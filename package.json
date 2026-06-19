@@ -1,0 +1,63 @@
+{
+  "name": "paper-camp",
+  "version": "0.1.0",
+  "description": "Local-first, AI-native project management with retro aesthetics",
+  "type": "module",
+  "bin": {
+    "paper-camp": "./dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/core/index.js",
+      "types": "./dist/core/index.d.ts"
+    }
+  },
+  "files": ["dist", "templates", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc && vite build && vite build --config vite.app.config.ts",
+    "build:app": "vite build --config vite.app.config.ts",
+    "dev": "vite --config vite.app.config.ts --port 3333",
+    "dev:lib": "vite",
+    "cli": "bun src/cli/index.ts",
+    "check-types": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:write": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": ["project-management", "ai-native", "local-first", "retro-ui", "cli", "dashboard"],
+  "author": "Dendelion",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "dependencies": {
+    "@dendelion/paper-ui": "link:../paper-ui",
+    "@tanstack/react-router": "^1.58.3",
+    "clsx": "^2.1.1",
+    "commander": "^12.0.0",
+    "react-markdown": "^10.1.0",
+    "zod": "^4.4.3",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.3",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react-swc": "^3.7.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.9",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-tsconfig-paths": "^5.0.1",
+    "vitest": "^2.1.3"
+  }
+}

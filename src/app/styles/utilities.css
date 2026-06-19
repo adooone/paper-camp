@@ -1,0 +1,66 @@
+@tailwind utilities;
+
+/*
+ * paper-ui's Button renders its colored fill as an SVG <path> layered behind the
+ * label, not a CSS background — so a bright color means recoloring that path
+ * directly. !important is needed because paper-ui's own hover/active rules
+ * (e.g. .primary:hover .blobFill) have higher specificity than a single class
+ * from outside the component.
+ */
+.btn-green svg path:first-child {
+  fill: #b7d9bc !important;
+}
+.btn-green:hover svg path:first-child {
+  fill: #a3ccaa !important;
+}
+.btn-green:active svg path:first-child {
+  fill: #8fbe98 !important;
+}
+
+.btn-orange svg path:first-child {
+  fill: #f0c9a4 !important;
+}
+.btn-orange:hover svg path:first-child {
+  fill: #eabb8c !important;
+}
+.btn-orange:active svg path:first-child {
+  fill: #e3ac74 !important;
+}
+
+.btn-red svg path:first-child {
+  fill: #e3b3b1 !important;
+}
+.btn-red:hover svg path:first-child {
+  fill: #dc9f9c !important;
+}
+.btn-red:active svg path:first-child {
+  fill: #d38b88 !important;
+}
+
+.btn-blue svg path:first-child {
+  fill: #aecbe0 !important;
+}
+.btn-blue:hover svg path:first-child {
+  fill: #98bcd5 !important;
+}
+.btn-blue:active svg path:first-child {
+  fill: #82aeca !important;
+}
+
+.btn-violet svg path:first-child {
+  fill: #d2c0e0 !important;
+}
+.btn-violet:hover svg path:first-child {
+  fill: #c3a9d6 !important;
+}
+.btn-violet:active svg path:first-child {
+  fill: #b392cb !important;
+}
+
+.btn-green,
+.btn-orange,
+.btn-red,
+.btn-blue,
+.btn-violet {
+  color: #1a1917 !important;
+}
