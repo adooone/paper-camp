@@ -1,5 +1,7 @@
+import { deriveIdeaStatuses, parseIdeas } from '@/core/parser';
 import type {
   DecisionEntry,
+  IdeaEntry,
   OpenQuestionEntry,
   ParseResult,
   PlanEntry,
@@ -14,28 +16,6 @@ import {
 } from '../services/docs-api';
 import { fetchIdeas } from '../services/ideas-api';
 import { fetchPlans } from '../services/plans-api';
-
-interface IdeaEntry {
-  id: string | null;
-  title: string;
-  body: string;
-}
-
-const IDEA_ID_RE = /^(IDEA-\d+):\s*/;
-
-const parseIdeas = (content: string): IdeaEntry[] => {
-  const sections = content.split(/\n---+\n/).filter(Boolean);
-  return sections.map((section) => {
-    const headingMatch = section.match(/^#{1,3}\s+(.+)/m);
-    const rawTitle = headingMatch
-      ? headingMatch[1].trim()
-      : (section.trim().split('\n')[0]?.trim() ?? 'Untitled');
-    const idMatch = rawTitle.match(IDEA_ID_RE);
-    const id = idMatch?.[1] ?? null;
-    const title = id ? rawTitle.slice(idMatch![0].length) : rawTitle;
-    return { id, title, body: section.trim() };
-  });
-};
 
 type AppStore = {
   plans: ParseResult<PlanEntry> | null;
@@ -90,7 +70,7 @@ type AppStore = {
   setSettingsConfigFiles: (files: string[]) => void;
 };
 
-export const useAppStore = create<AppStore>((set) => ({
+export const useAppStore = create<AppStore>((set, get) => ({
   plans: null,
   plansLoading: false,
   plansError: null,
@@ -98,7 +78,13 @@ export const useAppStore = create<AppStore>((set) => ({
     set({ plansLoading: true });
     try {
       const data = await fetchPlans();
-      set({ plans: data, plansError: null, plansLoading: false });
+      const { ideaEntries } = get();
+      set({
+        plans: data,
+        plansError: null,
+        plansLoading: false,
+        ideaEntries: deriveIdeaStatuses(ideaEntries, data.entries),
+      });
     } catch (err) {
       set({ plansError: String(err), plansLoading: false });
     }
@@ -109,7 +95,12 @@ export const useAppStore = create<AppStore>((set) => ({
   loadIdeas: async () => {
     try {
       const content = await fetchIdeas();
-      set({ ideasContent: content, ideaEntries: content.trim() ? parseIdeas(content) : [] });
+      const parsed = content.trim() ? parseIdeas(content) : [];
+      const { plans } = get();
+      set({
+        ideasContent: content,
+        ideaEntries: deriveIdeaStatuses(parsed, plans?.entries ?? []),
+      });
     } catch {
       set({ ideasContent: null, ideaEntries: [] });
     }

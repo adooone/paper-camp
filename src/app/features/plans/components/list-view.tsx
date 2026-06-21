@@ -1,16 +1,10 @@
 import { space } from '@/app/styles/tokens';
-import type { PlanEntry } from '@/types/index';
+import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { useEffect, useRef } from 'react';
 import { ClosedSection } from './closed-section';
-import { IdeaCard } from './idea-card';
+import { IdeasBoard } from './ideas-board';
 import { PlanCard } from './plan-card';
 import { SectionHeading } from './section-heading';
-
-interface IdeaEntry {
-  id: string | null;
-  title: string;
-  body: string;
-}
 
 interface ListViewProps {
   plans: PlanEntry[];
@@ -74,17 +68,12 @@ export const ListView = ({
       {ideaEntries && ideaEntries.length > 0 && (
         <section style={{ marginBottom: space[8] }}>
           <SectionHeading label="Ideas" count={ideaEntries.length} />
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: space[3],
-            }}
-          >
-            {ideaEntries.map((e) => (
-              <IdeaCard key={e.title} id={e.id} title={e.title} onClick={() => onOpenIdea?.(e.title)} />
-            ))}
-          </div>
+          <IdeasBoard
+            ideas={ideaEntries}
+            plans={plans}
+            onOpenIdea={onOpenIdea}
+            onOpenPlan={onOpenPlan}
+          />
         </section>
       )}
 

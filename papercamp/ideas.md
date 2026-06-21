@@ -43,7 +43,7 @@ Why this one first: the backend is already done and tested. This is UI work on t
 
 ---
 
-### IDEA-2: Settings page with sidebar and editable configs
+### IDEA-2: Settings page and configs
 
 Turn Settings from a single static info+icon page into a real sidebar-driven configuration workspace — but scoped honestly to what *this* repo's stack actually has, not a generic eslint/prettier list. The existing project-info card (name, version, icon — already built) becomes the sidebar's default "General" section rather than the whole page.
 
@@ -60,7 +60,7 @@ Why this one second: it needs a new write path (with real validation/security th
 
 ---
 
-### IDEA-3: The Stack — right-side status & history panel
+### IDEA-3: The Stack panel
 
 A persistent right-hand panel, present across every page (not a route — more like the `NavigationIsland`, but docked right and full-height), showing the active plan and a feed of recent project activity. Default open, toggleable closed.
 
@@ -77,7 +77,7 @@ This whole idea is buildable from data and patterns that already exist in the co
 
 ---
 
-### IDEA-4: Agent orchestration — launch, watch, and steer tasks from the dashboard
+### IDEA-4: Agent orchestration
 
 A more concrete shape for what started as "agent observability." Clicking a plan/task in the dashboard launches a real agent session scoped to that task, streams a simplified view of its progress into the status panel ("The Stack" idea above), and lets you send follow-up input into the same session without leaving the browser. This turns Paper Camp from a passive viewer of `papercamp/` into an active layer between you and the agent — but the persisted record stays exactly where it already lives, in `plans.md`/`progress.md`, written by the agent itself as part of doing the work, not in some new log format.
 
@@ -103,7 +103,7 @@ Built for more than one agent from the start — Claude Code for most work, some
 
 ---
 
-### IDEA-5: Repo health status — live lint/format/test results in The Stack
+### IDEA-5: Repo health status
 
 A third section in the already-built Stack panel (`src/app/components/stack-panel.tsx`), next to "Active" and "Live", showing whether the repo is actually green right now — lint, format, and tests — without opening a terminal. This is the concrete version of a promise the original pitch already made ("analog gauges display project health and momentum") rather than a new concept: three small status pills wired to checks the project already runs by hand.
 
@@ -124,7 +124,7 @@ Why this is a natural next step rather than a new subsystem: it's the same SSE p
 
 ---
 
-### IDEA-6: Plan & phase IDs — short titles, numbered phases, and a paper-ui accordion for full detail
+### IDEA-6: Plan and phase IDs
 
 Right now a `PlanEntry`'s `title` (`src/types/index.ts`) doubles as both the identifier and the full description — entries like "Build core library: parser, schemas, scaffold, CLI" or "Add board view, plan CRUD, and project branding" are sentence-length, and every place that lists plans (`plan-card.tsx`, `plan-nav-item.tsx`, `kanban-card.tsx`, `plans-sidebar.tsx`) renders that whole sentence. Same problem one level down: a `PhaseItem` (`src/types/index.ts`) is just `{ done, text }`, and `text` is itself a full sentence ("Add AI focus handoff — one-line copy-prompt per phase with plan title and phase number") rendered inline in `plan-detail.tsx` with no way to collapse it. This idea gives both plans and phases a short, scannable identity, with the long version still available but tucked behind a click.
 
@@ -165,7 +165,7 @@ Right now a `PlanEntry`'s `title` (`src/types/index.ts`) doubles as both the ide
 
 ---
 
-### IDEA-7: Commit section in The Stack — stage, write, and commit without leaving the dashboard
+### IDEA-7: Commit section
 
 A second top-of-panel section in the Stack panel (`src/app/components/stack-panel.tsx`), sitting right below "Status" (see the "Repo health status" idea above — final order ends up Status → Commit → Active → Live). Shows the live working-tree diff — how many files changed and which ones — plus a small form to write a commit title/message and fire it off, so a commit doesn't require switching to a terminal.
 
@@ -188,7 +188,7 @@ This pairs naturally with two ideas already in this file: it's fed by the same f
 
 ---
 
-### IDEA-8: Ideas board — Planned/Done columns, priority order, short titles, and idea↔plan links
+### IDEA-8: Ideas board
 
 Today every `ideas.md` section renders flat in a single "Ideas" grid (`list-view.tsx`'s `ideaEntries.map(...)` → `IdeaCard`), as a long, un-prioritized, un-titled blob of prose per card. Nothing distinguishes a brand-new idea from one that shipped months ago, nothing says which one matters more, and the card title is whatever the first line of prose happens to be — for several of the entries already in this file, that's a full sentence. This replaces the flat grid with a real two-column board: **Planned** and **Done**.
 
@@ -212,7 +212,7 @@ Today every `ideas.md` section renders flat in a single "Ideas" grid (`list-view
 
 ---
 
-### IDEA-9: Review status — a manual gate before "done," a fixed Closed section, and a per-plan Log
+### IDEA-9: Review status
 
 Two real gaps found while reading `plan-detail.tsx` and `closed-section.tsx` just now, both pointing at the same underlying problem: once a plan is marked complete, you lose visibility into it.
 
@@ -227,7 +227,7 @@ Two real gaps found while reading `plan-detail.tsx` and `closed-section.tsx` jus
 
 **A per-plan Log, available on every plan, not just ones in review:** a new `### Log` sub-section in the plan's markdown block, parsed the same way `### Phases` already is — extending `src/core/parser.ts`'s existing heading-block extraction rather than writing a second one-off parser for it — formatted as dated bullets that deliberately mirror `progress.md`'s own `## YYYY-MM-DD` / `- item` shape, just scoped to one plan instead of the whole project:
 ```
-### IDEA-10: Log
+### Log
 - 2026-06-21: Implemented the persistent ID counter in `.paper-camp/config.json`.
 - 2026-06-22: Review — counter logic looks solid; one missing migration note, fixed.
 ```

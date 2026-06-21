@@ -1,5 +1,7 @@
 import type {
   DecisionEntry,
+  IdeaEntry,
+  IdeaStatus,
   OpenQuestionEntry,
   ParseResult,
   PhaseItem,
@@ -193,6 +195,40 @@ export function parseOpenQuestions(markdown: string): ParseResult<OpenQuestionEn
   }
 
   return { entries, warnings };
+}
+
+const IDEA_ID_RE = /^(IDEA-\d+):\s*/;
+
+const IDEA_SEPARATOR_RE = /\n---+\n/;
+
+/** ideas.md is split into sections by `---` separators. Each section has an optional
+ * `### IDEA-N:` heading prefix followed by a short title, and a prose body. */
+export function parseIdeas(markdown: string): IdeaEntry[] {
+  const sections = markdown.split(IDEA_SEPARATOR_RE).filter(Boolean);
+  return sections.map((section) => {
+    const headingMatch = section.match(/^#{1,3}\s+(.+)/m);
+    const rawTitle = headingMatch
+      ? headingMatch[1].trim()
+      : (section.trim().split('\n')[0]?.trim() ?? 'Untitled');
+    const idMatch = rawTitle.match(IDEA_ID_RE);
+    const id = idMatch?.[1] ?? null;
+    const title = id ? rawTitle.slice(idMatch![0].length) : rawTitle;
+    return { id, title, body: section.trim() };
+  });
+}
+
+export function deriveIdeaStatuses(ideas: IdeaEntry[], plans: PlanEntry[]): IdeaEntry[] {
+  return ideas.map((idea) => {
+    if (!idea.id) {
+      return { ...idea, status: 'planned' };
+    }
+    const linkedPlans = plans.filter((p) => p.idea === idea.id);
+    if (linkedPlans.length === 0) {
+      return { ...idea, status: 'planned' };
+    }
+    const allDone = linkedPlans.every((p) => p.status === 'done' || p.status === 'dropped');
+    return { ...idea, status: allDone ? 'done' : 'planned' };
+  });
 }
 
 const PROGRESS_HEADING_RE = /^##\s+(\d{4}-\d{2}-\d{2})\s*$/;

@@ -61,6 +61,15 @@ export interface OpenQuestionEntry {
   body: string;
 }
 
+export type IdeaStatus = 'planned' | 'done';
+
+export interface IdeaEntry {
+  id: string | null;
+  title: string;
+  body: string;
+  status?: IdeaStatus;
+}
+
 export interface ProgressEntry {
   date: string;
   items: string[];

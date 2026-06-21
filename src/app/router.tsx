@@ -7,6 +7,7 @@ import {
   useNavigate,
   useRouterState,
 } from '@tanstack/react-router';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
@@ -29,6 +30,7 @@ const RootLayout = () => {
   const docSearchQuery = useAppStore((s) => s.docSearchQuery);
   const setDocSearchQuery = useAppStore((s) => s.setDocSearchQuery);
   const [stackOpen, setStackOpen] = useState(true);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     loadPlans();
@@ -42,7 +44,6 @@ const RootLayout = () => {
       showSidebar={false}
       showPage={false}
       bleedBottom
-      routeKey={pathname}
       stackOpen={stackOpen}
       navigationIsland={
         <nav aria-label="Navigation island">
@@ -91,17 +92,26 @@ const RootLayout = () => {
             {pathname === '/docs' && <DocsSidebar />}
             {pathname === '/settings' && <SettingsSidebar />}
           </SidebarShell>
-          <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden">
-            <div className="flex-1 min-h-0">
+          <div className="flex flex-1 flex-col min-h-0 min-w-0">
+            <div className="flex-1 min-h-0 overflow-y-auto">
               <Page
                 texture={{ texture: 'parchment' }}
-                className="h-full"
                 style={{
-                  minHeight: '100%',
+                  height: 'auto',
                   paddingBottom: `calc(${layoutConfig.navIslandBottom} + ${layoutConfig.navIslandHeight} + ${space[4]})`,
                 }}
               >
-                <Outlet />
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={pathname}
+                    initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={shouldReduceMotion ? undefined : { opacity: 0, y: -8 }}
+                    transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+                  >
+                    <Outlet />
+                  </motion.div>
+                </AnimatePresence>
               </Page>
             </div>
           </div>

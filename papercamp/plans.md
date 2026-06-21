@@ -358,7 +358,7 @@ plan is deleted).
 
 ## Ideas board
 
-**Status:** planned
+**Status:** done
 **Kind:** feat
 **Id:** FEAT-8
 **Created:** 2026-06-21
@@ -374,15 +374,15 @@ Planned/Done columns, priority order, short titles, and idea↔plan links" for t
 rationale.
 
 ### Phases
-- [ ] Move idea parsing into core
+- [x] Move idea parsing into core
       Move idea parsing into `src/core/parser.ts`/`src/types/index.ts` as a real `IdeaEntry` type (`id`, `title`, `body`), replacing the ad-hoc client-side `parseIdeas` in `app-store.ts`
-- [ ] Rewrite ideas.md headings
+- [x] Rewrite ideas.md headings
       Rewrite existing `ideas.md` headings to short titles with their `IDEA-N:` prefix
-- [ ] Derive idea Planned/Done state
+- [x] Derive idea Planned/Done state
       Derive each idea's Planned/Done state: "Done" only when every plan whose `Idea` field references it is `done`/`dropped`; everything else (including ideas with zero linked plans) is "Planned"
-- [ ] Build two-column ideas board
+- [x] Build two-column ideas board
       Build the two-column board, reusing `kanban-column.tsx`'s existing column shell, replacing the flat grid in `list-view.tsx`
-- [ ] Add idea rows with linked plans
+- [x] Add idea rows with linked plans
       Each idea row shows an icon (lightbulb for Planned, checkmark for Done) and its short title; expanding it lists every linked plan as a clickable `Stamp` per plan ID
-- [ ] Order ideas by file position
+- [x] Order ideas by file position
       Order ideas within each column by their position in `ideas.md` (priority = file order); read-only for v1, no reorder controls yet
