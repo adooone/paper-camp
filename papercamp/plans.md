@@ -583,3 +583,146 @@ cleanup items, all introduced by the Review status work itself.
       heading-search/boundary-scan/remainder-slice logic almost verbatim — factor out a
       shared `extractSection(body, headingRe, parseEntry)` before a third markdown
       sub-section repeats the duplication.
+
+## Phase convergence audit
+
+**Status:** review
+**Kind:** feat
+**Id:** FEAT-14
+**Idea:** IDEA-11
+**Created:** 2026-06-26
+**Updated:** 2026-06-26
+**Tags:** app, plans, agent
+
+A button on a plan's phase list that launches an agent to compare the plan's intent
+against the current code and append any clearly-missing phase as a new unchecked item —
+never reorder, check, or rewrite an existing phase. Append-only is the entire safety
+property: if nothing's missing, it writes nothing, not even an empty heading. See
+ideas.md's "Phase convergence audit" for full rationale.
+
+### Phases
+- [x] Generalize agent task scope beyond a single phase
+      `agent.ts`'s `start()`/`AgentTask` are currently phase-shaped (`planId` +
+      `phaseIndex`, success-check is "did this phase's checkbox flip"). This task is
+      plan-scoped, not phase-scoped — add a launch mode with no `phaseIndex`, whose
+      success-check is "did a new line get appended to `### Phases` or `### Log`"
+- [x] Add convergence-audit prompt constant
+      New `src/app/features/plans/prompts.ts`: read this plan's phases and body, inspect
+      the current repo state, append any phase that's clearly required but missing as a
+      normal `- [ ]` line at the end of the list, optionally with the existing indented
+      description format. Explicitly never touch existing lines. Finish with one `### Log`
+      line summarizing what was found — or write nothing at all if nothing's missing
+- [x] Add "Audit phases against code" button to plan-detail.tsx
+      Next to the existing `PhaseCopyButton`, launches the plan-scoped agent task from the
+      previous two phases
+- [x] Verify append-only behavior end-to-end
+      Run against a real plan; confirm existing phases are never reordered, checked, or
+      edited, and a Log entry only appears when something was actually appended
+
+### Log
+- 2026-06-26: `agent.ts`'s `AgentTask`/`AgentTaskState` now have an optional `phaseIndex`; a new shared `launch()` helper backs both `start(plan, phaseIndex)` (unchanged, phase-scoped) and a new `startForPlan(plan, prompt)` (plan-scoped, no phase). Plan-scoped success is judged in `didTaskProgress()` by snapshotting `phases.length`/`log.length` at launch (`planBaseline`) and checking for growth in either on finish, instead of one phase's checkbox. `resume()` carries `planBaseline` through a steering respawn like it already did `phaseIndex`. Updated `stack-panel.tsx`'s status line to omit the phase number when absent. `tsc`/`biome`/`vitest` all clean. Status set to `in-progress` (3 phases still unchecked).
+- 2026-06-26: Added `AuditPhasesButton` next to `PhaseCopyButton` in `plan-detail.tsx`, wired through a new `launchPlanAudit` store action, `POST /api/agent/launch-audit`, and `agent.startForPlan()`. Could not exercise the live happy path: the running dev server's long-lived `agent` singleton predates this route (404 until a full process restart), and this verification session was itself the agent task occupying the single-task slot — restarting the server or spawning a second real headless agent was deliberately avoided. Verified by code review (`tsc`/`biome`/`vitest` clean) instead; live end-to-end coverage is phase 4's job.
+- 2026-06-26: Verified append-only behavior end-to-end against a real plan (FEAT-9, "Project settings and config views"). Could not spawn the literal production path (a `claude --permission-mode auto` subprocess) directly — this sandbox's safety classifier denies that as an "unsafe agent" spawn, and the running dev server's `agent.ts` singleton was itself occupied by this very verification session — so used isolated temp copies of the repo and the harness's own sanctioned Agent tool, dispatched with the exact real prompt text, as a faithful stand-in. Two "nothing missing" runs against FEAT-9 unmodified (all 5 phases genuinely match the code) wrote zero bytes — confirmed via untouched-file diff, no Log line, no heading. One "real gap" run, with an unambiguous unimplemented requirement added to FEAT-9's body (a port/`.env` conflict warning that genuinely doesn't exist in code), appended exactly one new unchecked `- [ ]` phase plus one new `### Log` line — confirmed via independent diff against the pristine original that every other line, in every other plan entry, was byte-for-byte unchanged: no reordering, no checking, no rewriting. The appended phase stayed unchecked even though the audit found it, matching the prompt's instruction. This was the plan's last phase — Status set to `review` per `AGENTS.md`.
+
+## Plan/decision consistency check
+
+**Status:** planned
+**Kind:** feat
+**Id:** FEAT-15
+**Idea:** IDEA-12
+**Created:** 2026-06-26
+**Updated:** 2026-06-26
+**Tags:** app, stack, docs
+
+A read-only, derived findings pass over `decisions.md`/`open-questions.md`/`plans.md`:
+dangling cross-references, and open questions that are still `open` while the plan they
+block is `in-progress`/`review`. No AI involved — every check is a pure function over
+already-parsed entries, same "derive, don't duplicate" approach `deriveIdeaStatuses`
+already uses. See ideas.md's "Plan/decision consistency check" for full rationale.
+
+### Phases
+- [ ] Add `blocks?` field to OpenQuestionEntry
+      Parsed/serialized the same way `PlanEntry`'s existing optional `idea` field already
+      is — a plan `id` (e.g. `FEAT-2`) that this open question blocks
+- [ ] Add findConsistencyIssues() derived check
+      Pure function over already-parsed entries: dangling `resolvedBy`/`supersededBy`
+      references that don't match any actual entry title, and open questions with
+      `blocks` pointing at a plan whose `status` is `in-progress` or `review`
+- [ ] Add GET /api/consistency route
+      Returns the findings array as-is, same shape pattern as the other read routes
+- [ ] Add Consistency pill to Stack panel Status section
+      Fourth pill next to Lint/Format/Tests — `clean` or a count, same `Stamp` and
+      click-to-expand pattern, expanding into a list of findings each linking through to
+      the Docs page entry or the blocking plan
+
+## Review-found phases
+
+**Status:** planned
+**Kind:** feat
+**Id:** FEAT-16
+**Idea:** IDEA-14
+**Created:** 2026-06-26
+**Updated:** 2026-06-26
+**Tags:** app, plans, agent
+
+Lets `/code-review` findings become new, unchecked phases appended to the plan they were
+reviewed against, instead of disappearing as chat output — reusing the existing per-phase
+"Start agent" machinery instead of building a parallel bugs/updates entity type. See
+ideas.md's "Review-found phases" for full rationale.
+
+### Phases
+- [ ] Add `source?: 'review'` to PhaseItem
+      Parsed from a small inline tag on the phase's checkbox line (e.g.
+      `- [ ] [review] <finding summary>`) rather than a separate markdown section, so
+      phases stay one list ordered however they were added
+- [ ] Resolve the paper-ui Table row-styling gap
+      paper-ui's `Table` has no per-row styling hook today, only per-cell `cell` render
+      functions — decide between adding a `rowClassName?: (row, index) => string` prop to
+      the sibling paper-ui repo, or a paper-camp-only way to fake it from inside a cell
+- [ ] Render review-found phase styling in plan-detail.tsx
+      A small `Stamp`/badge next to the phase title plus the row treatment chosen in the
+      previous phase, so a review-found phase reads as distinct without a second table
+- [ ] Wire /code-review findings into an "Add as phases" action
+      Each finding's `failure_scenario`/file:line detail becomes the new phase's
+      `description` — same field that already renders in the expandable row for ordinary
+      phases
+
+## Agent-drafted plans
+
+**Status:** planned
+**Kind:** feat
+**Id:** FEAT-17
+**Idea:** IDEA-15
+**Created:** 2026-06-26
+**Updated:** 2026-06-26
+**Tags:** app, plans, agent
+
+A "Draft plan" button on an `IdeaEntry` that launches an agent to read the idea and write
+a real, phased `plans.md` entry from it — title, phases, descriptions, `idea: IDEA-N`
+backlink — reviewing every other open plan to decide where the new plan belongs in file
+order (priority), and reordering existing plan headings if warranted. See ideas.md's
+"Agent-drafted plans" for full rationale, including the still-open write-directly-vs-
+propose-first and context-scope decisions.
+
+### Phases
+- [ ] Generalize agent task scope for plan-drafting tasks
+      Shares the non-phase-scoped launch mode added by FEAT-14 (or builds it here if that
+      lands first) — this task has neither `planId` nor `phaseIndex`, since the plan
+      doesn't exist until the agent writes it; success-check is "did a new `## Heading`
+      with `idea: IDEA-N` appear in plans.md"
+- [ ] Decide write-directly-vs-propose-first
+      Resolve whether the agent commits the new plan straight to `plans.md` (like
+      FEAT-10's phase-execution agent) or produces a draft requiring approval first —
+      stated open question in ideas.md, needs an actual answer before the rest of this
+      ships
+- [ ] Add plan-drafting prompt builder
+      Includes the idea's full body, relevant `about.md`/`decisions.md` context, every
+      other non-`done` plan (for the priority/ordering decision), and instructions to
+      insert the new plan at the right file position — moving existing plan headings if
+      warranted, never editing their title/phases/body
+- [ ] Add "Draft plan" button to IdeasBoard row
+      Available only while the idea has no linked plan yet; once one exists, the
+      per-phase buttons take over
+- [ ] Add visible file-order ranking to the Backlog section
+      A small ordinal marker per `PlanCard` reflecting file position, read-only — without
+      this, the agent's priority/ordering decisions are invisible in the UI

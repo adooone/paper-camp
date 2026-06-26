@@ -10,7 +10,13 @@ import type {
   ProgressEntry,
 } from '@/types/index';
 import { create } from 'zustand';
-import { fetchAgentStatus, launchAgent, resumeAgent, stopAgent } from '../services/agent-api';
+import {
+  fetchAgentStatus,
+  launchAgent,
+  launchPlanAudit,
+  resumeAgent,
+  stopAgent,
+} from '../services/agent-api';
 import {
   fetchDecisions,
   fetchOpenQuestions,
@@ -85,6 +91,7 @@ type AppStore = {
   agentStatus: AgentTaskState | null;
   loadAgentStatus: () => Promise<void>;
   launchAgent: (planId: string, phaseIndex: number) => Promise<void>;
+  launchPlanAudit: (planId: string, prompt: string) => Promise<void>;
   resumeAgent: (message: string) => Promise<void>;
   stopAgent: () => Promise<void>;
 };
@@ -239,6 +246,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   launchAgent: async (planId, phaseIndex) => {
     await launchAgent(planId, phaseIndex);
+    await get().loadAgentStatus();
+  },
+  launchPlanAudit: async (planId, prompt) => {
+    await launchPlanAudit(planId, prompt);
     await get().loadAgentStatus();
   },
   resumeAgent: async (message) => {

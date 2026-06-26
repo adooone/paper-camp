@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { phaseProgress, relativeDate } from '../helpers';
 import { AgentStartButton } from './agent-start-button';
+import { AuditPhasesButton } from './audit-phases-button';
 import { PhaseCopyButton } from './phase-copy-button';
 import { PlanIdStamp } from './plan-id-stamp';
 import { ProgressBar } from './progress-bar';
@@ -31,6 +32,11 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
     agentBusy && agentStatus !== null && agentStatus.planId === plan.id
       ? agentStatus.phaseIndex
       : null;
+  const auditRunning =
+    agentBusy &&
+    agentStatus !== null &&
+    agentStatus.planId === plan.id &&
+    agentStatus.phaseIndex === undefined;
   const [updating, setUpdating] = useState(false);
   const [logInput, setLogInput] = useState('');
   const progress = phaseProgress(plan);
@@ -202,17 +208,33 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
 
       {plan.phases.length > 0 && (
         <div style={{ marginBottom: space[8] }}>
-          <h3
+          <div
             style={{
-              fontFamily: fontFamily.serif,
-              fontSize: fontSize.sm,
-              fontWeight: 600,
-              margin: `0 0 ${space[3]}`,
-              opacity: 0.65,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: space[3],
+              marginBottom: space[3],
             }}
           >
-            Phases
-          </h3>
+            <h3
+              style={{
+                fontFamily: fontFamily.serif,
+                fontSize: fontSize.sm,
+                fontWeight: 600,
+                margin: 0,
+                opacity: 0.65,
+              }}
+            >
+              Phases
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+              {auditRunning && (
+                <span className="spinner" style={{ opacity: 0.6 }} title="Audit running…" />
+              )}
+              <AuditPhasesButton plan={plan} disabled={agentBusy} />
+            </div>
+          </div>
           <Table
             data={plan.phases}
             columns={[

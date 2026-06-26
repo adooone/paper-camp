@@ -20,7 +20,11 @@ const MAX_LINES = 50;
 interface AgentTask {
   planTitle: string;
   planId?: string;
-  phaseIndex: number;
+  // Absent for a plan-scoped task (e.g. a convergence audit spanning every phase),
+  // present for a single-phase task.
+  phaseIndex?: number;
+  // Only set for plan-scoped tasks, to check success against: did Phases or Log grow?
+  planBaseline?: { phases: number; log: number };
   status: AgentTaskStatus;
   agentId: AgentId;
   adapter: AgentAdapter;
@@ -81,14 +85,22 @@ export function createAgentManager(root: string) {
     broadcast(`agent: ${status}`);
   }
 
-  async function wasPhaseChecked(task: AgentTask): Promise<boolean | null> {
+  async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
     try {
       const raw = await readFile(join(root, 'papercamp', 'plans.md'), 'utf-8');
       const { entries } = parsePlans(raw);
       const plan =
         entries.find((p) => p.id === task.planId) ??
         entries.find((p) => p.title === task.planTitle);
-      return plan?.phases[task.phaseIndex]?.done ?? null;
+      if (!plan) return null;
+      if (task.phaseIndex !== undefined) {
+        return plan.phases[task.phaseIndex]?.done ?? null;
+      }
+      if (!task.planBaseline) return null;
+      return (
+        plan.phases.length > task.planBaseline.phases ||
+        (plan.log?.length ?? 0) > task.planBaseline.log
+      );
     } catch {
       return null;
     }
@@ -97,12 +109,13 @@ export function createAgentManager(root: string) {
   function finishTask(task: AgentTask, error: boolean) {
     setStatus(task, error ? 'error' : 'done');
     if (error) return;
-    wasPhaseChecked(task).then((checked) => {
-      if (current === task && checked === false) {
-        pushLine(
-          task,
-          'Warning: agent finished but did not check off this phase in plans.md — verify manually',
-        );
+    didTaskProgress(task).then((progressed) => {
+      if (current === task && progressed === false) {
+        const warning =
+          task.phaseIndex !== undefined
+            ? 'Warning: agent finished but did not check off this phase in plans.md — verify manually'
+            : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
+        pushLine(task, warning);
       }
     });
   }
@@ -144,32 +157,50 @@ export function createAgentManager(root: string) {
     });
   }
 
-  function start(plan: PlanEntry, phaseIndex: number): Result {
+  // Shared by start()/startForPlan(): synchronous on purpose, same race-avoidance
+  // reasoning as the busy-guard above — no `await` between the guard check and
+  // reserving `current`.
+  function launch(
+    plan: PlanEntry,
+    prompt: string,
+    scope: Pick<AgentTask, 'phaseIndex' | 'planBaseline'>,
+  ): Result {
     if (current && current.status !== 'done' && current.status !== 'error') {
       return { ok: false, error: 'An agent task is already running' };
     }
-    const phase = plan.phases[phaseIndex];
-    if (!phase) {
-      return { ok: false, error: 'Phase not found' };
-    }
-
     const { id: agentId, adapter } = resolveAgent(plan.agent ?? readDefaultAgentId(root));
-    const prompt = buildAgentPrompt(plan, phase, phaseIndex);
     const proc = spawnAgent(adapter, adapter.buildArgs(prompt));
     const task: AgentTask = {
       planTitle: plan.title,
       planId: plan.id,
-      phaseIndex,
       status: 'starting',
       agentId,
       adapter,
       proc,
       lines: [],
+      ...scope,
     };
     current = task;
     attachReader(task);
     setStatus(task, 'running');
     return { ok: true };
+  }
+
+  function start(plan: PlanEntry, phaseIndex: number): Result {
+    const phase = plan.phases[phaseIndex];
+    if (!phase) {
+      return { ok: false, error: 'Phase not found' };
+    }
+    const prompt = buildAgentPrompt(plan, phase, phaseIndex);
+    return launch(plan, prompt, { phaseIndex });
+  }
+
+  // Plan-scoped launch mode: no single phase, so success is judged by whether the
+  // agent appended anything to Phases or Log rather than whether one checkbox flipped.
+  function startForPlan(plan: PlanEntry, prompt: string): Result {
+    return launch(plan, prompt, {
+      planBaseline: { phases: plan.phases.length, log: plan.log?.length ?? 0 },
+    });
   }
 
   function resume(message: string): Result {
@@ -195,6 +226,7 @@ export function createAgentManager(root: string) {
       planTitle: prior.planTitle,
       planId: prior.planId,
       phaseIndex: prior.phaseIndex,
+      planBaseline: prior.planBaseline,
       status: 'starting',
       agentId: prior.agentId,
       adapter: prior.adapter,
@@ -240,6 +272,7 @@ export function createAgentManager(root: string) {
 
   return {
     start,
+    startForPlan,
     resume,
     stop,
     getStatus,

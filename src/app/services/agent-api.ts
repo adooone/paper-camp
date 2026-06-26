@@ -17,6 +17,18 @@ export const launchAgent = async (planId: string, phaseIndex: number): Promise<v
   }
 };
 
+export const launchPlanAudit = async (planId: string, prompt: string): Promise<void> => {
+  const response = await fetch('/api/agent/launch-audit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId, prompt }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
+    throw new Error(err.error);
+  }
+};
+
 export const resumeAgent = async (message: string): Promise<void> => {
   const response = await fetch('/api/agent/resume', {
     method: 'POST',

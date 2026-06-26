@@ -27,10 +27,12 @@ Turn Settings from a single static info+icon page into a real sidebar-driven con
 - **Sidebar layout** — `settings-sidebar.tsx` mirrors `PlansSidebar`'s structure: a left rail of sections (`General`, `Config Files`), main area showing whichever one is selected. "General" is the default landing section.
 - **Auto-discovered config sections, not a hardcoded list** — `GET /api/configs` (`src/app/server/api.ts`) checks a fixed candidate list (`biome.json`, `tsconfig.json`, `tailwind.config.ts`, `vite.config.ts`, `vite.app.config.ts`, `postcss.config.js`, `package.json`) against what actually exists in the repo root and returns only the hits — the sidebar never shows a config this repo doesn't have.
 
-**Still open:**
+**Also shipped (FEAT-9):**
 
-- **Structured rendering for what's already viewable** — `ConfigEditorSection` (`settings-page.tsx`) renders every allowlisted file as a raw `CodeBlock`, even `package.json`, whose `scripts` block is the one piece of that file anyone actually looks at here. Special-case it into a `name → command` table; the rest stay as `CodeBlock`.
-- **Editable project identity** — the "General" card's project name is still a static `<h2>{config.projectName}</h2>`; the icon upload next to it works (shipped earlier, in FEAT-3), but the name field itself is not editable.
+- **Structured rendering for `package.json`** — `ConfigEditorSection` special-cases it into a `name → command` table instead of a raw `CodeBlock`; every other allowlisted config still renders as `CodeBlock`.
+- **Editable project identity** — the "General" card's project name is now an editable `Input`, saved through `POST /api/config`.
+
+This idea is fully shipped — no open items remain.
 
 **Scope change (2026-06-25): the write path for `biome.json`/`tsconfig.json`/etc. is dropped, not deferred.** The original plan for the remaining half was a `Textarea` + JSON-validate + allowlisted save endpoint over these files directly. On reflection that solves a problem nobody has — they're real editor/LSP-backed files; a save button in a browser textarea is strictly worse than the editor already open in another window, for the exact same edit. What's actually worth making *editable* through this dashboard is a small, curated set of operational settings common to most repos (dev server port, env vars) — split out into [[IDEA-13]] rather than bolted onto this idea's original "make every config writable" framing.
 
@@ -311,7 +313,7 @@ This repo's own state makes the gap concrete. The port `3333` is hardcoded in th
 
 ---
 
-### IDEA-14: Review findings become marked phases on the plan
+### IDEA-14: Review-found phases
 
 A `/code-review` pass against a plan's implementation surfaces real findings (bugs, cleanup, conventions violations) that today only exist as chat output — nothing persists them, and nothing lets you act on one with a click the way [[IDEA-4]]'s "Start agent" button already lets you act on a planned phase.
 
@@ -330,3 +332,23 @@ The first design considered was a separate `bugs`/`updates` entity type, paralle
 
 - **One plan, one phase list — review findings are not a parallel track.** This avoids the "which list is authoritative" question a separate entity type would raise, at the cost of phases no longer being purely "things planned in advance."
 - **Marking is cosmetic/informational, not a different lifecycle.** A review-found phase still goes through the exact same checkbox/Status-honesty rules ([AGENTS.md](../AGENTS.md)'s "update the plan as you go") as any other phase — it just looks different.
+
+---
+
+### IDEA-15: Agent-drafted plans
+
+Turning an idea into an actual plan is the one step in this whole pipeline still done entirely by hand — write a title, break it into phases, fill in descriptions. Everything downstream of that (executing a phase, reviewing the result) already has a "Start agent" button per [[IDEA-4]]. This idea closes the gap on the front end: a button on an `IdeaEntry` that launches an agent whose job is to read the idea and draft a real, phased plan from it.
+
+**Why this is a different shape of agent task, not just a new button.** [[IDEA-4]]'s agent is scoped to *executing* one phase of an existing plan — the prompt says "do this, then check it off." This agent's job is the opposite end of the pipeline: read `ideas.md`'s prose for one `IDEA-N`, plus whatever `about.md`/`decisions.md` context is relevant, and produce a new `plans.md` entry — title, phases, descriptions, `idea: IDEA-N` backlink — with nothing yet built. `src/app/server/agent.ts`'s current `AgentTask` is implicitly phase-shaped (`planId` + `phaseIndex`); a planning task has neither, since the plan doesn't exist until the agent writes it. The two task shapes likely share the spawn/stream/stop machinery in `agent.ts` but need a second prompt-builder and a different "what does success look like" check than [[IDEA-4]]'s phase-checkbox verification — probably "did a new `## Heading` with `idea: IDEA-N` actually appear in `plans.md`."
+
+**Where the button lives:** the `IdeasBoard` row (`about.md`'s description: lightbulb/check icon, title, expand-to-linked-plans) gets a "Draft plan" action, available while the idea has no linked plan yet — once a plan exists for an idea, this button's job is done and the existing per-phase buttons take over.
+
+**Priority and ordering are decided, not open:** `plans.md` has no `Priority:` field, and doesn't need one — `ideas.md` already establishes "priority = file order" for ideas (`about.md`/the Ideas-board plan's "Order ideas by file position" phase). This agent follows the same convention for plans: the prompt includes every other non-`done` plan as context, and the agent's job is to insert the new plan at the file position that reflects where it belongs in implementation order, not append it at the end. If reviewing the open set shows the new plan should jump ahead of (or behind) existing open plans, the agent **may reorder those existing entries' position too** — but only moves headings, never edits another plan's title, phases, or body text. This keeps the blast radius to "where things sit in the file," matching the read-only-content guarantee the rest of this pipeline already relies on.
+
+**Make that order visible, not just inferable.** Unlike the Ideas board (which actually renders `ideaEntries` top-to-bottom in file order, so position doubles as a visible ranking), the Plans page's "Backlog" section is the wrong shape for this today — per `about.md`, plans render grouped by status with no indication that file order means anything. A user staring at the Backlog list has no way to tell the agent's chosen order from an arbitrary one. This idea should also add a small ordinal marker (e.g. "1.", "2." or a numbered `Stamp`) to each `PlanCard` within the Backlog section, reflecting its file position — read-only for v1, same as the Ideas board's ordering is read-only with no drag-and-drop. Without this, the whole priority-setting half of this idea produces an effect nobody can see.
+
+**Open questions, not yet decided:**
+
+- **Does the agent write `plans.md` directly, or propose a draft for approval first?** [[IDEA-4]]'s phase-execution agent writes directly because the work being done is scoped and reviewable after the fact (`Status: review`). Drafting an entire plan from a one-paragraph idea is a much looser instruction with more room to misjudge scope — worth a real decision rather than copying the existing pattern by default.
+- **How much of `papercamp/` does the prompt need as context** to draft a plan that fits this project's actual conventions (phase granularity, the `kind`/`id` scheme, linking back via `idea`) instead of generic boilerplate — the whole of `about.md`, or something smaller and more targeted?
+- **Relationship to [[IDEA-14]]:** both are "agent produces a planning artifact, not a code change" — if [[IDEA-14]]'s phase-marking generalizes into a real non-execution task type in `agent.ts`, this idea is the second consumer of that same generalization rather than its own special case.

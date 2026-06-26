@@ -488,6 +488,43 @@ export function createApiMiddleware(root: string): ApiMiddleware {
       return;
     }
 
+    // POST /api/agent/launch-audit — start a headless agent on a plan-scoped convergence audit
+    if (req.method === 'POST' && pathname === '/api/agent/launch-audit') {
+      try {
+        const body = await readBody(req);
+        const { planId, prompt } = JSON.parse(body) as { planId?: string; prompt?: string };
+        if (!planId || !prompt) {
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'planId and prompt are required' }));
+          return;
+        }
+        const parsed = parsePlans(await readMaybe(campFile(root, 'plans.md')));
+        const plan = parsed.entries.find((p) => p.id === planId);
+        if (!plan) {
+          res.statusCode = 404;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'plan not found' }));
+          return;
+        }
+        const result = agent.startForPlan(plan, prompt);
+        if (!result.ok) {
+          res.statusCode = 409;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: result.error }));
+          return;
+        }
+        res.statusCode = 202;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ok: true }));
+      } catch (error) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: (error as Error).message }));
+      }
+      return;
+    }
+
     // POST /api/agent/resume — send a steering message to the running agent task
     if (req.method === 'POST' && pathname === '/api/agent/resume') {
       try {

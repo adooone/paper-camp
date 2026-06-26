@@ -127,7 +127,7 @@ export interface AgentTaskState {
   status: AgentTaskStatus;
   planTitle: string;
   planId?: string;
-  phaseIndex: number;
+  phaseIndex?: number;
   agentId: AgentId;
   sessionId?: string;
   lines: string[];

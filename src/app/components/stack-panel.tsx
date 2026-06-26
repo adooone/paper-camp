@@ -505,8 +505,11 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       color: deskChalk,
                     }}
                   >
-                    {agentStatus.planTitle} — phase {agentStatus.phaseIndex + 1} ·{' '}
-                    {AGENT_LABELS[agentStatus.agentId]}
+                    {agentStatus.planTitle}
+                    {agentStatus.phaseIndex !== undefined
+                      ? ` — phase ${agentStatus.phaseIndex + 1}`
+                      : ''}{' '}
+                    · {AGENT_LABELS[agentStatus.agentId]}
                   </span>
                   {(() => {
                     const statusFill: Record<AgentTaskStatus, string> = {
