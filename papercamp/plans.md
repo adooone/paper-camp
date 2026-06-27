@@ -1272,6 +1272,18 @@ FEAT-N/FIX-N naming scheme.
       from phase 14 are all that's left on approval. The
       `type(scope): description` convention from phase 8 still applies, just
       typed by hand rather than generated.
+- [x] Fix CI failing on unpinned pnpm version
+      Live pipeline failed: `ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite` from
+      pnpm itself, then `this version of pnpm requires at least Node.js
+      v22.13`. Root cause: every workflow's `pnpm/action-setup@v4` used
+      `version: latest`, which resolved to pnpm 11.9 (needs Node ≥22.13's
+      `node:sqlite`), while every workflow's `actions/setup-node@v4` pins
+      `node-version: 20`. Locally `pnpm --version` is 10.12.1, fine on Node
+      20 — only CI had drifted. Fixed by adding `"packageManager":
+      "pnpm@10.12.1"` to `package.json` as the single source of truth, and
+      removing the `version: latest` override from all 4 `pnpm/action-setup`
+      steps (`ci.yml` ×3, `publish.yml` ×1) so the action reads the pinned
+      version from `packageManager` instead.
 
 ### Log
 - 2026-06-27: I want to have 3 steps in PR visible for each check - Quality, Tests and Consistency
@@ -1281,3 +1293,4 @@ FEAT-N/FIX-N naming scheme.
 - 2026-06-27: Clarified the trigger is the first phase actually starting, not the plan merely reaching `in-progress` status with nothing started. Also want plan-switching blocked once a branch exists for an unfinished plan — show the user a message to finish the current feature first. Appended a phase for the block; not implementing yet.
 - 2026-06-27: Also want the branch name shown in the commit section at the top of the Stack panel's card, so it's obvious which branch a commit is about to land on. Appended a phase for it.
 - 2026-06-27: After seeing approval auto-commit in action, decided against it — only auto-create the branch (if missing); commit manually instead. Also asked whether the `feat/feat-22-...` double-prefix branch name is OK; confirmed it's the deliberate tradeoff from the original branch-naming decision (redundant but keeps the plan ID visually obvious in a plain `git branch` listing).
+- 2026-06-27: Reported a real CI failure: `ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite` then "this version of pnpm requires at least Node.js v22.13". Root cause was `pnpm/action-setup@v4`'s unpinned `version: latest` resolving to pnpm 11 against workflows pinned to Node 20. Pinned pnpm via `package.json`'s `packageManager` field instead.
