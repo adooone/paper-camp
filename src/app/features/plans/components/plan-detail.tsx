@@ -193,6 +193,10 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
         ))}
       </div>
 
+      <div style={{ marginBottom: space[1] }}>
+        <ClarifyButton plan={plan} disabled={agentBusy} />
+      </div>
+
       {plan.body && (
         <p
           className="text-base"
@@ -286,7 +290,6 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
               {auditRunning && (
                 <span className="spinner" style={{ opacity: 0.6 }} title="Audit running…" />
               )}
-              <ClarifyButton plan={plan} disabled={agentBusy} />
               <AuditPhasesButton plan={plan} disabled={agentBusy} />
               <AddReviewPhasesButton onAdd={handleAddReviewPhases} disabled={updating} />
             </div>

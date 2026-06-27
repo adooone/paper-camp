@@ -26,6 +26,15 @@ export const ClarifyButton = ({ plan, disabled }: ClarifyButtonProps) => {
       size="small"
       onClick={handleClick}
       disabled={disabled}
+      icon={
+        status === 'copied' ? (
+          <CheckIcon size={14} />
+        ) : status === 'failed' ? (
+          <CloseIcon size={14} />
+        ) : (
+          <CopyIcon size={14} />
+        )
+      }
       title={
         status === 'copied'
           ? 'Copied'
@@ -36,19 +45,9 @@ export const ClarifyButton = ({ plan, disabled }: ClarifyButtonProps) => {
       style={{
         color:
           status === 'copied' ? '#6A9B72' : status === 'failed' ? '#A06060' : color.textSecondary,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
       }}
     >
-      {status === 'copied' ? (
-        <CheckIcon size={14} />
-      ) : status === 'failed' ? (
-        <CloseIcon size={14} />
-      ) : (
-        <CopyIcon size={14} />
-      )}
-      <span>Clarify before starting</span>
+      Copy Clarifications Prompt
     </Button>
   );
 };

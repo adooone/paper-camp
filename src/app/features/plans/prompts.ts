@@ -5,6 +5,16 @@ export function buildConvergenceAuditPrompt(plan: PlanEntry): string {
     .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
     .join('\n');
 
+  const logList =
+    plan.log && plan.log.length > 0
+      ? plan.log.map((entry) => `- ${entry.date}: ${entry.text}`).join('\n')
+      : '(none)';
+
+  const clarificationsList =
+    plan.clarifications && plan.clarifications.length > 0
+      ? plan.clarifications.map((entry) => `- ${entry.date}: ${entry.text}`).join('\n')
+      : '(none)';
+
   return `You're auditing the plan "${plan.title}" (${plan.id ?? 'no id'}) in papercamp/plans.md.
 
 Plan body: ${plan.body}
@@ -12,7 +22,13 @@ Plan body: ${plan.body}
 Current phases:
 ${phaseList}
 
-Read this plan's phases and body, then inspect the current repo state. Append any phase that's clearly required but missing as a normal \`- [ ]\` line at the end of the \`### Phases\` list — optionally with the existing indented description format. Explicitly never touch existing lines: never reorder, check, uncheck, or rewrite anything already there, no matter how stale or redundant it looks.
+Log entries (issues, bugs, and review notes documented so far):
+${logList}
+
+Clarifications (answered questions about scope and design):
+${clarificationsList}
+
+Read this plan's phases, body, Log entries, and Clarifications, then inspect the current repo state. The Log entries often document bugs, UX issues, or missing functionality that should be turned into new phases. Append any phase that's clearly required but missing as a normal \`- [ ]\` line at the end of the \`### Phases\` list — optionally with the existing indented description format. Explicitly never touch existing lines: never reorder, check, uncheck, or rewrite anything already there, no matter how stale or redundant it looks.
 
 If you append anything, finish with exactly one new \`### Log\` line (date: summary) describing what was found and appended.
 
@@ -38,26 +54,15 @@ Plan body: ${plan.body}
 Current phases:
 ${plan.phases.length > 0 ? plan.phases.map((p, i) => `${i + 1}. [${p.done ? 'x' : ' '}] ${p.text}`).join('\n') : '(none yet)'}
 
-Scan this plan against a fixed taxonomy of potential gaps:
-- **Functional scope** — is what's being built clearly bounded, or could it balloon?
-- **Data model** — are the key entities, their relationships, and persistence boundaries defined?
-- **UX flow** — is the user's interaction path from start to completion clear?
-- **Non-functional attributes** — are performance, security, accessibility, or platform constraints stated?
-- **Edge cases** — what happens when inputs are empty, connections drop, or the happy path breaks?
-- **Terminology** — are domain-specific terms defined consistently?
-- **Completion signals** — is it clear what "done" means for each phase and for the plan as a whole?
+Scan this plan against: functional scope, data model, UX flow, non-functional attributes, edge cases, terminology, completion signals.
 
-Surface at most 5 of the highest-impact gaps. Ask about them **one at a time** — wait for each answer before asking the next. Lead each question with a stated recommendation:
-
-**Recommended:** Option A — <why>
-
-The person answering can say "yes" (accepting the recommendation), suggest a different answer, or ask for clarification. Write accepted answers back under \`### Clarifications\` in plans.md as a new line in this format:
+Surface at most 5 highest-impact gaps, one question at a time, each with a **Recommended:** answer. Write accepted answers to \`### Clarifications\` as:
 
 \`\`\`
 - YYYY-MM-DD: Q: <question> → A: <answer>
 \`\`\`
 
-Use today's date (YYYY-MM-DD) for each answer. Only write lines that were actually answered — never write questions without answers. Keep existing \`### Clarifications\` entries intact; only append new ones.`;
+Only append answered lines. Keep existing clarifications intact. Use today's date.`;
 }
 
 export function buildPlanDraftPrompt(idea: IdeaEntry, otherPlans: PlanEntry[]): string {
