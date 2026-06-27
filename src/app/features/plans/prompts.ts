@@ -19,6 +19,17 @@ If you append anything, finish with exactly one new \`### Log\` line (date: summ
 If nothing is missing, write nothing at all — not even an empty heading or a Log line. The audit must be safe to re-run anytime without producing log spam.`;
 }
 
+export function buildIdeaExtendPrompt(idea: IdeaEntry): string {
+  return `You're extending an idea in papercamp/ideas.md: ${idea.id ?? 'no id'} ("${idea.title}").
+
+Idea body, in full:
+${idea.body}
+
+Your job: explore the current codebase and rewrite this idea's body in place in ideas.md with more specific detail — concrete approaches, file references, and any relevant architectural context you find in the code. Keep the idea's heading (${idea.id ?? 'IDEA-N'}: ${idea.title}) unchanged; only update the prose body below it.
+
+Write the full updated body — everything below the heading. Make the description more specific and actionable while keeping the same general intent. Do not change the \`### IDEA-N:\` heading line.`;
+}
+
 export function buildPlanDraftPrompt(idea: IdeaEntry, otherPlans: PlanEntry[]): string {
   const openPlans = otherPlans.filter((p) => p.status !== 'done');
   const plansContext = openPlans.length

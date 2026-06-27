@@ -4,12 +4,14 @@ import {
   type AgentTaskStatus,
   type CheckStatus,
   type ConsistencyIssue,
+  type TaskKind,
 } from '@/types/index';
 import {
   Accordion,
   Alert,
   Button,
   Card,
+  CloseIcon,
   IconButton,
   Input,
   Stamp,
@@ -64,9 +66,6 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
-  const resumeAgentTask = useAppStore((s) => s.resumeAgent);
-  const [steeringMessage, setSteeringMessage] = useState('');
-  const [steering, setSteering] = useState(false);
   const [consistencyExpanded, setConsistencyExpanded] = useState(false);
   const [commitExpanded, setCommitExpanded] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
@@ -162,17 +161,6 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
       setCommitting(false);
     }
   }, [commitTitle, commitMessage, selectedFiles, addRefs, activePlan, suggestedTitle]);
-
-  const handleSendSteering = useCallback(async () => {
-    if (!steeringMessage.trim()) return;
-    setSteering(true);
-    try {
-      await resumeAgentTask(steeringMessage.trim());
-      setSteeringMessage('');
-    } finally {
-      setSteering(false);
-    }
-  }, [steeringMessage, resumeAgentTask]);
 
   const handleFindingClick = useCallback(
     (issue: ConsistencyIssue) => {
@@ -299,126 +287,125 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             }}
           >
             <div style={sectionLabelStyle}>Agent</div>
-            {agentStatus ? (
-              <Card variant="chalkboard" size="small" className="stack-card-fill">
+            <Card variant="chalkboard" size="small" className="stack-card-fill">
+              {agentStatus ? (
                 <div
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: space[2],
-                    marginBottom: space[2],
+                    flexDirection: 'column',
+                    height: '100%',
+                    minHeight: 0,
                   }}
                 >
-                  <span
-                    style={{
-                      fontFamily: fontFamily.serif,
-                      fontWeight: 600,
-                      fontSize: fontSize.sm,
-                      color: deskChalk,
-                    }}
-                  >
-                    {agentStatus.planTitle}
-                    {agentStatus.phaseIndex !== undefined
-                      ? ` — phase ${agentStatus.phaseIndex + 1}`
-                      : ''}{' '}
-                    · {AGENT_LABELS[agentStatus.agentId]}
-                  </span>
-                  {(() => {
-                    const statusFill: Record<AgentTaskStatus, string> = {
-                      starting: '#5a4a2d',
-                      running: '#5a4a2d',
-                      stopping: '#5a4a2d',
-                      done: '#2d5a3b',
-                      error: '#5a2d2d',
-                    };
-                    const statusText: Record<AgentTaskStatus, string> = {
-                      starting: '#d6c4a0',
-                      running: '#d6c4a0',
-                      stopping: '#d6c4a0',
-                      done: '#b5d6b5',
-                      error: '#d6a0a0',
-                    };
-                    return (
-                      <Stamp
-                        variant="chalkboard"
-                        size="small"
-                        fillColor={statusFill[agentStatus.status]}
-                        textColor={statusText[agentStatus.status]}
-                      >
-                        {agentStatus.status}
-                      </Stamp>
-                    );
-                  })()}
-                </div>
-                {agentStatus.lines.length > 0 && (
                   <div
                     style={{
                       display: 'flex',
-                      flexDirection: 'column',
-                      gap: space[1],
-                      fontFamily: fontFamily.mono,
-                      fontSize: fontSize['2xs'],
-                      color: deskTextMuted,
-                      marginBottom: space[3],
-                      maxHeight: 120,
-                      overflowY: 'auto',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: space[2],
+                      marginBottom: space[2],
+                      flexShrink: 0,
                     }}
                   >
-                    {agentStatus.lines.slice(-5).map((line, i) => (
-                      <span key={`${i}-${line}`} style={{ whiteSpace: 'pre-wrap' }}>
-                        {line}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {(agentStatus.status === 'running' ||
-                  agentStatus.status === 'starting' ||
-                  agentStatus.status === 'stopping') && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
-                    {agentStatus.status === 'running' && (
-                      <div style={{ display: 'flex', gap: space[2] }}>
-                        <Input
-                          variant="chalkboard"
-                          size="small"
-                          placeholder="Steer the agent…"
-                          value={steeringMessage}
-                          onChange={(e) => setSteeringMessage(e.currentTarget.value)}
-                        />
-                        <Button
-                          variant="chalkboard"
-                          size="small"
-                          onClick={handleSendSteering}
-                          disabled={steering || !steeringMessage.trim()}
-                        >
-                          Send
-                        </Button>
-                      </div>
-                    )}
-                    <Button
-                      variant="chalkboard"
-                      size="small"
-                      onClick={stopAgentTask}
-                      disabled={agentStatus.status === 'stopping'}
+                    <span
+                      style={{
+                        fontFamily: fontFamily.serif,
+                        fontWeight: 600,
+                        fontSize: fontSize.sm,
+                        color: deskChalk,
+                      }}
                     >
-                      Stop
-                    </Button>
+                      {agentStatus.planTitle}
+                      {agentStatus.taskKind === 'phase' && agentStatus.phaseIndex !== undefined
+                        ? ` — phase ${agentStatus.phaseIndex + 1}`
+                        : agentStatus.taskKind === 'audit'
+                          ? ' — audit'
+                          : agentStatus.taskKind === 'draft'
+                            ? ' — drafting'
+                            : agentStatus.taskKind === 'extend'
+                              ? ' — extending'
+                              : ''}{' '}
+                      · {AGENT_LABELS[agentStatus.agentId]}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+                      {(() => {
+                        const statusFill: Record<AgentTaskStatus, string> = {
+                          starting: '#5a4a2d',
+                          running: '#5a4a2d',
+                          stopping: '#5a4a2d',
+                          done: '#2d5a3b',
+                          error: '#5a2d2d',
+                        };
+                        const statusText: Record<AgentTaskStatus, string> = {
+                          starting: '#d6c4a0',
+                          running: '#d6c4a0',
+                          stopping: '#d6c4a0',
+                          done: '#b5d6b5',
+                          error: '#d6a0a0',
+                        };
+                        return (
+                          <Stamp
+                            variant="chalkboard"
+                            size="small"
+                            fillColor={statusFill[agentStatus.status]}
+                            textColor={statusText[agentStatus.status]}
+                          >
+                            {agentStatus.status}
+                          </Stamp>
+                        );
+                      })()}
+                      {(agentStatus.status === 'running' ||
+                        agentStatus.status === 'starting' ||
+                        agentStatus.status === 'stopping') && (
+                        <IconButton
+                          icon={<CloseIcon />}
+                          variant="ghost"
+                          size="small"
+                          label="Stop agent"
+                          onClick={stopAgentTask}
+                          disabled={agentStatus.status === 'stopping'}
+                        />
+                      )}
+                    </div>
                   </div>
-                )}
-              </Card>
-            ) : (
-              <div
-                style={{
-                  flex: 1,
-                  minHeight: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>No agent running.</p>
-              </div>
-            )}
+                  {agentStatus.lines.length > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: space[1],
+                        fontFamily: fontFamily.mono,
+                        fontSize: fontSize['2xs'],
+                        color: deskTextMuted,
+                        flex: 1,
+                        minHeight: 0,
+                        overflowY: 'auto',
+                      }}
+                    >
+                      {agentStatus.lines.map((line, i) => (
+                        <span key={`${i}-${line}`} style={{ whiteSpace: 'pre-wrap' }}>
+                          {line}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    flex: 1,
+                    minHeight: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>
+                    No agent running.
+                  </p>
+                </div>
+              )}
+            </Card>
           </div>
 
           <div

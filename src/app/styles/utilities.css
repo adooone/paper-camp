@@ -87,6 +87,22 @@
   background-color: rgba(155, 122, 181, 0.08);
 }
 
+@keyframes paper-camp-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.24;
+  }
+}
+
+.paper-camp-skeleton {
+  background: currentColor;
+  border-radius: 4px;
+  animation: paper-camp-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
 .spinner {
   display: inline-block;
   width: 14px;

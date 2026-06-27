@@ -1,26 +1,11 @@
 export interface ParsedAgentLine {
   text: string;
-  sessionId?: string;
   done?: boolean;
   error?: boolean;
 }
 
-export const capabilities = { supportsResume: true };
-
-export function buildArgs(prompt: string, opts: { resumeSessionId?: string } = {}): string[] {
-  const args = [
-    '-p',
-    prompt,
-    '--output-format',
-    'stream-json',
-    '--verbose',
-    '--permission-mode',
-    'auto',
-  ];
-  if (opts.resumeSessionId) {
-    args.push('-r', opts.resumeSessionId);
-  }
-  return args;
+export function buildArgs(prompt: string): string[] {
+  return ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--permission-mode', 'auto'];
 }
 
 /**
@@ -37,15 +22,13 @@ export function parseLine(line: string): ParsedAgentLine | null {
     return null;
   }
 
-  const sessionId = typeof json.session_id === 'string' ? json.session_id : undefined;
-
   switch (json.type) {
     case 'system': {
       if (json.subtype === 'init') {
-        return { text: 'Agent session started', sessionId };
+        return { text: 'Agent session started' };
       }
       if (json.subtype === 'post_turn_summary' && typeof json.status_detail === 'string') {
-        return { text: json.status_detail, sessionId };
+        return { text: json.status_detail };
       }
       return null;
     }
@@ -57,10 +40,10 @@ export function parseLine(line: string): ParsedAgentLine | null {
       for (const block of blocks) {
         const b = block as { type?: string; name?: string; text?: string };
         if (b.type === 'tool_use') {
-          return { text: `Running ${b.name ?? 'a tool'}…`, sessionId };
+          return { text: `Running ${b.name ?? 'a tool'}…` };
         }
         if (b.type === 'text' && typeof b.text === 'string' && b.text.trim()) {
-          return { text: b.text.trim(), sessionId };
+          return { text: b.text.trim() };
         }
       }
       return null;
@@ -71,17 +54,17 @@ export function parseLine(line: string): ParsedAgentLine | null {
       const block = Array.isArray(content) ? (content[0] as Record<string, unknown>) : undefined;
       if (block?.is_error) {
         const text = typeof block.content === 'string' ? block.content : 'Tool call failed';
-        return { text: `Error: ${text}`, sessionId, error: true };
+        return { text: `Error: ${text}`, error: true };
       }
-      return { text: 'Tool finished', sessionId };
+      return { text: 'Tool finished' };
     }
     case 'result': {
       const error = Boolean(json.is_error);
       const result = typeof json.result === 'string' ? json.result.trim() : '';
       const text = result || (error ? 'Agent run failed' : 'Agent run finished');
-      return { text, sessionId, done: true, error };
+      return { text, done: true, error };
     }
     default:
-      return { text: 'Agent is working…', sessionId };
+      return { text: 'Agent is working…' };
   }
 }

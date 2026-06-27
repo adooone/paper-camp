@@ -41,14 +41,14 @@ export const launchPlanDraft = async (ideaId: string, prompt: string): Promise<v
   }
 };
 
-export const resumeAgent = async (message: string): Promise<void> => {
-  const response = await fetch('/api/agent/resume', {
+export const launchIdeaExtend = async (ideaId: string, prompt: string): Promise<void> => {
+  const response = await fetch('/api/agent/launch-extend', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ ideaId, prompt }),
   });
   if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Resume failed' }));
+    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
     throw new Error(err.error);
   }
 };

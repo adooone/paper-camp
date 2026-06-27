@@ -327,6 +327,43 @@ export function createApiMiddleware(root: string): ApiMiddleware {
       return;
     }
 
+    // POST /api/ideas — append a new idea entry to ideas.md
+    if (req.method === 'POST' && pathname === '/api/ideas') {
+      try {
+        const body = await readBody(req);
+        const { title, content } = JSON.parse(body) as { title?: string; content?: string };
+        if (!title?.trim()) {
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'title is required' }));
+          return;
+        }
+        const filePath = campFile(root, 'ideas.md');
+        const existing = await readMaybe(filePath);
+        const parsed = parseIdeas(existing);
+        const maxNum = parsed.reduce((max, idea) => {
+          if (idea.id) {
+            const num = Number.parseInt(idea.id.replace('IDEA-', ''), 10);
+            return Number.isNaN(num) ? max : Math.max(max, num);
+          }
+          return max;
+        }, 0);
+        const newId = `IDEA-${maxNum + 1}`;
+        const section = `### ${newId}: ${title.trim()}\n\n${content?.trim() ?? ''}`;
+        const trimmed = existing.trimEnd();
+        const separator = trimmed.length === 0 ? '' : '\n\n---\n\n';
+        await writeFile(filePath, `${trimmed}${separator}${section}\n`);
+        res.statusCode = 201;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ok: true, id: newId }));
+      } catch (error) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: (error as Error).message }));
+      }
+      return;
+    }
+
     // GET /api/icon — serve project icon
     if (req.method === 'GET' && pathname === '/api/icon') {
       const assetsDir = join(root, '.paper-camp', 'assets');
@@ -600,18 +637,26 @@ export function createApiMiddleware(root: string): ApiMiddleware {
       return;
     }
 
-    // POST /api/agent/resume — send a steering message to the running agent task
-    if (req.method === 'POST' && pathname === '/api/agent/resume') {
+    // POST /api/agent/launch-extend — start a headless agent to extend an idea's body
+    if (req.method === 'POST' && pathname === '/api/agent/launch-extend') {
       try {
         const body = await readBody(req);
-        const { message } = JSON.parse(body) as { message?: string };
-        if (!message?.trim()) {
+        const { ideaId, prompt } = JSON.parse(body) as { ideaId?: string; prompt?: string };
+        if (!ideaId || !prompt) {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'message is required' }));
+          res.end(JSON.stringify({ error: 'ideaId and prompt are required' }));
           return;
         }
-        const result = agent.resume(message.trim());
+        const ideas = parseIdeas(await readMaybe(campFile(root, 'ideas.md')));
+        const idea = ideas.find((i) => i.id === ideaId);
+        if (!idea) {
+          res.statusCode = 404;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'idea not found' }));
+          return;
+        }
+        const result = agent.startForIdeaExtend(idea, prompt);
         if (!result.ok) {
           res.statusCode = 409;
           res.setHeader('Content-Type', 'application/json');

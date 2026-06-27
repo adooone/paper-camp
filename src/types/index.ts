@@ -138,13 +138,15 @@ export interface GitStatusEntry {
 
 export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error';
 
+export type TaskKind = 'phase' | 'audit' | 'draft' | 'extend';
+
 export interface AgentTaskState {
   status: AgentTaskStatus;
+  taskKind: TaskKind;
   planTitle: string;
   planId?: string;
   phaseIndex?: number;
   ideaId?: string;
   agentId: AgentId;
-  sessionId?: string;
   lines: string[];
 }

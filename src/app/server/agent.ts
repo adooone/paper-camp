@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { parsePlans } from '../../core/parser';
+import { parseIdeas, parsePlans } from '../../core/parser';
 import type {
   AgentId,
   AgentTaskState,
@@ -18,7 +18,10 @@ import { type AgentAdapter, resolveAgent } from './agents';
 
 const MAX_LINES = 50;
 
+type TaskKind = 'phase' | 'audit' | 'draft' | 'extend';
+
 interface AgentTask {
+  taskKind: TaskKind;
   planTitle: string;
   planId?: string;
   // Absent for a plan-scoped task (e.g. a convergence audit spanning every phase),
@@ -29,10 +32,11 @@ interface AgentTask {
   // Only set for an idea-drafting task, which has neither planId nor phaseIndex since
   // the plan doesn't exist yet — success is checked by idea id instead.
   ideaId?: string;
+  // For idea-extend tasks: snapshot the idea's body before launch so we can detect changes.
+  ideaBodyBaseline?: string;
   status: AgentTaskStatus;
   agentId: AgentId;
   adapter: AgentAdapter;
-  sessionId?: string;
   proc: ChildProcess;
   lines: string[];
 }
@@ -91,6 +95,14 @@ export function createAgentManager(root: string) {
 
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
     try {
+      if (task.taskKind === 'extend') {
+        const raw = await readFile(join(root, 'papercamp', 'ideas.md'), 'utf-8');
+        const entries = parseIdeas(raw);
+        const idea = entries.find((e) => e.id === task.ideaId);
+        if (!idea) return null;
+        if (task.ideaBodyBaseline === undefined) return null;
+        return idea.body !== task.ideaBodyBaseline;
+      }
       const raw = await readFile(join(root, 'papercamp', 'plans.md'), 'utf-8');
       const { entries } = parsePlans(raw);
       if (task.ideaId !== undefined) {
@@ -119,11 +131,13 @@ export function createAgentManager(root: string) {
     didTaskProgress(task).then((progressed) => {
       if (current === task && progressed === false) {
         const warning =
-          task.ideaId !== undefined
-            ? `Warning: agent finished but no plan linking idea: ${task.ideaId} appeared in plans.md — verify manually`
-            : task.phaseIndex !== undefined
-              ? 'Warning: agent finished but did not check off this phase in plans.md — verify manually'
-              : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
+          task.taskKind === 'extend'
+            ? `Warning: agent finished but the idea body for ${task.ideaId} did not change — verify manually`
+            : task.ideaId !== undefined
+              ? `Warning: agent finished but no plan linking idea: ${task.ideaId} appeared in plans.md — verify manually`
+              : task.phaseIndex !== undefined
+                ? 'Warning: agent finished but did not check off this phase in plans.md — verify manually'
+                : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
         pushLine(task, warning);
       }
     });
@@ -136,7 +150,6 @@ export function createAgentManager(root: string) {
       if (current !== task || !line.trim()) return;
       const parsed = task.adapter.parseLine(line);
       if (!parsed) return;
-      if (parsed.sessionId) task.sessionId = parsed.sessionId;
       pushLine(task, parsed.text);
       if (parsed.done) {
         finishTask(task, Boolean(parsed.error));
@@ -176,7 +189,10 @@ export function createAgentManager(root: string) {
   function launch(
     identity: { planTitle: string; planId?: string; agentOverride?: AgentId },
     prompt: string,
-    scope: Pick<AgentTask, 'phaseIndex' | 'planBaseline' | 'ideaId'>,
+    scope: Pick<
+      AgentTask,
+      'taskKind' | 'phaseIndex' | 'planBaseline' | 'ideaId' | 'ideaBodyBaseline'
+    >,
   ): Result {
     if (isBusy()) {
       return { ok: false, error: 'An agent task is already running' };
@@ -211,6 +227,7 @@ export function createAgentManager(root: string) {
     }
     const prompt = buildAgentPrompt(plan, phase, phaseIndex);
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
+      taskKind: 'phase',
       phaseIndex,
     });
   }
@@ -219,6 +236,7 @@ export function createAgentManager(root: string) {
   // agent appended anything to Phases or Log rather than whether one checkbox flipped.
   function startForPlan(plan: PlanEntry, prompt: string): Result {
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
+      taskKind: 'audit',
       planBaseline: { phases: plan.phases.length, log: plan.log?.length ?? 0 },
     });
   }
@@ -230,45 +248,24 @@ export function createAgentManager(root: string) {
     if (!idea.id) {
       return { ok: false, error: 'Idea has no id to link a drafted plan back to' };
     }
-    return launch({ planTitle: `Draft plan for ${idea.id}` }, prompt, { ideaId: idea.id });
+    return launch({ planTitle: `Draft plan for ${idea.id}` }, prompt, {
+      taskKind: 'draft',
+      ideaId: idea.id,
+    });
   }
 
-  function resume(message: string): Result {
-    if (!current || current.status !== 'running') {
-      return { ok: false, error: 'No running agent task to steer' };
+  // Idea-extend launch mode: given an idea, explores the codebase and rewrites its
+  // body in place in ideas.md. Success is judged by whether that idea's body text
+  // actually changed.
+  function startForIdeaExtend(idea: IdeaEntry, prompt: string): Result {
+    if (!idea.id) {
+      return { ok: false, error: 'Idea has no id to extend' };
     }
-    if (!current.adapter.capabilities.supportsResume) {
-      return { ok: false, error: 'This agent does not support mid-task steering' };
-    }
-    if (!current.sessionId) {
-      return { ok: false, error: 'Agent session not started yet — try again shortly' };
-    }
-
-    const prior = current;
-    prior.status = 'stopping';
-    if (!prior.proc.killed) prior.proc.kill();
-
-    const proc = spawnAgent(
-      prior.adapter,
-      prior.adapter.buildArgs(message, { resumeSessionId: prior.sessionId }),
-    );
-    const task: AgentTask = {
-      planTitle: prior.planTitle,
-      planId: prior.planId,
-      phaseIndex: prior.phaseIndex,
-      planBaseline: prior.planBaseline,
-      ideaId: prior.ideaId,
-      status: 'starting',
-      agentId: prior.agentId,
-      adapter: prior.adapter,
-      sessionId: prior.sessionId,
-      proc,
-      lines: prior.lines,
-    };
-    current = task;
-    attachReader(task);
-    setStatus(task, 'running');
-    return { ok: true };
+    return launch({ planTitle: `Extend ${idea.id}` }, prompt, {
+      taskKind: 'extend',
+      ideaId: idea.id,
+      ideaBodyBaseline: idea.body,
+    });
   }
 
   function stop(): Result {
@@ -292,12 +289,12 @@ export function createAgentManager(root: string) {
     if (!current) return null;
     return {
       status: current.status,
+      taskKind: current.taskKind,
       planTitle: current.planTitle,
       planId: current.planId,
       phaseIndex: current.phaseIndex,
       ideaId: current.ideaId,
       agentId: current.agentId,
-      sessionId: current.sessionId,
       lines: [...current.lines],
     };
   }
@@ -306,7 +303,7 @@ export function createAgentManager(root: string) {
     start,
     startForPlan,
     startForIdea,
-    resume,
+    startForIdeaExtend,
     stop,
     getStatus,
     subscribe(res: ServerResponse) {
@@ -321,4 +318,13 @@ export function createAgentManager(root: string) {
   };
 }
 
-export type AgentManager = ReturnType<typeof createAgentManager>;
+export interface AgentManager {
+  start: (plan: PlanEntry, phaseIndex: number) => Result;
+  startForPlan: (plan: PlanEntry, prompt: string) => Result;
+  startForIdea: (idea: IdeaEntry, prompt: string) => Result;
+  startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
+  stop: () => Result;
+  getStatus: () => AgentTaskState | null;
+  subscribe: (res: ServerResponse) => void;
+  killCurrent: () => void;
+}

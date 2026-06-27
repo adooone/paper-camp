@@ -4,9 +4,8 @@ import type { ParsedAgentLine } from './claude-code';
 
 export interface AgentAdapter {
   command: string;
-  buildArgs: (prompt: string, opts?: { resumeSessionId?: string }) => string[];
+  buildArgs: (prompt: string) => string[];
   parseLine: (line: string) => ParsedAgentLine | null;
-  capabilities: { supportsResume: boolean };
 }
 
 export const DEFAULT_AGENT_ID: AgentId = 'claude-code';
@@ -16,7 +15,6 @@ export const AGENTS: Record<AgentId, AgentAdapter> = {
     command: 'claude',
     buildArgs: claudeCode.buildArgs,
     parseLine: claudeCode.parseLine,
-    capabilities: claudeCode.capabilities,
   },
 };
 

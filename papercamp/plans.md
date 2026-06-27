@@ -689,7 +689,7 @@ ideas.md's "Review-found phases" for full rationale.
 
 ## Agent-drafted plans
 
-**Status:** in-progress
+**Status:** done
 **Kind:** feat
 **Id:** FEAT-17
 **Idea:** IDEA-15
@@ -726,6 +726,12 @@ decision. The write-directly-vs-propose-first question is resolved — see decis
 - [x] Add visible file-order ranking to the Backlog section
       A small ordinal marker per `PlanCard` reflecting file position, read-only — without
       this, the agent's priority/ordering decisions are invisible in the UI
+- [x] Show a skeleton plan card while drafting is in progress
+      While `agentStatus.ideaId` is set and the task is `starting`/`running`, render a
+      placeholder `PlanCard` in the Backlog list (wherever the new plan will land) showing
+      only the real `idea.id` and a "Creating a plan…" title — every other field (status
+      stamp, tags, rank, phase count) renders as a loading-skeleton block instead of real
+      content. Disappears once the real plan entry appears (or the task finishes/errors).
 
 ### Log
 - 2026-06-27: No visible feedback when draft button is clicked. No agent logs in stack and nothing working. After clicking draft button I dont see plan was created. Or where should I find it?
@@ -871,3 +877,171 @@ card's plan/phase info plus a redundant "Live" SSE log feed.
       font-size — the slot is now always exactly two lines tall, so the stamps row
       never recenters. Verified live in Chrome: triggered Tests running → pass → back
       to Quality-fail, row stayed pixel-identical throughout
+
+## Polish Ideas and Stack UX
+
+**Status:** done
+**Kind:** feat
+**Id:** FEAT-18
+**Idea:** IDEA-16
+**Created:** 2026-06-27
+**Updated:** 2026-06-27
+**Tags:** ideas, ux, app, agent
+
+A grab-bag of UX fixes for the Ideas/Stack flow, flagged from actually using the app
+rather than from a single feature gap: the sidebar's Ideas list never drops a
+done idea, there's no UI path to create a new `ideas.md` entry at all (only
+`plans.md` Backlog items via "Add to backlog"), the Ideas board's Done column grows
+unbounded, the Stack panel's Agent section only understands FEAT-10's phase-execution
+task shape, and several user-triggered actions give no visible feedback — FEAT-17's
+own log entry ("No visible feedback when draft button is clicked... nothing
+working") is a real instance of that last problem, not a hypothetical one.
+
+This also adds a third agent-task shape — "Extend with AI" on an open idea, rewriting
+its body in place — alongside FEAT-10's phase execution and FEAT-17's plan-drafting,
+which is what makes the Stack panel's phase-only Agent section and IDEA-4's
+one-task-at-a-time constraint worth revisiting now rather than later.
+
+### Phases
+- [x] Hide done-linked ideas from the sidebar's Ideas section
+      `plans-sidebar.tsx`'s Ideas section lists every `ideaEntries` item regardless of
+      its derived `status`; filter to `status !== 'done'` so a fully-planned idea drops
+      out once its linked plan(s) are done. The Ideas board's own Planned/Done columns
+      are unaffected — seeing a done idea there next to its check icon is the point.
+- [x] Add a minimal idea-creation form and `POST /api/ideas`
+      There's currently no UI path to create an `ideas.md` entry — `add-idea-modal.tsx`
+      only creates `plans.md` Backlog entries. Add an endpoint that appends a new
+      `### IDEA-N: <title>` section from `{ title, body }`, and a plain two-field modal
+      (no kind/tags/etc, matching the minimal shape an idea entry actually needs)
+      wired up from the Ideas section.
+- [x] Add an "Extend with AI" agent task for rewriting one idea's body
+      A third `AgentTask` shape alongside FEAT-10's phase-scoped execution and FEAT-17's
+      plan-drafting: given one idea's id and current body, explores the codebase and
+      rewrites that idea's body in place in `ideas.md` with more specific detail
+      (concrete approaches, file references). Needs its own prompt builder and a
+      different success check ("did this `IDEA-N`'s body text change") than either
+      existing task shape, plus a button on the open-idea view.
+- [x] Build a shared in-flight/result feedback pattern and apply it
+      `DraftPlanButton`'s local `launching` state currently has no visible effect on
+      screen — confirmed by FEAT-17's own log. Add one reusable loading/success/failure
+      affordance and wire it into Draft plan, Extend with AI, and any other
+      user-triggered action found during an audit to be missing it; treat this as the
+      first fix in what's flagged as a recurring gap, not a one-off patch.
+- [x] Broaden the Stack panel's Agent section beyond phase execution
+      The Agent section's rendering (`stack-panel.tsx`) is built around
+      `agentStatus.phaseIndex`, so plan-drafting and idea-extension tasks have nowhere
+      sensible to show. Generalize it to display any task kind. IDEA-4's "one active
+      task at a time" constraint stays as-is — see decisions.md; this phase is display
+      only, not a concurrency change.
+- [x] Cap the Ideas board's Done column at 4 rows with a done-ideas list view
+      `ideas-board.tsx`'s `done` column renders every done idea unfiltered. Slice to the
+      4 most recently done, and render a 5th row as a "[N more ideas]" link (not a card)
+      that navigates to a new, separate done-ideas list view showing the full set.
+
+## Add opencode agent support
+
+**Status:** in-progress
+**Kind:** feat
+**Id:** FEAT-20
+**Idea:** IDEA-17
+**Created:** 2026-06-27
+**Updated:** 2026-06-27
+**Tags:** app, agent, settings
+
+A second real `AgentAdapter` (opencode) alongside Claude Code, plus replacing
+`.paper-camp/config.json`'s single project-wide `defaultAgent` with a default per
+agent-task kind — phase execution ([[IDEA-4]]), plan-drafting ([[IDEA-15]]), and idea
+extension (the FEAT-18 phase that adds it) — so opencode can be the default for running
+plan phases specifically without forcing it onto every kind of agent task. Builds on
+the live opencode CLI verification already done for FEAT-10 (see decisions.md's "Verify
+opencode's CLI before assuming it generalizes from Claude Code" — `opencode run
+--format json` streams NDJSON with `sessionID` on every event, and `-s/--session <id>`
+resume is confirmed working), so `supportsResume` for this adapter is a known `true`,
+not an open question. Also fixes two real visual bugs on the Settings page found while
+looking at where `defaultAgent` lives: four near-identical single-field cards stacking
+the General section past one screen, and the Default Agent `Select`'s dropdown getting
+hard-clipped by its `Card`'s `overflow: hidden` — the second one a hard blocker for the
+new per-kind selectors, since adding two more `Select`s on top of the current layout
+would just be three clipped dropdowns instead of one.
+
+### Phases
+- [ ] Add opencode AgentAdapter
+      New `src/app/server/agents/opencode.ts` implementing `buildArgs`/`parseLine`/
+      `capabilities` against opencode's already-confirmed `run --format json` NDJSON
+      output and `-s/--session <id>` resume; `capabilities.supportsResume` is `true`,
+      not assumed. Register it as a second entry in `AGENTS`
+      (`src/app/server/agents/index.ts`); add `'opencode'` to `AGENT_IDS`/`AGENT_LABELS`
+      (`src/types/index.ts`)
+- [ ] Fix Settings page Select dropdown clipping
+      `settings-page.tsx`'s `GeneralSection` renders its `Select` inside a `Card`, and
+      `Card`'s stylesheet sets `overflow: hidden`
+      (`~/dev/paper-ui/src/components/card/card.module.scss:6`), clipping the open
+      dropdown's option list flush at the card's bottom edge. Add portal rendering to
+      paper-ui's `Select` (escaping the Card's overflow context) or restructure so
+      `Select` controls never sit inside an `overflow: hidden` container — needed before
+      the per-task-kind selectors below add two more `Select`s with the same bug
+- [ ] Consolidate GeneralSection into one card
+      Replace the four separate full-width `Card`s (Project Name, Project Icon, Dev
+      Server Port, Default Agent), each with its own `marginTop: space[8]` and Save
+      button, with one `Card` (or a tight list layout with internal dividers) holding
+      all the rows — fixes the General section running well past one screen for a
+      handful of related project settings
+- [ ] Replace defaultAgent with per-task-kind defaultAgents
+      `PaperCampConfig.defaultAgent` (`src/types/index.ts`) becomes `defaultAgents: {
+      phase: AgentId, planDraft: AgentId, ideaExtend: AgentId }`; update `POST
+      /api/config` validation and every `resolveAgent` call site (`agent.ts`) to look up
+      by the task kind it's launching, migrating a config still on the old single field.
+      `defaultAgents.phase` defaults to `'opencode'`, `planDraft`/`ideaExtend` stay
+      `'claude-code'` — per the user's request that opencode become the default
+      specifically for running plan phases, not every task kind. A plan's own per-plan
+      `Agent:` override still wins over whichever default applies to that kind
+- [ ] Add per-task-kind Select controls to Settings
+      Three `Select`s (Phase execution / Plan drafting / Idea extension) in the
+      now-consolidated General card, built on the fixed dropdown layout from above, each
+      saving its own key through the updated `POST /api/config`
+- [ ] Verify opencode end-to-end
+      Launch a real phase-execution task with the opencode adapter selected and confirm
+      it streams status into the Stack panel and checks off the phase like the Claude
+      Code adapter does; confirm mid-task steering via `-s/--session <id>` actually
+      works through the existing resume flow, not just the standalone CLI probe; confirm
+      all three Settings selectors save/load correctly and their dropdowns are fully
+      clickable, not clipped
+
+## Plan clarification pass
+
+**Status:** idea
+**Kind:** feat
+**Id:** FEAT-19
+**Idea:** IDEA-10
+**Created:** 2026-06-27
+**Tags:** app, plans, core
+
+Borrows `spec-kit`'s `/clarify` algorithm — scan a fixed taxonomy (functional scope,
+data model, UX flow, non-functional attributes, edge cases, terminology, completion
+signals), surface at most 5 highest-impact gaps, ask one question at a time with a
+stated recommendation up front — onto a new optional `### Clarifications` sub-section
+per plan, parsed the same way `### Phases`/`### Log` already are. See ideas.md's "Plan
+clarification pass" for full rationale, including why this stays an available tool
+rather than a gate every plan must pass through.
+
+### Phases
+- [ ] Generalize extractLog into extractDatedList
+      `extractLog`'s body in `src/core/parser.ts` is a generic `{ date, text }` list
+      parser already; factor it into `extractDatedList(body, headingRe)` reusing
+      `LOG_ENTRY_RE` unchanged, with `extractLog` becoming a one-line call into it
+- [ ] Add Clarifications parsing and PlanEntry field
+      Add `CLARIFICATIONS_HEADING_RE = /^###\s+Clarifications\s*$/i`, call
+      `extractDatedList` with it the same way `extractPhases`/`extractLog` call their
+      own heading regexes, and add `clarifications?: LogEntry[]` to `PlanEntry` (parser
+      and serializer), reusing the existing `LogEntry` type — no new type needed
+- [ ] Add clarification-pass prompt constant
+      New constant in `src/app/features/plans/prompts.ts`: the taxonomy above, the
+      "ask one at a time, lead with `**Recommended:** Option A — <why>`" loop
+      instruction, and "write accepted answers back under `### Clarifications` as
+      `- YYYY-MM-DD: Q: <question> → A: <answer>`"
+- [ ] Add "Clarify before starting" button to plan-detail.tsx
+      Same copy-to-clipboard mechanism as `PhaseCopyButton`, placed near it, using the
+      new prompt constant
+- [ ] Render Clarifications list in plan-detail.tsx
+      Read-only dated bullets below the plan body, above Phases, styled identically to
+      how `### Log` entries already render

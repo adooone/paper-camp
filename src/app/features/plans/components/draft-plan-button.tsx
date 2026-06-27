@@ -1,8 +1,8 @@
+import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { Button } from '@dendelion/paper-ui';
-import { useState } from 'react';
 import { buildPlanDraftPrompt } from '../prompts';
 
 interface DraftPlanButtonProps {
@@ -15,16 +15,14 @@ export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
-  const [launching, setLaunching] = useState(false);
+  const { state, run } = useActionFeedback();
 
-  const handleClick = async () => {
-    if (!idea.id) return;
-    setLaunching(true);
-    try {
-      await launchPlanDraft(idea.id, buildPlanDraftPrompt(idea, otherPlans));
-    } finally {
-      setLaunching(false);
-    }
+  const handleClick = () => {
+    const id = idea.id;
+    if (!id) return;
+    run(async () => {
+      await launchPlanDraft(id, buildPlanDraftPrompt(idea, otherPlans));
+    });
   };
 
   return (
@@ -32,11 +30,11 @@ export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
       variant="ghost"
       size="small"
       onClick={handleClick}
-      disabled={agentBusy || launching || !idea.id}
+      disabled={agentBusy || state === 'loading' || !idea.id}
       title={idea.id ? undefined : 'Idea needs an ID before an agent can run'}
       style={{ color: color.textSecondary }}
     >
-      Draft plan
+      {state === 'loading' ? 'Drafting…' : state === 'success' ? 'Draft sent!' : 'Draft plan'}
     </Button>
   );
 };

@@ -1,4 +1,5 @@
 import { AddIdeaModal } from '@/app/components/add-idea-modal';
+import { createIdea } from '@/app/services/ideas-api';
 import { createPlan, deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
@@ -6,6 +7,7 @@ import type { PlanEntry } from '@/types/index';
 import { IconButton, ListItem } from '@dendelion/paper-ui';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useState } from 'react';
+import { CreateIdeaModal } from './create-idea-modal';
 import { PlanNavItem } from './plan-nav-item';
 import { SidebarSection } from './sidebar-section';
 
@@ -15,6 +17,7 @@ export const PlansSidebar = () => {
   const {
     plans,
     loadPlans,
+    loadIdeas,
     activePlanTitle,
     setActivePlanTitle,
     activeIdeaTitle,
@@ -22,6 +25,7 @@ export const PlansSidebar = () => {
     ideaEntries,
   } = useAppStore();
   const [addingIdea, setAddingIdea] = useState(false);
+  const [creatingIdea, setCreatingIdea] = useState(false);
 
   const active =
     plans?.entries.filter((p) => p.status === 'in-progress' || p.status === 'review') ?? [];
@@ -32,6 +36,12 @@ export const PlansSidebar = () => {
     await createPlan(idea);
     await loadPlans();
     setAddingIdea(false);
+  };
+
+  const handleCreateIdeaEntry = async (idea: { title: string; content?: string }) => {
+    await createIdea(idea);
+    await loadIdeas();
+    setCreatingIdea(false);
   };
 
   const handleDeleteIdea = async (title: string) => {
@@ -81,18 +91,31 @@ export const PlansSidebar = () => {
         </SidebarSection>
       )}
 
-      {ideaEntries.length > 0 && (
-        <SidebarSection label="Ideas">
-          {ideaEntries.map((e) => (
-            <ListItem
-              key={e.title}
+      {ideaEntries.filter((e) => e.status !== 'done').length > 0 && (
+        <SidebarSection
+          label="Ideas"
+          action={
+            <IconButton
+              icon={<span>+</span>}
+              variant="ghost"
               size="small"
-              active={activeIdeaTitle === e.title}
-              onClick={() => handleSelectIdea(e.title)}
-            >
-              {e.title}
-            </ListItem>
-          ))}
+              label="New idea"
+              onClick={() => setCreatingIdea(true)}
+            />
+          }
+        >
+          {ideaEntries
+            .filter((e) => e.status !== 'done')
+            .map((e) => (
+              <ListItem
+                key={e.title}
+                size="small"
+                active={activeIdeaTitle === e.title}
+                onClick={() => handleSelectIdea(e.title)}
+              >
+                {e.title}
+              </ListItem>
+            ))}
         </SidebarSection>
       )}
 
@@ -143,6 +166,11 @@ export const PlansSidebar = () => {
         )}
       </SidebarSection>
       <AddIdeaModal open={addingIdea} onClose={() => setAddingIdea(false)} onAdd={handleAddIdea} />
+      <CreateIdeaModal
+        open={creatingIdea}
+        onClose={() => setCreatingIdea(false)}
+        onAdd={handleCreateIdeaEntry}
+      />
     </>
   );
 };

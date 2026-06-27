@@ -202,3 +202,24 @@ in a fresh temp project, and confirming the served HTML/JS/CSS/font assets, `/ap
 and `/api/config` reflecting that project's own data (not this repo's), and the SPA
 fallback all work — plus a headless-browser screenshot of the Plans page rendering real
 data from the built bundle.
+
+## Agent tasks stay one-at-a-time even with multiple task kinds
+
+**Date:** 2026-06-27
+**Status:** decided
+
+**Context:** IDEA-4 originally scoped "one active task at a time" as a v1 limitation,
+to be revisited once concurrent tasks were needed. FEAT-18 introduced a third agent-task
+kind (idea-extension, alongside FEAT-10's phase execution and FEAT-17's plan-drafting),
+which raised the question of whether `agent.ts`'s single `current: AgentTask | null`
+slot should become concurrent now that there's more than one kind of task.
+
+**Decision:** No — `agent.ts` keeps exactly one running task at a time, regardless of
+kind. FEAT-18's phase 5 ("Broaden the Stack panel's Agent section beyond phase
+execution") is display-only: generalize the Agent card to render any task kind
+sensibly, without touching the underlying one-task concurrency model.
+
+**Rationale:** Concurrent tasks mean a shared workspace with possibly conflicting edits
+to the same `papercamp/` files — a much bigger problem than rendering a second task kind
+in the UI, and not one that's been asked for. More task *kinds* existing doesn't by
+itself create a need for more task *slots*.

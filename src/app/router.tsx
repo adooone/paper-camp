@@ -40,6 +40,7 @@ const RootLayout = () => {
     loadIdeas();
   }, [loadPlans, loadIdeas]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the reset trigger (run on every navigation), not read in the body
   useEffect(() => {
     setActivePlanTitle(null);
     setActiveIdeaTitle(null);

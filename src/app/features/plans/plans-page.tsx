@@ -1,5 +1,6 @@
 import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
+import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import { Alert, Button, Stamp } from '@dendelion/paper-ui';
@@ -7,6 +8,7 @@ import { BoardView } from './components/board-view';
 import { ListView } from './components/list-view';
 import { PlanDetail } from './components/plan-detail';
 import { ViewToggle } from './components/view-toggle';
+import { buildIdeaExtendPrompt } from './prompts';
 
 export const PlansPage = () => {
   const {
@@ -19,7 +21,13 @@ export const PlansPage = () => {
     view,
     setView,
     ideaEntries,
+    agentStatus,
   } = useAppStore();
+
+  const draftingIdeaId =
+    agentStatus?.ideaId && (agentStatus.status === 'starting' || agentStatus.status === 'running')
+      ? agentStatus.ideaId
+      : null;
 
   const handleBack = () => {
     setActivePlanTitle(null);
@@ -115,6 +123,9 @@ export const PlansPage = () => {
               .replace(/^-{3,}\s*$/m, '')
               .trim()}
           </Markdown>
+          <div style={{ marginTop: space[6] }}>
+            <ExtendWithAIButton ideaId={activeIdea.id} />
+          </div>
         </div>
       </div>
     );
@@ -160,8 +171,42 @@ export const PlansPage = () => {
           onOpenPlan={handleOpenPlan}
           ideaEntries={ideaEntries}
           onOpenIdea={handleOpenIdea}
+          draftingIdeaId={draftingIdeaId}
         />
       )}
     </div>
+  );
+};
+
+const ExtendWithAIButton = ({ ideaId }: { ideaId: string | null }) => {
+  const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);
+  const agentStatus = useAppStore((s) => s.agentStatus);
+  const agentBusy =
+    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
+  const { state, run } = useActionFeedback();
+
+  const handleClick = () => {
+    if (!ideaId) return;
+    run(async () => {
+      const idea = useAppStore.getState().ideaEntries.find((e) => e.id === ideaId);
+      if (!idea) return;
+      await launchIdeaExtend(ideaId, buildIdeaExtendPrompt(idea));
+    });
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="small"
+      onClick={handleClick}
+      disabled={agentBusy || state === 'loading' || !ideaId}
+      title={ideaId ? undefined : 'Idea needs an ID before an agent can run'}
+    >
+      {state === 'loading'
+        ? 'Extending…'
+        : state === 'success'
+          ? 'Extension sent!'
+          : 'Extend with AI'}
+    </Button>
   );
 };
