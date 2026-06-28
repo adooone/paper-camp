@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1](https://github.com/adooone/paper-camp/compare/v0.2.0...v0.2.1) (2026-06-28)
+
+
+### Bug Fixes
+
+* **22:** skip draft PR creation if one already exists in any state ([b8c26cc](https://github.com/adooone/paper-camp/commit/b8c26ccce9341028978c07f36201811774e503f9))
+
 ## [0.2.0](https://github.com/adooone/paper-camp/compare/v0.1.0...v0.2.0) (2026-06-28)
 
 

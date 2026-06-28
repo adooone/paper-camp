@@ -1463,6 +1463,51 @@ FEAT-N/FIX-N naming scheme.
       workflows in phase 22. `tsc`/`biome`/`vitest`/`build` all clean (35
       tests), `pnpm-lock.yaml` doesn't need updating (it doesn't store the
       root package's own name).
+- [x] Scope the Scout app token to least privilege
+      CodeRabbit's re-review flagged that `draft-pr.yml`'s Scout installation
+      token inherited the app's full installation permissions instead of a
+      narrow grant. Added `permission-contents: read` and
+      `permission-pull-requests: write` to the `create-github-app-token` step
+      — the only two things this job actually does (`gh pr list`/`gh pr
+      create`). `biome` clean.
+- [x] Add `fetch-depth: 0` to `publish.yml`'s checkout
+      `publish.yml` was the only workflow checkout missing `fetch-depth: 0`,
+      diverging from the standard bootstrap every other workflow uses (CI's
+      three jobs, draft-pr). Added for consistency — publish-time logic may
+      want full git history/tags available.
+- [x] Exclude `package.json` from Biome's formatter
+      Every release-please PR that touched `package.json` was failing the
+      Quality/Lint check: Biome's JSON formatter collapses short arrays onto
+      one line, but release-please's own JSON writer always re-serializes
+      arrays multi-line when it bumps `version`, so the two disagreed on
+      every single release. Biome 1.9.4 doesn't yet support the
+      `json.formatter.expand` option that would reconcile the two styles
+      (that's a Biome 2.x feature) — excluding `package.json` from the
+      formatter in `biome.json`'s `files.ignore` is the practical fix until
+      an upgrade. Verified by pushing directly to the open release-please
+      branch (`release-please--branches--main--components--paper-camp`),
+      which then passed Quality/Lint.
+- [x] Fix `draft-pr.yml` creating a duplicate PR after merge
+      `gh pr list --head "$BRANCH"` defaults to `--state open`, so once a
+      branch's PR merged, a later push to that same branch (e.g. a follow-up
+      fix commit) found no "existing" PR and opened a duplicate (PR #3,
+      opened after PR #1 had already merged). Added `--state all` to the
+      existing-PR check. Verified live: re-pushed to the closed
+      `feat/feat-22-github-ci-cd-automation` branch and confirmed the
+      workflow logged "PR #3 already exists ... skipping" instead of
+      creating a fourth PR.
+- [x] Fix `publish.yml` never triggering after a release
+      Noticed zero `publish.yml` runs ever, despite `v0.2.0` having been
+      published. Root cause: `release.yml` ran `release-please-action` with
+      the default `GITHUB_TOKEN`, and GitHub's anti-recursion guard blocks
+      events triggered by `GITHUB_TOKEN` from starting new workflow runs —
+      so the `release: types: [published]` event fired but was silently
+      forbidden from triggering `publish.yml`. Switched `release.yml` to mint
+      a Scout app installation token (`permission-contents: write`,
+      `permission-pull-requests: write`) via `create-github-app-token`,
+      passed as release-please-action's `token` input instead of
+      `GITHUB_TOKEN` — same fix pattern already used for `draft-pr.yml`.
+      YAML re-parses clean, `biome` clean.
 
 ### Log
 - 2026-06-27: I want to have 3 steps in PR visible for each check - Quality, Tests and Consistency
@@ -1480,3 +1525,7 @@ FEAT-N/FIX-N naming scheme.
 - 2026-06-28: Asked to check CodeRabbit's review comments on the live PR and think through how PR review fits the plan-status methodology. Triaged 9 comments; fixed the clear-cut ones (injection risk, error-swallowing in `ensureBranch`, unchecked response in `fetchGitStatus`, persist-credentials hardening, a self-contradicting `decisions.md` paragraph, a duplicate `progress.md` heading), and separately fixed the `Status: done` → `review` mismatch CodeRabbit also caught. Recommendation: treat CodeRabbit's findings as a pre-approval checklist, not a `review`-status gate — `review` still just means "phases done," and skimming/triaging bot comments happens before clicking Approve & close, not before.
 - 2026-06-28: Reopened the one disagreement with CodeRabbit — decided a "quick check we're on the right branch" before every phase is worth it, not just at phase 0. Reversed the earlier "first phase only" decision; appended a phase.
 - 2026-06-28: Decided the npm package should be scoped, not bare `paper-camp`. Confirmed `@dendelion` (the scope `paper-ui` already publishes under) is available and accessible; scoped it as `@dendelion/paper-camp`.
+- 2026-06-28: Checked CodeRabbit's remaining unresolved comments via the GraphQL review-threads API (most of the earlier 9 were stale — already fixed but not auto-resolved). Found and fixed two real ones (Scout token over-broad permissions, `publish.yml` missing `fetch-depth: 0`) and confirmed a third (`app-store.ts`'s `fetchGitStatus` handling) was already correct, just a stale comment predating an earlier fix.
+- 2026-06-28: Reported a CI failure on the release-please PR branch — root cause was Biome's JSON formatter disagreeing with release-please's own array serialization on every release. Fixed by excluding `package.json` from Biome's formatter.
+- 2026-06-28: Reported that Scout opened a second, duplicate PR for the same branch after PR #1 had already merged. Root cause was `gh pr list`'s default `--state open` filter going blind after a merge; fixed with `--state all`.
+- 2026-06-28: Noticed the Publish job never ran anywhere despite a release existing. Root cause was `release.yml` creating the GitHub Release with the default `GITHUB_TOKEN`, which GitHub's anti-recursion guard blocks from triggering downstream workflows. Fixed by switching to a Scout app token, the same pattern already used for `draft-pr.yml`.
