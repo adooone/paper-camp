@@ -47,7 +47,7 @@ jobs:
           DISPLAY_ID=$(echo "$PLAN_ID" | sed 's/^\([a-z]*\)/\U\1/' | sed 's/\-[a-z]/\U&/')
           FULL_TITLE="${DISPLAY_ID}: ${TITLE}"
 
-          EXISTING=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null || echo "")
+          EXISTING=$(gh pr list --head "$BRANCH" --state all --json number --jq '.[0].number' 2>/dev/null || echo "")
 
           if [ -z "$EXISTING" ]; then
             BODY="**Plan:** \`${DISPLAY_ID}\` — see \`papercamp/plans.md\` for the full plan."
