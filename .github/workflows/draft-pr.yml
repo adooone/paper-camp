@@ -1,0 +1,64 @@
+name: Draft PR
+
+on:
+  push:
+    branches:
+      - feat/*
+      - fix/*
+      - refactor/*
+      - chore/*
+      - docs/*
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  draft-pr:
+    name: Draft PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Generate Scout app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.SCOUT_APP_ID }}
+          private-key: ${{ secrets.SCOUT_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
+
+      - name: Create draft PR if not exists
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          PLAN_ID=$(echo "$BRANCH" | grep -oP '[a-z]+-\d+' || true)
+          if [ -z "$PLAN_ID" ]; then
+            echo "Branch '$BRANCH' does not match plan-ID pattern — skipping PR creation"
+            exit 0
+          fi
+
+          TITLE=$(echo "$BRANCH" | sed 's|^[^/]*/||' | sed 's/^[a-z]*-[0-9]*-//' | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+          DISPLAY_ID=$(echo "$PLAN_ID" | sed 's/^\([a-z]*\)/\U\1/' | sed 's/\-[a-z]/\U&/')
+          FULL_TITLE="${DISPLAY_ID}: ${TITLE}"
+
+          EXISTING=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null || echo "")
+
+          if [ -z "$EXISTING" ]; then
+            BODY="**Plan:** \`${DISPLAY_ID}\` — see \`papercamp/plans.md\` for the full plan."
+            BODY="${BODY}"$'\n\n'"This PR was auto-created as a draft on the first push to this feature branch."
+            BODY="${BODY}"$'\n'"Promote to \"Ready for review\" when the plan reaches \`review\` status."
+            gh pr create \
+              --title "$FULL_TITLE" \
+              --body "$BODY" \
+              --draft \
+              --base main
+            echo "Created draft PR for $FULL_TITLE"
+          else
+            echo "PR #$EXISTING already exists for branch '$BRANCH' — skipping"
+          fi

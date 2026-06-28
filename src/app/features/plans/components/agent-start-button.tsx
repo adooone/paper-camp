@@ -19,6 +19,8 @@ export const AgentStartButton = ({ planId, phaseIndex, disabled }: AgentStartBut
     setLaunching(true);
     try {
       await launchAgent(planId, phaseIndex);
+    } catch (err) {
+      alert((err as Error).message);
     } finally {
       setLaunching(false);
     }

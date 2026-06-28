@@ -63,6 +63,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const setActivePlanTitle = useAppStore((s) => s.setActivePlanTitle);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const gitStatus = useAppStore((s) => s.gitStatus);
+  const gitBranch = useAppStore((s) => s.gitBranch);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
@@ -686,7 +687,16 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
               padding: space[6],
             }}
           >
-            <div style={sectionLabelStyle}>Commit</div>
+            <div
+              style={{ ...sectionLabelStyle, display: 'flex', alignItems: 'center', gap: space[2] }}
+            >
+              Commit
+              {gitBranch && (
+                <Stamp variant="chalkboard" size="small">
+                  {gitBranch}
+                </Stamp>
+              )}
+            </div>
             <Card variant="chalkboard" size="small" className="stack-card-fill">
               {gitStatus && gitStatus.length > 0 ? (
                 <>

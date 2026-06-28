@@ -5,6 +5,7 @@ import type {
   ConsistencyIssue,
   DecisionEntry,
   GitStatusEntry,
+  GitStatusResponse,
   IdeaEntry,
   OpenQuestionEntry,
   ParseResult,
@@ -94,6 +95,7 @@ type AppStore = {
   loadConsistency: () => Promise<void>;
 
   gitStatus: GitStatusEntry[] | null;
+  gitBranch: string | null;
   loadGitStatus: () => Promise<void>;
 
   agentStatus: AgentTaskState | null;
@@ -252,10 +254,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   gitStatus: null,
+  gitBranch: null,
   loadGitStatus: async () => {
     try {
-      const data = await fetchGitStatus();
-      set({ gitStatus: data });
+      const { branch, entries } = await fetchGitStatus();
+      set({ gitStatus: entries, gitBranch: branch });
     } catch {
       // keep previous status
     }

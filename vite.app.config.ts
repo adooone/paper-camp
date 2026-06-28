@@ -77,9 +77,6 @@ export default defineConfig({
       },
     },
   },
-  optimizeDeps: {
-    exclude: ['@dendelion/paper-ui'],
-  },
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),

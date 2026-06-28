@@ -203,10 +203,102 @@ and `/api/config` reflecting that project's own data (not this repo's), and the 
 fallback all work — plus a headless-browser screenshot of the Plans page rendering real
 data from the built bundle.
 
-## Agent tasks stay one-at-a-time even with multiple task kinds
+## Commit messages use type(scope): description, scope is the plan number
 
 **Date:** 2026-06-27
 **Status:** decided
+
+**Context:** Wanted a clearer commit convention tying commits back to the
+plan/idea they belong to, e.g. `feat(20): description` instead of bare
+`feat: description`. Testing the new rule against this repo's actual commit
+history (all `feat: Title Case Description`) surfaced that
+`@commitlint/config-conventional`'s default `subject-case` rule rejects
+capitalized subjects — every prior commit would fail the `consistency` CI
+check the first time it ran for real.
+
+**Decision:** `.commitlintrc.json` now requires a non-empty scope
+(`scope-empty: [2, "never"]`). Scope convention: the plan/idea number alone,
+no kind prefix (`feat(22)`, not `feat(feat-22)` or `feat(FEAT-22)`) — the
+`type` already encodes the kind. Commits not tied to a plan use a short area
+name as scope instead (`chore(deps)`). `subject-case` is disabled
+(`[2, "never", []]`) to keep the repo's existing capitalized-subject style
+valid rather than forcing every future commit into lowercase-imperative.
+
+**Rationale:** A bare number scope is shorter than repeating the kind twice
+(`feat(feat-22)` is redundant since `type` is already `feat`), and mirrors how
+PR titles already display `FEAT-22: Title`. Disabling `subject-case` avoids a
+style fight with three years of existing commit history just to satisfy a
+linter default that was never actually enforced before this plan added a real
+`consistency` check.
+
+## Branch protection on main requires checks but stays push-friendly
+
+**Date:** 2026-06-27
+**Status:** decided
+
+**Context:** Auditing FEAT-22 found `main` had zero branch protection on the
+live GitHub repo — `gh api repos/.../branches/main/protection` returned 404.
+A broken commit could merge through a PR with no CI gate at all, despite
+`ci.yml` defining three checks. The "main stays pushable" decision (above)
+meant any protection rule had to keep direct pushes working.
+
+**Decision:** Applied branch protection to `main` via `gh api` requiring the
+`Quality`, `Tests`, and `Consistency` status checks to pass before a PR can
+merge (`required_status_checks.contexts`), with `enforce_admins: false` and no
+push restrictions. `NPM_TOKEN` was deliberately *not* set by the agent — it's
+a secret value belonging to the user's npm account, not something to generate
+or transmit through tool calls.
+
+**Rationale:** Required status checks gate the PR merge button only — they do
+not block direct `git push` to a protected branch, so this is compatible with
+agents/users pushing small fixes straight to `main`. `enforce_admins: false`
+keeps that escape hatch explicit rather than accidental.
+
+## Per-feature branch workflow
+
+**Date:** 2026-06-27
+**Status:** decided
+
+**Context:** FEAT-22 phase 4 adopts a per-feature branch workflow to replace
+the current every-commit-goes-to-main pattern. This required decisions on
+branch naming, PR creation timing, whether `main` stays directly pushable, and
+how the branch workflow affects IDEA-4's agents that write directly to
+`plans.md`/`progress.md`.
+
+**Decision:**
+- **Branch naming:** `<kind>/<lowercase-id>-<kebab-title>` — exactly one branch
+  per plan, named after its plan ID and short title. Examples:
+  `feat/feat-22-ci-cd-automation`, `fix/fix-2-review-status-bugs`.
+- **PR creation:** On the first push to a feature branch, a GitHub Action
+  (`draft-pr.yml`) creates a **draft** PR automatically. Idempotent: skips if
+  a PR already exists for that branch.
+- **Main stays pushable.** Direct pushes to `main` are allowed for: agent
+  writes to `plans.md`/`progress.md` during phase execution, tiny fixes, and
+  config changes. All substantive plan work uses branches merged via PR.
+- **IDEA-4 agents are unaffected.** Agents write to `plans.md`/`progress.md`
+  on whatever branch is checked out. When running on a feature branch, those
+  writes travel with the branch and merge into `main` along with the rest of
+  the work. Merge conflicts from two branches editing overlapping regions of
+  `plans.md` are possible but accepted — IDEA-20 (per-file plans) will
+  eliminate this structurally.
+
+**Rationale:**
+- The double-prefix branch format (`feat/feat-22-...`) is redundant but
+  self-documenting in a plain `git branch` listing — the plan ID is always
+  visually present without needing to know the scheme.
+- Draft PRs give CI feedback from the first push without forcing a "ready for
+  review" state. The PR is the workspace; promoting it to ready is the human
+  signal that review should happen.
+- Main stays pushable because the solo workflow has legitimate use cases for
+  direct-to-main commits (agent progress writes, hotfixes). `main` does have
+  branch protection (added later — see "Branch protection on main requires
+  checks but stays push-friendly" above), but it only gates the PR merge
+  button via required status checks; it does not restrict direct pushes. The
+  convention itself (when to push to `main` vs. open a PR) is enforced by
+  code review, not a CI gate.
+- The per-branch agent impact is minimal because IDEA-4's agents already write
+  to the working tree regardless of branch. No agent behavioral change is
+  needed — just awareness that branch context matters for where writes land.
 
 **Context:** IDEA-4 originally scoped "one active task at a time" as a v1 limitation,
 to be revisited once concurrent tasks were needed. FEAT-18 introduced a third agent-task

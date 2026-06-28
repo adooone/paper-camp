@@ -1,8 +1,8 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { watch } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
-import type { GitStatusEntry } from '../../types';
+import type { GitStatusEntry, PlanEntry } from '../../types';
 
 export function createGitManager(root: string) {
   const clients = new Set<ServerResponse>();
@@ -73,6 +73,41 @@ export function createGitManager(root: string) {
     await runGit(args);
   }
 
+  function ensureBranch(plan: PlanEntry): void {
+    if (!plan.kind || !plan.id) return;
+
+    const kind = plan.kind.toLowerCase();
+    const id = plan.id.toLowerCase();
+    const title = plan.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    const branch = `${kind}/${id}-${title}`;
+
+    const currentResult = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: root });
+    if (currentResult.status !== 0) {
+      throw new Error(
+        currentResult.stderr.toString().trim() || 'Unable to read current git branch',
+      );
+    }
+    const currentBranch = currentResult.stdout.toString().trim();
+    if (currentBranch === branch) return;
+
+    const result = spawnSync('git', ['checkout', '-b', branch, 'main'], { cwd: root });
+    if (result.status !== 0) {
+      // Branch already exists — just check it out
+      const checkoutResult = spawnSync('git', ['checkout', branch], { cwd: root });
+      if (checkoutResult.status !== 0) {
+        throw new Error(
+          checkoutResult.stderr.toString().trim() ||
+            result.stderr.toString().trim() ||
+            `Unable to check out ${branch}`,
+        );
+      }
+    }
+  }
+
   async function refresh() {
     try {
       await runGitStatus();
@@ -109,11 +144,25 @@ export function createGitManager(root: string) {
     // src/ doesn't exist or watcher not available
   }
 
+  function getCurrentBranch(): string {
+    const result = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: root });
+    return result.stdout.toString().trim();
+  }
+
+  function getFeatureBranchPlanId(): string | null {
+    const branch = getCurrentBranch();
+    const match = branch.match(/^[a-z]+\/([a-z]+-\d+)-/);
+    return match ? match[1].toUpperCase() : null;
+  }
+
   return {
     async getStatus(): Promise<GitStatusEntry[]> {
       return runGitStatus();
     },
+    getCurrentBranch,
     commit,
+    ensureBranch,
+    getFeatureBranchPlanId,
     subscribe(res: ServerResponse) {
       clients.add(res);
       res.on('close', () => clients.delete(res));

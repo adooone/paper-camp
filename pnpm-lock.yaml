@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@dendelion/paper-ui':
-        specifier: link:../paper-ui
-        version: link:../paper-ui
+        specifier: ^0.2.0
+        version: 0.2.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-router':
         specifier: ^1.58.3
         version: 1.168.26(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -249,6 +249,12 @@ packages:
         optional: true
       conventional-commits-parser:
         optional: true
+
+  '@dendelion/paper-ui@0.2.0':
+    resolution: {integrity: sha512-YvzM06p6z8AJzaNU6Vm+GdAXhaA3T1SPZVrEqjw0z/Y8Hv7hqBIYxXhRlDd6zPJ98ExpUiS3IgH6o2ITrUc0yw==}
+    peerDependencies:
+      react: ^18.0.0
+      react-dom: ^18.0.0
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -1737,6 +1743,9 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
+  tailwind-merge@2.6.1:
+    resolution: {integrity: sha512-Oo6tHdpZsGpkKG88HJ8RR1rg/RdnEkQEfMoEk2x1XRI3F1AxeU+ijRXpiVUF4UbLfcxxRGw6TbUINKYdWVsQTQ==}
+
   tailwindcss@3.4.19:
     resolution: {integrity: sha512-3ofp+LL8E+pK/JuPLPggVAIaEuhvIz4qNcf3nA1Xn2o/7fb7s/TYpHhwGDv1ZU3PkBluUVaF8PyCHcm48cKLWQ==}
     engines: {node: '>=14.0.0'}
@@ -2152,6 +2161,16 @@ snapshots:
       semver: 7.7.4
     optionalDependencies:
       conventional-commits-parser: 6.4.0
+
+  '@dendelion/paper-ui@0.2.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      clsx: 2.1.1
+      framer-motion: 12.40.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      tailwind-merge: 2.6.1
+    transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
 
   '@esbuild/aix-ppc64@0.21.5':
     optional: true
@@ -3642,6 +3661,8 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  tailwind-merge@2.6.1: {}
 
   tailwindcss@3.4.19:
     dependencies:

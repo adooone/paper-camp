@@ -160,6 +160,11 @@ export interface GitStatusEntry {
   staged: boolean;
 }
 
+export interface GitStatusResponse {
+  branch: string;
+  entries: GitStatusEntry[];
+}
+
 export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error';
 
 export type TaskKind = 'phase' | 'audit' | 'draft' | 'extend';

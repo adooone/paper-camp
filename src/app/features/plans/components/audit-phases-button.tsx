@@ -19,6 +19,8 @@ export const AuditPhasesButton = ({ plan, disabled }: AuditPhasesButtonProps) =>
     setLaunching(true);
     try {
       await launchPlanAudit(plan.id, buildConvergenceAuditPrompt(plan));
+    } catch (err) {
+      alert((err as Error).message);
     } finally {
       setLaunching(false);
     }

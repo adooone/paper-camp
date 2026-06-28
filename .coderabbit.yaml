@@ -1,0 +1,58 @@
+language: "en-US"
+early_access: false
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!*.lock"
+    - "!*.png"
+    - "!*.jpg"
+    - "!*.svg"
+  path_instructions:
+    - path: "**/*.{ts,tsx}"
+      instructions: |
+        Review against CODE_STYLE.md (code style guide) and UX_PRINCIPLES.md (UX/UI principles):
+        - Use paper-ui components by default (Button, Card, Input, Table, Stamp, etc.) — raw HTML only when paper-ui has no equivalent, with an inline comment explaining the gap
+        - Follow design tokens from src/app/styles/tokens.ts (fontFamily, space, fontSize, layout constants) — no hardcoded spacing or font stacks
+        - Luminari font reserved for page H1s, markdown headings, and deliberate title moments only; body text uses the project-wide default (Cormorant Garamond)
+        - Naming: PascalCase components with {Name}Props interface, camelCase helpers and event handlers (handleXxx), PascalCase files
+        - Imports use @/ aliases, avoid ../../ more than one level
+        - Feature folders at src/app/features/{name}/, services at src/app/services/, cross-cutting at src/app/components/
+        - framer-motion for route transitions, list animations, panel slides — keep restrained, respect reduced-motion
+        - Layout stability: reserve space for changing content (visibility:hidden instead of conditional mount), center content within fixed-height containers, empty states match populated state height
+        - The "3 copies = extract" rule: if the same logic/style/fetch appears three times, extract it
+    - path: "*.md"
+      instructions: |
+        Follow AGENTS.md and the repo's established markdown conventions:
+        - plans.md entries use ## Title, Status/Id/Kind/Idea/Created/Updated/Tags frontmatter, ### Phases with - [ ] checkboxes
+        - progress.md entries are reverse-chronological dated entries with - bullet points
+        - Commit messages follow format: type(scope): Description (capitalized, not lowercase imperative)
+    - path: ".github/workflows/*.yml"
+      instructions: |
+        Follow this repo's CI/CD workflow conventions (AGENTS.md's Branch workflow, ci.yml patterns):
+        - Job names have explicit name: fields (Quality, Tests, Consistency, etc.)
+        - Uses pnpm/action-setup@v4 without version override (reads pinned version from package.json's packageManager field)
+        - actions/setup-node@v4 with node-version: 20
+    - path: ".coderabbit.yaml"
+      instructions: |
+        Configuration file for CodeRabbit itself — do not suggest changes.
+  auto_review:
+    enabled: true
+    drafts: true
+    base_branches:
+      - "^feat/.*"
+      - "^fix/.*"
+      - "^refactor/.*"
+      - "^chore/.*"
+      - "^docs/.*"
+      - "^main$"
+    labels:
+      - "!wip"
+chat:
+  auto_reply: true

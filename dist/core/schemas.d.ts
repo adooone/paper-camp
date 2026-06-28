@@ -4,6 +4,7 @@ export declare const planFieldsSchema: z.ZodObject<{
         idea: "idea";
         planned: "planned";
         "in-progress": "in-progress";
+        review: "review";
         done: "done";
         dropped: "dropped";
     }>;
@@ -16,6 +17,10 @@ export declare const planFieldsSchema: z.ZodObject<{
     }>>;
     id: z.ZodOptional<z.ZodString>;
     idea: z.ZodOptional<z.ZodString>;
+    agent: z.ZodOptional<z.ZodEnum<{
+        "claude-code": "claude-code";
+        opencode: "opencode";
+    }>>;
     created: z.ZodString;
     updated: z.ZodOptional<z.ZodString>;
     tags: z.ZodOptional<z.ZodString>;
@@ -35,6 +40,7 @@ export declare const openQuestionFieldsSchema: z.ZodObject<{
     }>;
     raised: z.ZodString;
     'resolved-by': z.ZodOptional<z.ZodString>;
+    blocks: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 export declare const paperCampConfigSchema: z.ZodObject<{
     version: z.ZodString;
@@ -46,6 +52,24 @@ export declare const paperCampConfigSchema: z.ZodObject<{
         chore: z.ZodNumber;
         docs: z.ZodNumber;
         refactor: z.ZodNumber;
+    }, z.core.$strip>>;
+    defaultAgent: z.ZodOptional<z.ZodEnum<{
+        "claude-code": "claude-code";
+        opencode: "opencode";
+    }>>;
+    defaultAgents: z.ZodOptional<z.ZodObject<{
+        phase: z.ZodEnum<{
+            "claude-code": "claude-code";
+            opencode: "opencode";
+        }>;
+        planDraft: z.ZodEnum<{
+            "claude-code": "claude-code";
+            opencode: "opencode";
+        }>;
+        ideaExtend: z.ZodEnum<{
+            "claude-code": "claude-code";
+            opencode: "opencode";
+        }>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
 export type PlanFields = z.infer<typeof planFieldsSchema>;

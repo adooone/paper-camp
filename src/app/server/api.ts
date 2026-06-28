@@ -81,6 +81,22 @@ const CONFIG_ALLOWLIST = [
   'package.json',
 ];
 
+async function checkBranchConflictForPlan(
+  root: string,
+  git: { getFeatureBranchPlanId: () => string | null },
+  targetPlanId?: string,
+): Promise<string | null> {
+  const activePlanId = git.getFeatureBranchPlanId();
+  if (!activePlanId) return null;
+  if (targetPlanId && activePlanId === targetPlanId) return null;
+  const plansRaw = await readMaybe(campFile(root, 'plans.md'));
+  if (!plansRaw) return null;
+  const { entries } = parsePlans(plansRaw);
+  const activePlan = entries.find((p) => p.id === activePlanId);
+  if (!activePlan || activePlan.status === 'done' || activePlan.status === 'dropped') return null;
+  return `Finish \`${activePlanId}\` — ${activePlan.title} — before starting another plan`;
+}
+
 const apiRoutes: ApiRoute[] = [
   {
     path: '/api/package-name',
@@ -184,7 +200,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
   const activity = createActivityManager(root);
   const git = createGitManager(root);
   const status = createStatusManager(root);
-  const agent = createAgentManager(root);
+  const agent = createAgentManager(root, (plan) => git.ensureBranch(plan));
   const handler = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const pathname = (req.url ?? '').split('?')[0];
 
@@ -316,7 +332,29 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.end(JSON.stringify({ error: 'plan not found' }));
           return;
         }
+        if (updates.status === 'done') {
+          const targetEntry = parsed.entries.find((e: PlanEntry) => e.title === trimmed);
+          const conflict = await checkBranchConflictForPlan(root, git, targetEntry?.id);
+          if (conflict) {
+            res.statusCode = 409;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: conflict }));
+            return;
+          }
+        }
         await writeFile(filePath, formatPlans(updated));
+
+        if (updates.status === 'done') {
+          const finalEntry = updated.find((e: PlanEntry) => e.title === trimmed);
+          if (finalEntry) {
+            try {
+              git.ensureBranch(finalEntry);
+            } catch {
+              // Non-fatal: git operations may fail (not a repo, etc.)
+            }
+          }
+        }
+
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ ok: true }));
@@ -433,9 +471,10 @@ export function createApiMiddleware(root: string): ApiMiddleware {
     if (req.method === 'GET' && pathname === '/api/git/status') {
       try {
         const entries = await git.getStatus();
+        const branch = git.getCurrentBranch();
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(entries));
+        res.end(JSON.stringify({ branch, entries }));
       } catch (error) {
         res.statusCode = 500;
         res.setHeader('Content-Type', 'application/json');
@@ -546,6 +585,13 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.end(JSON.stringify({ error: 'plan not found' }));
           return;
         }
+        const conflict = await checkBranchConflictForPlan(root, git, plan.id);
+        if (conflict) {
+          res.statusCode = 409;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: conflict }));
+          return;
+        }
         const result = await agent.start(plan, phaseIndex);
         if (!result.ok) {
           res.statusCode = 409;
@@ -581,6 +627,13 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.statusCode = 404;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'plan not found' }));
+          return;
+        }
+        const conflict = await checkBranchConflictForPlan(root, git, plan.id);
+        if (conflict) {
+          res.statusCode = 409;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: conflict }));
           return;
         }
         const result = agent.startForPlan(plan, prompt);
@@ -620,6 +673,13 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.end(JSON.stringify({ error: 'idea not found' }));
           return;
         }
+        const conflict = await checkBranchConflictForPlan(root, git);
+        if (conflict) {
+          res.statusCode = 409;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: conflict }));
+          return;
+        }
         const result = agent.startForIdea(idea, prompt);
         if (!result.ok) {
           res.statusCode = 409;
@@ -655,6 +715,13 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.statusCode = 404;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'idea not found' }));
+          return;
+        }
+        const conflict = await checkBranchConflictForPlan(root, git);
+        if (conflict) {
+          res.statusCode = 409;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: conflict }));
           return;
         }
         const result = agent.startForIdeaExtend(idea, prompt);

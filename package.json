@@ -1,8 +1,9 @@
 {
-  "name": "paper-camp",
+  "name": "@dendelion/paper-camp",
   "version": "0.1.0",
   "description": "Local-first, AI-native project management with retro aesthetics",
   "type": "module",
+  "packageManager": "pnpm@10.12.1",
   "bin": {
     "paper-camp": "./dist/cli/index.js"
   },
@@ -37,7 +38,7 @@
     "react-dom": "^18.0.0"
   },
   "dependencies": {
-    "@dendelion/paper-ui": "link:../paper-ui",
+    "@dendelion/paper-ui": "^0.2.0",
     "@tanstack/react-router": "^1.58.3",
     "clsx": "^2.1.1",
     "commander": "^12.0.0",
