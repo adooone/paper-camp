@@ -39,6 +39,6 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist", "*.config.js", "*.config.ts"]
+    "ignore": ["node_modules", "dist", "*.config.js", "*.config.ts", "package.json"]
   }
 }
