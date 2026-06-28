@@ -4,7 +4,7 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "paper-camp",
+      "package-name": "@dendelion/paper-camp",
       "versioning": "default",
       "include-component-in-tag": false,
       "bump-minor-pre-major": true,

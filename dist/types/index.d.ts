@@ -1,12 +1,21 @@
-export type PlanStatus = 'idea' | 'planned' | 'in-progress' | 'done' | 'dropped';
+export type PlanStatus = 'idea' | 'planned' | 'in-progress' | 'review' | 'done' | 'dropped';
+export declare const PLAN_STATUSES: PlanStatus[];
+export interface LogEntry {
+    date: string;
+    text: string;
+}
 export type PlanKind = 'feat' | 'fix' | 'chore' | 'docs' | 'refactor';
 export declare const PLAN_KINDS: PlanKind[];
+export declare const AGENT_IDS: readonly ["claude-code", "opencode"];
+export type AgentId = (typeof AGENT_IDS)[number];
+export declare const AGENT_LABELS: Record<AgentId, string>;
 export type DecisionStatus = 'decided' | 'superseded';
 export type QuestionStatus = 'open' | 'resolved';
 export interface PhaseItem {
     done: boolean;
     text: string;
     description?: string;
+    source?: 'review';
 }
 /** Raw shape produced by the generic heading-block parser, before per-file validation. */
 export interface RawEntry {
@@ -14,6 +23,8 @@ export interface RawEntry {
     fields: Record<string, string>;
     body: string;
     phases: PhaseItem[];
+    log?: LogEntry[];
+    clarifications?: LogEntry[];
 }
 export interface ParseWarning {
     title: string;
@@ -29,11 +40,14 @@ export interface PlanEntry {
     kind?: PlanKind;
     id?: string;
     idea?: string;
+    agent?: AgentId;
     created: string;
     updated?: string;
     tags: string[];
     body: string;
     phases: PhaseItem[];
+    log?: LogEntry[];
+    clarifications?: LogEntry[];
 }
 export interface DecisionEntry {
     title: string;
@@ -47,16 +61,72 @@ export interface OpenQuestionEntry {
     status: QuestionStatus;
     raised: string;
     resolvedBy?: string;
+    blocks?: string;
     body: string;
+}
+export type ConsistencyIssueKind = 'dangling-resolved-by' | 'dangling-superseded-by' | 'blocked-plan-active';
+export interface ConsistencyIssue {
+    kind: ConsistencyIssueKind;
+    section: 'decisions' | 'open-questions';
+    title: string;
+    message: string;
+    planId?: string;
+}
+export type IdeaStatus = 'planned' | 'done';
+export interface IdeaEntry {
+    id: string | null;
+    title: string;
+    body: string;
+    status?: IdeaStatus;
 }
 export interface ProgressEntry {
     date: string;
     items: string[];
 }
+export interface EnvEntry {
+    key: string;
+    value: string;
+}
+export interface DefaultAgentsMap {
+    phase: AgentId;
+    planDraft: AgentId;
+    ideaExtend: AgentId;
+}
+export declare const DEFAULT_AGENTS: DefaultAgentsMap;
 export interface PaperCampConfig {
     version: string;
     projectName: string;
     initializedAt: string;
     nextId?: Record<PlanKind, number>;
+    port?: number;
+    defaultAgents?: DefaultAgentsMap;
+}
+export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';
+export interface CheckResult {
+    status: CheckStatus;
+    lastRun: string | null;
+    output: string;
+}
+export type CheckName = 'lint' | 'format' | 'test';
+export interface GitStatusEntry {
+    path: string;
+    status: string;
+    staged: boolean;
+}
+export interface GitStatusResponse {
+    branch: string;
+    entries: GitStatusEntry[];
+}
+export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error';
+export type TaskKind = 'phase' | 'audit' | 'draft' | 'extend';
+export interface AgentTaskState {
+    status: AgentTaskStatus;
+    taskKind: TaskKind;
+    planTitle: string;
+    planId?: string;
+    phaseIndex?: number;
+    ideaId?: string;
+    agentId: AgentId;
+    lines: string[];
 }
 //# sourceMappingURL=index.d.ts.map

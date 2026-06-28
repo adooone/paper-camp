@@ -1,16 +1,28 @@
-import { PhaseItem } from '../types/index';
+import { LogEntry, PhaseItem } from '../types/index';
 export declare function todayDateString(): string;
+/**
+ * Mints the next `<KIND>-<N>` plan ID from the persistent counter in `.paper-camp/config.json`,
+ * incrementing and writing it back. Calls are chained through a module-level promise so two
+ * near-simultaneous calls within this process never read the same counter value and mint a
+ * duplicate ID — this does not protect against a concurrent call from a separate process (e.g.
+ * the CLI racing the dev server), which is an accepted gap for a local single-user tool.
+ * Returns undefined if the config file is missing or has no `nextId` counters yet.
+ */
+export declare function assignPlanId(configPath: string, kind: string): Promise<string | undefined>;
 interface NewPlanInput {
     title: string;
     status: string;
     kind?: string;
     id?: string;
     idea?: string;
+    agent?: string;
     created: string;
     updated?: string;
     tags?: string[];
     body?: string;
     phases?: PhaseItem[];
+    log?: LogEntry[];
+    clarifications?: LogEntry[];
 }
 export declare function formatPlanEntry(input: NewPlanInput): string;
 interface NewDecisionInput {
@@ -26,6 +38,7 @@ interface NewOpenQuestionInput {
     raised: string;
     status: string;
     resolvedBy?: string;
+    blocks?: string;
     body?: string;
 }
 export declare function formatOpenQuestionEntry(input: NewOpenQuestionInput): string;

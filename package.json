@@ -1,5 +1,5 @@
 {
-  "name": "paper-camp",
+  "name": "@dendelion/paper-camp",
   "version": "0.1.0",
   "description": "Local-first, AI-native project management with retro aesthetics",
   "type": "module",

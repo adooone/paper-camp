@@ -1446,6 +1446,23 @@ FEAT-N/FIX-N naming scheme.
       }` to an unconditional `ensureBranch(plan)` call before every phase
       launch. Supersedes the original "first phase only" scoping decision.
       `tsc`/`biome`/`vitest` all clean (35 tests).
+- [x] Scope the npm package as `@dendelion/paper-camp`
+      Confirmed `@dendelion` is a scope the user already has `read-write`
+      access to (same one `@dendelion/paper-ui` publishes under), and
+      `@dendelion/paper-camp` is unclaimed. Renamed `package.json`'s `name`
+      to `@dendelion/paper-camp` — the `bin` field stays `{ "paper-camp":
+      "./dist/cli/index.js" }` unchanged, so the installed CLI command name
+      doesn't change even though the package identity does. Updated
+      `.github/release-please-config.json`'s `package-name` to match.
+      Scoped packages default to private on npm, so added `--access public`
+      to `publish.yml`'s `npm publish` call — without it the first publish
+      would have silently tried to create a private package and failed (or
+      succeeded as private, which isn't what's wanted for an open-source
+      CLI). Also added `persist-credentials: false` to `publish.yml`'s
+      checkout for consistency with the hardening applied to the other
+      workflows in phase 22. `tsc`/`biome`/`vitest`/`build` all clean (35
+      tests), `pnpm-lock.yaml` doesn't need updating (it doesn't store the
+      root package's own name).
 
 ### Log
 - 2026-06-27: I want to have 3 steps in PR visible for each check - Quality, Tests and Consistency
@@ -1462,3 +1479,4 @@ FEAT-N/FIX-N naming scheme.
 - 2026-06-27: Noticed draft PRs are authored by `github-actions[bot]` and wants a custom-named bot identity instead. Discussed GitHub App vs. dedicated bot account; went with a GitHub App. Named it **Scout** after rejecting "Ranger" and a few other camp-themed options (Sherpa, Lookout, Quartermaster, Trailblazer, Camp Scribe). User is creating the App now; appended a phase to wire it into `draft-pr.yml` once the App ID/private key are available.
 - 2026-06-28: Asked to check CodeRabbit's review comments on the live PR and think through how PR review fits the plan-status methodology. Triaged 9 comments; fixed the clear-cut ones (injection risk, error-swallowing in `ensureBranch`, unchecked response in `fetchGitStatus`, persist-credentials hardening, a self-contradicting `decisions.md` paragraph, a duplicate `progress.md` heading), and separately fixed the `Status: done` → `review` mismatch CodeRabbit also caught. Recommendation: treat CodeRabbit's findings as a pre-approval checklist, not a `review`-status gate — `review` still just means "phases done," and skimming/triaging bot comments happens before clicking Approve & close, not before.
 - 2026-06-28: Reopened the one disagreement with CodeRabbit — decided a "quick check we're on the right branch" before every phase is worth it, not just at phase 0. Reversed the earlier "first phase only" decision; appended a phase.
+- 2026-06-28: Decided the npm package should be scoped, not bare `paper-camp`. Confirmed `@dendelion` (the scope `paper-ui` already publishes under) is available and accessible; scoped it as `@dendelion/paper-camp`.
