@@ -29,6 +29,8 @@ jobs:
         with:
           app-id: ${{ secrets.SCOUT_APP_ID }}
           private-key: ${{ secrets.SCOUT_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
 
       - name: Create draft PR if not exists
         env:
