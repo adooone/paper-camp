@@ -155,6 +155,21 @@ export function createGitManager(root: string) {
     // src/ doesn't exist or watcher not available
   }
 
+  // Counts commits on HEAD not yet on the upstream branch. No upstream configured
+  // (e.g. a brand new branch) isn't an error here — it just means nothing to push yet.
+  async function getAheadCount(): Promise<number> {
+    try {
+      const output = await runGit(['rev-list', '--count', '@{u}..HEAD']);
+      return Number.parseInt(output.trim(), 10) || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  async function push(): Promise<void> {
+    await runGit(['push']);
+  }
+
   function getCurrentBranch(): string {
     const result = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: root });
     return result.stdout.toString().trim();
@@ -205,6 +220,8 @@ export function createGitManager(root: string) {
     diff,
     ensureBranch,
     getFeatureBranchPlanId,
+    getAheadCount,
+    push,
     subscribe(res: ServerResponse) {
       clients.add(res);
       res.on('close', () => clients.delete(res));

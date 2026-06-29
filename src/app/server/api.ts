@@ -583,11 +583,27 @@ export function createApiMiddleware(root: string): ApiMiddleware {
       try {
         const entries = await git.getStatus();
         const branch = git.getCurrentBranch();
+        const ahead = await git.getAheadCount();
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ branch, entries }));
+        res.end(JSON.stringify({ branch, entries, ahead }));
       } catch (error) {
         res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: (error as Error).message }));
+      }
+      return;
+    }
+
+    // POST /api/git/push — push the current branch to its upstream
+    if (req.method === 'POST' && pathname === '/api/git/push') {
+      try {
+        await git.push();
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ok: true }));
+      } catch (error) {
+        res.statusCode = 400;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ error: (error as Error).message }));
       }

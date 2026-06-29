@@ -21,7 +21,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { findFocusPlan } from '../features/plans/helpers';
-import { commitChanges, suggestCommitMessage } from '../services/git-api';
+import { commitChanges, pushChanges, suggestCommitMessage } from '../services/git-api';
 import { useAppStore } from '../stores/app-store';
 import { summarizeQualityFailure, summarizeTestFailure } from '../utils/check-summary';
 import { CopyPromptButton } from './copy-prompt-button';
@@ -64,6 +64,23 @@ const WandIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
+const PushIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M12 19V5" />
+    <path d="m5 12 7-7 7 7" />
+  </svg>
+);
+
 const CHALKBOARD_TEXTURE = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.15 0 0 0 0 0.28 0 0 0 0 0.20 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)' opacity='1'/%3E%3C/svg%3E")`;
 
 const deskBg = color.deskBg;
@@ -102,6 +119,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
+  const gitAhead = useAppStore((s) => s.gitAhead);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
@@ -115,6 +133,8 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
     readStoredCommitField(COMMIT_MESSAGE_STORAGE_KEY),
   );
   const [committing, setCommitting] = useState(false);
+  const [pushing, setPushing] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
   const [commitError, setCommitError] = useState<string | null>(null);
   const [addRefs, setAddRefs] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
@@ -235,12 +255,34 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
       setCommitMessage('');
       setAddRefs(false);
       setCommitExpanded(false);
+      await loadGitStatus();
     } catch (err) {
       setCommitError((err as Error).message);
     } finally {
       setCommitting(false);
     }
-  }, [commitTitle, commitMessage, selectedFiles, addRefs, activePlan, suggestedTitle]);
+  }, [
+    commitTitle,
+    commitMessage,
+    selectedFiles,
+    addRefs,
+    activePlan,
+    suggestedTitle,
+    loadGitStatus,
+  ]);
+
+  const handlePush = useCallback(async () => {
+    setPushing(true);
+    setPushError(null);
+    try {
+      await pushChanges();
+      await loadGitStatus();
+    } catch (err) {
+      setPushError((err as Error).message);
+    } finally {
+      setPushing(false);
+    }
+  }, [loadGitStatus]);
 
   const handleSuggestFromChanges = useCallback(async () => {
     if (selectedFiles.size === 0) return;
@@ -784,15 +826,39 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             }}
           >
             <div
-              style={{ ...sectionLabelStyle, display: 'flex', alignItems: 'center', gap: space[2] }}
+              style={{
+                ...sectionLabelStyle,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: space[2],
+              }}
             >
-              Commit
-              {gitBranch && (
-                <Stamp variant="chalkboard" size="small">
-                  {gitBranch}
-                </Stamp>
+              <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+                Commit
+                {gitBranch && (
+                  <Stamp variant="chalkboard" size="small">
+                    {gitBranch}
+                  </Stamp>
+                )}
+              </div>
+              {gitAhead > 0 && (
+                <Button
+                  variant="chalkboard"
+                  size="small"
+                  icon={<PushIcon size={14} />}
+                  disabled={pushing}
+                  onClick={handlePush}
+                >
+                  {pushing ? 'Pushing…' : `Push ${gitAhead} commit${gitAhead === 1 ? '' : 's'}`}
+                </Button>
               )}
             </div>
+            {pushError && (
+              <Alert variant="chalkboard" dismissible onDismiss={() => setPushError(null)}>
+                {pushError}
+              </Alert>
+            )}
             <Card variant="chalkboard" size="small" className="stack-card-fill">
               {gitStatus && gitStatus.length > 0 ? (
                 <>

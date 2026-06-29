@@ -95,6 +95,7 @@ type AppStore = {
 
   gitStatus: GitStatusEntry[] | null;
   gitBranch: string | null;
+  gitAhead: number;
   loadGitStatus: () => Promise<void>;
 
   agentStatus: AgentTaskState | null;
@@ -251,10 +252,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   gitStatus: null,
   gitBranch: null,
+  gitAhead: 0,
   loadGitStatus: async () => {
     try {
-      const { branch, entries } = await fetchGitStatus();
-      set({ gitStatus: entries, gitBranch: branch });
+      const { branch, entries, ahead } = await fetchGitStatus();
+      set({ gitStatus: entries, gitBranch: branch, gitAhead: ahead });
     } catch {
       // keep previous status
     }

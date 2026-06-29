@@ -163,6 +163,7 @@ export interface GitStatusEntry {
 export interface GitStatusResponse {
   branch: string;
   entries: GitStatusEntry[];
+  ahead: number;
 }
 
 export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error';
