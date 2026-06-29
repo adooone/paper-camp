@@ -102,17 +102,9 @@ async function checkBranchConflictForPlan(
   if (!activePlanId) return null;
   if (targetPlanId && activePlanId === targetPlanId) return null;
   const plansDir = campFile(root, 'plans');
-  const { entries } = await readAllPlanFiles(plansDir);
+  const { entries } = await readPlansMerged(plansDir, campFile(root, 'plans.md'));
   const activePlan = entries.find((p) => p.id === activePlanId);
   if (!activePlan || activePlan.status === 'done' || activePlan.status === 'dropped') return null;
-  // Fallback: check monolithic if no per-file entry found
-  if (!activePlan) {
-    const plansRaw = await readMaybe(campFile(root, 'plans.md'));
-    if (!plansRaw) return null;
-    const monoPlan = parsePlans(plansRaw).entries.find((p) => p.id === activePlanId);
-    if (!monoPlan || monoPlan.status === 'done' || monoPlan.status === 'dropped') return null;
-    return `Finish \`${activePlanId}\` — ${monoPlan.title} — before starting another plan`;
-  }
   return `Finish \`${activePlanId}\` — ${activePlan.title} — before starting another plan`;
 }
 
@@ -486,7 +478,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           return;
         }
         const ideasDir = campFile(root, 'ideas');
-        const existing = await readAllIdeaFiles(ideasDir);
+        const existing = await readIdeasMerged(ideasDir, campFile(root, 'ideas.md'));
         const maxNum = existing.entries.reduce((max, idea) => {
           if (idea.id) {
             const num = Number.parseInt(idea.id.replace('IDEA-', ''), 10);

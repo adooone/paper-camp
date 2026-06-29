@@ -270,7 +270,7 @@ export function parseOpenQuestions(markdown: string): ParseResult<OpenQuestionEn
 // YAML frontmatter parser  (used by the per-file plan/idea format)
 // ---------------------------------------------------------------------------
 
-const FRONTMATTER_RE = /^---\s*\n([\s\S]*?)\n---\s*\n?/;
+const FRONTMATTER_RE = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n)?/;
 
 /**
  * Extracts and validates YAML frontmatter from a markdown string.
@@ -493,28 +493,37 @@ async function readFileMaybe(path: string): Promise<string> {
  * index.md in either directory.
  * Returns empty result if the directory doesn't exist or has no plan files.
  */
-export async function readAllPlanFiles(plansDir: string): Promise<ParseResult<PlanEntry>> {
+export async function readAllPlanFiles(
+  plansDir: string,
+): Promise<ParseResult<PlanEntry> & { fileCount: number }> {
   const entries: PlanEntry[] = [];
   const warnings: ParseWarning[] = [];
+  let fileCount = 0;
 
   for (const dir of [plansDir, join(plansDir, 'archive')]) {
     const files = (await readdirMaybe(dir)).filter((f) => f.endsWith('.md') && f !== 'index.md');
+    fileCount += files.length;
     for (const file of files) {
       const content = await readFileMaybe(join(dir, file));
-      if (!content) continue;
+      if (!content) {
+        warnings.push({ title: file, message: 'Could not read plan file' });
+        continue;
+      }
       const result = parsePlanFile(content);
       entries.push(...result.entries);
       warnings.push(...result.warnings);
     }
   }
 
-  return { entries, warnings };
+  return { entries, warnings, fileCount };
 }
 
 /**
  * Reads all per-file ideas from a directory (non-recursive, excludes index.md).
  */
-export async function readAllIdeaFiles(ideasDir: string): Promise<ParseResult<IdeaEntry>> {
+export async function readAllIdeaFiles(
+  ideasDir: string,
+): Promise<ParseResult<IdeaEntry> & { fileCount: number }> {
   const entries: IdeaEntry[] = [];
   const warnings: ParseWarning[] = [];
 
@@ -522,13 +531,16 @@ export async function readAllIdeaFiles(ideasDir: string): Promise<ParseResult<Id
 
   for (const file of files) {
     const content = await readFileMaybe(join(ideasDir, file));
-    if (!content) continue;
+    if (!content) {
+      warnings.push({ title: file, message: 'Could not read idea file' });
+      continue;
+    }
     const result = parseIdeaFile(content);
     entries.push(...result.entries);
     warnings.push(...result.warnings);
   }
 
-  return { entries, warnings };
+  return { entries, warnings, fileCount: files.length };
 }
 
 /**
@@ -545,7 +557,7 @@ export async function readPlansMerged(
     readFileMaybe(monolithicPath),
   ]);
 
-  if (perFileResult.entries.length === 0) {
+  if (perFileResult.fileCount === 0) {
     return parsePlans(monoRaw);
   }
 
@@ -579,12 +591,12 @@ export async function readIdeasMerged(
     readFileMaybe(monolithicPath),
   ]);
 
-  if (perFileResult.entries.length === 0 && !monoRaw) {
-    return { entries: [], warnings: [] };
+  if (perFileResult.fileCount === 0 && !monoRaw) {
+    return { entries: [], warnings: perFileResult.warnings };
   }
 
-  if (perFileResult.entries.length === 0) {
-    return { entries: parseIdeas(monoRaw), warnings: [] };
+  if (perFileResult.fileCount === 0) {
+    return { entries: parseIdeas(monoRaw), warnings: perFileResult.warnings };
   }
 
   if (!monoRaw) {

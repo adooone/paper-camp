@@ -5,6 +5,8 @@ import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import type { GitStatusEntry, PlanEntry } from '../../types';
 
+const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
+
 export function createGitManager(root: string) {
   const clients = new Set<ServerResponse>();
 
@@ -155,11 +157,24 @@ export function createGitManager(root: string) {
     // src/ doesn't exist or watcher not available
   }
 
-  // Counts commits on HEAD not yet on the upstream branch. No upstream configured
-  // (e.g. a brand new branch) isn't an error here — it just means nothing to push yet.
+  async function hasUpstream(): Promise<boolean> {
+    try {
+      await runGit(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Counts commits on HEAD not yet on the upstream branch. When no upstream is
+  // configured (e.g. a fresh branch that's never been pushed), every local commit
+  // not reachable from any remote-tracking branch counts as ahead.
   async function getAheadCount(): Promise<number> {
     try {
-      const output = await runGit(['rev-list', '--count', '@{u}..HEAD']);
+      const args = (await hasUpstream())
+        ? ['rev-list', '--count', '@{u}..HEAD']
+        : ['rev-list', '--count', 'HEAD', '--not', '--remotes'];
+      const output = await runGit(args);
       return Number.parseInt(output.trim(), 10) || 0;
     } catch {
       return 0;
@@ -167,7 +182,11 @@ export function createGitManager(root: string) {
   }
 
   async function push(): Promise<void> {
-    await runGit(['push']);
+    if (await hasUpstream()) {
+      await runGit(['push']);
+    } else {
+      await runGit(['push', '--set-upstream', 'origin', getCurrentBranch()]);
+    }
   }
 
   function getCurrentBranch(): string {
@@ -188,6 +207,10 @@ export function createGitManager(root: string) {
    */
   async function diff(files: string[], maxChars = 12000): Promise<string> {
     if (files.length === 0) return '';
+    const blocked = files.find((file) => AI_DIFF_BLOCKLIST.some((pattern) => pattern.test(file)));
+    if (blocked) {
+      throw new Error(`Refusing to send sensitive file "${blocked}" to commit suggestion`);
+    }
     const statusEntries = await runGitStatus();
     const untracked = new Set(statusEntries.filter((e) => e.status === '??').map((e) => e.path));
     const tracked = files.filter((f) => !untracked.has(f));

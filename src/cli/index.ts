@@ -144,9 +144,11 @@ program
 
     let migratedPlans = 0;
     let skippedPlans = 0;
+    let planWarnings = 0;
     const plansRaw = await readFile(plansPath, 'utf-8').catch(() => '');
     if (plansRaw.trim()) {
       const { entries, warnings } = parsePlans(plansRaw);
+      planWarnings = warnings.length;
       for (const warning of warnings) {
         console.warn(`  warning: ${warning.title}: ${warning.message}`);
       }
@@ -199,7 +201,8 @@ program
           skippedIdeas++;
           continue;
         }
-        const content = formatIdeaFile({ id: idea.id, title: idea.title, body: idea.body });
+        const body = idea.body.replace(/^#{1,3}\s+.+(?:\r?\n)?/, '').trim();
+        const content = formatIdeaFile({ id: idea.id, title: idea.title, body });
         await writeFile(targetFile, `${content}\n`, 'utf-8');
         migratedIdeas++;
       }
@@ -215,7 +218,7 @@ program
     // monolithic content, and parseIdeas() in particular has no heading match for plain
     // prose, producing a phantom null-id entry that the merge step's dedup logic always
     // keeps. A truly empty file avoids both parsers entirely.
-    if (migratedPlans > 0 && skippedPlans === 0) {
+    if (migratedPlans > 0 && skippedPlans === 0 && planWarnings === 0) {
       await writeFile(plansPath, '', 'utf-8');
     }
     if (migratedIdeas > 0 && skippedIdeas === 0) {

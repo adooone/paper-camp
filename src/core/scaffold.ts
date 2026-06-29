@@ -50,9 +50,6 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
   paperCampConfigSchema.parse(config);
 
   await mkdir(campDir, { recursive: true });
-  await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
-
-  await mkdir(campDir, { recursive: true });
 
   // Per-file plans directory with index and archive
   const plansDir = join(campDir, 'plans');
@@ -82,4 +79,6 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
       await writeFile(filePath, '', 'utf-8');
     }
   }
+
+  await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
 }

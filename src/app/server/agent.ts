@@ -4,12 +4,7 @@ import { readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import {
-  readAllIdeaFiles,
-  readAllPlanFiles,
-  readIdeasMerged,
-  readPlansMerged,
-} from '../../core/parser';
+import { readAllIdeaFiles, readIdeasMerged, readPlansMerged } from '../../core/parser';
 import {
   type AgentId,
   type AgentTaskState,
@@ -126,7 +121,7 @@ export function createAgentManager(
         return idea.body !== task.ideaBodyBaseline;
       }
       const plansDir = join(root, 'papercamp', 'plans');
-      const { entries } = await readAllPlanFiles(plansDir);
+      const { entries } = await readPlansMerged(plansDir, join(root, 'papercamp', 'plans.md'));
       if (task.ideaId !== undefined) {
         return entries.some((p: { idea?: string }) => p.idea === task.ideaId);
       }
