@@ -29,6 +29,26 @@ import { CopyPromptButton } from './copy-prompt-button';
 const COMMIT_TITLE_STORAGE_KEY = 'papercamp.commitTitle';
 const COMMIT_MESSAGE_STORAGE_KEY = 'papercamp.commitMessage';
 
+// Subsystem-area scopes — keep in sync with .commitlintrc.json's `scope-enum`
+// (release/main are release-bot-only and intentionally excluded from suggestions).
+const COMMIT_SCOPES = [
+  'core',
+  'cli',
+  'app',
+  'server',
+  'agent',
+  'plans',
+  'ideas',
+  'docs',
+  'settings',
+  'stack',
+  'ui',
+  'ci',
+  'config',
+  'deps',
+  'repo',
+];
+
 function readStoredCommitField(key: string): string {
   try {
     return localStorage.getItem(key) ?? '';
@@ -181,13 +201,11 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const activePlan = useMemo(() => findFocusPlan(plans?.entries), [plans?.entries]);
 
   const suggestedScope = useMemo(() => {
-    if (!activePlan) return '';
-    if (activePlan.id) return activePlan.id.replace(/^[A-Z]+-/, '');
-    return activePlan.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 30);
+    // Scope is a subsystem area, never the plan id. Prefer the plan's first tag
+    // that's a known scope (matches AGENTS.md's "usually the plan's primary tag"
+    // rule); fall back to `repo`. The plan id goes in the Refs: footer instead.
+    const tagScope = activePlan?.tags?.find((t) => COMMIT_SCOPES.includes(t));
+    return tagScope ?? 'repo';
   }, [activePlan]);
 
   const allPhasesDone = useMemo(
@@ -203,8 +221,14 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   }, [activePlan, suggestedScope, allPhasesDone]);
 
   const suggestedMessage = useMemo(() => {
-    if (!activePlan?.phases.length || allPhasesDone) return '';
-    return activePlan.phases.map((phase) => `- ${phase.text}`).join('\n');
+    if (!activePlan) return '';
+    // Plan id lives in a Refs: footer (commit-scope convention), not the scope.
+    const refs = activePlan.id ? `Refs: ${activePlan.id}` : '';
+    const phaseBody =
+      !allPhasesDone && activePlan.phases.length
+        ? activePlan.phases.map((phase) => `- ${phase.text}`).join('\n')
+        : '';
+    return [phaseBody, refs].filter(Boolean).join('\n\n');
   }, [activePlan, allPhasesDone]);
 
   useEffect(() => {

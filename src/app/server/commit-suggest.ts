@@ -49,5 +49,11 @@ export async function suggestCommitMessage(
 
   const data = JSON.parse(match[0]) as { title?: string; message?: string };
   if (!data.title) throw new Error('Agent response missing a title');
-  return { title: data.title, message: data.message ?? '' };
+  let message = data.message ?? '';
+  // The prompt asks for a `Refs: <plan>` footer when a plan is active; backfill it
+  // if the model dropped it, so plan traceability stays consistent.
+  if (planContext && !/Refs:\s*\S/.test(message)) {
+    message = message ? `${message}\n\nRefs: ${planContext}` : `Refs: ${planContext}`;
+  }
+  return { title: data.title, message };
 }
