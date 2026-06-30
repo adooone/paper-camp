@@ -1,3 +1,7 @@
+import { readFile, readdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import { parse as parseYaml } from 'yaml';
+import type { z } from 'zod';
 import type {
   ConsistencyIssue,
   DecisionEntry,
@@ -5,12 +9,19 @@ import type {
   IdeaStatus,
   OpenQuestionEntry,
   ParseResult,
+  ParseWarning,
   PhaseItem,
   PlanEntry,
   ProgressEntry,
   RawEntry,
 } from '../types/index';
-import { decisionFieldsSchema, openQuestionFieldsSchema, planFieldsSchema } from './schemas';
+import {
+  decisionFieldsSchema,
+  ideaFrontmatterSchema,
+  openQuestionFieldsSchema,
+  planFieldsSchema,
+  planFrontmatterSchema,
+} from './schemas';
 
 const HEADING_RE = /^##\s+(.+?)\s*$/;
 const FIELD_RE = /^\*\*([A-Za-z][A-Za-z-]*):\*\*\s*(.*)$/;
@@ -255,6 +266,132 @@ export function parseOpenQuestions(markdown: string): ParseResult<OpenQuestionEn
   return { entries, warnings };
 }
 
+// ---------------------------------------------------------------------------
+// YAML frontmatter parser  (used by the per-file plan/idea format)
+// ---------------------------------------------------------------------------
+
+const FRONTMATTER_RE = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n)?/;
+
+/**
+ * Extracts and validates YAML frontmatter from a markdown string.
+ * Returns the parsed data + body without warnings on success.
+ * Returns partial data + warnings when frontmatter is absent, malformed,
+ * or fails schema validation — never throws.
+ */
+export function parseFrontmatter<T>(
+  content: string,
+  schema: z.ZodType<T>,
+): { data: T | null; body: string; warnings: ParseWarning[] } {
+  const warnings: ParseWarning[] = [];
+
+  const match = content.match(FRONTMATTER_RE);
+  if (!match) {
+    return { data: null, body: content.trim(), warnings };
+  }
+
+  const yamlStr = match[1];
+  const body = content.slice(match[0].length).trim();
+
+  let parsed: unknown;
+  try {
+    parsed = parseYaml(yamlStr);
+  } catch (err) {
+    warnings.push({
+      title: '(frontmatter)',
+      message: `Invalid YAML frontmatter: ${(err as Error).message}`,
+    });
+    return { data: null, body, warnings };
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    warnings.push({
+      title: '(frontmatter)',
+      message: 'YAML frontmatter did not produce an object',
+    });
+    return { data: null, body, warnings };
+  }
+
+  const result = schema.safeParse(parsed);
+  if (!result.success) {
+    const title = (parsed as Record<string, unknown>).id as string | undefined;
+    warnings.push({
+      title: title ?? '(frontmatter)',
+      message: result.error.issues.map((i) => i.message).join('; '),
+    });
+    return { data: null, body, warnings };
+  }
+
+  return { data: result.data, body, warnings };
+}
+
+/**
+ * Parse a single per-plan file with YAML frontmatter.
+ * The body after frontmatter is scanned for ### Phases and ### Log sections,
+ * same as the monolithic parser.
+ */
+export function parsePlanFile(content: string): ParseResult<PlanEntry> {
+  const warnings: ParseWarning[] = [];
+  const {
+    data: frontmatter,
+    body: rawBody,
+    warnings: fmWarnings,
+  } = parseFrontmatter(content, planFrontmatterSchema);
+  warnings.push(...fmWarnings);
+
+  if (!frontmatter) {
+    return { entries: [], warnings };
+  }
+
+  let body = rawBody;
+  const { body: bodyAfterPhases, phases } = extractPhases(body);
+  body = bodyAfterPhases;
+  const { body: bodyAfterLog, log } = extractLog(body);
+  body = bodyAfterLog;
+  const { body: bodyAfterClarifications, clarifications } = extractClarifications(body);
+  body = bodyAfterClarifications;
+
+  const entry: PlanEntry = {
+    title: frontmatter.title,
+    status: frontmatter.status,
+    kind: frontmatter.kind,
+    id: frontmatter.id,
+    idea: frontmatter.idea,
+    agent: frontmatter.agent,
+    created: frontmatter.created,
+    updated: frontmatter.updated,
+    tags: frontmatter.tags ?? [],
+    body,
+    phases,
+    log,
+    clarifications,
+  };
+
+  return { entries: [entry], warnings };
+}
+
+/**
+ * Parse a single per-idea file with YAML frontmatter.
+ */
+export function parseIdeaFile(content: string): ParseResult<IdeaEntry> {
+  const {
+    data: frontmatter,
+    body,
+    warnings: fmWarnings,
+  } = parseFrontmatter(content, ideaFrontmatterSchema);
+
+  if (!frontmatter) {
+    return { entries: [], warnings: fmWarnings };
+  }
+
+  const entry: IdeaEntry = {
+    id: frontmatter.id,
+    title: frontmatter.title,
+    body: body || '',
+  };
+
+  return { entries: [entry], warnings: fmWarnings };
+}
+
 const IDEA_ID_RE = /^(IDEA-\d+):\s*/;
 
 const IDEA_SEPARATOR_RE = /\n---+\n/;
@@ -272,20 +409,6 @@ export function parseIdeas(markdown: string): IdeaEntry[] {
     const id = idMatch?.[1] ?? null;
     const title = id ? rawTitle.slice(idMatch![0].length) : rawTitle;
     return { id, title, body: section.trim() };
-  });
-}
-
-export function deriveIdeaStatuses(ideas: IdeaEntry[], plans: PlanEntry[]): IdeaEntry[] {
-  return ideas.map((idea) => {
-    if (!idea.id) {
-      return { ...idea, status: 'planned' };
-    }
-    const linkedPlans = plans.filter((p) => p.idea === idea.id);
-    if (linkedPlans.length === 0) {
-      return { ...idea, status: 'planned' };
-    }
-    const allDone = linkedPlans.every((p) => p.status === 'done' || p.status === 'dropped');
-    return { ...idea, status: allDone ? 'done' : 'planned' };
   });
 }
 
@@ -344,6 +467,160 @@ const PROGRESS_HEADING_RE = /^##\s+(\d{4}-\d{2}-\d{2})\s*$/;
 const BULLET_RE = /^[-*]\s+(.*)$/;
 
 /** progress.md is an append-only date log, not a record-based file — no fields, no validation. */
+// ---------------------------------------------------------------------------
+// Per-file readers  (read all plan/idea files from a directory)
+// ---------------------------------------------------------------------------
+
+async function readdirMaybe(dir: string): Promise<string[]> {
+  try {
+    return await readdir(dir);
+  } catch {
+    return [];
+  }
+}
+
+async function readFileMaybe(path: string): Promise<string> {
+  try {
+    return await readFile(path, 'utf-8');
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Reads all per-file plans from a directory, including its `archive/` subdirectory
+ * (done/dropped plans live there — see core/serializer.ts's archive move). Excludes
+ * index.md in either directory.
+ * Returns empty result if the directory doesn't exist or has no plan files.
+ */
+export async function readAllPlanFiles(
+  plansDir: string,
+): Promise<ParseResult<PlanEntry> & { fileCount: number }> {
+  const entries: PlanEntry[] = [];
+  const warnings: ParseWarning[] = [];
+  let fileCount = 0;
+
+  for (const dir of [plansDir, join(plansDir, 'archive')]) {
+    const files = (await readdirMaybe(dir)).filter((f) => f.endsWith('.md') && f !== 'index.md');
+    fileCount += files.length;
+    for (const file of files) {
+      const content = await readFileMaybe(join(dir, file));
+      if (!content) {
+        warnings.push({ title: file, message: 'Could not read plan file' });
+        continue;
+      }
+      const result = parsePlanFile(content);
+      entries.push(...result.entries);
+      warnings.push(...result.warnings);
+    }
+  }
+
+  return { entries, warnings, fileCount };
+}
+
+/**
+ * Reads all per-file ideas from a directory (non-recursive, excludes index.md).
+ */
+export async function readAllIdeaFiles(
+  ideasDir: string,
+): Promise<ParseResult<IdeaEntry> & { fileCount: number }> {
+  const entries: IdeaEntry[] = [];
+  const warnings: ParseWarning[] = [];
+
+  const files = (await readdirMaybe(ideasDir)).filter((f) => f.endsWith('.md') && f !== 'index.md');
+
+  for (const file of files) {
+    const content = await readFileMaybe(join(ideasDir, file));
+    if (!content) {
+      warnings.push({ title: file, message: 'Could not read idea file' });
+      continue;
+    }
+    const result = parseIdeaFile(content);
+    entries.push(...result.entries);
+    warnings.push(...result.warnings);
+  }
+
+  return { entries, warnings, fileCount: files.length };
+}
+
+/**
+ * Merges per-file plan entries with monolithic fallback, deduplicating by id/title.
+ * Per-file entries take precedence; any plan in per-file that also exists in
+ * the monolithic file is only included once (per-file version wins).
+ */
+export async function readPlansMerged(
+  plansDir: string,
+  monolithicPath: string,
+): Promise<ParseResult<PlanEntry>> {
+  const [perFileResult, monoRaw] = await Promise.all([
+    readAllPlanFiles(plansDir),
+    readFileMaybe(monolithicPath),
+  ]);
+
+  if (perFileResult.fileCount === 0) {
+    return parsePlans(monoRaw);
+  }
+
+  const monoResult = parsePlans(monoRaw);
+  const seen = new Set<string>();
+  for (const e of perFileResult.entries) {
+    seen.add(e.id ?? e.title);
+  }
+  const dedupedMono = monoResult.entries.filter((e) => {
+    const key = e.id ?? e.title;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return {
+    entries: [...perFileResult.entries, ...dedupedMono],
+    warnings: [...monoResult.warnings, ...perFileResult.warnings],
+  };
+}
+
+/**
+ * Merges per-file idea entries with monolithic fallback, deduplicating by id.
+ */
+export async function readIdeasMerged(
+  ideasDir: string,
+  monolithicPath: string,
+): Promise<ParseResult<IdeaEntry>> {
+  const [perFileResult, monoRaw] = await Promise.all([
+    readAllIdeaFiles(ideasDir),
+    readFileMaybe(monolithicPath),
+  ]);
+
+  if (perFileResult.fileCount === 0 && !monoRaw) {
+    return { entries: [], warnings: perFileResult.warnings };
+  }
+
+  if (perFileResult.fileCount === 0) {
+    return { entries: parseIdeas(monoRaw), warnings: perFileResult.warnings };
+  }
+
+  if (!monoRaw) {
+    return perFileResult;
+  }
+
+  const monoEntries = parseIdeas(monoRaw);
+  const seen = new Set<string>();
+  for (const e of perFileResult.entries) {
+    if (e.id) seen.add(e.id);
+  }
+  const dedupedMono = monoEntries.filter((e) => {
+    if (!e.id) return true;
+    if (seen.has(e.id)) return false;
+    seen.add(e.id);
+    return true;
+  });
+
+  return {
+    entries: [...perFileResult.entries, ...dedupedMono],
+    warnings: [...perFileResult.warnings],
+  };
+}
+
 export function parseProgress(markdown: string): ProgressEntry[] {
   const lines = markdown.split('\n');
   const headingIndices: number[] = [];

@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import { AGENT_IDS } from '../types/index';
 
-const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected a YYYY-MM-DD date');
+export const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
+
+// ---------------------------------------------------------------------------
+// Field-based schemas  (used by the monolithic `plans.md`/`decisions.md`/
+// `open-questions.md` format — one file with multiple `## Heading` entries,
+// each having `**Field:** value` lines below the heading.)
+// ---------------------------------------------------------------------------
 
 export const planFieldsSchema = z.object({
   status: z.enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped']),
@@ -27,6 +33,37 @@ export const openQuestionFieldsSchema = z.object({
   blocks: z.string().optional(),
 });
 
+// ---------------------------------------------------------------------------
+// YAML frontmatter schemas  (used by the per-file plan/idea format —
+// one file per plan/idea, metadata in `---`-delimited YAML frontmatter,
+// markdown body below.)
+//
+// These are the single source of truth for the per-file format. The
+// field-based schemas above exist only until the migration from monolithic
+// files (phase 7 of FEAT-24) is complete.
+// ---------------------------------------------------------------------------
+
+export const planFrontmatterSchema = z.object({
+  id: z.string().describe('Permanent plan ID, e.g. FEAT-24'),
+  title: z.string().describe('Human-readable plan name, e.g. "Plan storage architecture"'),
+  kind: z
+    .enum(['feat', 'fix', 'chore', 'docs', 'refactor'])
+    .describe('Plan kind matching Conventional Commits types'),
+  status: z
+    .enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped'])
+    .describe('Current lifecycle status'),
+  idea: z.string().optional().describe('IDEA-N backlink if this plan grew out of an idea'),
+  agent: z.enum(AGENT_IDS).optional().describe('Per-plan agent override'),
+  created: dateString.describe('Creation date (YYYY-MM-DD)'),
+  updated: dateString.optional().describe('Last significant update date (YYYY-MM-DD)'),
+  tags: z.array(z.string()).optional().describe('Tagging categories'),
+});
+
+export const ideaFrontmatterSchema = z.object({
+  id: z.string().describe('Permanent idea ID, e.g. IDEA-20'),
+  title: z.string().describe('Short idea headline (3-6 words)'),
+});
+
 export const paperCampConfigSchema = z.object({
   version: z.string(),
   projectName: z.string(),
@@ -46,6 +83,7 @@ export const paperCampConfigSchema = z.object({
       phase: z.enum(AGENT_IDS),
       planDraft: z.enum(AGENT_IDS),
       ideaExtend: z.enum(AGENT_IDS),
+      commitSuggest: z.enum(AGENT_IDS),
     })
     .optional(),
 });
@@ -53,3 +91,5 @@ export const paperCampConfigSchema = z.object({
 export type PlanFields = z.infer<typeof planFieldsSchema>;
 export type DecisionFields = z.infer<typeof decisionFieldsSchema>;
 export type OpenQuestionFields = z.infer<typeof openQuestionFieldsSchema>;
+export type PlanFrontmatter = z.infer<typeof planFrontmatterSchema>;
+export type IdeaFrontmatter = z.infer<typeof ideaFrontmatterSchema>;

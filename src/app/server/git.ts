@@ -1,8 +1,16 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { watch } from 'node:fs';
+import { lstat, readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import type { GitStatusEntry, PlanEntry } from '../../types';
+
+const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
+
+// Git expands pathspec magic (e.g. `:/`) even after `--`, which can broaden a
+// command beyond the caller-selected files. Force every API-supplied path to be
+// treated literally so selections can't widen to unrelated files.
+const toLiteralPathspec = (file: string) => `:(literal)${file}`;
 
 export function createGitManager(root: string) {
   const clients = new Set<ServerResponse>();
@@ -25,11 +33,13 @@ export function createGitManager(root: string) {
       const x = line[0] ?? ' ';
       const y = line[1] ?? ' ';
       const rest = line.slice(3);
-      const path = rest.split(' -> ').pop() ?? rest;
+      const parts = rest.split(' -> ');
+      const path = parts.pop() ?? rest;
       entries.push({
         path,
         status: `${x}${y}`,
         staged: x !== ' ' && x !== '?',
+        renameSource: (x === 'R' || x === 'C') && parts.length > 0 ? parts[0] : undefined,
       });
     }
     return entries;
@@ -66,10 +76,26 @@ export function createGitManager(root: string) {
 
   async function commit(files: string[], title: string, message?: string): Promise<void> {
     if (files.length > 0) {
-      await runGit(['add', '--', ...files]);
+      const statusEntries = await runGitStatus();
+      const statusByPath = new Map(statusEntries.map((e) => [e.path, e.status]));
+      // Files already fully staged (no pending worktree change) have nothing left for
+      // `git add` to match — passing them anyway makes git fail with "did not match any files".
+      const toAdd = files.filter((f) => {
+        const status = statusByPath.get(f);
+        return status === undefined || status[1] !== ' ';
+      });
+      if (toAdd.length > 0) {
+        await runGit(['add', '--', ...toAdd.map(toLiteralPathspec)]);
+      }
     }
     const args = ['commit', '-m', title];
     if (message) args.push('-m', message);
+    // Restrict the commit to the selected files so unrelated already-staged
+    // paths aren't swept in; an empty selection falls through to "commit
+    // whatever's staged", which is the intended behavior for that case.
+    if (files.length > 0) {
+      args.push('--', ...files.map(toLiteralPathspec));
+    }
     await runGit(args);
   }
 
@@ -144,6 +170,38 @@ export function createGitManager(root: string) {
     // src/ doesn't exist or watcher not available
   }
 
+  async function hasUpstream(): Promise<boolean> {
+    try {
+      await runGit(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Counts commits on HEAD not yet on the upstream branch. When no upstream is
+  // configured (e.g. a fresh branch that's never been pushed), every local commit
+  // not reachable from any remote-tracking branch counts as ahead.
+  async function getAheadCount(): Promise<number> {
+    try {
+      const args = (await hasUpstream())
+        ? ['rev-list', '--count', '@{u}..HEAD']
+        : ['rev-list', '--count', 'HEAD', '--not', '--remotes'];
+      const output = await runGit(args);
+      return Number.parseInt(output.trim(), 10) || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  async function push(): Promise<void> {
+    if (await hasUpstream()) {
+      await runGit(['push']);
+    } else {
+      await runGit(['push', '--set-upstream', 'origin', getCurrentBranch()]);
+    }
+  }
+
   function getCurrentBranch(): string {
     const result = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: root });
     return result.stdout.toString().trim();
@@ -155,14 +213,81 @@ export function createGitManager(root: string) {
     return match ? match[1].toUpperCase() : null;
   }
 
+  /**
+   * Diff text for the given paths, capped to a sane size for feeding into a prompt.
+   * Plain `git diff` skips untracked files entirely, so those are read directly and
+   * presented as new-file content instead.
+   */
+  async function diff(files: string[], maxChars = 12000): Promise<string> {
+    if (files.length === 0) return '';
+    const blocked = files.find((file) => AI_DIFF_BLOCKLIST.some((pattern) => pattern.test(file)));
+    if (blocked) {
+      throw new Error(`Refusing to send sensitive file "${blocked}" to commit suggestion`);
+    }
+    const statusEntries = await runGitStatus();
+    const untracked = new Set(statusEntries.filter((e) => e.status === '??').map((e) => e.path));
+
+    const renameSources = new Map(
+      statusEntries
+        .filter((e): e is GitStatusEntry & { renameSource: string } => !!e.renameSource)
+        .map((e) => [e.path, e.renameSource]),
+    );
+
+    const tracked = files.filter((f) => {
+      if (untracked.has(f)) return false;
+      const source = renameSources.get(f);
+      if (source && AI_DIFF_BLOCKLIST.some((pattern) => pattern.test(source))) return false;
+      return true;
+    });
+    const parts: string[] = [];
+
+    if (tracked.length > 0) {
+      const trackedDiff = await runGit([
+        'diff',
+        'HEAD',
+        '--',
+        ...tracked.map(toLiteralPathspec),
+      ]).catch(() => '');
+      if (trackedDiff) parts.push(trackedDiff);
+    }
+
+    for (const file of files.filter((f) => untracked.has(f))) {
+      const filePath = join(root, file);
+      // lstat (not stat) so a symlink is identified as such instead of followed —
+      // otherwise its target's content, possibly outside the repo, leaks into the AI prompt.
+      const stats = await lstat(filePath).catch(() => null);
+      if (!stats) continue;
+      if (stats.isSymbolicLink()) {
+        parts.push(`--- /dev/null\n+++ b/${file}\n(new file omitted: symlink)`);
+        continue;
+      }
+      if (stats.size > maxChars) {
+        parts.push(`--- /dev/null\n+++ b/${file}\n(new file omitted: exceeds diff size cap)`);
+        continue;
+      }
+      const content = await readFile(filePath, 'utf-8').catch(() => '');
+      if (content) {
+        parts.push(`--- /dev/null\n+++ b/${file}\n(new file)\n${content}`);
+      }
+    }
+
+    const combined = parts.join('\n\n');
+    return combined.length > maxChars
+      ? `${combined.slice(0, maxChars)}\n... (truncated)`
+      : combined;
+  }
+
   return {
     async getStatus(): Promise<GitStatusEntry[]> {
       return runGitStatus();
     },
     getCurrentBranch,
     commit,
+    diff,
     ensureBranch,
     getFeatureBranchPlanId,
+    getAheadCount,
+    push,
     subscribe(res: ServerResponse) {
       clients.add(res);
       res.on('close', () => clients.delete(res));

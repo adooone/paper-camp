@@ -1,10 +1,9 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { parseIdeas, parsePlans } from '../../core/parser';
+import { readIdeasMerged, readPlansMerged } from '../../core/parser';
 import {
   type AgentId,
   type AgentTaskState,
@@ -17,7 +16,7 @@ import {
   type PlanEntry,
   type TaskKind,
 } from '../../types/index';
-import { type AgentAdapter, resolveAgent } from './agents';
+import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 
 const MAX_LINES = 50;
 
@@ -44,7 +43,7 @@ interface AgentTask {
 
 function readDefaultAgentIds(root: string): DefaultAgentsMap {
   try {
-    const raw = readFileSync(join(root, '.paper-camp', 'config.json'), 'utf-8');
+    const raw = readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8');
     const config = JSON.parse(raw) as PaperCampConfig & { defaultAgent?: AgentId };
     if (config.defaultAgents) return config.defaultAgents;
     if (config.defaultAgent) {
@@ -52,6 +51,7 @@ function readDefaultAgentIds(root: string): DefaultAgentsMap {
         phase: config.defaultAgent,
         planDraft: config.defaultAgent,
         ideaExtend: config.defaultAgent,
+        commitSuggest: config.defaultAgent,
       };
     }
     return DEFAULT_AGENTS;
@@ -104,21 +104,21 @@ export function createAgentManager(
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
     try {
       if (task.taskKind === 'extend') {
-        const raw = await readFile(join(root, 'papercamp', 'ideas.md'), 'utf-8');
-        const entries = parseIdeas(raw);
+        const ideasDir = join(root, 'papercamp', 'ideas');
+        const { entries } = await readIdeasMerged(ideasDir, join(root, 'papercamp', 'ideas.md'));
         const idea = entries.find((e) => e.id === task.ideaId);
         if (!idea) return null;
         if (task.ideaBodyBaseline === undefined) return null;
         return idea.body !== task.ideaBodyBaseline;
       }
-      const raw = await readFile(join(root, 'papercamp', 'plans.md'), 'utf-8');
-      const { entries } = parsePlans(raw);
+      const plansDir = join(root, 'papercamp', 'plans');
+      const { entries } = await readPlansMerged(plansDir, join(root, 'papercamp', 'plans.md'));
       if (task.ideaId !== undefined) {
-        return entries.some((p) => p.idea === task.ideaId);
+        return entries.some((p: { idea?: string }) => p.idea === task.ideaId);
       }
       const plan =
-        entries.find((p) => p.id === task.planId) ??
-        entries.find((p) => p.title === task.planTitle);
+        entries.find((p: { id?: string }) => p.id === task.planId) ??
+        entries.find((p: { title: string }) => p.title === task.planTitle);
       if (!plan) return null;
       if (task.phaseIndex !== undefined) {
         return plan.phases[task.phaseIndex]?.done ?? null;
@@ -280,6 +280,120 @@ export function createAgentManager(
     });
   }
 
+  // Read-only, one-shot task: ask the configured agent to turn a diff into a commit
+  // message.  Uses the configured agent's binary but constructs its own arguments so it
+  // never picks up the shared adapter's `--permission-mode auto` flag — this call must
+  // stay deny-by-default since the model is only ever supposed to read the diff text.
+  const COMMIT_SUGGEST_TIMEOUT_MS = 60_000;
+  const STDIN_MAX_BYTES = 10 * 1024 * 1024;
+
+  function runCommitSuggest(prompt: string): Promise<string> {
+    if (isBusy()) {
+      return Promise.reject(new Error('An agent task is already running'));
+    }
+    if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
+      return Promise.reject(new Error('Commit suggestion prompt exceeds the 10MB stdin limit'));
+    }
+    const defaultAgents = readDefaultAgentIds(root);
+    const { id: agentId, adapter } = resolveAgent({
+      defaultAgents,
+      taskKind: 'commit-suggest',
+    });
+
+    const isClaude = agentId === 'claude-code';
+    const args = isClaude ? ['-p', '--output-format', 'json'] : ['run', '--format', 'json'];
+
+    return new Promise((resolve, reject) => {
+      const proc = spawn(adapter.command, args, {
+        cwd: root,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      const task: AgentTask = {
+        taskKind: 'commit-suggest',
+        planTitle: 'Suggest commit message',
+        status: 'starting',
+        agentId,
+        adapter,
+        proc,
+        lines: [],
+      };
+      current = task;
+      setStatus(task, 'running');
+
+      let settled = false;
+      const settle = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        fn();
+      };
+      const timeout = setTimeout(() => {
+        settle(() => {
+          if (current === task) {
+            pushLine(task, 'Commit suggestion timed out');
+            setStatus(task, 'error');
+            if (!proc.killed) proc.kill('SIGTERM');
+          }
+          reject(new Error('Commit suggestion timed out'));
+        });
+      }, COMMIT_SUGGEST_TIMEOUT_MS);
+
+      proc.stdin?.on('error', () => {});
+      proc.stdin?.write(prompt);
+      proc.stdin?.end();
+
+      let stdout = '';
+      let stderr = '';
+      proc.stdout?.on('data', (d: Buffer) => {
+        stdout += d.toString();
+      });
+      proc.stderr?.on('data', (d: Buffer) => {
+        stderr += d.toString();
+      });
+      proc.on('close', (code) => {
+        if (current !== task) return;
+        settle(() => {
+          if (task.status === 'stopping') {
+            setStatus(task, 'done');
+            reject(new Error('Stopped'));
+            return;
+          }
+          if (code === 0) {
+            setStatus(task, 'done');
+            // opencode outputs JSON events — extract text content to find the response.
+            const result = isClaude
+              ? stdout
+              : stdout
+                  .split('\n')
+                  .map((line) => {
+                    try {
+                      const evt = JSON.parse(line);
+                      if (evt?.type === 'text' && evt?.part?.text) return evt.part.text;
+                    } catch {}
+                    return null;
+                  })
+                  .filter(Boolean)
+                  .join('\n');
+            resolve(result);
+          } else {
+            const errText = stderr || `${adapter.command} exited with code ${code}`;
+            pushLine(task, errText);
+            setStatus(task, 'error');
+            reject(new Error(errText));
+          }
+        });
+      });
+      proc.on('error', (err) => {
+        if (current !== task) return;
+        settle(() => {
+          pushLine(task, `Failed to spawn agent: ${err.message}`);
+          setStatus(task, 'error');
+          reject(err);
+        });
+      });
+    });
+  }
+
   function stop(): Result {
     if (!current) {
       return { ok: false, error: 'No agent task running' };
@@ -316,6 +430,7 @@ export function createAgentManager(
     startForPlan,
     startForIdea,
     startForIdeaExtend,
+    runCommitSuggest,
     stop,
     getStatus,
     subscribe(res: ServerResponse) {
@@ -335,6 +450,7 @@ export interface AgentManager {
   startForPlan: (plan: PlanEntry, prompt: string) => Result;
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
+  runCommitSuggest: (prompt: string) => Promise<string>;
   stop: () => Result;
   getStatus: () => AgentTaskState | null;
   subscribe: (res: ServerResponse) => void;

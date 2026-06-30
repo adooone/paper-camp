@@ -45,6 +45,7 @@ const GeneralSection = () => {
   const [agentSavedPhase, setAgentSavedPhase] = useState(false);
   const [agentSavedDraft, setAgentSavedDraft] = useState(false);
   const [agentSavedExtend, setAgentSavedExtend] = useState(false);
+  const [agentSavedSuggest, setAgentSavedSuggest] = useState(false);
 
   useEffect(() => {
     fetchConfig().then((c) => {
@@ -60,6 +61,7 @@ const GeneralSection = () => {
       phase: current?.phase ?? DEFAULT_AGENTS.phase,
       planDraft: current?.planDraft ?? DEFAULT_AGENTS.planDraft,
       ideaExtend: current?.ideaExtend ?? DEFAULT_AGENTS.ideaExtend,
+      commitSuggest: current?.commitSuggest ?? DEFAULT_AGENTS.commitSuggest,
       [key]: value as AgentId,
     };
     const ok = await saveConfig({ defaultAgents: updated });
@@ -70,7 +72,9 @@ const GeneralSection = () => {
           ? setAgentSavedPhase
           : key === 'planDraft'
             ? setAgentSavedDraft
-            : setAgentSavedExtend;
+            : key === 'ideaExtend'
+              ? setAgentSavedExtend
+              : setAgentSavedSuggest;
       setter(true);
       setTimeout(() => setter(false), 2000);
     }
@@ -128,7 +132,7 @@ const GeneralSection = () => {
       </div>
       {config === undefined && <p>Loading…</p>}
       {config === null && (
-        <Alert variant="warning" title="No .paper-camp/config.json found">
+        <Alert variant="warning" title="No papercamp/config.json found">
           Run <code>paper-camp init</code> in this directory first.
         </Alert>
       )}
@@ -309,7 +313,14 @@ const GeneralSection = () => {
           </div>
 
           <div
-            style={{ display: 'flex', alignItems: 'flex-end', gap: space[3], paddingTop: space[3] }}
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: space[3],
+              borderBottom: '1px solid rgba(61, 53, 43, 0.1)',
+              paddingBottom: space[3],
+              paddingTop: space[3],
+            }}
           >
             <Select
               value={config.defaultAgents?.ideaExtend ?? DEFAULT_AGENTS.ideaExtend}
@@ -319,6 +330,23 @@ const GeneralSection = () => {
               helperText="Expands an idea with AI-generated detail."
             />
             {agentSavedExtend && (
+              <span className="text-sm" style={{ opacity: 0.6 }}>
+                Saved
+              </span>
+            )}
+          </div>
+
+          <div
+            style={{ display: 'flex', alignItems: 'flex-end', gap: space[3], paddingTop: space[3] }}
+          >
+            <Select
+              value={config.defaultAgents?.commitSuggest ?? DEFAULT_AGENTS.commitSuggest}
+              onChange={(v: string) => handleSaveAgent('commitSuggest', v)}
+              options={AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] }))}
+              label="Commit suggestion"
+              helperText="Generates commit title and message from the diff."
+            />
+            {agentSavedSuggest && (
               <span className="text-sm" style={{ opacity: 0.6 }}>
                 Saved
               </span>

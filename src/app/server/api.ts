@@ -1,20 +1,29 @@
-import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, stat, unlink, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { extname, join } from 'node:path';
 import { applyEnvEntries, parseEnv } from '../../core/env';
+import { deriveIdeaStatuses } from '../../core/idea-status';
 import {
   findConsistencyIssues,
   parseDecisions,
   parseIdeas,
   parseOpenQuestions,
+  parsePlanFile,
   parsePlans,
   parseProgress,
+  readAllIdeaFiles,
+  readAllPlanFiles,
+  readIdeasMerged,
+  readPlansMerged,
 } from '../../core/parser';
 import {
-  appendBlock,
+  archivePlanFile,
   assignPlanId,
+  formatIdeaFile,
+  formatIdeasIndex,
   formatPlanEntry,
-  formatPlans,
+  formatPlanFile,
+  formatPlansIndex,
   todayDateString,
 } from '../../core/serializer';
 import {
@@ -23,6 +32,7 @@ import {
   DEFAULT_AGENTS,
   type DefaultAgentsMap,
   type EnvEntry,
+  type IdeaEntry,
   type LogEntry,
   PLAN_KINDS,
   type PaperCampConfig,
@@ -30,8 +40,10 @@ import {
   type PlanEntry,
   type PlanStatus,
 } from '../../types/index';
+import { findFocusPlan } from '../features/plans/helpers';
 import { createActivityManager } from './activity';
 import { type AgentManager, createAgentManager } from './agent';
+import { suggestCommitMessage } from './commit-suggest';
 import { createGitManager } from './git';
 import { createStatusManager } from './status';
 
@@ -89,12 +101,31 @@ async function checkBranchConflictForPlan(
   const activePlanId = git.getFeatureBranchPlanId();
   if (!activePlanId) return null;
   if (targetPlanId && activePlanId === targetPlanId) return null;
-  const plansRaw = await readMaybe(campFile(root, 'plans.md'));
-  if (!plansRaw) return null;
-  const { entries } = parsePlans(plansRaw);
+  const plansDir = campFile(root, 'plans');
+  const { entries } = await readPlansMerged(plansDir, campFile(root, 'plans.md'));
   const activePlan = entries.find((p) => p.id === activePlanId);
   if (!activePlan || activePlan.status === 'done' || activePlan.status === 'dropped') return null;
   return `Finish \`${activePlanId}\` — ${activePlan.title} — before starting another plan`;
+}
+
+async function regenerateIndexes(root: string): Promise<void> {
+  const plansDir = campFile(root, 'plans');
+  const ideasDir = campFile(root, 'ideas');
+
+  const [plansResult, ideasResult] = await Promise.all([
+    readPlansMerged(plansDir, campFile(root, 'plans.md')),
+    readIdeasMerged(ideasDir, campFile(root, 'ideas.md')),
+  ]);
+
+  const ideasWithStatus = deriveIdeaStatuses(ideasResult.entries, plansResult.entries);
+
+  await mkdir(plansDir, { recursive: true });
+  await mkdir(ideasDir, { recursive: true });
+
+  await Promise.all([
+    writeFile(join(plansDir, 'index.md'), formatPlansIndex(plansResult.entries)),
+    writeFile(join(ideasDir, 'index.md'), formatIdeasIndex(ideasWithStatus)),
+  ]);
 }
 
 const apiRoutes: ApiRoute[] = [
@@ -113,7 +144,7 @@ const apiRoutes: ApiRoute[] = [
   },
   {
     path: '/api/plans',
-    handler: async (root) => parsePlans(await readMaybe(campFile(root, 'plans.md'))),
+    handler: async (root) => readPlansMerged(campFile(root, 'plans'), campFile(root, 'plans.md')),
   },
   {
     path: '/api/progress',
@@ -132,28 +163,25 @@ const apiRoutes: ApiRoute[] = [
   },
   {
     path: '/api/ideas',
-    handler: async (root) => ({
-      content: await readMaybe(campFile(root, 'ideas.md')),
-    }),
+    handler: async (root) => readIdeasMerged(campFile(root, 'ideas'), campFile(root, 'ideas.md')),
   },
   {
     path: '/api/consistency',
     handler: async (root) => {
-      const [decisionsRaw, openQuestionsRaw, plansRaw] = await Promise.all([
+      const [decisionsRaw, openQuestionsRaw, plansResult] = await Promise.all([
         readMaybe(campFile(root, 'decisions.md')),
         readMaybe(campFile(root, 'open-questions.md')),
-        readMaybe(campFile(root, 'plans.md')),
+        readPlansMerged(campFile(root, 'plans'), campFile(root, 'plans.md')),
       ]);
       const decisions = parseDecisions(decisionsRaw);
       const openQuestions = parseOpenQuestions(openQuestionsRaw);
-      const plans = parsePlans(plansRaw);
-      return findConsistencyIssues(decisions.entries, openQuestions.entries, plans.entries);
+      return findConsistencyIssues(decisions.entries, openQuestions.entries, plansResult.entries);
     },
   },
   {
     path: '/api/config',
     handler: async (root) => {
-      const raw = await readMaybe(join(root, '.paper-camp', 'config.json'));
+      const raw = await readMaybe(join(root, 'papercamp', 'config.json'));
       return raw ? JSON.parse(raw) : null;
     },
   },
@@ -204,7 +232,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
   const handler = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const pathname = (req.url ?? '').split('?')[0];
 
-    // DELETE /api/plans?title=... — remove a plan entry
+    // DELETE /api/plans?title=... — remove a plan entry from per-file storage
     if (req.method === 'DELETE' && pathname === '/api/plans') {
       try {
         const url = new URL(req.url ?? '', `http://${req.headers.host ?? 'localhost'}`);
@@ -215,17 +243,25 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.end(JSON.stringify({ error: 'title is required' }));
           return;
         }
-        const filePath = campFile(root, 'plans.md');
-        const parsed = parsePlans(await readMaybe(filePath));
+        const plansDir = campFile(root, 'plans');
         const trimmed = title.trim();
-        const remaining = parsed.entries.filter((entry) => entry.title !== trimmed);
-        if (remaining.length === parsed.entries.length) {
+        const { entries } = await readAllPlanFiles(plansDir);
+        const target = entries.find((e) => e.title === trimmed || e.id === trimmed);
+        if (!target?.id) {
           res.statusCode = 404;
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'plan not found' }));
+          res.end(JSON.stringify({ error: 'plan not found in per-file storage' }));
           return;
         }
-        await writeFile(filePath, formatPlans(remaining));
+        const filePath = join(plansDir, `${target.id}.md`);
+        if (!(await fileExists(filePath))) {
+          res.statusCode = 404;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'plan file not found' }));
+          return;
+        }
+        await unlink(filePath);
+        await regenerateIndexes(root);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ ok: true }));
@@ -237,7 +273,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
       return;
     }
 
-    // POST /api/plans — append a new idea entry
+    // POST /api/plans — create a new per-file plan entry
     if (req.method === 'POST' && pathname === '/api/plans') {
       try {
         const body = await readBody(req);
@@ -255,18 +291,29 @@ export function createApiMiddleware(root: string): ApiMiddleware {
         const planKind =
           kind && PLAN_KINDS.includes(kind as (typeof PLAN_KINDS)[number]) ? kind : 'feat';
 
-        const configPath = join(root, '.paper-camp', 'config.json');
+        const configPath = join(root, 'papercamp', 'config.json');
         const id = await assignPlanId(configPath, planKind);
 
-        const entry = formatPlanEntry({
-          title: title.trim(),
-          status: 'idea',
-          kind: planKind,
+        if (!id) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'could not assign plan ID' }));
+          return;
+        }
+
+        const plansDir = campFile(root, 'plans');
+        await mkdir(plansDir, { recursive: true });
+
+        const planContent = formatPlanFile({
           id,
+          title: title.trim(),
+          kind: planKind,
+          status: 'idea',
           created: todayDateString(),
           body: content?.trim(),
         });
-        await appendBlock(campFile(root, 'plans.md'), entry);
+        await writeFile(join(plansDir, `${id}.md`), `${planContent}\n`, 'utf-8');
+        await regenerateIndexes(root);
         res.statusCode = 201;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ ok: true, id }));
@@ -289,8 +336,8 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.end(JSON.stringify({ error: 'title is required' }));
           return;
         }
-        const body = await readBody(req);
-        const updates = JSON.parse(body) as {
+        const reqBody = await readBody(req);
+        const updates = JSON.parse(reqBody) as {
           phases?: PhaseItem[];
           status?: PlanStatus;
           log?: LogEntry[];
@@ -302,39 +349,47 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.end(JSON.stringify({ error: 'agent must be a known agent id' }));
           return;
         }
-        const filePath = campFile(root, 'plans.md');
-        const parsed = parsePlans(await readMaybe(filePath));
+
+        const plansDir = campFile(root, 'plans');
+        const { entries } = await readAllPlanFiles(plansDir);
         const trimmed = title.trim();
-        let found = false;
-        const updated = parsed.entries.map((entry: PlanEntry) => {
-          if (entry.title === trimmed) {
-            found = true;
-            return {
-              ...entry,
-              ...(updates.status !== undefined && { status: updates.status }),
-              ...(updates.phases !== undefined && { phases: updates.phases }),
-              ...(updates.log !== undefined && { log: updates.log }),
-              ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
-              updated: todayDateString(),
-            };
-          }
-          // Starting a plan puts it in focus — only one other plan is ever "in focus"
-          // (in-progress) at a time. A `review` plan isn't in focus, it's done and
-          // awaiting approval, so starting a different plan must never touch it.
-          if (updates.status === 'in-progress' && entry.status === 'in-progress') {
-            return { ...entry, status: 'planned' as const, updated: todayDateString() };
-          }
-          return entry;
-        });
-        if (!found) {
+        const target = entries.find((e) => e.title === trimmed || e.id === trimmed);
+
+        if (!target?.id) {
           res.statusCode = 404;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'plan not found' }));
           return;
         }
-        if (updates.status === 'done') {
-          const targetEntry = parsed.entries.find((e: PlanEntry) => e.title === trimmed);
-          const conflict = await checkBranchConflictForPlan(root, git, targetEntry?.id);
+
+        const targetFile = join(plansDir, `${target.id}.md`);
+        const raw = await readMaybe(targetFile);
+        if (!raw) {
+          res.statusCode = 404;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'plan file not found' }));
+          return;
+        }
+
+        const parsed = parsePlanFile(raw);
+        if (parsed.entries.length === 0) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'failed to parse plan file' }));
+          return;
+        }
+
+        const updatedEntry: PlanEntry = {
+          ...parsed.entries[0],
+          ...(updates.status !== undefined && { status: updates.status }),
+          ...(updates.phases !== undefined && { phases: updates.phases }),
+          ...(updates.log !== undefined && { log: updates.log }),
+          ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
+          updated: todayDateString(),
+        };
+
+        if (updates.status === 'done' || updates.status === 'dropped') {
+          const conflict = await checkBranchConflictForPlan(root, git, target.id);
           if (conflict) {
             res.statusCode = 409;
             res.setHeader('Content-Type', 'application/json');
@@ -342,16 +397,61 @@ export function createApiMiddleware(root: string): ApiMiddleware {
             return;
           }
         }
-        await writeFile(filePath, formatPlans(updated));
 
-        if (updates.status === 'done') {
-          const finalEntry = updated.find((e: PlanEntry) => e.title === trimmed);
-          if (finalEntry) {
-            try {
-              git.ensureBranch(finalEntry);
-            } catch {
-              // Non-fatal: git operations may fail (not a repo, etc.)
+        // Demote other in-progress plans when starting a new one
+        if (updates.status === 'in-progress') {
+          const allPlans = await readAllPlanFiles(plansDir);
+          for (const other of allPlans.entries) {
+            if (other.id !== target.id && other.status === 'in-progress') {
+              const otherFile = join(plansDir, `${other.id}.md`);
+              const otherRaw = await readMaybe(otherFile);
+              if (otherRaw) {
+                const otherParsed = parsePlanFile(otherRaw);
+                if (otherParsed.entries.length > 0) {
+                  const demotedInput: Parameters<typeof formatPlanFile>[0] = {
+                    id: otherParsed.entries[0].id ?? other.id!,
+                    title: otherParsed.entries[0].title,
+                    kind: otherParsed.entries[0].kind ?? 'feat',
+                    status: 'planned',
+                    created: otherParsed.entries[0].created,
+                    updated: todayDateString(),
+                    body: otherParsed.entries[0].body,
+                    phases: otherParsed.entries[0].phases,
+                    log: otherParsed.entries[0].log,
+                    clarifications: otherParsed.entries[0].clarifications,
+                  };
+                  await writeFile(otherFile, `${formatPlanFile(demotedInput)}\n`, 'utf-8');
+                }
+              }
             }
+          }
+        }
+
+        // Write updated plan
+        const writeInput: Parameters<typeof formatPlanFile>[0] = {
+          id: updatedEntry.id ?? target.id,
+          title: updatedEntry.title,
+          kind: updatedEntry.kind ?? 'feat',
+          status: updatedEntry.status,
+          idea: updatedEntry.idea,
+          agent: updatedEntry.agent,
+          created: updatedEntry.created,
+          updated: updatedEntry.updated,
+          tags: updatedEntry.tags,
+          body: updatedEntry.body,
+          phases: updatedEntry.phases,
+          log: updatedEntry.log,
+          clarifications: updatedEntry.clarifications,
+        };
+        await writeFile(targetFile, `${formatPlanFile(writeInput)}\n`, 'utf-8');
+        await regenerateIndexes(root);
+
+        if (updates.status === 'done' || updates.status === 'dropped') {
+          await archivePlanFile(root, target.id);
+          try {
+            git.ensureBranch(updatedEntry);
+          } catch {
+            // Non-fatal
           }
         }
 
@@ -366,21 +466,20 @@ export function createApiMiddleware(root: string): ApiMiddleware {
       return;
     }
 
-    // POST /api/ideas — append a new idea entry to ideas.md
+    // POST /api/ideas — create a new per-file idea entry
     if (req.method === 'POST' && pathname === '/api/ideas') {
       try {
-        const body = await readBody(req);
-        const { title, content } = JSON.parse(body) as { title?: string; content?: string };
+        const reqBody = await readBody(req);
+        const { title, content } = JSON.parse(reqBody) as { title?: string; content?: string };
         if (!title?.trim()) {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'title is required' }));
           return;
         }
-        const filePath = campFile(root, 'ideas.md');
-        const existing = await readMaybe(filePath);
-        const parsed = parseIdeas(existing);
-        const maxNum = parsed.reduce((max, idea) => {
+        const ideasDir = campFile(root, 'ideas');
+        const existing = await readIdeasMerged(ideasDir, campFile(root, 'ideas.md'));
+        const maxNum = existing.entries.reduce((max, idea) => {
           if (idea.id) {
             const num = Number.parseInt(idea.id.replace('IDEA-', ''), 10);
             return Number.isNaN(num) ? max : Math.max(max, num);
@@ -388,10 +487,14 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           return max;
         }, 0);
         const newId = `IDEA-${maxNum + 1}`;
-        const section = `### ${newId}: ${title.trim()}\n\n${content?.trim() ?? ''}`;
-        const trimmed = existing.trimEnd();
-        const separator = trimmed.length === 0 ? '' : '\n\n---\n\n';
-        await writeFile(filePath, `${trimmed}${separator}${section}\n`);
+        await mkdir(ideasDir, { recursive: true });
+        const ideaContent = formatIdeaFile({
+          id: newId,
+          title: title.trim(),
+          body: content?.trim(),
+        });
+        await writeFile(join(ideasDir, `${newId}.md`), `${ideaContent}\n`, 'utf-8');
+        await regenerateIndexes(root);
         res.statusCode = 201;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ ok: true, id: newId }));
@@ -405,7 +508,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
 
     // GET /api/icon — serve project icon
     if (req.method === 'GET' && pathname === '/api/icon') {
-      const assetsDir = join(root, '.paper-camp', 'assets');
+      const assetsDir = join(root, 'papercamp', 'assets');
       const mimeMap: Record<string, string> = {
         svg: 'image/svg+xml',
         png: 'image/png',
@@ -453,7 +556,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
         const mime = match[1];
         const ext = mime === 'image/svg+xml' ? 'svg' : mime.split('/')[1];
         const buffer = Buffer.from(match[2], 'base64');
-        const assetsDir = join(root, '.paper-camp', 'assets');
+        const assetsDir = join(root, 'papercamp', 'assets');
         await mkdir(assetsDir, { recursive: true });
         await writeFile(join(assetsDir, `icon.${ext}`), buffer);
         res.statusCode = 200;
@@ -472,11 +575,27 @@ export function createApiMiddleware(root: string): ApiMiddleware {
       try {
         const entries = await git.getStatus();
         const branch = git.getCurrentBranch();
+        const ahead = await git.getAheadCount();
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ branch, entries }));
+        res.end(JSON.stringify({ branch, entries, ahead }));
       } catch (error) {
         res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: (error as Error).message }));
+      }
+      return;
+    }
+
+    // POST /api/git/push — push the current branch to its upstream
+    if (req.method === 'POST' && pathname === '/api/git/push') {
+      try {
+        await git.push();
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ok: true }));
+      } catch (error) {
+        res.statusCode = 400;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ error: (error as Error).message }));
       }
@@ -502,6 +621,39 @@ export function createApiMiddleware(root: string): ApiMiddleware {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ ok: true }));
+      } catch (error) {
+        res.statusCode = 400;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: (error as Error).message }));
+      }
+      return;
+    }
+
+    // POST /api/git/suggest-commit-message — agent-written title/body from the actual diff
+    if (req.method === 'POST' && pathname === '/api/git/suggest-commit-message') {
+      try {
+        const body = await readBody(req);
+        const { files } = JSON.parse(body) as { files?: string[] };
+        if (!files?.length) {
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'files is required' }));
+          return;
+        }
+        const diffText = await git.diff(files);
+        const { entries } = await readPlansMerged(
+          campFile(root, 'plans'),
+          campFile(root, 'plans.md'),
+        );
+        const activePlan = findFocusPlan(entries);
+        const suggestion = await suggestCommitMessage(
+          diffText,
+          activePlan?.id,
+          agent.runCommitSuggest,
+        );
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(suggestion));
       } catch (error) {
         res.statusCode = 400;
         res.setHeader('Content-Type', 'application/json');
@@ -569,20 +721,47 @@ export function createApiMiddleware(root: string): ApiMiddleware {
     // POST /api/agent/launch — start a headless agent on one plan phase
     if (req.method === 'POST' && pathname === '/api/agent/launch') {
       try {
-        const body = await readBody(req);
-        const { planId, phaseIndex } = JSON.parse(body) as { planId?: string; phaseIndex?: number };
+        const reqBody = await readBody(req);
+        const { planId, phaseIndex } = JSON.parse(reqBody) as {
+          planId?: string;
+          phaseIndex?: number;
+        };
         if (!planId || typeof phaseIndex !== 'number') {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'planId and phaseIndex are required' }));
           return;
         }
-        const parsed = parsePlans(await readMaybe(campFile(root, 'plans.md')));
+        const plansDir = campFile(root, 'plans');
+        const parsed = await readAllPlanFiles(plansDir);
         const plan = parsed.entries.find((p) => p.id === planId);
         if (!plan) {
-          res.statusCode = 404;
+          // Fallback to monolithic
+          const mono = parsePlans(await readMaybe(campFile(root, 'plans.md')));
+          const monoPlan = mono.entries.find((p) => p.id === planId);
+          if (!monoPlan) {
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'plan not found' }));
+            return;
+          }
+          const conflict = await checkBranchConflictForPlan(root, git, monoPlan.id);
+          if (conflict) {
+            res.statusCode = 409;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: conflict }));
+            return;
+          }
+          const result = await agent.start(monoPlan, phaseIndex);
+          if (!result.ok) {
+            res.statusCode = 409;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: result.error }));
+            return;
+          }
+          res.statusCode = 202;
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'plan not found' }));
+          res.end(JSON.stringify({ ok: true }));
           return;
         }
         const conflict = await checkBranchConflictForPlan(root, git, plan.id);
@@ -613,16 +792,21 @@ export function createApiMiddleware(root: string): ApiMiddleware {
     // POST /api/agent/launch-audit — start a headless agent on a plan-scoped convergence audit
     if (req.method === 'POST' && pathname === '/api/agent/launch-audit') {
       try {
-        const body = await readBody(req);
-        const { planId, prompt } = JSON.parse(body) as { planId?: string; prompt?: string };
+        const reqBody = await readBody(req);
+        const { planId, prompt } = JSON.parse(reqBody) as { planId?: string; prompt?: string };
         if (!planId || !prompt) {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'planId and prompt are required' }));
           return;
         }
-        const parsed = parsePlans(await readMaybe(campFile(root, 'plans.md')));
-        const plan = parsed.entries.find((p) => p.id === planId);
+        const plansDir = campFile(root, 'plans');
+        const parsed = await readAllPlanFiles(plansDir);
+        let plan = parsed.entries.find((p) => p.id === planId);
+        if (!plan) {
+          const mono = parsePlans(await readMaybe(campFile(root, 'plans.md')));
+          plan = mono.entries.find((p) => p.id === planId);
+        }
         if (!plan) {
           res.statusCode = 404;
           res.setHeader('Content-Type', 'application/json');
@@ -657,16 +841,21 @@ export function createApiMiddleware(root: string): ApiMiddleware {
     // POST /api/agent/launch-draft — start a headless agent that drafts a new plan from an idea
     if (req.method === 'POST' && pathname === '/api/agent/launch-draft') {
       try {
-        const body = await readBody(req);
-        const { ideaId, prompt } = JSON.parse(body) as { ideaId?: string; prompt?: string };
+        const reqBody = await readBody(req);
+        const { ideaId, prompt } = JSON.parse(reqBody) as { ideaId?: string; prompt?: string };
         if (!ideaId || !prompt) {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'ideaId and prompt are required' }));
           return;
         }
-        const ideas = parseIdeas(await readMaybe(campFile(root, 'ideas.md')));
-        const idea = ideas.find((i) => i.id === ideaId);
+        const ideasDir = campFile(root, 'ideas');
+        const ideas = await readAllIdeaFiles(ideasDir);
+        let idea = ideas.entries.find((i) => i.id === ideaId);
+        if (!idea) {
+          const mono = parseIdeas(await readMaybe(campFile(root, 'ideas.md')));
+          idea = mono.find((i) => i.id === ideaId);
+        }
         if (!idea) {
           res.statusCode = 404;
           res.setHeader('Content-Type', 'application/json');
@@ -701,16 +890,21 @@ export function createApiMiddleware(root: string): ApiMiddleware {
     // POST /api/agent/launch-extend — start a headless agent to extend an idea's body
     if (req.method === 'POST' && pathname === '/api/agent/launch-extend') {
       try {
-        const body = await readBody(req);
-        const { ideaId, prompt } = JSON.parse(body) as { ideaId?: string; prompt?: string };
+        const reqBody = await readBody(req);
+        const { ideaId, prompt } = JSON.parse(reqBody) as { ideaId?: string; prompt?: string };
         if (!ideaId || !prompt) {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'ideaId and prompt are required' }));
           return;
         }
-        const ideas = parseIdeas(await readMaybe(campFile(root, 'ideas.md')));
-        const idea = ideas.find((i) => i.id === ideaId);
+        const ideasDir = campFile(root, 'ideas');
+        const ideas = await readAllIdeaFiles(ideasDir);
+        let idea = ideas.entries.find((i) => i.id === ideaId);
+        if (!idea) {
+          const mono = parseIdeas(await readMaybe(campFile(root, 'ideas.md')));
+          idea = mono.find((i) => i.id === ideaId);
+        }
         if (!idea) {
           res.statusCode = 404;
           res.setHeader('Content-Type', 'application/json');
@@ -757,10 +951,10 @@ export function createApiMiddleware(root: string): ApiMiddleware {
       return;
     }
 
-    // POST /api/config — update editable fields in .paper-camp/config.json (port, projectName)
+    // POST /api/config — update editable fields in papercamp/config.json (port, projectName)
     if (req.method === 'POST' && pathname === '/api/config') {
       try {
-        const configPath = join(root, '.paper-camp', 'config.json');
+        const configPath = join(root, 'papercamp', 'config.json');
         const raw = await readMaybe(configPath);
         if (!raw) {
           res.statusCode = 404;
@@ -794,7 +988,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           return;
         }
         if (defaultAgents !== undefined) {
-          for (const key of ['phase', 'planDraft', 'ideaExtend'] as const) {
+          for (const key of ['phase', 'planDraft', 'ideaExtend', 'commitSuggest'] as const) {
             if (!AGENT_IDS.includes(defaultAgents[key])) {
               res.statusCode = 400;
               res.setHeader('Content-Type', 'application/json');
@@ -804,10 +998,15 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           }
         }
         const config = JSON.parse(raw) as PaperCampConfig;
-        const resolvedDefaultAgents =
+        const resolvedDefaultAgents: DefaultAgentsMap | undefined =
           defaultAgents ??
           (defaultAgent !== undefined
-            ? { phase: defaultAgent, planDraft: defaultAgent, ideaExtend: defaultAgent }
+            ? {
+                phase: defaultAgent,
+                planDraft: defaultAgent,
+                ideaExtend: defaultAgent,
+                commitSuggest: defaultAgent,
+              }
             : undefined);
         const configWithOld = config as PaperCampConfig & { defaultAgent?: AgentId };
         const { defaultAgent: _oldAgent, ...configRest } = configWithOld;

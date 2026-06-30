@@ -24,3 +24,28 @@ export const commitChanges = async (
     throw new Error(err.error);
   }
 };
+
+export const pushChanges = async (): Promise<void> => {
+  const response = await fetch('/api/git/push', { method: 'POST' });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Push failed' }));
+    throw new Error(err.error);
+  }
+};
+
+export const suggestCommitMessage = async (
+  files: string[],
+): Promise<{ title: string; message: string }> => {
+  const response = await fetch('/api/git/suggest-commit-message', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files }),
+  });
+  if (!response.ok) {
+    const err = await response
+      .json()
+      .catch(() => ({ error: 'Failed to suggest a commit message' }));
+    throw new Error(err.error);
+  }
+  return response.json();
+};

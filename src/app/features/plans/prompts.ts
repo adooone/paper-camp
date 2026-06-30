@@ -110,7 +110,7 @@ in the same voice as the existing entries in plans.md.
 - \`Kind\` picks the ID prefix — choose whichever Conventional Commits type
   best fits this idea (most are \`feat\`).
 - \`Id\` must come from the persistent per-kind counter in
-  \`.paper-camp/config.json\`'s \`nextId\` field — read the current value for
+  \`papercamp/config.json\`'s \`nextId\` field — read the current value for
   your chosen \`Kind\` (e.g. \`nextId.feat\`), use it as \`<KIND>-<N>\`, and
   increment that counter in the same write. Never derive the number by
   scanning plans.md for the highest existing one — a deleted plan's number

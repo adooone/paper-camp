@@ -1,7 +1,8 @@
-export const fetchIdeas = async (): Promise<string> => {
+import type { IdeaEntry, ParseResult } from '@/types/index';
+
+export const fetchIdeas = async (): Promise<ParseResult<IdeaEntry>> => {
   const response = await fetch('/api/ideas');
-  const data = await response.json();
-  return data.content ?? '';
+  return response.json();
 };
 
 export const createIdea = async (idea: { title: string; content?: string }): Promise<string> => {

@@ -29,10 +29,11 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   audit: 'phase',
   draft: 'planDraft',
   extend: 'ideaExtend',
+  'commit-suggest': 'commitSuggest',
 };
 
 export function resolveAgent(opts: {
-  agentId: AgentId | undefined;
+  agentId?: AgentId;
   defaultAgents?: DefaultAgentsMap;
   taskKind?: TaskKind;
 }): { id: AgentId; adapter: AgentAdapter } {

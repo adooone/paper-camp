@@ -21,10 +21,65 @@ import { useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { findFocusPlan } from '../features/plans/helpers';
-import { commitChanges } from '../services/git-api';
+import { commitChanges, pushChanges, suggestCommitMessage } from '../services/git-api';
 import { useAppStore } from '../stores/app-store';
 import { summarizeQualityFailure, summarizeTestFailure } from '../utils/check-summary';
 import { CopyPromptButton } from './copy-prompt-button';
+
+const COMMIT_TITLE_STORAGE_KEY = 'papercamp.commitTitle';
+const COMMIT_MESSAGE_STORAGE_KEY = 'papercamp.commitMessage';
+
+function readStoredCommitField(key: string): string {
+  try {
+    return localStorage.getItem(key) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function writeStoredCommitField(key: string, value: string): void {
+  try {
+    if (value) localStorage.setItem(key, value);
+    else localStorage.removeItem(key);
+  } catch {
+    // localStorage unavailable (e.g. private browsing) — fall back to in-memory only
+  }
+}
+
+const WandIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="m12 3-1.6 4.85a2 2 0 0 1-1.27 1.27L4.27 10.7l4.86 1.6a2 2 0 0 1 1.27 1.27L12 18.4l1.6-4.86a2 2 0 0 1 1.27-1.27l4.86-1.6-4.86-1.6a2 2 0 0 1-1.27-1.27L12 3Z" />
+    <path d="M19 3v3" />
+    <path d="M20.5 4.5h-3" />
+  </svg>
+);
+
+const PushIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M12 19V5" />
+    <path d="m5 12 7-7 7 7" />
+  </svg>
+);
 
 const CHALKBOARD_TEXTURE = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.15 0 0 0 0 0.28 0 0 0 0 0.20 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)' opacity='1'/%3E%3C/svg%3E")`;
 
@@ -64,17 +119,25 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
+  const gitAhead = useAppStore((s) => s.gitAhead);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
   const [consistencyExpanded, setConsistencyExpanded] = useState(false);
   const [commitExpanded, setCommitExpanded] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
-  const [commitTitle, setCommitTitle] = useState('');
-  const [commitMessage, setCommitMessage] = useState('');
+  const [commitTitle, setCommitTitle] = useState(() =>
+    readStoredCommitField(COMMIT_TITLE_STORAGE_KEY),
+  );
+  const [commitMessage, setCommitMessage] = useState(() =>
+    readStoredCommitField(COMMIT_MESSAGE_STORAGE_KEY),
+  );
   const [committing, setCommitting] = useState(false);
+  const [pushing, setPushing] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
   const [commitError, setCommitError] = useState<string | null>(null);
-  const [addRefs, setAddRefs] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
   const shouldReduceMotion = useReducedMotion();
   const navigate = useNavigate();
   const refreshRef = useRef({
@@ -117,17 +180,52 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
 
   const activePlan = useMemo(() => findFocusPlan(plans?.entries), [plans?.entries]);
 
+  const suggestedScope = useMemo(() => {
+    if (!activePlan) return '';
+    if (activePlan.id) return activePlan.id.replace(/^[A-Z]+-/, '');
+    return activePlan.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 30);
+  }, [activePlan]);
+
+  const allPhasesDone = useMemo(
+    () => Boolean(activePlan?.phases.length) && activePlan!.phases.every((phase) => phase.done),
+    [activePlan],
+  );
+
   const suggestedTitle = useMemo(() => {
     if (!activePlan) return '';
     const kind = activePlan.kind ?? 'feat';
-    return `${kind}: ${activePlan.title}`;
-  }, [activePlan]);
+    if (allPhasesDone) return `${kind}(${suggestedScope}): updates`;
+    return `${kind}(${suggestedScope}): ${activePlan.title}`;
+  }, [activePlan, suggestedScope, allPhasesDone]);
+
+  const suggestedMessage = useMemo(() => {
+    if (!activePlan?.phases.length || allPhasesDone) return '';
+    return activePlan.phases.map((phase) => `- ${phase.text}`).join('\n');
+  }, [activePlan, allPhasesDone]);
 
   useEffect(() => {
     if (suggestedTitle && !commitTitle) {
       setCommitTitle(suggestedTitle);
     }
   }, [suggestedTitle, commitTitle]);
+
+  useEffect(() => {
+    if (suggestedMessage && !commitMessage) {
+      setCommitMessage(suggestedMessage);
+    }
+  }, [suggestedMessage, commitMessage]);
+
+  useEffect(() => {
+    writeStoredCommitField(COMMIT_TITLE_STORAGE_KEY, commitTitle);
+  }, [commitTitle]);
+
+  useEffect(() => {
+    writeStoredCommitField(COMMIT_MESSAGE_STORAGE_KEY, commitMessage);
+  }, [commitMessage]);
 
   useEffect(() => {
     if (gitStatus) {
@@ -149,19 +247,49 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
     setCommitting(true);
     setCommitError(null);
     try {
-      const msg =
-        addRefs && activePlan?.id ? `${commitMessage}\n\nRefs: ${activePlan.id}` : commitMessage;
-      await commitChanges([...selectedFiles], commitTitle.trim(), msg.trim() || undefined);
+      await commitChanges(
+        [...selectedFiles],
+        commitTitle.trim(),
+        commitMessage.trim() || undefined,
+      );
       setCommitTitle(suggestedTitle);
       setCommitMessage('');
-      setAddRefs(false);
       setCommitExpanded(false);
+      await loadGitStatus();
     } catch (err) {
       setCommitError((err as Error).message);
     } finally {
       setCommitting(false);
     }
-  }, [commitTitle, commitMessage, selectedFiles, addRefs, activePlan, suggestedTitle]);
+  }, [commitTitle, commitMessage, selectedFiles, suggestedTitle, loadGitStatus]);
+
+  const handlePush = useCallback(async () => {
+    setPushing(true);
+    setPushError(null);
+    try {
+      await pushChanges();
+      await loadGitStatus();
+    } catch (err) {
+      setPushError((err as Error).message);
+    } finally {
+      setPushing(false);
+    }
+  }, [loadGitStatus]);
+
+  const handleSuggestFromChanges = useCallback(async () => {
+    if (selectedFiles.size === 0) return;
+    setSuggesting(true);
+    setSuggestError(null);
+    try {
+      const result = await suggestCommitMessage([...selectedFiles]);
+      setCommitTitle(result.title);
+      setCommitMessage(result.message);
+    } catch (err) {
+      setSuggestError((err as Error).message);
+    } finally {
+      setSuggesting(false);
+    }
+  }, [selectedFiles]);
 
   const handleFindingClick = useCallback(
     (issue: ConsistencyIssue) => {
@@ -325,7 +453,9 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                             ? ' — drafting'
                             : agentStatus.taskKind === 'extend'
                               ? ' — extending'
-                              : ''}{' '}
+                              : agentStatus.taskKind === 'commit-suggest'
+                                ? ' — suggesting commit message'
+                                : ''}{' '}
                       · {AGENT_LABELS[agentStatus.agentId]}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
@@ -761,13 +891,35 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       marginTop: space[3],
                     }}
                   >
-                    <Input
-                      variant="chalkboard"
-                      size="small"
-                      placeholder="Commit title"
-                      value={commitTitle}
-                      onChange={(e) => setCommitTitle(e.currentTarget.value)}
-                    />
+                    {suggestError && (
+                      <Alert
+                        variant="chalkboard"
+                        dismissible
+                        onDismiss={() => setSuggestError(null)}
+                      >
+                        {suggestError}
+                      </Alert>
+                    )}
+                    <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
+                      <div style={{ flex: 1 }}>
+                        <Input
+                          variant="chalkboard"
+                          size="small"
+                          placeholder="Commit title"
+                          value={commitTitle}
+                          onChange={(e) => setCommitTitle(e.currentTarget.value)}
+                        />
+                      </div>
+                      <IconButton
+                        icon={<WandIcon size={16} />}
+                        variant="chalkboard"
+                        size="small"
+                        label="Suggest title and message from the diff"
+                        disabled={selectedFiles.size === 0 || suggesting}
+                        onClick={handleSuggestFromChanges}
+                        wobble={suggesting ? 1 : 0}
+                      />
+                    </div>
                     <Textarea
                       variant="chalkboard"
                       size="small"
@@ -776,27 +928,6 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       onChange={(e) => setCommitMessage(e.currentTarget.value)}
                       rows={2}
                     />
-                    {activePlan?.id && (
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: space[2],
-                          fontFamily: fontFamily.handwritten,
-                          fontSize: fontSize.sm,
-                          color: deskChalk,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={addRefs}
-                          onChange={() => setAddRefs(!addRefs)}
-                          style={{ accentColor: deskChalk }}
-                        />
-                        Add Refs: {activePlan.id}
-                      </label>
-                    )}
                     {commitError && (
                       <Alert
                         variant="chalkboard"
@@ -823,13 +954,44 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                     flex: 1,
                     minHeight: 0,
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    gap: space[3],
                   }}
                 >
-                  <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>
-                    No changed files.
-                  </p>
+                  {gitAhead > 0 ? (
+                    <>
+                      <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>
+                        All changes committed — {gitAhead} commit{gitAhead === 1 ? '' : 's'} ready
+                        to push.
+                      </p>
+                      {pushError && (
+                        <Alert
+                          variant="chalkboard"
+                          dismissible
+                          onDismiss={() => setPushError(null)}
+                        >
+                          {pushError}
+                        </Alert>
+                      )}
+                      <Button
+                        variant="chalkboard"
+                        size="small"
+                        icon={<PushIcon size={14} />}
+                        disabled={pushing}
+                        onClick={handlePush}
+                      >
+                        {pushing
+                          ? 'Pushing…'
+                          : `Push ${gitAhead} commit${gitAhead === 1 ? '' : 's'}`}
+                      </Button>
+                    </>
+                  ) : (
+                    <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>
+                      No changed files.
+                    </p>
+                  )}
                 </div>
               )}
             </Card>
