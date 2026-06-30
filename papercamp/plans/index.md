@@ -2,16 +2,16 @@
 
 | Id | Title | Status | Tags |
 |----|-------|--------|------|
-| REFACTOR-1 | UI cleanup: style guide and tokens | done | app, ui, refactor |
 | DOCS-1 | Refresh about.md reference | done | docs |
 | FEAT-1 | Build core library | done | core, cli |
-| REFACTOR-2 | UI cleanup follow-up | done | app, ui, refactor |
-| FIX-2 | Fix Review status bugs | done | app, plans, core |
+| REFACTOR-1 | UI cleanup: style guide and tokens | done | app, ui, refactor |
 | FEAT-2 | Build dashboard app | done | app, paper-ui |
-| REFACTOR-3 | Drop Focus page and unify sidebar | done | app, plans, ui |
+| FIX-2 | Fix Review status bugs | done | app, plans, core |
+| REFACTOR-2 | UI cleanup follow-up | done | app, ui, refactor |
 | FEAT-3 | Add board view and branding | done | app, plans, settings |
-| REFACTOR-4 | Default font and Stack panel cleanup | done | app, ui, paper-ui |
+| REFACTOR-3 | Drop Focus page and unify sidebar | done | app, plans, ui |
 | FEAT-4 | Build Docs page | done | app, docs |
+| REFACTOR-4 | Default font and Stack panel cleanup | done | app, ui, paper-ui |
 | FEAT-5 | Build Settings page | done | app, settings |
 | FEAT-6 | Build the Stack panel | done | app, stack |
 | FEAT-7 | Plan and phase IDs | done | app, plans, core |
@@ -31,4 +31,4 @@
 | FEAT-21 | Settings config workspace | done | app, settings |
 | FEAT-22 | GitHub CI/CD automation | done | ci, cd, github |
 | FEAT-23 | Resolve open questions from Docs | idea | app, docs |
-| FEAT-24 | Plan storage architecture | review | core, cli, plans, ideas |
+| FEAT-24 | Plan storage architecture | done | core, cli, plans, ideas |

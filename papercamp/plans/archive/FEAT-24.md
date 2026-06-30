@@ -2,10 +2,10 @@
 id: FEAT-24
 title: Plan storage architecture
 kind: feat
-status: review
+status: done
 created: 2026-06-28
 idea: IDEA-20
-updated: 2026-06-28
+updated: 2026-06-30
 tags:
   - core
   - cli

@@ -21,6 +21,6 @@
 | IDEA-17 | opencode agent support | done |
 | IDEA-18 | GitHub integration | done |
 | IDEA-19 | Resolve open questions from the Docs page | planned |
-| IDEA-20 | Plan storage architecture | planned |
+| IDEA-20 | Plan storage architecture | done |
 | IDEA-21 | Batch plan-doc freshness audit | planned |
 | IDEA-22 | Restructure and actualize repo-root docs | planned |
