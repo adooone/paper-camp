@@ -50,7 +50,7 @@ jobs:
           EXISTING=$(gh pr list --head "$BRANCH" --state all --json number --jq '.[0].number' 2>/dev/null || echo "")
 
           if [ -z "$EXISTING" ]; then
-            BODY="**Plan:** \`${DISPLAY_ID}\` — see \`papercamp/plans.md\` for the full plan."
+            BODY="**Plan:** \`${DISPLAY_ID}\` — see \`papercamp/plans/${DISPLAY_ID}.md\` for the full plan."
             BODY="${BODY}"$'\n\n'"This PR was auto-created as a draft on the first push to this feature branch."
             BODY="${BODY}"$'\n'"Promote to \"Ready for review\" when the plan reaches \`review\` status."
             gh pr create \

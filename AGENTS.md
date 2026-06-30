@@ -4,13 +4,13 @@ This file is the source of truth for how AI assistants should work in this repos
 
 ## Do one phase at a time
 
-When a user asks you to work on a plan from `papercamp/plans.md`, complete **only the phase they explicitly asked for** unless they tell you otherwise. Do not automatically continue into later phases.
+When a user asks you to work on a plan (each plan is its own file at `papercamp/plans/<ID>.md`), complete **only the phase they explicitly asked for** unless they tell you otherwise. Do not automatically continue into later phases.
 
 If the boundary between phases is unclear, or if you are unsure whether the user wants the next phase done, ask before continuing.
 
 ## Update the plan as you go
 
-Mark the completed phase `[x]` in `papercamp/plans.md` and keep the plan's `Status` field honest (`in-progress` / `review` / `done`).
+Mark the completed phase `[x]` in the plan's file (`papercamp/plans/<ID>.md`) and keep its `status:` frontmatter field honest (`in-progress` / `review` / `done`).
 
 When all phases of a plan are complete, set its `Status` to `review` — not `done`. The `review` status means a human (or a later agent) needs to approve the work before it's closed. Plans that reach `done` should only get there via an explicit "Approve & close" action, never because the last phase was checked off automatically.
 
@@ -106,7 +106,7 @@ directly on `main`. A draft PR is auto-created on first push.
 
 - **`main` stays pushable.** Direct pushes to `main` are allowed but
   *conventionally* reserved for:
-  - Agent writes to `papercamp/plans.md`/`progress.md` during phase execution
+  - Agent writes to `papercamp/plans/`/`progress.md` during phase execution
     (these are the only agent writes that land directly on `main`)
   - Tiny fixes and config changes
   - Merging feature branch PRs
@@ -116,11 +116,12 @@ directly on `main`. A draft PR is auto-created on first push.
 - **Agents and branches:** When an agent executes a plan phase, it works on
   whatever branch is currently checked out. If the agent was started from a
   branch (e.g. via the Stack panel while that branch is active), its writes to
-  `plans.md`/`progress.md` land on that branch. When the PR merges, those file
-  changes come along with the rest of the branch. Two branches modifying
-  overlapping regions of `plans.md` simultaneously may conflict on merge —
-  this is accepted until IDEA-20 (per-file plans) eliminates the problem
-  structurally.
+  the plan's file under `papercamp/plans/` and to `progress.md` land on that
+  branch. When the PR merges, those changes come along with the rest of the
+  branch. Per-file plan storage (FEAT-24) means two branches working different
+  plans touch different files and no longer conflict on merge; `progress.md`
+  remains a shared append-only log, so concurrent appends there can still
+  conflict.
 
 - **Naming enforcement:** The branch naming convention is not enforced by CI
   (no branch-name lint). It is a convention agents are expected to follow,
@@ -132,13 +133,26 @@ Format: `<type>(<scope>): <description>`
 
 - `type` is one of `feat`, `fix`, `chore`, `docs`, `refactor` (commitlint's
   `type-enum`, matches plan `Kind`).
-- `scope` is the plan or idea number with no kind prefix — just the digits
-  (e.g. `feat(22): ...` for `FEAT-22`, `fix(3): ...` for `FIX-3`). For commits
-  not tied to a specific plan (dependency bumps, repo-wide chores), use a
-  short area name instead (e.g. `chore(deps): ...`).
+- `scope` is a **subsystem area**, not the plan number — chosen from the fixed
+  list in `.commitlintrc.json`'s `scope-enum`: `core`, `cli`, `app`, `server`,
+  `agent`, `plans`, `ideas`, `docs`, `settings`, `stack`, `ui`, `ci`, `config`,
+  `deps`, `repo` (plus `release`/`main` for the release bot). Pick the area the
+  change most affects — usually the plan's primary tag. This keeps the release
+  changelog readable (`* **ci:** Add CI workflow`) instead of a context-free
+  list of numbers. Adding a new area means editing the `scope-enum`.
+- **Plan traceability lives in a footer, not the scope.** Add a `Refs:` trailer
+  with the plan ID for any commit tied to a plan (the branch name already
+  encodes it too):
+
+  ```
+  feat(ci): Add CI workflow for tests and lint
+
+  Refs: FEAT-22
+  ```
+
 - `description` follows this repo's existing style: capitalized, like a
-  changelog entry (e.g. `feat(22): Add CI workflow for tests and lint`), not
+  changelog entry (e.g. `feat(ci): Add CI workflow for tests and lint`), not
   the lowercase imperative style some Conventional Commits guides use.
 - Enforced by `.commitlintrc.json` + the `consistency` CI check: scope is
-  required (`scope-empty`), and `subject-case` is disabled so the capitalized
-  style stays valid.
+  required (`scope-empty`) and must be a known area (`scope-enum`), and
+  `subject-case` is disabled so the capitalized style stays valid.

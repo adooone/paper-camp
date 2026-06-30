@@ -25,7 +25,7 @@ Open `http://localhost:3333` to access the dashboard.
 
 ## Pages
 
-- **Plans** — Browse and manage plans from `papercamp/plans.md`
+- **Plans** — Browse and manage plans from `papercamp/plans/`
 - **Review** — Code review findings surfaced as actionable plan phases
 - **Docs** — Decisions, open questions, progress timeline, and repo docs
 - **Settings** — Project configuration

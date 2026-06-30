@@ -1,14 +1,18 @@
 function buildPrompt(diffText: string, planContext?: string): string {
   return `You are writing a single git commit message for the diff below. Do not use any tools, do not read or edit any files — base your answer only on the diff text given.
 
-Follow this repo's commit convention: \`type(scope): Description\`, where type is one of feat|fix|chore|docs|refactor and scope is a short identifier (often a plan number). Keep the whole title under 100 characters and do not end it with a period.${
+Follow this repo's commit convention: \`type(scope): Description\`, where type is one of feat|fix|chore|docs|refactor and scope is a subsystem area from this fixed list: core, cli, app, server, agent, plans, ideas, docs, settings, stack, ui, ci, config, deps, repo. Pick the area the diff most affects. Keep the whole title under 100 characters and do not end it with a period.${
     planContext
-      ? `\nThis work belongs to plan ${planContext} — use it as the scope unless the diff clearly suggests otherwise.`
+      ? `\nThis work belongs to plan ${planContext}. Do NOT put the plan id in the scope — instead end the message body with a \`Refs: ${planContext}\` line as its final line.`
       : ''
   }
 
 Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
-{"title": "type(scope): Description", "message": "optional longer body describing what changed and why, or an empty string if the title alone is clear enough"}
+{"title": "type(scope): Description", "message": "${
+    planContext
+      ? `longer body describing what changed and why, ending with a \`Refs: ${planContext}\` line`
+      : 'optional longer body describing what changed and why, or an empty string if the title alone is clear enough'
+  }"}
 
 Diff:
 ${diffText}`;

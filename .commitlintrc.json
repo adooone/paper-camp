@@ -3,6 +3,29 @@
   "rules": {
     "type-enum": [2, "always", ["feat", "fix", "chore", "docs", "refactor"]],
     "scope-empty": [2, "never"],
+    "scope-enum": [
+      2,
+      "always",
+      [
+        "core",
+        "cli",
+        "app",
+        "server",
+        "agent",
+        "plans",
+        "ideas",
+        "docs",
+        "settings",
+        "stack",
+        "ui",
+        "ci",
+        "config",
+        "deps",
+        "repo",
+        "release",
+        "main"
+      ]
+    ],
     "subject-case": [2, "never", []],
     "body-max-line-length": [0],
     "footer-max-line-length": [0]

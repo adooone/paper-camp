@@ -23,6 +23,7 @@
 | IDEA-19 | Resolve open questions from the Docs page | done |
 | IDEA-20 | Plan storage architecture | done |
 | IDEA-21 | Batch plan-doc freshness audit | planned |
-| IDEA-22 | Restructure and actualize repo-root docs | planned |
+| IDEA-22 | Restructure and actualize repo-root docs | done |
 | IDEA-23 | Per-agent model and effort settings | planned |
 | IDEA-24 | Sync to main before new plan | planned |
+| IDEA-25 | Actualize about.md for per-file storage | planned |
