@@ -300,9 +300,8 @@ export function createAgentManager(
       taskKind: 'commit-suggest',
     });
 
-    // claude-code uses -p to read from stdin; opencode takes the prompt as a positional arg.
     const isClaude = agentId === 'claude-code';
-    const args = isClaude ? ['-p', '--output-format', 'json'] : ['run', prompt, '--format', 'json'];
+    const args = isClaude ? ['-p', '--output-format', 'json'] : ['run', '--format', 'json'];
 
     return new Promise((resolve, reject) => {
       const proc = spawn(adapter.command, args, {
@@ -340,11 +339,7 @@ export function createAgentManager(
       }, COMMIT_SUGGEST_TIMEOUT_MS);
 
       proc.stdin?.on('error', () => {});
-
-      // claude-code reads the prompt from stdin; opencode already has it in args.
-      if (isClaude) {
-        proc.stdin?.write(prompt);
-      }
+      proc.stdin?.write(prompt);
       proc.stdin?.end();
 
       let stdout = '';
