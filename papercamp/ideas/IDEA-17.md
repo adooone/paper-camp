@@ -3,7 +3,7 @@ id: IDEA-17
 title: opencode agent support
 ---
 
-### IDEA-17: opencode agent support
+## IDEA-17: opencode agent support
 
 Today `src/app/server/agents/index.ts` only registers one adapter (`claude-code`), and `.paper-camp/config.json`'s `defaultAgent` is a single project-wide value used for every kind of agent task. This idea adds a second real adapter (opencode) and lets the default be set per task kind instead of one global value, plus fixes visual problems on the Settings page noticed while looking at where this config lives.
 

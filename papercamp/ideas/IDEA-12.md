@@ -3,7 +3,7 @@ id: IDEA-12
 title: Plan/decision consistency check
 ---
 
-### IDEA-12: Plan/decision consistency check
+## IDEA-12: Plan/decision consistency check
 
 `decisions.md` and `open-questions.md` are the two files in `papercamp/` that exist specifically to stop a project from re-litigating settled questions or losing track of blockers — but nothing today checks whether they're internally consistent, or whether an unresolved open question is actually blocking work that's marked `in-progress` anyway. `spec-kit`'s `/analyze` command runs exactly this kind of check across its own artifacts (spec/plan/tasks): a read-only, severity-graded findings pass, never a write. The equivalent here is small enough to be entirely derivable from data already parsed — no AI call needed for v1, same "derive, don't duplicate" approach `deriveIdeaStatuses` (`src/core/parser.ts:253-265`) already uses for Idea status.
 

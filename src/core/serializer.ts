@@ -271,8 +271,8 @@ export function formatIdeaFile(input: NewIdeaFileInput): string {
   };
 
   const parts: string[] = [serializeFrontmatter(frontmatter)];
-
-  if (input.body) parts.push(input.body);
+  const heading = `## ${input.id}: ${input.title}`;
+  parts.push(input.body ? `${heading}\n\n${input.body}` : heading);
 
   return parts.join('\n\n').trimEnd();
 }

@@ -3,7 +3,7 @@ id: IDEA-16
 title: Ideas UX improvement
 ---
 
-### IDEA-16: Ideas UX improvement
+## IDEA-16: Ideas UX improvement
 
 A grab-bag of UX fixes for the Ideas/Stack flow, flagged from actually using the app rather than from a single feature gap.
 

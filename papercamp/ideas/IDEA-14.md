@@ -3,7 +3,7 @@ id: IDEA-14
 title: Review-found phases
 ---
 
-### IDEA-14: Review-found phases
+## IDEA-14: Review-found phases
 
 A `/code-review` pass against a plan's implementation surfaces real findings (bugs, cleanup, conventions violations) that today only exist as chat output — nothing persists them, and nothing lets you act on one with a click the way [[IDEA-4]]'s "Start agent" button already lets you act on a planned phase.
 

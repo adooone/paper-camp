@@ -3,7 +3,7 @@ id: IDEA-28
 title: Idea-file heading level (MD001)
 ---
 
-### IDEA-28: Idea-file heading level (MD001)
+## IDEA-28: Idea-file heading level (MD001)
 
 Every idea file opens its body with a level-3 heading — `### IDEA-N: Title` — immediately after the YAML frontmatter. markdownlint's MD001 (heading-increment) flags this because the first heading jumps straight to `###` without an `h1`/`h2` above it. CodeRabbit raises it on every new idea file (IDEA-25, IDEA-26, …).
 

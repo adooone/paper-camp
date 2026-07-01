@@ -3,7 +3,7 @@ id: IDEA-25
 title: Actualize about.md for per-file storage
 ---
 
-### IDEA-25: Actualize about.md for per-file storage
+## IDEA-25: Actualize about.md for per-file storage
 
 `papercamp/about.md` is the project's internal reference doc ("the concrete shape of the system: folders, files, commands, and stack"), and it's now **internally contradictory** after the FEAT-24 / IDEA-20 per-file migration. It already grew a `## Per-file plan/idea storage architecture` section (about.md:7) describing the new layout, but the rest of the doc still describes the old monolithic `plans.md`/`ideas.md` as the storage — so the same document now says two different things, and several details match neither reality.
 

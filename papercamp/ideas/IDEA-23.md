@@ -3,7 +3,7 @@ id: IDEA-23
 title: Per-agent model and effort settings
 ---
 
-### IDEA-23: Per-agent model and effort settings
+## IDEA-23: Per-agent model and effort settings
 
 Today the agent config is a single choice per task: `DefaultAgentsMap` (`src/types/index.ts`) maps each task kind — `phase`, `planDraft`, `ideaExtend`, `commitSuggest` — to one `AgentId` (`claude-code` or `opencode`), and the Settings page surfaces exactly that as four agent-picker dropdowns (`settings-page.tsx` — "Phase execution", "Plan drafting", "Idea extension", "Commit suggestion"). What's missing is everything *below* the agent choice: neither adapter's `buildArgs` passes a model or a reasoning-effort level. `claude-code` hardcodes `-p … --output-format stream-json --verbose --permission-mode auto` and `opencode` hardcodes `run … --format json`, so every task always runs on each CLI's default model at its default effort. The goal is to let each per-task config also carry a **model** and an **effort** level.
 

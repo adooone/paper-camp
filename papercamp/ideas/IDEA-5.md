@@ -3,7 +3,7 @@ id: IDEA-5
 title: Repo health status
 ---
 
-### IDEA-5: Repo health status
+## IDEA-5: Repo health status
 
 A third section in the already-built Stack panel (`src/app/components/stack-panel.tsx`), next to "Active" and "Live", showing whether the repo is actually green right now — lint, format, and tests — without opening a terminal. This is the concrete version of a promise the original pitch already made ("analog gauges display project health and momentum") rather than a new concept: three small status pills wired to checks the project already runs by hand.
 

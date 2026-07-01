@@ -3,7 +3,7 @@ id: IDEA-24
 title: Sync to main before new plan
 ---
 
-### IDEA-24: Sync to main before new plan
+## IDEA-24: Sync to main before new plan
 
 When you go to start a new plan, you're often still sitting on the *previous* feature branch — whose PR has already merged and whose remote branch was deleted. Nothing in the dashboard notices: today's only guard, `checkBranchConflictForPlan` (`src/app/server/api.ts`), reads the plan id out of the branch name (`getFeatureBranchPlanId`) and blocks a launch only while *that plan's status* is unfinished — it passes `done`/`dropped` straight through. So once the old plan is closed, you can draft and start working on top of a stale, already-merged branch, tangling the new feature into leftover local history. (Concretely: this just bit us — a draft agent wrote FEAT-25/FEAT-26 into the legacy `plans.md` while on a merged branch, and switching to main needed a manual stash → checkout → fast-forward → pop to recover.)
 

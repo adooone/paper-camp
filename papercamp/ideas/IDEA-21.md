@@ -3,7 +3,7 @@ id: IDEA-21
 title: Batch plan-doc freshness audit
 ---
 
-### IDEA-21: Batch plan-doc freshness audit
+## IDEA-21: Batch plan-doc freshness audit
 
 The existing "Phase convergence audit" (`AuditPhasesButton`, see `plans.md`'s "Phase convergence audit" section) already solves this for one plan at a time: an AI pass that compares a single plan's recorded phases against the actual code and append-only adds whatever's missing, never rewriting or checking off existing lines. What's missing is the sweep version — going through every `review`/`done` plan and surfacing drift across the whole project in one pass, instead of remembering to click audit on each plan individually.
 

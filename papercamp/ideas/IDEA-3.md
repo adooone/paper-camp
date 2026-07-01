@@ -3,7 +3,7 @@ id: IDEA-3
 title: The Stack panel
 ---
 
-### IDEA-3: The Stack panel
+## IDEA-3: The Stack panel
 
 A persistent right-hand panel, present across every page (not a route — more like the `NavigationIsland`, but docked right and full-height), showing the active plan and a feed of recent project activity. Default open, toggleable closed.
 

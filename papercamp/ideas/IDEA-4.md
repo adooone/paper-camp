@@ -3,7 +3,7 @@ id: IDEA-4
 title: Agent orchestration
 ---
 
-### IDEA-4: Agent orchestration
+## IDEA-4: Agent orchestration
 
 A more concrete shape for what started as "agent observability." Clicking a plan/task in the dashboard launches a real agent session scoped to that task, streams a simplified view of its progress into the status panel ("The Stack" idea above), and lets you send follow-up input into the same session without leaving the browser. This turns Paper Camp from a passive viewer of `papercamp/` into an active layer between you and the agent — but the persisted record stays exactly where it already lives, in `plans.md`/`progress.md`, written by the agent itself as part of doing the work, not in some new log format.
 

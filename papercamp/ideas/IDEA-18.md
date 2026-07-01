@@ -3,7 +3,7 @@ id: IDEA-18
 title: GitHub integration
 ---
 
-### IDEA-18: GitHub integration
+## IDEA-18: GitHub integration
 
 This repo (`git@github.com:croco-dendy/paper-camp.git`) has zero `.github/` workflows today — no CI runs `tsc`/`biome`/`vitest` on a push or PR, there's no automated `npm publish`, and every commit so far has gone straight to `main`. One piece of groundwork already exists, unused: `.commitlintrc.json` enforces Conventional Commits with a `type-enum` restricted to exactly this repo's own plan `Kind` values (`feat`/`fix`/`chore`/`docs`/`refactor`) — but nothing currently runs it (no `.husky` commit-msg hook, no CI lint job), so it's effectively dead config. This idea wires up real CI/CD around what's already there rather than starting from scratch.
 

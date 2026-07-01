@@ -3,7 +3,7 @@ id: IDEA-1
 title: Project docs browser
 ---
 
-### IDEA-1: Project docs browser
+## IDEA-1: Project docs browser
 
 A Docs page that aggregates all project documentation into a browsable, searchable view inside the dashboard, so the project's full narrative — structure, conventions, decisions — is one click away instead of scattered across the terminal and editor. The papercamp/ folder is the living memory; the Docs page is the reference library built on top of it.
 
