@@ -2,7 +2,7 @@
 id: FEAT-27
 title: Sync to main guard
 kind: feat
-status: review
+status: done
 created: 2026-07-01
 idea: IDEA-24
 updated: 2026-07-01

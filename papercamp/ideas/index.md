@@ -25,7 +25,7 @@
 | IDEA-21 | Batch plan-doc freshness audit | done |
 | IDEA-22 | Restructure and actualize repo-root docs | done |
 | IDEA-23 | Per-agent model and effort settings | done |
-| IDEA-24 | Sync to main before new plan | planned |
+| IDEA-24 | Sync to main before new plan | done |
 | IDEA-25 | Actualize about.md for per-file storage | done |
 | IDEA-26 | Plan reconcile pass and audit gating | planned |
 | IDEA-27 | Content-hash freshness for batch audit | planned |
