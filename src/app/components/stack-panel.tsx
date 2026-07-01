@@ -517,7 +517,9 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                                 ? ' — extending'
                                 : agentStatus.taskKind === 'commit-suggest'
                                   ? ' — suggesting commit message'
-                                  : ''}{' '}
+                                  : agentStatus.taskKind === 'sync'
+                                    ? ' — syncing to main'
+                                    : ''}{' '}
                       · {AGENT_LABELS[agentStatus.agentId]}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
