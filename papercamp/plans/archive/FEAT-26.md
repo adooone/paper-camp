@@ -2,7 +2,7 @@
 id: FEAT-26
 title: Per-agent model and effort
 kind: feat
-status: review
+status: done
 created: 2026-06-30
 idea: IDEA-23
 updated: 2026-07-01
