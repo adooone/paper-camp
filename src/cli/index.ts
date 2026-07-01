@@ -23,7 +23,13 @@ import {
   formatPlansIndex,
   todayDateString,
 } from '../core/serializer';
-import { DEFAULT_AGENTS, PLAN_KINDS, type PlanEntry } from '../types/index';
+import {
+  type AgentRunOptions,
+  DEFAULT_AGENTS,
+  PLAN_KINDS,
+  type PlanEntry,
+  coerceAgentConfig,
+} from '../types/index';
 import { startDevServer } from './dev-server';
 
 async function exists(path: string): Promise<boolean> {
@@ -84,9 +90,10 @@ async function runPlanAudit(
   root: string,
   plan: PlanEntry,
   adapter: AgentAdapter,
+  opts?: AgentRunOptions,
 ): Promise<boolean> {
   const prompt = buildConvergenceAuditPrompt(plan);
-  const proc = spawn(adapter.command, adapter.buildArgs(prompt), {
+  const proc = spawn(adapter.command, adapter.buildArgs(prompt, opts), {
     cwd: root,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -337,7 +344,7 @@ program
       () => '{}',
     );
     let config: {
-      defaultAgents?: typeof DEFAULT_AGENTS;
+      defaultAgents?: Record<string, unknown>;
       defaultAgent?: string;
     };
     try {
@@ -347,8 +354,16 @@ program
       process.exitCode = 1;
       return;
     }
-    const defaultAgents = config.defaultAgents ?? DEFAULT_AGENTS;
-    const { adapter } = resolveAgent({ defaultAgents, taskKind: 'audit' });
+    const rawAgents = config.defaultAgents;
+    const defaultAgents = rawAgents
+      ? {
+          phase: coerceAgentConfig(rawAgents.phase),
+          planDraft: coerceAgentConfig(rawAgents.planDraft),
+          ideaExtend: coerceAgentConfig(rawAgents.ideaExtend),
+          commitSuggest: coerceAgentConfig(rawAgents.commitSuggest),
+        }
+      : DEFAULT_AGENTS;
+    const { adapter, model, effort } = resolveAgent({ defaultAgents, taskKind: 'audit' });
 
     console.log(`Auditing ${candidates.length} plan(s):\n`);
 
@@ -398,7 +413,7 @@ program
       const phasesBefore = plan.phases.length;
 
       console.log(`  [audit] ${label} ${plan.title}`);
-      const success = await runPlanAudit(root, plan, adapter);
+      const success = await runPlanAudit(root, plan, adapter, { model, effort });
 
       if (success) {
         try {

@@ -36,7 +36,7 @@
 | FEAT-23 | Resolve open questions from Docs | done | app, docs |
 | FEAT-24 | Plan storage architecture | done | core, cli, plans, ideas |
 | FEAT-25 | Batch plan freshness audit | done | audit, convergence-audit, batch, cli, dashboard |
-| FEAT-26 | Per-agent model and effort | idea | agents, settings, config, model, effort, ui |
+| FEAT-26 | Per-agent model and effort | done | agents, settings, config, model, effort, ui |
 | FEAT-27 | Sync to main guard | idea | git, branch, ux |
 | FEAT-28 | Reconcile pass and audit gating | idea | plans, audit, reconcile, ai |
 | FEAT-29 | Content-hash audit freshness | idea | audit, freshness, batch |

@@ -187,7 +187,7 @@ const ExtendWithAIButton = ({ ideaId }: { ideaId: string | null }) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
-  const { state, run } = useActionFeedback();
+  const { state, errorMessage, run } = useActionFeedback();
 
   const handleClick = () => {
     if (!ideaId) return;
@@ -198,19 +198,28 @@ const ExtendWithAIButton = ({ ideaId }: { ideaId: string | null }) => {
     });
   };
 
+  const title =
+    state === 'error'
+      ? (errorMessage ?? 'Extension failed')
+      : ideaId
+        ? undefined
+        : 'Idea needs an ID before an agent can run';
+
   return (
     <Button
       variant="ghost"
       size="small"
       onClick={handleClick}
       disabled={agentBusy || state === 'loading' || !ideaId}
-      title={ideaId ? undefined : 'Idea needs an ID before an agent can run'}
+      title={title}
     >
       {state === 'loading'
         ? 'Extending…'
         : state === 'success'
           ? 'Extension sent!'
-          : 'Extend with AI'}
+          : state === 'error'
+            ? 'Extension failed'
+            : 'Extend with AI'}
     </Button>
   );
 };

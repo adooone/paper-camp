@@ -124,18 +124,57 @@ export interface EnvEntry {
   value: string;
 }
 
+export interface AgentConfig {
+  agent: AgentId;
+  model?: string;
+  effort?: string;
+}
+
+/** Model/effort passed to an adapter's buildArgs — the AgentConfig minus the agent id. */
+export interface AgentRunOptions {
+  model?: string;
+  effort?: string;
+}
+
+/** Maps option names to a fixed value list (renders a Select) or null (free-text or hidden). */
+export type AgentOptionsDescriptor = Record<string, string[] | null | undefined>;
+
+export const AGENT_OPTIONS: Record<AgentId, AgentOptionsDescriptor> = {
+  'claude-code': {
+    model: ['opus', 'sonnet', 'fable', 'haiku'],
+    effort: ['low', 'medium', 'high', 'xhigh', 'max'],
+  },
+  opencode: {
+    model: null,
+  },
+};
+
+export function coerceAgentConfig(v: unknown): AgentConfig {
+  const toAgent = (a: unknown): AgentId =>
+    AGENT_IDS.includes(a as AgentId) ? (a as AgentId) : 'claude-code';
+  if (typeof v === 'string') return { agent: toAgent(v) };
+  // Tolerate null/undefined and partial legacy entries — a missing key must not
+  // throw (that would 500 the /api/config read this coercion exists to protect).
+  const obj = (v ?? {}) as Record<string, unknown>;
+  return {
+    agent: toAgent(obj.agent),
+    ...(typeof obj.model === 'string' && { model: obj.model }),
+    ...(typeof obj.effort === 'string' && { effort: obj.effort }),
+  };
+}
+
 export interface DefaultAgentsMap {
-  phase: AgentId;
-  planDraft: AgentId;
-  ideaExtend: AgentId;
-  commitSuggest: AgentId;
+  phase: AgentConfig;
+  planDraft: AgentConfig;
+  ideaExtend: AgentConfig;
+  commitSuggest: AgentConfig;
 }
 
 export const DEFAULT_AGENTS: DefaultAgentsMap = {
-  phase: 'opencode',
-  planDraft: 'claude-code',
-  ideaExtend: 'claude-code',
-  commitSuggest: 'claude-code',
+  phase: { agent: 'opencode' },
+  planDraft: { agent: 'claude-code' },
+  ideaExtend: { agent: 'claude-code' },
+  commitSuggest: { agent: 'claude-code' },
 };
 
 export interface PaperCampConfig {

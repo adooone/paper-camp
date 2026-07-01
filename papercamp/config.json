@@ -10,9 +10,25 @@
     "refactor": 5
   },
   "defaultAgents": {
-    "phase": "claude-code",
-    "planDraft": "claude-code",
-    "ideaExtend": "claude-code",
-    "commitSuggest": "claude-code"
+    "phase": {
+      "agent": "claude-code",
+      "model": "haiku",
+      "effort": "medium"
+    },
+    "planDraft": {
+      "agent": "claude-code",
+      "model": "opus",
+      "effort": "high"
+    },
+    "ideaExtend": {
+      "agent": "claude-code",
+      "model": "opus",
+      "effort": "high"
+    },
+    "commitSuggest": {
+      "agent": "claude-code",
+      "model": "haiku",
+      "effort": "low"
+    }
   }
 }

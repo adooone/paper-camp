@@ -1,6 +1,15 @@
 import { z } from 'zod';
 import { AGENT_IDS } from '../types/index';
 
+export const agentConfigSchema = z.preprocess(
+  (v) => (typeof v === 'string' ? { agent: v } : v),
+  z.object({
+    agent: z.enum(AGENT_IDS),
+    model: z.string().optional(),
+    effort: z.string().optional(),
+  }),
+);
+
 export const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
 
 // ---------------------------------------------------------------------------
@@ -81,10 +90,10 @@ export const paperCampConfigSchema = z.object({
   defaultAgent: z.enum(AGENT_IDS).optional(),
   defaultAgents: z
     .object({
-      phase: z.enum(AGENT_IDS),
-      planDraft: z.enum(AGENT_IDS),
-      ideaExtend: z.enum(AGENT_IDS),
-      commitSuggest: z.enum(AGENT_IDS),
+      phase: agentConfigSchema,
+      planDraft: agentConfigSchema,
+      ideaExtend: agentConfigSchema,
+      commitSuggest: agentConfigSchema,
     })
     .optional(),
 });

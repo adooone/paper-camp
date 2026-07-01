@@ -42,6 +42,7 @@ import {
   type PhaseItem,
   type PlanEntry,
   type PlanStatus,
+  coerceAgentConfig,
 } from '../../types/index';
 import { findFocusPlan } from '../features/plans/helpers';
 import { createActivityManager } from './activity';
@@ -185,7 +186,20 @@ const apiRoutes: ApiRoute[] = [
     path: '/api/config',
     handler: async (root) => {
       const raw = await readMaybe(join(root, 'papercamp', 'config.json'));
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      const config = JSON.parse(raw);
+      // Coerce legacy bare-string defaultAgents (e.g. "phase": "opencode") into
+      // the { agent, model?, effort? } shape the settings UI expects — old
+      // config.json files predate FEAT-26 and would otherwise crash the page.
+      if (config?.defaultAgents) {
+        config.defaultAgents = {
+          phase: coerceAgentConfig(config.defaultAgents.phase),
+          planDraft: coerceAgentConfig(config.defaultAgents.planDraft),
+          ideaExtend: coerceAgentConfig(config.defaultAgents.ideaExtend),
+          commitSuggest: coerceAgentConfig(config.defaultAgents.commitSuggest),
+        };
+      }
+      return config;
     },
   },
   {
@@ -1053,12 +1067,14 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           return;
         }
         const body = await readBody(req);
-        const { port, projectName, defaultAgent, defaultAgents } = JSON.parse(body) as {
+        const bodyParsed = JSON.parse(body) as {
           port?: number;
           projectName?: string;
           defaultAgent?: AgentId;
-          defaultAgents?: DefaultAgentsMap;
+          defaultAgents?: Record<string, unknown>;
         };
+        const { port, projectName, defaultAgent } = bodyParsed;
+        const rawDefaultAgents = bodyParsed.defaultAgents;
         if (port !== undefined && (!Number.isInteger(port) || port <= 0)) {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
@@ -1077,9 +1093,12 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.end(JSON.stringify({ error: 'defaultAgent must be a known agent id' }));
           return;
         }
-        if (defaultAgents !== undefined) {
+        if (rawDefaultAgents !== undefined) {
           for (const key of ['phase', 'planDraft', 'ideaExtend', 'commitSuggest'] as const) {
-            if (!AGENT_IDS.includes(defaultAgents[key])) {
+            const val = rawDefaultAgents[key];
+            const agentId =
+              typeof val === 'string' ? val : (val as Record<string, unknown> | undefined)?.agent;
+            if (!agentId || !AGENT_IDS.includes(agentId as AgentId)) {
               res.statusCode = 400;
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({ error: `defaultAgents.${key} must be a known agent id` }));
@@ -1088,14 +1107,22 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           }
         }
         const config = JSON.parse(raw) as PaperCampConfig;
+        const defaultAgents: DefaultAgentsMap | undefined = rawDefaultAgents
+          ? {
+              phase: coerceAgentConfig(rawDefaultAgents.phase),
+              planDraft: coerceAgentConfig(rawDefaultAgents.planDraft),
+              ideaExtend: coerceAgentConfig(rawDefaultAgents.ideaExtend),
+              commitSuggest: coerceAgentConfig(rawDefaultAgents.commitSuggest),
+            }
+          : undefined;
         const resolvedDefaultAgents: DefaultAgentsMap | undefined =
           defaultAgents ??
           (defaultAgent !== undefined
             ? {
-                phase: defaultAgent,
-                planDraft: defaultAgent,
-                ideaExtend: defaultAgent,
-                commitSuggest: defaultAgent,
+                phase: { agent: defaultAgent },
+                planDraft: { agent: defaultAgent },
+                ideaExtend: { agent: defaultAgent },
+                commitSuggest: { agent: defaultAgent },
               }
             : undefined);
         const configWithOld = config as PaperCampConfig & { defaultAgent?: AgentId };

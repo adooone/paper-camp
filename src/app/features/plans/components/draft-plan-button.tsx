@@ -15,7 +15,7 @@ export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
-  const { state, run } = useActionFeedback();
+  const { state, errorMessage, run } = useActionFeedback();
 
   const handleClick = () => {
     const id = idea.id;
@@ -25,16 +25,33 @@ export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
     });
   };
 
+  const label =
+    state === 'loading'
+      ? 'Drafting…'
+      : state === 'success'
+        ? 'Draft sent!'
+        : state === 'error'
+          ? 'Draft failed'
+          : 'Draft plan';
+  // Surface the failure reason (e.g. the branch-conflict guard's 409) instead of
+  // silently swallowing it — hovering shows the full message.
+  const title =
+    state === 'error'
+      ? (errorMessage ?? 'Draft failed')
+      : idea.id
+        ? undefined
+        : 'Idea needs an ID before an agent can run';
+
   return (
     <Button
       variant="ghost"
       size="small"
       onClick={handleClick}
       disabled={agentBusy || state === 'loading' || !idea.id}
-      title={idea.id ? undefined : 'Idea needs an ID before an agent can run'}
-      style={{ color: color.textSecondary }}
+      title={title}
+      style={{ color: state === 'error' ? color.accentRoseDark : color.textSecondary }}
     >
-      {state === 'loading' ? 'Drafting…' : state === 'success' ? 'Draft sent!' : 'Draft plan'}
+      {label}
     </Button>
   );
 };

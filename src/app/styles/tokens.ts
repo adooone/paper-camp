@@ -77,6 +77,9 @@ export const color = {
   deskChalk: '#d4e8cb',
 } as const;
 
+// Hairline divider between stacked rows (settings agent rows, config/script lists).
+export const rowDivider = '1px solid rgba(61, 53, 43, 0.1)';
+
 // Measured height of the fixed bottom nav island (<Island> padding + content row).
 // Keep in sync with the upstream Island/Input/Button small-size tokens.
 const navIslandHeight = '4.5rem';

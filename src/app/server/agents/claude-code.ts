@@ -1,11 +1,24 @@
+import type { AgentRunOptions } from '../../../types/index';
+
 export interface ParsedAgentLine {
   text: string;
   done?: boolean;
   error?: boolean;
 }
 
-export function buildArgs(prompt: string): string[] {
-  return ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--permission-mode', 'auto'];
+export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
+  const args = [
+    '-p',
+    prompt,
+    '--output-format',
+    'stream-json',
+    '--verbose',
+    '--permission-mode',
+    'auto',
+  ];
+  if (opts?.model) args.push('--model', opts.model);
+  if (opts?.effort) args.push('--effort', opts.effort);
+  return args;
 }
 
 /**

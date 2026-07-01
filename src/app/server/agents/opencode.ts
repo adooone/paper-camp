@@ -1,7 +1,11 @@
+import type { AgentRunOptions } from '../../../types/index';
 import type { ParsedAgentLine } from './claude-code';
 
-export function buildArgs(prompt: string): string[] {
-  return ['run', prompt, '--format', 'json'];
+export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
+  const args = ['run', prompt, '--format', 'json'];
+  if (opts?.model) args.push('-m', opts.model);
+  if (opts?.effort) args.push('--variant', opts.effort);
+  return args;
 }
 
 const TOOL_LABELS: Record<string, string> = {

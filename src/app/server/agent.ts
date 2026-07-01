@@ -21,6 +21,7 @@ import {
   type PhaseItem,
   type PlanEntry,
   type TaskKind,
+  coerceAgentConfig,
 } from '../../types/index';
 import { buildConvergenceAuditPrompt } from '../features/plans/prompts';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
@@ -51,14 +52,23 @@ interface AgentTask {
 function readDefaultAgentIds(root: string): DefaultAgentsMap {
   try {
     const raw = readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8');
-    const config = JSON.parse(raw) as PaperCampConfig & { defaultAgent?: AgentId };
-    if (config.defaultAgents) return config.defaultAgents;
-    if (config.defaultAgent) {
+    const config = JSON.parse(raw) as Record<string, unknown> & { defaultAgent?: AgentId };
+    const rawAgents = config.defaultAgents as Record<string, unknown> | undefined;
+    if (rawAgents) {
       return {
-        phase: config.defaultAgent,
-        planDraft: config.defaultAgent,
-        ideaExtend: config.defaultAgent,
-        commitSuggest: config.defaultAgent,
+        phase: coerceAgentConfig(rawAgents.phase),
+        planDraft: coerceAgentConfig(rawAgents.planDraft),
+        ideaExtend: coerceAgentConfig(rawAgents.ideaExtend),
+        commitSuggest: coerceAgentConfig(rawAgents.commitSuggest),
+      };
+    }
+    if (config.defaultAgent) {
+      const id = config.defaultAgent;
+      return {
+        phase: { agent: id },
+        planDraft: { agent: id },
+        ideaExtend: { agent: id },
+        commitSuggest: { agent: id },
       };
     }
     return DEFAULT_AGENTS;
@@ -217,12 +227,17 @@ export function createAgentManager(
       return { ok: false, error: 'An agent task is already running' };
     }
     const defaultAgents = readDefaultAgentIds(root);
-    const { id: agentId, adapter } = resolveAgent({
+    const {
+      id: agentId,
+      adapter,
+      model,
+      effort,
+    } = resolveAgent({
       agentId: identity.agentOverride,
       defaultAgents,
       taskKind: scope.taskKind,
     });
-    const proc = spawnAgent(adapter, adapter.buildArgs(prompt));
+    const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
     const task: AgentTask = {
       planTitle: identity.planTitle,
       planId: identity.planId,
@@ -314,7 +329,12 @@ export function createAgentManager(
       return { ok: false, error: 'An agent task is already running' };
     }
     const defaultAgents = readDefaultAgentIds(root);
-    const { id: agentId, adapter } = resolveAgent({ defaultAgents, taskKind: 'audit' });
+    const {
+      id: agentId,
+      adapter,
+      model,
+      effort,
+    } = resolveAgent({ defaultAgents, taskKind: 'audit' });
 
     // Stub proc — replaced per plan in the loop. Already-exited is fine: stop() sets
     // task.status = 'stopping' first; kill() on a dead process is a no-op.
@@ -378,7 +398,7 @@ export function createAgentManager(
 
           pushLine(task, `[audit] ${plan.id} ${plan.title}`);
           const prompt = buildConvergenceAuditPrompt(plan);
-          const proc = spawn(adapter.command, adapter.buildArgs(prompt), {
+          const proc = spawn(adapter.command, adapter.buildArgs(prompt, { model, effort }), {
             cwd: root,
             stdio: ['ignore', 'pipe', 'pipe'],
           });
@@ -463,13 +483,20 @@ export function createAgentManager(
       return Promise.reject(new Error('Commit suggestion prompt exceeds the 10MB stdin limit'));
     }
     const defaultAgents = readDefaultAgentIds(root);
-    const { id: agentId, adapter } = resolveAgent({
+    const {
+      id: agentId,
+      adapter,
+      model,
+      effort,
+    } = resolveAgent({
       defaultAgents,
       taskKind: 'commit-suggest',
     });
 
     const isClaude = agentId === 'claude-code';
     const args = isClaude ? ['-p', '--output-format', 'json'] : ['run', '--format', 'json'];
+    if (model) args.push(isClaude ? '--model' : '-m', model);
+    if (effort) args.push(isClaude ? '--effort' : '--variant', effort);
 
     return new Promise((resolve, reject) => {
       const proc = spawn(adapter.command, args, {
