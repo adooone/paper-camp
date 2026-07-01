@@ -2,7 +2,7 @@
 id: DOCS-3
 title: Actualize about.md for per-file storage
 kind: docs
-status: review
+status: done
 created: 2026-07-01
 idea: IDEA-25
 updated: 2026-07-01

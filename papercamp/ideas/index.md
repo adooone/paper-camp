@@ -26,7 +26,7 @@
 | IDEA-22 | Restructure and actualize repo-root docs | done |
 | IDEA-23 | Per-agent model and effort settings | planned |
 | IDEA-24 | Sync to main before new plan | planned |
-| IDEA-25 | Actualize about.md for per-file storage | planned |
+| IDEA-25 | Actualize about.md for per-file storage | done |
 | IDEA-26 | Plan reconcile pass and audit gating | planned |
 | IDEA-27 | Content-hash freshness for batch audit | planned |
 | IDEA-28 | Idea-file heading level (MD001) | done |
