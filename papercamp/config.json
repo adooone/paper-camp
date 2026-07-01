@@ -12,7 +12,7 @@
   "defaultAgents": {
     "phase": {
       "agent": "claude-code",
-      "model": "haiku",
+      "model": "sonnet",
       "effort": "medium"
     },
     "planDraft": {
@@ -27,7 +27,7 @@
     },
     "commitSuggest": {
       "agent": "claude-code",
-      "model": "haiku",
+      "model": "sonnet",
       "effort": "low"
     }
   }

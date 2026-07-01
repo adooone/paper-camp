@@ -1,6 +1,7 @@
 import { deriveIdeaStatuses } from '@/core/idea-status';
 import type {
   AgentTaskState,
+  BranchHygieneStatus,
   CheckName,
   ConsistencyIssue,
   DecisionEntry,
@@ -97,6 +98,7 @@ type AppStore = {
   gitStatus: GitStatusEntry[] | null;
   gitBranch: string | null;
   gitAhead: number;
+  gitBranchHygiene: BranchHygieneStatus | null;
   loadGitStatus: () => Promise<void>;
 
   agentStatus: AgentTaskState | null;
@@ -255,10 +257,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
   gitStatus: null,
   gitBranch: null,
   gitAhead: 0,
+  gitBranchHygiene: null,
   loadGitStatus: async () => {
     try {
-      const { branch, entries, ahead } = await fetchGitStatus();
-      set({ gitStatus: entries, gitBranch: branch, gitAhead: ahead });
+      const { branch, entries, ahead, branchHygiene } = await fetchGitStatus();
+      set({
+        gitStatus: entries,
+        gitBranch: branch,
+        gitAhead: ahead,
+        gitBranchHygiene: branchHygiene,
+      });
     } catch {
       // keep previous status
     }

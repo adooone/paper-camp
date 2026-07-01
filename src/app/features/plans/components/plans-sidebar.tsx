@@ -4,7 +4,7 @@ import { createPlan, deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
-import { IconButton, ListItem } from '@dendelion/paper-ui';
+import { Alert, IconButton, ListItem } from '@dendelion/paper-ui';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useState } from 'react';
 import { CreateIdeaModal } from './create-idea-modal';
@@ -23,9 +23,14 @@ export const PlansSidebar = () => {
     activeIdeaTitle,
     setActiveIdeaTitle,
     ideaEntries,
+    gitBranchHygiene,
   } = useAppStore();
   const [addingIdea, setAddingIdea] = useState(false);
   const [creatingIdea, setCreatingIdea] = useState(false);
+
+  const isStale = Boolean(
+    gitBranchHygiene && gitBranchHygiene !== 'clean-on-main' && gitBranchHygiene !== 'fine',
+  );
 
   const active =
     plans?.entries.filter((p) => p.status === 'in-progress' || p.status === 'review') ?? [];
@@ -65,6 +70,19 @@ export const PlansSidebar = () => {
 
   return (
     <>
+      {isStale && (
+        <div style={{ marginBottom: space[4] }}>
+          <Alert variant="warning" title="Branch hygiene alert">
+            {gitBranchHygiene === 'stale-merged'
+              ? "You're on a merged branch. Switch to main first before creating new plans."
+              : gitBranchHygiene === 'stale-no-upstream'
+                ? 'This branch has no upstream yet. Switch to main first before creating new plans.'
+                : gitBranchHygiene === 'dirty'
+                  ? 'Working tree has uncommitted changes. Switch to clean main before creating new plans.'
+                  : 'Switch to main first before creating new plans.'}
+          </Alert>
+        </div>
+      )}
       {active.length > 0 && (
         <SidebarSection label="In progress">
           {active.map((p) => (
@@ -126,8 +144,10 @@ export const PlansSidebar = () => {
             icon={<span>+</span>}
             variant="ghost"
             size="small"
-            label="Add to backlog"
+            label={isStale ? 'Switch to main first' : 'Add to backlog'}
+            disabled={isStale}
             onClick={() => setAddingIdea(true)}
+            title={isStale ? 'Switch to main first' : undefined}
           />
         }
       >

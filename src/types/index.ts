@@ -207,11 +207,26 @@ export interface GitStatusResponse {
   branch: string;
   entries: GitStatusEntry[];
   ahead: number;
+  branchHygiene: BranchHygieneStatus;
 }
+
+export type BranchHygieneStatus =
+  | 'clean-on-main'
+  | 'stale-merged'
+  | 'stale-no-upstream'
+  | 'dirty'
+  | 'fine';
 
 export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error';
 
-export type TaskKind = 'phase' | 'audit' | 'batch-audit' | 'draft' | 'extend' | 'commit-suggest';
+export type TaskKind =
+  | 'phase'
+  | 'audit'
+  | 'batch-audit'
+  | 'draft'
+  | 'extend'
+  | 'commit-suggest'
+  | 'sync';
 
 export interface AgentTaskState {
   status: AgentTaskStatus;

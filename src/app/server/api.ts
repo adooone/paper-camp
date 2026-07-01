@@ -32,6 +32,7 @@ import {
 import {
   AGENT_IDS,
   type AgentId,
+  type BranchHygieneStatus,
   DEFAULT_AGENTS,
   type DefaultAgentsMap,
   type EnvEntry,
@@ -99,9 +100,17 @@ const CONFIG_ALLOWLIST = [
 
 async function checkBranchConflictForPlan(
   root: string,
-  git: { getFeatureBranchPlanId: () => string | null },
+  git: {
+    getFeatureBranchPlanId: () => string | null;
+    getBranchHygieneStatus: () => Promise<BranchHygieneStatus>;
+  },
   targetPlanId?: string,
 ): Promise<string | null> {
+  const hygiene = await git.getBranchHygieneStatus();
+  if (hygiene === 'stale-merged') {
+    return "You're on a merged branch — switch to main first";
+  }
+
   const activePlanId = git.getFeatureBranchPlanId();
   if (!activePlanId) return null;
   if (targetPlanId && activePlanId === targetPlanId) return null;
@@ -364,6 +373,15 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'title is required' }));
+          return;
+        }
+        // Server-side branch-hygiene guard — the sidebar disables this client-side,
+        // but a stale-branch request must not create a plan by bypassing the UI.
+        const conflict = await checkBranchConflictForPlan(root, git);
+        if (conflict) {
+          res.statusCode = 409;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: conflict }));
           return;
         }
         const planKind =
@@ -656,9 +674,10 @@ export function createApiMiddleware(root: string): ApiMiddleware {
         const entries = await git.getStatus();
         const branch = git.getCurrentBranch();
         const ahead = await git.getAheadCount();
+        const branchHygiene = await git.getBranchHygieneStatus();
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ branch, entries, ahead }));
+        res.end(JSON.stringify({ branch, entries, ahead, branchHygiene }));
       } catch (error) {
         res.statusCode = 500;
         res.setHeader('Content-Type', 'application/json');
@@ -703,6 +722,68 @@ export function createApiMiddleware(root: string): ApiMiddleware {
         res.end(JSON.stringify({ ok: true }));
       } catch (error) {
         res.statusCode = 400;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: (error as Error).message }));
+      }
+      return;
+    }
+
+    // POST /api/git/sync — sync to main (clean: inline, dirty: agent task)
+    if (req.method === 'POST' && pathname === '/api/git/sync') {
+      try {
+        const body = await readBody(req);
+        const { mode } = JSON.parse(body) as { mode?: string };
+        if (mode !== 'clean' && mode !== 'dirty') {
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: "mode must be 'clean' or 'dirty'" }));
+          return;
+        }
+
+        if (mode === 'clean') {
+          // Re-verify cleanliness server-side — the client's `mode` is derived from
+          // a possibly-stale status snapshot, and checking out main against an
+          // actually-dirty tree could fail confusingly or carry changes onto main.
+          const currentStatus = await git.getStatus();
+          if (currentStatus.length > 0) {
+            res.statusCode = 409;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(
+              JSON.stringify({ error: 'Working tree is no longer clean — refresh and retry' }),
+            );
+            return;
+          }
+          // Inline sync: checkout main, fetch, fast-forward merge
+          await git.runGitSync();
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ ok: true }));
+          return;
+        }
+
+        // Dirty mode: launch agent task
+        const prompt = `Sync the current branch to main by:
+1. Stashing or committing any uncommitted changes (do not use \`git reset --hard\` or \`git clean -fd\` without an explicit confirmation step)
+2. Relocating any mis-filed content (e.g., any new plans written to the legacy \`papercamp/plans.md\` instead of per-file \`papercamp/plans/*.md\`)
+3. Checking out main: \`git checkout main\`
+4. Fetching from origin: \`git fetch --prune\`
+5. Fast-forwarding the merge: \`git merge --ff-only origin/main\`
+6. Confirming success
+
+Report the final branch and status to verify the sync completed.`;
+
+        const result = agent.startSync(prompt);
+        if (!result.ok) {
+          res.statusCode = 409;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: result.error }));
+          return;
+        }
+        res.statusCode = 202;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ok: true }));
+      } catch (error) {
+        res.statusCode = 500;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ error: (error as Error).message }));
       }
@@ -1133,7 +1214,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           ...(projectName !== undefined && { projectName: projectName.trim() }),
           ...(resolvedDefaultAgents && { defaultAgents: resolvedDefaultAgents }),
         };
-        await writeFile(configPath, JSON.stringify(updated, null, 2));
+        await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ ok: true }));

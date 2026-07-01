@@ -21,7 +21,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { findFocusPlan } from '../features/plans/helpers';
-import { commitChanges, pushChanges, suggestCommitMessage } from '../services/git-api';
+import { commitChanges, pushChanges, suggestCommitMessage, syncToMain } from '../services/git-api';
 import { useAppStore } from '../stores/app-store';
 import { summarizeQualityFailure, summarizeTestFailure } from '../utils/check-summary';
 import { CopyPromptButton } from './copy-prompt-button';
@@ -101,6 +101,25 @@ const PushIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
+const MergeIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="18" cy="18" r="3" />
+    <circle cx="6" cy="6" r="3" />
+    <path d="M6 9v5c0 .667 3 1 6 1s6-.333 6-1V9" />
+    <path d="M12 17v2" />
+  </svg>
+);
+
 const CHALKBOARD_TEXTURE = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.15 0 0 0 0 0.28 0 0 0 0 0.20 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)' opacity='1'/%3E%3C/svg%3E")`;
 
 const deskBg = color.deskBg;
@@ -140,6 +159,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
+  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
@@ -158,6 +178,8 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const [commitError, setCommitError] = useState<string | null>(null);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const shouldReduceMotion = useReducedMotion();
   const navigate = useNavigate();
   const refreshRef = useRef({
@@ -299,6 +321,20 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
       setPushing(false);
     }
   }, [loadGitStatus]);
+
+  const handleSync = useCallback(async () => {
+    setSyncing(true);
+    setSyncError(null);
+    try {
+      const isClean = gitStatus && gitStatus.length === 0;
+      await syncToMain(isClean ? 'clean' : 'dirty');
+      await loadGitStatus();
+    } catch (err) {
+      setSyncError((err as Error).message);
+    } finally {
+      setSyncing(false);
+    }
+  }, [gitStatus, loadGitStatus]);
 
   const handleSuggestFromChanges = useCallback(async () => {
     if (selectedFiles.size === 0) return;
@@ -481,7 +517,9 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                                 ? ' — extending'
                                 : agentStatus.taskKind === 'commit-suggest'
                                   ? ' — suggesting commit message'
-                                  : ''}{' '}
+                                  : agentStatus.taskKind === 'sync'
+                                    ? ' — syncing to main'
+                                    : ''}{' '}
                       · {AGENT_LABELS[agentStatus.agentId]}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
@@ -1014,9 +1052,30 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       </Button>
                     </>
                   ) : (
-                    <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>
-                      No changed files.
-                    </p>
+                    <>
+                      <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>
+                        No changed files.
+                      </p>
+                      {syncError && (
+                        <Alert
+                          variant="chalkboard"
+                          dismissible
+                          onDismiss={() => setSyncError(null)}
+                        >
+                          {syncError}
+                        </Alert>
+                      )}
+                      <Button
+                        variant="chalkboard"
+                        size="small"
+                        icon={<MergeIcon size={14} />}
+                        disabled={syncing || gitBranchHygiene === 'clean-on-main'}
+                        onClick={handleSync}
+                        title={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : ''}
+                      >
+                        {syncing ? 'Syncing…' : 'Sync to main'}
+                      </Button>
+                    </>
                   )}
                 </div>
               )}

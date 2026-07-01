@@ -306,6 +306,10 @@ export function createAgentManager(
     });
   }
 
+  function startSync(prompt: string): Result {
+    return launch({ planTitle: 'Sync to main' }, prompt, { taskKind: 'sync' });
+  }
+
   async function findBatchPlanFile(plansDir: string, id: string): Promise<string | null> {
     const direct = join(plansDir, `${id}.md`);
     try {
@@ -626,6 +630,7 @@ export function createAgentManager(
     startForIdea,
     startForIdeaExtend,
     startBatchAudit,
+    startSync,
     runCommitSuggest,
     stop,
     getStatus,
@@ -647,6 +652,7 @@ export interface AgentManager {
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchAudit: () => Result;
+  startSync: (prompt: string) => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;
   stop: () => Result;
   getStatus: () => AgentTaskState | null;
