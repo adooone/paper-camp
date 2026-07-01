@@ -2,9 +2,10 @@
 id: FEAT-27
 title: Sync to main guard
 kind: feat
-status: idea
+status: planned
 created: 2026-07-01
 idea: IDEA-24
+updated: 2026-07-01
 tags:
   - git
   - branch
