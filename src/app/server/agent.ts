@@ -394,6 +394,8 @@ export function createAgentManager(
               }
             });
           }
+          // Drain stderr — an unread pipe can fill and hang the subprocess.
+          proc.stderr?.on('data', () => {});
 
           const success = await new Promise<boolean>((resolve) => {
             proc.on('close', (code) => resolve(code === 0));

@@ -106,7 +106,7 @@ directly on `main`. A draft PR is auto-created on first push.
 
 - **`main` stays pushable.** Direct pushes to `main` are allowed but
   *conventionally* reserved for:
-  - Agent writes to `papercamp/plans/`/`progress.md` during phase execution
+  - Agent writes to `papercamp/plans/` and `papercamp/progress.md` during phase execution
     (these are the only agent writes that land directly on `main`)
   - Tiny fixes and config changes
   - Merging feature branch PRs
@@ -116,10 +116,10 @@ directly on `main`. A draft PR is auto-created on first push.
 - **Agents and branches:** When an agent executes a plan phase, it works on
   whatever branch is currently checked out. If the agent was started from a
   branch (e.g. via the Stack panel while that branch is active), its writes to
-  the plan's file under `papercamp/plans/` and to `progress.md` land on that
+  the plan's file under `papercamp/plans/` and to `papercamp/progress.md` land on that
   branch. When the PR merges, those changes come along with the rest of the
   branch. Per-file plan storage (FEAT-24) means two branches working different
-  plans touch different files and no longer conflict on merge; `progress.md`
+  plans touch different files and no longer conflict on merge; `papercamp/progress.md`
   remains a shared append-only log, so concurrent appends there can still
   conflict.
 

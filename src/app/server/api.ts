@@ -252,7 +252,16 @@ export function createApiMiddleware(root: string): ApiMiddleware {
 
   async function stampAuditDate(planId: string, gapPhases: number): Promise<void> {
     const plansDir = campFile(root, 'plans');
-    const planFile = join(plansDir, `${planId}.md`);
+    // Batch audit can touch archived (done/dropped) plans too — resolve the
+    // actual file so those get stamped instead of re-audited every run.
+    const directPlanFile = join(plansDir, `${planId}.md`);
+    const archivedPlanFile = join(plansDir, 'archive', `${planId}.md`);
+    const planFile = (await fileExists(directPlanFile))
+      ? directPlanFile
+      : (await fileExists(archivedPlanFile))
+        ? archivedPlanFile
+        : null;
+    if (!planFile) return;
     const raw = await readMaybe(planFile);
     if (!raw) return;
     const parsed = parsePlanFile(raw);
@@ -995,6 +1004,15 @@ export function createApiMiddleware(root: string): ApiMiddleware {
 
     // POST /api/agent/launch-audit-all — start a batch convergence audit across all review/done plans
     if (req.method === 'POST' && pathname === '/api/agent/launch-audit-all') {
+      // Batch audit can modify many plan files — gate it behind the same
+      // active-plan guard the other write-capable agent routes use.
+      const conflict = await checkBranchConflictForPlan(root, git);
+      if (conflict) {
+        res.statusCode = 409;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: conflict }));
+        return;
+      }
       const result = agent.startBatchAudit();
       if (!result.ok) {
         res.statusCode = 409;

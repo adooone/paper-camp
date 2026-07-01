@@ -53,11 +53,14 @@ async function getFileMtimeDateString(filePath: string): Promise<string | null> 
 }
 
 async function stampCliAuditDate(planFile: string, planId: string): Promise<void> {
-  const raw = await readFile(planFile, 'utf-8').catch(() => '');
-  if (!raw) return;
+  // Throw on failure so the caller can mark the audit failed rather than
+  // logging [done] while the audited stamp was silently never written.
+  const raw = await readFile(planFile, 'utf-8');
   const parsed = parsePlanFile(raw);
-  if (parsed.entries.length === 0) return;
   const entry = parsed.entries[0];
+  if (!entry) {
+    throw new Error(`Could not parse plan file after audit: ${planFile}`);
+  }
   const writeInput: Parameters<typeof formatPlanFile>[0] = {
     id: planId,
     title: entry.title,
@@ -333,10 +336,17 @@ program
     const configRaw = await readFile(join(root, 'papercamp', 'config.json'), 'utf-8').catch(
       () => '{}',
     );
-    const config = JSON.parse(configRaw) as {
+    let config: {
       defaultAgents?: typeof DEFAULT_AGENTS;
       defaultAgent?: string;
     };
+    try {
+      config = JSON.parse(configRaw) as typeof config;
+    } catch {
+      console.error('Invalid papercamp/config.json');
+      process.exitCode = 1;
+      return;
+    }
     const defaultAgents = config.defaultAgents ?? DEFAULT_AGENTS;
     const { adapter } = resolveAgent({ defaultAgents, taskKind: 'audit' });
 
@@ -391,7 +401,14 @@ program
       const success = await runPlanAudit(root, plan, adapter);
 
       if (success) {
-        await stampCliAuditDate(planFile, plan.id);
+        try {
+          await stampCliAuditDate(planFile, plan.id);
+        } catch (err) {
+          console.log(`  [fail]  ${label} ${plan.title} — ${(err as Error).message}`);
+          process.exitCode = 1;
+          results.push({ id, title: plan.title, status: 'failed' });
+          continue;
+        }
 
         const afterRaw = await readFile(planFile, 'utf-8').catch(() => '');
         const afterParsed = parsePlanFile(afterRaw);
