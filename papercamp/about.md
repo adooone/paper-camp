@@ -1,6 +1,6 @@
 # Paper Camp — Technical Reference
 
-The philosophy and intent live in [ideas.md](./ideas.md). This document covers the concrete shape of the system: folders, files, commands, and stack.
+The philosophy and intent live in [papercamp/ideas/](./ideas/). This document covers the concrete shape of the system: folders, files, commands, and stack.
 
 ---
 
@@ -25,21 +25,21 @@ papercamp/
 │   └── icon.svg                # moved from .paper-camp/assets/
 ├── plans/
 │   ├── index.md                # generated — id/title/status/tags only, never hand-edited
-│   ├── feat-24.md              # YAML frontmatter + markdown body
-│   ├── feat-23.md
-│   ├── fix-2.md
+│   ├── FEAT-24.md              # YAML frontmatter + markdown body
+│   ├── FEAT-23.md
+│   ├── FIX-2.md
 │   └── archive/
-│       ├── feat-1.md           # moved here verbatim on done/dropped, no rewrite
-│       └── feat-2.md
+│       ├── FEAT-1.md           # moved here verbatim on done/dropped, no rewrite
+│       └── FEAT-2.md
 └── ideas/
     ├── index.md                # generated — id/title only
-    ├── idea-20.md              # YAML frontmatter + markdown body
-    └── idea-17.md
+    ├── IDEA-20.md              # YAML frontmatter + markdown body
+    └── IDEA-17.md
 ```
 
 ### Filename convention
 
-**Id-only, lowercase**: `feat-24.md`, `idea-20.md`, `fix-3.md`.
+**Id-only, uppercase**: `FEAT-24.md`, `IDEA-20.md`, `FIX-3.md`.
 
 - Stable across renames — if a plan's title changes the file path doesn't, so existing
   references (git history, agent tool calls, URL bookmarks) never break.
@@ -54,7 +54,7 @@ today — phases as a `- [ ]`/`- [x]` checklist, description and log as prose. T
 frontmatter is parsed by a real YAML library and validated against zod schemas (see
 `src/core/frontmatter-schemas.ts`), which are the single source of truth.
 
-Example plan file (`papercamp/plans/feat-24.md`):
+Example plan file (`papercamp/plans/FEAT-24.md`):
 
 ```markdown
 ---
@@ -79,7 +79,7 @@ Description and rationale...
 - 2026-06-28: Initial design drafted
 ```
 
-Example idea file (`papercamp/ideas/idea-20.md`):
+Example idea file (`papercamp/ideas/IDEA-20.md`):
 
 ```markdown
 ---
@@ -172,7 +172,7 @@ visibility conventions. The config schema (zod `paperCampConfigSchema` in
 
 ### Migration plan
 
-See `plans.md`'s "Plan storage architecture" (FEAT-24) for the phased migration. The
+See `papercamp/plans/FEAT-24.md` for the phased migration. The
 seven phases are:
 
 1. Design per-file schema, directory layout, and migration plan (this document)
@@ -193,8 +193,8 @@ Lives at the repo root. Plain markdown, committed alongside the code it describe
 
 | File | Purpose |
 |------|---------|
-| `ideas.md` | Philosophy, intent, raw thoughts — the "why" behind the project. |
-| `plans.md` | What's being built, broken into actionable steps. |
+| `plans/` | Per-plan files with YAML frontmatter — what's being built, one file per plan. |
+| `ideas/` | Per-idea files with YAML frontmatter — the "why" behind the project. |
 | `progress.md` | Running log of what's done, in chronological order. |
 | `decisions.md` | Choices made and the reasoning behind them — the record that prevents re-litigating settled questions. |
 | `open-questions.md` | Unresolved items that need a decision before work can proceed. |
@@ -211,7 +211,7 @@ No numbering scheme, no status-icon tables, no separate index file — the folde
 
 **Why not a cache either:** for a solo project's planning files (a handful of small `.md` files), parsing on every dashboard request is fast enough that an index/cache buys nothing but complexity. If that ever stops being true at scale, the fix is a disposable, gitignored index rebuilt from the files on change — never a second source of truth. Not needed for v1.
 
-**How structure is added without losing the prose:** real top-of-file YAML frontmatter doesn't fit `plans.md`, `decisions.md`, or `open-questions.md`, because each file holds *multiple* independent records, not one. Instead, every record uses the same shape:
+**How structure is added without losing the prose:** Plans and ideas use per-file YAML frontmatter — the schema, required fields, and example files are covered in `## Per-file plan/idea storage architecture` above. The three remaining monolithic files (`decisions.md`, `open-questions.md`, `progress.md`) stay monolithic because they are append-only logs rather than entity collections: there is no per-entry archive move, ID-based lookup, or rename needed, so splitting each entry into its own file adds path-management overhead without enabling any new capability. Each record in those files uses a lightweight `## Heading` + `**Field:** value` block grammar instead:
 
 ```markdown
 ## <Title>
@@ -222,41 +222,9 @@ No numbering scheme, no status-icon tables, no separate index file — the folde
 Free-form prose body.
 ```
 
-The parser reads a `## Heading`, then collects consecutive `**Key:** value` lines immediately below it (stops at the first blank line or non-matching line), and treats everything after as the record's markdown body. One parser function handles all three files; only the expected field set differs per file. Fields are validated per-file with a schema (e.g. zod) — unknown or missing required fields surface as a dashboard warning, never a hard crash, since a human or AI can always hand-edit the file into an invalid shape.
+The parser reads a `## Heading`, then collects consecutive `**Key:** value` lines immediately below it (stops at the first blank line or non-matching line), and treats everything after as the record's markdown body. Fields are validated per-file with a zod schema — unknown or missing required fields surface as a dashboard warning, never a hard crash.
 
 Dates are always `YYYY-MM-DD`.
-
-### `ideas.md` — no schema
-
-Pure prose, no fields, never parsed into structured records. The dashboard renders it read-only (e.g. an "About this project" panel). This file is for thinking, not tracking.
-
-### `plans.md`
-
-One `## Heading` per plan. Titles start with a verb and are capitalised (e.g. `## Build dashboard app`, `## Refresh about.md`).
-
-| Field | Required | Values |
-|-------|----------|--------|
-| `Status` | yes | `idea \| planned \| in-progress \| done \| dropped` |
-| `Created` | yes | date |
-| `Updated` | no | date |
-| `Tags` | no | comma-separated |
-
-Body: free prose description. Optional `### Phases` subsection with a standard markdown checkbox list (`- [ ]` / `- [x]`) — this drives the plan's progress percentage and feeds the dashboard's health/momentum gauges.
-
-```markdown
-## Build markdown storage layer
-
-**Status:** in-progress
-**Created:** 2026-06-18
-**Tags:** core, parser
-
-Use frontmatter-style fields per entry instead of a database...
-
-### Phases
-- [x] Decide on storage format
-- [ ] Write zod schemas
-- [ ] Build parser
-```
 
 ### `progress.md` — append-only log, not record-based
 
@@ -314,9 +282,9 @@ Bin entry: `paper-camp` → `dist/cli/index.js`, built with `commander`. Impleme
 
 | Command | Effect |
 |---------|--------|
-| `paper-camp init [project-name] [-i, --intent <text>]` | Creates `papercamp/config.json` and `papercamp/{ideas,plans,progress,decisions,open-questions}.md`. `--intent` seeds `ideas.md` with the one-line description; everything else starts empty for the AI/human to fill in during the first session — the CLI does not call an LLM itself (see "Storage decision" below for why init stays this thin). Refuses to run if `papercamp/config.json` already exists, and never overwrites an existing `ideas.md`. |
+| `paper-camp init [project-name] [-i, --intent <text>]` | Creates `papercamp/config.json`, `papercamp/plans/` (with `index.md` and `archive/` subdir), `papercamp/ideas/` (with `index.md`), and `papercamp/{progress,decisions,open-questions}.md`. `--intent` seeds `ideas/index.md` with the one-line description; everything else starts empty for the AI/human to fill in during the first session — the CLI does not call an LLM itself (see "Storage decision" below for why init stays this thin). Refuses to run if `papercamp/config.json` already exists, and never overwrites existing files. |
 | `paper-camp dev [-p, --port <number>]` | Starts a plain `node:http` server (`src/cli/dev-server.ts`): `/api/*` via `createApiMiddleware`, everything else served statically from the built `dist/app`, falling back to `index.html` for unknown paths (SPA routing). Defaults to port 3333. |
-| `paper-camp add plan <name>` | Appends a new `## <name>` entry to `papercamp/plans.md` with `Status: idea` and today's date, using the plan schema below. |
+| `paper-camp add plan <name>` | Writes a new `papercamp/plans/<ID>.md` file with YAML frontmatter (`id`, `title`, `kind`, `status: idea`, `created`) and an empty body, assigning the next ID from `config.json`'s `nextId` counter. |
 
 ---
 
@@ -326,8 +294,8 @@ Source tree under `src/`:
 
 - `src/types/index.ts` — shared types: `PlanEntry` (now with optional `kind: PlanKind`, `id` — its `<KIND>-<N>` stamp — and `idea`, a backlink to the `IDEA-N` it grew out of), `PlanKind`/`PLAN_KINDS` (`feat | fix | chore | docs | refactor`, matching Conventional Commits' type strings), `IdeaEntry` (`id`, `title`, `body`, derived `status: 'planned' | 'done'`), `DecisionEntry`, `OpenQuestionEntry`, `ProgressEntry`, `PhaseItem` (`text` plus an optional `description` for the collapsible long form), `PaperCampConfig` (now with an optional `nextId: Record<PlanKind, number>` counter).
 - `src/core/schemas.ts` — zod schemas validating the per-entry fields block for each file (see schemas below).
-- `src/core/parser.ts` — `parseRawEntries` (generic `## heading` + fields + body + `### Phases` splitter), typed `parsePlans`/`parseDecisions`/`parseOpenQuestions` (validate with zod, collect warnings instead of throwing), `parseProgress` (date-log parser, no fields), `parseIdeas` (splits `ideas.md` on `---` into `IDEA-N`-prefixed sections), and `deriveIdeaStatuses` (marks an idea "done" only once every plan referencing it via `idea` is `done`/`dropped`).
-- `src/core/serializer.ts` — `formatPlanEntry`/`formatDecisionEntry`/`formatOpenQuestionEntry`/`formatProgressEntry` plus `appendBlock`, used to write new entries back to a file without disturbing existing content; `formatPlans` (rewrites the full `plans.md` entry list, used by the delete/patch routes); `assignPlanId` (reads/increments the per-kind `nextId` counter in `papercamp/config.json` and returns the next `<KIND>-<N>`, never derived from scanning `plans.md` — a freed ID must never be reassigned).
+- `src/core/parser.ts` — per-file entry points: `parsePlanFile`/`parseIdeaFile` (parse a single YAML-frontmatter plan/idea file, validate fields with zod, collect warnings instead of throwing); `readAllPlanFiles`/`readAllIdeaFiles` (scan `plans/`/`ideas/` dirs, including `plans/archive/`, calling the per-file parsers); `readPlansMerged`/`readIdeasMerged` (the primary API entry points — merge per-file entries with a monolithic fallback, deduplicating by id/title so repos mid-migration keep working). Still-active monolithic parsers for non-migrated files: `parseDecisions`/`parseOpenQuestions`/`parseProgress` (read `decisions.md`/`open-questions.md`/`progress.md`). Other helpers: `parseRawEntries` (generic `## heading` + fields + body + `### Phases` splitter, backing the monolithic parsers), `parseFrontmatter` (low-level YAML frontmatter reader), `deriveIdeaStatuses` (marks an idea "done" once every plan whose `idea` field references it is `done`/`dropped`). Back-compat fallbacks for plans/ideas (only called by the Merged functions when the per-file dirs are empty): `parsePlans`/`parseIdeas`.
+- `src/core/serializer.ts` — per-file writers: `formatPlanFile`/`formatIdeaFile` (produce a YAML-frontmatter + body file for a new or updated plan/idea — used by `add plan`/`add idea`, PATCH status flows, and the migration path); `formatPlansIndex`/`formatIdeasIndex` (rewrite `plans/index.md`/`ideas/index.md` summary tables after any mutation); `archivePlanFile` (move a per-file plan to `plans/archive/`); `serializeFrontmatter` (low-level YAML serializer). Still-active monolithic writers for non-migrated files: `formatDecisionEntry`/`formatOpenQuestionEntry`/`formatProgressEntry` plus `appendBlock` (append to `decisions.md`/`open-questions.md`/`progress.md`). `assignPlanId` (reads/increments the per-kind `nextId` counter in `papercamp/config.json` and returns the next `<KIND>-<N>` — a freed ID must never be reassigned). Back-compat exports no longer called by any route: `formatPlanEntry`/`formatPlans` (monolithic plan writers, kept on the lib surface).
 - `src/core/scaffold.ts` — `initProject`, used by `init`.
 - `src/core/index.ts` — public core API, re-exports all of the above.
 - `src/cli/index.ts` — the commander CLI.
@@ -390,8 +358,8 @@ Three pages exist — Plans, Docs, Settings (Focus was dropped; see decisions.md
   - Clicking "Open" on a plan card (either view) or a sidebar nav item shows `PlanDetail` — id/title header, status/dates/tags/body, a progress bar, and the phase list as a `Table` with toggleable `Checkbox`es (`PATCH /api/plans`), a per-phase `PhaseCopyButton`, and `expandable` rows showing each phase's optional `description` in a chalkboard-textured sub-row. A "Mark complete" `Button` appears once every phase is checked. This is the same view a plan opens into everywhere — there's no separate read-only or distraction-free variant anymore.
   - Malformed entries surface as a non-fatal `Alert`.
   - **Ideas vs. Backlog** are two distinct concepts, kept visually separate in both the sidebar and list view (see decisions.md):
-    1. **Ideas** — `ideaEntries`, parsed in `src/core/parser.ts` from `ideas.md`'s `IDEA-N:`-prefixed sections (split on `---`), each with a derived `status: 'planned' | 'done'` (done only once every plan whose `idea` field references it is `done`/`dropped`). Rendered as a two-column `IdeasBoard` (`Table` in `board` mode, "Planned"/"Done" columns, ordered by file position): each row shows a lightbulb/check `Icon`, the idea's short title, and — if any plan links to it via `idea` — an expand toggle listing every linked plan as a clickable `PlanIdStamp`. Read-only and no delete; clicking the title opens the idea's full body inline on the Plans page.
-    2. **Backlog** — `plans.md` entries with `Status: idea`, created via the sidebar's "Add to backlog" modal (`POST /api/plans`, with a `Kind` `Select`), fully CRUD (deletable via the sidebar's "×", editable like any other plan), and open into the same `PlanDetail` as a `planned`/`in-progress` plan.
+    1. **Ideas** — `ideaEntries`, loaded via `readIdeasMerged` from `papercamp/ideas/*.md` per-file entries, each with a derived `status: 'planned' | 'done'` (done only once every plan whose `idea` field references it is `done`/`dropped`). Rendered as a two-column `IdeasBoard` (`Table` in `board` mode, "Planned"/"Done" columns, ordered by file position): each row shows a lightbulb/check `Icon`, the idea's short title, and — if any plan links to it via `idea` — an expand toggle listing every linked plan as a clickable `PlanIdStamp`. Read-only and no delete; clicking the title opens the idea's full body inline on the Plans page.
+    2. **Backlog** — per-file plan entries with `status: idea` (from `papercamp/plans/*.md`), created via the sidebar's "Add to backlog" modal (`POST /api/plans`, with a `Kind` `Select`), fully CRUD (deletable via the sidebar's "×", editable like any other plan), and open into the same `PlanDetail` as a `planned`/`in-progress` plan.
     The sidebar shows "Ideas" only when `ideaEntries` is non-empty, and a separate "Backlog" section (with the add/delete actions) always. List view mirrors that split.
 - **Docs** (`/docs`) — a documentation browser with a left `DocsSidebar` grouped into four sections: **Repo Docs** (`/api/docs` — `MAIN.md`/`README.md`/`CHANGELOG.md`/`LICENSE`, whichever exist; defaults to `MAIN.md` on first load if present), **Decisions** (`/api/decisions`, a `Stamp` for `decided`/`superseded`, a `superseded` entry links to its `Superseded-by` replacement), **Open Questions** (`/api/open-questions`, a `Stamp` for `open`/`resolved`, cross-linked to/from its `Resolved-by` decision), and **Progress** (`/api/progress`, rendered as a reverse-chronological `ProgressTimeline`). Each section shows "Loading…" while its slice of `useAppStore` is in flight, and an empty-state line once loaded with nothing. A search `Input` in the nav island (visible only on `/docs`) drives full-text search across all four sources, replacing the normal page body with `DocsSearch` results while a query is active.
 - **Settings** (`/settings`) — sidebar-driven, mirroring the Docs/Plans sidebar shape. "General" (the default section) shows project info (`/api/config`: `projectName`, version, `initializedAt`, or a warning `Alert` if unconfigured) and a "Project Icon" uploader (SVG/PNG/JPG/GIF/WebP via a hidden file input — paper-ui has no file-input component — previewed immediately and persisted through `POST /api/icon`). A "Config Files" section lists whichever allowlisted config file actually exists in the repo (`GET /api/configs`); selecting one fetches its content (`GET /api/configs?name=...`) and renders it read-only via `CodeBlock`. The uploaded icon (if any) replaces the default folder icon in the nav island and every sidebar header, next to the project name (read from this repo's own `package.json` `name` via `/api/package-name`, falling back to "Paper Camp").

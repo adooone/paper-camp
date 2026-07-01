@@ -2,7 +2,7 @@
 id: CHORE-1
 title: Demote idea headings to h2
 kind: chore
-status: review
+status: done
 created: 2026-07-01
 idea: IDEA-28
 updated: 2026-07-01

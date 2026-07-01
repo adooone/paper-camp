@@ -29,4 +29,4 @@
 | IDEA-25 | Actualize about.md for per-file storage | planned |
 | IDEA-26 | Plan reconcile pass and audit gating | planned |
 | IDEA-27 | Content-hash freshness for batch audit | planned |
-| IDEA-28 | Idea-file heading level (MD001) | planned |
+| IDEA-28 | Idea-file heading level (MD001) | done |

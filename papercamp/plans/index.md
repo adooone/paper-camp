@@ -2,7 +2,7 @@
 
 | Id | Title | Status | Tags |
 |----|-------|--------|------|
-| CHORE-1 | Demote idea headings to h2 | in-progress | markdown, linting, ideas |
+| CHORE-1 | Demote idea headings to h2 | done | markdown, linting, ideas |
 | DOCS-1 | Refresh about.md reference | done | docs |
 | FEAT-1 | Build core library | done | core, cli |
 | REFACTOR-1 | UI cleanup: style guide and tokens | done | app, ui, refactor |
@@ -10,7 +10,7 @@
 | FEAT-2 | Build dashboard app | done | app, paper-ui |
 | FIX-2 | Fix Review status bugs | done | app, plans, core |
 | REFACTOR-2 | UI cleanup follow-up | done | app, ui, refactor |
-| DOCS-3 | Actualize about.md for per-file storage | idea | docs, per-file, about |
+| DOCS-3 | Actualize about.md for per-file storage | in-progress | docs, per-file, about |
 | FEAT-3 | Add board view and branding | done | app, plans, settings |
 | REFACTOR-3 | Drop Focus page and unify sidebar | done | app, plans, ui |
 | FEAT-4 | Build Docs page | done | app, docs |
