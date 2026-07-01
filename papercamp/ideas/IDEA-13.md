@@ -3,7 +3,7 @@ id: IDEA-13
 title: Project settings — port & env vars
 ---
 
-### IDEA-13: Project settings — port & env vars
+## IDEA-13: Project settings — port & env vars
 
 Replaces the "editable raw contents" ambition [[IDEA-2]] originally had for `biome.json`/`tsconfig.json`/etc. Those are real editor/LSP-backed files — a write path over them adds nothing. What's actually worth editing through this dashboard is the small set of operational knobs that are genuinely common across most repos, not specific to this stack: which port the dev server binds to, and which env vars are set.
 

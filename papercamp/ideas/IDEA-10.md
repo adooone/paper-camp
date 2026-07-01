@@ -3,7 +3,7 @@ id: IDEA-10
 title: Plan clarification pass
 ---
 
-### IDEA-10: Plan clarification pass
+## IDEA-10: Plan clarification pass
 
 Three ideas below (this one, "Phase convergence audit", and "Plan/decision consistency check") came out of looking at how GitHub's `spec-kit` and similar spec-driven tools structure the AI's side of planning — not to adopt their per-feature folder pipeline (`about.md` already rejected that ceremony on purpose), but because a few of their individual mechanisms are genuinely portable onto the plan record shape this project already has.
 

@@ -348,7 +348,7 @@ describe('formatIdeaFile round-trip', () => {
     const { entries } = parseIdeaFile(serialized);
     expect(entries[0].id).toBe('IDEA-20');
     expect(entries[0].title).toBe('Plan storage architecture');
-    expect(entries[0].body).toBe('Full rationale body.');
+    expect(entries[0].body).toBe('## IDEA-20: Plan storage architecture\n\nFull rationale body.');
   });
 
   it('round-trips an idea with no body', () => {
@@ -358,6 +358,6 @@ describe('formatIdeaFile round-trip', () => {
     });
     const { entries } = parseIdeaFile(serialized);
     expect(entries[0].id).toBe('IDEA-1');
-    expect(entries[0].body).toBe('');
+    expect(entries[0].body).toBe('## IDEA-1: Minimal idea');
   });
 });

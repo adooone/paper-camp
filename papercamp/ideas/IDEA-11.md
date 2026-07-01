@@ -3,7 +3,7 @@ id: IDEA-11
 title: Phase convergence audit
 ---
 
-### IDEA-11: Phase convergence audit
+## IDEA-11: Phase convergence audit
 
 The companion to "The Stack" panel's existing phase-progress view and to "Plan clarification pass" above: once a plan has phases and work is underway, nothing currently re-checks whether the phase list still matches what the code actually needs. A phase written before implementation started can easily miss something that only became obvious once the work began.
 

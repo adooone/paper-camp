@@ -3,7 +3,7 @@ id: IDEA-7
 title: Commit section
 ---
 
-### IDEA-7: Commit section
+## IDEA-7: Commit section
 
 A second top-of-panel section in the Stack panel (`src/app/components/stack-panel.tsx`), sitting right below "Status" (see the "Repo health status" idea above — final order ends up Status → Commit → Active → Live). Shows the live working-tree diff — how many files changed and which ones — plus a small form to write a commit title/message and fire it off, so a commit doesn't require switching to a terminal.
 

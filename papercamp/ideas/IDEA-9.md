@@ -3,7 +3,7 @@ id: IDEA-9
 title: Review status
 ---
 
-### IDEA-9: Review status
+## IDEA-9: Review status
 
 Two real gaps found while reading `plan-detail.tsx` and `closed-section.tsx` just now, both pointing at the same underlying problem: once a plan is marked complete, you lose visibility into it.
 

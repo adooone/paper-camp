@@ -3,7 +3,7 @@ id: IDEA-15
 title: Agent-drafted plans
 ---
 
-### IDEA-15: Agent-drafted plans
+## IDEA-15: Agent-drafted plans
 
 Turning an idea into an actual plan is the one step in this whole pipeline still done entirely by hand — write a title, break it into phases, fill in descriptions. Everything downstream of that (executing a phase, reviewing the result) already has a "Start agent" button per [[IDEA-4]]. This idea closes the gap on the front end: a button on an `IdeaEntry` that launches an agent whose job is to read the idea and draft a real, phased plan from it.
 

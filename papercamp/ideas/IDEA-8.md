@@ -3,7 +3,7 @@ id: IDEA-8
 title: Ideas board
 ---
 
-### IDEA-8: Ideas board
+## IDEA-8: Ideas board
 
 Today every `ideas.md` section renders flat in a single "Ideas" grid (`list-view.tsx`'s `ideaEntries.map(...)` → `IdeaCard`), as a long, un-prioritized, un-titled blob of prose per card. Nothing distinguishes a brand-new idea from one that shipped months ago, nothing says which one matters more, and the card title is whatever the first line of prose happens to be — for several of the entries already in this file, that's a full sentence. This replaces the flat grid with a real two-column board: **Planned** and **Done**.
 

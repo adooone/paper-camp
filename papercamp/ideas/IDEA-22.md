@@ -3,7 +3,7 @@ id: IDEA-22
 title: Restructure and actualize repo-root docs
 ---
 
-### IDEA-22: Restructure and actualize repo-root docs
+## IDEA-22: Restructure and actualize repo-root docs
 
 The repo root currently has six markdown files — `README.md`, `AGENTS.md`, `CODE_STYLE.md`, `UX_PRINCIPLES.md`, `MAIN.md`, `CHANGELOG.md` — and `README.md` itself is stale: its "Pages" section lists `Focus` (removed years ago, per `progress.md`'s 2026-06-18 entry) and is missing `Review` and `Docs`, both of which exist as real routes today (`src/app/router.tsx`). The goal: only `README.md` stays in the root; everything else that's prose documentation (not config, not auto-generated tooling output) moves into a `docs/` folder, and `README.md` itself gets rewritten to actually match the current app.
 

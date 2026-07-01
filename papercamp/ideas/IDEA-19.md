@@ -3,7 +3,7 @@ id: IDEA-19
 title: Resolve open questions from the Docs page
 ---
 
-### IDEA-19: Resolve open questions from the Docs page
+## IDEA-19: Resolve open questions from the Docs page
 
 `open-questions.md`'s Docs view (`open-question-detail.tsx`) is read-only today — it shows the question, its `open`/`resolved` `Stamp`, and a click-through to whatever `decisions.md` entry resolved it, but there's no way to actually answer one from the app. Right now the only path is dictating an answer in chat and having it hand-written into `decisions.md`; this idea closes that gap with a real in-app action.
 

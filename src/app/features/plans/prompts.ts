@@ -43,7 +43,7 @@ ${idea.body}
 
 Your job: explore the current codebase and rewrite this idea's body in place in that file with more specific detail — concrete approaches, file references, and any relevant architectural context you find in the code. Leave the YAML frontmatter (id, title) and the idea's \`### ${idea.id ?? 'IDEA-N'}: ${idea.title}\` heading unchanged; only update the prose body below the heading.
 
-Write the full updated body — everything below the heading. Make the description more specific and actionable while keeping the same general intent. Do not change the \`### IDEA-N:\` heading line.`;
+Write the full updated body — everything below the heading. Make the description more specific and actionable while keeping the same general intent. Do not change the \`## IDEA-N:\` heading line.`;
 }
 
 export function buildClarifyPrompt(plan: PlanEntry): string {

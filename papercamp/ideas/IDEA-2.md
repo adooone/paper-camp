@@ -3,7 +3,7 @@ id: IDEA-2
 title: Settings page and configs
 ---
 
-### IDEA-2: Settings page and configs
+## IDEA-2: Settings page and configs
 
 Turn Settings from a single static info+icon page into a real sidebar-driven configuration workspace — but scoped honestly to what *this* repo's stack actually has, not a generic eslint/prettier list. The existing project-info card (name, version, icon — already built) becomes the sidebar's default "General" section rather than the whole page.
 

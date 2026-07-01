@@ -3,7 +3,7 @@ id: IDEA-26
 title: Plan reconcile pass and audit gating
 ---
 
-### IDEA-26: Plan reconcile pass and audit gating
+## IDEA-26: Plan reconcile pass and audit gating
 
 FEAT-25 exposed two gaps in how plans stay in sync with reality:
 

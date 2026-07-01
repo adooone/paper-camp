@@ -398,7 +398,7 @@ const IDEA_ID_RE = /^(IDEA-\d+):\s*/;
 const IDEA_SEPARATOR_RE = /\n---+\n/;
 
 /** ideas.md is split into sections by `---` separators. Each section has an optional
- * `### IDEA-N:` heading prefix followed by a short title, and a prose body. */
+ * `## IDEA-N:` heading prefix followed by a short title, and a prose body. */
 export function parseIdeas(markdown: string): IdeaEntry[] {
   const sections = markdown.split(IDEA_SEPARATOR_RE).filter(Boolean);
   return sections.map((section) => {

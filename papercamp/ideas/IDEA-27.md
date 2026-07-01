@@ -3,7 +3,7 @@ id: IDEA-27
 title: Content-hash freshness for batch audit
 ---
 
-### IDEA-27: Content-hash freshness for batch audit
+## IDEA-27: Content-hash freshness for batch audit
 
 FEAT-25's batch audit skips plans that are "up to date" since their last audit, but the freshness check is day-granularity and wrong for same-day edits. Both call sites compare `plan.audited >= mtimeDate` where each side is a `YYYY-MM-DD` string:
 - `src/app/server/agent.ts` (the batch loop, ~line 372)

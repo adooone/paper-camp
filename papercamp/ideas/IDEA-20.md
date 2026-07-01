@@ -3,7 +3,7 @@ id: IDEA-20
 title: Plan storage architecture
 ---
 
-### IDEA-20: Plan storage architecture
+## IDEA-20: Plan storage architecture
 
 `plans.md` is one monolithic file holding every plan ever created, `done` or not — already 1045 lines / 23 of 26 plans closed, and it only grows. At this project's actual stated goal — many plans/fixes over time, managed mostly by AI agents working sequentially or on branches — a single growing file becomes expensive in three concrete ways: every agent read costs the whole file even when it cares about one plan, the hand-rolled line parser (`core/parser.ts`, which already emits non-fatal warnings on malformed entries) gets more fragile the more entries it has to scan, and two branches editing two different plans still collide on the same file's line ranges. `ideas.md` has the identical shape and will hit the identical wall.
 
