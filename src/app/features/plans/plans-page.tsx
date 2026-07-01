@@ -4,6 +4,7 @@ import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import { Alert, Button, Stamp } from '@dendelion/paper-ui';
+import { AuditAllButton } from './components/audit-all-button';
 import { BoardView } from './components/board-view';
 import { ListView } from './components/list-view';
 import { PlanDetail } from './components/plan-detail';
@@ -142,7 +143,10 @@ export const PlansPage = () => {
         }}
       >
         <PageTitle>Plans</PageTitle>
-        <ViewToggle view={view} onChange={setView} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+          <AuditAllButton />
+          <ViewToggle view={view} onChange={setView} />
+        </div>
       </div>
 
       {plans.warnings.length > 0 && (

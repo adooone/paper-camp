@@ -305,6 +305,37 @@ describe('formatPlanFile round-trip', () => {
       { done: false, text: 'Fix review findings', source: 'review' },
     ]);
   });
+
+  it('round-trips the audited field', () => {
+    const input = {
+      id: 'FEAT-25',
+      title: 'Batch plan freshness audit',
+      kind: 'feat' as const,
+      status: 'in-progress' as const,
+      created: '2026-06-30',
+      audited: '2026-07-01',
+    };
+
+    const serialized = formatPlanFile(input);
+    const { entries, warnings } = parsePlanFile(serialized);
+    expect(warnings).toEqual([]);
+    expect(entries[0].audited).toBe('2026-07-01');
+  });
+
+  it('omits audited from frontmatter when not set', () => {
+    const input = {
+      id: 'FEAT-1',
+      title: 'No audit yet',
+      kind: 'feat' as const,
+      status: 'planned' as const,
+      created: '2026-06-01',
+    };
+
+    const serialized = formatPlanFile(input);
+    expect(serialized).not.toContain('audited');
+    const { entries } = parsePlanFile(serialized);
+    expect(entries[0].audited).toBeUndefined();
+  });
 });
 
 describe('formatIdeaFile round-trip', () => {

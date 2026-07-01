@@ -231,7 +231,59 @@ export function createApiMiddleware(root: string): ApiMiddleware {
   const activity = createActivityManager(root);
   const git = createGitManager(root);
   const status = createStatusManager(root);
-  const agent = createAgentManager(root, (plan) => git.ensureBranch(plan));
+
+  async function prependProgressItem(item: string): Promise<void> {
+    const progressPath = campFile(root, 'progress.md');
+    const today = todayDateString();
+    const heading = `## ${today}`;
+    const raw = await readMaybe(progressPath);
+    if (raw.startsWith(`${heading}\n`)) {
+      await writeFile(
+        progressPath,
+        `${heading}\n- ${item}\n${raw.slice(heading.length + 1)}`,
+        'utf-8',
+      );
+    } else {
+      const trimmed = raw.trimEnd();
+      const next = trimmed ? `${heading}\n- ${item}\n\n${trimmed}\n` : `${heading}\n- ${item}\n`;
+      await writeFile(progressPath, next, 'utf-8');
+    }
+  }
+
+  async function stampAuditDate(planId: string, gapPhases: number): Promise<void> {
+    const plansDir = campFile(root, 'plans');
+    const planFile = join(plansDir, `${planId}.md`);
+    const raw = await readMaybe(planFile);
+    if (!raw) return;
+    const parsed = parsePlanFile(raw);
+    if (parsed.entries.length === 0) return;
+    const entry = parsed.entries[0];
+    const writeInput: Parameters<typeof formatPlanFile>[0] = {
+      id: planId,
+      title: entry.title,
+      kind: entry.kind ?? 'feat',
+      status: entry.status,
+      idea: entry.idea,
+      agent: entry.agent,
+      created: entry.created,
+      updated: entry.updated,
+      audited: todayDateString(),
+      tags: entry.tags,
+      body: entry.body,
+      phases: entry.phases,
+      log: entry.log,
+      clarifications: entry.clarifications,
+    };
+    await writeFile(planFile, `${formatPlanFile(writeInput)}\n`, 'utf-8');
+    if (gapPhases > 0) {
+      const label = `gap phase${gapPhases === 1 ? '' : 's'}`;
+      await prependProgressItem(
+        `Batch audit of ${planId} (${entry.title}) — ${gapPhases} ${label} appended`,
+      );
+    }
+  }
+
+  const agent = createAgentManager(root, (plan) => git.ensureBranch(plan), stampAuditDate);
   const handler = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const pathname = (req.url ?? '').split('?')[0];
 
@@ -418,6 +470,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
                     status: 'planned',
                     created: otherParsed.entries[0].created,
                     updated: todayDateString(),
+                    audited: otherParsed.entries[0].audited,
                     body: otherParsed.entries[0].body,
                     phases: otherParsed.entries[0].phases,
                     log: otherParsed.entries[0].log,
@@ -440,6 +493,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           agent: updatedEntry.agent,
           created: updatedEntry.created,
           updated: updatedEntry.updated,
+          audited: updatedEntry.audited,
           tags: updatedEntry.tags,
           body: updatedEntry.body,
           phases: updatedEntry.phases,
@@ -936,6 +990,21 @@ export function createApiMiddleware(root: string): ApiMiddleware {
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ error: (error as Error).message }));
       }
+      return;
+    }
+
+    // POST /api/agent/launch-audit-all — start a batch convergence audit across all review/done plans
+    if (req.method === 'POST' && pathname === '/api/agent/launch-audit-all') {
+      const result = agent.startBatchAudit();
+      if (!result.ok) {
+        res.statusCode = 409;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: result.error }));
+        return;
+      }
+      res.statusCode = 202;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ ok: true }));
       return;
     }
 

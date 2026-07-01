@@ -53,6 +53,14 @@ export const launchIdeaExtend = async (ideaId: string, prompt: string): Promise<
   }
 };
 
+export const launchBatchAudit = async (): Promise<void> => {
+  const response = await fetch('/api/agent/launch-audit-all', { method: 'POST' });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
+    throw new Error(err.error);
+  }
+};
+
 export const stopAgent = async (): Promise<void> => {
   const response = await fetch('/api/agent/stop', { method: 'POST' });
   if (!response.ok) {

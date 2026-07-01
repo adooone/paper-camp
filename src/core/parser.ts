@@ -359,6 +359,7 @@ export function parsePlanFile(content: string): ParseResult<PlanEntry> {
     agent: frontmatter.agent,
     created: frontmatter.created,
     updated: frontmatter.updated,
+    audited: frontmatter.audited,
     tags: frontmatter.tags ?? [],
     body,
     phases,

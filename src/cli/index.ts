@@ -1,9 +1,19 @@
 #!/usr/bin/env node
+import { spawn } from 'node:child_process';
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
+import { createInterface } from 'node:readline';
 import { Command } from 'commander';
+import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
+import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { deriveIdeaStatuses } from '../core/idea-status';
-import { parseIdeas, parsePlans, readAllIdeaFiles, readAllPlanFiles } from '../core/parser';
+import {
+  parseIdeas,
+  parsePlanFile,
+  parsePlans,
+  readAllIdeaFiles,
+  readAllPlanFiles,
+} from '../core/parser';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import {
   assignPlanId,
@@ -13,7 +23,7 @@ import {
   formatPlansIndex,
   todayDateString,
 } from '../core/serializer';
-import { PLAN_KINDS } from '../types/index';
+import { DEFAULT_AGENTS, PLAN_KINDS, type PlanEntry } from '../types/index';
 import { startDevServer } from './dev-server';
 
 async function exists(path: string): Promise<boolean> {
@@ -23,6 +33,76 @@ async function exists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+async function findPlanFile(plansDir: string, id: string): Promise<string | null> {
+  const direct = join(plansDir, `${id}.md`);
+  if (await exists(direct)) return direct;
+  const archived = join(plansDir, 'archive', `${id}.md`);
+  if (await exists(archived)) return archived;
+  return null;
+}
+
+async function getFileMtimeDateString(filePath: string): Promise<string | null> {
+  try {
+    const s = await stat(filePath);
+    return s.mtime.toISOString().slice(0, 10);
+  } catch {
+    return null;
+  }
+}
+
+async function stampCliAuditDate(planFile: string, planId: string): Promise<void> {
+  const raw = await readFile(planFile, 'utf-8').catch(() => '');
+  if (!raw) return;
+  const parsed = parsePlanFile(raw);
+  if (parsed.entries.length === 0) return;
+  const entry = parsed.entries[0];
+  const writeInput: Parameters<typeof formatPlanFile>[0] = {
+    id: planId,
+    title: entry.title,
+    kind: entry.kind ?? 'feat',
+    status: entry.status,
+    idea: entry.idea,
+    agent: entry.agent,
+    created: entry.created,
+    updated: entry.updated,
+    audited: todayDateString(),
+    tags: entry.tags,
+    body: entry.body,
+    phases: entry.phases,
+    log: entry.log,
+    clarifications: entry.clarifications,
+  };
+  await writeFile(planFile, `${formatPlanFile(writeInput)}\n`, 'utf-8');
+}
+
+async function runPlanAudit(
+  root: string,
+  plan: PlanEntry,
+  adapter: AgentAdapter,
+): Promise<boolean> {
+  const prompt = buildConvergenceAuditPrompt(plan);
+  const proc = spawn(adapter.command, adapter.buildArgs(prompt), {
+    cwd: root,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  if (proc.stdout) {
+    const rl = createInterface({ input: proc.stdout });
+    rl.on('line', (line) => {
+      const parsed = adapter.parseLine(line);
+      if (parsed?.text && parsed.text !== 'Agent is working…') {
+        process.stdout.write(`    ${parsed.text}\n`);
+      }
+    });
+  }
+  proc.stderr?.on('data', (d: Buffer) => process.stderr.write(d));
+
+  return new Promise((resolve) => {
+    proc.on('close', (code) => resolve(code === 0));
+    proc.on('error', () => resolve(false));
+  });
 }
 
 const program = new Command();
@@ -228,6 +308,133 @@ program
     console.log(
       `Migrated ${migratedPlans} plans (${skippedPlans} skipped), ${migratedIdeas} ideas (${skippedIdeas} skipped).`,
     );
+  });
+
+program
+  .command('audit')
+  .description('Audit all review/done plans for missing phases')
+  .action(async () => {
+    const root = process.cwd();
+    const plansDir = resolve(root, 'papercamp', 'plans');
+
+    const { entries, warnings } = await readAllPlanFiles(plansDir);
+
+    for (const warning of warnings) {
+      console.warn(`  warning: ${warning.title}: ${warning.message}`);
+    }
+
+    const candidates = entries.filter((p) => p.status === 'review' || p.status === 'done');
+
+    if (candidates.length === 0) {
+      console.log('No plans with status "review" or "done" found.');
+      return;
+    }
+
+    const configRaw = await readFile(join(root, 'papercamp', 'config.json'), 'utf-8').catch(
+      () => '{}',
+    );
+    const config = JSON.parse(configRaw) as {
+      defaultAgents?: typeof DEFAULT_AGENTS;
+      defaultAgent?: string;
+    };
+    const defaultAgents = config.defaultAgents ?? DEFAULT_AGENTS;
+    const { adapter } = resolveAgent({ defaultAgents, taskKind: 'audit' });
+
+    console.log(`Auditing ${candidates.length} plan(s):\n`);
+
+    interface AuditResult {
+      id: string;
+      title: string;
+      status: 'audited' | 'skipped' | 'failed';
+      gapPhases?: number;
+      skipReason?: string;
+    }
+
+    const results: AuditResult[] = [];
+
+    for (const plan of candidates) {
+      const id = plan.id ?? '(no id)';
+      const label = id.padEnd(14);
+
+      if (!plan.id) {
+        console.log(`  [skip]  ${label} ${plan.title} — no id`);
+        results.push({ id, title: plan.title, status: 'skipped', skipReason: 'no id' });
+        continue;
+      }
+
+      const planFile = await findPlanFile(plansDir, plan.id);
+      if (!planFile) {
+        console.log(`  [skip]  ${label} ${plan.title} — file not found`);
+        results.push({ id, title: plan.title, status: 'skipped', skipReason: 'file not found' });
+        continue;
+      }
+
+      if (plan.audited) {
+        const mtimeDate = await getFileMtimeDateString(planFile);
+        if (mtimeDate && plan.audited >= mtimeDate) {
+          console.log(
+            `  [skip]  ${label} ${plan.title} — audited ${plan.audited}, unchanged since`,
+          );
+          results.push({
+            id,
+            title: plan.title,
+            status: 'skipped',
+            skipReason: `audited ${plan.audited}, unchanged`,
+          });
+          continue;
+        }
+      }
+
+      const phasesBefore = plan.phases.length;
+
+      console.log(`  [audit] ${label} ${plan.title}`);
+      const success = await runPlanAudit(root, plan, adapter);
+
+      if (success) {
+        await stampCliAuditDate(planFile, plan.id);
+
+        const afterRaw = await readFile(planFile, 'utf-8').catch(() => '');
+        const afterParsed = parsePlanFile(afterRaw);
+        const phasesAfter = afterParsed.entries[0]?.phases.length ?? phasesBefore;
+        const gapPhases = Math.max(0, phasesAfter - phasesBefore);
+
+        console.log(`  [done]  ${label} ${plan.title}`);
+        results.push({ id, title: plan.title, status: 'audited', gapPhases });
+      } else {
+        console.log(`  [fail]  ${label} ${plan.title} — agent exited with error`);
+        process.exitCode = 1;
+        results.push({ id, title: plan.title, status: 'failed' });
+      }
+    }
+
+    const audited = results.filter((r) => r.status === 'audited');
+    const skipped = results.filter((r) => r.status === 'skipped');
+    const failed = results.filter((r) => r.status === 'failed');
+    const totalGaps = audited.reduce((sum, r) => sum + (r.gapPhases ?? 0), 0);
+    const bar = '─'.repeat(43);
+
+    console.log(`\n${bar}`);
+    console.log('Audit summary');
+    console.log(
+      `  Audited : ${audited.length}   Skipped : ${skipped.length}   Failed : ${failed.length}`,
+    );
+    if (audited.length > 0) {
+      if (totalGaps > 0) {
+        console.log(`  Gap phases appended: ${totalGaps} total`);
+        for (const r of audited.filter((r) => (r.gapPhases ?? 0) > 0)) {
+          console.log(`    ${r.id.padEnd(14)} +${r.gapPhases} phase(s)`);
+        }
+      } else {
+        console.log('  No gap phases appended — all audited plans are complete.');
+      }
+    }
+    if (skipped.length > 0) {
+      console.log('  Skipped:');
+      for (const r of skipped) {
+        console.log(`    ${r.id.padEnd(14)} ${r.skipReason}`);
+      }
+    }
+    console.log(bar);
   });
 
 program.parseAsync(process.argv);

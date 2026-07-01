@@ -183,6 +183,7 @@ interface NewPlanFileInput {
   agent?: string;
   created: string;
   updated?: string;
+  audited?: string;
   tags?: string[];
   body?: string;
   phases?: PhaseItem[];
@@ -214,6 +215,7 @@ export function formatPlanFile(input: NewPlanFileInput): string {
   if (input.idea) frontmatter.idea = input.idea;
   if (input.agent) frontmatter.agent = input.agent;
   if (input.updated) frontmatter.updated = input.updated;
+  if (input.audited) frontmatter.audited = input.audited;
   if (input.tags && input.tags.length > 0) frontmatter.tags = input.tags;
 
   const sections: string[] = [serializeFrontmatter(frontmatter)];

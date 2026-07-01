@@ -16,6 +16,7 @@ import { create } from 'zustand';
 import {
   fetchAgentStatus,
   launchAgent,
+  launchBatchAudit,
   launchIdeaExtend,
   launchPlanAudit,
   launchPlanDraft,
@@ -104,6 +105,7 @@ type AppStore = {
   launchPlanAudit: (planId: string, prompt: string) => Promise<void>;
   launchPlanDraft: (ideaId: string, prompt: string) => Promise<void>;
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
+  launchBatchAudit: () => Promise<void>;
   stopAgent: () => Promise<void>;
 };
 
@@ -285,6 +287,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   launchIdeaExtend: async (ideaId, prompt) => {
     await launchIdeaExtend(ideaId, prompt);
+    await get().loadAgentStatus();
+  },
+  launchBatchAudit: async () => {
+    await launchBatchAudit();
     await get().loadAgentStatus();
   },
   stopAgent: async () => {

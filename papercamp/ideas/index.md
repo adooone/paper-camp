@@ -27,3 +27,4 @@
 | IDEA-23 | Per-agent model and effort settings | planned |
 | IDEA-24 | Sync to main before new plan | planned |
 | IDEA-25 | Actualize about.md for per-file storage | planned |
+| IDEA-26 | Plan reconcile pass and audit gating | planned |

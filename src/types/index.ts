@@ -67,6 +67,7 @@ export interface PlanEntry {
   agent?: AgentId;
   created: string;
   updated?: string;
+  audited?: string;
   tags: string[];
   body: string;
   phases: PhaseItem[];
@@ -171,7 +172,7 @@ export interface GitStatusResponse {
 
 export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error';
 
-export type TaskKind = 'phase' | 'audit' | 'draft' | 'extend' | 'commit-suggest';
+export type TaskKind = 'phase' | 'audit' | 'batch-audit' | 'draft' | 'extend' | 'commit-suggest';
 
 export interface AgentTaskState {
   status: AgentTaskStatus;

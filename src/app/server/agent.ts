@@ -1,9 +1,15 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { readFile, stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { readIdeasMerged, readPlansMerged } from '../../core/parser';
+import {
+  parsePlanFile,
+  readAllPlanFiles,
+  readIdeasMerged,
+  readPlansMerged,
+} from '../../core/parser';
 import {
   type AgentId,
   type AgentTaskState,
@@ -16,6 +22,7 @@ import {
   type PlanEntry,
   type TaskKind,
 } from '../../types/index';
+import { buildConvergenceAuditPrompt } from '../features/plans/prompts';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 
 const MAX_LINES = 50;
@@ -75,6 +82,7 @@ Do only this phase. When done, check it off in that file's \`### Phases\` list (
 export function createAgentManager(
   root: string,
   ensureBranch: (plan: PlanEntry) => void = () => {},
+  onAuditComplete?: (planId: string, gapPhases: number) => Promise<void>,
 ) {
   const clients = new Set<ServerResponse>();
   let current: AgentTask | null = null;
@@ -147,6 +155,9 @@ export function createAgentManager(
                 ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
                 : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
         pushLine(task, warning);
+      }
+      if (current === task && task.taskKind === 'audit' && task.planId && progressed === true) {
+        onAuditComplete?.(task.planId, 0).catch(() => {});
       }
     });
   }
@@ -278,6 +289,161 @@ export function createAgentManager(
       ideaId: idea.id,
       ideaBodyBaseline: idea.body,
     });
+  }
+
+  async function findBatchPlanFile(plansDir: string, id: string): Promise<string | null> {
+    const direct = join(plansDir, `${id}.md`);
+    try {
+      await stat(direct);
+      return direct;
+    } catch {}
+    const archived = join(plansDir, 'archive', `${id}.md`);
+    try {
+      await stat(archived);
+      return archived;
+    } catch {}
+    return null;
+  }
+
+  // Batch audit: iterate every review/done plan and run a convergence audit on each,
+  // skipping plans whose "audited" marker is newer than the file's last modification.
+  // Runs plans sequentially; updates task.proc before each spawn so stop() kills the
+  // right subprocess.
+  function startBatchAudit(): Result {
+    if (isBusy()) {
+      return { ok: false, error: 'An agent task is already running' };
+    }
+    const defaultAgents = readDefaultAgentIds(root);
+    const { id: agentId, adapter } = resolveAgent({ defaultAgents, taskKind: 'audit' });
+
+    // Stub proc — replaced per plan in the loop. Already-exited is fine: stop() sets
+    // task.status = 'stopping' first; kill() on a dead process is a no-op.
+    const stubProc = spawn('sh', ['-c', 'exit 0'], {
+      cwd: root,
+      stdio: 'ignore',
+    });
+    const task: AgentTask = {
+      taskKind: 'batch-audit',
+      planTitle: 'Batch audit',
+      status: 'starting',
+      agentId,
+      adapter,
+      proc: stubProc,
+      lines: [],
+    };
+    current = task;
+    setStatus(task, 'running');
+
+    (async () => {
+      try {
+        const plansDir = join(root, 'papercamp', 'plans');
+        const { entries } = await readAllPlanFiles(plansDir);
+        const candidates = entries.filter((p) => p.status === 'review' || p.status === 'done');
+
+        if (candidates.length === 0) {
+          if (current === task) {
+            pushLine(task, 'No plans with status "review" or "done" to audit.');
+            setStatus(task, 'done');
+          }
+          return;
+        }
+
+        pushLine(task, `Auditing ${candidates.length} plan(s)…`);
+        let audited = 0;
+        let skipped = 0;
+        let failed = 0;
+
+        for (const plan of candidates) {
+          if (current !== task || task.status === 'stopping') break;
+          if (!plan.id) {
+            skipped++;
+            continue;
+          }
+
+          const planFile = await findBatchPlanFile(plansDir, plan.id);
+          if (!planFile) {
+            skipped++;
+            continue;
+          }
+
+          if (plan.audited) {
+            const fileStat = await stat(planFile).catch(() => null);
+            const mtimeDate = fileStat ? fileStat.mtime.toISOString().slice(0, 10) : null;
+            if (mtimeDate && plan.audited >= mtimeDate) {
+              pushLine(task, `[skip] ${plan.id} — up to date`);
+              skipped++;
+              continue;
+            }
+          }
+
+          pushLine(task, `[audit] ${plan.id} ${plan.title}`);
+          const prompt = buildConvergenceAuditPrompt(plan);
+          const proc = spawn(adapter.command, adapter.buildArgs(prompt), {
+            cwd: root,
+            stdio: ['ignore', 'pipe', 'pipe'],
+          });
+          task.proc = proc;
+
+          if (proc.stdout) {
+            const rl = createInterface({ input: proc.stdout });
+            rl.on('line', (line) => {
+              if (current !== task) return;
+              const parsed = adapter.parseLine(line);
+              if (parsed?.text && parsed.text !== 'Agent is working…') {
+                pushLine(task, `  ${parsed.text}`);
+              }
+            });
+          }
+
+          const success = await new Promise<boolean>((resolve) => {
+            proc.on('close', (code) => resolve(code === 0));
+            proc.on('error', () => resolve(false));
+          });
+
+          if (current !== task) return;
+
+          if (success) {
+            let gapPhases = 0;
+            try {
+              const rawAfter = await readFile(planFile, 'utf-8');
+              const parsedAfter = parsePlanFile(rawAfter);
+              const afterCount = parsedAfter.entries[0]?.phases.length ?? plan.phases.length;
+              gapPhases = Math.max(0, afterCount - plan.phases.length);
+            } catch {
+              /* gapPhases stays 0 */
+            }
+            await onAuditComplete?.(plan.id, gapPhases);
+            audited++;
+            pushLine(
+              task,
+              gapPhases > 0
+                ? `[done] ${plan.id} — ${gapPhases} gap phase${gapPhases === 1 ? '' : 's'} added`
+                : `[done] ${plan.id}`,
+            );
+          } else {
+            failed++;
+            pushLine(task, `[fail] ${plan.id} — agent error`);
+          }
+        }
+
+        if (current !== task) return;
+
+        if (task.status === 'stopping') {
+          setStatus(task, 'done');
+          return;
+        }
+
+        pushLine(task, `Audit complete — ${audited} audited, ${skipped} skipped, ${failed} failed`);
+        setStatus(task, failed > 0 ? 'error' : 'done');
+      } catch (err) {
+        if (current === task) {
+          pushLine(task, `Batch audit failed: ${(err as Error).message}`);
+          setStatus(task, 'error');
+        }
+      }
+    })();
+
+    return { ok: true };
   }
 
   // Read-only, one-shot task: ask the configured agent to turn a diff into a commit
@@ -430,6 +596,7 @@ export function createAgentManager(
     startForPlan,
     startForIdea,
     startForIdeaExtend,
+    startBatchAudit,
     runCommitSuggest,
     stop,
     getStatus,
@@ -450,6 +617,7 @@ export interface AgentManager {
   startForPlan: (plan: PlanEntry, prompt: string) => Result;
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
+  startBatchAudit: () => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;
   stop: () => Result;
   getStatus: () => AgentTaskState | null;

@@ -27,6 +27,7 @@ export const AGENTS: Record<AgentId, AgentAdapter> = {
 const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   phase: 'phase',
   audit: 'phase',
+  'batch-audit': 'phase',
   draft: 'planDraft',
   extend: 'ideaExtend',
   'commit-suggest': 'commitSuggest',

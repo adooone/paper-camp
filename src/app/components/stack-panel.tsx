@@ -473,13 +473,15 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         ? ` — phase ${agentStatus.phaseIndex + 1}`
                         : agentStatus.taskKind === 'audit'
                           ? ' — audit'
-                          : agentStatus.taskKind === 'draft'
-                            ? ' — drafting'
-                            : agentStatus.taskKind === 'extend'
-                              ? ' — extending'
-                              : agentStatus.taskKind === 'commit-suggest'
-                                ? ' — suggesting commit message'
-                                : ''}{' '}
+                          : agentStatus.taskKind === 'batch-audit'
+                            ? ' — batch audit'
+                            : agentStatus.taskKind === 'draft'
+                              ? ' — drafting'
+                              : agentStatus.taskKind === 'extend'
+                                ? ' — extending'
+                                : agentStatus.taskKind === 'commit-suggest'
+                                  ? ' — suggesting commit message'
+                                  : ''}{' '}
                       · {AGENT_LABELS[agentStatus.agentId]}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>

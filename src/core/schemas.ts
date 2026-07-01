@@ -56,6 +56,7 @@ export const planFrontmatterSchema = z.object({
   agent: z.enum(AGENT_IDS).optional().describe('Per-plan agent override'),
   created: dateString.describe('Creation date (YYYY-MM-DD)'),
   updated: dateString.optional().describe('Last significant update date (YYYY-MM-DD)'),
+  audited: dateString.optional().describe('Date of last successful convergence audit (YYYY-MM-DD)'),
   tags: z.array(z.string()).optional().describe('Tagging categories'),
 });
 
