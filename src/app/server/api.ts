@@ -375,6 +375,15 @@ export function createApiMiddleware(root: string): ApiMiddleware {
           res.end(JSON.stringify({ error: 'title is required' }));
           return;
         }
+        // Server-side branch-hygiene guard — the sidebar disables this client-side,
+        // but a stale-branch request must not create a plan by bypassing the UI.
+        const conflict = await checkBranchConflictForPlan(root, git);
+        if (conflict) {
+          res.statusCode = 409;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: conflict }));
+          return;
+        }
         const planKind =
           kind && PLAN_KINDS.includes(kind as (typeof PLAN_KINDS)[number]) ? kind : 'feat';
 
@@ -732,6 +741,18 @@ export function createApiMiddleware(root: string): ApiMiddleware {
         }
 
         if (mode === 'clean') {
+          // Re-verify cleanliness server-side — the client's `mode` is derived from
+          // a possibly-stale status snapshot, and checking out main against an
+          // actually-dirty tree could fail confusingly or carry changes onto main.
+          const currentStatus = await git.getStatus();
+          if (currentStatus.length > 0) {
+            res.statusCode = 409;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(
+              JSON.stringify({ error: 'Working tree is no longer clean — refresh and retry' }),
+            );
+            return;
+          }
           // Inline sync: checkout main, fetch, fast-forward merge
           await git.runGitSync();
           res.statusCode = 200;

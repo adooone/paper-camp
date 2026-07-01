@@ -212,14 +212,15 @@ export function createGitManager(root: string) {
     if (currentBranch === 'main' || currentBranch === 'master') return false;
 
     try {
+      // Merged status only — the upstream check lives in getBranchHygieneStatus so
+      // it can tell 'stale-merged' apart from 'stale-no-upstream'. Conflating them
+      // here missed the common case: a pushed branch merged via PR (still has an
+      // upstream) would never report 'stale-merged'.
       const mergedBranches = await runGit(['branch', '--merged', 'main']);
-      const isMerged = mergedBranches.split('\n').some((line) => {
+      return mergedBranches.split('\n').some((line) => {
         const branch = line.trim().replace(/^\*\s+/, '');
         return branch === currentBranch;
       });
-
-      if (!isMerged) return false;
-      return !(await hasUpstream());
     } catch {
       return false;
     }

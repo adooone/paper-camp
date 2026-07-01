@@ -159,6 +159,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
+  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
@@ -1066,15 +1067,9 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         variant="chalkboard"
                         size="small"
                         icon={<MergeIcon size={14} />}
-                        disabled={
-                          syncing || (gitBranch === 'main' && (gitStatus?.length ?? 0) === 0)
-                        }
+                        disabled={syncing || gitBranchHygiene === 'clean-on-main'}
                         onClick={handleSync}
-                        title={
-                          gitBranch === 'main' && (gitStatus?.length ?? 0) === 0
-                            ? 'Already on clean main'
-                            : ''
-                        }
+                        title={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : ''}
                       >
                         {syncing ? 'Syncing…' : 'Sync to main'}
                       </Button>
