@@ -22,6 +22,24 @@ const navItems = [
   { id: 'settings', label: 'Settings', path: '/settings' },
 ];
 
+const STACK_OPEN_KEY = 'stack-open';
+
+function readStoredStackOpen(): boolean {
+  try {
+    return localStorage.getItem(STACK_OPEN_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeStoredStackOpen(value: boolean): void {
+  try {
+    localStorage.setItem(STACK_OPEN_KEY, String(value));
+  } catch {
+    // localStorage unavailable (e.g. private browsing) — fall back to in-memory only
+  }
+}
+
 const RootLayout = () => {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -30,7 +48,7 @@ const RootLayout = () => {
   const setActivePlanTitle = useAppStore((s) => s.setActivePlanTitle);
   const setActiveIdeaTitle = useAppStore((s) => s.setActiveIdeaTitle);
   const activeId = navItems.find((item) => item.path === pathname)?.id;
-  const [stackOpen, setStackOpen] = useState(true);
+  const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
@@ -137,7 +155,16 @@ const RootLayout = () => {
           </div>
         </div>
       </div>
-      <StackPanel open={stackOpen} onToggle={() => setStackOpen((o) => !o)} />
+      <StackPanel
+        open={stackOpen}
+        onToggle={() =>
+          setStackOpen((o) => {
+            const next = !o;
+            writeStoredStackOpen(next);
+            return next;
+          })
+        }
+      />
     </Layout>
   );
 };
