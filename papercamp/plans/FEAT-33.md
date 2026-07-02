@@ -2,9 +2,10 @@
 id: FEAT-33
 title: Responsive layout and Stack panel redesign
 kind: feat
-status: planned
+status: in-progress
 created: 2026-07-01
 idea: IDEA-34
+updated: 2026-07-02
 tags:
   - app
   - ui
@@ -34,7 +35,7 @@ Sequencing: land after [[IDEA-32]]'s mechanical 0.2→0.5 bump, before the rest 
 10. Sidebar plan items hard-truncate ("Reconcile pass and …") with their mini progress bars crowding the sidebar edge at narrow widths.
 
 ### Phases
-- [ ] Add responsive breakpoints to the root layout
+- [x] Add responsive breakpoints to the root layout
       In router.tsx / the shared paper-ui Layout, stop reserving a fixed paddingRight for the Stack panel (`layoutConfig.stackPanelWidth`, 480px, applied at router.tsx:93 whenever `stackOpen`) — let it overlay content instead of pushing it, below a defined breakpoint (e.g. <1440px). Make the content column flex: 1 with a flexible max-width instead of the current stack of fixed widths (paper-ui `Page` caps content at max-width 800px, sidebar holds 220px) that stops fitting at common window sizes. Below ~1024px, collapse the sidebar into paper-ui Layout's existing mobile sidebar mechanics (`mobileOpen` toggle + overlay in layout.tsx, currently unused by paper-camp) rather than a fixed 220px column.
 - [ ] Move global navigation into a Layout header and remove the nav island
       Replace the hand-rolled floating <Island> composition in router.tsx with paper-ui Layout's built-in header (showHeader): project identity in the logo/title slot on the left, the nav buttons as headerActions (same ghost Buttons with isActive as today — Layout's navigationItems prop renders into its sidebar, not the header, so the buttons stay hand-composed). Remove the navigationIsland slot usage and its stack-open x-shift animation. Move the Docs search input into the Docs page's own sidebar, since it only applies to one route. Give the Stack panel a top offset equal to the header height (its position: fixed currently starts at top: 0) so the panel slides in under the header instead of covering it. Note: this reverses the 2026-06-19 decision "Docs search lives in the nav island as a page-specific tool" — when this phase lands, add a superseding entry to decisions.md (and mark the old one superseded) so the record stays consistent.

@@ -33,6 +33,7 @@ const RootLayout = () => {
   const docSearchQuery = useAppStore((s) => s.docSearchQuery);
   const setDocSearchQuery = useAppStore((s) => s.setDocSearchQuery);
   const [stackOpen, setStackOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -44,6 +45,7 @@ const RootLayout = () => {
   useEffect(() => {
     setActivePlanTitle(null);
     setActiveIdeaTitle(null);
+    setMobileSidebarOpen(false);
   }, [pathname, setActivePlanTitle, setActiveIdeaTitle]);
 
   return (
@@ -57,6 +59,31 @@ const RootLayout = () => {
       navigationIsland={
         <nav aria-label="Navigation island">
           <Island>
+            <button
+              type="button"
+              className="lg:hidden flex items-center justify-center"
+              style={{
+                width: 24,
+                height: 24,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onClick={() => setMobileSidebarOpen(true)}
+              aria-label="Open sidebar"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
+              </svg>
+            </button>
             <ProjectIdentityHeader size="sm" />
             <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.12)' }} />
             {pathname === '/docs' && (
@@ -89,14 +116,19 @@ const RootLayout = () => {
       }
     >
       <div
-        className="flex h-full min-h-0 justify-center items-stretch box-border overflow-hidden"
-        style={{ paddingRight: stackOpen ? layoutConfig.stackPanelWidth : 0 }}
+        // Stack panel pushes content only when there's room to spare (>=1440px);
+        // below that it overlays, since layoutConfig.stackPanelWidth (480) is
+        // hardcoded here — Tailwind's arbitrary-value classes must be static.
+        className={`flex h-full min-h-0 justify-center items-stretch box-border overflow-hidden ${
+          stackOpen ? 'min-[1440px]:pr-[480px]' : ''
+        }`}
       >
-        <div
-          className="flex h-full min-h-0 w-full max-w-layout"
-          style={{ gap: layoutConfig.contentGap }}
-        >
-          <SidebarShell routeKey={pathname}>
+        <div className="flex h-full min-h-0 w-full" style={{ gap: layoutConfig.contentGap }}>
+          <SidebarShell
+            routeKey={pathname}
+            mobileOpen={mobileSidebarOpen}
+            onMobileClose={() => setMobileSidebarOpen(false)}
+          >
             {pathname === '/' && <PlansSidebar />}
             {pathname === '/review' && <ReviewSidebar />}
             {pathname === '/docs' && <DocsSidebar />}
