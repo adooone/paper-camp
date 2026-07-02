@@ -1,4 +1,4 @@
-import { Button, Layout, Page, layoutConfig } from '@dendelion/paper-ui';
+import { Button, IconButton, Layout, Page, layoutConfig } from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -80,31 +80,26 @@ const RootLayout = () => {
           bleedBottom
           headerActions={
             <>
-              <button
-                type="button"
-                className="lg:hidden flex items-center justify-center"
-                style={{
-                  width: 24,
-                  height: 24,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
+              <IconButton
+                variant="ghost"
+                size="small"
+                className="lg:hidden"
+                label="Open sidebar"
                 onClick={() => setMobileSidebarOpen(true)}
-                aria-label="Open sidebar"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
-                </svg>
-              </button>
+                icon={
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
+                  </svg>
+                }
+              />
               <ProjectIdentityHeader size="sm" />
               <div className="flex-1" />
               <nav aria-label="Main navigation" className="flex items-center gap-1">
@@ -159,13 +154,13 @@ const RootLayout = () => {
       </div>
       <StackPanel
         open={stackOpen}
-        onToggle={() =>
-          setStackOpen((o) => {
-            const next = !o;
-            writeStoredStackOpen(next);
-            return next;
-          })
-        }
+        onToggle={() => {
+          // Keep the persistence side effect out of the setState updater (updaters
+          // must be pure — StrictMode double-invokes them).
+          const next = !stackOpen;
+          writeStoredStackOpen(next);
+          setStackOpen(next);
+        }}
       />
     </>
   );

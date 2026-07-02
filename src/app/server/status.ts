@@ -16,6 +16,10 @@ const CHECK_COMMANDS: Record<CheckName, string> = {
   test: 'npx vitest run',
 };
 
+// Auto-fix pass (format + safe lint) shared by the "Fix" action and the run-all
+// verification gate's pre-check.
+const BIOME_FIX_COMMAND = 'npx biome check . --write';
+
 export type StatusManager = ReturnType<typeof createStatusManager>;
 
 export function createStatusManager(root: string) {
@@ -96,7 +100,7 @@ export function createStatusManager(root: string) {
     setResult('lint', 'running', 'Applying automatic fixes…');
     setResult('format', 'running', 'Applying automatic fixes…');
 
-    const proc = spawn('npx biome check . --write', {
+    const proc = spawn(BIOME_FIX_COMMAND, {
       cwd: root,
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: true,
@@ -159,7 +163,7 @@ export function createStatusManager(root: string) {
         }
       };
 
-      const fix = spawn('npx biome check . --write', { cwd: root, stdio: 'ignore', shell: true });
+      const fix = spawn(BIOME_FIX_COMMAND, { cwd: root, stdio: 'ignore', shell: true });
       fix.on('close', runChecks);
       fix.on('error', runChecks);
     });

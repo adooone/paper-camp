@@ -558,6 +558,9 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         fontWeight: 600,
                         fontSize: fontSize.sm,
                         color: deskChalk,
+                        // minWidth: 0 lets this flex item shrink below its content
+                        // width — without it overflow/ellipsis never triggers.
+                        minWidth: 0,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',

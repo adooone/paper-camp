@@ -60,6 +60,7 @@ export const DocsSidebar = () => {
       <div style={{ marginBottom: space[4] }}>
         <Input
           size="small"
+          aria-label="Search docs"
           placeholder="Search docs…"
           value={docSearchQuery}
           onChange={(e) => setDocSearchQuery(e.target.value)}

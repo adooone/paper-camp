@@ -1,6 +1,6 @@
 import { layout, space } from '@/app/styles/tokens';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface SidebarShellProps {
   routeKey: string;
@@ -16,6 +16,7 @@ export const SidebarShell = ({
   onMobileClose,
 }: SidebarShellProps) => {
   const shouldReduceMotion = useReducedMotion();
+  const asideRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -25,6 +26,16 @@ export const SidebarShell = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileOpen, onMobileClose]);
+
+  // When the drawer opens, move focus into it (it acts as a modal dialog below
+  // the lg breakpoint); restore focus to whatever was focused before — the
+  // hamburger trigger — when it closes.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    asideRef.current?.focus();
+    return () => previouslyFocused?.focus?.();
+  }, [mobileOpen]);
 
   return (
     <>
@@ -39,6 +50,13 @@ export const SidebarShell = ({
         />
       )}
       <aside
+        ref={asideRef}
+        // Dialog semantics only while acting as a mobile drawer — at lg+ this is
+        // an in-flow navigation sidebar, not a modal.
+        role={mobileOpen ? 'dialog' : undefined}
+        aria-modal={mobileOpen || undefined}
+        aria-label="Sidebar navigation"
+        tabIndex={-1}
         className={`fixed inset-y-0 left-0 z-[300] transition-transform duration-300 ease-out lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
