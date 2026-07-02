@@ -2,7 +2,7 @@
 id: FEAT-30
 title: Run all phases with per-phase commits
 kind: feat
-status: review
+status: done
 created: 2026-07-01
 idea: IDEA-29
 updated: 2026-07-02

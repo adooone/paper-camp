@@ -15,6 +15,8 @@ import { join } from 'node:path';
  * `open-questions.md`, and `progress.md` — replacing the old hardcoded list that
  * still pointed at the removed legacy `plans.md`.
  */
+export type ActivityManager = ReturnType<typeof createActivityManager>;
+
 export function createActivityManager(root: string) {
   const clients = new Set<ServerResponse>();
   let timer: ReturnType<typeof setTimeout> | null = null;

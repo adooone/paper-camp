@@ -12,6 +12,8 @@ const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 // treated literally so selections can't widen to unrelated files.
 const toLiteralPathspec = (file: string) => `:(literal)${file}`;
 
+export type GitManager = ReturnType<typeof createGitManager>;
+
 export function createGitManager(root: string) {
   const clients = new Set<ServerResponse>();
 

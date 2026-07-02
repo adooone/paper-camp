@@ -3,6 +3,7 @@ import type { DecisionEntry, OpenQuestionEntry, PlanEntry } from '../types/index
 import {
   findConsistencyIssues,
   parseDecisions,
+  parseIdeas,
   parseOpenQuestions,
   parsePlans,
   parseProgress,
@@ -168,6 +169,65 @@ Body.
     ]);
   });
 
+  it('extracts Log entries out of the body', () => {
+    const md = `## Short title
+
+**Status:** in-progress
+**Created:** 2026-06-18
+
+Body.
+
+### Log
+- 2026-06-18: Started implementation
+- 2026-06-19: Finished parser
+`;
+    const { entries, warnings } = parsePlans(md);
+    expect(warnings).toEqual([]);
+    expect(entries[0].log).toEqual([
+      { date: '2026-06-18', text: 'Started implementation' },
+      { date: '2026-06-19', text: 'Finished parser' },
+    ]);
+    expect(entries[0].body).toBe('Body.');
+  });
+
+  it('extracts Clarifications entries out of the body', () => {
+    const md = `## Short title
+
+**Status:** in-progress
+**Created:** 2026-06-18
+
+Body.
+
+### Clarifications
+- 2026-06-20: Scope limited to the dashboard
+`;
+    const { entries, warnings } = parsePlans(md);
+    expect(warnings).toEqual([]);
+    expect(entries[0].clarifications).toEqual([
+      { date: '2026-06-20', text: 'Scope limited to the dashboard' },
+    ]);
+    expect(entries[0].body).toBe('Body.');
+  });
+
+  it('stops a Phases section at the next sub-heading', () => {
+    const md = `## Short title
+
+**Status:** in-progress
+**Created:** 2026-06-18
+
+Body.
+
+### Phases
+- [ ] Only phase
+
+### Log
+- 2026-06-18: Note
+`;
+    const { entries } = parsePlans(md);
+    expect(entries[0].phases).toEqual([{ done: false, text: 'Only phase' }]);
+    expect(entries[0].log).toEqual([{ date: '2026-06-18', text: 'Note' }]);
+  });
+
   it('parses the [review] inline tag as phase.source', () => {
     const md = `## Short title
 
@@ -325,6 +385,44 @@ describe('findConsistencyIssues', () => {
     const questions = [question({ title: 'Q1', status: 'resolved', blocks: 'FEAT-2' })];
     const plans = [plan({ title: 'Plan A', id: 'FEAT-2', status: 'in-progress' })];
     expect(findConsistencyIssues([], questions, plans)).toEqual([]);
+  });
+});
+
+describe('parseIdeas', () => {
+  it('splits sections on --- separators and extracts IDEA ids from headings', () => {
+    const md = `## IDEA-1: First idea
+
+Body one.
+
+---
+
+## IDEA-2: Second idea
+
+Body two.
+`;
+    const ideas = parseIdeas(md);
+    expect(ideas).toHaveLength(2);
+    expect(ideas[0]).toMatchObject({ id: 'IDEA-1', title: 'First idea' });
+    expect(ideas[0].body).toContain('Body one.');
+    expect(ideas[1]).toMatchObject({ id: 'IDEA-2', title: 'Second idea' });
+  });
+
+  it('keeps a section without an IDEA prefix, with a null id', () => {
+    const md = `## Just a heading
+
+Some body.
+`;
+    const ideas = parseIdeas(md);
+    expect(ideas).toEqual([
+      { id: null, title: 'Just a heading', body: '## Just a heading\n\nSome body.' },
+    ]);
+  });
+
+  it('falls back to the first line as title when there is no heading', () => {
+    const ideas = parseIdeas('A stray thought without markdown.\nMore prose.');
+    expect(ideas).toHaveLength(1);
+    expect(ideas[0].id).toBeNull();
+    expect(ideas[0].title).toBe('A stray thought without markdown.');
   });
 });
 

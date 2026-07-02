@@ -32,6 +32,14 @@ Body content here.
     expect(result.body).toBe(content);
   });
 
+  it('parses frontmatter with CRLF line endings', () => {
+    const content = '---\r\nid: FEAT-1\r\ntitle: Windows plan\r\n---\r\nBody text.\r\n';
+    const result = parseFrontmatter(content, testSchema);
+    expect(result.warnings).toEqual([]);
+    expect(result.data).toEqual({ id: 'FEAT-1', title: 'Windows plan' });
+    expect(result.body).toBe('Body text.');
+  });
+
   it('warns on malformed YAML', () => {
     const content = `---
 unclosed: "string
@@ -304,6 +312,29 @@ describe('formatPlanFile round-trip', () => {
     expect(entries[0].phases).toEqual([
       { done: false, text: 'Fix review findings', source: 'review' },
     ]);
+  });
+
+  it('round-trips clarifications', () => {
+    const input = {
+      id: 'FEAT-30',
+      title: 'Clarified plan',
+      kind: 'feat' as const,
+      status: 'in-progress' as const,
+      created: '2026-06-30',
+      body: 'Body.',
+      clarifications: [
+        { date: '2026-07-01', text: 'Only the dashboard is in scope' },
+        { date: '2026-07-02', text: 'Ship behind a flag' },
+      ],
+      phases: [{ done: false, text: 'Do the work' }],
+    };
+
+    const serialized = formatPlanFile(input);
+    const { entries, warnings } = parsePlanFile(serialized);
+    expect(warnings).toEqual([]);
+    expect(entries[0].clarifications).toEqual(input.clarifications);
+    expect(entries[0].body).toBe('Body.');
+    expect(entries[0].phases).toEqual(input.phases);
   });
 
   it('round-trips the audited field', () => {

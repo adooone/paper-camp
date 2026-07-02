@@ -1,7 +1,7 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useProjectIdentity } from '@/app/hooks';
 import { fetchConfig, saveConfig } from '@/app/services/config-api';
-import { fetchConfigFile } from '@/app/services/configs-api';
+import { fetchConfigFile } from '@/app/services/config-files-api';
 import { fetchEnv, saveEnv } from '@/app/services/env-api';
 import { uploadIcon } from '@/app/services/icon-api';
 import { useAppStore } from '@/app/stores/app-store';

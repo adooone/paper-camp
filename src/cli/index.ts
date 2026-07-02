@@ -7,13 +7,8 @@ import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { deriveIdeaStatuses } from '../core/idea-status';
-import {
-  parseIdeas,
-  parsePlanFile,
-  parsePlans,
-  readAllIdeaFiles,
-  readAllPlanFiles,
-} from '../core/parser';
+import { parseIdeas, parsePlanFile, parsePlans } from '../core/parser';
+import { readAllIdeaFiles, readAllPlanFiles } from '../core/readers';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import {
   assignPlanId,

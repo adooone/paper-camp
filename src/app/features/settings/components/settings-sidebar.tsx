@@ -1,4 +1,4 @@
-import { fetchConfigs } from '@/app/services/configs-api';
+import { fetchConfigs } from '@/app/services/config-files-api';
 import { fetchEnv } from '@/app/services/env-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { ListItem } from '@dendelion/paper-ui';

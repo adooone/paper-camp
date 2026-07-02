@@ -16,6 +16,8 @@ const CHECK_COMMANDS: Record<CheckName, string> = {
   test: 'npx vitest run',
 };
 
+export type StatusManager = ReturnType<typeof createStatusManager>;
+
 export function createStatusManager(root: string) {
   const clients = new Set<ServerResponse>();
   const snapshot: StatusSnapshot = {

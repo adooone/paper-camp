@@ -30,7 +30,7 @@
 | IDEA-26 | Plan reconcile pass and audit gating | planned |
 | IDEA-27 | Content-hash freshness for batch audit | planned |
 | IDEA-28 | Idea-file heading level (MD001) | done |
-| IDEA-29 | Run all phases with per-phase commits | planned |
+| IDEA-29 | Run all phases with per-phase commits | done |
 | IDEA-30 | Claude Code native integration | planned |
 | IDEA-31 | Paper Camp as an MCP server | planned |
 | IDEA-32 | Migrate to paper-ui 0.5.0 | planned |
@@ -38,3 +38,4 @@
 | IDEA-34 | Responsive layout and Stack panel redesign | planned |
 | IDEA-35 | Scout ↔ GitHub plan sync | planned |
 | IDEA-36 | Scheduled repo digest and nudges | planned |
+| IDEA-37 | Fable capability-window tasks | planned |
