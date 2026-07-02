@@ -17,9 +17,12 @@ jobs:
   request-review:
     name: Request CodeRabbit review
     # Only for PR runs that succeeded — skip pushes to main and failed runs.
+    # Also skip release-please's own PR: it's bot-generated changelog/version
+    # bumps, not code that needs a CodeRabbit review.
     if: >
       github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success'
+      github.event.workflow_run.conclusion == 'success' &&
+      !startsWith(github.event.workflow_run.head_branch, 'release-please')
     runs-on: ubuntu-latest
     steps:
       - name: Generate Scout app token
@@ -42,5 +45,9 @@ jobs:
             echo "No open PR for branch '$BRANCH' — nothing to review."
             exit 0
           fi
-          gh pr comment "$PR" --body "@coderabbitai review"
-          echo "Requested CodeRabbit review on PR #$PR (CI passed on $BRANCH)."
+          # "full review" (not "review"): the incremental "review" command
+          # no-ops on commits CodeRabbit already saw, so a bot-posted "review"
+          # can land on already-seen commits and skip everything. "full review"
+          # forces a complete pass — matches what works when triggered by hand.
+          gh pr comment "$PR" --body "@coderabbitai full review"
+          echo "Requested CodeRabbit full review on PR #$PR (CI passed on $BRANCH)."

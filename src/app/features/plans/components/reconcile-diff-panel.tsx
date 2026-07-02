@@ -74,7 +74,7 @@ export const ReconcileDiffPanel = ({
   };
 
   return (
-    <Modal open title="Review reconcile changes" size="large" onClose={onApprove}>
+    <Modal open title="Review reconcile changes" size="large" onClose={handleDiscard}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
         <p className="text-sm" style={{ margin: 0, opacity: 0.7 }}>
           The reconcile agent proposed the rewrite below for "{plan.title}". Approve to keep it, or

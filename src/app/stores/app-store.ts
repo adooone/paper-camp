@@ -107,13 +107,22 @@ type AppStore = {
   loadAgentStatus: () => Promise<void>;
   launchAgent: (planId: string, phaseIndex: number) => Promise<void>;
   launchPlanAudit: (planId: string, prompt: string) => Promise<void>;
-  launchPlanReconcile: (planId: string, prompt: string) => Promise<void>;
+  launchPlanReconcile: (
+    planId: string,
+    prompt: string,
+    before: ReconcilePreview['before'],
+  ) => Promise<void>;
   launchPlanDraft: (ideaId: string, prompt: string) => Promise<void>;
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
   launchBatchAudit: () => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
   stopAgent: () => Promise<void>;
 
+  // Snapshot captured when a reconcile is launched, held at store level (not in
+  // the button component) so an in-flight reconcile's completion is still handled
+  // if the user navigates away before the agent finishes. Consumed by
+  // loadAgentStatus when the reconcile task reaches 'done'.
+  pendingReconcile: ReconcilePreview | null;
   // The proposed rewrite from a reconcile agent run, held for a before/after
   // diff panel until the user approves (keeps it) or discards (reverts it).
   reconcilePreview: ReconcilePreview | null;
@@ -291,6 +300,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
     try {
       const data = await fetchAgentStatus();
       set({ agentStatus: data });
+
+      // Hand a finished reconcile's snapshot to the diff panel. Lives here (not
+      // in ReconcileButton) so it fires regardless of which plan view is mounted.
+      const pending = get().pendingReconcile;
+      if (pending && data?.taskKind === 'reconcile' && data.planId === pending.planId) {
+        if (data.status === 'done') {
+          // loadPlans first: if it throws, pendingReconcile stays set and retries.
+          await get().loadPlans();
+          set({ reconcilePreview: pending, pendingReconcile: null });
+        } else if (data.status === 'error') {
+          set({ pendingReconcile: null });
+        }
+      }
     } catch {
       // keep previous status
     }
@@ -303,8 +325,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await launchPlanAudit(planId, prompt);
     await get().loadAgentStatus();
   },
-  launchPlanReconcile: async (planId, prompt) => {
-    await launchPlanReconcile(planId, prompt);
+  launchPlanReconcile: async (planId, prompt, before) => {
+    // Record the pre-launch snapshot in the store before firing, so completion
+    // is handled by loadAgentStatus even if the launching component unmounts.
+    set({ pendingReconcile: { planId, before } });
+    try {
+      await launchPlanReconcile(planId, prompt);
+    } catch (err) {
+      set({ pendingReconcile: null });
+      throw err;
+    }
     await get().loadAgentStatus();
   },
   launchPlanDraft: async (ideaId, prompt) => {
@@ -328,6 +358,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await get().loadAgentStatus();
   },
 
+  pendingReconcile: null,
   reconcilePreview: null,
   setReconcilePreview: (preview) => set({ reconcilePreview: preview }),
 }));

@@ -6,6 +6,7 @@ import {
   buildConvergenceAuditPrompt,
   buildIdeaExtendPrompt,
   buildPlanDraftPrompt,
+  buildReconcilePrompt,
 } from './prompts';
 
 const idea: IdeaEntry = { id: 'IDEA-7', title: 'Test idea', body: 'Idea body prose.' };
@@ -59,6 +60,19 @@ describe('agent prompts target per-file storage', () => {
     const prompt = buildClarifyPrompt(plan);
     expect(prompt).toContain(`papercamp/plans/${plan.id}.md`);
     expect(prompt).not.toContain('plans.md');
+  });
+
+  it('reconcile prompt targets the per-file plan and keeps its guardrails', () => {
+    const prompt = buildReconcilePrompt(plan);
+    expect(prompt).toContain(`papercamp/plans/${plan.id}.md`);
+    expect(prompt).toContain(`papercamp/plans/archive/${plan.id}.md`);
+    expect(prompt).not.toContain('plans.md');
+    // The guardrails are the whole point of the reconcile pass — an AI rewrite
+    // that edits frontmatter or the phase set would corrupt the plan. Regressions
+    // in this prose must fail the build, not ship silently.
+    expect(prompt).toContain('Never touch the YAML frontmatter');
+    expect(prompt).toContain('Never add or remove phases');
+    expect(prompt).toMatch(/Never un-check.*phase line/);
   });
 
   it('phase-execution prompt points at the per-file plan, not legacy plans.md', () => {
