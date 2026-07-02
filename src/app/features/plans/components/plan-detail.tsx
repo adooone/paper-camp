@@ -295,7 +295,9 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
                 plan.phases.some((p) => !p.done) && (
                   <RunAllPhasesButton plan={plan} disabled={agentBusy} />
                 )}
-              <AuditPhasesButton plan={plan} disabled={agentBusy} />
+              {(plan.status === 'review' || plan.status === 'done') && (
+                <AuditPhasesButton plan={plan} disabled={agentBusy} />
+              )}
               <AddReviewPhasesButton onAdd={handleAddReviewPhases} disabled={updating} />
             </div>
           </div>

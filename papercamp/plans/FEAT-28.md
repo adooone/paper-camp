@@ -2,10 +2,10 @@
 id: FEAT-28
 title: Reconcile pass and audit gating
 kind: feat
-status: planned
+status: in-progress
 created: 2026-07-01
 idea: IDEA-26
-updated: 2026-07-01
+updated: 2026-07-02
 tags:
   - plans
   - audit
@@ -16,7 +16,7 @@ tags:
 FEAT-25's batch audit revealed two gaps: the convergence audit button is visible on every plan status even though it only makes sense after a plan is complete, and there is no mechanism to fix stale prose in an in-progress plan. This feature closes both gaps. First, `AuditPhasesButton` is gated to `review` and `done` so drift-detection only fires when the plan is finished. Second, a new "Reconcile" pass is introduced — an AI rewrite that corrects stale file paths, renamed/removed code symbols, and superseded approaches in phase descriptions and body prose, producing a diff preview the user approves before anything lands. The reconcile prompt is kept deliberately narrow ("fix references and superseded approaches; leave everything else byte-identical") and enforces hard guardrails: frontmatter identity and checked phases are never touched.
 
 ### Phases
-- [ ] Gate AuditPhasesButton to review/done status
+- [x] Gate AuditPhasesButton to review/done status
       In `plan-detail.tsx:298`, wrap `AuditPhasesButton` in a `status === 'review' || status === 'done'` guard. No changes to the audit logic itself.
 - [ ] Add reconcile TaskKind and prompt
       Add `'reconcile'` to the `TaskKind` union in `src/types/index.ts`; the `TASK_KIND_TO_DEFAULT_KEY` map in `src/app/server/agents/index.ts` is typed `Record<TaskKind, …>`, so it also needs a `reconcile` entry for agent resolution. Write `buildReconcilePrompt` in `src/app/features/plans/prompts.ts` (alongside `buildConvergenceAuditPrompt`) with the narrow rewrite instruction and guardrails (never touch id/frontmatter, never un-check or delete `[x]` phases, never add/remove phases — only reword prose and fix references).
