@@ -21,7 +21,7 @@ The correct fix is a content hash. After auditing, store `audited-hash` = a hash
       Add an optional `audited-hash: string` field to `planFrontmatterSchema` in `src/core/schemas.ts` (`frontmatter-schemas.ts` is only a compatibility re-export shim; the schema itself lives in `schemas.ts`).
 - [x] Implement hash computation helper
       Add a pure `computePlanContentHash(plan)` function that serialises phases + body prose, excluding `audited` and `audited-hash` fields, and returns a hex digest. Lives alongside the frontmatter helpers.
-- [ ] Update parser and serializer round-trip
+- [x] Update parser and serializer round-trip
       Ensure `parsePlanFile` (src/core/parser.ts) reads `audited-hash` and `formatPlanFile` (src/core/serializer.ts) writes it, and add the field to the shared `planFileInput` helper in `src/app/server/helpers.ts` so plan rewrites carry it. This must land before the stamp functions — they write through `formatPlanFile`/`planFileInput`, which would silently drop the field until it round-trips.
 - [ ] Thread hash through stamp functions
       Update `stampAuditDate` in `src/app/server/agent-hooks.ts` (moved there from api.ts when the server was split into modules) and `stampCliAuditDate` in `src/cli/index.ts` to compute and write `audited-hash` alongside the existing `audited: <date>` field (keep the date for human readability).

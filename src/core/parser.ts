@@ -358,6 +358,7 @@ export function parsePlanFile(content: string): ParseResult<PlanEntry> {
     created: frontmatter.created,
     updated: frontmatter.updated,
     audited: frontmatter.audited,
+    auditedHash: frontmatter['audited-hash'],
     tags: frontmatter.tags ?? [],
     body,
     phases,

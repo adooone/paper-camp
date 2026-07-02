@@ -46,6 +46,7 @@ export function planFileInput(
     created: entry.created,
     updated: entry.updated,
     audited: entry.audited,
+    auditedHash: entry.auditedHash,
     tags: entry.tags,
     body: entry.body,
     phases: entry.phases,
