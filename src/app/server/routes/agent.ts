@@ -97,6 +97,36 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
+    // POST /api/agent/launch-reconcile — start a headless agent that reconciles stale prose in a plan
+    {
+      method: 'POST',
+      path: '/api/agent/launch-reconcile',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { planId, prompt } = JSON.parse(reqBody) as { planId?: string; prompt?: string };
+        if (!planId || !prompt) {
+          sendJson(res, 400, { error: 'planId and prompt are required' });
+          return;
+        }
+        const plan = await findPlanById(root, planId);
+        if (!plan) {
+          sendJson(res, 404, { error: 'plan not found' });
+          return;
+        }
+        const conflict = await checkBranchConflictForPlan(root, git, plan.id);
+        if (conflict) {
+          sendJson(res, 409, { error: conflict });
+          return;
+        }
+        const result = agent.startForPlan(plan, prompt, 'reconcile');
+        if (!result.ok) {
+          sendJson(res, 409, { error: result.error });
+          return;
+        }
+        sendJson(res, 202, { ok: true });
+      },
+    },
+
     // POST /api/agent/launch-draft — start a headless agent that drafts a new plan from an idea
     {
       method: 'POST',

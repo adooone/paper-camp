@@ -40,6 +40,9 @@ interface AgentTask {
   ideaId?: string;
   // For idea-extend tasks: snapshot the idea's body before launch so we can detect changes.
   ideaBodyBaseline?: string;
+  // For reconcile tasks: snapshot of body + phase text before launch, since a reconcile
+  // rewrites prose in place rather than growing Phases/Log like an audit does.
+  reconcileBaseline?: string;
   status: AgentTaskStatus;
   agentId: AgentId;
   adapter: AgentAdapter;
@@ -133,6 +136,18 @@ export function createAgentManager(
         if (task.ideaBodyBaseline === undefined) return null;
         return idea.body !== task.ideaBodyBaseline;
       }
+      if (task.taskKind === 'reconcile') {
+        const { entries } = await readPlansMerged(
+          join(root, 'papercamp', 'plans'),
+          join(root, 'papercamp', 'plans.md'),
+        );
+        const plan = entries.find((p: { id?: string }) => p.id === task.planId);
+        if (!plan || task.reconcileBaseline === undefined) return null;
+        return (
+          JSON.stringify({ body: plan.body, phases: plan.phases.map((p) => p.text) }) !==
+          task.reconcileBaseline
+        );
+      }
       const plansDir = join(root, 'papercamp', 'plans');
       const { entries } = await readPlansMerged(plansDir, join(root, 'papercamp', 'plans.md'));
       if (task.ideaId !== undefined) {
@@ -163,11 +178,13 @@ export function createAgentManager(
         const warning =
           task.taskKind === 'extend'
             ? `Warning: agent finished but the idea body for ${task.ideaId} did not change — verify manually`
-            : task.ideaId !== undefined
-              ? `Warning: agent finished but no plan linking idea: ${task.ideaId} appeared in papercamp/plans/ — verify manually`
-              : task.phaseIndex !== undefined
-                ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
-                : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
+            : task.taskKind === 'reconcile'
+              ? 'Warning: agent finished but the plan body and phase text did not change — verify manually'
+              : task.ideaId !== undefined
+                ? `Warning: agent finished but no plan linking idea: ${task.ideaId} appeared in papercamp/plans/ — verify manually`
+                : task.phaseIndex !== undefined
+                  ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
+                  : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
         pushLine(task, warning);
       }
       if (current === task && task.taskKind === 'audit' && task.planId && progressed === true) {
@@ -224,7 +241,12 @@ export function createAgentManager(
     prompt: string,
     scope: Pick<
       AgentTask,
-      'taskKind' | 'phaseIndex' | 'planBaseline' | 'ideaId' | 'ideaBodyBaseline'
+      | 'taskKind'
+      | 'phaseIndex'
+      | 'planBaseline'
+      | 'ideaId'
+      | 'ideaBodyBaseline'
+      | 'reconcileBaseline'
     >,
   ): Result {
     if (isBusy()) {
@@ -276,10 +298,23 @@ export function createAgentManager(
 
   // Plan-scoped launch mode: no single phase, so success is judged by whether the
   // agent appended anything to Phases or Log rather than whether one checkbox flipped.
-  function startForPlan(plan: PlanEntry, prompt: string): Result {
+  // Reconcile tasks rewrite prose in place instead, so they're judged against a
+  // snapshot of body + phase text rather than the Phases/Log growth baseline.
+  function startForPlan(
+    plan: PlanEntry,
+    prompt: string,
+    taskKind: 'audit' | 'reconcile' = 'audit',
+  ): Result {
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
-      taskKind: 'audit',
-      planBaseline: { phases: plan.phases.length, log: plan.log?.length ?? 0 },
+      taskKind,
+      ...(taskKind === 'reconcile'
+        ? {
+            reconcileBaseline: JSON.stringify({
+              body: plan.body,
+              phases: plan.phases.map((p) => p.text),
+            }),
+          }
+        : { planBaseline: { phases: plan.phases.length, log: plan.log?.length ?? 0 } }),
     });
   }
 
@@ -831,7 +866,7 @@ export function createAgentManager(
 
 export interface AgentManager {
   start: (plan: PlanEntry, phaseIndex: number) => Result;
-  startForPlan: (plan: PlanEntry, prompt: string) => Result;
+  startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchAudit: () => Result;
