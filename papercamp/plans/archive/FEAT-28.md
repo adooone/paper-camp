@@ -2,7 +2,7 @@
 id: FEAT-28
 title: Reconcile pass and audit gating
 kind: feat
-status: review
+status: done
 created: 2026-07-01
 idea: IDEA-26
 updated: 2026-07-02

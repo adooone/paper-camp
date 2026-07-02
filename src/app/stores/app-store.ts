@@ -327,12 +327,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   launchPlanReconcile: async (planId, prompt, before) => {
     // Don't clobber an in-flight reconcile's snapshot: if one is already pending
-    // for a different plan, refuse rather than overwrite it (the launch would
-    // 409 anyway — only one agent task runs at a time — and clearing the slot on
-    // that failure would strip the earlier plan's diff safety net).
+    // (same plan or not), refuse rather than overwrite it. Only one agent task
+    // runs at a time, so a second launch would 409 anyway — and clearing the slot
+    // on that failure would strip the earlier reconcile's diff safety net. A
+    // same-plan relaunch is reachable too (navigate away mid-reconcile and back —
+    // ReconcileButton's local `launching` flag resets on remount).
     const existing = get().pendingReconcile;
-    if (existing && existing.planId !== planId) {
-      throw new Error('A reconcile is already in progress for another plan');
+    if (existing) {
+      throw new Error(
+        existing.planId === planId
+          ? 'A reconcile is already in progress for this plan'
+          : 'A reconcile is already in progress for another plan',
+      );
     }
     // Record the pre-launch snapshot in the store before firing, so completion
     // is handled by loadAgentStatus even if the launching component unmounts.
