@@ -6,6 +6,7 @@ import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
+import { computePlanContentHash } from '../core/content-hash';
 import { deriveIdeaStatuses } from '../core/idea-status';
 import { parseIdeas, parsePlanFile, parsePlans } from '../core/parser';
 import { readAllIdeaFiles, readAllPlanFiles } from '../core/readers';
@@ -72,6 +73,7 @@ async function stampCliAuditDate(planFile: string, planId: string): Promise<void
     created: entry.created,
     updated: entry.updated,
     audited: todayDateString(),
+    auditedHash: computePlanContentHash({ body: entry.body, phases: entry.phases }),
     tags: entry.tags,
     body: entry.body,
     phases: entry.phases,

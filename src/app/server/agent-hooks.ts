@@ -1,5 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { computePlanContentHash } from '../../core/content-hash';
 import { parsePlanFile } from '../../core/parser';
 import { todayDateString } from '../../core/serializer';
 import type { PhaseItem, PlanEntry } from '../../types/index';
@@ -47,7 +48,11 @@ export function createAgentHooks(root: string, git: GitManager) {
     const parsed = parsePlanFile(raw);
     if (parsed.entries.length === 0) return;
     const entry = parsed.entries[0];
-    await writePlanFile(planFile, planFileInput(entry, { id: planId, audited: todayDateString() }));
+    const auditedHash = computePlanContentHash({ body: entry.body, phases: entry.phases });
+    await writePlanFile(
+      planFile,
+      planFileInput(entry, { id: planId, audited: todayDateString(), auditedHash }),
+    );
     if (gapPhases > 0) {
       const label = `gap phase${gapPhases === 1 ? '' : 's'}`;
       await prependProgressItem(
