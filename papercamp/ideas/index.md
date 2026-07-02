@@ -35,7 +35,7 @@
 | IDEA-31 | Paper Camp as an MCP server | planned |
 | IDEA-32 | Migrate to paper-ui 0.5.0 | planned |
 | IDEA-33 | Adopt paper-ui 0.5.0 components | planned |
-| IDEA-34 | Responsive layout and Stack panel redesign | planned |
+| IDEA-34 | Responsive layout and Stack panel redesign | done |
 | IDEA-35 | Scout ↔ GitHub plan sync | planned |
 | IDEA-36 | Scheduled repo digest and nudges | planned |
 | IDEA-37 | Fable capability-window tasks | planned |

@@ -2,7 +2,7 @@
 id: FEAT-33
 title: Responsive layout and Stack panel redesign
 kind: feat
-status: review
+status: done
 created: 2026-07-01
 idea: IDEA-34
 updated: 2026-07-02
