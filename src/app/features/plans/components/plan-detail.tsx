@@ -22,6 +22,7 @@ import { ClarifyButton } from './clarify-button';
 import { PhaseCopyButton } from './phase-copy-button';
 import { PlanIdStamp } from './plan-id-stamp';
 import { ProgressBar } from './progress-bar';
+import { ReconcileButton } from './reconcile-button';
 import { ReconcileDiffPanel } from './reconcile-diff-panel';
 import { RunAllPhasesButton } from './run-all-phases-button';
 
@@ -325,6 +326,7 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
               {(plan.status === 'review' || plan.status === 'done') && (
                 <AuditPhasesButton plan={plan} disabled={agentBusy} />
               )}
+              {plan.status !== 'done' && <ReconcileButton plan={plan} disabled={agentBusy} />}
               <AddReviewPhasesButton onAdd={handleAddReviewPhases} disabled={updating} />
             </div>
           </div>

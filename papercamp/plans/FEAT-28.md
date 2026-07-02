@@ -24,7 +24,7 @@ FEAT-25's batch audit revealed two gaps: the convergence audit button is visible
       Add a `POST /api/agent/launch-reconcile` route in `src/app/server/routes/agent.ts` (api.ts has since been split into per-domain route modules; `/api/agent/launch-audit` in that file is the template): resolve the plan via `findPlanById`, run `checkBranchConflictForPlan`, launch the agent, and stream the result back over the existing SSE channel.
 - [x] Build diff/preview approval UI
       After the agent returns the proposed rewrite, render a before/after diff panel in the plan detail view. The user can approve (write the file) or discard. Mirror the "human reviews and promotes" flow used for agent-drafted plans.
-- [ ] Add Reconcile button to plan-detail.tsx
+- [x] Add Reconcile button to plan-detail.tsx
       Render a "Reconcile" button gated to non-`done` plans (complement to the audit button). Wire it to the reconcile launch route and open the diff/preview panel on completion.
 - [ ] Optional deterministic pre-pass
       Before the model call, run a cheap find/replace for known path renames (e.g. `plans.md` → `papercamp/plans/`) so the AI pass only handles deeper semantic drift. Include this as part of the reconcile route, not a separate UI action.
