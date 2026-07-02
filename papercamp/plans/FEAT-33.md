@@ -45,7 +45,7 @@ Sequencing: land after [[IDEA-32]]'s mechanical 0.2→0.5 bump, before the rest 
       Change the RootLayout's stackOpen useState(true) in router.tsx to a localStorage-backed value defaulting to false. Nothing in the panel is populated on load; it should be opened on demand rather than reserving 480px of width from first paint, and the user's open/closed choice should survive reloads instead of resetting.
 - [x] Redesign the Stack panel Commit section with a bounded scroll region
       Restructure stack-panel.tsx's Commit card so the changed-files Accordion scrolls within a bounded height and the commit title/message/Commit button sit in a non-scrolling footer that stays reachable regardless of file count. Replace the fixed flex: 2/1/2 ratios across Agent/Status/Commit with sizing driven by actual content.
-- [ ] Simplify the Agent card to a title and one status line
+- [x] Simplify the Agent card to a title and one status line
       Replace the full agentStatus.lines scrolling log in the Agent card with just the latest line next to the title; move the full log behind an Accordion (consistent with the Commit section) for anyone who wants to expand it.
 - [ ] Give the collapsed Stack rail a live status signal
       When the panel is closed, the rail should show state, not the letter "S": a spinner/accent color while an agent is running, a red indicator when Quality/Tests fail or Consistency has findings. In the Status card, make the Quality/Tests/Consistency stamps look like the buttons they are (hover/pressed affordance, or explicit run buttons next to passive status stamps) — clicking them currently launches check runs with no visual hint that they're interactive.

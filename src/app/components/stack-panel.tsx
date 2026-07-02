@@ -165,6 +165,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const stopAgentTask = useAppStore((s) => s.stopAgent);
   const [consistencyExpanded, setConsistencyExpanded] = useState(false);
   const [commitExpanded, setCommitExpanded] = useState(false);
+  const [agentLogExpanded, setAgentLogExpanded] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [commitTitle, setCommitTitle] = useState(() =>
     readStoredCommitField(COMMIT_TITLE_STORAGE_KEY),
@@ -491,7 +492,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: space[2],
-                      marginBottom: space[2],
+                      marginBottom: space[1],
                       flexShrink: 0,
                     }}
                   >
@@ -501,6 +502,9 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         fontWeight: 600,
                         fontSize: fontSize.sm,
                         color: deskChalk,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {agentStatus.planTitle}
@@ -565,24 +569,49 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                     </div>
                   </div>
                   {agentStatus.lines.length > 0 && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: space[1],
-                        fontFamily: fontFamily.mono,
-                        fontSize: fontSize['2xs'],
-                        color: deskTextMuted,
-                        maxHeight: 160,
-                        overflowY: 'auto',
-                      }}
-                    >
-                      {agentStatus.lines.map((line, i) => (
-                        <span key={`${i}-${line}`} style={{ whiteSpace: 'pre-wrap' }}>
-                          {line}
-                        </span>
-                      ))}
-                    </div>
+                    <>
+                      <span
+                        style={{
+                          fontFamily: fontFamily.mono,
+                          fontSize: fontSize['2xs'],
+                          color: deskTextMuted,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          marginBottom: space[2],
+                          flexShrink: 0,
+                        }}
+                      >
+                        {agentStatus.lines[agentStatus.lines.length - 1]}
+                      </span>
+                      <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
+                        <Accordion
+                          title={`${agentStatus.lines.length} line${agentStatus.lines.length === 1 ? '' : 's'}`}
+                          expanded={agentLogExpanded}
+                          onToggle={() => setAgentLogExpanded(!agentLogExpanded)}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: space[1],
+                              fontFamily: fontFamily.mono,
+                              fontSize: fontSize['2xs'],
+                              color: deskTextMuted,
+                              paddingTop: space[2],
+                              maxHeight: 160,
+                              overflowY: 'auto',
+                            }}
+                          >
+                            {agentStatus.lines.map((line, i) => (
+                              <span key={`${i}-${line}`} style={{ whiteSpace: 'pre-wrap' }}>
+                                {line}
+                              </span>
+                            ))}
+                          </div>
+                        </Accordion>
+                      </div>
+                    </>
                   )}
                 </div>
               ) : (
