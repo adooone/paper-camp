@@ -17,11 +17,11 @@ FEAT-25's batch audit revealed two gaps: the convergence audit button is visible
 
 ### Phases
 - [ ] Gate AuditPhasesButton to review/done status
-      In `plan-detail.tsx:293`, wrap `AuditPhasesButton` in a `status === 'review' || status === 'done'` guard. No changes to the audit logic itself.
+      In `plan-detail.tsx:298`, wrap `AuditPhasesButton` in a `status === 'review' || status === 'done'` guard. No changes to the audit logic itself.
 - [ ] Add reconcile TaskKind and prompt
-      Add `'reconcile'` to the `TaskKind` union in `types.ts`. Write `buildReconcilePrompt` in `prompts.ts` with the narrow rewrite instruction and guardrails (never touch id/frontmatter, never un-check or delete `[x]` phases, never add/remove phases — only reword prose and fix references).
+      Add `'reconcile'` to the `TaskKind` union in `src/types/index.ts`; the `TASK_KIND_TO_DEFAULT_KEY` map in `src/app/server/agents/index.ts` is typed `Record<TaskKind, …>`, so it also needs a `reconcile` entry for agent resolution. Write `buildReconcilePrompt` in `src/app/features/plans/prompts.ts` (alongside `buildConvergenceAuditPrompt`) with the narrow rewrite instruction and guardrails (never touch id/frontmatter, never un-check or delete `[x]` phases, never add/remove phases — only reword prose and fix references).
 - [ ] Add launch route for reconcile tasks
-      Extend the task-launch API (alongside the existing audit route) to accept `kind: 'reconcile'`, resolve the agent, and stream the result back.
+      Add a `POST /api/agent/launch-reconcile` route in `src/app/server/routes/agent.ts` (api.ts has since been split into per-domain route modules; `/api/agent/launch-audit` in that file is the template): resolve the plan via `findPlanById`, run `checkBranchConflictForPlan`, launch the agent, and stream the result back over the existing SSE channel.
 - [ ] Build diff/preview approval UI
       After the agent returns the proposed rewrite, render a before/after diff panel in the plan detail view. The user can approve (write the file) or discard. Mirror the "human reviews and promotes" flow used for agent-drafted plans.
 - [ ] Add Reconcile button to plan-detail.tsx

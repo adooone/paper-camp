@@ -18,14 +18,14 @@ The correct fix is a content hash. After auditing, store `audited-hash` = a hash
 
 ### Phases
 - [ ] Add audited-hash to frontmatter schema
-      Add an optional `audited-hash: string` field to the plan frontmatter schema in `src/core/frontmatter-schemas.ts`.
+      Add an optional `audited-hash: string` field to `planFrontmatterSchema` in `src/core/schemas.ts` (`frontmatter-schemas.ts` is only a compatibility re-export shim; the schema itself lives in `schemas.ts`).
 - [ ] Implement hash computation helper
       Add a pure `computePlanContentHash(plan)` function that serialises phases + body prose, excluding `audited` and `audited-hash` fields, and returns a hex digest. Lives alongside the frontmatter helpers.
+- [ ] Update parser and serializer round-trip
+      Ensure `parsePlanFile` (src/core/parser.ts) reads `audited-hash` and `formatPlanFile` (src/core/serializer.ts) writes it, and add the field to the shared `planFileInput` helper in `src/app/server/helpers.ts` so plan rewrites carry it. This must land before the stamp functions — they write through `formatPlanFile`/`planFileInput`, which would silently drop the field until it round-trips.
 - [ ] Thread hash through stamp functions
-      Update `stampAuditDate` in `api.ts` and `stampCliAuditDate` in `cli/index.ts` to compute and write `audited-hash` alongside the existing `audited: <date>` field (keep the date for human readability).
+      Update `stampAuditDate` in `src/app/server/agent-hooks.ts` (moved there from api.ts when the server was split into modules) and `stampCliAuditDate` in `src/cli/index.ts` to compute and write `audited-hash` alongside the existing `audited: <date>` field (keep the date for human readability).
 - [ ] Replace freshness checks with hash comparison
-      Update the two freshness-check call sites — `src/app/server/agent.ts` (~line 372) and `src/cli/index.ts` (~line 374) — to skip a plan only when `plan['audited-hash']` exists and matches the recomputed hash.
-- [ ] Update parser and serializer
-      Ensure `parsePlanFile` reads `audited-hash` and `formatPlanFile` writes it so the field round-trips without corruption.
+      Update the two freshness-check call sites — the `plan.audited >= mtimeDate` comparisons in `startBatchAudit` in `src/app/server/agent.ts` (~line 396) and the audit-all loop in `src/cli/index.ts` (~line 394) — to skip a plan only when `plan['audited-hash']` exists and matches the recomputed hash.
 - [ ] Tests
       Add unit tests for `computePlanContentHash` (same-content stability, sensitivity to body/phase edits, insensitivity to audit-field changes) and integration tests for the skip/re-audit decision in both the agent and CLI paths.
