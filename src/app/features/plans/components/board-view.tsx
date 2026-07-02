@@ -10,6 +10,7 @@ interface BoardViewProps {
 export const BoardView = ({ plans }: BoardViewProps) => {
   return (
     <Table
+      className="board-view-table"
       board={KANBAN_COLUMNS.map(({ status, label }) => ({
         key: status,
         label,

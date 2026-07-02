@@ -223,6 +223,24 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
 
   const activePlan = useMemo(() => findFocusPlan(plans?.entries), [plans?.entries]);
 
+  const qualityStatus: CheckStatus = useMemo(() => {
+    const lintStatus = statusData?.lint?.status ?? 'stale';
+    const formatStatus = statusData?.format?.status ?? 'stale';
+    if (lintStatus === 'running' || formatStatus === 'running') return 'running';
+    if (lintStatus === 'fail' || formatStatus === 'fail') return 'fail';
+    if (lintStatus === 'stale' && formatStatus === 'stale') return 'stale';
+    return 'pass';
+  }, [statusData]);
+  const testStatus: CheckStatus = statusData?.test?.status ?? 'stale';
+  const anyChecksRunning = qualityStatus === 'running' || testStatus === 'running';
+  const hasConsistencyIssues = consistency.length > 0;
+  const anyChecksFailing =
+    qualityStatus === 'fail' || testStatus === 'fail' || hasConsistencyIssues;
+  const agentActive =
+    agentStatus?.status === 'running' ||
+    agentStatus?.status === 'starting' ||
+    agentStatus?.status === 'stopping';
+
   const suggestedScope = useMemo(() => {
     // Scope is a subsystem area, never the plan id. Prefer the plan's first tag
     // that's a known scope (matches AGENTS.md's "usually the plan's primary tag"
@@ -393,12 +411,47 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             }}
           >
             <IconButton
-              icon={<span style={{ fontSize: fontSize['2xs'] }}>S</span>}
+              icon={
+                agentActive ? (
+                  <span
+                    className="spinner"
+                    style={{ width: 12, height: 12, borderTopColor: '#d6c4a0' }}
+                  />
+                ) : anyChecksFailing ? (
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: '#d6a0a0',
+                      boxShadow: '0 0 6px rgba(214, 160, 160, 0.9)',
+                    }}
+                  />
+                ) : (
+                  <span style={{ fontSize: fontSize['2xs'] }}>S</span>
+                )
+              }
               variant="chalkboard"
               size="small"
-              label="Open stack panel"
+              label={
+                agentActive
+                  ? 'Open stack panel — agent running'
+                  : anyChecksFailing
+                    ? 'Open stack panel — checks failing'
+                    : 'Open stack panel'
+              }
               onClick={onToggle}
-              style={{ width: 28, height: 64, borderRadius: '6px 0 0 6px' }}
+              style={{
+                width: 28,
+                height: 64,
+                borderRadius: '6px 0 0 6px',
+                boxShadow: agentActive
+                  ? 'inset 0 0 0 1px rgba(214, 196, 160, 0.6)'
+                  : anyChecksFailing
+                    ? 'inset 0 0 0 1px rgba(214, 160, 160, 0.6)'
+                    : undefined,
+              }}
             />
           </motion.div>
         )}
@@ -656,19 +709,8 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                   running: '#d6c4a0',
                   stale: undefined,
                 };
-                const lintStatus = statusData?.lint?.status ?? 'stale';
-                const formatStatus = statusData?.format?.status ?? 'stale';
-                const testStatus = statusData?.test?.status ?? 'stale';
-                const qualityStatus: CheckStatus =
-                  lintStatus === 'running' || formatStatus === 'running'
-                    ? 'running'
-                    : lintStatus === 'fail' || formatStatus === 'fail'
-                      ? 'fail'
-                      : lintStatus === 'stale' && formatStatus === 'stale'
-                        ? 'stale'
-                        : 'pass';
-                const anyRunning = qualityStatus === 'running' || testStatus === 'running';
-                const hasIssues = consistency.length > 0;
+                const anyRunning = anyChecksRunning;
+                const hasIssues = hasConsistencyIssues;
 
                 const qualityFixPrompt = `Fix the failing lint/format checks in this repo.\n\nLint output:\n${statusData?.lint?.output || '(none)'}\n\nFormat output:\n${statusData?.format?.output || '(none)'}`;
                 const testFixPrompt = `Fix the failing tests in this repo. Output from the last test run:\n\n${statusData?.test?.output || '(no output captured)'}`;
@@ -693,6 +735,8 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                     >
                       <button
                         type="button"
+                        className="stack-check-btn"
+                        title="Run lint and format checks"
                         onClick={() => {
                           if (!anyRunning) {
                             runCheck('lint');
@@ -727,6 +771,8 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       </button>
                       <button
                         type="button"
+                        className="stack-check-btn"
+                        title="Run tests"
                         onClick={() => {
                           if (!anyRunning) runCheck('test');
                         }}
@@ -757,6 +803,10 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       <div>
                         <button
                           type="button"
+                          className={hasIssues ? 'stack-check-btn' : undefined}
+                          title={
+                            hasIssues ? 'Show consistency findings' : 'No consistency findings'
+                          }
                           onClick={() => {
                             if (hasIssues) setConsistencyExpanded((prev) => !prev);
                           }}

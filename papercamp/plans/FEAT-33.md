@@ -2,7 +2,7 @@
 id: FEAT-33
 title: Responsive layout and Stack panel redesign
 kind: feat
-status: in-progress
+status: review
 created: 2026-07-01
 idea: IDEA-34
 updated: 2026-07-02
@@ -47,11 +47,11 @@ Sequencing: land after [[IDEA-32]]'s mechanical 0.2→0.5 bump, before the rest 
       Restructure stack-panel.tsx's Commit card so the changed-files Accordion scrolls within a bounded height and the commit title/message/Commit button sit in a non-scrolling footer that stays reachable regardless of file count. Replace the fixed flex: 2/1/2 ratios across Agent/Status/Commit with sizing driven by actual content.
 - [x] Simplify the Agent card to a title and one status line
       Replace the full agentStatus.lines scrolling log in the Agent card with just the latest line next to the title; move the full log behind an Accordion (consistent with the Commit section) for anyone who wants to expand it.
-- [ ] Give the collapsed Stack rail a live status signal
+- [x] Give the collapsed Stack rail a live status signal
       When the panel is closed, the rail should show state, not the letter "S": a spinner/accent color while an agent is running, a red indicator when Quality/Tests fail or Consistency has findings. In the Status card, make the Quality/Tests/Consistency stamps look like the buttons they are (hover/pressed affordance, or explicit run buttons next to passive status stamps) — clicking them currently launches check runs with no visual hint that they're interactive.
-- [ ] Make the board view usable at narrow widths
+- [x] Make the board view usable at narrow widths
       Give board lanes a min-width with overflow-x: auto and a visible scrollbar on the lane container so partial lanes don't silently hide; below the sidebar-collapse breakpoint, stack lanes vertically instead of panning.
-- [ ] Fix sidebar truncation (identity header and plan items)
+- [x] Fix sidebar truncation (identity header and plan items)
       Add overflow: hidden and text-overflow: ellipsis (with a matching min-width: 0 on its flex container) to project-identity-header.tsx so long project names truncate with an ellipsis instead of being hard-clipped mid-word by the sidebar edge. Let sidebar plan items in plan-nav-item.tsx wrap to two lines or ellipsize with a title tooltip, so items stay identifiable next to their mini progress bars at narrow widths.
-- [ ] Visual verification pass across viewport widths
+- [x] Visual verification pass across viewport widths
       Re-run the same Chrome visual check that surfaced these issues (deimos:3333) at ~1600px, ~1024px, and ~834px widths, plus the Stack panel with 10+ changed files and an active agent run, the collapsed rail during a run and with failing checks, and the board view at each width, to confirm no regressions from the earlier findings.

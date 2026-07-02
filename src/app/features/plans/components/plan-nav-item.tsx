@@ -21,6 +21,7 @@ export const PlanNavItem = ({ plan, active, onClick, action }: PlanNavItemProps)
       active={active}
       onClick={onClick}
       size="small"
+      title={plan.title}
       icon={
         <span
           style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }}
