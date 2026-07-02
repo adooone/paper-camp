@@ -15,6 +15,18 @@ export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
     '--verbose',
     '--permission-mode',
     'auto',
+    // These are headless, terminal-only jobs. Hard-block every path out of the
+    // terminal so a phase can't try to "visually check" the running app — a
+    // prompt instruction alone can't stop a tool the agent can actually reach.
+    // --strict-mcp-config drops ALL ambient MCP servers (the developer's
+    // browser / computer-use / chrome servers get inherited otherwise, since
+    // there's no project .mcp.json), independent of their names; --disallowedTools
+    // blocks the built-in web tools. Verification must go through the terminal
+    // (type-check / lint / tests), never a browser or fetched URL.
+    '--strict-mcp-config',
+    '--disallowedTools',
+    'WebFetch',
+    'WebSearch',
   ];
   if (opts?.model) args.push('--model', opts.model);
   if (opts?.effort) args.push('--effort', opts.effort);

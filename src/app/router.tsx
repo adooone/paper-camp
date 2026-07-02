@@ -1,4 +1,4 @@
-import { Button, Input, Island, Layout, Page, layoutConfig, space } from '@dendelion/paper-ui';
+import { Button, IconButton, Layout, Page, layoutConfig } from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -22,6 +22,24 @@ const navItems = [
   { id: 'settings', label: 'Settings', path: '/settings' },
 ];
 
+const STACK_OPEN_KEY = 'stack-open';
+
+function readStoredStackOpen(): boolean {
+  try {
+    return localStorage.getItem(STACK_OPEN_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeStoredStackOpen(value: boolean): void {
+  try {
+    localStorage.setItem(STACK_OPEN_KEY, String(value));
+  } catch {
+    // localStorage unavailable (e.g. private browsing) — fall back to in-memory only
+  }
+}
+
 const RootLayout = () => {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -30,9 +48,8 @@ const RootLayout = () => {
   const setActivePlanTitle = useAppStore((s) => s.setActivePlanTitle);
   const setActiveIdeaTitle = useAppStore((s) => s.setActiveIdeaTitle);
   const activeId = navItems.find((item) => item.path === pathname)?.id;
-  const docSearchQuery = useAppStore((s) => s.docSearchQuery);
-  const setDocSearchQuery = useAppStore((s) => s.setDocSearchQuery);
-  const [stackOpen, setStackOpen] = useState(true);
+  const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -44,91 +61,108 @@ const RootLayout = () => {
   useEffect(() => {
     setActivePlanTitle(null);
     setActiveIdeaTitle(null);
+    setMobileSidebarOpen(false);
   }, [pathname, setActivePlanTitle, setActiveIdeaTitle]);
 
   return (
-    <Layout
-      background={{ texture: 'paper', ruledType: 'grid', ruledColor: 'blue' }}
-      showHeader={false}
-      showSidebar={false}
-      showPage={false}
-      bleedBottom
-      stackOpen={stackOpen}
-      navigationIsland={
-        <nav aria-label="Navigation island">
-          <Island>
-            <ProjectIdentityHeader size="sm" />
-            <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.12)' }} />
-            {pathname === '/docs' && (
-              <div style={{ width: 180 }}>
-                <Input
-                  size="small"
-                  placeholder="Search docs…"
-                  value={docSearchQuery}
-                  onChange={(e) => setDocSearchQuery(e.target.value)}
-                />
-              </div>
-            )}
-            <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.12)' }} />
-            <div className="flex items-center gap-1">
-              {navItems.map((item) => (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  size="small"
-                  isActive={item.id === activeId}
-                  onClick={() => navigate({ to: item.path })}
-                  aria-current={item.id === activeId ? 'page' : undefined}
-                >
-                  {item.label}
-                </Button>
-              ))}
-            </div>
-          </Island>
-        </nav>
-      }
-    >
-      <div
-        className="flex h-full min-h-0 justify-center items-stretch box-border overflow-hidden"
-        style={{ paddingRight: stackOpen ? layoutConfig.stackPanelWidth : 0 }}
-      >
-        <div
-          className="flex h-full min-h-0 w-full max-w-layout"
-          style={{ gap: layoutConfig.contentGap }}
-        >
-          <SidebarShell routeKey={pathname}>
-            {pathname === '/' && <PlansSidebar />}
-            {pathname === '/review' && <ReviewSidebar />}
-            {pathname === '/docs' && <DocsSidebar />}
-            {pathname === '/settings' && <SettingsSidebar />}
-          </SidebarShell>
-          <div className="flex flex-1 flex-col min-h-0 min-w-0">
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              <Page
-                texture={{ texture: 'parchment' }}
-                style={{
-                  height: 'auto',
-                  paddingBottom: `calc(${layoutConfig.navIslandBottom} + ${layoutConfig.navIslandHeight} + ${space[4]})`,
-                }}
-              >
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={pathname}
-                    initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={shouldReduceMotion ? undefined : { opacity: 0, y: -8 }}
-                    transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+    <>
+      {/* The Stack panel lives outside the Layout, header included: at >=1440px this
+          padding shrinks the whole Layout — header and content alike — so the open
+          panel owns the full right edge; below that the panel overlays. 480 is
+          layoutConfig.stackPanelWidth, hardcoded because Tailwind's arbitrary-value
+          classes must be static. */}
+      <div className={`h-screen box-border ${stackOpen ? 'min-[1440px]:pr-[480px]' : ''}`}>
+        <Layout
+          background={{ texture: 'paper', ruledType: 'grid', ruledColor: 'blue' }}
+          showHeader
+          showSidebar={false}
+          showPage={false}
+          bleedBottom
+          headerActions={
+            <>
+              <IconButton
+                variant="ghost"
+                size="small"
+                className="lg:hidden"
+                label="Open sidebar"
+                onClick={() => setMobileSidebarOpen(true)}
+                icon={
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
                   >
-                    <Outlet />
-                  </motion.div>
-                </AnimatePresence>
-              </Page>
+                    <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
+                  </svg>
+                }
+              />
+              <ProjectIdentityHeader size="sm" />
+              <div className="flex-1" />
+              <nav aria-label="Main navigation" className="flex items-center gap-1">
+                {navItems.map((item) => (
+                  <Button
+                    key={item.id}
+                    variant="ghost"
+                    size="small"
+                    isActive={item.id === activeId}
+                    onClick={() => navigate({ to: item.path })}
+                    aria-current={item.id === activeId ? 'page' : undefined}
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+              </nav>
+            </>
+          }
+        >
+          <div className="flex h-full min-h-0 justify-center items-stretch box-border overflow-hidden">
+            <div className="flex h-full min-h-0 w-full" style={{ gap: layoutConfig.contentGap }}>
+              <SidebarShell
+                routeKey={pathname}
+                mobileOpen={mobileSidebarOpen}
+                onMobileClose={() => setMobileSidebarOpen(false)}
+              >
+                {pathname === '/' && <PlansSidebar />}
+                {pathname === '/review' && <ReviewSidebar />}
+                {pathname === '/docs' && <DocsSidebar />}
+                {pathname === '/settings' && <SettingsSidebar />}
+              </SidebarShell>
+              <div className="flex flex-1 flex-col min-h-0 min-w-0">
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                  <Page texture={{ texture: 'parchment' }} style={{ height: 'auto' }}>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={pathname}
+                        initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={shouldReduceMotion ? undefined : { opacity: 0, y: -8 }}
+                        transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+                      >
+                        <Outlet />
+                      </motion.div>
+                    </AnimatePresence>
+                  </Page>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </Layout>
       </div>
-      <StackPanel open={stackOpen} onToggle={() => setStackOpen((o) => !o)} />
-    </Layout>
+      <StackPanel
+        open={stackOpen}
+        onToggle={() => {
+          // Keep the persistence side effect out of the setState updater (updaters
+          // must be pure — StrictMode double-invokes them).
+          const next = !stackOpen;
+          writeStoredStackOpen(next);
+          setStackOpen(next);
+        }}
+      />
+    </>
   );
 };
 

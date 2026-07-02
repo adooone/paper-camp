@@ -16,6 +16,10 @@ const CHECK_COMMANDS: Record<CheckName, string> = {
   test: 'npx vitest run',
 };
 
+// Auto-fix pass (format + safe lint) shared by the "Fix" action and the run-all
+// verification gate's pre-check.
+const BIOME_FIX_COMMAND = 'npx biome check . --write';
+
 export type StatusManager = ReturnType<typeof createStatusManager>;
 
 export function createStatusManager(root: string) {
@@ -96,7 +100,7 @@ export function createStatusManager(root: string) {
     setResult('lint', 'running', 'Applying automatic fixes…');
     setResult('format', 'running', 'Applying automatic fixes…');
 
-    const proc = spawn('npx biome check . --write', {
+    const proc = spawn(BIOME_FIX_COMMAND, {
       cwd: root,
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: true,
@@ -131,23 +135,37 @@ export function createStatusManager(root: string) {
   // One-shot: spawn fresh processes for all three checks and resolve true only if
   // all pass. Intentionally bypasses the queue so callers get a clean result that
   // reflects the current working tree rather than a stale cached status.
+  //
+  // Auto-fix first: run `biome check . --write` before the check-mode gate so a
+  // trivial formatting difference — in agent-written code, or a pre-existing nit
+  // in a file an earlier phase touched but this one didn't — can't hard-fail an
+  // autonomous run-all phase. This mirrors what a human does before committing;
+  // the applied fixes get picked up by the phase commit (which stages `-A`). Only
+  // issues that survive the auto-fix (real lint errors, test failures) fail the
+  // phase. The fixer's own exit code is ignored — the real gate is the checks below.
   function runChecksAndWait(): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
-      const names: CheckName[] = ['lint', 'format', 'test'];
-      const passed: Record<CheckName, boolean | null> = { lint: null, format: null, test: null };
-      let pending = names.length;
+      const runChecks = () => {
+        const names: CheckName[] = ['lint', 'format', 'test'];
+        const passed: Record<CheckName, boolean | null> = { lint: null, format: null, test: null };
+        let pending = names.length;
 
-      function onDone(name: CheckName, ok: boolean) {
-        passed[name] = ok;
-        pending--;
-        if (pending === 0) resolve(names.every((n) => passed[n] === true));
-      }
+        function onDone(name: CheckName, ok: boolean) {
+          passed[name] = ok;
+          pending--;
+          if (pending === 0) resolve(names.every((n) => passed[n] === true));
+        }
 
-      for (const name of names) {
-        const proc = spawn(CHECK_COMMANDS[name], { cwd: root, stdio: 'ignore', shell: true });
-        proc.on('close', (code) => onDone(name, code === 0));
-        proc.on('error', () => onDone(name, false));
-      }
+        for (const name of names) {
+          const proc = spawn(CHECK_COMMANDS[name], { cwd: root, stdio: 'ignore', shell: true });
+          proc.on('close', (code) => onDone(name, code === 0));
+          proc.on('error', () => onDone(name, false));
+        }
+      };
+
+      const fix = spawn(BIOME_FIX_COMMAND, { cwd: root, stdio: 'ignore', shell: true });
+      fix.on('close', runChecks);
+      fix.on('error', runChecks);
     });
   }
 

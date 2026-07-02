@@ -43,4 +43,4 @@
 | FEAT-30 | Run all phases with per-phase commits | done | agent, phases, git, autonomy |
 | FEAT-31 | Claude Code native integration | planned | integration, claude-code, skill, hooks, cli |
 | FEAT-32 | Paper Camp MCP server | planned | mcp, server, core, integration |
-| FEAT-33 | Responsive layout and Stack panel redesign | planned | app, ui, layout, navigation, stack, paper-ui, responsive |
+| FEAT-33 | Responsive layout and Stack panel redesign | done | app, ui, layout, navigation, stack, paper-ui, responsive |

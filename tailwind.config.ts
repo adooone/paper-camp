@@ -10,9 +10,6 @@ const config: Config = {
       fontFamily: {
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
-      maxWidth: {
-        layout: '1044px',
-      },
     },
   },
   plugins: [],

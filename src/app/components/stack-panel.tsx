@@ -165,6 +165,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const stopAgentTask = useAppStore((s) => s.stopAgent);
   const [consistencyExpanded, setConsistencyExpanded] = useState(false);
   const [commitExpanded, setCommitExpanded] = useState(false);
+  const [agentLogExpanded, setAgentLogExpanded] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [commitTitle, setCommitTitle] = useState(() =>
     readStoredCommitField(COMMIT_TITLE_STORAGE_KEY),
@@ -221,6 +222,24 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   }, []);
 
   const activePlan = useMemo(() => findFocusPlan(plans?.entries), [plans?.entries]);
+
+  const qualityStatus: CheckStatus = useMemo(() => {
+    const lintStatus = statusData?.lint?.status ?? 'stale';
+    const formatStatus = statusData?.format?.status ?? 'stale';
+    if (lintStatus === 'running' || formatStatus === 'running') return 'running';
+    if (lintStatus === 'fail' || formatStatus === 'fail') return 'fail';
+    if (lintStatus === 'stale' && formatStatus === 'stale') return 'stale';
+    return 'pass';
+  }, [statusData]);
+  const testStatus: CheckStatus = statusData?.test?.status ?? 'stale';
+  const anyChecksRunning = qualityStatus === 'running' || testStatus === 'running';
+  const hasConsistencyIssues = consistency.length > 0;
+  const anyChecksFailing =
+    qualityStatus === 'fail' || testStatus === 'fail' || hasConsistencyIssues;
+  const agentActive =
+    agentStatus?.status === 'running' ||
+    agentStatus?.status === 'starting' ||
+    agentStatus?.status === 'stopping';
 
   const suggestedScope = useMemo(() => {
     // Scope is a subsystem area, never the plan id. Prefer the plan's first tag
@@ -382,7 +401,9 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
               right: 0,
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 100,
+              // Above the Layout header (z-200): the panel sits outside the main
+              // layout, so nothing from it may paint on top of the stack.
+              zIndex: 300,
               borderRadius: '6px 0 0 6px',
               background: deskBg,
               backgroundImage: `${CHALKBOARD_TEXTURE}, linear-gradient(135deg, ${deskLight} 0%, ${deskBg} 60%)`,
@@ -392,12 +413,47 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             }}
           >
             <IconButton
-              icon={<span style={{ fontSize: fontSize['2xs'] }}>S</span>}
+              icon={
+                agentActive ? (
+                  <span
+                    className="spinner"
+                    style={{ width: 12, height: 12, borderTopColor: '#d6c4a0' }}
+                  />
+                ) : anyChecksFailing ? (
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: '#d6a0a0',
+                      boxShadow: '0 0 6px rgba(214, 160, 160, 0.9)',
+                    }}
+                  />
+                ) : (
+                  <span style={{ fontSize: fontSize['2xs'] }}>S</span>
+                )
+              }
               variant="chalkboard"
               size="small"
-              label="Open stack panel"
+              label={
+                agentActive
+                  ? 'Open stack panel — agent running'
+                  : anyChecksFailing
+                    ? 'Open stack panel — checks failing'
+                    : 'Open stack panel'
+              }
               onClick={onToggle}
-              style={{ width: 28, height: 64, borderRadius: '6px 0 0 6px' }}
+              style={{
+                width: 28,
+                height: 64,
+                borderRadius: '6px 0 0 6px',
+                boxShadow: agentActive
+                  ? 'inset 0 0 0 1px rgba(214, 196, 160, 0.6)'
+                  : anyChecksFailing
+                    ? 'inset 0 0 0 1px rgba(214, 160, 160, 0.6)'
+                    : undefined,
+              }}
             />
           </motion.div>
         )}
@@ -423,7 +479,8 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          zIndex: 100,
+          // Above the Layout header (z-200) — the panel owns the full right edge.
+          zIndex: 300,
         }}
       >
         <div
@@ -467,8 +524,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
         >
           <div
             style={{
-              flex: 2,
-              minHeight: 0,
+              flex: '0 0 auto',
               display: 'flex',
               flexDirection: 'column',
               padding: space[6],
@@ -492,7 +548,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: space[2],
-                      marginBottom: space[2],
+                      marginBottom: space[1],
                       flexShrink: 0,
                     }}
                   >
@@ -502,6 +558,12 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         fontWeight: 600,
                         fontSize: fontSize.sm,
                         color: deskChalk,
+                        // minWidth: 0 lets this flex item shrink below its content
+                        // width — without it overflow/ellipsis never triggers.
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {agentStatus.planTitle}
@@ -566,25 +628,49 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                     </div>
                   </div>
                   {agentStatus.lines.length > 0 && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: space[1],
-                        fontFamily: fontFamily.mono,
-                        fontSize: fontSize['2xs'],
-                        color: deskTextMuted,
-                        flex: 1,
-                        minHeight: 0,
-                        overflowY: 'auto',
-                      }}
-                    >
-                      {agentStatus.lines.map((line, i) => (
-                        <span key={`${i}-${line}`} style={{ whiteSpace: 'pre-wrap' }}>
-                          {line}
-                        </span>
-                      ))}
-                    </div>
+                    <>
+                      <span
+                        style={{
+                          fontFamily: fontFamily.mono,
+                          fontSize: fontSize['2xs'],
+                          color: deskTextMuted,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          marginBottom: space[2],
+                          flexShrink: 0,
+                        }}
+                      >
+                        {agentStatus.lines[agentStatus.lines.length - 1]}
+                      </span>
+                      <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
+                        <Accordion
+                          title={`${agentStatus.lines.length} line${agentStatus.lines.length === 1 ? '' : 's'}`}
+                          expanded={agentLogExpanded}
+                          onToggle={() => setAgentLogExpanded(!agentLogExpanded)}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: space[1],
+                              fontFamily: fontFamily.mono,
+                              fontSize: fontSize['2xs'],
+                              color: deskTextMuted,
+                              paddingTop: space[2],
+                              maxHeight: 160,
+                              overflowY: 'auto',
+                            }}
+                          >
+                            {agentStatus.lines.map((line, i) => (
+                              <span key={`${i}-${line}`} style={{ whiteSpace: 'pre-wrap' }}>
+                                {line}
+                              </span>
+                            ))}
+                          </div>
+                        </Accordion>
+                      </div>
+                    </>
                   )}
                 </div>
               ) : (
@@ -607,8 +693,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
 
           <div
             style={{
-              flex: 1,
-              minHeight: 0,
+              flex: '0 0 auto',
               display: 'flex',
               flexDirection: 'column',
               padding: space[6],
@@ -630,19 +715,8 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                   running: '#d6c4a0',
                   stale: undefined,
                 };
-                const lintStatus = statusData?.lint?.status ?? 'stale';
-                const formatStatus = statusData?.format?.status ?? 'stale';
-                const testStatus = statusData?.test?.status ?? 'stale';
-                const qualityStatus: CheckStatus =
-                  lintStatus === 'running' || formatStatus === 'running'
-                    ? 'running'
-                    : lintStatus === 'fail' || formatStatus === 'fail'
-                      ? 'fail'
-                      : lintStatus === 'stale' && formatStatus === 'stale'
-                        ? 'stale'
-                        : 'pass';
-                const anyRunning = qualityStatus === 'running' || testStatus === 'running';
-                const hasIssues = consistency.length > 0;
+                const anyRunning = anyChecksRunning;
+                const hasIssues = hasConsistencyIssues;
 
                 const qualityFixPrompt = `Fix the failing lint/format checks in this repo.\n\nLint output:\n${statusData?.lint?.output || '(none)'}\n\nFormat output:\n${statusData?.format?.output || '(none)'}`;
                 const testFixPrompt = `Fix the failing tests in this repo. Output from the last test run:\n\n${statusData?.test?.output || '(no output captured)'}`;
@@ -667,6 +741,8 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                     >
                       <button
                         type="button"
+                        className="stack-check-btn"
+                        title="Run lint and format checks"
                         onClick={() => {
                           if (!anyRunning) {
                             runCheck('lint');
@@ -701,6 +777,8 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       </button>
                       <button
                         type="button"
+                        className="stack-check-btn"
+                        title="Run tests"
                         onClick={() => {
                           if (!anyRunning) runCheck('test');
                         }}
@@ -731,6 +809,10 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       <div>
                         <button
                           type="button"
+                          className={hasIssues ? 'stack-check-btn' : undefined}
+                          title={
+                            hasIssues ? 'Show consistency findings' : 'No consistency findings'
+                          }
                           onClick={() => {
                             if (hasIssues) setConsistencyExpanded((prev) => !prev);
                           }}
@@ -876,7 +958,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
 
           <div
             style={{
-              flex: 2,
+              flex: '1 1 auto',
               minHeight: 0,
               display: 'flex',
               flexDirection: 'column',
@@ -896,61 +978,64 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             <Card variant="chalkboard" size="small" className="stack-card-fill">
               {gitStatus && gitStatus.length > 0 ? (
                 <>
-                  <Accordion
-                    title={`${gitStatus.length} file${gitStatus.length === 1 ? '' : 's'} changed`}
-                    expanded={commitExpanded}
-                    onToggle={() => setCommitExpanded(!commitExpanded)}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: space[2],
-                        paddingTop: space[2],
-                      }}
+                  <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
+                    <Accordion
+                      title={`${gitStatus.length} file${gitStatus.length === 1 ? '' : 's'} changed`}
+                      expanded={commitExpanded}
+                      onToggle={() => setCommitExpanded(!commitExpanded)}
                     >
-                      {gitStatus.map((entry) => (
-                        <label
-                          key={entry.path}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: space[2],
-                            fontFamily: fontFamily.mono,
-                            fontSize: fontSize['2xs'],
-                            color: deskChalk,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedFiles.has(entry.path)}
-                            onChange={() => handleToggleFile(entry.path)}
-                            style={{ accentColor: deskChalk }}
-                          />
-                          <span
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: space[2],
+                          paddingTop: space[2],
+                        }}
+                      >
+                        {gitStatus.map((entry) => (
+                          <label
+                            key={entry.path}
                             style={{
-                              color: entry.staged ? deskChalk : deskTextMuted,
-                              minWidth: 24,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: space[2],
+                              fontFamily: fontFamily.mono,
+                              fontSize: fontSize['2xs'],
+                              color: deskChalk,
+                              cursor: 'pointer',
                             }}
                           >
-                            {entry.status}
-                          </span>
-                          <span
-                            style={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {entry.path}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </Accordion>
+                            <input
+                              type="checkbox"
+                              checked={selectedFiles.has(entry.path)}
+                              onChange={() => handleToggleFile(entry.path)}
+                              style={{ accentColor: deskChalk }}
+                            />
+                            <span
+                              style={{
+                                color: entry.staged ? deskChalk : deskTextMuted,
+                                minWidth: 24,
+                              }}
+                            >
+                              {entry.status}
+                            </span>
+                            <span
+                              style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {entry.path}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </Accordion>
+                  </div>
                   <div
                     style={{
+                      flexShrink: 0,
                       display: 'flex',
                       flexDirection: 'column',
                       gap: space[3],

@@ -30,6 +30,19 @@
 }
 
 /*
+ * paper-ui's Layout header is `justify-content: space-between` with a left slot
+ * that only takes a string `title` — all arbitrary content goes into the
+ * right-aligned `headerActions` div. Letting that slot grow to fill the row is
+ * what allows the identity to sit left and the nav right (a `flex-1` spacer
+ * between them does the separation). The attribute selector matches the hashed
+ * CSS-module class by its stable name part.
+ */
+header > div[class*="headerActions"] {
+  flex: 1;
+  min-width: 0;
+}
+
+/*
  * paper-ui's Button renders its colored fill as an SVG <path> layered behind the
  * label, not a CSS background — so a bright color means recoloring that path
  * directly. !important is needed because paper-ui's own hover/active rules
@@ -111,4 +124,59 @@
   border-top-color: currentColor;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
+}
+
+/*
+ * The Status card's Quality/Tests/Consistency stamps are plain <button>s that
+ * launch check runs on click, but paper-ui's Stamp has no interactive states of
+ * its own — so this supplies the hover/pressed affordance that tells people
+ * they're clickable, not just status labels.
+ */
+.stack-check-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.15);
+}
+.stack-check-btn:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+/*
+ * paper-ui's Table board layout scrolls horizontally with the browser's default
+ * (often invisible/overlay) scrollbar, so a partial lane at the right edge gives
+ * no hint there's more to pan to. Reaching into the board's nested divs (same
+ * pattern as .stack-card-fill above) makes the scrollbar always visible, and
+ * below the sidebar-collapse breakpoint (Tailwind's `lg`, 1024px) switches lanes
+ * from a horizontal pan to a vertical stack so nothing is hidden off-screen.
+ */
+.board-view-table > div {
+  scrollbar-width: auto;
+  scrollbar-color: rgba(0, 0, 0, 0.35) rgba(0, 0, 0, 0.06);
+}
+.board-view-table > div::-webkit-scrollbar {
+  height: 12px;
+}
+.board-view-table > div::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.06);
+}
+.board-view-table > div::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+}
+
+@media (max-width: 1023px) {
+  .board-view-table > div {
+    overflow-x: hidden;
+  }
+  .board-view-table > div > div {
+    flex-direction: column;
+  }
+  .board-view-table > div > div > div {
+    flex-basis: auto;
+    width: 100%;
+  }
+  .board-view-table > div > div > div + div {
+    border-left: none !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+  }
 }

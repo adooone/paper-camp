@@ -1,3 +1,24 @@
+## Docs search lives in the Docs page's own sidebar
+
+**Date:** 2026-07-02
+**Status:** decided
+
+**Context:** `FEAT-33`'s navigation redesign removed the floating `NavigationIsland`
+in favor of paper-ui `Layout`'s built-in header, which has no page-specific slot —
+only shared identity and global nav belong there. That leaves the Docs search input
+(previously rendered in the island, only on `/docs`) without a home in the new header.
+Supersedes the 2026-06-19 decision to place it in the nav island.
+
+**Decision:** Moved the search input into `DocsSidebar`, above the Repo Docs/
+Decisions/Open Questions/Progress sections. Still backed by the same
+`docSearchQuery`/`setDocSearchQuery` store state and the paper-ui `Input` component;
+only the mount point changed.
+
+**Rationale:** The unified navigation model this plan establishes has exactly two
+levels — a global header (identity + nav) and a per-route sidebar for pages with
+actual sections. Docs already has a sidebar, and search is Docs-specific, so it
+belongs there rather than forcing a page-specific tool into the now-generic header.
+
 ## Plan-drafting agent writes plans.md directly, same as phase execution
 
 **Date:** 2026-06-27
@@ -163,7 +184,7 @@ added as its own deliberate entry later.
 ## Docs search lives in the nav island as a page-specific tool
 
 **Date:** 2026-06-19
-**Status:** decided
+**Status:** superseded by "Docs search lives in the Docs page's own sidebar" (2026-07-02)
 
 **Context:** The initial implementation placed the Docs page's full-text search input
 inside the page content area, at the top of the main content column. This consumed

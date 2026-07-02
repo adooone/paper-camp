@@ -12,12 +12,12 @@ export const ProjectIdentityHeader = ({ size = 'md' }: ProjectIdentityHeaderProp
   const textSize = size === 'sm' ? fontSize.sm : fontSize.md;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: space[3], minWidth: 0 }}>
       {iconDataUri ? (
         <img
           src={iconDataUri}
           alt=""
-          style={{ width: iconSize, height: iconSize, objectFit: 'contain' }}
+          style={{ width: iconSize, height: iconSize, objectFit: 'contain', flexShrink: 0 }}
         />
       ) : (
         <Icon icon={<FolderIcon />} size="small" />
@@ -28,6 +28,9 @@ export const ProjectIdentityHeader = ({ size = 'md' }: ProjectIdentityHeaderProp
           fontWeight: 600,
           fontSize: textSize,
           whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          minWidth: 0,
         }}
       >
         {loading ? 'Loading…' : (projectName ?? 'Paper Camp')}
