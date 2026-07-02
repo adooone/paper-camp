@@ -2,7 +2,7 @@
 id: FEAT-28
 title: Reconcile pass and audit gating
 kind: feat
-status: in-progress
+status: review
 created: 2026-07-01
 idea: IDEA-26
 updated: 2026-07-02
@@ -26,5 +26,5 @@ FEAT-25's batch audit revealed two gaps: the convergence audit button is visible
       After the agent returns the proposed rewrite, render a before/after diff panel in the plan detail view. The user can approve (write the file) or discard. Mirror the "human reviews and promotes" flow used for agent-drafted plans.
 - [x] Add Reconcile button to plan-detail.tsx
       Render a "Reconcile" button gated to non-`done` plans (complement to the audit button). Wire it to the reconcile launch route and open the diff/preview panel on completion.
-- [ ] Optional deterministic pre-pass
+- [x] Optional deterministic pre-pass
       Before the model call, run a cheap find/replace for known path renames (e.g. `plans.md` → `papercamp/plans/`) so the AI pass only handles deeper semantic drift. Include this as part of the reconcile route, not a separate UI action.

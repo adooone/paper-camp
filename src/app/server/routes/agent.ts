@@ -1,9 +1,71 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { parseIdeas, parsePlans } from '../../../core/parser';
 import { readAllIdeaFiles, readAllPlanFiles } from '../../../core/readers';
 import type { IdeaEntry, PlanEntry } from '../../../types/index';
-import { campFile, checkBranchConflictForPlan, readMaybe } from '../helpers';
+import { campFile, checkBranchConflictForPlan, fileExists, readMaybe } from '../helpers';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
+
+/** Resolves a per-file plan's path, checking the archive subdirectory as a fallback. */
+async function resolvePlanFilePath(root: string, planId: string): Promise<string | null> {
+  const primary = join(campFile(root, 'plans'), `${planId}.md`);
+  if (await fileExists(primary)) return primary;
+  const archived = join(campFile(root, 'plans'), 'archive', `${planId}.md`);
+  if (await fileExists(archived)) return archived;
+  return null;
+}
+
+/**
+ * Known path/identifier renames from this project's own history (see progress.md),
+ * cheap enough to fix with plain substitution before spending a model call on the
+ * rest of a plan's drift.
+ */
+const KNOWN_RENAMES: ReadonlyArray<readonly [string, string]> = [
+  ['`plans.md`', '`papercamp/plans/`'],
+  ['`ideas.md`', '`papercamp/ideas/`'],
+  ['.paper-camp/', 'papercamp/'],
+  ['FocusTaskItem', 'FocusPhaseItem'],
+  ['TaskItem', 'PhaseItem'],
+  ['taskProgress', 'phaseProgress'],
+  ['taskPercentage', 'phasePercentage'],
+];
+
+/**
+ * Applies KNOWN_RENAMES line-by-line, skipping the YAML frontmatter and any
+ * checked phase line (plus its indented continuation lines) — the same
+ * guardrails the AI reconcile pass itself enforces.
+ */
+function applyKnownRenames(content: string): { content: string; changed: boolean } {
+  const frontmatterEnd = content.startsWith('---\n') ? content.indexOf('\n---', 4) + 4 : -1;
+  const frontmatter = frontmatterEnd >= 4 ? content.slice(0, frontmatterEnd) : '';
+  const rest = frontmatterEnd >= 4 ? content.slice(frontmatterEnd) : content;
+
+  const lines = rest.split('\n');
+  let changed = false;
+  let skippingCheckedPhase = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^- \[x\]/.test(line)) {
+      skippingCheckedPhase = true;
+      continue;
+    }
+    if (skippingCheckedPhase) {
+      if (line.trim() === '' || /^\s+\S/.test(line)) continue;
+      skippingCheckedPhase = false;
+    }
+    let updated = line;
+    for (const [from, to] of KNOWN_RENAMES) {
+      if (updated.includes(from)) updated = updated.split(from).join(to);
+    }
+    if (updated !== line) {
+      changed = true;
+      lines[i] = updated;
+    }
+  }
+
+  return { content: frontmatter + lines.join('\n'), changed };
+}
 
 /** Per-file plan lookup with fallback to the legacy monolithic plans.md. */
 async function findPlanById(root: string, planId: string): Promise<PlanEntry | undefined> {
@@ -117,6 +179,12 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         if (conflict) {
           sendJson(res, 409, { error: conflict });
           return;
+        }
+        const filePath = await resolvePlanFilePath(root, planId);
+        if (filePath) {
+          const raw = await readFile(filePath, 'utf-8');
+          const { content, changed } = applyKnownRenames(raw);
+          if (changed) await writeFile(filePath, content, 'utf-8');
         }
         const result = agent.startForPlan(plan, prompt, 'reconcile');
         if (!result.ok) {
