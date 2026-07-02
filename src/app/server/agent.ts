@@ -78,13 +78,17 @@ function readDefaultAgentIds(root: string): DefaultAgentsMap {
 type Result = { ok: true } | { ok: false; error: string };
 
 export function buildAgentPrompt(plan: PlanEntry, phase: PhaseItem, phaseIndex: number): string {
-  return `You're working on phase ${phaseIndex + 1} ("${phase.text}") of the plan "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/plans/${plan.id ?? '<ID>'}.md.
+  const details = phase.description ? `Phase details:\n${phase.description}\n\n` : '';
+  return `You are executing exactly one phase of the plan "${plan.title}" (${plan.id ?? 'no id'}): phase ${phaseIndex + 1}, "${phase.text}". The plan is a single file at papercamp/plans/${plan.id ?? '<ID>'}.md.
 
-${phase.description ?? ''}
+${details}Plan context: ${plan.body}
 
-Plan context: ${plan.body}
+Do only this phase — do not start any other phase, even if it looks quick.
 
-Do only this phase. When done, check it off in that file's \`### Phases\` list (- [ ] -> - [x]) and append what you did to progress.md. If this was the last unchecked phase, set the plan's \`status:\` frontmatter field to \`review\`, not \`done\`, per this repo's AGENTS.md.`;
+When the work is done:
+1. In the plan file's \`### Phases\` list, change this phase's checkbox from \`- [ ]\` to \`- [x]\`. Do not change any other line.
+2. Add one bullet describing what you did under today's \`## YYYY-MM-DD\` heading at the top of progress.md (create the heading at the top if today's is not there yet — newest day stays first).
+3. If every phase in the list is now checked, set the plan's \`status:\` frontmatter field to \`review\` — never \`done\`; per this repo's AGENTS.md a human promotes plans to done.`;
 }
 
 export function createAgentManager(
@@ -553,6 +557,14 @@ export function createAgentManager(
           const timeoutHandle = setTimeout(() => {
             timedOut = true;
             if (!proc.killed) proc.kill('SIGTERM');
+            // SIGTERM can be ignored; without escalation `await procDone` never
+            // resolves and this run-all task blocks the agent slot forever — same
+            // reasoning as the escalation in stop().
+            setTimeout(() => {
+              if (proc.exitCode === null && proc.signalCode === null) {
+                proc.kill('SIGKILL');
+              }
+            }, 5000);
           }, PHASE_TIMEOUT_MS);
           const exitedOk = await procDone;
           clearTimeout(timeoutHandle);

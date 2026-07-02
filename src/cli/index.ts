@@ -156,7 +156,9 @@ program
       console.log(`Paper Camp dashboard running at http://localhost:${port}`);
     } catch (error) {
       console.error((error as Error).message);
-      process.exitCode = 1;
+      // Hard-exit: the API middleware's fs watchers are already running by the time
+      // listen fails, and they keep the event loop alive forever with exitCode alone.
+      process.exit(1);
     }
   });
 

@@ -60,7 +60,10 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
 
   function runGit(args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
-      const proc = spawn('git', args, {
+      // quotepath=off keeps non-ASCII paths (e.g. Cyrillic filenames) as raw UTF-8 in
+      // porcelain output instead of octal-escaped quoted strings the parser would
+      // pass through garbled, breaking every downstream pathspec.
+      const proc = spawn('git', ['-c', 'core.quotepath=off', ...args], {
         cwd: root,
         stdio: ['ignore', 'pipe', 'pipe'],
       });
@@ -88,9 +91,15 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   async function commit(files: string[], title: string, message?: string): Promise<void> {
+    let renameSources = new Map<string, string>();
     if (files.length > 0) {
       const statusEntries = await runGitStatus();
       const statusByPath = new Map(statusEntries.map((e) => [e.path, e.status]));
+      renameSources = new Map(
+        statusEntries
+          .filter((e): e is GitStatusEntry & { renameSource: string } => !!e.renameSource)
+          .map((e) => [e.path, e.renameSource]),
+      );
       // Files already fully staged (no pending worktree change) have nothing left for
       // `git add` to match — passing them anyway makes git fail with "did not match any files".
       const toAdd = files.filter((f) => {
@@ -107,7 +116,14 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     // paths aren't swept in; an empty selection falls through to "commit
     // whatever's staged", which is the intended behavior for that case.
     if (files.length > 0) {
-      args.push('--', ...files.map(toLiteralPathspec));
+      // A staged rename spans two paths. Restricting the commit to the new path alone
+      // records the add but leaves the old path's staged deletion behind — HEAD ends
+      // up with both files. Include the rename source so the deletion lands too.
+      const pathspecs = files.flatMap((f) => {
+        const source = renameSources.get(f);
+        return source ? [f, source] : [f];
+      });
+      args.push('--', ...pathspecs.map(toLiteralPathspec));
     }
     await runGit(args);
   }

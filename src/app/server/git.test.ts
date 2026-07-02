@@ -362,6 +362,30 @@ describe('commit', () => {
     expect(git(root, 'log', '-1', '--format=%B')).toContain('body paragraph');
   });
 
+  it('commits a staged rename including the old path, not as a copy', async () => {
+    // A pathspec-limited commit of only the new path records the add but leaves the
+    // old path's staged deletion behind — HEAD keeps both files (rename becomes copy).
+    const root = await initRepo();
+    await commitFile(root, 'old-name.txt', 'content\n', 'add file');
+    git(root, 'mv', 'old-name.txt', 'new-name.txt');
+    const manager = gitManager(root);
+    await manager.commit(['new-name.txt'], 'rename the file');
+    expect(await manager.getStatus()).toEqual([]);
+    const headFiles = git(root, 'ls-tree', '--name-only', 'HEAD');
+    expect(headFiles).toContain('new-name.txt');
+    expect(headFiles).not.toContain('old-name.txt');
+  });
+
+  it('handles non-ASCII filenames without octal quoting', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'файл.md'), 'вміст\n');
+    const manager = gitManager(root);
+    const entries = await manager.getStatus();
+    expect(entries).toContainEqual(expect.objectContaining({ path: 'файл.md', status: '??' }));
+    await manager.commit(['файл.md'], 'add cyrillic file');
+    expect(await manager.getStatus()).toEqual([]);
+  });
+
   it('treats selected paths literally instead of as glob pathspecs', async () => {
     const root = await initRepo();
     await commitFile(root, 'a*.txt', 'glob1\n', 'add glob-named file');

@@ -97,7 +97,8 @@ describe('buildAgentPrompt', () => {
 
   it('names the phase 1-based, the plan id, and the per-plan file path', () => {
     const prompt = buildAgentPrompt(plan, plan.phases[1], 1);
-    expect(prompt).toContain('phase 2 ("Second phase")');
+    expect(prompt).toContain('phase 2');
+    expect(prompt).toContain('"Second phase"');
     expect(prompt).toContain('FEAT-1');
     expect(prompt).toContain('papercamp/plans/FEAT-1.md');
     expect(prompt).toContain('Plan body.');

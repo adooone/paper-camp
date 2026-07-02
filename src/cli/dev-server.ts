@@ -1,6 +1,6 @@
 import { readFile, stat } from 'node:fs/promises';
 import { type IncomingMessage, type ServerResponse, createServer } from 'node:http';
-import { dirname, extname, join } from 'node:path';
+import { dirname, extname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApiMiddleware } from '../app/server/api';
 
@@ -47,9 +47,14 @@ export async function startDevServer({ root, port }: DevServerOptions): Promise<
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
     const filePath = join(staticDir, pathname === '/' ? 'index.html' : pathname);
 
+    // join() normalizes `..`, so a crafted path like /../../.env would resolve
+    // outside the asset directory and serve arbitrary files (the server binds all
+    // interfaces). Anything that escapes staticDir gets the SPA fallback instead.
+    const escapesStaticDir = filePath !== staticDir && !filePath.startsWith(staticDir + sep);
+
     try {
-      const fileStat = await stat(filePath);
-      if (fileStat.isFile()) {
+      const fileStat = escapesStaticDir ? null : await stat(filePath);
+      if (fileStat?.isFile()) {
         res.statusCode = 200;
         res.setHeader('Content-Type', MIME[extname(filePath)] ?? 'application/octet-stream');
         res.end(await readFile(filePath));
@@ -80,5 +85,10 @@ export async function startDevServer({ root, port }: DevServerOptions): Promise<
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 
-  await new Promise<void>((resolve) => server.listen(port, resolve));
+  // Reject on listen errors (EADDRINUSE etc.) — with only the success callback,
+  // a taken port left this promise pending forever and the CLI hanging silently.
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, resolve);
+  });
 }

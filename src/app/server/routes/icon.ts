@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
@@ -57,6 +57,14 @@ export function iconRoutes({ root }: RouteContext): Route[] {
         const buffer = Buffer.from(match[2], 'base64');
         const assetsDir = join(root, 'papercamp', 'assets');
         await mkdir(assetsDir, { recursive: true });
+        // Remove any previously uploaded icon with a different extension — GET serves
+        // the first extension it finds, so a stale icon.svg would permanently shadow
+        // a newly uploaded icon.png.
+        await Promise.all(
+          Object.keys(MIME_BY_EXT)
+            .filter((e) => e !== ext)
+            .map((e) => unlink(join(assetsDir, `icon.${e}`)).catch(() => {})),
+        );
         await writeFile(join(assetsDir, `icon.${ext}`), buffer);
         sendJson(res, 200, { ok: true });
       },

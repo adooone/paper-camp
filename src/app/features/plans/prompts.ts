@@ -1,5 +1,11 @@
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 
+// Wording notes for these prompts: all of them except buildClarifyPrompt run
+// headless (`claude -p` / `opencode run` — see server/agents/), so they must never
+// ask questions or wait for input, and each one's "done" condition is checked
+// mechanically by agent.ts's didTaskProgress. buildClarifyPrompt is the exception:
+// it is copied to the clipboard for the user to paste into an interactive session.
+
 export function buildConvergenceAuditPrompt(plan: PlanEntry): string {
   const phaseList = plan.phases
     .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
@@ -15,54 +21,71 @@ export function buildConvergenceAuditPrompt(plan: PlanEntry): string {
       ? plan.clarifications.map((entry) => `- ${entry.date}: ${entry.text}`).join('\n')
       : '(none)';
 
-  return `You're auditing the plan "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/plans/${plan.id ?? '<ID>'}.md (or papercamp/plans/archive/${plan.id ?? '<ID>'}.md if it's already done/dropped — check both). Edit only that file.
+  return `You are auditing the plan "${plan.title}" (${plan.id ?? 'no id'}) for missing phases. The plan is a single file at papercamp/plans/${plan.id ?? '<ID>'}.md — if it is not there, it is archived at papercamp/plans/archive/${plan.id ?? '<ID>'}.md. Edit only that file.
 
 Plan body: ${plan.body}
 
 Current phases:
 ${phaseList}
 
-Log entries (issues, bugs, and review notes documented so far):
+Log entries (issues, bugs, and review notes recorded so far):
 ${logList}
 
-Clarifications (answered questions about scope and design):
+Clarifications (answered scope/design questions):
 ${clarificationsList}
 
-Read this plan's phases, body, Log entries, and Clarifications, then inspect the current repo state. The Log entries often document bugs, UX issues, or missing functionality that should be turned into new phases. Append any phase that's clearly required but missing as a normal \`- [ ]\` line at the end of the \`### Phases\` list — optionally with the existing indented description format. Explicitly never touch existing lines: never reorder, check, uncheck, or rewrite anything already there, no matter how stale or redundant it looks.
+Task:
+1. Read the plan above, then inspect the relevant code in this repo.
+2. Identify work that is clearly required to fulfil this plan but is covered by no existing phase. The Log entries are the best source — they often record bugs or gaps that were never turned into phases.
+3. If you found missing work: append one \`- [ ] <short phase title>\` line per item at the end of the \`### Phases\` list. You may add detail below a checkbox line as continuation lines indented with 6 spaces. Then append exactly one line to the \`### Log\` section, formatted \`- YYYY-MM-DD: <what was found and appended>\`, creating that section after the Phases list if it does not exist.
+4. If nothing is missing: make no edits at all — no Log line, no empty heading, no "nothing found" note. This audit re-runs regularly and must leave no trace when there is nothing to add.
 
-If you append anything, finish with exactly one new \`### Log\` line (date: summary) describing what was found and appended.
-
-If nothing is missing, write nothing at all — not even an empty heading or a Log line. The audit must be safe to re-run anytime without producing log spam.`;
+Rules:
+- Never modify, reorder, check, uncheck, or delete any existing line, even if it looks stale, wrong, or redundant.
+- Never touch the YAML frontmatter.
+- Append only: new unchecked phases at the end of the list, plus the single Log line.`;
 }
 
 export function buildIdeaExtendPrompt(idea: IdeaEntry): string {
-  return `You're extending an idea stored as a single file at papercamp/ideas/${idea.id ?? '<ID>'}.md: ${idea.id ?? 'no id'} ("${idea.title}").
+  return `You are expanding the idea ${idea.id ?? 'no id'} ("${idea.title}"), stored as a single file at papercamp/ideas/${idea.id ?? '<ID>'}.md. Edit only that file.
 
-Idea body, in full:
+Current idea body, in full:
 ${idea.body}
 
-Your job: explore the current codebase and rewrite this idea's body in place in that file with more specific detail — concrete approaches, file references, and any relevant architectural context you find in the code. Leave the YAML frontmatter (id, title) and the idea's \`### ${idea.id ?? 'IDEA-N'}: ${idea.title}\` heading unchanged; only update the prose body below the heading.
+Task:
+1. Explore this codebase and find what is relevant to the idea: the files it would touch, existing helpers or patterns it should build on, and constraints visible in the code.
+2. Rewrite the idea's prose body in that file so it is concrete and actionable: name specific files and symbols, describe a workable approach, and include the architectural context you found. Keep the idea's original intent — sharpen it, do not redirect it.
 
-Write the full updated body — everything below the heading. Make the description more specific and actionable while keeping the same general intent. Do not change the \`## IDEA-N:\` heading line.`;
+Keep unchanged:
+- the YAML frontmatter (id, title)
+- the \`## ${idea.id ?? 'IDEA-N'}: ${idea.title}\` heading line
+
+Replace everything below that heading with the improved body.`;
 }
 
 export function buildClarifyPrompt(plan: PlanEntry): string {
-  return `You're clarifying the plan "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/plans/${plan.id ?? '<ID>'}.md (or papercamp/plans/archive/${plan.id ?? '<ID>'}.md if done/dropped). Edit only that file.
+  return `You are clarifying the plan "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/plans/${plan.id ?? '<ID>'}.md (or papercamp/plans/archive/${plan.id ?? '<ID>'}.md if archived). Edit only that file, and within it only the \`### Clarifications\` section.
 
 Plan body: ${plan.body}
 
 Current phases:
 ${plan.phases.length > 0 ? plan.phases.map((p, i) => `${i + 1}. [${p.done ? 'x' : ' '}] ${p.text}`).join('\n') : '(none yet)'}
 
-Scan this plan against: functional scope, data model, UX flow, non-functional attributes, edge cases, terminology, completion signals.
+Task: surface the plan's most important unanswered questions and get them answered by the user, one at a time.
 
-Surface at most 5 highest-impact gaps, one question at a time, each with a **Recommended:** answer. Write accepted answers to \`### Clarifications\` as:
+1. Check the plan for gaps in: functional scope, data model, UX flow, non-functional requirements, edge cases, terminology, and completion criteria.
+2. Pick the gaps that would most change the implementation — at most 5. If the plan has no meaningful gaps, say so and stop; do not invent questions.
+3. Ask the user one question at a time. With each question, propose an answer marked **Recommended:** so the user can accept it with a single word. Wait for the user's reply before asking the next question.
+4. After each answered question, append one line to the plan file's \`### Clarifications\` section, creating the section between the body and \`### Phases\` if it does not exist:
 
 \`\`\`
-- YYYY-MM-DD: Q: <question> → A: <answer>
+- YYYY-MM-DD: Q: <question> → A: <the user's answer>
 \`\`\`
 
-Only append answered lines. Keep existing clarifications intact. Use today's date.`;
+Rules:
+- Record only answers the user actually gave (accepting your recommendation counts).
+- Append only — never rewrite or delete existing Clarifications lines.
+- Use today's date.`;
 }
 
 export function buildPlanDraftPrompt(idea: IdeaEntry, otherPlans: PlanEntry[]): string {
@@ -80,14 +103,14 @@ ${phaseList || '  (no phases yet)'}`;
         .join('\n\n')
     : '(no other open plans exist yet)';
 
-  return `You're drafting a new plan from an idea: ${idea.id ?? 'no id'} ("${idea.title}"), stored at papercamp/ideas/${idea.id ?? '<ID>'}.md.
+  return `You are drafting a new plan from an idea: ${idea.id ?? 'no id'} ("${idea.title}"), stored at papercamp/ideas/${idea.id ?? '<ID>'}.md.
 
 Idea body, in full:
 ${idea.body}
 
 ## Plan file shape (see papercamp/about.md)
 
-Each plan is its own file at \`papercamp/plans/<KIND>-<N>.md\` (the file name is the plan's id). It has YAML frontmatter, a free-prose body paragraph, then an optional \`### Phases\` checklist:
+Each plan is its own file at \`papercamp/plans/<KIND>-<N>.md\` (the file name is the plan's id). It has YAML frontmatter, a free-prose body, then a \`### Phases\` checklist:
 
 \`\`\`
 ---
@@ -98,48 +121,36 @@ status: idea
 created: <today, YYYY-MM-DD>
 idea: ${idea.id ?? 'IDEA-N'}
 tags:
-  - comma
-  - separated
+  - app
+  - agent
 ---
 
 One or two paragraphs of free prose giving context — what this is and why,
-in the same voice as the existing plan files.
+in the same voice as the plans shown below.
 
 ### Phases
 - [ ] Short phase title
-      Optional indented long-form description of the phase.
+      Optional description of the phase, indented with 6 spaces.
 \`\`\`
 
-- \`title\` is a short verb-led headline, 2-6 words.
-- \`kind\` picks the ID prefix — choose whichever Conventional Commits type
-  best fits this idea (most are \`feat\`).
-- \`id\` must come from the persistent per-kind counter in
-  \`papercamp/config.json\`'s \`nextId\` field — read the current value for
-  your chosen \`kind\` (e.g. \`nextId.feat\`), use it as \`<KIND>-<N>\`, and
-  increment that counter in the same write. Never derive the number by
-  scanning existing plan files for the highest one — a deleted plan's number
-  must never be reused.
-- \`idea\` must be exactly \`${idea.id ?? "this idea's id"}\` — that backlink is
-  what the rest of the dashboard (and this task's own success check) uses to
-  find the plan you wrote.
-- Write \`status: idea\`, never anything further along. Per
-  papercamp/decisions.md ("Plan-drafting agent writes directly, same as
-  phase execution"), this entry lands straight in the Backlog with no
-  separate approval step — a human reviews and promotes it from there, the
-  same as any other backlog entry.
-- Phases should be genuinely actionable steps a future agent or human could
-  pick up one at a time — match the granularity of the existing phases shown
-  below, not a single giant phase.
+Field rules:
+- \`title\`: a short verb-led headline, 2-6 words.
+- \`kind\`: the Conventional Commits type that best fits this idea (most are \`feat\`). It determines the ID prefix.
+- \`id\`: read \`nextId.<kind>\` from \`papercamp/config.json\` (e.g. \`nextId.feat\`), use that number as \`<KIND>-<N>\`, and write the incremented counter back to config.json. Never derive the number by scanning existing plan files for the highest one — a deleted plan's number must never be reused.
+- \`idea\`: exactly \`${idea.id ?? "this idea's id"}\`. This backlink is how the dashboard (and this task's own success check) finds the plan you wrote — without it the draft counts as failed.
+- \`status\`: exactly \`idea\`, never anything further along. Drafts land in the Backlog and a human promotes them from there (per papercamp/decisions.md, "Plan-drafting agent writes directly, same as phase execution").
+- \`tags\`: 1-4 short subsystem tags that fit the idea (the example values above are placeholders).
+- Phases: actionable steps a future agent or human could pick up one at a time — match the granularity of the phases in the plans shown below, not one giant phase.
 
 ## Every other open (non-done) plan, for scope context
 
 ${plansContext}
 
-## What to write
+## What to do
 
-Create exactly one new file, \`papercamp/plans/<KIND>-<N>.md\`, using the id
-you allocated above. Use the list of existing plans only to avoid
-duplicating an in-flight plan's scope and to match phase granularity —
-never create, edit, move, or rename any other plan file, and never write to
-the legacy \`papercamp/plans.md\` (it is unused under per-file storage).`;
+1. Read \`papercamp/config.json\` and take the current \`nextId.<kind>\` value for your chosen kind.
+2. Create exactly one new file, \`papercamp/plans/<KIND>-<N>.md\`, in the shape above.
+3. Write the incremented counter back to \`papercamp/config.json\`.
+
+Use the open plans above only to avoid duplicating an in-flight plan's scope and to match phase granularity. Never create, edit, move, or rename any other plan file, and never write to the legacy monolithic file \`papercamp/plans.md\` — it is unused under per-file storage.`;
 }
