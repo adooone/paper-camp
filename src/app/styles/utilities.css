@@ -30,6 +30,19 @@
 }
 
 /*
+ * paper-ui's Layout header is `justify-content: space-between` with a left slot
+ * that only takes a string `title` — all arbitrary content goes into the
+ * right-aligned `headerActions` div. Letting that slot grow to fill the row is
+ * what allows the identity to sit left and the nav right (a `flex-1` spacer
+ * between them does the separation). The attribute selector matches the hashed
+ * CSS-module class by its stable name part.
+ */
+header > div[class*="headerActions"] {
+  flex: 1;
+  min-width: 0;
+}
+
+/*
  * paper-ui's Button renders its colored fill as an SVG <path> layered behind the
  * label, not a CSS background — so a bright color means recoloring that path
  * directly. !important is needed because paper-ui's own hover/active rules

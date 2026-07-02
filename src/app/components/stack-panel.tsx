@@ -401,7 +401,9 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
               right: 0,
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 100,
+              // Above the Layout header (z-200): the panel sits outside the main
+              // layout, so nothing from it may paint on top of the stack.
+              zIndex: 300,
               borderRadius: '6px 0 0 6px',
               background: deskBg,
               backgroundImage: `${CHALKBOARD_TEXTURE}, linear-gradient(135deg, ${deskLight} 0%, ${deskBg} 60%)`,
@@ -464,7 +466,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
         }}
         style={{
           position: 'fixed',
-          top: layout.headerHeight,
+          top: 0,
           right: 0,
           bottom: 0,
           width: layout.stackPanelWidth,
@@ -477,7 +479,8 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          zIndex: 100,
+          // Above the Layout header (z-200) — the panel owns the full right edge.
+          zIndex: 300,
         }}
       >
         <div
