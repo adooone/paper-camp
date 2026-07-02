@@ -10,6 +10,11 @@ import { createGitManager } from './git';
 // the git binary, and the bugs this file guards against (a fresh feature branch
 // reported as stale) live in how real git answers `branch --merged` / `rev-list`,
 // not in anything a mock would exercise.
+//
+// Managers are created with watching disabled: the recursive fs watchers live for
+// the whole process, and Node's recursive-watch fallback crashes with an uncatchable
+// ENOENT when afterAll deletes the temp repos out from under them.
+const gitManager = (root: string) => createGitManager(root, { watch: false });
 
 const roots: string[] = [];
 
@@ -70,7 +75,7 @@ describe('getBranchHygieneStatus', () => {
     // so without the behind-count guard a just-created branch looked "stale-merged".
     const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-1-new-work');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('fine');
   });
 
@@ -78,7 +83,7 @@ describe('getBranchHygieneStatus', () => {
     const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-1-new-work');
     await writeFile(join(root, 'wip.txt'), 'work in progress\n');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('dirty');
   });
 
@@ -86,7 +91,7 @@ describe('getBranchHygieneStatus', () => {
     const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-2-active');
     await commitFile(root, 'feature.txt', 'new feature\n', 'add feature');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('fine');
   });
 
@@ -97,7 +102,7 @@ describe('getBranchHygieneStatus', () => {
     git(root, 'checkout', 'main');
     git(root, 'merge', '--no-ff', '-m', 'merge feature', 'feat/feat-3-done');
     git(root, 'checkout', 'feat/feat-3-done');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
   });
 
@@ -109,7 +114,7 @@ describe('getBranchHygieneStatus', () => {
     git(root, 'merge', '--ff-only', 'feat/feat-4-done');
     await commitFile(root, 'later.txt', 'later\n', 'later work on main');
     git(root, 'checkout', 'feat/feat-4-done');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
   });
 
@@ -121,26 +126,26 @@ describe('getBranchHygieneStatus', () => {
     git(root, 'merge', '--no-ff', '-m', 'merge feature', 'feat/feat-5-done');
     git(root, 'checkout', 'feat/feat-5-done');
     await writeFile(join(root, 'stray.txt'), 'stray\n');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
   });
 
   it('reports clean-on-main on a clean main checkout', async () => {
     const root = await initRepo();
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('clean-on-main');
   });
 
   it('reports dirty on main with uncommitted changes', async () => {
     const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'changed\n');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('dirty');
   });
 
   it('treats master like main', async () => {
     const root = await initRepo('master');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('clean-on-main');
   });
 });
@@ -148,7 +153,7 @@ describe('getBranchHygieneStatus', () => {
 describe('isMergedIntoMain', () => {
   it('returns false on main itself', async () => {
     const root = await initRepo();
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.isMergedIntoMain()).toBe(false);
   });
 
@@ -157,7 +162,7 @@ describe('isMergedIntoMain', () => {
     // a zero-commit branch "merged" the moment it is created.
     const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-1-fresh');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.isMergedIntoMain()).toBe(true);
   });
 
@@ -165,7 +170,7 @@ describe('isMergedIntoMain', () => {
     const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-2-active');
     await commitFile(root, 'feature.txt', 'new\n', 'add feature');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.isMergedIntoMain()).toBe(false);
   });
 });
@@ -174,7 +179,7 @@ describe('getAheadCount', () => {
   it('counts commits past the upstream when one is configured', async () => {
     const root = await initRepo();
     await addOrigin(root);
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getAheadCount()).toBe(0);
     await commitFile(root, 'a.txt', 'a\n', 'local commit');
     expect(await manager.getAheadCount()).toBe(1);
@@ -185,7 +190,7 @@ describe('getAheadCount', () => {
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-1-unpushed');
     await commitFile(root, 'a.txt', 'a\n', 'branch commit');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     // Only the one new commit counts — history already on origin/main does not.
     expect(await manager.getAheadCount()).toBe(1);
   });
@@ -193,7 +198,7 @@ describe('getAheadCount', () => {
   it('counts every local commit when the repo has no remotes at all', async () => {
     const root = await initRepo();
     await commitFile(root, 'a.txt', 'a\n', 'second commit');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.getAheadCount()).toBe(2);
   });
 });
@@ -201,7 +206,7 @@ describe('getAheadCount', () => {
 describe('ensureBranch', () => {
   it('creates and checks out a kind/id-title branch, slugging the title', async () => {
     const root = await initRepo();
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     manager.ensureBranch(plan({ kind: 'feat', id: 'FEAT-42', title: 'Add User Auth!' }));
     expect(manager.getCurrentBranch()).toBe('feat/feat-42-add-user-auth');
   });
@@ -211,7 +216,7 @@ describe('ensureBranch', () => {
     const mainSha = git(root, 'rev-parse', 'HEAD');
     git(root, 'checkout', '-b', 'other-branch');
     await commitFile(root, 'other.txt', 'other\n', 'other work');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     manager.ensureBranch(plan({ kind: 'fix', id: 'FIX-1', title: 'Small fix' }));
     expect(manager.getCurrentBranch()).toBe('fix/fix-1-small-fix');
     expect(git(root, 'rev-parse', 'HEAD')).toBe(mainSha);
@@ -221,7 +226,7 @@ describe('ensureBranch', () => {
     const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-42-add-user-auth');
     const shaBefore = git(root, 'rev-parse', 'HEAD');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     manager.ensureBranch(plan({ kind: 'feat', id: 'FEAT-42', title: 'Add User Auth!' }));
     expect(manager.getCurrentBranch()).toBe('feat/feat-42-add-user-auth');
     expect(git(root, 'rev-parse', 'HEAD')).toBe(shaBefore);
@@ -233,7 +238,7 @@ describe('ensureBranch', () => {
     await commitFile(root, 'work.txt', 'work\n', 'branch work');
     const branchSha = git(root, 'rev-parse', 'HEAD');
     git(root, 'checkout', 'main');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     manager.ensureBranch(plan({ kind: 'feat', id: 'FEAT-7', title: 'Existing work' }));
     expect(manager.getCurrentBranch()).toBe('feat/feat-7-existing-work');
     // Prior work on the branch is kept — not reset to main.
@@ -242,7 +247,7 @@ describe('ensureBranch', () => {
 
   it('does nothing when the plan has no kind or id', async () => {
     const root = await initRepo();
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     manager.ensureBranch(plan({ title: 'No id yet' }));
     expect(manager.getCurrentBranch()).toBe('main');
   });
@@ -252,13 +257,13 @@ describe('getFeatureBranchPlanId', () => {
   it('extracts the plan id from a kind/id-title branch', async () => {
     const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-30-run-all-phases');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(manager.getFeatureBranchPlanId()).toBe('FEAT-30');
   });
 
   it('returns null on main and on branches without the pattern', async () => {
     const root = await initRepo();
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(manager.getFeatureBranchPlanId()).toBeNull();
     git(root, 'checkout', '-b', 'random-branch');
     expect(manager.getFeatureBranchPlanId()).toBeNull();
@@ -273,7 +278,7 @@ describe('getStatus', () => {
     await commitFile(root, 'staged.txt', 'v1\n', 'add staged.txt');
     await writeFile(join(root, 'staged.txt'), 'v2\n');
     git(root, 'add', '--', 'staged.txt');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     const entries = await manager.getStatus();
     expect(entries).toContainEqual(
       expect.objectContaining({ path: 'untracked.txt', status: '??', staged: false }),
@@ -290,7 +295,7 @@ describe('getStatus', () => {
     const root = await initRepo();
     await commitFile(root, 'old-name.txt', 'content\n', 'add file');
     git(root, 'mv', 'old-name.txt', 'new-name.txt');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     const entries = await manager.getStatus();
     expect(entries).toContainEqual(
       expect.objectContaining({
@@ -310,7 +315,7 @@ describe('commit', () => {
     await commitFile(root, 'b.txt', 'b1\n', 'add b');
     await writeFile(join(root, 'a.txt'), 'a2\n');
     await writeFile(join(root, 'b.txt'), 'b2\n');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     await manager.commit(['a.txt'], 'change a only');
     const committed = git(root, 'show', '--name-only', '--format=', 'HEAD');
     expect(committed).toContain('a.txt');
@@ -322,7 +327,7 @@ describe('commit', () => {
   it('stages and commits an untracked file', async () => {
     const root = await initRepo();
     await writeFile(join(root, 'new.txt'), 'new\n');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     await manager.commit(['new.txt'], 'add new file');
     expect(git(root, 'show', '--name-only', '--format=', 'HEAD')).toContain('new.txt');
     expect(await manager.getStatus()).toEqual([]);
@@ -334,7 +339,7 @@ describe('commit', () => {
     const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'staged change\n');
     git(root, 'add', '--', 'README.md');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     await manager.commit(['README.md'], 'commit staged change');
     expect(await manager.getStatus()).toEqual([]);
   });
@@ -343,7 +348,7 @@ describe('commit', () => {
     const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'staged change\n');
     git(root, 'add', '--', 'README.md');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     await manager.commit([], 'commit staged');
     expect(git(root, 'log', '-1', '--format=%s')).toBe('commit staged');
     expect(await manager.getStatus()).toEqual([]);
@@ -352,7 +357,7 @@ describe('commit', () => {
   it('includes the body as a second -m paragraph', async () => {
     const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'change\n');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     await manager.commit(['README.md'], 'title line', 'body paragraph');
     expect(git(root, 'log', '-1', '--format=%B')).toContain('body paragraph');
   });
@@ -363,7 +368,7 @@ describe('commit', () => {
     await commitFile(root, 'ab.txt', 'ab1\n', 'add ab');
     await writeFile(join(root, 'a*.txt'), 'glob2\n');
     await writeFile(join(root, 'ab.txt'), 'ab2\n');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     await manager.commit(['a*.txt'], 'change glob-named file only');
     // Without :(literal), the `a*.txt` pathspec would also sweep in ab.txt.
     const entries = await manager.getStatus();
@@ -375,14 +380,14 @@ describe('commit', () => {
 describe('diff', () => {
   it('returns an empty string for an empty selection', async () => {
     const root = await initRepo();
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.diff([])).toBe('');
   });
 
   it('includes tracked modifications as a unified diff', async () => {
     const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'changed\n');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     const output = await manager.diff(['README.md']);
     expect(output).toContain('-hello');
     expect(output).toContain('+changed');
@@ -391,7 +396,7 @@ describe('diff', () => {
   it('includes untracked file content as a new-file block', async () => {
     const root = await initRepo();
     await writeFile(join(root, 'brand-new.txt'), 'fresh content\n');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     const output = await manager.diff(['brand-new.txt']);
     expect(output).toContain('+++ b/brand-new.txt');
     expect(output).toContain('(new file)');
@@ -401,7 +406,7 @@ describe('diff', () => {
   it('refuses to diff sensitive files', async () => {
     const root = await initRepo();
     await writeFile(join(root, '.env'), 'SECRET=1\n');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     await expect(manager.diff(['.env'])).rejects.toThrow(/sensitive/);
     await expect(manager.diff(['config/.env.production'])).rejects.toThrow(/sensitive/);
     await expect(manager.diff(['certs/server.pem'])).rejects.toThrow(/sensitive/);
@@ -411,14 +416,14 @@ describe('diff', () => {
     const root = await initRepo();
     await commitFile(root, '.env', 'SECRET=1\n', 'add env');
     git(root, 'mv', '.env', 'settings.txt');
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     expect(await manager.diff(['settings.txt'])).toBe('');
   });
 
   it('omits symlink content instead of following the target', async () => {
     const root = await initRepo();
     await symlink('/etc/hostname', join(root, 'sneaky-link'));
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     const output = await manager.diff(['sneaky-link']);
     expect(output).toContain('(new file omitted: symlink)');
   });
@@ -426,7 +431,7 @@ describe('diff', () => {
   it('omits untracked files larger than the size cap', async () => {
     const root = await initRepo();
     await writeFile(join(root, 'big.txt'), 'x'.repeat(500));
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     const output = await manager.diff(['big.txt'], 200);
     expect(output).toContain('(new file omitted: exceeds diff size cap)');
   });
@@ -434,7 +439,7 @@ describe('diff', () => {
   it('truncates combined output past the size cap', async () => {
     const root = await initRepo();
     await writeFile(join(root, 'README.md'), `${'y'.repeat(500)}\n`);
-    const manager = createGitManager(root);
+    const manager = gitManager(root);
     const output = await manager.diff(['README.md'], 100);
     expect(output).toContain('... (truncated)');
     expect(output.length).toBeLessThan(200);

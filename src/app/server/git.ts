@@ -14,7 +14,18 @@ const toLiteralPathspec = (file: string) => `:(literal)${file}`;
 
 export type GitManager = ReturnType<typeof createGitManager>;
 
-export function createGitManager(root: string) {
+export interface GitManagerOptions {
+  /**
+   * Start the recursive fs watchers on `.git/` and `src/` that push live status
+   * ticks to SSE subscribers. Defaults to true; tests disable it because Node's
+   * recursive-watch fallback crashes uncatchably when a watched tree is deleted
+   * (e.g. a temp repo being cleaned up), and the watchers live for the process
+   * lifetime with no close handle.
+   */
+  watch?: boolean;
+}
+
+export function createGitManager(root: string, options: GitManagerOptions = {}) {
   const clients = new Set<ServerResponse>();
 
   function broadcast(event: { message: string; timestamp: string }) {
@@ -148,28 +159,30 @@ export function createGitManager(root: string) {
     }
   }
 
-  const gitDir = join(root, '.git');
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  try {
-    watch(gitDir, { recursive: true }, (eventType, filename) => {
-      if (filename === 'index') {
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(refresh, 500);
-      }
-    });
-  } catch {
-    // watcher not available
-  }
+  if (options.watch !== false) {
+    const gitDir = join(root, '.git');
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    try {
+      watch(gitDir, { recursive: true }, (eventType, filename) => {
+        if (filename === 'index') {
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(refresh, 500);
+        }
+      });
+    } catch {
+      // watcher not available
+    }
 
-  const srcDir = join(root, 'src');
-  let srcTimer: ReturnType<typeof setTimeout> | null = null;
-  try {
-    watch(srcDir, { recursive: true }, () => {
-      if (srcTimer) clearTimeout(srcTimer);
-      srcTimer = setTimeout(refresh, 500);
-    });
-  } catch {
-    // src/ doesn't exist or watcher not available
+    const srcDir = join(root, 'src');
+    let srcTimer: ReturnType<typeof setTimeout> | null = null;
+    try {
+      watch(srcDir, { recursive: true }, () => {
+        if (srcTimer) clearTimeout(srcTimer);
+        srcTimer = setTimeout(refresh, 500);
+      });
+    } catch {
+      // src/ doesn't exist or watcher not available
+    }
   }
 
   async function hasUpstream(): Promise<boolean> {
