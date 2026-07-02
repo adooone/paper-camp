@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0](https://github.com/adooone/paper-camp/compare/v0.4.0...v0.5.0) (2026-07-02)
+
+
+### Features
+
+* **app:** Add accessibility and stability fixes across layout components ([7949962](https://github.com/adooone/paper-camp/commit/7949962ddea7b5a72918ac1ac561b7ecf04b3bf2))
+* **app:** Add responsive breakpoints to the root layout ([fd97128](https://github.com/adooone/paper-camp/commit/fd97128937d61f50db64d524e03efe69d9119b1d))
+* **app:** Default the Stack panel to closed and persist the choice ([0ea24cc](https://github.com/adooone/paper-camp/commit/0ea24ccc3ed28f45d963706da84a518ae0a4e8ce))
+* **app:** Give the Stack panel the full right edge ([ae5b1b7](https://github.com/adooone/paper-camp/commit/ae5b1b7399c10b42925dcff7b0f9d3cb007c9bf9))
+* **app:** Move global navigation into a Layout header and remove the nav island ([2183441](https://github.com/adooone/paper-camp/commit/2183441a0a76386103b481d2ff8b92f5314403bd))
+* **app:** Redesign the Stack panel Commit section with a bounded scroll region ([5266803](https://github.com/adooone/paper-camp/commit/5266803d0e2c3feebdf32f0c3222d2623b199aee))
+* **app:** Remove island clearance hacks ([3b5ee8a](https://github.com/adooone/paper-camp/commit/3b5ee8a36c54ac1234f278ad3a5c5fdad7af9124))
+* **app:** Simplify the Agent card to a title and one status line ([fd06b09](https://github.com/adooone/paper-camp/commit/fd06b09551305cf1d41faa6fee1b6f313364985a))
+* **app:** updates ([00123ea](https://github.com/adooone/paper-camp/commit/00123ea216569f2943c5deb7dd566f93ac96fa84))
+* **app:** Visual verification pass across viewport widths ([0193e91](https://github.com/adooone/paper-camp/commit/0193e9110c26f0b4c5b187ffc4bca5cd92a915fb))
+
 ## [0.4.0](https://github.com/adooone/paper-camp/compare/v0.3.0...v0.4.0) (2026-07-02)
 
 
