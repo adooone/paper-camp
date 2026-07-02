@@ -31,6 +31,7 @@ export const deletePlan = async (title: string): Promise<void> => {
 export const updatePlan = async (
   title: string,
   updates: {
+    body?: string;
     phases?: PhaseItem[];
     status?: PlanStatus;
     log?: LogEntry[];

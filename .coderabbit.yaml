@@ -43,11 +43,12 @@ reviews:
       instructions: |
         Configuration file for CodeRabbit itself — do not suggest changes.
   auto_review:
-    # Disabled on purpose: reviews are triggered after CI passes by
-    # .github/workflows/review.yml (paper-scout comments
-    # "@coderabbitai review" on the green PR) instead of on every push.
-    enabled: false
-    drafts: true
+    # Native auto-review: CodeRabbit reviews on PR open/push directly. A prior
+    # setup gated reviews to "after CI passes" via a paper-scout bot comment,
+    # but CodeRabbit ignores @coderabbitai commands from bot/GitHub-App accounts,
+    # so that never triggered a review. This is the reliable path.
+    enabled: true
+    drafts: false
     base_branches:
       - "^feat/.*"
       - "^fix/.*"

@@ -27,7 +27,7 @@
 | IDEA-23 | Per-agent model and effort settings | done |
 | IDEA-24 | Sync to main before new plan | done |
 | IDEA-25 | Actualize about.md for per-file storage | done |
-| IDEA-26 | Plan reconcile pass and audit gating | planned |
+| IDEA-26 | Plan reconcile pass and audit gating | done |
 | IDEA-27 | Content-hash freshness for batch audit | planned |
 | IDEA-28 | Idea-file heading level (MD001) | done |
 | IDEA-29 | Run all phases with per-phase commits | done |
@@ -39,3 +39,7 @@
 | IDEA-35 | Scout ↔ GitHub plan sync | planned |
 | IDEA-36 | Scheduled repo digest and nudges | planned |
 | IDEA-37 | Fable capability-window tasks | planned |
+| IDEA-38 | Dense plans worklist | planned |
+| IDEA-39 | Focus cockpit and ambient status | planned |
+| IDEA-40 | Deep-linkable routes and breadcrumbs | planned |
+| IDEA-41 | Settings and affordance polish | planned |

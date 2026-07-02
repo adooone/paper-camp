@@ -227,7 +227,8 @@ export type TaskKind =
   | 'draft'
   | 'extend'
   | 'commit-suggest'
-  | 'sync';
+  | 'sync'
+  | 'reconcile';
 
 export interface AgentTaskState {
   status: AgentTaskStatus;

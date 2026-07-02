@@ -40,6 +40,7 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   'batch-audit': 'phase',
   'run-all': 'phase',
   sync: 'phase',
+  reconcile: 'phase',
   draft: 'planDraft',
   extend: 'ideaExtend',
   'commit-suggest': 'commitSuggest',

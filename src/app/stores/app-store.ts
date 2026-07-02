@@ -21,6 +21,7 @@ import {
   launchIdeaExtend,
   launchPlanAudit,
   launchPlanDraft,
+  launchPlanReconcile,
   launchRunAll,
   stopAgent,
 } from '../services/agent-api';
@@ -106,12 +107,32 @@ type AppStore = {
   loadAgentStatus: () => Promise<void>;
   launchAgent: (planId: string, phaseIndex: number) => Promise<void>;
   launchPlanAudit: (planId: string, prompt: string) => Promise<void>;
+  launchPlanReconcile: (
+    planId: string,
+    prompt: string,
+    before: ReconcilePreview['before'],
+  ) => Promise<void>;
   launchPlanDraft: (ideaId: string, prompt: string) => Promise<void>;
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
   launchBatchAudit: () => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
   stopAgent: () => Promise<void>;
+
+  // Snapshot captured when a reconcile is launched, held at store level (not in
+  // the button component) so an in-flight reconcile's completion is still handled
+  // if the user navigates away before the agent finishes. Consumed by
+  // loadAgentStatus when the reconcile task reaches 'done'.
+  pendingReconcile: ReconcilePreview | null;
+  // The proposed rewrite from a reconcile agent run, held for a before/after
+  // diff panel until the user approves (keeps it) or discards (reverts it).
+  reconcilePreview: ReconcilePreview | null;
+  setReconcilePreview: (preview: ReconcilePreview | null) => void;
 };
+
+export interface ReconcilePreview {
+  planId: string;
+  before: { body: string; phases: PlanEntry['phases'] };
+}
 
 export const useAppStore = create<AppStore>((set, get) => ({
   plans: null,
@@ -279,6 +300,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
     try {
       const data = await fetchAgentStatus();
       set({ agentStatus: data });
+
+      // Hand a finished reconcile's snapshot to the diff panel. Lives here (not
+      // in ReconcileButton) so it fires regardless of which plan view is mounted.
+      const pending = get().pendingReconcile;
+      if (pending && data?.taskKind === 'reconcile' && data.planId === pending.planId) {
+        if (data.status === 'done') {
+          // loadPlans first: if it throws, pendingReconcile stays set and retries.
+          await get().loadPlans();
+          set({ reconcilePreview: pending, pendingReconcile: null });
+        } else if (data.status === 'error') {
+          set({ pendingReconcile: null });
+        }
+      }
     } catch {
       // keep previous status
     }
@@ -289,6 +323,32 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   launchPlanAudit: async (planId, prompt) => {
     await launchPlanAudit(planId, prompt);
+    await get().loadAgentStatus();
+  },
+  launchPlanReconcile: async (planId, prompt, before) => {
+    // Don't clobber an in-flight reconcile's snapshot: if one is already pending
+    // (same plan or not), refuse rather than overwrite it. Only one agent task
+    // runs at a time, so a second launch would 409 anyway — and clearing the slot
+    // on that failure would strip the earlier reconcile's diff safety net. A
+    // same-plan relaunch is reachable too (navigate away mid-reconcile and back —
+    // ReconcileButton's local `launching` flag resets on remount).
+    const existing = get().pendingReconcile;
+    if (existing) {
+      throw new Error(
+        existing.planId === planId
+          ? 'A reconcile is already in progress for this plan'
+          : 'A reconcile is already in progress for another plan',
+      );
+    }
+    // Record the pre-launch snapshot in the store before firing, so completion
+    // is handled by loadAgentStatus even if the launching component unmounts.
+    set({ pendingReconcile: { planId, before } });
+    try {
+      await launchPlanReconcile(planId, prompt);
+    } catch (err) {
+      set({ pendingReconcile: null });
+      throw err;
+    }
     await get().loadAgentStatus();
   },
   launchPlanDraft: async (ideaId, prompt) => {
@@ -311,4 +371,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await stopAgent();
     await get().loadAgentStatus();
   },
+
+  pendingReconcile: null,
+  reconcilePreview: null,
+  setReconcilePreview: (preview) => set({ reconcilePreview: preview }),
 }));

@@ -46,6 +46,32 @@ Rules:
 - Append only: new unchecked phases at the end of the list, plus the single Log line.`;
 }
 
+export function buildReconcilePrompt(plan: PlanEntry): string {
+  const phaseList = plan.phases
+    .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
+    .join('\n');
+
+  return `You are reconciling the plan "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/plans/${plan.id ?? '<ID>'}.md — if it is not there, it is archived at papercamp/plans/archive/${plan.id ?? '<ID>'}.md. Edit only that file.
+
+Plan body: ${plan.body}
+
+Current phases:
+${phaseList}
+
+Task: this plan has drifted from the codebase — some phase descriptions and body prose may reference file paths that moved, code symbols that were renamed or removed, or approaches that were superseded during implementation. Find and fix only that drift.
+
+1. Read the plan above, then inspect the relevant code in this repo to find what has actually changed since the prose was written.
+2. Reword only the sentences or phrases that are now stale: fix references and superseded approaches. Leave everything else byte-identical.
+3. Do not summarize, restructure, or "improve" prose that is still accurate — an unnecessary rewrite is a failure of this task, not a bonus.
+
+Hard guardrails, never violate these:
+- Never touch the YAML frontmatter (id, title, kind, status, created, idea, tags, or any other field).
+- Never un-check, check, delete, or reorder any phase line, checked or unchecked.
+- Never add or remove phases.
+- Never touch the Log or Clarifications sections.
+- If nothing is stale, make no edits at all.`;
+}
+
 export function buildIdeaExtendPrompt(idea: IdeaEntry): string {
   return `You are expanding the idea ${idea.id ?? 'no id'} ("${idea.title}"), stored as a single file at papercamp/ideas/${idea.id ?? '<ID>'}.md. Edit only that file.
 
