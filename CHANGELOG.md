@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0](https://github.com/adooone/paper-camp/compare/v0.3.0...v0.4.0) (2026-07-02)
+
+
+### Features
+
+* **agent:** updates ([bf00b26](https://github.com/adooone/paper-camp/commit/bf00b264e62e8f6a4ee98eebc7caedab75f69b6f))
+* **ideas:** Add IDEA-35/36, mark FEAT-27 review, tighten sync guards ([a5b8c5d](https://github.com/adooone/paper-camp/commit/a5b8c5d1a2f47d36b11a3b0dc30295324ecbc533))
+* **plans:** Add launch route for reconcile tasks ([78b8b69](https://github.com/adooone/paper-camp/commit/78b8b696f75a88cde5a003a3e5a53360b09e1734))
+* **plans:** Add Reconcile button to plan-detail.tsx ([b4f41a5](https://github.com/adooone/paper-camp/commit/b4f41a50010cc270db2361873f9b951a0f556a8b))
+* **plans:** Add reconcile TaskKind and prompt ([95ac9af](https://github.com/adooone/paper-camp/commit/95ac9af4116deb40591fa0f3f06f6dcb835f7dc7))
+* **plans:** Build diff/preview approval UI ([5efe1ac](https://github.com/adooone/paper-camp/commit/5efe1ac0f8ab5c6d67851b5f435dd37c4b6b97d9))
+* **plans:** complete FEAT-30 run-all-phases implementation ([5a97451](https://github.com/adooone/paper-camp/commit/5a974511048ea9030e2738fadf6cc4b0c14cd46b))
+* **plans:** Gate AuditPhasesButton to review/done status ([171b4dd](https://github.com/adooone/paper-camp/commit/171b4ddb79833db5a5f22a32cbb7b6227c5147f5))
+* **plans:** Mark FEAT-28 done and archive plan ([af84ab2](https://github.com/adooone/paper-camp/commit/af84ab2d79acf55ed374319c029d80c6dd8a6330))
+* **plans:** Optional deterministic pre-pass ([0927842](https://github.com/adooone/paper-camp/commit/092784295ee852f113a8b7231d2f7e3d081eb539))
+* **plans:** updates ([4c02ebb](https://github.com/adooone/paper-camp/commit/4c02ebb1d1ff3eef682238b8873490654ea2a1c6))
+* **repo:** updates ([9a2b36a](https://github.com/adooone/paper-camp/commit/9a2b36a1b0b6623625e6b7341557380f867f1924))
+
+
+### Bug Fixes
+
+* **app:** Reject reconcile launch when another plan has one pending ([0685c61](https://github.com/adooone/paper-camp/commit/0685c619f5d85cc08228b538e06a11b1aa419b36))
+* **config:** Upgrade phase/commitSuggest agents to sonnet and fix config file newline ([d29b89b](https://github.com/adooone/paper-camp/commit/d29b89bb0b57a7ec7b1b6099a48137c627ef8cbb))
+* **plans:** Fix reconcile state leaks and CI review triggers ([ad82f9c](https://github.com/adooone/paper-camp/commit/ad82f9cbc1bbe31c16cba3777e020ccc74ce6d77))
+* **server:** disable git fs watchers in tests to stop CI teardown crash ([473f819](https://github.com/adooone/paper-camp/commit/473f819acea58df6015332eeea0445f2a6500bbb))
+
+
+### Code Refactoring
+
+* **app:** split api.ts into routes, readers, and agent-hooks modules ([3f9ddd9](https://github.com/adooone/paper-camp/commit/3f9ddd95160b71d839b6bf59e6be379c6cbd9f5e))
+
+
+### Documentation
+
+* **plans:** Correct file paths and phase details in FEAT-28/29/31/32/33 ([f5c60ee](https://github.com/adooone/paper-camp/commit/f5c60eeb345dac81e4d038086f671788302d5d1e))
+* **plans:** Refresh FEAT-33 architecture doc for shipped storage migration ([bf93ab3](https://github.com/adooone/paper-camp/commit/bf93ab3f2f530e29d11b7cf398ff05b3c83e072d))
+* **plans:** Rewrite agent prompts with clearer numbered task steps ([766e83b](https://github.com/adooone/paper-camp/commit/766e83b9eb1f67542c01bae7fdc8286cb5b52adb))
+
 ## [0.3.0](https://github.com/adooone/paper-camp/compare/v0.2.1...v0.3.0) (2026-07-01)
 
 
