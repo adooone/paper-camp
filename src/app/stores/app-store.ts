@@ -111,7 +111,17 @@ type AppStore = {
   launchBatchAudit: () => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
   stopAgent: () => Promise<void>;
+
+  // The proposed rewrite from a reconcile agent run, held for a before/after
+  // diff panel until the user approves (keeps it) or discards (reverts it).
+  reconcilePreview: ReconcilePreview | null;
+  setReconcilePreview: (preview: ReconcilePreview | null) => void;
 };
+
+export interface ReconcilePreview {
+  planId: string;
+  before: { body: string; phases: PlanEntry['phases'] };
+}
 
 export const useAppStore = create<AppStore>((set, get) => ({
   plans: null,
@@ -311,4 +321,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await stopAgent();
     await get().loadAgentStatus();
   },
+
+  reconcilePreview: null,
+  setReconcilePreview: (preview) => set({ reconcilePreview: preview }),
 }));

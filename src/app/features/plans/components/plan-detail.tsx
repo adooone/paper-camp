@@ -22,6 +22,7 @@ import { ClarifyButton } from './clarify-button';
 import { PhaseCopyButton } from './phase-copy-button';
 import { PlanIdStamp } from './plan-id-stamp';
 import { ProgressBar } from './progress-bar';
+import { ReconcileDiffPanel } from './reconcile-diff-panel';
 import { RunAllPhasesButton } from './run-all-phases-button';
 
 interface PlanDetailProps {
@@ -31,6 +32,8 @@ interface PlanDetailProps {
 export const PlanDetail = ({ plan }: PlanDetailProps) => {
   const loadPlans = useAppStore((s) => s.loadPlans);
   const agentStatus = useAppStore((s) => s.agentStatus);
+  const reconcilePreview = useAppStore((s) => s.reconcilePreview);
+  const setReconcilePreview = useAppStore((s) => s.setReconcilePreview);
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const agentPhaseIndex =
@@ -114,6 +117,22 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
     setUpdating(false);
   };
 
+  const handleApproveReconcile = () => {
+    setReconcilePreview(null);
+  };
+
+  const handleDiscardReconcile = async () => {
+    if (!reconcilePreview || reconcilePreview.planId !== plan.id) return;
+    setUpdating(true);
+    await updatePlan(plan.title, {
+      body: reconcilePreview.before.body,
+      phases: reconcilePreview.before.phases,
+    });
+    await loadPlans();
+    setReconcilePreview(null);
+    setUpdating(false);
+  };
+
   const handleAddLogEntry = async () => {
     if (!logInput.trim()) return;
     const today = new Date().toISOString().slice(0, 10);
@@ -128,6 +147,14 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
 
   return (
     <div>
+      {reconcilePreview && reconcilePreview.planId === plan.id && (
+        <ReconcileDiffPanel
+          plan={plan}
+          before={reconcilePreview.before}
+          onApprove={handleApproveReconcile}
+          onDiscard={handleDiscardReconcile}
+        />
+      )}
       <div
         style={{
           display: 'flex',

@@ -122,6 +122,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         }
         const reqBody = await readBody(req);
         const updates = JSON.parse(reqBody) as {
+          body?: string;
           phases?: PhaseItem[];
           status?: PlanStatus;
           log?: LogEntry[];
@@ -157,6 +158,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
 
         const updatedEntry: PlanEntry = {
           ...parsed.entries[0],
+          ...(updates.body !== undefined && { body: updates.body }),
           ...(updates.status !== undefined && { status: updates.status }),
           ...(updates.phases !== undefined && { phases: updates.phases }),
           ...(updates.log !== undefined && { log: updates.log }),
