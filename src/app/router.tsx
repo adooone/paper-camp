@@ -1,4 +1,4 @@
-import { Button, Input, Island, Layout, Page, layoutConfig, space } from '@dendelion/paper-ui';
+import { Button, Layout, Page, layoutConfig, space } from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -30,8 +30,6 @@ const RootLayout = () => {
   const setActivePlanTitle = useAppStore((s) => s.setActivePlanTitle);
   const setActiveIdeaTitle = useAppStore((s) => s.setActiveIdeaTitle);
   const activeId = navItems.find((item) => item.path === pathname)?.id;
-  const docSearchQuery = useAppStore((s) => s.docSearchQuery);
-  const setDocSearchQuery = useAppStore((s) => s.setDocSearchQuery);
   const [stackOpen, setStackOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -51,68 +49,54 @@ const RootLayout = () => {
   return (
     <Layout
       background={{ texture: 'paper', ruledType: 'grid', ruledColor: 'blue' }}
-      showHeader={false}
+      showHeader
       showSidebar={false}
       showPage={false}
       bleedBottom
-      stackOpen={stackOpen}
-      navigationIsland={
-        <nav aria-label="Navigation island">
-          <Island>
-            <button
-              type="button"
-              className="lg:hidden flex items-center justify-center"
-              style={{
-                width: 24,
-                height: 24,
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-              onClick={() => setMobileSidebarOpen(true)}
-              aria-label="Open sidebar"
+      headerActions={
+        <>
+          <button
+            type="button"
+            className="lg:hidden flex items-center justify-center"
+            style={{
+              width: 24,
+              height: 24,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+            onClick={() => setMobileSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
             >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
+              <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
+            </svg>
+          </button>
+          <ProjectIdentityHeader size="sm" />
+          <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.12)' }} />
+          <nav aria-label="Main navigation" className="flex items-center gap-1">
+            {navItems.map((item) => (
+              <Button
+                key={item.id}
+                variant="ghost"
+                size="small"
+                isActive={item.id === activeId}
+                onClick={() => navigate({ to: item.path })}
+                aria-current={item.id === activeId ? 'page' : undefined}
               >
-                <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
-              </svg>
-            </button>
-            <ProjectIdentityHeader size="sm" />
-            <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.12)' }} />
-            {pathname === '/docs' && (
-              <div style={{ width: 180 }}>
-                <Input
-                  size="small"
-                  placeholder="Search docs…"
-                  value={docSearchQuery}
-                  onChange={(e) => setDocSearchQuery(e.target.value)}
-                />
-              </div>
-            )}
-            <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.12)' }} />
-            <div className="flex items-center gap-1">
-              {navItems.map((item) => (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  size="small"
-                  isActive={item.id === activeId}
-                  onClick={() => navigate({ to: item.path })}
-                  aria-current={item.id === activeId ? 'page' : undefined}
-                >
-                  {item.label}
-                </Button>
-              ))}
-            </div>
-          </Island>
-        </nav>
+                {item.label}
+              </Button>
+            ))}
+          </nav>
+        </>
       }
     >
       <div

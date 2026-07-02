@@ -410,7 +410,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
         }}
         style={{
           position: 'fixed',
-          top: 0,
+          top: layout.headerHeight,
           right: 0,
           bottom: 0,
           width: layout.stackPanelWidth,

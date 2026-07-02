@@ -1,6 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
-import { ListItem } from '@dendelion/paper-ui';
+import { Input, ListItem } from '@dendelion/paper-ui';
 import { useEffect } from 'react';
 import { SidebarSection } from '../../plans/components/sidebar-section';
 
@@ -39,6 +39,8 @@ export const DocsSidebar = () => {
     setActiveDocSection,
     activeDocTitle,
     setActiveDocTitle,
+    docSearchQuery,
+    setDocSearchQuery,
   } = useAppStore();
 
   useEffect(() => {
@@ -55,6 +57,15 @@ export const DocsSidebar = () => {
 
   return (
     <>
+      <div style={{ marginBottom: space[4] }}>
+        <Input
+          size="small"
+          placeholder="Search docs…"
+          value={docSearchQuery}
+          onChange={(e) => setDocSearchQuery(e.target.value)}
+        />
+      </div>
+
       <SidebarSection label="Repo Docs">
         {repoDocsLoading && repoDocs.length === 0 ? (
           <EmptyState>Loading…</EmptyState>

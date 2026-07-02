@@ -84,10 +84,14 @@ export const rowDivider = '1px solid rgba(61, 53, 43, 0.1)';
 // Keep in sync with the upstream Island/Input/Button small-size tokens.
 const navIslandHeight = '4.5rem';
 
+// Keep in sync with paper-ui's Layout header height (layout.module.scss .header).
+const headerHeight = '48px';
+
 export const layout = {
   sidebarWidth: 220,
   stackPanelWidth: 480,
   navIslandBottom: space[6],
   navIslandHeight,
+  headerHeight,
   contentGap: space[6],
 } as const;
