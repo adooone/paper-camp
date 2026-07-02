@@ -2,7 +2,7 @@
 id: FEAT-29
 title: Content-hash audit freshness
 kind: feat
-status: in-progress
+status: review
 created: 2026-07-01
 idea: IDEA-27
 updated: 2026-07-02
@@ -27,5 +27,5 @@ The correct fix is a content hash. After auditing, store `audited-hash` = a hash
       Update `stampAuditDate` in `src/app/server/agent-hooks.ts` (moved there from api.ts when the server was split into modules) and `stampCliAuditDate` in `src/cli/index.ts` to compute and write `audited-hash` alongside the existing `audited: <date>` field (keep the date for human readability).
 - [x] Replace freshness checks with hash comparison
       Update the two freshness-check call sites — the `plan.audited >= mtimeDate` comparisons in `startBatchAudit` in `src/app/server/agent.ts` (~line 396) and the audit-all loop in `src/cli/index.ts` (~line 394) — to skip a plan only when `plan['audited-hash']` exists and matches the recomputed hash.
-- [ ] Tests
+- [x] Tests
       Add unit tests for `computePlanContentHash` (same-content stability, sensitivity to body/phase edits, insensitivity to audit-field changes) and integration tests for the skip/re-audit decision in both the agent and CLI paths.
