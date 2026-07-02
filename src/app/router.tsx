@@ -1,4 +1,4 @@
-import { Button, Layout, Page, layoutConfig, space } from '@dendelion/paper-ui';
+import { Button, Layout, Page, layoutConfig } from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -120,13 +120,7 @@ const RootLayout = () => {
           </SidebarShell>
           <div className="flex flex-1 flex-col min-h-0 min-w-0">
             <div className="flex-1 min-h-0 overflow-y-auto">
-              <Page
-                texture={{ texture: 'parchment' }}
-                style={{
-                  height: 'auto',
-                  paddingBottom: `calc(${layoutConfig.navIslandBottom} + ${layoutConfig.navIslandHeight} + ${space[4]})`,
-                }}
-              >
+              <Page texture={{ texture: 'parchment' }} style={{ height: 'auto' }}>
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={pathname}
