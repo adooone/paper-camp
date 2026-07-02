@@ -43,7 +43,7 @@ Sequencing: land after [[IDEA-32]]'s mechanical 0.2→0.5 bump, before the rest 
       Drop the nav-island bottom padding from the Page style in router.tsx (the navIslandBottom + navIslandHeight calc) and any other island clearance workarounds once the header lands. Verify the Plans sidebar list and the plan-detail phases table — both previously overlapped by the island — now render to the true bottom of the viewport.
 - [x] Default the Stack panel to closed and persist the choice
       Change the RootLayout's stackOpen useState(true) in router.tsx to a localStorage-backed value defaulting to false. Nothing in the panel is populated on load; it should be opened on demand rather than reserving 480px of width from first paint, and the user's open/closed choice should survive reloads instead of resetting.
-- [ ] Redesign the Stack panel Commit section with a bounded scroll region
+- [x] Redesign the Stack panel Commit section with a bounded scroll region
       Restructure stack-panel.tsx's Commit card so the changed-files Accordion scrolls within a bounded height and the commit title/message/Commit button sit in a non-scrolling footer that stays reachable regardless of file count. Replace the fixed flex: 2/1/2 ratios across Agent/Status/Commit with sizing driven by actual content.
 - [ ] Simplify the Agent card to a title and one status line
       Replace the full agentStatus.lines scrolling log in the Agent card with just the latest line next to the title; move the full log behind an Accordion (consistent with the Commit section) for anyone who wants to expand it.

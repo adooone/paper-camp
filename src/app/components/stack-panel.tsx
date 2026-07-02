@@ -467,8 +467,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
         >
           <div
             style={{
-              flex: 2,
-              minHeight: 0,
+              flex: '0 0 auto',
               display: 'flex',
               flexDirection: 'column',
               padding: space[6],
@@ -574,8 +573,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         fontFamily: fontFamily.mono,
                         fontSize: fontSize['2xs'],
                         color: deskTextMuted,
-                        flex: 1,
-                        minHeight: 0,
+                        maxHeight: 160,
                         overflowY: 'auto',
                       }}
                     >
@@ -607,8 +605,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
 
           <div
             style={{
-              flex: 1,
-              minHeight: 0,
+              flex: '0 0 auto',
               display: 'flex',
               flexDirection: 'column',
               padding: space[6],
@@ -876,7 +873,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
 
           <div
             style={{
-              flex: 2,
+              flex: '1 1 auto',
               minHeight: 0,
               display: 'flex',
               flexDirection: 'column',
@@ -896,61 +893,64 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             <Card variant="chalkboard" size="small" className="stack-card-fill">
               {gitStatus && gitStatus.length > 0 ? (
                 <>
-                  <Accordion
-                    title={`${gitStatus.length} file${gitStatus.length === 1 ? '' : 's'} changed`}
-                    expanded={commitExpanded}
-                    onToggle={() => setCommitExpanded(!commitExpanded)}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: space[2],
-                        paddingTop: space[2],
-                      }}
+                  <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
+                    <Accordion
+                      title={`${gitStatus.length} file${gitStatus.length === 1 ? '' : 's'} changed`}
+                      expanded={commitExpanded}
+                      onToggle={() => setCommitExpanded(!commitExpanded)}
                     >
-                      {gitStatus.map((entry) => (
-                        <label
-                          key={entry.path}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: space[2],
-                            fontFamily: fontFamily.mono,
-                            fontSize: fontSize['2xs'],
-                            color: deskChalk,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedFiles.has(entry.path)}
-                            onChange={() => handleToggleFile(entry.path)}
-                            style={{ accentColor: deskChalk }}
-                          />
-                          <span
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: space[2],
+                          paddingTop: space[2],
+                        }}
+                      >
+                        {gitStatus.map((entry) => (
+                          <label
+                            key={entry.path}
                             style={{
-                              color: entry.staged ? deskChalk : deskTextMuted,
-                              minWidth: 24,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: space[2],
+                              fontFamily: fontFamily.mono,
+                              fontSize: fontSize['2xs'],
+                              color: deskChalk,
+                              cursor: 'pointer',
                             }}
                           >
-                            {entry.status}
-                          </span>
-                          <span
-                            style={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {entry.path}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </Accordion>
+                            <input
+                              type="checkbox"
+                              checked={selectedFiles.has(entry.path)}
+                              onChange={() => handleToggleFile(entry.path)}
+                              style={{ accentColor: deskChalk }}
+                            />
+                            <span
+                              style={{
+                                color: entry.staged ? deskChalk : deskTextMuted,
+                                minWidth: 24,
+                              }}
+                            >
+                              {entry.status}
+                            </span>
+                            <span
+                              style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {entry.path}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </Accordion>
+                  </div>
                   <div
                     style={{
+                      flexShrink: 0,
                       display: 'flex',
                       flexDirection: 'column',
                       gap: space[3],
