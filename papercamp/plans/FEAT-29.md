@@ -2,10 +2,10 @@
 id: FEAT-29
 title: Content-hash audit freshness
 kind: feat
-status: planned
+status: in-progress
 created: 2026-07-01
 idea: IDEA-27
-updated: 2026-07-01
+updated: 2026-07-02
 tags:
   - audit
   - freshness
@@ -17,7 +17,7 @@ FEAT-25's batch audit freshness check compares `audited >= mtimeDate` as `YYYY-M
 The correct fix is a content hash. After auditing, store `audited-hash` = a hash of the plan's meaningful content (phases + body, excluding the audit fields themselves). On subsequent runs, recompute the hash and skip only if it matches. Because the hash covers content rather than mtime, the stamp-write can't trip it, and real edits are detected regardless of when they happen. Existing plans with `audited` but no `audited-hash` are treated as needing audit so the hash gets populated on the first run through — a safe migration default.
 
 ### Phases
-- [ ] Add audited-hash to frontmatter schema
+- [x] Add audited-hash to frontmatter schema
       Add an optional `audited-hash: string` field to `planFrontmatterSchema` in `src/core/schemas.ts` (`frontmatter-schemas.ts` is only a compatibility re-export shim; the schema itself lives in `schemas.ts`).
 - [ ] Implement hash computation helper
       Add a pure `computePlanContentHash(plan)` function that serialises phases + body prose, excluding `audited` and `audited-hash` fields, and returns a hex digest. Lives alongside the frontmatter helpers.

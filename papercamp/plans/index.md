@@ -39,7 +39,7 @@
 | FEAT-26 | Per-agent model and effort | done | agents, settings, config, model, effort, ui |
 | FEAT-27 | Sync to main guard | done | git, branch, ux |
 | FEAT-28 | Reconcile pass and audit gating | done | plans, audit, reconcile, ai |
-| FEAT-29 | Content-hash audit freshness | planned | audit, freshness, batch |
+| FEAT-29 | Content-hash audit freshness | in-progress | audit, freshness, batch |
 | FEAT-30 | Run all phases with per-phase commits | done | agent, phases, git, autonomy |
 | FEAT-31 | Claude Code native integration | planned | integration, claude-code, skill, hooks, cli |
 | FEAT-32 | Paper Camp MCP server | planned | mcp, server, core, integration |
