@@ -27,6 +27,9 @@ import {
   coerceAgentConfig,
 } from '../types/index';
 import { startDevServer } from './dev-server';
+import { logLastCommit } from './post-commit-log';
+import { logNewFile } from './post-tool-use-log';
+import { buildSessionFocus } from './session-focus';
 
 async function exists(path: string): Promise<boolean> {
   try {
@@ -127,6 +130,9 @@ program
       console.log('  papercamp/ideas/          (per-file idea entries)');
       console.log('  papercamp/ideas/index.md');
       console.log('  papercamp/progress.md, decisions.md, open-questions.md');
+      console.log('  .claude/skills/paper-camp/SKILL.md');
+      console.log('  .claude/settings.json     (SessionStart + PostToolUse hooks)');
+      console.log('  .git/hooks/post-commit    (if in a git repo)');
     } catch (error) {
       if (error instanceof AlreadyInitializedError) {
         console.error(error.message);
@@ -457,6 +463,46 @@ program
       }
     }
     console.log(bar);
+  });
+
+// The three commands below are internal — invoked by the scaffolded
+// `.claude/settings.json` hooks and git post-commit hook, not by users.
+program
+  .command('session-focus')
+  .description(
+    'Print a SessionStart focus block for the current project (used by Claude Code hooks)',
+  )
+  .action(async () => {
+    const root = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+    const context = await buildSessionFocus(root).catch(() => null);
+    if (!context) return;
+    console.log(
+      JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: 'SessionStart',
+          additionalContext: context,
+        },
+      }),
+    );
+  });
+
+program
+  .command('log-commit')
+  .description('Log the last git commit to progress.md (used by the post-commit hook)')
+  .action(async () => {
+    await logLastCommit(process.cwd()).catch(() => undefined);
+  });
+
+program
+  .command('post-tool-use-log')
+  .description('Log a new file created by a Write tool call (used by Claude Code hooks)')
+  .action(async () => {
+    const root = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+    const chunks: Buffer[] = [];
+    for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
+    const raw = Buffer.concat(chunks).toString('utf-8');
+    const input = raw ? JSON.parse(raw) : {};
+    await logNewFile(root, input).catch(() => undefined);
   });
 
 program.parseAsync(process.argv);
