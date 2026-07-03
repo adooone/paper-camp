@@ -16,5 +16,18 @@
       "Bash(git status*)",
       "Bash(git diff*)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$CLAUDE_PROJECT_DIR/src/cli/session-focus.ts\""
+          }
+        ]
+      }
+    ]
   }
 }

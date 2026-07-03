@@ -2,10 +2,10 @@
 id: FEAT-31
 title: Claude Code native integration
 kind: feat
-status: planned
+status: in-progress
 created: 2026-07-01
 idea: IDEA-30
-updated: 2026-07-01
+updated: 2026-07-03
 tags:
   - integration
   - claude-code
@@ -19,9 +19,9 @@ Paper Camp's distribution story is making itself automatic inside Claude Code: w
 The design is deliberately anti-drift: the SessionStart focus block is *derived* from live data (the per-file plans plus `progress.md`) rather than stored in a hand-maintained `now.md`, and the automatic logger is the deterministic commit-linked git hook, not an always-on tool watcher. The PostToolUse surface stays off by default and narrow when on — new-file creation only — so it only catches scaffolding milestones the git hook would miss, without the noise and token cost of watching every tool call. Complements [[FEAT-32]] (the MCP server, drafted from IDEA-31 since this plan was written): if that server exists, the skill reads through it rather than reimplementing file access.
 
 ### Phases
-- [ ] Write the Paper Camp skill (`SKILL.md`)
+- [x] Write the Paper Camp skill (`SKILL.md`)
       Author the skill that Claude Code auto-discovers when a `papercamp/` folder is present. It packages the methodology and instructs the assistant to read `plans/`, `ideas/`, `decisions.md`, and `open-questions.md` before working, and to keep the active plan's phases and `progress.md` current as it goes. Build this first — highest leverage, lowest effort — and keep the file-access instructions thin enough that they can later delegate to the [[FEAT-32]] MCP server.
-- [ ] Add the SessionStart focus hook
+- [x] Add the SessionStart focus hook
       A `.claude/settings.json` SessionStart hook that injects a derived focus block from live data: the focus plan via the dashboard's `findFocusPlan` (src/app/features/plans/helpers.ts) over the per-file plans, the active feature branch via the git manager's `getFeatureBranchPlanId` (src/app/server/git.ts), and the last 3 `progress.md` entries. Derive, never add a `now.md` — a single source of truth (plans + log) beats a duplicate file that drifts. Ship it as a small script the hook shells out to.
 - [ ] Add the git post-commit auto-logger
       A committed `post-commit` git hook that appends a timestamped `progress.md` entry from each commit message. This is *the* automatic logger: deterministic, cheap, commit-linked, and it keeps `progress.md` in sync with git history with zero habit. Reuse the existing progress append/serializer path — `formatProgressEntry` in src/core/serializer.ts and the prepend-under-today's-heading logic of `prependProgressItem` in src/app/server/agent-hooks.ts — so entries match the `## YYYY-MM-DD` + bullet grammar.

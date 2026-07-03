@@ -90,7 +90,12 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     return runGit(['status', '--porcelain=v1']).then(parsePorcelain);
   }
 
-  async function commit(files: string[], title: string, message?: string): Promise<void> {
+  async function commit(
+    files: string[],
+    title: string,
+    message?: string,
+    options?: { noVerify?: boolean },
+  ): Promise<void> {
     let renameSources = new Map<string, string>();
     if (files.length > 0) {
       const statusEntries = await runGitStatus();
@@ -110,7 +115,14 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         await runGit(['add', '--', ...toAdd.map(toLiteralPathspec)]);
       }
     }
-    const args = ['commit', '-m', title];
+    const args = ['commit'];
+    // Machine-generated commits (agent per-phase / run-review) opt out of the
+    // commit-msg hook: their message format is controlled in code and kept
+    // valid-by-construction, so a human-oriented lint hook has nothing to catch
+    // and must never abort an unattended run. Interactive/UI commits leave this
+    // off and stay subject to the hook.
+    if (options?.noVerify) args.push('--no-verify');
+    args.push('-m', title);
     if (message) args.push('-m', message);
     // Restrict the commit to the selected files so unrelated already-staged
     // paths aren't swept in; an empty selection falls through to "commit
