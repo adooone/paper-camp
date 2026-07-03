@@ -24,7 +24,7 @@ Beyond the direct swaps, a few adoptions are opportunistic — take them only wh
       Convert the ~15 `title=` tooltip attributes (view-toggle, plan-detail, the draft/extend/clarify/audit buttons, …) to the Tooltip component. Sweep for stragglers with a grep for `title=` on interactive elements before closing the phase.
 - [x] Adopt CopyButton and Divider
       Replace `components/copy-prompt-button.tsx` with CopyButton, and the hand-rolled `borderBottom` row dividers in `stack-panel.tsx` (×3) and `settings-page.tsx` (×5) with Divider, dropping the now-unused `rowDivider` token.
-- [ ] Evaluate the opportunistic adoptions
+- [x] Evaluate the opportunistic adoptions
       Assess Tabs for `ViewToggle`, Accordion for the `ideas-board.tsx` / `plan-detail.tsx` expand toggles, Menu for `plans-sidebar.tsx` actions, and Switch/Radio for the boolean/small-exclusive agent-config `Select`s. Adopt each only where it removes custom code with no rendering regression; record what was deferred and why so the idea's backlog stays honest.
 - [ ] Type-check and visual pass
       `tsc --noEmit` plus a browser eyeball of every touched surface: toasts fire on action failure, loaders and skeletons render, tooltips open, copy still copies, dividers match the old row separation. These swaps change rendering, not just types, so the visual half is the real gate.
