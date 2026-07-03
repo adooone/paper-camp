@@ -68,6 +68,7 @@ export interface PlanEntry {
   created: string;
   updated?: string;
   audited?: string;
+  auditedHash?: string;
   tags: string[];
   body: string;
   phases: PhaseItem[];

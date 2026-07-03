@@ -184,6 +184,7 @@ interface NewPlanFileInput {
   created: string;
   updated?: string;
   audited?: string;
+  auditedHash?: string;
   tags?: string[];
   body?: string;
   phases?: PhaseItem[];
@@ -216,6 +217,7 @@ export function formatPlanFile(input: NewPlanFileInput): string {
   if (input.agent) frontmatter.agent = input.agent;
   if (input.updated) frontmatter.updated = input.updated;
   if (input.audited) frontmatter.audited = input.audited;
+  if (input.auditedHash) frontmatter['audited-hash'] = input.auditedHash;
   if (input.tags && input.tags.length > 0) frontmatter.tags = input.tags;
 
   const sections: string[] = [serializeFrontmatter(frontmatter)];

@@ -6,6 +6,7 @@ import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
+import { computePlanContentHash } from '../core/content-hash';
 import { deriveIdeaStatuses } from '../core/idea-status';
 import { parseIdeas, parsePlanFile, parsePlans } from '../core/parser';
 import { readAllIdeaFiles, readAllPlanFiles } from '../core/readers';
@@ -44,15 +45,6 @@ async function findPlanFile(plansDir: string, id: string): Promise<string | null
   return null;
 }
 
-async function getFileMtimeDateString(filePath: string): Promise<string | null> {
-  try {
-    const s = await stat(filePath);
-    return s.mtime.toISOString().slice(0, 10);
-  } catch {
-    return null;
-  }
-}
-
 async function stampCliAuditDate(planFile: string, planId: string): Promise<void> {
   // Throw on failure so the caller can mark the audit failed rather than
   // logging [done] while the audited stamp was silently never written.
@@ -72,6 +64,7 @@ async function stampCliAuditDate(planFile: string, planId: string): Promise<void
     created: entry.created,
     updated: entry.updated,
     audited: todayDateString(),
+    auditedHash: computePlanContentHash({ body: entry.body, phases: entry.phases }),
     tags: entry.tags,
     body: entry.body,
     phases: entry.phases,
@@ -391,9 +384,9 @@ program
         continue;
       }
 
-      if (plan.audited) {
-        const mtimeDate = await getFileMtimeDateString(planFile);
-        if (mtimeDate && plan.audited >= mtimeDate) {
+      if (plan.audited && plan.auditedHash) {
+        const contentHash = computePlanContentHash({ body: plan.body, phases: plan.phases });
+        if (contentHash === plan.auditedHash) {
           console.log(
             `  [skip]  ${label} ${plan.title} — audited ${plan.audited}, unchanged since`,
           );

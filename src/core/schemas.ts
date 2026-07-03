@@ -66,6 +66,10 @@ export const planFrontmatterSchema = z.object({
   created: dateString.describe('Creation date (YYYY-MM-DD)'),
   updated: dateString.optional().describe('Last significant update date (YYYY-MM-DD)'),
   audited: dateString.optional().describe('Date of last successful convergence audit (YYYY-MM-DD)'),
+  'audited-hash': z
+    .string()
+    .optional()
+    .describe('Content hash of the plan at last audit, used to detect edits regardless of mtime'),
   tags: z.array(z.string()).optional().describe('Tagging categories'),
 });
 

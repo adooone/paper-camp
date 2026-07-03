@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -52,8 +52,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
+
+      # The CLI runs under bun ("cli": "bun src/cli/index.ts"), and
+      # src/cli/audit.test.ts spawns `bun` as a real subprocess — without it
+      # spawnSync returns stdout: null and those tests fail.
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
         run: pnpm install
@@ -63,13 +69,13 @@ jobs:
 
   consistency:
     name: Consistency
-    if: github.event_name == 'pull_request'
+    # Codebase-structure consistency (dead code + architecture boundaries).
+    # Commit-message linting moved to the local commit-msg git hook (husky).
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           persist-credentials: false
 
       - name: Setup pnpm
@@ -78,11 +84,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install
 
-      - name: Lint commit messages
-        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+      # Dead code: fail on unused files and unused dependencies (high-confidence).
+      # Unused exports/types still surface locally via `pnpm run knip`.
+      - name: Dead code (knip)
+        run: npx knip --include files,dependencies
+
+      # Architecture: no forbidden cross-layer imports, no unresolvable imports.
+      - name: Architecture boundaries (dependency-cruiser)
+        run: pnpm run depcruise

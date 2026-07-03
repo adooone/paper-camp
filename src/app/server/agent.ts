@@ -4,6 +4,7 @@ import { readFile, stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
+import { computePlanContentHash } from '../../core/content-hash';
 import { parsePlanFile } from '../../core/parser';
 import { readAllPlanFiles, readIdeasMerged, readPlansMerged } from '../../core/readers';
 import {
@@ -433,10 +434,9 @@ export function createAgentManager(
             continue;
           }
 
-          if (plan.audited) {
-            const fileStat = await stat(planFile).catch(() => null);
-            const mtimeDate = fileStat ? fileStat.mtime.toISOString().slice(0, 10) : null;
-            if (mtimeDate && plan.audited >= mtimeDate) {
+          if (plan.audited && plan.auditedHash) {
+            const contentHash = computePlanContentHash({ body: plan.body, phases: plan.phases });
+            if (contentHash === plan.auditedHash) {
               pushLine(task, `[skip] ${plan.id} — up to date`);
               skipped++;
               continue;
