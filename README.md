@@ -30,6 +30,12 @@ Open `http://localhost:3333` to access the dashboard.
 - **Docs** — Decisions, open questions, progress timeline, and repo docs
 - **Settings** — Project configuration
 
+## MCP server
+
+Any [Model Context Protocol](https://modelcontextprotocol.io) client can read and write your
+`papercamp/` project via `paper-camp mcp`. See [docs/MCP.md](docs/MCP.md) for the client config
+snippet and the full tool list.
+
 ## License
 
 MIT

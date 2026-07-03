@@ -2,7 +2,7 @@
 id: FEAT-32
 title: Paper Camp MCP server
 kind: feat
-status: in-progress
+status: review
 created: 2026-07-01
 idea: IDEA-31
 updated: 2026-07-03
@@ -28,5 +28,5 @@ The v1 tool set ships read and write together — `list_plans`, `get_plan`, `upd
       In the `draft_plan` / `update_phase` handlers (the writes that start or advance a plan), call `checkBranchConflictForPlan` server-side before mutating, and return a structured MCP error when it fails — so an MCP client is exactly as constrained as the dashboard and can't create a second active plan on a branch. The guard lives in `src/app/server/helpers.ts` and needs a `GitManager` (`createGitManager` in `src/app/server/git.ts`, constructed with `{ watch: false }` since a stdio server has no SSE subscribers); the CLI already imports app/server modules (`resolveAgent`), so the MCP entry point reusing both is established practice, not a layering violation.
 - [x] Tests for the tool handlers and guard enforcement
       Add tests covering each tool's happy path against a fixture `papercamp/` project (reads return expected shapes; writes land through the serializers with correct id allocation and index regen) and covering the guard: a plan-advancing write on a conflicting branch is rejected, matching the dashboard's behavior.
-- [ ] Document registration and the MCP surface
+- [x] Document registration and the MCP surface
       Document the `paper-camp mcp` subcommand, the one-line client MCP config snippet, and the v1 tool list with each tool's arguments, so a user can register the server in any client and know what it exposes.
