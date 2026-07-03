@@ -12,6 +12,8 @@ import {
   Button,
   Card,
   CloseIcon,
+  CopyButton,
+  Divider,
   IconButton,
   Input,
   Spinner,
@@ -26,7 +28,6 @@ import { findFocusPlan } from '../features/plans/helpers';
 import { commitChanges, pushChanges, suggestCommitMessage, syncToMain } from '../services/git-api';
 import { useAppStore } from '../stores/app-store';
 import { summarizeQualityFailure, summarizeTestFailure } from '../utils/check-summary';
-import { CopyPromptButton } from './copy-prompt-button';
 
 const COMMIT_TITLE_STORAGE_KEY = 'papercamp.commitTitle';
 const COMMIT_MESSAGE_STORAGE_KEY = 'papercamp.commitMessage';
@@ -494,7 +495,6 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
           style={{
             height: 80,
             padding: `0 ${space[6]}`,
-            borderBottom: `1px solid ${deskBorder}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -520,6 +520,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             style={{ width: 28, height: 28, border: `1px solid ${deskBorder}` }}
           />
         </div>
+        <Divider surface="chalkboard" />
         <div
           style={{
             flex: 1,
@@ -535,7 +536,6 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
               display: 'flex',
               flexDirection: 'column',
               padding: space[6],
-              borderBottom: `1px solid ${deskBorder}`,
             }}
           >
             <div style={sectionLabelStyle}>Agent</div>
@@ -697,6 +697,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
               )}
             </Card>
           </div>
+          <Divider surface="chalkboard" />
 
           <div
             style={{
@@ -704,7 +705,6 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
               display: 'flex',
               flexDirection: 'column',
               padding: space[6],
-              borderBottom: `1px solid ${deskBorder}`,
             }}
           >
             <div style={sectionLabelStyle}>Status</div>
@@ -926,12 +926,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         );
                         secondaryLine = (
                           <span style={{ color: deskChalk }}>
-                            Suggested fix:{' '}
-                            <CopyPromptButton
-                              prompt={testFixPrompt}
-                              label="copy a fix prompt"
-                              variant="link"
-                            />
+                            Suggested fix: <CopyButton text={testFixPrompt} surface="chalkboard" />
                           </span>
                         );
                       } else if (consistencyStatus === 'fail') {

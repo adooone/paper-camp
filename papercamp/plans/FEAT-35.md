@@ -22,7 +22,7 @@ Beyond the direct swaps, a few adoptions are opportunistic — take them only wh
       Replace the hand-rolled `.spinner` class with paper-ui Spinner (`utilities.css`, `plan-detail.tsx`) and `PlanCardSkeleton` with Skeleton (`plan-card-skeleton.tsx`, `list-view.tsx`), deleting the custom CSS and component once nothing references them.
 - [x] Replace title attributes with Tooltip
       Convert the ~15 `title=` tooltip attributes (view-toggle, plan-detail, the draft/extend/clarify/audit buttons, …) to the Tooltip component. Sweep for stragglers with a grep for `title=` on interactive elements before closing the phase.
-- [ ] Adopt CopyButton and Divider
+- [x] Adopt CopyButton and Divider
       Replace `components/copy-prompt-button.tsx` with CopyButton, and the hand-rolled `borderBottom` row dividers in `stack-panel.tsx` (×3) and `settings-page.tsx` (×5) with Divider, dropping the now-unused `rowDivider` token.
 - [ ] Evaluate the opportunistic adoptions
       Assess Tabs for `ViewToggle`, Accordion for the `ideas-board.tsx` / `plan-detail.tsx` expand toggles, Menu for `plans-sidebar.tsx` actions, and Switch/Radio for the boolean/small-exclusive agent-config `Select`s. Adopt each only where it removes custom code with no rendering regression; record what was deferred and why so the idea's backlog stays honest.

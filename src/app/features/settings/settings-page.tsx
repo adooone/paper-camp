@@ -5,7 +5,7 @@ import { fetchConfigFile } from '@/app/services/config-files-api';
 import { fetchEnv, saveEnv } from '@/app/services/env-api';
 import { uploadIcon } from '@/app/services/icon-api';
 import { useAppStore } from '@/app/stores/app-store';
-import { color, fontFamily, fontSize, rowDivider, space } from '@/app/styles/tokens';
+import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import {
   AGENT_IDS,
   AGENT_LABELS,
@@ -23,6 +23,7 @@ import {
   Card,
   CloseIcon,
   CodeBlock,
+  Divider,
   IconButton,
   Input,
   Select,
@@ -90,63 +91,65 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTa
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: space[3],
-        ...(!isLast && { borderBottom: rowDivider }),
-        paddingBottom: space[2],
-        paddingTop: space[2],
-      }}
-    >
-      <span style={{ width: 110, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.65 }}>
-        {TASK_TYPE_LABELS[taskKey]}
-      </span>
-      <Select
-        size="small"
-        value={agentConfig.agent}
-        onChange={handleAgentChange}
-        options={AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] }))}
-      />
-      {Array.isArray(modelOpts) ? (
-        <Select
-          size="small"
-          value={agentConfig.model ?? ''}
-          onChange={handleModelSelectChange}
-          options={[
-            { value: '', label: 'Default' },
-            ...modelOpts.map((m) => ({ value: m, label: m })),
-          ]}
-        />
-      ) : modelOpts === null ? (
-        <Input
-          size="small"
-          value={localModel}
-          placeholder="Default model"
-          onChange={(e) => setLocalModel(e.target.value)}
-          onBlur={handleModelInputBlur}
-        />
-      ) : null}
-      {/* Reserve the effort slot even when the agent has no effort options, so
-          switching agents doesn't change the control count and shift the row. */}
-      <div style={{ visibility: Array.isArray(effortOpts) ? 'visible' : 'hidden' }}>
-        <Select
-          size="small"
-          value={agentConfig.effort ?? ''}
-          onChange={handleEffortChange}
-          options={[
-            { value: '', label: 'Default' },
-            ...(Array.isArray(effortOpts) ? effortOpts : []).map((e) => ({ value: e, label: e })),
-          ]}
-        />
-      </div>
-      {isSaved && (
-        <span className="text-sm" style={{ opacity: 0.6 }}>
-          Saved
+    <>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: space[3],
+          paddingBottom: space[2],
+          paddingTop: space[2],
+        }}
+      >
+        <span style={{ width: 110, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.65 }}>
+          {TASK_TYPE_LABELS[taskKey]}
         </span>
-      )}
-    </div>
+        <Select
+          size="small"
+          value={agentConfig.agent}
+          onChange={handleAgentChange}
+          options={AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] }))}
+        />
+        {Array.isArray(modelOpts) ? (
+          <Select
+            size="small"
+            value={agentConfig.model ?? ''}
+            onChange={handleModelSelectChange}
+            options={[
+              { value: '', label: 'Default' },
+              ...modelOpts.map((m) => ({ value: m, label: m })),
+            ]}
+          />
+        ) : modelOpts === null ? (
+          <Input
+            size="small"
+            value={localModel}
+            placeholder="Default model"
+            onChange={(e) => setLocalModel(e.target.value)}
+            onBlur={handleModelInputBlur}
+          />
+        ) : null}
+        {/* Reserve the effort slot even when the agent has no effort options, so
+            switching agents doesn't change the control count and shift the row. */}
+        <div style={{ visibility: Array.isArray(effortOpts) ? 'visible' : 'hidden' }}>
+          <Select
+            size="small"
+            value={agentConfig.effort ?? ''}
+            onChange={handleEffortChange}
+            options={[
+              { value: '', label: 'Default' },
+              ...(Array.isArray(effortOpts) ? effortOpts : []).map((e) => ({ value: e, label: e })),
+            ]}
+          />
+        </div>
+        {isSaved && (
+          <span className="text-sm" style={{ opacity: 0.6 }}>
+            Saved
+          </span>
+        )}
+      </div>
+      {!isLast && <Divider />}
+    </>
   );
 };
 
@@ -254,7 +257,6 @@ const GeneralSection = () => {
               display: 'flex',
               alignItems: 'flex-end',
               gap: space[3],
-              borderBottom: rowDivider,
               paddingBottom: space[3],
             }}
           >
@@ -284,13 +286,13 @@ const GeneralSection = () => {
               </span>
             )}
           </div>
+          <Divider />
 
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: space[3],
-              borderBottom: rowDivider,
               paddingBottom: space[3],
               paddingTop: space[3],
             }}
@@ -342,13 +344,13 @@ const GeneralSection = () => {
               )}
             </div>
           </div>
+          <Divider />
 
           <div
             style={{
               display: 'flex',
               alignItems: 'flex-end',
               gap: space[3],
-              borderBottom: rowDivider,
               paddingBottom: space[3],
               paddingTop: space[3],
             }}
@@ -374,6 +376,7 @@ const GeneralSection = () => {
               </span>
             )}
           </div>
+          <Divider />
 
           {TASK_TYPE_KEYS.map((key, idx) => (
             <AgentTaskRow
