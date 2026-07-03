@@ -1,8 +1,8 @@
-import { access, mkdir, stat, writeFile } from 'node:fs/promises';
+import { access, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { PaperCampConfig } from '../types/index';
 import { paperCampConfigSchema } from './schemas';
-import { CLAUDE_SETTINGS_JSON, POST_COMMIT_HOOK_SCRIPT, SKILL_MD_CONTENT } from './templates';
+import { CLAUDE_SETTINGS_JSON, SKILL_MD_CONTENT } from './templates';
 
 export const PAPER_CAMP_VERSION = '0.1.0';
 
@@ -87,11 +87,10 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
 }
 
 /**
- * Scaffolds the four Claude Code native-integration surfaces: the
- * auto-discovered skill, the SessionStart/PostToolUse hook wiring in
- * `.claude/settings.json`, and the git post-commit auto-logger. Each piece
- * follows the same no-clobber contract as the rest of init — an existing
- * file is left untouched rather than merged into.
+ * Scaffolds the Claude Code native-integration surfaces: the auto-discovered
+ * skill and the SessionStart/PostToolUse hook wiring in `.claude/settings.json`.
+ * Each piece follows the same no-clobber contract as the rest of init — an
+ * existing file is left untouched rather than merged into.
  */
 async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<void> {
   const skillDir = join(targetDir, '.claude', 'skills', 'paper-camp');
@@ -106,20 +105,5 @@ async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<void> {
   const settingsPath = join(claudeDir, 'settings.json');
   if (!(await exists(settingsPath))) {
     await writeFile(settingsPath, CLAUDE_SETTINGS_JSON, 'utf-8');
-  }
-
-  // Only in an actual git repo, and only if no post-commit hook is already installed.
-  // A worktree/submodule checkout has `.git` as a FILE ("gitdir: …") rather than a
-  // directory, so mkdir(.git/hooks) under it would throw ENOTDIR — require a real
-  // directory and skip the native-hook scaffold otherwise.
-  const gitDir = join(targetDir, '.git');
-  const gitDirStat = await stat(gitDir).catch(() => null);
-  if (gitDirStat?.isDirectory()) {
-    const hooksDir = join(gitDir, 'hooks');
-    const postCommitPath = join(hooksDir, 'post-commit');
-    if (!(await exists(postCommitPath))) {
-      await mkdir(hooksDir, { recursive: true });
-      await writeFile(postCommitPath, POST_COMMIT_HOOK_SCRIPT, { encoding: 'utf-8', mode: 0o755 });
-    }
   }
 }

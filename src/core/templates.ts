@@ -1,8 +1,8 @@
 /**
  * Static file contents scaffolded by `paper-camp init` for the Claude Code
- * native integration: the discoverable skill, the SessionStart/PostToolUse
- * hook wiring, and the git post-commit hook. Kept in one place so `init`'s
- * no-clobber writes stay simple string dumps.
+ * native integration: the discoverable skill and the SessionStart/PostToolUse
+ * hook wiring. Kept in one place so `init`'s no-clobber writes stay simple
+ * string dumps.
  */
 
 export const SKILL_MD_CONTENT = `---
@@ -102,10 +102,3 @@ export const CLAUDE_SETTINGS_JSON = `${JSON.stringify(
   null,
   2,
 )}\n`;
-
-export const POST_COMMIT_HOOK_SCRIPT = `#!/bin/sh
-# Installed by \`paper-camp init\` — logs each commit to papercamp/progress.md.
-BIN="$(git rev-parse --show-toplevel)/node_modules/.bin/paper-camp"
-[ -x "$BIN" ] && "$BIN" log-commit
-exit 0
-`;

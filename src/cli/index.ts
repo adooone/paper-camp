@@ -27,7 +27,6 @@ import {
   coerceAgentConfig,
 } from '../types/index';
 import { startDevServer } from './dev-server';
-import { logLastCommit } from './post-commit-log';
 import { logNewFile } from './post-tool-use-log';
 import { buildSessionFocus } from './session-focus';
 
@@ -132,7 +131,6 @@ program
       console.log('  papercamp/progress.md, decisions.md, open-questions.md');
       console.log('  .claude/skills/paper-camp/SKILL.md');
       console.log('  .claude/settings.json     (SessionStart + PostToolUse hooks)');
-      console.log('  .git/hooks/post-commit    (if in a git repo)');
     } catch (error) {
       if (error instanceof AlreadyInitializedError) {
         console.error(error.message);
@@ -465,8 +463,8 @@ program
     console.log(bar);
   });
 
-// The three commands below are internal — invoked by the scaffolded
-// `.claude/settings.json` hooks and git post-commit hook, not by users.
+// The two commands below are internal — invoked by the scaffolded
+// `.claude/settings.json` hooks, not by users.
 program
   .command('session-focus')
   .description(
@@ -484,13 +482,6 @@ program
         },
       }),
     );
-  });
-
-program
-  .command('log-commit')
-  .description('Log the last git commit to progress.md (used by the post-commit hook)')
-  .action(async () => {
-    await logLastCommit(process.cwd()).catch(() => undefined);
   });
 
 program

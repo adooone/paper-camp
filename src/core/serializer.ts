@@ -139,8 +139,8 @@ export function formatProgressEntry(date: string, items: string[]): string {
 /**
  * Prepends a single bullet under today's `## YYYY-MM-DD` heading at the top of a
  * progress.md file, creating the heading if today's isn't already there (newest
- * day stays first). Shared by the agent's progress hook and the git post-commit
- * logger so both write the same grammar.
+ * day stays first). Shared by the agent's progress hook and the PostToolUse
+ * new-file logger so both write the same grammar.
  */
 export async function prependProgressItem(progressPath: string, item: string): Promise<void> {
   const heading = `## ${todayDateString()}`;

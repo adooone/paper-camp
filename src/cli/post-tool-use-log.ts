@@ -24,8 +24,7 @@ async function readConfig(root: string): Promise<PaperCampConfig | null> {
  * Off unless papercamp/config.json sets `autoLogNewFiles: true`. Fires only for a Write
  * whose structuredPatch is empty — Claude Code leaves that empty when the Write tool
  * created the file rather than overwriting existing content — so edits, reads, searches,
- * bash, and commits (none of which are Write calls) never match, and this never
- * double-logs against the git post-commit hook.
+ * and bash (none of which are Write calls) never match.
  */
 export async function logNewFile(root: string, input: PostToolUseInput): Promise<void> {
   const config = await readConfig(root);
