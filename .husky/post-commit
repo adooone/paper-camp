@@ -1,0 +1,1 @@
+bun "$(git rev-parse --show-toplevel)/src/cli/post-commit-log.ts"
