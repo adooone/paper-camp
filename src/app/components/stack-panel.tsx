@@ -14,6 +14,7 @@ import {
   CloseIcon,
   IconButton,
   Input,
+  Spinner,
   Stamp,
   Textarea,
 } from '@dendelion/paper-ui';
@@ -423,10 +424,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             <IconButton
               icon={
                 agentActive ? (
-                  <span
-                    className="spinner"
-                    style={{ width: 12, height: 12, borderTopColor: '#d6c4a0' }}
-                  />
+                  <Spinner size="small" surface="chalkboard" label="Agent running" />
                 ) : anyChecksFailing ? (
                   <span
                     aria-hidden="true"

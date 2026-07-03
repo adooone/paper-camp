@@ -1,5 +1,5 @@
 import { fontFamily, space } from '@/app/styles/tokens';
-import { Card, Stamp } from '@dendelion/paper-ui';
+import { Card, Skeleton, Stamp } from '@dendelion/paper-ui';
 
 interface PlanCardSkeletonProps {
   ideaId: string;
@@ -32,24 +32,18 @@ export const PlanCardSkeleton = ({ ideaId }: PlanCardSkeletonProps) => (
         </Stamp>
         <span style={{ opacity: 0.55 }}>Creating a plan…</span>
       </h2>
-      <div className="paper-camp-skeleton" style={{ width: 60, height: 20, opacity: 0.18 }} />
+      <Skeleton variant="rect" width={60} height={20} />
     </div>
 
     <div style={{ marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: space[2] }}>
-      <div className="paper-camp-skeleton" style={{ width: 90, height: 12, opacity: 0.18 }} />
-      <div
-        className="paper-camp-skeleton"
-        style={{ width: 50, height: 18, borderRadius: 999, opacity: 0.18 }}
-      />
+      <Skeleton variant="text" width={90} height={12} />
+      <Skeleton variant="rect" width={50} height={18} />
     </div>
 
     <div style={{ marginTop: space[3] }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
-        <div className="paper-camp-skeleton" style={{ flex: 1, height: 6, opacity: 0.18 }} />
-        <div
-          className="paper-camp-skeleton"
-          style={{ width: 28, height: 12, flexShrink: 0, opacity: 0.18 }}
-        />
+        <Skeleton variant="rect" width="100%" height={6} style={{ flex: 1 }} />
+        <Skeleton variant="text" width={28} height={12} style={{ flexShrink: 0 }} />
       </div>
     </div>
   </Card>

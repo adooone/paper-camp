@@ -85,12 +85,6 @@ header > div[class*="headerActions"] {
   color: #1a1917 !important;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /*
  * Review-found phases get a faint violet wash matching the "review" plan-status
  * color elsewhere — table cells have no background of their own, so this paints
@@ -98,32 +92,6 @@ header > div[class*="headerActions"] {
  */
 .phase-row-review {
   background-color: rgba(155, 122, 181, 0.08);
-}
-
-@keyframes paper-camp-skeleton-pulse {
-  0%,
-  100% {
-    opacity: 0.12;
-  }
-  50% {
-    opacity: 0.24;
-  }
-}
-
-.paper-camp-skeleton {
-  background: currentColor;
-  border-radius: 4px;
-  animation: paper-camp-skeleton-pulse 1.4s ease-in-out infinite;
-}
-
-.spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(0, 0, 0, 0.15);
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
 }
 
 /*

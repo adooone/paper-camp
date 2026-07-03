@@ -11,7 +11,7 @@ import {
   type PlanEntry,
   type PlanStatus,
 } from '@/types/index';
-import { Button, Checkbox, Select, Stamp, Table, Textarea } from '@dendelion/paper-ui';
+import { Button, Checkbox, Select, Spinner, Stamp, Table, Textarea } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { STATUS_COLOR, STATUS_LABEL } from '../constants';
 import { phaseProgress, relativeDate } from '../helpers';
@@ -316,9 +316,7 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
               Phases
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-              {auditRunning && (
-                <span className="spinner" style={{ opacity: 0.6 }} title="Audit running…" />
-              )}
+              {auditRunning && <Spinner size="small" label="Audit running…" />}
               {(plan.status === 'planned' || plan.status === 'in-progress') &&
                 plan.phases.some((p) => !p.done) && (
                   <RunAllPhasesButton plan={plan} disabled={agentBusy} />
@@ -374,11 +372,7 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
                   <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
                     <PhaseCopyButton planTitle={plan.title} phaseIndex={index} />
                     {!phase.done && agentPhaseIndex === index ? (
-                      <span
-                        className="spinner"
-                        style={{ opacity: 0.6 }}
-                        title={`Agent ${agentStatus?.status}…`}
-                      />
+                      <Spinner size="small" label={`Agent ${agentStatus?.status}…`} />
                     ) : (
                       !phase.done && (
                         <AgentStartButton
