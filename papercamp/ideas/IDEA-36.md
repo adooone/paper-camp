@@ -13,4 +13,4 @@ Use Scout on a schedule (cron `workflow`s acting as the app) to make the repo pr
 
 **Open-questions ↔ issues mirror (stretch).** Mirror `open-questions.md` entries as GitHub issues so questions become assignable and trackable in GitHub, and a question whose `blocks` points at a plan links to that plan's PR. Two-way sync is the harder part (source-of-truth conflicts); a one-way `open-questions.md` → issues push is the safe v1. This is the piece [[IDEA-35]] deliberately left out — it lands here because it's issue-centric like the digest.
 
-**Wiring:** `on: schedule` (cron) workflows that mint the Scout token, read `src/core`, and post via `gh` — same pattern as `review.yml`. The issue-based pieces (digest, mirror) need `issues: write` added to Scout's GitHub App permissions; the PR nudge only needs `pull-requests: write` (already granted).
+**Wiring:** `on: schedule` (cron) workflows that mint the Scout token, read `src/core`, and post via `gh` — same token-minting pattern as `draft-pr.yml`. The issue-based pieces (digest, mirror) need `issues: write` added to Scout's GitHub App permissions; the PR nudge only needs `pull-requests: write` (already granted).
