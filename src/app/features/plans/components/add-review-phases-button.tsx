@@ -57,11 +57,7 @@ export const AddReviewPhasesButton = ({ onAdd, disabled }: AddReviewPhasesButton
             rows={10}
             disabled={submitting}
           />
-          {error && (
-            <Alert variant="warning" title="Could not add phases">
-              {error}
-            </Alert>
-          )}
+          {error && <Alert variant="warning">Could not add phases — {error}</Alert>}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
             <Button type="button" variant="ghost" onClick={handleClose} disabled={submitting}>
               Cancel

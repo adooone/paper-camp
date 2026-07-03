@@ -243,8 +243,8 @@ const GeneralSection = () => {
       </div>
       {config === undefined && <p>Loading…</p>}
       {config === null && (
-        <Alert variant="warning" title="No papercamp/config.json found">
-          Run <code>paper-camp init</code> in this directory first.
+        <Alert variant="warning">
+          No papercamp/config.json found — run <code>paper-camp init</code> in this directory first.
         </Alert>
       )}
       {config && (
@@ -425,11 +425,7 @@ const ConfigEditorSection = ({ fileName }: { fileName: string }) => {
 
   if (loading) return <p>Loading…</p>;
   if (content === null) {
-    return (
-      <Alert variant="warning" title="Could not load file">
-        {fileName} not found.
-      </Alert>
-    );
+    return <Alert variant="warning">Could not load file — {fileName} not found.</Alert>;
   }
 
   const scripts = fileName === 'package.json' ? parsePackageScripts(content) : null;
@@ -548,13 +544,10 @@ const EnvSection = () => {
   return (
     <div>
       <h2 style={{ margin: 0, marginBottom: space[4] }}>Environment Variables</h2>
-      {error && (
-        <Alert variant="warning" title="Could not save">
-          {error}
-        </Alert>
-      )}
+      {error && <Alert variant="warning">Could not save — {error}</Alert>}
       {missingKeys.length > 0 && (
-        <Alert variant="warning" title="Missing from .env">
+        <Card size="small" accent accentColor="amber">
+          <p style={{ margin: 0, fontWeight: 600 }}>Missing from .env</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: space[2], alignItems: 'center' }}>
             <span>Present in .env.example but not set:</span>
             {missingKeys.map((key) => (
@@ -568,7 +561,7 @@ const EnvSection = () => {
               </Button>
             ))}
           </div>
-        </Alert>
+        </Card>
       )}
       <Table
         data={rows}

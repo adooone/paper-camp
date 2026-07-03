@@ -3,7 +3,7 @@ import { PageTitle } from '@/app/components/page-title';
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
-import { Alert, Button, Stamp } from '@dendelion/paper-ui';
+import { Button, Card, Stamp } from '@dendelion/paper-ui';
 import { AuditAllButton } from './components/audit-all-button';
 import { BoardView } from './components/board-view';
 import { ListView } from './components/list-view';
@@ -54,9 +54,10 @@ export const PlansPage = () => {
     return (
       <div>
         <PageTitle>Plans</PageTitle>
-        <Alert variant="error" title="Couldn't load plans.md">
-          {plansError}
-        </Alert>
+        <Card size="small" accent accentColor="rose">
+          <p style={{ margin: 0, fontWeight: 600 }}>Couldn't load plans.md</p>
+          <p style={{ margin: 0, opacity: 0.75 }}>{plansError}</p>
+        </Card>
       </div>
     );
   }
@@ -150,15 +151,16 @@ export const PlansPage = () => {
       </div>
 
       {plans.warnings.length > 0 && (
-        <Alert variant="warning" title="Some entries couldn't be parsed">
-          <ul>
+        <Card size="small" accent accentColor="amber">
+          <p style={{ margin: 0, fontWeight: 600 }}>Some entries couldn't be parsed</p>
+          <ul style={{ margin: 0, paddingLeft: space[5] }}>
             {plans.warnings.map((w) => (
               <li key={w.title}>
                 {w.title}: {w.message}
               </li>
             ))}
           </ul>
-        </Alert>
+        </Card>
       )}
 
       {plans.entries.length === 0 && ideaEntries.length === 0 ? (

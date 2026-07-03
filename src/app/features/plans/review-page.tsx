@@ -1,7 +1,7 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
-import { Alert, Button } from '@dendelion/paper-ui';
+import { Button, Card } from '@dendelion/paper-ui';
 import { PlanCard } from './components/plan-card';
 import { PlanDetail } from './components/plan-detail';
 
@@ -28,9 +28,10 @@ export const ReviewPage = () => {
     return (
       <div>
         <PageTitle>Review</PageTitle>
-        <Alert variant="error" title="Couldn't load plans.md">
-          {plansError}
-        </Alert>
+        <Card size="small" accent accentColor="rose">
+          <p style={{ margin: 0, fontWeight: 600 }}>Couldn't load plans.md</p>
+          <p style={{ margin: 0, opacity: 0.75 }}>{plansError}</p>
+        </Card>
       </div>
     );
   }
