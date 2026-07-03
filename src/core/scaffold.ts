@@ -1,4 +1,4 @@
-import { access, mkdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { PaperCampConfig } from '../types/index';
 import { paperCampConfigSchema } from './schemas';
@@ -109,8 +109,12 @@ async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<void> {
   }
 
   // Only in an actual git repo, and only if no post-commit hook is already installed.
+  // A worktree/submodule checkout has `.git` as a FILE ("gitdir: …") rather than a
+  // directory, so mkdir(.git/hooks) under it would throw ENOTDIR — require a real
+  // directory and skip the native-hook scaffold otherwise.
   const gitDir = join(targetDir, '.git');
-  if (await exists(gitDir)) {
+  const gitDirStat = await stat(gitDir).catch(() => null);
+  if (gitDirStat?.isDirectory()) {
     const hooksDir = join(gitDir, 'hooks');
     const postCommitPath = join(hooksDir, 'post-commit');
     if (!(await exists(postCommitPath))) {

@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun \"$CLAUDE_PROJECT_DIR/src/cli/session-focus.ts\""
+            "command": "bun \"$CLAUDE_PROJECT_DIR/src/cli/index.ts\" session-focus"
           }
         ]
       }

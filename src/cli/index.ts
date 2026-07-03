@@ -501,8 +501,16 @@ program
     const chunks: Buffer[] = [];
     for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
     const raw = Buffer.concat(chunks).toString('utf-8');
-    const input = raw ? JSON.parse(raw) : {};
-    await logNewFile(root, input).catch(() => undefined);
+    // A malformed/truncated stdin payload makes JSON.parse throw synchronously —
+    // this opt-in hook must stay a silent no-op rather than surface an unhandled
+    // rejection, matching the .catch(() => undefined) around logNewFile below.
+    let input: unknown = {};
+    try {
+      input = raw ? JSON.parse(raw) : {};
+    } catch {
+      return;
+    }
+    await logNewFile(root, input as never).catch(() => undefined);
   });
 
 program.parseAsync(process.argv);

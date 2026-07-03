@@ -1,1 +1,1 @@
-bun "$(git rev-parse --show-toplevel)/src/cli/post-commit-log.ts"
+bun "$(git rev-parse --show-toplevel)/src/cli/index.ts" log-commit
