@@ -28,7 +28,7 @@
 | IDEA-24 | Sync to main before new plan | done |
 | IDEA-25 | Actualize about.md for per-file storage | done |
 | IDEA-26 | Plan reconcile pass and audit gating | done |
-| IDEA-27 | Content-hash freshness for batch audit | planned |
+| IDEA-27 | Content-hash freshness for batch audit | done |
 | IDEA-28 | Idea-file heading level (MD001) | done |
 | IDEA-29 | Run all phases with per-phase commits | done |
 | IDEA-30 | Claude Code native integration | planned |

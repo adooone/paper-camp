@@ -2,10 +2,10 @@
 id: FEAT-29
 title: Content-hash audit freshness
 kind: feat
-status: review
+status: done
 created: 2026-07-01
 idea: IDEA-27
-updated: 2026-07-02
+updated: 2026-07-03
 tags:
   - audit
   - freshness
