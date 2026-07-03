@@ -20,7 +20,7 @@ The v1 tool set ships read and write together — `list_plans`, `get_plan`, `upd
 ### Phases
 - [x] Add the MCP SDK and `paper-camp mcp` entry point
       Add the MCP SDK dependency and a new server entry module (e.g. `src/mcp/server.ts`) that instantiates an MCP server over a stdio transport. Wire a `paper-camp mcp` subcommand into the CLI dispatcher that boots this server against the current working directory's `papercamp/` project — reusing the same project-root resolution the CLI and dashboard already use, no new config.
-- [ ] Map the read tools onto core readers
+- [x] Map the read tools onto core readers
       Register `list_plans`, `get_plan`, `list_open_questions`, and `list_decisions` as MCP tools whose handlers call the existing `readAllPlanFiles`/`readPlansMerged`/`parsePlanFile` and the open-questions/decisions parsers. Define input/output JSON schemas that mirror the shapes the dashboard API returns so clients see the same data.
 - [ ] Map the write tools through the guarded core
       Register `update_phase`, `add_idea`, `draft_plan`, `append_progress`, and `resolve_open_question`, each routed through the `src/core` serializers (`formatPlanFile`, `assignPlanId`, `archivePlanFile`) exactly as the dashboard's route handlers in `src/app/server/routes/plans.ts`/`ideas.ts`/`docs.ts` do — never raw file writes — so id allocation, archive-on-done, and index regeneration (`regenerateIndexes` in `src/app/server/helpers.ts`) hold identically. For `append_progress`, note the append logic (`prependProgressItem`) currently lives in `src/app/server/agent-hooks.ts`, not core — move it into `src/core/serializer.ts` next to `formatProgressEntry` so the dashboard hooks and this server share one implementation instead of duplicating the grammar.
