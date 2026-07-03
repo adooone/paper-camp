@@ -2,8 +2,10 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import type { GitManager } from '../app/server/git';
 import {
   campFile,
+  checkBranchConflictForPlan,
   planFileInput,
   readMaybe,
   regenerateIndexes,
@@ -120,10 +122,11 @@ export function registerReadTools(server: McpServer, root: string): void {
  * Registers the v1 write tools, each routed through the same `src/core` serializers
  * the dashboard's route handlers (`src/app/server/routes/plans.ts`/`ideas.ts`/`docs.ts`)
  * call — never a raw file write — so id allocation, archive-on-done, and index
- * regeneration hold identically. The branch-conflict guard the dashboard enforces on
- * plan-advancing writes lands in a later phase; these handlers don't call it yet.
+ * regeneration hold identically. `draft_plan` and `update_phase` also run the same
+ * `checkBranchConflictForPlan` guard those routes enforce, so an MCP client can't
+ * start or advance a plan a dashboard user would be blocked from.
  */
-export function registerWriteTools(server: McpServer, root: string): void {
+export function registerWriteTools(server: McpServer, root: string, git: GitManager): void {
   server.registerTool(
     'add_idea',
     {
@@ -169,6 +172,8 @@ export function registerWriteTools(server: McpServer, root: string): void {
     },
     async ({ title, content, kind }) => {
       if (!title.trim()) throw new Error('title is required');
+      const conflict = await checkBranchConflictForPlan(root, git);
+      if (conflict) throw new Error(conflict);
       const planKind = kind ?? 'feat';
       const configPath = join(root, 'papercamp', 'config.json');
       const id = await assignPlanId(configPath, planKind);
@@ -210,6 +215,9 @@ export function registerWriteTools(server: McpServer, root: string): void {
       const { entries } = await readAllPlanFiles(plansDir);
       const target = entries.find((e) => e.id === id);
       if (!target?.id) throw new Error(`plan "${id}" not found`);
+
+      const conflict = await checkBranchConflictForPlan(root, git, target.id);
+      if (conflict) throw new Error(conflict);
 
       const targetFile = join(plansDir, `${target.id}.md`);
       const raw = await readMaybe(targetFile);
