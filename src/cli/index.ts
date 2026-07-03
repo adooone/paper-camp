@@ -19,6 +19,7 @@ import {
   formatPlansIndex,
   todayDateString,
 } from '../core/serializer';
+import { startMcpServer } from '../mcp/server';
 import {
   type AgentRunOptions,
   DEFAULT_AGENTS,
@@ -461,6 +462,18 @@ program
       }
     }
     console.log(bar);
+  });
+
+program
+  .command('mcp')
+  .description('Run the Paper Camp MCP server (stdio) for the current project')
+  .action(async () => {
+    try {
+      await startMcpServer(process.cwd());
+    } catch (error) {
+      console.error(`Failed to start MCP server: ${(error as Error).message}`);
+      process.exit(1);
+    }
   });
 
 // The two commands below are internal — invoked by the scaffolded

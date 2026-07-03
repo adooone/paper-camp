@@ -163,7 +163,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
-  const [consistencyExpanded, setConsistencyExpanded] = useState(false);
+  const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
   const [commitExpanded, setCommitExpanded] = useState(false);
   const [agentLogExpanded, setAgentLogExpanded] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
@@ -232,10 +232,18 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
     return 'pass';
   }, [statusData]);
   const testStatus: CheckStatus = statusData?.test?.status ?? 'stale';
-  const anyChecksRunning = qualityStatus === 'running' || testStatus === 'running';
-  const hasConsistencyIssues = consistency.length > 0;
+  // Codebase consistency (knip + dependency-cruiser) — mirrors the CI "Consistency" job.
+  const consistencyStatus: CheckStatus = statusData?.consistency?.status ?? 'stale';
+  const anyChecksRunning =
+    qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
+  // Plan/decision *document* consistency (dangling refs, blocked plans) — a separate
+  // concern from the code-consistency check, surfaced in its own "Docs" stamp.
+  const hasDocIssues = consistency.length > 0;
   const anyChecksFailing =
-    qualityStatus === 'fail' || testStatus === 'fail' || hasConsistencyIssues;
+    qualityStatus === 'fail' ||
+    testStatus === 'fail' ||
+    consistencyStatus === 'fail' ||
+    hasDocIssues;
   const agentActive =
     agentStatus?.status === 'running' ||
     agentStatus?.status === 'starting' ||
@@ -716,10 +724,53 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                   stale: undefined,
                 };
                 const anyRunning = anyChecksRunning;
-                const hasIssues = hasConsistencyIssues;
+                const hasIssues = hasDocIssues;
 
                 const qualityFixPrompt = `Fix the failing lint/format checks in this repo.\n\nLint output:\n${statusData?.lint?.output || '(none)'}\n\nFormat output:\n${statusData?.format?.output || '(none)'}`;
                 const testFixPrompt = `Fix the failing tests in this repo. Output from the last test run:\n\n${statusData?.test?.output || '(no output captured)'}`;
+
+                // One shape for the three check-run stamps (Quality / Tests / Consistency),
+                // each a click-to-run button colored by its check status. Extracted per the
+                // repo's "3 copies = extract" rule; the Docs stamp below is a different shape
+                // (a findings toggle) and stays separate.
+                const checkButton = (opts: {
+                  label: string;
+                  status: CheckStatus;
+                  title: string;
+                  onClick: () => void;
+                }) => (
+                  <button
+                    type="button"
+                    className="stack-check-btn"
+                    title={opts.title}
+                    onClick={() => {
+                      if (!anyRunning) opts.onClick();
+                    }}
+                    disabled={anyRunning}
+                    style={{
+                      cursor: anyRunning ? 'not-allowed' : 'pointer',
+                      opacity: anyRunning && opts.status !== 'running' ? 0.5 : 1,
+                      display: 'inline-flex',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                    }}
+                  >
+                    <Stamp
+                      variant="chalkboard"
+                      size="small"
+                      fillColor={statusFill[opts.status]}
+                      textColor={statusText[opts.status]}
+                    >
+                      {opts.label}
+                      <span
+                        style={{ visibility: opts.status === 'running' ? 'visible' : 'hidden' }}
+                      >
+                        …
+                      </span>
+                    </Stamp>
+                  </button>
+                );
 
                 return (
                   <div
@@ -739,82 +790,38 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         justifyContent: 'center',
                       }}
                     >
-                      <button
-                        type="button"
-                        className="stack-check-btn"
-                        title="Run lint and format checks"
-                        onClick={() => {
-                          if (!anyRunning) {
-                            runCheck('lint');
-                            runCheck('format');
-                          }
-                        }}
-                        disabled={anyRunning}
-                        style={{
-                          cursor: anyRunning ? 'not-allowed' : 'pointer',
-                          opacity: anyRunning && qualityStatus !== 'running' ? 0.5 : 1,
-                          display: 'inline-flex',
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                        }}
-                      >
-                        <Stamp
-                          variant="chalkboard"
-                          size="small"
-                          fillColor={statusFill[qualityStatus]}
-                          textColor={statusText[qualityStatus]}
-                        >
-                          Quality
-                          <span
-                            style={{
-                              visibility: qualityStatus === 'running' ? 'visible' : 'hidden',
-                            }}
-                          >
-                            …
-                          </span>
-                        </Stamp>
-                      </button>
-                      <button
-                        type="button"
-                        className="stack-check-btn"
-                        title="Run tests"
-                        onClick={() => {
-                          if (!anyRunning) runCheck('test');
-                        }}
-                        disabled={anyRunning}
-                        style={{
-                          cursor: anyRunning ? 'not-allowed' : 'pointer',
-                          opacity: anyRunning && testStatus !== 'running' ? 0.5 : 1,
-                          display: 'inline-flex',
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                        }}
-                      >
-                        <Stamp
-                          variant="chalkboard"
-                          size="small"
-                          fillColor={statusFill[testStatus]}
-                          textColor={statusText[testStatus]}
-                        >
-                          Tests
-                          <span
-                            style={{ visibility: testStatus === 'running' ? 'visible' : 'hidden' }}
-                          >
-                            …
-                          </span>
-                        </Stamp>
-                      </button>
+                      {checkButton({
+                        label: 'Quality',
+                        status: qualityStatus,
+                        title: 'Run lint and format checks',
+                        onClick: () => {
+                          runCheck('lint');
+                          runCheck('format');
+                        },
+                      })}
+                      {checkButton({
+                        label: 'Tests',
+                        status: testStatus,
+                        title: 'Run tests',
+                        onClick: () => runCheck('test'),
+                      })}
+                      {checkButton({
+                        label: 'Consistency',
+                        status: consistencyStatus,
+                        title: 'Run codebase consistency (knip + dependency-cruiser)',
+                        onClick: () => runCheck('consistency'),
+                      })}
                       <div>
                         <button
                           type="button"
                           className={hasIssues ? 'stack-check-btn' : undefined}
                           title={
-                            hasIssues ? 'Show consistency findings' : 'No consistency findings'
+                            hasIssues
+                              ? 'Show plan/decision doc findings'
+                              : 'No plan/decision doc findings'
                           }
                           onClick={() => {
-                            if (hasIssues) setConsistencyExpanded((prev) => !prev);
+                            if (hasIssues) setDocIssuesExpanded((prev) => !prev);
                           }}
                           style={{
                             cursor: hasIssues ? 'pointer' : 'default',
@@ -830,10 +837,10 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                             fillColor={hasIssues ? '#5a2d2d' : '#2d5a3b'}
                             textColor={hasIssues ? '#d6a0a0' : '#b5d6b5'}
                           >
-                            Consistency
+                            Docs
                           </Stamp>
                         </button>
-                        {consistencyExpanded && hasIssues && (
+                        {docIssuesExpanded && hasIssues && (
                           <div
                             style={{
                               marginTop: space[2],
@@ -923,7 +930,28 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                             />
                           </span>
                         );
-                      } else if (qualityStatus === 'pass' && testStatus === 'pass') {
+                      } else if (consistencyStatus === 'fail') {
+                        primaryLine = (
+                          <span style={{ color: deskTextMuted }}>
+                            Codebase consistency failed (knip / dependency-cruiser).
+                          </span>
+                        );
+                        secondaryLine = (
+                          <span style={{ color: deskTextMuted, opacity: 0.8 }}>
+                            Run pnpm run consistency for details.
+                          </span>
+                        );
+                      } else if (hasDocIssues) {
+                        primaryLine = (
+                          <span style={{ color: deskTextMuted }}>
+                            Plan/decision doc issues — see the Docs stamp.
+                          </span>
+                        );
+                      } else if (
+                        qualityStatus === 'pass' &&
+                        testStatus === 'pass' &&
+                        consistencyStatus === 'pass'
+                      ) {
                         primaryLine = <span style={{ color: '#b5d6b5' }}>All checks passing.</span>;
                       } else {
                         primaryLine = (
