@@ -7,6 +7,36 @@ import type { PhaseItem, PlanEntry } from '../../types/index';
 import type { GitManager } from './git';
 import { campFile, fileExists, planFileInput, readMaybe, writePlanFile } from './helpers';
 
+// Valid commit scopes — keep in sync with .commitlintrc.json's `scope-enum`.
+// The agent derives its commit scope from a plan's tags, but tags are free-form
+// and may not be valid scopes (e.g. FEAT-29's first tag was `freshness`). Picking
+// the first tag that IS a scope — else a safe default — keeps agent-authored
+// commits passing the Consistency check instead of red-lining CI.
+const COMMIT_SCOPES = new Set([
+  'core',
+  'cli',
+  'app',
+  'server',
+  'agent',
+  'audit',
+  'plans',
+  'ideas',
+  'docs',
+  'settings',
+  'stack',
+  'ui',
+  'ci',
+  'config',
+  'deps',
+  'repo',
+  'release',
+  'main',
+]);
+
+function resolveCommitScope(plan: Pick<PlanEntry, 'tags'>): string {
+  return plan.tags?.find((tag) => COMMIT_SCOPES.has(tag)) ?? 'plans';
+}
+
 /**
  * Callbacks the agent manager invokes as tasks progress: stamping audit dates,
  * committing per-phase work, and handing a finished run over to review. Kept out of
@@ -62,7 +92,7 @@ export function createAgentHooks(root: string, git: GitManager) {
   }
 
   async function commitPhase(plan: PlanEntry, phase: PhaseItem): Promise<void> {
-    const area = plan.tags?.[0] ?? 'plans';
+    const area = resolveCommitScope(plan);
     const title = `${plan.kind ?? 'feat'}(${area}): ${phase.text}`;
     const refs = plan.id ? `Refs: ${plan.id}` : undefined;
     await git.stageAll();
@@ -87,7 +117,7 @@ export function createAgentHooks(root: string, git: GitManager) {
         updated: todayDateString(),
       }),
     );
-    const area = plan.tags?.[0] ?? 'plans';
+    const area = resolveCommitScope(plan);
     const refs = plan.id ? `Refs: ${plan.id}` : undefined;
     await git.stageAll();
     await git.commit([], `${entry.kind ?? 'feat'}(${area}): mark ${plan.id} review`, refs);

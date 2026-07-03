@@ -12,6 +12,7 @@
         "app",
         "server",
         "agent",
+        "audit",
         "plans",
         "ideas",
         "docs",
