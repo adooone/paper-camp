@@ -58,3 +58,12 @@ export const parseWarningSchema = z.object({
   title: z.string(),
   message: z.string(),
 });
+
+export const okResultSchema = z.object({
+  ok: z.literal(true),
+});
+
+export const idResultSchema = z.object({
+  ok: z.literal(true),
+  id: z.string(),
+});
