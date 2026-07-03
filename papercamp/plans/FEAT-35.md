@@ -2,7 +2,7 @@
 id: FEAT-35
 title: Adopt paper-ui 0.5.0 components
 kind: feat
-status: in-progress
+status: review
 created: 2026-07-03
 idea: IDEA-33
 updated: 2026-07-03
@@ -26,5 +26,5 @@ Beyond the direct swaps, a few adoptions are opportunistic — take them only wh
       Replace `components/copy-prompt-button.tsx` with CopyButton, and the hand-rolled `borderBottom` row dividers in `stack-panel.tsx` (×3) and `settings-page.tsx` (×5) with Divider, dropping the now-unused `rowDivider` token.
 - [x] Evaluate the opportunistic adoptions
       Assess Tabs for `ViewToggle`, Accordion for the `ideas-board.tsx` / `plan-detail.tsx` expand toggles, Menu for `plans-sidebar.tsx` actions, and Switch/Radio for the boolean/small-exclusive agent-config `Select`s. Adopt each only where it removes custom code with no rendering regression; record what was deferred and why so the idea's backlog stays honest.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
       `tsc --noEmit` plus a browser eyeball of every touched surface: toasts fire on action failure, loaders and skeletons render, tooltips open, copy still copies, dividers match the old row separation. These swaps change rendering, not just types, so the visual half is the real gate.
