@@ -32,6 +32,7 @@
     "test:watch": "vitest",
     "knip": "knip",
     "depcruise": "depcruise src --config .dependency-cruiser.cjs",
+    "consistency": "knip --include files,dependencies && depcruise src --config .dependency-cruiser.cjs",
     "prepare": "husky"
   },
   "keywords": [

@@ -163,7 +163,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
-  const [consistencyExpanded, setConsistencyExpanded] = useState(false);
+  const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
   const [commitExpanded, setCommitExpanded] = useState(false);
   const [agentLogExpanded, setAgentLogExpanded] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
@@ -232,10 +232,18 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
     return 'pass';
   }, [statusData]);
   const testStatus: CheckStatus = statusData?.test?.status ?? 'stale';
-  const anyChecksRunning = qualityStatus === 'running' || testStatus === 'running';
-  const hasConsistencyIssues = consistency.length > 0;
+  // Codebase consistency (knip + dependency-cruiser) — mirrors the CI "Consistency" job.
+  const consistencyStatus: CheckStatus = statusData?.consistency?.status ?? 'stale';
+  const anyChecksRunning =
+    qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
+  // Plan/decision *document* consistency (dangling refs, blocked plans) — a separate
+  // concern from the code-consistency check, surfaced in its own "Docs" stamp.
+  const hasDocIssues = consistency.length > 0;
   const anyChecksFailing =
-    qualityStatus === 'fail' || testStatus === 'fail' || hasConsistencyIssues;
+    qualityStatus === 'fail' ||
+    testStatus === 'fail' ||
+    consistencyStatus === 'fail' ||
+    hasDocIssues;
   const agentActive =
     agentStatus?.status === 'running' ||
     agentStatus?.status === 'starting' ||
@@ -716,7 +724,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                   stale: undefined,
                 };
                 const anyRunning = anyChecksRunning;
-                const hasIssues = hasConsistencyIssues;
+                const hasIssues = hasDocIssues;
 
                 const qualityFixPrompt = `Fix the failing lint/format checks in this repo.\n\nLint output:\n${statusData?.lint?.output || '(none)'}\n\nFormat output:\n${statusData?.format?.output || '(none)'}`;
                 const testFixPrompt = `Fix the failing tests in this repo. Output from the last test run:\n\n${statusData?.test?.output || '(no output captured)'}`;
@@ -806,15 +814,50 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                           </span>
                         </Stamp>
                       </button>
+                      <button
+                        type="button"
+                        className="stack-check-btn"
+                        title="Run codebase consistency (knip + dependency-cruiser)"
+                        onClick={() => {
+                          if (!anyRunning) runCheck('consistency');
+                        }}
+                        disabled={anyRunning}
+                        style={{
+                          cursor: anyRunning ? 'not-allowed' : 'pointer',
+                          opacity: anyRunning && consistencyStatus !== 'running' ? 0.5 : 1,
+                          display: 'inline-flex',
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                        }}
+                      >
+                        <Stamp
+                          variant="chalkboard"
+                          size="small"
+                          fillColor={statusFill[consistencyStatus]}
+                          textColor={statusText[consistencyStatus]}
+                        >
+                          Consistency
+                          <span
+                            style={{
+                              visibility: consistencyStatus === 'running' ? 'visible' : 'hidden',
+                            }}
+                          >
+                            …
+                          </span>
+                        </Stamp>
+                      </button>
                       <div>
                         <button
                           type="button"
                           className={hasIssues ? 'stack-check-btn' : undefined}
                           title={
-                            hasIssues ? 'Show consistency findings' : 'No consistency findings'
+                            hasIssues
+                              ? 'Show plan/decision doc findings'
+                              : 'No plan/decision doc findings'
                           }
                           onClick={() => {
-                            if (hasIssues) setConsistencyExpanded((prev) => !prev);
+                            if (hasIssues) setDocIssuesExpanded((prev) => !prev);
                           }}
                           style={{
                             cursor: hasIssues ? 'pointer' : 'default',
@@ -830,10 +873,10 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                             fillColor={hasIssues ? '#5a2d2d' : '#2d5a3b'}
                             textColor={hasIssues ? '#d6a0a0' : '#b5d6b5'}
                           >
-                            Consistency
+                            Docs
                           </Stamp>
                         </button>
-                        {consistencyExpanded && hasIssues && (
+                        {docIssuesExpanded && hasIssues && (
                           <div
                             style={{
                               marginTop: space[2],

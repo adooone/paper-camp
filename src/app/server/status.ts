@@ -8,12 +8,15 @@ interface StatusSnapshot {
   lint: CheckResult;
   format: CheckResult;
   test: CheckResult;
+  consistency: CheckResult;
 }
 
 const CHECK_COMMANDS: Record<CheckName, string> = {
   lint: 'npx biome lint .',
   format: 'npx biome format .',
   test: 'npx vitest run',
+  // Codebase consistency — mirrors the CI "Consistency" job (dead code + architecture).
+  consistency: 'pnpm run consistency',
 };
 
 // Auto-fix pass (format + safe lint) shared by the "Fix" action and the run-all
@@ -28,6 +31,7 @@ export function createStatusManager(root: string) {
     lint: { status: 'stale', lastRun: null, output: '' },
     format: { status: 'stale', lastRun: null, output: '' },
     test: { status: 'stale', lastRun: null, output: '' },
+    consistency: { status: 'stale', lastRun: null, output: '' },
   };
   const running = new Set<CheckName>();
   const queued = new Set<CheckName>();
@@ -146,14 +150,16 @@ export function createStatusManager(root: string) {
   function runChecksAndWait(): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       const runChecks = () => {
+        // Gate stays lint/format/test — the consistency check (knip/depcruise) is a
+        // manual/dashboard check, not part of the per-phase run-all gate.
         const names: CheckName[] = ['lint', 'format', 'test'];
-        const passed: Record<CheckName, boolean | null> = { lint: null, format: null, test: null };
+        const passed = new Map<CheckName, boolean>();
         let pending = names.length;
 
         function onDone(name: CheckName, ok: boolean) {
-          passed[name] = ok;
+          passed.set(name, ok);
           pending--;
-          if (pending === 0) resolve(names.every((n) => passed[n] === true));
+          if (pending === 0) resolve(names.every((n) => passed.get(n) === true));
         }
 
         for (const name of names) {
@@ -175,6 +181,7 @@ export function createStatusManager(root: string) {
         lint: { ...snapshot.lint },
         format: { ...snapshot.format },
         test: { ...snapshot.test },
+        consistency: { ...snapshot.consistency },
       };
     },
     runCheck,
@@ -182,7 +189,7 @@ export function createStatusManager(root: string) {
     runQualityFix,
     subscribe(res: ServerResponse) {
       clients.add(res);
-      for (const name of ['lint', 'format', 'test'] as CheckName[]) {
+      for (const name of ['lint', 'format', 'test', 'consistency'] as CheckName[]) {
         const result = snapshot[name];
         if (result.status !== 'stale') {
           res.write(

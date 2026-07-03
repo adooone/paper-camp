@@ -18,9 +18,13 @@ module.exports = {
     {
       name: 'no-unresolvable',
       severity: 'error',
-      comment: 'An import that cannot be resolved is almost always a bug or a bad path.',
+      comment:
+        'A relative import that cannot be resolved is almost always a bad path. ' +
+        'Scoped to relative imports (pathNot ^[^.]) — resolving third-party packages ' +
+        "with exports-map/wildcard subpaths (e.g. the MCP SDK's `./server/*`) is " +
+        "dependency-cruiser's weak spot and is already covered by the type-checker.",
       from: {},
-      to: { couldNotResolve: true },
+      to: { couldNotResolve: true, pathNot: '^[^.]' },
     },
     {
       name: 'core-types-independent-of-app-and-cli',

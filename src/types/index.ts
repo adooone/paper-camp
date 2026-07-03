@@ -197,7 +197,7 @@ export interface CheckResult {
   output: string;
 }
 
-export type CheckName = 'lint' | 'format' | 'test';
+export type CheckName = 'lint' | 'format' | 'test' | 'consistency';
 
 export interface GitStatusEntry {
   path: string;

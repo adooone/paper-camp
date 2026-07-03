@@ -12,14 +12,14 @@ export function statusRoutes({ activity, agent, git, status }: RouteContext): Ro
       },
     },
 
-    // POST /api/status/check?name=lint|format|test — trigger a one-off check run
+    // POST /api/status/check?name=lint|format|test|consistency — trigger a one-off check run
     {
       method: 'POST',
       path: '/api/status/check',
       handle: (req, res) => {
         const name = requestUrl(req).searchParams.get('name');
-        if (name !== 'lint' && name !== 'format' && name !== 'test') {
-          sendJson(res, 400, { error: 'name must be lint, format, or test' });
+        if (name !== 'lint' && name !== 'format' && name !== 'test' && name !== 'consistency') {
+          sendJson(res, 400, { error: 'name must be lint, format, test, or consistency' });
           return;
         }
         status.runCheck(name);

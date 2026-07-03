@@ -4,6 +4,7 @@ export interface StatusState {
   lint: CheckResult;
   format: CheckResult;
   test: CheckResult;
+  consistency: CheckResult;
 }
 
 export const fetchStatus = async (): Promise<StatusState> => {
