@@ -2,7 +2,7 @@
 id: FEAT-35
 title: Adopt paper-ui 0.5.0 components
 kind: feat
-status: review
+status: done
 created: 2026-07-03
 idea: IDEA-33
 updated: 2026-07-03
