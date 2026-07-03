@@ -2,10 +2,10 @@
 id: FEAT-32
 title: Paper Camp MCP server
 kind: feat
-status: planned
+status: in-progress
 created: 2026-07-01
 idea: IDEA-31
-updated: 2026-07-01
+updated: 2026-07-03
 tags:
   - mcp
   - server
@@ -18,7 +18,7 @@ Expose Paper Camp as a Model Context Protocol server so any MCP client — Claud
 The v1 tool set ships read and write together — `list_plans`, `get_plan`, `update_phase`, `add_idea`, `draft_plan`, `append_progress`, `list_open_questions`, `resolve_open_question`, `list_decisions` — with no read-only-first phasing, because the writes are the point: an assistant that can only read can't keep the project current. Write safety is settled and non-negotiable: every write goes through the `src/core` serializers (never raw edits) so id allocation, archive-on-done, and index regeneration all still hold, and the server enforces the same workflow guards the dashboard does — writes that start or advance a plan run `checkBranchConflictForPlan` server-side so an MCP client can't bypass the "one active plan per branch" rule. Distribution is a `paper-camp mcp` subcommand that runs a stdio server, reusing the installed package so registering it in a client is one config line. This is the better long-term foundation than the Claude Code native surfaces in [[FEAT-31]] — that skill can read through this server rather than reimplementing file access.
 
 ### Phases
-- [ ] Add the MCP SDK and `paper-camp mcp` entry point
+- [x] Add the MCP SDK and `paper-camp mcp` entry point
       Add the MCP SDK dependency and a new server entry module (e.g. `src/mcp/server.ts`) that instantiates an MCP server over a stdio transport. Wire a `paper-camp mcp` subcommand into the CLI dispatcher that boots this server against the current working directory's `papercamp/` project — reusing the same project-root resolution the CLI and dashboard already use, no new config.
 - [ ] Map the read tools onto core readers
       Register `list_plans`, `get_plan`, `list_open_questions`, and `list_decisions` as MCP tools whose handlers call the existing `readAllPlanFiles`/`readPlansMerged`/`parsePlanFile` and the open-questions/decisions parsers. Define input/output JSON schemas that mirror the shapes the dashboard API returns so clients see the same data.
