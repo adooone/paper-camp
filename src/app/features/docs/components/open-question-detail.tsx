@@ -83,7 +83,7 @@ export const OpenQuestionDetail = () => {
           </span>
         )}
         {question.status === 'open' && (
-          <Button variant="chalkboard" onClick={handleOpenModal}>
+          <Button surface="chalkboard" onClick={handleOpenModal}>
             Resolve
           </Button>
         )}

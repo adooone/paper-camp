@@ -57,7 +57,7 @@ export const CopyPromptButton = ({
           <CopyIcon size={16} />
         )
       }
-      variant="chalkboard"
+      surface="chalkboard"
       size="small"
       label={status === 'copied' ? 'Copied' : status === 'failed' ? 'Copy failed' : label}
       onClick={handleCopy}

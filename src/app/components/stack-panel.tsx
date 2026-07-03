@@ -442,7 +442,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                   <span style={{ fontSize: fontSize['2xs'] }}>S</span>
                 )
               }
-              variant="chalkboard"
+              surface="chalkboard"
               size="small"
               label={
                 agentActive
@@ -514,7 +514,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
           </span>
           <IconButton
             icon={<span style={{ fontSize: fontSize.sm, lineHeight: 1 }}>&times;</span>}
-            variant="chalkboard"
+            surface="chalkboard"
             size="small"
             label="Close stack panel"
             onClick={onToggle}
@@ -540,7 +540,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             }}
           >
             <div style={sectionLabelStyle}>Agent</div>
-            <Card variant="chalkboard" size="small" className="stack-card-fill">
+            <Card surface="chalkboard" size="small" className="stack-card-fill">
               {agentStatus ? (
                 <div
                   style={{
@@ -612,7 +612,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         };
                         return (
                           <Stamp
-                            variant="chalkboard"
+                            surface="chalkboard"
                             size="small"
                             fillColor={statusFill[agentStatus.status]}
                             textColor={statusText[agentStatus.status]}
@@ -709,7 +709,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             }}
           >
             <div style={sectionLabelStyle}>Status</div>
-            <Card variant="chalkboard" size="small" className="stack-card-fill">
+            <Card surface="chalkboard" size="small" className="stack-card-fill">
               {(() => {
                 const statusFill: Record<CheckStatus, string> = {
                   pass: '#2d5a3b',
@@ -757,7 +757,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                     }}
                   >
                     <Stamp
-                      variant="chalkboard"
+                      surface="chalkboard"
                       size="small"
                       fillColor={statusFill[opts.status]}
                       textColor={statusText[opts.status]}
@@ -832,7 +832,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                           }}
                         >
                           <Stamp
-                            variant="chalkboard"
+                            surface="chalkboard"
                             size="small"
                             fillColor={hasIssues ? '#5a2d2d' : '#2d5a3b'}
                             textColor={hasIssues ? '#d6a0a0' : '#b5d6b5'}
@@ -998,12 +998,12 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
             >
               Commit
               {gitBranch && (
-                <Stamp variant="chalkboard" size="small">
+                <Stamp surface="chalkboard" size="small">
                   {gitBranch}
                 </Stamp>
               )}
             </div>
-            <Card variant="chalkboard" size="small" className="stack-card-fill">
+            <Card surface="chalkboard" size="small" className="stack-card-fill">
               {gitStatus && gitStatus.length > 0 ? (
                 <>
                   <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
@@ -1072,7 +1072,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                   >
                     {suggestError && (
                       <Alert
-                        variant="chalkboard"
+                        surface="chalkboard"
                         dismissible
                         onDismiss={() => setSuggestError(null)}
                       >
@@ -1082,7 +1082,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                     <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
                       <div style={{ flex: 1 }}>
                         <Input
-                          variant="chalkboard"
+                          surface="chalkboard"
                           size="small"
                           placeholder="Commit title"
                           value={commitTitle}
@@ -1091,7 +1091,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       </div>
                       <IconButton
                         icon={<WandIcon size={16} />}
-                        variant="chalkboard"
+                        surface="chalkboard"
                         size="small"
                         label="Suggest title and message from the diff"
                         disabled={selectedFiles.size === 0 || suggesting}
@@ -1100,7 +1100,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       />
                     </div>
                     <Textarea
-                      variant="chalkboard"
+                      surface="chalkboard"
                       size="small"
                       placeholder="Commit message (optional)"
                       value={commitMessage}
@@ -1109,7 +1109,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                     />
                     {commitError && (
                       <Alert
-                        variant="chalkboard"
+                        surface="chalkboard"
                         dismissible
                         onDismiss={() => setCommitError(null)}
                       >
@@ -1117,7 +1117,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       </Alert>
                     )}
                     <Button
-                      variant="chalkboard"
+                      surface="chalkboard"
                       size="small"
                       fullWidth
                       disabled={selectedFiles.size === 0 || !commitTitle.trim() || committing}
@@ -1147,7 +1147,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       </p>
                       {pushError && (
                         <Alert
-                          variant="chalkboard"
+                          surface="chalkboard"
                           dismissible
                           onDismiss={() => setPushError(null)}
                         >
@@ -1155,7 +1155,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         </Alert>
                       )}
                       <Button
-                        variant="chalkboard"
+                        surface="chalkboard"
                         size="small"
                         icon={<PushIcon size={14} />}
                         disabled={pushing}
@@ -1173,7 +1173,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                       </p>
                       {syncError && (
                         <Alert
-                          variant="chalkboard"
+                          surface="chalkboard"
                           dismissible
                           onDismiss={() => setSyncError(null)}
                         >
@@ -1181,7 +1181,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         </Alert>
                       )}
                       <Button
-                        variant="chalkboard"
+                        surface="chalkboard"
                         size="small"
                         icon={<MergeIcon size={14} />}
                         disabled={syncing || gitBranchHygiene === 'clean-on-main'}
