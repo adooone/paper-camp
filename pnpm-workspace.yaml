@@ -1,0 +1,2 @@
+overrides:
+  '@dendelion/paper-ui': link:../paper-ui
