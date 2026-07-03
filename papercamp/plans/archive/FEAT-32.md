@@ -2,7 +2,7 @@
 id: FEAT-32
 title: Paper Camp MCP server
 kind: feat
-status: review
+status: done
 created: 2026-07-01
 idea: IDEA-31
 updated: 2026-07-03

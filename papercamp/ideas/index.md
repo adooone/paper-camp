@@ -32,7 +32,7 @@
 | IDEA-28 | Idea-file heading level (MD001) | done |
 | IDEA-29 | Run all phases with per-phase commits | done |
 | IDEA-30 | Claude Code native integration | planned |
-| IDEA-31 | Paper Camp as an MCP server | planned |
+| IDEA-31 | Paper Camp as an MCP server | done |
 | IDEA-32 | Migrate to paper-ui 0.5.0 | planned |
 | IDEA-33 | Adopt paper-ui 0.5.0 components | planned |
 | IDEA-34 | Responsive layout and Stack panel redesign | done |
