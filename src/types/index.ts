@@ -185,6 +185,8 @@ export interface PaperCampConfig {
   nextId?: Record<PlanKind, number>;
   port?: number;
   defaultAgents?: DefaultAgentsMap;
+  /** Off by default. When true, the PostToolUse hook logs new-file creations to progress.md. */
+  autoLogNewFiles?: boolean;
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';

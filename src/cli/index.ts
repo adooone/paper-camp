@@ -27,6 +27,8 @@ import {
   coerceAgentConfig,
 } from '../types/index';
 import { startDevServer } from './dev-server';
+import { logNewFile } from './post-tool-use-log';
+import { buildSessionFocus } from './session-focus';
 
 async function exists(path: string): Promise<boolean> {
   try {
@@ -127,6 +129,8 @@ program
       console.log('  papercamp/ideas/          (per-file idea entries)');
       console.log('  papercamp/ideas/index.md');
       console.log('  papercamp/progress.md, decisions.md, open-questions.md');
+      console.log('  .claude/skills/paper-camp/SKILL.md');
+      console.log('  .claude/settings.json     (SessionStart + PostToolUse hooks)');
     } catch (error) {
       if (error instanceof AlreadyInitializedError) {
         console.error(error.message);
@@ -457,6 +461,47 @@ program
       }
     }
     console.log(bar);
+  });
+
+// The two commands below are internal — invoked by the scaffolded
+// `.claude/settings.json` hooks, not by users.
+program
+  .command('session-focus')
+  .description(
+    'Print a SessionStart focus block for the current project (used by Claude Code hooks)',
+  )
+  .action(async () => {
+    const root = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+    const context = await buildSessionFocus(root).catch(() => null);
+    if (!context) return;
+    console.log(
+      JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: 'SessionStart',
+          additionalContext: context,
+        },
+      }),
+    );
+  });
+
+program
+  .command('post-tool-use-log')
+  .description('Log a new file created by a Write tool call (used by Claude Code hooks)')
+  .action(async () => {
+    const root = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+    const chunks: Buffer[] = [];
+    for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
+    const raw = Buffer.concat(chunks).toString('utf-8');
+    // A malformed/truncated stdin payload makes JSON.parse throw synchronously —
+    // this opt-in hook must stay a silent no-op rather than surface an unhandled
+    // rejection, matching the .catch(() => undefined) around logNewFile below.
+    let input: unknown = {};
+    try {
+      input = raw ? JSON.parse(raw) : {};
+    } catch {
+      return;
+    }
+    await logNewFile(root, input as never).catch(() => undefined);
   });
 
 program.parseAsync(process.argv);

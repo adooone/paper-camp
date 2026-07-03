@@ -136,6 +136,34 @@ export function formatProgressEntry(date: string, items: string[]): string {
   return [`## ${date}`, ...items.map((item) => `- ${item}`)].join('\n');
 }
 
+/**
+ * Prepends a single bullet under today's `## YYYY-MM-DD` heading at the top of a
+ * progress.md file, creating the heading if today's isn't already there (newest
+ * day stays first). Shared by the agent's progress hook and the PostToolUse
+ * new-file logger so both write the same grammar.
+ */
+export async function prependProgressItem(progressPath: string, item: string): Promise<void> {
+  const heading = `## ${todayDateString()}`;
+  let raw = '';
+  try {
+    raw = await readFile(progressPath, 'utf-8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+  await mkdir(dirname(progressPath), { recursive: true });
+  if (raw.startsWith(`${heading}\n`)) {
+    await writeFile(
+      progressPath,
+      `${heading}\n- ${item}\n${raw.slice(heading.length + 1)}`,
+      'utf-8',
+    );
+  } else {
+    const trimmed = raw.trimEnd();
+    const next = trimmed ? `${heading}\n- ${item}\n\n${trimmed}\n` : `${heading}\n- ${item}\n`;
+    await writeFile(progressPath, next, 'utf-8');
+  }
+}
+
 /** Serializes an array of plan entries back to a plans.md file. */
 export function formatPlans(entries: NewPlanInput[]): string {
   if (entries.length === 0) return '';

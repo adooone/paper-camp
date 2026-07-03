@@ -16,5 +16,29 @@
       "Bash(git status*)",
       "Bash(git diff*)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$CLAUDE_PROJECT_DIR/src/cli/index.ts\" session-focus"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$CLAUDE_PROJECT_DIR/src/cli/post-tool-use-log.ts\""
+          }
+        ]
+      }
+    ]
   }
 }
