@@ -72,8 +72,8 @@ export const PlansSidebar = () => {
     <>
       {isStale && (
         <div style={{ marginBottom: space[4] }}>
-          <Alert variant="warning" title="Branch hygiene alert">
-            This branch is already merged into main. Switch to main before creating new plans.
+          <Alert variant="warning">
+            Branch hygiene: this branch is merged — switch to main before creating new plans.
           </Alert>
         </div>
       )}

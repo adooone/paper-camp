@@ -5,7 +5,7 @@ title: Adopt paper-ui 0.5.0 components
 
 ## IDEA-33: Adopt paper-ui 0.5.0 components
 
-0.5.0 roughly doubled paper-ui's component list, and paper-camp has hand-rolled several things the library now provides. Once the version bump lands ([[IDEA-32]] — this depends on it), replace the custom code with the real components. This is a UI-quality/consistency pass, kept separate from the migration so the bump PR stays a clean "renders identically on 0.5.0" change.
+0.5.0 roughly doubled paper-ui's component list, and paper-camp has hand-rolled several things the library now provides. The version bump has landed ([[IDEA-32]] / FEAT-34, pinned `0.5.0`), so this is unblocked: replace the custom code with the real components. This is a UI-quality/consistency pass, kept separate from the migration so the bump PR stayed a clean "renders identically on 0.5.0" change.
 
 **Direct swaps (replace existing custom code, grounded in actual files):**
 
@@ -21,11 +21,11 @@ title: Adopt paper-ui 0.5.0 components
 **Toast is the headline.** Wiring `ToastProvider` at the app root and calling `useToast` from every `useActionFeedback` consumer finally surfaces action failures — the Draft/Extend buttons (and others) currently swallow `errorMessage` because nothing renders it. Do this one first; the rest are polish.
 
 **Opportunistic — adopt only where it removes custom code, otherwise defer:**
-- **NavigationIsland** — `router.tsx` hand-rolls the bottom nav inside a bare `<Island>`; the dedicated component may replace it (0.5.0 fixed its top position).
+- ~~**NavigationIsland**~~ — obsolete: FEAT-33 ([[IDEA-34]]) moved global navigation into paper-ui `Layout`'s header and removed the floating island entirely; nothing left to adopt.
 - **Tabs** — the board/list `ViewToggle` (icon-button toggle) could become Tabs.
-- **Accordion** — the collapsible expand toggles in `ideas-board.tsx` / `plan-detail.tsx` / `stack-panel.tsx`.
+- **Accordion** — the collapsible expand toggles in `ideas-board.tsx` / `plan-detail.tsx` (`stack-panel.tsx` already uses the real `Accordion` for its changed-files list).
 - **Menu** — per-item action dropdowns in `plans-sidebar.tsx` if actions grow past the single "×" delete.
 - **Switch / Radio** — settings currently modeled as `Select` where the choice is boolean/small-exclusive (agent config rows).
-- Not applicable now: Avatar, Breadcrumb, Pagination, Swatch, PropTable.
+- Not applicable here: Avatar, Swatch, PropTable. `Breadcrumb` and `Pagination` are claimed by [[IDEA-40]] and [[IDEA-38]] respectively.
 
 Each swap is independently shippable, so this can land incrementally (Toast first) rather than as one big PR. Verify visually — these change rendering, not just types.
