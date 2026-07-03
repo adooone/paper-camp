@@ -2,7 +2,7 @@ import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
-import { Button } from '@dendelion/paper-ui';
+import { Button, useToast } from '@dendelion/paper-ui';
 import { buildPlanDraftPrompt } from '../prompts';
 
 interface DraftPlanButtonProps {
@@ -16,12 +16,22 @@ export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const { state, errorMessage, run } = useActionFeedback();
+  const { toast } = useToast();
 
   const handleClick = () => {
     const id = idea.id;
     if (!id) return;
     run(async () => {
-      await launchPlanDraft(id, buildPlanDraftPrompt(idea, otherPlans));
+      try {
+        await launchPlanDraft(id, buildPlanDraftPrompt(idea, otherPlans));
+      } catch (err) {
+        toast({
+          title: 'Draft failed',
+          description: (err as Error).message,
+          variant: 'error',
+        });
+        throw err;
+      }
     });
   };
 
