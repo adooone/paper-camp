@@ -2,7 +2,7 @@
 id: FEAT-31
 title: Claude Code native integration
 kind: feat
-status: review
+status: done
 created: 2026-07-01
 idea: IDEA-30
 updated: 2026-07-03
