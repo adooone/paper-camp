@@ -322,6 +322,8 @@ the dashboard's Settings page via `POST /api/config` (`projectName`, `port`,
 `nextId` is the per-kind plan-ID counter `assignPlanId` reads and increments; `port` is
 optional (see the schema-drift note under "Config migration" above). Legacy bare-string
 `defaultAgents` values (`"phase": "opencode"`) are coerced to the object shape on read.
+An optional `autoLogNewFiles: boolean` field gates the opt-in PostToolUse hook (see
+"Claude Code native integration" above) — absent or `false` means off.
 
 ---
 
@@ -339,6 +341,53 @@ Bin entry: `paper-camp` → `dist/cli/index.js`, built with `commander`. Impleme
 
 ---
 
+## Claude Code native integration
+
+Paper Camp plugs into Claude Code itself rather than only offering a dashboard: any
+project with a `papercamp/` folder gets its memory loaded and kept current with zero
+prompting. `paper-camp init` scaffolds four surfaces (see `scaffoldClaudeCodeIntegration`
+in `src/core/scaffold.ts`, static contents in `src/core/templates.ts`), each following
+init's existing no-clobber contract — an already-present file is left untouched.
+
+1. **The skill** (`.claude/skills/paper-camp/SKILL.md`) — auto-discovered whenever the
+   working directory contains `papercamp/`. Instructs the assistant to read `plans/`,
+   `ideas/`, `decisions.md`, and `open-questions.md` before working, and to keep the
+   active plan's phases and `progress.md` current as it goes (this repo's own copy at
+   `.claude/skills/paper-camp/SKILL.md` is the source the template mirrors verbatim).
+2. **The SessionStart hook** (`.claude/settings.json`) — shells out to
+   `paper-camp session-focus` (`src/cli/session-focus.ts`, exporting `buildSessionFocus`)
+   on every new session. It *derives* a focus block from live data rather than reading a
+   hand-maintained file: the in-progress plan (preferring the one tied to the current
+   feature branch via the git manager's `getFeatureBranchPlanId`, falling back to
+   `findFocusPlan` over the per-file plans) plus the last 3 `progress.md` bullets. Prints
+   a `hookSpecificOutput.additionalContext` JSON payload for Claude Code to inject, or
+   exits silently if no `papercamp/plans/` directory exists.
+3. **The git post-commit hook** (`.git/hooks/post-commit`, only scaffolded inside an
+   actual git repo) — shells out to `paper-camp log-commit`
+   (`src/cli/post-commit-log.ts`, exporting `logLastCommit`), which appends a
+   `Commit: <subject>` bullet to today's `progress.md` heading via the same
+   `prependProgressItem` path the dashboard's commit flow uses. This is the automatic
+   logger: deterministic and commit-linked, not an always-on watcher.
+4. **The PostToolUse hook** (`.claude/settings.json`, matcher `Write`) — shells out to
+   `paper-camp post-tool-use-log` (`src/cli/post-tool-use-log.ts`, exporting
+   `logNewFile`), **off by default**. It only fires when `papercamp/config.json` sets
+   `autoLogNewFiles: true`, and even then only for a `Write` whose `structuredPatch` is
+   empty (Claude Code's signal that the tool created the file rather than editing
+   existing content) — so reads, edits, searches, bash, and commits never match, and it
+   never double-logs against the git hook. Logs `New file: <relative path>` to
+   `progress.md` when it fires.
+
+All three shell-outs resolve the `paper-camp` binary the same way: `$CLAUDE_PROJECT_DIR`
+for the two Claude Code hooks, `git rev-parse --show-toplevel` for the git hook — both
+pointing at `node_modules/.bin/paper-camp` in the consuming project, since a fresh
+install only ships `dist/cli/index.js`, not a `src/` tree to run against directly.
+
+Complements [[FEAT-32]] (the MCP server, if it exists in a given project): the skill's
+file-access instructions are written thin enough to delegate to it rather than
+reimplementing file access.
+
+---
+
 ## Package layout
 
 Source tree under `src/`:
@@ -350,7 +399,8 @@ Source tree under `src/`:
 - `src/core/idea-status.ts` — `deriveIdeaStatuses` (marks an idea "done" once every plan whose `idea` field references it is `done`/`dropped`). Pure and kept out of parser.ts so client-bundled importers (app-store) don't pull in Node-only file code; note it is *not* re-exported from `src/core/index.ts` — consumers import it by path (the barrel omission isn't documented anywhere as intentional).
 - `src/core/env.ts` — `parseEnv`/serialize helpers for `.env` files (`KEY=value` lines, quoting rules), backing the Settings page's Environment Variables editor via `/api/env`.
 - `src/core/serializer.ts` — per-file writers: `formatPlanFile`/`formatIdeaFile` (produce a YAML-frontmatter + body file — used by `add plan`, `migrate`, `POST /api/plans`, `POST /api/ideas`, and every PATCH rewrite via the server's `planFileInput`/`writePlanFile` helpers); `formatPlansIndex`/`formatIdeasIndex` (rewrite the index tables after any mutation); `archivePlanFile` (rename a per-file plan into `plans/archive/`); `serializeFrontmatter` (low-level YAML serializer); `assignPlanId` (reads/increments the per-kind `nextId` counter in `papercamp/config.json` and returns the next `<KIND>-<N>` — a freed ID must never be reassigned; calls are chained through a module-level promise so same-process callers can't mint duplicates, while cross-process races — CLI vs dev server — are an accepted gap). Still-active monolithic writers: `formatDecisionEntry`/`formatOpenQuestionEntry`/`formatOpenQuestions`/`formatProgressEntry` plus `appendBlock` (used by the open-question resolve flow). Back-compat exports no longer called by anything: `formatPlanEntry`/`formatPlans` (monolithic plan writers, kept on the lib surface).
-- `src/core/scaffold.ts` — `initProject`, used by `init`.
+- `src/core/scaffold.ts` — `initProject`, used by `init`; also `scaffoldClaudeCodeIntegration`, which writes the four Claude Code native-integration surfaces (see above) from the static templates in `src/core/templates.ts`.
+- `src/cli/session-focus.ts` / `post-commit-log.ts` / `post-tool-use-log.ts` — the bodies behind the `session-focus`, `log-commit`, and `post-tool-use-log` CLI subcommands the scaffolded hooks shell out to (see "Claude Code native integration" above).
 - `src/core/index.ts` — public core API; re-exports `env`/`parser`/`readers`/`schemas`/`scaffold`/`serializer` and the shared types (`idea-status.ts` and `frontmatter-schemas.ts` are imported by path, not via the barrel).
 - `src/cli/index.ts` — the commander CLI.
 - `src/cli/dev-server.ts` — `startDevServer({ root, port })`, the plain `node:http` server `paper-camp dev` runs: reuses `createApiMiddleware` for `/api/*`, serves the built `dist/app` statically otherwise, with an `index.html` SPA fallback.
@@ -436,7 +486,8 @@ Sidebar navigation lives in the nav island (a floating pill fixed near the botto
 ## Current implementation status
 
 **Built and tested:**
-- `src/types`, `src/core/schemas.ts` (+ the `frontmatter-schemas.ts` barrel), `src/core/parser.ts`, `src/core/readers.ts`, `src/core/idea-status.ts`, `src/core/env.ts`, `src/core/serializer.ts`, `src/core/scaffold.ts`, `src/core/index.ts`
+- `src/types`, `src/core/schemas.ts` (+ the `frontmatter-schemas.ts` barrel), `src/core/parser.ts`, `src/core/readers.ts`, `src/core/idea-status.ts`, `src/core/env.ts`, `src/core/serializer.ts`, `src/core/scaffold.ts`, `src/core/templates.ts`, `src/core/index.ts`
+- Claude Code native integration: skill (`.claude/skills/paper-camp/SKILL.md`), SessionStart focus hook, git post-commit auto-logger, opt-in PostToolUse new-file logger — all scaffolded by `init`, see "Claude Code native integration" above
 - `src/cli/index.ts` — `init`, `dev` (real, see below), `add plan`, `migrate`, `audit`
 - `src/cli/dev-server.ts` — static + API server for installed consumers
 - `vite.config.ts` cli build entry (with a `node:*`-matching external function, not a hardcoded list), so `pnpm build` produces a working `dist/cli/index.js` with shebang intact

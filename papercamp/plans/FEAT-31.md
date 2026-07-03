@@ -2,7 +2,7 @@
 id: FEAT-31
 title: Claude Code native integration
 kind: feat
-status: in-progress
+status: review
 created: 2026-07-01
 idea: IDEA-30
 updated: 2026-07-03
@@ -29,5 +29,5 @@ The design is deliberately anti-drift: the SessionStart focus block is *derived*
       A `.claude/settings.json` PostToolUse hook, **off by default**, enabled via a config flag. When on it fires only on new-file creation (a `Write` to a path that didn't previously exist) and appends a dated `progress.md` bullet; it explicitly ignores reads, searches, bash, and anything commit-related so it never double-logs against the git hook. Add the config flag and gate the hook body on it.
 - [x] Scaffold all four surfaces from `paper-camp init`
       Extend `initProject`/`init` so a fresh project gets the skill file, the `.claude/settings.json` hook entries (SessionStart plus the default-off PostToolUse), and the committed post-commit hook — never overwriting existing files, matching init's current no-clobber contract. This is what makes the integration turnkey.
-- [ ] Document the integration and verify end-to-end
+- [x] Document the integration and verify end-to-end
       Add an `about.md` section covering the four surfaces and the config flag, then smoke-test in a fresh temp project: confirm the skill is discovered, the SessionStart block renders live focus, a commit lands a `progress.md` entry, and the PostToolUse hook stays silent until enabled.

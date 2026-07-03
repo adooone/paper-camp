@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { relative } from 'node:path';
 import { campFile, fileExists, readMaybe } from '../app/server/helpers';
 import { prependProgressItem } from '../core/serializer';
@@ -39,21 +38,4 @@ export async function logNewFile(root: string, input: PostToolUseInput): Promise
 
   const rel = relative(root, filePath);
   await prependProgressItem(campFile(root, 'progress.md'), `New file: ${rel}`);
-}
-
-async function readStdin(): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
-  return Buffer.concat(chunks).toString('utf-8');
-}
-
-async function main() {
-  const root = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
-  const raw = await readStdin().catch(() => '');
-  const input = raw ? (JSON.parse(raw) as PostToolUseInput) : {};
-  await logNewFile(root, input).catch(() => undefined);
-}
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
 }

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { findFocusPlan } from '../app/features/plans/helpers';
 import { createGitManager } from '../app/server/git';
 import { campFile, fileExists, readMaybe } from '../app/server/helpers';
@@ -45,25 +44,4 @@ export async function buildSessionFocus(root: string): Promise<string | null> {
     sections.push(['**Recent progress:**', ...recentItems.map((item) => `- ${item}`)].join('\n'));
   }
   return sections.join('\n\n');
-}
-
-async function main() {
-  const root = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
-  const context = await buildSessionFocus(root).catch(() => null);
-  if (!context) {
-    process.exit(0);
-  }
-  console.log(
-    JSON.stringify({
-      hookSpecificOutput: {
-        hookEventName: 'SessionStart',
-        additionalContext: context,
-      },
-    }),
-  );
-  process.exit(0);
-}
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
 }
