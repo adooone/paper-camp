@@ -468,7 +468,12 @@ program
   .command('mcp')
   .description('Run the Paper Camp MCP server (stdio) for the current project')
   .action(async () => {
-    await startMcpServer(process.cwd());
+    try {
+      await startMcpServer(process.cwd());
+    } catch (error) {
+      console.error(`Failed to start MCP server: ${(error as Error).message}`);
+      process.exit(1);
+    }
   });
 
 // The two commands below are internal — invoked by the scaffolded

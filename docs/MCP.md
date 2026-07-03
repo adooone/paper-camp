@@ -81,7 +81,7 @@ than the branch's own unfinished plan (`checkBranchConflictForPlan`).
 
 **`append_progress`**
 Prepend a bullet under today's heading in `progress.md`.
-- `item` (string) — progress bullet text, without the leading `- `
+- `item` (string) — progress bullet text, without the leading dash
 
 **`resolve_open_question`**
 Resolve an open question, logging the resolution as a new decision.

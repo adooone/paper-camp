@@ -127,6 +127,20 @@ export function registerReadTools(server: McpServer, root: string): void {
  * start or advance a plan a dashboard user would be blocked from.
  */
 export function registerWriteTools(server: McpServer, root: string, git: GitManager): void {
+  // The stdio transport can multiplex concurrent tool calls, and the read-then-write
+  // id allocation in add_idea / draft_plan would otherwise be able to interleave and
+  // mint duplicate ids. A promise-chain mutex serializes id-allocating writes so each
+  // sees the previous one's committed state.
+  let writeChain: Promise<unknown> = Promise.resolve();
+  const runExclusive = <T>(fn: () => Promise<T>): Promise<T> => {
+    const result = writeChain.then(fn, fn);
+    writeChain = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  };
+
   server.registerTool(
     'add_idea',
     {
@@ -138,24 +152,29 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: idResultSchema.shape,
     },
-    async ({ title, content }) => {
-      if (!title.trim()) throw new Error('title is required');
-      const ideasDir = campFile(root, 'ideas');
-      const existing = await readIdeasMerged(ideasDir, campFile(root, 'ideas.md'));
-      const maxNum = existing.entries.reduce((max, idea) => {
-        if (idea.id) {
-          const num = Number.parseInt(idea.id.replace('IDEA-', ''), 10);
-          return Number.isNaN(num) ? max : Math.max(max, num);
-        }
-        return max;
-      }, 0);
-      const newId = `IDEA-${maxNum + 1}`;
-      await mkdir(ideasDir, { recursive: true });
-      const ideaContent = formatIdeaFile({ id: newId, title: title.trim(), body: content?.trim() });
-      await writeFile(join(ideasDir, `${newId}.md`), `${ideaContent}\n`, 'utf-8');
-      await regenerateIndexes(root);
-      return json({ ok: true, id: newId });
-    },
+    ({ title, content }) =>
+      runExclusive(async () => {
+        if (!title.trim()) throw new Error('title is required');
+        const ideasDir = campFile(root, 'ideas');
+        const existing = await readIdeasMerged(ideasDir, campFile(root, 'ideas.md'));
+        const maxNum = existing.entries.reduce((max, idea) => {
+          if (idea.id) {
+            const num = Number.parseInt(idea.id.replace('IDEA-', ''), 10);
+            return Number.isNaN(num) ? max : Math.max(max, num);
+          }
+          return max;
+        }, 0);
+        const newId = `IDEA-${maxNum + 1}`;
+        await mkdir(ideasDir, { recursive: true });
+        const ideaContent = formatIdeaFile({
+          id: newId,
+          title: title.trim(),
+          body: content?.trim(),
+        });
+        await writeFile(join(ideasDir, `${newId}.md`), `${ideaContent}\n`, 'utf-8');
+        await regenerateIndexes(root);
+        return json({ ok: true, id: newId });
+      }),
   );
 
   server.registerTool(
@@ -170,30 +189,31 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: idResultSchema.shape,
     },
-    async ({ title, content, kind }) => {
-      if (!title.trim()) throw new Error('title is required');
-      const conflict = await checkBranchConflictForPlan(root, git);
-      if (conflict) throw new Error(conflict);
-      const planKind = kind ?? 'feat';
-      const configPath = join(root, 'papercamp', 'config.json');
-      const id = await assignPlanId(configPath, planKind);
-      if (!id) throw new Error('could not assign plan ID');
+    ({ title, content, kind }) =>
+      runExclusive(async () => {
+        if (!title.trim()) throw new Error('title is required');
+        const conflict = await checkBranchConflictForPlan(root, git);
+        if (conflict) throw new Error(conflict);
+        const planKind = kind ?? 'feat';
+        const configPath = join(root, 'papercamp', 'config.json');
+        const id = await assignPlanId(configPath, planKind);
+        if (!id) throw new Error('could not assign plan ID');
 
-      const plansDir = campFile(root, 'plans');
-      await mkdir(plansDir, { recursive: true });
+        const plansDir = campFile(root, 'plans');
+        await mkdir(plansDir, { recursive: true });
 
-      const planContent = formatPlanFile({
-        id,
-        title: title.trim(),
-        kind: planKind,
-        status: 'idea',
-        created: todayDateString(),
-        body: content?.trim(),
-      });
-      await writeFile(join(plansDir, `${id}.md`), `${planContent}\n`, 'utf-8');
-      await regenerateIndexes(root);
-      return json({ ok: true, id });
-    },
+        const planContent = formatPlanFile({
+          id,
+          title: title.trim(),
+          kind: planKind,
+          status: 'idea',
+          created: todayDateString(),
+          body: content?.trim(),
+        });
+        await writeFile(join(plansDir, `${id}.md`), `${planContent}\n`, 'utf-8');
+        await regenerateIndexes(root);
+        return json({ ok: true, id });
+      }),
   );
 
   server.registerTool(
