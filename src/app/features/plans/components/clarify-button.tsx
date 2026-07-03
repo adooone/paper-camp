@@ -1,7 +1,7 @@
 import { color } from '@/app/styles/tokens';
 import { copyToClipboard } from '@/app/utils/clipboard';
 import type { PlanEntry } from '@/types/index';
-import { Button, CheckIcon, CloseIcon, CopyIcon } from '@dendelion/paper-ui';
+import { Button, CheckIcon, CloseIcon, CopyIcon, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { buildClarifyPrompt } from '../prompts';
 
@@ -21,33 +21,36 @@ export const ClarifyButton = ({ plan, disabled }: ClarifyButtonProps) => {
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="small"
-      onClick={handleClick}
-      disabled={disabled}
-      icon={
-        status === 'copied' ? (
-          <CheckIcon size={14} />
-        ) : status === 'failed' ? (
-          <CloseIcon size={14} />
-        ) : (
-          <CopyIcon size={14} />
-        )
-      }
-      title={
+    <Tooltip
+      content={
         status === 'copied'
           ? 'Copied'
           : status === 'failed'
             ? 'Copy failed — select and copy manually'
             : 'Copy clarification prompt'
       }
-      style={{
-        color:
-          status === 'copied' ? '#6A9B72' : status === 'failed' ? '#A06060' : color.textSecondary,
-      }}
     >
-      Copy Clarifications Prompt
-    </Button>
+      <Button
+        variant="ghost"
+        size="small"
+        onClick={handleClick}
+        disabled={disabled}
+        icon={
+          status === 'copied' ? (
+            <CheckIcon size={14} />
+          ) : status === 'failed' ? (
+            <CloseIcon size={14} />
+          ) : (
+            <CopyIcon size={14} />
+          )
+        }
+        style={{
+          color:
+            status === 'copied' ? '#6A9B72' : status === 'failed' ? '#A06060' : color.textSecondary,
+        }}
+      >
+        Copy Clarifications Prompt
+      </Button>
+    </Tooltip>
   );
 };

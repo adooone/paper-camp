@@ -17,6 +17,7 @@ import {
   Spinner,
   Stamp,
   Textarea,
+  Tooltip,
 } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -737,37 +738,38 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                   title: string;
                   onClick: () => void;
                 }) => (
-                  <button
-                    type="button"
-                    className="stack-check-btn"
-                    title={opts.title}
-                    onClick={() => {
-                      if (!anyRunning) opts.onClick();
-                    }}
-                    disabled={anyRunning}
-                    style={{
-                      cursor: anyRunning ? 'not-allowed' : 'pointer',
-                      opacity: anyRunning && opts.status !== 'running' ? 0.5 : 1,
-                      display: 'inline-flex',
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                    }}
-                  >
-                    <Stamp
-                      surface="chalkboard"
-                      size="small"
-                      fillColor={statusFill[opts.status]}
-                      textColor={statusText[opts.status]}
+                  <Tooltip content={opts.title} surface="chalkboard">
+                    <button
+                      type="button"
+                      className="stack-check-btn"
+                      onClick={() => {
+                        if (!anyRunning) opts.onClick();
+                      }}
+                      disabled={anyRunning}
+                      style={{
+                        cursor: anyRunning ? 'not-allowed' : 'pointer',
+                        opacity: anyRunning && opts.status !== 'running' ? 0.5 : 1,
+                        display: 'inline-flex',
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                      }}
                     >
-                      {opts.label}
-                      <span
-                        style={{ visibility: opts.status === 'running' ? 'visible' : 'hidden' }}
+                      <Stamp
+                        surface="chalkboard"
+                        size="small"
+                        fillColor={statusFill[opts.status]}
+                        textColor={statusText[opts.status]}
                       >
-                        …
-                      </span>
-                    </Stamp>
-                  </button>
+                        {opts.label}
+                        <span
+                          style={{ visibility: opts.status === 'running' ? 'visible' : 'hidden' }}
+                        >
+                          …
+                        </span>
+                      </Stamp>
+                    </button>
+                  </Tooltip>
                 );
 
                 return (
@@ -810,34 +812,38 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                         onClick: () => runCheck('consistency'),
                       })}
                       <div>
-                        <button
-                          type="button"
-                          className={hasIssues ? 'stack-check-btn' : undefined}
-                          title={
+                        <Tooltip
+                          content={
                             hasIssues
                               ? 'Show plan/decision doc findings'
                               : 'No plan/decision doc findings'
                           }
-                          onClick={() => {
-                            if (hasIssues) setDocIssuesExpanded((prev) => !prev);
-                          }}
-                          style={{
-                            cursor: hasIssues ? 'pointer' : 'default',
-                            display: 'inline-flex',
-                            background: 'none',
-                            border: 'none',
-                            padding: 0,
-                          }}
+                          surface="chalkboard"
                         >
-                          <Stamp
-                            surface="chalkboard"
-                            size="small"
-                            fillColor={hasIssues ? '#5a2d2d' : '#2d5a3b'}
-                            textColor={hasIssues ? '#d6a0a0' : '#b5d6b5'}
+                          <button
+                            type="button"
+                            className={hasIssues ? 'stack-check-btn' : undefined}
+                            onClick={() => {
+                              if (hasIssues) setDocIssuesExpanded((prev) => !prev);
+                            }}
+                            style={{
+                              cursor: hasIssues ? 'pointer' : 'default',
+                              display: 'inline-flex',
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                            }}
                           >
-                            Docs
-                          </Stamp>
-                        </button>
+                            <Stamp
+                              surface="chalkboard"
+                              size="small"
+                              fillColor={hasIssues ? '#5a2d2d' : '#2d5a3b'}
+                              textColor={hasIssues ? '#d6a0a0' : '#b5d6b5'}
+                            >
+                              Docs
+                            </Stamp>
+                          </button>
+                        </Tooltip>
                         {docIssuesExpanded && hasIssues && (
                           <div
                             style={{
@@ -1178,16 +1184,22 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                           {syncError}
                         </Alert>
                       )}
-                      <Button
+                      <Tooltip
+                        content={
+                          gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined
+                        }
                         surface="chalkboard"
-                        size="small"
-                        icon={<MergeIcon size={14} />}
-                        disabled={syncing || gitBranchHygiene === 'clean-on-main'}
-                        onClick={handleSync}
-                        title={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : ''}
                       >
-                        {syncing ? 'Syncing…' : 'Sync to main'}
-                      </Button>
+                        <Button
+                          surface="chalkboard"
+                          size="small"
+                          icon={<MergeIcon size={14} />}
+                          disabled={syncing || gitBranchHygiene === 'clean-on-main'}
+                          onClick={handleSync}
+                        >
+                          {syncing ? 'Syncing…' : 'Sync to main'}
+                        </Button>
+                      </Tooltip>
                     </>
                   )}
                 </div>

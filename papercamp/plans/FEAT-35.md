@@ -20,7 +20,7 @@ Beyond the direct swaps, a few adoptions are opportunistic — take them only wh
       Mount `ToastProvider` at the app root and call `useToast` from every `useActionFeedback` consumer's `run()` path so `errorMessage` finally renders — the Draft/Extend buttons (and the other action callers) currently swallow failures silently. Exercise a failing action end-to-end to confirm the toast actually appears. Highest-value swap; ship it first.
 - [x] Swap the custom loaders for Spinner and Skeleton
       Replace the hand-rolled `.spinner` class with paper-ui Spinner (`utilities.css`, `plan-detail.tsx`) and `PlanCardSkeleton` with Skeleton (`plan-card-skeleton.tsx`, `list-view.tsx`), deleting the custom CSS and component once nothing references them.
-- [ ] Replace title attributes with Tooltip
+- [x] Replace title attributes with Tooltip
       Convert the ~15 `title=` tooltip attributes (view-toggle, plan-detail, the draft/extend/clarify/audit buttons, …) to the Tooltip component. Sweep for stragglers with a grep for `title=` on interactive elements before closing the phase.
 - [ ] Adopt CopyButton and Divider
       Replace `components/copy-prompt-button.tsx` with CopyButton, and the hand-rolled `borderBottom` row dividers in `stack-panel.tsx` (×3) and `settings-page.tsx` (×5) with Divider, dropping the now-unused `rowDivider` token.
