@@ -48,3 +48,9 @@
 | FEAT-35 | Adopt paper-ui 0.5.0 components | done | app, ui |
 | FEAT-36 | Mirror plans onto GitHub PRs | planned | ci, github, plans |
 | FEAT-37 | Densify the plans worklist | done | app, ui, plans, ideas |
+| FEAT-38 | Schedule repo digest and nudges | idea | ci, github, agent |
+| FEAT-39 | Build the focus cockpit | idea | app, ui, plans, stack |
+| FEAT-40 | Make sub-views real routes | idea | app, ui, routing, navigation |
+| FEAT-41 | Filter and sort the plans list | in-progress | app, ui, plans |
+| FEAT-42 | Unify the ideas and plans worklist | idea | app, ideas, plans, core |
+| FEAT-43 | Check idea overlap at capture | idea | app, ideas, agent |
