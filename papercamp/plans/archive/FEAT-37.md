@@ -2,7 +2,7 @@
 id: FEAT-37
 title: Densify the plans worklist
 kind: feat
-status: review
+status: done
 created: 2026-07-04
 idea: IDEA-38
 updated: 2026-07-04

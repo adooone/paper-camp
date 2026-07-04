@@ -47,4 +47,4 @@
 | FEAT-34 | Migrate to paper-ui 0.5.0 | done | app, ui, deps |
 | FEAT-35 | Adopt paper-ui 0.5.0 components | done | app, ui |
 | FEAT-36 | Mirror plans onto GitHub PRs | planned | ci, github, plans |
-| FEAT-37 | Densify the plans worklist | in-progress | app, ui, plans, ideas |
+| FEAT-37 | Densify the plans worklist | done | app, ui, plans, ideas |
