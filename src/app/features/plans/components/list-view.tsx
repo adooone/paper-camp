@@ -27,6 +27,8 @@ export const ListView = ({
 }: ListViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [statuses, setStatuses] = useState<PlanStatus[]>(DEFAULT_VISIBLE_STATUSES);
+  const [tags, setTags] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (!activePlanTitle) return;
@@ -40,7 +42,18 @@ export const ListView = ({
     );
   };
 
-  const { rows, statusCounts } = selectPlanRows(plans, { ...DEFAULT_PLAN_LIST_FILTERS, statuses });
+  const toggleTag = (tag: string) => {
+    setTags((current) =>
+      current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag],
+    );
+  };
+
+  const { rows, statusCounts, tagCounts } = selectPlanRows(plans, {
+    ...DEFAULT_PLAN_LIST_FILTERS,
+    statuses,
+    tags,
+    search,
+  });
   const showSkeleton = Boolean(draftingIdeaId) && !plans.some((p) => p.idea === draftingIdeaId);
 
   return (
@@ -49,6 +62,11 @@ export const ListView = ({
         statusCounts={statusCounts}
         activeStatuses={statuses}
         onToggleStatus={toggleStatus}
+        tagCounts={tagCounts}
+        activeTags={tags}
+        onToggleTag={toggleTag}
+        search={search}
+        onSearchChange={setSearch}
       />
       {showSkeleton && draftingIdeaId && (
         <div style={{ marginBottom: space[3] }}>
