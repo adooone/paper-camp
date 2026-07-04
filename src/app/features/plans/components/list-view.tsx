@@ -1,8 +1,7 @@
 import { space } from '@/app/styles/tokens';
-import type { IdeaEntry, PlanEntry } from '@/types/index';
+import type { PlanEntry } from '@/types/index';
 import { useEffect, useRef } from 'react';
 import { ClosedSection } from './closed-section';
-import { IdeasBoard } from './ideas-board';
 import { PlanCardSkeleton } from './plan-card-skeleton';
 import { PlanRows } from './plan-rows';
 import { SectionHeading } from './section-heading';
@@ -11,19 +10,10 @@ interface ListViewProps {
   plans: PlanEntry[];
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
-  ideaEntries?: IdeaEntry[];
-  onOpenIdea?: (title: string) => void;
   draftingIdeaId?: string | null;
 }
 
-export const ListView = ({
-  plans,
-  activePlanTitle,
-  onOpenPlan,
-  ideaEntries,
-  onOpenIdea,
-  draftingIdeaId,
-}: ListViewProps) => {
+export const ListView = ({ plans, activePlanTitle, onOpenPlan, draftingIdeaId }: ListViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,18 +48,6 @@ export const ListView = ({
           {backlog.length > 0 && (
             <PlanRows plans={backlog} activePlanTitle={activePlanTitle} onOpen={onOpenPlan} />
           )}
-        </section>
-      )}
-
-      {ideaEntries && ideaEntries.length > 0 && (
-        <section style={{ marginBottom: space[8] }}>
-          <SectionHeading label="Ideas" count={ideaEntries.length} />
-          <IdeasBoard
-            ideas={ideaEntries}
-            plans={plans}
-            onOpenIdea={onOpenIdea}
-            onOpenPlan={onOpenPlan}
-          />
         </section>
       )}
 

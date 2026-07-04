@@ -63,9 +63,9 @@ export const PlansSidebar = () => {
   };
 
   const handleSelectIdea = (title: string) => {
+    navigate({ to: '/ideas' });
     setActiveIdeaTitle(title);
     setActivePlanTitle(null);
-    navigate({ to: '/' });
   };
 
   return (
@@ -122,7 +122,7 @@ export const PlansSidebar = () => {
               <ListItem
                 key={e.title}
                 size="small"
-                active={activeIdeaTitle === e.title}
+                active={pathname === '/ideas' && activeIdeaTitle === e.title}
                 onClick={() => handleSelectIdea(e.title)}
               >
                 {e.title}

@@ -11,12 +11,19 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
-import { PlansPage, PlansSidebar, ReviewPage, ReviewSidebar } from './features/plans/index';
+import {
+  IdeasPage,
+  PlansPage,
+  PlansSidebar,
+  ReviewPage,
+  ReviewSidebar,
+} from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
 import { useAppStore } from './stores/app-store';
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
+  { id: 'ideas', label: 'Ideas', path: '/ideas' },
   { id: 'review', label: 'Review', path: '/review' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'settings', label: 'Settings', path: '/settings' },
@@ -126,7 +133,7 @@ const RootLayout = () => {
                 mobileOpen={mobileSidebarOpen}
                 onMobileClose={() => setMobileSidebarOpen(false)}
               >
-                {pathname === '/' && <PlansSidebar />}
+                {(pathname === '/' || pathname === '/ideas') && <PlansSidebar />}
                 {pathname === '/review' && <ReviewSidebar />}
                 {pathname === '/docs' && <DocsSidebar />}
                 {pathname === '/settings' && <SettingsSidebar />}
@@ -173,6 +180,11 @@ const plansRoute = createRoute({
   path: '/',
   component: PlansPage,
 });
+const ideasRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/ideas',
+  component: IdeasPage,
+});
 const reviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/review',
@@ -190,7 +202,13 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
-const routeTree = rootRoute.addChildren([plansRoute, reviewRoute, docsRoute, settingsRoute]);
+const routeTree = rootRoute.addChildren([
+  plansRoute,
+  ideasRoute,
+  reviewRoute,
+  docsRoute,
+  settingsRoute,
+]);
 
 export const router = createRouter({ routeTree });
 
