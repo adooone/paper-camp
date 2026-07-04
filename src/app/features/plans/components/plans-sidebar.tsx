@@ -4,7 +4,7 @@ import { createPlan, deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
-import { Alert, IconButton, ListItem } from '@dendelion/paper-ui';
+import { Alert, IconButton, ListItem, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useState } from 'react';
 import { CreateIdeaModal } from './create-idea-modal';
@@ -134,15 +134,16 @@ export const PlansSidebar = () => {
       <SidebarSection
         label="Backlog"
         action={
-          <IconButton
-            icon={<span>+</span>}
-            variant="ghost"
-            size="small"
-            label={isStale ? 'Switch to main first' : 'Add to backlog'}
-            disabled={isStale}
-            onClick={() => setAddingIdea(true)}
-            title={isStale ? 'Switch to main first' : undefined}
-          />
+          <Tooltip content={isStale ? 'Switch to main first' : undefined}>
+            <IconButton
+              icon={<span>+</span>}
+              variant="ghost"
+              size="small"
+              label={isStale ? 'Switch to main first' : 'Add to backlog'}
+              disabled={isStale}
+              onClick={() => setAddingIdea(true)}
+            />
+          </Tooltip>
         }
       >
         {ideas.map((p) => (

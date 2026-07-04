@@ -2,7 +2,7 @@
 id: FEAT-34
 title: Migrate to paper-ui 0.5.0
 kind: feat
-status: review
+status: done
 created: 2026-07-03
 idea: IDEA-32
 updated: 2026-07-03

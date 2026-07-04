@@ -22,10 +22,10 @@ title: Adopt paper-ui 0.5.0 components
 
 **Opportunistic — adopt only where it removes custom code, otherwise defer:**
 - ~~**NavigationIsland**~~ — obsolete: FEAT-33 ([[IDEA-34]]) moved global navigation into paper-ui `Layout`'s header and removed the floating island entirely; nothing left to adopt.
-- **Tabs** — the board/list `ViewToggle` (icon-button toggle) could become Tabs.
-- **Accordion** — the collapsible expand toggles in `ideas-board.tsx` / `plan-detail.tsx` (`stack-panel.tsx` already uses the real `Accordion` for its changed-files list).
-- **Menu** — per-item action dropdowns in `plans-sidebar.tsx` if actions grow past the single "×" delete.
-- **Switch / Radio** — settings currently modeled as `Select` where the choice is boolean/small-exclusive (agent config rows).
+- **Tabs** — assessed for the board/list `ViewToggle`. Deferred: `Tabs` always renders a visible text label next to each icon and wraps active content in a `Card`; the current `IconButton` pair is icon-only (label is aria-only, surfaced via `Tooltip`). Adopting would add visible labels and a content-wrapper — a rendering regression, not a like-for-like swap.
+- **Accordion** — assessed for `ideas-board.tsx` and `plan-detail.tsx`. Deferred both: `ideas-board.tsx`'s "▾ N links" toggle needs two independent click targets sharing one row (the idea title navigates via `onOpenIdea`, the chevron expands), but `Accordion`'s `title` renders inside a single header `<button>` — merging them would break the title's navigate-on-click behavior. `plan-detail.tsx` has no hand-rolled expand toggle to replace; its phase-detail expand/collapse is already the `Table` component's own built-in `expandable` prop, not custom code.
+- **Menu** — reassessed for `plans-sidebar.tsx`. Still deferred: the per-item action is still the single "×" delete `IconButton`; hasn't grown past that threshold.
+- **Switch / Radio** — reassessed. The only boolean/small-exclusive candidate is the agent picker in `settings-page.tsx`'s `AgentTaskRow` (`AGENT_IDS` = `['claude-code', 'opencode']`, 2 options). Deferred: it's already rendered with paper-ui's own `Select`, not hand-rolled markup, so swapping it for `Radio` wouldn't remove any custom code — just substitute one paper-ui component for another, outside this phase's adoption bar.
 - Not applicable here: Avatar, Swatch, PropTable. `Breadcrumb` and `Pagination` are claimed by [[IDEA-40]] and [[IDEA-38]] respectively.
 
 Each swap is independently shippable, so this can land incrementally (Toast first) rather than as one big PR. Verify visually — these change rendering, not just types.

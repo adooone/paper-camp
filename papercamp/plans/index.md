@@ -44,4 +44,5 @@
 | FEAT-31 | Claude Code native integration | done | integration, claude-code, skill, hooks, cli |
 | FEAT-32 | Paper Camp MCP server | done | mcp, server, core, integration |
 | FEAT-33 | Responsive layout and Stack panel redesign | done | app, ui, layout, navigation, stack, paper-ui, responsive |
-| FEAT-34 | Migrate to paper-ui 0.5.0 | in-progress | app, ui, deps |
+| FEAT-34 | Migrate to paper-ui 0.5.0 | done | app, ui, deps |
+| FEAT-35 | Adopt paper-ui 0.5.0 components | done | app, ui |

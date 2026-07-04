@@ -138,8 +138,9 @@ is generated from them via zod v4's built-in `toJSONSchema()`.
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
-    "id":    { "type": "string", "description": "Permanent idea ID, e.g. IDEA-20" },
-    "title": { "type": "string", "description": "Short idea headline (3-6 words)" }
+    "id":     { "type": "string", "description": "Permanent idea ID, e.g. IDEA-20" },
+    "title":  { "type": "string", "description": "Short idea headline (3-6 words)" },
+    "status": { "type": "string", "enum": ["planned", "done"], "description": "Explicit close for ideas that need no plan; omitted means derived from linked plans" }
   },
   "required": ["id", "title"],
   "additionalProperties": false
@@ -163,7 +164,8 @@ without scanning every per-plan file:
 ```
 
 Rows are sorted by numeric id, ascending. The plans index lists id, title, status, and
-tags; the ideas index lists id, title, and the derived planned/done status — no bodies,
+tags; the ideas index lists id, title, and the planned/done status (derived from linked
+plans, or set explicitly for planless ideas) — no bodies,
 no phases. This is what an agent's first "what's going on here" pass actually reads (the
 dashboard's list view reads the parsed entries from `/api/plans` instead).
 
@@ -180,8 +182,10 @@ serializer can't produce doesn't survive that path; only the move step is byte-f
 Readers treat archived plans as first-class: `readAllPlanFiles` scans both
 `plans/` and `plans/archive/`.
 
-Ideas don't archive — a done idea just has a linked done plan; the idea entry's own shape
-doesn't change.
+Ideas don't archive — a done idea normally just has linked done plans; the idea entry's
+own shape doesn't change. Ideas that need no plan at all (usage patterns, one-off runs)
+close with an explicit `status: done` in their frontmatter, which `deriveIdeaStatuses`
+honors ahead of the linked-plan derivation.
 
 ### Config migration
 

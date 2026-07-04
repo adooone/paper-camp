@@ -33,12 +33,12 @@
 | IDEA-29 | Run all phases with per-phase commits | done |
 | IDEA-30 | Claude Code native integration | done |
 | IDEA-31 | Paper Camp as an MCP server | done |
-| IDEA-32 | Migrate to paper-ui 0.5.0 | planned |
-| IDEA-33 | Adopt paper-ui 0.5.0 components | planned |
+| IDEA-32 | Migrate to paper-ui 0.5.0 | done |
+| IDEA-33 | Adopt paper-ui 0.5.0 components | done |
 | IDEA-34 | Responsive layout and Stack panel redesign | done |
 | IDEA-35 | Scout ↔ GitHub plan sync | planned |
 | IDEA-36 | Scheduled repo digest and nudges | planned |
-| IDEA-37 | Fable capability-window tasks | planned |
+| IDEA-37 | Fable capability-window tasks | done |
 | IDEA-38 | Dense plans worklist | planned |
 | IDEA-39 | Focus cockpit and ambient status | planned |
 | IDEA-40 | Deep-linkable routes and breadcrumbs | planned |

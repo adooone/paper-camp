@@ -3,7 +3,7 @@ import { PageTitle } from '@/app/components/page-title';
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
-import { Button, Card, Stamp } from '@dendelion/paper-ui';
+import { Button, Card, Stamp, Tooltip, useToast } from '@dendelion/paper-ui';
 import { AuditAllButton } from './components/audit-all-button';
 import { BoardView } from './components/board-view';
 import { ListView } from './components/list-view';
@@ -190,13 +190,23 @@ const ExtendWithAIButton = ({ ideaId }: { ideaId: string | null }) => {
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const { state, errorMessage, run } = useActionFeedback();
+  const { toast } = useToast();
 
   const handleClick = () => {
     if (!ideaId) return;
     run(async () => {
       const idea = useAppStore.getState().ideaEntries.find((e) => e.id === ideaId);
       if (!idea) return;
-      await launchIdeaExtend(ideaId, buildIdeaExtendPrompt(idea));
+      try {
+        await launchIdeaExtend(ideaId, buildIdeaExtendPrompt(idea));
+      } catch (err) {
+        toast({
+          title: 'Extension failed',
+          description: (err as Error).message,
+          variant: 'error',
+        });
+        throw err;
+      }
     });
   };
 
@@ -208,20 +218,21 @@ const ExtendWithAIButton = ({ ideaId }: { ideaId: string | null }) => {
         : 'Idea needs an ID before an agent can run';
 
   return (
-    <Button
-      variant="ghost"
-      size="small"
-      onClick={handleClick}
-      disabled={agentBusy || state === 'loading' || !ideaId}
-      title={title}
-    >
-      {state === 'loading'
-        ? 'Extending…'
-        : state === 'success'
-          ? 'Extension sent!'
-          : state === 'error'
-            ? 'Extension failed'
-            : 'Extend with AI'}
-    </Button>
+    <Tooltip content={title}>
+      <Button
+        variant="ghost"
+        size="small"
+        onClick={handleClick}
+        disabled={agentBusy || state === 'loading' || !ideaId}
+      >
+        {state === 'loading'
+          ? 'Extending…'
+          : state === 'success'
+            ? 'Extension sent!'
+            : state === 'error'
+              ? 'Extension failed'
+              : 'Extend with AI'}
+      </Button>
+    </Tooltip>
   );
 };

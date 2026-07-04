@@ -1,4 +1,4 @@
-import { Button, IconButton, Layout, Page, layoutConfig } from '@dendelion/paper-ui';
+import { Button, IconButton, Layout, Page, ToastProvider, layoutConfig } from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -65,7 +65,7 @@ const RootLayout = () => {
   }, [pathname, setActivePlanTitle, setActiveIdeaTitle]);
 
   return (
-    <>
+    <ToastProvider>
       {/* The Stack panel lives outside the Layout, header included: at >=1440px this
           padding shrinks the whole Layout — header and content alike — so the open
           panel owns the full right edge; below that the panel overlays. 480 is
@@ -162,7 +162,7 @@ const RootLayout = () => {
           setStackOpen(next);
         }}
       />
-    </>
+    </ToastProvider>
   );
 };
 

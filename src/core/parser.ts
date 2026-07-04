@@ -387,6 +387,7 @@ export function parseIdeaFile(content: string): ParseResult<IdeaEntry> {
     id: frontmatter.id,
     title: frontmatter.title,
     body: body || '',
+    ...(frontmatter.status && { status: frontmatter.status }),
   };
 
   return { entries: [entry], warnings: fmWarnings };

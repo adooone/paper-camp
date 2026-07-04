@@ -77,9 +77,6 @@ export const color = {
   deskChalk: '#d4e8cb',
 } as const;
 
-// Hairline divider between stacked rows (settings agent rows, config/script lists).
-export const rowDivider = '1px solid rgba(61, 53, 43, 0.1)';
-
 // Keep in sync with paper-ui's Layout header height (layout.module.scss .header).
 const headerHeight = '48px';
 

@@ -1,3 +1,26 @@
+## Planless ideas close via explicit frontmatter status
+
+**Date:** 2026-07-03
+**Status:** decided
+
+**Context:** An idea's planned/done status is derived: done only once every plan whose
+`idea:` field references it is done/dropped. `IDEA-37` (Fable capability-window tasks)
+is a usage pattern with nothing to build — it will never have a linked plan, so under
+pure derivation it would sit in the backlog as `planned` forever.
+
+**Decision:** Idea frontmatter accepts an optional `status: done` that
+`deriveIdeaStatuses` honors ahead of the linked-plan derivation
+(`ideaFrontmatterSchema`, `parseIdeaFile`, and `formatIdeaFile` carry the field).
+Derivation stays the default for every idea that omits it; explicit `planned` is
+ignored in favor of derivation. Derived statuses are never written back into files —
+the field only enters a file by hand or by a caller that passes it deliberately.
+
+**Rationale:** The alternative closes were dishonest or destructive: linking the idea
+to an unrelated done plan fakes provenance, and deleting the file loses the reusable
+prompt templates it carries. An explicit close keeps the record, keeps derivation the
+single mechanism everywhere else, and adds one optional field rather than a parallel
+status system.
+
 ## Docs search lives in the Docs page's own sidebar
 
 **Date:** 2026-07-02

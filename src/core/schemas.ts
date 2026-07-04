@@ -76,6 +76,12 @@ export const planFrontmatterSchema = z.object({
 export const ideaFrontmatterSchema = z.object({
   id: z.string().describe('Permanent idea ID, e.g. IDEA-20'),
   title: z.string().describe('Short idea headline (3-6 words)'),
+  status: z
+    .enum(['planned', 'done'])
+    .optional()
+    .describe(
+      'Explicit close for ideas that need no plan; omitted means derived from linked plans',
+    ),
 });
 
 export const paperCampConfigSchema = z.object({
