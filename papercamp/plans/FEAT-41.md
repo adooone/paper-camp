@@ -45,7 +45,7 @@ blocks this — it builds directly on FEAT-37's landed row-card list.
       renders one `plan-rows.tsx` list from it — default sort status precedence
       (in-progress → review → planned → backlog → done → dropped) then updated,
       done/dropped excluded by default — and `closed-section.tsx` is retired.
-- [ ] Build the sticky filter card with status chips
+- [x] Build the sticky filter card with status chips
       A sticky kraft `Card` pinned below the app header (matching the list header's
       texture): status chips with live counts that toggle the selector's status
       filters, done/dropped chips defaulting off as the first-paint guard.
