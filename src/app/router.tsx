@@ -11,7 +11,13 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
-import { IdeasPage, PlansPage, ReviewPage, ReviewSidebar } from './features/plans/index';
+import {
+  IdeasPage,
+  PlanFilterColumn,
+  PlansPage,
+  ReviewPage,
+  ReviewSidebar,
+} from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
 import { useAppStore } from './stores/app-store';
 
@@ -49,7 +55,8 @@ const RootLayout = () => {
   const setActivePlanTitle = useAppStore((s) => s.setActivePlanTitle);
   const setActiveIdeaTitle = useAppStore((s) => s.setActiveIdeaTitle);
   const activeId = navItems.find((item) => item.path === pathname)?.id;
-  const hasSidebar = pathname === '/review' || pathname === '/docs' || pathname === '/settings';
+  const hasSidebar =
+    pathname === '/' || pathname === '/review' || pathname === '/docs' || pathname === '/settings';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -131,6 +138,7 @@ const RootLayout = () => {
                   mobileOpen={mobileSidebarOpen}
                   onMobileClose={() => setMobileSidebarOpen(false)}
                 >
+                  {pathname === '/' && <PlanFilterColumn />}
                   {pathname === '/review' && <ReviewSidebar />}
                   {pathname === '/docs' && <DocsSidebar />}
                   {pathname === '/settings' && <SettingsSidebar />}

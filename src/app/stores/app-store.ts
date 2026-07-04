@@ -1,3 +1,8 @@
+import {
+  DEFAULT_PLAN_LIST_FILTERS,
+  type PlanListFilters,
+  type PlanSortKey,
+} from '@/app/features/plans/plan-list-selector';
 import { deriveIdeaStatuses } from '@/core/idea-status';
 import type {
   AgentTaskState,
@@ -11,6 +16,7 @@ import type {
   OpenQuestionEntry,
   ParseResult,
   PlanEntry,
+  PlanStatus,
   ProgressEntry,
 } from '@/types/index';
 import { create } from 'zustand';
@@ -55,6 +61,15 @@ type AppStore = {
 
   view: 'list' | 'board';
   setView: (v: 'list' | 'board') => void;
+
+  // Plans-list filters, lifted here so the left filter column and the list itself
+  // (separate subtrees since the column renders in the sidebar slot) share one source.
+  planFilters: PlanListFilters;
+  togglePlanStatus: (status: PlanStatus) => void;
+  togglePlanTag: (tag: string) => void;
+  setPlanSearch: (search: string) => void;
+  setPlanSortKey: (sortKey: PlanSortKey) => void;
+  togglePlanSortDirection: () => void;
 
   decisions: DecisionEntry[];
   decisionsLoading: boolean;
@@ -175,6 +190,35 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   view: 'list',
   setView: (v) => set({ view: v }),
+
+  planFilters: DEFAULT_PLAN_LIST_FILTERS,
+  togglePlanStatus: (status) =>
+    set((s) => ({
+      planFilters: {
+        ...s.planFilters,
+        statuses: s.planFilters.statuses.includes(status)
+          ? s.planFilters.statuses.filter((x) => x !== status)
+          : [...s.planFilters.statuses, status],
+      },
+    })),
+  togglePlanTag: (tag) =>
+    set((s) => ({
+      planFilters: {
+        ...s.planFilters,
+        tags: s.planFilters.tags.includes(tag)
+          ? s.planFilters.tags.filter((x) => x !== tag)
+          : [...s.planFilters.tags, tag],
+      },
+    })),
+  setPlanSearch: (search) => set((s) => ({ planFilters: { ...s.planFilters, search } })),
+  setPlanSortKey: (sortKey) => set((s) => ({ planFilters: { ...s.planFilters, sortKey } })),
+  togglePlanSortDirection: () =>
+    set((s) => ({
+      planFilters: {
+        ...s.planFilters,
+        sortDirection: s.planFilters.sortDirection === 'asc' ? 'desc' : 'asc',
+      },
+    })),
 
   decisions: [],
   decisionsLoading: true,

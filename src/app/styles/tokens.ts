@@ -81,7 +81,9 @@ export const color = {
 const headerHeight = '48px';
 
 export const layout = {
-  sidebarWidth: 220,
+  // 224 = 7 × 32, a multiple of the Layout's 32px background grid cell so the
+  // sidebar (and the plans Filters card that fills it) sits flush on the grid.
+  sidebarWidth: 224,
   stackPanelWidth: 480,
   headerHeight,
   contentGap: space[6],
