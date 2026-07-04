@@ -1,4 +1,4 @@
-import { space } from '@/app/styles/tokens';
+import { color, fontSize, space } from '@/app/styles/tokens';
 import { PLAN_KINDS } from '@/types/index';
 import { Button, Input, Modal, Select, Textarea } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
@@ -16,6 +16,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
   const [content, setContent] = useState('');
   const [kind, setKind] = useState('feat');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -23,20 +24,29 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
       setContent('');
       setKind('feat');
       setLoading(false);
+      setError(null);
     }
   }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || loading) return;
+    setError(null);
     setLoading(true);
-    await onAdd({
-      title: title.trim(),
-      content: content.trim() || undefined,
-      kind,
-    });
-    setLoading(false);
-    onClose();
+    try {
+      await onAdd({
+        title: title.trim(),
+        content: content.trim() || undefined,
+        kind,
+      });
+      onClose();
+    } catch (err) {
+      // Surface the failure and re-enable the form so the user can retry —
+      // without the finally the modal would stay stuck disabled on any onAdd reject.
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,6 +79,9 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
           disabled={loading}
           rows={4}
         />
+        {error && (
+          <p style={{ margin: 0, color: color.accentRoseDark, fontSize: fontSize.sm }}>{error}</p>
+        )}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
           <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             Cancel

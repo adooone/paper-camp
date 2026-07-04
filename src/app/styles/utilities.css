@@ -95,6 +95,74 @@ header > div[class*="headerActions"] {
 }
 
 /*
+ * Returning from a plan's detail view to the list scrolls the row for that plan
+ * back into view (see list-view.tsx); this outline is what makes it findable
+ * once scrolled to, the same way the old PlanCard's highlight ring did.
+ */
+.plan-row-highlighted {
+  outline: 2px solid rgba(200, 154, 90, 0.5);
+  outline-offset: -2px;
+}
+
+/*
+ * The dense plans list (plan-rows.tsx) is a table-shaped stack of Cards, not
+ * paper-ui's Table: a kraft header card over one-line paper row cards. The
+ * shared grid template is what keeps the header and every row's columns
+ * aligned; below the sidebar-collapse breakpoint the updated column disappears
+ * (cells carry the plan-rows-cell-updated class).
+ */
+.plan-rows-grid {
+  display: grid;
+  /* The header card and every row card are each their own grid, so auto/max-content
+     tracks would resolve per card and drift out of alignment. Every column except
+     the flexible title is therefore a fixed width — that's what keeps the header
+     labels sitting exactly over the row cells. Title owns the rest; Page caps
+     content around ~750px, so the fixed columns stay lean. */
+  grid-template-columns: 76px minmax(0, 1fr) 84px 96px 112px;
+  gap: 0.625rem;
+  align-items: center;
+}
+
+/* Backlog rows add a trailing per-item delete column (idea-status plans only,
+   from the sidebar's old backlog list). */
+.plan-rows-grid--deletable {
+  grid-template-columns: 76px minmax(0, 1fr) 84px 96px 112px 32px;
+}
+
+/*
+ * Card's own smallest padding (.75rem 1rem on its textureLayer) is still sized
+ * for content cards; rows need a tighter, single-line fit. Same reach-into-the-
+ * nested-div pattern as .stack-card-fill above.
+ */
+.plan-row-card [class*="textureLayer"] {
+  padding: 0.375rem 0.875rem;
+}
+
+@media (max-width: 1023px) {
+  .plan-rows-grid {
+    grid-template-columns: 76px minmax(0, 1fr) 96px 112px;
+  }
+  .plan-rows-grid--deletable {
+    grid-template-columns: 76px minmax(0, 1fr) 96px 112px 32px;
+  }
+  .plan-rows-cell-updated {
+    display: none;
+  }
+}
+
+/*
+ * The dense ideas list (idea-rows.tsx) mirrors .plan-rows-grid: same fixed-width
+ * non-title columns for the same per-card alignment reason, but swaps progress
+ * for a trailing action column (draft-plan button, or the linked-plans toggle).
+ */
+.idea-rows-grid {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) 112px 140px;
+  gap: 0.625rem;
+  align-items: center;
+}
+
+/*
  * The Status card's Quality/Tests/Consistency stamps are plain <button>s that
  * launch check runs on click, but paper-ui's Stamp has no interactive states of
  * its own — so this supplies the hover/pressed affordance that tells people

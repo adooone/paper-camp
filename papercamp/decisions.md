@@ -1,3 +1,28 @@
+## Dense lists are row cards, not paper-ui Table
+
+**Date:** 2026-07-04
+**Status:** decided
+
+**Context:** `FEAT-37`'s first phase originally specified paper-ui `Table` with
+`TableCellDropdown` for the dense plans list. The phase-1 agent run surfaced that
+`TableCellDropdown` was never exported from paper-ui's public API (it exists in the
+source and in stray per-module `.d.ts` files, but neither `dist/index.js` nor
+`dist/index.d.ts` carry it), and on review the Table look was rejected anyway.
+
+**Decision:** The dense lists are hand-composed rows that look like a table: each row
+a one-line paper-ui `Card` with compact padding and small gaps, under a header `Card`
+in a contrasting texture (kraft over paper), all sharing one grid column template
+(`.plan-rows-grid`). Rows are read-only — the title owns all flexible width, status
+renders as a `Stamp`, and edits (including status) happen inside the plan detail;
+inline editing via a row-level `Select` was built first and dropped on review, since
+the control cost row height and title space without earning them. Plans and ideas
+additionally split onto separate routes rather than sharing one page.
+
+**Rationale:** Rows-as-cards keep the app's warm card language while hitting the same
+density target, and they remove the dependency on an unexported component. The
+paper-ui export omission is still worth fixing upstream, but no paper-camp feature
+should be blocked on a cross-repo release.
+
 ## Planless ideas close via explicit frontmatter status
 
 **Date:** 2026-07-03
