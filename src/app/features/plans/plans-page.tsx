@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title';
+import { deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Button, Card } from '@dendelion/paper-ui';
@@ -8,8 +9,16 @@ import { ListView } from './components/list-view';
 import { PlanDetail } from './components/plan-detail';
 
 export const PlansPage = () => {
-  const { plans, plansError, activePlanTitle, setActivePlanTitle, view, setView, agentStatus } =
-    useAppStore();
+  const {
+    plans,
+    plansError,
+    activePlanTitle,
+    setActivePlanTitle,
+    view,
+    setView,
+    agentStatus,
+    loadPlans,
+  } = useAppStore();
 
   const draftingIdeaId =
     agentStatus?.ideaId && (agentStatus.status === 'starting' || agentStatus.status === 'running')
@@ -22,6 +31,13 @@ export const PlansPage = () => {
 
   const handleOpenPlan = (title: string) => {
     setActivePlanTitle(title);
+  };
+
+  const handleDeleteIdea = async (title: string) => {
+    if (!window.confirm(`Delete idea "${title}"?`)) return;
+    await deletePlan(title);
+    await loadPlans();
+    if (activePlanTitle === title) setActivePlanTitle(null);
   };
 
   const activePlan = activePlanTitle
@@ -85,8 +101,8 @@ export const PlansPage = () => {
 
       {plans.entries.length === 0 ? (
         <p style={{ opacity: 0.5 }}>
-          No plans yet. Run <code>paper-camp add plan &quot;name&quot;</code>, or add one from the
-          sidebar.
+          No plans yet. Run <code>paper-camp add plan &quot;name&quot;</code>, or add one to the
+          backlog above.
         </p>
       ) : view === 'board' ? (
         <BoardView plans={plans.entries} />
@@ -95,6 +111,7 @@ export const PlansPage = () => {
           plans={plans.entries}
           activePlanTitle={activePlanTitle}
           onOpenPlan={handleOpenPlan}
+          onDeleteIdea={handleDeleteIdea}
           draftingIdeaId={draftingIdeaId}
         />
       )}

@@ -10,10 +10,17 @@ interface ListViewProps {
   plans: PlanEntry[];
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
+  onDeleteIdea?: (title: string) => void;
   draftingIdeaId?: string | null;
 }
 
-export const ListView = ({ plans, activePlanTitle, onOpenPlan, draftingIdeaId }: ListViewProps) => {
+export const ListView = ({
+  plans,
+  activePlanTitle,
+  onOpenPlan,
+  onDeleteIdea,
+  draftingIdeaId,
+}: ListViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,7 +53,12 @@ export const ListView = ({ plans, activePlanTitle, onOpenPlan, draftingIdeaId }:
             </div>
           )}
           {backlog.length > 0 && (
-            <PlanRows plans={backlog} activePlanTitle={activePlanTitle} onOpen={onOpenPlan} />
+            <PlanRows
+              plans={backlog}
+              activePlanTitle={activePlanTitle}
+              onOpen={onOpenPlan}
+              onDeleteIdea={onDeleteIdea}
+            />
           )}
         </section>
       )}

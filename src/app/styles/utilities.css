@@ -123,6 +123,12 @@ header > div[class*="headerActions"] {
   align-items: center;
 }
 
+/* Backlog rows add a trailing per-item delete column (idea-status plans only,
+   from the sidebar's old backlog list). */
+.plan-rows-grid--deletable {
+  grid-template-columns: 76px minmax(0, 1fr) 84px 96px 112px 32px;
+}
+
 /*
  * Card's own smallest padding (.75rem 1rem on its textureLayer) is still sized
  * for content cards; rows need a tighter, single-line fit. Same reach-into-the-
@@ -135,6 +141,9 @@ header > div[class*="headerActions"] {
 @media (max-width: 1023px) {
   .plan-rows-grid {
     grid-template-columns: 76px minmax(0, 1fr) 96px 112px;
+  }
+  .plan-rows-grid--deletable {
+    grid-template-columns: 76px minmax(0, 1fr) 96px 112px 32px;
   }
   .plan-rows-cell-updated {
     display: none;

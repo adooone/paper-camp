@@ -5,6 +5,7 @@ import { Button } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { IdeaDetail } from './components/idea-detail';
 import { IdeasBoard } from './components/ideas-board';
+import { NewIdeaButton } from './components/new-idea-button';
 
 export const IdeasPage = () => {
   const { plans, activeIdeaTitle, setActiveIdeaTitle, setActivePlanTitle, ideaEntries } =
@@ -38,12 +39,20 @@ export const IdeasPage = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: space[4] }}>
+      <div
+        style={{
+          marginBottom: space[4],
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <PageTitle>Ideas</PageTitle>
+        <NewIdeaButton />
       </div>
 
       {ideaEntries.length === 0 ? (
-        <p style={{ opacity: 0.5 }}>No ideas yet. Add one from the sidebar to get started.</p>
+        <p style={{ opacity: 0.5 }}>No ideas yet — add one to get started.</p>
       ) : (
         <IdeasBoard
           ideas={ideaEntries}

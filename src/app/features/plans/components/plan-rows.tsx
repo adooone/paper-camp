@@ -1,6 +1,6 @@
 import { fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
-import { Card, Stamp } from '@dendelion/paper-ui';
+import { Card, IconButton, Stamp } from '@dendelion/paper-ui';
 import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { phaseProgress, relativeDate } from '../helpers';
 import { PlanIdStamp } from './plan-id-stamp';
@@ -10,6 +10,8 @@ interface PlanRowsProps {
   plans: PlanEntry[];
   activePlanTitle?: string | null;
   onOpen?: (title: string) => void;
+  /** Backlog-only: deletes a plan still in "idea" status. Adds a trailing column. */
+  onDeleteIdea?: (title: string) => void;
 }
 
 const headerLabelStyle: React.CSSProperties = {
@@ -27,11 +29,12 @@ const headerLabelStyle: React.CSSProperties = {
  * the title owns the space, status is a Stamp, and any editing (including
  * status changes) happens inside the plan the row opens.
  */
-export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
+export const PlanRows = ({ plans, activePlanTitle, onOpen, onDeleteIdea }: PlanRowsProps) => {
+  const gridClass = onDeleteIdea ? 'plan-rows-grid plan-rows-grid--deletable' : 'plan-rows-grid';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
       <Card size="small" texture="kraft" className="plan-row-card">
-        <div className="plan-rows-grid">
+        <div className={gridClass}>
           <span style={headerLabelStyle}>Id</span>
           <span style={headerLabelStyle}>Title</span>
           <span className="plan-rows-cell-updated" style={headerLabelStyle}>
@@ -39,6 +42,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
           </span>
           <span style={headerLabelStyle}>Progress</span>
           <span style={headerLabelStyle}>Status</span>
+          {onDeleteIdea && <span style={headerLabelStyle} />}
         </div>
       </Card>
       {plans.map((plan) => {
@@ -63,7 +67,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
             style={{ cursor: onOpen ? 'pointer' : undefined, borderRadius: 10 }}
           >
             <Card size="small" texture="canvas" className="plan-row-card">
-              <div className="plan-rows-grid">
+              <div className={gridClass}>
                 <PlanIdStamp id={plan.id} />
                 <span
                   style={{
@@ -102,6 +106,21 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                 >
                   {STATUS_LABEL[plan.status]}
                 </Stamp>
+                {onDeleteIdea &&
+                  (plan.status === 'idea' ? (
+                    <IconButton
+                      icon={<span>×</span>}
+                      variant="ghost"
+                      size="small"
+                      label="Delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteIdea(plan.title);
+                      }}
+                    />
+                  ) : (
+                    <span />
+                  ))}
               </div>
             </Card>
           </div>

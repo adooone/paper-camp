@@ -11,13 +11,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
-import {
-  IdeasPage,
-  PlansPage,
-  PlansSidebar,
-  ReviewPage,
-  ReviewSidebar,
-} from './features/plans/index';
+import { IdeasPage, PlansPage, ReviewPage, ReviewSidebar } from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
 import { useAppStore } from './stores/app-store';
 
@@ -55,6 +49,7 @@ const RootLayout = () => {
   const setActivePlanTitle = useAppStore((s) => s.setActivePlanTitle);
   const setActiveIdeaTitle = useAppStore((s) => s.setActiveIdeaTitle);
   const activeId = navItems.find((item) => item.path === pathname)?.id;
+  const hasSidebar = pathname === '/review' || pathname === '/docs' || pathname === '/settings';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -87,26 +82,28 @@ const RootLayout = () => {
           bleedBottom
           headerActions={
             <>
-              <IconButton
-                variant="ghost"
-                size="small"
-                className="lg:hidden"
-                label="Open sidebar"
-                onClick={() => setMobileSidebarOpen(true)}
-                icon={
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    aria-hidden="true"
-                  >
-                    <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
-                  </svg>
-                }
-              />
+              {hasSidebar && (
+                <IconButton
+                  variant="ghost"
+                  size="small"
+                  className="lg:hidden"
+                  label="Open sidebar"
+                  onClick={() => setMobileSidebarOpen(true)}
+                  icon={
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
+                      <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
+                    </svg>
+                  }
+                />
+              )}
               <ProjectIdentityHeader size="sm" />
               <div className="flex-1" />
               <nav aria-label="Main navigation" className="flex items-center gap-1">
@@ -128,16 +125,17 @@ const RootLayout = () => {
         >
           <div className="flex h-full min-h-0 justify-center items-stretch box-border overflow-hidden">
             <div className="flex h-full min-h-0 w-full" style={{ gap: layoutConfig.contentGap }}>
-              <SidebarShell
-                routeKey={pathname}
-                mobileOpen={mobileSidebarOpen}
-                onMobileClose={() => setMobileSidebarOpen(false)}
-              >
-                {(pathname === '/' || pathname === '/ideas') && <PlansSidebar />}
-                {pathname === '/review' && <ReviewSidebar />}
-                {pathname === '/docs' && <DocsSidebar />}
-                {pathname === '/settings' && <SettingsSidebar />}
-              </SidebarShell>
+              {hasSidebar && (
+                <SidebarShell
+                  routeKey={pathname}
+                  mobileOpen={mobileSidebarOpen}
+                  onMobileClose={() => setMobileSidebarOpen(false)}
+                >
+                  {pathname === '/review' && <ReviewSidebar />}
+                  {pathname === '/docs' && <DocsSidebar />}
+                  {pathname === '/settings' && <SettingsSidebar />}
+                </SidebarShell>
+              )}
               <div className="flex flex-1 flex-col min-h-0 min-w-0">
                 <div className="flex-1 min-h-0 overflow-y-auto">
                   <Page texture={{ texture: 'parchment' }} style={{ height: 'auto' }}>

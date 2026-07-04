@@ -1,5 +1,6 @@
 import { space } from '@/app/styles/tokens';
 import { Card } from '@dendelion/paper-ui';
+import { AddToBacklogButton } from './add-to-backlog-button';
 import { AuditAllButton } from './audit-all-button';
 import { ViewToggle } from './view-toggle';
 
@@ -25,6 +26,7 @@ export const ListToolbar = ({ view, onChangeView }: ListToolbarProps) => {
             gap: space[2],
           }}
         >
+          <AddToBacklogButton />
           <AuditAllButton />
           <ViewToggle view={view} onChange={onChangeView} />
         </div>

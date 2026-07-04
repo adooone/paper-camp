@@ -28,7 +28,7 @@ Approach (revised after the first phase-1 run): the dense lists are **not** pape
       Ideas leave the Plans page: add an `/ideas` route rendering the ideas row list as its own view, with an "Ideas" item in the header nav to switch between the two lists. Deep-linking *individual* plans/ideas stays out of scope — that's [[IDEA-40]]. The Plans page keeps In progress/Backlog/Closed only.
 - [x] Bound the closed plans section
       Add paper-ui `Pagination` (or a windowed "show more") to `closed-section.tsx` so 40+ done plans no longer render as one unbounded list behind a single toggle.
-- [ ] Replace the plans sidebar's duplicate lists
+- [x] Replace the plans sidebar's duplicate lists
       Swap `plans-sidebar.tsx`'s In progress/Planned/Ideas/Backlog item lists for section filters plus counts — or drop the Plans sidebar entirely if the filters don't earn their space. Preserve the actions the lists carried (add to backlog, per-item delete) wherever they move.
 - [ ] Compress the plan detail preamble
       Fold `plan-detail.tsx`'s five stacked metadata rows (status select, date+tags, clarify button, progress, agent select) into a single header line plus one meta line before the content starts.
