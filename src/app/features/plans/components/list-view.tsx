@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import {
   DEFAULT_PLAN_LIST_FILTERS,
   DEFAULT_VISIBLE_STATUSES,
+  type PlanSortKey,
+  type SortDirection,
   selectPlanRows,
 } from '../plan-list-selector';
 import { PlanCardSkeleton } from './plan-card-skeleton';
@@ -29,6 +31,10 @@ export const ListView = ({
   const [statuses, setStatuses] = useState<PlanStatus[]>(DEFAULT_VISIBLE_STATUSES);
   const [tags, setTags] = useState<string[]>([]);
   const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<PlanSortKey>(DEFAULT_PLAN_LIST_FILTERS.sortKey);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    DEFAULT_PLAN_LIST_FILTERS.sortDirection,
+  );
 
   useEffect(() => {
     if (!activePlanTitle) return;
@@ -48,11 +54,17 @@ export const ListView = ({
     );
   };
 
+  const toggleSortDirection = () => {
+    setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
+  };
+
   const { rows, statusCounts, tagCounts } = selectPlanRows(plans, {
     ...DEFAULT_PLAN_LIST_FILTERS,
     statuses,
     tags,
     search,
+    sortKey,
+    sortDirection,
   });
   const showSkeleton = Boolean(draftingIdeaId) && !plans.some((p) => p.idea === draftingIdeaId);
 
@@ -67,6 +79,10 @@ export const ListView = ({
         onToggleTag={toggleTag}
         search={search}
         onSearchChange={setSearch}
+        sortKey={sortKey}
+        onSortKeyChange={setSortKey}
+        sortDirection={sortDirection}
+        onToggleSortDirection={toggleSortDirection}
       />
       {showSkeleton && draftingIdeaId && (
         <div style={{ marginBottom: space[3] }}>

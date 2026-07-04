@@ -52,7 +52,7 @@ blocks this — it builds directly on FEAT-37's landed row-card list.
 - [x] Add tag chips and search
       The top few tags as clickable count-stamps in the card with the rest behind
       an overflow control, plus a search input matching plan title and body.
-- [ ] Add the sort control
+- [x] Add the sort control
       A compact sort control in the card: status precedence (default), updated,
       created, title, id, phase progress — with a direction toggle. Applies to the
       rows list only; the board view keeps its fixed lanes.

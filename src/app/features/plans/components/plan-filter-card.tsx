@@ -1,8 +1,9 @@
 import { space } from '@/app/styles/tokens';
 import type { PlanStatus } from '@/types/index';
-import { Card, Input, Stamp } from '@dendelion/paper-ui';
+import { Card, IconButton, Input, Select, Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
+import type { PlanSortKey, SortDirection } from '../plan-list-selector';
 
 interface PlanFilterCardProps {
   statusCounts: Record<PlanStatus, number>;
@@ -13,7 +14,21 @@ interface PlanFilterCardProps {
   onToggleTag: (tag: string) => void;
   search: string;
   onSearchChange: (value: string) => void;
+  sortKey: PlanSortKey;
+  onSortKeyChange: (key: PlanSortKey) => void;
+  sortDirection: SortDirection;
+  onToggleSortDirection: () => void;
 }
+
+/** Order matches the plan text: status precedence first (the default), then the rest. */
+const SORT_OPTIONS: { value: PlanSortKey; label: string }[] = [
+  { value: 'status', label: 'Status' },
+  { value: 'updated', label: 'Updated' },
+  { value: 'created', label: 'Created' },
+  { value: 'title', label: 'Title' },
+  { value: 'id', label: 'ID' },
+  { value: 'progress', label: 'Phase progress' },
+];
 
 /** Above this many tags, the rest collapse behind a "+N more" toggle. */
 const VISIBLE_TAG_COUNT = 6;
@@ -49,6 +64,10 @@ export const PlanFilterCard = ({
   onToggleTag,
   search,
   onSearchChange,
+  sortKey,
+  onSortKeyChange,
+  sortDirection,
+  onToggleSortDirection,
 }: PlanFilterCardProps) => {
   const active = new Set(activeStatuses);
   const activeTagSet = new Set(activeTags);
@@ -162,14 +181,56 @@ export const PlanFilterCard = ({
             </button>
           )}
         </div>
-        <div style={{ marginTop: space[3] }}>
-          <Input
-            type="search"
+        <div
+          style={{
+            marginTop: space[3],
+            display: 'flex',
+            gap: space[2],
+            alignItems: 'flex-end',
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <Input
+              type="search"
+              size="small"
+              placeholder="Search plans…"
+              aria-label="Search plans"
+              value={search}
+              onChange={(event) => onSearchChange(event.target.value)}
+            />
+          </div>
+          <Select
             size="small"
-            placeholder="Search plans…"
-            aria-label="Search plans"
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
+            options={SORT_OPTIONS}
+            value={sortKey}
+            onChange={(value) => onSortKeyChange(value as PlanSortKey)}
+            width={160}
+          />
+          <IconButton
+            icon={
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  transform: sortDirection === 'desc' ? 'rotate(180deg)' : undefined,
+                  transition: 'transform 0.15s ease',
+                }}
+              >
+                <title>Sort direction</title>
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+            }
+            label={sortDirection === 'asc' ? 'Sort ascending' : 'Sort descending'}
+            size="small"
+            variant="ghost"
+            onClick={onToggleSortDirection}
           />
         </div>
       </Card>
