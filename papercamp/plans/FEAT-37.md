@@ -2,7 +2,7 @@
 id: FEAT-37
 title: Densify the plans worklist
 kind: feat
-status: in-progress
+status: review
 created: 2026-07-04
 idea: IDEA-38
 updated: 2026-07-04
@@ -32,5 +32,5 @@ Approach (revised after the first phase-1 run): the dense lists are **not** pape
       Swap `plans-sidebar.tsx`'s In progress/Planned/Ideas/Backlog item lists for section filters plus counts — or drop the Plans sidebar entirely if the filters don't earn their space. Preserve the actions the lists carried (add to backlog, per-item delete) wherever they move.
 - [x] Compress the plan detail preamble
       Fold `plan-detail.tsx`'s five stacked metadata rows (status select, date+tags, clarify button, progress, agent select) into a single header line plus one meta line before the content starts.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
       Run `tsc --noEmit`, `biome check . --write`, and the test suite; then a browser pass over the dense plans table, ideas rows, paginated closed section, sidebar replacement, and compressed plan detail at laptop and narrow widths.
