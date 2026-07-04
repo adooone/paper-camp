@@ -210,6 +210,17 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
           disabled={updating}
           options={PLAN_STATUSES.map((status) => ({ value: status, label: STATUS_LABEL[status] }))}
         />
+        <Select
+          size="small"
+          width={180}
+          value={plan.agent ?? ''}
+          onChange={handleSetAgent}
+          disabled={updating}
+          options={[
+            { value: '', label: 'Project default agent' },
+            ...AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] })),
+          ]}
+        />
         <span className="text-sm" style={{ opacity: 0.45 }}>
           {plan.updated
             ? `updated ${relativeDate(plan.updated)}`
@@ -220,9 +231,16 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
             {tag}
           </Stamp>
         ))}
-      </div>
-
-      <div style={{ marginBottom: space[1] }}>
+        {progress !== null && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flex: '0 0 140px' }}>
+            <div style={{ flex: 1 }}>
+              <ProgressBar pct={progress.pct} color={STATUS_COLOR[plan.status]} />
+            </div>
+            <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
+              {progress.done}/{progress.total}
+            </span>
+          </div>
+        )}
         <ClarifyButton plan={plan} disabled={agentBusy} />
       </div>
 
@@ -265,33 +283,6 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
           </div>
         </div>
       )}
-
-      {progress !== null && (
-        <div style={{ marginBottom: space[5] }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
-            <div style={{ flex: 1 }}>
-              <ProgressBar pct={progress.pct} color={STATUS_COLOR[plan.status]} />
-            </div>
-            <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
-              {progress.done}/{progress.total}
-            </span>
-          </div>
-        </div>
-      )}
-
-      <div style={{ marginBottom: space[5] }}>
-        <Select
-          size="small"
-          width={220}
-          value={plan.agent ?? ''}
-          onChange={handleSetAgent}
-          disabled={updating}
-          options={[
-            { value: '', label: 'Project default agent' },
-            ...AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] })),
-          ]}
-        />
-      </div>
 
       {plan.phases.length > 0 && (
         <div style={{ marginBottom: space[8] }}>
