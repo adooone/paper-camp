@@ -51,7 +51,7 @@ export const ListView = ({ plans, activePlanTitle, onOpenPlan, draftingIdeaId }:
         </section>
       )}
 
-      <ClosedSection plans={closed} onOpen={onOpenPlan} />
+      <ClosedSection plans={closed} activePlanTitle={activePlanTitle} onOpen={onOpenPlan} />
     </div>
   );
 };
