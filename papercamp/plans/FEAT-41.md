@@ -2,7 +2,7 @@
 id: FEAT-41
 title: Filter and sort the plans list
 kind: feat
-status: in-progress
+status: review
 created: 2026-07-04
 idea: IDEA-42
 updated: 2026-07-04
@@ -59,7 +59,7 @@ blocks this — it builds directly on FEAT-37's landed row-card list.
 - [x] Absorb the toolbar into the card
       Move Audit-all, the view toggle, and Add-to-backlog from `list-toolbar.tsx`
       into the sticky card and delete `list-toolbar.tsx`.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
       `tsc --noEmit`, `biome check`, tests, and a browser pass over chip toggling,
       counts, search, sort directions, sticky behavior while scrolling, and the
       done/dropped reveal with 40+ closed plans.
