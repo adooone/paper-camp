@@ -1,9 +1,12 @@
 ---
 id: IDEA-37
 title: Fable capability-window tasks
+status: done
 ---
 
 ## IDEA-37: Fable capability-window tasks
+
+**Closed 2026-07-03 without a plan** — this is a usage pattern, not a feature: the tasks are one-off prompts fired from the existing agent plumbing, so there is nothing to build and nothing for a plan to track. Tasks 5 and 6 ran (see their notes); the remaining prompts stay below as ready-to-fire templates for however much of the window is left.
 
 Claude Fable 5 (`claude-fable-5`) is available to us for a limited window. It's the most capable model we can run, and it's differentiated at **long-horizon autonomous execution** (minutes-long single turns, one-shot builds against a spec), **open-ended judgment** (architecture, UX taste), **repo-wide reasoning** (1M context holds the whole codebase + all plans at once), and **bug-finding** (higher recall *and* precision). It's also 2× Opus pricing — so routing it by cost is the wrong frame for a closing window.
 

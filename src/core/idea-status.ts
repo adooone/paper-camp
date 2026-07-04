@@ -6,6 +6,12 @@ import type { IdeaEntry, PlanEntry } from '../types/index';
  */
 export function deriveIdeaStatuses(ideas: IdeaEntry[], plans: PlanEntry[]): IdeaEntry[] {
   return ideas.map((idea) => {
+    // An explicit `status: done` in the idea's frontmatter wins over derivation —
+    // it's the close mechanism for ideas that need no plan (usage patterns,
+    // one-off runs), which would otherwise stay `planned` forever.
+    if (idea.status === 'done') {
+      return idea;
+    }
     if (!idea.id) {
       return { ...idea, status: 'planned' };
     }

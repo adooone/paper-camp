@@ -38,7 +38,7 @@
 | IDEA-34 | Responsive layout and Stack panel redesign | done |
 | IDEA-35 | Scout ↔ GitHub plan sync | planned |
 | IDEA-36 | Scheduled repo digest and nudges | planned |
-| IDEA-37 | Fable capability-window tasks | planned |
+| IDEA-37 | Fable capability-window tasks | done |
 | IDEA-38 | Dense plans worklist | planned |
 | IDEA-39 | Focus cockpit and ambient status | planned |
 | IDEA-40 | Deep-linkable routes and breadcrumbs | planned |

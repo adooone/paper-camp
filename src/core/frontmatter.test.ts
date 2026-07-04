@@ -220,6 +220,30 @@ title: Minimal idea
     expect(entries).toEqual([]);
     expect(warnings).toEqual([]);
   });
+
+  it('carries an explicit frontmatter status through', () => {
+    const content = `---
+id: IDEA-37
+title: Fable capability-window tasks
+status: done
+---
+Closed without a plan.
+`;
+    const { entries, warnings } = parseIdeaFile(content);
+    expect(warnings).toEqual([]);
+    expect(entries[0].status).toBe('done');
+  });
+
+  it('leaves status undefined when frontmatter has none', () => {
+    const content = `---
+id: IDEA-20
+title: Plan storage architecture
+---
+Body.
+`;
+    const { entries } = parseIdeaFile(content);
+    expect(entries[0].status).toBeUndefined();
+  });
 });
 
 describe('formatPlanFile round-trip', () => {

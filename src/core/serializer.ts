@@ -288,6 +288,9 @@ export function formatPlanFile(input: NewPlanFileInput): string {
 interface NewIdeaFileInput {
   id: string;
   title: string;
+  // Explicit close for planless ideas only — never pass a derived status here,
+  // or the derivation would be frozen into the file.
+  status?: string;
   body?: string;
 }
 
@@ -299,6 +302,7 @@ export function formatIdeaFile(input: NewIdeaFileInput): string {
     id: input.id,
     title: input.title,
   };
+  if (input.status) frontmatter.status = input.status;
 
   const parts: string[] = [serializeFrontmatter(frontmatter)];
   const heading = `## ${input.id}: ${input.title}`;

@@ -739,6 +739,10 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                   onClick: () => void;
                 }) => (
                   <Tooltip content={opts.title} surface="chalkboard">
+                    {/* Raw <button>, not paper-ui Button/IconButton: the clickable target
+                        is a Stamp with its own chalkboard chrome, so we need a bare,
+                        chrome-less button wrapping it rather than a component that draws
+                        its own button surface. */}
                     <button
                       type="button"
                       className="stack-check-btn"
@@ -820,6 +824,9 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
                           }
                           surface="chalkboard"
                         >
+                          {/* Raw <button> for the same reason as the check stamps above:
+                              the clickable target is a Stamp, so no paper-ui Button/IconButton
+                              equivalent fits. */}
                           <button
                             type="button"
                             className={hasIssues ? 'stack-check-btn' : undefined}
