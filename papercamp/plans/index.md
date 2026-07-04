@@ -2,19 +2,19 @@
 
 | Id | Title | Status | Tags |
 |----|-------|--------|------|
-| REFACTOR-1 | UI cleanup: style guide and tokens | done | app, ui, refactor |
-| DOCS-1 | Refresh about.md reference | done | docs |
 | CHORE-1 | Demote idea headings to h2 | done | markdown, linting, ideas |
+| DOCS-1 | Refresh about.md reference | done | docs |
 | FEAT-1 | Build core library | done | core, cli |
-| REFACTOR-2 | UI cleanup follow-up | done | app, ui, refactor |
-| FIX-2 | Fix Review status bugs | done | app, plans, core |
+| REFACTOR-1 | UI cleanup: style guide and tokens | done | app, ui, refactor |
 | DOCS-2 | Restructure repo-root docs | done | docs, readme, restructure, coderabbit |
 | FEAT-2 | Build dashboard app | done | app, paper-ui |
+| FIX-2 | Fix Review status bugs | done | app, plans, core |
+| REFACTOR-2 | UI cleanup follow-up | done | app, ui, refactor |
 | DOCS-3 | Actualize about.md for per-file storage | done | docs, per-file, about |
-| REFACTOR-3 | Drop Focus page and unify sidebar | done | app, plans, ui |
 | FEAT-3 | Add board view and branding | done | app, plans, settings |
-| REFACTOR-4 | Default font and Stack panel cleanup | done | app, ui, paper-ui |
+| REFACTOR-3 | Drop Focus page and unify sidebar | done | app, plans, ui |
 | FEAT-4 | Build Docs page | done | app, docs |
+| REFACTOR-4 | Default font and Stack panel cleanup | done | app, ui, paper-ui |
 | FEAT-5 | Build Settings page | done | app, settings |
 | FEAT-6 | Build the Stack panel | done | app, stack |
 | FEAT-7 | Plan and phase IDs | done | app, plans, core |
@@ -46,3 +46,5 @@
 | FEAT-33 | Responsive layout and Stack panel redesign | done | app, ui, layout, navigation, stack, paper-ui, responsive |
 | FEAT-34 | Migrate to paper-ui 0.5.0 | done | app, ui, deps |
 | FEAT-35 | Adopt paper-ui 0.5.0 components | done | app, ui |
+| FEAT-36 | Mirror plans onto GitHub PRs | planned | ci, github, plans |
+| FEAT-37 | Densify the plans worklist | in-progress | app, ui, plans, ideas |
