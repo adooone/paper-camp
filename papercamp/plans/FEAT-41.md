@@ -56,7 +56,7 @@ blocks this — it builds directly on FEAT-37's landed row-card list.
       A compact sort control in the card: status precedence (default), updated,
       created, title, id, phase progress — with a direction toggle. Applies to the
       rows list only; the board view keeps its fixed lanes.
-- [ ] Absorb the toolbar into the card
+- [x] Absorb the toolbar into the card
       Move Audit-all, the view toggle, and Add-to-backlog from `list-toolbar.tsx`
       into the sticky card and delete `list-toolbar.tsx`.
 - [ ] Type-check and visual pass

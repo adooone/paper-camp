@@ -4,8 +4,13 @@ import { Card, IconButton, Input, Select, Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
 import type { PlanSortKey, SortDirection } from '../plan-list-selector';
+import { AddToBacklogButton } from './add-to-backlog-button';
+import { AuditAllButton } from './audit-all-button';
+import { ViewToggle } from './view-toggle';
 
 interface PlanFilterCardProps {
+  view: 'list' | 'board';
+  onChangeView: (v: 'list' | 'board') => void;
   statusCounts: Record<PlanStatus, number>;
   activeStatuses: PlanStatus[];
   onToggleStatus: (status: PlanStatus) => void;
@@ -54,8 +59,13 @@ const STATUS_CHIP_LABEL: Record<PlanStatus, string> = {
  * page's scroll container, so it reads as pinned under the fixed app header
  * above it). Status chips double as filters and live counts; done/dropped
  * default off per FEAT-41's first-paint guard, so a plain click brings them in.
+ * Rendered once at the page level (not inside list-view.tsx) so Add-to-backlog,
+ * Audit-all, and the view toggle it absorbed from list-toolbar.tsx stay reachable
+ * while the board view is active too.
  */
 export const PlanFilterCard = ({
+  view,
+  onChangeView,
   statusCounts,
   activeStatuses,
   onToggleStatus,
@@ -86,6 +96,19 @@ export const PlanFilterCard = ({
   return (
     <div style={{ position: 'sticky', top: 0, zIndex: 10, marginBottom: space[4] }}>
       <Card size="small" texture="kraft" className="plan-row-card">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: space[2],
+            marginBottom: space[3],
+          }}
+        >
+          <AddToBacklogButton />
+          <AuditAllButton />
+          <ViewToggle view={view} onChange={onChangeView} />
+        </div>
         <div
           style={{
             display: 'flex',

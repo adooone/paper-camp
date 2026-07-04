@@ -2,11 +2,20 @@ import { PageTitle } from '@/app/components/page-title';
 import { deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
+import type { PlanStatus } from '@/types/index';
 import { Button, Card } from '@dendelion/paper-ui';
+import { useState } from 'react';
 import { BoardView } from './components/board-view';
-import { ListToolbar } from './components/list-toolbar';
 import { ListView } from './components/list-view';
 import { PlanDetail } from './components/plan-detail';
+import { PlanFilterCard } from './components/plan-filter-card';
+import {
+  DEFAULT_PLAN_LIST_FILTERS,
+  DEFAULT_VISIBLE_STATUSES,
+  type PlanSortKey,
+  type SortDirection,
+  selectPlanRows,
+} from './plan-list-selector';
 
 export const PlansPage = () => {
   const {
@@ -19,6 +28,30 @@ export const PlansPage = () => {
     agentStatus,
     loadPlans,
   } = useAppStore();
+
+  const [statuses, setStatuses] = useState<PlanStatus[]>(DEFAULT_VISIBLE_STATUSES);
+  const [tags, setTags] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<PlanSortKey>(DEFAULT_PLAN_LIST_FILTERS.sortKey);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    DEFAULT_PLAN_LIST_FILTERS.sortDirection,
+  );
+
+  const toggleStatus = (status: PlanStatus) => {
+    setStatuses((current) =>
+      current.includes(status) ? current.filter((s) => s !== status) : [...current, status],
+    );
+  };
+
+  const toggleTag = (tag: string) => {
+    setTags((current) =>
+      current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag],
+    );
+  };
+
+  const toggleSortDirection = () => {
+    setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
+  };
 
   const draftingIdeaId =
     agentStatus?.ideaId && (agentStatus.status === 'starting' || agentStatus.status === 'running')
@@ -78,13 +111,37 @@ export const PlansPage = () => {
     );
   }
 
+  const { rows, statusCounts, tagCounts } = selectPlanRows(plans.entries, {
+    ...DEFAULT_PLAN_LIST_FILTERS,
+    statuses,
+    tags,
+    search,
+    sortKey,
+    sortDirection,
+  });
+
   return (
     <div>
       <div style={{ marginBottom: space[4] }}>
         <PageTitle>Plans</PageTitle>
       </div>
 
-      <ListToolbar view={view} onChangeView={setView} />
+      <PlanFilterCard
+        view={view}
+        onChangeView={setView}
+        statusCounts={statusCounts}
+        activeStatuses={statuses}
+        onToggleStatus={toggleStatus}
+        tagCounts={tagCounts}
+        activeTags={tags}
+        onToggleTag={toggleTag}
+        search={search}
+        onSearchChange={setSearch}
+        sortKey={sortKey}
+        onSortKeyChange={setSortKey}
+        sortDirection={sortDirection}
+        onToggleSortDirection={toggleSortDirection}
+      />
 
       {plans.warnings.length > 0 && (
         <Card size="small" accent accentColor="amber">
@@ -109,6 +166,7 @@ export const PlansPage = () => {
       ) : (
         <ListView
           plans={plans.entries}
+          rows={rows}
           activePlanTitle={activePlanTitle}
           onOpenPlan={handleOpenPlan}
           onDeleteIdea={handleDeleteIdea}
