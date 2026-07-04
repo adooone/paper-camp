@@ -22,7 +22,7 @@ Approach (revised after the first phase-1 run): the dense lists are **not** pape
       Replace `list-view.tsx`'s stacked `PlanCard`s with a hand-composed row list (`plan-rows.tsx`): each row a one-line `Card` with compact padding and small gaps, sharing a grid column template with a header `Card` in a contrasting paper texture (kraft header over canvas rows). Columns: FEAT-id `Stamp`, title, updated date, a small phase-progress bar, and a status `Stamp` — the title owns all flexible space and rows are read-only; status changes happen inside the plan detail. Row click opens the plan detail as before; the updated column collapses away below the sidebar breakpoint.
 - [x] Move list actions into the list header
       Host Audit-all and the list/board view toggle in the row list's header area, replacing the ad-hoc header row `plans-page.tsx` currently composes above the list.
-- [ ] Rework the ideas board into full-width rows
+- [x] Rework the ideas board into full-width rows
       Replace `ideas-board.tsx`'s two-lane board with full-width rows in the same row-card style as the plans list, fixing the wrapped-title/empty-half-row problem. "Draft plan" stays a per-row action.
 - [ ] Split plans and ideas onto separate routes
       Ideas leave the Plans page: add an `/ideas` route rendering the ideas row list as its own view, with an "Ideas" item in the header nav to switch between the two lists. Deep-linking *individual* plans/ideas stays out of scope — that's [[IDEA-40]]. The Plans page keeps In progress/Backlog/Closed only.

@@ -142,6 +142,18 @@ header > div[class*="headerActions"] {
 }
 
 /*
+ * The dense ideas list (idea-rows.tsx) mirrors .plan-rows-grid: same fixed-width
+ * non-title columns for the same per-card alignment reason, but swaps progress
+ * for a trailing action column (draft-plan button, or the linked-plans toggle).
+ */
+.idea-rows-grid {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) 112px 140px;
+  gap: 0.625rem;
+  align-items: center;
+}
+
+/*
  * The Status card's Quality/Tests/Consistency stamps are plain <button>s that
  * launch check runs on click, but paper-ui's Stamp has no interactive states of
  * its own — so this supplies the hover/pressed affordance that tells people
