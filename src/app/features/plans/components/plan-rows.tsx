@@ -117,6 +117,11 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, onDeleteIdea }: PlanR
                         e.stopPropagation();
                         onDeleteIdea(plan.title);
                       }}
+                      onKeyDown={(e) => {
+                        // Keep Enter/Space from bubbling to the row's onKeyDown — otherwise
+                        // one keypress both deletes the plan and opens its detail view.
+                        if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
+                      }}
                     />
                   ) : (
                     <span />

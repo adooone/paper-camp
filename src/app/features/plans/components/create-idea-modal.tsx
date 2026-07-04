@@ -1,4 +1,4 @@
-import { space } from '@/app/styles/tokens';
+import { color, fontSize, space } from '@/app/styles/tokens';
 import { Button, Input, Modal, Textarea } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 
@@ -12,22 +12,32 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setTitle('');
       setContent('');
       setLoading(false);
+      setError(null);
     }
   }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || loading) return;
+    setError(null);
     setLoading(true);
-    await onAdd({ title: title.trim(), content: content.trim() || undefined });
-    setLoading(false);
-    onClose();
+    try {
+      await onAdd({ title: title.trim(), content: content.trim() || undefined });
+      onClose();
+    } catch (err) {
+      // Without this the modal stays stuck disabled if onAdd rejects; surface the
+      // error and re-enable the form so the user can retry.
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,6 +63,9 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
           disabled={loading}
           rows={4}
         />
+        {error && (
+          <p style={{ margin: 0, color: color.accentRoseDark, fontSize: fontSize.sm }}>{error}</p>
+        )}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
           <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             Cancel

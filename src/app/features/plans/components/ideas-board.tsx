@@ -53,7 +53,10 @@ export const IdeasBoard = ({ ideas, plans, onOpenIdea, onOpenPlan }: IdeasBoardP
           <div key={idea.title} style={{ borderRadius: 10 }}>
             <Card size="small" texture="canvas" className="plan-row-card">
               <div className="idea-rows-grid">
-                <PlanIdStamp id={idea.id ?? undefined} />
+                {/* Always occupy the first grid column — PlanIdStamp renders null when
+                    id is absent, which would collapse the cell and shift every later
+                    column left (same guard the action column below uses). */}
+                {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
                 <button
                   type="button"
                   onClick={() => onOpenIdea?.(idea.title)}

@@ -42,7 +42,9 @@ export const IdeaDetail = ({ idea }: IdeaDetailProps) => {
       <Markdown>
         {idea.body
           .replace(/^#{1,3}\s+.+(\n|$)/, '')
-          .replace(/^-{3,}\s*$/m, '')
+          // Only a leading delimiter, not the `m` flag — otherwise this strips any
+          // standalone `---` horizontal rule the user wrote mid-body.
+          .replace(/^\s*-{3,}\s*(\n|$)/, '')
           .trim()}
       </Markdown>
       <div style={{ marginTop: space[6] }}>
@@ -64,7 +66,9 @@ const ExtendWithAIButton = ({ ideaId }: { ideaId: string | null }) => {
     if (!ideaId) return;
     run(async () => {
       const idea = useAppStore.getState().ideaEntries.find((e) => e.id === ideaId);
-      if (!idea) return;
+      // Throw, don't return: a bare return resolves the run() callback normally, so
+      // useActionFeedback would flash success even though the extend never launched.
+      if (!idea) throw new Error(`Idea ${ideaId} not found`);
       try {
         await launchIdeaExtend(ideaId, buildIdeaExtendPrompt(idea));
       } catch (err) {
