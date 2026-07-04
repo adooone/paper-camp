@@ -1,4 +1,4 @@
-import { space } from '@/app/styles/tokens';
+import { fontSize, space } from '@/app/styles/tokens';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -14,7 +14,7 @@ interface IdeasBoardProps {
 }
 
 const headerLabelStyle: React.CSSProperties = {
-  fontSize: '0.875rem',
+  fontSize: fontSize.xs,
   fontWeight: 600,
   opacity: 0.6,
   whiteSpace: 'nowrap',
