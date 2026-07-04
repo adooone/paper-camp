@@ -4,11 +4,10 @@ import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import { Button, Card, Stamp, Tooltip, useToast } from '@dendelion/paper-ui';
-import { AuditAllButton } from './components/audit-all-button';
 import { BoardView } from './components/board-view';
+import { ListToolbar } from './components/list-toolbar';
 import { ListView } from './components/list-view';
 import { PlanDetail } from './components/plan-detail';
-import { ViewToggle } from './components/view-toggle';
 import { buildIdeaExtendPrompt } from './prompts';
 
 export const PlansPage = () => {
@@ -135,20 +134,11 @@ export const PlansPage = () => {
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: space[7],
-        }}
-      >
+      <div style={{ marginBottom: space[4] }}>
         <PageTitle>Plans</PageTitle>
-        <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-          <AuditAllButton />
-          <ViewToggle view={view} onChange={setView} />
-        </div>
       </div>
+
+      <ListToolbar view={view} onChangeView={setView} />
 
       {plans.warnings.length > 0 && (
         <Card size="small" accent accentColor="amber">
