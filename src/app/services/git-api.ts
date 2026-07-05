@@ -52,3 +52,14 @@ export const syncToMain = async (mode: 'clean' | 'dirty'): Promise<void> => {
   });
   await throwIfNotOk(response, 'Sync failed');
 };
+
+export const createPlanBranch = async (planId: string): Promise<string> => {
+  const response = await fetch('/api/git/branch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Failed to create branch');
+  return data.branch as string;
+};

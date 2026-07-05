@@ -1,21 +1,22 @@
 import { Markdown } from '@/app/components/markdown';
+import { createPlanBranch } from '@/app/services/git-api';
 import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
+import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
-  AGENT_IDS,
-  AGENT_LABELS,
-  type AgentId,
-  type IdeaEntry,
-  type LogEntry,
-  PLAN_STATUSES,
-  type PhaseItem,
-  type PlanEntry,
-  type PlanStatus,
-} from '@/types/index';
-import { Button, Checkbox, Select, Spinner, Stamp, Table, Textarea } from '@dendelion/paper-ui';
+  Button,
+  Card,
+  Checkbox,
+  Spinner,
+  Stamp,
+  Table,
+  Textarea,
+  Tooltip,
+  useToast,
+} from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { STATUS_COLOR, STATUS_LABEL } from '../constants';
+import { STATUS_COLOR } from '../constants';
 import { phaseProgress, relativeDate } from '../helpers';
 import { AddReviewPhasesButton } from './add-review-phases-button';
 import { AgentStartButton } from './agent-start-button';
@@ -28,7 +29,6 @@ import { PlanIdStamp } from './plan-id-stamp';
 import { ProgressBar } from './progress-bar';
 import { ReconcileButton } from './reconcile-button';
 import { ReconcileDiffPanel } from './reconcile-diff-panel';
-import { RunAllPhasesButton } from './run-all-phases-button';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -39,9 +39,19 @@ interface EntityDetailProps {
  * (markdown rationale plus Draft-plan/Extend actions), plan-shaped after
  * (phases table, run controls, review actions). Notes render NoteDetail instead.
  */
+/** Parses the entity id a feature branch encodes (feat/idea-43-… → IDEA-43). */
+function branchEntityId(branch: string | null): string | null {
+  const match = branch?.match(/^[a-z]+\/([a-z]+-\d+)-/);
+  return match ? match[1].toUpperCase() : null;
+}
+
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const loadPlans = useAppStore((s) => s.loadPlans);
   const allPlans = useAppStore((s) => s.plans);
+  const gitBranch = useAppStore((s) => s.gitBranch);
+  const loadGitStatus = useAppStore((s) => s.loadGitStatus);
+  const { toast } = useToast();
+  const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const reconcilePreview = useAppStore((s) => s.reconcilePreview);
   const setReconcilePreview = useAppStore((s) => s.setReconcilePreview);
@@ -60,8 +70,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const [logInput, setLogInput] = useState('');
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
-  const inProgress = plan.status === 'in-progress';
-  const underReview = plan.status === 'review';
   // The IdeaEntry view of this entity, for the idea-scoped agent actions
   // (draft/extend prompts take the idea shape).
   const ideaView: IdeaEntry = {
@@ -71,21 +79,26 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     log: plan.log,
   };
   const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
+  // Branch management is manual — the app never switches branches on its own.
+  // Surface where work would land, and offer the plan's branch as one click.
+  const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
+  const showBranchRow =
+    plan.status === 'planned' || plan.status === 'in-progress' || plan.status === 'review';
+
+  const handleCreateBranch = async () => {
+    if (!plan.id) return;
+    setBranching(true);
+    try {
+      const branch = await createPlanBranch(plan.id);
+      toast({ title: 'Branch ready', description: `Now on ${branch}`, variant: 'success' });
+      await loadGitStatus();
+    } catch (err) {
+      toast({ title: 'Branch failed', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setBranching(false);
+    }
+  };
   const allDone = progress !== null && progress.done === progress.total && progress.total > 0;
-
-  const handleStart = async () => {
-    setUpdating(true);
-    await updatePlan(plan.title, { status: 'in-progress' });
-    await loadPlans();
-    setUpdating(false);
-  };
-
-  const handleStop = async () => {
-    setUpdating(true);
-    await updatePlan(plan.title, { status: 'planned' });
-    await loadPlans();
-    setUpdating(false);
-  };
 
   const handleTogglePhase = async (index: number) => {
     const nextPhases: PhaseItem[] = plan.phases.map((phase, i) =>
@@ -99,34 +112,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     } else {
       await updatePlan(plan.title, { phases: nextPhases });
     }
-    await loadPlans();
-    setUpdating(false);
-  };
-
-  const handleApprove = async () => {
-    setUpdating(true);
-    await updatePlan(plan.title, { status: 'done' });
-    await loadPlans();
-    setUpdating(false);
-  };
-
-  const handleNeedsChanges = async () => {
-    setUpdating(true);
-    await updatePlan(plan.title, { status: 'in-progress' });
-    await loadPlans();
-    setUpdating(false);
-  };
-
-  const handleSetStatus = async (value: string) => {
-    setUpdating(true);
-    await updatePlan(plan.title, { status: value as PlanStatus });
-    await loadPlans();
-    setUpdating(false);
-  };
-
-  const handleSetAgent = async (value: string) => {
-    setUpdating(true);
-    await updatePlan(plan.title, { agent: value ? (value as AgentId) : null });
     await loadPlans();
     setUpdating(false);
   };
@@ -176,42 +161,21 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           onDiscard={handleDiscardReconcile}
         />
       )}
-      <div
+      <h2
         style={{
+          fontFamily: fontFamily.serif,
+          fontWeight: 600,
+          fontSize: '1.75rem',
+          margin: `0 0 ${space[3]}`,
+          lineHeight: lineHeight.tight,
           display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: space[4],
-          marginBottom: space[3],
+          alignItems: 'center',
+          gap: space[3],
         }}
       >
-        <h2
-          style={{
-            fontFamily: fontFamily.serif,
-            fontWeight: 600,
-            fontSize: '1.75rem',
-            margin: 0,
-            lineHeight: lineHeight.tight,
-            display: 'flex',
-            alignItems: 'center',
-            gap: space[3],
-          }}
-        >
-          <PlanIdStamp id={plan.id} />
-          {plan.title}
-        </h2>
-        {!underReview && hasPhases && (
-          <Button
-            variant="primary"
-            size="small"
-            className={inProgress ? 'btn-orange' : 'btn-green'}
-            onClick={inProgress ? handleStop : handleStart}
-            disabled={updating}
-          >
-            {inProgress ? 'Stop' : 'Start'}
-          </Button>
-        )}
-      </div>
+        <PlanIdStamp id={plan.id} />
+        {plan.title}
+      </h2>
 
       <div
         style={{
@@ -222,25 +186,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           marginBottom: space[4],
         }}
       >
-        <Select
-          size="small"
-          width={140}
-          value={plan.status}
-          onChange={handleSetStatus}
-          disabled={updating}
-          options={PLAN_STATUSES.map((status) => ({ value: status, label: STATUS_LABEL[status] }))}
-        />
-        <Select
-          size="small"
-          width={180}
-          value={plan.agent ?? ''}
-          onChange={handleSetAgent}
-          disabled={updating}
-          options={[
-            { value: '', label: 'Project default agent' },
-            ...AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] })),
-          ]}
-        />
         <span className="text-sm" style={{ opacity: 0.45 }}>
           {plan.updated
             ? `updated ${relativeDate(plan.updated)}`
@@ -263,6 +208,35 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         )}
         <ClarifyButton plan={plan} disabled={agentBusy} />
       </div>
+
+      {showBranchRow && !onOwnBranch && (
+        <Card size="small" accent accentColor="amber" className="mb-4">
+          <div style={{ display: 'flex', alignItems: 'center', gap: space[3], flexWrap: 'wrap' }}>
+            <span className="text-sm">
+              Working branch: <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
+            </span>
+            {plan.id && (
+              <Tooltip
+                content={`Creates ${(plan.kind ?? 'feat').toLowerCase()}/${plan.id.toLowerCase()}-… from main, or switches to it if it already exists`}
+              >
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={handleCreateBranch}
+                  disabled={branching}
+                >
+                  {branching ? 'Switching…' : 'Create branch'}
+                </Button>
+              </Tooltip>
+            )}
+          </div>
+        </Card>
+      )}
+      {showBranchRow && onOwnBranch && (
+        <p className="text-sm" style={{ margin: `0 0 ${space[4]}`, opacity: 0.45 }}>
+          Working branch: <code>{gitBranch}</code>
+        </p>
+      )}
 
       {plan.body && (
         <div style={{ marginBottom: space[4], opacity: 0.85 }}>
@@ -339,10 +313,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
               {auditRunning && <Spinner size="small" label="Audit running…" />}
-              {(plan.status === 'planned' || plan.status === 'in-progress') &&
-                plan.phases.some((p) => !p.done) && (
-                  <RunAllPhasesButton plan={plan} disabled={agentBusy} />
-                )}
               {(plan.status === 'review' || plan.status === 'done') && (
                 <AuditPhasesButton plan={plan} disabled={agentBusy} />
               )}
@@ -417,29 +387,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               phase.source === 'review' ? 'phase-row-review' : undefined
             }
           />
-        </div>
-      )}
-
-      {underReview && (
-        <div style={{ display: 'flex', gap: space[3], marginBottom: space[6] }}>
-          <Button
-            variant="primary"
-            size="small"
-            className="btn-green"
-            onClick={handleApprove}
-            disabled={updating}
-          >
-            Approve &amp; close
-          </Button>
-          <Button
-            variant="primary"
-            size="small"
-            className="btn-orange"
-            onClick={handleNeedsChanges}
-            disabled={updating}
-          >
-            Needs changes
-          </Button>
         </div>
       )}
 

@@ -1,4 +1,4 @@
-import { readWorkEntries } from '../../../core/readers';
+import { entityToPlan, readEntities, readWorkEntries } from '../../../core/readers';
 import { findFocusPlan } from '../../features/plans/helpers';
 import { suggestCommitMessage } from '../commit-suggest';
 import { campFile } from '../helpers';
@@ -27,6 +27,33 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
         const ahead = await git.getAheadCount();
         const branchHygiene = await git.getBranchHygieneStatus();
         sendJson(res, 200, { branch, entries, ahead, branchHygiene });
+      },
+    },
+
+    // POST /api/git/branch — create (or switch to) a plan's feature branch, on request.
+    // Branch management is manual: nothing else in the app switches branches.
+    {
+      method: 'POST',
+      path: '/api/git/branch',
+      handle: async (req, res) => {
+        try {
+          const body = await readBody(req);
+          const { planId } = JSON.parse(body) as { planId?: string };
+          if (!planId) {
+            sendJson(res, 400, { error: 'planId is required' });
+            return;
+          }
+          const { entries } = await readEntities(campFile(root, 'ideas'));
+          const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
+          if (!entity) {
+            sendJson(res, 404, { error: 'entity not found' });
+            return;
+          }
+          git.ensureBranch(entityToPlan(entity));
+          sendJson(res, 200, { ok: true, branch: git.getCurrentBranch() });
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
+        }
       },
     },
 

@@ -11,7 +11,13 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
-import { PlanFilterColumn, PlansPage, ReviewPage, ReviewSidebar } from './features/plans/index';
+import {
+  PlanActionsColumn,
+  PlanFilterColumn,
+  PlansPage,
+  ReviewPage,
+  ReviewSidebar,
+} from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
 import { useAppStore } from './stores/app-store';
 
@@ -167,8 +173,18 @@ const RootLayout = () => {
                   mobileOpen={mobileSidebarOpen}
                   onMobileClose={() => setMobileSidebarOpen(false)}
                 >
-                  {pathname === '/' && <PlanFilterColumn />}
-                  {pathname === '/review' && <ReviewSidebar />}
+                  {pathname === '/' && (
+                    <>
+                      <PlanFilterColumn />
+                      <PlanActionsColumn />
+                    </>
+                  )}
+                  {pathname === '/review' && (
+                    <>
+                      <ReviewSidebar />
+                      <PlanActionsColumn flush={false} />
+                    </>
+                  )}
                   {pathname === '/docs' && <DocsSidebar />}
                   {pathname === '/settings' && <SettingsSidebar />}
                 </SidebarShell>

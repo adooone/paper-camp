@@ -1,6 +1,6 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { entityToPlan, readEntities } from '../../../core/readers';
+import { readEntities } from '../../../core/readers';
 import {
   archiveEntityFile,
   assignEntityId,
@@ -190,11 +190,6 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
 
         if (updates.status === 'done' || updates.status === 'dropped') {
           await archiveEntityFile(root, target.id);
-          try {
-            git.ensureBranch(entityToPlan(updatedEntry));
-          } catch {
-            // Non-fatal
-          }
         }
 
         sendJson(res, 200, { ok: true });

@@ -142,6 +142,15 @@ selector/renderer machinery transfers to it with the parent swapped.
       branch-per-plan setup, the draft-PR "Plan:" line, and any prompts that
       reference plan ids. Legacy `<KIND>-<N>` references in git history stay
       as they are.
+- [x] Make branch management manual
+      Nothing switches git branches automatically anymore: the agent launches
+      (single phase, run-all) and the done/dropped archive path stop calling
+      `ensureBranch` — auto-branching from main mid-plan yanked the user off
+      their real working branch. Instead the entity detail surfaces the working
+      branch: an amber alert when a planned/in-progress/review entity is open on
+      a branch that isn't its own, with a manual "Create branch" button
+      (`POST /api/git/branch` → the same `ensureBranch`, now user-initiated),
+      and a muted confirmation line when the branch matches.
 - [x] Morph the UI to the single entity
       `IdeaDetail` and `PlanDetail` merge into one detail view that renders
       idea-shaped until phases exist and plan-shaped after ("create plan" =

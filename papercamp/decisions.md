@@ -1,3 +1,29 @@
+## Branch management is manual
+
+**Date:** 2026-07-05
+**Status:** decided
+
+**Context:** Launching an agent task (single phase or run-all) auto-ran
+`ensureBranch`, which creates the plan's branch *from main* and checks it out.
+Mid-plan that silently yanks the user off their real working branch — surfaced
+when starting `FEAT-42`'s last phase from the UI created a stray
+`feat/idea-43-…` branch off main while the actual work lived on
+`feat/feat-42-…`. The `done`/`dropped` archive path had the same auto-call.
+
+**Decision:** Nothing in the app switches git branches on its own. Agent
+launches and status changes run on whatever branch is checked out. Instead,
+the entity detail surfaces branch state: an amber working-branch alert when a
+`planned`/`in-progress`/`review` entity is open on a branch that isn't its own
+(matched by the entity id the branch name encodes), with a manual
+"Create branch" button — `POST /api/git/branch`, calling the same
+`ensureBranch` helper, now user-initiated — plus a muted confirmation line
+when the branch already matches.
+
+**Rationale:** A branch switch changes workspace state the user is standing
+in; doing it as a side effect of "run this phase" is exactly the kind of
+surprise the alert can prevent without the automation. The helper and its
+branch-naming convention survive unchanged — only who pulls the trigger moved.
+
 ## Entity ids are lifetime IDEA-N
 
 **Date:** 2026-07-05

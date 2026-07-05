@@ -102,7 +102,6 @@ When the work is done:
 
 export function createAgentManager(
   root: string,
-  ensureBranch: (plan: PlanEntry) => void = () => {},
   onAuditComplete?: (planId: string, gapPhases: number) => Promise<void>,
   onPhaseCommit?: (plan: PlanEntry, phase: PhaseItem, phaseIndex: number) => Promise<void>,
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
@@ -291,7 +290,6 @@ export function createAgentManager(
     if (!phase) {
       return { ok: false, error: 'Phase not found' };
     }
-    ensureBranch(plan);
     const prompt = buildAgentPrompt(plan, phase, phaseIndex);
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
       taskKind: 'phase',
@@ -515,7 +513,8 @@ export function createAgentManager(
   }
 
   // Run all unchecked phases sequentially, spawning a fresh agent per phase.
-  // Calls ensureBranch up front, then iterates unchecked phases in order.
+  // Iterates unchecked phases in order on whatever branch is checked out —
+  // branch management is manual (see the "Branch creation is manual" decision).
   // Stops on first failure; calls onPhaseCommit (wired at construction) after each verified success.
   function startRunAllPhases(plan: PlanEntry, runProjectChecks?: () => Promise<boolean>): Result {
     if (isBusy()) {
@@ -528,8 +527,6 @@ export function createAgentManager(
     if (unchecked.length === 0) {
       return { ok: false, error: 'No unchecked phases to run' };
     }
-
-    ensureBranch(plan);
 
     const defaultAgents = readDefaultAgentIds(root);
     const {
