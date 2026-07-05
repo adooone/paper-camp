@@ -1,4 +1,4 @@
-import type { PlanEntry, PlanStatus } from '@/types/index';
+import type { IdeaEntry, IdeaStatus, PlanEntry, PlanStatus } from '@/types/index';
 import { PLAN_STATUSES } from '@/types/index';
 import { phasePercentage } from './helpers';
 
@@ -11,10 +11,15 @@ export interface PlanListFilters {
   search: string;
   sortKey: PlanSortKey;
   sortDirection: SortDirection;
+  /** Filter chip for `kind: note` ideas — separate lifecycle from PlanStatus. */
+  noteStatuses: IdeaStatus[];
 }
 
 /** Excludes done/dropped so 40+ closed plans stay out of first paint until a chip reveals them. */
 export const DEFAULT_VISIBLE_STATUSES: PlanStatus[] = ['in-progress', 'review', 'planned', 'idea'];
+
+/** Mirrors DEFAULT_VISIBLE_STATUSES: closed notes stay out of first paint too. */
+export const DEFAULT_VISIBLE_NOTE_STATUSES: IdeaStatus[] = ['open'];
 
 export const DEFAULT_PLAN_LIST_FILTERS: PlanListFilters = {
   statuses: DEFAULT_VISIBLE_STATUSES,
@@ -22,6 +27,7 @@ export const DEFAULT_PLAN_LIST_FILTERS: PlanListFilters = {
   search: '',
   sortKey: 'status',
   sortDirection: 'asc',
+  noteStatuses: DEFAULT_VISIBLE_NOTE_STATUSES,
 };
 
 /** in-progress -> review -> planned -> backlog(idea) -> done -> dropped, per FEAT-41. */
@@ -88,10 +94,13 @@ const comparePlans = (a: PlanEntry, b: PlanEntry, key: PlanSortKey): number => {
   }
 };
 
-const countBy = <T>(plans: PlanEntry[], key: (plan: PlanEntry) => T[]): Record<string, number> => {
+const countBy = <Entry, Value>(
+  entries: Entry[],
+  key: (entry: Entry) => Value[],
+): Record<string, number> => {
   const counts: Record<string, number> = {};
-  for (const plan of plans) {
-    for (const value of key(plan)) {
+  for (const entry of entries) {
+    for (const value of key(entry)) {
       counts[String(value)] = (counts[String(value)] ?? 0) + 1;
     }
   }
@@ -135,4 +144,174 @@ export const selectPlanRows = (
     });
 
   return { rows, statusCounts, tagCounts };
+};
+
+const IDEA_STATUSES: IdeaStatus[] = ['open', 'done', 'dropped'];
+
+/**
+ * Notes carry no phases/plan work, so they have no natural PlanStatus. Open
+ * sits at the same backlog tier as an undrafted idea; done/dropped reuse the
+ * plan tiers of the same name — this lets the merged worklist sort reuse a
+ * single STATUS_ORDER instead of a parallel one for notes.
+ */
+const NOTE_STATUS_TIER: Record<IdeaStatus, PlanStatus> = {
+  open: 'idea',
+  done: 'done',
+  dropped: 'dropped',
+};
+
+const matchesIdeaSearch = (idea: IdeaEntry, search: string): boolean => {
+  const needle = search.trim().toLowerCase();
+  if (!needle) return true;
+  return idea.title.toLowerCase().includes(needle) || idea.body.toLowerCase().includes(needle);
+};
+
+export interface IdeaGroupRow {
+  type: 'idea-group';
+  idea: IdeaEntry;
+  children: PlanEntry[];
+}
+
+export interface NoteRow {
+  type: 'note';
+  idea: IdeaEntry;
+}
+
+export interface PlanRow {
+  type: 'plan';
+  plan: PlanEntry;
+}
+
+export type WorklistRow = IdeaGroupRow | NoteRow | PlanRow;
+
+export interface WorklistResult {
+  rows: WorklistRow[];
+  statusCounts: Record<PlanStatus, number>;
+  tagCounts: Record<string, number>;
+  noteStatusCounts: Record<IdeaStatus, number>;
+}
+
+/**
+ * "2/3 plans done" for a group's row-card summary; null before any plan is
+ * drafted, when the row shows a Draft-plan action instead of a summary.
+ */
+export const deriveChildrenSummary = (
+  children: PlanEntry[],
+): { done: number; total: number } | null => {
+  if (children.length === 0) return null;
+  return { done: children.filter((p) => p.status === 'done').length, total: children.length };
+};
+
+/**
+ * A plan-shaped stand-in used only to compare a group/note row against
+ * ordinary plan rows under whichever PlanSortKey is active. Title/id stay the
+ * idea's own identity (so alphabetical/id sorts read as "the idea"), while
+ * status/updated/created/progress come from the group's most-advanced child
+ * per FEAT-42, falling back to the undrafted/note tier when there isn't one.
+ */
+const worklistSortProxy = (row: WorklistRow): PlanEntry => {
+  if (row.type === 'plan') return row.plan;
+
+  if (row.type === 'note') {
+    return {
+      title: row.idea.title,
+      id: row.idea.id ?? undefined,
+      status: NOTE_STATUS_TIER[row.idea.status ?? 'open'],
+      created: '',
+      tags: [],
+      body: row.idea.body,
+      phases: [],
+    };
+  }
+
+  const mostAdvanced =
+    row.children.length > 0
+      ? [...row.children].sort((a, b) => comparePlans(a, b, 'status'))[0]
+      : undefined;
+
+  return {
+    ...(mostAdvanced ?? {
+      status: 'idea' as const,
+      created: '',
+      tags: [],
+      body: row.idea.body,
+      phases: [],
+    }),
+    title: row.idea.title,
+    id: row.idea.id ?? undefined,
+  };
+};
+
+/**
+ * Extends selectPlanRows into FEAT-42's two-level worklist tree: a plan whose
+ * `idea:` backlink points at a plan-bearing idea nests under that idea as a
+ * group (idea parents with derived children summaries); every other plan
+ * stays top-level (orphan plans); `kind: note` ideas surface as their own
+ * rows gated by a separate `noteStatuses` filter. Nesting stops at this one
+ * level — a group's children are never themselves grouped. Status/tag chips
+ * only ever describe PlanStatus, so an idea with no plans yet is gated by
+ * search alone, not by the statuses/tags filters.
+ */
+export const selectWorklistRows = (
+  plans: PlanEntry[],
+  ideas: IdeaEntry[],
+  filters: PlanListFilters = DEFAULT_PLAN_LIST_FILTERS,
+): WorklistResult => {
+  const { statusCounts, tagCounts } = selectPlanRows(plans, filters);
+
+  const notes = ideas.filter((idea) => idea.kind === 'note');
+  const ideaParents = ideas.filter((idea) => idea.kind !== 'note');
+  const ideaParentIds = new Set(
+    ideaParents.map((idea) => idea.id).filter((id): id is string => Boolean(id)),
+  );
+
+  const childrenByIdea = new Map<string, PlanEntry[]>();
+  const orphanPlans: PlanEntry[] = [];
+  for (const p of plans) {
+    if (p.idea && ideaParentIds.has(p.idea)) {
+      const list = childrenByIdea.get(p.idea) ?? [];
+      list.push(p);
+      childrenByIdea.set(p.idea, list);
+    } else {
+      orphanPlans.push(p);
+    }
+  }
+
+  const noteStatusSet = new Set(filters.noteStatuses);
+  const noteStatusCounts = countBy(
+    notes.filter((idea) => matchesIdeaSearch(idea, filters.search)),
+    (idea) => [idea.status ?? 'open'],
+  ) as Record<IdeaStatus, number>;
+  for (const status of IDEA_STATUSES) noteStatusCounts[status] ??= 0;
+
+  const rows: WorklistRow[] = selectPlanRows(orphanPlans, filters).rows.map(
+    (plan): PlanRow => ({ type: 'plan', plan }),
+  );
+
+  for (const idea of ideaParents) {
+    const allChildren = idea.id ? (childrenByIdea.get(idea.id) ?? []) : [];
+    const filteredChildren = selectPlanRows(allChildren, filters).rows;
+    if (filteredChildren.length === 0) {
+      // A plan-bearing idea with plans that all got filtered out (e.g. every
+      // child is done and the done chip is off) hides entirely, same as a
+      // top-level plan would. Only a genuinely undrafted idea (no plans yet)
+      // falls back to the search filter, so it can still surface as an empty
+      // group with a Draft-plan action.
+      if (allChildren.length > 0 || !matchesIdeaSearch(idea, filters.search)) continue;
+    }
+    rows.push({ type: 'idea-group', idea, children: filteredChildren });
+  }
+
+  for (const idea of notes) {
+    if (!noteStatusSet.has(idea.status ?? 'open')) continue;
+    if (!matchesIdeaSearch(idea, filters.search)) continue;
+    rows.push({ type: 'note', idea });
+  }
+
+  rows.sort((a, b) => {
+    const cmp = comparePlans(worklistSortProxy(a), worklistSortProxy(b), filters.sortKey);
+    return filters.sortDirection === 'desc' ? -cmp : cmp;
+  });
+
+  return { rows, statusCounts, tagCounts, noteStatusCounts };
 };

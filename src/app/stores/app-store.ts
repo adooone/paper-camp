@@ -12,6 +12,7 @@ import type {
   GitStatusEntry,
   GitStatusResponse,
   IdeaEntry,
+  IdeaStatus,
   OpenQuestionEntry,
   ParseResult,
   PlanEntry,
@@ -66,6 +67,7 @@ type AppStore = {
   planFilters: PlanListFilters;
   togglePlanStatus: (status: PlanStatus) => void;
   togglePlanTag: (tag: string) => void;
+  toggleNoteStatus: (status: IdeaStatus) => void;
   setPlanSearch: (search: string) => void;
   setPlanSortKey: (sortKey: PlanSortKey) => void;
   togglePlanSortDirection: () => void;
@@ -202,6 +204,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
         tags: s.planFilters.tags.includes(tag)
           ? s.planFilters.tags.filter((x) => x !== tag)
           : [...s.planFilters.tags, tag],
+      },
+    })),
+  toggleNoteStatus: (status) =>
+    set((s) => ({
+      planFilters: {
+        ...s.planFilters,
+        noteStatuses: s.planFilters.noteStatuses.includes(status)
+          ? s.planFilters.noteStatuses.filter((x) => x !== status)
+          : [...s.planFilters.noteStatuses, status],
       },
     })),
   setPlanSearch: (search) => set((s) => ({ planFilters: { ...s.planFilters, search } })),

@@ -54,7 +54,7 @@ check is out of scope — this list just makes it natural later.
       Reuse plans' `### Log` (`- date: text`) shape in idea bodies —
       parse/serialize support plus AI extend appending a dated entry instead
       of mutating the original prose.
-- [ ] Build the group-aware tree selector
+- [x] Build the group-aware tree selector
       Extend FEAT-41's factored filter/sort selector to derive the two-level
       tree from `idea:` backlinks — idea parents with derived children
       summaries, orphan plans top-level, one level only — with group sort
