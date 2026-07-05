@@ -119,6 +119,38 @@ export interface IdeaEntry {
   log?: LogEntry[];
 }
 
+// ---------------------------------------------------------------------------
+// Unified entity  (FEAT-42 phases 7+ — one file per entity: an "idea" for its
+// whole life, plan as an optional Phases section. Replaces PlanEntry/IdeaEntry
+// once the migration cutover lands.)
+// ---------------------------------------------------------------------------
+
+/** Work classification — same Conventional-Commits values as PlanKind; `kind` renamed to `type` in the unified schema. */
+export type EntityType = PlanKind;
+
+/** Plan lifecycle plus the note-only `open`. Notes use open → done/dropped; everything else uses the PlanStatus track. */
+export type EntityStatus = PlanStatus | 'open';
+
+export interface EntityEntry {
+  id: string;
+  title: string;
+  /** Absent until the entity is classified (usually when its plan is drafted). */
+  type?: EntityType;
+  /** "note" marks an entity that never grows phases. */
+  kind?: 'note';
+  status: EntityStatus;
+  agent?: AgentId;
+  created: string;
+  updated?: string;
+  audited?: string;
+  auditedHash?: string;
+  tags: string[];
+  body: string;
+  phases: PhaseItem[];
+  log?: LogEntry[];
+  clarifications?: LogEntry[];
+}
+
 export interface ProgressEntry {
   date: string;
   items: string[];
@@ -186,7 +218,8 @@ export interface PaperCampConfig {
   version: string;
   projectName: string;
   initializedAt: string;
-  nextId?: Record<PlanKind, number>;
+  /** Per-kind plan counters, plus the unified-entity `idea` counter that outlives them after the FEAT-42 migration. */
+  nextId?: Record<PlanKind, number> & { idea?: number };
   port?: number;
   defaultAgents?: DefaultAgentsMap;
   /** Off by default. When true, the PostToolUse hook logs new-file creations to progress.md. */

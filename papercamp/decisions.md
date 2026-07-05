@@ -1,3 +1,28 @@
+## Entity ids are lifetime IDEA-N
+
+**Date:** 2026-07-05
+**Status:** decided
+
+**Context:** `IDEA-43`'s single-file evolution merges ideas and plans into one entity
+("idea" for life, plan as a section), which forces the id question: today ideas are
+`IDEA-N` and plans are `<KIND>-<N>` (`FEAT-42`, `FIX-2`, …), and the git/GitHub surface
+— branch names, commit `Refs:` footers, the draft-PR "Plan:" line, `FEAT-36`'s planned
+PR mirror — keys off the plan form. Keeping both would mean an entity changes identity
+mid-life (or carries two ids), reintroducing exactly the split the merge kills.
+
+**Decision:** One id space, one lifetime id: every entity is `IDEA-N` from capture to
+done, unchanged when its plan section lands. `type` (feat/fix/…) carries the
+Conventional-Commits meaning ids used to encode — commit types and branch prefixes
+come from it (`feat/idea-99-…`), and `Refs:` footers carry the `IDEA-N`. The per-kind
+`nextId` counters in `config.json` collapse into a single idea counter. How migrated
+legacy entities map onto this space (pairs keeping the idea's id, orphan plans getting
+minted ids, multi-plan splits) is specified in the migration plan, not here.
+
+**Rationale:** The id's job is stable reference, not classification — kind/type is
+frontmatter and can change (a "feat" that turns out to be a "fix") without breaking
+every reference to the entity. A single lifetime id is also what makes "the idea *is*
+the plan file" honest: nothing about the entity's identity changes when it matures.
+
 ## Ideas and plans merge into one worklist; ideas carry no tracked status
 
 **Date:** 2026-07-05

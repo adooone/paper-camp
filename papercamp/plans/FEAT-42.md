@@ -2,7 +2,7 @@
 id: FEAT-42
 title: Unify the ideas and plans worklist
 kind: feat
-status: review
+status: in-progress
 created: 2026-07-04
 idea: IDEA-43
 updated: 2026-07-05
@@ -31,8 +31,8 @@ plans' dated `### Log` grammar so refinements append as history instead of mutat
 the original intent, and the creation paths untangle into "New idea" (refine-first)
 vs "Quick plan" (today's Add-to-backlog).
 
-No storage migration: ideas and plans stay separate file types and the tree is
-derived client-side from `idea:` backlinks. This builds directly on [[FEAT-41]]'s
+No storage migration in this first stage: ideas and plans stay separate file types
+and the tree is derived client-side from `idea:` backlinks. This builds directly on [[FEAT-41]]'s
 factored filter/sort selector — filters and sorts become group-aware (a group sorts
 by its most-advanced child; done children collapse behind "+N done" once a group
 outgrows ~5 rows), which is exactly why that selector was kept out of
@@ -43,6 +43,20 @@ the unified view; landing this supersedes the Ideas-vs-Backlog visual separation
 decision and generalizes the "Planless ideas close via explicit frontmatter status"
 decision, both to record in `decisions.md`. [[IDEA-44]]'s capture-time overlap
 check is out of scope — this list just makes it natural later.
+
+**Extension (2026-07-05):** phases 7+ complete [[IDEA-43]]'s single-file evolution —
+the unification goes one level deeper, from the lists to the files. Ideas and plans
+converge into one entity: an *idea* for its whole life, with the plan as a `### Phases`
+section the drafting agent writes into the file that's already there; the UI flips
+idea-shaped → plan-shaped on "are there phases yet". Every entity carries one lifetime
+`IDEA-N` id (per the "Entity ids are lifetime IDEA-N" decision; `type` — today's
+`kind`, renamed — drives commit types and branch prefixes like `feat/idea-99-…`). This
+*is* the storage migration the first stage deferred: all legacy files merge, legacy
+bodies simplify to brief summaries (git history keeps the detail), multi-plan ideas
+split into one idea per plan, and the two-file readers retire. The idea→plans tree
+phases 3–4 built goes flat again — thematic grouping returns later as the separate
+*topics* entity (follow-up idea, out of scope here), and the group-aware
+selector/renderer machinery transfers to it with the parent swapped.
 
 ### Phases
 - [x] Add kind note and status asymmetry to the schema
@@ -74,3 +88,46 @@ check is out of scope — this list just makes it natural later.
       `tsc --noEmit`, `biome check`, tests, and a browser pass over the tree
       layout and connectors, group collapse, the note chip and note status
       edits, both creation modals, and the slimmed header nav.
+- [x] Converge the entity schema and core
+      One frontmatter schema for the unified entity: today's plan schema with
+      phases optional, `kind` renamed to `type` (values stay
+      Conventional-Commits-shaped), `kind: note` kept as the planless marker
+      with its manual status, and the per-kind `nextId` counters collapsed into
+      a single `IDEA-N` counter. `parsePlanFile`/`parseIdeaFile` and
+      `formatPlanFile`/`formatIdeaFile` converge on one parse/serialize pair;
+      the `idea:` backlink field retires from the schema.
+- [ ] Migrate every file into the unified corpus
+      One-time migration into a single `papercamp/ideas/` tree (with `archive/`
+      for done/dropped): merge each 1:1 idea↔plan pair with the plan file as
+      base (idea prose above, logs concatenated, plan frontmatter wins, id
+      becomes the idea's `IDEA-N`); mint fresh `IDEA-N` ids for orphan plans;
+      split multi-plan ideas into one idea per plan with short bodies derived
+      from the shared parent; simplify legacy bodies to a brief "what this was
+      about" summary (AI-assisted rewrite pass, git history keeps the full
+      text); regenerate one index and retire `papercamp/plans/`.
+- [ ] Adapt the readers, API, MCP, and CLI
+      One reader over the unified directory replaces
+      `readPlansMerged`/`readIdeasMerged` (monolithic and two-file fallbacks
+      retire); `/api/plans` and `/api/ideas` serve the same corpus (or collapse
+      into one route); `regenerateIndexes` emits one table; MCP tools
+      (`src/mcp/tools.ts`) and the CLI (`add`, `audit`, `migrate`) work on
+      entities.
+- [ ] Re-key the git and GitHub surfaces to IDEA-N
+      Branch naming (`feat/idea-99-…` — `type` supplies the prefix), commit
+      `Refs:` footers, the commit-suggest scope logic, agent hooks'
+      branch-per-plan setup, the draft-PR "Plan:" line, and any prompts that
+      reference plan ids. Legacy `<KIND>-<N>` references in git history stay
+      as they are.
+- [ ] Morph the UI to the single entity
+      `IdeaDetail` and `PlanDetail` merge into one detail view that renders
+      idea-shaped until phases exist and plan-shaped after ("create plan" =
+      the drafting agent writing the Phases section); the worklist flattens
+      (idea→plan grouping retires until topics land) with notes keeping their
+      chip; "New idea" and "Quick plan" both create the same entity file
+      (refine-first vs act-directly); id stamps show `IDEA-N`.
+- [ ] Actualize the docs and closing pass
+      Update `about.md`'s storage architecture, CLI, and API sections for the
+      unified entity (plus `AGENTS.md` if it names the two-file shape), then
+      `tsc --noEmit`, `biome check`, tests, and a browser pass over the
+      migrated corpus: worklist, entity detail in both shapes, creation flows,
+      and the re-keyed branch/commit surfaces.

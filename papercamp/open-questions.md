@@ -1,3 +1,21 @@
+## Which ID convention survives the single-file idea/plan merge?
+
+**Status:** resolved
+**Raised:** 2026-07-05
+**Resolved-by:** Entity ids are lifetime IDEA-N
+
+`IDEA-43`'s single-file evolution merges ideas and plans into one file per entity
+("idea" for life, plan as a section). Today the two halves have separate ID spaces: `IDEA-N` for ideas, `<KIND>-<N>`
+(`FEAT-37`, `FIX-2`, …) for plans — and everything git/GitHub-side keys off the plan
+form: branch names (`feat/feat-37-…`), commit `Refs:` footers, the draft-PR "Plan:"
+line, and `FEAT-36`'s planned PR mirror. Two real options: (a) one lifetime id per
+entity — `IDEA-N` from capture to done, branches become `feat/idea-45-…`, `type` still
+drives the commit type, and `<KIND>-<N>` ids survive only on migrated legacy entities;
+or (b) keep minting a `<TYPE>-<N>` id when the plan section lands, meaning the entity's
+id changes mid-life (or carries two), which preserves git conventions but reintroduces
+exactly the split identity the merge is trying to kill. Decide before the migration
+plan is drafted — the file-rename step depends on it.
+
 ## What should package.json's `./app` export actually be?
 
 **Status:** resolved
