@@ -49,6 +49,14 @@ describe('agent prompts target per-file storage', () => {
     expect(prompt).not.toContain('ideas.md');
   });
 
+  it('idea-extend prompt appends a dated Log entry instead of rewriting the body', () => {
+    const prompt = buildIdeaExtendPrompt(idea);
+    expect(prompt).toContain('### Log');
+    expect(prompt).toContain('YYYY-MM-DD');
+    expect(prompt).toContain('Append only');
+    expect(prompt).not.toContain('Replace everything below that heading');
+  });
+
   it('convergence-audit prompt points at the per-file plan, not legacy plans.md', () => {
     const prompt = buildConvergenceAuditPrompt(plan);
     expect(prompt).toContain(`papercamp/plans/${plan.id}.md`);

@@ -116,6 +116,7 @@ export interface IdeaEntry {
   body: string;
   kind?: IdeaKind;
   status?: IdeaStatus;
+  log?: LogEntry[];
 }
 
 export interface ProgressEntry {

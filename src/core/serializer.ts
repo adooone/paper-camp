@@ -292,6 +292,7 @@ interface NewIdeaFileInput {
   kind?: string;
   status?: string;
   body?: string;
+  log?: LogEntry[];
 }
 
 /**
@@ -308,6 +309,14 @@ export function formatIdeaFile(input: NewIdeaFileInput): string {
   const parts: string[] = [serializeFrontmatter(frontmatter)];
   const heading = `## ${input.id}: ${input.title}`;
   parts.push(input.body ? `${heading}\n\n${input.body}` : heading);
+
+  if (input.log && input.log.length > 0) {
+    const lines = ['### Log'];
+    for (const entry of input.log) {
+      lines.push(`- ${entry.date}: ${entry.text}`);
+    }
+    parts.push(lines.join('\n'));
+  }
 
   return parts.join('\n\n').trimEnd();
 }

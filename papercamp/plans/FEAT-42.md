@@ -50,7 +50,7 @@ check is out of scope — this list just makes it natural later.
       `open → done/dropped` status that zod only accepts on notes; retire
       `deriveIdeaStatuses` and the planned/done derivation, and mark `IDEA-37`
       as the first note — generalizing the planless-close decision.
-- [ ] Give ideas the dated Log grammar
+- [x] Give ideas the dated Log grammar
       Reuse plans' `### Log` (`- date: text`) shape in idea bodies —
       parse/serialize support plus AI extend appending a dated entry instead
       of mutating the original prose.

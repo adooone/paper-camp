@@ -39,8 +39,9 @@ interface AgentTask {
   // Only set for an idea-drafting task, which has neither planId nor phaseIndex since
   // the plan doesn't exist yet — success is checked by idea id instead.
   ideaId?: string;
-  // For idea-extend tasks: snapshot the idea's body before launch so we can detect changes.
-  ideaBodyBaseline?: string;
+  // For idea-extend tasks: snapshot the idea's Log entry count before launch, since
+  // extend now appends a dated Log entry rather than rewriting the body in place.
+  ideaLogBaseline?: number;
   // For reconcile tasks: snapshot of body + phase text before launch, since a reconcile
   // rewrites prose in place rather than growing Phases/Log like an audit does.
   reconcileBaseline?: string;
@@ -138,8 +139,8 @@ export function createAgentManager(
         const { entries } = await readIdeasMerged(ideasDir, join(root, 'papercamp', 'ideas.md'));
         const idea = entries.find((e) => e.id === task.ideaId);
         if (!idea) return null;
-        if (task.ideaBodyBaseline === undefined) return null;
-        return idea.body !== task.ideaBodyBaseline;
+        if (task.ideaLogBaseline === undefined) return null;
+        return (idea.log?.length ?? 0) > task.ideaLogBaseline;
       }
       if (task.taskKind === 'reconcile') {
         const { entries } = await readPlansMerged(
@@ -250,7 +251,7 @@ export function createAgentManager(
       | 'phaseIndex'
       | 'planBaseline'
       | 'ideaId'
-      | 'ideaBodyBaseline'
+      | 'ideaLogBaseline'
       | 'reconcileBaseline'
     >,
   ): Result {
@@ -346,7 +347,7 @@ export function createAgentManager(
     return launch({ planTitle: `Extend ${idea.id}` }, prompt, {
       taskKind: 'extend',
       ideaId: idea.id,
-      ideaBodyBaseline: idea.body,
+      ideaLogBaseline: idea.log?.length ?? 0,
     });
   }
 

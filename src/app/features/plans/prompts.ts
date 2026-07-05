@@ -73,20 +73,29 @@ Hard guardrails, never violate these:
 }
 
 export function buildIdeaExtendPrompt(idea: IdeaEntry): string {
-  return `You are expanding the idea ${idea.id ?? 'no id'} ("${idea.title}"), stored as a single file at papercamp/ideas/${idea.id ?? '<ID>'}.md. Edit only that file.
+  const logList =
+    idea.log && idea.log.length > 0
+      ? idea.log.map((entry) => `- ${entry.date}: ${entry.text}`).join('\n')
+      : '(none)';
 
-Current idea body, in full:
+  return `You are expanding the idea ${idea.id ?? 'no id'} ("${idea.title}"), stored as a single file at papercamp/ideas/${idea.id ?? '<ID>'}.md. Edit only that file, and within it only the \`### Log\` section.
+
+Current idea body, in full (do not modify this):
 ${idea.body}
+
+Prior Log entries:
+${logList}
 
 Task:
 1. Explore this codebase and find what is relevant to the idea: the files it would touch, existing helpers or patterns it should build on, and constraints visible in the code.
-2. Rewrite the idea's prose body in that file so it is concrete and actionable: name specific files and symbols, describe a workable approach, and include the architectural context you found. Keep the idea's original intent — sharpen it, do not redirect it.
+2. Write up what you found as a single dated entry — name specific files and symbols, describe a workable approach, and include the architectural context you found. Keep the idea's original intent — sharpen it, do not redirect it.
+3. Append exactly one line to the \`### Log\` section, formatted \`- YYYY-MM-DD: <what you found>\`, creating that section at the end of the file if it does not exist. Use today's date, and keep the entry to that single physical line (no literal line breaks).
 
 Keep unchanged:
 - the YAML frontmatter (id, title)
-- the \`## ${idea.id ?? 'IDEA-N'}: ${idea.title}\` heading line
+- the \`## ${idea.id ?? 'IDEA-N'}: ${idea.title}\` heading line and the original body prose beneath it
 
-Replace everything below that heading with the improved body.`;
+Append only — never rewrite or delete the idea's existing body or prior Log lines.`;
 }
 
 export function buildClarifyPrompt(plan: PlanEntry): string {

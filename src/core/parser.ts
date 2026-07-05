@@ -375,7 +375,7 @@ export function parsePlanFile(content: string): ParseResult<PlanEntry> {
 export function parseIdeaFile(content: string): ParseResult<IdeaEntry> {
   const {
     data: frontmatter,
-    body,
+    body: rawBody,
     warnings: fmWarnings,
   } = parseFrontmatter(content, ideaFrontmatterSchema);
 
@@ -383,12 +383,15 @@ export function parseIdeaFile(content: string): ParseResult<IdeaEntry> {
     return { entries: [], warnings: fmWarnings };
   }
 
+  const { body, log } = extractLog(rawBody);
+
   const entry: IdeaEntry = {
     id: frontmatter.id,
     title: frontmatter.title,
     body: body || '',
     ...(frontmatter.kind && { kind: frontmatter.kind }),
     ...(frontmatter.status && { status: frontmatter.status }),
+    ...(log.length > 0 && { log }),
   };
 
   return { entries: [entry], warnings: fmWarnings };
