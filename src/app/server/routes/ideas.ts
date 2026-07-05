@@ -14,7 +14,11 @@ export function ideaRoutes({ root }: RouteContext): Route[] {
       path: '/api/ideas',
       handle: async (req, res) => {
         const reqBody = await readBody(req);
-        const { title, content } = JSON.parse(reqBody) as { title?: string; content?: string };
+        const { title, content, kind } = JSON.parse(reqBody) as {
+          title?: string;
+          content?: string;
+          kind?: 'idea' | 'note';
+        };
         if (!title?.trim()) {
           sendJson(res, 400, { error: 'title is required' });
           return;
@@ -34,6 +38,7 @@ export function ideaRoutes({ root }: RouteContext): Route[] {
           id: newId,
           title: title.trim(),
           body: content?.trim(),
+          kind: kind === 'note' ? 'note' : undefined,
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${ideaContent}\n`, 'utf-8');
         await regenerateIndexes(root);

@@ -5,7 +5,11 @@ export const fetchIdeas = async (): Promise<ParseResult<IdeaEntry>> => {
   return response.json();
 };
 
-export const createIdea = async (idea: { title: string; content?: string }): Promise<string> => {
+export const createIdea = async (idea: {
+  title: string;
+  content?: string;
+  kind?: 'idea' | 'note';
+}): Promise<string> => {
   const response = await fetch('/api/ideas', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

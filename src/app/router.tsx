@@ -11,19 +11,12 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
-import {
-  IdeasPage,
-  PlanFilterColumn,
-  PlansPage,
-  ReviewPage,
-  ReviewSidebar,
-} from './features/plans/index';
+import { PlanFilterColumn, PlansPage, ReviewPage, ReviewSidebar } from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
 import { useAppStore } from './stores/app-store';
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
-  { id: 'ideas', label: 'Ideas', path: '/ideas' },
   { id: 'review', label: 'Review', path: '/review' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'settings', label: 'Settings', path: '/settings' },
@@ -232,11 +225,6 @@ const plansRoute = createRoute({
   path: '/',
   component: PlansPage,
 });
-const ideasRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/ideas',
-  component: IdeasPage,
-});
 const reviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/review',
@@ -254,13 +242,7 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
-const routeTree = rootRoute.addChildren([
-  plansRoute,
-  ideasRoute,
-  reviewRoute,
-  docsRoute,
-  settingsRoute,
-]);
+const routeTree = rootRoute.addChildren([plansRoute, reviewRoute, docsRoute, settingsRoute]);
 
 export const router = createRouter({ routeTree });
 

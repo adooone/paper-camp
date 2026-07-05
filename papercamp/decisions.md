@@ -1,3 +1,40 @@
+## Ideas and plans merge into one worklist; ideas carry no tracked status
+
+**Date:** 2026-07-05
+**Status:** decided
+
+**Context:** `FEAT-42` unifies the `/` plans list and the standalone `/ideas` list
+into one worklist: idea rows render as group parents (lightbulb icon, title,
+Extend/Draft-plan actions, a derived "2/3 plans done" children summary) with
+their linked plans nested beneath via the existing `idea:` backlink, and plans
+without an idea stay top-level. This directly supersedes the 2026-06-19 decision
+to split the sidebar into separate "Ideas" and "Backlog" sections, and
+generalizes the 2026-07-03 "Planless ideas close via explicit frontmatter
+status" decision from a single escape hatch (`status: done`) into a proper
+`kind: note` asymmetry (`open → done/dropped`, enforced by
+`ideaFrontmatterSchema`) for ideas that never need a plan.
+
+**Decision:** The `/ideas` list route and its header nav item are removed;
+`ideas-page.tsx` and `ideas-board.tsx` are deleted since the unified `/` list
+(via `plans-page.tsx`'s `activeIdeaTitle`/`IdeaDetail` branch, landed in phase 4)
+already renders both the worklist and idea detail. `NewIdeaButton` (title
+"New idea", refine-first — its modal now has a note toggle setting
+`kind: 'note'`) and `AddToBacklogButton` (relabeled "Quick plan" — today's
+plan-first creation, unchanged behavior) both move into `plans-header.tsx`'s
+toolbar. `FEAT-40`'s per-item idea-detail address is unaffected by this
+removal — that plan hadn't landed a `/ideas/$id` param route yet at the time
+of this change (idea detail was always store-state driven, not a URL route),
+so there was no separate detail route to preserve; when FEAT-40 adds param
+routes later, `/ideas/$ideaId` can point at the same unified page.
+
+**Rationale:** Two lists implied two workflows, but ideas were always meant to
+funnel into plans — keeping them as a separate top-level list understated that
+relationship and duplicated list chrome (header, filters, row language) for no
+benefit once the group-aware tree selector (phase 3) and renderer (phase 4)
+existed to show both in one place. Superseding the Ideas/Backlog sidebar split
+outright (rather than leaving it stale) keeps `decisions.md` from contradicting
+the shipped UI.
+
 ## Dense lists are row cards, not paper-ui Table
 
 **Date:** 2026-07-04

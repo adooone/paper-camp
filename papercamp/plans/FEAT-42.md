@@ -65,7 +65,7 @@ check is out of scope — this list just makes it natural later.
       beneath as ordinary `plan-rows.tsx` rows with a slight inset and thin
       connector, notes with their distinct icon and status stamp, and done
       children collapsing behind "+N done" once a group outgrows ~5 rows.
-- [ ] Retire the ideas route and rename creation paths
+- [x] Retire the ideas route and rename creation paths
       Carry the New-idea button (modal gains the note toggle) into the unified
       list, rename Add-to-backlog to "Quick plan", remove the `/ideas` list
       route and header nav item (FEAT-40's per-item param route stays), and
