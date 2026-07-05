@@ -47,6 +47,32 @@ function writeStoredStackOpen(value: boolean): void {
   }
 }
 
+// At/above this width the Stack panel is pinned open (the layout reserves 480px for
+// it — see the min-[1440px]:pr-[480px] wrapper) and the sidebar+page group fills the
+// remaining width; below it the panel overlays and can be toggled. Keep in sync with
+// that Tailwind class, which must stay a static literal.
+const LARGE_SCREEN_QUERY = '(min-width: 1440px)';
+
+// On large screens the sidebar+page group fills the available width, leaving a
+// two-grid-cell (64px) margin on each side. The Layout already pads its content by
+// one 32px cell, so we add just one more cell here to reach the two-cell total.
+const CONTENT_MARGIN = 32;
+
+/** Subscribe to a CSS media query; re-renders when it starts/stops matching. */
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(query).matches : false,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
+    setMatches(mql.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, [query]);
+  return matches;
+}
+
 const RootLayout = () => {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -60,6 +86,7 @@ const RootLayout = () => {
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+  const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
 
   useEffect(() => {
     loadPlans();
@@ -75,12 +102,7 @@ const RootLayout = () => {
 
   return (
     <ToastProvider>
-      {/* The Stack panel lives outside the Layout, header included: at >=1440px this
-          padding shrinks the whole Layout — header and content alike — so the open
-          panel owns the full right edge; below that the panel overlays. 480 is
-          layoutConfig.stackPanelWidth, hardcoded because Tailwind's arbitrary-value
-          classes must be static. */}
-      <div className={`h-screen box-border ${stackOpen ? 'min-[1440px]:pr-[480px]' : ''}`}>
+      <div className="h-screen box-border min-[1440px]:pr-[480px]">
         <Layout
           background={{ texture: 'paper', ruledType: 'grid', ruledColor: 'blue' }}
           showHeader
@@ -131,7 +153,21 @@ const RootLayout = () => {
           }
         >
           <div className="flex h-full min-h-0 justify-center items-stretch box-border overflow-hidden">
-            <div className="flex h-full min-h-0 w-full" style={{ gap: layoutConfig.contentGap }}>
+            {/* The sidebar + page form one group. On large screens it fills the
+                available width (page grows past 800) with a two-grid-cell margin on
+                each side. Below that it shrinks to its content (sidebar + gap + up to
+                an 800px page) and `justify-center` above keeps it centered, so the
+                filters card sits directly beside the page with only contentGap
+                between them — never pinned to the far left with a gap. */}
+            <div
+              className="flex h-full min-h-0 min-w-0"
+              style={{
+                gap: layoutConfig.contentGap,
+                ...(isLarge
+                  ? { width: '100%', paddingLeft: CONTENT_MARGIN, paddingRight: CONTENT_MARGIN }
+                  : {}),
+              }}
+            >
               {hasSidebar && (
                 <SidebarShell
                   routeKey={pathname}
@@ -144,9 +180,18 @@ const RootLayout = () => {
                   {pathname === '/settings' && <SettingsSidebar />}
                 </SidebarShell>
               )}
-              <div className="flex flex-1 flex-col min-h-0 min-w-0">
+              {/* Page column. Large: grow to fill the group. Small: basis 800 (the
+                  Page's own max-width), may shrink but never grows, so there's no
+                  empty stretch for the Page to re-center inside and drift away. */}
+              <div
+                className="flex flex-col min-h-0 min-w-0"
+                style={{ flex: isLarge ? '1 1 0%' : '0 1 800px' }}
+              >
                 <div className="flex-1 min-h-0 overflow-y-auto">
-                  <Page texture={{ texture: 'parchment' }} style={{ height: 'auto' }}>
+                  <Page
+                    texture={{ texture: 'parchment' }}
+                    style={{ height: 'auto', ...(isLarge ? { maxWidth: 'none' } : {}) }}
+                  >
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={pathname}
@@ -167,6 +212,7 @@ const RootLayout = () => {
       </div>
       <StackPanel
         open={stackOpen}
+        pinned={isLarge}
         onToggle={() => {
           // Keep the persistence side effect out of the setState updater (updaters
           // must be pure — StrictMode double-invokes them).

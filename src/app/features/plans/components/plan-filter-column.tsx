@@ -73,7 +73,7 @@ export const PlanFilterColumn = () => {
     // Pull up by the SidebarShell's top padding so the card's top edge lines up
     // with the Page surface (which starts flush at the top of the content row).
     <div style={{ marginTop: `calc(-1 * ${space[5]})` }}>
-      <Card surface="paper" texture="paper" size="small">
+      <Card surface="paper" texture="speckle" size="small">
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
           <h2
             style={{

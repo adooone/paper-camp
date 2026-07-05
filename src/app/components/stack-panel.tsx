@@ -135,6 +135,9 @@ const deskChalk = color.deskChalk;
 interface StackPanelProps {
   open: boolean;
   onToggle: () => void;
+  // When pinned (large screens), the panel is always visible and can't be closed:
+  // the reopen handle and the close button are both hidden.
+  pinned?: boolean;
 }
 
 const sectionLabelStyle: React.CSSProperties = {
@@ -145,7 +148,8 @@ const sectionLabelStyle: React.CSSProperties = {
   marginBottom: space[3],
 };
 
-export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
+export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) => {
+  const isOpen = open || pinned;
   const plans = useAppStore((s) => s.plans);
   const loadProgress = useAppStore((s) => s.loadProgress);
   const loadPlans = useAppStore((s) => s.loadPlans);
@@ -401,7 +405,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
   return (
     <>
       <AnimatePresence>
-        {!open && (
+        {!isOpen && (
           <motion.div
             initial={shouldReduceMotion ? undefined : { opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -467,7 +471,7 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
         )}
       </AnimatePresence>
       <motion.div
-        animate={{ x: open ? 0 : '100%' }}
+        animate={{ x: isOpen ? 0 : '100%' }}
         transition={{
           duration: shouldReduceMotion ? 0 : 0.3,
           ease: [0.4, 0, 0.2, 1],
@@ -511,14 +515,16 @@ export const StackPanel = ({ open, onToggle }: StackPanelProps) => {
           >
             Stack
           </span>
-          <IconButton
-            icon={<span style={{ fontSize: fontSize.sm, lineHeight: 1 }}>&times;</span>}
-            surface="chalkboard"
-            size="small"
-            label="Close stack panel"
-            onClick={onToggle}
-            style={{ width: 28, height: 28, border: `1px solid ${deskBorder}` }}
-          />
+          {!pinned && (
+            <IconButton
+              icon={<span style={{ fontSize: fontSize.sm, lineHeight: 1 }}>&times;</span>}
+              surface="chalkboard"
+              size="small"
+              label="Close stack panel"
+              onClick={onToggle}
+              style={{ width: 28, height: 28, border: `1px solid ${deskBorder}` }}
+            />
+          )}
         </div>
         <Divider surface="chalkboard" />
         <div
