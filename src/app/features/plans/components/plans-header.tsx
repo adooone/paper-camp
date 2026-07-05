@@ -50,42 +50,52 @@ export const PlansHeader = () => {
         Plans
       </h1>
 
-      {view === 'list' && (
-        <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
-          <Select
-            size="small"
-            options={SORT_OPTIONS}
-            value={filters.sortKey}
-            onChange={(value) => setPlanSortKey(value as PlanSortKey)}
-          />
-          <IconButton
-            icon={
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{
-                  transform: filters.sortDirection === 'desc' ? 'rotate(180deg)' : undefined,
-                  transition: 'transform 0.15s ease',
-                }}
-              >
-                <title>Sort direction</title>
-                <line x1="12" y1="19" x2="12" y2="5" />
-                <polyline points="5 12 12 5 19 12" />
-              </svg>
-            }
-            label={filters.sortDirection === 'asc' ? 'Sort ascending' : 'Sort descending'}
-            size="small"
-            variant="ghost"
-            onClick={togglePlanSortDirection}
-          />
-        </div>
-      )}
+      {/* Sort applies to the list only, but we keep it mounted and just hide it in
+          board view (visibility, not conditional mount) so the toolbar buttons to
+          its right don't jump when toggling views — per docs/UX_PRINCIPLES.md
+          "reserve space for content that changes". visibility:hidden also drops it
+          from tab order and the a11y tree while hidden. */}
+      <div
+        style={{
+          display: 'flex',
+          gap: space[2],
+          alignItems: 'center',
+          visibility: view === 'list' ? 'visible' : 'hidden',
+        }}
+      >
+        <Select
+          size="small"
+          options={SORT_OPTIONS}
+          value={filters.sortKey}
+          onChange={(value) => setPlanSortKey(value as PlanSortKey)}
+        />
+        <IconButton
+          icon={
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                transform: filters.sortDirection === 'desc' ? 'rotate(180deg)' : undefined,
+                transition: 'transform 0.15s ease',
+              }}
+            >
+              <title>Sort direction</title>
+              <line x1="12" y1="19" x2="12" y2="5" />
+              <polyline points="5 12 12 5 19 12" />
+            </svg>
+          }
+          label={filters.sortDirection === 'asc' ? 'Sort ascending' : 'Sort descending'}
+          size="small"
+          variant="ghost"
+          onClick={togglePlanSortDirection}
+        />
+      </div>
 
       <AddToBacklogButton />
       <AuditAllButton />
