@@ -1,37 +1,41 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { parsePlanFile } from '../../../core/parser';
-import { readAllPlanFiles } from '../../../core/readers';
+import { entityToPlan, readEntities } from '../../../core/readers';
 import {
-  archivePlanFile,
-  assignPlanId,
-  formatPlanFile,
+  archiveEntityFile,
+  assignEntityId,
+  formatEntityFile,
   todayDateString,
 } from '../../../core/serializer';
 import {
   AGENT_IDS,
   type AgentId,
+  type EntityEntry,
   type LogEntry,
   PLAN_KINDS,
   type PhaseItem,
-  type PlanEntry,
   type PlanStatus,
 } from '../../../types/index';
 import {
   campFile,
   checkBranchConflictForPlan,
+  entityFileInput,
   fileExists,
-  planFileInput,
   readMaybe,
   regenerateIndexes,
-  writePlanFile,
+  writeEntityFile,
 } from '../helpers';
 import { readBody, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
+/** Work entities only (never notes), matched by title or id. */
+function findWorkEntity(entries: EntityEntry[], key: string): EntityEntry | undefined {
+  return entries.find((e) => e.kind !== 'note' && (e.title === key || e.id === key));
+}
+
 export function planRoutes({ root, git }: RouteContext): Route[] {
   return [
-    // DELETE /api/plans?title=... — remove a plan entry from per-file storage
+    // DELETE /api/plans?title=... — remove a work entity from the corpus
     {
       method: 'DELETE',
       path: '/api/plans',
@@ -41,17 +45,16 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'title is required' });
           return;
         }
-        const plansDir = campFile(root, 'plans');
-        const trimmed = title.trim();
-        const { entries } = await readAllPlanFiles(plansDir);
-        const target = entries.find((e) => e.title === trimmed || e.id === trimmed);
-        if (!target?.id) {
-          sendJson(res, 404, { error: 'plan not found in per-file storage' });
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const target = findWorkEntity(entries, title.trim());
+        if (!target) {
+          sendJson(res, 404, { error: 'entity not found' });
           return;
         }
-        const filePath = join(plansDir, `${target.id}.md`);
+        const filePath = join(ideasDir, `${target.id}.md`);
         if (!(await fileExists(filePath))) {
-          sendJson(res, 404, { error: 'plan file not found' });
+          sendJson(res, 404, { error: 'entity file not found' });
           return;
         }
         await unlink(filePath);
@@ -60,7 +63,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
       },
     },
 
-    // POST /api/plans — create a new per-file plan entry
+    // POST /api/plans — create a new work entity ("Quick plan": status idea, typed)
     {
       method: 'POST',
       path: '/api/plans',
@@ -75,42 +78,42 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'title is required' });
           return;
         }
-        // Server-side branch-hygiene guard — the sidebar disables this client-side,
-        // but a stale-branch request must not create a plan by bypassing the UI.
+        // Server-side branch-hygiene guard — the UI disables this client-side,
+        // but a stale-branch request must not create an entity by bypassing it.
         const conflict = await checkBranchConflictForPlan(root, git);
         if (conflict) {
           sendJson(res, 409, { error: conflict });
           return;
         }
-        const planKind =
+        const type =
           kind && PLAN_KINDS.includes(kind as (typeof PLAN_KINDS)[number]) ? kind : 'feat';
 
         const configPath = join(root, 'papercamp', 'config.json');
-        const id = await assignPlanId(configPath, planKind);
+        const id = await assignEntityId(configPath);
 
         if (!id) {
-          sendJson(res, 500, { error: 'could not assign plan ID' });
+          sendJson(res, 500, { error: 'could not assign entity ID' });
           return;
         }
 
-        const plansDir = campFile(root, 'plans');
-        await mkdir(plansDir, { recursive: true });
+        const ideasDir = campFile(root, 'ideas');
+        await mkdir(ideasDir, { recursive: true });
 
-        const planContent = formatPlanFile({
+        const entityContent = formatEntityFile({
           id,
           title: title.trim(),
-          kind: planKind,
+          type,
           status: 'idea',
           created: todayDateString(),
           body: content?.trim(),
         });
-        await writeFile(join(plansDir, `${id}.md`), `${planContent}\n`, 'utf-8');
+        await writeFile(join(ideasDir, `${id}.md`), `${entityContent}\n`, 'utf-8');
         await regenerateIndexes(root);
         sendJson(res, 201, { ok: true, id });
       },
     },
 
-    // PATCH /api/plans?title=... — update an existing plan entry
+    // PATCH /api/plans?title=... — update an existing work entity
     {
       method: 'PATCH',
       path: '/api/plans',
@@ -122,7 +125,6 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         }
         const reqBody = await readBody(req);
         const updates = JSON.parse(reqBody) as {
-          body?: string;
           phases?: PhaseItem[];
           status?: PlanStatus;
           log?: LogEntry[];
@@ -133,32 +135,24 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           return;
         }
 
-        const plansDir = campFile(root, 'plans');
-        const { entries } = await readAllPlanFiles(plansDir);
-        const trimmed = title.trim();
-        const target = entries.find((e) => e.title === trimmed || e.id === trimmed);
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const target = findWorkEntity(entries, title.trim());
 
-        if (!target?.id) {
-          sendJson(res, 404, { error: 'plan not found' });
+        if (!target) {
+          sendJson(res, 404, { error: 'entity not found' });
           return;
         }
 
-        const targetFile = join(plansDir, `${target.id}.md`);
+        const targetFile = join(ideasDir, `${target.id}.md`);
         const raw = await readMaybe(targetFile);
         if (!raw) {
-          sendJson(res, 404, { error: 'plan file not found' });
+          sendJson(res, 404, { error: 'entity file not found' });
           return;
         }
 
-        const parsed = parsePlanFile(raw);
-        if (parsed.entries.length === 0) {
-          sendJson(res, 500, { error: 'failed to parse plan file' });
-          return;
-        }
-
-        const updatedEntry: PlanEntry = {
-          ...parsed.entries[0],
-          ...(updates.body !== undefined && { body: updates.body }),
+        const updatedEntry: EntityEntry = {
+          ...target,
           ...(updates.status !== undefined && { status: updates.status }),
           ...(updates.phases !== undefined && { phases: updates.phases }),
           ...(updates.log !== undefined && { log: updates.log }),
@@ -174,40 +168,28 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           }
         }
 
-        // Demote other in-progress plans when starting a new one
+        // Demote other in-progress entities when starting a new one
         if (updates.status === 'in-progress') {
-          const allPlans = await readAllPlanFiles(plansDir);
-          for (const other of allPlans.entries) {
-            if (other.id !== target.id && other.status === 'in-progress') {
-              const otherFile = join(plansDir, `${other.id}.md`);
-              const otherRaw = await readMaybe(otherFile);
-              if (otherRaw) {
-                const otherParsed = parsePlanFile(otherRaw);
-                if (otherParsed.entries.length > 0) {
-                  await writePlanFile(
-                    otherFile,
-                    planFileInput(otherParsed.entries[0], {
-                      id: otherParsed.entries[0].id ?? other.id!,
-                      status: 'planned',
-                      updated: todayDateString(),
-                    }),
-                  );
-                }
+          for (const other of entries) {
+            if (other.id !== target.id && other.kind !== 'note' && other.status === 'in-progress') {
+              const otherFile = join(ideasDir, `${other.id}.md`);
+              if (await fileExists(otherFile)) {
+                await writeEntityFile(
+                  otherFile,
+                  entityFileInput(other, { status: 'planned', updated: todayDateString() }),
+                );
               }
             }
           }
         }
 
-        await writePlanFile(
-          targetFile,
-          planFileInput(updatedEntry, { id: updatedEntry.id ?? target.id }),
-        );
+        await writeEntityFile(targetFile, entityFileInput(updatedEntry));
         await regenerateIndexes(root);
 
         if (updates.status === 'done' || updates.status === 'dropped') {
-          await archivePlanFile(root, target.id);
+          await archiveEntityFile(root, target.id);
           try {
-            git.ensureBranch(updatedEntry);
+            git.ensureBranch(entityToPlan(updatedEntry));
           } catch {
             // Non-fatal
           }

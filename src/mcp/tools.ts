@@ -6,21 +6,20 @@ import type { GitManager } from '../app/server/git';
 import {
   campFile,
   checkBranchConflictForPlan,
-  planFileInput,
+  entityFileInput,
   readMaybe,
   regenerateIndexes,
-  writePlanFile,
+  writeEntityFile,
 } from '../app/server/helpers';
-import { parseDecisions, parseOpenQuestions, parsePlanFile } from '../core/parser';
-import { readAllPlanFiles, readIdeasMerged, readPlansMerged } from '../core/readers';
+import { parseDecisions, parseEntityFile, parseOpenQuestions } from '../core/parser';
+import { entityToPlan, readEntities, readWorkEntries } from '../core/readers';
 import {
   appendBlock,
-  archivePlanFile,
-  assignPlanId,
+  archiveEntityFile,
+  assignEntityId,
   formatDecisionEntry,
-  formatIdeaFile,
+  formatEntityFile,
   formatOpenQuestions,
-  formatPlanFile,
   prependProgressItem,
   todayDateString,
 } from '../core/serializer';
@@ -51,14 +50,15 @@ export function registerReadTools(server: McpServer, root: string): void {
     'list_plans',
     {
       title: 'List plans',
-      description: 'List all plans (per-file and monolithic, merged), with parse warnings.',
+      description:
+        'List all work entities (plan-shaped view of the unified corpus), with parse warnings.',
       outputSchema: {
         entries: z.array(planEntrySchema),
         warnings: z.array(parseWarningSchema),
       },
     },
     async () => {
-      const result = await readPlansMerged(campFile(root, 'plans'), campFile(root, 'plans.md'));
+      const result = await readWorkEntries(campFile(root, 'ideas'));
       return json({ ...result });
     },
   );
@@ -67,19 +67,16 @@ export function registerReadTools(server: McpServer, root: string): void {
     'get_plan',
     {
       title: 'Get plan',
-      description: 'Fetch a single plan by its id (e.g. FEAT-32).',
+      description: 'Fetch a single work entity by its id (e.g. IDEA-43).',
       inputSchema: {
-        id: z.string().describe('Plan id, e.g. FEAT-32'),
+        id: z.string().describe('Entity id, e.g. IDEA-43'),
       },
       outputSchema: {
         entry: planEntrySchema.nullable(),
       },
     },
     async ({ id }) => {
-      const { entries } = await readPlansMerged(
-        campFile(root, 'plans'),
-        campFile(root, 'plans.md'),
-      );
+      const { entries } = await readWorkEntries(campFile(root, 'ideas'));
       const entry = entries.find((p) => p.id === id) ?? null;
       return json({ entry });
     },
@@ -145,7 +142,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     'add_idea',
     {
       title: 'Add idea',
-      description: 'Create a new per-file idea entry and regenerate the ideas index.',
+      description: 'Create a new idea entity (status: idea) and regenerate the index.',
       inputSchema: {
         title: z.string().describe('Idea title'),
         content: z.string().optional().describe('Idea body (markdown)'),
@@ -155,20 +152,16 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     ({ title, content }) =>
       runExclusive(async () => {
         if (!title.trim()) throw new Error('title is required');
+        const configPath = join(root, 'papercamp', 'config.json');
+        const newId = await assignEntityId(configPath);
+        if (!newId) throw new Error('could not assign entity ID');
         const ideasDir = campFile(root, 'ideas');
-        const existing = await readIdeasMerged(ideasDir, campFile(root, 'ideas.md'));
-        const maxNum = existing.entries.reduce((max, idea) => {
-          if (idea.id) {
-            const num = Number.parseInt(idea.id.replace('IDEA-', ''), 10);
-            return Number.isNaN(num) ? max : Math.max(max, num);
-          }
-          return max;
-        }, 0);
-        const newId = `IDEA-${maxNum + 1}`;
         await mkdir(ideasDir, { recursive: true });
-        const ideaContent = formatIdeaFile({
+        const ideaContent = formatEntityFile({
           id: newId,
           title: title.trim(),
+          status: 'idea',
+          created: todayDateString(),
           body: content?.trim(),
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${ideaContent}\n`, 'utf-8');
@@ -181,11 +174,12 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     'draft_plan',
     {
       title: 'Draft plan',
-      description: 'Create a new per-file plan entry, assigning it the next id for its kind.',
+      description:
+        'Create a new typed work entity (status: idea) with the next lifetime IDEA-N id.',
       inputSchema: {
-        title: z.string().describe('Plan title'),
-        content: z.string().optional().describe('Plan body (markdown)'),
-        kind: z.enum(PLAN_KINDS).optional().describe("Plan kind, defaults to 'feat'"),
+        title: z.string().describe('Entity title'),
+        content: z.string().optional().describe('Entity body (markdown)'),
+        kind: z.enum(PLAN_KINDS).optional().describe("Work type, defaults to 'feat'"),
       },
       outputSchema: idResultSchema.shape,
     },
@@ -196,21 +190,21 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         if (conflict) throw new Error(conflict);
         const planKind = kind ?? 'feat';
         const configPath = join(root, 'papercamp', 'config.json');
-        const id = await assignPlanId(configPath, planKind);
-        if (!id) throw new Error('could not assign plan ID');
+        const id = await assignEntityId(configPath);
+        if (!id) throw new Error('could not assign entity ID');
 
-        const plansDir = campFile(root, 'plans');
-        await mkdir(plansDir, { recursive: true });
+        const ideasDir = campFile(root, 'ideas');
+        await mkdir(ideasDir, { recursive: true });
 
-        const planContent = formatPlanFile({
+        const planContent = formatEntityFile({
           id,
           title: title.trim(),
-          kind: planKind,
+          type: planKind,
           status: 'idea',
           created: todayDateString(),
           body: content?.trim(),
         });
-        await writeFile(join(plansDir, `${id}.md`), `${planContent}\n`, 'utf-8');
+        await writeFile(join(ideasDir, `${id}.md`), `${planContent}\n`, 'utf-8');
         await regenerateIndexes(root);
         return json({ ok: true, id });
       }),
@@ -231,20 +225,20 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       outputSchema: okResultSchema.shape,
     },
     async ({ id, phaseIndex, done, status }) => {
-      const plansDir = campFile(root, 'plans');
-      const { entries } = await readAllPlanFiles(plansDir);
-      const target = entries.find((e) => e.id === id);
-      if (!target?.id) throw new Error(`plan "${id}" not found`);
+      const ideasDir = campFile(root, 'ideas');
+      const { entries } = await readEntities(ideasDir);
+      const target = entries.find((e) => e.id === id && e.kind !== 'note');
+      if (!target) throw new Error(`plan "${id}" not found`);
 
       const conflict = await checkBranchConflictForPlan(root, git, target.id);
       if (conflict) throw new Error(conflict);
 
-      const targetFile = join(plansDir, `${target.id}.md`);
+      const targetFile = join(ideasDir, `${target.id}.md`);
       const raw = await readMaybe(targetFile);
-      if (!raw) throw new Error('plan file not found');
+      if (!raw) throw new Error('entity file not found');
 
-      const parsed = parsePlanFile(raw);
-      if (parsed.entries.length === 0) throw new Error('failed to parse plan file');
+      const parsed = parseEntityFile(raw);
+      if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
       const entry = parsed.entries[0];
 
       if (phaseIndex < 0 || phaseIndex >= entry.phases.length) {
@@ -263,14 +257,11 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         updated: todayDateString(),
       };
 
-      await writePlanFile(
-        targetFile,
-        planFileInput(updatedEntry, { id: updatedEntry.id ?? target.id }),
-      );
+      await writeEntityFile(targetFile, entityFileInput(updatedEntry));
       await regenerateIndexes(root);
 
       if (status === 'done' || status === 'dropped') {
-        await archivePlanFile(root, target.id);
+        await archiveEntityFile(root, target.id);
       }
 
       return json({ ok: true });

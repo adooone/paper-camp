@@ -5,7 +5,7 @@ import {
   parseOpenQuestions,
   parseProgress,
 } from '../../../core/parser';
-import { readIdeasMerged, readPlansMerged } from '../../../core/readers';
+import { readNoteEntries, readWorkEntries } from '../../../core/readers';
 import { coerceAgentConfig } from '../../../types/index';
 import { campFile, readMaybe } from '../helpers';
 import { listConfigFiles } from './config';
@@ -27,7 +27,7 @@ export const readRoutes: ReadRoute[] = [
   },
   {
     path: '/api/plans',
-    handler: async (root) => readPlansMerged(campFile(root, 'plans'), campFile(root, 'plans.md')),
+    handler: async (root) => readWorkEntries(campFile(root, 'ideas')),
   },
   {
     path: '/api/progress',
@@ -46,7 +46,7 @@ export const readRoutes: ReadRoute[] = [
   },
   {
     path: '/api/ideas',
-    handler: async (root) => readIdeasMerged(campFile(root, 'ideas'), campFile(root, 'ideas.md')),
+    handler: async (root) => readNoteEntries(campFile(root, 'ideas')),
   },
   {
     path: '/api/consistency',
@@ -54,7 +54,7 @@ export const readRoutes: ReadRoute[] = [
       const [decisionsRaw, openQuestionsRaw, plansResult] = await Promise.all([
         readMaybe(campFile(root, 'decisions.md')),
         readMaybe(campFile(root, 'open-questions.md')),
-        readPlansMerged(campFile(root, 'plans'), campFile(root, 'plans.md')),
+        readWorkEntries(campFile(root, 'ideas')),
       ]);
       const decisions = parseDecisions(decisionsRaw);
       const openQuestions = parseOpenQuestions(openQuestionsRaw);

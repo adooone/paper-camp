@@ -1,8 +1,8 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readIdeasMerged, readPlansMerged } from '../../core/readers';
-import { formatIdeasIndex, formatPlanFile, formatPlansIndex } from '../../core/serializer';
-import type { BranchHygieneStatus, PlanEntry } from '../../types/index';
+import { readEntities } from '../../core/readers';
+import { formatEntitiesIndex, formatEntityFile } from '../../core/serializer';
+import type { BranchHygieneStatus, EntityEntry } from '../../types/index';
 
 export async function readMaybe(path: string): Promise<string> {
   try {
@@ -24,23 +24,23 @@ export async function fileExists(path: string): Promise<boolean> {
 
 export const campFile = (root: string, name: string) => join(root, 'papercamp', name);
 
-export type PlanFileInput = Parameters<typeof formatPlanFile>[0];
+export type EntityFileInput = Parameters<typeof formatEntityFile>[0];
 
 /**
- * Serializer input for re-writing an existing plan file: carries every field of the
- * parsed entry so a partial update can't silently drop idea backlinks, agent
- * overrides, or tags, with `overrides` applied on top.
+ * Serializer input for re-writing an existing entity file: carries every field of
+ * the parsed entry so a partial update can't silently drop the type, agent
+ * override, or tags, with `overrides` applied on top.
  */
-export function planFileInput(
-  entry: PlanEntry,
-  overrides: Partial<PlanFileInput> = {},
-): PlanFileInput {
+export function entityFileInput(
+  entry: EntityEntry,
+  overrides: Partial<EntityFileInput> = {},
+): EntityFileInput {
   return {
-    id: entry.id ?? '',
+    id: entry.id,
     title: entry.title,
-    kind: entry.kind ?? 'feat',
+    type: entry.type,
+    kind: entry.kind,
     status: entry.status,
-    idea: entry.idea,
     agent: entry.agent,
     created: entry.created,
     updated: entry.updated,
@@ -55,26 +55,16 @@ export function planFileInput(
   };
 }
 
-export async function writePlanFile(path: string, input: PlanFileInput): Promise<void> {
-  await writeFile(path, `${formatPlanFile(input)}\n`, 'utf-8');
+export async function writeEntityFile(path: string, input: EntityFileInput): Promise<void> {
+  await writeFile(path, `${formatEntityFile(input)}\n`, 'utf-8');
 }
 
+/** Rewrites the one unified index (papercamp/ideas/index.md) from the entity corpus. */
 export async function regenerateIndexes(root: string): Promise<void> {
-  const plansDir = campFile(root, 'plans');
   const ideasDir = campFile(root, 'ideas');
-
-  const [plansResult, ideasResult] = await Promise.all([
-    readPlansMerged(plansDir, campFile(root, 'plans.md')),
-    readIdeasMerged(ideasDir, campFile(root, 'ideas.md')),
-  ]);
-
-  await mkdir(plansDir, { recursive: true });
+  const { entries } = await readEntities(ideasDir);
   await mkdir(ideasDir, { recursive: true });
-
-  await Promise.all([
-    writeFile(join(plansDir, 'index.md'), formatPlansIndex(plansResult.entries)),
-    writeFile(join(ideasDir, 'index.md'), formatIdeasIndex(ideasResult.entries)),
-  ]);
+  await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries));
 }
 
 export async function checkBranchConflictForPlan(
@@ -99,9 +89,11 @@ export async function checkBranchConflictForPlan(
     return "You're on a merged branch — switch to main before starting another plan";
   }
 
-  const plansDir = campFile(root, 'plans');
-  const { entries } = await readPlansMerged(plansDir, campFile(root, 'plans.md'));
-  const activePlan = entries.find((p) => p.id === activePlanId);
+  // Note: branches created before the entity migration carry legacy <KIND>-<N>
+  // ids that no longer match any entity, so this lookup misses and the guard
+  // stays silent for them — phase 10 re-keys branch naming to IDEA-N ids.
+  const { entries } = await readEntities(campFile(root, 'ideas'));
+  const activePlan = entries.find((e) => e.id === activePlanId && e.kind !== 'note');
   if (!activePlan || activePlan.status === 'done' || activePlan.status === 'dropped') return null;
   return `Finish \`${activePlanId}\` — ${activePlan.title} — before starting another plan`;
 }

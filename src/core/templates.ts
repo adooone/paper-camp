@@ -7,7 +7,7 @@
 
 export const SKILL_MD_CONTENT = `---
 name: paper-camp
-description: Work inside a project that has a papercamp/ folder — its per-file plans, ideas, decisions log, open questions, and progress log. Use this whenever the working directory contains papercamp/ (papercamp/plans/, papercamp/ideas/, papercamp/decisions.md, papercamp/open-questions.md, papercamp/progress.md), and especially before starting, continuing, or completing any plan phase, drafting an idea, logging a decision, or answering "what are we working on / what's next".
+description: Work inside a project that has a papercamp/ folder — its unified idea entities (each holding its plan as a section), decisions log, open questions, and progress log. Use this whenever the working directory contains papercamp/ (papercamp/ideas/, papercamp/decisions.md, papercamp/open-questions.md, papercamp/progress.md), and especially before starting, continuing, or completing any plan phase, drafting an idea, logging a decision, or answering "what are we working on / what's next".
 ---
 
 # Paper Camp
@@ -27,18 +27,20 @@ only the mechanism changes.
 
 Read, in this order, whatever exists:
 
-1. \`papercamp/plans/index.md\` — every plan's id/title/status/tags, at a glance.
-2. The specific plan file at \`papercamp/plans/<ID>.md\` (e.g. \`FEAT-31.md\`) for
-   the plan you're about to work on. Each plan is YAML frontmatter (\`id\`,
-   \`title\`, \`kind\`, \`status\`, \`tags\`, ...) plus prose, then a \`### Phases\`
-   list of \`- [ ]\`/\`- [x]\` checkboxes with an indented description under each.
-3. \`papercamp/ideas/index.md\` and any linked idea file — plans often trace
-   back to an \`idea:\` field; the idea explains *why*, the plan explains *what*.
-4. \`papercamp/decisions.md\` — settled calls that constrain your approach.
+1. \`papercamp/ideas/index.md\` — every entity's id/title/type/status/tags, at
+   a glance. Ideas and plans are one thing: an entity is an *idea* for its
+   whole life, and its plan is a \`### Phases\` section inside the same file.
+2. The specific entity file at \`papercamp/ideas/<ID>.md\` (e.g. \`IDEA-43.md\`)
+   for the work you're about to do — YAML frontmatter (\`id\`, \`title\`,
+   \`type\`, \`status\`, \`tags\`, ...) plus prose rationale, then optionally a
+   \`### Phases\` list of \`- [ ]\`/\`- [x]\` checkboxes with an indented
+   description under each. Done/dropped entities live in
+   \`papercamp/ideas/archive/\`.
+3. \`papercamp/decisions.md\` — settled calls that constrain your approach.
    Don't re-litigate a logged decision without flagging it to the user first.
-5. \`papercamp/open-questions.md\` — unresolved questions that might block or
+4. \`papercamp/open-questions.md\` — unresolved questions that might block or
    redirect the work you're about to start.
-6. The last handful of entries in \`papercamp/progress.md\` for recent context
+5. The last handful of entries in \`papercamp/progress.md\` for recent context
    on what just happened.
 
 Skip files that don't exist yet (a fresh project may have empty logs).

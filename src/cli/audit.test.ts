@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { computePlanContentHash } from '../core/content-hash';
-import { parsePlanFile } from '../core/parser';
+import { parseEntityFile } from '../core/parser';
 
 // Exercises `paper-camp audit` as a real subprocess (via bun, matching the "cli" script)
 // so the skip/re-audit decision is verified end to end through argument parsing, plan
@@ -15,9 +15,9 @@ import { parsePlanFile } from '../core/parser';
 const CLI_ENTRY = join(__dirname, 'index.ts');
 
 const PLAN_REVIEW = `---
-id: FEAT-1
+id: IDEA-1
 title: Test plan
-kind: feat
+type: feat
 status: review
 created: 2026-07-01
 ---
@@ -54,9 +54,9 @@ async function makeProject(
   await writeFile(shimPath, '#!/usr/bin/env node\nprocess.exit(0);\n');
   await chmod(shimPath, 0o755);
 
-  const plansDir = join(root, 'papercamp', 'plans');
-  await mkdir(plansDir, { recursive: true });
-  const planFile = join(plansDir, 'FEAT-1.md');
+  const ideasDir = join(root, 'papercamp', 'ideas');
+  await mkdir(ideasDir, { recursive: true });
+  const planFile = join(ideasDir, 'IDEA-1.md');
   await writeFile(planFile, planMd);
 
   return { root, planFile, path: `${shimBin}:${process.env.PATH}` };
@@ -72,7 +72,7 @@ function runAudit(root: string, path: string) {
 
 describe('paper-camp audit (CLI)', () => {
   it('skips a plan whose audited-hash still matches its content, without invoking an agent', async () => {
-    const { body, phases } = parsePlanFile(PLAN_REVIEW).entries[0];
+    const { body, phases } = parseEntityFile(PLAN_REVIEW).entries[0];
     const hash = computePlanContentHash({ body, phases });
     const { root, planFile, path } = await makeProject(withAuditStamp(PLAN_REVIEW, hash));
 
@@ -96,7 +96,7 @@ describe('paper-camp audit (CLI)', () => {
     expect(result.stdout).toContain('[done]');
     expect(result.stdout).toContain('Audited : 1   Skipped : 0   Failed : 0');
 
-    const after = parsePlanFile(await readFile(planFile, 'utf-8')).entries[0];
+    const after = parseEntityFile(await readFile(planFile, 'utf-8')).entries[0];
     const expectedHash = computePlanContentHash({ body: after.body, phases: after.phases });
     expect(after.auditedHash).toBe(expectedHash);
     expect(after.auditedHash).not.toBe('stale-hash-does-not-match');
@@ -110,7 +110,7 @@ describe('paper-camp audit (CLI)', () => {
     expect(result.stdout).not.toContain('[skip]');
     expect(result.stdout).toContain('[done]');
 
-    const after = parsePlanFile(await readFile(planFile, 'utf-8')).entries[0];
+    const after = parseEntityFile(await readFile(planFile, 'utf-8')).entries[0];
     expect(after.auditedHash).toBeTruthy();
   });
 });

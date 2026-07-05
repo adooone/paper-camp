@@ -46,25 +46,18 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
     version: PAPER_CAMP_VERSION,
     projectName: options.projectName,
     initializedAt: new Date().toISOString(),
-    nextId: { feat: 1, fix: 1, chore: 1, docs: 1, refactor: 1 },
+    nextId: { idea: 1 },
   };
   paperCampConfigSchema.parse(config);
 
   await mkdir(campDir, { recursive: true });
 
-  // Per-file plans directory with index and archive
-  const plansDir = join(campDir, 'plans');
-  await mkdir(plansDir, { recursive: true });
-  const plansIndex = join(plansDir, 'index.md');
-  if (!(await exists(plansIndex))) {
-    await writeFile(plansIndex, '# Plans\n\nNo plans yet.\n', 'utf-8');
-  }
-  const archiveDir = join(plansDir, 'archive');
-  await mkdir(archiveDir, { recursive: true });
-
-  // Per-file ideas directory with index
+  // Unified entity directory: one file per idea (plan as a section), with an
+  // archive/ for done/dropped entities and one generated index.
   const ideasDir = join(campDir, 'ideas');
   await mkdir(ideasDir, { recursive: true });
+  const entityArchiveDir = join(ideasDir, 'archive');
+  await mkdir(entityArchiveDir, { recursive: true });
   const ideasIndex = join(ideasDir, 'index.md');
   if (!(await exists(ideasIndex))) {
     const ideasBody = options.intent

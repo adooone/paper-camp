@@ -1,27 +1,26 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { computePlanContentHash } from '../core/content-hash';
-import { parseIdeas, parsePlanFile, parsePlans } from '../core/parser';
-import { readAllIdeaFiles, readAllPlanFiles } from '../core/readers';
+import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parser';
+import { entityToPlan, readEntities } from '../core/readers';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import {
-  assignPlanId,
-  formatIdeaFile,
-  formatIdeasIndex,
-  formatPlanFile,
-  formatPlansIndex,
+  assignEntityId,
+  formatEntitiesIndex,
+  formatEntityFile,
   todayDateString,
 } from '../core/serializer';
 import { startMcpServer } from '../mcp/server';
 import {
   type AgentRunOptions,
   DEFAULT_AGENTS,
+  type LogEntry,
   PLAN_KINDS,
   type PlanEntry,
   coerceAgentConfig,
@@ -51,17 +50,17 @@ async function stampCliAuditDate(planFile: string, planId: string): Promise<void
   // Throw on failure so the caller can mark the audit failed rather than
   // logging [done] while the audited stamp was silently never written.
   const raw = await readFile(planFile, 'utf-8');
-  const parsed = parsePlanFile(raw);
+  const parsed = parseEntityFile(raw);
   const entry = parsed.entries[0];
   if (!entry) {
-    throw new Error(`Could not parse plan file after audit: ${planFile}`);
+    throw new Error(`Could not parse entity file after audit: ${planFile}`);
   }
-  const writeInput: Parameters<typeof formatPlanFile>[0] = {
+  const writeInput: Parameters<typeof formatEntityFile>[0] = {
     id: planId,
     title: entry.title,
-    kind: entry.kind ?? 'feat',
+    type: entry.type,
+    kind: entry.kind,
     status: entry.status,
-    idea: entry.idea,
     agent: entry.agent,
     created: entry.created,
     updated: entry.updated,
@@ -73,7 +72,7 @@ async function stampCliAuditDate(planFile: string, planId: string): Promise<void
     log: entry.log,
     clarifications: entry.clarifications,
   };
-  await writeFile(planFile, `${formatPlanFile(writeInput)}\n`, 'utf-8');
+  await writeFile(planFile, `${formatEntityFile(writeInput)}\n`, 'utf-8');
 }
 
 async function runPlanAudit(
@@ -123,11 +122,9 @@ program
       await initProject(targetDir, { projectName: name, intent: opts.intent });
       console.log(`Initialized Paper Camp in ${targetDir}`);
       console.log('  papercamp/config.json');
-      console.log('  papercamp/plans/          (per-file plan entries)');
-      console.log('  papercamp/plans/index.md');
-      console.log('  papercamp/plans/archive/');
-      console.log('  papercamp/ideas/          (per-file idea entries)');
+      console.log('  papercamp/ideas/          (one file per idea, plan as a section)');
       console.log('  papercamp/ideas/index.md');
+      console.log('  papercamp/ideas/archive/');
       console.log('  papercamp/progress.md, decisions.md, open-questions.md');
       console.log('  .claude/skills/paper-camp/SKILL.md');
       console.log('  .claude/settings.json     (SessionStart + PostToolUse hooks)');
@@ -183,133 +180,175 @@ program
     const kind = opts.kind;
     const root = process.cwd();
     const configPath = resolve(root, 'papercamp', 'config.json');
-    const id = await assignPlanId(configPath, kind);
+    const id = await assignEntityId(configPath);
 
     if (!id) {
-      console.error('Could not assign plan ID — is the project initialized?');
+      console.error('Could not assign entity ID — is the project initialized?');
       process.exitCode = 1;
       return;
     }
 
-    const plansDir = resolve(root, 'papercamp', 'plans');
-    await mkdir(plansDir, { recursive: true });
+    const ideasDir = resolve(root, 'papercamp', 'ideas');
+    await mkdir(ideasDir, { recursive: true });
 
-    const planContent = formatPlanFile({
+    const entityContent = formatEntityFile({
       id,
       title: name,
-      kind,
+      type: kind,
       status: 'idea',
       created: todayDateString(),
     });
-    await writeFile(join(plansDir, `${id}.md`), `${planContent}\n`, 'utf-8');
+    await writeFile(join(ideasDir, `${id}.md`), `${entityContent}\n`, 'utf-8');
 
-    // Regenerate index
-    const { entries } = await readAllPlanFiles(plansDir);
-    await writeFile(join(plansDir, 'index.md'), formatPlansIndex(entries), 'utf-8');
+    // Regenerate the unified index
+    const { entries } = await readEntities(ideasDir);
+    await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries), 'utf-8');
 
-    console.log(`Added plan "${name}" (${id}) to papercamp/plans/${id}.md`);
+    console.log(`Added "${name}" (${id}) to papercamp/ideas/${id}.md`);
   });
 
 program
   .command('migrate')
   .description(
-    'One-time migration: split monolithic plans.md/ideas.md into per-file YAML frontmatter entries',
+    'One-time migration: merge the two-file plans/ideas corpus into unified single-file entities under papercamp/ideas/',
   )
   .action(async () => {
     const root = process.cwd();
     const plansDir = resolve(root, 'papercamp', 'plans');
-    const archiveDir = join(plansDir, 'archive');
     const ideasDir = resolve(root, 'papercamp', 'ideas');
-    await mkdir(archiveDir, { recursive: true });
-    await mkdir(ideasDir, { recursive: true });
+    const entityArchiveDir = join(ideasDir, 'archive');
+    await mkdir(entityArchiveDir, { recursive: true });
 
-    const plansPath = resolve(root, 'papercamp', 'plans.md');
-    const ideasPath = resolve(root, 'papercamp', 'ideas.md');
+    const stripHeading = (body: string) => body.replace(/^#{1,3}\s+[^\n]*\n?/, '').trim();
+    const isClosed = (status: string) => status === 'done' || status === 'dropped';
+    const numOf = (id: string) => Number.parseInt(id.replace(/^[A-Z]+-/, ''), 10);
 
-    let migratedPlans = 0;
-    let skippedPlans = 0;
-    let planWarnings = 0;
-    const plansRaw = await readFile(plansPath, 'utf-8').catch(() => '');
-    if (plansRaw.trim()) {
-      const { entries, warnings } = parsePlans(plansRaw);
-      planWarnings = warnings.length;
-      for (const warning of warnings) {
-        console.warn(`  warning: ${warning.title}: ${warning.message}`);
+    async function readLegacyDir<T>(
+      dir: string,
+      parse: (content: string) => { entries: T[]; warnings: { title: string; message: string }[] },
+    ): Promise<T[]> {
+      const out: T[] = [];
+      const files: string[] = await readdir(dir).catch(() => []);
+      for (const f of files.filter((f) => f.endsWith('.md') && f !== 'index.md')) {
+        const { entries, warnings } = parse(await readFile(join(dir, f), 'utf-8'));
+        for (const w of warnings) console.warn(`  warning: ${f}: ${w.message}`);
+        out.push(...entries);
       }
-      for (const entry of entries) {
-        if (!entry.id) {
-          console.warn(`  skipping plan "${entry.title}" — no Id assigned, cannot migrate`);
-          skippedPlans++;
-          continue;
-        }
-        const targetDir =
-          entry.status === 'done' || entry.status === 'dropped' ? archiveDir : plansDir;
-        const targetFile = join(targetDir, `${entry.id}.md`);
-        if (await exists(targetFile)) {
-          skippedPlans++;
-          continue;
-        }
-        const content = formatPlanFile({
-          id: entry.id,
-          title: entry.title,
-          kind: entry.kind ?? 'feat',
-          status: entry.status,
-          idea: entry.idea,
-          agent: entry.agent,
-          created: entry.created,
-          updated: entry.updated,
-          tags: entry.tags,
-          body: entry.body,
-          phases: entry.phases,
-          log: entry.log,
-          clarifications: entry.clarifications,
+      return out;
+    }
+
+    // Legacy ideas live flat in ideas/; legacy plans in plans/ + plans/archive/.
+    const legacyIdeas = (
+      await readLegacyDir(ideasDir, (c) => {
+        const r = parseIdeaFile(c);
+        return { entries: r.entries, warnings: r.warnings };
+      })
+    ).filter((i) => i.id);
+    const legacyPlans = [
+      ...(await readLegacyDir(plansDir, parsePlanFile)),
+      ...(await readLegacyDir(join(plansDir, 'archive'), parsePlanFile)),
+    ].filter((p) => p.id);
+
+    if (legacyPlans.length === 0) {
+      console.log('Nothing to migrate — no legacy plan files under papercamp/plans/.');
+      return;
+    }
+
+    const plansByIdea = new Map<string, typeof legacyPlans>();
+    for (const p of legacyPlans) {
+      if (!p.idea) continue;
+      if (!plansByIdea.has(p.idea)) plansByIdea.set(p.idea, []);
+      plansByIdea.get(p.idea)?.push(p);
+    }
+    const configPath = resolve(root, 'papercamp', 'config.json');
+
+    const mergedLog = (idea: { log?: LogEntry[] } | undefined, plan: { log?: LogEntry[] }) =>
+      [...(idea?.log ?? []), ...(plan.log ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+
+    let written = 0;
+    const writeEntity = async (input: Parameters<typeof formatEntityFile>[0]) => {
+      const target = join(isClosed(input.status) ? entityArchiveDir : ideasDir, `${input.id}.md`);
+      await writeFile(target, `${formatEntityFile(input)}\n`, 'utf-8');
+      written++;
+    };
+
+    // Ideas: merge with their plan(s), or pass through as planless entities.
+    for (const idea of legacyIdeas) {
+      const ideaId = idea.id as string;
+      const plans = (plansByIdea.get(ideaId) ?? []).sort(
+        (a, b) => numOf(a.id as string) - numOf(b.id as string),
+      );
+      if (plans.length === 0) {
+        await writeEntity({
+          id: ideaId,
+          title: idea.title,
+          kind: idea.kind === 'note' ? 'note' : undefined,
+          status: idea.kind === 'note' ? (idea.status ?? 'open') : 'idea',
+          created: todayDateString(),
+          body: stripHeading(idea.body),
+          log: idea.log,
         });
-        await writeFile(targetFile, `${content}\n`, 'utf-8');
-        migratedPlans++;
+        continue;
+      }
+      // First plan keeps the idea's id; splits from a multi-plan idea mint fresh ids.
+      for (const [i, plan] of plans.entries()) {
+        const id = i === 0 ? ideaId : await assignEntityId(configPath);
+        if (!id) throw new Error('could not mint an entity id — is nextId.idea configured?');
+        await writeEntity({
+          id,
+          title: plan.title,
+          type: plan.kind,
+          status: plan.status,
+          agent: plan.agent,
+          created: plan.created,
+          updated: plan.updated,
+          audited: plan.audited,
+          auditedHash: plan.auditedHash,
+          tags: plan.tags,
+          body: [stripHeading(idea.body), plan.body].filter(Boolean).join('\n\n'),
+          phases: plan.phases,
+          log: mergedLog(i === 0 ? idea : undefined, plan),
+          clarifications: plan.clarifications,
+        });
       }
     }
 
-    let migratedIdeas = 0;
-    let skippedIdeas = 0;
-    const ideasRaw = await readFile(ideasPath, 'utf-8').catch(() => '');
-    if (ideasRaw.trim()) {
-      const entries = parseIdeas(ideasRaw);
-      for (const idea of entries) {
-        if (!idea.id) {
-          console.warn(`  skipping idea "${idea.title}" — no Id assigned, cannot migrate`);
-          skippedIdeas++;
-          continue;
-        }
-        const targetFile = join(ideasDir, `${idea.id}.md`);
-        if (await exists(targetFile)) {
-          skippedIdeas++;
-          continue;
-        }
-        const body = idea.body.replace(/^#{1,3}\s+.+(?:\r?\n)?/, '').trim();
-        const content = formatIdeaFile({ id: idea.id, title: idea.title, body });
-        await writeFile(targetFile, `${content}\n`, 'utf-8');
-        migratedIdeas++;
-      }
+    // Orphan plans (no idea backlink): mint fresh lifetime ids in chronological order.
+    const orphans = legacyPlans
+      .filter((p) => !p.idea)
+      .sort(
+        (a, b) =>
+          a.created.localeCompare(b.created) || numOf(a.id as string) - numOf(b.id as string),
+      );
+    for (const plan of orphans) {
+      const id = await assignEntityId(configPath);
+      if (!id) throw new Error('could not mint an entity id — is nextId.idea configured?');
+      await writeEntity({
+        id,
+        title: plan.title,
+        type: plan.kind,
+        status: plan.status,
+        agent: plan.agent,
+        created: plan.created,
+        updated: plan.updated,
+        audited: plan.audited,
+        auditedHash: plan.auditedHash,
+        tags: plan.tags,
+        body: plan.body,
+        phases: plan.phases,
+        log: plan.log,
+        clarifications: plan.clarifications,
+      });
     }
 
-    const { entries: allPlans } = await readAllPlanFiles(plansDir);
-    await writeFile(join(plansDir, 'index.md'), formatPlansIndex(allPlans), 'utf-8');
-    const { entries: allIdeas } = await readAllIdeaFiles(ideasDir);
-    await writeFile(join(ideasDir, 'index.md'), formatIdeasIndex(allIdeas), 'utf-8');
-
-    // Empty, not a pointer comment: readPlansMerged/readIdeasMerged fast-path on falsy
-    // monolithic content, and parseIdeas() in particular has no heading match for plain
-    // prose, producing a phantom null-id entry that the merge step's dedup logic always
-    // keeps. A truly empty file avoids both parsers entirely.
-    if (migratedPlans > 0 && skippedPlans === 0 && planWarnings === 0) {
-      await writeFile(plansPath, '', 'utf-8');
-    }
-    if (migratedIdeas > 0 && skippedIdeas === 0) {
-      await writeFile(ideasPath, '', 'utf-8');
-    }
+    const { entries } = await readEntities(ideasDir);
+    await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries), 'utf-8');
 
     console.log(
-      `Migrated ${migratedPlans} plans (${skippedPlans} skipped), ${migratedIdeas} ideas (${skippedIdeas} skipped).`,
+      `Migrated ${written} entities into papercamp/ideas/ (${orphans.length} orphan plans minted fresh ids).`,
+    );
+    console.log(
+      'Verify the result, then delete papercamp/plans/ — it is no longer read. Consider simplifying archived bodies by hand or with an agent; git history keeps the originals.',
     );
   });
 
@@ -318,15 +357,17 @@ program
   .description('Audit all review/done plans for missing phases')
   .action(async () => {
     const root = process.cwd();
-    const plansDir = resolve(root, 'papercamp', 'plans');
+    const ideasDir = resolve(root, 'papercamp', 'ideas');
 
-    const { entries, warnings } = await readAllPlanFiles(plansDir);
+    const { entries: allEntities, warnings } = await readEntities(ideasDir);
 
     for (const warning of warnings) {
       console.warn(`  warning: ${warning.title}: ${warning.message}`);
     }
 
-    const candidates = entries.filter((p) => p.status === 'review' || p.status === 'done');
+    const candidates = allEntities
+      .filter((e) => e.kind !== 'note' && (e.status === 'review' || e.status === 'done'))
+      .map(entityToPlan);
 
     if (candidates.length === 0) {
       console.log('No plans with status "review" or "done" found.');
@@ -380,7 +421,7 @@ program
         continue;
       }
 
-      const planFile = await findPlanFile(plansDir, plan.id);
+      const planFile = await findPlanFile(ideasDir, plan.id);
       if (!planFile) {
         console.log(`  [skip]  ${label} ${plan.title} — file not found`);
         results.push({ id, title: plan.title, status: 'skipped', skipReason: 'file not found' });

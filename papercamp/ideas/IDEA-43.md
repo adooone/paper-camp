@@ -129,7 +129,7 @@ selector/renderer machinery transfers to it with the parent swapped.
       from the shared parent; simplify legacy bodies to a brief "what this was
       about" summary (AI-assisted rewrite pass, git history keeps the full
       text); regenerate one index and retire `papercamp/plans/`.
-- [ ] Adapt the readers, API, MCP, and CLI
+- [x] Adapt the readers, API, MCP, and CLI
       One reader over the unified directory replaces
       `readPlansMerged`/`readIdeasMerged` (monolithic and two-file fallbacks
       retire); `/api/plans` and `/api/ideas` serve the same corpus (or collapse

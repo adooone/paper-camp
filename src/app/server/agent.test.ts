@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computePlanContentHash } from '../../core/content-hash';
-import { parsePlanFile } from '../../core/parser';
+import { parseEntityFile } from '../../core/parser';
+import { entityToPlan } from '../../core/readers';
 import type { PhaseItem, PlanEntry } from '../../types/index';
 import { buildAgentPrompt, createAgentManager } from './agent';
 
@@ -33,14 +34,14 @@ vi.mock('./agents', () => {
 // checkbox — the minimal "agent did its phase" behavior.
 const FLIP_NEXT_CHECKBOX = `
 const fs = require('node:fs');
-const p = 'papercamp/plans/FEAT-1.md';
+const p = 'papercamp/ideas/IDEA-1.md';
 fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('- [ ]', '- [x]'));
 `;
 
 const PLAN_TWO_PHASES = `---
-id: FEAT-1
+id: IDEA-1
 title: Test plan
-kind: feat
+type: feat
 status: in-progress
 created: 2026-07-01
 ---
@@ -65,9 +66,9 @@ beforeEach(() => {
 async function makeRoot(planMd: string): Promise<{ root: string; plan: PlanEntry }> {
   const root = await mkdtemp(join(tmpdir(), 'papercamp-agent-test-'));
   roots.push(root);
-  await mkdir(join(root, 'papercamp', 'plans'), { recursive: true });
-  await writeFile(join(root, 'papercamp', 'plans', 'FEAT-1.md'), planMd);
-  const plan = parsePlanFile(planMd).entries[0];
+  await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+  await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), planMd);
+  const plan = entityToPlan(parseEntityFile(planMd).entries[0]);
   return { root, plan };
 }
 
@@ -94,14 +95,14 @@ async function waitForStatus(
 const settled = (status: string) => status === 'done' || status === 'error';
 
 describe('buildAgentPrompt', () => {
-  const plan = parsePlanFile(PLAN_TWO_PHASES).entries[0];
+  const plan = entityToPlan(parseEntityFile(PLAN_TWO_PHASES).entries[0]);
 
   it('names the phase 1-based, the plan id, and the per-plan file path', () => {
     const prompt = buildAgentPrompt(plan, plan.phases[1], 1);
     expect(prompt).toContain('phase 2');
     expect(prompt).toContain('"Second phase"');
-    expect(prompt).toContain('FEAT-1');
-    expect(prompt).toContain('papercamp/plans/FEAT-1.md');
+    expect(prompt).toContain('IDEA-1');
+    expect(prompt).toContain('papercamp/ideas/IDEA-1.md');
     expect(prompt).toContain('Plan body.');
   });
 
@@ -138,8 +139,8 @@ describe('startRunAllPhases', () => {
     expect(runProjectChecks).toHaveBeenCalledTimes(2);
     expect(onRunComplete).toHaveBeenCalledOnce();
 
-    const after = parsePlanFile(
-      await readFile(join(root, 'papercamp', 'plans', 'FEAT-1.md'), 'utf-8'),
+    const after = parseEntityFile(
+      await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
     );
     expect(after.entries[0].phases.every((phase) => phase.done)).toBe(true);
   });
@@ -311,7 +312,7 @@ describe('stop and getStatus', () => {
     expect(state).toMatchObject({
       taskKind: 'run-all',
       planTitle: 'Test plan',
-      planId: 'FEAT-1',
+      planId: 'IDEA-1',
       agentId: 'claude-code',
     });
     await waitForStatus(manager, settled);
@@ -321,9 +322,9 @@ describe('stop and getStatus', () => {
 describe('startBatchAudit', () => {
   // status: review so readAllPlanFiles' candidate filter (review/done) picks it up.
   const PLAN_REVIEW = `---
-id: FEAT-1
+id: IDEA-1
 title: Test plan
-kind: feat
+type: feat
 status: review
 created: 2026-07-01
 ---
@@ -342,7 +343,7 @@ Plan body.
   }
 
   it('skips a plan whose audited-hash still matches its content', async () => {
-    const { body, phases } = parsePlanFile(PLAN_REVIEW).entries[0];
+    const { body, phases } = parseEntityFile(PLAN_REVIEW).entries[0];
     const hash = computePlanContentHash({ body, phases });
     const { root } = await makeRoot(withAuditStamp(PLAN_REVIEW, hash));
     const onAuditComplete = vi.fn(async () => {});
@@ -351,7 +352,7 @@ Plan body.
     expect(manager.startBatchAudit()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     const lines = manager.getStatus()?.lines.join('\n');
-    expect(lines).toContain('[skip] FEAT-1 — up to date');
+    expect(lines).toContain('[skip] IDEA-1 — up to date');
     expect(lines).toContain('0 audited, 1 skipped, 0 failed');
     expect(onAuditComplete).not.toHaveBeenCalled();
   });
@@ -365,9 +366,9 @@ Plan body.
     expect(manager.startBatchAudit()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     const lines = manager.getStatus()?.lines.join('\n');
-    expect(lines).toContain('[audit] FEAT-1 Test plan');
+    expect(lines).toContain('[audit] IDEA-1 Test plan');
     expect(lines).toContain('1 audited, 0 skipped, 0 failed');
-    expect(onAuditComplete).toHaveBeenCalledWith('FEAT-1', 0);
+    expect(onAuditComplete).toHaveBeenCalledWith('IDEA-1', 0);
   });
 
   it('audits a plan that has never been audited (no audited-hash yet)', async () => {
@@ -379,6 +380,6 @@ Plan body.
     expect(manager.startBatchAudit()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(manager.getStatus()?.lines.join('\n')).not.toContain('[skip]');
-    expect(onAuditComplete).toHaveBeenCalledWith('FEAT-1', 0);
+    expect(onAuditComplete).toHaveBeenCalledWith('IDEA-1', 0);
   });
 });

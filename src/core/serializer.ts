@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '../types/index';
+import type { EntityEntry, LogEntry, PhaseItem } from '../types/index';
 
 export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -408,15 +408,15 @@ export function formatIdeaFile(input: NewIdeaFileInput): string {
 }
 
 /**
- * Moves a per-file plan from papercamp/plans/<id>.md to papercamp/plans/archive/<id>.md.
+ * Moves an entity from papercamp/ideas/<id>.md to papercamp/ideas/archive/<id>.md.
  * This is a pure file move — no parse-and-re-serialize step.
- * Returns true if the file was moved, false if no per-file exists for this plan.
+ * Returns true if the file was moved, false if no file exists for this entity.
  */
-export async function archivePlanFile(root: string, planId: string): Promise<boolean> {
-  const plansDir = join(root, 'papercamp', 'plans');
-  const archiveDir = join(plansDir, 'archive');
-  const sourcePath = join(plansDir, `${planId}.md`);
-  const destPath = join(archiveDir, `${planId}.md`);
+export async function archiveEntityFile(root: string, entityId: string): Promise<boolean> {
+  const ideasDir = join(root, 'papercamp', 'ideas');
+  const archiveDir = join(ideasDir, 'archive');
+  const sourcePath = join(ideasDir, `${entityId}.md`);
+  const destPath = join(archiveDir, `${entityId}.md`);
 
   await mkdir(archiveDir, { recursive: true });
 
@@ -430,40 +430,23 @@ export async function archivePlanFile(root: string, planId: string): Promise<boo
 }
 
 // ---------------------------------------------------------------------------
-// Index file generators  (papercamp/plans/index.md, papercamp/ideas/index.md)
+// Index file generator  (papercamp/ideas/index.md — the one unified table)
 // ---------------------------------------------------------------------------
 
-export function formatPlansIndex(entries: PlanEntry[]): string {
-  if (entries.length === 0) return '# Plans\n\nNo plans yet.\n';
+export function formatEntitiesIndex(entities: EntityEntry[]): string {
+  if (entities.length === 0) return '# Ideas\n\nNo ideas yet.\n';
 
-  const sorted = [...entries].sort((a, b) => {
-    const aNum = a.id ? Number.parseInt(a.id.replace(/^[A-Z]+-/, ''), 10) : Number.NaN;
-    const bNum = b.id ? Number.parseInt(b.id.replace(/^[A-Z]+-/, ''), 10) : Number.NaN;
+  const sorted = [...entities].sort((a, b) => {
+    const aNum = Number.parseInt(a.id.replace(/^[A-Z]+-/, ''), 10);
+    const bNum = Number.parseInt(b.id.replace(/^[A-Z]+-/, ''), 10);
     if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
-    return (a.title || '').localeCompare(b.title || '');
+    return a.title.localeCompare(b.title);
   });
 
   const rows = sorted.map(
     (e) =>
-      `| ${e.id || ''} | ${(e.title || '').replace(/\|/g, '\\|')} | ${e.status} | ${(e.tags || []).join(', ')} |`,
+      `| ${e.id} | ${e.title.replace(/\|/g, '\\|')} | ${e.type ?? (e.kind === 'note' ? 'note' : '—')} | ${e.status} | ${(e.tags ?? []).join(', ')} |`,
   );
 
-  return `# Plans\n\n| Id | Title | Status | Tags |\n|----|-------|--------|------|\n${rows.join('\n')}\n`;
-}
-
-export function formatIdeasIndex(ideas: IdeaEntry[]): string {
-  if (ideas.length === 0) return '# Ideas\n\nNo ideas yet.\n';
-
-  const sorted = [...ideas].sort((a, b) => {
-    const aNum = a.id ? Number.parseInt(a.id.replace('IDEA-', ''), 10) : Number.NaN;
-    const bNum = b.id ? Number.parseInt(b.id.replace('IDEA-', ''), 10) : Number.NaN;
-    if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
-    return (a.title || '').localeCompare(b.title || '');
-  });
-
-  const rows = sorted.map(
-    (e) => `| ${e.id || ''} | ${(e.title || '').replace(/\|/g, '\\|')} | ${e.status ?? '—'} |`,
-  );
-
-  return `# Ideas\n\n| Id | Title | Status |\n|----|-------|--------|\n${rows.join('\n')}\n`;
+  return `# Ideas\n\n| Id | Title | Type | Status | Tags |\n|----|-------|------|--------|------|\n${rows.join('\n')}\n`;
 }

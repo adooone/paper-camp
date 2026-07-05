@@ -1,4 +1,4 @@
-import { readPlansMerged } from '../../../core/readers';
+import { readWorkEntries } from '../../../core/readers';
 import { findFocusPlan } from '../../features/plans/helpers';
 import { suggestCommitMessage } from '../commit-suggest';
 import { campFile } from '../helpers';
@@ -118,10 +118,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             return;
           }
           const diffText = await git.diff(files);
-          const { entries } = await readPlansMerged(
-            campFile(root, 'plans'),
-            campFile(root, 'plans.md'),
-          );
+          const { entries } = await readWorkEntries(campFile(root, 'ideas'));
           const activePlan = findFocusPlan(entries);
           const suggestion = await suggestCommitMessage(
             diffText,

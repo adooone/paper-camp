@@ -146,15 +146,15 @@ export const paperCampConfigSchema = z.object({
   initializedAt: z.string(),
   nextId: z
     .object({
-      feat: z.number(),
-      fix: z.number(),
-      chore: z.number(),
-      docs: z.number(),
-      refactor: z.number(),
-      // The unified-entity counter (FEAT-42 phase 7+): all new entities mint
-      // lifetime IDEA-N ids from here; the per-kind counters above retire with
-      // the migration cutover.
+      // The unified-entity counter: all new entities mint lifetime IDEA-N ids
+      // from here. The per-kind counters are legacy, still present in
+      // pre-migration configs.
       idea: z.number().optional(),
+      feat: z.number().optional(),
+      fix: z.number().optional(),
+      chore: z.number().optional(),
+      docs: z.number().optional(),
+      refactor: z.number().optional(),
     })
     .optional(),
   defaultAgent: z.enum(AGENT_IDS).optional(),

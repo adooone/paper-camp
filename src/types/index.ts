@@ -218,8 +218,8 @@ export interface PaperCampConfig {
   version: string;
   projectName: string;
   initializedAt: string;
-  /** Per-kind plan counters, plus the unified-entity `idea` counter that outlives them after the FEAT-42 migration. */
-  nextId?: Record<PlanKind, number> & { idea?: number };
+  /** The unified-entity `idea` counter; the per-kind plan counters are legacy, present only in pre-migration configs. */
+  nextId?: Partial<Record<PlanKind, number>> & { idea?: number };
   port?: number;
   defaultAgents?: DefaultAgentsMap;
   /** Off by default. When true, the PostToolUse hook logs new-file creations to progress.md. */
