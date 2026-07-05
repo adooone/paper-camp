@@ -1,4 +1,22 @@
-## Which ID convention survives the single-file idea/plan merge?
+## Does the scaffolded Claude Code skill need an entity-migration pass?
+
+**Status:** open
+**Raised:** 2026-07-05
+**Blocks:** —
+
+While rewriting `about.md` for `IDEA-43`'s single-file entity migration (phase 13,
+"Actualize the docs and closing pass"), `.claude/skills/paper-camp/SKILL.md` (and its
+template source, presumably `src/core/templates.ts`) turned out still to describe the
+pre-migration two-file shape: `papercamp/plans/index.md`, `papercamp/plans/<ID>.md`,
+and an idea file that "plans often trace back to" via an `idea:` backlink field that no
+longer exists in the schema. This file is out of this phase's stated scope (`about.md`'s
+storage/CLI/API sections, plus `AGENTS.md` — already accurate) but it is the actual text
+injected into every Claude Code session working in a `papercamp/` project, so its
+staleness has real behavioral impact (an agent could go looking for `papercamp/plans/`
+and find nothing). Worth a small follow-up pass — either its own quick phase/plan, or a
+fold-in the next time templates.ts is touched — to update the skill text (and any other
+scaffolded template referencing the old layout) to `papercamp/ideas/<IDEA-N>.md` with
+phases-as-a-section.
 
 **Status:** resolved
 **Raised:** 2026-07-05

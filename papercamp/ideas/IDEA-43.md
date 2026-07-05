@@ -2,7 +2,7 @@
 id: IDEA-43
 title: Unify the ideas and plans worklist
 type: feat
-status: in-progress
+status: review
 created: 2026-07-04
 updated: 2026-07-05
 tags:
@@ -158,7 +158,7 @@ selector/renderer machinery transfers to it with the parent swapped.
       (idea→plan grouping retires until topics land) with notes keeping their
       chip; "New idea" and "Quick plan" both create the same entity file
       (refine-first vs act-directly); id stamps show `IDEA-N`.
-- [ ] Actualize the docs and closing pass
+- [x] Actualize the docs and closing pass
       Update `about.md`'s storage architecture, CLI, and API sections for the
       unified entity (plus `AGENTS.md` if it names the two-file shape), then
       `tsc --noEmit`, `biome check`, tests, and a browser pass over the
