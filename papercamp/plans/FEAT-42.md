@@ -59,7 +59,7 @@ check is out of scope — this list just makes it natural later.
       tree from `idea:` backlinks — idea parents with derived children
       summaries, orphan plans top-level, one level only — with group sort
       keyed to the most-advanced child and a note filter chip.
-- [ ] Render the unified two-level worklist
+- [x] Render the unified two-level worklist
       Idea rows as parents in the row-card language (lightbulb icon, title,
       Extend/Draft-plan actions, children summary), linked plans indented
       beneath as ordinary `plan-rows.tsx` rows with a slight inset and thin

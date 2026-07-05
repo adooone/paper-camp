@@ -1,10 +1,8 @@
 import { Markdown } from '@/app/components/markdown';
-import { useActionFeedback } from '@/app/hooks/use-action-feedback';
-import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import type { IdeaEntry } from '@/types/index';
-import { Button, Stamp, Tooltip, useToast } from '@dendelion/paper-ui';
-import { buildIdeaExtendPrompt } from '../prompts';
+import { Stamp } from '@dendelion/paper-ui';
+import { ExtendIdeaButton } from './extend-idea-button';
 
 interface IdeaDetailProps {
   idea: IdeaEntry;
@@ -48,63 +46,8 @@ export const IdeaDetail = ({ idea }: IdeaDetailProps) => {
           .trim()}
       </Markdown>
       <div style={{ marginTop: space[6] }}>
-        <ExtendWithAIButton ideaId={idea.id} />
+        <ExtendIdeaButton idea={idea} />
       </div>
     </div>
-  );
-};
-
-const ExtendWithAIButton = ({ ideaId }: { ideaId: string | null }) => {
-  const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);
-  const agentStatus = useAppStore((s) => s.agentStatus);
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
-  const { state, errorMessage, run } = useActionFeedback();
-  const { toast } = useToast();
-
-  const handleClick = () => {
-    if (!ideaId) return;
-    run(async () => {
-      const idea = useAppStore.getState().ideaEntries.find((e) => e.id === ideaId);
-      // Throw, don't return: a bare return resolves the run() callback normally, so
-      // useActionFeedback would flash success even though the extend never launched.
-      if (!idea) throw new Error(`Idea ${ideaId} not found`);
-      try {
-        await launchIdeaExtend(ideaId, buildIdeaExtendPrompt(idea));
-      } catch (err) {
-        toast({
-          title: 'Extension failed',
-          description: (err as Error).message,
-          variant: 'error',
-        });
-        throw err;
-      }
-    });
-  };
-
-  const title =
-    state === 'error'
-      ? (errorMessage ?? 'Extension failed')
-      : ideaId
-        ? undefined
-        : 'Idea needs an ID before an agent can run';
-
-  return (
-    <Tooltip content={title}>
-      <Button
-        variant="ghost"
-        size="small"
-        onClick={handleClick}
-        disabled={agentBusy || state === 'loading' || !ideaId}
-      >
-        {state === 'loading'
-          ? 'Extending…'
-          : state === 'success'
-            ? 'Extension sent!'
-            : state === 'error'
-              ? 'Extension failed'
-              : 'Extend with AI'}
-      </Button>
-    </Tooltip>
   );
 };

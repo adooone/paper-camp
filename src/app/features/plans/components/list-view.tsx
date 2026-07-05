@@ -1,14 +1,16 @@
 import { space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { useEffect, useRef } from 'react';
+import type { WorklistRow } from '../plan-list-selector';
 import { PlanCardSkeleton } from './plan-card-skeleton';
-import { PlanRows } from './plan-rows';
+import { WorklistRows } from './worklist-rows';
 
 interface ListViewProps {
   plans: PlanEntry[];
-  rows: PlanEntry[];
+  rows: WorklistRow[];
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
+  onOpenIdea?: (title: string) => void;
   onDeleteIdea?: (title: string) => void;
   draftingIdeaId?: string | null;
 }
@@ -18,6 +20,7 @@ export const ListView = ({
   rows,
   activePlanTitle,
   onOpenPlan,
+  onOpenIdea,
   onDeleteIdea,
   draftingIdeaId,
 }: ListViewProps) => {
@@ -39,10 +42,12 @@ export const ListView = ({
         </div>
       )}
       {rows.length > 0 ? (
-        <PlanRows
-          plans={rows}
+        <WorklistRows
+          rows={rows}
+          plans={plans}
           activePlanTitle={activePlanTitle}
-          onOpen={onOpenPlan}
+          onOpenPlan={onOpenPlan}
+          onOpenIdea={onOpenIdea}
           onDeleteIdea={onDeleteIdea}
         />
       ) : (
