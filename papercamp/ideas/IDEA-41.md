@@ -1,9 +1,9 @@
 ---
 id: IDEA-41
 title: Settings and affordance polish
+status: idea
+created: 2026-07-02
 ---
-
-## IDEA-41: Settings and affordance polish
 
 Loose ends from the same design review that fit neither [[IDEA-34]] (layout) nor [[IDEA-33]] (component swaps): places where controls don't look like what they do, or behave inconsistently.
 
