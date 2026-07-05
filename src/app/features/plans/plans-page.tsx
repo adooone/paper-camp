@@ -4,9 +4,10 @@ import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Button, Card } from '@dendelion/paper-ui';
 import { BoardView } from './components/board-view';
-import { ListToolbar } from './components/list-toolbar';
 import { ListView } from './components/list-view';
 import { PlanDetail } from './components/plan-detail';
+import { PlansHeader } from './components/plans-header';
+import { selectPlanRows } from './plan-list-selector';
 
 export const PlansPage = () => {
   const {
@@ -15,9 +16,9 @@ export const PlansPage = () => {
     activePlanTitle,
     setActivePlanTitle,
     view,
-    setView,
     agentStatus,
     loadPlans,
+    planFilters,
   } = useAppStore();
 
   const draftingIdeaId =
@@ -78,13 +79,11 @@ export const PlansPage = () => {
     );
   }
 
+  const { rows } = selectPlanRows(plans.entries, planFilters);
+
   return (
     <div>
-      <div style={{ marginBottom: space[4] }}>
-        <PageTitle>Plans</PageTitle>
-      </div>
-
-      <ListToolbar view={view} onChangeView={setView} />
+      <PlansHeader />
 
       {plans.warnings.length > 0 && (
         <Card size="small" accent accentColor="amber">
@@ -109,6 +108,7 @@ export const PlansPage = () => {
       ) : (
         <ListView
           plans={plans.entries}
+          rows={rows}
           activePlanTitle={activePlanTitle}
           onOpenPlan={handleOpenPlan}
           onDeleteIdea={handleDeleteIdea}

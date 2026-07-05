@@ -43,6 +43,18 @@ header > div[class*="headerActions"] {
 }
 
 /*
+ * paper-ui's Layout header is a fixed 48px with no prop or CSS variable to size it.
+ * Override it to 64px (two 32px background-grid cells) so the header sits flush on
+ * the grid. Keep in sync with layout.headerHeight in tokens.ts. The attribute
+ * selector matches the hashed CSS-module class by its stable name part; the
+ * `header` tag and the `___` guard keep it off the headerActions/Title/Subtitle
+ * divs, whose classes share the "header" prefix but not "header___".
+ */
+header[class*="layout-module__header___"] {
+  height: 64px;
+}
+
+/*
  * paper-ui's Button renders its colored fill as an SVG <path> layered behind the
  * label, not a CSS background — so a bright color means recoloring that path
  * directly. !important is needed because paper-ui's own hover/active rules

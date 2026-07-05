@@ -43,3 +43,6 @@
 | IDEA-39 | Focus cockpit and ambient status | planned |
 | IDEA-40 | Deep-linkable routes and breadcrumbs | planned |
 | IDEA-41 | Settings and affordance polish | planned |
+| IDEA-42 | Plans list filters and sorting | planned |
+| IDEA-43 | Unified ideas and plans worklist | planned |
+| IDEA-44 | Idea overlap check at capture | planned |

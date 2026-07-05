@@ -77,11 +77,14 @@ export const color = {
   deskChalk: '#d4e8cb',
 } as const;
 
-// Keep in sync with paper-ui's Layout header height (layout.module.scss .header).
-const headerHeight = '48px';
+// paper-ui's Layout header is 48px by default; we override it to 64px (two 32px
+// grid cells) in utilities.css. Keep this in sync with that rule.
+const headerHeight = '64px';
 
 export const layout = {
-  sidebarWidth: 220,
+  // 224 = 7 × 32, a multiple of the Layout's 32px background grid cell so the
+  // sidebar (and the plans Filters card that fills it) sits flush on the grid.
+  sidebarWidth: 224,
   stackPanelWidth: 480,
   headerHeight,
   contentGap: space[6],

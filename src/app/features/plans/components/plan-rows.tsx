@@ -113,6 +113,10 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, onDeleteIdea }: PlanR
                       variant="ghost"
                       size="small"
                       label="Delete"
+                      // Small IconButton is a fixed 40×40; shrink it so it doesn't
+                      // out-tall the row's ~30px content and make backlog rows
+                      // stand taller than the rest.
+                      style={{ width: 28, height: 28 }}
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteIdea(plan.title);
