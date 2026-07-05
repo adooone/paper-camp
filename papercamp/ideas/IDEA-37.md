@@ -1,6 +1,7 @@
 ---
 id: IDEA-37
 title: Fable capability-window tasks
+kind: note
 status: done
 ---
 

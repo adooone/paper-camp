@@ -2,9 +2,10 @@
 id: FEAT-42
 title: Unify the ideas and plans worklist
 kind: feat
-status: idea
+status: in-progress
 created: 2026-07-04
 idea: IDEA-43
+updated: 2026-07-05
 tags:
   - app
   - ideas
@@ -44,7 +45,7 @@ decision, both to record in `decisions.md`. [[IDEA-44]]'s capture-time overlap
 check is out of scope — this list just makes it natural later.
 
 ### Phases
-- [ ] Add kind note and status asymmetry to the schema
+- [x] Add kind note and status asymmetry to the schema
       Extend `ideaFrontmatterSchema` with `kind: note` and a manual
       `open → done/dropped` status that zod only accepts on notes; retire
       `deriveIdeaStatuses` and the planned/done derivation, and mark `IDEA-37`

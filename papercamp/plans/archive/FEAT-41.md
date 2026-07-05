@@ -2,10 +2,10 @@
 id: FEAT-41
 title: Filter and sort the plans list
 kind: feat
-status: review
+status: done
 created: 2026-07-04
 idea: IDEA-42
-updated: 2026-07-04
+updated: 2026-07-05
 tags:
   - app
   - ui

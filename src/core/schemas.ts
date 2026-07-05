@@ -73,16 +73,23 @@ export const planFrontmatterSchema = z.object({
   tags: z.array(z.string()).optional().describe('Tagging categories'),
 });
 
-export const ideaFrontmatterSchema = z.object({
-  id: z.string().describe('Permanent idea ID, e.g. IDEA-20'),
-  title: z.string().describe('Short idea headline (3-6 words)'),
-  status: z
-    .enum(['planned', 'done'])
-    .optional()
-    .describe(
-      'Explicit close for ideas that need no plan; omitted means derived from linked plans',
-    ),
-});
+export const ideaFrontmatterSchema = z
+  .object({
+    id: z.string().describe('Permanent idea ID, e.g. IDEA-20'),
+    title: z.string().describe('Short idea headline (3-6 words)'),
+    kind: z
+      .enum(['idea', 'note'])
+      .optional()
+      .describe('"note" for ideas that never need a plan; omitted means a plan-bearing idea'),
+    status: z
+      .enum(['open', 'done', 'dropped'])
+      .optional()
+      .describe('Manual lifecycle, valid only on notes — plan-bearing ideas carry no status'),
+  })
+  .refine((data) => data.status === undefined || data.kind === 'note', {
+    message: 'status is only valid on ideas with kind: note',
+    path: ['status'],
+  });
 
 export const paperCampConfigSchema = z.object({
   version: z.string(),

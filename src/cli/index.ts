@@ -7,7 +7,6 @@ import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { computePlanContentHash } from '../core/content-hash';
-import { deriveIdeaStatuses } from '../core/idea-status';
 import { parseIdeas, parsePlanFile, parsePlans } from '../core/parser';
 import { readAllIdeaFiles, readAllPlanFiles } from '../core/readers';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
@@ -296,8 +295,7 @@ program
     const { entries: allPlans } = await readAllPlanFiles(plansDir);
     await writeFile(join(plansDir, 'index.md'), formatPlansIndex(allPlans), 'utf-8');
     const { entries: allIdeas } = await readAllIdeaFiles(ideasDir);
-    const ideasWithStatus = deriveIdeaStatuses(allIdeas, allPlans);
-    await writeFile(join(ideasDir, 'index.md'), formatIdeasIndex(ideasWithStatus), 'utf-8');
+    await writeFile(join(ideasDir, 'index.md'), formatIdeasIndex(allIdeas), 'utf-8');
 
     // Empty, not a pointer comment: readPlansMerged/readIdeasMerged fast-path on falsy
     // monolithic content, and parseIdeas() in particular has no heading match for plain

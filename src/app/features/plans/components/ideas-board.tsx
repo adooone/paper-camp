@@ -2,7 +2,7 @@ import { fontSize, space } from '@/app/styles/tokens';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { STATUS_LABEL, STATUS_STAMP } from '../constants';
+import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../constants';
 import { DraftPlanButton } from './draft-plan-button';
 import { PlanIdStamp } from './plan-id-stamp';
 
@@ -45,7 +45,7 @@ export const IdeasBoard = ({ ideas, plans, onOpenIdea, onOpenPlan }: IdeasBoardP
         </div>
       </Card>
       {ideas.map((idea) => {
-        const status = idea.status ?? 'planned';
+        const status = idea.status;
         const isExpanded = expanded === idea.title;
         const links = idea.id ? linkedPlans(idea.id) : [];
         const hasLinks = links.length > 0;
@@ -77,13 +77,17 @@ export const IdeasBoard = ({ ideas, plans, onOpenIdea, onOpenPlan }: IdeasBoardP
                 >
                   {idea.title}
                 </button>
-                <Stamp
-                  size="small"
-                  fillColor={STATUS_STAMP[status].fill}
-                  textColor={STATUS_STAMP[status].text}
-                >
-                  {STATUS_LABEL[status]}
-                </Stamp>
+                {status ? (
+                  <Stamp
+                    size="small"
+                    fillColor={IDEA_STATUS_STAMP[status].fill}
+                    textColor={IDEA_STATUS_STAMP[status].text}
+                  >
+                    {IDEA_STATUS_LABEL[status]}
+                  </Stamp>
+                ) : (
+                  <span />
+                )}
                 {hasLinks ? (
                   <button
                     type="button"

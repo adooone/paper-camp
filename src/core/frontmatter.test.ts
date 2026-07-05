@@ -221,17 +221,32 @@ title: Minimal idea
     expect(warnings).toEqual([]);
   });
 
-  it('carries an explicit frontmatter status through', () => {
+  it('carries an explicit frontmatter status through for notes', () => {
     const content = `---
 id: IDEA-37
 title: Fable capability-window tasks
+kind: note
 status: done
 ---
 Closed without a plan.
 `;
     const { entries, warnings } = parseIdeaFile(content);
     expect(warnings).toEqual([]);
+    expect(entries[0].kind).toBe('note');
     expect(entries[0].status).toBe('done');
+  });
+
+  it('rejects a status on a plan-bearing idea', () => {
+    const content = `---
+id: IDEA-1
+title: Some idea
+status: done
+---
+`;
+    const { entries, warnings } = parseIdeaFile(content);
+    expect(entries).toEqual([]);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0].message).toContain('status is only valid on ideas with kind: note');
   });
 
   it('leaves status undefined when frontmatter has none', () => {

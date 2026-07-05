@@ -288,8 +288,8 @@ export function formatPlanFile(input: NewPlanFileInput): string {
 interface NewIdeaFileInput {
   id: string;
   title: string;
-  // Explicit close for planless ideas only — never pass a derived status here,
-  // or the derivation would be frozen into the file.
+  // "note" for ideas that never need a plan — only notes may carry `status`.
+  kind?: string;
   status?: string;
   body?: string;
 }
@@ -302,6 +302,7 @@ export function formatIdeaFile(input: NewIdeaFileInput): string {
     id: input.id,
     title: input.title,
   };
+  if (input.kind) frontmatter.kind = input.kind;
   if (input.status) frontmatter.status = input.status;
 
   const parts: string[] = [serializeFrontmatter(frontmatter)];
@@ -366,8 +367,7 @@ export function formatIdeasIndex(ideas: IdeaEntry[]): string {
   });
 
   const rows = sorted.map(
-    (e) =>
-      `| ${e.id || ''} | ${(e.title || '').replace(/\|/g, '\\|')} | ${e.status || 'planned'} |`,
+    (e) => `| ${e.id || ''} | ${(e.title || '').replace(/\|/g, '\\|')} | ${e.status ?? '—'} |`,
   );
 
   return `# Ideas\n\n| Id | Title | Status |\n|----|-------|--------|\n${rows.join('\n')}\n`;

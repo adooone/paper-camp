@@ -1,6 +1,5 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { deriveIdeaStatuses } from '../../core/idea-status';
 import { readIdeasMerged, readPlansMerged } from '../../core/readers';
 import { formatIdeasIndex, formatPlanFile, formatPlansIndex } from '../../core/serializer';
 import type { BranchHygieneStatus, PlanEntry } from '../../types/index';
@@ -69,14 +68,12 @@ export async function regenerateIndexes(root: string): Promise<void> {
     readIdeasMerged(ideasDir, campFile(root, 'ideas.md')),
   ]);
 
-  const ideasWithStatus = deriveIdeaStatuses(ideasResult.entries, plansResult.entries);
-
   await mkdir(plansDir, { recursive: true });
   await mkdir(ideasDir, { recursive: true });
 
   await Promise.all([
     writeFile(join(plansDir, 'index.md'), formatPlansIndex(plansResult.entries)),
-    writeFile(join(ideasDir, 'index.md'), formatIdeasIndex(ideasWithStatus)),
+    writeFile(join(ideasDir, 'index.md'), formatIdeasIndex(ideasResult.entries)),
   ]);
 }
 

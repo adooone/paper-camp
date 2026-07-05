@@ -3,7 +3,6 @@ import {
   type PlanListFilters,
   type PlanSortKey,
 } from '@/app/features/plans/plan-list-selector';
-import { deriveIdeaStatuses } from '@/core/idea-status';
 import type {
   AgentTaskState,
   BranchHygieneStatus,
@@ -157,12 +156,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ plansLoading: true });
     try {
       const data = await fetchPlans();
-      const { ideaEntries } = get();
       set({
         plans: data,
         plansError: null,
         plansLoading: false,
-        ideaEntries: deriveIdeaStatuses(ideaEntries, data.entries),
       });
     } catch (err) {
       set({ plansError: String(err), plansLoading: false });
@@ -173,10 +170,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   loadIdeas: async () => {
     try {
       const result = await fetchIdeas();
-      const { plans } = get();
-      set({
-        ideaEntries: deriveIdeaStatuses(result.entries, plans?.entries ?? []),
-      });
+      set({ ideaEntries: result.entries });
     } catch {
       set({ ideaEntries: [] });
     }

@@ -106,12 +106,15 @@ export interface ConsistencyIssue {
   planId?: string;
 }
 
-export type IdeaStatus = 'planned' | 'done';
+export type IdeaKind = 'idea' | 'note';
+
+export type IdeaStatus = 'open' | 'done' | 'dropped';
 
 export interface IdeaEntry {
   id: string | null;
   title: string;
   body: string;
+  kind?: IdeaKind;
   status?: IdeaStatus;
 }
 

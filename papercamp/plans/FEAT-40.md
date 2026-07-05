@@ -2,9 +2,10 @@
 id: FEAT-40
 title: Make sub-views real routes
 kind: feat
-status: idea
+status: planned
 created: 2026-07-04
 idea: IDEA-40
+updated: 2026-07-05
 tags:
   - app
   - ui
