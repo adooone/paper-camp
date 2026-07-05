@@ -2,7 +2,7 @@
 id: FEAT-42
 title: Unify the ideas and plans worklist
 kind: feat
-status: in-progress
+status: review
 created: 2026-07-04
 idea: IDEA-43
 updated: 2026-07-05
@@ -70,7 +70,7 @@ check is out of scope — this list just makes it natural later.
       list, rename Add-to-backlog to "Quick plan", remove the `/ideas` list
       route and header nav item (FEAT-40's per-item param route stays), and
       record the supersessions in `decisions.md`.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
       `tsc --noEmit`, `biome check`, tests, and a browser pass over the tree
       layout and connectors, group collapse, the note chip and note status
       edits, both creation modals, and the slimmed header nav.
