@@ -2,13 +2,15 @@ import { Markdown } from '@/app/components/markdown';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import type { IdeaEntry } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
+import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../constants';
 import { ExtendIdeaButton } from './extend-idea-button';
 
-interface IdeaDetailProps {
+interface NoteDetailProps {
   idea: IdeaEntry;
 }
 
-export const IdeaDetail = ({ idea }: IdeaDetailProps) => {
+/** Detail view for a note entity — reference material that never grows phases. */
+export const NoteDetail = ({ idea }: NoteDetailProps) => {
   return (
     <div
       style={{
@@ -36,6 +38,15 @@ export const IdeaDetail = ({ idea }: IdeaDetailProps) => {
           </Stamp>
         )}
         {idea.title}
+        {idea.status && (
+          <Stamp
+            size="small"
+            fillColor={IDEA_STATUS_STAMP[idea.status].fill}
+            textColor={IDEA_STATUS_STAMP[idea.status].text}
+          >
+            {IDEA_STATUS_LABEL[idea.status]}
+          </Stamp>
+        )}
       </h2>
       <Markdown>
         {idea.body

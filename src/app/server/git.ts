@@ -141,9 +141,12 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   function ensureBranch(plan: PlanEntry): void {
-    if (!plan.kind || !plan.id) return;
+    if (!plan.id) return;
 
-    const kind = plan.kind.toLowerCase();
+    // Branch prefix comes from the entity's type; an entity started before it
+    // was classified still gets a branch (defaulting to feat) rather than
+    // silently working on whatever branch happens to be checked out.
+    const kind = (plan.kind ?? 'feat').toLowerCase();
     const id = plan.id.toLowerCase();
     const title = plan.title
       .toLowerCase()

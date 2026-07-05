@@ -4,13 +4,13 @@ This file is the source of truth for how AI assistants should work in this repos
 
 ## Do one phase at a time
 
-When a user asks you to work on a plan (each plan is its own file at `papercamp/plans/<ID>.md`), complete **only the phase they explicitly asked for** unless they tell you otherwise. Do not automatically continue into later phases.
+When a user asks you to work on a plan (each entity — an *idea* with its plan as a `### Phases` section — is its own file at `papercamp/ideas/<ID>.md`), complete **only the phase they explicitly asked for** unless they tell you otherwise. Do not automatically continue into later phases.
 
 If the boundary between phases is unclear, or if you are unsure whether the user wants the next phase done, ask before continuing.
 
 ## Update the plan as you go
 
-Mark the completed phase `[x]` in the plan's file (`papercamp/plans/<ID>.md`) and keep its `status:` frontmatter field honest (`in-progress` / `review` / `done`).
+Mark the completed phase `[x]` in the entity's file (`papercamp/ideas/<ID>.md`) and keep its `status:` frontmatter field honest (`in-progress` / `review` / `done`).
 
 When all phases of a plan are complete, set its `Status` to `review` — not `done`. The `review` status means a human (or a later agent) needs to approve the work before it's closed. Plans that reach `done` should only get there via an explicit "Approve & close" action, never because the last phase was checked off automatically.
 
@@ -85,12 +85,16 @@ at a UI change before reporting it done, not just `tsc`/lint.
 Work on a plan (feature, fix, refactor, etc.) happens on a feature branch, not
 directly on `main`. A draft PR is auto-created on first push.
 
-- **Branch naming:** `<kind>/<lowercase-id>-<kebab-title>`
-  - `kind` is one of: `feat`, `fix`, `refactor`, `chore`, `docs` (matches
-    plan `Kind` and commitlint's `type-enum`)
-  - `id` is the lowercase plan ID (e.g., `feat-22`, `fix-2`)
-  - Title is the plan's short title in kebab-case
-  - Example: `feat/feat-22-ci-cd-automation`, `fix/fix-2-review-status-bugs`
+- **Branch naming:** `<type>/<lowercase-id>-<kebab-title>`
+  - `type` is one of: `feat`, `fix`, `refactor`, `chore`, `docs` (the entity's
+    `type` frontmatter field, matching commitlint's `type-enum`; entities
+    without a type yet default to `feat`)
+  - `id` is the lowercase lifetime entity id (e.g., `idea-43`) — it never
+    changes, even when the entity's type does
+  - Title is the entity's short title in kebab-case
+  - Example: `feat/idea-43-unify-the-ideas-and-plans-worklist`
+  - Pre-migration branches keep their legacy `feat/feat-22-…` names; only new
+    branches use entity ids
 
 - **When to create a branch:** Before starting any plan's first phase. The
   branch lives for the plan's entire lifecycle — from `in-progress` through
@@ -106,7 +110,7 @@ directly on `main`. A draft PR is auto-created on first push.
 
 - **`main` stays pushable.** Direct pushes to `main` are allowed but
   *conventionally* reserved for:
-  - Agent writes to `papercamp/plans/` and `papercamp/progress.md` during phase execution
+  - Agent writes to `papercamp/ideas/` and `papercamp/progress.md` during phase execution
     (these are the only agent writes that land directly on `main`)
   - Tiny fixes and config changes
   - Merging feature branch PRs
@@ -116,9 +120,9 @@ directly on `main`. A draft PR is auto-created on first push.
 - **Agents and branches:** When an agent executes a plan phase, it works on
   whatever branch is currently checked out. If the agent was started from a
   branch (e.g. via the Stack panel while that branch is active), its writes to
-  the plan's file under `papercamp/plans/` and to `papercamp/progress.md` land on that
+  the entity's file under `papercamp/ideas/` and to `papercamp/progress.md` land on that
   branch. When the PR merges, those changes come along with the rest of the
-  branch. Per-file plan storage (FEAT-24) means two branches working different
+  branch. Per-file entity storage means two branches working different
   plans touch different files and no longer conflict on merge; `papercamp/progress.md`
   remains a shared append-only log, so concurrent appends there can still
   conflict.
@@ -141,13 +145,13 @@ Format: `<type>(<scope>): <description>`
   changelog readable (`* **ci:** Add CI workflow`) instead of a context-free
   list of numbers. Adding a new area means editing the `scope-enum`.
 - **Plan traceability lives in a footer, not the scope.** Add a `Refs:` trailer
-  with the plan ID for any commit tied to a plan (the branch name already
+  with the entity ID for any commit tied to a plan (the branch name already
   encodes it too):
 
   ```
   feat(ci): Add CI workflow for tests and lint
 
-  Refs: FEAT-22
+  Refs: IDEA-43
   ```
 
 - `description` follows this repo's existing style: capitalized, like a

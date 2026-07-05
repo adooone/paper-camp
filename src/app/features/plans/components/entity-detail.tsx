@@ -1,3 +1,4 @@
+import { Markdown } from '@/app/components/markdown';
 import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
@@ -5,6 +6,7 @@ import {
   AGENT_IDS,
   AGENT_LABELS,
   type AgentId,
+  type IdeaEntry,
   type LogEntry,
   PLAN_STATUSES,
   type PhaseItem,
@@ -19,6 +21,8 @@ import { AddReviewPhasesButton } from './add-review-phases-button';
 import { AgentStartButton } from './agent-start-button';
 import { AuditPhasesButton } from './audit-phases-button';
 import { ClarifyButton } from './clarify-button';
+import { DraftPlanButton } from './draft-plan-button';
+import { ExtendIdeaButton } from './extend-idea-button';
 import { PhaseCopyButton } from './phase-copy-button';
 import { PlanIdStamp } from './plan-id-stamp';
 import { ProgressBar } from './progress-bar';
@@ -26,12 +30,18 @@ import { ReconcileButton } from './reconcile-button';
 import { ReconcileDiffPanel } from './reconcile-diff-panel';
 import { RunAllPhasesButton } from './run-all-phases-button';
 
-interface PlanDetailProps {
+interface EntityDetailProps {
   plan: PlanEntry;
 }
 
-export const PlanDetail = ({ plan }: PlanDetailProps) => {
+/**
+ * The one detail view for a work entity — idea-shaped until it has phases
+ * (markdown rationale plus Draft-plan/Extend actions), plan-shaped after
+ * (phases table, run controls, review actions). Notes render NoteDetail instead.
+ */
+export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const loadPlans = useAppStore((s) => s.loadPlans);
+  const allPlans = useAppStore((s) => s.plans);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const reconcilePreview = useAppStore((s) => s.reconcilePreview);
   const setReconcilePreview = useAppStore((s) => s.setReconcilePreview);
@@ -49,8 +59,18 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
   const [updating, setUpdating] = useState(false);
   const [logInput, setLogInput] = useState('');
   const progress = phaseProgress(plan);
+  const hasPhases = plan.phases.length > 0;
   const inProgress = plan.status === 'in-progress';
   const underReview = plan.status === 'review';
+  // The IdeaEntry view of this entity, for the idea-scoped agent actions
+  // (draft/extend prompts take the idea shape).
+  const ideaView: IdeaEntry = {
+    id: plan.id ?? null,
+    title: plan.title,
+    body: plan.body,
+    log: plan.log,
+  };
+  const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
   const allDone = progress !== null && progress.done === progress.total && progress.total > 0;
 
   const handleStart = async () => {
@@ -180,7 +200,7 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
           <PlanIdStamp id={plan.id} />
           {plan.title}
         </h2>
-        {!underReview && (
+        {!underReview && hasPhases && (
           <Button
             variant="primary"
             size="small"
@@ -245,12 +265,9 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
       </div>
 
       {plan.body && (
-        <p
-          className="text-base"
-          style={{ margin: `0 0 ${space[4]}`, opacity: 0.8, lineHeight: lineHeight.normal }}
-        >
-          {plan.body}
-        </p>
+        <div style={{ marginBottom: space[4], opacity: 0.85 }}>
+          <Markdown>{plan.body}</Markdown>
+        </div>
       )}
 
       {plan.clarifications && plan.clarifications.length > 0 && (
@@ -284,7 +301,21 @@ export const PlanDetail = ({ plan }: PlanDetailProps) => {
         </div>
       )}
 
-      {plan.phases.length > 0 && (
+      {!hasPhases && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: space[3],
+            marginBottom: space[8],
+          }}
+        >
+          <DraftPlanButton idea={ideaView} otherPlans={otherPlans} />
+          <ExtendIdeaButton idea={ideaView} />
+        </div>
+      )}
+
+      {hasPhases && (
         <div style={{ marginBottom: space[8] }}>
           <div
             style={{

@@ -207,8 +207,8 @@ describe('ensureBranch', () => {
   it('creates and checks out a kind/id-title branch, slugging the title', async () => {
     const root = await initRepo();
     const manager = gitManager(root);
-    manager.ensureBranch(plan({ kind: 'feat', id: 'FEAT-42', title: 'Add User Auth!' }));
-    expect(manager.getCurrentBranch()).toBe('feat/feat-42-add-user-auth');
+    manager.ensureBranch(plan({ kind: 'feat', id: 'IDEA-42', title: 'Add User Auth!' }));
+    expect(manager.getCurrentBranch()).toBe('feat/idea-42-add-user-auth');
   });
 
   it('branches from main even when currently on another branch', async () => {
@@ -217,39 +217,46 @@ describe('ensureBranch', () => {
     git(root, 'checkout', '-b', 'other-branch');
     await commitFile(root, 'other.txt', 'other\n', 'other work');
     const manager = gitManager(root);
-    manager.ensureBranch(plan({ kind: 'fix', id: 'FIX-1', title: 'Small fix' }));
-    expect(manager.getCurrentBranch()).toBe('fix/fix-1-small-fix');
+    manager.ensureBranch(plan({ kind: 'fix', id: 'IDEA-1', title: 'Small fix' }));
+    expect(manager.getCurrentBranch()).toBe('fix/idea-1-small-fix');
     expect(git(root, 'rev-parse', 'HEAD')).toBe(mainSha);
   });
 
   it('is a no-op when already on the plan branch', async () => {
     const root = await initRepo();
-    git(root, 'checkout', '-b', 'feat/feat-42-add-user-auth');
+    git(root, 'checkout', '-b', 'feat/idea-42-add-user-auth');
     const shaBefore = git(root, 'rev-parse', 'HEAD');
     const manager = gitManager(root);
-    manager.ensureBranch(plan({ kind: 'feat', id: 'FEAT-42', title: 'Add User Auth!' }));
-    expect(manager.getCurrentBranch()).toBe('feat/feat-42-add-user-auth');
+    manager.ensureBranch(plan({ kind: 'feat', id: 'IDEA-42', title: 'Add User Auth!' }));
+    expect(manager.getCurrentBranch()).toBe('feat/idea-42-add-user-auth');
     expect(git(root, 'rev-parse', 'HEAD')).toBe(shaBefore);
   });
 
   it('checks out an existing branch instead of failing to recreate it', async () => {
     const root = await initRepo();
-    git(root, 'checkout', '-b', 'feat/feat-7-existing-work');
+    git(root, 'checkout', '-b', 'feat/idea-7-existing-work');
     await commitFile(root, 'work.txt', 'work\n', 'branch work');
     const branchSha = git(root, 'rev-parse', 'HEAD');
     git(root, 'checkout', 'main');
     const manager = gitManager(root);
-    manager.ensureBranch(plan({ kind: 'feat', id: 'FEAT-7', title: 'Existing work' }));
-    expect(manager.getCurrentBranch()).toBe('feat/feat-7-existing-work');
+    manager.ensureBranch(plan({ kind: 'feat', id: 'IDEA-7', title: 'Existing work' }));
+    expect(manager.getCurrentBranch()).toBe('feat/idea-7-existing-work');
     // Prior work on the branch is kept — not reset to main.
     expect(git(root, 'rev-parse', 'HEAD')).toBe(branchSha);
   });
 
-  it('does nothing when the plan has no kind or id', async () => {
+  it('does nothing when the entity has no id', async () => {
     const root = await initRepo();
     const manager = gitManager(root);
     manager.ensureBranch(plan({ title: 'No id yet' }));
     expect(manager.getCurrentBranch()).toBe('main');
+  });
+
+  it('defaults the branch prefix to feat for an untyped entity', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    manager.ensureBranch(plan({ id: 'IDEA-9', title: 'Untyped work' }));
+    expect(manager.getCurrentBranch()).toBe('feat/idea-9-untyped-work');
   });
 });
 

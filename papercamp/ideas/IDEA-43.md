@@ -136,13 +136,13 @@ selector/renderer machinery transfers to it with the parent swapped.
       into one route); `regenerateIndexes` emits one table; MCP tools
       (`src/mcp/tools.ts`) and the CLI (`add`, `audit`, `migrate`) work on
       entities.
-- [ ] Re-key the git and GitHub surfaces to IDEA-N
+- [x] Re-key the git and GitHub surfaces to IDEA-N
       Branch naming (`feat/idea-99-…` — `type` supplies the prefix), commit
       `Refs:` footers, the commit-suggest scope logic, agent hooks'
       branch-per-plan setup, the draft-PR "Plan:" line, and any prompts that
       reference plan ids. Legacy `<KIND>-<N>` references in git history stay
       as they are.
-- [ ] Morph the UI to the single entity
+- [x] Morph the UI to the single entity
       `IdeaDetail` and `PlanDetail` merge into one detail view that renders
       idea-shaped until phases exist and plan-shaped after ("create plan" =
       the drafting agent writing the Phases section); the worklist flattens

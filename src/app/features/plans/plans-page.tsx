@@ -4,9 +4,9 @@ import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Button, Card } from '@dendelion/paper-ui';
 import { BoardView } from './components/board-view';
-import { IdeaDetail } from './components/idea-detail';
+import { EntityDetail } from './components/entity-detail';
 import { ListView } from './components/list-view';
-import { PlanDetail } from './components/plan-detail';
+import { NoteDetail } from './components/note-detail';
 import { PlansHeader } from './components/plans-header';
 import { selectWorklistRows } from './plan-list-selector';
 
@@ -20,15 +20,9 @@ export const PlansPage = () => {
     activeIdeaTitle,
     setActiveIdeaTitle,
     view,
-    agentStatus,
     loadPlans,
     planFilters,
   } = useAppStore();
-
-  const draftingIdeaId =
-    agentStatus?.ideaId && (agentStatus.status === 'starting' || agentStatus.status === 'running')
-      ? agentStatus.ideaId
-      : null;
 
   const handleBack = () => {
     setActivePlanTitle(null);
@@ -87,7 +81,7 @@ export const PlansPage = () => {
             &larr; All plans
           </Button>
         </div>
-        <PlanDetail plan={activePlan} />
+        <EntityDetail plan={activePlan} />
       </div>
     );
   }
@@ -100,7 +94,7 @@ export const PlansPage = () => {
             &larr; All plans
           </Button>
         </div>
-        <IdeaDetail idea={activeIdea} />
+        <NoteDetail idea={activeIdea} />
       </div>
     );
   }
@@ -139,7 +133,6 @@ export const PlansPage = () => {
           onOpenPlan={handleOpenPlan}
           onOpenIdea={handleOpenIdea}
           onDeleteIdea={handleDeleteIdea}
-          draftingIdeaId={draftingIdeaId}
         />
       )}
     </div>
