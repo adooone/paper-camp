@@ -1,22 +1,23 @@
 import { PageTitle } from '@/app/components/page-title';
+import { useActivePlanTitle } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Button, Card } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { EntityDetail } from './components/entity-detail';
 import { PlanCard } from './components/plan-card';
 
 export const ReviewPage = () => {
-  const { plans, plansError, activePlanTitle, setActivePlanTitle, setActiveIdeaTitle } =
-    useAppStore();
+  const { plans, plansError } = useAppStore();
+  const activePlanTitle = useActivePlanTitle();
+  const navigate = useNavigate();
 
   const handleBack = () => {
-    setActivePlanTitle(null);
-    setActiveIdeaTitle(null);
+    navigate({ to: '/review' });
   };
 
   const handleOpenPlan = (title: string) => {
-    setActivePlanTitle(title);
-    setActiveIdeaTitle(null);
+    navigate({ to: '/review/$planId', params: { planId: encodeURIComponent(title) } });
   };
 
   const reviewPlans = plans?.entries.filter((p) => p.status === 'review') ?? [];

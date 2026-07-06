@@ -1,4 +1,5 @@
 import { IntentButton } from '@/app/components';
+import { useActivePlanTitle } from '@/app/hooks';
 import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
@@ -37,7 +38,7 @@ interface PlanActionsColumnProps {
 
 export const PlanActionsColumn = ({ flush = true }: PlanActionsColumnProps) => {
   const plans = useAppStore((s) => s.plans);
-  const activePlanTitle = useAppStore((s) => s.activePlanTitle);
+  const activePlanTitle = useActivePlanTitle();
   const loadPlans = useAppStore((s) => s.loadPlans);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const [updating, setUpdating] = useState(false);

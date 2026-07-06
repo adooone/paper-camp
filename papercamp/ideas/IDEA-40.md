@@ -51,7 +51,7 @@ dependency is left since the [[IDEA-32]] bump landed `Breadcrumb`.
       Define `/plans/$planId`, `/ideas/$ideaId`, and `/docs/$section` as TanStack
       Router param routes in `router.tsx`; clicking a plan, idea, or doc section
       navigates to its route instead of setting store state.
-- [ ] Derive selection state from the URL
+- [x] Derive selection state from the URL
       Replace the `activePlanTitle`/`activeIdeaTitle`/`activeDocSection` globals in
       `app-store.ts` with values derived from route params (active highlighting and
       detail rendering included), and drop the pathname-reset effect in `router.tsx`.

@@ -1,3 +1,4 @@
+import { useActivePlanTitle } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanStatus } from '@/types/index';
@@ -38,7 +39,7 @@ const sectionLabelStyle: React.CSSProperties = {
  */
 export const PlanFilterColumn = () => {
   const plans = useAppStore((s) => s.plans);
-  const activePlanTitle = useAppStore((s) => s.activePlanTitle);
+  const activePlanTitle = useActivePlanTitle();
   const filters = useAppStore((s) => s.planFilters);
   const togglePlanStatus = useAppStore((s) => s.togglePlanStatus);
   const togglePlanTag = useAppStore((s) => s.togglePlanTag);

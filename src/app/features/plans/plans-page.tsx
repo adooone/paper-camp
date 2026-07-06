@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title';
+import { useActiveIdeaTitle, useActivePlanTitle } from '@/app/hooks';
 import { deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
@@ -14,17 +15,9 @@ import { PlansHeader } from './components/plans-header';
 import { selectWorklistRows } from './plan-list-selector';
 
 export const PlansPage = () => {
-  const {
-    plans,
-    plansError,
-    ideaEntries,
-    activePlanTitle,
-    setActivePlanTitle,
-    activeIdeaTitle,
-    view,
-    loadPlans,
-    planFilters,
-  } = useAppStore();
+  const { plans, plansError, ideaEntries, view, loadPlans, planFilters } = useAppStore();
+  const activePlanTitle = useActivePlanTitle();
+  const activeIdeaTitle = useActiveIdeaTitle();
   const navigate = useNavigate();
 
   const handleBack = () => {
@@ -44,7 +37,7 @@ export const PlansPage = () => {
   const handleDeleteIdea = async (title: string) => {
     await deletePlan(title);
     await loadPlans();
-    if (activePlanTitle === title) setActivePlanTitle(null);
+    if (activePlanTitle === title) navigate({ to: '/' });
   };
 
   const activePlan = activePlanTitle

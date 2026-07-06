@@ -1,19 +1,18 @@
+import { useActivePlanTitle } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { useNavigate, useRouterState } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { PlanNavItem } from './plan-nav-item';
 import { SidebarSection } from './sidebar-section';
 
 export const ReviewSidebar = () => {
   const navigate = useNavigate();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { plans, activePlanTitle, setActivePlanTitle, setActiveIdeaTitle } = useAppStore();
+  const activePlanTitle = useActivePlanTitle();
+  const { plans } = useAppStore();
 
   const reviewPlans = plans?.entries.filter((p) => p.status === 'review') ?? [];
 
   const handleSelectPlan = (title: string) => {
-    navigate({ to: '/review' });
-    setActivePlanTitle(title);
-    setActiveIdeaTitle(null);
+    navigate({ to: '/review/$planId', params: { planId: encodeURIComponent(title) } });
   };
 
   return (
@@ -35,7 +34,7 @@ export const ReviewSidebar = () => {
           <PlanNavItem
             key={p.title}
             plan={p}
-            active={pathname === '/review' && activePlanTitle === p.title}
+            active={activePlanTitle === p.title}
             onClick={() => handleSelectPlan(p.title)}
           />
         ))

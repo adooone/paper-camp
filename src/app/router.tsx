@@ -5,7 +5,6 @@ import {
   createRoute,
   createRouter,
   useNavigate,
-  useParams,
   useRouterState,
 } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -78,18 +77,18 @@ const RootLayout = () => {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
-  const setActivePlanTitle = useAppStore((s) => s.setActivePlanTitle);
-  const setActiveIdeaTitle = useAppStore((s) => s.setActiveIdeaTitle);
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
+  const isReviewArea = pathname === '/review' || pathname.startsWith('/review/');
   const activeId = isPlansArea
     ? 'plans'
-    : isDocsArea
-      ? 'docs'
-      : navItems.find((item) => item.path === pathname)?.id;
-  const hasSidebar =
-    isPlansArea || pathname === '/review' || isDocsArea || pathname === '/settings';
+    : isReviewArea
+      ? 'review'
+      : isDocsArea
+        ? 'docs'
+        : navItems.find((item) => item.path === pathname)?.id;
+  const hasSidebar = isPlansArea || isReviewArea || isDocsArea || pathname === '/settings';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -100,13 +99,10 @@ const RootLayout = () => {
     loadIdeas();
   }, [loadPlans, loadIdeas]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body — close the mobile sidebar on every route change.
   useEffect(() => {
-    // /plans/$planId and /ideas/$ideaId set these themselves from the route param
-    // (see PlanDetailRoute / IdeaDetailRoute below) — resetting here would clobber that.
-    if (!pathname.startsWith('/plans/')) setActivePlanTitle(null);
-    if (!pathname.startsWith('/ideas/')) setActiveIdeaTitle(null);
     setMobileSidebarOpen(false);
-  }, [pathname, setActivePlanTitle, setActiveIdeaTitle]);
+  }, [pathname]);
 
   return (
     <ToastProvider>
@@ -188,7 +184,7 @@ const RootLayout = () => {
                       <PlanActionsColumn />
                     </>
                   )}
-                  {pathname === '/review' && (
+                  {isReviewArea && (
                     <>
                       <ReviewSidebar />
                       <PlanActionsColumn flush={false} />
@@ -243,40 +239,6 @@ const RootLayout = () => {
   );
 };
 
-const DOC_SECTIONS = ['decisions', 'questions', 'progress', 'repo-docs'] as const;
-
-/** Syncs the `/plans/$planId` route param into the store so `PlansPage` opens that plan's detail view. */
-const PlanDetailRoute = () => {
-  const { planId } = useParams({ strict: false });
-  const setActivePlanTitle = useAppStore((s) => s.setActivePlanTitle);
-  useEffect(() => {
-    if (planId) setActivePlanTitle(decodeURIComponent(planId));
-  }, [planId, setActivePlanTitle]);
-  return <PlansPage />;
-};
-
-/** Syncs the `/ideas/$ideaId` route param into the store so `PlansPage` opens that idea's detail view. */
-const IdeaDetailRoute = () => {
-  const { ideaId } = useParams({ strict: false });
-  const setActiveIdeaTitle = useAppStore((s) => s.setActiveIdeaTitle);
-  useEffect(() => {
-    if (ideaId) setActiveIdeaTitle(decodeURIComponent(ideaId));
-  }, [ideaId, setActiveIdeaTitle]);
-  return <PlansPage />;
-};
-
-/** Syncs the `/docs/$section` route param into the store so `DocsPage` renders that section. */
-const DocsSectionRoute = () => {
-  const { section } = useParams({ strict: false });
-  const setActiveDocSection = useAppStore((s) => s.setActiveDocSection);
-  useEffect(() => {
-    if (DOC_SECTIONS.includes(section as (typeof DOC_SECTIONS)[number])) {
-      setActiveDocSection(section as (typeof DOC_SECTIONS)[number]);
-    }
-  }, [section, setActiveDocSection]);
-  return <DocsPage />;
-};
-
 const rootRoute = createRootRoute({ component: RootLayout });
 
 const plansRoute = createRoute({
@@ -287,16 +249,21 @@ const plansRoute = createRoute({
 const planDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/plans/$planId',
-  component: PlanDetailRoute,
+  component: PlansPage,
 });
 const ideaDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/ideas/$ideaId',
-  component: IdeaDetailRoute,
+  component: PlansPage,
 });
 const reviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/review',
+  component: ReviewPage,
+});
+const reviewDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/review/$planId',
   component: ReviewPage,
 });
 const docsRoute = createRoute({
@@ -307,7 +274,7 @@ const docsRoute = createRoute({
 const docsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs/$section',
-  component: DocsSectionRoute,
+  component: DocsPage,
 });
 
 const settingsRoute = createRoute({
@@ -321,6 +288,7 @@ const routeTree = rootRoute.addChildren([
   planDetailRoute,
   ideaDetailRoute,
   reviewRoute,
+  reviewDetailRoute,
   docsRoute,
   docsSectionRoute,
   settingsRoute,

@@ -1,3 +1,4 @@
+import { useActiveDocSection } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Input, ListItem } from '@dendelion/paper-ui';
@@ -36,12 +37,15 @@ export const DocsSidebar = () => {
     loadOpenQuestions,
     loadProgress,
     loadRepoDocs,
-    activeDocSection,
     activeDocTitle,
     setActiveDocTitle,
     docSearchQuery,
     setDocSearchQuery,
   } = useAppStore();
+  const routeSection = useActiveDocSection();
+  const activeDocSection =
+    routeSection ??
+    (activeDocTitle && repoDocs.some((f) => f.name === activeDocTitle) ? 'repo-docs' : null);
   const navigate = useNavigate();
 
   useEffect(() => {
