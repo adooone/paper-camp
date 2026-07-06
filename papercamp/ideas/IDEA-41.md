@@ -55,7 +55,7 @@ confirm, now in `plans-page.tsx`, not `plans-sidebar.tsx` — becomes a paper-ui
       Add a header row (Task / Agent / Model / Effort) above the `AgentTaskRow`s
       in `settings-page.tsx`, aligned with the row layout, so the three selects
       no longer need decoding by their values.
-- [ ] Unify settings persistence on save-on-change
+- [x] Unify settings persistence on save-on-change
       Make project name and port save on blur/change in `settings-page.tsx`,
       confirmed by a `Toast` (ToastProvider already wired in `router.tsx`);
       remove the two Save buttons and all transient "Saved" spans, with the
