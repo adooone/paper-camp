@@ -62,7 +62,7 @@ dependency is left since the [[IDEA-32]] bump landed `Breadcrumb`.
       Render List | Board | Review | Closed as a `Tabs` row on the Plans page, retire
       the standalone `/review` page, and drop Review from the header nav (keeping
       [[FEAT-39]]'s inline queue untouched).
-- [ ] Land Docs on the README
+- [x] Land Docs on the README
       Default `/docs` to the readme section instead of the "Select a section from the
       sidebar" placeholder.
 - [ ] Type-check and visual pass

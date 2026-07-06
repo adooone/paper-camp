@@ -16,9 +16,9 @@ export const DocsPage = () => {
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
   const repoDocs = useAppStore((s) => s.repoDocs);
   const navigate = useNavigate();
-  // Bare /docs (no route section) falls back to the pre-selected repo doc — currently
-  // just MAIN.md (see loadRepoDocs) — until IDEA-40's later phase gives /docs itself
-  // a default route.
+  // Bare /docs (no route section) falls back to the pre-selected repo doc — MAIN.md or
+  // README.md, whichever the repo has (see loadRepoDocs) — so /docs lands on content
+  // instead of the placeholder below.
   const activeDocSection =
     routeSection ??
     (activeDocTitle && repoDocs.some((f) => f.name === activeDocTitle) ? 'repo-docs' : null);

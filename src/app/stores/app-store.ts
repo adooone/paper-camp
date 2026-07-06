@@ -252,8 +252,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const data = await fetchRepoDocs();
       set({ repoDocs: data.files, repoDocsLoading: false });
       const { activeDocTitle } = get();
-      if (!activeDocTitle && data.files.some((f) => f.name === 'MAIN.md')) {
-        set({ activeDocTitle: 'MAIN.md' });
+      if (!activeDocTitle) {
+        const readme = ['MAIN.md', 'README.md'].find((name) =>
+          data.files.some((f) => f.name === name),
+        );
+        if (readme) set({ activeDocTitle: readme });
       }
     } catch {
       set({ repoDocs: [], repoDocsLoading: false });
