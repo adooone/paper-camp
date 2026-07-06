@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
 import {
-  IdeasPage,
+  PlanActionsColumn,
   PlanFilterColumn,
   PlansPage,
   ReviewPage,
@@ -23,7 +23,6 @@ import { useAppStore } from './stores/app-store';
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
-  { id: 'ideas', label: 'Ideas', path: '/ideas' },
   { id: 'review', label: 'Review', path: '/review' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'settings', label: 'Settings', path: '/settings' },
@@ -174,8 +173,18 @@ const RootLayout = () => {
                   mobileOpen={mobileSidebarOpen}
                   onMobileClose={() => setMobileSidebarOpen(false)}
                 >
-                  {pathname === '/' && <PlanFilterColumn />}
-                  {pathname === '/review' && <ReviewSidebar />}
+                  {pathname === '/' && (
+                    <>
+                      <PlanFilterColumn />
+                      <PlanActionsColumn />
+                    </>
+                  )}
+                  {pathname === '/review' && (
+                    <>
+                      <ReviewSidebar />
+                      <PlanActionsColumn flush={false} />
+                    </>
+                  )}
                   {pathname === '/docs' && <DocsSidebar />}
                   {pathname === '/settings' && <SettingsSidebar />}
                 </SidebarShell>
@@ -232,11 +241,6 @@ const plansRoute = createRoute({
   path: '/',
   component: PlansPage,
 });
-const ideasRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/ideas',
-  component: IdeasPage,
-});
 const reviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/review',
@@ -254,13 +258,7 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
-const routeTree = rootRoute.addChildren([
-  plansRoute,
-  ideasRoute,
-  reviewRoute,
-  docsRoute,
-  settingsRoute,
-]);
+const routeTree = rootRoute.addChildren([plansRoute, reviewRoute, docsRoute, settingsRoute]);
 
 export const router = createRouter({ routeTree });
 

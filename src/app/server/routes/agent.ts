@@ -1,17 +1,16 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { parseIdeas, parsePlans } from '../../../core/parser';
-import { readAllIdeaFiles, readAllPlanFiles } from '../../../core/readers';
-import type { IdeaEntry, PlanEntry } from '../../../types/index';
-import { campFile, checkBranchConflictForPlan, fileExists, readMaybe } from '../helpers';
+import { entityToPlan, readEntities } from '../../../core/readers';
+import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry } from '../../../types/index';
+import { campFile, checkBranchConflictForPlan, fileExists } from '../helpers';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
-/** Resolves a per-file plan's path, checking the archive subdirectory as a fallback. */
-async function resolvePlanFilePath(root: string, planId: string): Promise<string | null> {
-  const primary = join(campFile(root, 'plans'), `${planId}.md`);
+/** Resolves an entity's file path, checking the archive subdirectory as a fallback. */
+async function resolveEntityFilePath(root: string, entityId: string): Promise<string | null> {
+  const primary = join(campFile(root, 'ideas'), `${entityId}.md`);
   if (await fileExists(primary)) return primary;
-  const archived = join(campFile(root, 'plans'), 'archive', `${planId}.md`);
+  const archived = join(campFile(root, 'ideas'), 'archive', `${entityId}.md`);
   if (await fileExists(archived)) return archived;
   return null;
 }
@@ -22,8 +21,9 @@ async function resolvePlanFilePath(root: string, planId: string): Promise<string
  * rest of a plan's drift.
  */
 const KNOWN_RENAMES: ReadonlyArray<readonly [string, string]> = [
-  ['`plans.md`', '`papercamp/plans/`'],
+  ['`plans.md`', '`papercamp/ideas/`'],
   ['`ideas.md`', '`papercamp/ideas/`'],
+  ['papercamp/plans/', 'papercamp/ideas/'],
   ['.paper-camp/', 'papercamp/'],
   ['FocusTaskItem', 'FocusPhaseItem'],
   ['TaskItem', 'PhaseItem'],
@@ -67,22 +67,29 @@ function applyKnownRenames(content: string): { content: string; changed: boolean
   return { content: frontmatter + lines.join('\n'), changed };
 }
 
-/** Per-file plan lookup with fallback to the legacy monolithic plans.md. */
+/** Work-entity lookup in PlanEntry shape, for the plan-scoped agent tasks. */
 async function findPlanById(root: string, planId: string): Promise<PlanEntry | undefined> {
-  const { entries } = await readAllPlanFiles(campFile(root, 'plans'));
-  const plan = entries.find((p) => p.id === planId);
-  if (plan) return plan;
-  const mono = parsePlans(await readMaybe(campFile(root, 'plans.md')));
-  return mono.entries.find((p) => p.id === planId);
+  const { entries } = await readEntities(campFile(root, 'ideas'));
+  const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
+  return entity ? entityToPlan(entity) : undefined;
 }
 
-/** Per-file idea lookup with fallback to the legacy monolithic ideas.md. */
+/** IdeaEntry view of any entity, for the idea-scoped tasks (draft/extend). */
+function toIdeaEntry(e: EntityEntry): IdeaEntry {
+  return {
+    id: e.id,
+    title: e.title,
+    body: e.body,
+    kind: e.kind,
+    status: e.kind === 'note' ? (e.status as IdeaStatus) : undefined,
+    log: e.log,
+  };
+}
+
 async function findIdeaById(root: string, ideaId: string): Promise<IdeaEntry | undefined> {
-  const { entries } = await readAllIdeaFiles(campFile(root, 'ideas'));
-  const idea = entries.find((i) => i.id === ideaId);
-  if (idea) return idea;
-  const mono = parseIdeas(await readMaybe(campFile(root, 'ideas.md')));
-  return mono.find((i) => i.id === ideaId);
+  const { entries } = await readEntities(campFile(root, 'ideas'));
+  const entity = entries.find((e) => e.id === ideaId);
+  return entity ? toIdeaEntry(entity) : undefined;
 }
 
 export function agentRoutes({ root, git, status, agent }: RouteContext): Route[] {
@@ -180,7 +187,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           sendJson(res, 409, { error: conflict });
           return;
         }
-        const filePath = await resolvePlanFilePath(root, planId);
+        const filePath = await resolveEntityFilePath(root, planId);
         if (filePath) {
           const raw = await readFile(filePath, 'utf-8');
           const { content, changed } = applyKnownRenames(raw);

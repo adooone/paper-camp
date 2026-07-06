@@ -19,7 +19,6 @@ export function createApiMiddleware(root: string): ApiMiddleware {
   const hooks = createAgentHooks(root, git);
   const agent = createAgentManager(
     root,
-    (plan) => git.ensureBranch(plan),
     hooks.stampAuditDate,
     hooks.commitPhase,
     hooks.setRunReview,

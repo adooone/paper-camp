@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { computePlanContentHash } from '../../core/content-hash';
 import { parsePlanFile } from '../../core/parser';
-import { readAllPlanFiles, readIdeasMerged, readPlansMerged } from '../../core/readers';
+import { entityToPlan, readEntities } from '../../core/readers';
 import {
   type AgentId,
   type AgentTaskState,
@@ -39,8 +39,9 @@ interface AgentTask {
   // Only set for an idea-drafting task, which has neither planId nor phaseIndex since
   // the plan doesn't exist yet — success is checked by idea id instead.
   ideaId?: string;
-  // For idea-extend tasks: snapshot the idea's body before launch so we can detect changes.
-  ideaBodyBaseline?: string;
+  // For idea-extend tasks: snapshot the idea's Log entry count before launch, since
+  // extend now appends a dated Log entry rather than rewriting the body in place.
+  ideaLogBaseline?: number;
   // For reconcile tasks: snapshot of body + phase text before launch, since a reconcile
   // rewrites prose in place rather than growing Phases/Log like an audit does.
   reconcileBaseline?: string;
@@ -83,7 +84,7 @@ type Result = { ok: true } | { ok: false; error: string };
 
 export function buildAgentPrompt(plan: PlanEntry, phase: PhaseItem, phaseIndex: number): string {
   const details = phase.description ? `Phase details:\n${phase.description}\n\n` : '';
-  return `You are executing exactly one phase of the plan "${plan.title}" (${plan.id ?? 'no id'}): phase ${phaseIndex + 1}, "${phase.text}". The plan is a single file at papercamp/plans/${plan.id ?? '<ID>'}.md.
+  return `You are executing exactly one phase of the plan "${plan.title}" (${plan.id ?? 'no id'}): phase ${phaseIndex + 1}, "${phase.text}". The plan is a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md.
 
 ${details}Plan context: ${plan.body}
 
@@ -101,7 +102,6 @@ When the work is done:
 
 export function createAgentManager(
   root: string,
-  ensureBranch: (plan: PlanEntry) => void = () => {},
   onAuditComplete?: (planId: string, gapPhases: number) => Promise<void>,
   onPhaseCommit?: (plan: PlanEntry, phase: PhaseItem, phaseIndex: number) => Promise<void>,
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
@@ -134,33 +134,30 @@ export function createAgentManager(
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
     try {
       if (task.taskKind === 'extend') {
-        const ideasDir = join(root, 'papercamp', 'ideas');
-        const { entries } = await readIdeasMerged(ideasDir, join(root, 'papercamp', 'ideas.md'));
+        const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
         const idea = entries.find((e) => e.id === task.ideaId);
         if (!idea) return null;
-        if (task.ideaBodyBaseline === undefined) return null;
-        return idea.body !== task.ideaBodyBaseline;
+        if (task.ideaLogBaseline === undefined) return null;
+        return (idea.log?.length ?? 0) > task.ideaLogBaseline;
       }
       if (task.taskKind === 'reconcile') {
-        const { entries } = await readPlansMerged(
-          join(root, 'papercamp', 'plans'),
-          join(root, 'papercamp', 'plans.md'),
-        );
-        const plan = entries.find((p: { id?: string }) => p.id === task.planId);
+        const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
+        const plan = entries.find((e) => e.id === task.planId && e.kind !== 'note');
         if (!plan || task.reconcileBaseline === undefined) return null;
         return (
           JSON.stringify({ body: plan.body, phases: plan.phases.map((p) => p.text) }) !==
           task.reconcileBaseline
         );
       }
-      const plansDir = join(root, 'papercamp', 'plans');
-      const { entries } = await readPlansMerged(plansDir, join(root, 'papercamp', 'plans.md'));
+      const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
       if (task.ideaId !== undefined) {
-        return entries.some((p: { idea?: string }) => p.idea === task.ideaId);
+        // In-place drafting: success is the entity gaining its Phases section.
+        const target = entries.find((e) => e.id === task.ideaId);
+        return target ? target.phases.length > 0 : null;
       }
       const plan =
-        entries.find((p: { id?: string }) => p.id === task.planId) ??
-        entries.find((p: { title: string }) => p.title === task.planTitle);
+        entries.find((e) => e.id === task.planId && e.kind !== 'note') ??
+        entries.find((e) => e.title === task.planTitle && e.kind !== 'note');
       if (!plan) return null;
       if (task.phaseIndex !== undefined) {
         return plan.phases[task.phaseIndex]?.done ?? null;
@@ -186,7 +183,7 @@ export function createAgentManager(
             : task.taskKind === 'reconcile'
               ? 'Warning: agent finished but the plan body and phase text did not change — verify manually'
               : task.ideaId !== undefined
-                ? `Warning: agent finished but no plan linking idea: ${task.ideaId} appeared in papercamp/plans/ — verify manually`
+                ? `Warning: agent finished but ${task.ideaId} gained no Phases section — verify manually`
                 : task.phaseIndex !== undefined
                   ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
                   : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
@@ -250,7 +247,7 @@ export function createAgentManager(
       | 'phaseIndex'
       | 'planBaseline'
       | 'ideaId'
-      | 'ideaBodyBaseline'
+      | 'ideaLogBaseline'
       | 'reconcileBaseline'
     >,
   ): Result {
@@ -293,7 +290,6 @@ export function createAgentManager(
     if (!phase) {
       return { ok: false, error: 'Phase not found' };
     }
-    ensureBranch(plan);
     const prompt = buildAgentPrompt(plan, phase, phaseIndex);
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
       taskKind: 'phase',
@@ -325,7 +321,7 @@ export function createAgentManager(
 
   // Idea-drafting launch mode: there's no plan yet (and so no per-plan agent override
   // either) — the plan only exists once the agent writes it, so success is judged by
-  // whether a new plan file linking this idea's id shows up in papercamp/plans/.
+  // whether the entity's file gained a Phases section (in-place drafting).
   function startForIdea(idea: IdeaEntry, prompt: string): Result {
     if (!idea.id) {
       return { ok: false, error: 'Idea has no id to link a drafted plan back to' };
@@ -346,7 +342,7 @@ export function createAgentManager(
     return launch({ planTitle: `Extend ${idea.id}` }, prompt, {
       taskKind: 'extend',
       ideaId: idea.id,
-      ideaBodyBaseline: idea.body,
+      ideaLogBaseline: idea.log?.length ?? 0,
     });
   }
 
@@ -404,9 +400,10 @@ export function createAgentManager(
 
     (async () => {
       try {
-        const plansDir = join(root, 'papercamp', 'plans');
-        const { entries } = await readAllPlanFiles(plansDir);
-        const candidates = entries.filter((p) => p.status === 'review' || p.status === 'done');
+        const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
+        const candidates = entries
+          .filter((e) => e.kind !== 'note' && (e.status === 'review' || e.status === 'done'))
+          .map(entityToPlan);
 
         if (candidates.length === 0) {
           if (current === task) {
@@ -428,7 +425,7 @@ export function createAgentManager(
             continue;
           }
 
-          const planFile = await findBatchPlanFile(plansDir, plan.id);
+          const planFile = await findBatchPlanFile(join(root, 'papercamp', 'ideas'), plan.id);
           if (!planFile) {
             skipped++;
             continue;
@@ -516,7 +513,8 @@ export function createAgentManager(
   }
 
   // Run all unchecked phases sequentially, spawning a fresh agent per phase.
-  // Calls ensureBranch up front, then iterates unchecked phases in order.
+  // Iterates unchecked phases in order on whatever branch is checked out —
+  // branch management is manual (see the "Branch creation is manual" decision).
   // Stops on first failure; calls onPhaseCommit (wired at construction) after each verified success.
   function startRunAllPhases(plan: PlanEntry, runProjectChecks?: () => Promise<boolean>): Result {
     if (isBusy()) {
@@ -529,8 +527,6 @@ export function createAgentManager(
     if (unchecked.length === 0) {
       return { ok: false, error: 'No unchecked phases to run' };
     }
-
-    ensureBranch(plan);
 
     const defaultAgents = readDefaultAgentIds(root);
     const {

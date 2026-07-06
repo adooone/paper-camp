@@ -1,41 +1,45 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readIdeasMerged } from '../../../core/readers';
-import { formatIdeaFile } from '../../../core/serializer';
+import { assignEntityId, formatEntityFile, todayDateString } from '../../../core/serializer';
 import { campFile, regenerateIndexes } from '../helpers';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 export function ideaRoutes({ root }: RouteContext): Route[] {
   return [
-    // POST /api/ideas — create a new per-file idea entry
+    // POST /api/ideas — create a new entity ("New idea": refine-first, or a note)
     {
       method: 'POST',
       path: '/api/ideas',
       handle: async (req, res) => {
         const reqBody = await readBody(req);
-        const { title, content } = JSON.parse(reqBody) as { title?: string; content?: string };
+        const { title, content, kind } = JSON.parse(reqBody) as {
+          title?: string;
+          content?: string;
+          kind?: 'idea' | 'note';
+        };
         if (!title?.trim()) {
           sendJson(res, 400, { error: 'title is required' });
           return;
         }
+        const configPath = join(root, 'papercamp', 'config.json');
+        const newId = await assignEntityId(configPath);
+        if (!newId) {
+          sendJson(res, 500, { error: 'could not assign entity ID' });
+          return;
+        }
         const ideasDir = campFile(root, 'ideas');
-        const existing = await readIdeasMerged(ideasDir, campFile(root, 'ideas.md'));
-        const maxNum = existing.entries.reduce((max, idea) => {
-          if (idea.id) {
-            const num = Number.parseInt(idea.id.replace('IDEA-', ''), 10);
-            return Number.isNaN(num) ? max : Math.max(max, num);
-          }
-          return max;
-        }, 0);
-        const newId = `IDEA-${maxNum + 1}`;
         await mkdir(ideasDir, { recursive: true });
-        const ideaContent = formatIdeaFile({
+        const isNote = kind === 'note';
+        const entityContent = formatEntityFile({
           id: newId,
           title: title.trim(),
+          kind: isNote ? 'note' : undefined,
+          status: isNote ? 'open' : 'idea',
+          created: todayDateString(),
           body: content?.trim(),
         });
-        await writeFile(join(ideasDir, `${newId}.md`), `${ideaContent}\n`, 'utf-8');
+        await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         await regenerateIndexes(root);
         sendJson(res, 201, { ok: true, id: newId });
       },

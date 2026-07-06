@@ -1,16 +1,17 @@
 import { color, fontSize, space } from '@/app/styles/tokens';
-import { Button, Input, Modal, Textarea } from '@dendelion/paper-ui';
+import { Button, Input, Modal, Switch, Textarea } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 
 interface CreateIdeaModalProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (idea: { title: string; content?: string }) => Promise<void>;
+  onAdd: (idea: { title: string; content?: string; kind?: 'idea' | 'note' }) => Promise<void>;
 }
 
 export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [isNote, setIsNote] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,6 +19,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
     if (open) {
       setTitle('');
       setContent('');
+      setIsNote(false);
       setLoading(false);
       setError(null);
     }
@@ -29,7 +31,11 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
     setError(null);
     setLoading(true);
     try {
-      await onAdd({ title: title.trim(), content: content.trim() || undefined });
+      await onAdd({
+        title: title.trim(),
+        content: content.trim() || undefined,
+        kind: isNote ? 'note' : undefined,
+      });
       onClose();
     } catch (err) {
       // Without this the modal stays stuck disabled if onAdd rejects; surface the
@@ -62,6 +68,12 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
           placeholder="Optional details…"
           disabled={loading}
           rows={4}
+        />
+        <Switch
+          label="Note — never needs a plan"
+          checked={isNote}
+          onChange={(e) => setIsNote(e.target.checked)}
+          disabled={loading}
         />
         {error && (
           <p style={{ margin: 0, color: color.accentRoseDark, fontSize: fontSize.sm }}>{error}</p>

@@ -26,7 +26,7 @@ export const AddToBacklogButton = () => {
           icon={<span>+</span>}
           variant="ghost"
           size="small"
-          label={isStale ? 'Switch to main first' : 'Add to backlog'}
+          label={isStale ? 'Switch to main first' : 'Quick plan'}
           disabled={isStale}
           onClick={() => setOpen(true)}
         />

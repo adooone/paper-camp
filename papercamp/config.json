@@ -7,7 +7,8 @@
     "fix": 3,
     "chore": 2,
     "docs": 4,
-    "refactor": 5
+    "refactor": 5,
+    "idea": 55
   },
   "defaultAgents": {
     "phase": {

@@ -1,3 +1,39 @@
+## Does the scaffolded Claude Code skill need an entity-migration pass?
+
+**Status:** open
+**Raised:** 2026-07-05
+**Blocks:** —
+
+While rewriting `about.md` for `IDEA-43`'s single-file entity migration (phase 13,
+"Actualize the docs and closing pass"), `.claude/skills/paper-camp/SKILL.md` (and its
+template source, presumably `src/core/templates.ts`) turned out still to describe the
+pre-migration two-file shape: `papercamp/plans/index.md`, `papercamp/plans/<ID>.md`,
+and an idea file that "plans often trace back to" via an `idea:` backlink field that no
+longer exists in the schema. This file is out of this phase's stated scope (`about.md`'s
+storage/CLI/API sections, plus `AGENTS.md` — already accurate) but it is the actual text
+injected into every Claude Code session working in a `papercamp/` project, so its
+staleness has real behavioral impact (an agent could go looking for `papercamp/plans/`
+and find nothing). Worth a small follow-up pass — either its own quick phase/plan, or a
+fold-in the next time templates.ts is touched — to update the skill text (and any other
+scaffolded template referencing the old layout) to `papercamp/ideas/<IDEA-N>.md` with
+phases-as-a-section.
+
+**Status:** resolved
+**Raised:** 2026-07-05
+**Resolved-by:** Entity ids are lifetime IDEA-N
+
+`IDEA-43`'s single-file evolution merges ideas and plans into one file per entity
+("idea" for life, plan as a section). Today the two halves have separate ID spaces: `IDEA-N` for ideas, `<KIND>-<N>`
+(`FEAT-37`, `FIX-2`, …) for plans — and everything git/GitHub-side keys off the plan
+form: branch names (`feat/feat-37-…`), commit `Refs:` footers, the draft-PR "Plan:"
+line, and `FEAT-36`'s planned PR mirror. Two real options: (a) one lifetime id per
+entity — `IDEA-N` from capture to done, branches become `feat/idea-45-…`, `type` still
+drives the commit type, and `<KIND>-<N>` ids survive only on migrated legacy entities;
+or (b) keep minting a `<TYPE>-<N>` id when the plan section lands, meaning the entity's
+id changes mid-life (or carries two), which preserves git conventions but reintroduces
+exactly the split identity the merge is trying to kill. Decide before the migration
+plan is drafted — the file-rename step depends on it.
+
 ## What should package.json's `./app` export actually be?
 
 **Status:** resolved

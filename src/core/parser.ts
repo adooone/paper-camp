@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import type {
   ConsistencyIssue,
   DecisionEntry,
+  EntityEntry,
   IdeaEntry,
   IdeaStatus,
   OpenQuestionEntry,
@@ -15,6 +16,7 @@ import type {
 } from '../types/index';
 import {
   decisionFieldsSchema,
+  entityFrontmatterSchema,
   ideaFrontmatterSchema,
   openQuestionFieldsSchema,
   planFieldsSchema,
@@ -327,6 +329,62 @@ export function parseFrontmatter<T>(
  * The body after frontmatter is scanned for ### Phases and ### Log sections,
  * same as the monolithic parser.
  */
+/**
+ * Parses a unified entity file (FEAT-42 phases 7+): one file per entity — an
+ * "idea" for its whole life, plan as an optional `### Phases` body section.
+ * Same body pipeline as parsePlanFile (Phases/Log/Clarifications extraction);
+ * the frontmatter differs: `type` instead of `kind`, no `idea:` backlink, and
+ * the note/status asymmetry from the idea schema folded in.
+ */
+export function parseEntityFile(content: string): ParseResult<EntityEntry> {
+  const warnings: ParseWarning[] = [];
+  const {
+    data: frontmatter,
+    body: rawBody,
+    warnings: fmWarnings,
+  } = parseFrontmatter(content, entityFrontmatterSchema);
+  warnings.push(...fmWarnings);
+
+  if (!frontmatter) {
+    return { entries: [], warnings };
+  }
+
+  let body = rawBody;
+  const { body: bodyAfterPhases, phases } = extractPhases(body);
+  body = bodyAfterPhases;
+  const { body: bodyAfterLog, log } = extractLog(body);
+  body = bodyAfterLog;
+  const { body: bodyAfterClarifications, clarifications } = extractClarifications(body);
+  body = bodyAfterClarifications;
+
+  if (frontmatter.kind === 'note' && phases.length > 0) {
+    warnings.push({
+      title: frontmatter.title,
+      message: 'note entities must not carry a Phases section — kept, but fix the file',
+    });
+  }
+
+  const entry: EntityEntry = {
+    id: frontmatter.id,
+    title: frontmatter.title,
+    type: frontmatter.type,
+    kind: frontmatter.kind,
+    status: frontmatter.status,
+    agent: frontmatter.agent,
+    created: frontmatter.created,
+    updated: frontmatter.updated,
+    audited: frontmatter.audited,
+    auditedHash: frontmatter['audited-hash'],
+    tags: frontmatter.tags ?? [],
+    body,
+    phases,
+    log,
+    clarifications,
+  };
+
+  return { entries: [entry], warnings };
+}
+
 export function parsePlanFile(content: string): ParseResult<PlanEntry> {
   const warnings: ParseWarning[] = [];
   const {
@@ -375,7 +433,7 @@ export function parsePlanFile(content: string): ParseResult<PlanEntry> {
 export function parseIdeaFile(content: string): ParseResult<IdeaEntry> {
   const {
     data: frontmatter,
-    body,
+    body: rawBody,
     warnings: fmWarnings,
   } = parseFrontmatter(content, ideaFrontmatterSchema);
 
@@ -383,11 +441,15 @@ export function parseIdeaFile(content: string): ParseResult<IdeaEntry> {
     return { entries: [], warnings: fmWarnings };
   }
 
+  const { body, log } = extractLog(rawBody);
+
   const entry: IdeaEntry = {
     id: frontmatter.id,
     title: frontmatter.title,
     body: body || '',
+    ...(frontmatter.kind && { kind: frontmatter.kind }),
     ...(frontmatter.status && { status: frontmatter.status }),
+    ...(log.length > 0 && { log }),
   };
 
   return { entries: [entry], warnings: fmWarnings };

@@ -2,8 +2,8 @@ import { PageTitle } from '@/app/components/page-title';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Button, Card } from '@dendelion/paper-ui';
+import { EntityDetail } from './components/entity-detail';
 import { PlanCard } from './components/plan-card';
-import { PlanDetail } from './components/plan-detail';
 
 export const ReviewPage = () => {
   const { plans, plansError, activePlanTitle, setActivePlanTitle, setActiveIdeaTitle } =
@@ -53,7 +53,7 @@ export const ReviewPage = () => {
             &larr; Back to review
           </Button>
         </div>
-        <PlanDetail plan={activePlan} />
+        <EntityDetail plan={activePlan} />
       </div>
     );
   }

@@ -221,17 +221,32 @@ title: Minimal idea
     expect(warnings).toEqual([]);
   });
 
-  it('carries an explicit frontmatter status through', () => {
+  it('carries an explicit frontmatter status through for notes', () => {
     const content = `---
 id: IDEA-37
 title: Fable capability-window tasks
+kind: note
 status: done
 ---
 Closed without a plan.
 `;
     const { entries, warnings } = parseIdeaFile(content);
     expect(warnings).toEqual([]);
+    expect(entries[0].kind).toBe('note');
     expect(entries[0].status).toBe('done');
+  });
+
+  it('rejects a status on a plan-bearing idea', () => {
+    const content = `---
+id: IDEA-1
+title: Some idea
+status: done
+---
+`;
+    const { entries, warnings } = parseIdeaFile(content);
+    expect(entries).toEqual([]);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0].message).toContain('status is only valid on ideas with kind: note');
   });
 
   it('leaves status undefined when frontmatter has none', () => {
@@ -243,6 +258,30 @@ Body.
 `;
     const { entries } = parseIdeaFile(content);
     expect(entries[0].status).toBeUndefined();
+  });
+
+  it('parses a Log section and strips it from the body', () => {
+    const content = `---
+id: IDEA-20
+title: Plan storage architecture
+---
+## IDEA-20: Plan storage architecture
+
+Original prose, untouched.
+
+### Log
+- 2026-07-01: Explored the storage layer and found the relevant files
+- 2026-07-02: Sharpened the approach after a second pass
+`;
+    const { entries, warnings } = parseIdeaFile(content);
+    expect(warnings).toEqual([]);
+    expect(entries[0].body).toBe(
+      '## IDEA-20: Plan storage architecture\n\nOriginal prose, untouched.',
+    );
+    expect(entries[0].log).toEqual([
+      { date: '2026-07-01', text: 'Explored the storage layer and found the relevant files' },
+      { date: '2026-07-02', text: 'Sharpened the approach after a second pass' },
+    ]);
   });
 });
 
@@ -414,5 +453,24 @@ describe('formatIdeaFile round-trip', () => {
     const { entries } = parseIdeaFile(serialized);
     expect(entries[0].id).toBe('IDEA-1');
     expect(entries[0].body).toBe('## IDEA-1: Minimal idea');
+  });
+
+  it('round-trips an idea with Log entries, leaving the body untouched', () => {
+    const serialized = formatIdeaFile({
+      id: 'IDEA-20',
+      title: 'Plan storage architecture',
+      body: 'Full rationale body.',
+      log: [
+        { date: '2026-07-01', text: 'Extended with findings from the codebase' },
+        { date: '2026-07-02', text: 'A second extend pass' },
+      ],
+    });
+    const { entries, warnings } = parseIdeaFile(serialized);
+    expect(warnings).toEqual([]);
+    expect(entries[0].body).toBe('## IDEA-20: Plan storage architecture\n\nFull rationale body.');
+    expect(entries[0].log).toEqual([
+      { date: '2026-07-01', text: 'Extended with findings from the codebase' },
+      { date: '2026-07-02', text: 'A second extend pass' },
+    ]);
   });
 });

@@ -3,7 +3,6 @@ import {
   type PlanListFilters,
   type PlanSortKey,
 } from '@/app/features/plans/plan-list-selector';
-import { deriveIdeaStatuses } from '@/core/idea-status';
 import type {
   AgentTaskState,
   BranchHygieneStatus,
@@ -13,6 +12,7 @@ import type {
   GitStatusEntry,
   GitStatusResponse,
   IdeaEntry,
+  IdeaStatus,
   OpenQuestionEntry,
   ParseResult,
   PlanEntry,
@@ -67,6 +67,7 @@ type AppStore = {
   planFilters: PlanListFilters;
   togglePlanStatus: (status: PlanStatus) => void;
   togglePlanTag: (tag: string) => void;
+  toggleNoteStatus: (status: IdeaStatus) => void;
   setPlanSearch: (search: string) => void;
   setPlanSortKey: (sortKey: PlanSortKey) => void;
   togglePlanSortDirection: () => void;
@@ -157,12 +158,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ plansLoading: true });
     try {
       const data = await fetchPlans();
-      const { ideaEntries } = get();
       set({
         plans: data,
         plansError: null,
         plansLoading: false,
-        ideaEntries: deriveIdeaStatuses(ideaEntries, data.entries),
       });
     } catch (err) {
       set({ plansError: String(err), plansLoading: false });
@@ -173,10 +172,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   loadIdeas: async () => {
     try {
       const result = await fetchIdeas();
-      const { plans } = get();
-      set({
-        ideaEntries: deriveIdeaStatuses(result.entries, plans?.entries ?? []),
-      });
+      set({ ideaEntries: result.entries });
     } catch {
       set({ ideaEntries: [] });
     }
@@ -208,6 +204,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
         tags: s.planFilters.tags.includes(tag)
           ? s.planFilters.tags.filter((x) => x !== tag)
           : [...s.planFilters.tags, tag],
+      },
+    })),
+  toggleNoteStatus: (status) =>
+    set((s) => ({
+      planFilters: {
+        ...s.planFilters,
+        noteStatuses: s.planFilters.noteStatuses.includes(status)
+          ? s.planFilters.noteStatuses.filter((x) => x !== status)
+          : [...s.planFilters.noteStatuses, status],
       },
     })),
   setPlanSearch: (search) => set((s) => ({ planFilters: { ...s.planFilters, search } })),

@@ -4,6 +4,7 @@ import { IconButton, Select } from '@dendelion/paper-ui';
 import type { PlanSortKey } from '../plan-list-selector';
 import { AddToBacklogButton } from './add-to-backlog-button';
 import { AuditAllButton } from './audit-all-button';
+import { NewIdeaButton } from './new-idea-button';
 import { ViewToggle } from './view-toggle';
 
 const SORT_OPTIONS: { value: PlanSortKey; label: string }[] = [
@@ -97,6 +98,7 @@ export const PlansHeader = () => {
         />
       </div>
 
+      <NewIdeaButton />
       <AddToBacklogButton />
       <AuditAllButton />
       <ViewToggle view={view} onChange={setView} />

@@ -15,8 +15,7 @@ const plan: PlanEntry = {
   title: 'Test plan',
   status: 'in-progress',
   kind: 'feat',
-  id: 'FEAT-9',
-  idea: 'IDEA-7',
+  id: 'IDEA-9',
   created: '2026-06-30',
   tags: ['app'],
   body: 'Plan body prose.',
@@ -25,22 +24,20 @@ const plan: PlanEntry = {
   clarifications: [],
 };
 
-// Guards the FEAT-24 per-file migration: the agent prompts must point at
-// papercamp/plans/<ID>.md and papercamp/ideas/<ID>.md, never the legacy
-// monolithic files. A draft agent that writes to plans.md is exactly the
-// regression this suite exists to catch.
-describe('agent prompts target per-file storage', () => {
-  it('plan-draft prompt writes a per-file plan in YAML-frontmatter shape', () => {
+// Guards the FEAT-42 unified-entity migration: the agent prompts must point at
+// papercamp/ideas/<ID>.md (one file per entity), never the retired
+// papercamp/plans/ tree or the legacy monolithic files. A draft agent that
+// creates a new plan file is exactly the regression this suite exists to catch.
+describe('agent prompts target the unified entity corpus', () => {
+  it('plan-draft prompt edits the idea file in place, adding Phases and type', () => {
     const prompt = buildPlanDraftPrompt(idea, []);
-    expect(prompt).toContain('papercamp/plans/<KIND>-<N>.md');
-    // YAML frontmatter shape, not the old "## Heading" + "**Field:**" form
-    expect(prompt).toContain('status: idea');
-    expect(prompt).toContain(`idea: ${idea.id}`);
+    expect(prompt).toContain(`papercamp/ideas/${idea.id}.md`);
+    expect(prompt).toContain('never create a new file');
+    expect(prompt).toContain('### Phases');
+    // Status stays idea for the human promotion gate; the id never changes.
+    expect(prompt).toMatch(/`status` stays exactly `idea`/);
+    expect(prompt).not.toContain('papercamp/plans/');
     expect(prompt).not.toContain('**Status:**');
-    // The only mention of plans.md must be the explicit "don't use it" guard,
-    // never an instruction to write a "plans.md entry" or order it by file position.
-    expect(prompt).not.toContain('new plans.md entry');
-    expect(prompt).not.toContain('file order in papercamp/plans.md');
   });
 
   it('idea-extend prompt points at the per-file idea, not legacy ideas.md', () => {
@@ -49,23 +46,31 @@ describe('agent prompts target per-file storage', () => {
     expect(prompt).not.toContain('ideas.md');
   });
 
-  it('convergence-audit prompt points at the per-file plan, not legacy plans.md', () => {
+  it('idea-extend prompt appends a dated Log entry instead of rewriting the body', () => {
+    const prompt = buildIdeaExtendPrompt(idea);
+    expect(prompt).toContain('### Log');
+    expect(prompt).toContain('YYYY-MM-DD');
+    expect(prompt).toContain('Append only');
+    expect(prompt).not.toContain('Replace everything below that heading');
+  });
+
+  it('convergence-audit prompt points at the entity file, not legacy plans.md', () => {
     const prompt = buildConvergenceAuditPrompt(plan);
-    expect(prompt).toContain(`papercamp/plans/${plan.id}.md`);
-    expect(prompt).toContain(`papercamp/plans/archive/${plan.id}.md`);
+    expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
+    expect(prompt).toContain(`papercamp/ideas/archive/${plan.id}.md`);
     expect(prompt).not.toContain('plans.md');
   });
 
-  it('clarify prompt points at the per-file plan, not legacy plans.md', () => {
+  it('clarify prompt points at the entity file, not legacy plans.md', () => {
     const prompt = buildClarifyPrompt(plan);
-    expect(prompt).toContain(`papercamp/plans/${plan.id}.md`);
+    expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
     expect(prompt).not.toContain('plans.md');
   });
 
-  it('reconcile prompt targets the per-file plan and keeps its guardrails', () => {
+  it('reconcile prompt targets the entity file and keeps its guardrails', () => {
     const prompt = buildReconcilePrompt(plan);
-    expect(prompt).toContain(`papercamp/plans/${plan.id}.md`);
-    expect(prompt).toContain(`papercamp/plans/archive/${plan.id}.md`);
+    expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
+    expect(prompt).toContain(`papercamp/ideas/archive/${plan.id}.md`);
     expect(prompt).not.toContain('plans.md');
     // The guardrails are the whole point of the reconcile pass — an AI rewrite
     // that edits frontmatter or the phase set would corrupt the plan. Regressions
@@ -75,9 +80,9 @@ describe('agent prompts target per-file storage', () => {
     expect(prompt).toMatch(/Never un-check.*phase line/);
   });
 
-  it('phase-execution prompt points at the per-file plan, not legacy plans.md', () => {
+  it('phase-execution prompt points at the entity file, not legacy plans.md', () => {
     const prompt = buildAgentPrompt(plan, plan.phases[0], 0);
-    expect(prompt).toContain(`papercamp/plans/${plan.id}.md`);
+    expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
     expect(prompt).not.toContain('plans.md');
     // progress.md is still the live append-only log — that reference must stay
     expect(prompt).toContain('progress.md');

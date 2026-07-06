@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computePlanContentHash } from '../../core/content-hash';
-import { parsePlanFile } from '../../core/parser';
+import { parseEntityFile } from '../../core/parser';
+import { entityToPlan } from '../../core/readers';
 import type { PhaseItem, PlanEntry } from '../../types/index';
 import { buildAgentPrompt, createAgentManager } from './agent';
 
@@ -33,14 +34,14 @@ vi.mock('./agents', () => {
 // checkbox — the minimal "agent did its phase" behavior.
 const FLIP_NEXT_CHECKBOX = `
 const fs = require('node:fs');
-const p = 'papercamp/plans/FEAT-1.md';
+const p = 'papercamp/ideas/IDEA-1.md';
 fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('- [ ]', '- [x]'));
 `;
 
 const PLAN_TWO_PHASES = `---
-id: FEAT-1
+id: IDEA-1
 title: Test plan
-kind: feat
+type: feat
 status: in-progress
 created: 2026-07-01
 ---
@@ -65,9 +66,9 @@ beforeEach(() => {
 async function makeRoot(planMd: string): Promise<{ root: string; plan: PlanEntry }> {
   const root = await mkdtemp(join(tmpdir(), 'papercamp-agent-test-'));
   roots.push(root);
-  await mkdir(join(root, 'papercamp', 'plans'), { recursive: true });
-  await writeFile(join(root, 'papercamp', 'plans', 'FEAT-1.md'), planMd);
-  const plan = parsePlanFile(planMd).entries[0];
+  await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+  await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), planMd);
+  const plan = entityToPlan(parseEntityFile(planMd).entries[0]);
   return { root, plan };
 }
 
@@ -94,14 +95,14 @@ async function waitForStatus(
 const settled = (status: string) => status === 'done' || status === 'error';
 
 describe('buildAgentPrompt', () => {
-  const plan = parsePlanFile(PLAN_TWO_PHASES).entries[0];
+  const plan = entityToPlan(parseEntityFile(PLAN_TWO_PHASES).entries[0]);
 
   it('names the phase 1-based, the plan id, and the per-plan file path', () => {
     const prompt = buildAgentPrompt(plan, plan.phases[1], 1);
     expect(prompt).toContain('phase 2');
     expect(prompt).toContain('"Second phase"');
-    expect(prompt).toContain('FEAT-1');
-    expect(prompt).toContain('papercamp/plans/FEAT-1.md');
+    expect(prompt).toContain('IDEA-1');
+    expect(prompt).toContain('papercamp/ideas/IDEA-1.md');
     expect(prompt).toContain('Plan body.');
   });
 
@@ -116,12 +117,10 @@ describe('startRunAllPhases', () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const commits: number[] = [];
-    const ensureBranch = vi.fn();
     const onRunComplete = vi.fn(async () => {});
     const runProjectChecks = vi.fn(async () => true);
     const manager = createAgentManager(
       root,
-      ensureBranch,
       undefined,
       async (_plan, _phase, phaseIndex) => {
         commits.push(phaseIndex);
@@ -131,15 +130,14 @@ describe('startRunAllPhases', () => {
 
     const result = manager.startRunAllPhases(plan, runProjectChecks);
     expect(result).toEqual({ ok: true });
-    expect(ensureBranch).toHaveBeenCalledOnce();
 
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(commits).toEqual([0, 1]);
     expect(runProjectChecks).toHaveBeenCalledTimes(2);
     expect(onRunComplete).toHaveBeenCalledOnce();
 
-    const after = parsePlanFile(
-      await readFile(join(root, 'papercamp', 'plans', 'FEAT-1.md'), 'utf-8'),
+    const after = parseEntityFile(
+      await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
     );
     expect(after.entries[0].phases.every((phase) => phase.done)).toBe(true);
   });
@@ -153,7 +151,7 @@ describe('startRunAllPhases', () => {
       return ['-e', agentScript.current];
     };
     const commits: number[] = [];
-    const manager = createAgentManager(root, undefined, undefined, async (_p, _ph, i) => {
+    const manager = createAgentManager(root, undefined, async (_p, _ph, i) => {
       commits.push(i);
     });
 
@@ -174,7 +172,7 @@ describe('startRunAllPhases', () => {
     };
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, undefined, onPhaseCommit, onRunComplete);
+    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
@@ -189,7 +187,7 @@ describe('startRunAllPhases', () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = 'process.exit(3)';
     const onPhaseCommit = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, undefined, onPhaseCommit);
+    const manager = createAgentManager(root, undefined, onPhaseCommit);
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
@@ -202,7 +200,7 @@ describe('startRunAllPhases', () => {
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, undefined, onPhaseCommit, onRunComplete);
+    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
 
     manager.startRunAllPhases(plan, async () => false);
     expect(await waitForStatus(manager, settled)).toBe('error');
@@ -243,7 +241,7 @@ describe('startRunAllPhases', () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = 'setTimeout(() => process.exit(0), 5000)';
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, undefined, undefined, onRunComplete);
+    const manager = createAgentManager(root, undefined, undefined, onRunComplete);
 
     manager.startRunAllPhases(plan);
     expect(manager.stop()).toEqual({ ok: true });
@@ -256,11 +254,9 @@ describe('start (single phase)', () => {
   it('finishes cleanly when the agent checks off the phase', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = FLIP_NEXT_CHECKBOX;
-    const ensureBranch = vi.fn();
-    const manager = createAgentManager(root, ensureBranch);
+    const manager = createAgentManager(root);
 
     expect(manager.start(plan, 0)).toEqual({ ok: true });
-    expect(ensureBranch).toHaveBeenCalledOnce();
     expect(await waitForStatus(manager, settled)).toBe('done');
     // The post-run verification is async; give it a beat before asserting no warning.
     await new Promise((resolve) => setTimeout(resolve, 200));
@@ -311,7 +307,7 @@ describe('stop and getStatus', () => {
     expect(state).toMatchObject({
       taskKind: 'run-all',
       planTitle: 'Test plan',
-      planId: 'FEAT-1',
+      planId: 'IDEA-1',
       agentId: 'claude-code',
     });
     await waitForStatus(manager, settled);
@@ -321,9 +317,9 @@ describe('stop and getStatus', () => {
 describe('startBatchAudit', () => {
   // status: review so readAllPlanFiles' candidate filter (review/done) picks it up.
   const PLAN_REVIEW = `---
-id: FEAT-1
+id: IDEA-1
 title: Test plan
-kind: feat
+type: feat
 status: review
 created: 2026-07-01
 ---
@@ -342,16 +338,16 @@ Plan body.
   }
 
   it('skips a plan whose audited-hash still matches its content', async () => {
-    const { body, phases } = parsePlanFile(PLAN_REVIEW).entries[0];
+    const { body, phases } = parseEntityFile(PLAN_REVIEW).entries[0];
     const hash = computePlanContentHash({ body, phases });
     const { root } = await makeRoot(withAuditStamp(PLAN_REVIEW, hash));
     const onAuditComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onAuditComplete);
+    const manager = createAgentManager(root, onAuditComplete);
 
     expect(manager.startBatchAudit()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     const lines = manager.getStatus()?.lines.join('\n');
-    expect(lines).toContain('[skip] FEAT-1 — up to date');
+    expect(lines).toContain('[skip] IDEA-1 — up to date');
     expect(lines).toContain('0 audited, 1 skipped, 0 failed');
     expect(onAuditComplete).not.toHaveBeenCalled();
   });
@@ -360,25 +356,25 @@ Plan body.
     const { root } = await makeRoot(withAuditStamp(PLAN_REVIEW, 'stale-hash-does-not-match'));
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const onAuditComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onAuditComplete);
+    const manager = createAgentManager(root, onAuditComplete);
 
     expect(manager.startBatchAudit()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     const lines = manager.getStatus()?.lines.join('\n');
-    expect(lines).toContain('[audit] FEAT-1 Test plan');
+    expect(lines).toContain('[audit] IDEA-1 Test plan');
     expect(lines).toContain('1 audited, 0 skipped, 0 failed');
-    expect(onAuditComplete).toHaveBeenCalledWith('FEAT-1', 0);
+    expect(onAuditComplete).toHaveBeenCalledWith('IDEA-1', 0);
   });
 
   it('audits a plan that has never been audited (no audited-hash yet)', async () => {
     const { root } = await makeRoot(PLAN_REVIEW);
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const onAuditComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onAuditComplete);
+    const manager = createAgentManager(root, onAuditComplete);
 
     expect(manager.startBatchAudit()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(manager.getStatus()?.lines.join('\n')).not.toContain('[skip]');
-    expect(onAuditComplete).toHaveBeenCalledWith('FEAT-1', 0);
+    expect(onAuditComplete).toHaveBeenCalledWith('IDEA-1', 0);
   });
 });

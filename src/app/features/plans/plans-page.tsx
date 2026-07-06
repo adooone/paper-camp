@@ -4,34 +4,37 @@ import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Button, Card } from '@dendelion/paper-ui';
 import { BoardView } from './components/board-view';
+import { EntityDetail } from './components/entity-detail';
 import { ListView } from './components/list-view';
-import { PlanDetail } from './components/plan-detail';
+import { NoteDetail } from './components/note-detail';
 import { PlansHeader } from './components/plans-header';
-import { selectPlanRows } from './plan-list-selector';
+import { selectWorklistRows } from './plan-list-selector';
 
 export const PlansPage = () => {
   const {
     plans,
     plansError,
+    ideaEntries,
     activePlanTitle,
     setActivePlanTitle,
+    activeIdeaTitle,
+    setActiveIdeaTitle,
     view,
-    agentStatus,
     loadPlans,
     planFilters,
   } = useAppStore();
 
-  const draftingIdeaId =
-    agentStatus?.ideaId && (agentStatus.status === 'starting' || agentStatus.status === 'running')
-      ? agentStatus.ideaId
-      : null;
-
   const handleBack = () => {
     setActivePlanTitle(null);
+    setActiveIdeaTitle(null);
   };
 
   const handleOpenPlan = (title: string) => {
     setActivePlanTitle(title);
+  };
+
+  const handleOpenIdea = (title: string) => {
+    setActiveIdeaTitle(title);
   };
 
   const handleDeleteIdea = async (title: string) => {
@@ -43,6 +46,10 @@ export const PlansPage = () => {
 
   const activePlan = activePlanTitle
     ? plans?.entries.find((p) => p.title === activePlanTitle)
+    : null;
+
+  const activeIdea = activeIdeaTitle
+    ? ideaEntries.find((idea) => idea.title === activeIdeaTitle)
     : null;
 
   if (plansError) {
@@ -74,12 +81,25 @@ export const PlansPage = () => {
             &larr; All plans
           </Button>
         </div>
-        <PlanDetail plan={activePlan} />
+        <EntityDetail plan={activePlan} />
       </div>
     );
   }
 
-  const { rows } = selectPlanRows(plans.entries, planFilters);
+  if (activeIdea) {
+    return (
+      <div>
+        <div style={{ marginBottom: space[4] }}>
+          <Button variant="ghost" size="small" onClick={handleBack}>
+            &larr; All plans
+          </Button>
+        </div>
+        <NoteDetail idea={activeIdea} />
+      </div>
+    );
+  }
+
+  const { rows } = selectWorklistRows(plans.entries, ideaEntries, planFilters);
 
   return (
     <div>
@@ -111,8 +131,8 @@ export const PlansPage = () => {
           rows={rows}
           activePlanTitle={activePlanTitle}
           onOpenPlan={handleOpenPlan}
+          onOpenIdea={handleOpenIdea}
           onDeleteIdea={handleDeleteIdea}
-          draftingIdeaId={draftingIdeaId}
         />
       )}
     </div>

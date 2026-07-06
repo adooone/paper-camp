@@ -8,7 +8,7 @@ export const NewIdeaButton = () => {
   const loadIdeas = useAppStore((s) => s.loadIdeas);
   const [open, setOpen] = useState(false);
 
-  const handleAdd = async (idea: { title: string; content?: string }) => {
+  const handleAdd = async (idea: { title: string; content?: string; kind?: 'idea' | 'note' }) => {
     await createIdea(idea);
     await loadIdeas();
     setOpen(false);

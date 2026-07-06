@@ -1,4 +1,4 @@
-import type { PlanEntry, PlanStatus } from '@/types/index';
+import type { IdeaStatus, PlanEntry, PlanStatus } from '@/types/index';
 
 export const STATUS_COLOR: Record<PlanEntry['status'], string> = {
   'in-progress': '#C89A5A',
@@ -35,6 +35,19 @@ export const STATUS_STAMP: Record<PlanEntry['status'], { fill: string; text: str
   planned: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
   'in-progress': { fill: 'rgba(212, 163, 115, 0.25)', text: '#A67B4F' },
   review: { fill: 'rgba(155, 122, 181, 0.25)', text: '#7B5E9E' },
+  done: { fill: 'rgba(168, 155, 168, 0.25)', text: '#6E5E6E' },
+  dropped: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
+};
+
+// Manual status stamp for `kind: note` ideas only — plan-bearing ideas carry no status.
+export const IDEA_STATUS_LABEL: Record<IdeaStatus, string> = {
+  open: 'Open',
+  done: 'Done',
+  dropped: 'Dropped',
+};
+
+export const IDEA_STATUS_STAMP: Record<IdeaStatus, { fill: string; text: string }> = {
+  open: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
   done: { fill: 'rgba(168, 155, 168, 0.25)', text: '#6E5E6E' },
   dropped: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
 };

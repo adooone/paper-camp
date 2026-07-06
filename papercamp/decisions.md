@@ -1,3 +1,91 @@
+## Branch management is manual
+
+**Date:** 2026-07-05
+**Status:** decided
+
+**Context:** Launching an agent task (single phase or run-all) auto-ran
+`ensureBranch`, which creates the plan's branch *from main* and checks it out.
+Mid-plan that silently yanks the user off their real working branch — surfaced
+when starting `FEAT-42`'s last phase from the UI created a stray
+`feat/idea-43-…` branch off main while the actual work lived on
+`feat/feat-42-…`. The `done`/`dropped` archive path had the same auto-call.
+
+**Decision:** Nothing in the app switches git branches on its own. Agent
+launches and status changes run on whatever branch is checked out. Instead,
+the entity detail surfaces branch state: an amber working-branch alert when a
+`planned`/`in-progress`/`review` entity is open on a branch that isn't its own
+(matched by the entity id the branch name encodes), with a manual
+"Create branch" button — `POST /api/git/branch`, calling the same
+`ensureBranch` helper, now user-initiated — plus a muted confirmation line
+when the branch already matches.
+
+**Rationale:** A branch switch changes workspace state the user is standing
+in; doing it as a side effect of "run this phase" is exactly the kind of
+surprise the alert can prevent without the automation. The helper and its
+branch-naming convention survive unchanged — only who pulls the trigger moved.
+
+## Entity ids are lifetime IDEA-N
+
+**Date:** 2026-07-05
+**Status:** decided
+
+**Context:** `IDEA-43`'s single-file evolution merges ideas and plans into one entity
+("idea" for life, plan as a section), which forces the id question: today ideas are
+`IDEA-N` and plans are `<KIND>-<N>` (`FEAT-42`, `FIX-2`, …), and the git/GitHub surface
+— branch names, commit `Refs:` footers, the draft-PR "Plan:" line, `FEAT-36`'s planned
+PR mirror — keys off the plan form. Keeping both would mean an entity changes identity
+mid-life (or carries two ids), reintroducing exactly the split the merge kills.
+
+**Decision:** One id space, one lifetime id: every entity is `IDEA-N` from capture to
+done, unchanged when its plan section lands. `type` (feat/fix/…) carries the
+Conventional-Commits meaning ids used to encode — commit types and branch prefixes
+come from it (`feat/idea-99-…`), and `Refs:` footers carry the `IDEA-N`. The per-kind
+`nextId` counters in `config.json` collapse into a single idea counter. How migrated
+legacy entities map onto this space (pairs keeping the idea's id, orphan plans getting
+minted ids, multi-plan splits) is specified in the migration plan, not here.
+
+**Rationale:** The id's job is stable reference, not classification — kind/type is
+frontmatter and can change (a "feat" that turns out to be a "fix") without breaking
+every reference to the entity. A single lifetime id is also what makes "the idea *is*
+the plan file" honest: nothing about the entity's identity changes when it matures.
+
+## Ideas and plans merge into one worklist; ideas carry no tracked status
+
+**Date:** 2026-07-05
+**Status:** decided
+
+**Context:** `FEAT-42` unifies the `/` plans list and the standalone `/ideas` list
+into one worklist: idea rows render as group parents (lightbulb icon, title,
+Extend/Draft-plan actions, a derived "2/3 plans done" children summary) with
+their linked plans nested beneath via the existing `idea:` backlink, and plans
+without an idea stay top-level. This directly supersedes the 2026-06-19 decision
+to split the sidebar into separate "Ideas" and "Backlog" sections, and
+generalizes the 2026-07-03 "Planless ideas close via explicit frontmatter
+status" decision from a single escape hatch (`status: done`) into a proper
+`kind: note` asymmetry (`open → done/dropped`, enforced by
+`ideaFrontmatterSchema`) for ideas that never need a plan.
+
+**Decision:** The `/ideas` list route and its header nav item are removed;
+`ideas-page.tsx` and `ideas-board.tsx` are deleted since the unified `/` list
+(via `plans-page.tsx`'s `activeIdeaTitle`/`IdeaDetail` branch, landed in phase 4)
+already renders both the worklist and idea detail. `NewIdeaButton` (title
+"New idea", refine-first — its modal now has a note toggle setting
+`kind: 'note'`) and `AddToBacklogButton` (relabeled "Quick plan" — today's
+plan-first creation, unchanged behavior) both move into `plans-header.tsx`'s
+toolbar. `FEAT-40`'s per-item idea-detail address is unaffected by this
+removal — that plan hadn't landed a `/ideas/$id` param route yet at the time
+of this change (idea detail was always store-state driven, not a URL route),
+so there was no separate detail route to preserve; when FEAT-40 adds param
+routes later, `/ideas/$ideaId` can point at the same unified page.
+
+**Rationale:** Two lists implied two workflows, but ideas were always meant to
+funnel into plans — keeping them as a separate top-level list understated that
+relationship and duplicated list chrome (header, filters, row language) for no
+benefit once the group-aware tree selector (phase 3) and renderer (phase 4)
+existed to show both in one place. Superseding the Ideas/Backlog sidebar split
+outright (rather than leaving it stale) keeps `decisions.md` from contradicting
+the shipped UI.
+
 ## Dense lists are row cards, not paper-ui Table
 
 **Date:** 2026-07-04

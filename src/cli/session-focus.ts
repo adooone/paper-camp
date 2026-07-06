@@ -2,7 +2,7 @@ import { findFocusPlan } from '../app/features/plans/helpers';
 import { createGitManager } from '../app/server/git';
 import { campFile, fileExists, readMaybe } from '../app/server/helpers';
 import { parseProgress } from '../core/parser';
-import { readPlansMerged } from '../core/readers';
+import { readWorkEntries } from '../core/readers';
 import type { PlanEntry } from '../types/index';
 
 function renderPlanLine(plan: PlanEntry): string {
@@ -24,9 +24,9 @@ function renderPlanLine(plan: PlanEntry): string {
  * plans/log it's summarizing.
  */
 export async function buildSessionFocus(root: string): Promise<string | null> {
-  if (!(await fileExists(campFile(root, 'plans')))) return null;
+  if (!(await fileExists(campFile(root, 'ideas')))) return null;
 
-  const { entries } = await readPlansMerged(campFile(root, 'plans'), campFile(root, 'plans.md'));
+  const { entries } = await readWorkEntries(campFile(root, 'ideas'));
   const git = createGitManager(root, { watch: false });
   const branchPlanId = git.getFeatureBranchPlanId();
   const plan =

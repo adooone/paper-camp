@@ -1,10 +1,10 @@
 import { join } from 'node:path';
 import { computePlanContentHash } from '../../core/content-hash';
-import { parsePlanFile } from '../../core/parser';
+import { parseEntityFile } from '../../core/parser';
 import { prependProgressItem as prependProgressLine, todayDateString } from '../../core/serializer';
 import type { PhaseItem, PlanEntry } from '../../types/index';
 import type { GitManager } from './git';
-import { campFile, fileExists, planFileInput, readMaybe, writePlanFile } from './helpers';
+import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 
 // Valid commit scopes — keep in sync with .commitlintrc.json's `scope-enum`.
 // The agent derives its commit scope from a plan's tags, but tags are free-form
@@ -47,26 +47,26 @@ export function createAgentHooks(root: string, git: GitManager) {
   }
 
   async function stampAuditDate(planId: string, gapPhases: number): Promise<void> {
-    const plansDir = campFile(root, 'plans');
-    // Batch audit can touch archived (done/dropped) plans too — resolve the
+    const ideasDir = campFile(root, 'ideas');
+    // Batch audit can touch archived (done/dropped) entities too — resolve the
     // actual file so those get stamped instead of re-audited every run.
-    const directPlanFile = join(plansDir, `${planId}.md`);
-    const archivedPlanFile = join(plansDir, 'archive', `${planId}.md`);
-    const planFile = (await fileExists(directPlanFile))
-      ? directPlanFile
-      : (await fileExists(archivedPlanFile))
-        ? archivedPlanFile
+    const directFile = join(ideasDir, `${planId}.md`);
+    const archivedFile = join(ideasDir, 'archive', `${planId}.md`);
+    const planFile = (await fileExists(directFile))
+      ? directFile
+      : (await fileExists(archivedFile))
+        ? archivedFile
         : null;
     if (!planFile) return;
     const raw = await readMaybe(planFile);
     if (!raw) return;
-    const parsed = parsePlanFile(raw);
+    const parsed = parseEntityFile(raw);
     if (parsed.entries.length === 0) return;
     const entry = parsed.entries[0];
     const auditedHash = computePlanContentHash({ body: entry.body, phases: entry.phases });
-    await writePlanFile(
+    await writeEntityFile(
       planFile,
-      planFileInput(entry, { id: planId, audited: todayDateString(), auditedHash }),
+      entityFileInput(entry, { audited: todayDateString(), auditedHash }),
     );
     if (gapPhases > 0) {
       const label = `gap phase${gapPhases === 1 ? '' : 's'}`;
@@ -88,18 +88,17 @@ export function createAgentHooks(root: string, git: GitManager) {
 
   async function setRunReview(plan: PlanEntry): Promise<void> {
     if (!plan.id) return;
-    const plansDir = campFile(root, 'plans');
-    const planFile = join(plansDir, `${plan.id}.md`);
+    const ideasDir = campFile(root, 'ideas');
+    const planFile = join(ideasDir, `${plan.id}.md`);
     const raw = await readMaybe(planFile);
     if (!raw) return;
-    const parsed = parsePlanFile(raw);
+    const parsed = parseEntityFile(raw);
     if (parsed.entries.length === 0) return;
     const entry = parsed.entries[0];
     if (entry.status === 'review' || entry.status === 'done' || entry.status === 'dropped') return;
-    await writePlanFile(
+    await writeEntityFile(
       planFile,
-      planFileInput(entry, {
-        id: entry.id ?? plan.id,
+      entityFileInput(entry, {
         status: 'review',
         updated: todayDateString(),
       }),
@@ -107,7 +106,7 @@ export function createAgentHooks(root: string, git: GitManager) {
     const area = resolveCommitScope(plan);
     const refs = plan.id ? `Refs: ${plan.id}` : undefined;
     await git.stageAll();
-    await git.commit([], `${entry.kind ?? 'feat'}(${area}): mark ${plan.id} review`, refs, {
+    await git.commit([], `${entry.type ?? 'feat'}(${area}): mark ${plan.id} review`, refs, {
       noVerify: true,
     });
   }

@@ -50,7 +50,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Add to backlog" size="small">
+    <Modal open={open} onClose={onClose} title="Quick plan" size="small">
       <form
         onSubmit={handleSubmit}
         style={{ display: 'flex', flexDirection: 'column', gap: space[4] }}

@@ -12,6 +12,9 @@ interface PlanRowsProps {
   onOpen?: (title: string) => void;
   /** Backlog-only: deletes a plan still in "idea" status. Adds a trailing column. */
   onDeleteIdea?: (title: string) => void;
+  /** FEAT-42: worklist-rows.tsx nests this under an idea-group header, which already
+   * carries its own header row — set false there so it isn't repeated per group. */
+  showHeader?: boolean;
 }
 
 const headerLabelStyle: React.CSSProperties = {
@@ -29,22 +32,30 @@ const headerLabelStyle: React.CSSProperties = {
  * the title owns the space, status is a Stamp, and any editing (including
  * status changes) happens inside the plan the row opens.
  */
-export const PlanRows = ({ plans, activePlanTitle, onOpen, onDeleteIdea }: PlanRowsProps) => {
+export const PlanRows = ({
+  plans,
+  activePlanTitle,
+  onOpen,
+  onDeleteIdea,
+  showHeader = true,
+}: PlanRowsProps) => {
   const gridClass = onDeleteIdea ? 'plan-rows-grid plan-rows-grid--deletable' : 'plan-rows-grid';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
-      <Card size="small" texture="kraft" className="plan-row-card">
-        <div className={gridClass}>
-          <span style={headerLabelStyle}>Id</span>
-          <span style={headerLabelStyle}>Title</span>
-          <span className="plan-rows-cell-updated" style={headerLabelStyle}>
-            Updated
-          </span>
-          <span style={headerLabelStyle}>Progress</span>
-          <span style={headerLabelStyle}>Status</span>
-          {onDeleteIdea && <span style={headerLabelStyle} />}
-        </div>
-      </Card>
+      {showHeader && (
+        <Card size="small" texture="kraft" className="plan-row-card">
+          <div className={gridClass}>
+            <span style={headerLabelStyle}>Id</span>
+            <span style={headerLabelStyle}>Title</span>
+            <span className="plan-rows-cell-updated" style={headerLabelStyle}>
+              Updated
+            </span>
+            <span style={headerLabelStyle}>Progress</span>
+            <span style={headerLabelStyle}>Status</span>
+            {onDeleteIdea && <span style={headerLabelStyle} />}
+          </div>
+        </Card>
+      )}
       {plans.map((plan) => {
         const progress = phaseProgress(plan);
         return (

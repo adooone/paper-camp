@@ -1,13 +1,25 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { IdeaEntry, ParseResult, ParseWarning, PlanEntry } from '../types/index';
-import { parseIdeaFile, parseIdeas, parsePlanFile, parsePlans } from './parser';
+import type {
+  EntityEntry,
+  IdeaEntry,
+  IdeaStatus,
+  ParseResult,
+  ParseWarning,
+  PlanEntry,
+  PlanStatus,
+} from '../types/index';
+import { parseEntityFile } from './parser';
 
 // ---------------------------------------------------------------------------
-// Per-file readers  (read all plan/idea files from a directory)
+// Unified entity reader  (FEAT-42 phases 8–9: one corpus under papercamp/ideas/,
+// one file per entity — an "idea" for its whole life, plan as a Phases section.)
 //
 // Everything here touches the filesystem; the pure string -> data parsing it
-// builds on lives in parser.ts.
+// builds on lives in parser.ts. The legacy two-file readers
+// (readPlansMerged/readIdeasMerged and the per-dir scanners) retired with the
+// migration; `paper-camp migrate` reads legacy shapes through the old parsers
+// directly.
 // ---------------------------------------------------------------------------
 
 async function readdirMaybe(dir: string): Promise<string[]> {
@@ -27,28 +39,26 @@ async function readFileMaybe(path: string): Promise<string> {
 }
 
 /**
- * Reads all per-file plans from a directory, including its `archive/` subdirectory
- * (done/dropped plans live there — see core/serializer.ts's archive move). Excludes
- * index.md in either directory.
- * Returns empty result if the directory doesn't exist or has no plan files.
+ * Reads every entity from the unified directory, including its `archive/`
+ * subdirectory (done/dropped entities live there). Excludes index.md.
  */
-export async function readAllPlanFiles(
-  plansDir: string,
-): Promise<ParseResult<PlanEntry> & { fileCount: number }> {
-  const entries: PlanEntry[] = [];
+export async function readEntities(
+  ideasDir: string,
+): Promise<ParseResult<EntityEntry> & { fileCount: number }> {
+  const entries: EntityEntry[] = [];
   const warnings: ParseWarning[] = [];
   let fileCount = 0;
 
-  for (const dir of [plansDir, join(plansDir, 'archive')]) {
+  for (const dir of [ideasDir, join(ideasDir, 'archive')]) {
     const files = (await readdirMaybe(dir)).filter((f) => f.endsWith('.md') && f !== 'index.md');
     fileCount += files.length;
     for (const file of files) {
       const content = await readFileMaybe(join(dir, file));
       if (!content) {
-        warnings.push({ title: file, message: 'Could not read plan file' });
+        warnings.push({ title: file, message: 'Could not read entity file' });
         continue;
       }
-      const result = parsePlanFile(content);
+      const result = parseEntityFile(content);
       entries.push(...result.entries);
       warnings.push(...result.warnings);
     }
@@ -58,104 +68,56 @@ export async function readAllPlanFiles(
 }
 
 /**
- * Reads all per-file ideas from a directory (non-recursive, excludes index.md).
+ * PlanEntry view of a work entity (anything that isn't a note): `kind` is the
+ * entity's `type`. Lets the plan-shaped pipeline (API responses, prompts, UI)
+ * keep working until the UI morphs to entities directly.
  */
-export async function readAllIdeaFiles(
-  ideasDir: string,
-): Promise<ParseResult<IdeaEntry> & { fileCount: number }> {
-  const entries: IdeaEntry[] = [];
-  const warnings: ParseWarning[] = [];
-
-  const files = (await readdirMaybe(ideasDir)).filter((f) => f.endsWith('.md') && f !== 'index.md');
-
-  for (const file of files) {
-    const content = await readFileMaybe(join(ideasDir, file));
-    if (!content) {
-      warnings.push({ title: file, message: 'Could not read idea file' });
-      continue;
-    }
-    const result = parseIdeaFile(content);
-    entries.push(...result.entries);
-    warnings.push(...result.warnings);
-  }
-
-  return { entries, warnings, fileCount: files.length };
-}
-
-/**
- * Merges per-file plan entries with monolithic fallback, deduplicating by id/title.
- * Per-file entries take precedence; any plan in per-file that also exists in
- * the monolithic file is only included once (per-file version wins).
- */
-export async function readPlansMerged(
-  plansDir: string,
-  monolithicPath: string,
-): Promise<ParseResult<PlanEntry>> {
-  const [perFileResult, monoRaw] = await Promise.all([
-    readAllPlanFiles(plansDir),
-    readFileMaybe(monolithicPath),
-  ]);
-
-  if (perFileResult.fileCount === 0) {
-    return parsePlans(monoRaw);
-  }
-
-  const monoResult = parsePlans(monoRaw);
-  const seen = new Set<string>();
-  for (const e of perFileResult.entries) {
-    seen.add(e.id ?? e.title);
-  }
-  const dedupedMono = monoResult.entries.filter((e) => {
-    const key = e.id ?? e.title;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
+export function entityToPlan(e: EntityEntry): PlanEntry {
   return {
-    entries: [...perFileResult.entries, ...dedupedMono],
-    warnings: [...monoResult.warnings, ...perFileResult.warnings],
+    title: e.title,
+    // Non-note entities can't carry the note-only 'open' (schema-enforced).
+    status: e.status as PlanStatus,
+    kind: e.type,
+    id: e.id,
+    agent: e.agent,
+    created: e.created,
+    updated: e.updated,
+    audited: e.audited,
+    auditedHash: e.auditedHash,
+    tags: e.tags,
+    body: e.body,
+    phases: e.phases,
+    log: e.log,
+    clarifications: e.clarifications,
   };
 }
 
-/**
- * Merges per-file idea entries with monolithic fallback, deduplicating by id.
- */
-export async function readIdeasMerged(
-  ideasDir: string,
-  monolithicPath: string,
-): Promise<ParseResult<IdeaEntry>> {
-  const [perFileResult, monoRaw] = await Promise.all([
-    readAllIdeaFiles(ideasDir),
-    readFileMaybe(monolithicPath),
-  ]);
-
-  if (perFileResult.fileCount === 0 && !monoRaw) {
-    return { entries: [], warnings: perFileResult.warnings };
-  }
-
-  if (perFileResult.fileCount === 0) {
-    return { entries: parseIdeas(monoRaw), warnings: perFileResult.warnings };
-  }
-
-  if (!monoRaw) {
-    return perFileResult;
-  }
-
-  const monoEntries = parseIdeas(monoRaw);
-  const seen = new Set<string>();
-  for (const e of perFileResult.entries) {
-    if (e.id) seen.add(e.id);
-  }
-  const dedupedMono = monoEntries.filter((e) => {
-    if (!e.id) return true;
-    if (seen.has(e.id)) return false;
-    seen.add(e.id);
-    return true;
-  });
-
+/** IdeaEntry view of a note entity, for the note-shaped API/UI surface. */
+export function entityToIdea(e: EntityEntry): IdeaEntry {
   return {
-    entries: [...perFileResult.entries, ...dedupedMono],
-    warnings: [...perFileResult.warnings],
+    id: e.id,
+    title: e.title,
+    body: e.body,
+    kind: 'note',
+    status: e.status as IdeaStatus,
+    log: e.log,
+  };
+}
+
+/** All work entities (non-notes) in PlanEntry shape — the `/api/plans` view. */
+export async function readWorkEntries(ideasDir: string): Promise<ParseResult<PlanEntry>> {
+  const { entries, warnings } = await readEntities(ideasDir);
+  return {
+    entries: entries.filter((e) => e.kind !== 'note').map(entityToPlan),
+    warnings,
+  };
+}
+
+/** All note entities in IdeaEntry shape — the `/api/ideas` view. */
+export async function readNoteEntries(ideasDir: string): Promise<ParseResult<IdeaEntry>> {
+  const { entries, warnings } = await readEntities(ideasDir);
+  return {
+    entries: entries.filter((e) => e.kind === 'note').map(entityToIdea),
+    warnings,
   };
 }

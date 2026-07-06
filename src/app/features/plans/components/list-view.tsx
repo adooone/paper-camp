@@ -1,16 +1,16 @@
 import { space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { useEffect, useRef } from 'react';
-import { PlanCardSkeleton } from './plan-card-skeleton';
-import { PlanRows } from './plan-rows';
+import type { WorklistRow } from '../plan-list-selector';
+import { WorklistRows } from './worklist-rows';
 
 interface ListViewProps {
   plans: PlanEntry[];
-  rows: PlanEntry[];
+  rows: WorklistRow[];
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
+  onOpenIdea?: (title: string) => void;
   onDeleteIdea?: (title: string) => void;
-  draftingIdeaId?: string | null;
 }
 
 export const ListView = ({
@@ -18,8 +18,8 @@ export const ListView = ({
   rows,
   activePlanTitle,
   onOpenPlan,
+  onOpenIdea,
   onDeleteIdea,
-  draftingIdeaId,
 }: ListViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -29,31 +29,24 @@ export const ListView = ({
     row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [activePlanTitle]);
 
-  const showSkeleton = Boolean(draftingIdeaId) && !plans.some((p) => p.idea === draftingIdeaId);
-
   return (
     <div ref={containerRef}>
-      {showSkeleton && draftingIdeaId && (
-        <div style={{ marginBottom: space[3] }}>
-          <PlanCardSkeleton ideaId={draftingIdeaId} />
-        </div>
-      )}
       {rows.length > 0 ? (
-        <PlanRows
-          plans={rows}
+        <WorklistRows
+          rows={rows}
+          plans={plans}
           activePlanTitle={activePlanTitle}
-          onOpen={onOpenPlan}
+          onOpenPlan={onOpenPlan}
+          onOpenIdea={onOpenIdea}
           onDeleteIdea={onDeleteIdea}
         />
       ) : (
         // Plans exist but the active filters/search matched none. Without this the
         // list renders blank — PlansPage only handles the "no plans at all" case.
         // Show an explicit empty state instead (docs/UX_PRINCIPLES.md).
-        !showSkeleton && (
-          <p style={{ opacity: 0.5, padding: `${space[6]} 0`, textAlign: 'center' }}>
-            No plans match your filters.
-          </p>
-        )
+        <p style={{ opacity: 0.5, padding: `${space[6]} 0`, textAlign: 'center' }}>
+          No plans match your filters.
+        </p>
       )}
     </div>
   );

@@ -31,11 +31,10 @@ async function makeRoot(): Promise<string> {
   git(root, 'config', 'user.email', 'test@example.com');
   git(root, 'config', 'user.name', 'Test User');
   git(root, 'config', 'commit.gpgsign', 'false');
-  await mkdir(join(root, 'papercamp', 'plans'), { recursive: true });
-  await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+  await mkdir(join(root, 'papercamp', 'ideas', 'archive'), { recursive: true });
   await writeFile(
     join(root, 'papercamp', 'config.json'),
-    `${JSON.stringify({ nextId: { feat: 1, fix: 1, chore: 1, docs: 1, refactor: 1 } }, null, 2)}\n`,
+    `${JSON.stringify({ nextId: { idea: 1 } }, null, 2)}\n`,
   );
   await writeFile(join(root, 'README.md'), 'hello\n');
   git(root, 'add', '.');
@@ -44,7 +43,7 @@ async function makeRoot(): Promise<string> {
 }
 
 async function writePlan(root: string, id: string, contents: string): Promise<void> {
-  await writeFile(join(root, 'papercamp', 'plans', `${id}.md`), contents);
+  await writeFile(join(root, 'papercamp', 'ideas', `${id}.md`), contents);
 }
 
 function planFile(opts: {
@@ -57,7 +56,7 @@ function planFile(opts: {
   return `---
 id: ${id}
 title: ${title}
-kind: feat
+type: feat
 status: ${status}
 created: 2026-07-01
 ---
@@ -82,28 +81,28 @@ async function connect(root: string, gitManager: GitManager): Promise<Client> {
 describe('read tools', () => {
   it('list_plans returns per-file plans', async () => {
     const root = await makeRoot();
-    await writePlan(root, 'FEAT-1', planFile({ id: 'FEAT-1', title: 'First plan' }));
+    await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'First plan' }));
     const client = await connect(root, createGitManager(root, { watch: false }));
 
     const result = await client.callTool({ name: 'list_plans', arguments: {} });
     expect(result.isError).toBeFalsy();
     expect(result.structuredContent).toMatchObject({
-      entries: [expect.objectContaining({ id: 'FEAT-1', title: 'First plan' })],
+      entries: [expect.objectContaining({ id: 'IDEA-1', title: 'First plan' })],
       warnings: [],
     });
   });
 
   it('get_plan finds a plan by id and returns null for an unknown id', async () => {
     const root = await makeRoot();
-    await writePlan(root, 'FEAT-1', planFile({ id: 'FEAT-1', title: 'First plan' }));
+    await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'First plan' }));
     const client = await connect(root, createGitManager(root, { watch: false }));
 
-    const found = await client.callTool({ name: 'get_plan', arguments: { id: 'FEAT-1' } });
+    const found = await client.callTool({ name: 'get_plan', arguments: { id: 'IDEA-1' } });
     expect(found.structuredContent).toMatchObject({
-      entry: expect.objectContaining({ id: 'FEAT-1', title: 'First plan' }),
+      entry: expect.objectContaining({ id: 'IDEA-1', title: 'First plan' }),
     });
 
-    const missing = await client.callTool({ name: 'get_plan', arguments: { id: 'FEAT-99' } });
+    const missing = await client.callTool({ name: 'get_plan', arguments: { id: 'IDEA-99' } });
     expect(missing.structuredContent).toEqual({ entry: null });
   });
 
@@ -143,7 +142,12 @@ describe('write tools', () => {
     const root = await makeRoot();
     await writeFile(
       join(root, 'papercamp', 'ideas', 'IDEA-1.md'),
-      '---\nid: IDEA-1\ntitle: Old\n---\n',
+      '---\nid: IDEA-1\ntitle: Old\nstatus: idea\ncreated: 2026-07-01\n---\n',
+    );
+    // Ids mint from the unified counter (not max-existing) — seed it past IDEA-1.
+    await writeFile(
+      join(root, 'papercamp', 'config.json'),
+      `${JSON.stringify({ nextId: { idea: 2 } }, null, 2)}\n`,
     );
     const client = await connect(root, createGitManager(root, { watch: false }));
 
@@ -171,23 +175,23 @@ describe('write tools', () => {
       arguments: { title: 'Brand new plan', content: 'Plan body.' },
     });
     expect(result.isError).toBeFalsy();
-    expect(result.structuredContent).toEqual({ ok: true, id: 'FEAT-1' });
+    expect(result.structuredContent).toEqual({ ok: true, id: 'IDEA-1' });
 
-    const written = await readFile(join(root, 'papercamp', 'plans', 'FEAT-1.md'), 'utf-8');
+    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(written).toContain('title: Brand new plan');
     expect(written).toContain('status: idea');
 
-    const index = await readFile(join(root, 'papercamp', 'plans', 'index.md'), 'utf-8');
-    expect(index).toContain('FEAT-1');
+    const index = await readFile(join(root, 'papercamp', 'ideas', 'index.md'), 'utf-8');
+    expect(index).toContain('IDEA-1');
   });
 
   it('update_phase toggles the phase by index and regenerates the index', async () => {
     const root = await makeRoot();
     await writePlan(
       root,
-      'FEAT-1',
+      'IDEA-1',
       planFile({
-        id: 'FEAT-1',
+        id: 'IDEA-1',
         title: 'Two-phase plan',
         phases: ['- [ ] First phase', '- [ ] Second phase'],
       }),
@@ -196,12 +200,12 @@ describe('write tools', () => {
 
     const result = await client.callTool({
       name: 'update_phase',
-      arguments: { id: 'FEAT-1', phaseIndex: 0, done: true },
+      arguments: { id: 'IDEA-1', phaseIndex: 0, done: true },
     });
     expect(result.isError).toBeFalsy();
     expect(result.structuredContent).toEqual({ ok: true });
 
-    const written = await readFile(join(root, 'papercamp', 'plans', 'FEAT-1.md'), 'utf-8');
+    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(written).toContain('- [x] First phase');
     expect(written).toContain('- [ ] Second phase');
   });
@@ -210,22 +214,22 @@ describe('write tools', () => {
     const root = await makeRoot();
     await writePlan(
       root,
-      'FEAT-1',
-      planFile({ id: 'FEAT-1', title: 'Nearly done plan', phases: ['- [ ] Only phase'] }),
+      'IDEA-1',
+      planFile({ id: 'IDEA-1', title: 'Nearly done plan', phases: ['- [ ] Only phase'] }),
     );
     const client = await connect(root, createGitManager(root, { watch: false }));
 
     const result = await client.callTool({
       name: 'update_phase',
-      arguments: { id: 'FEAT-1', phaseIndex: 0, done: true, status: 'done' },
+      arguments: { id: 'IDEA-1', phaseIndex: 0, done: true, status: 'done' },
     });
     expect(result.isError).toBeFalsy();
 
     await expect(
-      readFile(join(root, 'papercamp', 'plans', 'FEAT-1.md'), 'utf-8'),
+      readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
     ).rejects.toThrow();
     const archived = await readFile(
-      join(root, 'papercamp', 'plans', 'archive', 'FEAT-1.md'),
+      join(root, 'papercamp', 'ideas', 'archive', 'IDEA-1.md'),
       'utf-8',
     );
     expect(archived).toContain('status: done');
@@ -278,12 +282,12 @@ describe('branch-conflict guard', () => {
     const root = await makeRoot();
     await writePlan(
       root,
-      'FEAT-1',
-      planFile({ id: 'FEAT-1', title: 'In-flight plan', status: 'in-progress' }),
+      'IDEA-1',
+      planFile({ id: 'IDEA-1', title: 'In-flight plan', status: 'in-progress' }),
     );
     git(root, 'add', '.');
-    git(root, 'commit', '-m', 'add FEAT-1');
-    git(root, 'checkout', '-b', 'feat/feat-1-in-flight-plan');
+    git(root, 'commit', '-m', 'add IDEA-1');
+    git(root, 'checkout', '-b', 'feat/idea-1-in-flight-plan');
     const client = await connect(root, createGitManager(root, { watch: false }));
 
     const result = await client.callTool({
@@ -292,29 +296,29 @@ describe('branch-conflict guard', () => {
     });
     expect(result.isError).toBe(true);
 
-    const plansDir = join(root, 'papercamp', 'plans');
+    const plansDir = join(root, 'papercamp', 'ideas');
     const { readdir } = await import('node:fs/promises');
-    expect((await readdir(plansDir)).filter((f) => f.endsWith('.md'))).toEqual(['FEAT-1.md']);
+    expect((await readdir(plansDir)).filter((f) => f.endsWith('.md'))).toEqual(['IDEA-1.md']);
   });
 
   it("allows update_phase to advance the branch's own active plan", async () => {
     const root = await makeRoot();
     await writePlan(
       root,
-      'FEAT-1',
-      planFile({ id: 'FEAT-1', title: 'In-flight plan', status: 'in-progress' }),
+      'IDEA-1',
+      planFile({ id: 'IDEA-1', title: 'In-flight plan', status: 'in-progress' }),
     );
     git(root, 'add', '.');
-    git(root, 'commit', '-m', 'add FEAT-1');
-    git(root, 'checkout', '-b', 'feat/feat-1-in-flight-plan');
+    git(root, 'commit', '-m', 'add IDEA-1');
+    git(root, 'checkout', '-b', 'feat/idea-1-in-flight-plan');
     const client = await connect(root, createGitManager(root, { watch: false }));
 
     const result = await client.callTool({
       name: 'update_phase',
-      arguments: { id: 'FEAT-1', phaseIndex: 0, done: true },
+      arguments: { id: 'IDEA-1', phaseIndex: 0, done: true },
     });
     expect(result.isError).toBeFalsy();
-    const written = await readFile(join(root, 'papercamp', 'plans', 'FEAT-1.md'), 'utf-8');
+    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(written).toContain('- [x] First phase');
   });
 
@@ -322,26 +326,26 @@ describe('branch-conflict guard', () => {
     const root = await makeRoot();
     await writePlan(
       root,
-      'FEAT-1',
-      planFile({ id: 'FEAT-1', title: 'In-flight plan', status: 'in-progress' }),
+      'IDEA-1',
+      planFile({ id: 'IDEA-1', title: 'In-flight plan', status: 'in-progress' }),
     );
     await writePlan(
       root,
-      'FEAT-2',
-      planFile({ id: 'FEAT-2', title: 'Other plan', status: 'planned' }),
+      'IDEA-2',
+      planFile({ id: 'IDEA-2', title: 'Other plan', status: 'planned' }),
     );
     git(root, 'add', '.');
     git(root, 'commit', '-m', 'add plans');
-    git(root, 'checkout', '-b', 'feat/feat-1-in-flight-plan');
+    git(root, 'checkout', '-b', 'feat/idea-1-in-flight-plan');
     const client = await connect(root, createGitManager(root, { watch: false }));
 
     const result = await client.callTool({
       name: 'update_phase',
-      arguments: { id: 'FEAT-2', phaseIndex: 0, done: true },
+      arguments: { id: 'IDEA-2', phaseIndex: 0, done: true },
     });
     expect(result.isError).toBe(true);
 
-    const written = await readFile(join(root, 'papercamp', 'plans', 'FEAT-2.md'), 'utf-8');
+    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), 'utf-8');
     expect(written).toContain('- [ ] First phase');
   });
 });

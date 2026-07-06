@@ -1,210 +1,119 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
-import { readAllIdeaFiles, readAllPlanFiles, readIdeasMerged, readPlansMerged } from './readers';
+import { describe, expect, it } from 'vitest';
+import {
+  entityToIdea,
+  entityToPlan,
+  readEntities,
+  readNoteEntries,
+  readWorkEntries,
+} from './readers';
+import { formatEntityFile } from './serializer';
 
-const roots: string[] = [];
+function makeCorpus(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'entities-'));
+  mkdirSync(join(dir, 'archive'), { recursive: true });
 
-afterAll(async () => {
-  await Promise.all(roots.map((root) => rm(root, { recursive: true, force: true })));
-});
-
-async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'papercamp-readers-test-'));
-  roots.push(root);
-  return root;
+  writeFileSync(
+    join(dir, 'IDEA-1.md'),
+    `${formatEntityFile({
+      id: 'IDEA-1',
+      title: 'Active work',
+      type: 'feat',
+      status: 'in-progress',
+      created: '2026-07-01',
+      tags: ['core'],
+      body: 'Doing things.',
+      phases: [
+        { text: 'One', done: true },
+        { text: 'Two', done: false },
+      ],
+    })}\n`,
+  );
+  writeFileSync(
+    join(dir, 'IDEA-2.md'),
+    `${formatEntityFile({
+      id: 'IDEA-2',
+      title: 'A note',
+      kind: 'note',
+      status: 'open',
+      created: '2026-07-02',
+      body: 'Reference material.',
+    })}\n`,
+  );
+  writeFileSync(
+    join(dir, 'archive', 'IDEA-3.md'),
+    `${formatEntityFile({
+      id: 'IDEA-3',
+      title: 'Shipped work',
+      type: 'fix',
+      status: 'done',
+      created: '2026-06-01',
+      body: 'It was fixed.',
+    })}\n`,
+  );
+  writeFileSync(join(dir, 'index.md'), '# Ideas\n\n| Id |\n');
+  return dir;
 }
 
-function planFile(id: string, title: string, status = 'planned'): string {
-  return `---
-id: ${id}
-title: ${title}
-kind: feat
-status: ${status}
-created: 2026-07-01
----
-Body of ${id}.
-`;
-}
-
-function ideaFile(id: string, title: string): string {
-  return `---
-id: ${id}
-title: ${title}
----
-Body of ${id}.
-`;
-}
-
-describe('readAllPlanFiles', () => {
-  it('reads plans from the directory and its archive, excluding index.md', async () => {
-    const root = await makeRoot();
-    const plansDir = join(root, 'plans');
-    await mkdir(join(plansDir, 'archive'), { recursive: true });
-    await writeFile(join(plansDir, 'FEAT-1.md'), planFile('FEAT-1', 'Active plan'));
-    await writeFile(join(plansDir, 'index.md'), '# Plans\n\n| table |\n');
-    await writeFile(
-      join(plansDir, 'archive', 'FEAT-2.md'),
-      planFile('FEAT-2', 'Archived plan', 'done'),
-    );
-    await writeFile(join(plansDir, 'archive', 'index.md'), '# Archive\n');
-
-    const { entries, warnings, fileCount } = await readAllPlanFiles(plansDir);
+describe('readEntities', () => {
+  it('reads live and archived entities, skipping index.md', async () => {
+    const dir = makeCorpus();
+    const { entries, warnings, fileCount } = await readEntities(dir);
     expect(warnings).toEqual([]);
-    expect(fileCount).toBe(2);
-    expect(entries.map((entry) => entry.id).sort()).toEqual(['FEAT-1', 'FEAT-2']);
+    expect(fileCount).toBe(3);
+    expect(entries.map((e) => e.id).sort()).toEqual(['IDEA-1', 'IDEA-2', 'IDEA-3']);
   });
 
-  it('warns on an invalid plan file without dropping the valid ones', async () => {
-    const root = await makeRoot();
-    const plansDir = join(root, 'plans');
-    await mkdir(plansDir, { recursive: true });
-    await writeFile(join(plansDir, 'FEAT-1.md'), planFile('FEAT-1', 'Valid plan'));
-    await writeFile(join(plansDir, 'FEAT-2.md'), planFile('FEAT-2', 'Bad status', 'nope'));
-
-    const { entries, warnings } = await readAllPlanFiles(plansDir);
-    expect(entries.map((entry) => entry.id)).toEqual(['FEAT-1']);
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0].title).toBe('FEAT-2');
-  });
-
-  it('warns on an unreadable (empty) plan file', async () => {
-    const root = await makeRoot();
-    const plansDir = join(root, 'plans');
-    await mkdir(plansDir, { recursive: true });
-    await writeFile(join(plansDir, 'FEAT-1.md'), '');
-
-    const { entries, warnings } = await readAllPlanFiles(plansDir);
-    expect(entries).toEqual([]);
-    expect(warnings).toEqual([{ title: 'FEAT-1.md', message: 'Could not read plan file' }]);
-  });
-
-  it('returns an empty result for a missing directory', async () => {
-    const root = await makeRoot();
-    const result = await readAllPlanFiles(join(root, 'does-not-exist'));
-    expect(result).toEqual({ entries: [], warnings: [], fileCount: 0 });
-  });
-});
-
-describe('readAllIdeaFiles', () => {
-  it('reads idea files non-recursively, excluding index.md', async () => {
-    const root = await makeRoot();
-    const ideasDir = join(root, 'ideas');
-    await mkdir(join(ideasDir, 'archive'), { recursive: true });
-    await writeFile(join(ideasDir, 'IDEA-1.md'), ideaFile('IDEA-1', 'First idea'));
-    await writeFile(join(ideasDir, 'index.md'), '# Ideas\n');
-    await writeFile(join(ideasDir, 'archive', 'IDEA-2.md'), ideaFile('IDEA-2', 'Buried idea'));
-
-    const { entries, warnings, fileCount } = await readAllIdeaFiles(ideasDir);
-    expect(warnings).toEqual([]);
-    expect(fileCount).toBe(1);
-    expect(entries.map((entry) => entry.id)).toEqual(['IDEA-1']);
-  });
-});
-
-describe('readPlansMerged', () => {
-  const monolithic = `## Old FEAT-1 title
-
-**Status:** planned
-**Id:** FEAT-1
-**Created:** 2026-01-01
-
-Mono body one.
-
-## Mono only plan
-
-**Status:** idea
-**Id:** FEAT-9
-**Created:** 2026-01-02
-
-Mono body nine.
-`;
-
-  it('prefers the per-file version of a plan over its monolithic duplicate', async () => {
-    const root = await makeRoot();
-    const plansDir = join(root, 'plans');
-    await mkdir(plansDir, { recursive: true });
-    await writeFile(join(plansDir, 'FEAT-1.md'), planFile('FEAT-1', 'New FEAT-1 title'));
-    const monoPath = join(root, 'plans.md');
-    await writeFile(monoPath, monolithic);
-
-    const { entries, warnings } = await readPlansMerged(plansDir, monoPath);
-    expect(warnings).toEqual([]);
-    expect(entries.map((entry) => [entry.id, entry.title])).toEqual([
-      ['FEAT-1', 'New FEAT-1 title'],
-      ['FEAT-9', 'Mono only plan'],
-    ]);
-  });
-
-  it('falls back to the monolithic file when no per-file plans exist', async () => {
-    const root = await makeRoot();
-    const monoPath = join(root, 'plans.md');
-    await writeFile(monoPath, monolithic);
-
-    const { entries } = await readPlansMerged(join(root, 'plans'), monoPath);
-    expect(entries.map((entry) => entry.id)).toEqual(['FEAT-1', 'FEAT-9']);
-  });
-
-  it('returns per-file plans alone when the monolithic file is missing', async () => {
-    const root = await makeRoot();
-    const plansDir = join(root, 'plans');
-    await mkdir(plansDir, { recursive: true });
-    await writeFile(join(plansDir, 'FEAT-1.md'), planFile('FEAT-1', 'Only per-file'));
-
-    const { entries } = await readPlansMerged(plansDir, join(root, 'plans.md'));
-    expect(entries.map((entry) => entry.id)).toEqual(['FEAT-1']);
-  });
-});
-
-describe('readIdeasMerged', () => {
-  const monolithic = `## IDEA-1: Old first idea
-
-Old body one.
-
----
-
-## IDEA-2: Mono only idea
-
-Body two.
-
----
-
-Just a headingless stray thought.
-`;
-
-  it('prefers per-file ideas and keeps monolithic-only and id-less sections', async () => {
-    const root = await makeRoot();
-    const ideasDir = join(root, 'ideas');
-    await mkdir(ideasDir, { recursive: true });
-    await writeFile(join(ideasDir, 'IDEA-1.md'), ideaFile('IDEA-1', 'New first idea'));
-    const monoPath = join(root, 'ideas.md');
-    await writeFile(monoPath, monolithic);
-
-    const { entries } = await readIdeasMerged(ideasDir, monoPath);
-    expect(entries.map((entry) => [entry.id, entry.title])).toEqual([
-      ['IDEA-1', 'New first idea'],
-      ['IDEA-2', 'Mono only idea'],
-      [null, 'Just a headingless stray thought.'],
-    ]);
-  });
-
-  it('returns an empty result when neither source exists', async () => {
-    const root = await makeRoot();
-    const { entries, warnings } = await readIdeasMerged(
-      join(root, 'ideas'),
-      join(root, 'ideas.md'),
-    );
+  it('returns empty for a missing directory', async () => {
+    const { entries, warnings, fileCount } = await readEntities('/nonexistent/nowhere');
     expect(entries).toEqual([]);
     expect(warnings).toEqual([]);
+    expect(fileCount).toBe(0);
   });
 
-  it('parses the monolithic file alone when no per-file ideas exist', async () => {
-    const root = await makeRoot();
-    const monoPath = join(root, 'ideas.md');
-    await writeFile(monoPath, monolithic);
+  it('surfaces parse warnings for invalid files without dropping the rest', async () => {
+    const dir = makeCorpus();
+    // status open without kind: note fails the schema refine
+    writeFileSync(
+      join(dir, 'IDEA-9.md'),
+      '---\nid: IDEA-9\ntitle: Broken\nstatus: open\ncreated: 2026-07-01\n---\n',
+    );
+    const { entries, warnings } = await readEntities(dir);
+    expect(warnings.length).toBeGreaterThan(0);
+    expect(entries.map((e) => e.id).sort()).toEqual(['IDEA-1', 'IDEA-2', 'IDEA-3']);
+  });
+});
 
-    const { entries } = await readIdeasMerged(join(root, 'ideas'), monoPath);
-    expect(entries.map((entry) => entry.id)).toEqual(['IDEA-1', 'IDEA-2', null]);
+describe('entity views', () => {
+  it('readWorkEntries maps non-notes to PlanEntry shape with kind from type', async () => {
+    const dir = makeCorpus();
+    const { entries } = await readWorkEntries(dir);
+    expect(entries.map((e) => e.id).sort()).toEqual(['IDEA-1', 'IDEA-3']);
+    const active = entries.find((e) => e.id === 'IDEA-1');
+    expect(active?.kind).toBe('feat');
+    expect(active?.status).toBe('in-progress');
+    expect(active?.phases).toHaveLength(2);
+    expect(active?.idea).toBeUndefined();
+  });
+
+  it('readNoteEntries maps notes to IdeaEntry shape', async () => {
+    const dir = makeCorpus();
+    const { entries } = await readNoteEntries(dir);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].id).toBe('IDEA-2');
+    expect(entries[0].kind).toBe('note');
+    expect(entries[0].status).toBe('open');
+  });
+
+  it('entityToPlan and entityToIdea preserve identity fields', async () => {
+    const dir = makeCorpus();
+    const { entries } = await readEntities(dir);
+    const work = entries.find((e) => e.id === 'IDEA-3');
+    const note = entries.find((e) => e.id === 'IDEA-2');
+    expect(work && entityToPlan(work).id).toBe('IDEA-3');
+    expect(work && entityToPlan(work).kind).toBe('fix');
+    expect(note && entityToIdea(note).title).toBe('A note');
   });
 });
