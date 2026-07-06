@@ -1,3 +1,4 @@
+import { IntentButton } from '@/app/components';
 import { Markdown } from '@/app/components/markdown';
 import { createPlanBranch } from '@/app/services/git-api';
 import { updatePlan } from '@/app/services/plans-api';
@@ -426,15 +427,14 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             placeholder="Add a log entry…"
             rows={2}
           />
-          <Button
-            variant="primary"
+          <IntentButton
+            intent="log"
             size="small"
-            className="btn-violet"
             onClick={handleAddLogEntry}
             disabled={updating || !logInput.trim()}
           >
             Add entry
-          </Button>
+          </IntentButton>
         </div>
       </div>
     </div>

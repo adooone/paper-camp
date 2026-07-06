@@ -1,6 +1,7 @@
+import { IntentButton } from '@/app/components';
 import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import type { PhaseItem, PlanEntry } from '@/types/index';
-import { Button, Modal } from '@dendelion/paper-ui';
+import { Modal } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { type DiffToken, diffWords } from '../diff';
 
@@ -117,24 +118,12 @@ export const ReconcileDiffPanel = ({
         )}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
-          <Button
-            variant="primary"
-            size="small"
-            className="btn-orange"
-            onClick={handleDiscard}
-            disabled={discarding}
-          >
+          <IntentButton intent="stop" size="small" onClick={handleDiscard} disabled={discarding}>
             Discard
-          </Button>
-          <Button
-            variant="primary"
-            size="small"
-            className="btn-green"
-            onClick={onApprove}
-            disabled={discarding}
-          >
+          </IntentButton>
+          <IntentButton intent="go" size="small" onClick={onApprove} disabled={discarding}>
             Approve
-          </Button>
+          </IntentButton>
         </div>
       </div>
     </Modal>

@@ -1,5 +1,4 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { color } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Button, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -35,11 +34,10 @@ export const ReconcileButton = ({ plan, disabled }: ReconcileButtonProps) => {
   return (
     <Tooltip content={plan.id ? undefined : 'Plan needs an ID before an agent can run'}>
       <Button
-        variant="ghost"
+        variant="secondary"
         size="small"
         onClick={handleClick}
         disabled={disabled || launching || !plan.id}
-        style={{ color: color.textSecondary }}
       >
         Reconcile
       </Button>

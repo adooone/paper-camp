@@ -3,7 +3,9 @@ import { deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Button, Card } from '@dendelion/paper-ui';
+import { useState } from 'react';
 import { BoardView } from './components/board-view';
+import { DeleteIdeaModal } from './components/delete-idea-modal';
 import { EntityDetail } from './components/entity-detail';
 import { ListView } from './components/list-view';
 import { NoteDetail } from './components/note-detail';
@@ -37,8 +39,9 @@ export const PlansPage = () => {
     setActiveIdeaTitle(title);
   };
 
+  const [deleteIdeaTitle, setDeleteIdeaTitle] = useState<string | null>(null);
+
   const handleDeleteIdea = async (title: string) => {
-    if (!window.confirm(`Delete idea "${title}"?`)) return;
     await deletePlan(title);
     await loadPlans();
     if (activePlanTitle === title) setActivePlanTitle(null);
@@ -132,9 +135,15 @@ export const PlansPage = () => {
           activePlanTitle={activePlanTitle}
           onOpenPlan={handleOpenPlan}
           onOpenIdea={handleOpenIdea}
-          onDeleteIdea={handleDeleteIdea}
+          onDeleteIdea={setDeleteIdeaTitle}
         />
       )}
+
+      <DeleteIdeaModal
+        title={deleteIdeaTitle}
+        onClose={() => setDeleteIdeaTitle(null)}
+        onConfirm={handleDeleteIdea}
+      />
     </div>
   );
 };

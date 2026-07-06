@@ -2,9 +2,9 @@
 id: IDEA-43
 title: Unify the ideas and plans worklist
 type: feat
-status: review
+status: done
 created: 2026-07-04
-updated: 2026-07-05
+updated: 2026-07-06
 tags:
   - app
   - ideas

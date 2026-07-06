@@ -59,41 +59,42 @@ header[class*="layout-module__header___"] {
  * label, not a CSS background — so a bright color means recoloring that path
  * directly. !important is needed because paper-ui's own hover/active rules
  * (e.g. .primary:hover .blobFill) have higher specificity than a single class
- * from outside the component.
+ * from outside the component. Applied by `IntentButton` (app/components/intent-button.tsx),
+ * which names the go/stop/log intent once instead of each call site picking a color.
  */
-.btn-green svg path:first-child {
+.intent-button-go svg path:first-child {
   fill: #b7d9bc !important;
 }
-.btn-green:hover svg path:first-child {
+.intent-button-go:hover svg path:first-child {
   fill: #a3ccaa !important;
 }
-.btn-green:active svg path:first-child {
+.intent-button-go:active svg path:first-child {
   fill: #8fbe98 !important;
 }
 
-.btn-orange svg path:first-child {
+.intent-button-stop svg path:first-child {
   fill: #f0c9a4 !important;
 }
-.btn-orange:hover svg path:first-child {
+.intent-button-stop:hover svg path:first-child {
   fill: #eabb8c !important;
 }
-.btn-orange:active svg path:first-child {
+.intent-button-stop:active svg path:first-child {
   fill: #e3ac74 !important;
 }
 
-.btn-violet svg path:first-child {
+.intent-button-log svg path:first-child {
   fill: #d2c0e0 !important;
 }
-.btn-violet:hover svg path:first-child {
+.intent-button-log:hover svg path:first-child {
   fill: #c3a9d6 !important;
 }
-.btn-violet:active svg path:first-child {
+.intent-button-log:active svg path:first-child {
   fill: #b392cb !important;
 }
 
-.btn-green,
-.btn-orange,
-.btn-violet {
+.intent-button-go,
+.intent-button-stop,
+.intent-button-log {
   color: #1a1917 !important;
 }
 

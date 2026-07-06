@@ -29,6 +29,7 @@ import {
   Select,
   Stamp,
   Table,
+  useToast,
 } from '@dendelion/paper-ui';
 import { useEffect, useRef, useState } from 'react';
 
@@ -47,10 +48,44 @@ interface AgentTaskRowProps {
   agentConfig: AgentConfig;
   isLast: boolean;
   onSave: (key: TaskTypeKey, config: AgentConfig) => Promise<void>;
-  isSaved: boolean;
 }
 
-const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTaskRowProps) => {
+const TASK_COLUMN_WIDTH = 110;
+const AGENT_COLUMN_WIDTH = 140;
+const MODEL_COLUMN_WIDTH = 160;
+const EFFORT_COLUMN_WIDTH = 110;
+
+const AgentTaskRowHeader = () => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: space[3],
+      paddingBottom: space[1],
+    }}
+  >
+    <span style={{ width: TASK_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}>
+      Task
+    </span>
+    <span
+      style={{ width: AGENT_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}
+    >
+      Agent
+    </span>
+    <span
+      style={{ width: MODEL_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}
+    >
+      Model
+    </span>
+    <span
+      style={{ width: EFFORT_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}
+    >
+      Effort
+    </span>
+  </div>
+);
+
+const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave }: AgentTaskRowProps) => {
   // Fall back if the config carries an unknown agent id — never white-screen the page.
   const opts = AGENT_OPTIONS[agentConfig.agent] ?? AGENT_OPTIONS['claude-code'];
   const modelOpts = opts.model;
@@ -101,11 +136,14 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTa
           paddingTop: space[2],
         }}
       >
-        <span style={{ width: 110, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.65 }}>
+        <span
+          style={{ width: TASK_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.65 }}
+        >
           {TASK_TYPE_LABELS[taskKey]}
         </span>
         <Select
           size="small"
+          width={AGENT_COLUMN_WIDTH}
           value={agentConfig.agent}
           onChange={handleAgentChange}
           options={AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] }))}
@@ -113,6 +151,7 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTa
         {Array.isArray(modelOpts) ? (
           <Select
             size="small"
+            width={MODEL_COLUMN_WIDTH}
             value={agentConfig.model ?? ''}
             onChange={handleModelSelectChange}
             options={[
@@ -123,6 +162,7 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTa
         ) : modelOpts === null ? (
           <Input
             size="small"
+            style={{ width: MODEL_COLUMN_WIDTH }}
             value={localModel}
             placeholder="Default model"
             onChange={(e) => setLocalModel(e.target.value)}
@@ -134,6 +174,7 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTa
         <div style={{ visibility: Array.isArray(effortOpts) ? 'visible' : 'hidden' }}>
           <Select
             size="small"
+            width={EFFORT_COLUMN_WIDTH}
             value={agentConfig.effort ?? ''}
             onChange={handleEffortChange}
             options={[
@@ -142,11 +183,6 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTa
             ]}
           />
         </div>
-        {isSaved && (
-          <span className="text-sm" style={{ opacity: 0.6 }}>
-            Saved
-          </span>
-        )}
       </div>
       {!isLast && <Divider />}
     </>
@@ -159,15 +195,10 @@ const GeneralSection = () => {
   const { iconDataUri: fetchedIconDataUri, loading: identityLoading } = useProjectIdentity();
   const [uploadedIconDataUri, setUploadedIconDataUri] = useState<string | null>(null);
   const iconDataUri = uploadedIconDataUri ?? fetchedIconDataUri;
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [portInput, setPortInput] = useState('');
-  const [portSaving, setPortSaving] = useState(false);
-  const [portSaved, setPortSaved] = useState(false);
   const [nameInput, setNameInput] = useState('');
-  const [nameSaving, setNameSaving] = useState(false);
-  const [nameSaved, setNameSaved] = useState(false);
-  const [agentSavedKey, setAgentSavedKey] = useState<TaskTypeKey | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchConfig().then((c) => {
@@ -189,51 +220,51 @@ const GeneralSection = () => {
     const ok = await saveConfig({ defaultAgents: updated });
     if (ok) {
       setConfig((prev) => (prev ? { ...prev, defaultAgents: updated } : prev));
-      setAgentSavedKey(key);
-      setTimeout(() => setAgentSavedKey(null), 2000);
+      toast({ title: 'Saved', variant: 'success' });
+    } else {
+      toast({ title: 'Failed to save', variant: 'error' });
     }
   };
 
   const handleSavePort = async () => {
     const port = Number(portInput);
-    if (!Number.isInteger(port) || port <= 0) return;
-    setPortSaving(true);
+    if (!config || !Number.isInteger(port) || port <= 0 || port === config.port) return;
     const ok = await saveConfig({ port });
-    setPortSaving(false);
     if (ok) {
       setConfig((prev) => (prev ? { ...prev, port } : prev));
-      setPortSaved(true);
-      setTimeout(() => setPortSaved(false), 2000);
+      toast({ title: 'Saved', variant: 'success' });
+    } else {
+      toast({ title: 'Failed to save', variant: 'error' });
     }
   };
 
   const handleSaveName = async () => {
     const projectName = nameInput.trim();
-    if (!projectName) return;
-    setNameSaving(true);
+    if (!config || !projectName || projectName === config.projectName) return;
     const ok = await saveConfig({ projectName });
-    setNameSaving(false);
     if (ok) {
       setConfig((prev) => (prev ? { ...prev, projectName } : prev));
       setNameInput(projectName);
-      setNameSaved(true);
-      setTimeout(() => setNameSaved(false), 2000);
+      toast({ title: 'Saved', variant: 'success' });
+    } else {
+      toast({ title: 'Failed to save', variant: 'error' });
     }
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSaving(true);
+    setUploading(true);
     const reader = new FileReader();
     reader.onloadend = async () => {
       const dataUri = reader.result as string;
       const ok = await uploadIcon(dataUri);
-      setSaving(false);
+      setUploading(false);
       if (ok) {
-        setSaved(true);
         setUploadedIconDataUri(dataUri);
-        setTimeout(() => setSaved(false), 2000);
+        toast({ title: 'Saved', variant: 'success' });
+      } else {
+        toast({ title: 'Failed to save', variant: 'error' });
       }
     };
     reader.readAsDataURL(file);
@@ -263,16 +294,9 @@ const GeneralSection = () => {
             <Input
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
+              onBlur={handleSaveName}
               label="Project Name"
             />
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={handleSaveName}
-              disabled={nameSaving || !nameInput.trim() || nameInput.trim() === config.projectName}
-            >
-              {nameSaving ? 'Saving…' : 'Save'}
-            </Button>
             <Stamp
               size="small"
               fillColor="rgba(143, 185, 150, 0.25)"
@@ -280,11 +304,6 @@ const GeneralSection = () => {
             >
               v{config.version}
             </Stamp>
-            {nameSaved && (
-              <span className="text-sm" style={{ opacity: 0.6 }}>
-                Saved
-              </span>
-            )}
           </div>
           <Divider />
 
@@ -323,21 +342,16 @@ const GeneralSection = () => {
                 variant="secondary"
                 size="small"
                 onClick={() => fileRef.current?.click()}
-                disabled={saving}
+                disabled={uploading}
               >
-                {saving ? 'Uploading…' : 'Choose File'}
+                {uploading ? 'Uploading…' : 'Choose File'}
               </Button>
-              {saved && (
-                <span className="text-sm" style={{ opacity: 0.6, marginLeft: space[2] }}>
-                  Saved
-                </span>
-              )}
               {identityLoading && (
                 <p className="text-sm" style={{ opacity: 0.5, margin: `${space[1]} 0 0` }}>
                   Loading…
                 </p>
               )}
-              {!identityLoading && !iconDataUri && !saving && (
+              {!identityLoading && !iconDataUri && !uploading && (
                 <p className="text-sm" style={{ opacity: 0.45, margin: `${space[1]} 0 0` }}>
                   No icon set.
                 </p>
@@ -359,25 +373,14 @@ const GeneralSection = () => {
               type="number"
               value={portInput}
               onChange={(e) => setPortInput(e.target.value)}
+              onBlur={handleSavePort}
               label="Port"
               helperText="Default for `paper-camp dev`. Does not affect the running server."
             />
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={handleSavePort}
-              disabled={portSaving || !portInput}
-            >
-              {portSaving ? 'Saving…' : 'Save'}
-            </Button>
-            {portSaved && (
-              <span className="text-sm" style={{ opacity: 0.6 }}>
-                Saved
-              </span>
-            )}
           </div>
           <Divider />
 
+          <AgentTaskRowHeader />
           {TASK_TYPE_KEYS.map((key, idx) => (
             <AgentTaskRow
               key={key}
@@ -385,7 +388,6 @@ const GeneralSection = () => {
               agentConfig={config.defaultAgents?.[key] ?? DEFAULT_AGENTS[key]}
               isLast={idx === TASK_TYPE_KEYS.length - 1}
               onSave={handleSaveAgentConfig}
-              isSaved={agentSavedKey === key}
             />
           ))}
         </Card>
