@@ -1,6 +1,7 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, space } from '@/app/styles/tokens';
 import { Button } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 
 interface SearchMatch {
   section: 'decisions' | 'questions' | 'progress' | 'repo-docs';
@@ -28,15 +29,9 @@ const snippet = (text: string, query: string, maxLen = 120): string => {
 };
 
 export const DocsSearch = ({ query }: DocsSearchProps) => {
-  const {
-    decisions,
-    openQuestions,
-    progress,
-    repoDocs,
-    setActiveDocSection,
-    setActiveDocTitle,
-    setDocSearchQuery,
-  } = useAppStore();
+  const { decisions, openQuestions, progress, repoDocs, setActiveDocTitle, setDocSearchQuery } =
+    useAppStore();
+  const navigate = useNavigate();
 
   const results: SearchMatch[] = [];
 
@@ -94,7 +89,7 @@ export const DocsSearch = ({ query }: DocsSearchProps) => {
   }
 
   const handleSelect = (section: SearchMatch['section'], title: string) => {
-    setActiveDocSection(section);
+    navigate({ to: '/docs/$section', params: { section } });
     setActiveDocTitle(title);
     setDocSearchQuery('');
   };

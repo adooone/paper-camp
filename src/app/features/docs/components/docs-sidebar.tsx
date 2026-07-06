@@ -1,6 +1,7 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Input, ListItem } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { SidebarSection } from '../../plans/components/sidebar-section';
 
@@ -36,12 +37,12 @@ export const DocsSidebar = () => {
     loadProgress,
     loadRepoDocs,
     activeDocSection,
-    setActiveDocSection,
     activeDocTitle,
     setActiveDocTitle,
     docSearchQuery,
     setDocSearchQuery,
   } = useAppStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadDecisions();
@@ -51,7 +52,7 @@ export const DocsSidebar = () => {
   }, [loadDecisions, loadOpenQuestions, loadProgress, loadRepoDocs]);
 
   const handleSelectDecision = (title: string) => {
-    setActiveDocSection('decisions');
+    navigate({ to: '/docs/$section', params: { section: 'decisions' } });
     setActiveDocTitle(title);
   };
 
@@ -77,7 +78,7 @@ export const DocsSidebar = () => {
               size="small"
               active={activeDocSection === 'repo-docs' && activeDocTitle === f.name}
               onClick={() => {
-                setActiveDocSection('repo-docs');
+                navigate({ to: '/docs/$section', params: { section: 'repo-docs' } });
                 setActiveDocTitle(f.name);
               }}
             >
@@ -118,7 +119,7 @@ export const DocsSidebar = () => {
               size="small"
               active={activeDocSection === 'questions' && activeDocTitle === q.title}
               onClick={() => {
-                setActiveDocSection('questions');
+                navigate({ to: '/docs/$section', params: { section: 'questions' } });
                 setActiveDocTitle(q.title);
               }}
             >
@@ -140,7 +141,7 @@ export const DocsSidebar = () => {
               size="small"
               active={activeDocSection === 'progress' && activeDocTitle === p.date}
               onClick={() => {
-                setActiveDocSection('progress');
+                navigate({ to: '/docs/$section', params: { section: 'progress' } });
                 setActiveDocTitle(p.date);
               }}
             >

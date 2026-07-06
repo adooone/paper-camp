@@ -3,6 +3,7 @@ import { deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Button, Card } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { BoardView } from './components/board-view';
 import { DeleteIdeaModal } from './components/delete-idea-modal';
@@ -20,23 +21,22 @@ export const PlansPage = () => {
     activePlanTitle,
     setActivePlanTitle,
     activeIdeaTitle,
-    setActiveIdeaTitle,
     view,
     loadPlans,
     planFilters,
   } = useAppStore();
+  const navigate = useNavigate();
 
   const handleBack = () => {
-    setActivePlanTitle(null);
-    setActiveIdeaTitle(null);
+    navigate({ to: '/' });
   };
 
   const handleOpenPlan = (title: string) => {
-    setActivePlanTitle(title);
+    navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(title) } });
   };
 
   const handleOpenIdea = (title: string) => {
-    setActiveIdeaTitle(title);
+    navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(title) } });
   };
 
   const [deleteIdeaTitle, setDeleteIdeaTitle] = useState<string | null>(null);

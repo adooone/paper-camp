@@ -47,7 +47,7 @@ per-item param routes work the same either way. Nothing blocks this — no paper
 dependency is left since the [[IDEA-32]] bump landed `Breadcrumb`.
 
 ### Phases
-- [ ] Add param routes for plans, ideas, and docs
+- [x] Add param routes for plans, ideas, and docs
       Define `/plans/$planId`, `/ideas/$ideaId`, and `/docs/$section` as TanStack
       Router param routes in `router.tsx`; clicking a plan, idea, or doc section
       navigates to its route instead of setting store state.

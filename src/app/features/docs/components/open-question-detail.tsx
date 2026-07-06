@@ -3,13 +3,14 @@ import { resolveOpenQuestion } from '@/app/services/docs-api';
 import { useAppStore } from '@/app/stores';
 import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import { Button, Input, Modal, Stamp, Textarea } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 
 export const OpenQuestionDetail = () => {
   const openQuestions = useAppStore((s) => s.openQuestions);
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
-  const setActiveDocSection = useAppStore((s) => s.setActiveDocSection);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
+  const navigate = useNavigate();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [decision, setDecision] = useState('');
@@ -21,7 +22,7 @@ export const OpenQuestionDetail = () => {
 
   const handleResolvedByClick = () => {
     if (question.resolvedBy) {
-      setActiveDocSection('decisions');
+      navigate({ to: '/docs/$section', params: { section: 'decisions' } });
       setActiveDocTitle(question.resolvedBy);
     }
   };
