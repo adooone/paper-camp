@@ -42,7 +42,7 @@
 | IDEA-38 | Densify the plans worklist | feat | done | app, ui, plans, ideas |
 | IDEA-39 | Build the focus cockpit | feat | idea | app, ui, plans, stack |
 | IDEA-40 | Make sub-views real routes | feat | in-progress | app, ui, routing, navigation |
-| IDEA-41 | Settings and affordance polish | fix | review | app, ui, settings |
+| IDEA-41 | Settings and affordance polish | fix | done | app, ui, settings |
 | IDEA-42 | Filter and sort the plans list | feat | done | app, ui, plans |
 | IDEA-43 | Unify the ideas and plans worklist | feat | done | app, ideas, plans, core |
 | IDEA-44 | Check idea overlap at capture | feat | idea | app, ideas, agent |
