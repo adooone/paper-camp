@@ -60,7 +60,7 @@ confirm, now in `plans-page.tsx`, not `plans-sidebar.tsx` — becomes a paper-ui
       confirmed by a `Toast` (ToastProvider already wired in `router.tsx`);
       remove the two Save buttons and all transient "Saved" spans, with the
       agent rows adopting the same Toast. The env table keeps its batch Save.
-- [ ] Give the phases-header tools button affordance
+- [x] Give the phases-header tools button affordance
       Switch `AuditPhasesButton`, `ReconcileButton`, and `AddReviewPhasesButton`
       (rendered in `entity-detail.tsx`'s Phases header) from ghost to secondary
       so they read as actions, not labels.

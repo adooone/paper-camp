@@ -41,7 +41,7 @@ export const AddReviewPhasesButton = ({ onAdd, disabled }: AddReviewPhasesButton
 
   return (
     <>
-      <Button variant="ghost" size="small" onClick={() => setOpen(true)} disabled={disabled}>
+      <Button variant="secondary" size="small" onClick={() => setOpen(true)} disabled={disabled}>
         Add as phases
       </Button>
       <Modal open={open} onClose={handleClose} title="Add /code-review findings" size="small">
