@@ -2,7 +2,7 @@
 id: IDEA-41
 title: Settings and affordance polish
 type: fix
-status: in-progress
+status: review
 created: 2026-07-02
 updated: 2026-07-06
 tags:
@@ -73,6 +73,6 @@ confirm, now in `plans-page.tsx`, not `plans-sidebar.tsx` — becomes a paper-ui
 - [x] Replace window.confirm with a Modal
       Swap the delete-idea `window.confirm` in `plans-page.tsx` for a paper-ui
       `Modal` confirm dialog, following `create-idea-modal.tsx`'s idiom.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
       `tsc --noEmit`, `biome check`, tests, and a browser pass over Settings
       (headers, toasts) and the plan detail / delete-confirm flows.
