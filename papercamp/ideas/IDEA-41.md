@@ -64,7 +64,7 @@ confirm, now in `plans-page.tsx`, not `plans-sidebar.tsx` — becomes a paper-ui
       Switch `AuditPhasesButton`, `ReconcileButton`, and `AddReviewPhasesButton`
       (rendered in `entity-detail.tsx`'s Phases header) from ghost to secondary
       so they read as actions, not labels.
-- [ ] Retire the color-override classes
+- [x] Retire the color-override classes
       Replace the six `btn-green` / `btn-orange` / `btn-violet` usages
       (`plan-actions-column.tsx`, `entity-detail.tsx`,
       `reconcile-diff-panel.tsx`) with one semantic wrapper that names the

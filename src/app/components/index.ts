@@ -1,4 +1,5 @@
 export { AddIdeaModal } from './add-idea-modal';
+export { IntentButton } from './intent-button';
 export { LinkButton } from './link-button';
 export { Markdown } from './markdown';
 export { ProjectIdentityHeader } from './project-identity-header';

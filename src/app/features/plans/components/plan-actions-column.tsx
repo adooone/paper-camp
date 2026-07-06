@@ -1,3 +1,4 @@
+import { IntentButton } from '@/app/components';
 import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
@@ -8,7 +9,7 @@ import {
   PLAN_STATUSES,
   type PlanStatus,
 } from '@/types/index';
-import { Button, Card, Select } from '@dendelion/paper-ui';
+import { Card, Select } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { STATUS_LABEL } from '../constants';
 import { RunAllPhasesButton } from './run-all-phases-button';
@@ -106,42 +107,39 @@ export const PlanActionsColumn = ({ flush = true }: PlanActionsColumnProps) => {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
             {!underReview && hasPhases && (
-              <Button
-                variant="primary"
+              <IntentButton
+                intent={inProgress ? 'stop' : 'go'}
                 size="small"
                 fullWidth
-                className={inProgress ? 'btn-orange' : 'btn-green'}
                 onClick={() => patch({ status: inProgress ? 'planned' : 'in-progress' })}
                 disabled={updating}
               >
                 {inProgress ? 'Stop' : 'Start'}
-              </Button>
+              </IntentButton>
             )}
 
             {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy} />}
 
             {underReview && (
               <>
-                <Button
-                  variant="primary"
+                <IntentButton
+                  intent="go"
                   size="small"
                   fullWidth
-                  className="btn-green"
                   onClick={() => patch({ status: 'done' })}
                   disabled={updating}
                 >
                   Approve &amp; close
-                </Button>
-                <Button
-                  variant="primary"
+                </IntentButton>
+                <IntentButton
+                  intent="stop"
                   size="small"
                   fullWidth
-                  className="btn-orange"
                   onClick={() => patch({ status: 'in-progress' })}
                   disabled={updating}
                 >
                   Needs changes
-                </Button>
+                </IntentButton>
               </>
             )}
           </div>
