@@ -7,7 +7,7 @@ import type { Route, RouteContext } from './types';
 
 const DIRTY_SYNC_PROMPT = `Sync the current branch to main by:
 1. Stashing or committing any uncommitted changes (do not use \`git reset --hard\` or \`git clean -fd\` without an explicit confirmation step)
-2. Relocating any mis-filed content (e.g., any new plans written to the legacy \`papercamp/plans.md\` instead of per-file \`papercamp/plans/*.md\`)
+2. Relocating any mis-filed content (e.g., any new entities written to a legacy path like \`papercamp/plans.md\` or \`papercamp/plans/\` instead of per-file \`papercamp/ideas/*.md\`)
 3. Checking out main: \`git checkout main\`
 4. Fetching from origin: \`git fetch --prune\`
 5. Fast-forwarding the merge: \`git merge --ff-only origin/main\`

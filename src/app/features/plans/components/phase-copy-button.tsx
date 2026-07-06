@@ -5,15 +5,16 @@ import { useState } from 'react';
 
 interface PhaseCopyButtonProps {
   planTitle: string;
+  planId?: string;
   phaseIndex: number;
 }
 
-export const PhaseCopyButton = ({ planTitle, phaseIndex }: PhaseCopyButtonProps) => {
+export const PhaseCopyButton = ({ planTitle, planId, phaseIndex }: PhaseCopyButtonProps) => {
   const [status, setStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const prompt = `Start phase ${phaseIndex + 1} of plan "${planTitle}" in papercamp/plans.md`;
+    const prompt = `Start phase ${phaseIndex + 1} of plan "${planTitle}" in papercamp/ideas/${planId ?? '<ID>'}.md`;
     const ok = await copyToClipboard(prompt);
     setStatus(ok ? 'copied' : 'failed');
     setTimeout(() => setStatus('idle'), 1500);

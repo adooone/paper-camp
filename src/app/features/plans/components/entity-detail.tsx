@@ -362,7 +362,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                 header: 'Actions',
                 cell: (phase: PhaseItem, index: number) => (
                   <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
-                    <PhaseCopyButton planTitle={plan.title} phaseIndex={index} />
+                    <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
                     {!phase.done && agentPhaseIndex === index ? (
                       <Spinner size="small" label={`Agent ${agentStatus?.status}…`} />
                     ) : (

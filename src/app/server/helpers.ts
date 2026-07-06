@@ -91,7 +91,7 @@ export async function checkBranchConflictForPlan(
 
   // Note: branches created before the entity migration carry legacy <KIND>-<N>
   // ids that no longer match any entity, so this lookup misses and the guard
-  // stays silent for them — phase 10 re-keys branch naming to IDEA-N ids.
+  // stays silent for them — new branches key off the entity's IDEA-N id.
   const { entries } = await readEntities(campFile(root, 'ideas'));
   const activePlan = entries.find((e) => e.id === activePlanId && e.kind !== 'note');
   if (!activePlan || activePlan.status === 'done' || activePlan.status === 'dropped') return null;
