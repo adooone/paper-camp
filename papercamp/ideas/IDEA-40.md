@@ -55,7 +55,7 @@ dependency is left since the [[IDEA-32]] bump landed `Breadcrumb`.
       Replace the `activePlanTitle`/`activeIdeaTitle`/`activeDocSection` globals in
       `app-store.ts` with values derived from route params (active highlighting and
       detail rendering included), and drop the pathname-reset effect in `router.tsx`.
-- [ ] Replace back buttons with Breadcrumb
+- [x] Replace back buttons with Breadcrumb
       Swap the hand-rolled "← All plans" (and idea/doc equivalents) for paper-ui
       `Breadcrumb` links — Plans / FEAT-28 — on the plan, idea, and doc detail views.
 - [ ] Fold Review into the Plans route

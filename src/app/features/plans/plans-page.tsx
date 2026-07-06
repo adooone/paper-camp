@@ -3,7 +3,7 @@ import { useActiveIdeaTitle, useActivePlanTitle } from '@/app/hooks';
 import { deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
-import { Button, Card } from '@dendelion/paper-ui';
+import { Breadcrumb, Card } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { BoardView } from './components/board-view';
@@ -73,9 +73,12 @@ export const PlansPage = () => {
     return (
       <div>
         <div style={{ marginBottom: space[4] }}>
-          <Button variant="ghost" size="small" onClick={handleBack}>
-            &larr; All plans
-          </Button>
+          <Breadcrumb
+            items={[
+              { id: 'plans', label: 'Plans', onClick: handleBack },
+              { id: 'plan', label: activePlan.title },
+            ]}
+          />
         </div>
         <EntityDetail plan={activePlan} />
       </div>
@@ -86,9 +89,12 @@ export const PlansPage = () => {
     return (
       <div>
         <div style={{ marginBottom: space[4] }}>
-          <Button variant="ghost" size="small" onClick={handleBack}>
-            &larr; All plans
-          </Button>
+          <Breadcrumb
+            items={[
+              { id: 'plans', label: 'Plans', onClick: handleBack },
+              { id: 'idea', label: activeIdea.title },
+            ]}
+          />
         </div>
         <NoteDetail idea={activeIdea} />
       </div>

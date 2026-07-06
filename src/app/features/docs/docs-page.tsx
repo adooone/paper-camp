@@ -1,6 +1,9 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useActiveDocSection } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
+import { space } from '@/app/styles/tokens';
+import { Breadcrumb } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { DecisionDetail } from './components/decision-detail';
 import { DocsSearch } from './components/docs-search';
 import { OpenQuestionDetail } from './components/open-question-detail';
@@ -12,12 +15,15 @@ export const DocsPage = () => {
   const routeSection = useActiveDocSection();
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
   const repoDocs = useAppStore((s) => s.repoDocs);
+  const navigate = useNavigate();
   // Bare /docs (no route section) falls back to the pre-selected repo doc — currently
   // just MAIN.md (see loadRepoDocs) — until IDEA-40's later phase gives /docs itself
   // a default route.
   const activeDocSection =
     routeSection ??
     (activeDocTitle && repoDocs.some((f) => f.name === activeDocTitle) ? 'repo-docs' : null);
+
+  const handleBackToDocs = () => navigate({ to: '/docs' });
 
   if (docSearchQuery.trim()) {
     return (
@@ -30,6 +36,14 @@ export const DocsPage = () => {
   if (activeDocSection === 'decisions' && activeDocTitle) {
     return (
       <div>
+        <div style={{ marginBottom: space[4] }}>
+          <Breadcrumb
+            items={[
+              { id: 'docs', label: 'Docs', onClick: handleBackToDocs },
+              { id: 'decision', label: activeDocTitle },
+            ]}
+          />
+        </div>
         <PageTitle>Decisions</PageTitle>
         <DecisionDetail />
       </div>
@@ -39,6 +53,14 @@ export const DocsPage = () => {
   if (activeDocSection === 'questions' && activeDocTitle) {
     return (
       <div>
+        <div style={{ marginBottom: space[4] }}>
+          <Breadcrumb
+            items={[
+              { id: 'docs', label: 'Docs', onClick: handleBackToDocs },
+              { id: 'question', label: activeDocTitle },
+            ]}
+          />
+        </div>
         <PageTitle>Open Questions</PageTitle>
         <OpenQuestionDetail />
       </div>
@@ -48,6 +70,14 @@ export const DocsPage = () => {
   if (activeDocSection === 'progress') {
     return (
       <div>
+        <div style={{ marginBottom: space[4] }}>
+          <Breadcrumb
+            items={[
+              { id: 'docs', label: 'Docs', onClick: handleBackToDocs },
+              { id: 'progress', label: activeDocTitle ?? 'Progress' },
+            ]}
+          />
+        </div>
         <PageTitle>Progress</PageTitle>
         <ProgressTimeline />
       </div>
@@ -57,6 +87,14 @@ export const DocsPage = () => {
   if (activeDocSection === 'repo-docs' && activeDocTitle) {
     return (
       <div>
+        <div style={{ marginBottom: space[4] }}>
+          <Breadcrumb
+            items={[
+              { id: 'docs', label: 'Docs', onClick: handleBackToDocs },
+              { id: 'repo-doc', label: activeDocTitle },
+            ]}
+          />
+        </div>
         <RepoDocDetail />
       </div>
     );
