@@ -2,7 +2,7 @@
 id: IDEA-40
 title: Make sub-views real routes
 type: feat
-status: in-progress
+status: review
 created: 2026-07-04
 updated: 2026-07-06
 tags:
@@ -65,6 +65,6 @@ dependency is left since the [[IDEA-32]] bump landed `Breadcrumb`.
 - [x] Land Docs on the README
       Default `/docs` to the readme section instead of the "Select a section from the
       sidebar" placeholder.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
       `tsc --noEmit`, `biome check`, tests, and a browser pass over deep links,
       refresh, back-button behavior, and the merged Plans tabs.
