@@ -50,6 +50,41 @@ interface AgentTaskRowProps {
   isSaved: boolean;
 }
 
+const TASK_COLUMN_WIDTH = 110;
+const AGENT_COLUMN_WIDTH = 140;
+const MODEL_COLUMN_WIDTH = 160;
+const EFFORT_COLUMN_WIDTH = 110;
+
+const AgentTaskRowHeader = () => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: space[3],
+      paddingBottom: space[1],
+    }}
+  >
+    <span style={{ width: TASK_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}>
+      Task
+    </span>
+    <span
+      style={{ width: AGENT_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}
+    >
+      Agent
+    </span>
+    <span
+      style={{ width: MODEL_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}
+    >
+      Model
+    </span>
+    <span
+      style={{ width: EFFORT_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}
+    >
+      Effort
+    </span>
+  </div>
+);
+
 const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTaskRowProps) => {
   // Fall back if the config carries an unknown agent id — never white-screen the page.
   const opts = AGENT_OPTIONS[agentConfig.agent] ?? AGENT_OPTIONS['claude-code'];
@@ -101,11 +136,14 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTa
           paddingTop: space[2],
         }}
       >
-        <span style={{ width: 110, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.65 }}>
+        <span
+          style={{ width: TASK_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.65 }}
+        >
           {TASK_TYPE_LABELS[taskKey]}
         </span>
         <Select
           size="small"
+          width={AGENT_COLUMN_WIDTH}
           value={agentConfig.agent}
           onChange={handleAgentChange}
           options={AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] }))}
@@ -113,6 +151,7 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTa
         {Array.isArray(modelOpts) ? (
           <Select
             size="small"
+            width={MODEL_COLUMN_WIDTH}
             value={agentConfig.model ?? ''}
             onChange={handleModelSelectChange}
             options={[
@@ -123,6 +162,7 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTa
         ) : modelOpts === null ? (
           <Input
             size="small"
+            style={{ width: MODEL_COLUMN_WIDTH }}
             value={localModel}
             placeholder="Default model"
             onChange={(e) => setLocalModel(e.target.value)}
@@ -134,6 +174,7 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave, isSaved }: AgentTa
         <div style={{ visibility: Array.isArray(effortOpts) ? 'visible' : 'hidden' }}>
           <Select
             size="small"
+            width={EFFORT_COLUMN_WIDTH}
             value={agentConfig.effort ?? ''}
             onChange={handleEffortChange}
             options={[
@@ -378,6 +419,7 @@ const GeneralSection = () => {
           </div>
           <Divider />
 
+          <AgentTaskRowHeader />
           {TASK_TYPE_KEYS.map((key, idx) => (
             <AgentTaskRow
               key={key}
