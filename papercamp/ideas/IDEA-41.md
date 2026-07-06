@@ -70,7 +70,7 @@ confirm, now in `plans-page.tsx`, not `plans-sidebar.tsx` — becomes a paper-ui
       `reconcile-diff-panel.tsx`) with one semantic wrapper that names the
       go / stop / log intent once, and delete the classes from `utilities.css`;
       check `~/dev/paper-ui` for a native variant/`colors` route first.
-- [ ] Replace window.confirm with a Modal
+- [x] Replace window.confirm with a Modal
       Swap the delete-idea `window.confirm` in `plans-page.tsx` for a paper-ui
       `Modal` confirm dialog, following `create-idea-modal.tsx`'s idiom.
 - [ ] Type-check and visual pass
