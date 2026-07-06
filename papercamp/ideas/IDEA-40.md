@@ -58,7 +58,7 @@ dependency is left since the [[IDEA-32]] bump landed `Breadcrumb`.
 - [x] Replace back buttons with Breadcrumb
       Swap the hand-rolled "← All plans" (and idea/doc equivalents) for paper-ui
       `Breadcrumb` links — Plans / FEAT-28 — on the plan, idea, and doc detail views.
-- [ ] Fold Review into the Plans route
+- [x] Fold Review into the Plans route
       Render List | Board | Review | Closed as a `Tabs` row on the Plans page, retire
       the standalone `/review` page, and drop Review from the header nav (keeping
       [[FEAT-39]]'s inline queue untouched).

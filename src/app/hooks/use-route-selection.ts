@@ -3,7 +3,7 @@ import { useParams } from '@tanstack/react-router';
 export const DOC_SECTIONS = ['decisions', 'questions', 'progress', 'repo-docs'] as const;
 export type DocSection = (typeof DOC_SECTIONS)[number];
 
-/** The plan title selected via the `/plans/$planId` or `/review/$planId` route param. */
+/** The plan title selected via the `/plans/$planId` route param. */
 export function useActivePlanTitle(): string | null {
   const { planId } = useParams({ strict: false });
   return typeof planId === 'string' ? decodeURIComponent(planId) : null;

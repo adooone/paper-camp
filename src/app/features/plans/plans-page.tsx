@@ -3,7 +3,7 @@ import { useActiveIdeaTitle, useActivePlanTitle } from '@/app/hooks';
 import { deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
-import { Breadcrumb, Card } from '@dendelion/paper-ui';
+import { Breadcrumb, Card, Tabs } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { BoardView } from './components/board-view';
@@ -12,10 +12,18 @@ import { EntityDetail } from './components/entity-detail';
 import { ListView } from './components/list-view';
 import { NoteDetail } from './components/note-detail';
 import { PlansHeader } from './components/plans-header';
+import { StatusPlanList } from './components/status-plan-list';
 import { selectWorklistRows } from './plan-list-selector';
 
+const VIEW_TABS = [
+  { id: 'list', label: 'List' },
+  { id: 'board', label: 'Board' },
+  { id: 'review', label: 'Review' },
+  { id: 'closed', label: 'Closed' },
+];
+
 export const PlansPage = () => {
-  const { plans, plansError, ideaEntries, view, loadPlans, planFilters } = useAppStore();
+  const { plans, plansError, ideaEntries, view, setView, loadPlans, planFilters } = useAppStore();
   const activePlanTitle = useActivePlanTitle();
   const activeIdeaTitle = useActiveIdeaTitle();
   const navigate = useNavigate();
@@ -102,10 +110,16 @@ export const PlansPage = () => {
   }
 
   const { rows } = selectWorklistRows(plans.entries, ideaEntries, planFilters);
+  const reviewPlans = plans.entries.filter((p) => p.status === 'review');
+  const closedPlans = plans.entries.filter((p) => p.status === 'done' || p.status === 'dropped');
 
   return (
     <div>
       <PlansHeader />
+
+      <div style={{ marginBottom: space[5] }}>
+        <Tabs items={VIEW_TABS} activeKey={view} onSelect={(id) => setView(id as typeof view)} />
+      </div>
 
       {plans.warnings.length > 0 && (
         <Card size="small" accent accentColor="amber">
@@ -127,6 +141,18 @@ export const PlansPage = () => {
         </p>
       ) : view === 'board' ? (
         <BoardView plans={plans.entries} />
+      ) : view === 'review' ? (
+        <StatusPlanList
+          plans={reviewPlans}
+          emptyMessage="No plans pending review."
+          onOpenPlan={handleOpenPlan}
+        />
+      ) : view === 'closed' ? (
+        <StatusPlanList
+          plans={closedPlans}
+          emptyMessage="No closed plans."
+          onOpenPlan={handleOpenPlan}
+        />
       ) : (
         <ListView
           plans={plans.entries}

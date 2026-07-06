@@ -11,19 +11,12 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
-import {
-  PlanActionsColumn,
-  PlanFilterColumn,
-  PlansPage,
-  ReviewPage,
-  ReviewSidebar,
-} from './features/plans/index';
+import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
 import { useAppStore } from './stores/app-store';
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
-  { id: 'review', label: 'Review', path: '/review' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'settings', label: 'Settings', path: '/settings' },
 ];
@@ -80,15 +73,12 @@ const RootLayout = () => {
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
-  const isReviewArea = pathname === '/review' || pathname.startsWith('/review/');
   const activeId = isPlansArea
     ? 'plans'
-    : isReviewArea
-      ? 'review'
-      : isDocsArea
-        ? 'docs'
-        : navItems.find((item) => item.path === pathname)?.id;
-  const hasSidebar = isPlansArea || isReviewArea || isDocsArea || pathname === '/settings';
+    : isDocsArea
+      ? 'docs'
+      : navItems.find((item) => item.path === pathname)?.id;
+  const hasSidebar = isPlansArea || isDocsArea || pathname === '/settings';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -184,12 +174,6 @@ const RootLayout = () => {
                       <PlanActionsColumn />
                     </>
                   )}
-                  {isReviewArea && (
-                    <>
-                      <ReviewSidebar />
-                      <PlanActionsColumn flush={false} />
-                    </>
-                  )}
                   {isDocsArea && <DocsSidebar />}
                   {pathname === '/settings' && <SettingsSidebar />}
                 </SidebarShell>
@@ -256,16 +240,6 @@ const ideaDetailRoute = createRoute({
   path: '/ideas/$ideaId',
   component: PlansPage,
 });
-const reviewRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/review',
-  component: ReviewPage,
-});
-const reviewDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/review/$planId',
-  component: ReviewPage,
-});
 const docsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs',
@@ -287,8 +261,6 @@ const routeTree = rootRoute.addChildren([
   plansRoute,
   planDetailRoute,
   ideaDetailRoute,
-  reviewRoute,
-  reviewDetailRoute,
   docsRoute,
   docsSectionRoute,
   settingsRoute,

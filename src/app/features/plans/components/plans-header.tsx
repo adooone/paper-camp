@@ -5,7 +5,6 @@ import type { PlanSortKey } from '../plan-list-selector';
 import { AddToBacklogButton } from './add-to-backlog-button';
 import { AuditAllButton } from './audit-all-button';
 import { NewIdeaButton } from './new-idea-button';
-import { ViewToggle } from './view-toggle';
 
 const SORT_OPTIONS: { value: PlanSortKey; label: string }[] = [
   { value: 'status', label: 'Status' },
@@ -23,7 +22,6 @@ const SORT_OPTIONS: { value: PlanSortKey; label: string }[] = [
  */
 export const PlansHeader = () => {
   const view = useAppStore((s) => s.view);
-  const setView = useAppStore((s) => s.setView);
   const filters = useAppStore((s) => s.planFilters);
   const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);
   const togglePlanSortDirection = useAppStore((s) => s.togglePlanSortDirection);
@@ -101,7 +99,6 @@ export const PlansHeader = () => {
       <NewIdeaButton />
       <AddToBacklogButton />
       <AuditAllButton />
-      <ViewToggle view={view} onChange={setView} />
     </div>
   );
 };
