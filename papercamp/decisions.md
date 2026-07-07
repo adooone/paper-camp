@@ -1,3 +1,30 @@
+## The plans worklist is one filterable list — no Board/Review/Closed tabs
+
+**Date:** 2026-07-07
+**Status:** decided
+
+**Context:** `IDEA-40` phase 4 ("Fold Review into the Plans route") added a
+`List | Board | Review | Closed` `Tabs` row to the Plans page. But `IDEA-42`
+had already made the worklist a single filterable list, and
+`PlanFilterColumn`'s status chips already toggle `review`/`done`/`dropped`
+(alongside Backlog/planned/in-progress). So Review and Closed were a second,
+coarser filtering mechanism over the same data, and Board a third parallel
+view — three ways to slice one list.
+
+**Decision:** The Plans page renders exactly one view: the filterable worklist
+(`ListView`). Removed the `Tabs` row and the Board/Review/Closed views, their
+`view`/`setView` store state, and the components they alone used
+(`BoardView`, `KanbanCard`, `KANBAN_COLUMNS`, `StatusPlanList`, `PlanCard`, the
+`.board-view-table` CSS). Status-scoped browsing lives entirely in
+`PlanFilterColumn`'s chips. This supersedes `IDEA-40` phase 4's Tabs approach;
+the rest of `IDEA-40` (param routes, `Breadcrumb`, docs-on-README) stands.
+
+**Rationale:** One list with one filter mechanism is the shape `IDEA-42`
+committed to; the tabs reintroduced the split it removed. The chips express
+review/closed and more granularly than fixed tabs (multi-select, live counts),
+and dropping Board deletes a whole parallel rendering path with its own
+responsive CSS to maintain. The single list is the surface worth investing in.
+
 ## Branch management is manual
 
 **Date:** 2026-07-05

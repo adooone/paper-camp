@@ -1,4 +1,4 @@
-import type { IdeaStatus, PlanEntry, PlanStatus } from '@/types/index';
+import type { IdeaStatus, PlanEntry } from '@/types/index';
 
 export const STATUS_COLOR: Record<PlanEntry['status'], string> = {
   'in-progress': '#C89A5A',
@@ -51,8 +51,3 @@ export const IDEA_STATUS_STAMP: Record<IdeaStatus, { fill: string; text: string 
   done: { fill: 'rgba(168, 155, 168, 0.25)', text: '#6E5E6E' },
   dropped: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
 };
-
-export const KANBAN_COLUMNS: { status: PlanStatus; label: string }[] = [
-  { status: 'planned', label: 'Planned' },
-  { status: 'in-progress', label: 'In Progress' },
-];

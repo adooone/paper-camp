@@ -53,9 +53,6 @@ type AppStore = {
   ideaEntries: IdeaEntry[];
   loadIdeas: () => Promise<void>;
 
-  view: 'list' | 'board' | 'review' | 'closed';
-  setView: (v: 'list' | 'board' | 'review' | 'closed') => void;
-
   // Plans-list filters, lifted here so the left filter column and the list itself
   // (separate subtrees since the column renders in the sidebar slot) share one source.
   planFilters: PlanListFilters;
@@ -166,9 +163,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ ideaEntries: [] });
     }
   },
-
-  view: 'list',
-  setView: (v) => set({ view: v }),
 
   planFilters: DEFAULT_PLAN_LIST_FILTERS,
   togglePlanStatus: (status) =>
