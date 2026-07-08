@@ -47,20 +47,24 @@ Rules:
 }
 
 export function buildReconcilePrompt(plan: PlanEntry): string {
-  const phaseList = plan.phases
-    .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
-    .join('\n');
+  const hasPhases = plan.phases.length > 0;
+  const noun = hasPhases ? 'plan' : 'idea';
+  const phaseList = hasPhases
+    ? plan.phases
+        .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
+        .join('\n')
+    : '(none — this is a backlog idea with no phases yet)';
 
-  return `You are reconciling the plan "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md — if it is not there, it is archived at papercamp/ideas/archive/${plan.id ?? '<ID>'}.md. Edit only that file.
+  return `You are reconciling the ${noun} "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md — if it is not there, it is archived at papercamp/ideas/archive/${plan.id ?? '<ID>'}.md. Edit only that file.
 
-Plan body: ${plan.body}
+${hasPhases ? 'Plan' : 'Idea'} body: ${plan.body}
 
 Current phases:
 ${phaseList}
 
-Task: this plan has drifted from the codebase — some phase descriptions and body prose may reference file paths that moved, code symbols that were renamed or removed, or approaches that were superseded during implementation. Find and fix only that drift.
+Task: this ${noun} has drifted from the codebase — some ${hasPhases ? 'phase descriptions and body prose' : 'body prose'} may reference file paths that moved, code symbols that were renamed or removed, or approaches that were superseded during implementation. Find and fix only that drift.
 
-1. Read the plan above, then inspect the relevant code in this repo to find what has actually changed since the prose was written.
+1. Read the ${noun} above, then inspect the relevant code in this repo to find what has actually changed since the prose was written.
 2. Reword only the sentences or phrases that are now stale: fix references and superseded approaches. Leave everything else byte-identical.
 3. Do not summarize, restructure, or "improve" prose that is still accurate — an unnecessary rewrite is a failure of this task, not a bonus.
 

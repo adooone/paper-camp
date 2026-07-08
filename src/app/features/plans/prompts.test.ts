@@ -80,6 +80,16 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).toMatch(/Never un-check.*phase line/);
   });
 
+  it('reconcile prompt handles phase-less backlog ideas without a phases section', () => {
+    const backlogIdea: PlanEntry = { ...plan, phases: [] };
+    const prompt = buildReconcilePrompt(backlogIdea);
+    expect(prompt).toContain(`papercamp/ideas/${backlogIdea.id}.md`);
+    expect(prompt).toContain('(none — this is a backlog idea with no phases yet)');
+    // Same guardrails still apply — a phase-less idea must not gain phases via reconcile.
+    expect(prompt).toContain('Never touch the YAML frontmatter');
+    expect(prompt).toContain('Never add or remove phases');
+  });
+
   it('phase-execution prompt points at the entity file, not legacy plans.md', () => {
     const prompt = buildAgentPrompt(plan, plan.phases[0], 0);
     expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);

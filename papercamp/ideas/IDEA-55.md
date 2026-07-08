@@ -27,7 +27,7 @@ The three open calls resolve as: **scope** — open ideas and plans (`idea`/`pla
 ### Phases
 - [x] Build the batch reconcile sweep
       Add `startBatchReconcile` to `agent.ts`, cloning `startBatchAudit`'s sequential loop and cancel handling; select open non-note entities and snapshot each body + phases as the `before` baseline ahead of its run.
-- [ ] Generalize the reconcile prompt for ideas
+- [x] Generalize the reconcile prompt for ideas
       Teach `buildReconcilePrompt` to handle phase-less backlog ideas with the same drift-only rules and Log/frontmatter guardrails.
 - [ ] Turn the reconcile slots into a queue
       Generalize `pendingReconcile`/`reconcilePreview` in `app-store.ts` to an ordered queue, fed by the sweep's server-held before/after snapshots via a new agent route.
