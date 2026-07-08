@@ -159,9 +159,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   const fixQuality = useAppStore((s) => s.fixQuality);
   const consistency = useAppStore((s) => s.consistency);
   const loadConsistency = useAppStore((s) => s.loadConsistency);
-  const setActiveDocSection = useAppStore((s) => s.setActiveDocSection);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
-  const setActivePlanTitle = useAppStore((s) => s.setActivePlanTitle);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
@@ -390,16 +388,20 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       if (issue.kind === 'blocked-plan-active' && issue.planId) {
         const blockedPlan = plans?.entries.find((p) => p.id === issue.planId);
         if (blockedPlan) {
-          setActivePlanTitle(blockedPlan.title);
-          navigate({ to: '/' });
+          navigate({
+            to: '/plans/$planId',
+            params: { planId: encodeURIComponent(blockedPlan.title) },
+          });
           return;
         }
       }
-      setActiveDocSection(issue.section === 'open-questions' ? 'questions' : 'decisions');
       setActiveDocTitle(issue.title);
-      navigate({ to: '/docs' });
+      navigate({
+        to: '/docs/$section',
+        params: { section: issue.section === 'open-questions' ? 'questions' : 'decisions' },
+      });
     },
-    [plans?.entries, navigate, setActivePlanTitle, setActiveDocSection, setActiveDocTitle],
+    [plans?.entries, navigate, setActiveDocTitle],
   );
 
   return (

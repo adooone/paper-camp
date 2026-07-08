@@ -5,7 +5,6 @@ import type { PlanSortKey } from '../plan-list-selector';
 import { AddToBacklogButton } from './add-to-backlog-button';
 import { AuditAllButton } from './audit-all-button';
 import { NewIdeaButton } from './new-idea-button';
-import { ViewToggle } from './view-toggle';
 
 const SORT_OPTIONS: { value: PlanSortKey; label: string }[] = [
   { value: 'status', label: 'Status' },
@@ -18,12 +17,9 @@ const SORT_OPTIONS: { value: PlanSortKey; label: string }[] = [
 
 /**
  * The plans page header row: the page title plus the toolbar (sort, add-to-backlog,
- * audit-all, view toggle), rendered above the list/board. Sort only applies to the
- * list, so it's hidden in board view; the rest stays so the view toggle is reachable.
+ * audit-all), rendered above the worklist.
  */
 export const PlansHeader = () => {
-  const view = useAppStore((s) => s.view);
-  const setView = useAppStore((s) => s.setView);
   const filters = useAppStore((s) => s.planFilters);
   const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);
   const togglePlanSortDirection = useAppStore((s) => s.togglePlanSortDirection);
@@ -51,17 +47,11 @@ export const PlansHeader = () => {
         Plans
       </h1>
 
-      {/* Sort applies to the list only, but we keep it mounted and just hide it in
-          board view (visibility, not conditional mount) so the toolbar buttons to
-          its right don't jump when toggling views — per docs/UX_PRINCIPLES.md
-          "reserve space for content that changes". visibility:hidden also drops it
-          from tab order and the a11y tree while hidden. */}
       <div
         style={{
           display: 'flex',
           gap: space[2],
           alignItems: 'center',
-          visibility: view === 'list' ? 'visible' : 'hidden',
         }}
       >
         <Select
@@ -101,7 +91,6 @@ export const PlansHeader = () => {
       <NewIdeaButton />
       <AddToBacklogButton />
       <AuditAllButton />
-      <ViewToggle view={view} onChange={setView} />
     </div>
   );
 };

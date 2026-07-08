@@ -11,19 +11,12 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
-import {
-  PlanActionsColumn,
-  PlanFilterColumn,
-  PlansPage,
-  ReviewPage,
-  ReviewSidebar,
-} from './features/plans/index';
+import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
 import { useAppStore } from './stores/app-store';
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
-  { id: 'review', label: 'Review', path: '/review' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'settings', label: 'Settings', path: '/settings' },
 ];
@@ -77,11 +70,15 @@ const RootLayout = () => {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
-  const setActivePlanTitle = useAppStore((s) => s.setActivePlanTitle);
-  const setActiveIdeaTitle = useAppStore((s) => s.setActiveIdeaTitle);
-  const activeId = navItems.find((item) => item.path === pathname)?.id;
-  const hasSidebar =
-    pathname === '/' || pathname === '/review' || pathname === '/docs' || pathname === '/settings';
+  const isPlansArea =
+    pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
+  const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
+  const activeId = isPlansArea
+    ? 'plans'
+    : isDocsArea
+      ? 'docs'
+      : navItems.find((item) => item.path === pathname)?.id;
+  const hasSidebar = isPlansArea || isDocsArea || pathname === '/settings';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -92,12 +89,10 @@ const RootLayout = () => {
     loadIdeas();
   }, [loadPlans, loadIdeas]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the reset trigger (run on every navigation), not read in the body
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body — close the mobile sidebar on every route change.
   useEffect(() => {
-    setActivePlanTitle(null);
-    setActiveIdeaTitle(null);
     setMobileSidebarOpen(false);
-  }, [pathname, setActivePlanTitle, setActiveIdeaTitle]);
+  }, [pathname]);
 
   return (
     <ToastProvider>
@@ -173,19 +168,13 @@ const RootLayout = () => {
                   mobileOpen={mobileSidebarOpen}
                   onMobileClose={() => setMobileSidebarOpen(false)}
                 >
-                  {pathname === '/' && (
+                  {isPlansArea && (
                     <>
                       <PlanFilterColumn />
                       <PlanActionsColumn />
                     </>
                   )}
-                  {pathname === '/review' && (
-                    <>
-                      <ReviewSidebar />
-                      <PlanActionsColumn flush={false} />
-                    </>
-                  )}
-                  {pathname === '/docs' && <DocsSidebar />}
+                  {isDocsArea && <DocsSidebar />}
                   {pathname === '/settings' && <SettingsSidebar />}
                 </SidebarShell>
               )}
@@ -199,6 +188,7 @@ const RootLayout = () => {
                 <div className="flex-1 min-h-0 overflow-y-auto">
                   <Page
                     texture={{ texture: 'parchment' }}
+                    outline
                     style={{ height: 'auto', ...(isLarge ? { maxWidth: 'none' } : {}) }}
                   >
                     <AnimatePresence mode="wait">
@@ -241,14 +231,24 @@ const plansRoute = createRoute({
   path: '/',
   component: PlansPage,
 });
-const reviewRoute = createRoute({
+const planDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/review',
-  component: ReviewPage,
+  path: '/plans/$planId',
+  component: PlansPage,
+});
+const ideaDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/ideas/$ideaId',
+  component: PlansPage,
 });
 const docsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs',
+  component: DocsPage,
+});
+const docsSectionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/docs/$section',
   component: DocsPage,
 });
 
@@ -258,7 +258,14 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
-const routeTree = rootRoute.addChildren([plansRoute, reviewRoute, docsRoute, settingsRoute]);
+const routeTree = rootRoute.addChildren([
+  plansRoute,
+  planDetailRoute,
+  ideaDetailRoute,
+  docsRoute,
+  docsSectionRoute,
+  settingsRoute,
+]);
 
 export const router = createRouter({ routeTree });
 

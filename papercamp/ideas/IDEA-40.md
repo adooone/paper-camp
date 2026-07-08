@@ -2,7 +2,7 @@
 id: IDEA-40
 title: Make sub-views real routes
 type: feat
-status: in-progress
+status: review
 created: 2026-07-04
 updated: 2026-07-06
 tags:
@@ -47,24 +47,24 @@ per-item param routes work the same either way. Nothing blocks this — no paper
 dependency is left since the [[IDEA-32]] bump landed `Breadcrumb`.
 
 ### Phases
-- [ ] Add param routes for plans, ideas, and docs
+- [x] Add param routes for plans, ideas, and docs
       Define `/plans/$planId`, `/ideas/$ideaId`, and `/docs/$section` as TanStack
       Router param routes in `router.tsx`; clicking a plan, idea, or doc section
       navigates to its route instead of setting store state.
-- [ ] Derive selection state from the URL
+- [x] Derive selection state from the URL
       Replace the `activePlanTitle`/`activeIdeaTitle`/`activeDocSection` globals in
       `app-store.ts` with values derived from route params (active highlighting and
       detail rendering included), and drop the pathname-reset effect in `router.tsx`.
-- [ ] Replace back buttons with Breadcrumb
+- [x] Replace back buttons with Breadcrumb
       Swap the hand-rolled "← All plans" (and idea/doc equivalents) for paper-ui
       `Breadcrumb` links — Plans / FEAT-28 — on the plan, idea, and doc detail views.
-- [ ] Fold Review into the Plans route
+- [x] Fold Review into the Plans route
       Render List | Board | Review | Closed as a `Tabs` row on the Plans page, retire
       the standalone `/review` page, and drop Review from the header nav (keeping
       [[FEAT-39]]'s inline queue untouched).
-- [ ] Land Docs on the README
+- [x] Land Docs on the README
       Default `/docs` to the readme section instead of the "Select a section from the
       sidebar" placeholder.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
       `tsc --noEmit`, `biome check`, tests, and a browser pass over deep links,
       refresh, back-button behavior, and the merged Plans tabs.

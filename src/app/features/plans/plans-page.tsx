@@ -1,10 +1,11 @@
 import { PageTitle } from '@/app/components/page-title';
+import { useActiveIdeaTitle, useActivePlanTitle } from '@/app/hooks';
 import { deletePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
-import { Button, Card } from '@dendelion/paper-ui';
+import { Breadcrumb, Card } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { BoardView } from './components/board-view';
 import { DeleteIdeaModal } from './components/delete-idea-modal';
 import { EntityDetail } from './components/entity-detail';
 import { ListView } from './components/list-view';
@@ -13,30 +14,21 @@ import { PlansHeader } from './components/plans-header';
 import { selectWorklistRows } from './plan-list-selector';
 
 export const PlansPage = () => {
-  const {
-    plans,
-    plansError,
-    ideaEntries,
-    activePlanTitle,
-    setActivePlanTitle,
-    activeIdeaTitle,
-    setActiveIdeaTitle,
-    view,
-    loadPlans,
-    planFilters,
-  } = useAppStore();
+  const { plans, plansError, ideaEntries, loadPlans, planFilters } = useAppStore();
+  const activePlanTitle = useActivePlanTitle();
+  const activeIdeaTitle = useActiveIdeaTitle();
+  const navigate = useNavigate();
 
   const handleBack = () => {
-    setActivePlanTitle(null);
-    setActiveIdeaTitle(null);
+    navigate({ to: '/' });
   };
 
   const handleOpenPlan = (title: string) => {
-    setActivePlanTitle(title);
+    navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(title) } });
   };
 
   const handleOpenIdea = (title: string) => {
-    setActiveIdeaTitle(title);
+    navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(title) } });
   };
 
   const [deleteIdeaTitle, setDeleteIdeaTitle] = useState<string | null>(null);
@@ -44,7 +36,7 @@ export const PlansPage = () => {
   const handleDeleteIdea = async (title: string) => {
     await deletePlan(title);
     await loadPlans();
-    if (activePlanTitle === title) setActivePlanTitle(null);
+    if (activePlanTitle === title) navigate({ to: '/' });
   };
 
   const activePlan = activePlanTitle
@@ -80,9 +72,12 @@ export const PlansPage = () => {
     return (
       <div>
         <div style={{ marginBottom: space[4] }}>
-          <Button variant="ghost" size="small" onClick={handleBack}>
-            &larr; All plans
-          </Button>
+          <Breadcrumb
+            items={[
+              { id: 'plans', label: 'Plans', onClick: handleBack },
+              { id: 'plan', label: activePlan.title },
+            ]}
+          />
         </div>
         <EntityDetail plan={activePlan} />
       </div>
@@ -93,9 +88,12 @@ export const PlansPage = () => {
     return (
       <div>
         <div style={{ marginBottom: space[4] }}>
-          <Button variant="ghost" size="small" onClick={handleBack}>
-            &larr; All plans
-          </Button>
+          <Breadcrumb
+            items={[
+              { id: 'plans', label: 'Plans', onClick: handleBack },
+              { id: 'idea', label: activeIdea.title },
+            ]}
+          />
         </div>
         <NoteDetail idea={activeIdea} />
       </div>
@@ -126,8 +124,6 @@ export const PlansPage = () => {
           No plans yet. Run <code>paper-camp add plan &quot;name&quot;</code>, or add one to the
           backlog above.
         </p>
-      ) : view === 'board' ? (
-        <BoardView plans={plans.entries} />
       ) : (
         <ListView
           plans={plans.entries}

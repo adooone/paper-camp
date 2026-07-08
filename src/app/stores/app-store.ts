@@ -53,15 +53,6 @@ type AppStore = {
   ideaEntries: IdeaEntry[];
   loadIdeas: () => Promise<void>;
 
-  activePlanTitle: string | null;
-  setActivePlanTitle: (title: string | null) => void;
-
-  activeIdeaTitle: string | null;
-  setActiveIdeaTitle: (title: string | null) => void;
-
-  view: 'list' | 'board';
-  setView: (v: 'list' | 'board') => void;
-
   // Plans-list filters, lifted here so the left filter column and the list itself
   // (separate subtrees since the column renders in the sidebar slot) share one source.
   planFilters: PlanListFilters;
@@ -87,11 +78,6 @@ type AppStore = {
   repoDocs: { name: string; content: string }[];
   repoDocsLoading: boolean;
   loadRepoDocs: () => Promise<void>;
-
-  activeDocSection: 'decisions' | 'questions' | 'progress' | 'repo-docs' | null;
-  setActiveDocSection: (
-    section: 'decisions' | 'questions' | 'progress' | 'repo-docs' | null,
-  ) => void;
 
   activeDocTitle: string | null;
   setActiveDocTitle: (title: string | null) => void;
@@ -178,15 +164,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  activePlanTitle: null,
-  setActivePlanTitle: (title) => set({ activePlanTitle: title }),
-
-  activeIdeaTitle: null,
-  setActiveIdeaTitle: (title) => set({ activeIdeaTitle: title }),
-
-  view: 'list',
-  setView: (v) => set({ view: v }),
-
   planFilters: DEFAULT_PLAN_LIST_FILTERS,
   togglePlanStatus: (status) =>
     set((s) => ({
@@ -268,17 +245,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
     try {
       const data = await fetchRepoDocs();
       set({ repoDocs: data.files, repoDocsLoading: false });
-      const { activeDocSection } = get();
-      if (!activeDocSection && data.files.some((f) => f.name === 'MAIN.md')) {
-        set({ activeDocSection: 'repo-docs', activeDocTitle: 'MAIN.md' });
+      const { activeDocTitle } = get();
+      if (!activeDocTitle) {
+        const readme = ['MAIN.md', 'README.md'].find((name) =>
+          data.files.some((f) => f.name === name),
+        );
+        if (readme) set({ activeDocTitle: readme });
       }
     } catch {
       set({ repoDocs: [], repoDocsLoading: false });
     }
   },
-
-  activeDocSection: null,
-  setActiveDocSection: (section) => set({ activeDocSection: section }),
 
   activeDocTitle: null,
   setActiveDocTitle: (title) => set({ activeDocTitle: title }),

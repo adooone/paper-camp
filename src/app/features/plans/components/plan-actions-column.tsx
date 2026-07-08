@@ -1,4 +1,5 @@
 import { IntentButton } from '@/app/components';
+import { useActivePlanTitle } from '@/app/hooks';
 import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
@@ -30,14 +31,9 @@ const sectionLabelStyle: React.CSSProperties = {
  * Run all phases live here; the detail view keeps the body, phases table, and log.
  * Reads the active plan from the store so it stays in sync with the detail subtree.
  */
-interface PlanActionsColumnProps {
-  /** When it's the top card, pull up to line up with the Page; otherwise add a gap above. */
-  flush?: boolean;
-}
-
-export const PlanActionsColumn = ({ flush = true }: PlanActionsColumnProps) => {
+export const PlanActionsColumn = () => {
   const plans = useAppStore((s) => s.plans);
-  const activePlanTitle = useAppStore((s) => s.activePlanTitle);
+  const activePlanTitle = useActivePlanTitle();
   const loadPlans = useAppStore((s) => s.loadPlans);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const [updating, setUpdating] = useState(false);
@@ -61,9 +57,8 @@ export const PlanActionsColumn = ({ flush = true }: PlanActionsColumnProps) => {
   };
 
   return (
-    // Flush (top card): pull up by the SidebarShell's top padding to line up with the
-    // Page. Otherwise (below the review queue): a normal gap above.
-    <div style={{ marginTop: flush ? `calc(-1 * ${space[5]})` : space[5] }}>
+    // Pull up by the SidebarShell's top padding to line up with the Page.
+    <div style={{ marginTop: `calc(-1 * ${space[5]})` }}>
       <Card surface="paper" texture="speckle" size="small">
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
           <h2

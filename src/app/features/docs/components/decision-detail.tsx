@@ -2,13 +2,14 @@ import { LinkButton, Markdown } from '@/app/components';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import { Stamp } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 
 export const DecisionDetail = () => {
   const decisions = useAppStore((s) => s.decisions);
   const openQuestions = useAppStore((s) => s.openQuestions);
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
-  const setActiveDocSection = useAppStore((s) => s.setActiveDocSection);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
+  const navigate = useNavigate();
 
   const decision = decisions.find((d) => d.title === activeDocTitle);
   if (!decision) return null;
@@ -60,7 +61,7 @@ export const DecisionDetail = () => {
                 {i > 0 && ', '}
                 <LinkButton
                   onClick={() => {
-                    setActiveDocSection('questions');
+                    navigate({ to: '/docs/$section', params: { section: 'questions' } });
                     setActiveDocTitle(q.title);
                   }}
                 >
