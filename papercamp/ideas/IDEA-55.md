@@ -2,7 +2,7 @@
 id: IDEA-55
 title: Actualise all ideas at once
 type: feat
-status: in-progress
+status: review
 created: 2026-07-08
 updated: 2026-07-08
 tags:
@@ -37,4 +37,4 @@ The three open calls resolve as: **scope** — open ideas and plans (`idea`/`pla
       Plans-header button that launches the sweep and reports per-entity progress through the existing `agentStatus` lines and Stop control.
 - [x] Retire the app's Audit-all path
       Remove `audit-all-button.tsx`, `startBatchAudit`, and its route; keep `buildConvergenceAuditPrompt` for the CLI's `runPlanAudit`.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
