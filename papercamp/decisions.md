@@ -1,3 +1,50 @@
+## Status is derived from git and PR, not stored
+
+**Date:** 2026-07-08
+**Status:** decided
+
+**Context:** Lifecycle `status` is a stored frontmatter field, so keeping it
+honest means writing files — a plan reaching review, a branch being cut, the PR
+merging are each a hand edit or an agent/CI commit — and the recurring failure is
+drift (the index says `in-progress`, the file says `review`, the PR is already
+merged, nobody updated anything). `FEAT-35`'s plan and the first cut of `IDEA-56`
+both tried to *sync* the stored field from GitHub, which still commits on every
+merge — the exact churn we're trying to remove.
+
+**Decision:** Stop storing lifecycle status and derive it from signals that
+already exist, so it can't go stale because there's nothing to keep in sync:
+
+- **idea** — no plan yet (no `### Phases`).
+- **planned** — has phases, no branch.
+- **in-progress** — a branch for the entity **exists** (matched by the
+  `feat/idea-N-…` convention `branchEntityId` parses). Branch *existence*, not
+  "is it checked out": status must read the same on every clone, so "is it the
+  current branch" stays a purely-local signal that only drives the active-plan
+  highlight.
+- **review** — the branch exists and every phase is checked.
+- **done** — the entity's PR is merged, read from a **cached live `gh`/API
+  lookup** (not a persist-on-merge write, not git history — a squash-merge
+  deletes the branch and drops its commits from `main`, so GitHub is the only
+  reliable "was this merged" source).
+
+A minimal stored `status:` survives only for what reality can't express —
+**dropped** (abandonment leaves no branch and no merge) and closing a **planless
+idea or `note`** (never gets a branch or PR) — and doubles as the **offline /
+no-GitHub fallback**. So the field demotes from source-of-truth to
+override-plus-fallback; it does not disappear.
+
+**Rationale:** This removes the status-sync commits and the drift they cause —
+the highest-leverage fix for the "index/status is stale" churn that keeps
+generating review nits. The file stays authoritative only where reality has no
+signal, which is exactly where a human call is needed anyway. It keeps the
+already-decided "planless ideas close via explicit frontmatter status" escape
+hatch (that *is* the stored override), revises "Status: review is the human
+gate" (review now *is* all-phases-checked; done *is* merged), and moots
+`FEAT-35`'s merge→`done`+archive phase. Open consequence for the planning pass:
+if done is derived, moving a file to `archive/` is itself a needless commit, so
+whether the `archive/` directory survives is now in question. To be implemented
+via `IDEA-56`.
+
 ## The plans worklist is one filterable list — no Board/Review/Closed tabs
 
 **Date:** 2026-07-07

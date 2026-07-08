@@ -114,8 +114,9 @@ export const entityFrontmatterSchema = z
       .describe('"note" marks an entity that never grows phases; omitted for normal ideas'),
     status: z
       .enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped', 'open'])
+      .optional()
       .describe(
-        'Lifecycle status: idea → planned → in-progress → review → done/dropped; notes use open → done/dropped',
+        'Stored override, no longer the source of truth: most lifecycle states derive from phases/branch/PR. Only dropped, a planless idea/note being closed, or the offline fallback need this set.',
       ),
     agent: z.enum(AGENT_IDS).optional().describe('Per-entity agent override'),
     created: dateString.describe('Creation date (YYYY-MM-DD)'),
@@ -131,10 +132,16 @@ export const entityFrontmatterSchema = z
       ),
     tags: z.array(z.string()).optional().describe('Tagging categories'),
   })
-  .refine((data) => data.kind !== 'note' || ['open', 'done', 'dropped'].includes(data.status), {
-    message: 'a note entity must use status open, done, or dropped',
-    path: ['status'],
-  })
+  .refine(
+    (data) =>
+      data.kind !== 'note' ||
+      data.status === undefined ||
+      ['open', 'done', 'dropped'].includes(data.status),
+    {
+      message: 'a note entity must use status open, done, or dropped',
+      path: ['status'],
+    },
+  )
   .refine((data) => data.kind === 'note' || data.status !== 'open', {
     message: 'status open is only valid on entities with kind: note',
     path: ['status'],

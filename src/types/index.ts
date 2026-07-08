@@ -138,7 +138,8 @@ export interface EntityEntry {
   type?: EntityType;
   /** "note" marks an entity that never grows phases. */
   kind?: 'note';
-  status: EntityStatus;
+  /** Stored override, not the source of truth — see entityFrontmatterSchema. */
+  status?: EntityStatus;
   agent?: AgentId;
   created: string;
   updated?: string;

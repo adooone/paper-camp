@@ -18,7 +18,7 @@
     },
     "planDraft": {
       "agent": "claude-code",
-      "model": "fable",
+      "model": "opus",
       "effort": "high"
     },
     "ideaExtend": {

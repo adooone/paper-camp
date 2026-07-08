@@ -408,7 +408,7 @@ export function createAgentManager(
         const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
         const openStatuses = new Set(['idea', 'planned', 'in-progress', 'review']);
         const candidates = entries
-          .filter((e) => e.kind !== 'note' && openStatuses.has(e.status))
+          .filter((e) => e.kind !== 'note' && e.status !== undefined && openStatuses.has(e.status))
           .map(entityToPlan);
 
         if (candidates.length === 0) {

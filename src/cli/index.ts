@@ -220,7 +220,7 @@ program
     await mkdir(entityArchiveDir, { recursive: true });
 
     const stripHeading = (body: string) => body.replace(/^#{1,3}\s+[^\n]*\n?/, '').trim();
-    const isClosed = (status: string) => status === 'done' || status === 'dropped';
+    const isClosed = (status: string | undefined) => status === 'done' || status === 'dropped';
     const numOf = (id: string) => Number.parseInt(id.replace(/^[A-Z]+-/, ''), 10);
 
     async function readLegacyDir<T>(
