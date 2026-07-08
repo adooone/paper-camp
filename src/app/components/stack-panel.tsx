@@ -588,17 +588,19 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
                           ? ' — audit'
                           : agentStatus.taskKind === 'batch-audit'
                             ? ' — batch audit'
-                            : agentStatus.taskKind === 'draft'
-                              ? ' — drafting'
-                              : agentStatus.taskKind === 'extend'
-                                ? ' — extending'
-                                : agentStatus.taskKind === 'commit-suggest'
-                                  ? ' — suggesting commit message'
-                                  : agentStatus.taskKind === 'sync'
-                                    ? ' — syncing to main'
-                                    : agentStatus.taskKind === 'run-all'
-                                      ? ' — run all phases'
-                                      : ''}{' '}
+                            : agentStatus.taskKind === 'batch-reconcile'
+                              ? ' — batch reconcile'
+                              : agentStatus.taskKind === 'draft'
+                                ? ' — drafting'
+                                : agentStatus.taskKind === 'extend'
+                                  ? ' — extending'
+                                  : agentStatus.taskKind === 'commit-suggest'
+                                    ? ' — suggesting commit message'
+                                    : agentStatus.taskKind === 'sync'
+                                      ? ' — syncing to main'
+                                      : agentStatus.taskKind === 'run-all'
+                                        ? ' — run all phases'
+                                        : ''}{' '}
                       · {AGENT_LABELS[agentStatus.agentId]}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>

@@ -78,6 +78,14 @@ export const launchBatchAudit = async (): Promise<void> => {
   }
 };
 
+export const launchBatchReconcile = async (): Promise<void> => {
+  const response = await fetch('/api/agent/launch-reconcile-all', { method: 'POST' });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
+    throw new Error(err.error);
+  }
+};
+
 export const launchRunAll = async (planId: string): Promise<void> => {
   const response = await fetch('/api/agent/launch-run-all', {
     method: 'POST',

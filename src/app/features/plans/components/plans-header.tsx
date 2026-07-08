@@ -2,6 +2,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, space } from '@/app/styles/tokens';
 import { IconButton, Select } from '@dendelion/paper-ui';
 import type { PlanSortKey } from '../plan-list-selector';
+import { ActualiseAllButton } from './actualise-all-button';
 import { AddToBacklogButton } from './add-to-backlog-button';
 import { AuditAllButton } from './audit-all-button';
 import { NewIdeaButton } from './new-idea-button';
@@ -90,6 +91,7 @@ export const PlansHeader = () => {
 
       <NewIdeaButton />
       <AddToBacklogButton />
+      <ActualiseAllButton />
       <AuditAllButton />
     </div>
   );

@@ -283,6 +283,27 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
+    // POST /api/agent/launch-reconcile-all — start a batch reconcile sweep across all open ideas/plans
+    {
+      method: 'POST',
+      path: '/api/agent/launch-reconcile-all',
+      handle: async (_req, res) => {
+        // Batch reconcile can rewrite many entity files — gate it behind the same
+        // active-plan guard the other write-capable agent routes use.
+        const conflict = await checkBranchConflictForPlan(root, git);
+        if (conflict) {
+          sendJson(res, 409, { error: conflict });
+          return;
+        }
+        const result = agent.startBatchReconcile();
+        if (!result.ok) {
+          sendJson(res, 409, { error: result.error });
+          return;
+        }
+        sendJson(res, 202, { ok: true });
+      },
+    },
+
     // POST /api/agent/launch-run-all — run every unchecked phase sequentially with per-phase commits
     {
       method: 'POST',
