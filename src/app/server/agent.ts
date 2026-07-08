@@ -20,7 +20,7 @@ import {
   type TaskKind,
   coerceAgentConfig,
 } from '../../types/index';
-import { buildConvergenceAuditPrompt } from '../features/plans/prompts';
+import { buildConvergenceAuditPrompt, buildReconcilePrompt } from '../features/plans/prompts';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 
 const MAX_LINES = 50;
@@ -512,6 +512,159 @@ export function createAgentManager(
     return { ok: true };
   }
 
+  // Batch reconcile: sweep every open non-note entity (idea/planned/in-progress/review)
+  // and run a reconcile pass on each, rewording only prose that has drifted from the
+  // code. Clone of startBatchAudit's sequential loop and cancel handling — swap the
+  // audit prompt for the reconcile prompt and widen the selection beyond review/done
+  // plans. Snapshots each entity's body + phase text as the `before` baseline right
+  // before its run, since (unlike single Reconcile, where the client captures that
+  // snapshot at launch) the server is the only party in the loop here.
+  function startBatchReconcile(): Result {
+    if (isBusy()) {
+      return { ok: false, error: 'An agent task is already running' };
+    }
+    const defaultAgents = readDefaultAgentIds(root);
+    const {
+      id: agentId,
+      adapter,
+      model,
+      effort,
+    } = resolveAgent({ defaultAgents, taskKind: 'reconcile' });
+
+    // Stub proc — replaced per entity in the loop. Already-exited is fine: stop() sets
+    // task.status = 'stopping' first; kill() on a dead process is a no-op.
+    const stubProc = spawn('sh', ['-c', 'exit 0'], {
+      cwd: root,
+      stdio: 'ignore',
+    });
+    const task: AgentTask = {
+      taskKind: 'batch-reconcile',
+      planTitle: 'Batch reconcile',
+      status: 'starting',
+      agentId,
+      adapter,
+      proc: stubProc,
+      lines: [],
+    };
+    current = task;
+    setStatus(task, 'running');
+
+    (async () => {
+      try {
+        const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
+        const openStatuses = new Set(['idea', 'planned', 'in-progress', 'review']);
+        const candidates = entries
+          .filter((e) => e.kind !== 'note' && openStatuses.has(e.status))
+          .map(entityToPlan);
+
+        if (candidates.length === 0) {
+          if (current === task) {
+            pushLine(task, 'No open ideas or plans to reconcile.');
+            setStatus(task, 'done');
+          }
+          return;
+        }
+
+        pushLine(
+          task,
+          `Reconciling ${candidates.length} entit${candidates.length === 1 ? 'y' : 'ies'}…`,
+        );
+        let reconciled = 0;
+        let skipped = 0;
+        let failed = 0;
+        const total = candidates.length;
+
+        for (const [index, plan] of candidates.entries()) {
+          if (current !== task || task.status === 'stopping') break;
+          if (!plan.id) {
+            skipped++;
+            continue;
+          }
+
+          const planFile = await findBatchPlanFile(join(root, 'papercamp', 'ideas'), plan.id);
+          if (!planFile) {
+            skipped++;
+            continue;
+          }
+
+          // Snapshot the before baseline right before this entity's run.
+          const before = { body: plan.body, phases: plan.phases.map((p) => p.text) };
+
+          pushLine(task, `[reconcile] ${plan.id} ${plan.title} (${index + 1}/${total})`);
+          const prompt = buildReconcilePrompt(plan);
+          const proc = spawn(adapter.command, adapter.buildArgs(prompt, { model, effort }), {
+            cwd: root,
+            stdio: ['ignore', 'pipe', 'pipe'],
+          });
+          task.proc = proc;
+
+          if (proc.stdout) {
+            const rl = createInterface({ input: proc.stdout });
+            rl.on('line', (line) => {
+              if (current !== task) return;
+              const parsed = adapter.parseLine(line);
+              if (parsed?.text && parsed.text !== 'Agent is working…') {
+                pushLine(task, `  ${parsed.text}`);
+              }
+            });
+          }
+          // Drain stderr — an unread pipe can fill and hang the subprocess.
+          proc.stderr?.on('data', () => {});
+
+          const success = await new Promise<boolean>((resolve) => {
+            proc.on('close', (code) => resolve(code === 0));
+            proc.on('error', () => resolve(false));
+          });
+
+          if (current !== task) return;
+
+          if (success) {
+            let changed = false;
+            try {
+              const rawAfter = await readFile(planFile, 'utf-8');
+              const parsedAfter = parsePlanFile(rawAfter);
+              const after = parsedAfter.entries[0];
+              changed = after
+                ? JSON.stringify({ body: after.body, phases: after.phases.map((p) => p.text) }) !==
+                  JSON.stringify(before)
+                : false;
+            } catch {
+              /* changed stays false */
+            }
+            reconciled++;
+            pushLine(
+              task,
+              changed ? `[done] ${plan.id} — updated` : `[done] ${plan.id} — no drift found`,
+            );
+          } else {
+            failed++;
+            pushLine(task, `[fail] ${plan.id} — agent error`);
+          }
+        }
+
+        if (current !== task) return;
+
+        if (task.status === 'stopping') {
+          setStatus(task, 'done');
+          return;
+        }
+
+        pushLine(
+          task,
+          `Reconcile complete — ${reconciled} reconciled, ${skipped} skipped, ${failed} failed`,
+        );
+        setStatus(task, failed > 0 ? 'error' : 'done');
+      } catch (err) {
+        if (current === task) {
+          pushLine(task, `Batch reconcile failed: ${(err as Error).message}`);
+          setStatus(task, 'error');
+        }
+      }
+    })();
+
+    return { ok: true };
+  }
+
   // Run all unchecked phases sequentially, spawning a fresh agent per phase.
   // Iterates unchecked phases in order on whatever branch is checked out —
   // branch management is manual (see the "Branch creation is manual" decision).
@@ -847,6 +1000,7 @@ export function createAgentManager(
     startForIdea,
     startForIdeaExtend,
     startBatchAudit,
+    startBatchReconcile,
     startRunAllPhases,
     startSync,
     runCommitSuggest,
@@ -870,6 +1024,7 @@ export interface AgentManager {
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchAudit: () => Result;
+  startBatchReconcile: () => Result;
   startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<boolean>) => Result;
   startSync: (prompt: string) => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;
