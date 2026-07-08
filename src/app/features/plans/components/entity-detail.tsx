@@ -29,7 +29,6 @@ import { PhaseCopyButton } from './phase-copy-button';
 import { PlanIdStamp } from './plan-id-stamp';
 import { ProgressBar } from './progress-bar';
 import { ReconcileButton } from './reconcile-button';
-import { ReconcileDiffPanel } from './reconcile-diff-panel';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -54,9 +53,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const { toast } = useToast();
   const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const reconcileQueue = useAppStore((s) => s.reconcileQueue);
-  const removeFromReconcileQueue = useAppStore((s) => s.removeFromReconcileQueue);
-  const reconcilePreview = reconcileQueue.find((item) => item.planId === plan.id) ?? null;
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const agentPhaseIndex =
@@ -125,22 +121,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     setUpdating(false);
   };
 
-  const handleApproveReconcile = () => {
-    if (plan.id) removeFromReconcileQueue(plan.id);
-  };
-
-  const handleDiscardReconcile = async () => {
-    if (!reconcilePreview || !plan.id) return;
-    setUpdating(true);
-    await updatePlan(plan.title, {
-      body: reconcilePreview.before.body,
-      phases: reconcilePreview.before.phases,
-    });
-    await loadPlans();
-    removeFromReconcileQueue(plan.id);
-    setUpdating(false);
-  };
-
   const handleAddLogEntry = async () => {
     if (!logInput.trim()) return;
     const today = new Date().toISOString().slice(0, 10);
@@ -155,14 +135,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
   return (
     <div>
-      {reconcilePreview && (
-        <ReconcileDiffPanel
-          plan={plan}
-          before={reconcilePreview.before}
-          onApprove={handleApproveReconcile}
-          onDiscard={handleDiscardReconcile}
-        />
-      )}
       <h2
         style={{
           fontFamily: fontFamily.serif,

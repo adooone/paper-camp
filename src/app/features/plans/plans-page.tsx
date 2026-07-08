@@ -11,6 +11,7 @@ import { EntityDetail } from './components/entity-detail';
 import { ListView } from './components/list-view';
 import { NoteDetail } from './components/note-detail';
 import { PlansHeader } from './components/plans-header';
+import { ReconcileQueueReview } from './components/reconcile-queue-review';
 import { selectWorklistRows } from './plan-list-selector';
 
 export const PlansPage = () => {
@@ -71,6 +72,7 @@ export const PlansPage = () => {
   if (activePlan) {
     return (
       <div>
+        <ReconcileQueueReview />
         <div style={{ marginBottom: space[4] }}>
           <Breadcrumb
             items={[
@@ -87,6 +89,7 @@ export const PlansPage = () => {
   if (activeIdea) {
     return (
       <div>
+        <ReconcileQueueReview />
         <div style={{ marginBottom: space[4] }}>
           <Breadcrumb
             items={[
@@ -104,6 +107,7 @@ export const PlansPage = () => {
 
   return (
     <div>
+      <ReconcileQueueReview />
       <PlansHeader />
 
       {plans.warnings.length > 0 && (
