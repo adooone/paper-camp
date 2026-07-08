@@ -262,7 +262,6 @@ export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'er
 export type TaskKind =
   | 'phase'
   | 'audit'
-  | 'batch-audit'
   | 'batch-reconcile'
   | 'run-all'
   | 'draft'

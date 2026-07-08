@@ -262,27 +262,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/launch-audit-all — start a batch convergence audit across all review/done plans
-    {
-      method: 'POST',
-      path: '/api/agent/launch-audit-all',
-      handle: async (_req, res) => {
-        // Batch audit can modify many plan files — gate it behind the same
-        // active-plan guard the other write-capable agent routes use.
-        const conflict = await checkBranchConflictForPlan(root, git);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
-        const result = agent.startBatchAudit();
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
-      },
-    },
-
     // POST /api/agent/launch-reconcile-all — start a batch reconcile sweep across all open ideas/plans
     {
       method: 'POST',

@@ -35,6 +35,6 @@ The three open calls resolve as: **scope** — open ideas and plans (`idea`/`pla
       Reuse `ReconcileDiffPanel` one entity at a time with an N-of-M counter, rendered from the Plans page root; Approve keeps and advances, Discard reverts via `updatePlan` and advances.
 - [x] Add the Actualise-all button
       Plans-header button that launches the sweep and reports per-entity progress through the existing `agentStatus` lines and Stop control.
-- [ ] Retire the app's Audit-all path
+- [x] Retire the app's Audit-all path
       Remove `audit-all-button.tsx`, `startBatchAudit`, and its route; keep `buildConvergenceAuditPrompt` for the CLI's `runPlanAudit`.
 - [ ] Type-check and visual pass
