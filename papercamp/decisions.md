@@ -1,3 +1,60 @@
+## `archive/` stops moving on `done`; migration keeps `status:` only where it can't derive
+
+**Date:** 2026-07-08
+**Status:** decided
+
+**Context:** `IDEA-56` phase 6 swept the ~55 existing entities' stored `status:`
+now that it's a derived-first field, and had to settle whether the `archive/`
+move (done on every `done`/`dropped` write, in `routes/plans.ts` and
+`mcp/tools.ts`) survives. Actually clearing stored `status: done` and
+re-deriving live (via `gh`, network on) surfaced two things: `readEntities`
+already reads `ideas/` and its `archive/` subdirectory as one merged list, so
+a file's directory never affected any read path — only the archive-on-write
+commit was ever in question. And most of the ~51 archived entities predate
+the per-feature-branch workflow (`FEAT-22`, 2026-06-27) or were renumbered
+into `IDEA-N` by the id-unification migration (`IDEA-43`, née `FEAT-42`), so
+`branchName(id, type, title)` computed from their *current* id never matches
+their real historical branch/PR name — `deriveStatus` has no way to
+reconstruct `done` for them and mis-fires a false-negative "confirmed not
+merged" instead.
+
+**Decision:**
+- Stopped archiving on `done` in both write paths (`routes/plans.ts`,
+  `mcp/tools.ts`): `done` is derived from a merged PR, so moving the file on
+  every approve is a needless commit with no read-path benefit. `dropped`
+  still archives — it has no live signal, so the stored override is the only
+  place that fact lives, and archiving still tidies it out of the active
+  worklist view. Existing files already under `archive/` were left in place;
+  moving them back would just be the same needless commit in reverse.
+- Fixed `resolvePrMergedForEntity` (`core/readers.ts`): when an entity has no
+  currently-existing branch, `gh` finding no PR under the *computed* name is
+  no longer treated as confirmed non-merge (which was silently downgrading
+  every pre-`FEAT-22` and pre-unification `done` entity to `planned` on a
+  live read) — it now falls back to `undefined` (unresolved), which
+  `deriveStatus` already trusts the stored `done` fallback for. A real
+  existing branch confirmed non-merged still corrects a stale stored `done`
+  down, unchanged.
+- Cleared the stored `status:` override on the entities that verifiably
+  derive clean without it: `IDEA-35`/`36`/`39`/`44` (their `idea`/`planned`
+  override no longer matched the phases-based derivation once phases
+  existed) and `IDEA-40`/`41`/`55` (post-unification entities whose live
+  branch name matches a confirmed-merged PR). Kept `status: done` on every
+  other archived entity, including `IDEA-43` — its `unify-the-ideas...`
+  branch existed locally with zero commits ahead of `main` and no PR of its
+  own (the real merge landed under the pre-renumbering `feat-42` branch), so
+  it was deleted (`git branch -d`, fully merged, no data loss) to stop it
+  confirming a false non-merge for that entity now that the fix above
+  distinguishes "no branch" from "a real branch, checked, not merged."
+
+**Rationale:** The read-merge across `ideas/` and `archive/` already made the
+physical split cosmetic; keeping the commit that produces that split
+without a corresponding behavior difference was the exact "needless commit"
+this idea's premise argues against. The `resolvePrMergedForEntity` fix was
+necessary, not optional busywork: without it, simply keeping `status: done`
+stored (the migration's own conclusion for ~46 entities) would not have
+survived the first live `gh`-connected read, since the ladder would still
+silently recompute and overwrite it to `planned`.
+
 ## Status is derived from git and PR, not stored
 
 **Date:** 2026-07-08

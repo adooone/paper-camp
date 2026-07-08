@@ -2,7 +2,6 @@
 id: IDEA-36
 title: Schedule repo digest and nudges
 type: feat
-status: idea
 created: 2026-07-04
 tags:
   - ci

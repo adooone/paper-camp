@@ -2,7 +2,6 @@
 id: IDEA-41
 title: Settings and affordance polish
 type: fix
-status: done
 created: 2026-07-02
 updated: 2026-07-06
 tags:

@@ -210,7 +210,7 @@ describe('write tools', () => {
     expect(written).toContain('- [ ] Second phase');
   });
 
-  it('update_phase archives the plan file when the new status is done', async () => {
+  it('update_phase does not archive the plan file when the new status is done', async () => {
     const root = await makeRoot();
     await writePlan(
       root,
@@ -225,6 +225,25 @@ describe('write tools', () => {
     });
     expect(result.isError).toBeFalsy();
 
+    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(written).toContain('status: done');
+  });
+
+  it('update_phase archives the plan file when the new status is dropped', async () => {
+    const root = await makeRoot();
+    await writePlan(
+      root,
+      'IDEA-1',
+      planFile({ id: 'IDEA-1', title: 'Nearly done plan', phases: ['- [ ] Only phase'] }),
+    );
+    const client = await connect(root, createGitManager(root, { watch: false }));
+
+    const result = await client.callTool({
+      name: 'update_phase',
+      arguments: { id: 'IDEA-1', phaseIndex: 0, done: true, status: 'dropped' },
+    });
+    expect(result.isError).toBeFalsy();
+
     await expect(
       readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
     ).rejects.toThrow();
@@ -232,7 +251,7 @@ describe('write tools', () => {
       join(root, 'papercamp', 'ideas', 'archive', 'IDEA-1.md'),
       'utf-8',
     );
-    expect(archived).toContain('status: done');
+    expect(archived).toContain('status: dropped');
   });
 
   it("append_progress prepends a bullet under today's heading", async () => {

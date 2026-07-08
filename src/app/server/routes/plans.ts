@@ -187,7 +187,10 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         await writeEntityFile(targetFile, entityFileInput(updatedEntry));
         await regenerateIndexes(root);
 
-        if (updates.status === 'done' || updates.status === 'dropped') {
+        // `done` is derived from a merged PR, so it never needs archiving on its own —
+        // moving the file would just be a needless commit. `dropped` has no such signal,
+        // so it stays the one status that still archives on write.
+        if (updates.status === 'dropped') {
           await archiveEntityFile(root, target.id);
         }
 

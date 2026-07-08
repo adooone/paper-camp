@@ -41,7 +41,7 @@ Open questions for the planning pass: **PR resolution + auth** — resolve the P
       Regenerate the index fully from the derived value and point worklist grouping, filters, and the branch-guards at derived status instead of the stored field, so nothing reads the demoted `status:` as source-of-truth.
 - [x] Surface the PR badge and the override editor in the UI
       Render the GitHub-icon PR badge (number + draft/open/merged, linking out) as the visible face of derived review/done, and give the UI a way to set the `dropped` / manual-close override now that `status:` isn't the primary field.
-- [ ] Migrate stored statuses and settle `archive/`
+- [x] Migrate stored statuses and settle `archive/`
       Sweep the ~55 existing entities: clear stored `status:` values that now derive cleanly, keep only the ones that must stay as overrides. Decide whether `archive/` survives — moving a done file there is itself a commit, so either drop the move or derive "archived-ness" too — and update the logged decisions the derivation revises.
 - [ ] Type-check and full pass
       `tsc` and `biome` clean, tests updated for the derived-status paths and the offline fallback.

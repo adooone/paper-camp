@@ -2,7 +2,6 @@
 id: IDEA-35
 title: Mirror plans onto GitHub PRs
 type: feat
-status: planned
 created: 2026-07-04
 updated: 2026-07-08
 tags:

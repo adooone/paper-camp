@@ -160,16 +160,24 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
  * PR). Everything else skips the `gh` round-trip entirely — an idea or a
  * freshly-planned entity was never branched, so it can't have a PR.
  */
-export function resolvePrMergedForEntity(
+export async function resolvePrMergedForEntity(
   root: string,
   e: EntityEntry,
   hasBranch: boolean | undefined,
 ): Promise<boolean | undefined> {
   if (e.phases.length === 0 || (!hasBranch && e.status !== 'done')) {
-    return Promise.resolve(undefined);
+    return undefined;
   }
   const branch = branchName(e.id, e.type, e.title);
-  return branch ? resolvePrMerged(root, branch) : Promise.resolve(undefined);
+  if (!branch) return undefined;
+  const merged = await resolvePrMerged(root, branch);
+  // No live branch, and `gh` found no PR under the *computed* name: for an entity
+  // that predates the current branch-naming convention (e.g. renumbered during the
+  // IDEA-43 id-unification migration), the real historical branch/PR used a
+  // different name, so this "no match" isn't proof of non-merge — don't let it
+  // override a stored `done`. Only a currently-existing branch confirms the miss.
+  if (!hasBranch && merged === false) return undefined;
+  return merged;
 }
 
 /**
