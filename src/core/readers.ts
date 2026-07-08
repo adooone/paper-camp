@@ -10,7 +10,9 @@ import type {
   PlanEntry,
   PlanStatus,
 } from '../types/index';
+import { branchName } from './branch';
 import { parseEntityFile } from './parser';
+import { resolvePrMerged } from './pr';
 import { deriveStatus } from './status';
 
 // ---------------------------------------------------------------------------
@@ -102,18 +104,20 @@ export async function readEntities(
  * entity's `type`. Lets the plan-shaped pipeline (API responses, prompts, UI)
  * keep working until the UI morphs to entities directly.
  *
- * `status` is derived from phases/branch existence rather than read straight
+ * `status` is derived from phases/branch/PR state rather than read straight
  * off `e.status` — see `deriveStatus`. `hasBranch` is `undefined` when the
  * caller has no branch information (e.g. git is unavailable), which falls
- * back to the stored override. Note this only affects the *view*: `e.status`
- * itself stays the raw stored override, so round-tripping an `EntityEntry`
- * back to disk (e.g. after an edit) never persists a derived value.
+ * back to the stored override; `prMerged` is `undefined` when the caller has
+ * no live PR-merged lookup (e.g. `gh` unavailable), same fallback. Note this
+ * only affects the *view*: `e.status` itself stays the raw stored override,
+ * so round-tripping an `EntityEntry` back to disk (e.g. after an edit) never
+ * persists a derived value.
  */
-export function entityToPlan(e: EntityEntry, hasBranch?: boolean): PlanEntry {
+export function entityToPlan(e: EntityEntry, hasBranch?: boolean, prMerged?: boolean): PlanEntry {
   return {
     title: e.title,
     // Non-note entities can't carry the note-only 'open' (schema-enforced).
-    status: deriveStatus(e, hasBranch) as PlanStatus,
+    status: deriveStatus(e, hasBranch, prMerged) as PlanStatus,
     kind: e.type,
     id: e.id,
     agent: e.agent,
@@ -141,13 +145,36 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
   };
 }
 
+/**
+ * Live-resolves whether `e`'s PR is merged, for entities where one could
+ * plausibly exist: it must have grown phases, and either still have a local
+ * branch or already carry a stored `done` (a squash-merge deletes the
+ * branch, so a previously-done entity needs the live check to still find its
+ * PR). Everything else skips the `gh` round-trip entirely — an idea or a
+ * freshly-planned entity was never branched, so it can't have a PR.
+ */
+function resolvePrMergedForEntity(
+  root: string,
+  e: EntityEntry,
+  hasBranch: boolean | undefined,
+): Promise<boolean | undefined> {
+  if (e.phases.length === 0 || (!hasBranch && e.status !== 'done')) {
+    return Promise.resolve(undefined);
+  }
+  const branch = branchName(e.id, e.type, e.title);
+  return branch ? resolvePrMerged(root, branch) : Promise.resolve(undefined);
+}
+
 /** All work entities (non-notes) in PlanEntry shape — the `/api/plans` view. */
 export async function readWorkEntries(ideasDir: string): Promise<ParseResult<PlanEntry>> {
   const { entries, warnings, branchEntityIds } = await readEntities(ideasDir);
+  const root = join(ideasDir, '..', '..');
+  const work = entries.filter((e) => e.kind !== 'note');
+  const prMerged = await Promise.all(
+    work.map((e) => resolvePrMergedForEntity(root, e, branchEntityIds?.has(e.id))),
+  );
   return {
-    entries: entries
-      .filter((e) => e.kind !== 'note')
-      .map((e) => entityToPlan(e, branchEntityIds?.has(e.id))),
+    entries: work.map((e, i) => entityToPlan(e, branchEntityIds?.has(e.id), prMerged[i])),
     warnings,
   };
 }

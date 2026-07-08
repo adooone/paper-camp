@@ -45,4 +45,24 @@ describe('deriveStatus', () => {
       'done',
     );
   });
+
+  it('derives done when the live PR lookup says merged, even overriding a stale stored value', () => {
+    expect(deriveStatus({ phases: [phase(true)], status: 'in-progress' }, true, true)).toBe('done');
+    expect(deriveStatus({ phases: [phase(false)] }, true, true)).toBe('done');
+  });
+
+  it('falls back to a stored done when the PR lookup is unresolved', () => {
+    expect(deriveStatus({ phases: [phase(true)], status: 'done' }, true, undefined)).toBe('done');
+  });
+
+  it('falls through to the rest of the ladder on a confirmed non-merge, correcting a stale stored done', () => {
+    expect(deriveStatus({ phases: [phase(true)], status: 'done' }, true, false)).toBe('review');
+    expect(deriveStatus({ phases: [phase(true), phase(false)], status: 'done' }, true, false)).toBe(
+      'in-progress',
+    );
+  });
+
+  it('dropped always wins over a merged PR lookup', () => {
+    expect(deriveStatus({ phases: [phase(true)], status: 'dropped' }, true, true)).toBe('dropped');
+  });
 });

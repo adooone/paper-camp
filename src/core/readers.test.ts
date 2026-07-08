@@ -1,8 +1,9 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { clearPrCache } from './pr';
 import {
   entityToIdea,
   entityToPlan,
@@ -11,6 +12,15 @@ import {
   readWorkEntries,
 } from './readers';
 import { formatEntityFile } from './serializer';
+
+/** Puts a fake `gh` on PATH that always reports the given PR state, so tests
+ * don't shell out to the real GitHub CLI. */
+function installFakeGh(state: string): void {
+  const dir = mkdtempSync(join(tmpdir(), 'papercamp-readers-gh-'));
+  writeFileSync(join(dir, 'gh'), `#!/bin/sh\necho '[{"state":"${state}"}]'\n`);
+  chmodSync(join(dir, 'gh'), 0o755);
+  process.env.PATH = `${dir}:${process.env.PATH}`;
+}
 
 function git(cwd: string, ...args: string[]): void {
   const result = spawnSync('git', args, { cwd, encoding: 'utf-8' });
@@ -226,5 +236,54 @@ describe('status derivation via git branch existence', () => {
     // The stored file never set `status`, so the raw entry stays undefined even
     // though the branch exists and would derive to in-progress in the view layer.
     expect(raw?.status).toBeUndefined();
+  });
+});
+
+describe('status derivation via live PR merge state', () => {
+  const originalPath = process.env.PATH;
+
+  afterEach(() => {
+    process.env.PATH = originalPath;
+    clearPrCache();
+  });
+
+  it('derives done when the resolved PR for the branch is merged', async () => {
+    installFakeGh('MERGED');
+    const { root, ideasDir } = initRepoWithIdeas();
+    writeFileSync(
+      join(ideasDir, 'IDEA-6.md'),
+      `${formatEntityFile({
+        id: 'IDEA-6',
+        title: 'Shipped work',
+        type: 'feat',
+        created: '2026-07-01',
+        body: 'Merged upstream.',
+        phases: [{ text: 'One', done: true }],
+      })}\n`,
+    );
+    git(root, 'branch', 'feat/idea-6-shipped-work');
+
+    const { entries } = await readWorkEntries(ideasDir);
+    expect(entries.find((e) => e.id === 'IDEA-6')?.status).toBe('done');
+  });
+
+  it('stays at review when the resolved PR is open, not merged', async () => {
+    installFakeGh('OPEN');
+    const { root, ideasDir } = initRepoWithIdeas();
+    writeFileSync(
+      join(ideasDir, 'IDEA-7.md'),
+      `${formatEntityFile({
+        id: 'IDEA-7',
+        title: 'In review',
+        type: 'feat',
+        created: '2026-07-01',
+        body: 'Not merged yet.',
+        phases: [{ text: 'One', done: true }],
+      })}\n`,
+    );
+    git(root, 'branch', 'feat/idea-7-in-review');
+
+    const { entries } = await readWorkEntries(ideasDir);
+    expect(entries.find((e) => e.id === 'IDEA-7')?.status).toBe('review');
   });
 });
