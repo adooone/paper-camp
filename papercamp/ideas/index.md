@@ -57,4 +57,4 @@
 | IDEA-53 | Fix Review status bugs | fix | done | app, plans, core |
 | IDEA-54 | Default font and Stack panel cleanup | refactor | done | app, ui, paper-ui |
 | IDEA-55 | Actualise all ideas at once | feat | done | app, plans, agent |
-| IDEA-56 | Derive status from git and PR state | feat | in-progress | app, github, plans, core |
+| IDEA-56 | Derive status from git and PR state | feat | review | app, github, plans, core |

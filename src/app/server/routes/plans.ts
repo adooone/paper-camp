@@ -146,7 +146,13 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           return;
         }
 
-        const targetFile = join(ideasDir, `${target.id}.md`);
+        // readEntities scans ideas/ AND archive/, so target may be archived (done/
+        // dropped). Resolve the file in either location — otherwise editing or
+        // reopening an archived entity (e.g. clearing a dropped override) 404s.
+        const primaryFile = join(ideasDir, `${target.id}.md`);
+        const targetFile = (await fileExists(primaryFile))
+          ? primaryFile
+          : join(ideasDir, 'archive', `${target.id}.md`);
         const raw = await readMaybe(targetFile);
         if (!raw) {
           sendJson(res, 404, { error: 'entity file not found' });

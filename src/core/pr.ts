@@ -82,10 +82,13 @@ async function cachedPrInfo(
   branch: string,
   ttlMs: number,
 ): Promise<PrInfo | null | undefined> {
-  const cached = cache.get(branch);
+  // Key by root+branch: a long-lived process (server/MCP) can resolve PRs for more
+  // than one repo, and branch names collide across repos.
+  const key = `${root}::${branch}`;
+  const cached = cache.get(key);
   if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.info;
   const info = await runGhPrList(root, branch);
-  cache.set(branch, { info, fetchedAt: Date.now() });
+  cache.set(key, { info, fetchedAt: Date.now() });
   return info;
 }
 

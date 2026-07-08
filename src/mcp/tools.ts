@@ -215,7 +215,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     {
       title: 'Update phase',
       description:
-        'Toggle a plan phase done/not-done by index, optionally updating the plan status (archiving it if the new status is done or dropped).',
+        'Toggle a plan phase done/not-done by index, optionally updating the plan status (archiving it only if the new status is dropped).',
       inputSchema: {
         id: z.string().describe('Plan id, e.g. FEAT-32'),
         phaseIndex: z.number().int().nonnegative().describe('0-based index into the phases list'),
