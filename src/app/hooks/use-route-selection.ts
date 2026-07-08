@@ -1,3 +1,4 @@
+import { useAppStore } from '@/app/stores/app-store';
 import { useParams } from '@tanstack/react-router';
 
 export const DOC_SECTIONS = ['decisions', 'questions', 'progress', 'repo-docs'] as const;
@@ -19,4 +20,20 @@ export function useActiveIdeaTitle(): string | null {
 export function useActiveDocSection(): DocSection | null {
   const { section } = useParams({ strict: false });
   return DOC_SECTIONS.includes(section as DocSection) ? (section as DocSection) : null;
+}
+
+/**
+ * The resolved docs section: the route section, or — for bare `/docs` with no
+ * section — the pre-selected repo doc (MAIN.md or README.md, whichever the repo
+ * has; see `loadRepoDocs`), so `/docs` lands on content instead of the
+ * placeholder. Shared by `DocsPage` and `DocsSidebar`.
+ */
+export function useResolvedDocSection(): DocSection | null {
+  const routeSection = useActiveDocSection();
+  const activeDocTitle = useAppStore((s) => s.activeDocTitle);
+  const repoDocs = useAppStore((s) => s.repoDocs);
+  return (
+    routeSection ??
+    (activeDocTitle && repoDocs.some((f) => f.name === activeDocTitle) ? 'repo-docs' : null)
+  );
 }

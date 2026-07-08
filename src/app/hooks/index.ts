@@ -5,5 +5,6 @@ export {
   useActiveDocSection,
   useActiveIdeaTitle,
   useActivePlanTitle,
+  useResolvedDocSection,
 } from './use-route-selection';
 export type { DocSection } from './use-route-selection';

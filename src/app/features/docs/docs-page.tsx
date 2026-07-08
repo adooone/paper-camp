@@ -1,5 +1,5 @@
 import { PageTitle } from '@/app/components/page-title';
-import { useActiveDocSection } from '@/app/hooks';
+import { useResolvedDocSection } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Breadcrumb } from '@dendelion/paper-ui';
@@ -12,16 +12,9 @@ import { RepoDocDetail } from './components/repo-doc-detail';
 
 export const DocsPage = () => {
   const docSearchQuery = useAppStore((s) => s.docSearchQuery);
-  const routeSection = useActiveDocSection();
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
-  const repoDocs = useAppStore((s) => s.repoDocs);
   const navigate = useNavigate();
-  // Bare /docs (no route section) falls back to the pre-selected repo doc — MAIN.md or
-  // README.md, whichever the repo has (see loadRepoDocs) — so /docs lands on content
-  // instead of the placeholder below.
-  const activeDocSection =
-    routeSection ??
-    (activeDocTitle && repoDocs.some((f) => f.name === activeDocTitle) ? 'repo-docs' : null);
+  const activeDocSection = useResolvedDocSection();
 
   const handleBackToDocs = () => navigate({ to: '/docs' });
 

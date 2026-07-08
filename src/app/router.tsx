@@ -188,6 +188,7 @@ const RootLayout = () => {
                 <div className="flex-1 min-h-0 overflow-y-auto">
                   <Page
                     texture={{ texture: 'parchment' }}
+                    outline
                     style={{ height: 'auto', ...(isLarge ? { maxWidth: 'none' } : {}) }}
                   >
                     <AnimatePresence mode="wait">
