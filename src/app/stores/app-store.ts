@@ -353,23 +353,27 @@ export const useAppStore = create<AppStore>((set, get) => ({
       // queue, fetched from the server since (unlike single Reconcile) the client
       // never captured a `before` snapshot itself. Guarded by batchReconcileConsumed
       // so repeated polls of the same 'done' status don't re-append the same entries;
-      // the guard resets once the task kind moves off 'done' (a fresh sweep started).
-      if (data?.taskKind === 'batch-reconcile') {
-        if (data.status === 'done' && !get().batchReconcileConsumed) {
-          set({ batchReconcileConsumed: true });
-          const results = await fetchReconcileQueue();
-          if (results && results.length > 0) {
-            await get().loadPlans();
-            set((s) => ({
-              reconcileQueue: [
-                ...s.reconcileQueue,
-                ...results.map((r) => ({ planId: r.planId, before: r.before })),
-              ],
-            }));
-          }
-        } else if (data.status !== 'done' && get().batchReconcileConsumed) {
-          set({ batchReconcileConsumed: false });
+      // the guard is reset at the next launch (see launchBatchReconcile).
+      if (
+        data?.taskKind === 'batch-reconcile' &&
+        data.status === 'done' &&
+        !get().batchReconcileConsumed
+      ) {
+        const results = await fetchReconcileQueue();
+        if (results && results.length > 0) {
+          await get().loadPlans();
+          set((s) => ({
+            reconcileQueue: [
+              ...s.reconcileQueue,
+              ...results.map((r) => ({ planId: r.planId, before: r.before })),
+            ],
+          }));
         }
+        // Mark consumed only after the fetch+append succeeds. If fetchReconcileQueue
+        // throws, the catch below leaves the guard false so the next poll retries,
+        // rather than permanently skipping a finished batch. The guard is reset at
+        // launch (see launchBatchReconcile), not by observing a non-'done' poll.
+        set({ batchReconcileConsumed: true });
       }
     } catch {
       // keep previous status
@@ -418,6 +422,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await get().loadAgentStatus();
   },
   launchBatchReconcile: async () => {
+    // Reset the consumed guard at launch (not by polling for an intermediate
+    // non-'done' status, which a fast poll can miss) so this sweep's results
+    // are shown even if the previous batch's 'done' was already consumed.
+    set({ batchReconcileConsumed: false });
     await launchBatchReconcile();
     await get().loadAgentStatus();
   },

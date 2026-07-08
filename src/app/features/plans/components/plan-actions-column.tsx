@@ -10,7 +10,7 @@ import {
   PLAN_STATUSES,
   type PlanStatus,
 } from '@/types/index';
-import { Card, Select } from '@dendelion/paper-ui';
+import { Card, Select, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { STATUS_LABEL } from '../constants';
 import { RunAllPhasesButton } from './run-all-phases-button';
@@ -36,6 +36,7 @@ export const PlanActionsColumn = () => {
   const activePlanTitle = useActivePlanTitle();
   const loadPlans = useAppStore((s) => s.loadPlans);
   const agentStatus = useAppStore((s) => s.agentStatus);
+  const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
 
   const plan = activePlanTitle ? plans?.entries.find((p) => p.title === activePlanTitle) : null;
@@ -51,9 +52,16 @@ export const PlanActionsColumn = () => {
 
   const patch = async (updates: Parameters<typeof updatePlan>[1]) => {
     setUpdating(true);
-    await updatePlan(plan.title, updates);
-    await loadPlans();
-    setUpdating(false);
+    try {
+      await updatePlan(plan.title, updates);
+      await loadPlans();
+    } catch (err) {
+      // e.g. the 409 branch-conflict guard when approving/closing off the plan's
+      // own branch — surface it so the action doesn't just appear to do nothing.
+      toast({ title: 'Update failed', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setUpdating(false);
+    }
   };
 
   return (

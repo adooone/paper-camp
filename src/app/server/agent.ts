@@ -380,12 +380,9 @@ export function createAgentManager(
       return { ok: false, error: 'An agent task is already running' };
     }
     const defaultAgents = readDefaultAgentIds(root);
-    const {
-      id: agentId,
-      adapter,
-      model,
-      effort,
-    } = resolveAgent({ defaultAgents, taskKind: 'reconcile' });
+    // Task-level agent is for status display only; each entity re-resolves its own
+    // below so a per-entity `agent:` override in a mixed batch is honored.
+    const { id: agentId, adapter } = resolveAgent({ defaultAgents, taskKind: 'reconcile' });
 
     // Stub proc — replaced per entity in the loop. Already-exited is fine: stop() sets
     // task.status = 'stopping' first; kill() on a dead process is a no-op.
@@ -450,8 +447,13 @@ export function createAgentManager(
           const before = { body: plan.body, phases: plan.phases };
 
           pushLine(task, `[reconcile] ${plan.id} ${plan.title} (${index + 1}/${total})`);
+          const {
+            adapter: entAdapter,
+            model,
+            effort,
+          } = resolveAgent({ agentId: plan.agent, defaultAgents, taskKind: 'reconcile' });
           const prompt = buildReconcilePrompt(plan);
-          const proc = spawn(adapter.command, adapter.buildArgs(prompt, { model, effort }), {
+          const proc = spawn(entAdapter.command, entAdapter.buildArgs(prompt, { model, effort }), {
             cwd: root,
             stdio: ['ignore', 'pipe', 'pipe'],
           });
@@ -461,7 +463,7 @@ export function createAgentManager(
             const rl = createInterface({ input: proc.stdout });
             rl.on('line', (line) => {
               if (current !== task) return;
-              const parsed = adapter.parseLine(line);
+              const parsed = entAdapter.parseLine(line);
               if (parsed?.text && parsed.text !== 'Agent is working…') {
                 pushLine(task, `  ${parsed.text}`);
               }
@@ -470,12 +472,31 @@ export function createAgentManager(
           // Drain stderr — an unread pipe can fill and hang the subprocess.
           proc.stderr?.on('data', () => {});
 
-          const success = await new Promise<boolean>((resolve) => {
+          // Wait with a timeout so one entity's stall/clarifying-question hang is a
+          // failure rather than blocking the whole sweep and pinning the agent slot
+          // (isBusy() stuck true) — same SIGTERM→SIGKILL escalation as startRunAllPhases.
+          let timedOut = false;
+          const procDone = new Promise<boolean>((resolve) => {
             proc.on('close', (code) => resolve(code === 0));
             proc.on('error', () => resolve(false));
           });
+          const timeoutHandle = setTimeout(() => {
+            timedOut = true;
+            if (!proc.killed) proc.kill('SIGTERM');
+            setTimeout(() => {
+              if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
+            }, 5000);
+          }, PHASE_TIMEOUT_MS);
+          const success = await procDone;
+          clearTimeout(timeoutHandle);
 
           if (current !== task) return;
+
+          if (timedOut) {
+            failed++;
+            pushLine(task, `[timeout] ${plan.id} — no progress for ${PHASE_TIMEOUT_MS / 60000}min`);
+            continue;
+          }
 
           if (success) {
             let changed = false;

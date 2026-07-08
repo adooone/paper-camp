@@ -1,5 +1,6 @@
 import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
+import { useToast } from '@dendelion/paper-ui';
 import { useEffect } from 'react';
 import { ReconcileDiffPanel } from './reconcile-diff-panel';
 
@@ -14,6 +15,7 @@ export const ReconcileQueueReview = () => {
   const removeFromReconcileQueue = useAppStore((s) => s.removeFromReconcileQueue);
   const plans = useAppStore((s) => s.plans);
   const loadPlans = useAppStore((s) => s.loadPlans);
+  const { toast } = useToast();
 
   const head = reconcileQueue[0] ?? null;
   const plan = head ? (plans?.entries.find((p) => p.id === head.planId) ?? null) : null;
@@ -31,9 +33,14 @@ export const ReconcileQueueReview = () => {
   };
 
   const handleDiscard = async () => {
-    await updatePlan(plan.title, { body: head.before.body, phases: head.before.phases });
-    await loadPlans();
-    removeFromReconcileQueue(head.planId);
+    try {
+      await updatePlan(plan.title, { body: head.before.body, phases: head.before.phases });
+      await loadPlans();
+      removeFromReconcileQueue(head.planId);
+    } catch (err) {
+      // Keep the item queued so the user can retry rather than silently losing the revert.
+      toast({ title: 'Discard failed', description: (err as Error).message, variant: 'error' });
+    }
   };
 
   return (
