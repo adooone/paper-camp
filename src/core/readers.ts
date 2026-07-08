@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
@@ -10,6 +11,7 @@ import type {
   PlanStatus,
 } from '../types/index';
 import { parseEntityFile } from './parser';
+import { deriveStatus } from './status';
 
 // ---------------------------------------------------------------------------
 // Unified entity reader  (FEAT-42 phases 8–9: one corpus under papercamp/ideas/,
@@ -39,12 +41,40 @@ async function readFileMaybe(path: string): Promise<string> {
 }
 
 /**
+ * Local branches matching the `feat/idea-N-…` naming convention, keyed by the
+ * entity id they encode (e.g. `IDEA-43`). `undefined` when git itself isn't
+ * available (no repo, no git binary) — callers treat that as "can't derive
+ * branch-backed status, fall back to stored" rather than "no branches exist".
+ */
+function listBranchEntityIds(ideasDir: string): Set<string> | undefined {
+  // ideasDir is always <root>/papercamp/ideas.
+  const root = join(ideasDir, '..', '..');
+  const result = spawnSync('git', ['branch', '--format=%(refname:short)'], {
+    cwd: root,
+    encoding: 'utf-8',
+  });
+  if (result.error || result.status !== 0) return undefined;
+  const ids = new Set<string>();
+  for (const line of result.stdout.split('\n')) {
+    const match = line.trim().match(/^[a-z]+\/([a-z]+-\d+)-/);
+    if (match) ids.add(match[1].toUpperCase());
+  }
+  return ids;
+}
+
+/**
  * Reads every entity from the unified directory, including its `archive/`
  * subdirectory (done/dropped entities live there). Excludes index.md.
+ *
+ * Also resolves which entities have a feature branch, for callers deriving
+ * status (see `deriveStatus` / `entityToPlan`) — resolved once per read
+ * rather than once per entity.
  */
 export async function readEntities(
   ideasDir: string,
-): Promise<ParseResult<EntityEntry> & { fileCount: number }> {
+): Promise<
+  ParseResult<EntityEntry> & { fileCount: number; branchEntityIds: Set<string> | undefined }
+> {
   const entries: EntityEntry[] = [];
   const warnings: ParseWarning[] = [];
   let fileCount = 0;
@@ -64,19 +94,26 @@ export async function readEntities(
     }
   }
 
-  return { entries, warnings, fileCount };
+  return { entries, warnings, fileCount, branchEntityIds: listBranchEntityIds(ideasDir) };
 }
 
 /**
  * PlanEntry view of a work entity (anything that isn't a note): `kind` is the
  * entity's `type`. Lets the plan-shaped pipeline (API responses, prompts, UI)
  * keep working until the UI morphs to entities directly.
+ *
+ * `status` is derived from phases/branch existence rather than read straight
+ * off `e.status` — see `deriveStatus`. `hasBranch` is `undefined` when the
+ * caller has no branch information (e.g. git is unavailable), which falls
+ * back to the stored override. Note this only affects the *view*: `e.status`
+ * itself stays the raw stored override, so round-tripping an `EntityEntry`
+ * back to disk (e.g. after an edit) never persists a derived value.
  */
-export function entityToPlan(e: EntityEntry): PlanEntry {
+export function entityToPlan(e: EntityEntry, hasBranch?: boolean): PlanEntry {
   return {
     title: e.title,
     // Non-note entities can't carry the note-only 'open' (schema-enforced).
-    status: e.status as PlanStatus,
+    status: deriveStatus(e, hasBranch) as PlanStatus,
     kind: e.type,
     id: e.id,
     agent: e.agent,
@@ -106,9 +143,11 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
 
 /** All work entities (non-notes) in PlanEntry shape — the `/api/plans` view. */
 export async function readWorkEntries(ideasDir: string): Promise<ParseResult<PlanEntry>> {
-  const { entries, warnings } = await readEntities(ideasDir);
+  const { entries, warnings, branchEntityIds } = await readEntities(ideasDir);
   return {
-    entries: entries.filter((e) => e.kind !== 'note').map(entityToPlan),
+    entries: entries
+      .filter((e) => e.kind !== 'note')
+      .map((e) => entityToPlan(e, branchEntityIds?.has(e.id))),
     warnings,
   };
 }

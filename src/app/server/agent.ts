@@ -409,7 +409,7 @@ export function createAgentManager(
         const openStatuses = new Set(['idea', 'planned', 'in-progress', 'review']);
         const candidates = entries
           .filter((e) => e.kind !== 'note' && e.status !== undefined && openStatuses.has(e.status))
-          .map(entityToPlan);
+          .map((e) => entityToPlan(e));
 
         if (candidates.length === 0) {
           if (current === task) {

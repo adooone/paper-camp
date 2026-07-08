@@ -367,7 +367,7 @@ program
 
     const candidates = allEntities
       .filter((e) => e.kind !== 'note' && (e.status === 'review' || e.status === 'done'))
-      .map(entityToPlan);
+      .map((e) => entityToPlan(e));
 
     if (candidates.length === 0) {
       console.log('No plans with status "review" or "done" found.');

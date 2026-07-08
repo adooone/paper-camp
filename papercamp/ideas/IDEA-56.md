@@ -33,7 +33,7 @@ Open questions for the planning pass: **PR resolution + auth** — resolve the P
 ### Phases
 - [x] Turn `status` into an optional override in the schema
       Make `status` optional in `entityFrontmatterSchema`, narrowing its stored meaning to the un-derivable values (`dropped`, and closing a planless idea / `note`) plus the offline fallback. Nothing else derives yet — this just stops requiring the field and keeps existing values parsing.
-- [ ] Derive idea → review locally from phases and branch existence
+- [x] Derive idea → review locally from phases and branch existence
       Add a pure `deriveStatus` helper walking the ladder from observable state: `idea` (no `### Phases`), `planned` (phases, no branch), `in-progress` (a `feat/idea-N-…` branch exists via `branchEntityId`), `review` (branch + all phases checked). Keep "is it the current branch" separate as the local active-plan highlight only. Wire it into `readEntities`/`entityToPlan` for these four rungs, falling back to the stored override when git is absent.
 - [ ] Resolve and cache the PR to derive `done`
       Resolve each entity's PR from its branch / `**Plan:**` line via `gh` CLI or a configured token, read merged-state from the live lookup, and cache it with a TTL so the worklist stays cheap. `done` = PR merged; degrade to the stored marker when GitHub is unreachable, so idea→review still derive locally offline.
