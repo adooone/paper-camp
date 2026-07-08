@@ -2,6 +2,84 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0](https://github.com/adooone/paper-camp/compare/v0.5.0...v0.6.0) (2026-07-08)
+
+
+### Features
+
+* **app:** Absorb the toolbar into the card ([a524eea](https://github.com/adooone/paper-camp/commit/a524eea834e5e01e53b2f6a02973a8fb0c9b43b4))
+* **app:** Actualize the docs and closing pass ([0ba0d54](https://github.com/adooone/paper-camp/commit/0ba0d545cd22a6dc5fb15977920cc0b7162699ee))
+* **app:** Add kind note and status asymmetry to the schema ([27dae3b](https://github.com/adooone/paper-camp/commit/27dae3bf69466e51a99ac2ab4468460d6ec7053b))
+* **app:** Add param routes for plans, ideas, and docs ([2ec2189](https://github.com/adooone/paper-camp/commit/2ec2189af30190b7d8068d4aa7e4924a226011f3))
+* **app:** Add tag chips and search ([67e914a](https://github.com/adooone/paper-camp/commit/67e914a7010c78240df4634655e5c84404377293))
+* **app:** Add the Actualise-all button ([7d726ec](https://github.com/adooone/paper-camp/commit/7d726ec740d20f1c0989b4acf4ac946f2048fde1))
+* **app:** Add the sort control ([70ce834](https://github.com/adooone/paper-camp/commit/70ce834223ca4b0caadc0a51b208cab67712e68f))
+* **app:** Bound the closed plans section ([e8ad156](https://github.com/adooone/paper-camp/commit/e8ad15699cd3e7a72c871acf12ad5eb1b415ffdd))
+* **app:** Build the batch reconcile sweep ([9b0297b](https://github.com/adooone/paper-camp/commit/9b0297bdb4d3fb38590cc8f820edc6ba78c3255f))
+* **app:** Build the filter/sort selector and flat list ([f583fa2](https://github.com/adooone/paper-camp/commit/f583fa2686b06866aedea5a3a7cde38d9e3c0356))
+* **app:** Build the group-aware tree selector ([31914bb](https://github.com/adooone/paper-camp/commit/31914bbb13bc7103b7b505266698919798dd562c))
+* **app:** Build the queue review UI ([3e77cf0](https://github.com/adooone/paper-camp/commit/3e77cf03684f58843328cc7e3451343396b3c6b1))
+* **app:** Build the sticky filter card with status chips ([1faaf5f](https://github.com/adooone/paper-camp/commit/1faaf5ff71f182c404220fcb5060b8b10ae5895a))
+* **app:** Compress the plan detail preamble ([e68d36e](https://github.com/adooone/paper-camp/commit/e68d36ec8ba5d7c127aa2ca13aa2611e8b935bb3))
+* **app:** Derive selection state from the URL ([6ffee04](https://github.com/adooone/paper-camp/commit/6ffee04a86d2f2b14fda6f57f9b159791b5330f4))
+* **app:** Fold Review into the Plans route ([1d68b6c](https://github.com/adooone/paper-camp/commit/1d68b6ce1cacd821dc7a1419a3aa8ab64bfd0315))
+* **app:** Generalize the reconcile prompt for ideas ([6b26141](https://github.com/adooone/paper-camp/commit/6b261415b9205ed2cd537418568089886ae28d80))
+* **app:** Give ideas the dated Log grammar ([a1838c4](https://github.com/adooone/paper-camp/commit/a1838c4c745c7288fa5e99dea8c98951b1576bcd))
+* **app:** Land Docs on the README ([540b0ab](https://github.com/adooone/paper-camp/commit/540b0abe0926f9631ae2ea47d2d38e2799d1a1de))
+* **app:** Make branch management manual, bump paper-ui, restyle plan actions ([1879cbf](https://github.com/adooone/paper-camp/commit/1879cbf323e7d0c0d1636fe757d75f76cf741bc0))
+* **app:** Move list actions into the list header ([15b4a15](https://github.com/adooone/paper-camp/commit/15b4a15b113082db67b696b87ca2bd5617859586))
+* **app:** Pin stack panel and rebalance layout at wide viewports ([bb75056](https://github.com/adooone/paper-camp/commit/bb75056516086961955e9f7639c9960c6042f36a))
+* **app:** Re-key git surfaces and merge idea/plan UI into one entity view ([260db93](https://github.com/adooone/paper-camp/commit/260db93fdde5e0494c7a1c73c85c1e4042b4b2fa))
+* **app:** Render the unified two-level worklist ([87f84ea](https://github.com/adooone/paper-camp/commit/87f84ea97045770335f1ae667a0afb939a9e38b2))
+* **app:** Replace back buttons with Breadcrumb ([637496a](https://github.com/adooone/paper-camp/commit/637496aba3b1b716f7b669ea96e7c7136712989c))
+* **app:** Replace the plans sidebar's duplicate lists ([86ac698](https://github.com/adooone/paper-camp/commit/86ac69829b31c3d7d148e96b6d889832d7938337))
+* **app:** Retire the app's Audit-all path ([45c39a3](https://github.com/adooone/paper-camp/commit/45c39a3ccaf34718df8e546234feee79f1d6e24f))
+* **app:** Retire the ideas route and rename creation paths ([095050a](https://github.com/adooone/paper-camp/commit/095050ab6f3dba5c1d48c9107fd2e7b87413d24f))
+* **app:** Rework the ideas board into full-width rows ([6d5b281](https://github.com/adooone/paper-camp/commit/6d5b281682ecc8c868097d301bc7fdc01c21bac9))
+* **app:** Split plans and ideas onto separate routes ([735903b](https://github.com/adooone/paper-camp/commit/735903bf068982f3ab563bd73fcf8ad51c1659e9))
+* **app:** Turn the reconcile slots into a queue ([dd47b64](https://github.com/adooone/paper-camp/commit/dd47b6402082980862638c33a1f460f262364b34))
+* **app:** Type-check and visual pass ([39bbd4d](https://github.com/adooone/paper-camp/commit/39bbd4d578a191b9351821c10f75b27560ad2114))
+* **app:** Type-check and visual pass ([f8ffa81](https://github.com/adooone/paper-camp/commit/f8ffa81f7b441047f998ab352d04fac91aeda4fd))
+* **app:** Type-check and visual pass ([003fe35](https://github.com/adooone/paper-camp/commit/003fe3593f2f18afa251c6994acdeb767d15338f))
+* **app:** Type-check and visual pass ([327e004](https://github.com/adooone/paper-camp/commit/327e0043b18222e0bbb5787b7e4cee790806834c))
+* **app:** Type-check and visual pass ([e941301](https://github.com/adooone/paper-camp/commit/e941301e4067c1858de8e276e1b93362097cff24))
+* **core:** Add optional-phase entity schema for idea/plan merge ([c462b3b](https://github.com/adooone/paper-camp/commit/c462b3b77f2b59fd0b7a657b445f1adf873a4f49))
+* **ideas:** Renumber ideas, archive plans, bump idea counter ([dd51146](https://github.com/adooone/paper-camp/commit/dd51146e0323bceab457266d1165465ae36843c1))
+* **plans:** Convert plans list to dense row cards ([3462d47](https://github.com/adooone/paper-camp/commit/3462d47c579ed3f8527d8d210eee63536b951ba6))
+* **plans:** Keep sort control visible and add empty-filter state ([b5c3f14](https://github.com/adooone/paper-camp/commit/b5c3f14e28a55eeab5d6605e7ad79525ff3294ef))
+* **plans:** Mark FEAT-37 done and archive its plan ([b8f28c6](https://github.com/adooone/paper-camp/commit/b8f28c6d81ae48b6d00a73765f97b32aad3b7bb6))
+* **plans:** Split filter card into header and column ([704b270](https://github.com/adooone/paper-camp/commit/704b270ce70e32767dd2037c7c459d4db2b775df))
+* **server:** Migrate readers, routes, and CLI to unified entity corpus ([a88f803](https://github.com/adooone/paper-camp/commit/a88f80301b864f67a867177b58049996a2383e45))
+
+
+### Bug Fixes
+
+* **app:** Give the phases-header tools button affordance ([dd74e06](https://github.com/adooone/paper-camp/commit/dd74e06f59c6ea17310d4ac97dc9ba4b6ada7755))
+* **app:** Label the agent matrix ([e005dfc](https://github.com/adooone/paper-camp/commit/e005dfc006e5a8e7add972a38812f2030894959f))
+* **app:** Replace window.confirm with a Modal ([3801a2c](https://github.com/adooone/paper-camp/commit/3801a2c5ffcfbf4408ef3317a3e9ed875f0312a8))
+* **app:** Retire the color-override classes ([1b6e37d](https://github.com/adooone/paper-camp/commit/1b6e37da907aec1c3bdbb1286386558d0850866f))
+* **app:** Surface update failures and relax close branch guard ([b7cd273](https://github.com/adooone/paper-camp/commit/b7cd2733e16074f6e9c7621d2a9f96f992b4b062))
+* **app:** Type-check and visual pass ([1f6b4e8](https://github.com/adooone/paper-camp/commit/1f6b4e883b59db0391bcf3b2801ae663e17b7fbc))
+* **app:** Unify settings persistence on save-on-change ([caa4b2e](https://github.com/adooone/paper-camp/commit/caa4b2e0045cbf92d5ea3c83f730a38c43e87d30))
+* **plans:** Fix idea/plan modal error handling and pagination edge cases ([7015970](https://github.com/adooone/paper-camp/commit/70159701e01dc653679432cda8ba34bf3779ffc6))
+* **plans:** Point phase-copy prompt at unified entity file path ([0e69421](https://github.com/adooone/paper-camp/commit/0e694212cbe228334f03283b20d7a9341d4990f1))
+* **plans:** Shrink delete icon button to match row height ([f6d2c56](https://github.com/adooone/paper-camp/commit/f6d2c56e6529f9a93a10b4e64087020f0f9339a1))
+* **plans:** Use fontSize.xs token instead of hardcoded rem value ([9e60750](https://github.com/adooone/paper-camp/commit/9e60750281967e39c86e50ef2b21652c0ba6a012))
+
+
+### Code Refactoring
+
+* **docs:** Extract shared DocsBreadcrumb component ([9df9ab3](https://github.com/adooone/paper-camp/commit/9df9ab3a549b0e9c347eade4f39a5f610a9982a9))
+* **docs:** Share docs-section fallback logic in one hook ([756e9a9](https://github.com/adooone/paper-camp/commit/756e9a9b0002938227c3f1ac1102f8de06242570))
+* **plans:** Collapse Plans page to a single filterable list ([e42d7d7](https://github.com/adooone/paper-camp/commit/e42d7d7c819483a2cddc77ab3238f7a434649439))
+
+
+### Documentation
+
+* **ideas:** Close IDEA-55 and archive IDEA-40 as done ([9fd15cf](https://github.com/adooone/paper-camp/commit/9fd15cfb82ec1db56cd2ed92030701f2aebd04c0))
+* **ideas:** Mark IDEA-40 in-progress and IDEA-41 in review ([ab35cba](https://github.com/adooone/paper-camp/commit/ab35cba107a0381b6be44f836efebaa32625e5f2))
+* **ideas:** Mark IDEA-41 done and archive it ([036dfc2](https://github.com/adooone/paper-camp/commit/036dfc22fffe14e30f19dc64317ee64aafd63b01))
+
 ## [0.5.0](https://github.com/adooone/paper-camp/compare/v0.4.0...v0.5.0) (2026-07-04)
 
 
