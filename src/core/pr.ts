@@ -1,24 +1,56 @@
 import { spawn } from 'node:child_process';
+import type { PrInfo } from '../types/index';
 
 interface PrCacheEntry {
-  merged: boolean | undefined;
+  /** `null` = `gh` ran successfully and found no matching PR (confirmed). */
+  info: PrInfo | null | undefined;
   fetchedAt: number;
 }
 
 const cache = new Map<string, PrCacheEntry>();
 
 /**
- * Cache window for a resolved PR merge state — long enough that a worklist
- * read doesn't re-shell out to `gh` on every request, short enough that a
- * merge shows up as `done` within the same working session.
+ * Cache window for a resolved PR — long enough that a worklist read doesn't
+ * re-shell out to `gh` on every request, short enough that a merge or state
+ * change shows up within the same working session.
  */
 export const PR_CACHE_TTL_MS = 5 * 60 * 1000;
 
-function runGhPrList(root: string, branch: string): Promise<boolean | undefined> {
+interface GhPrRow {
+  number: number;
+  url: string;
+  state: string;
+  isDraft: boolean;
+}
+
+function toPrInfo(row: GhPrRow): PrInfo {
+  const state: PrInfo['state'] =
+    row.state === 'MERGED'
+      ? 'merged'
+      : row.state === 'CLOSED'
+        ? 'closed'
+        : row.isDraft
+          ? 'draft'
+          : 'open';
+  return { number: row.number, url: row.url, state };
+}
+
+function runGhPrList(root: string, branch: string): Promise<PrInfo | null | undefined> {
   return new Promise((resolve) => {
     const proc = spawn(
       'gh',
-      ['pr', 'list', '--head', branch, '--state', 'all', '--json', 'state', '--limit', '1'],
+      [
+        'pr',
+        'list',
+        '--head',
+        branch,
+        '--state',
+        'all',
+        '--json',
+        'number,url,state,isDraft',
+        '--limit',
+        '1',
+      ],
       { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] },
     );
     let stdout = '';
@@ -35,14 +67,41 @@ function runGhPrList(root: string, branch: string): Promise<boolean | undefined>
         return;
       }
       try {
-        const rows = JSON.parse(stdout) as Array<{ state: string }>;
-        resolve(rows[0]?.state === 'MERGED');
+        const rows = JSON.parse(stdout) as GhPrRow[];
+        resolve(rows[0] ? toPrInfo(rows[0]) : null);
       } catch {
         resolve(undefined);
       }
     });
     proc.on('error', () => resolve(undefined));
   });
+}
+
+async function cachedPrInfo(
+  root: string,
+  branch: string,
+  ttlMs: number,
+): Promise<PrInfo | null | undefined> {
+  const cached = cache.get(branch);
+  if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.info;
+  const info = await runGhPrList(root, branch);
+  cache.set(branch, { info, fetchedAt: Date.now() });
+  return info;
+}
+
+/**
+ * Live-resolves `branch`'s PR (number, url, draft/open/closed/merged state),
+ * cached for `ttlMs` — the source for the UI's PR badge. `undefined` means
+ * either no matching PR or the lookup couldn't be resolved at all (no `gh`,
+ * not authenticated, offline, ...); either way there's nothing to render.
+ */
+export async function resolvePrInfo(
+  root: string,
+  branch: string,
+  ttlMs = PR_CACHE_TTL_MS,
+): Promise<PrInfo | undefined> {
+  const info = await cachedPrInfo(root, branch, ttlMs);
+  return info ?? undefined;
 }
 
 /**
@@ -62,11 +121,8 @@ export async function resolvePrMerged(
   branch: string,
   ttlMs = PR_CACHE_TTL_MS,
 ): Promise<boolean | undefined> {
-  const cached = cache.get(branch);
-  if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.merged;
-  const merged = await runGhPrList(root, branch);
-  cache.set(branch, { merged, fetchedAt: Date.now() });
-  return merged;
+  const info = await cachedPrInfo(root, branch, ttlMs);
+  return info === undefined ? undefined : info?.state === 'merged';
 }
 
 /** Test-only: clears the module-level PR cache between test cases. */

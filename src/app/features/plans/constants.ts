@@ -1,4 +1,4 @@
-import type { IdeaStatus, PlanEntry } from '@/types/index';
+import type { IdeaStatus, PlanEntry, PrState } from '@/types/index';
 
 export const STATUS_COLOR: Record<PlanEntry['status'], string> = {
   'in-progress': '#C89A5A',
@@ -50,4 +50,18 @@ export const IDEA_STATUS_STAMP: Record<IdeaStatus, { fill: string; text: string 
   open: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
   done: { fill: 'rgba(168, 155, 168, 0.25)', text: '#6E5E6E' },
   dropped: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
+};
+
+export const PR_STATE_LABEL: Record<PrState, string> = {
+  draft: 'Draft',
+  open: 'Open',
+  closed: 'Closed',
+  merged: 'Merged',
+};
+
+export const PR_STATE_STAMP: Record<PrState, { fill: string; text: string }> = {
+  draft: { fill: 'rgba(138, 155, 168, 0.25)', text: '#5E7080' },
+  open: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
+  closed: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
+  merged: { fill: 'rgba(155, 122, 181, 0.25)', text: '#7B5E9E' },
 };

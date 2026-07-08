@@ -2,7 +2,7 @@ import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { clearPrCache, resolvePrMerged } from './pr';
+import { clearPrCache, resolvePrInfo, resolvePrMerged } from './pr';
 
 /** Puts a fake `gh` on PATH that answers from `script` and counts invocations
  * (via a call-count file), so tests don't shell out to the real GitHub CLI. */
@@ -68,5 +68,53 @@ describe('resolvePrMerged', () => {
 
     await resolvePrMerged(root, 'feat/idea-2-thing', 0);
     expect(callCount()).toBe(2);
+  });
+});
+
+describe('resolvePrInfo', () => {
+  const originalPath = process.env.PATH;
+
+  beforeEach(() => {
+    clearPrCache();
+  });
+
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  it('resolves number/url/state for a merged PR', async () => {
+    const { root } = installFakeGh(
+      `echo '[{"number":7,"url":"https://github.com/o/r/pull/7","state":"MERGED","isDraft":false}]'`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await resolvePrInfo(root, 'feat/idea-1-thing')).toEqual({
+      number: 7,
+      url: 'https://github.com/o/r/pull/7',
+      state: 'merged',
+    });
+  });
+
+  it('resolves draft state for an open PR marked draft', async () => {
+    const { root } = installFakeGh(
+      `echo '[{"number":9,"url":"https://github.com/o/r/pull/9","state":"OPEN","isDraft":true}]'`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await resolvePrInfo(root, 'feat/idea-1-thing')).toEqual({
+      number: 9,
+      url: 'https://github.com/o/r/pull/9',
+      state: 'draft',
+    });
+  });
+
+  it('resolves undefined when gh finds no matching PR', async () => {
+    const { root } = installFakeGh(`echo '[]'`);
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await resolvePrInfo(root, 'feat/idea-1-thing')).toBeUndefined();
+  });
+
+  it('resolves undefined when gh exits non-zero', async () => {
+    const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await resolvePrInfo(root, 'feat/idea-1-thing')).toBeUndefined();
   });
 });

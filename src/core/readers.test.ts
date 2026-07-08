@@ -287,6 +287,36 @@ describe('status derivation via live PR merge state', () => {
     const { entries } = await readWorkEntries(ideasDir);
     expect(entries.find((e) => e.id === 'IDEA-7')?.status).toBe('review');
   });
+
+  it('threads the resolved PR (number/url/state) onto the PlanEntry for the badge', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'papercamp-readers-gh-'));
+    writeFileSync(
+      join(dir, 'gh'),
+      `#!/bin/sh\necho '[{"number":42,"url":"https://github.com/o/r/pull/42","state":"OPEN","isDraft":false}]'\n`,
+    );
+    chmodSync(join(dir, 'gh'), 0o755);
+    process.env.PATH = `${dir}:${process.env.PATH}`;
+    const { root, ideasDir } = initRepoWithIdeas();
+    writeFileSync(
+      join(ideasDir, 'IDEA-11.md'),
+      `${formatEntityFile({
+        id: 'IDEA-11',
+        title: 'Badge candidate',
+        type: 'feat',
+        created: '2026-07-01',
+        body: 'Has an open PR.',
+        phases: [{ text: 'One', done: true }],
+      })}\n`,
+    );
+    git(root, 'branch', 'feat/idea-11-badge-candidate');
+
+    const { entries } = await readWorkEntries(ideasDir);
+    expect(entries.find((e) => e.id === 'IDEA-11')?.pr).toEqual({
+      number: 42,
+      url: 'https://github.com/o/r/pull/42',
+      state: 'open',
+    });
+  });
 });
 
 describe('readEntitiesWithDerivedStatus', () => {

@@ -9,10 +9,11 @@ import type {
   ParseWarning,
   PlanEntry,
   PlanStatus,
+  PrInfo,
 } from '../types/index';
 import { branchName } from './branch';
 import { parseEntityFile } from './parser';
-import { resolvePrMerged } from './pr';
+import { resolvePrInfo, resolvePrMerged } from './pr';
 import { deriveStatus } from './status';
 
 // ---------------------------------------------------------------------------
@@ -113,7 +114,12 @@ export async function readEntities(
  * so round-tripping an `EntityEntry` back to disk (e.g. after an edit) never
  * persists a derived value.
  */
-export function entityToPlan(e: EntityEntry, hasBranch?: boolean, prMerged?: boolean): PlanEntry {
+export function entityToPlan(
+  e: EntityEntry,
+  hasBranch?: boolean,
+  prMerged?: boolean,
+  pr?: PrInfo,
+): PlanEntry {
   return {
     title: e.title,
     // Non-note entities can't carry the note-only 'open' (schema-enforced).
@@ -130,6 +136,7 @@ export function entityToPlan(e: EntityEntry, hasBranch?: boolean, prMerged?: boo
     phases: e.phases,
     log: e.log,
     clarifications: e.clarifications,
+    pr,
   };
 }
 
@@ -166,6 +173,25 @@ export function resolvePrMergedForEntity(
 }
 
 /**
+ * Live-resolves `e`'s full PR (number, url, draft/open/closed/merged state)
+ * for the UI's PR badge — same "could plausibly have a PR" gate as
+ * `resolvePrMergedForEntity`, and same branch-name derivation, so it targets
+ * the identical `gh` lookup and hits that call's cache entry rather than
+ * spawning a second `gh` process per entity per read.
+ */
+export function resolvePrInfoForEntity(
+  root: string,
+  e: EntityEntry,
+  hasBranch: boolean | undefined,
+): Promise<PrInfo | undefined> {
+  if (e.phases.length === 0 || (!hasBranch && e.status !== 'done')) {
+    return Promise.resolve(undefined);
+  }
+  const branch = branchName(e.id, e.type, e.title);
+  return branch ? resolvePrInfo(root, branch) : Promise.resolve(undefined);
+}
+
+/**
  * Every entity (including notes) with `status` replaced by its derived value —
  * for callers that need the resolved lifecycle without the PlanEntry reshape,
  * namely index generation and the branch-guard (see IDEA-56 phase 4). This is
@@ -194,11 +220,20 @@ export async function readWorkEntries(ideasDir: string): Promise<ParseResult<Pla
   const { entries, warnings, branchEntityIds } = await readEntities(ideasDir);
   const root = join(ideasDir, '..', '..');
   const work = entries.filter((e) => e.kind !== 'note');
-  const prMerged = await Promise.all(
-    work.map((e) => resolvePrMergedForEntity(root, e, branchEntityIds?.has(e.id))),
+  // Resolve merged-state before full PR info per entity — same `gh` lookup,
+  // so the second call is a cache hit rather than a second `gh` process.
+  const pr = await Promise.all(
+    work.map(async (e) => {
+      const hasBranch = branchEntityIds?.has(e.id);
+      const prMerged = await resolvePrMergedForEntity(root, e, hasBranch);
+      const prInfo = await resolvePrInfoForEntity(root, e, hasBranch);
+      return { prMerged, prInfo };
+    }),
   );
   return {
-    entries: work.map((e, i) => entityToPlan(e, branchEntityIds?.has(e.id), prMerged[i])),
+    entries: work.map((e, i) =>
+      entityToPlan(e, branchEntityIds?.has(e.id), pr[i].prMerged, pr[i].prInfo),
+    ),
     warnings,
   };
 }

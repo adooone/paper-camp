@@ -127,7 +127,8 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         const updates = JSON.parse(reqBody) as {
           body?: string;
           phases?: PhaseItem[];
-          status?: PlanStatus;
+          /** `null` clears the stored override (e.g. reopening a dropped plan). */
+          status?: PlanStatus | null;
           log?: LogEntry[];
           agent?: AgentId | null;
         };
@@ -155,7 +156,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         const updatedEntry: EntityEntry = {
           ...target,
           ...(updates.body !== undefined && { body: updates.body }),
-          ...(updates.status !== undefined && { status: updates.status }),
+          ...(updates.status !== undefined && { status: updates.status ?? undefined }),
           ...(updates.phases !== undefined && { phases: updates.phases }),
           ...(updates.log !== undefined && { log: updates.log }),
           ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),

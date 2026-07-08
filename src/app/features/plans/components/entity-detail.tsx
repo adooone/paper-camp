@@ -27,6 +27,7 @@ import { DraftPlanButton } from './draft-plan-button';
 import { ExtendIdeaButton } from './extend-idea-button';
 import { PhaseCopyButton } from './phase-copy-button';
 import { PlanIdStamp } from './plan-id-stamp';
+import { PrBadge } from './pr-badge';
 import { ProgressBar } from './progress-bar';
 import { ReconcileButton } from './reconcile-button';
 
@@ -195,6 +196,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             </span>
           </div>
         )}
+        {plan.pr && <PrBadge pr={plan.pr} />}
         <ClarifyButton plan={plan} disabled={agentBusy} />
       </div>
 
