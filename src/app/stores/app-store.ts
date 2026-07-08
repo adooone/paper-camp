@@ -22,6 +22,7 @@ import type {
 import { create } from 'zustand';
 import {
   fetchAgentStatus,
+  fetchReconcileQueue,
   launchAgent,
   launchBatchAudit,
   launchIdeaExtend,
@@ -120,15 +121,22 @@ type AppStore = {
   launchRunAll: (planId: string) => Promise<void>;
   stopAgent: () => Promise<void>;
 
-  // Snapshot captured when a reconcile is launched, held at store level (not in
-  // the button component) so an in-flight reconcile's completion is still handled
-  // if the user navigates away before the agent finishes. Consumed by
-  // loadAgentStatus when the reconcile task reaches 'done'.
+  // Snapshot captured when a single-plan reconcile is launched, held at store level
+  // (not in the button component) so an in-flight reconcile's completion is still
+  // handled if the user navigates away before the agent finishes. Consumed by
+  // loadAgentStatus when the reconcile task reaches 'done', at which point it's
+  // pushed onto reconcileQueue.
   pendingReconcile: ReconcilePreview | null;
-  // The proposed rewrite from a reconcile agent run, held for a before/after
-  // diff panel until the user approves (keeps it) or discards (reverts it).
-  reconcilePreview: ReconcilePreview | null;
-  setReconcilePreview: (preview: ReconcilePreview | null) => void;
+  // Ordered queue of proposed rewrites awaiting review, one entry per entity, each
+  // held for a before/after diff panel until the user approves (keeps it) or
+  // discards (reverts it). Fed either by a single Reconcile completing (one entry)
+  // or by a batch reconcile sweep completing (many entries at once, fetched from
+  // GET /api/agent/reconcile-queue — see loadAgentStatus).
+  reconcileQueue: ReconcilePreview[];
+  removeFromReconcileQueue: (planId: string) => void;
+  // Guards loadAgentStatus against re-fetching/re-appending the same batch reconcile
+  // sweep's results on every poll while its task stays 'done' as `current`.
+  batchReconcileConsumed: boolean;
 };
 
 export interface ReconcilePreview {
@@ -327,16 +335,40 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const data = await fetchAgentStatus();
       set({ agentStatus: data });
 
-      // Hand a finished reconcile's snapshot to the diff panel. Lives here (not
-      // in ReconcileButton) so it fires regardless of which plan view is mounted.
+      // Hand a finished single-plan reconcile's snapshot to the review queue. Lives
+      // here (not in ReconcileButton) so it fires regardless of which plan view is
+      // mounted.
       const pending = get().pendingReconcile;
       if (pending && data?.taskKind === 'reconcile' && data.planId === pending.planId) {
         if (data.status === 'done') {
           // loadPlans first: if it throws, pendingReconcile stays set and retries.
           await get().loadPlans();
-          set({ reconcilePreview: pending, pendingReconcile: null });
+          set((s) => ({ reconcileQueue: [...s.reconcileQueue, pending], pendingReconcile: null }));
         } else if (data.status === 'error') {
           set({ pendingReconcile: null });
+        }
+      }
+
+      // Hand a finished batch reconcile sweep's per-entity snapshots to the review
+      // queue, fetched from the server since (unlike single Reconcile) the client
+      // never captured a `before` snapshot itself. Guarded by batchReconcileConsumed
+      // so repeated polls of the same 'done' status don't re-append the same entries;
+      // the guard resets once the task kind moves off 'done' (a fresh sweep started).
+      if (data?.taskKind === 'batch-reconcile') {
+        if (data.status === 'done' && !get().batchReconcileConsumed) {
+          set({ batchReconcileConsumed: true });
+          const results = await fetchReconcileQueue();
+          if (results && results.length > 0) {
+            await get().loadPlans();
+            set((s) => ({
+              reconcileQueue: [
+                ...s.reconcileQueue,
+                ...results.map((r) => ({ planId: r.planId, before: r.before })),
+              ],
+            }));
+          }
+        } else if (data.status !== 'done' && get().batchReconcileConsumed) {
+          set({ batchReconcileConsumed: false });
         }
       }
     } catch {
@@ -399,6 +431,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   pendingReconcile: null,
-  reconcilePreview: null,
-  setReconcilePreview: (preview) => set({ reconcilePreview: preview }),
+  reconcileQueue: [],
+  removeFromReconcileQueue: (planId) =>
+    set((s) => ({ reconcileQueue: s.reconcileQueue.filter((item) => item.planId !== planId) })),
+  batchReconcileConsumed: false,
 }));

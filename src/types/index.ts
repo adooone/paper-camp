@@ -281,3 +281,12 @@ export interface AgentTaskState {
   agentId: AgentId;
   lines: string[];
 }
+
+// A single entity's proposed rewrite from a batch reconcile sweep, held server-side
+// (see startBatchReconcile in agent.ts) and served via GET /api/agent/reconcile-queue
+// once the sweep's `before` snapshot for that entity is known to have changed.
+export interface ReconcileQueueItem {
+  planId: string;
+  title: string;
+  before: { body: string; phases: PhaseItem[] };
+}

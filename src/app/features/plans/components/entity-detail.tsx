@@ -54,8 +54,9 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const { toast } = useToast();
   const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const reconcilePreview = useAppStore((s) => s.reconcilePreview);
-  const setReconcilePreview = useAppStore((s) => s.setReconcilePreview);
+  const reconcileQueue = useAppStore((s) => s.reconcileQueue);
+  const removeFromReconcileQueue = useAppStore((s) => s.removeFromReconcileQueue);
+  const reconcilePreview = reconcileQueue.find((item) => item.planId === plan.id) ?? null;
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const agentPhaseIndex =
@@ -125,18 +126,18 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   };
 
   const handleApproveReconcile = () => {
-    setReconcilePreview(null);
+    if (plan.id) removeFromReconcileQueue(plan.id);
   };
 
   const handleDiscardReconcile = async () => {
-    if (!reconcilePreview || reconcilePreview.planId !== plan.id) return;
+    if (!reconcilePreview || !plan.id) return;
     setUpdating(true);
     await updatePlan(plan.title, {
       body: reconcilePreview.before.body,
       phases: reconcilePreview.before.phases,
     });
     await loadPlans();
-    setReconcilePreview(null);
+    removeFromReconcileQueue(plan.id);
     setUpdating(false);
   };
 
@@ -154,7 +155,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
   return (
     <div>
-      {reconcilePreview && reconcilePreview.planId === plan.id && (
+      {reconcilePreview && (
         <ReconcileDiffPanel
           plan={plan}
           before={reconcilePreview.before}

@@ -1,7 +1,12 @@
-import type { AgentTaskState } from '@/types/index';
+import type { AgentTaskState, ReconcileQueueItem } from '@/types/index';
 
 export const fetchAgentStatus = async (): Promise<AgentTaskState | null> => {
   const response = await fetch('/api/agent/status');
+  return response.json();
+};
+
+export const fetchReconcileQueue = async (): Promise<ReconcileQueueItem[] | null> => {
+  const response = await fetch('/api/agent/reconcile-queue');
   return response.json();
 };
 

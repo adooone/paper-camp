@@ -5,7 +5,7 @@ import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { computePlanContentHash } from '../../core/content-hash';
-import { parsePlanFile } from '../../core/parser';
+import { parseEntityFile, parsePlanFile } from '../../core/parser';
 import { entityToPlan, readEntities } from '../../core/readers';
 import {
   type AgentId,
@@ -17,6 +17,7 @@ import {
   type PaperCampConfig,
   type PhaseItem,
   type PlanEntry,
+  type ReconcileQueueItem,
   type TaskKind,
   coerceAgentConfig,
 } from '../../types/index';
@@ -45,6 +46,10 @@ interface AgentTask {
   // For reconcile tasks: snapshot of body + phase text before launch, since a reconcile
   // rewrites prose in place rather than growing Phases/Log like an audit does.
   reconcileBaseline?: string;
+  // For a batch-reconcile sweep: one entry per entity whose reconcile actually changed
+  // its prose, holding the pre-run snapshot so the client can review/revert it later.
+  // Read by GET /api/agent/reconcile-queue.
+  reconcileResults?: ReconcileQueueItem[];
   status: AgentTaskStatus;
   agentId: AgentId;
   adapter: AgentAdapter;
@@ -545,6 +550,7 @@ export function createAgentManager(
       adapter,
       proc: stubProc,
       lines: [],
+      reconcileResults: [],
     };
     current = task;
     setStatus(task, 'running');
@@ -587,8 +593,10 @@ export function createAgentManager(
             continue;
           }
 
-          // Snapshot the before baseline right before this entity's run.
-          const before = { body: plan.body, phases: plan.phases.map((p) => p.text) };
+          // Snapshot the before baseline right before this entity's run — full phase
+          // objects (not just text) so a changed entity's snapshot is reusable as-is
+          // for a client-side revert/diff, matching single Reconcile's `before` shape.
+          const before = { body: plan.body, phases: plan.phases };
 
           pushLine(task, `[reconcile] ${plan.id} ${plan.title} (${index + 1}/${total})`);
           const prompt = buildReconcilePrompt(plan);
@@ -621,17 +629,25 @@ export function createAgentManager(
           if (success) {
             let changed = false;
             try {
+              // parseEntityFile (not parsePlanFile) — candidates include backlog ideas
+              // (status: idea), whose frontmatter parsePlanFile's plan-only status
+              // schema rejects.
               const rawAfter = await readFile(planFile, 'utf-8');
-              const parsedAfter = parsePlanFile(rawAfter);
-              const after = parsedAfter.entries[0];
+              const parsedAfter = parseEntityFile(rawAfter);
+              const after = parsedAfter.entries[0]
+                ? entityToPlan(parsedAfter.entries[0])
+                : undefined;
               changed = after
                 ? JSON.stringify({ body: after.body, phases: after.phases.map((p) => p.text) }) !==
-                  JSON.stringify(before)
+                  JSON.stringify({ body: before.body, phases: before.phases.map((p) => p.text) })
                 : false;
             } catch {
               /* changed stays false */
             }
             reconciled++;
+            if (changed) {
+              task.reconcileResults?.push({ planId: plan.id, title: plan.title, before });
+            }
             pushLine(
               task,
               changed ? `[done] ${plan.id} — updated` : `[done] ${plan.id} — no drift found`,
@@ -994,6 +1010,14 @@ export function createAgentManager(
     };
   }
 
+  // The most recent batch-reconcile sweep's per-entity results, or null if the
+  // current (or most recently finished) task isn't a batch-reconcile sweep. Stays
+  // available until the next agent task launch replaces `current`.
+  function getReconcileQueue(): ReconcileQueueItem[] | null {
+    if (!current || current.taskKind !== 'batch-reconcile') return null;
+    return [...(current.reconcileResults ?? [])];
+  }
+
   return {
     start,
     startForPlan,
@@ -1006,6 +1030,7 @@ export function createAgentManager(
     runCommitSuggest,
     stop,
     getStatus,
+    getReconcileQueue,
     subscribe(res: ServerResponse) {
       clients.add(res);
       res.on('close', () => clients.delete(res));
@@ -1030,6 +1055,7 @@ export interface AgentManager {
   runCommitSuggest: (prompt: string) => Promise<string>;
   stop: () => Result;
   getStatus: () => AgentTaskState | null;
+  getReconcileQueue: () => ReconcileQueueItem[] | null;
   subscribe: (res: ServerResponse) => void;
   killCurrent: () => void;
 }

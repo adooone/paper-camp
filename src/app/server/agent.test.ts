@@ -378,3 +378,66 @@ Plan body.
     expect(onAuditComplete).toHaveBeenCalledWith('IDEA-1', 0);
   });
 });
+
+describe('startBatchReconcile / getReconcileQueue', () => {
+  const IDEA_OPEN = `---
+id: IDEA-1
+title: Test idea
+type: feat
+status: idea
+created: 2026-07-01
+---
+Plan body.
+`;
+
+  const REWRITE_BODY = `
+const fs = require('node:fs');
+const p = 'papercamp/ideas/IDEA-1.md';
+fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated plan body.'));
+`;
+
+  it('returns null before any batch reconcile has run', async () => {
+    const { root } = await makeRoot(IDEA_OPEN);
+    const manager = createAgentManager(root);
+    expect(manager.getReconcileQueue()).toBeNull();
+  });
+
+  it('queues a before snapshot for an entity whose prose actually changed', async () => {
+    const { root } = await makeRoot(IDEA_OPEN);
+    agentScript.current = REWRITE_BODY;
+    const manager = createAgentManager(root);
+
+    expect(manager.startBatchReconcile()).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
+
+    const queue = manager.getReconcileQueue();
+    expect(queue).toEqual([
+      { planId: 'IDEA-1', title: 'Test idea', before: { body: 'Plan body.', phases: [] } },
+    ]);
+  });
+
+  it('leaves the queue empty when no entity actually drifted', async () => {
+    const { root } = await makeRoot(IDEA_OPEN);
+    agentScript.current = 'process.exit(0)';
+    const manager = createAgentManager(root);
+
+    expect(manager.startBatchReconcile()).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — no drift found');
+    expect(manager.getReconcileQueue()).toEqual([]);
+  });
+
+  it('returns null once a different task kind becomes current', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = REWRITE_BODY;
+    const manager = createAgentManager(root);
+
+    manager.startBatchReconcile();
+    await waitForStatus(manager, settled);
+
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    manager.start(plan, 0);
+    expect(manager.getReconcileQueue()).toBeNull();
+  });
+});

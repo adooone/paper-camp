@@ -313,6 +313,16 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
+    // GET /api/agent/reconcile-queue — per-entity before snapshots from the most
+    // recent batch reconcile sweep, for the client to turn into a review queue
+    {
+      method: 'GET',
+      path: '/api/agent/reconcile-queue',
+      handle: (_req, res) => {
+        sendJson(res, 200, agent.getReconcileQueue());
+      },
+    },
+
     // POST /api/agent/stop — kill the running agent task
     {
       method: 'POST',
