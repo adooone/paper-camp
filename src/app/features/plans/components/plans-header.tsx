@@ -2,8 +2,8 @@ import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, space } from '@/app/styles/tokens';
 import { IconButton, Select } from '@dendelion/paper-ui';
 import type { PlanSortKey } from '../plan-list-selector';
+import { ActualiseAllButton } from './actualise-all-button';
 import { AddToBacklogButton } from './add-to-backlog-button';
-import { AuditAllButton } from './audit-all-button';
 import { NewIdeaButton } from './new-idea-button';
 
 const SORT_OPTIONS: { value: PlanSortKey; label: string }[] = [
@@ -17,7 +17,7 @@ const SORT_OPTIONS: { value: PlanSortKey; label: string }[] = [
 
 /**
  * The plans page header row: the page title plus the toolbar (sort, add-to-backlog,
- * audit-all), rendered above the worklist.
+ * actualise-all), rendered above the worklist.
  */
 export const PlansHeader = () => {
   const filters = useAppStore((s) => s.planFilters);
@@ -90,7 +90,7 @@ export const PlansHeader = () => {
 
       <NewIdeaButton />
       <AddToBacklogButton />
-      <AuditAllButton />
+      <ActualiseAllButton />
     </div>
   );
 };

@@ -2,7 +2,6 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { computePlanContentHash } from '../../core/content-hash';
 import { parseEntityFile } from '../../core/parser';
 import { entityToPlan } from '../../core/readers';
 import type { PhaseItem, PlanEntry } from '../../types/index';
@@ -314,67 +313,65 @@ describe('stop and getStatus', () => {
   });
 });
 
-describe('startBatchAudit', () => {
-  // status: review so readAllPlanFiles' candidate filter (review/done) picks it up.
-  const PLAN_REVIEW = `---
+describe('startBatchReconcile / getReconcileQueue', () => {
+  const IDEA_OPEN = `---
 id: IDEA-1
-title: Test plan
+title: Test idea
 type: feat
-status: review
+status: idea
 created: 2026-07-01
 ---
 Plan body.
-
-### Phases
-- [x] First phase
-- [ ] Second phase
 `;
 
-  function withAuditStamp(md: string, hash: string, date = '2026-07-01'): string {
-    return md.replace(
-      'created: 2026-07-01\n',
-      `created: 2026-07-01\naudited: ${date}\naudited-hash: ${hash}\n`,
-    );
-  }
+  const REWRITE_BODY = `
+const fs = require('node:fs');
+const p = 'papercamp/ideas/IDEA-1.md';
+fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated plan body.'));
+`;
 
-  it('skips a plan whose audited-hash still matches its content', async () => {
-    const { body, phases } = parseEntityFile(PLAN_REVIEW).entries[0];
-    const hash = computePlanContentHash({ body, phases });
-    const { root } = await makeRoot(withAuditStamp(PLAN_REVIEW, hash));
-    const onAuditComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, onAuditComplete);
-
-    expect(manager.startBatchAudit()).toEqual({ ok: true });
-    expect(await waitForStatus(manager, settled)).toBe('done');
-    const lines = manager.getStatus()?.lines.join('\n');
-    expect(lines).toContain('[skip] IDEA-1 — up to date');
-    expect(lines).toContain('0 audited, 1 skipped, 0 failed');
-    expect(onAuditComplete).not.toHaveBeenCalled();
+  it('returns null before any batch reconcile has run', async () => {
+    const { root } = await makeRoot(IDEA_OPEN);
+    const manager = createAgentManager(root);
+    expect(manager.getReconcileQueue()).toBeNull();
   });
 
-  it('re-audits a plan whose content changed since its audited-hash was stamped', async () => {
-    const { root } = await makeRoot(withAuditStamp(PLAN_REVIEW, 'stale-hash-does-not-match'));
-    agentScript.current = FLIP_NEXT_CHECKBOX;
-    const onAuditComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, onAuditComplete);
+  it('queues a before snapshot for an entity whose prose actually changed', async () => {
+    const { root } = await makeRoot(IDEA_OPEN);
+    agentScript.current = REWRITE_BODY;
+    const manager = createAgentManager(root);
 
-    expect(manager.startBatchAudit()).toEqual({ ok: true });
+    expect(manager.startBatchReconcile()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    const lines = manager.getStatus()?.lines.join('\n');
-    expect(lines).toContain('[audit] IDEA-1 Test plan');
-    expect(lines).toContain('1 audited, 0 skipped, 0 failed');
-    expect(onAuditComplete).toHaveBeenCalledWith('IDEA-1', 0);
+    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
+
+    const queue = manager.getReconcileQueue();
+    expect(queue).toEqual([
+      { planId: 'IDEA-1', title: 'Test idea', before: { body: 'Plan body.', phases: [] } },
+    ]);
   });
 
-  it('audits a plan that has never been audited (no audited-hash yet)', async () => {
-    const { root } = await makeRoot(PLAN_REVIEW);
-    agentScript.current = FLIP_NEXT_CHECKBOX;
-    const onAuditComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, onAuditComplete);
+  it('leaves the queue empty when no entity actually drifted', async () => {
+    const { root } = await makeRoot(IDEA_OPEN);
+    agentScript.current = 'process.exit(0)';
+    const manager = createAgentManager(root);
 
-    expect(manager.startBatchAudit()).toEqual({ ok: true });
+    expect(manager.startBatchReconcile()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    expect(manager.getStatus()?.lines.join('\n')).not.toContain('[skip]');
-    expect(onAuditComplete).toHaveBeenCalledWith('IDEA-1', 0);
+    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — no drift found');
+    expect(manager.getReconcileQueue()).toEqual([]);
+  });
+
+  it('returns null once a different task kind becomes current', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = REWRITE_BODY;
+    const manager = createAgentManager(root);
+
+    manager.startBatchReconcile();
+    await waitForStatus(manager, settled);
+
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    manager.start(plan, 0);
+    expect(manager.getReconcileQueue()).toBeNull();
   });
 });

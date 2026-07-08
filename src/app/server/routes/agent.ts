@@ -262,19 +262,19 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/launch-audit-all — start a batch convergence audit across all review/done plans
+    // POST /api/agent/launch-reconcile-all — start a batch reconcile sweep across all open ideas/plans
     {
       method: 'POST',
-      path: '/api/agent/launch-audit-all',
+      path: '/api/agent/launch-reconcile-all',
       handle: async (_req, res) => {
-        // Batch audit can modify many plan files — gate it behind the same
+        // Batch reconcile can rewrite many entity files — gate it behind the same
         // active-plan guard the other write-capable agent routes use.
         const conflict = await checkBranchConflictForPlan(root, git);
         if (conflict) {
           sendJson(res, 409, { error: conflict });
           return;
         }
-        const result = agent.startBatchAudit();
+        const result = agent.startBatchReconcile();
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });
           return;
@@ -310,6 +310,16 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           return;
         }
         sendJson(res, 202, { ok: true });
+      },
+    },
+
+    // GET /api/agent/reconcile-queue — per-entity before snapshots from the most
+    // recent batch reconcile sweep, for the client to turn into a review queue
+    {
+      method: 'GET',
+      path: '/api/agent/reconcile-queue',
+      handle: (_req, res) => {
+        sendJson(res, 200, agent.getReconcileQueue());
       },
     },
 

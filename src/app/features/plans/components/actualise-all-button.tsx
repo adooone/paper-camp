@@ -3,8 +3,8 @@ import { color } from '@/app/styles/tokens';
 import { Button } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
-export const AuditAllButton = () => {
-  const launchBatchAudit = useAppStore((s) => s.launchBatchAudit);
+export const ActualiseAllButton = () => {
+  const launchBatchReconcile = useAppStore((s) => s.launchBatchReconcile);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const [launching, setLaunching] = useState(false);
 
@@ -14,7 +14,7 @@ export const AuditAllButton = () => {
   const handleClick = async () => {
     setLaunching(true);
     try {
-      await launchBatchAudit();
+      await launchBatchReconcile();
     } catch (err) {
       alert((err as Error).message);
     } finally {
@@ -30,7 +30,7 @@ export const AuditAllButton = () => {
       disabled={agentBusy || launching}
       style={{ color: color.textSecondary }}
     >
-      Audit all
+      Actualise all
     </Button>
   );
 };

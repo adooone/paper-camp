@@ -11,6 +11,7 @@ import { EntityDetail } from './components/entity-detail';
 import { ListView } from './components/list-view';
 import { NoteDetail } from './components/note-detail';
 import { PlansHeader } from './components/plans-header';
+import { ReconcileQueueReview } from './components/reconcile-queue-review';
 import { selectWorklistRows } from './plan-list-selector';
 
 export const PlansPage = () => {
@@ -68,78 +69,78 @@ export const PlansPage = () => {
     );
   }
 
-  if (activePlan) {
-    return (
-      <div>
-        <div style={{ marginBottom: space[4] }}>
-          <Breadcrumb
-            items={[
-              { id: 'plans', label: 'Plans', onClick: handleBack },
-              { id: 'plan', label: activePlan.title },
-            ]}
-          />
-        </div>
-        <EntityDetail plan={activePlan} />
-      </div>
-    );
-  }
-
-  if (activeIdea) {
-    return (
-      <div>
-        <div style={{ marginBottom: space[4] }}>
-          <Breadcrumb
-            items={[
-              { id: 'plans', label: 'Plans', onClick: handleBack },
-              { id: 'idea', label: activeIdea.title },
-            ]}
-          />
-        </div>
-        <NoteDetail idea={activeIdea} />
-      </div>
-    );
-  }
-
   const { rows } = selectWorklistRows(plans.entries, ideaEntries, planFilters);
 
+  // The reconcile review queue is a self-contained modal driven by store state,
+  // not by which branch is active — render it once above the branching so it
+  // isn't duplicated across the plan/idea/list views.
   return (
-    <div>
-      <PlansHeader />
-
-      {plans.warnings.length > 0 && (
-        <Card size="small" accent accentColor="amber">
-          <p style={{ margin: 0, fontWeight: 600 }}>Some entries couldn't be parsed</p>
-          <ul style={{ margin: 0, paddingLeft: space[5] }}>
-            {plans.warnings.map((w) => (
-              <li key={w.title}>
-                {w.title}: {w.message}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {plans.entries.length === 0 ? (
-        <p style={{ opacity: 0.5 }}>
-          No plans yet. Run <code>paper-camp add plan &quot;name&quot;</code>, or add one to the
-          backlog above.
-        </p>
+    <>
+      <ReconcileQueueReview />
+      {activePlan ? (
+        <div>
+          <div style={{ marginBottom: space[4] }}>
+            <Breadcrumb
+              items={[
+                { id: 'plans', label: 'Plans', onClick: handleBack },
+                { id: 'plan', label: activePlan.title },
+              ]}
+            />
+          </div>
+          <EntityDetail plan={activePlan} />
+        </div>
+      ) : activeIdea ? (
+        <div>
+          <div style={{ marginBottom: space[4] }}>
+            <Breadcrumb
+              items={[
+                { id: 'plans', label: 'Plans', onClick: handleBack },
+                { id: 'idea', label: activeIdea.title },
+              ]}
+            />
+          </div>
+          <NoteDetail idea={activeIdea} />
+        </div>
       ) : (
-        <ListView
-          plans={plans.entries}
-          rows={rows}
-          activePlanTitle={activePlanTitle}
-          onOpenPlan={handleOpenPlan}
-          onOpenIdea={handleOpenIdea}
-          onDeleteIdea={setDeleteIdeaTitle}
-        />
-      )}
+        <div>
+          <PlansHeader />
 
-      <DeleteIdeaModal
-        title={deleteIdeaTitle}
-        onClose={() => setDeleteIdeaTitle(null)}
-        onConfirm={handleDeleteIdea}
-      />
-    </div>
+          {plans.warnings.length > 0 && (
+            <Card size="small" accent accentColor="amber">
+              <p style={{ margin: 0, fontWeight: 600 }}>Some entries couldn't be parsed</p>
+              <ul style={{ margin: 0, paddingLeft: space[5] }}>
+                {plans.warnings.map((w) => (
+                  <li key={w.title}>
+                    {w.title}: {w.message}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {plans.entries.length === 0 ? (
+            <p style={{ opacity: 0.5 }}>
+              No plans yet. Run <code>paper-camp add plan &quot;name&quot;</code>, or add one to the
+              backlog above.
+            </p>
+          ) : (
+            <ListView
+              plans={plans.entries}
+              rows={rows}
+              activePlanTitle={activePlanTitle}
+              onOpenPlan={handleOpenPlan}
+              onOpenIdea={handleOpenIdea}
+              onDeleteIdea={setDeleteIdeaTitle}
+            />
+          )}
+
+          <DeleteIdeaModal
+            title={deleteIdeaTitle}
+            onClose={() => setDeleteIdeaTitle(null)}
+            onConfirm={handleDeleteIdea}
+          />
+        </div>
+      )}
+    </>
   );
 };

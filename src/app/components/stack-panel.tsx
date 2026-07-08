@@ -586,8 +586,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
                         ? ` — phase ${agentStatus.phaseIndex + 1}`
                         : agentStatus.taskKind === 'audit'
                           ? ' — audit'
-                          : agentStatus.taskKind === 'batch-audit'
-                            ? ' — batch audit'
+                          : agentStatus.taskKind === 'batch-reconcile'
+                            ? ' — batch reconcile'
                             : agentStatus.taskKind === 'draft'
                               ? ' — drafting'
                               : agentStatus.taskKind === 'extend'

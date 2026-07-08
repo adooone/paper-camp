@@ -262,7 +262,7 @@ export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'er
 export type TaskKind =
   | 'phase'
   | 'audit'
-  | 'batch-audit'
+  | 'batch-reconcile'
   | 'run-all'
   | 'draft'
   | 'extend'
@@ -279,4 +279,13 @@ export interface AgentTaskState {
   ideaId?: string;
   agentId: AgentId;
   lines: string[];
+}
+
+// A single entity's proposed rewrite from a batch reconcile sweep, held server-side
+// (see startBatchReconcile in agent.ts) and served via GET /api/agent/reconcile-queue
+// once the sweep's `before` snapshot for that entity is known to have changed.
+export interface ReconcileQueueItem {
+  planId: string;
+  title: string;
+  before: { body: string; phases: PhaseItem[] };
 }

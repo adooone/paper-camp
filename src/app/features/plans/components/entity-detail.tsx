@@ -29,7 +29,6 @@ import { PhaseCopyButton } from './phase-copy-button';
 import { PlanIdStamp } from './plan-id-stamp';
 import { ProgressBar } from './progress-bar';
 import { ReconcileButton } from './reconcile-button';
-import { ReconcileDiffPanel } from './reconcile-diff-panel';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -54,8 +53,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const { toast } = useToast();
   const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const reconcilePreview = useAppStore((s) => s.reconcilePreview);
-  const setReconcilePreview = useAppStore((s) => s.setReconcilePreview);
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const agentPhaseIndex =
@@ -107,37 +104,31 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     );
     setUpdating(true);
     const allChecked = nextPhases.every((p) => p.done);
-    // Auto-set to review when last phase is checked
-    if (allChecked && plan.status === 'in-progress') {
-      await updatePlan(plan.title, { phases: nextPhases, status: 'review' });
-    } else {
-      await updatePlan(plan.title, { phases: nextPhases });
+    try {
+      // Auto-set to review when last phase is checked
+      if (allChecked && plan.status === 'in-progress') {
+        await updatePlan(plan.title, { phases: nextPhases, status: 'review' });
+      } else {
+        await updatePlan(plan.title, { phases: nextPhases });
+      }
+      await loadPlans();
+    } catch (err) {
+      toast({ title: 'Update failed', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setUpdating(false);
     }
-    await loadPlans();
-    setUpdating(false);
   };
 
   const handleAddReviewPhases = async (newPhases: PhaseItem[]) => {
     setUpdating(true);
-    await updatePlan(plan.title, { phases: [...plan.phases, ...newPhases] });
-    await loadPlans();
-    setUpdating(false);
-  };
-
-  const handleApproveReconcile = () => {
-    setReconcilePreview(null);
-  };
-
-  const handleDiscardReconcile = async () => {
-    if (!reconcilePreview || reconcilePreview.planId !== plan.id) return;
-    setUpdating(true);
-    await updatePlan(plan.title, {
-      body: reconcilePreview.before.body,
-      phases: reconcilePreview.before.phases,
-    });
-    await loadPlans();
-    setReconcilePreview(null);
-    setUpdating(false);
+    try {
+      await updatePlan(plan.title, { phases: [...plan.phases, ...newPhases] });
+      await loadPlans();
+    } catch (err) {
+      toast({ title: 'Update failed', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleAddLogEntry = async () => {
@@ -146,22 +137,19 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     const newLog: LogEntry = { date: today, text: logInput.trim().replace(/\n/g, ' ') };
     const updatedLog = [...(plan.log ?? []), newLog];
     setUpdating(true);
-    await updatePlan(plan.title, { log: updatedLog });
-    await loadPlans();
-    setLogInput('');
-    setUpdating(false);
+    try {
+      await updatePlan(plan.title, { log: updatedLog });
+      await loadPlans();
+      setLogInput('');
+    } catch (err) {
+      toast({ title: 'Update failed', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setUpdating(false);
+    }
   };
 
   return (
     <div>
-      {reconcilePreview && reconcilePreview.planId === plan.id && (
-        <ReconcileDiffPanel
-          plan={plan}
-          before={reconcilePreview.before}
-          onApprove={handleApproveReconcile}
-          onDiscard={handleDiscardReconcile}
-        />
-      )}
       <h2
         style={{
           fontFamily: fontFamily.serif,

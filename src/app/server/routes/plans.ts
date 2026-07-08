@@ -162,13 +162,11 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           updated: todayDateString(),
         };
 
-        if (updates.status === 'done' || updates.status === 'dropped') {
-          const conflict = await checkBranchConflictForPlan(root, git, target.id);
-          if (conflict) {
-            sendJson(res, 409, { error: conflict });
-            return;
-          }
-        }
+        // Closing a reviewed plan (done/dropped) is intentionally NOT branch-guarded:
+        // it isn't starting new work, and the common flow is to approve/close after the
+        // PR merges — by which point you're on main or a merged branch, not the plan's
+        // own. The branch-conflict guard stays on the work-starting paths (agent launches
+        // and plan creation).
 
         // Demote other in-progress entities when starting a new one
         if (updates.status === 'in-progress') {

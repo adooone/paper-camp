@@ -10,6 +10,9 @@ interface ReconcileDiffPanelProps {
   before: { body: string; phases: PhaseItem[] };
   onApprove: () => void;
   onDiscard: () => Promise<void>;
+  // 1-based position within a multi-entity review queue; omitted for a lone
+  // single-plan reconcile where there's nothing to count against.
+  queuePosition?: { index: number; total: number };
 }
 
 const DiffText = ({ tokens }: { tokens: DiffToken[] }) => (
@@ -52,6 +55,7 @@ export const ReconcileDiffPanel = ({
   before,
   onApprove,
   onDiscard,
+  queuePosition,
 }: ReconcileDiffPanelProps) => {
   const [discarding, setDiscarding] = useState(false);
 
@@ -75,7 +79,16 @@ export const ReconcileDiffPanel = ({
   };
 
   return (
-    <Modal open title="Review reconcile changes" size="large" onClose={handleDiscard}>
+    <Modal
+      open
+      title={
+        queuePosition
+          ? `Review reconcile changes (${queuePosition.index} of ${queuePosition.total})`
+          : 'Review reconcile changes'
+      }
+      size="large"
+      onClose={handleDiscard}
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
         <p className="text-sm" style={{ margin: 0, opacity: 0.7 }}>
           The reconcile agent proposed the rewrite below for "{plan.title}". Approve to keep it, or

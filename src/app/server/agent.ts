@@ -5,7 +5,7 @@ import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { computePlanContentHash } from '../../core/content-hash';
-import { parsePlanFile } from '../../core/parser';
+import { parseEntityFile, parsePlanFile } from '../../core/parser';
 import { entityToPlan, readEntities } from '../../core/readers';
 import {
   type AgentId,
@@ -17,10 +17,11 @@ import {
   type PaperCampConfig,
   type PhaseItem,
   type PlanEntry,
+  type ReconcileQueueItem,
   type TaskKind,
   coerceAgentConfig,
 } from '../../types/index';
-import { buildConvergenceAuditPrompt } from '../features/plans/prompts';
+import { buildReconcilePrompt } from '../features/plans/prompts';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 
 const MAX_LINES = 50;
@@ -45,6 +46,10 @@ interface AgentTask {
   // For reconcile tasks: snapshot of body + phase text before launch, since a reconcile
   // rewrites prose in place rather than growing Phases/Log like an audit does.
   reconcileBaseline?: string;
+  // For a batch-reconcile sweep: one entry per entity whose reconcile actually changed
+  // its prose, holding the pre-run snapshot so the client can review/revert it later.
+  // Read by GET /api/agent/reconcile-queue.
+  reconcileResults?: ReconcileQueueItem[];
   status: AgentTaskStatus;
   agentId: AgentId;
   adapter: AgentAdapter;
@@ -364,36 +369,36 @@ export function createAgentManager(
     return null;
   }
 
-  // Batch audit: iterate every review/done plan and run a convergence audit on each,
-  // skipping plans whose "audited" marker is newer than the file's last modification.
-  // Runs plans sequentially; updates task.proc before each spawn so stop() kills the
-  // right subprocess.
-  function startBatchAudit(): Result {
+  // Batch reconcile: sweep every open non-note entity (idea/planned/in-progress/review)
+  // and run a reconcile pass on each, rewording only prose that has drifted from the
+  // code. Runs entities sequentially, updating task.proc before each spawn so stop()
+  // kills the right subprocess. Snapshots each entity's body + phase text as the
+  // `before` baseline right before its run, since (unlike single Reconcile, where the client captures that
+  // snapshot at launch) the server is the only party in the loop here.
+  function startBatchReconcile(): Result {
     if (isBusy()) {
       return { ok: false, error: 'An agent task is already running' };
     }
     const defaultAgents = readDefaultAgentIds(root);
-    const {
-      id: agentId,
-      adapter,
-      model,
-      effort,
-    } = resolveAgent({ defaultAgents, taskKind: 'audit' });
+    // Task-level agent is for status display only; each entity re-resolves its own
+    // below so a per-entity `agent:` override in a mixed batch is honored.
+    const { id: agentId, adapter } = resolveAgent({ defaultAgents, taskKind: 'reconcile' });
 
-    // Stub proc — replaced per plan in the loop. Already-exited is fine: stop() sets
+    // Stub proc — replaced per entity in the loop. Already-exited is fine: stop() sets
     // task.status = 'stopping' first; kill() on a dead process is a no-op.
     const stubProc = spawn('sh', ['-c', 'exit 0'], {
       cwd: root,
       stdio: 'ignore',
     });
     const task: AgentTask = {
-      taskKind: 'batch-audit',
-      planTitle: 'Batch audit',
+      taskKind: 'batch-reconcile',
+      planTitle: 'Batch reconcile',
       status: 'starting',
       agentId,
       adapter,
       proc: stubProc,
       lines: [],
+      reconcileResults: [],
     };
     current = task;
     setStatus(task, 'running');
@@ -401,24 +406,29 @@ export function createAgentManager(
     (async () => {
       try {
         const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
+        const openStatuses = new Set(['idea', 'planned', 'in-progress', 'review']);
         const candidates = entries
-          .filter((e) => e.kind !== 'note' && (e.status === 'review' || e.status === 'done'))
+          .filter((e) => e.kind !== 'note' && openStatuses.has(e.status))
           .map(entityToPlan);
 
         if (candidates.length === 0) {
           if (current === task) {
-            pushLine(task, 'No plans with status "review" or "done" to audit.');
+            pushLine(task, 'No open ideas or plans to reconcile.');
             setStatus(task, 'done');
           }
           return;
         }
 
-        pushLine(task, `Auditing ${candidates.length} plan(s)…`);
-        let audited = 0;
+        pushLine(
+          task,
+          `Reconciling ${candidates.length} entit${candidates.length === 1 ? 'y' : 'ies'}…`,
+        );
+        let reconciled = 0;
         let skipped = 0;
         let failed = 0;
+        const total = candidates.length;
 
-        for (const plan of candidates) {
+        for (const [index, plan] of candidates.entries()) {
           if (current !== task || task.status === 'stopping') break;
           if (!plan.id) {
             skipped++;
@@ -431,18 +441,19 @@ export function createAgentManager(
             continue;
           }
 
-          if (plan.audited && plan.auditedHash) {
-            const contentHash = computePlanContentHash({ body: plan.body, phases: plan.phases });
-            if (contentHash === plan.auditedHash) {
-              pushLine(task, `[skip] ${plan.id} — up to date`);
-              skipped++;
-              continue;
-            }
-          }
+          // Snapshot the before baseline right before this entity's run — full phase
+          // objects (not just text) so a changed entity's snapshot is reusable as-is
+          // for a client-side revert/diff, matching single Reconcile's `before` shape.
+          const before = { body: plan.body, phases: plan.phases };
 
-          pushLine(task, `[audit] ${plan.id} ${plan.title}`);
-          const prompt = buildConvergenceAuditPrompt(plan);
-          const proc = spawn(adapter.command, adapter.buildArgs(prompt, { model, effort }), {
+          pushLine(task, `[reconcile] ${plan.id} ${plan.title} (${index + 1}/${total})`);
+          const {
+            adapter: entAdapter,
+            model,
+            effort,
+          } = resolveAgent({ agentId: plan.agent, defaultAgents, taskKind: 'reconcile' });
+          const prompt = buildReconcilePrompt(plan);
+          const proc = spawn(entAdapter.command, entAdapter.buildArgs(prompt, { model, effort }), {
             cwd: root,
             stdio: ['ignore', 'pipe', 'pipe'],
           });
@@ -452,7 +463,7 @@ export function createAgentManager(
             const rl = createInterface({ input: proc.stdout });
             rl.on('line', (line) => {
               if (current !== task) return;
-              const parsed = adapter.parseLine(line);
+              const parsed = entAdapter.parseLine(line);
               if (parsed?.text && parsed.text !== 'Agent is working…') {
                 pushLine(task, `  ${parsed.text}`);
               }
@@ -461,30 +472,57 @@ export function createAgentManager(
           // Drain stderr — an unread pipe can fill and hang the subprocess.
           proc.stderr?.on('data', () => {});
 
-          const success = await new Promise<boolean>((resolve) => {
+          // Wait with a timeout so one entity's stall/clarifying-question hang is a
+          // failure rather than blocking the whole sweep and pinning the agent slot
+          // (isBusy() stuck true) — same SIGTERM→SIGKILL escalation as startRunAllPhases.
+          let timedOut = false;
+          const procDone = new Promise<boolean>((resolve) => {
             proc.on('close', (code) => resolve(code === 0));
             proc.on('error', () => resolve(false));
           });
+          const timeoutHandle = setTimeout(() => {
+            timedOut = true;
+            if (!proc.killed) proc.kill('SIGTERM');
+            setTimeout(() => {
+              if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
+            }, 5000);
+          }, PHASE_TIMEOUT_MS);
+          const success = await procDone;
+          clearTimeout(timeoutHandle);
 
           if (current !== task) return;
 
+          if (timedOut) {
+            failed++;
+            pushLine(task, `[timeout] ${plan.id} — no progress for ${PHASE_TIMEOUT_MS / 60000}min`);
+            continue;
+          }
+
           if (success) {
-            let gapPhases = 0;
+            let changed = false;
             try {
+              // parseEntityFile (not parsePlanFile) — candidates include backlog ideas
+              // (status: idea), whose frontmatter parsePlanFile's plan-only status
+              // schema rejects.
               const rawAfter = await readFile(planFile, 'utf-8');
-              const parsedAfter = parsePlanFile(rawAfter);
-              const afterCount = parsedAfter.entries[0]?.phases.length ?? plan.phases.length;
-              gapPhases = Math.max(0, afterCount - plan.phases.length);
+              const parsedAfter = parseEntityFile(rawAfter);
+              const after = parsedAfter.entries[0]
+                ? entityToPlan(parsedAfter.entries[0])
+                : undefined;
+              changed = after
+                ? JSON.stringify({ body: after.body, phases: after.phases.map((p) => p.text) }) !==
+                  JSON.stringify({ body: before.body, phases: before.phases.map((p) => p.text) })
+                : false;
             } catch {
-              /* gapPhases stays 0 */
+              /* changed stays false */
             }
-            await onAuditComplete?.(plan.id, gapPhases);
-            audited++;
+            reconciled++;
+            if (changed) {
+              task.reconcileResults?.push({ planId: plan.id, title: plan.title, before });
+            }
             pushLine(
               task,
-              gapPhases > 0
-                ? `[done] ${plan.id} — ${gapPhases} gap phase${gapPhases === 1 ? '' : 's'} added`
-                : `[done] ${plan.id}`,
+              changed ? `[done] ${plan.id} — updated` : `[done] ${plan.id} — no drift found`,
             );
           } else {
             failed++;
@@ -499,11 +537,14 @@ export function createAgentManager(
           return;
         }
 
-        pushLine(task, `Audit complete — ${audited} audited, ${skipped} skipped, ${failed} failed`);
+        pushLine(
+          task,
+          `Reconcile complete — ${reconciled} reconciled, ${skipped} skipped, ${failed} failed`,
+        );
         setStatus(task, failed > 0 ? 'error' : 'done');
       } catch (err) {
         if (current === task) {
-          pushLine(task, `Batch audit failed: ${(err as Error).message}`);
+          pushLine(task, `Batch reconcile failed: ${(err as Error).message}`);
           setStatus(task, 'error');
         }
       }
@@ -841,17 +882,26 @@ export function createAgentManager(
     };
   }
 
+  // The most recent batch-reconcile sweep's per-entity results, or null if the
+  // current (or most recently finished) task isn't a batch-reconcile sweep. Stays
+  // available until the next agent task launch replaces `current`.
+  function getReconcileQueue(): ReconcileQueueItem[] | null {
+    if (!current || current.taskKind !== 'batch-reconcile') return null;
+    return [...(current.reconcileResults ?? [])];
+  }
+
   return {
     start,
     startForPlan,
     startForIdea,
     startForIdeaExtend,
-    startBatchAudit,
+    startBatchReconcile,
     startRunAllPhases,
     startSync,
     runCommitSuggest,
     stop,
     getStatus,
+    getReconcileQueue,
     subscribe(res: ServerResponse) {
       clients.add(res);
       res.on('close', () => clients.delete(res));
@@ -869,12 +919,13 @@ export interface AgentManager {
   startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
-  startBatchAudit: () => Result;
+  startBatchReconcile: () => Result;
   startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<boolean>) => Result;
   startSync: (prompt: string) => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;
   stop: () => Result;
   getStatus: () => AgentTaskState | null;
+  getReconcileQueue: () => ReconcileQueueItem[] | null;
   subscribe: (res: ServerResponse) => void;
   killCurrent: () => void;
 }
