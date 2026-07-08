@@ -41,7 +41,7 @@
 | IDEA-37 | Fable capability-window tasks | note | done |  |
 | IDEA-38 | Densify the plans worklist | feat | done | app, ui, plans, ideas |
 | IDEA-39 | Build the focus cockpit | feat | idea | app, ui, plans, stack |
-| IDEA-40 | Make sub-views real routes | feat | review | app, ui, routing, navigation |
+| IDEA-40 | Make sub-views real routes | feat | done | app, ui, routing, navigation |
 | IDEA-41 | Settings and affordance polish | fix | done | app, ui, settings |
 | IDEA-42 | Filter and sort the plans list | feat | done | app, ui, plans |
 | IDEA-43 | Unify the ideas and plans worklist | feat | done | app, ideas, plans, core |
@@ -56,5 +56,5 @@
 | IDEA-52 | Build Settings page | feat | done | app, settings |
 | IDEA-53 | Fix Review status bugs | fix | done | app, plans, core |
 | IDEA-54 | Default font and Stack panel cleanup | refactor | done | app, ui, paper-ui |
-| IDEA-55 | Actualise all ideas at once | feat | review | app, plans, agent |
+| IDEA-55 | Actualise all ideas at once | feat | done | app, plans, agent |
 | IDEA-56 | Surface PR status in the dashboard | feat | idea | app, github, plans |
