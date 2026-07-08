@@ -8,6 +8,7 @@ import {
   entityToIdea,
   entityToPlan,
   readEntities,
+  readEntitiesWithDerivedStatus,
   readNoteEntries,
   readWorkEntries,
 } from './readers';
@@ -285,5 +286,59 @@ describe('status derivation via live PR merge state', () => {
 
     const { entries } = await readWorkEntries(ideasDir);
     expect(entries.find((e) => e.id === 'IDEA-7')?.status).toBe('review');
+  });
+});
+
+describe('readEntitiesWithDerivedStatus', () => {
+  it('replaces status with the derived value for work entities, leaving notes untouched', async () => {
+    const { root, ideasDir } = initRepoWithIdeas();
+    writeFileSync(
+      join(ideasDir, 'IDEA-8.md'),
+      `${formatEntityFile({
+        id: 'IDEA-8',
+        title: 'Active work',
+        type: 'feat',
+        created: '2026-07-01',
+        body: 'In flight.',
+        phases: [{ text: 'One', done: false }],
+      })}\n`,
+    );
+    writeFileSync(
+      join(ideasDir, 'IDEA-9.md'),
+      `${formatEntityFile({
+        id: 'IDEA-9',
+        title: 'A note',
+        kind: 'note',
+        status: 'open',
+        created: '2026-07-01',
+        body: 'Reference material.',
+      })}\n`,
+    );
+    git(root, 'branch', 'feat/idea-8-active-work');
+
+    const { entries, warnings } = await readEntitiesWithDerivedStatus(ideasDir);
+    expect(warnings).toEqual([]);
+    expect(entries.find((e) => e.id === 'IDEA-8')?.status).toBe('in-progress');
+    expect(entries.find((e) => e.id === 'IDEA-9')?.status).toBe('open');
+  });
+
+  it('never writes the derived value back to disk', async () => {
+    const { root, ideasDir } = initRepoWithIdeas();
+    writeFileSync(
+      join(ideasDir, 'IDEA-10.md'),
+      `${formatEntityFile({
+        id: 'IDEA-10',
+        title: 'Active work',
+        type: 'feat',
+        created: '2026-07-01',
+        body: 'In flight.',
+        phases: [{ text: 'One', done: false }],
+      })}\n`,
+    );
+    git(root, 'branch', 'feat/idea-10-active-work');
+
+    await readEntitiesWithDerivedStatus(ideasDir);
+    const { entries: raw } = await readEntities(ideasDir);
+    expect(raw.find((e) => e.id === 'IDEA-10')?.status).toBeUndefined();
   });
 });

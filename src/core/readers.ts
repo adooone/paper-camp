@@ -153,7 +153,7 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
  * PR). Everything else skips the `gh` round-trip entirely — an idea or a
  * freshly-planned entity was never branched, so it can't have a PR.
  */
-function resolvePrMergedForEntity(
+export function resolvePrMergedForEntity(
   root: string,
   e: EntityEntry,
   hasBranch: boolean | undefined,
@@ -163,6 +163,30 @@ function resolvePrMergedForEntity(
   }
   const branch = branchName(e.id, e.type, e.title);
   return branch ? resolvePrMerged(root, branch) : Promise.resolve(undefined);
+}
+
+/**
+ * Every entity (including notes) with `status` replaced by its derived value —
+ * for callers that need the resolved lifecycle without the PlanEntry reshape,
+ * namely index generation and the branch-guard (see IDEA-56 phase 4). This is
+ * a shallow copy: it never touches disk, so it's safe to feed straight back
+ * into `entityToPlan`/`deriveStatus` elsewhere (a derived status round-trips
+ * through the ladder's "no new signal, trust what's there" fallback) without
+ * risking a stale-status write.
+ */
+export async function readEntitiesWithDerivedStatus(
+  ideasDir: string,
+): Promise<ParseResult<EntityEntry>> {
+  const { entries, warnings, branchEntityIds } = await readEntities(ideasDir);
+  const root = join(ideasDir, '..', '..');
+  const derived = await Promise.all(
+    entries.map(async (e) => {
+      const hasBranch = branchEntityIds?.has(e.id);
+      const prMerged = await resolvePrMergedForEntity(root, e, hasBranch);
+      return { ...e, status: deriveStatus(e, hasBranch, prMerged) };
+    }),
+  );
+  return { entries: derived, warnings };
 }
 
 /** All work entities (non-notes) in PlanEntry shape — the `/api/plans` view. */

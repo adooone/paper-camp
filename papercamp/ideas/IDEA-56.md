@@ -37,7 +37,7 @@ Open questions for the planning pass: **PR resolution + auth** — resolve the P
       Add a pure `deriveStatus` helper walking the ladder from observable state: `idea` (no `### Phases`), `planned` (phases, no branch), `in-progress` (a `feat/idea-N-…` branch exists via `branchEntityId`), `review` (branch + all phases checked). Keep "is it the current branch" separate as the local active-plan highlight only. Wire it into `readEntities`/`entityToPlan` for these four rungs, falling back to the stored override when git is absent.
 - [x] Resolve and cache the PR to derive `done`
       Resolve each entity's PR from its branch / `**Plan:**` line via `gh` CLI or a configured token, read merged-state from the live lookup, and cache it with a TTL so the worklist stays cheap. `done` = PR merged; degrade to the stored marker when GitHub is unreachable, so idea→review still derive locally offline.
-- [ ] Rebuild the index, worklist, and branch-guards on derived status
+- [x] Rebuild the index, worklist, and branch-guards on derived status
       Regenerate the index fully from the derived value and point worklist grouping, filters, and the branch-guards at derived status instead of the stored field, so nothing reads the demoted `status:` as source-of-truth.
 - [ ] Surface the PR badge and the override editor in the UI
       Render the GitHub-icon PR badge (number + draft/open/merged, linking out) as the visible face of derived review/done, and give the UI a way to set the `dropped` / manual-close override now that `status:` isn't the primary field.
