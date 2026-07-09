@@ -57,7 +57,7 @@ thematic is also what keeps that plan's grouped worklist readable.
       and per-match actions, starting with **Open it** (navigate to the idea
       detail). The strip is absent when nothing scores above threshold, so the
       common no-overlap case stays visually unchanged.
-- [ ] Wire the Extend-instead and Draft-plan actions
+- [x] Wire the Extend-instead and Draft-plan actions
       **Extend it instead** appends the typed text as a dated `### Log`
       refinement on the matched idea ([[IDEA-43]]'s grammar) and closes the
       modal without creating a new idea file. **Draft a plan under it** hands

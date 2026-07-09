@@ -1,9 +1,12 @@
 import { useSimilarIdeas } from '@/app/hooks';
+import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
-import { Button, Card, Input, Modal, Stamp, Switch, Textarea } from '@dendelion/paper-ui';
+import type { IdeaEntry, LogEntry } from '@/types/index';
+import { Button, Card, Input, Modal, Stamp, Switch, Textarea, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { DraftPlanButton } from './draft-plan-button';
 
 interface CreateIdeaModalProps {
   open: boolean;
@@ -17,11 +20,22 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
   const [isNote, setIsNote] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [extendingId, setExtendingId] = useState<string | null>(null);
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
+  const loadPlans = useAppStore((s) => s.loadPlans);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  // Include `log` alongside the base candidate shape — Extend/Draft need it,
+  // beyond what the "Open it"-only shape from the previous phase carried.
   const similarIdeas = useSimilarIdeas(
     title,
-    planEntries.map((p) => ({ id: p.id, title: p.title, body: p.body, tags: p.tags })),
+    planEntries.map((p) => ({
+      id: p.id,
+      title: p.title,
+      body: p.body,
+      tags: p.tags,
+      log: p.log,
+    })),
   );
 
   useEffect(() => {
@@ -37,6 +51,21 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
   const handleOpenSimilar = (matchTitle: string) => {
     onClose();
     navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(matchTitle) } });
+  };
+
+  const handleExtendSimilar = async (candidateId: string, existingLog: LogEntry[] | undefined) => {
+    setExtendingId(candidateId);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const newLog: LogEntry = { date: today, text: title.trim() };
+      await updatePlan(candidateId, { log: [...(existingLog ?? []), newLog] });
+      await loadPlans();
+      onClose();
+    } catch (err) {
+      toast({ title: 'Extend failed', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setExtendingId(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,45 +109,61 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
             <span style={{ fontSize: fontSize.sm, opacity: 0.6, fontWeight: 600 }}>
               Similar ideas
             </span>
-            {similarIdeas.map(({ candidate }) => (
-              <Card key={candidate.id ?? candidate.title} size="small" texture="canvas">
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: space[2],
-                  }}
-                >
-                  <div
-                    style={{ display: 'flex', alignItems: 'center', gap: space[2], minWidth: 0 }}
-                  >
-                    {candidate.id && (
-                      <Stamp size="small" fillColor="rgba(0,0,0,0.08)">
-                        {candidate.id}
-                      </Stamp>
-                    )}
-                    <span
-                      style={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
+            {similarIdeas.map(({ candidate }) => {
+              const ideaView: IdeaEntry = {
+                id: candidate.id ?? null,
+                title: candidate.title,
+                body: candidate.body,
+                log: candidate.log,
+              };
+              const otherPlans = planEntries.filter((p) => p.id !== candidate.id);
+              return (
+                <Card key={candidate.id ?? candidate.title} size="small" texture="canvas">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: space[2], minWidth: 0 }}
                     >
-                      {candidate.title}
-                    </span>
+                      {candidate.id && (
+                        <Stamp size="small" fillColor="rgba(0,0,0,0.08)">
+                          {candidate.id}
+                        </Stamp>
+                      )}
+                      <span
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {candidate.title}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="small"
+                        onClick={() => handleOpenSimilar(candidate.title)}
+                      >
+                        Open it
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="small"
+                        disabled={!candidate.id || !title.trim() || extendingId !== null}
+                        onClick={() =>
+                          candidate.id && handleExtendSimilar(candidate.id, candidate.log)
+                        }
+                      >
+                        {extendingId === candidate.id ? 'Extending…' : 'Extend it instead'}
+                      </Button>
+                      <DraftPlanButton idea={ideaView} otherPlans={otherPlans} />
+                    </div>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="small"
-                    onClick={() => handleOpenSimilar(candidate.title)}
-                  >
-                    Open it
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         )}
         <Textarea
