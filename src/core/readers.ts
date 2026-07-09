@@ -44,12 +44,16 @@ async function readFileMaybe(path: string): Promise<string> {
 }
 
 /**
- * Local branches matching the `feat/idea-N-…` naming convention, keyed by the
- * entity id they encode (e.g. `IDEA-43`). `undefined` when git itself isn't
- * available (no repo, no git binary) — callers treat that as "can't derive
- * branch-backed status, fall back to stored" rather than "no branches exist".
+ * Local branches matching the `feat/idea-N-…` naming convention, mapped from the
+ * entity id they encode (e.g. `IDEA-43`) to the branch's *actual* name.
+ * `undefined` when git itself isn't available (no repo, no git binary) — callers
+ * treat that as "can't derive branch-backed status, fall back to stored" rather
+ * than "no branches exist". The real name matters: only the `feat/idea-N-` id
+ * prefix is stable, while the title slug in the branch can drift from the
+ * entity's current title (e.g. after a rename), so a PR lookup must query the
+ * actual branch, not one recomputed from the title.
  */
-function listBranchEntityIds(ideasDir: string): Set<string> | undefined {
+function listBranchesByEntityId(ideasDir: string): Map<string, string> | undefined {
   // ideasDir is always <root>/papercamp/ideas.
   const root = join(ideasDir, '..', '..');
   const result = spawnSync('git', ['branch', '--format=%(refname:short)'], {
@@ -57,12 +61,14 @@ function listBranchEntityIds(ideasDir: string): Set<string> | undefined {
     encoding: 'utf-8',
   });
   if (result.error || result.status !== 0) return undefined;
-  const ids = new Set<string>();
+  const byId = new Map<string, string>();
   for (const line of result.stdout.split('\n')) {
-    const match = line.trim().match(/^[a-z]+\/([a-z]+-\d+)-/);
-    if (match) ids.add(match[1].toUpperCase());
+    const name = line.trim();
+    const match = name.match(/^[a-z]+\/([a-z]+-\d+)-/);
+    // First branch wins per id, for a deterministic pick if several share a prefix.
+    if (match && !byId.has(match[1].toUpperCase())) byId.set(match[1].toUpperCase(), name);
   }
-  return ids;
+  return byId;
 }
 
 /**
@@ -73,10 +79,11 @@ function listBranchEntityIds(ideasDir: string): Set<string> | undefined {
  * status (see `deriveStatus` / `entityToPlan`) — resolved once per read
  * rather than once per entity.
  */
-export async function readEntities(
-  ideasDir: string,
-): Promise<
-  ParseResult<EntityEntry> & { fileCount: number; branchEntityIds: Set<string> | undefined }
+export async function readEntities(ideasDir: string): Promise<
+  ParseResult<EntityEntry> & {
+    fileCount: number;
+    branchEntityIds: Map<string, string> | undefined;
+  }
 > {
   const entries: EntityEntry[] = [];
   const warnings: ParseWarning[] = [];
@@ -97,7 +104,7 @@ export async function readEntities(
     }
   }
 
-  return { entries, warnings, fileCount, branchEntityIds: listBranchEntityIds(ideasDir) };
+  return { entries, warnings, fileCount, branchEntityIds: listBranchesByEntityId(ideasDir) };
 }
 
 /**
@@ -164,11 +171,15 @@ export async function resolvePrMergedForEntity(
   root: string,
   e: EntityEntry,
   hasBranch: boolean | undefined,
+  liveBranch?: string,
 ): Promise<boolean | undefined> {
   if (e.phases.length === 0 || (!hasBranch && e.status !== 'done')) {
     return undefined;
   }
-  const branch = branchName(e.id, e.type, e.title);
+  // Prefer the actual branch name (its title slug may have drifted from the
+  // entity's current title); fall back to the computed name when the branch is
+  // gone (squash-merge deletes it, so a stored `done` needs the live PR check).
+  const branch = liveBranch ?? branchName(e.id, e.type, e.title);
   if (!branch) return undefined;
   const merged = await resolvePrMerged(root, branch);
   // No live branch, and `gh` found no PR under the *computed* name: for an entity
@@ -191,11 +202,14 @@ export function resolvePrInfoForEntity(
   root: string,
   e: EntityEntry,
   hasBranch: boolean | undefined,
+  liveBranch?: string,
 ): Promise<PrInfo | undefined> {
   if (e.phases.length === 0 || (!hasBranch && e.status !== 'done')) {
     return Promise.resolve(undefined);
   }
-  const branch = branchName(e.id, e.type, e.title);
+  // Same real-branch-preferred resolution as resolvePrMergedForEntity, so both
+  // target the identical `gh` lookup and share its cache entry.
+  const branch = liveBranch ?? branchName(e.id, e.type, e.title);
   return branch ? resolvePrInfo(root, branch) : Promise.resolve(undefined);
 }
 
@@ -216,7 +230,12 @@ export async function readEntitiesWithDerivedStatus(
   const derived = await Promise.all(
     entries.map(async (e) => {
       const hasBranch = branchEntityIds?.has(e.id);
-      const prMerged = await resolvePrMergedForEntity(root, e, hasBranch);
+      const prMerged = await resolvePrMergedForEntity(
+        root,
+        e,
+        hasBranch,
+        branchEntityIds?.get(e.id),
+      );
       return { ...e, status: deriveStatus(e, hasBranch, prMerged) };
     }),
   );
@@ -233,8 +252,9 @@ export async function readWorkEntries(ideasDir: string): Promise<ParseResult<Pla
   const pr = await Promise.all(
     work.map(async (e) => {
       const hasBranch = branchEntityIds?.has(e.id);
-      const prMerged = await resolvePrMergedForEntity(root, e, hasBranch);
-      const prInfo = await resolvePrInfoForEntity(root, e, hasBranch);
+      const liveBranch = branchEntityIds?.get(e.id);
+      const prMerged = await resolvePrMergedForEntity(root, e, hasBranch, liveBranch);
+      const prInfo = await resolvePrInfoForEntity(root, e, hasBranch, liveBranch);
       return { prMerged, prInfo };
     }),
   );

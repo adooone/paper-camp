@@ -2,9 +2,9 @@
 id: IDEA-56
 title: Derive status from git and PR state
 type: feat
-status: review
+status: done
 created: 2026-07-08
-updated: 2026-07-08
+updated: 2026-07-09
 tags:
   - app
   - github

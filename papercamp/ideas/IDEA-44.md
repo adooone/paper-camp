@@ -46,7 +46,7 @@ left this check out of its own scope. Keeping the idea corpus small and
 thematic is also what keeps that plan's grouped worklist readable.
 
 ### Phases
-- [ ] Build the keyword similarity matcher
+- [x] Build the keyword similarity matcher
       A factored module/hook scoring typed text against `ideaEntries` titles,
       bodies, and tags — keyword overlap is enough at this corpus size. Returns
       ranked matches above a threshold, debounced for live use as the user
