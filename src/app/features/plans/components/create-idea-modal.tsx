@@ -1,8 +1,9 @@
 import { useSimilarIdeas } from '@/app/hooks';
+import { checkIdeaOverlap } from '@/app/services/ideas-api';
 import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
-import type { IdeaEntry, LogEntry } from '@/types/index';
+import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
 import { Button, Card, Input, Modal, Stamp, Switch, Textarea, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
@@ -21,8 +22,14 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [extendingId, setExtendingId] = useState<string | null>(null);
+  const [checkingOverlap, setCheckingOverlap] = useState(false);
+  const [overlapVerdict, setOverlapVerdict] = useState<OverlapVerdict | null>(null);
+  const [overlapError, setOverlapError] = useState<string | null>(null);
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
   const loadPlans = useAppStore((s) => s.loadPlans);
+  const agentStatus = useAppStore((s) => s.agentStatus);
+  const agentBusy =
+    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const navigate = useNavigate();
   const { toast } = useToast();
   // Include `log` alongside the base candidate shape — Extend/Draft need it,
@@ -45,12 +52,41 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
       setIsNote(false);
       setLoading(false);
       setError(null);
+      setCheckingOverlap(false);
+      setOverlapVerdict(null);
+      setOverlapError(null);
     }
   }, [open]);
 
   const handleOpenSimilar = (matchTitle: string) => {
     onClose();
     navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(matchTitle) } });
+  };
+
+  const handleCheckOverlap = async () => {
+    const text = `${title.trim()}${content.trim() ? `\n\n${content.trim()}` : ''}`;
+    if (!text) return;
+    setCheckingOverlap(true);
+    setOverlapError(null);
+    setOverlapVerdict(null);
+    try {
+      const candidates = planEntries.map((p) => ({
+        id: p.id,
+        title: p.title,
+        body: p.body,
+        tags: p.tags,
+      }));
+      setOverlapVerdict(await checkIdeaOverlap(text, candidates));
+    } catch (err) {
+      setOverlapError((err as Error).message);
+    } finally {
+      setCheckingOverlap(false);
+    }
+  };
+
+  const handleOpenVerdictTarget = (targetId: string) => {
+    const match = planEntries.find((p) => p.id === targetId);
+    if (match) handleOpenSimilar(match.title);
   };
 
   const handleExtendSimilar = async (candidateId: string, existingLog: LogEntry[] | undefined) => {
@@ -166,6 +202,52 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
             })}
           </div>
         )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+          <div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="small"
+              disabled={!title.trim() || checkingOverlap || agentBusy}
+              onClick={handleCheckOverlap}
+            >
+              {checkingOverlap ? 'Checking overlap…' : 'Check overlap'}
+            </Button>
+          </div>
+          {overlapError && (
+            <p style={{ margin: 0, color: color.accentRoseDark, fontSize: fontSize.sm }}>
+              {overlapError}
+            </p>
+          )}
+          {overlapVerdict && (
+            <Card size="small" texture="canvas">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+                <span style={{ fontWeight: 600 }}>
+                  {overlapVerdict.verdict === 'new'
+                    ? 'Looks genuinely new'
+                    : overlapVerdict.verdict === 'extend'
+                      ? `Extends ${overlapVerdict.targetId ?? 'an existing idea'}`
+                      : `Belongs inside ${overlapVerdict.targetId ?? 'an existing idea'}`}
+                </span>
+                <span style={{ fontSize: fontSize.sm, opacity: 0.8 }}>
+                  {overlapVerdict.reasoning}
+                </span>
+                {overlapVerdict.targetId && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="small"
+                      onClick={() => handleOpenVerdictTarget(overlapVerdict.targetId as string)}
+                    >
+                      Open it
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+        </div>
         <Textarea
           label="Description"
           value={content}

@@ -729,19 +729,24 @@ export function createAgentManager(
     return { ok: true };
   }
 
-  // Read-only, one-shot task: ask the configured agent to turn a diff into a commit
-  // message.  Uses the configured agent's binary but constructs its own arguments so it
-  // never picks up the shared adapter's `--permission-mode auto` flag — this call must
-  // stay deny-by-default since the model is only ever supposed to read the diff text.
-  const COMMIT_SUGGEST_TIMEOUT_MS = 60_000;
+  // Read-only, one-shot task: ask the configured agent a question and hand back its raw
+  // text reply, without ever touching a file. Uses the configured agent's binary but
+  // constructs its own arguments so it never picks up the shared adapter's
+  // `--permission-mode auto` flag — these calls must stay deny-by-default since the
+  // model is only ever supposed to read the prompt text handed to it on stdin.
+  const READONLY_PROMPT_TIMEOUT_MS = 60_000;
   const STDIN_MAX_BYTES = 10 * 1024 * 1024;
 
-  function runCommitSuggest(prompt: string): Promise<string> {
+  function runReadOnlyPrompt(
+    prompt: string,
+    taskKind: 'commit-suggest' | 'overlap-check',
+    planTitle: string,
+  ): Promise<string> {
     if (isBusy()) {
       return Promise.reject(new Error('An agent task is already running'));
     }
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
-      return Promise.reject(new Error('Commit suggestion prompt exceeds the 10MB stdin limit'));
+      return Promise.reject(new Error('Prompt exceeds the 10MB stdin limit'));
     }
     const defaultAgents = readDefaultAgentIds(root);
     const {
@@ -751,7 +756,7 @@ export function createAgentManager(
       effort,
     } = resolveAgent({
       defaultAgents,
-      taskKind: 'commit-suggest',
+      taskKind,
     });
 
     const isClaude = agentId === 'claude-code';
@@ -765,8 +770,8 @@ export function createAgentManager(
         stdio: ['pipe', 'pipe', 'pipe'],
       });
       const task: AgentTask = {
-        taskKind: 'commit-suggest',
-        planTitle: 'Suggest commit message',
+        taskKind,
+        planTitle,
         status: 'starting',
         agentId,
         adapter,
@@ -786,13 +791,13 @@ export function createAgentManager(
       const timeout = setTimeout(() => {
         settle(() => {
           if (current === task) {
-            pushLine(task, 'Commit suggestion timed out');
+            pushLine(task, `${planTitle} timed out`);
             setStatus(task, 'error');
             if (!proc.killed) proc.kill('SIGTERM');
           }
-          reject(new Error('Commit suggestion timed out'));
+          reject(new Error(`${planTitle} timed out`));
         });
-      }, COMMIT_SUGGEST_TIMEOUT_MS);
+      }, READONLY_PROMPT_TIMEOUT_MS);
 
       proc.stdin?.on('error', () => {});
       proc.stdin?.write(prompt);
@@ -850,6 +855,14 @@ export function createAgentManager(
     });
   }
 
+  function runCommitSuggest(prompt: string): Promise<string> {
+    return runReadOnlyPrompt(prompt, 'commit-suggest', 'Suggest commit message');
+  }
+
+  function runOverlapCheck(prompt: string): Promise<string> {
+    return runReadOnlyPrompt(prompt, 'overlap-check', 'Check idea overlap');
+  }
+
   function stop(): Result {
     if (!current) {
       return { ok: false, error: 'No agent task running' };
@@ -898,6 +911,7 @@ export function createAgentManager(
     startRunAllPhases,
     startSync,
     runCommitSuggest,
+    runOverlapCheck,
     stop,
     getStatus,
     getReconcileQueue,
@@ -922,6 +936,7 @@ export interface AgentManager {
   startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<boolean>) => Result;
   startSync: (prompt: string) => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;
+  runOverlapCheck: (prompt: string) => Promise<string>;
   stop: () => Result;
   getStatus: () => AgentTaskState | null;
   getReconcileQueue: () => ReconcileQueueItem[] | null;

@@ -280,6 +280,7 @@ export type TaskKind =
   | 'draft'
   | 'extend'
   | 'commit-suggest'
+  | 'overlap-check'
   | 'sync'
   | 'reconcile';
 
@@ -292,6 +293,14 @@ export interface AgentTaskState {
   ideaId?: string;
   agentId: AgentId;
   lines: string[];
+}
+
+// The AI Check-overlap action's triage result (IDEA-44 Tier 2): does the typed
+// text belong inside an existing idea, extend one, or is it genuinely new?
+export interface OverlapVerdict {
+  verdict: 'existing' | 'extend' | 'new';
+  targetId: string | null;
+  reasoning: string;
 }
 
 // A single entity's proposed rewrite from a batch reconcile sweep, held server-side

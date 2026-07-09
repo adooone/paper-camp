@@ -1,6 +1,13 @@
+import { DraftPlanButton } from '@/app/features/plans/components/draft-plan-button';
+import { useSimilarIdeas } from '@/app/hooks';
+import { checkIdeaOverlap } from '@/app/services/ideas-api';
+import { updatePlan } from '@/app/services/plans-api';
+import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
+import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
 import { PLAN_KINDS } from '@/types/index';
-import { Button, Input, Modal, Select, Textarea } from '@dendelion/paper-ui';
+import { Button, Card, Input, Modal, Select, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 
 interface AddIdeaModalProps {
@@ -17,6 +24,27 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
   const [kind, setKind] = useState('feat');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [extendingId, setExtendingId] = useState<string | null>(null);
+  const [checkingOverlap, setCheckingOverlap] = useState(false);
+  const [overlapVerdict, setOverlapVerdict] = useState<OverlapVerdict | null>(null);
+  const [overlapError, setOverlapError] = useState<string | null>(null);
+  const planEntries = useAppStore((s) => s.plans?.entries ?? []);
+  const loadPlans = useAppStore((s) => s.loadPlans);
+  const agentStatus = useAppStore((s) => s.agentStatus);
+  const agentBusy =
+    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const similarIdeas = useSimilarIdeas(
+    title,
+    planEntries.map((p) => ({
+      id: p.id,
+      title: p.title,
+      body: p.body,
+      tags: p.tags,
+      log: p.log,
+    })),
+  );
 
   useEffect(() => {
     if (open) {
@@ -25,8 +53,57 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
       setKind('feat');
       setLoading(false);
       setError(null);
+      setCheckingOverlap(false);
+      setOverlapVerdict(null);
+      setOverlapError(null);
     }
   }, [open]);
+
+  const handleOpenSimilar = (matchTitle: string) => {
+    onClose();
+    navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(matchTitle) } });
+  };
+
+  const handleCheckOverlap = async () => {
+    const text = `${title.trim()}${content.trim() ? `\n\n${content.trim()}` : ''}`;
+    if (!text) return;
+    setCheckingOverlap(true);
+    setOverlapError(null);
+    setOverlapVerdict(null);
+    try {
+      const candidates = planEntries.map((p) => ({
+        id: p.id,
+        title: p.title,
+        body: p.body,
+        tags: p.tags,
+      }));
+      setOverlapVerdict(await checkIdeaOverlap(text, candidates));
+    } catch (err) {
+      setOverlapError((err as Error).message);
+    } finally {
+      setCheckingOverlap(false);
+    }
+  };
+
+  const handleOpenVerdictTarget = (targetId: string) => {
+    const match = planEntries.find((p) => p.id === targetId);
+    if (match) handleOpenSimilar(match.title);
+  };
+
+  const handleExtendSimilar = async (candidateId: string, existingLog: LogEntry[] | undefined) => {
+    setExtendingId(candidateId);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const newLog: LogEntry = { date: today, text: title.trim() };
+      await updatePlan(candidateId, { log: [...(existingLog ?? []), newLog] });
+      await loadPlans();
+      onClose();
+    } catch (err) {
+      toast({ title: 'Extend failed', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setExtendingId(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +141,114 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
           autoFocus
           required
         />
+        {similarIdeas.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+            <span style={{ fontSize: fontSize.sm, opacity: 0.6, fontWeight: 600 }}>
+              Similar ideas
+            </span>
+            {similarIdeas.map(({ candidate }) => {
+              const ideaView: IdeaEntry = {
+                id: candidate.id ?? null,
+                title: candidate.title,
+                body: candidate.body,
+                log: candidate.log,
+              };
+              const otherPlans = planEntries.filter((p) => p.id !== candidate.id);
+              return (
+                <Card key={candidate.id ?? candidate.title} size="small" texture="canvas">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: space[2], minWidth: 0 }}
+                    >
+                      {candidate.id && (
+                        <Stamp size="small" fillColor="rgba(0,0,0,0.08)">
+                          {candidate.id}
+                        </Stamp>
+                      )}
+                      <span
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {candidate.title}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="small"
+                        onClick={() => handleOpenSimilar(candidate.title)}
+                      >
+                        Open it
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="small"
+                        disabled={!candidate.id || !title.trim() || extendingId !== null}
+                        onClick={() =>
+                          candidate.id && handleExtendSimilar(candidate.id, candidate.log)
+                        }
+                      >
+                        {extendingId === candidate.id ? 'Extending…' : 'Extend it instead'}
+                      </Button>
+                      <DraftPlanButton idea={ideaView} otherPlans={otherPlans} />
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+          <div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="small"
+              disabled={!title.trim() || checkingOverlap || agentBusy}
+              onClick={handleCheckOverlap}
+            >
+              {checkingOverlap ? 'Checking overlap…' : 'Check overlap'}
+            </Button>
+          </div>
+          {overlapError && (
+            <p style={{ margin: 0, color: color.accentRoseDark, fontSize: fontSize.sm }}>
+              {overlapError}
+            </p>
+          )}
+          {overlapVerdict && (
+            <Card size="small" texture="canvas">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+                <span style={{ fontWeight: 600 }}>
+                  {overlapVerdict.verdict === 'new'
+                    ? 'Looks genuinely new'
+                    : overlapVerdict.verdict === 'extend'
+                      ? `Extends ${overlapVerdict.targetId ?? 'an existing idea'}`
+                      : `Belongs inside ${overlapVerdict.targetId ?? 'an existing idea'}`}
+                </span>
+                <span style={{ fontSize: fontSize.sm, opacity: 0.8 }}>
+                  {overlapVerdict.reasoning}
+                </span>
+                {overlapVerdict.targetId && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="small"
+                      onClick={() => handleOpenVerdictTarget(overlapVerdict.targetId as string)}
+                    >
+                      Open it
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+        </div>
         <Select
           label="Kind"
           value={kind}

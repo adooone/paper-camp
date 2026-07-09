@@ -62,11 +62,11 @@ thematic is also what keeps that plan's grouped worklist readable.
       refinement on the matched idea ([[IDEA-43]]'s grammar) and closes the
       modal without creating a new idea file. **Draft a plan under it** hands
       off to the existing plan-drafting flow with `idea:` preset to the match.
-- [ ] Add the strip to the Quick-plan path
+- [x] Add the strip to the Quick-plan path
       The same matcher in the Quick-plan modal suggests candidate parent
       ideas; picking one sets the new plan's `idea:` field at creation, so
       theme-belonging plans stop being born as orphans.
-- [ ] Add the AI Check-overlap action
+- [x] Add the AI Check-overlap action
       An on-demand "Check overlap" button handing the new text plus the ideas
       index to an agent via the `prompts.ts` prompt-builder and launch plumbing
       (`launch-extend`/`launch-draft` siblings), returning a triage verdict:

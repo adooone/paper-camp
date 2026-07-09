@@ -1,4 +1,5 @@
 import type { IdeaEntry, PlanEntry } from '@/types/index';
+import type { SimilarityCandidate } from './idea-similarity';
 
 // Wording notes for these prompts: all of them except buildClarifyPrompt run
 // headless (`claude -p` / `opencode run` — see server/agents/), so they must never
@@ -171,4 +172,35 @@ Hard rules:
 ${plansContext}
 
 Use the open entities above only to avoid duplicating in-flight scope and to match phase granularity. Edit only papercamp/ideas/${idea.id ?? '<ID>'}.md — never create, edit, move, or rename any other file.`;
+}
+
+// IDEA-44 Tier 2: the on-demand "Check overlap" action. Unlike every prompt above,
+// this one is read-only (see server/agent.ts's runReadOnlyPrompt / runOverlapCheck) —
+// it never edits a file, so its "done" condition is the JSON verdict in its own
+// stdout, not a mechanical check against the repo.
+export function buildOverlapCheckPrompt(text: string, candidates: SimilarityCandidate[]): string {
+  const index = candidates.length
+    ? candidates
+        .map((c) => {
+          const tags = c.tags?.length ? ` (tags: ${c.tags.join(', ')})` : '';
+          return `### ${c.id ?? 'no id'}: ${c.title}${tags}\n${c.body}`;
+        })
+        .join('\n\n')
+    : '(no existing ideas yet)';
+
+  return `You are triaging a new intention against the existing ideas index, to prevent near-duplicate ideas from proliferating. Do not use any tools, do not read or edit any files — base your answer only on the text given below.
+
+New intention:
+${text}
+
+Existing ideas index:
+${index}
+
+Task: decide whether the new intention:
+1. belongs inside an existing idea (same scope, not yet covered by its body) — verdict "existing"
+2. extends an existing idea (related, but adds scope the existing idea doesn't cover) — verdict "extend"
+3. is genuinely new — verdict "new"
+
+Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
+{"verdict": "existing" | "extend" | "new", "targetId": "<the best-matching idea's id, or null if verdict is \\"new\\">", "reasoning": "<one sentence explaining the call>"}`;
 }
