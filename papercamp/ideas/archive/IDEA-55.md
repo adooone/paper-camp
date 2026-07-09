@@ -2,7 +2,6 @@
 id: IDEA-55
 title: Actualise all ideas at once
 type: feat
-status: done
 created: 2026-07-08
 updated: 2026-07-08
 tags:

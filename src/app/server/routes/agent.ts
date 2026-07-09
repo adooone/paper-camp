@@ -218,11 +218,10 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           sendJson(res, 404, { error: 'idea not found' });
           return;
         }
-        const conflict = await checkBranchConflictForPlan(root, git);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
+        // No branch-conflict guard here: drafting only edits the idea's markdown to
+        // add phases — it's planning, not code work, so it's fine on any branch. The
+        // guard stays on the execution paths (run-all / single-phase) that actually
+        // change code and must land on a specific branch.
         const result = agent.startForIdea(idea, prompt);
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });
@@ -248,11 +247,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           sendJson(res, 404, { error: 'idea not found' });
           return;
         }
-        const conflict = await checkBranchConflictForPlan(root, git);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
+        // No branch-conflict guard: extending only edits the idea's prose/log, not
+        // code — fine on any branch (see launch-draft).
         const result = agent.startForIdeaExtend(idea, prompt);
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });

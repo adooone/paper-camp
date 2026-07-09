@@ -58,6 +58,16 @@ export interface ParseResult<T> {
   warnings: ParseWarning[];
 }
 
+/** A PR's reviewable/mergeable state, as surfaced by `gh pr list`. */
+export type PrState = 'draft' | 'open' | 'closed' | 'merged';
+
+/** Live-resolved PR info for an entity's branch — see `core/pr.ts`. */
+export interface PrInfo {
+  number: number;
+  url: string;
+  state: PrState;
+}
+
 export interface PlanEntry {
   title: string;
   status: PlanStatus;
@@ -74,6 +84,8 @@ export interface PlanEntry {
   phases: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
+  /** Live-resolved PR for this entity's branch, when one exists — see `core/pr.ts`. */
+  pr?: PrInfo;
 }
 
 export interface DecisionEntry {
@@ -138,7 +150,8 @@ export interface EntityEntry {
   type?: EntityType;
   /** "note" marks an entity that never grows phases. */
   kind?: 'note';
-  status: EntityStatus;
+  /** Stored override, not the source of truth — see entityFrontmatterSchema. */
+  status?: EntityStatus;
   agent?: AgentId;
   created: string;
   updated?: string;

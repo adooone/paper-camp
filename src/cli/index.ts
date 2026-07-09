@@ -8,7 +8,7 @@ import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { computePlanContentHash } from '../core/content-hash';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parser';
-import { entityToPlan, readEntities } from '../core/readers';
+import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import {
   assignEntityId,
@@ -201,7 +201,7 @@ program
     await writeFile(join(ideasDir, `${id}.md`), `${entityContent}\n`, 'utf-8');
 
     // Regenerate the unified index
-    const { entries } = await readEntities(ideasDir);
+    const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
     await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries), 'utf-8');
 
     console.log(`Added "${name}" (${id}) to papercamp/ideas/${id}.md`);
@@ -220,7 +220,7 @@ program
     await mkdir(entityArchiveDir, { recursive: true });
 
     const stripHeading = (body: string) => body.replace(/^#{1,3}\s+[^\n]*\n?/, '').trim();
-    const isClosed = (status: string) => status === 'done' || status === 'dropped';
+    const isClosed = (status: string | undefined) => status === 'done' || status === 'dropped';
     const numOf = (id: string) => Number.parseInt(id.replace(/^[A-Z]+-/, ''), 10);
 
     async function readLegacyDir<T>(
@@ -341,7 +341,7 @@ program
       });
     }
 
-    const { entries } = await readEntities(ideasDir);
+    const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
     await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries), 'utf-8');
 
     console.log(
@@ -359,7 +359,7 @@ program
     const root = process.cwd();
     const ideasDir = resolve(root, 'papercamp', 'ideas');
 
-    const { entries: allEntities, warnings } = await readEntities(ideasDir);
+    const { entries: allEntities, warnings } = await readEntitiesWithDerivedStatus(ideasDir);
 
     for (const warning of warnings) {
       console.warn(`  warning: ${warning.title}: ${warning.message}`);
@@ -367,7 +367,7 @@ program
 
     const candidates = allEntities
       .filter((e) => e.kind !== 'note' && (e.status === 'review' || e.status === 'done'))
-      .map(entityToPlan);
+      .map((e) => entityToPlan(e));
 
     if (candidates.length === 0) {
       console.log('No plans with status "review" or "done" found.');

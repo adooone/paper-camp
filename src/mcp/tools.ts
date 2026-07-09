@@ -118,7 +118,7 @@ export function registerReadTools(server: McpServer, root: string): void {
 /**
  * Registers the v1 write tools, each routed through the same `src/core` serializers
  * the dashboard's route handlers (`src/app/server/routes/plans.ts`/`ideas.ts`/`docs.ts`)
- * call — never a raw file write — so id allocation, archive-on-done, and index
+ * call — never a raw file write — so id allocation, archive-on-drop, and index
  * regeneration hold identically. `draft_plan` and `update_phase` also run the same
  * `checkBranchConflictForPlan` guard those routes enforce, so an MCP client can't
  * start or advance a plan a dashboard user would be blocked from.
@@ -215,7 +215,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     {
       title: 'Update phase',
       description:
-        'Toggle a plan phase done/not-done by index, optionally updating the plan status (archiving it if the new status is done or dropped).',
+        'Toggle a plan phase done/not-done by index, optionally updating the plan status (archiving it only if the new status is dropped).',
       inputSchema: {
         id: z.string().describe('Plan id, e.g. FEAT-32'),
         phaseIndex: z.number().int().nonnegative().describe('0-based index into the phases list'),
@@ -260,7 +260,10 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       await writeEntityFile(targetFile, entityFileInput(updatedEntry));
       await regenerateIndexes(root);
 
-      if (status === 'done' || status === 'dropped') {
+      // `done` is derived from a merged PR, so it never needs archiving on its own —
+      // moving the file would just be a needless commit. `dropped` has no such signal,
+      // so it stays the one status that still archives on write.
+      if (status === 'dropped') {
         await archiveEntityFile(root, target.id);
       }
 

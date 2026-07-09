@@ -33,7 +33,8 @@ export const updatePlan = async (
   updates: {
     body?: string;
     phases?: PhaseItem[];
-    status?: PlanStatus;
+    /** `null` clears the stored status override (e.g. reopening a dropped plan). */
+    status?: PlanStatus | null;
     log?: LogEntry[];
     agent?: AgentId | null;
   },

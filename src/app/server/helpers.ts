@@ -1,6 +1,6 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readEntities } from '../../core/readers';
+import { readEntitiesWithDerivedStatus } from '../../core/readers';
 import { formatEntitiesIndex, formatEntityFile } from '../../core/serializer';
 import type { BranchHygieneStatus, EntityEntry } from '../../types/index';
 
@@ -59,10 +59,10 @@ export async function writeEntityFile(path: string, input: EntityFileInput): Pro
   await writeFile(path, `${formatEntityFile(input)}\n`, 'utf-8');
 }
 
-/** Rewrites the one unified index (papercamp/ideas/index.md) from the entity corpus. */
+/** Rewrites the one unified index (papercamp/ideas/index.md) from derived status. */
 export async function regenerateIndexes(root: string): Promise<void> {
   const ideasDir = campFile(root, 'ideas');
-  const { entries } = await readEntities(ideasDir);
+  const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
   await mkdir(ideasDir, { recursive: true });
   await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries));
 }
@@ -92,7 +92,7 @@ export async function checkBranchConflictForPlan(
   // Note: branches created before the entity migration carry legacy <KIND>-<N>
   // ids that no longer match any entity, so this lookup misses and the guard
   // stays silent for them — new branches key off the entity's IDEA-N id.
-  const { entries } = await readEntities(campFile(root, 'ideas'));
+  const { entries } = await readEntitiesWithDerivedStatus(campFile(root, 'ideas'));
   const activePlan = entries.find((e) => e.id === activePlanId && e.kind !== 'note');
   if (!activePlan || activePlan.status === 'done' || activePlan.status === 'dropped') return null;
   return `Finish \`${activePlanId}\` — ${activePlan.title} — before starting another plan`;

@@ -291,7 +291,7 @@ interface NewEntityFileInput {
   type?: string;
   // "note" for entities that never grow phases — notes use open/done/dropped status.
   kind?: string;
-  status: string;
+  status?: string;
   agent?: string;
   created: string;
   updated?: string;
@@ -317,7 +317,7 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   };
   if (input.type) frontmatter.type = input.type;
   if (input.kind) frontmatter.kind = input.kind;
-  frontmatter.status = input.status;
+  if (input.status) frontmatter.status = input.status;
   frontmatter.created = input.created;
   if (input.agent) frontmatter.agent = input.agent;
   if (input.updated) frontmatter.updated = input.updated;

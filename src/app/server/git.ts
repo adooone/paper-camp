@@ -3,6 +3,7 @@ import { watch } from 'node:fs';
 import { lstat, readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
+import { branchName } from '../../core/branch';
 import type { BranchHygieneStatus, GitStatusEntry, PlanEntry } from '../../types';
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
@@ -141,19 +142,11 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   function ensureBranch(plan: PlanEntry): void {
-    if (!plan.id) return;
-
     // Branch prefix comes from the entity's type; an entity started before it
     // was classified still gets a branch (defaulting to feat) rather than
     // silently working on whatever branch happens to be checked out.
-    const kind = (plan.kind ?? 'feat').toLowerCase();
-    const id = plan.id.toLowerCase();
-    const title = plan.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-
-    const branch = `${kind}/${id}-${title}`;
+    const branch = branchName(plan.id, plan.kind, plan.title);
+    if (!branch) return;
 
     const currentResult = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: root });
     if (currentResult.status !== 0) {

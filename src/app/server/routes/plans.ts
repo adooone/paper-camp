@@ -127,7 +127,8 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         const updates = JSON.parse(reqBody) as {
           body?: string;
           phases?: PhaseItem[];
-          status?: PlanStatus;
+          /** `null` clears the stored override (e.g. reopening a dropped plan). */
+          status?: PlanStatus | null;
           log?: LogEntry[];
           agent?: AgentId | null;
         };
@@ -145,7 +146,13 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           return;
         }
 
-        const targetFile = join(ideasDir, `${target.id}.md`);
+        // readEntities scans ideas/ AND archive/, so target may be archived (done/
+        // dropped). Resolve the file in either location — otherwise editing or
+        // reopening an archived entity (e.g. clearing a dropped override) 404s.
+        const primaryFile = join(ideasDir, `${target.id}.md`);
+        const targetFile = (await fileExists(primaryFile))
+          ? primaryFile
+          : join(ideasDir, 'archive', `${target.id}.md`);
         const raw = await readMaybe(targetFile);
         if (!raw) {
           sendJson(res, 404, { error: 'entity file not found' });
@@ -155,7 +162,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         const updatedEntry: EntityEntry = {
           ...target,
           ...(updates.body !== undefined && { body: updates.body }),
-          ...(updates.status !== undefined && { status: updates.status }),
+          ...(updates.status !== undefined && { status: updates.status ?? undefined }),
           ...(updates.phases !== undefined && { phases: updates.phases }),
           ...(updates.log !== undefined && { log: updates.log }),
           ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
@@ -186,7 +193,10 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         await writeEntityFile(targetFile, entityFileInput(updatedEntry));
         await regenerateIndexes(root);
 
-        if (updates.status === 'done' || updates.status === 'dropped') {
+        // `done` is derived from a merged PR, so it never needs archiving on its own —
+        // moving the file would just be a needless commit. `dropped` has no such signal,
+        // so it stays the one status that still archives on write.
+        if (updates.status === 'dropped') {
           await archiveEntityFile(root, target.id);
         }
 

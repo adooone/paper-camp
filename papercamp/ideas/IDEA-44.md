@@ -2,7 +2,6 @@
 id: IDEA-44
 title: Check idea overlap at capture
 type: feat
-status: idea
 created: 2026-07-04
 tags:
   - app
@@ -28,7 +27,7 @@ matcher live-scores the text against existing idea titles, bodies, and tags
 (`ideaEntries` is already in the store; keyword scoring is plenty at ~45 ideas)
 and a "Similar ideas" strip appears with per-match actions — **Open it**,
 **Extend it instead** (the typed text becomes a dated `### Log` refinement on
-the existing idea, using [[FEAT-42]]'s log grammar), or **Draft a plan under
+the existing idea, using [[IDEA-43]]'s log grammar), or **Draft a plan under
 it** (the intention was actionable all along; skip the new idea entirely). The
 same strip appears on the Quick-plan path, suggesting candidate parent ideas so
 plans that belong to a theme get their `idea:` link at birth instead of staying
@@ -40,9 +39,9 @@ and prompt-builder pattern (`prompts.ts`, `launch-extend`/`launch-draft`).
 Deliberately no relations system: "this new thought supersedes part of an old
 idea" is covered by the extend-instead flow (a dated refinement saying so) — no
 cross-idea link fields, no graph to keep consistent. This depends on
-[[FEAT-42]] landing first: it establishes the two capture points this plan
+[[IDEA-43]] landing first: it establishes the two capture points this plan
 augments (the New-idea modal and the renamed Quick-plan path) and the idea
-`### Log` grammar the extend-instead action writes into. [[FEAT-42]] explicitly
+`### Log` grammar the extend-instead action writes into. [[IDEA-43]] explicitly
 left this check out of its own scope. Keeping the idea corpus small and
 thematic is also what keeps that plan's grouped worklist readable.
 
@@ -60,7 +59,7 @@ thematic is also what keeps that plan's grouped worklist readable.
       common no-overlap case stays visually unchanged.
 - [ ] Wire the Extend-instead and Draft-plan actions
       **Extend it instead** appends the typed text as a dated `### Log`
-      refinement on the matched idea ([[FEAT-42]]'s grammar) and closes the
+      refinement on the matched idea ([[IDEA-43]]'s grammar) and closes the
       modal without creating a new idea file. **Draft a plan under it** hands
       off to the existing plan-drafting flow with `idea:` preset to the match.
 - [ ] Add the strip to the Quick-plan path

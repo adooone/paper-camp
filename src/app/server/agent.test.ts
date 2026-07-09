@@ -362,6 +362,48 @@ fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated pl
     expect(manager.getReconcileQueue()).toEqual([]);
   });
 
+  it('picks up an entity with no stored status override via its derived status', async () => {
+    // No `status:` field at all (the IDEA-56 default going forward) — the old
+    // filter (`e.status !== undefined && openStatuses.has(e.status)`) would have
+    // skipped this entity entirely; deriving status instead still finds it open.
+    const NO_STORED_STATUS = `---
+id: IDEA-1
+title: Test idea
+type: feat
+created: 2026-07-01
+---
+Plan body.
+
+### Phases
+- [ ] First phase
+`;
+    const { root } = await makeRoot(NO_STORED_STATUS);
+    agentScript.current = REWRITE_BODY;
+    const manager = createAgentManager(root);
+
+    expect(manager.startBatchReconcile()).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
+  });
+
+  it('excludes an entity whose stored status is done', async () => {
+    const DONE = `---
+id: IDEA-1
+title: Test idea
+type: feat
+status: done
+created: 2026-07-01
+---
+Plan body.
+`;
+    const { root } = await makeRoot(DONE);
+    const manager = createAgentManager(root);
+
+    expect(manager.startBatchReconcile()).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(manager.getStatus()?.lines.join('\n')).toContain('No open ideas or plans to reconcile.');
+  });
+
   it('returns null once a different task kind becomes current', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = REWRITE_BODY;

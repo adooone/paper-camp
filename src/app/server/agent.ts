@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { computePlanContentHash } from '../../core/content-hash';
 import { parseEntityFile, parsePlanFile } from '../../core/parser';
-import { entityToPlan, readEntities } from '../../core/readers';
+import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '../../core/readers';
 import {
   type AgentId,
   type AgentTaskState,
@@ -405,11 +405,10 @@ export function createAgentManager(
 
     (async () => {
       try {
-        const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
-        const openStatuses = new Set(['idea', 'planned', 'in-progress', 'review']);
+        const { entries } = await readEntitiesWithDerivedStatus(join(root, 'papercamp', 'ideas'));
         const candidates = entries
-          .filter((e) => e.kind !== 'note' && openStatuses.has(e.status))
-          .map(entityToPlan);
+          .filter((e) => e.kind !== 'note' && e.status !== 'done' && e.status !== 'dropped')
+          .map((e) => entityToPlan(e));
 
         if (candidates.length === 0) {
           if (current === task) {
