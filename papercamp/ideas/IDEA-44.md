@@ -52,7 +52,7 @@ thematic is also what keeps that plan's grouped worklist readable.
       ranked matches above a threshold, debounced for live use as the user
       types, and kept out of the modal components so both capture points share
       it.
-- [ ] Render the Similar-ideas strip in the New-idea modal
+- [x] Render the Similar-ideas strip in the New-idea modal
       As the title is typed, show matched ideas below the input — id, title,
       and per-match actions, starting with **Open it** (navigate to the idea
       detail). The strip is absent when nothing scores above threshold, so the

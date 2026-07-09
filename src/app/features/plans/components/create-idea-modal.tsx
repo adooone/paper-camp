@@ -1,5 +1,8 @@
+import { useSimilarIdeas } from '@/app/hooks';
+import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
-import { Button, Input, Modal, Switch, Textarea } from '@dendelion/paper-ui';
+import { Button, Card, Input, Modal, Stamp, Switch, Textarea } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 
 interface CreateIdeaModalProps {
@@ -14,6 +17,12 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
   const [isNote, setIsNote] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const planEntries = useAppStore((s) => s.plans?.entries ?? []);
+  const navigate = useNavigate();
+  const similarIdeas = useSimilarIdeas(
+    title,
+    planEntries.map((p) => ({ id: p.id, title: p.title, body: p.body, tags: p.tags })),
+  );
 
   useEffect(() => {
     if (open) {
@@ -24,6 +33,11 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
       setError(null);
     }
   }, [open]);
+
+  const handleOpenSimilar = (matchTitle: string) => {
+    onClose();
+    navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(matchTitle) } });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +75,52 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
           autoFocus
           required
         />
+        {similarIdeas.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+            <span style={{ fontSize: fontSize.sm, opacity: 0.6, fontWeight: 600 }}>
+              Similar ideas
+            </span>
+            {similarIdeas.map(({ candidate }) => (
+              <Card key={candidate.id ?? candidate.title} size="small" texture="canvas">
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: space[2],
+                  }}
+                >
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', gap: space[2], minWidth: 0 }}
+                  >
+                    {candidate.id && (
+                      <Stamp size="small" fillColor="rgba(0,0,0,0.08)">
+                        {candidate.id}
+                      </Stamp>
+                    )}
+                    <span
+                      style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {candidate.title}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="small"
+                    onClick={() => handleOpenSimilar(candidate.title)}
+                  >
+                    Open it
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
         <Textarea
           label="Description"
           value={content}
