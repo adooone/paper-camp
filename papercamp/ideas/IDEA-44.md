@@ -72,7 +72,7 @@ thematic is also what keeps that plan's grouped worklist readable.
       (`launch-extend`/`launch-draft` siblings), returning a triage verdict:
       belongs inside an existing idea, extends one, or genuinely new.
       Optionally fold the same check into the plan-drafting prompt as a step.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
       `tsc --noEmit`, `biome check`, tests, and a browser pass over both
       capture modals — strip appearance/absence, each action end to end, and
       the Quick-plan `idea:` preset.
