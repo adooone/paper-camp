@@ -45,7 +45,7 @@
 | IDEA-41 | Settings and affordance polish | fix | done | app, ui, settings |
 | IDEA-42 | Filter and sort the plans list | feat | done | app, ui, plans |
 | IDEA-43 | Unify the ideas and plans worklist | feat | done | app, ideas, plans, core |
-| IDEA-44 | Check idea overlap at capture | feat | planned | app, ideas, agent |
+| IDEA-44 | Check idea overlap at capture | feat | review | app, ideas, agent |
 | IDEA-45 | Build core library | feat | done | core, cli |
 | IDEA-46 | Build dashboard app | feat | done | app, paper-ui |
 | IDEA-47 | UI cleanup: style guide and tokens | refactor | done | app, ui, refactor |

@@ -1,3 +1,40 @@
+## Status derives from the PR (matched by id), not from local branches
+
+**Date:** 2026-07-09
+**Status:** decided
+
+**Context:** `IDEA-56`'s first cut keyed the middle rungs off *local branch
+existence* (`in-progress` = a `feat/idea-N-…` branch exists; `review` = branch +
+all phases checked) and resolved `done` per-entity with `gh pr list --head
+<computed-branch>`, where the branch name was recomputed from the entity's
+current title. Dogfooding the merged feature exposed three failures of the branch
+signal: a **rename** breaks the lookup (IDEA-56 itself — merged, but stuck at
+`review` because its branch name was recomputed from the new title and no longer
+matched the real PR head); a **squash-merge deletes the branch**, so the signal
+vanishes after merge; and a **fresh clone** has no feature branches at all, so
+everything derives to `planned`. It also cost a `spawnSync git branch` plus a
+per-entity `gh` call on every read.
+
+**Decision:** Derive status from the entity's **GitHub PR, matched by id**, not
+from any local branch. One `gh pr list --state all` resolves the whole worklist,
+indexed by the `**Plan:** \`IDEA-N\`` line `draft-pr.yml` stamps into every PR
+body (falling back to the `feat/idea-N-` id prefix of the head branch), cached
+per repo root. Ladder: idea (no phases) → planned (phases, no PR) → in-progress
+(open/draft PR) → review (open/draft PR + every phase checked) → done (PR merged)
+→ dropped (closed-unmerged PR, or the stored override). Offline / no-`gh` falls
+back to the stored override, else a phases-only `planned`. Removed
+`listBranchesByEntityId` and all local-branch reading from the derivation; the
+per-branch `resolvePrMerged`/`resolvePrInfo` became `resolvePrsByEntity`.
+
+**Rationale:** The PR is canonical where the local branch isn't — the id never
+drifts on rename, the PR persists in GitHub after the branch is deleted, and it
+reads the same on every clone. Matching by the `**Plan:**` id anchor is what
+makes all three rename/delete/clone failures impossible. One `gh` call for the
+whole worklist is also cheaper than the old per-entity `gh` + `git branch` on the
+hot path. This supersedes the branch-existence signal from `IDEA-56`'s first cut;
+the `done`-fallback and stored-`dropped` behaviour it settled are unchanged, only
+the PR resolution moved from a computed branch name to the id.
+
 ## `archive/` stops moving on `done`; migration keeps `status:` only where it can't derive
 
 **Date:** 2026-07-08

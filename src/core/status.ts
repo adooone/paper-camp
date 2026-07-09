@@ -1,4 +1,4 @@
-import type { EntityStatus, PhaseItem } from '../types/index';
+import type { EntityStatus, PhaseItem, PrInfo } from '../types/index';
 
 /** The subset of an entity's shape the status ladder needs to look at. */
 export interface StatusDerivationInput {
@@ -7,39 +7,46 @@ export interface StatusDerivationInput {
   phases: PhaseItem[];
 }
 
+function allChecked(entity: StatusDerivationInput): boolean {
+  return entity.phases.length > 0 && entity.phases.every((p) => p.done);
+}
+
 /**
- * Derives lifecycle status from observable state instead of trusting the
- * stored `status` field, so it can't drift from reality — see IDEA-56.
+ * Derives lifecycle status from the entity's phases and its GitHub PR instead of
+ * trusting the stored `status` field, so it can't drift from reality — see
+ * IDEA-56. Tracking keys off the PR (matched by id), not a local branch: the PR
+ * is canonical across clones and survives the branch being deleted after merge.
  *
- * Ladder: idea (no phases) -> planned (phases, no branch) -> in-progress
- * (branch exists) -> review (branch + every phase checked) -> done (PR
- * merged, IDEA-56 phase 3). `dropped` can never be derived (abandonment
- * leaves no trace), so it always passes through as stored. Notes track
- * open/done/dropped by hand and never grow phases or branches, so they
- * always pass through unchanged.
+ * Ladder: idea (no phases) -> planned (phases, no PR) -> in-progress (PR open or
+ * draft) -> review (PR open/draft AND every phase checked) -> done (PR merged).
+ * A closed-unmerged PR reads as `dropped`. `dropped` can never be derived
+ * (abandonment leaves no trace), so a stored `dropped` always passes through;
+ * notes track open/done/dropped by hand and pass through unchanged.
  *
- * `hasBranch` is `undefined` when git itself is unavailable (no repo, no git
- * binary) — in that case the four locally-derivable rungs fall back to
- * whatever is stored, or the phases-only guess of `planned`.
- *
- * `prMerged` is the live PR-merged lookup (see `resolvePrMerged`):
- * `true` derives `done` outright (even overriding a stale stored value that
- * says otherwise); `undefined` means the lookup couldn't be resolved (no
- * `gh`, offline, ...), so a stored `done` is trusted as the offline
- * fallback; `false` is a confirmed non-merge and falls through to the rest
- * of the ladder, which can correct a stale stored `done` back down.
+ * `pr` is the entity's resolved PR, or `undefined` when it has none / the lookup
+ * couldn't run. `prLookupResolved` says which: `false` (no `gh`, offline) falls
+ * the PR-backed rungs back to the stored override or a phases-only `planned`;
+ * `true` with no PR is a confirmed "no PR", so it derives `planned`/`idea` (a
+ * stored terminal `done` from an unmatchable legacy PR is still trusted).
  */
 export function deriveStatus(
   entity: StatusDerivationInput,
-  hasBranch: boolean | undefined,
-  prMerged?: boolean,
+  pr: PrInfo | undefined,
+  prLookupResolved: boolean,
 ): EntityStatus | undefined {
   if (entity.kind === 'note') return entity.status;
   if (entity.status === 'dropped') return entity.status;
-  if (prMerged) return 'done';
-  if (prMerged === undefined && entity.status === 'done') return entity.status;
-  if (entity.phases.length === 0) return 'idea';
-  if (hasBranch === undefined) return entity.status ?? 'planned';
-  if (!hasBranch) return 'planned';
-  return entity.phases.every((p) => p.done) ? 'review' : 'in-progress';
+  if (pr) {
+    if (pr.state === 'merged') return 'done';
+    if (pr.state === 'closed') return 'dropped';
+    return allChecked(entity) ? 'review' : 'in-progress';
+  }
+  if (!prLookupResolved) {
+    // GitHub unreachable — trust the stored override, else a phases-only guess.
+    return entity.status ?? (entity.phases.length > 0 ? 'planned' : 'idea');
+  }
+  // Resolved, and this entity has no PR. A stored terminal `done` (e.g. a legacy
+  // entity whose old PR isn't matchable by id) is still trusted.
+  if (entity.status === 'done') return 'done';
+  return entity.phases.length > 0 ? 'planned' : 'idea';
 }

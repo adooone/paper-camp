@@ -11,6 +11,7 @@ import { EntityDetail } from './components/entity-detail';
 import { ListView } from './components/list-view';
 import { NoteDetail } from './components/note-detail';
 import { PlansHeader } from './components/plans-header';
+import { PlansListSkeleton } from './components/plans-list-skeleton';
 import { ReconcileQueueReview } from './components/reconcile-queue-review';
 import { selectWorklistRows } from './plan-list-selector';
 
@@ -63,8 +64,8 @@ export const PlansPage = () => {
   if (!plans) {
     return (
       <div>
-        <PageTitle>Plans</PageTitle>
-        <p style={{ opacity: 0.5 }}>Loading…</p>
+        <PlansHeader />
+        <PlansListSkeleton />
       </div>
     );
   }
