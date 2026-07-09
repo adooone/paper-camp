@@ -2,7 +2,9 @@
 id: IDEA-44
 title: Check idea overlap at capture
 type: feat
+status: review
 created: 2026-07-04
+updated: 2026-07-09
 tags:
   - app
   - ideas
