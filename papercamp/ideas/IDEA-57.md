@@ -2,7 +2,9 @@
 id: IDEA-57
 title: Drive PR review fixes from the app
 type: feat
+status: review
 created: 2026-07-10
+updated: 2026-07-10
 tags:
   - app
   - github
