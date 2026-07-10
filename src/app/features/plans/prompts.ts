@@ -1,11 +1,10 @@
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 import type { SimilarityCandidate } from './idea-similarity';
 
-// Wording notes for these prompts: all of them except buildClarifyPrompt run
-// headless (`claude -p` / `opencode run` — see server/agents/), so they must never
-// ask questions or wait for input, and each one's "done" condition is checked
-// mechanically by agent.ts's didTaskProgress. buildClarifyPrompt is the exception:
-// it is copied to the clipboard for the user to paste into an interactive session.
+// Wording notes for these prompts: they all run headless (`claude -p` /
+// `opencode run` — see server/agents/), so they must never ask questions or wait
+// for input, and each one's "done" condition is checked mechanically by
+// agent.ts's didTaskProgress.
 
 export function buildConvergenceAuditPrompt(plan: PlanEntry): string {
   const phaseList = plan.phases
@@ -101,31 +100,6 @@ Keep unchanged:
 - the \`## ${idea.id ?? 'IDEA-N'}: ${idea.title}\` heading line and the original body prose beneath it
 
 Append only — never rewrite or delete the idea's existing body or prior Log lines.`;
-}
-
-export function buildClarifyPrompt(plan: PlanEntry): string {
-  return `You are clarifying the plan "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md (or papercamp/ideas/archive/${plan.id ?? '<ID>'}.md if archived). Edit only that file, and within it only the \`### Clarifications\` section.
-
-Plan body: ${plan.body}
-
-Current phases:
-${plan.phases.length > 0 ? plan.phases.map((p, i) => `${i + 1}. [${p.done ? 'x' : ' '}] ${p.text}`).join('\n') : '(none yet)'}
-
-Task: surface the plan's most important unanswered questions and get them answered by the user, one at a time.
-
-1. Check the plan for gaps in: functional scope, data model, UX flow, non-functional requirements, edge cases, terminology, and completion criteria.
-2. Pick the gaps that would most change the implementation — at most 5. If the plan has no meaningful gaps, say so and stop; do not invent questions.
-3. Ask the user one question at a time. With each question, propose an answer marked **Recommended:** so the user can accept it with a single word. Wait for the user's reply before asking the next question.
-4. After each answered question, append one line to the plan file's \`### Clarifications\` section, creating the section between the body and \`### Phases\` if it does not exist:
-
-\`\`\`
-- YYYY-MM-DD: Q: <question> → A: <the user's answer>
-\`\`\`
-
-Rules:
-- Record only answers the user actually gave (accepting your recommendation counts).
-- Append only — never rewrite or delete existing Clarifications lines.
-- Use today's date.`;
 }
 
 export function buildPlanDraftPrompt(idea: IdeaEntry, otherPlans: PlanEntry[]): string {

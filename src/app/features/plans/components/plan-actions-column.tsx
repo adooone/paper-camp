@@ -1,10 +1,9 @@
-import { IntentButton } from '@/app/components';
 import { useActivePlanTitle } from '@/app/hooks';
 import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { AGENT_IDS, AGENT_LABELS, type AgentId } from '@/types/index';
-import { Card, Select, Stamp, useToast } from '@dendelion/paper-ui';
+import { Card, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { RunAllPhasesButton } from './run-all-phases-button';
@@ -77,26 +76,16 @@ export const PlanActionsColumn = () => {
 
           <div>
             <div style={sectionLabelStyle}>Status</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
-              {/* Status derives from phases/branch/PR (IDEA-56) — the only thing
-                  left to set by hand is the dropped override, since abandonment
-                  leaves no branch or PR to derive it from. */}
-              <Stamp
-                size="small"
-                fillColor={STATUS_STAMP[plan.status].fill}
-                textColor={STATUS_STAMP[plan.status].text}
-              >
-                {STATUS_LABEL[plan.status]}
-              </Stamp>
-              <IntentButton
-                intent={dropped ? 'go' : 'stop'}
-                size="small"
-                onClick={() => patch({ status: dropped ? null : 'dropped' })}
-                disabled={updating}
-              >
-                {dropped ? 'Reopen' : 'Mark dropped'}
-              </IntentButton>
-            </div>
+            {/* Status derives from phases/branch/PR (IDEA-56) and is read-only
+                here; the dropped/reopen override lives in Actions below since
+                abandonment leaves no branch or PR to derive it from. */}
+            <Stamp
+              size="small"
+              fillColor={STATUS_STAMP[plan.status].fill}
+              textColor={STATUS_STAMP[plan.status].text}
+            >
+              {STATUS_LABEL[plan.status]}
+            </Stamp>
           </div>
 
           <div>
@@ -113,23 +102,42 @@ export const PlanActionsColumn = () => {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
-            {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy} />}
+          {/* One consistent action list instead of scattered filled buttons —
+              each row is a quiet paper ListItem with a meaning-colored glyph. */}
+          <div>
+            <div style={sectionLabelStyle}>Actions</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+              {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy} />}
 
-            {underReview && (
-              // Done normally derives from the PR merging (IDEA-56); this is the
-              // offline/no-GitHub fallback the idea calls out — it only sticks
-              // once the live PR lookup can't resolve a merge either way.
-              <IntentButton
-                intent="go"
+              {underReview && (
+                // Done normally derives from the PR merging (IDEA-56); this is the
+                // offline/no-GitHub fallback the idea calls out — it only sticks
+                // once the live PR lookup can't resolve a merge either way.
+                <ListItem
+                  size="small"
+                  icon={<span style={{ color: color.accentGreenDark }}>✓</span>}
+                  onClick={() => patch({ status: 'done' })}
+                  disabled={updating}
+                  style={updating ? { opacity: 0.5 } : undefined}
+                >
+                  Approve &amp; close
+                </ListItem>
+              )}
+
+              <ListItem
                 size="small"
-                fullWidth
-                onClick={() => patch({ status: 'done' })}
+                icon={
+                  <span style={{ color: dropped ? color.accentGreenDark : color.accentRoseDark }}>
+                    {dropped ? '↺' : '⊘'}
+                  </span>
+                }
+                onClick={() => patch({ status: dropped ? null : 'dropped' })}
                 disabled={updating}
+                style={updating ? { opacity: 0.5 } : undefined}
               >
-                Approve &amp; close
-              </IntentButton>
-            )}
+                {dropped ? 'Reopen plan' : 'Mark dropped'}
+              </ListItem>
+            </div>
           </div>
         </div>
       </Card>

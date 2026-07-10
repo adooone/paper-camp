@@ -2,7 +2,6 @@ import { buildAgentPrompt } from '@/app/server/agent';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
-  buildClarifyPrompt,
   buildConvergenceAuditPrompt,
   buildIdeaExtendPrompt,
   buildOverlapCheckPrompt,
@@ -59,12 +58,6 @@ describe('agent prompts target the unified entity corpus', () => {
     const prompt = buildConvergenceAuditPrompt(plan);
     expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
     expect(prompt).toContain(`papercamp/ideas/archive/${plan.id}.md`);
-    expect(prompt).not.toContain('plans.md');
-  });
-
-  it('clarify prompt points at the entity file, not legacy plans.md', () => {
-    const prompt = buildClarifyPrompt(plan);
-    expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
     expect(prompt).not.toContain('plans.md');
   });
 
