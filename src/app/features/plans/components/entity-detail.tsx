@@ -30,6 +30,7 @@ import { PlanIdStamp } from './plan-id-stamp';
 import { PrBadge } from './pr-badge';
 import { ProgressBar } from './progress-bar';
 import { ReconcileButton } from './reconcile-button';
+import { ReviewSignalBadge } from './review-signal-badge';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -236,6 +237,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             </span>
           )}
           {plan.pr && <PrBadge pr={plan.pr} />}
+          {plan.pr && <ReviewSignalBadge pr={plan.pr} />}
         </div>
       )}
 

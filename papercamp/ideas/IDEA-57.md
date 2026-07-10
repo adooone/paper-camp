@@ -21,7 +21,7 @@ Deliberately distinct from the neighboring GitHub ideas: [[IDEA-35]] enriches th
 ### Phases
 - [x] Carry review signal in the PR resolver
       Extend `resolvePrsByEntity` (`src/core/pr.ts`) to also return the PR's review decision (approved / changes-requested / review-required), the count of unresolved review threads, and whether comments have landed since the last agent pass — folded into the existing `gh pr list` worklist pass where possible, adding a `gh api` thread query only where the list can't supply it.
-- [ ] Surface review state on the plan card
+- [x] Surface review state on the plan card
       Render the new signal next to the existing `PrBadge` on `PlanCard` — e.g. "3 unaddressed comments" — so a reviewed-but-not-fixed PR is visible in the worklist without opening GitHub. Thread it through the API/store shape the card reads.
 - [ ] Add the fix-review prompt builder
       A new builder in `prompts.ts` that takes the PR's unresolved threads plus the plan context and produces the agent prompt to address them on the plan's branch, with a `prompts.test.ts` case covering thread rendering and the empty-threads guard.
