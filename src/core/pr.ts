@@ -95,7 +95,14 @@ function parsePrUrl(url: string): { owner: string; repo: string; number: string 
   return { owner, repo, number };
 }
 
-/** Shared `gh api graphql` runner: resolves `undefined` on any spawn/exit/parse failure. */
+const GH_API_TIMEOUT_MS = 15_000;
+
+/**
+ * Shared `gh api graphql` runner: resolves `undefined` on any spawn/exit/parse
+ * failure. Bounded by a timeout — this is called once per open/draft PR via
+ * `Promise.all` (see `enrichWithReviewSignal`), so a single stalled `gh` call must
+ * not be able to hang the whole worklist resolution.
+ */
 function runGhApiGraphql<T>(
   root: string,
   query: string,
@@ -120,23 +127,36 @@ function runGhApiGraphql<T>(
       ],
       { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] },
     );
+    let settled = false;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn();
+    };
+    const timer = setTimeout(() => {
+      proc.kill();
+      settle(() => resolve(undefined));
+    }, GH_API_TIMEOUT_MS);
     let stdout = '';
     proc.stdout?.on('data', (d: Buffer) => {
       stdout += d.toString();
     });
     proc.stderr?.on('data', () => {});
     proc.on('close', (code) => {
-      if (code !== 0) {
-        resolve(undefined);
-        return;
-      }
-      try {
-        resolve(JSON.parse(stdout) as T);
-      } catch {
-        resolve(undefined);
-      }
+      settle(() => {
+        if (code !== 0) {
+          resolve(undefined);
+          return;
+        }
+        try {
+          resolve(JSON.parse(stdout) as T);
+        } catch {
+          resolve(undefined);
+        }
+      });
     });
-    proc.on('error', () => resolve(undefined));
+    proc.on('error', () => settle(() => resolve(undefined)));
   });
 }
 

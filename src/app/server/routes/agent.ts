@@ -341,6 +341,10 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           return;
         }
         const threads = await fetchUnresolvedThreads(root, pr.url);
+        if (threads.length === 0) {
+          sendJson(res, 409, { error: 'No unresolved review threads to fix' });
+          return;
+        }
         const prompt = buildFixReviewPrompt(plan, threads);
         const result = await agent.startFixReview(plan, prompt);
         if (!result.ok) {

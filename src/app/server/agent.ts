@@ -109,6 +109,30 @@ function getHeadCommit(root: string): Promise<string | null> {
   });
 }
 
+/** True if local HEAD matches its upstream remote-tracking ref, i.e. the push landed. */
+function isHeadPushed(root: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn('git', ['rev-parse', 'HEAD', '@{u}'], {
+      cwd: root,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    proc.stdout?.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => {
+      if (code !== 0) {
+        resolve(false);
+        return;
+      }
+      const [head, upstream] = stdout.trim().split('\n');
+      resolve(Boolean(head) && head === upstream);
+    });
+    proc.on('error', () => resolve(false));
+  });
+}
+
 export function buildAgentPrompt(plan: PlanEntry, phase: PhaseItem, phaseIndex: number): string {
   const details = phase.description ? `Phase details:\n${phase.description}\n\n` : '';
   return `You are executing exactly one phase of the plan "${plan.title}" (${plan.id ?? 'no id'}): phase ${phaseIndex + 1}, "${phase.text}". The plan is a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md.
@@ -170,7 +194,8 @@ export function createAgentManager(
       if (task.taskKind === 'fix-review') {
         if (task.fixReviewBaseline === undefined) return null;
         const head = await getHeadCommit(root);
-        return head !== null && head !== task.fixReviewBaseline;
+        if (head === null || head === task.fixReviewBaseline) return false;
+        return await isHeadPushed(root);
       }
       if (task.taskKind === 'reconcile') {
         const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));

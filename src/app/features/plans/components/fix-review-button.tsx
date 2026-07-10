@@ -34,6 +34,8 @@ export const FixReviewButton = ({ plan, disabled }: FixReviewButtonProps) => {
     <Tooltip content={plan.id ? undefined : 'Plan needs an ID before an agent can run'}>
       <ListItem
         size="small"
+        // paper-ui has no flag icon (only CloseIcon, LightbulbIcon, CheckIcon, CopyIcon,
+        // PlusIcon, FolderIcon) — raw span is a deliberate fallback, not an oversight.
         icon={<span style={{ color: color.accentAmberDark }}>⚑</span>}
         onClick={handleClick}
         disabled={isDisabled}

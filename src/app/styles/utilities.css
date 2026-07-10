@@ -99,6 +99,25 @@ header[class*="layout-module__header___"] {
 }
 
 /*
+ * Phase-tools toolbar accent (Audit / Refresh / +). Same blob-recolor mechanism
+ * as .intent-button-* above, but a group tint rather than a go/stop/log meaning —
+ * kept separate so the intent vocabulary stays semantic. Uses paper-ui's soft
+ * $color-accent-green-light (#B5D4BA); hover/active stay within that soft range.
+ */
+.accent-button-green svg path:first-child {
+  fill: #b5d4ba !important;
+}
+.accent-button-green:hover svg path:first-child {
+  fill: #a8ccae !important;
+}
+.accent-button-green:active svg path:first-child {
+  fill: #9bc5a2 !important;
+}
+.accent-button-green {
+  color: #1a1917 !important;
+}
+
+/*
  * Review-found phases get a faint violet wash matching the "review" plan-status
  * color elsewhere — table cells have no background of their own, so this paints
  * through them per the CSS table background-painting order.

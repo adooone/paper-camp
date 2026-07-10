@@ -130,6 +130,10 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).toContain('(general PR comment)');
     expect(prompt).toContain('General comment with no diff anchor.');
     expect(prompt).toContain('Commit your changes and push');
+    // The commit must land with a convention-following message so no manual
+    // suggest step is needed after the fix — type(scope) title + Refs footer.
+    expect(prompt).toContain('type(scope): Description');
+    expect(prompt).toContain('Refs: IDEA-9');
     expect(prompt).toContain('Never check, uncheck, add, or remove any phase');
   });
 

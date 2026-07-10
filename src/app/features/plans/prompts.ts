@@ -177,7 +177,7 @@ Task:
 1. For each comment above, read the referenced file (when a path is given) and decide the right fix.
 2. Make the code changes that address every comment. If you disagree with one or it's a question rather than a requested change, say so briefly in your final summary rather than silently ignoring it.
 3. Run this repo's checks (type-check, lint, tests) and leave them passing.
-4. Commit your changes and push to the current branch so the open PR picks them up — do not create a new branch or open a new PR.
+4. Commit your changes and push to the current branch so the open PR picks them up — do not create a new branch or open a new PR. Write the commit message in this repo's convention so no separate suggest step is needed: \`type(scope): Description\`, where type is one of feat|fix|chore|docs|refactor and scope is a subsystem area from core, cli, app, server, agent, plans, ideas, docs, settings, stack, ui, ci, config, deps — pick the area the fixes most affect. Keep the title under 100 characters with no trailing period, and end the message body with a \`Refs: ${plan.id ?? '<ID>'}\` line (the plan id goes in that footer, never in the scope) so the commit traces back to the plan.
 
 Rules:
 - Never touch the YAML frontmatter of any entity file.

@@ -1,6 +1,6 @@
 import { space } from '@/app/styles/tokens';
 import type { PhaseItem } from '@/types/index';
-import { Alert, Button, Modal, Textarea } from '@dendelion/paper-ui';
+import { Alert, Button, IconButton, Modal, PlusIcon, Textarea, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { parseReviewFindings } from '../review-findings';
 
@@ -41,9 +41,16 @@ export const AddReviewPhasesButton = ({ onAdd, disabled }: AddReviewPhasesButton
 
   return (
     <>
-      <Button variant="secondary" size="small" onClick={() => setOpen(true)} disabled={disabled}>
-        Add as phases
-      </Button>
+      <Tooltip content="Add /code-review findings as phases">
+        <IconButton
+          className="accent-button-green"
+          size="small"
+          onClick={() => setOpen(true)}
+          disabled={disabled}
+          aria-label="Add code-review findings as phases"
+          icon={<PlusIcon size={16} />}
+        />
+      </Tooltip>
       <Modal open={open} onClose={handleClose} title="Add /code-review findings" size="small">
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
           <p className="text-sm" style={{ margin: 0, opacity: 0.7 }}>
