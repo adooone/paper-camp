@@ -8,3 +8,4 @@ export {
   useResolvedDocSection,
 } from './use-route-selection';
 export type { DocSection } from './use-route-selection';
+export { useSimilarIdeas } from './use-similar-ideas';

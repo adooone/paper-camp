@@ -2,9 +2,9 @@ import { buildAgentPrompt } from '@/app/server/agent';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
-  buildClarifyPrompt,
   buildConvergenceAuditPrompt,
   buildIdeaExtendPrompt,
+  buildOverlapCheckPrompt,
   buildPlanDraftPrompt,
   buildReconcilePrompt,
 } from './prompts';
@@ -61,12 +61,6 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).not.toContain('plans.md');
   });
 
-  it('clarify prompt points at the entity file, not legacy plans.md', () => {
-    const prompt = buildClarifyPrompt(plan);
-    expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
-    expect(prompt).not.toContain('plans.md');
-  });
-
   it('reconcile prompt targets the entity file and keeps its guardrails', () => {
     const prompt = buildReconcilePrompt(plan);
     expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
@@ -96,5 +90,22 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).not.toContain('plans.md');
     // progress.md is still the live append-only log — that reference must stay
     expect(prompt).toContain('progress.md');
+  });
+
+  // IDEA-44 Tier 2's "Check overlap" action is read-only — it never edits a file, so its
+  // guardrails are the opposite of every other prompt above: no tools, no file access.
+  it('overlap-check prompt is read-only and asks for a mechanically-parseable verdict', () => {
+    const prompt = buildOverlapCheckPrompt('A new intention', [
+      { id: 'IDEA-7', title: 'Test idea', body: 'Idea body prose.', tags: ['app'] },
+    ]);
+    expect(prompt).toContain('Do not use any tools, do not read or edit any files');
+    expect(prompt).toContain('### IDEA-7: Test idea (tags: app)');
+    expect(prompt).toContain('"verdict": "existing" | "extend" | "new"');
+    expect(prompt).not.toContain('papercamp/ideas/');
+  });
+
+  it('overlap-check prompt handles an empty ideas index', () => {
+    const prompt = buildOverlapCheckPrompt('A new intention', []);
+    expect(prompt).toContain('(no existing ideas yet)');
   });
 });

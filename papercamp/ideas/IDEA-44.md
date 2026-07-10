@@ -2,7 +2,9 @@
 id: IDEA-44
 title: Check idea overlap at capture
 type: feat
+status: review
 created: 2026-07-04
+updated: 2026-07-09
 tags:
   - app
   - ideas
@@ -46,33 +48,33 @@ left this check out of its own scope. Keeping the idea corpus small and
 thematic is also what keeps that plan's grouped worklist readable.
 
 ### Phases
-- [ ] Build the keyword similarity matcher
+- [x] Build the keyword similarity matcher
       A factored module/hook scoring typed text against `ideaEntries` titles,
       bodies, and tags — keyword overlap is enough at this corpus size. Returns
       ranked matches above a threshold, debounced for live use as the user
       types, and kept out of the modal components so both capture points share
       it.
-- [ ] Render the Similar-ideas strip in the New-idea modal
+- [x] Render the Similar-ideas strip in the New-idea modal
       As the title is typed, show matched ideas below the input — id, title,
       and per-match actions, starting with **Open it** (navigate to the idea
       detail). The strip is absent when nothing scores above threshold, so the
       common no-overlap case stays visually unchanged.
-- [ ] Wire the Extend-instead and Draft-plan actions
+- [x] Wire the Extend-instead and Draft-plan actions
       **Extend it instead** appends the typed text as a dated `### Log`
       refinement on the matched idea ([[IDEA-43]]'s grammar) and closes the
       modal without creating a new idea file. **Draft a plan under it** hands
       off to the existing plan-drafting flow with `idea:` preset to the match.
-- [ ] Add the strip to the Quick-plan path
+- [x] Add the strip to the Quick-plan path
       The same matcher in the Quick-plan modal suggests candidate parent
       ideas; picking one sets the new plan's `idea:` field at creation, so
       theme-belonging plans stop being born as orphans.
-- [ ] Add the AI Check-overlap action
+- [x] Add the AI Check-overlap action
       An on-demand "Check overlap" button handing the new text plus the ideas
       index to an agent via the `prompts.ts` prompt-builder and launch plumbing
       (`launch-extend`/`launch-draft` siblings), returning a triage verdict:
       belongs inside an existing idea, extends one, or genuinely new.
       Optionally fold the same check into the plan-drafting prompt as a step.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
       `tsc --noEmit`, `biome check`, tests, and a browser pass over both
       capture modals — strip appearance/absence, each action end to end, and
       the Quick-plan `idea:` preset.

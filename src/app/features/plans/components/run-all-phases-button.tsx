@@ -1,7 +1,7 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
-import { Button, Tooltip } from '@dendelion/paper-ui';
+import { ListItem, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface RunAllPhasesButtonProps {
@@ -25,17 +25,19 @@ export const RunAllPhasesButton = ({ plan, disabled }: RunAllPhasesButtonProps) 
     }
   };
 
+  const isDisabled = disabled || launching || !plan.id;
+
   return (
     <Tooltip content={plan.id ? undefined : 'Plan needs an ID before an agent can run'}>
-      <Button
-        variant="ghost"
+      <ListItem
         size="small"
+        icon={<span style={{ color: color.textSecondary }}>▶</span>}
         onClick={handleClick}
-        disabled={disabled || launching || !plan.id}
-        style={{ color: color.textSecondary }}
+        disabled={isDisabled}
+        style={isDisabled ? { opacity: 0.5 } : undefined}
       >
-        Run all phases
-      </Button>
+        {launching ? 'Starting…' : 'Run all phases'}
+      </ListItem>
     </Tooltip>
   );
 };

@@ -1,10 +1,10 @@
 import type { IdeaEntry, PlanEntry } from '@/types/index';
+import type { SimilarityCandidate } from './idea-similarity';
 
-// Wording notes for these prompts: all of them except buildClarifyPrompt run
-// headless (`claude -p` / `opencode run` — see server/agents/), so they must never
-// ask questions or wait for input, and each one's "done" condition is checked
-// mechanically by agent.ts's didTaskProgress. buildClarifyPrompt is the exception:
-// it is copied to the clipboard for the user to paste into an interactive session.
+// Wording notes for these prompts: they all run headless (`claude -p` /
+// `opencode run` — see server/agents/), so they must never ask questions or wait
+// for input, and each one's "done" condition is checked mechanically by
+// agent.ts's didTaskProgress.
 
 export function buildConvergenceAuditPrompt(plan: PlanEntry): string {
   const phaseList = plan.phases
@@ -102,31 +102,6 @@ Keep unchanged:
 Append only — never rewrite or delete the idea's existing body or prior Log lines.`;
 }
 
-export function buildClarifyPrompt(plan: PlanEntry): string {
-  return `You are clarifying the plan "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md (or papercamp/ideas/archive/${plan.id ?? '<ID>'}.md if archived). Edit only that file, and within it only the \`### Clarifications\` section.
-
-Plan body: ${plan.body}
-
-Current phases:
-${plan.phases.length > 0 ? plan.phases.map((p, i) => `${i + 1}. [${p.done ? 'x' : ' '}] ${p.text}`).join('\n') : '(none yet)'}
-
-Task: surface the plan's most important unanswered questions and get them answered by the user, one at a time.
-
-1. Check the plan for gaps in: functional scope, data model, UX flow, non-functional requirements, edge cases, terminology, and completion criteria.
-2. Pick the gaps that would most change the implementation — at most 5. If the plan has no meaningful gaps, say so and stop; do not invent questions.
-3. Ask the user one question at a time. With each question, propose an answer marked **Recommended:** so the user can accept it with a single word. Wait for the user's reply before asking the next question.
-4. After each answered question, append one line to the plan file's \`### Clarifications\` section, creating the section between the body and \`### Phases\` if it does not exist:
-
-\`\`\`
-- YYYY-MM-DD: Q: <question> → A: <the user's answer>
-\`\`\`
-
-Rules:
-- Record only answers the user actually gave (accepting your recommendation counts).
-- Append only — never rewrite or delete existing Clarifications lines.
-- Use today's date.`;
-}
-
 export function buildPlanDraftPrompt(idea: IdeaEntry, otherPlans: PlanEntry[]): string {
   const openPlans = otherPlans.filter((p) => p.status !== 'done');
   const plansContext = openPlans.length
@@ -171,4 +146,35 @@ Hard rules:
 ${plansContext}
 
 Use the open entities above only to avoid duplicating in-flight scope and to match phase granularity. Edit only papercamp/ideas/${idea.id ?? '<ID>'}.md — never create, edit, move, or rename any other file.`;
+}
+
+// IDEA-44 Tier 2: the on-demand "Check overlap" action. Unlike every prompt above,
+// this one is read-only (see server/agent.ts's runReadOnlyPrompt / runOverlapCheck) —
+// it never edits a file, so its "done" condition is the JSON verdict in its own
+// stdout, not a mechanical check against the repo.
+export function buildOverlapCheckPrompt(text: string, candidates: SimilarityCandidate[]): string {
+  const index = candidates.length
+    ? candidates
+        .map((c) => {
+          const tags = c.tags?.length ? ` (tags: ${c.tags.join(', ')})` : '';
+          return `### ${c.id ?? 'no id'}: ${c.title}${tags}\n${c.body}`;
+        })
+        .join('\n\n')
+    : '(no existing ideas yet)';
+
+  return `You are triaging a new intention against the existing ideas index, to prevent near-duplicate ideas from proliferating. Do not use any tools, do not read or edit any files — base your answer only on the text given below.
+
+New intention:
+${text}
+
+Existing ideas index:
+${index}
+
+Task: decide whether the new intention:
+1. belongs inside an existing idea (same scope, not yet covered by its body) — verdict "existing"
+2. extends an existing idea (related, but adds scope the existing idea doesn't cover) — verdict "extend"
+3. is genuinely new — verdict "new"
+
+Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
+{"verdict": "existing" | "extend" | "new", "targetId": "<the best-matching idea's id, or null if verdict is \\"new\\">", "reasoning": "<one sentence explaining the call>"}`;
 }

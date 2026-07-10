@@ -4,7 +4,6 @@ import { Card, IconButton, Stamp } from '@dendelion/paper-ui';
 import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { phaseProgress, relativeDate } from '../helpers';
 import { PlanIdStamp } from './plan-id-stamp';
-import { PrBadge } from './pr-badge';
 import { ProgressBar } from './progress-bar';
 
 interface PlanRowsProps {
@@ -119,7 +118,6 @@ export const PlanRows = ({
                   >
                     {STATUS_LABEL[plan.status]}
                   </Stamp>
-                  {plan.pr && <PrBadge pr={plan.pr} />}
                 </div>
                 {onDeleteIdea &&
                   (plan.status === 'idea' ? (

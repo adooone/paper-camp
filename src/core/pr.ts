@@ -1,16 +1,17 @@
 import { spawn } from 'node:child_process';
 import type { PrInfo } from '../types/index';
 
-interface PrCacheEntry {
-  /** `null` = `gh` ran successfully and found no matching PR (confirmed). */
-  info: PrInfo | null | undefined;
+interface PrMapCacheEntry {
+  /** A `Map` (possibly empty) once `gh` resolved; `undefined` = couldn't resolve. */
+  prs: Map<string, PrInfo> | undefined;
   fetchedAt: number;
 }
 
-const cache = new Map<string, PrCacheEntry>();
+// Keyed by repo root: a long-lived process (server/MCP) can serve more than one repo.
+const cache = new Map<string, PrMapCacheEntry>();
 
 /**
- * Cache window for a resolved PR — long enough that a worklist read doesn't
+ * Cache window for the resolved PR set — long enough that a worklist read doesn't
  * re-shell out to `gh` on every request, short enough that a merge or state
  * change shows up within the same working session.
  */
@@ -21,6 +22,8 @@ interface GhPrRow {
   url: string;
   state: string;
   isDraft: boolean;
+  headRefName: string;
+  body: string;
 }
 
 function toPrInfo(row: GhPrRow): PrInfo {
@@ -35,21 +38,39 @@ function toPrInfo(row: GhPrRow): PrInfo {
   return { number: row.number, url: row.url, state };
 }
 
-function runGhPrList(root: string, branch: string): Promise<PrInfo | null | undefined> {
+// When an entity has more than one PR, the most-advanced wins: a merge beats an
+// open reattempt beats a draft beats an abandoned close.
+const STATE_RANK: Record<PrInfo['state'], number> = { merged: 4, open: 3, draft: 2, closed: 1 };
+
+/**
+ * The entity id a PR references — its `**Plan:** \`IDEA-N\`` body line (stamped
+ * by draft-pr.yml), falling back to the `feat/idea-N-…` id prefix of its head
+ * branch. Both key off the stable id, never the title, so a renamed entity's PR
+ * still resolves.
+ */
+function prEntityId(row: GhPrRow): string | null {
+  const fromBody = row.body?.match(/\*\*Plan:\*\*\s*`?([A-Za-z]+-\d+)`?/);
+  if (fromBody) return fromBody[1].toUpperCase();
+  const fromBranch = row.headRefName?.match(/^[a-z]+\/([a-z]+-\d+)-/);
+  return fromBranch ? fromBranch[1].toUpperCase() : null;
+}
+
+function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> {
   return new Promise((resolve) => {
     const proc = spawn(
       'gh',
       [
         'pr',
         'list',
-        '--head',
-        branch,
         '--state',
         'all',
-        '--json',
-        'number,url,state,isDraft',
+        // High cap rather than pagination: one entity maps to one PR, so this
+        // only matters for repos with thousands of PRs. An entity whose PR falls
+        // past the cap simply has no live signal and falls back to stored status.
         '--limit',
-        '1',
+        '2000',
+        '--json',
+        'number,url,state,isDraft,headRefName,body',
       ],
       { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] },
     );
@@ -57,18 +78,29 @@ function runGhPrList(root: string, branch: string): Promise<PrInfo | null | unde
     proc.stdout?.on('data', (d: Buffer) => {
       stdout += d.toString();
     });
+    // Drain stderr — an unread pipe can fill and hang the subprocess.
+    proc.stderr?.on('data', () => {});
     proc.on('close', (code) => {
-      // Non-zero covers "no gh binary", "not authenticated", "offline", and
-      // "not a GitHub remote" alike — all of them mean "can't resolve", not
-      // "not merged", so the caller must fall back rather than treat this as
-      // a confirmed non-merge.
+      // Non-zero covers "no gh binary", "not authenticated", "offline", and "not
+      // a GitHub remote" alike — all mean "can't resolve", not "no PRs", so the
+      // caller must fall back rather than treat this as a confirmed empty set.
       if (code !== 0) {
         resolve(undefined);
         return;
       }
       try {
         const rows = JSON.parse(stdout) as GhPrRow[];
-        resolve(rows[0] ? toPrInfo(rows[0]) : null);
+        const byId = new Map<string, PrInfo>();
+        for (const row of rows) {
+          const id = prEntityId(row);
+          if (!id) continue;
+          const info = toPrInfo(row);
+          const existing = byId.get(id);
+          if (!existing || STATE_RANK[info.state] > STATE_RANK[existing.state]) {
+            byId.set(id, info);
+          }
+        }
+        resolve(byId);
       } catch {
         resolve(undefined);
       }
@@ -77,55 +109,25 @@ function runGhPrList(root: string, branch: string): Promise<PrInfo | null | unde
   });
 }
 
-async function cachedPrInfo(
-  root: string,
-  branch: string,
-  ttlMs: number,
-): Promise<PrInfo | null | undefined> {
-  // Key by root+branch: a long-lived process (server/MCP) can resolve PRs for more
-  // than one repo, and branch names collide across repos.
-  const key = `${root}::${branch}`;
-  const cached = cache.get(key);
-  if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.info;
-  const info = await runGhPrList(root, branch);
-  cache.set(key, { info, fetchedAt: Date.now() });
-  return info;
-}
-
 /**
- * Live-resolves `branch`'s PR (number, url, draft/open/closed/merged state),
- * cached for `ttlMs` — the source for the UI's PR badge. `undefined` means
- * either no matching PR or the lookup couldn't be resolved at all (no `gh`,
- * not authenticated, offline, ...); either way there's nothing to render.
+ * Every PR in the repo indexed by the entity id it references, resolved via a
+ * single `gh pr list` and cached for `ttlMs` — see IDEA-56's PR-driven status
+ * derivation. `undefined` when the lookup can't resolve at all (no `gh`, not
+ * authenticated, offline, no GitHub remote); callers fall back to stored status.
+ * An entity simply absent from the returned map has no PR (a confirmed answer).
  */
-export async function resolvePrInfo(
+export async function resolvePrsByEntity(
   root: string,
-  branch: string,
   ttlMs = PR_CACHE_TTL_MS,
-): Promise<PrInfo | undefined> {
-  const info = await cachedPrInfo(root, branch, ttlMs);
-  return info ?? undefined;
-}
-
-/**
- * Whether `branch`'s PR (if any) is merged, resolved via a live `gh` lookup
- * and cached for `ttlMs` — see IDEA-56 phase 3. Uses `gh pr list --head` (not
- * `gh pr view`) so a squash-merged branch that's already been deleted locally
- * still resolves: GitHub keeps the PR's recorded head branch name after the
- * branch itself is gone.
- *
- * Returns `undefined` when the lookup couldn't be resolved at all (no `gh`,
- * not authenticated, offline, ...) — callers fall back to the stored
- * override in that case. Returns `false` (not `undefined`) when `gh` ran
- * successfully but found no matching PR, since that's a confirmed answer.
- */
-export async function resolvePrMerged(
-  root: string,
-  branch: string,
-  ttlMs = PR_CACHE_TTL_MS,
-): Promise<boolean | undefined> {
-  const info = await cachedPrInfo(root, branch, ttlMs);
-  return info === undefined ? undefined : info?.state === 'merged';
+): Promise<Map<string, PrInfo> | undefined> {
+  const cached = cache.get(root);
+  if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.prs;
+  const prs = await runGhPrListAll(root);
+  // Only cache a successful resolution — caching an `undefined` (transient gh
+  // failure, offline) would pin the whole worklist to stored status for the full
+  // TTL instead of retrying on the next read.
+  if (prs !== undefined) cache.set(root, { prs, fetchedAt: Date.now() });
+  return prs;
 }
 
 /** Test-only: clears the module-level PR cache between test cases. */

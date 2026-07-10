@@ -22,7 +22,7 @@ import { phaseProgress, relativeDate } from '../helpers';
 import { AddReviewPhasesButton } from './add-review-phases-button';
 import { AgentStartButton } from './agent-start-button';
 import { AuditPhasesButton } from './audit-phases-button';
-import { ClarifyButton } from './clarify-button';
+import { CollapsibleText } from './collapsible-text';
 import { DraftPlanButton } from './draft-plan-button';
 import { ExtendIdeaButton } from './extend-idea-button';
 import { PhaseCopyButton } from './phase-copy-button';
@@ -151,87 +151,113 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
   return (
     <div>
-      <h2
-        style={{
-          fontFamily: fontFamily.serif,
-          fontWeight: 600,
-          fontSize: '1.75rem',
-          margin: `0 0 ${space[3]}`,
-          lineHeight: lineHeight.tight,
-          display: 'flex',
-          alignItems: 'center',
-          gap: space[3],
-        }}
-      >
-        <PlanIdStamp id={plan.id} />
-        {plan.title}
-      </h2>
-
+      {/* Title on the left, updated/created on the right, same line. */}
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
-          gap: space[2],
-          flexWrap: 'wrap',
-          marginBottom: space[4],
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: space[3],
+          margin: `0 0 ${space[3]}`,
         }}
       >
-        <span className="text-sm" style={{ opacity: 0.45 }}>
+        <h2
+          style={{
+            fontFamily: fontFamily.serif,
+            fontWeight: 600,
+            fontSize: '1.75rem',
+            margin: 0,
+            lineHeight: lineHeight.tight,
+            display: 'flex',
+            alignItems: 'center',
+            gap: space[3],
+            minWidth: 0,
+          }}
+        >
+          <PlanIdStamp id={plan.id} />
+          {plan.title}
+        </h2>
+        <span className="text-sm" style={{ opacity: 0.45, flexShrink: 0, whiteSpace: 'nowrap' }}>
           {plan.updated
             ? `updated ${relativeDate(plan.updated)}`
             : `created ${relativeDate(plan.created)}`}
         </span>
-        {plan.tags.map((tag) => (
-          <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
-            {tag}
-          </Stamp>
-        ))}
-        {progress !== null && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flex: '0 0 140px' }}>
-            <div style={{ flex: 1 }}>
-              <ProgressBar pct={progress.pct} color={STATUS_COLOR[plan.status]} />
-            </div>
-            <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
-              {progress.done}/{progress.total}
-            </span>
-          </div>
-        )}
-        {plan.pr && <PrBadge pr={plan.pr} />}
-        <ClarifyButton plan={plan} disabled={agentBusy} />
       </div>
 
-      {showBranchRow && !onOwnBranch && (
-        <Card size="small" accent accentColor="amber" className="mb-4">
-          <div style={{ display: 'flex', alignItems: 'center', gap: space[3], flexWrap: 'wrap' }}>
-            <span className="text-sm">
-              Working branch: <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
-            </span>
-            {plan.id && (
-              <Tooltip
-                content={`Creates ${(plan.kind ?? 'feat').toLowerCase()}/${plan.id.toLowerCase()}-… from main, or switches to it if it already exists`}
-              >
-                <Button
-                  variant="secondary"
-                  size="small"
-                  onClick={handleCreateBranch}
-                  disabled={branching}
-                >
-                  {branching ? 'Switching…' : 'Create branch'}
-                </Button>
-              </Tooltip>
-            )}
-          </div>
-        </Card>
+      {plan.tags.length > 0 && (
+        <div style={{ display: 'flex', gap: space[2], flexWrap: 'wrap', marginBottom: space[4] }}>
+          {plan.tags.map((tag) => (
+            <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
+              {tag}
+            </Stamp>
+          ))}
+        </div>
       )}
-      {showBranchRow && onOwnBranch && (
-        <p className="text-sm" style={{ margin: `0 0 ${space[4]}`, opacity: 0.45 }}>
-          Working branch: <code>{gitBranch}</code>
-        </p>
+
+      {/* Git branch + PR grouped together. */}
+      {(showBranchRow || plan.pr) && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: space[3],
+            flexWrap: 'wrap',
+            marginBottom: space[4],
+          }}
+        >
+          {showBranchRow && !onOwnBranch && (
+            <Card size="small" accent accentColor="amber">
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: space[3], flexWrap: 'wrap' }}
+              >
+                <span className="text-sm">
+                  Working branch: <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
+                </span>
+                {plan.id && (
+                  <Tooltip
+                    content={`Creates ${(plan.kind ?? 'feat').toLowerCase()}/${plan.id.toLowerCase()}-… from main, or switches to it if it already exists`}
+                  >
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={handleCreateBranch}
+                      disabled={branching}
+                    >
+                      {branching ? 'Switching…' : 'Create branch'}
+                    </Button>
+                  </Tooltip>
+                )}
+              </div>
+            </Card>
+          )}
+          {showBranchRow && onOwnBranch && (
+            <span className="text-sm" style={{ opacity: 0.45 }}>
+              Working branch: <code>{gitBranch}</code>
+            </span>
+          )}
+          {plan.pr && <PrBadge pr={plan.pr} />}
+        </div>
+      )}
+
+      {/* Progress bar: full width, last element of the header. */}
+      {progress !== null && (
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: space[3], marginBottom: space[4] }}
+        >
+          <div style={{ flex: 1 }}>
+            <ProgressBar pct={progress.pct} color={STATUS_COLOR[plan.status]} />
+          </div>
+          <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
+            {progress.done}/{progress.total}
+          </span>
+        </div>
       )}
 
       {plan.body && (
         <div style={{ marginBottom: space[4], opacity: 0.85 }}>
-          <Markdown>{plan.body}</Markdown>
+          <CollapsibleText resetKey={plan.id ?? plan.title}>
+            <Markdown>{plan.body}</Markdown>
+          </CollapsibleText>
         </div>
       )}
 
