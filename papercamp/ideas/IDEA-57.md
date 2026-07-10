@@ -27,7 +27,7 @@ Deliberately distinct from the neighboring GitHub ideas: [[IDEA-35]] enriches th
       A new builder in `prompts.ts` that takes the PR's unresolved threads plus the plan context and produces the agent prompt to address them on the plan's branch, with a `prompts.test.ts` case covering thread rendering and the empty-threads guard.
 - [x] Launch a "fix review comments" job
       A per-plan action sibling to run-all-phases: a `POST /api/agent/launch-fix-review` route that fetches unresolved threads via `gh api`, hands them and the plan context to the headless agent through the existing launch plumbing, and lets it fix and push on the plan's own branch. Reuse `agent.ts`'s progress/done detection; wire the button through `agent-api.ts` and the store's `launch*` actions.
-- [ ] Generalize the dashboard job queue
+- [x] Generalize the dashboard job queue
       Fold fix-review into the shared recurring-task pattern (draft, run phases, reconcile, audit) so all agent work dispatches from the dashboard with visible Stack-panel status rather than a typed chat prompt — the on-demand counterpart to the CI/cron automation.
 - [ ] Type-check and verification pass
       `tsc --noEmit`, `biome check`, and `vitest run` clean; smoke the resolver against a live PR with open review threads. Writing back to GitHub (resolving threads, replying) stays out of v1 as a deliberate stretch.
