@@ -64,8 +64,11 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
         'list',
         '--state',
         'all',
+        // High cap rather than pagination: one entity maps to one PR, so this
+        // only matters for repos with thousands of PRs. An entity whose PR falls
+        // past the cap simply has no live signal and falls back to stored status.
         '--limit',
-        '500',
+        '2000',
         '--json',
         'number,url,state,isDraft,headRefName,body',
       ],

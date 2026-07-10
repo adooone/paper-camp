@@ -65,6 +65,10 @@ export const PlansPage = () => {
     return (
       <div>
         <PlansHeader />
+        {/* The skeleton is aria-hidden, so announce the loading state to AT here. */}
+        <span role="status" aria-live="polite" className="sr-only">
+          Loading plans…
+        </span>
         <PlansListSkeleton />
       </div>
     );

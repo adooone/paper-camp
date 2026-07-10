@@ -59,6 +59,13 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
     }
   }, [open]);
 
+  // Editing the text after a check invalidates the verdict — clear it so stale
+  // overlap guidance isn't shown against text it no longer describes.
+  useEffect(() => {
+    setOverlapVerdict(null);
+    setOverlapError(null);
+  }, [title, content]);
+
   const handleOpenSimilar = (matchTitle: string) => {
     onClose();
     navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(matchTitle) } });
@@ -87,7 +94,16 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
 
   const handleOpenVerdictTarget = (targetId: string) => {
     const match = planEntries.find((p) => p.id === targetId);
-    if (match) handleOpenSimilar(match.title);
+    if (match) {
+      handleOpenSimilar(match.title);
+    } else {
+      // Stale/hallucinated id from the verdict — tell the user instead of no-op.
+      toast({
+        title: 'Plan not found',
+        description: `No plan with id ${targetId}`,
+        variant: 'error',
+      });
+    }
   };
 
   const handleExtendSimilar = async (candidateId: string, existingLog: LogEntry[] | undefined) => {

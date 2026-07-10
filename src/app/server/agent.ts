@@ -794,6 +794,11 @@ export function createAgentManager(
             pushLine(task, `${planTitle} timed out`);
             setStatus(task, 'error');
             if (!proc.killed) proc.kill('SIGTERM');
+            // Escalate if SIGTERM is ignored (e.g. stuck reading stdin), so the
+            // child doesn't leak — same as stop()/run-all/batch-reconcile.
+            setTimeout(() => {
+              if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
+            }, 5000);
           }
           reject(new Error(`${planTitle} timed out`));
         });

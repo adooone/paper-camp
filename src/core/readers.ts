@@ -123,12 +123,17 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
  * copy: it never touches disk, so it's safe to feed straight back into
  * `entityToPlan`/`deriveStatus` elsewhere without risking a stale-status write.
  */
+/** readEntities plus the one-shot PR resolution both derivation paths share. */
+async function readEntitiesAndPrs(ideasDir: string) {
+  const { entries, warnings } = await readEntities(ideasDir);
+  const prs = await resolvePrsByEntity(join(ideasDir, '..', '..'));
+  return { entries, warnings, prs, resolved: prs !== undefined };
+}
+
 export async function readEntitiesWithDerivedStatus(
   ideasDir: string,
 ): Promise<ParseResult<EntityEntry>> {
-  const { entries, warnings } = await readEntities(ideasDir);
-  const prs = await resolvePrsByEntity(join(ideasDir, '..', '..'));
-  const resolved = prs !== undefined;
+  const { entries, warnings, prs, resolved } = await readEntitiesAndPrs(ideasDir);
   const derived = entries.map((e) => ({
     ...e,
     status: deriveStatus(e, prs?.get(e.id), resolved),
@@ -138,9 +143,7 @@ export async function readEntitiesWithDerivedStatus(
 
 /** All work entities (non-notes) in PlanEntry shape — the `/api/plans` view. */
 export async function readWorkEntries(ideasDir: string): Promise<ParseResult<PlanEntry>> {
-  const { entries, warnings } = await readEntities(ideasDir);
-  const prs = await resolvePrsByEntity(join(ideasDir, '..', '..'));
-  const resolved = prs !== undefined;
+  const { entries, warnings, prs, resolved } = await readEntitiesAndPrs(ideasDir);
   return {
     entries: entries
       .filter((e) => e.kind !== 'note')
