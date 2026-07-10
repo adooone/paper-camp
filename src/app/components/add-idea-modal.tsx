@@ -60,7 +60,9 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
   }, [open]);
 
   // Editing the text after a check invalidates the verdict — clear it so stale
-  // overlap guidance isn't shown against text it no longer describes.
+  // overlap guidance isn't shown against text it no longer describes. title/content
+  // are the change triggers, not read in the effect body.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: text is a trigger, not read
   useEffect(() => {
     setOverlapVerdict(null);
     setOverlapError(null);

@@ -65,10 +65,11 @@ export const PlansPage = () => {
     return (
       <div>
         <PlansHeader />
-        {/* The skeleton is aria-hidden, so announce the loading state to AT here. */}
-        <span role="status" aria-live="polite" className="sr-only">
+        {/* The skeleton is aria-hidden, so announce the loading state to AT here.
+            <output> carries an implicit role="status". */}
+        <output aria-live="polite" className="sr-only">
           Loading plans…
-        </span>
+        </output>
         <PlansListSkeleton />
       </div>
     );
