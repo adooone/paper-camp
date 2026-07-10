@@ -61,11 +61,20 @@ export interface ParseResult<T> {
 /** A PR's reviewable/mergeable state, as surfaced by `gh pr list`. */
 export type PrState = 'draft' | 'open' | 'closed' | 'merged';
 
+/** GitHub's PR review decision, as surfaced by `gh pr list --json reviewDecision`. */
+export type ReviewDecision = 'approved' | 'changes-requested' | 'review-required';
+
 /** Live-resolved PR info for an entity's branch — see `core/pr.ts`. */
 export interface PrInfo {
   number: number;
   url: string;
   state: PrState;
+  /** Undefined when no review has been requested/decided, or when unresolved (offline, closed/merged PR). */
+  reviewDecision?: ReviewDecision;
+  /** Count of unresolved review threads. Only fetched for open/draft PRs; undefined when not fetched or unresolved. */
+  unresolvedThreadCount?: number;
+  /** Whether a comment or review landed after the PR's last commit — a proxy for "since the last agent pass" (a pass ends with a push). Only fetched for open/draft PRs. */
+  hasNewCommentsSincePush?: boolean;
 }
 
 export interface PlanEntry {

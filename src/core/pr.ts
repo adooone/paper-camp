@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import type { PrInfo } from '../types/index';
+import type { PrInfo, ReviewDecision } from '../types/index';
 
 interface PrMapCacheEntry {
   /** A `Map` (possibly empty) once `gh` resolved; `undefined` = couldn't resolve. */
@@ -24,7 +24,14 @@ interface GhPrRow {
   isDraft: boolean;
   headRefName: string;
   body: string;
+  reviewDecision: string;
 }
+
+const REVIEW_DECISION: Record<string, ReviewDecision> = {
+  APPROVED: 'approved',
+  CHANGES_REQUESTED: 'changes-requested',
+  REVIEW_REQUIRED: 'review-required',
+};
 
 function toPrInfo(row: GhPrRow): PrInfo {
   const state: PrInfo['state'] =
@@ -35,7 +42,8 @@ function toPrInfo(row: GhPrRow): PrInfo {
         : row.isDraft
           ? 'draft'
           : 'open';
-  return { number: row.number, url: row.url, state };
+  const reviewDecision = REVIEW_DECISION[row.reviewDecision];
+  return { number: row.number, url: row.url, state, ...(reviewDecision && { reviewDecision }) };
 }
 
 // When an entity has more than one PR, the most-advanced wins: a merge beats an
@@ -55,6 +63,105 @@ function prEntityId(row: GhPrRow): string | null {
   return fromBranch ? fromBranch[1].toUpperCase() : null;
 }
 
+interface ReviewSignal {
+  unresolvedThreadCount: number;
+  hasNewCommentsSincePush: boolean;
+}
+
+const REVIEW_THREADS_QUERY = `
+query($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $number) {
+      reviewThreads(first: 100) { nodes { isResolved } }
+      commits(last: 1) { nodes { commit { committedDate } } }
+      comments(last: 1) { nodes { createdAt } }
+      reviews(last: 1) { nodes { createdAt } }
+    }
+  }
+}`;
+
+interface GraphqlPullRequest {
+  reviewThreads: { nodes: { isResolved: boolean }[] };
+  commits: { nodes: { commit: { committedDate: string } }[] };
+  comments: { nodes: { createdAt: string }[] };
+  reviews: { nodes: { createdAt: string }[] };
+}
+
+/**
+ * `gh pr list` has no field for review-thread resolution or activity timing, so
+ * this is the one `gh api` call the list pass can't fold in — run only for
+ * open/draft PRs (a merged/closed PR has no review loop left to surface).
+ */
+function fetchReviewSignal(root: string, url: string): Promise<ReviewSignal | undefined> {
+  const match = url.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
+  if (!match) return Promise.resolve(undefined);
+  const [, owner, repo, number] = match;
+  return new Promise((resolve) => {
+    const proc = spawn(
+      'gh',
+      [
+        'api',
+        'graphql',
+        '-f',
+        `query=${REVIEW_THREADS_QUERY}`,
+        '-f',
+        `owner=${owner}`,
+        '-f',
+        `repo=${repo}`,
+        '-F',
+        `number=${number}`,
+      ],
+      { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] },
+    );
+    let stdout = '';
+    proc.stdout?.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => {
+      if (code !== 0) {
+        resolve(undefined);
+        return;
+      }
+      try {
+        const data = JSON.parse(stdout) as {
+          data?: { repository?: { pullRequest?: GraphqlPullRequest } };
+        };
+        const pr = data.data?.repository?.pullRequest;
+        if (!pr) {
+          resolve(undefined);
+          return;
+        }
+        const unresolvedThreadCount = pr.reviewThreads.nodes.filter((n) => !n.isResolved).length;
+        const pushedAt = pr.commits.nodes[0]?.commit.committedDate;
+        const latestActivity = [pr.comments.nodes[0]?.createdAt, pr.reviews.nodes[0]?.createdAt]
+          .filter((d): d is string => Boolean(d))
+          .sort()
+          .at(-1);
+        const hasNewCommentsSincePush = Boolean(
+          pushedAt && latestActivity && latestActivity > pushedAt,
+        );
+        resolve({ unresolvedThreadCount, hasNewCommentsSincePush });
+      } catch {
+        resolve(undefined);
+      }
+    });
+    proc.on('error', () => resolve(undefined));
+  });
+}
+
+/** Best-effort: enriches open/draft entries in place with review-thread signal. */
+async function enrichWithReviewSignal(root: string, byId: Map<string, PrInfo>): Promise<void> {
+  const active = [...byId.entries()].filter(
+    ([, info]) => info.state === 'open' || info.state === 'draft',
+  );
+  const signals = await Promise.all(active.map(([, info]) => fetchReviewSignal(root, info.url)));
+  active.forEach(([id, info], i) => {
+    const signal = signals[i];
+    if (signal) byId.set(id, { ...info, ...signal });
+  });
+}
+
 function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> {
   return new Promise((resolve) => {
     const proc = spawn(
@@ -70,7 +177,7 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
         '--limit',
         '2000',
         '--json',
-        'number,url,state,isDraft,headRefName,body',
+        'number,url,state,isDraft,headRefName,body,reviewDecision',
       ],
       { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] },
     );
@@ -100,7 +207,7 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
             byId.set(id, info);
           }
         }
-        resolve(byId);
+        enrichWithReviewSignal(root, byId).then(() => resolve(byId));
       } catch {
         resolve(undefined);
       }
