@@ -106,4 +106,12 @@ describe('resolvePrsByEntity', () => {
     await resolvePrsByEntity(root, 0);
     expect(callCount()).toBe(2);
   });
+
+  it('does not cache a failed lookup — the next read retries', async () => {
+    const { root, callCount } = installFakeGh(`echo 'boom' >&2\nexit 1`);
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await resolvePrsByEntity(root, 1000 * 60)).toBeUndefined();
+    expect(await resolvePrsByEntity(root, 1000 * 60)).toBeUndefined();
+    expect(callCount()).toBe(2);
+  });
 });

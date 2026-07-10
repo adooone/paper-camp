@@ -78,6 +78,8 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
     proc.stdout?.on('data', (d: Buffer) => {
       stdout += d.toString();
     });
+    // Drain stderr — an unread pipe can fill and hang the subprocess.
+    proc.stderr?.on('data', () => {});
     proc.on('close', (code) => {
       // Non-zero covers "no gh binary", "not authenticated", "offline", and "not
       // a GitHub remote" alike — all mean "can't resolve", not "no PRs", so the
@@ -121,7 +123,10 @@ export async function resolvePrsByEntity(
   const cached = cache.get(root);
   if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.prs;
   const prs = await runGhPrListAll(root);
-  cache.set(root, { prs, fetchedAt: Date.now() });
+  // Only cache a successful resolution — caching an `undefined` (transient gh
+  // failure, offline) would pin the whole worklist to stored status for the full
+  // TTL instead of retrying on the next read.
+  if (prs !== undefined) cache.set(root, { prs, fetchedAt: Date.now() });
   return prs;
 }
 
