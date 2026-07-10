@@ -1,4 +1,4 @@
-import type { IdeaEntry, PlanEntry } from '@/types/index';
+import type { IdeaEntry, PlanEntry, ReviewThread } from '@/types/index';
 import type { SimilarityCandidate } from './idea-similarity';
 
 // Wording notes for these prompts: they all run headless (`claude -p` /
@@ -146,6 +146,43 @@ Hard rules:
 ${plansContext}
 
 Use the open entities above only to avoid duplicating in-flight scope and to match phase granularity. Edit only papercamp/ideas/${idea.id ?? '<ID>'}.md — never create, edit, move, or rename any other file.`;
+}
+
+// IDEA-57: the "fix review comments" launch path. Unlike every prompt above, this
+// one runs on the plan's *existing* branch against an *already-open* PR — it edits
+// arbitrary source files (whatever each thread points at, not just the entity
+// file) and must commit and push so the same PR picks up the fix, rather than
+// leaving a diff for the app to detect via file content.
+export function buildFixReviewPrompt(plan: PlanEntry, threads: ReviewThread[]): string {
+  if (threads.length === 0) {
+    return `You were launched to fix review comments on the open PR for the plan "${plan.title}" (${plan.id ?? 'no id'}), but no unresolved review threads were found. Make no changes at all — do not edit, commit, or push anything.`;
+  }
+
+  const threadList = threads
+    .map((t, i) => {
+      const location = t.path ? `${t.path}${t.line ? `:${t.line}` : ''}` : '(general PR comment)';
+      const author = t.author ? ` (${t.author})` : '';
+      return `${i + 1}. ${location}${author}\n   ${t.body}`;
+    })
+    .join('\n\n');
+
+  return `You are addressing unresolved review comments on the open PR for the plan "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md. You are already checked out on the plan's branch — work against the code these comments point at, not the plan file itself, unless a comment specifically asks for a plan-file change.
+
+Plan body, for context: ${plan.body}
+
+Unresolved review comments:
+${threadList}
+
+Task:
+1. For each comment above, read the referenced file (when a path is given) and decide the right fix.
+2. Make the code changes that address every comment. If you disagree with one or it's a question rather than a requested change, say so briefly in your final summary rather than silently ignoring it.
+3. Run this repo's checks (type-check, lint, tests) and leave them passing.
+4. Commit your changes and push to the current branch so the open PR picks them up — do not create a new branch or open a new PR.
+
+Rules:
+- Never touch the YAML frontmatter of any entity file.
+- Never check, uncheck, add, or remove any phase in ${plan.id ?? 'the plan'}'s \`### Phases\` list — this pass fixes review comments, not plan bookkeeping.
+- If a comment needs a decision only a human can make, say so in your final summary instead of guessing.`;
 }
 
 // IDEA-44 Tier 2: the on-demand "Check overlap" action. Unlike every prompt above,

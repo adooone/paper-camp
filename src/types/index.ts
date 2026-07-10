@@ -64,6 +64,20 @@ export type PrState = 'draft' | 'open' | 'closed' | 'merged';
 /** GitHub's PR review decision, as surfaced by `gh pr list --json reviewDecision`. */
 export type ReviewDecision = 'approved' | 'changes-requested' | 'review-required';
 
+/**
+ * A single unresolved review comment/thread on a PR — the per-comment detail
+ * `PrInfo.unresolvedThreadCount` only counts. Fetched by the fix-review launch
+ * path (not `core/pr.ts`'s worklist resolver, which only needs the count) and
+ * fed to `buildFixReviewPrompt` in `prompts.ts`.
+ */
+export interface ReviewThread {
+  /** File path the comment is anchored to; absent for a PR-level (not diff-anchored) comment. */
+  path?: string;
+  line?: number;
+  author?: string;
+  body: string;
+}
+
 /** Live-resolved PR info for an entity's branch — see `core/pr.ts`. */
 export interface PrInfo {
   number: number;

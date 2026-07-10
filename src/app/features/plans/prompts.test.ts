@@ -1,8 +1,9 @@
 import { buildAgentPrompt } from '@/app/server/agent';
-import type { IdeaEntry, PlanEntry } from '@/types/index';
+import type { IdeaEntry, PlanEntry, ReviewThread } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
   buildConvergenceAuditPrompt,
+  buildFixReviewPrompt,
   buildIdeaExtendPrompt,
   buildOverlapCheckPrompt,
   buildPlanDraftPrompt,
@@ -107,5 +108,35 @@ describe('agent prompts target the unified entity corpus', () => {
   it('overlap-check prompt handles an empty ideas index', () => {
     const prompt = buildOverlapCheckPrompt('A new intention', []);
     expect(prompt).toContain('(no existing ideas yet)');
+  });
+
+  // IDEA-57: the fix-review launch path runs on the plan's already-open PR
+  // branch and must push, unlike every prompt above.
+  it('fix-review prompt renders each unresolved thread with its location and pushes the fix', () => {
+    const threads: ReviewThread[] = [
+      {
+        path: 'src/core/pr.ts',
+        line: 42,
+        author: 'coderabbitai',
+        body: 'This can throw on empty input.',
+      },
+      { body: 'General comment with no diff anchor.' },
+    ];
+    const prompt = buildFixReviewPrompt(plan, threads);
+    expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
+    expect(prompt).toContain('src/core/pr.ts:42');
+    expect(prompt).toContain('(coderabbitai)');
+    expect(prompt).toContain('This can throw on empty input.');
+    expect(prompt).toContain('(general PR comment)');
+    expect(prompt).toContain('General comment with no diff anchor.');
+    expect(prompt).toContain('Commit your changes and push');
+    expect(prompt).toContain('Never check, uncheck, add, or remove any phase');
+  });
+
+  it('fix-review prompt guards against an empty thread list by making no changes', () => {
+    const prompt = buildFixReviewPrompt(plan, []);
+    expect(prompt).toContain('no unresolved review threads were found');
+    expect(prompt).toContain('do not edit, commit, or push anything');
+    expect(prompt).not.toContain('Commit your changes and push');
   });
 });
