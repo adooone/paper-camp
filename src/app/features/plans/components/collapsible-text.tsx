@@ -60,10 +60,18 @@ export const CollapsibleText = ({
       >
         {children}
       </div>
+      {/* Raw <button>: paper-ui's Button is a filled/washed control with no bare
+          text-link variant, and this is a quiet inline disclosure link (matching
+          the worklist and filter "Show less" toggles). Conditionally mounted
+          rather than reserved with visibility:hidden: `overflows` is measured in
+          useLayoutEffect (pre-paint), so the toggle is already in the first
+          painted frame — no jump to reserve against — and short bodies that never
+          overflow don't carry a permanent empty gap. */}
       {overflows && (
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
           style={{
             alignSelf: 'flex-start',
             background: 'none',

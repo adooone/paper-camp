@@ -58,3 +58,4 @@
 | IDEA-54 | Default font and Stack panel cleanup | refactor | done | app, ui, paper-ui |
 | IDEA-55 | Actualise all ideas at once | feat | done | app, plans, agent |
 | IDEA-56 | Derive status from git and PR state | feat | done | app, github, plans, core |
+| IDEA-57 | Drive PR review fixes from the app | feat | idea | app, github, plans, agent |
