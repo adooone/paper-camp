@@ -46,6 +46,11 @@ interface AgentTask {
   // For reconcile tasks: snapshot of body + phase text before launch, since a reconcile
   // rewrites prose in place rather than growing Phases/Log like an audit does.
   reconcileBaseline?: string;
+  // For fix-review tasks: the branch's HEAD commit hash before launch. This task edits
+  // arbitrary source files (whatever each review thread points at), so there's no
+  // markdown snapshot to diff against like reconcile — success is judged by whether
+  // the agent committed (and pushed) at least once, per its prompt's instructions.
+  fixReviewBaseline?: string;
   // For a batch-reconcile sweep: one entry per entity whose reconcile actually changed
   // its prose, holding the pre-run snapshot so the client can review/revert it later.
   // Read by GET /api/agent/reconcile-queue.
@@ -86,6 +91,23 @@ function readDefaultAgentIds(root: string): DefaultAgentsMap {
 }
 
 type Result = { ok: true } | { ok: false; error: string };
+
+/** Current HEAD commit hash of the repo at `root`, or `null` if `git` can't resolve it. */
+function getHeadCommit(root: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const proc = spawn('git', ['rev-parse', 'HEAD'], {
+      cwd: root,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    proc.stdout?.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => resolve(code === 0 ? stdout.trim() : null));
+    proc.on('error', () => resolve(null));
+  });
+}
 
 export function buildAgentPrompt(plan: PlanEntry, phase: PhaseItem, phaseIndex: number): string {
   const details = phase.description ? `Phase details:\n${phase.description}\n\n` : '';
@@ -145,6 +167,11 @@ export function createAgentManager(
         if (task.ideaLogBaseline === undefined) return null;
         return (idea.log?.length ?? 0) > task.ideaLogBaseline;
       }
+      if (task.taskKind === 'fix-review') {
+        if (task.fixReviewBaseline === undefined) return null;
+        const head = await getHeadCommit(root);
+        return head !== null && head !== task.fixReviewBaseline;
+      }
       if (task.taskKind === 'reconcile') {
         const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
         const plan = entries.find((e) => e.id === task.planId && e.kind !== 'note');
@@ -187,11 +214,13 @@ export function createAgentManager(
             ? `Warning: agent finished but the idea body for ${task.ideaId} did not change — verify manually`
             : task.taskKind === 'reconcile'
               ? 'Warning: agent finished but the plan body and phase text did not change — verify manually'
-              : task.ideaId !== undefined
-                ? `Warning: agent finished but ${task.ideaId} gained no Phases section — verify manually`
-                : task.phaseIndex !== undefined
-                  ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
-                  : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
+              : task.taskKind === 'fix-review'
+                ? 'Warning: agent finished but no new commit was pushed — verify manually'
+                : task.ideaId !== undefined
+                  ? `Warning: agent finished but ${task.ideaId} gained no Phases section — verify manually`
+                  : task.phaseIndex !== undefined
+                    ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
+                    : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
         pushLine(task, warning);
       }
       if (current === task && task.taskKind === 'audit' && task.planId && progressed === true) {
@@ -254,6 +283,7 @@ export function createAgentManager(
       | 'ideaId'
       | 'ideaLogBaseline'
       | 'reconcileBaseline'
+      | 'fixReviewBaseline'
     >,
   ): Result {
     if (isBusy()) {
@@ -321,6 +351,20 @@ export function createAgentManager(
             }),
           }
         : { planBaseline: { phases: plan.phases.length, log: plan.log?.length ?? 0 } }),
+    });
+  }
+
+  // Fix-review launch mode: unlike every other plan-scoped launch, this one runs on
+  // the plan's existing branch against an already-open PR and is judged by whether
+  // the agent committed at least once (per its prompt, it also pushes) — there's no
+  // markdown snapshot to diff since it edits whatever files the review threads point
+  // at. Async only because it needs the pre-launch HEAD commit; launch() itself still
+  // does its busy-check/reserve synchronously once called.
+  async function startFixReview(plan: PlanEntry, prompt: string): Promise<Result> {
+    const fixReviewBaseline = (await getHeadCommit(root)) ?? undefined;
+    return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
+      taskKind: 'fix-review',
+      fixReviewBaseline,
     });
   }
 
@@ -910,6 +954,7 @@ export function createAgentManager(
   return {
     start,
     startForPlan,
+    startFixReview,
     startForIdea,
     startForIdeaExtend,
     startBatchReconcile,
@@ -935,6 +980,7 @@ export function createAgentManager(
 export interface AgentManager {
   start: (plan: PlanEntry, phaseIndex: number) => Result;
   startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
+  startFixReview: (plan: PlanEntry, prompt: string) => Promise<Result>;
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchReconcile: () => Result;

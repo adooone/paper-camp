@@ -1,6 +1,8 @@
+import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseEntityFile } from '../../core/parser';
 import { entityToPlan } from '../../core/readers';
@@ -61,6 +63,20 @@ beforeEach(() => {
   agentScript.current = 'process.exit(0)';
   agentScript.buildArgs = undefined;
 });
+
+const run = promisify(execFile);
+
+/** Like makeRoot, but also inits a real git repo with one commit — startFixReview
+ * needs an actual HEAD to snapshot and compare against. */
+async function makeGitRoot(planMd: string): Promise<{ root: string; plan: PlanEntry }> {
+  const { root, plan } = await makeRoot(planMd);
+  await run('git', ['init', '-q'], { cwd: root });
+  await run('git', ['config', 'user.email', 'test@example.com'], { cwd: root });
+  await run('git', ['config', 'user.name', 'Test'], { cwd: root });
+  await run('git', ['add', '-A'], { cwd: root });
+  await run('git', ['commit', '-q', '-m', 'initial'], { cwd: root });
+  return { root, plan };
+}
 
 async function makeRoot(planMd: string): Promise<{ root: string; plan: PlanEntry }> {
   const root = await mkdtemp(join(tmpdir(), 'papercamp-agent-test-'));
@@ -285,6 +301,57 @@ describe('start (single phase)', () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     const manager = createAgentManager(root);
     expect(manager.start(plan, 99)).toEqual({ ok: false, error: 'Phase not found' });
+  });
+});
+
+describe('startFixReview', () => {
+  const COMMIT_SOMETHING = `
+const { execSync } = require('node:child_process');
+execSync('git commit -q --allow-empty -m "fix review comments"');
+`;
+
+  it('finishes cleanly when the agent commits (and would push)', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = COMMIT_SOMETHING;
+    const manager = createAgentManager(root);
+
+    const result = await manager.startFixReview(plan, 'fix these comments');
+    expect(result).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(manager.getStatus()?.lines.join('\n')).not.toContain('verify manually');
+  });
+
+  it('warns when the agent exits cleanly without committing anything', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(0)';
+    const manager = createAgentManager(root);
+
+    await manager.startFixReview(plan, 'fix these comments');
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const start = Date.now();
+    while (
+      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      Date.now() - start < 5000
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(manager.getStatus()?.lines.join('\n')).toContain('no new commit was pushed');
+  });
+
+  it('rejects concurrent starts while another agent task is running', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'setTimeout(() => process.exit(0), 5000)';
+    const manager = createAgentManager(root);
+
+    expect(manager.start(plan, 0)).toEqual({ ok: true });
+    expect(await manager.startFixReview(plan, 'fix these comments')).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+
+    manager.stop();
+    await waitForStatus(manager, settled);
   });
 });
 

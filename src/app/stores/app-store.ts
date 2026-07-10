@@ -25,6 +25,7 @@ import {
   fetchReconcileQueue,
   launchAgent,
   launchBatchReconcile,
+  launchFixReview,
   launchIdeaExtend,
   launchPlanAudit,
   launchPlanDraft,
@@ -119,6 +120,7 @@ type AppStore = {
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
   launchBatchReconcile: () => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
+  launchFixReview: (planId: string) => Promise<void>;
   stopAgent: () => Promise<void>;
 
   // Snapshot captured when a single-plan reconcile is launched, held at store level
@@ -431,6 +433,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   launchRunAll: async (planId) => {
     await launchRunAll(planId);
+    await get().loadAgentStatus();
+  },
+  launchFixReview: async (planId) => {
+    await launchFixReview(planId);
     await get().loadAgentStatus();
   },
   stopAgent: async () => {

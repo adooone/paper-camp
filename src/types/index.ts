@@ -305,7 +305,8 @@ export type TaskKind =
   | 'commit-suggest'
   | 'overlap-check'
   | 'sync'
-  | 'reconcile';
+  | 'reconcile'
+  | 'fix-review';
 
 export interface AgentTaskState {
   status: AgentTaskStatus;

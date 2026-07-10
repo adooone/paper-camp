@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import type { PrInfo, ReviewDecision } from '../types/index';
+import type { PrInfo, ReviewDecision, ReviewThread } from '../types/index';
 
 interface PrMapCacheEntry {
   /** A `Map` (possibly empty) once `gh` resolved; `undefined` = couldn't resolve. */
@@ -87,15 +87,22 @@ interface GraphqlPullRequest {
   reviews: { nodes: { createdAt: string }[] };
 }
 
-/**
- * `gh pr list` has no field for review-thread resolution or activity timing, so
- * this is the one `gh api` call the list pass can't fold in — run only for
- * open/draft PRs (a merged/closed PR has no review loop left to surface).
- */
-function fetchReviewSignal(root: string, url: string): Promise<ReviewSignal | undefined> {
+/** Splits a PR's `html_url` into the owner/repo/number a `gh api graphql` call needs. */
+function parsePrUrl(url: string): { owner: string; repo: string; number: string } | null {
   const match = url.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
-  if (!match) return Promise.resolve(undefined);
+  if (!match) return null;
   const [, owner, repo, number] = match;
+  return { owner, repo, number };
+}
+
+/** Shared `gh api graphql` runner: resolves `undefined` on any spawn/exit/parse failure. */
+function runGhApiGraphql<T>(
+  root: string,
+  query: string,
+  owner: string,
+  repo: string,
+  number: string,
+): Promise<T | undefined> {
   return new Promise((resolve) => {
     const proc = spawn(
       'gh',
@@ -103,7 +110,7 @@ function fetchReviewSignal(root: string, url: string): Promise<ReviewSignal | un
         'api',
         'graphql',
         '-f',
-        `query=${REVIEW_THREADS_QUERY}`,
+        `query=${query}`,
         '-f',
         `owner=${owner}`,
         '-f',
@@ -124,30 +131,89 @@ function fetchReviewSignal(root: string, url: string): Promise<ReviewSignal | un
         return;
       }
       try {
-        const data = JSON.parse(stdout) as {
-          data?: { repository?: { pullRequest?: GraphqlPullRequest } };
-        };
-        const pr = data.data?.repository?.pullRequest;
-        if (!pr) {
-          resolve(undefined);
-          return;
-        }
-        const unresolvedThreadCount = pr.reviewThreads.nodes.filter((n) => !n.isResolved).length;
-        const pushedAt = pr.commits.nodes[0]?.commit.committedDate;
-        const latestActivity = [pr.comments.nodes[0]?.createdAt, pr.reviews.nodes[0]?.createdAt]
-          .filter((d): d is string => Boolean(d))
-          .sort()
-          .at(-1);
-        const hasNewCommentsSincePush = Boolean(
-          pushedAt && latestActivity && latestActivity > pushedAt,
-        );
-        resolve({ unresolvedThreadCount, hasNewCommentsSincePush });
+        resolve(JSON.parse(stdout) as T);
       } catch {
         resolve(undefined);
       }
     });
     proc.on('error', () => resolve(undefined));
   });
+}
+
+/**
+ * `gh pr list` has no field for review-thread resolution or activity timing, so
+ * this is the one `gh api` call the list pass can't fold in — run only for
+ * open/draft PRs (a merged/closed PR has no review loop left to surface).
+ */
+async function fetchReviewSignal(root: string, url: string): Promise<ReviewSignal | undefined> {
+  const parsed = parsePrUrl(url);
+  if (!parsed) return undefined;
+  const data = await runGhApiGraphql<{
+    data?: { repository?: { pullRequest?: GraphqlPullRequest } };
+  }>(root, REVIEW_THREADS_QUERY, parsed.owner, parsed.repo, parsed.number);
+  const pr = data?.data?.repository?.pullRequest;
+  if (!pr) return undefined;
+  const unresolvedThreadCount = pr.reviewThreads.nodes.filter((n) => !n.isResolved).length;
+  const pushedAt = pr.commits.nodes[0]?.commit.committedDate;
+  const latestActivity = [pr.comments.nodes[0]?.createdAt, pr.reviews.nodes[0]?.createdAt]
+    .filter((d): d is string => Boolean(d))
+    .sort()
+    .at(-1);
+  const hasNewCommentsSincePush = Boolean(pushedAt && latestActivity && latestActivity > pushedAt);
+  return { unresolvedThreadCount, hasNewCommentsSincePush };
+}
+
+const REVIEW_THREAD_COMMENTS_QUERY = `
+query($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $number) {
+      reviewThreads(first: 100) {
+        nodes {
+          isResolved
+          comments(first: 1) { nodes { path line body author { login } } }
+        }
+      }
+    }
+  }
+}`;
+
+interface GraphqlThreadComment {
+  path?: string | null;
+  line?: number | null;
+  body: string;
+  author?: { login: string } | null;
+}
+
+interface GraphqlThreadNode {
+  isResolved: boolean;
+  comments: { nodes: GraphqlThreadComment[] };
+}
+
+/**
+ * Per-comment detail for a PR's unresolved review threads, for the fix-review
+ * launch path (`POST /api/agent/launch-fix-review`) to hand to
+ * `buildFixReviewPrompt`. Each thread is represented by its first comment, since
+ * that's the one that states what needs fixing. Best-effort: resolves `[]` on
+ * any failure so a launch with no readable threads falls back to
+ * `buildFixReviewPrompt`'s own empty-threads guard rather than erroring out.
+ */
+export async function fetchUnresolvedThreads(root: string, url: string): Promise<ReviewThread[]> {
+  const parsed = parsePrUrl(url);
+  if (!parsed) return [];
+  const data = await runGhApiGraphql<{
+    data?: { repository?: { pullRequest?: { reviewThreads: { nodes: GraphqlThreadNode[] } } } };
+  }>(root, REVIEW_THREAD_COMMENTS_QUERY, parsed.owner, parsed.repo, parsed.number);
+  const nodes = data?.data?.repository?.pullRequest?.reviewThreads.nodes ?? [];
+  return nodes
+    .filter((n) => !n.isResolved)
+    .map((n) => n.comments.nodes[0])
+    .filter((c): c is GraphqlThreadComment => Boolean(c))
+    .map((c) => ({
+      ...(c.path ? { path: c.path } : {}),
+      ...(c.line != null ? { line: c.line } : {}),
+      ...(c.author?.login ? { author: c.author.login } : {}),
+      body: c.body,
+    }));
 }
 
 /** Best-effort: enriches open/draft entries in place with review-thread signal. */

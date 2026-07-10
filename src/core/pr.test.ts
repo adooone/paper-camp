@@ -2,7 +2,7 @@ import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { clearPrCache, resolvePrsByEntity } from './pr';
+import { clearPrCache, fetchUnresolvedThreads, resolvePrsByEntity } from './pr';
 
 /** Puts a fake `gh` on PATH that answers from `script` and counts invocations
  * (via a call-count file), so tests don't shell out to the real GitHub CLI. */
@@ -210,5 +210,39 @@ describe('resolvePrsByEntity', () => {
     expect(info?.unresolvedThreadCount).toBeUndefined();
     expect(info?.hasNewCommentsSincePush).toBeUndefined();
     expect(info?.state).toBe('open');
+  });
+});
+
+describe('fetchUnresolvedThreads', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  it('returns each unresolved thread as its first comment, skipping resolved ones', async () => {
+    const { root } = installFakeGh(`echo '{"data":{"repository":{"pullRequest":{
+      "reviewThreads":{"nodes":[
+        {"isResolved":true,"comments":{"nodes":[{"path":"a.ts","line":1,"body":"resolved","author":{"login":"bot"}}]}},
+        {"isResolved":false,"comments":{"nodes":[{"path":"b.ts","line":42,"body":"fix this","author":{"login":"reviewer"}}]}},
+        {"isResolved":false,"comments":{"nodes":[{"path":null,"line":null,"body":"general note","author":null}]}}
+      ]}
+    }}}}'`);
+    process.env.PATH = `${root}:${originalPath}`;
+
+    const threads = await fetchUnresolvedThreads(root, 'https://github.com/o/r/pull/1');
+    expect(threads).toEqual([
+      { path: 'b.ts', line: 42, author: 'reviewer', body: 'fix this' },
+      { body: 'general note' },
+    ]);
+  });
+
+  it('resolves an empty array when the url is not a GitHub PR url', async () => {
+    expect(await fetchUnresolvedThreads('/tmp', 'not-a-pr-url')).toEqual([]);
+  });
+
+  it('resolves an empty array when gh fails', async () => {
+    const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await fetchUnresolvedThreads(root, 'https://github.com/o/r/pull/2')).toEqual([]);
   });
 });

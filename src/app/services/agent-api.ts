@@ -90,6 +90,18 @@ export const launchRunAll = async (planId: string): Promise<void> => {
   }
 };
 
+export const launchFixReview = async (planId: string): Promise<void> => {
+  const response = await fetch('/api/agent/launch-fix-review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
+    throw new Error(err.error);
+  }
+};
+
 export const stopAgent = async (): Promise<void> => {
   const response = await fetch('/api/agent/stop', { method: 'POST' });
   if (!response.ok) {

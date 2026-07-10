@@ -1,7 +1,9 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fetchUnresolvedThreads, resolvePrsByEntity } from '../../../core/pr';
 import { entityToPlan, readEntities } from '../../../core/readers';
 import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry } from '../../../types/index';
+import { buildFixReviewPrompt } from '../../features/plans/prompts';
 import { campFile, checkBranchConflictForPlan, fileExists } from '../helpers';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
@@ -301,6 +303,46 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           return;
         }
         const result = agent.startRunAllPhases(plan, () => status.runChecksAndWait());
+        if (!result.ok) {
+          sendJson(res, 409, { error: result.error });
+          return;
+        }
+        sendJson(res, 202, { ok: true });
+      },
+    },
+
+    // POST /api/agent/launch-fix-review — fetch the plan's unresolved PR review
+    // threads via `gh api` and launch a headless agent to fix them on the plan's
+    // own (already checked-out) branch and push
+    {
+      method: 'POST',
+      path: '/api/agent/launch-fix-review',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { planId } = JSON.parse(reqBody) as { planId?: string };
+        if (!planId) {
+          sendJson(res, 400, { error: 'planId is required' });
+          return;
+        }
+        const plan = await findPlanById(root, planId);
+        if (!plan) {
+          sendJson(res, 404, { error: 'plan not found' });
+          return;
+        }
+        const conflict = await checkBranchConflictForPlan(root, git, plan.id);
+        if (conflict) {
+          sendJson(res, 409, { error: conflict });
+          return;
+        }
+        const prs = await resolvePrsByEntity(root);
+        const pr = prs?.get(planId);
+        if (!pr) {
+          sendJson(res, 404, { error: 'No PR found for this plan' });
+          return;
+        }
+        const threads = await fetchUnresolvedThreads(root, pr.url);
+        const prompt = buildFixReviewPrompt(plan, threads);
+        const result = await agent.startFixReview(plan, prompt);
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });
           return;
