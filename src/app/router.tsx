@@ -9,13 +9,7 @@ import {
 } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import {
-  CommitModal,
-  HeaderStatusCluster,
-  ProjectIdentityHeader,
-  SidebarShell,
-  StackPanel,
-} from './components';
+import { ProjectIdentityHeader, SidebarShell, StackPanel, StatusBar } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
@@ -87,7 +81,6 @@ const RootLayout = () => {
   const hasSidebar = isPlansArea || isDocsArea || pathname === '/settings';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [commitModalOpen, setCommitModalOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
 
@@ -135,14 +128,6 @@ const RootLayout = () => {
                 />
               )}
               <ProjectIdentityHeader size="sm" />
-              <HeaderStatusCluster
-                onOpenStack={() => {
-                  if (stackOpen) return;
-                  writeStoredStackOpen(true);
-                  setStackOpen(true);
-                }}
-                onOpenCommit={() => setCommitModalOpen(true)}
-              />
               <div className="flex-1" />
               <nav aria-label="Main navigation" className="flex items-center gap-1">
                 {navItems.map((item) => (
@@ -161,6 +146,20 @@ const RootLayout = () => {
             </>
           }
         >
+          {/* Full-width status strip under the header: ambient git/check glance
+              + quick actions. The Stack panel remains the control surface.
+              -32px top/sides bleeds it out of the Layout's 32px content padding
+              (paper-ui `.content`) so it sits flush under the header, edge to edge;
+              the 32px bottom margin restores the content's top padding below it. */}
+          <div style={{ margin: '-32px -32px 32px' }}>
+            <StatusBar
+              onOpenStack={() => {
+                if (stackOpen) return;
+                writeStoredStackOpen(true);
+                setStackOpen(true);
+              }}
+            />
+          </div>
           <div className="flex h-full min-h-0 justify-center items-stretch box-border overflow-hidden">
             {/* The sidebar + page form one group. On large screens it fills the
                 available width (page grows past 800) with a two-grid-cell margin on
@@ -235,7 +234,6 @@ const RootLayout = () => {
           setStackOpen(next);
         }}
       />
-      <CommitModal open={commitModalOpen} onClose={() => setCommitModalOpen(false)} />
     </ToastProvider>
   );
 };
