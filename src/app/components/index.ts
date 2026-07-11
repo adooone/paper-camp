@@ -1,4 +1,5 @@
 export { AddIdeaModal } from './add-idea-modal';
+export { CommitModal } from './commit-modal';
 export { HeaderStatusCluster } from './header-status-cluster';
 export { IntentButton } from './intent-button';
 export { LinkButton } from './link-button';

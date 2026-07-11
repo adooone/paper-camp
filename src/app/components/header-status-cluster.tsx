@@ -22,19 +22,23 @@ interface HeaderStatusClusterProps {
   // Opens the Stack panel so its full findings/agent-log detail is reachable —
   // the cluster stays a persistent summary, not a replacement for that detail.
   onOpenStack: () => void;
+  // Summons the commit Modal (IDEA-39 phase 4) — the commit form no longer
+  // lives in the Stack panel, so this is the only way to reach it.
+  onOpenCommit: () => void;
 }
 
 /**
  * Persistent header status cluster (IDEA-39): a Spinner while an agent task
- * runs, colored check Stamps, and a Tooltip+Menu for the run/fix/inspect
+ * runs, colored check Stamps, and a Tooltip+Menu for the commit/run/fix/inspect
  * actions. Reads the same store state the Stack panel does, so closing the
  * Stack never means flying blind — this is the ambient signal now, and it
  * supersedes the collapsed-rail spinner/red-dot IDEA-34 shipped.
  */
-export const HeaderStatusCluster = ({ onOpenStack }: HeaderStatusClusterProps) => {
+export const HeaderStatusCluster = ({ onOpenStack, onOpenCommit }: HeaderStatusClusterProps) => {
   const status = useAppStore((s) => s.status);
   const consistency = useAppStore((s) => s.consistency);
   const agentStatus = useAppStore((s) => s.agentStatus);
+  const gitStatus = useAppStore((s) => s.gitStatus);
   const runCheck = useAppStore((s) => s.runCheck);
   const fixQuality = useAppStore((s) => s.fixQuality);
 
@@ -61,7 +65,15 @@ export const HeaderStatusCluster = ({ onOpenStack }: HeaderStatusClusterProps) =
     agentStatus?.status === 'starting' ||
     agentStatus?.status === 'stopping';
 
+  const changedFileCount = gitStatus?.length ?? 0;
+
   const menuItems: MenuEntry[] = [
+    {
+      id: 'commit',
+      label: changedFileCount > 0 ? `Commit (${changedFileCount})` : 'Commit',
+      onSelect: onOpenCommit,
+    },
+    { id: 'sep-commit', type: 'separator' },
     {
       id: 'run-tests',
       label: 'Run tests',

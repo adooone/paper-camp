@@ -30,7 +30,7 @@ Scope boundaries: a "needs review" queue under the hero with inline Approve / Ne
       A persistent cluster in the `Layout` header (`router.tsx`'s `headerActions`, next to `ProjectIdentityHeader`): a `Spinner` while an agent task runs, colored `Stamp`s for the repo-health checks, and a `Tooltip` + `Menu` for actions (run tests, fix quality, view findings). State comes from the same stores the Stack panel reads today. Retire the collapsed-rail spinner/red-dot from IDEA-34 as the primary signal — the cluster is visible whether or not the Stack is open.
 - [x] Add the needs-review queue
       Under the hero, list plans with `status: review` with inline Approve (promote to `done` + archive, the existing review action) and Needs-changes buttons, reusing `plan-actions-column.tsx`'s handlers rather than duplicating them. The `/review` route has already been folded into the Plans page by IDEA-40's route-level scope.
-- [ ] Summon commit from the header
+- [x] Summon commit from the header
       Move the commit form (title, message, file list, the `findFocusPlan`-driven suggestion) out of the Stack panel into a `Modal` opened from the header cluster. Same store state and `/api` git calls; only the mount point changes.
 - [ ] Slim the Stack panel to a git/activity drawer
       With agent status, checks, and commit relocated, strip `stack-panel.tsx` down to the git/activity remainder (branch state, recent activity, findings detail). Remove now-dead sections and their store wiring rather than hiding them.

@@ -9,7 +9,13 @@ import {
 } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { HeaderStatusCluster, ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
+import {
+  CommitModal,
+  HeaderStatusCluster,
+  ProjectIdentityHeader,
+  SidebarShell,
+  StackPanel,
+} from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
@@ -81,6 +87,7 @@ const RootLayout = () => {
   const hasSidebar = isPlansArea || isDocsArea || pathname === '/settings';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [commitModalOpen, setCommitModalOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
 
@@ -134,6 +141,7 @@ const RootLayout = () => {
                   writeStoredStackOpen(true);
                   setStackOpen(true);
                 }}
+                onOpenCommit={() => setCommitModalOpen(true)}
               />
               <div className="flex-1" />
               <nav aria-label="Main navigation" className="flex items-center gap-1">
@@ -227,6 +235,7 @@ const RootLayout = () => {
           setStackOpen(next);
         }}
       />
+      <CommitModal open={commitModalOpen} onClose={() => setCommitModalOpen(false)} />
     </ToastProvider>
   );
 };
