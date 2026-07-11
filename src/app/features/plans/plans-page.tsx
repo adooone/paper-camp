@@ -8,11 +8,13 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { DeleteIdeaModal } from './components/delete-idea-modal';
 import { EntityDetail } from './components/entity-detail';
+import { FocusPlanHero } from './components/focus-plan-hero';
 import { ListView } from './components/list-view';
 import { NoteDetail } from './components/note-detail';
 import { PlansHeader } from './components/plans-header';
 import { PlansListSkeleton } from './components/plans-list-skeleton';
 import { ReconcileQueueReview } from './components/reconcile-queue-review';
+import { findFocusPlan } from './helpers';
 import { selectWorklistRows } from './plan-list-selector';
 
 export const PlansPage = () => {
@@ -75,7 +77,11 @@ export const PlansPage = () => {
     );
   }
 
-  const { rows } = selectWorklistRows(plans.entries, ideaEntries, planFilters);
+  const focusPlan = findFocusPlan(plans.entries);
+  const worklistEntries = focusPlan
+    ? plans.entries.filter((p) => p.title !== focusPlan.title)
+    : plans.entries;
+  const { rows } = selectWorklistRows(worklistEntries, ideaEntries, planFilters);
 
   // The reconcile review queue is a self-contained modal driven by store state,
   // not by which branch is active — render it once above the branching so it
@@ -110,6 +116,8 @@ export const PlansPage = () => {
       ) : (
         <div>
           <PlansHeader />
+
+          <FocusPlanHero plan={focusPlan} onOpenPlan={handleOpenPlan} />
 
           {plans.warnings.length > 0 && (
             <Card size="small" accent accentColor="amber">

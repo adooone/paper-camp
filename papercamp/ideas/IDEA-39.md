@@ -24,7 +24,7 @@ During a work session the questions that matter — what is the agent doing, are
 Scope boundaries: a "needs review" queue under the hero with inline Approve / Needs-changes replaces most trips to the `/review` page — the route-level merge of `/review` into the Plans page is [[IDEA-40]]'s scope, now landed, and per its own note this plan owns only the inline queue. [[IDEA-33]]'s Toast/Tooltip adoption has landed ([[FEAT-35]]), so the cluster follows those established idioms rather than inventing new ones. Nothing blocks this: [[IDEA-34]]'s header and the [[IDEA-32]] bump have both shipped.
 
 ### Phases
-- [ ] Render the focus plan hero card
+- [x] Render the focus plan hero card
       Lead the Plans landing with the `findFocusPlan` pick as a hero `Card`: title, status, the `### Phases` checklist with the next unchecked phase highlighted, the progress bar, and the run/audit/clarify controls inline (reusing `agent-start-button.tsx`, `audit-phases-button.tsx` & co. from `entity-detail.tsx`). The dense rows from FEAT-37 stay below, minus the hero plan so it isn't listed twice; when no plan is in flight, collapse the hero to a one-line "no active plan" strip rather than an empty box.
 - [ ] Build the ambient header status cluster
       A persistent cluster in the `Layout` header (`router.tsx`'s `headerActions`, next to `ProjectIdentityHeader`): a `Spinner` while an agent task runs, colored `Stamp`s for the repo-health checks, and a `Tooltip` + `Menu` for actions (run tests, fix quality, view findings). State comes from the same stores the Stack panel reads today. Retire the collapsed-rail spinner/red-dot from IDEA-34 as the primary signal — the cluster is visible whether or not the Stack is open.
