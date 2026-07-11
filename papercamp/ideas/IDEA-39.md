@@ -2,7 +2,9 @@
 id: IDEA-39
 title: Build the focus cockpit
 type: feat
+status: review
 created: 2026-07-04
+updated: 2026-07-11
 tags:
   - app
   - ui
