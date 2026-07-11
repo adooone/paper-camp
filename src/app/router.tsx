@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
+import { HeaderStatusCluster, ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
@@ -128,6 +128,13 @@ const RootLayout = () => {
                 />
               )}
               <ProjectIdentityHeader size="sm" />
+              <HeaderStatusCluster
+                onOpenStack={() => {
+                  if (stackOpen) return;
+                  writeStoredStackOpen(true);
+                  setStackOpen(true);
+                }}
+              />
               <div className="flex-1" />
               <nav aria-label="Main navigation" className="flex items-center gap-1">
                 {navItems.map((item) => (

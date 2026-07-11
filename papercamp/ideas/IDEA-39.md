@@ -26,7 +26,7 @@ Scope boundaries: a "needs review" queue under the hero with inline Approve / Ne
 ### Phases
 - [x] Render the focus plan hero card
       Lead the Plans landing with the `findFocusPlan` pick as a hero `Card`: title, status, the `### Phases` checklist with the next unchecked phase highlighted, the progress bar, and the run/audit/clarify controls inline (reusing `agent-start-button.tsx`, `audit-phases-button.tsx` & co. from `entity-detail.tsx`). The dense rows from FEAT-37 stay below, minus the hero plan so it isn't listed twice; when no plan is in flight, collapse the hero to a one-line "no active plan" strip rather than an empty box.
-- [ ] Build the ambient header status cluster
+- [x] Build the ambient header status cluster
       A persistent cluster in the `Layout` header (`router.tsx`'s `headerActions`, next to `ProjectIdentityHeader`): a `Spinner` while an agent task runs, colored `Stamp`s for the repo-health checks, and a `Tooltip` + `Menu` for actions (run tests, fix quality, view findings). State comes from the same stores the Stack panel reads today. Retire the collapsed-rail spinner/red-dot from IDEA-34 as the primary signal — the cluster is visible whether or not the Stack is open.
 - [ ] Add the needs-review queue
       Under the hero, list plans with `status: review` with inline Approve (promote to `done` + archive, the existing review action) and Needs-changes buttons, reusing `plan-actions-column.tsx`'s handlers rather than duplicating them. The `/review` route has already been folded into the Plans page by IDEA-40's route-level scope.

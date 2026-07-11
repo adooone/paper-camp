@@ -16,7 +16,6 @@ import {
   Divider,
   IconButton,
   Input,
-  Spinner,
   Stamp,
   Textarea,
   Tooltip,
@@ -244,15 +243,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   // Plan/decision *document* consistency (dangling refs, blocked plans) — a separate
   // concern from the code-consistency check, surfaced in its own "Docs" stamp.
   const hasDocIssues = consistency.length > 0;
-  const anyChecksFailing =
-    qualityStatus === 'fail' ||
-    testStatus === 'fail' ||
-    consistencyStatus === 'fail' ||
-    hasDocIssues;
-  const agentActive =
-    agentStatus?.status === 'running' ||
-    agentStatus?.status === 'starting' ||
-    agentStatus?.status === 'stopping';
 
   const suggestedScope = useMemo(() => {
     // Scope is a subsystem area, never the plan id. Prefer the plan's first tag
@@ -429,44 +419,19 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
               boxShadow: '-2px 0 8px rgba(0,0,0,0.15)',
             }}
           >
+            {/* Plain reopen handle — the header status cluster (IDEA-39) is now the
+                persistent ambient signal for agent/check state, so this no longer
+                doubles as one. */}
             <IconButton
-              icon={
-                agentActive ? (
-                  <Spinner size="small" surface="chalkboard" label="Agent running" />
-                ) : anyChecksFailing ? (
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: '#d6a0a0',
-                      boxShadow: '0 0 6px rgba(214, 160, 160, 0.9)',
-                    }}
-                  />
-                ) : (
-                  <span style={{ fontSize: fontSize['2xs'] }}>S</span>
-                )
-              }
+              icon={<span style={{ fontSize: fontSize['2xs'] }}>S</span>}
               surface="chalkboard"
               size="small"
-              label={
-                agentActive
-                  ? 'Open stack panel — agent running'
-                  : anyChecksFailing
-                    ? 'Open stack panel — checks failing'
-                    : 'Open stack panel'
-              }
+              label="Open stack panel"
               onClick={onToggle}
               style={{
                 width: 28,
                 height: 64,
                 borderRadius: '6px 0 0 6px',
-                boxShadow: agentActive
-                  ? 'inset 0 0 0 1px rgba(214, 196, 160, 0.6)'
-                  : anyChecksFailing
-                    ? 'inset 0 0 0 1px rgba(214, 160, 160, 0.6)'
-                    : undefined,
               }}
             />
           </motion.div>
