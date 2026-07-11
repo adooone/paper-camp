@@ -193,18 +193,3 @@ header[class*="layout-module__header___"] {
   gap: 0.625rem;
   align-items: center;
 }
-
-/*
- * The Status card's Quality/Tests/Consistency stamps are plain <button>s that
- * launch check runs on click, but paper-ui's Stamp has no interactive states of
- * its own — so this supplies the hover/pressed affordance that tells people
- * they're clickable, not just status labels.
- */
-.stack-check-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.15);
-}
-.stack-check-btn:active:not(:disabled) {
-  transform: translateY(0);
-  filter: brightness(0.95);
-}

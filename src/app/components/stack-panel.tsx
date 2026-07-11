@@ -1,25 +1,9 @@
 import { color, fontFamily, fontSize, layout, lineHeight, space } from '@/app/styles/tokens';
-import {
-  AGENT_LABELS,
-  type AgentTaskStatus,
-  type CheckStatus,
-  type ConsistencyIssue,
-  type TaskKind,
-} from '@/types/index';
-import {
-  Accordion,
-  Button,
-  Card,
-  CloseIcon,
-  CopyButton,
-  Divider,
-  IconButton,
-  Stamp,
-  Tooltip,
-} from '@dendelion/paper-ui';
+import type { CheckStatus, ConsistencyIssue } from '@/types/index';
+import { Card, CopyButton, Divider, IconButton, Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppStore } from '../stores/app-store';
 import { summarizeQualityFailure, summarizeTestFailure } from '../utils/check-summary';
 
@@ -51,21 +35,20 @@ const sectionLabelStyle: React.CSSProperties = {
 export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) => {
   const isOpen = open || pinned;
   const plans = useAppStore((s) => s.plans);
+  const progress = useAppStore((s) => s.progress);
   const loadProgress = useAppStore((s) => s.loadProgress);
   const loadPlans = useAppStore((s) => s.loadPlans);
   const statusData = useAppStore((s) => s.status);
   const loadStatus = useAppStore((s) => s.loadStatus);
-  const runCheck = useAppStore((s) => s.runCheck);
   const fixQuality = useAppStore((s) => s.fixQuality);
   const consistency = useAppStore((s) => s.consistency);
   const loadConsistency = useAppStore((s) => s.loadConsistency);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
+  const gitStatus = useAppStore((s) => s.gitStatus);
+  const gitBranch = useAppStore((s) => s.gitBranch);
+  const gitAhead = useAppStore((s) => s.gitAhead);
+  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
-  const agentStatus = useAppStore((s) => s.agentStatus);
-  const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
-  const stopAgentTask = useAppStore((s) => s.stopAgent);
-  const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
-  const [agentLogExpanded, setAgentLogExpanded] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   const navigate = useNavigate();
   const refreshRef = useRef({
@@ -74,7 +57,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     loadStatus,
     loadConsistency,
     loadGitStatus,
-    loadAgentStatus,
   });
   refreshRef.current = {
     loadProgress,
@@ -82,7 +64,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     loadStatus,
     loadConsistency,
     loadGitStatus,
-    loadAgentStatus,
   };
 
   useEffect(() => {
@@ -90,7 +71,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     refreshRef.current.loadStatus();
     refreshRef.current.loadConsistency();
     refreshRef.current.loadGitStatus();
-    refreshRef.current.loadAgentStatus();
   }, []);
 
   useEffect(() => {
@@ -101,7 +81,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       refreshRef.current.loadStatus();
       refreshRef.current.loadConsistency();
       refreshRef.current.loadGitStatus();
-      refreshRef.current.loadAgentStatus();
     };
     return () => es.close();
   }, []);
@@ -120,7 +99,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   const anyChecksRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
   // Plan/decision *document* consistency (dangling refs, blocked plans) — a separate
-  // concern from the code-consistency check, surfaced in its own "Docs" stamp.
+  // concern from the code-consistency check.
   const hasDocIssues = consistency.length > 0;
 
   const handleFindingClick = useCallback(
@@ -261,169 +240,56 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
               padding: space[6],
             }}
           >
-            <div style={sectionLabelStyle}>Agent</div>
+            <div style={sectionLabelStyle}>Branch</div>
             <Card surface="chalkboard" size="small" className="stack-card-fill">
-              {agentStatus ? (
-                <div
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: space[2],
+                  alignItems: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                <span
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: '100%',
-                    minHeight: 0,
+                    fontFamily: fontFamily.mono,
+                    fontSize: fontSize.sm,
+                    color: deskChalk,
                   }}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: space[2],
-                      marginBottom: space[1],
-                      flexShrink: 0,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: fontFamily.serif,
-                        fontWeight: 600,
-                        fontSize: fontSize.sm,
-                        color: deskChalk,
-                        // minWidth: 0 lets this flex item shrink below its content
-                        // width — without it overflow/ellipsis never triggers.
-                        minWidth: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {agentStatus.planTitle}
-                      {agentStatus.taskKind === 'phase' && agentStatus.phaseIndex !== undefined
-                        ? ` — phase ${agentStatus.phaseIndex + 1}`
-                        : agentStatus.taskKind === 'audit'
-                          ? ' — audit'
-                          : agentStatus.taskKind === 'batch-reconcile'
-                            ? ' — batch reconcile'
-                            : agentStatus.taskKind === 'reconcile'
-                              ? ' — reconcile'
-                              : agentStatus.taskKind === 'fix-review'
-                                ? ' — fixing review comments'
-                                : agentStatus.taskKind === 'draft'
-                                  ? ' — drafting'
-                                  : agentStatus.taskKind === 'extend'
-                                    ? ' — extending'
-                                    : agentStatus.taskKind === 'commit-suggest'
-                                      ? ' — suggesting commit message'
-                                      : agentStatus.taskKind === 'overlap-check'
-                                        ? ' — checking overlap'
-                                        : agentStatus.taskKind === 'sync'
-                                          ? ' — syncing to main'
-                                          : agentStatus.taskKind === 'run-all'
-                                            ? ' — run all phases'
-                                            : ''}{' '}
-                      · {AGENT_LABELS[agentStatus.agentId]}
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-                      {(() => {
-                        const statusFill: Record<AgentTaskStatus, string> = {
-                          starting: '#5a4a2d',
-                          running: '#5a4a2d',
-                          stopping: '#5a4a2d',
-                          done: '#2d5a3b',
-                          error: '#5a2d2d',
-                        };
-                        const statusText: Record<AgentTaskStatus, string> = {
-                          starting: '#d6c4a0',
-                          running: '#d6c4a0',
-                          stopping: '#d6c4a0',
-                          done: '#b5d6b5',
-                          error: '#d6a0a0',
-                        };
-                        return (
-                          <Stamp
-                            surface="chalkboard"
-                            size="small"
-                            fillColor={statusFill[agentStatus.status]}
-                            textColor={statusText[agentStatus.status]}
-                          >
-                            {agentStatus.status}
-                          </Stamp>
-                        );
-                      })()}
-                      {(agentStatus.status === 'running' ||
-                        agentStatus.status === 'starting' ||
-                        agentStatus.status === 'stopping') && (
-                        <IconButton
-                          icon={<CloseIcon />}
-                          variant="ghost"
-                          size="small"
-                          label="Stop agent"
-                          onClick={stopAgentTask}
-                          disabled={agentStatus.status === 'stopping'}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  {agentStatus.lines.length > 0 && (
-                    <>
-                      <span
-                        style={{
-                          fontFamily: fontFamily.mono,
-                          fontSize: fontSize['2xs'],
-                          color: deskTextMuted,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          marginBottom: space[2],
-                          flexShrink: 0,
-                        }}
-                      >
-                        {agentStatus.lines[agentStatus.lines.length - 1]}
-                      </span>
-                      <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
-                        <Accordion
-                          title={`${agentStatus.lines.length} line${agentStatus.lines.length === 1 ? '' : 's'}`}
-                          expanded={agentLogExpanded}
-                          onToggle={() => setAgentLogExpanded(!agentLogExpanded)}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: space[1],
-                              fontFamily: fontFamily.mono,
-                              fontSize: fontSize['2xs'],
-                              color: deskTextMuted,
-                              paddingTop: space[2],
-                              maxHeight: 160,
-                              overflowY: 'auto',
-                            }}
-                          >
-                            {agentStatus.lines.map((line, i) => (
-                              <span key={`${i}-${line}`} style={{ whiteSpace: 'pre-wrap' }}>
-                                {line}
-                              </span>
-                            ))}
-                          </div>
-                        </Accordion>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : (
+                  {gitBranch ?? 'unknown'}
+                </span>
                 <div
                   style={{
-                    flex: 1,
-                    minHeight: 0,
                     display: 'flex',
-                    alignItems: 'center',
+                    gap: space[2],
+                    flexWrap: 'wrap',
                     justifyContent: 'center',
                   }}
                 >
-                  <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>
-                    No agent running.
-                  </p>
+                  {gitStatus && gitStatus.length > 0 && (
+                    <Stamp surface="chalkboard" size="small">
+                      {gitStatus.length} changed
+                    </Stamp>
+                  )}
+                  {gitAhead > 0 && (
+                    <Stamp surface="chalkboard" size="small">
+                      {gitAhead} ahead
+                    </Stamp>
+                  )}
+                  {gitBranchHygiene === 'stale-merged' && (
+                    <Stamp
+                      surface="chalkboard"
+                      size="small"
+                      fillColor="#5a4a2d"
+                      textColor="#d6c4a0"
+                    >
+                      stale — merged
+                    </Stamp>
+                  )}
                 </div>
-              )}
+              </div>
             </Card>
           </div>
           <Divider surface="chalkboard" />
@@ -436,74 +302,10 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
               padding: space[6],
             }}
           >
-            <div style={sectionLabelStyle}>Status</div>
+            <div style={sectionLabelStyle}>Findings</div>
             <Card surface="chalkboard" size="small" className="stack-card-fill">
               {(() => {
-                const statusFill: Record<CheckStatus, string> = {
-                  pass: '#2d5a3b',
-                  fail: '#5a2d2d',
-                  running: '#5a4a2d',
-                  stale: 'transparent',
-                };
-                const statusText: Record<CheckStatus, string | undefined> = {
-                  pass: '#b5d6b5',
-                  fail: '#d6a0a0',
-                  running: '#d6c4a0',
-                  stale: undefined,
-                };
-                const anyRunning = anyChecksRunning;
-                const hasIssues = hasDocIssues;
-
-                const qualityFixPrompt = `Fix the failing lint/format checks in this repo.\n\nLint output:\n${statusData?.lint?.output || '(none)'}\n\nFormat output:\n${statusData?.format?.output || '(none)'}`;
                 const testFixPrompt = `Fix the failing tests in this repo. Output from the last test run:\n\n${statusData?.test?.output || '(no output captured)'}`;
-
-                // One shape for the three check-run stamps (Quality / Tests / Consistency),
-                // each a click-to-run button colored by its check status. Extracted per the
-                // repo's "3 copies = extract" rule; the Docs stamp below is a different shape
-                // (a findings toggle) and stays separate.
-                const checkButton = (opts: {
-                  label: string;
-                  status: CheckStatus;
-                  title: string;
-                  onClick: () => void;
-                }) => (
-                  <Tooltip content={opts.title} surface="chalkboard">
-                    {/* Raw <button>, not paper-ui Button/IconButton: the clickable target
-                        is a Stamp with its own chalkboard chrome, so we need a bare,
-                        chrome-less button wrapping it rather than a component that draws
-                        its own button surface. */}
-                    <button
-                      type="button"
-                      className="stack-check-btn"
-                      onClick={() => {
-                        if (!anyRunning) opts.onClick();
-                      }}
-                      disabled={anyRunning}
-                      style={{
-                        cursor: anyRunning ? 'not-allowed' : 'pointer',
-                        opacity: anyRunning && opts.status !== 'running' ? 0.5 : 1,
-                        display: 'inline-flex',
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                      }}
-                    >
-                      <Stamp
-                        surface="chalkboard"
-                        size="small"
-                        fillColor={statusFill[opts.status]}
-                        textColor={statusText[opts.status]}
-                      >
-                        {opts.label}
-                        <span
-                          style={{ visibility: opts.status === 'running' ? 'visible' : 'hidden' }}
-                        >
-                          …
-                        </span>
-                      </Stamp>
-                    </button>
-                  </Tooltip>
-                );
 
                 return (
                   <div
@@ -515,118 +317,10 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
                       gap: space[3],
                     }}
                   >
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: space[2],
-                        flexWrap: 'wrap',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {checkButton({
-                        label: 'Quality',
-                        status: qualityStatus,
-                        title: 'Run lint and format checks',
-                        onClick: () => {
-                          runCheck('lint');
-                          runCheck('format');
-                        },
-                      })}
-                      {checkButton({
-                        label: 'Tests',
-                        status: testStatus,
-                        title: 'Run tests',
-                        onClick: () => runCheck('test'),
-                      })}
-                      {checkButton({
-                        label: 'Consistency',
-                        status: consistencyStatus,
-                        title: 'Run codebase consistency (knip + dependency-cruiser)',
-                        onClick: () => runCheck('consistency'),
-                      })}
-                      <div>
-                        <Tooltip
-                          content={
-                            hasIssues
-                              ? 'Show plan/decision doc findings'
-                              : 'No plan/decision doc findings'
-                          }
-                          surface="chalkboard"
-                        >
-                          {/* Raw <button> for the same reason as the check stamps above:
-                              the clickable target is a Stamp, so no paper-ui Button/IconButton
-                              equivalent fits. */}
-                          <button
-                            type="button"
-                            className={hasIssues ? 'stack-check-btn' : undefined}
-                            onClick={() => {
-                              if (hasIssues) setDocIssuesExpanded((prev) => !prev);
-                            }}
-                            style={{
-                              cursor: hasIssues ? 'pointer' : 'default',
-                              display: 'inline-flex',
-                              background: 'none',
-                              border: 'none',
-                              padding: 0,
-                            }}
-                          >
-                            <Stamp
-                              surface="chalkboard"
-                              size="small"
-                              fillColor={hasIssues ? '#5a2d2d' : '#2d5a3b'}
-                              textColor={hasIssues ? '#d6a0a0' : '#b5d6b5'}
-                            >
-                              Docs
-                            </Stamp>
-                          </button>
-                        </Tooltip>
-                        {docIssuesExpanded && hasIssues && (
-                          <div
-                            style={{
-                              marginTop: space[2],
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: space[2],
-                            }}
-                          >
-                            {consistency.map((issue, i) => (
-                              <div
-                                key={`${issue.kind}-${issue.title}-${i}`}
-                                style={{
-                                  fontFamily: fontFamily.mono,
-                                  fontSize: fontSize['2xs'],
-                                  color: deskTextMuted,
-                                }}
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => handleFindingClick(issue)}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    padding: 0,
-                                    color: deskChalk,
-                                    textDecoration: 'underline',
-                                    cursor: 'pointer',
-                                    font: 'inherit',
-                                    textAlign: 'left',
-                                  }}
-                                >
-                                  {issue.message}
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
                     {(() => {
-                      // Exactly one (primaryLine, secondaryLine) pair per state, so this
-                      // slot is always exactly two lines tall — never fewer, never more —
-                      // and the stamps row above never recenters when state changes.
                       let primaryLine: React.ReactNode;
                       let secondaryLine: React.ReactNode = null;
-                      if (anyRunning) {
+                      if (anyChecksRunning) {
                         primaryLine = <span style={{ color: deskTextMuted }}>Running checks…</span>;
                       } else if (qualityStatus === 'fail') {
                         primaryLine = (
@@ -679,7 +373,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
                       } else if (hasDocIssues) {
                         primaryLine = (
                           <span style={{ color: deskTextMuted }}>
-                            Plan/decision doc issues — see the Docs stamp.
+                            Plan/decision doc issues — see below.
                           </span>
                         );
                       } else if (
@@ -708,15 +402,123 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
                         >
                           {primaryLine}
                           <span style={{ visibility: secondaryLine ? 'visible' : 'hidden' }}>
-                            {secondaryLine ?? ' '}
+                            {secondaryLine ?? ' '}
                           </span>
                         </div>
                       );
                     })()}
+                    {hasDocIssues && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: space[2],
+                        }}
+                      >
+                        {consistency.map((issue, i) => (
+                          <div
+                            key={`${issue.kind}-${issue.title}-${i}`}
+                            style={{
+                              fontFamily: fontFamily.mono,
+                              fontSize: fontSize['2xs'],
+                              color: deskTextMuted,
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => handleFindingClick(issue)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
+                                color: deskChalk,
+                                textDecoration: 'underline',
+                                cursor: 'pointer',
+                                font: 'inherit',
+                                textAlign: 'left',
+                              }}
+                            >
+                              {issue.message}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
             </Card>
+          </div>
+          <Divider surface="chalkboard" />
+
+          <div
+            style={{
+              flex: '1 1 auto',
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              padding: space[6],
+              overflow: 'hidden',
+            }}
+          >
+            <div style={sectionLabelStyle}>Activity</div>
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+              {progress.length === 0 ? (
+                <p style={{ opacity: 0.5, fontSize: fontSize.xs }}>No activity yet.</p>
+              ) : (
+                progress.map((entry, i) => (
+                  <div
+                    key={entry.date}
+                    style={{
+                      marginBottom: space[6],
+                      paddingBottom: space[4],
+                      borderBottom: i < progress.length - 1 ? `1px solid ${deskBorder}` : undefined,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: fontFamily.serif,
+                        fontWeight: 600,
+                        fontSize: fontSize.sm,
+                        color: deskChalk,
+                        margin: `0 0 ${space[2]}`,
+                        lineHeight: lineHeight.tight,
+                      }}
+                    >
+                      {entry.date}
+                    </div>
+                    <ul
+                      style={{
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: space[2],
+                      }}
+                    >
+                      {entry.items.map((item, j) => (
+                        <li
+                          key={`${entry.date}-${j}`}
+                          style={{
+                            fontFamily: fontFamily.handwritten,
+                            fontSize: fontSize.base,
+                            fontWeight: 400,
+                            lineHeight: lineHeight.tight,
+                            color: deskText,
+                            paddingLeft: space[3],
+                            borderLeft: `2px solid ${deskBorder}`,
+                            opacity: 0.9,
+                          }}
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </motion.div>

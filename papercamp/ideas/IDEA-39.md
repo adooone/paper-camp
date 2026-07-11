@@ -32,7 +32,7 @@ Scope boundaries: a "needs review" queue under the hero with inline Approve / Ne
       Under the hero, list plans with `status: review` with inline Approve (promote to `done` + archive, the existing review action) and Needs-changes buttons, reusing `plan-actions-column.tsx`'s handlers rather than duplicating them. The `/review` route has already been folded into the Plans page by IDEA-40's route-level scope.
 - [x] Summon commit from the header
       Move the commit form (title, message, file list, the `findFocusPlan`-driven suggestion) out of the Stack panel into a `Modal` opened from the header cluster. Same store state and `/api` git calls; only the mount point changes.
-- [ ] Slim the Stack panel to a git/activity drawer
+- [x] Slim the Stack panel to a git/activity drawer
       With agent status, checks, and commit relocated, strip `stack-panel.tsx` down to the git/activity remainder (branch state, recent activity, findings detail). Remove now-dead sections and their store wiring rather than hiding them.
 - [ ] Type-check and visual pass
       `tsc --noEmit`, `biome check`, full test suite, and a browser pass over the hero card, header cluster states (idle / agent running / checks failing), review queue, commit modal, and slimmed Stack at laptop and narrow widths — flag for a human if the session is headless.
