@@ -6,6 +6,7 @@ import { AGENT_IDS, AGENT_LABELS, type AgentId } from '@/types/index';
 import { Card, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
+import { FixReviewButton } from './fix-review-button';
 import { RunAllPhasesButton } from './run-all-phases-button';
 
 const sectionLabelStyle: React.CSSProperties = {
@@ -43,6 +44,11 @@ export const PlanActionsColumn = () => {
   const dropped = plan.status === 'dropped';
   const hasUnchecked = plan.phases.some((p) => !p.done);
   const canRunAll = (plan.status === 'planned' || inProgress) && hasUnchecked;
+  const canFixReview = Boolean(
+    plan.pr &&
+      (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
+      plan.pr.unresolvedThreadCount,
+  );
 
   const patch = async (updates: Parameters<typeof updatePlan>[1]) => {
     setUpdating(true);
@@ -108,6 +114,7 @@ export const PlanActionsColumn = () => {
             <div style={sectionLabelStyle}>Actions</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
               {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy} />}
+              {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy} />}
 
               {underReview && (
                 // Done normally derives from the PR merging (IDEA-56); this is the

@@ -28,12 +28,13 @@ export const AuditPhasesButton = ({ plan, disabled }: AuditPhasesButtonProps) =>
   return (
     <Tooltip content={plan.id ? undefined : 'Plan needs an ID before an agent can run'}>
       <Button
-        variant="secondary"
+        variant="primary"
+        className="accent-button-green"
         size="small"
         onClick={handleClick}
         disabled={disabled || launching || !plan.id}
       >
-        Audit phases against code
+        Audit
       </Button>
     </Tooltip>
   );

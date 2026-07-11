@@ -2,7 +2,7 @@ import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { clearPrCache, resolvePrsByEntity } from './pr';
+import { clearPrCache, fetchUnresolvedThreads, resolvePrsByEntity } from './pr';
 
 /** Puts a fake `gh` on PATH that answers from `script` and counts invocations
  * (via a call-count file), so tests don't shell out to the real GitHub CLI. */
@@ -18,6 +18,17 @@ function installFakeGh(script: string): { root: string; callCount: () => number 
   return { root, callCount: () => Number.parseInt(readFileSync(countFile, 'utf-8').trim(), 10) };
 }
 
+/** Like `installFakeGh`, but dispatches on the subcommand: `gh pr ...` answers
+ * with `prListScript`, `gh api ...` (the review-signal enrichment call) with
+ * `apiScript` — defaults to a harmless empty-PR response so tests that don't
+ * care about enrichment aren't affected by it firing for open/draft rows. */
+function installFakeGhDispatch(
+  prListScript: string,
+  apiScript = `echo '{"data":{"repository":{"pullRequest":null}}}'`,
+): { root: string; callCount: () => number } {
+  return installFakeGh(`if [ "$1" = "api" ]; then\n${apiScript}\nelse\n${prListScript}\nfi`);
+}
+
 interface Row {
   number: number;
   url: string;
@@ -25,6 +36,7 @@ interface Row {
   isDraft: boolean;
   headRefName: string;
   body: string;
+  reviewDecision: string;
 }
 const row = (o: Partial<Row>): Row => ({
   number: 1,
@@ -33,6 +45,7 @@ const row = (o: Partial<Row>): Row => ({
   isDraft: false,
   headRefName: '',
   body: '',
+  reviewDecision: '',
   ...o,
 });
 
@@ -43,8 +56,8 @@ describe('resolvePrsByEntity', () => {
     process.env.PATH = originalPath;
   });
 
-  const withGh = (rows: Row[]) => {
-    const { root, callCount } = installFakeGh(`echo '${JSON.stringify(rows)}'`);
+  const withGh = (rows: Row[], apiScript?: string) => {
+    const { root, callCount } = installFakeGhDispatch(`echo '${JSON.stringify(rows)}'`, apiScript);
     process.env.PATH = `${root}:${originalPath}`;
     return { root, callCount };
   };
@@ -113,5 +126,123 @@ describe('resolvePrsByEntity', () => {
     expect(await resolvePrsByEntity(root, 1000 * 60)).toBeUndefined();
     expect(await resolvePrsByEntity(root, 1000 * 60)).toBeUndefined();
     expect(callCount()).toBe(2);
+  });
+
+  it('maps reviewDecision straight from the list pass, no gh api call needed', async () => {
+    const { root, callCount } = withGh(
+      [
+        row({
+          number: 9,
+          url: 'https://github.com/o/r/pull/9',
+          state: 'OPEN',
+          body: '**Plan:** `IDEA-9`',
+          reviewDecision: 'CHANGES_REQUESTED',
+        }),
+      ],
+      `echo 'boom' >&2 && exit 1`,
+    );
+    const prs = await resolvePrsByEntity(root);
+    expect(prs?.get('IDEA-9')?.reviewDecision).toBe('changes-requested');
+    // The gh api call still happens (thread/activity signal), but reviewDecision itself
+    // didn't need it — confirm the failing fake api script didn't wipe the mapped value.
+    expect(callCount()).toBe(2);
+  });
+
+  it('omits reviewDecision when gh reports no decision yet', async () => {
+    const { root } = withGh([
+      row({ url: 'https://github.com/o/r/pull/1', body: '**Plan:** `IDEA-3`', reviewDecision: '' }),
+    ]);
+    const prs = await resolvePrsByEntity(root);
+    expect(prs?.get('IDEA-3')?.reviewDecision).toBeUndefined();
+  });
+
+  it('fetches unresolved thread count and push-activity signal for open/draft PRs via gh api', async () => {
+    const apiScript = `echo '{"data":{"repository":{"pullRequest":{
+      "reviewThreads":{"nodes":[{"isResolved":true},{"isResolved":false},{"isResolved":false}]},
+      "commits":{"nodes":[{"commit":{"committedDate":"2026-07-01T00:00:00Z"}}]},
+      "comments":{"nodes":[{"createdAt":"2026-07-02T00:00:00Z"}]},
+      "reviews":{"nodes":[]}
+    }}}}'`;
+    const { root } = withGh(
+      [row({ url: 'https://github.com/o/r/pull/4', body: '**Plan:** `IDEA-4`' })],
+      apiScript,
+    );
+    const prs = await resolvePrsByEntity(root);
+    const info = prs?.get('IDEA-4');
+    expect(info?.unresolvedThreadCount).toBe(2);
+    expect(info?.hasNewCommentsSincePush).toBe(true);
+  });
+
+  it('reports no new comments when the last push is after the last comment/review', async () => {
+    const apiScript = `echo '{"data":{"repository":{"pullRequest":{
+      "reviewThreads":{"nodes":[]},
+      "commits":{"nodes":[{"commit":{"committedDate":"2026-07-05T00:00:00Z"}}]},
+      "comments":{"nodes":[{"createdAt":"2026-07-02T00:00:00Z"}]},
+      "reviews":{"nodes":[{"createdAt":"2026-07-01T00:00:00Z"}]}
+    }}}}'`;
+    const { root } = withGh(
+      [row({ url: 'https://github.com/o/r/pull/5', body: '**Plan:** `IDEA-5`' })],
+      apiScript,
+    );
+    const prs = await resolvePrsByEntity(root);
+    const info = prs?.get('IDEA-5');
+    expect(info?.unresolvedThreadCount).toBe(0);
+    expect(info?.hasNewCommentsSincePush).toBe(false);
+  });
+
+  it('does not fetch review-thread signal for merged/closed PRs', async () => {
+    const { root, callCount } = withGh(
+      [row({ url: 'https://github.com/o/r/pull/6', state: 'MERGED', body: '**Plan:** `IDEA-6`' })],
+      `echo 'boom' >&2 && exit 1`,
+    );
+    const prs = await resolvePrsByEntity(root);
+    expect(prs?.get('IDEA-6')?.unresolvedThreadCount).toBeUndefined();
+    expect(callCount()).toBe(1);
+  });
+
+  it('leaves review-thread signal undefined when the gh api enrichment call fails', async () => {
+    const { root } = withGh(
+      [row({ url: 'https://github.com/o/r/pull/8', body: '**Plan:** `IDEA-8`' })],
+      `echo 'boom' >&2 && exit 1`,
+    );
+    const prs = await resolvePrsByEntity(root);
+    const info = prs?.get('IDEA-8');
+    expect(info?.unresolvedThreadCount).toBeUndefined();
+    expect(info?.hasNewCommentsSincePush).toBeUndefined();
+    expect(info?.state).toBe('open');
+  });
+});
+
+describe('fetchUnresolvedThreads', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  it('returns each unresolved thread as its first comment, skipping resolved ones', async () => {
+    const { root } = installFakeGh(`echo '{"data":{"repository":{"pullRequest":{
+      "reviewThreads":{"nodes":[
+        {"isResolved":true,"comments":{"nodes":[{"path":"a.ts","line":1,"body":"resolved","author":{"login":"bot"}}]}},
+        {"isResolved":false,"comments":{"nodes":[{"path":"b.ts","line":42,"body":"fix this","author":{"login":"reviewer"}}]}},
+        {"isResolved":false,"comments":{"nodes":[{"path":null,"line":null,"body":"general note","author":null}]}}
+      ]}
+    }}}}'`);
+    process.env.PATH = `${root}:${originalPath}`;
+
+    const threads = await fetchUnresolvedThreads(root, 'https://github.com/o/r/pull/1');
+    expect(threads).toEqual([
+      { path: 'b.ts', line: 42, author: 'reviewer', body: 'fix this' },
+      { body: 'general note' },
+    ]);
+  });
+
+  it('resolves an empty array when the url is not a GitHub PR url', async () => {
+    expect(await fetchUnresolvedThreads('/tmp', 'not-a-pr-url')).toEqual([]);
+  });
+
+  it('resolves an empty array when gh fails', async () => {
+    const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await fetchUnresolvedThreads(root, 'https://github.com/o/r/pull/2')).toEqual([]);
   });
 });

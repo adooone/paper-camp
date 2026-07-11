@@ -34,12 +34,13 @@ export const ReconcileButton = ({ plan, disabled }: ReconcileButtonProps) => {
   return (
     <Tooltip content={plan.id ? undefined : 'Plan needs an ID before an agent can run'}>
       <Button
-        variant="secondary"
+        variant="primary"
+        className="accent-button-green"
         size="small"
         onClick={handleClick}
         disabled={disabled || launching || !plan.id}
       >
-        Reconcile
+        Refresh
       </Button>
     </Tooltip>
   );
