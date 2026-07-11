@@ -100,7 +100,11 @@ type AppStore = {
   // One-click commit for the status bar: suggests a message from the diff and
   // commits every changed file (the same suggest+commit the Stack form uses).
   // Returns a result so the caller can toast success/failure.
-  quickCommit: () => Promise<{ ok: boolean; title?: string; error?: string }>;
+  quickCommit: () => Promise<{ ok: boolean; title?: string; error?: string; warning?: string }>;
+  // Shared across the status bar's quickCommit and the Stack panel's commit
+  // form so the two flows can't race the same commit request.
+  commitInFlight: boolean;
+  setCommitInFlight: (inFlight: boolean) => void;
 
   consistency: ConsistencyIssue[];
   loadConsistency: () => Promise<void>;
@@ -109,7 +113,9 @@ type AppStore = {
   gitBranch: string | null;
   gitAhead: number;
   gitBranchHygiene: BranchHygieneStatus | null;
-  loadGitStatus: () => Promise<void>;
+  // Resolves to false when the refresh silently failed (state is unchanged/stale)
+  // so callers like quickCommit can tell that apart from a real success.
+  loadGitStatus: () => Promise<boolean>;
 
   agentStatus: AgentTaskState | null;
   loadAgentStatus: () => Promise<void>;
@@ -307,19 +313,33 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
+  commitInFlight: false,
+  setCommitInFlight: (inFlight) => set({ commitInFlight: inFlight }),
   quickCommit: async () => {
-    const { gitStatus, loadGitStatus } = get();
+    const { gitStatus, loadGitStatus, commitInFlight } = get();
+    if (commitInFlight) {
+      return { ok: false, error: 'A commit is already in progress' };
+    }
     if (!gitStatus || gitStatus.length === 0) {
       return { ok: false, error: 'Nothing to commit' };
     }
     const files = gitStatus.map((e) => e.path);
+    set({ commitInFlight: true });
     try {
       const { title, message } = await suggestCommitMessage(files);
       await commitChanges(files, title, message || undefined);
-      await loadGitStatus();
-      return { ok: true, title };
+      const refreshed = await loadGitStatus();
+      return refreshed
+        ? { ok: true, title }
+        : {
+            ok: true,
+            title,
+            warning: 'Committed, but the git status refresh failed — reload to confirm',
+          };
     } catch (err) {
       return { ok: false, error: (err as Error).message };
+    } finally {
+      set({ commitInFlight: false });
     }
   },
 
@@ -346,8 +366,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
         gitAhead: ahead,
         gitBranchHygiene: branchHygiene,
       });
+      return true;
     } catch {
       // keep previous status
+      return false;
     }
   },
 

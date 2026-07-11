@@ -98,8 +98,8 @@ export const PlanActionsColumn = () => {
           <div>
             <div style={sectionLabelStyle}>Actions</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
-              {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy} />}
-              {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy} />}
+              {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
+              {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
 
               {underReview && (
                 // Done normally derives from the PR merging (IDEA-56); this is the

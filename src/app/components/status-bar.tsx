@@ -2,7 +2,6 @@ import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import type { CheckStatus } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles, useToast } from '@dendelion/paper-ui';
-import { useState } from 'react';
 
 // Small monochrome glyphs for the quick actions — paper-ui's icon set doesn't
 // cover run/fix/commit, so these are inline and inherit currentColor.
@@ -67,17 +66,20 @@ export const StatusBar = () => {
   const runCheck = useAppStore((s) => s.runCheck);
   const fixQuality = useAppStore((s) => s.fixQuality);
   const quickCommit = useAppStore((s) => s.quickCommit);
+  const commitInFlight = useAppStore((s) => s.commitInFlight);
   const { toast } = useToast();
-  const [committing, setCommitting] = useState(false);
 
-  const qualityStatus: CheckStatus =
-    status?.lint?.status === 'running' || status?.format?.status === 'running'
-      ? 'running'
-      : status?.lint?.status === 'fail' || status?.format?.status === 'fail'
-        ? 'fail'
-        : status?.lint?.status === 'stale' && status?.format?.status === 'stale'
-          ? 'stale'
-          : 'pass';
+  const qualityChecks: CheckStatus[] = [
+    status?.lint?.status ?? 'stale',
+    status?.format?.status ?? 'stale',
+  ];
+  const qualityStatus: CheckStatus = qualityChecks.includes('running')
+    ? 'running'
+    : qualityChecks.includes('fail')
+      ? 'fail'
+      : qualityChecks.includes('stale')
+        ? 'stale'
+        : 'pass';
   const testStatus: CheckStatus = status?.test?.status ?? 'stale';
   const consistencyStatus: CheckStatus = status?.consistency?.status ?? 'stale';
   const anyChecksRunning =
@@ -90,12 +92,14 @@ export const StatusBar = () => {
   const changedFileCount = gitStatus?.length ?? 0;
 
   const handleQuickCommit = async () => {
-    if (committing || changedFileCount === 0) return;
-    setCommitting(true);
+    if (commitInFlight || changedFileCount === 0) return;
     const result = await quickCommit();
-    setCommitting(false);
     if (result.ok) {
-      toast({ title: 'Committed', description: result.title, variant: 'success' });
+      toast({
+        title: 'Committed',
+        description: result.warning ?? result.title,
+        variant: result.warning ? 'warning' : 'success',
+      });
     } else {
       toast({ title: 'Commit failed', description: result.error, variant: 'error' });
     }
@@ -114,12 +118,13 @@ export const StatusBar = () => {
         fontSize: fontSize['2xs'],
         flexShrink: 0,
         boxSizing: 'border-box',
-        overflow: 'hidden',
+        overflowX: 'auto',
+        overflowY: 'hidden',
         whiteSpace: 'nowrap',
       }}
     >
       {/* Left: git + agent status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: space[3], minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: space[3], flexShrink: 0 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
           <span style={{ opacity: 0.5 }}>⌥</span>
           <code style={{ color: color.textPrimary }}>{gitBranch ?? 'no branch'}</code>
@@ -134,7 +139,7 @@ export const StatusBar = () => {
       <div style={{ flex: 1 }} />
 
       {/* Right: check status + immediate quick actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexShrink: 0 }}>
         <Tooltip content="Quality (lint + format)">
           <Stamp size="small" variant={CHECK_VARIANT[qualityStatus]}>
             Quality
@@ -156,10 +161,10 @@ export const StatusBar = () => {
             size="small"
             icon={<CommitIcon />}
             style={btnStyle}
-            disabled={committing || changedFileCount === 0}
+            disabled={commitInFlight || changedFileCount === 0}
             onClick={handleQuickCommit}
           >
-            {committing
+            {commitInFlight
               ? 'Committing…'
               : changedFileCount > 0
                 ? `Commit (${changedFileCount})`
