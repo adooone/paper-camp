@@ -1,10 +1,11 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import type { CheckStatus } from '@/types/index';
-import { Button, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
+import { Button, Spinner, Stamp, Tooltip, getTextureStyles, useToast } from '@dendelion/paper-ui';
+import { useState } from 'react';
 
 // Small monochrome glyphs for the quick actions — paper-ui's icon set doesn't
-// cover run/fix/commit/inspect, so these are inline and inherit currentColor.
+// cover run/fix/commit, so these are inline and inherit currentColor.
 const RunIcon = () => (
   <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
     <path d="M6 4l11 6-11 6z" />
@@ -40,21 +41,6 @@ const CommitIcon = () => (
     <path d="M2.5 10h4.5M13 10h4.5" />
   </svg>
 );
-const FindingsIcon = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 20 20"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <circle cx="8.5" cy="8.5" r="4.5" />
-    <path d="M12 12l4.5 4.5" />
-  </svg>
-);
 
 const CHECK_VARIANT: Record<CheckStatus, 'success' | 'error' | 'warning' | 'neutral'> = {
   pass: 'success',
@@ -66,28 +52,23 @@ const CHECK_VARIANT: Record<CheckStatus, 'success' | 'error' | 'warning' | 'neut
 // Shrinks the quick-action button labels to match the bar's 2xs text.
 const btnStyle = { fontSize: fontSize['2xs'] };
 
-interface StatusBarProps {
-  // Opens the Stack panel — the full control surface where commit, agent log,
-  // and findings detail live. The bar is the ambient glance; the panel is where
-  // you act.
-  onOpenStack: () => void;
-}
-
 /**
  * Full-width status strip under the header (IDEA-39, reworked): an at-a-glance
- * row of git state + check status + a few quick actions, so closing the Stack
- * panel never means flying blind. Deliberately NOT the control surface — the
- * Stack panel is; commit and findings detail open there rather than here.
+ * row of git state + check status, plus quick actions that fire immediately —
+ * commit, run tests, fix quality — without opening the Stack panel. The Stack
+ * panel stays the full control surface; the user opens it themselves.
  */
-export const StatusBar = ({ onOpenStack }: StatusBarProps) => {
+export const StatusBar = () => {
   const status = useAppStore((s) => s.status);
-  const consistency = useAppStore((s) => s.consistency);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
   const runCheck = useAppStore((s) => s.runCheck);
   const fixQuality = useAppStore((s) => s.fixQuality);
+  const quickCommit = useAppStore((s) => s.quickCommit);
+  const { toast } = useToast();
+  const [committing, setCommitting] = useState(false);
 
   const qualityStatus: CheckStatus =
     status?.lint?.status === 'running' || status?.format?.status === 'running'
@@ -101,18 +82,24 @@ export const StatusBar = ({ onOpenStack }: StatusBarProps) => {
   const consistencyStatus: CheckStatus = status?.consistency?.status ?? 'stale';
   const anyChecksRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
-  const hasDocIssues = consistency.length > 0;
-  const anyChecksFailing =
-    qualityStatus === 'fail' ||
-    testStatus === 'fail' ||
-    consistencyStatus === 'fail' ||
-    hasDocIssues;
   const agentActive =
     agentStatus?.status === 'running' ||
     agentStatus?.status === 'starting' ||
     agentStatus?.status === 'stopping';
 
   const changedFileCount = gitStatus?.length ?? 0;
+
+  const handleQuickCommit = async () => {
+    if (committing || changedFileCount === 0) return;
+    setCommitting(true);
+    const result = await quickCommit();
+    setCommitting(false);
+    if (result.ok) {
+      toast({ title: 'Committed', description: result.title, variant: 'success' });
+    } else {
+      toast({ title: 'Commit failed', description: result.error, variant: 'error' });
+    }
+  };
 
   return (
     <div
@@ -146,7 +133,7 @@ export const StatusBar = ({ onOpenStack }: StatusBarProps) => {
 
       <div style={{ flex: 1 }} />
 
-      {/* Right: check status + quick actions */}
+      {/* Right: check status + immediate quick actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
         <Tooltip content="Quality (lint + format)">
           <Stamp size="small" variant={CHECK_VARIANT[qualityStatus]}>
@@ -163,15 +150,22 @@ export const StatusBar = ({ onOpenStack }: StatusBarProps) => {
             Consistency
           </Stamp>
         </Tooltip>
-        <Button
-          variant="ghost"
-          size="small"
-          icon={<CommitIcon />}
-          style={btnStyle}
-          onClick={onOpenStack}
-        >
-          {changedFileCount > 0 ? `Commit (${changedFileCount})` : 'Commit'}
-        </Button>
+        <Tooltip content="Commit all changes with an auto-suggested message">
+          <Button
+            variant="ghost"
+            size="small"
+            icon={<CommitIcon />}
+            style={btnStyle}
+            disabled={committing || changedFileCount === 0}
+            onClick={handleQuickCommit}
+          >
+            {committing
+              ? 'Committing…'
+              : changedFileCount > 0
+                ? `Commit (${changedFileCount})`
+                : 'Commit'}
+          </Button>
+        </Tooltip>
         <Button
           variant="ghost"
           size="small"
@@ -191,16 +185,6 @@ export const StatusBar = ({ onOpenStack }: StatusBarProps) => {
           onClick={fixQuality}
         >
           Fix quality
-        </Button>
-        <Button
-          variant="ghost"
-          size="small"
-          icon={<FindingsIcon />}
-          style={btnStyle}
-          disabled={!anyChecksFailing}
-          onClick={onOpenStack}
-        >
-          Findings
         </Button>
       </div>
     </div>

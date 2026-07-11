@@ -8,14 +8,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { DeleteIdeaModal } from './components/delete-idea-modal';
 import { EntityDetail } from './components/entity-detail';
-import { FocusPlanHero } from './components/focus-plan-hero';
 import { ListView } from './components/list-view';
 import { NoteDetail } from './components/note-detail';
 import { PlansHeader } from './components/plans-header';
 import { PlansListSkeleton } from './components/plans-list-skeleton';
 import { ReconcileQueueReview } from './components/reconcile-queue-review';
 import { ReviewQueue } from './components/review-queue';
-import { findFocusPlan } from './helpers';
 import { selectWorklistRows } from './plan-list-selector';
 
 export const PlansPage = () => {
@@ -78,11 +76,7 @@ export const PlansPage = () => {
     );
   }
 
-  const focusPlan = findFocusPlan(plans.entries);
-  const worklistEntries = focusPlan
-    ? plans.entries.filter((p) => p.title !== focusPlan.title)
-    : plans.entries;
-  const { rows } = selectWorklistRows(worklistEntries, ideaEntries, planFilters);
+  const { rows } = selectWorklistRows(plans.entries, ideaEntries, planFilters);
   const reviewPlans = plans.entries.filter((p) => p.status === 'review');
 
   // The reconcile review queue is a self-contained modal driven by store state,
@@ -118,8 +112,6 @@ export const PlansPage = () => {
       ) : (
         <div>
           <PlansHeader />
-
-          <FocusPlanHero plan={focusPlan} onOpenPlan={handleOpenPlan} />
 
           <ReviewQueue plans={reviewPlans} onOpenPlan={handleOpenPlan} />
 

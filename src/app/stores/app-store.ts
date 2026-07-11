@@ -40,7 +40,7 @@ import {
   fetchProgress,
   fetchRepoDocs,
 } from '../services/docs-api';
-import { fetchGitStatus } from '../services/git-api';
+import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
 import { fetchIdeas } from '../services/ideas-api';
 import { fetchPlans } from '../services/plans-api';
 import type { StatusState } from '../services/status-api';
@@ -97,6 +97,10 @@ type AppStore = {
   loadStatus: () => Promise<void>;
   runCheck: (name: CheckName) => Promise<void>;
   fixQuality: () => Promise<void>;
+  // One-click commit for the status bar: suggests a message from the diff and
+  // commits every changed file (the same suggest+commit the Stack form uses).
+  // Returns a result so the caller can toast success/failure.
+  quickCommit: () => Promise<{ ok: boolean; title?: string; error?: string }>;
 
   consistency: ConsistencyIssue[];
   loadConsistency: () => Promise<void>;
@@ -300,6 +304,22 @@ export const useAppStore = create<AppStore>((set, get) => ({
       await triggerQualityFix();
     } catch {
       // ignore
+    }
+  },
+
+  quickCommit: async () => {
+    const { gitStatus, loadGitStatus } = get();
+    if (!gitStatus || gitStatus.length === 0) {
+      return { ok: false, error: 'Nothing to commit' };
+    }
+    const files = gitStatus.map((e) => e.path);
+    try {
+      const { title, message } = await suggestCommitMessage(files);
+      await commitChanges(files, title, message || undefined);
+      await loadGitStatus();
+      return { ok: true, title };
+    } catch (err) {
+      return { ok: false, error: (err as Error).message };
     }
   },
 
