@@ -104,16 +104,16 @@ header[class*="layout-module__header___"] {
  * kept separate so the intent vocabulary stays semantic. Uses paper-ui's soft
  * $color-accent-green-light (#B5D4BA); hover/active stay within that soft range.
  */
-.accent-button-green svg path:first-child {
+.accent-button-green:not(:disabled) svg path:first-child {
   fill: #b5d4ba !important;
 }
-.accent-button-green:hover svg path:first-child {
+.accent-button-green:hover:not(:disabled) svg path:first-child {
   fill: #a8ccae !important;
 }
-.accent-button-green:active svg path:first-child {
+.accent-button-green:active:not(:disabled) svg path:first-child {
   fill: #9bc5a2 !important;
 }
-.accent-button-green {
+.accent-button-green:not(:disabled) {
   color: #1a1917 !important;
 }
 
