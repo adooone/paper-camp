@@ -14,6 +14,7 @@ import { NoteDetail } from './components/note-detail';
 import { PlansHeader } from './components/plans-header';
 import { PlansListSkeleton } from './components/plans-list-skeleton';
 import { ReconcileQueueReview } from './components/reconcile-queue-review';
+import { ReviewQueue } from './components/review-queue';
 import { findFocusPlan } from './helpers';
 import { selectWorklistRows } from './plan-list-selector';
 
@@ -82,6 +83,7 @@ export const PlansPage = () => {
     ? plans.entries.filter((p) => p.title !== focusPlan.title)
     : plans.entries;
   const { rows } = selectWorklistRows(worklistEntries, ideaEntries, planFilters);
+  const reviewPlans = plans.entries.filter((p) => p.status === 'review');
 
   // The reconcile review queue is a self-contained modal driven by store state,
   // not by which branch is active — render it once above the branching so it
@@ -118,6 +120,8 @@ export const PlansPage = () => {
           <PlansHeader />
 
           <FocusPlanHero plan={focusPlan} onOpenPlan={handleOpenPlan} />
+
+          <ReviewQueue plans={reviewPlans} onOpenPlan={handleOpenPlan} />
 
           {plans.warnings.length > 0 && (
             <Card size="small" accent accentColor="amber">
