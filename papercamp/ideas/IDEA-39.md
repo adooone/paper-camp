@@ -34,5 +34,5 @@ Scope boundaries: a "needs review" queue under the hero with inline Approve / Ne
       Move the commit form (title, message, file list, the `findFocusPlan`-driven suggestion) out of the Stack panel into a `Modal` opened from the header cluster. Same store state and `/api` git calls; only the mount point changes.
 - [x] Slim the Stack panel to a git/activity drawer
       With agent status, checks, and commit relocated, strip `stack-panel.tsx` down to the git/activity remainder (branch state, recent activity, findings detail). Remove now-dead sections and their store wiring rather than hiding them.
-- [ ] Type-check and visual pass
+- [x] Type-check and visual pass
       `tsc --noEmit`, `biome check`, full test suite, and a browser pass over the hero card, header cluster states (idle / agent running / checks failing), review queue, commit modal, and slimmed Stack at laptop and narrow widths — flag for a human if the session is headless.

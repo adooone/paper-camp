@@ -40,7 +40,7 @@
 | IDEA-36 | Schedule repo digest and nudges | feat | planned | ci, github, agent |
 | IDEA-37 | Fable capability-window tasks | note | done |  |
 | IDEA-38 | Densify the plans worklist | feat | done | app, ui, plans, ideas |
-| IDEA-39 | Build the focus cockpit | feat | planned | app, ui, plans, stack |
+| IDEA-39 | Build the focus cockpit | feat | review | app, ui, plans, stack |
 | IDEA-40 | Make sub-views real routes | feat | done | app, ui, routing, navigation |
 | IDEA-41 | Settings and affordance polish | fix | done | app, ui, settings |
 | IDEA-42 | Filter and sort the plans list | feat | done | app, ui, plans |
