@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0](https://github.com/adooone/paper-camp/compare/v0.6.0...v0.7.0) (2026-07-11)
+
+
+### Features
+
+* **app:** Add the AI Check-overlap action ([71a0975](https://github.com/adooone/paper-camp/commit/71a09758a93410170c92331c99396af12751bce8))
+* **app:** Add the fix-review prompt builder ([05f30c0](https://github.com/adooone/paper-camp/commit/05f30c0548a6a8da4ba0aea7794bc543f0300034))
+* **app:** Build the keyword similarity matcher ([004741d](https://github.com/adooone/paper-camp/commit/004741d91bc2954e5d5ed040701e1ea6b6787172))
+* **app:** Carry review signal in the PR resolver ([c96c084](https://github.com/adooone/paper-camp/commit/c96c0845daf483b1f40bceaa678966a939aec57d))
+* **app:** Draft IDEA-57 and a11y-fix collapsible-text toggle ([d885f04](https://github.com/adooone/paper-camp/commit/d885f045b259748a4c13c3acc48595dbc9af8a46))
+* **app:** Generalize the dashboard job queue ([f29592f](https://github.com/adooone/paper-camp/commit/f29592fc94843c3d97ee2b90180d658c4d1741b4))
+* **app:** Harden fix-review flow with push verification and UI polish ([910698c](https://github.com/adooone/paper-camp/commit/910698c12d3c478a8da030214e47a2607a734ac1))
+* **app:** Launch a "fix review comments" job ([c3b3be6](https://github.com/adooone/paper-camp/commit/c3b3be63117a751587b4cfb24585e84275e39e3a))
+* **app:** mark IDEA-44 review ([6cdf9cd](https://github.com/adooone/paper-camp/commit/6cdf9cdb0c3360bdeb1b310dfc2187a4021fb6cf))
+* **app:** mark IDEA-57 review ([fb94bf2](https://github.com/adooone/paper-camp/commit/fb94bf2ec9f024dc55ee535879bb8a57f5e1131a))
+* **app:** Render the Similar-ideas strip in the New-idea modal ([0c5ddef](https://github.com/adooone/paper-camp/commit/0c5ddeff8c34689f99b0ea3578c3478678bbc2f6))
+* **app:** Surface review state on the plan card ([340d668](https://github.com/adooone/paper-camp/commit/340d668449a502e6afd6a0d282785148a53d18f2))
+* **app:** Type-check and verification pass ([a0afad3](https://github.com/adooone/paper-camp/commit/a0afad3a0ebc602b3155f5d4c5f1b040dee13a30))
+* **app:** Type-check and visual pass ([03b3dd6](https://github.com/adooone/paper-camp/commit/03b3dd6606498e22196c0fc7c053e7748ccfab81))
+* **app:** Type-check and visual pass ([a8e250e](https://github.com/adooone/paper-camp/commit/a8e250e403528b45c60b50efa3d03ddc4be11cc4))
+* **app:** Wire the Extend-instead and Draft-plan actions ([8262a66](https://github.com/adooone/paper-camp/commit/8262a660e517943333b73a9a38abea9457480dc5))
+* **ideas:** Derive status from PR id match, not local branches ([13868c2](https://github.com/adooone/paper-camp/commit/13868c2b21398c57d6d4bef7f02bb4b372ab0118))
+* **plans:** Simplify entity detail header and plan actions ([ef382c9](https://github.com/adooone/paper-camp/commit/ef382c99599695bcfc5334c8bc74161f4850393e))
+
+
+### Bug Fixes
+
+* **app:** Address CodeRabbit review findings on IDEA-56 ([abee40b](https://github.com/adooone/paper-camp/commit/abee40bc094120e69aeef482639ab58db7b46b65))
+* **app:** Disable green accent-button icon tint when disabled ([692a62e](https://github.com/adooone/paper-camp/commit/692a62e01e8183d25ee3cb493dd4b2009191c2ad))
+* **app:** Fix a11y lint issues in overlap-check and plans loading ([6a6e24a](https://github.com/adooone/paper-camp/commit/6a6e24a88ddc18817be3a306751dbad4650bd725))
+
 ## [0.6.0](https://github.com/adooone/paper-camp/compare/v0.5.0...v0.6.0) (2026-07-08)
 
 
