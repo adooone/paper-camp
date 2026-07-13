@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ProjectIdentityHeader, SidebarShell, StackPanel } from './components';
+import { ProjectIdentityHeader, SidebarShell, StackPanel, StatusBar } from './components';
 import { DocsPage, DocsSidebar } from './features/docs/index';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
 import { SettingsPage, SettingsSidebar } from './features/settings/index';
@@ -100,6 +100,7 @@ const RootLayout = () => {
         <Layout
           background={{ texture: 'paper', ruledType: 'grid', ruledColor: 'blue' }}
           showHeader
+          headerTexture="parchment"
           showSidebar={false}
           showPage={false}
           bleedBottom
@@ -146,6 +147,14 @@ const RootLayout = () => {
             </>
           }
         >
+          {/* Full-width status strip under the header: ambient git/check glance
+              + immediate quick actions (commit / run tests / fix quality).
+              -32px top/sides bleeds it out of the Layout's 32px content padding
+              (paper-ui `.content`) so it sits flush under the header, edge to edge;
+              the 32px bottom margin restores the content's top padding below it. */}
+          <div style={{ margin: '-32px -32px 32px' }}>
+            <StatusBar />
+          </div>
           <div className="flex h-full min-h-0 justify-center items-stretch box-border overflow-hidden">
             {/* The sidebar + page form one group. On large screens it fills the
                 available width (page grows past 800) with a two-grid-cell margin on

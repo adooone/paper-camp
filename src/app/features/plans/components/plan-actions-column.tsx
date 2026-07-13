@@ -1,11 +1,10 @@
 import { useActivePlanTitle } from '@/app/hooks';
-import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { AGENT_IDS, AGENT_LABELS, type AgentId } from '@/types/index';
-import { Card, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
-import { useState } from 'react';
+import { Card, ListItem, Select, Stamp } from '@dendelion/paper-ui';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
+import { usePlanStatusPatch } from '../use-plan-status-patch';
 import { FixReviewButton } from './fix-review-button';
 import { RunAllPhasesButton } from './run-all-phases-button';
 
@@ -29,10 +28,8 @@ const sectionLabelStyle: React.CSSProperties = {
 export const PlanActionsColumn = () => {
   const plans = useAppStore((s) => s.plans);
   const activePlanTitle = useActivePlanTitle();
-  const loadPlans = useAppStore((s) => s.loadPlans);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const { toast } = useToast();
-  const [updating, setUpdating] = useState(false);
+  const { patch: patchByTitle, updating } = usePlanStatusPatch();
 
   const plan = activePlanTitle ? plans?.entries.find((p) => p.title === activePlanTitle) : null;
   if (!plan) return null;
@@ -50,19 +47,7 @@ export const PlanActionsColumn = () => {
       plan.pr.unresolvedThreadCount,
   );
 
-  const patch = async (updates: Parameters<typeof updatePlan>[1]) => {
-    setUpdating(true);
-    try {
-      await updatePlan(plan.title, updates);
-      await loadPlans();
-    } catch (err) {
-      // e.g. the 409 branch-conflict guard when approving/closing off the plan's
-      // own branch — surface it so the action doesn't just appear to do nothing.
-      toast({ title: 'Update failed', description: (err as Error).message, variant: 'error' });
-    } finally {
-      setUpdating(false);
-    }
-  };
+  const patch = (updates: Parameters<typeof patchByTitle>[1]) => patchByTitle(plan.title, updates);
 
   return (
     // Pull up by the SidebarShell's top padding to line up with the Page.
@@ -113,8 +98,8 @@ export const PlanActionsColumn = () => {
           <div>
             <div style={sectionLabelStyle}>Actions</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
-              {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy} />}
-              {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy} />}
+              {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
+              {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
 
               {underReview && (
                 // Done normally derives from the PR merging (IDEA-56); this is the

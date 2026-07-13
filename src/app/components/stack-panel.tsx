@@ -167,6 +167,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
+  const commitInFlight = useAppStore((s) => s.commitInFlight);
+  const setCommitInFlight = useAppStore((s) => s.setCommitInFlight);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
   const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
   const [commitExpanded, setCommitExpanded] = useState(false);
@@ -321,8 +323,9 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   }, []);
 
   const handleCommit = useCallback(async () => {
-    if (!commitTitle.trim()) return;
+    if (!commitTitle.trim() || commitInFlight) return;
     setCommitting(true);
+    setCommitInFlight(true);
     setCommitError(null);
     try {
       await commitChanges(
@@ -338,8 +341,17 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       setCommitError((err as Error).message);
     } finally {
       setCommitting(false);
+      setCommitInFlight(false);
     }
-  }, [commitTitle, commitMessage, selectedFiles, suggestedTitle, loadGitStatus]);
+  }, [
+    commitTitle,
+    commitMessage,
+    selectedFiles,
+    suggestedTitle,
+    loadGitStatus,
+    commitInFlight,
+    setCommitInFlight,
+  ]);
 
   const handlePush = useCallback(async () => {
     setPushing(true);
@@ -1140,10 +1152,15 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
                       surface="chalkboard"
                       size="small"
                       fullWidth
-                      disabled={selectedFiles.size === 0 || !commitTitle.trim() || committing}
+                      disabled={
+                        selectedFiles.size === 0 ||
+                        !commitTitle.trim() ||
+                        committing ||
+                        commitInFlight
+                      }
                       onClick={handleCommit}
                     >
-                      {committing ? 'Committing…' : 'Commit'}
+                      {committing || commitInFlight ? 'Committing…' : 'Commit'}
                     </Button>
                   </div>
                 </>
