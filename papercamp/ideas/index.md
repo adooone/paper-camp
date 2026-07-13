@@ -37,7 +37,7 @@
 | IDEA-33 | Adopt paper-ui 0.5.0 components | feat | done | app, ui |
 | IDEA-34 | Responsive layout and Stack panel redesign | feat | done | app, ui, layout, navigation, stack, paper-ui, responsive |
 | IDEA-35 | Mirror plans onto GitHub PRs | feat | planned | ci, github, plans |
-| IDEA-36 | Schedule repo digest and nudges | feat | planned | ci, github, agent |
+| IDEA-36 | Schedule repo digest and nudges | feat | dropped | ci, github, agent |
 | IDEA-37 | Fable capability-window tasks | note | done |  |
 | IDEA-38 | Densify the plans worklist | feat | done | app, ui, plans, ideas |
 | IDEA-39 | Build the focus cockpit | feat | review | app, ui, plans, stack |
@@ -45,7 +45,7 @@
 | IDEA-41 | Settings and affordance polish | fix | done | app, ui, settings |
 | IDEA-42 | Filter and sort the plans list | feat | done | app, ui, plans |
 | IDEA-43 | Unify the ideas and plans worklist | feat | done | app, ideas, plans, core |
-| IDEA-44 | Check idea overlap at capture | feat | review | app, ideas, agent |
+| IDEA-44 | Check idea overlap at capture | feat | done | app, ideas, agent |
 | IDEA-45 | Build core library | feat | done | core, cli |
 | IDEA-46 | Build dashboard app | feat | done | app, paper-ui |
 | IDEA-47 | UI cleanup: style guide and tokens | refactor | done | app, ui, refactor |
@@ -58,4 +58,4 @@
 | IDEA-54 | Default font and Stack panel cleanup | refactor | done | app, ui, paper-ui |
 | IDEA-55 | Actualise all ideas at once | feat | done | app, plans, agent |
 | IDEA-56 | Derive status from git and PR state | feat | done | app, github, plans, core |
-| IDEA-57 | Drive PR review fixes from the app | feat | idea | app, github, plans, agent |
+| IDEA-57 | Drive PR review fixes from the app | feat | done | app, github, plans, agent |
