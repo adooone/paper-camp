@@ -10,6 +10,8 @@ export const OpenQuestionDetail = () => {
   const openQuestions = useAppStore((s) => s.openQuestions);
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
+  const loadDecisions = useAppStore((s) => s.loadDecisions);
+  const loadOpenQuestions = useAppStore((s) => s.loadOpenQuestions);
   const navigate = useNavigate();
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -45,6 +47,7 @@ export const OpenQuestionDetail = () => {
     try {
       await resolveOpenQuestion(question.title, decision.trim(), rationale.trim() || undefined);
       setModalOpen(false);
+      await Promise.all([loadDecisions(), loadOpenQuestions()]);
     } catch {
       setLoading(false);
     }

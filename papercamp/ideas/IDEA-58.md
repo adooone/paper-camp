@@ -29,7 +29,7 @@ Pairs with [[IDEA-59]] (the comment-trimming pass), which is cleanest to run rig
       Break the ~1230-line file into Commit, Status/Findings, Agent-log, and Activity components under `components/`, matching §4's feature-folder layout, with `stack-panel.tsx` composing them.
 - [x] Prune the dead exports knip flags
       Remove the genuinely-dead unused exports/symbols (~24), keeping the intentional public API of the `core`/`mcp` entry points; re-run knip to confirm.
-- [ ] Untangle the two import cycles
+- [x] Untangle the two import cycles
       Break the `core/pr.ts ↔ core/readers.ts` and `services/docs-api.ts ↔ stores/app-store.ts` `no-circular` warnings so depcruise reports an acyclic graph.
 - [ ] Sweep `src/app` for style-guide conformance
       Replace token literals with `styles/tokens.ts` values, swap raw HTML for the paper-ui component where one exists, and fix (or explicitly document) import paths that reach deeper than the guide allows.

@@ -46,9 +46,5 @@ export const resolveOpenQuestion = async (title: string, decision: string, ratio
     const err = await res.json().catch(() => ({ error: 'Unknown error' }));
     throw new Error(err.error ?? 'Failed to resolve open question');
   }
-  const { loadDecisions, loadOpenQuestions } = await import('@/app/stores/app-store').then((m) =>
-    m.useAppStore.getState(),
-  );
-  await Promise.all([loadDecisions(), loadOpenQuestions()]);
   return res.json() as Promise<{ ok: boolean }>;
 };

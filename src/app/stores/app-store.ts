@@ -151,7 +151,7 @@ type AppStore = {
   batchReconcileConsumed: boolean;
 };
 
-export interface ReconcilePreview {
+interface ReconcilePreview {
   planId: string;
   before: { body: string; phases: PlanEntry['phases'] };
 }
