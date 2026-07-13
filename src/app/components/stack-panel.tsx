@@ -29,6 +29,7 @@ import { commitChanges, pushChanges, suggestCommitMessage, syncToMain } from '..
 import { useAppStore } from '../stores/app-store';
 import { deriveCheckStatuses } from '../utils/check-status';
 import { summarizeQualityFailure, summarizeTestFailure } from '../utils/check-summary';
+import { MergeIcon, PushIcon, WandIcon } from './icons';
 
 const COMMIT_TITLE_STORAGE_KEY = 'papercamp.commitTitle';
 const COMMIT_MESSAGE_STORAGE_KEY = 'papercamp.commitMessage';
@@ -69,60 +70,6 @@ function writeStoredCommitField(key: string, value: string): void {
     // localStorage unavailable (e.g. private browsing) — fall back to in-memory only
   }
 }
-
-const WandIcon = ({ size = 16 }: { size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="m12 3-1.6 4.85a2 2 0 0 1-1.27 1.27L4.27 10.7l4.86 1.6a2 2 0 0 1 1.27 1.27L12 18.4l1.6-4.86a2 2 0 0 1 1.27-1.27l4.86-1.6-4.86-1.6a2 2 0 0 1-1.27-1.27L12 3Z" />
-    <path d="M19 3v3" />
-    <path d="M20.5 4.5h-3" />
-  </svg>
-);
-
-const PushIcon = ({ size = 16 }: { size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M12 19V5" />
-    <path d="m5 12 7-7 7 7" />
-  </svg>
-);
-
-const MergeIcon = ({ size = 16 }: { size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <circle cx="18" cy="18" r="3" />
-    <circle cx="6" cy="6" r="3" />
-    <path d="M6 9v5c0 .667 3 1 6 1s6-.333 6-1V9" />
-    <path d="M12 17v2" />
-  </svg>
-);
 
 const CHALKBOARD_TEXTURE = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.15 0 0 0 0 0.28 0 0 0 0 0.20 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)' opacity='1'/%3E%3C/svg%3E")`;
 

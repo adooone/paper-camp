@@ -21,7 +21,7 @@ Pairs with [[IDEA-59]] (the comment-trimming pass), which is cleanest to run rig
 ### Phases
 - [x] Extract the check-status derivation into one helper
       Pull the duplicated `qualityStatus`/`testStatus`/`consistencyStatus` logic out of `status-bar.tsx` and `stack-panel.tsx` into a single shared helper, and point both call sites at it (§3).
-- [ ] Consolidate the inline icon/glyph SVGs
+- [x] Consolidate the inline icon/glyph SVGs
       Move the per-file `WandIcon` and other redefined glyph SVGs into one icons module, and replace the local copies with imports.
 - [ ] Route the action pattern through `usePlanStatusPatch`
       Fold the hand-rolled `try/catch → toast → reload` call sites onto the existing `usePlanStatusPatch` helper so there's one owner of the pattern.

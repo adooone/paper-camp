@@ -1,4 +1,5 @@
 import { useAppStore } from '@/app/stores/app-store';
+import { color } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Button, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -28,9 +29,9 @@ export const AuditPhasesButton = ({ plan, disabled }: AuditPhasesButtonProps) =>
   return (
     <Tooltip content={plan.id ? undefined : 'Plan needs an ID before an agent can run'}>
       <Button
-        variant="primary"
-        className="accent-button-green"
+        variant="ghost"
         size="small"
+        style={{ color: color.accentGreenDark }}
         onClick={handleClick}
         disabled={disabled || launching || !plan.id}
       >

@@ -1,4 +1,4 @@
-import { space } from '@/app/styles/tokens';
+import { color, space } from '@/app/styles/tokens';
 import type { PhaseItem } from '@/types/index';
 import { Alert, Button, IconButton, Modal, PlusIcon, Textarea, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -43,8 +43,9 @@ export const AddReviewPhasesButton = ({ onAdd, disabled }: AddReviewPhasesButton
     <>
       <Tooltip content="Add /code-review findings as phases">
         <IconButton
-          className="accent-button-green"
+          variant="ghost"
           size="small"
+          style={{ color: color.accentGreenDark }}
           onClick={() => setOpen(true)}
           disabled={disabled}
           aria-label="Add code-review findings as phases"

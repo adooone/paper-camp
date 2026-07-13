@@ -3,44 +3,7 @@ import { color, fontSize, space } from '@/app/styles/tokens';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import type { CheckStatus } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles, useToast } from '@dendelion/paper-ui';
-
-// Small monochrome glyphs for the quick actions — paper-ui's icon set doesn't
-// cover run/fix/commit, so these are inline and inherit currentColor.
-const RunIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-    <path d="M6 4l11 6-11 6z" />
-  </svg>
-);
-const WandIcon = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 20 20"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <path d="M4 16l8-8" />
-    <path d="M13 3v3M11.5 4.5h3" />
-  </svg>
-);
-const CommitIcon = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 20 20"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <circle cx="10" cy="10" r="3" />
-    <path d="M2.5 10h4.5M13 10h4.5" />
-  </svg>
-);
+import { CommitIcon, RunIcon, WandIcon } from './icons';
 
 const CHECK_VARIANT: Record<CheckStatus, 'success' | 'error' | 'warning' | 'neutral'> = {
   pass: 'success',
