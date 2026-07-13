@@ -1,7 +1,6 @@
 import { IntentButton } from '@/app/components';
 import { Markdown } from '@/app/components/markdown';
 import { createPlanBranch } from '@/app/services/git-api';
-import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
@@ -19,6 +18,7 @@ import {
 import { useState } from 'react';
 import { STATUS_COLOR } from '../constants';
 import { phaseProgress, relativeDate } from '../helpers';
+import { usePlanStatusPatch } from '../use-plan-status-patch';
 import { AddReviewPhasesButton } from './add-review-phases-button';
 import { AgentStartButton } from './agent-start-button';
 import { AuditPhasesButton } from './audit-phases-button';
@@ -48,11 +48,11 @@ function branchEntityId(branch: string | null): string | null {
 }
 
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
-  const loadPlans = useAppStore((s) => s.loadPlans);
   const allPlans = useAppStore((s) => s.plans);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const { toast } = useToast();
+  const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy =
@@ -66,7 +66,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     agentStatus !== null &&
     agentStatus.planId === plan.id &&
     agentStatus.phaseIndex === undefined;
-  const [updating, setUpdating] = useState(false);
   const [logInput, setLogInput] = useState('');
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
@@ -104,33 +103,17 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     const nextPhases: PhaseItem[] = plan.phases.map((phase, i) =>
       i === index ? { ...phase, done: !phase.done } : phase,
     );
-    setUpdating(true);
+    // Auto-set to review when last phase is checked
     const allChecked = nextPhases.every((p) => p.done);
-    try {
-      // Auto-set to review when last phase is checked
-      if (allChecked && plan.status === 'in-progress') {
-        await updatePlan(plan.title, { phases: nextPhases, status: 'review' });
-      } else {
-        await updatePlan(plan.title, { phases: nextPhases });
-      }
-      await loadPlans();
-    } catch (err) {
-      toast({ title: 'Update failed', description: (err as Error).message, variant: 'error' });
-    } finally {
-      setUpdating(false);
+    if (allChecked && plan.status === 'in-progress') {
+      await patchByTitle(plan.title, { phases: nextPhases, status: 'review' });
+    } else {
+      await patchByTitle(plan.title, { phases: nextPhases });
     }
   };
 
   const handleAddReviewPhases = async (newPhases: PhaseItem[]) => {
-    setUpdating(true);
-    try {
-      await updatePlan(plan.title, { phases: [...plan.phases, ...newPhases] });
-      await loadPlans();
-    } catch (err) {
-      toast({ title: 'Update failed', description: (err as Error).message, variant: 'error' });
-    } finally {
-      setUpdating(false);
-    }
+    await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
   };
 
   const handleAddLogEntry = async () => {
@@ -138,16 +121,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     const today = new Date().toISOString().slice(0, 10);
     const newLog: LogEntry = { date: today, text: logInput.trim().replace(/\n/g, ' ') };
     const updatedLog = [...(plan.log ?? []), newLog];
-    setUpdating(true);
-    try {
-      await updatePlan(plan.title, { log: updatedLog });
-      await loadPlans();
-      setLogInput('');
-    } catch (err) {
-      toast({ title: 'Update failed', description: (err as Error).message, variant: 'error' });
-    } finally {
-      setUpdating(false);
-    }
+    const ok = await patchByTitle(plan.title, { log: updatedLog });
+    if (ok) setLogInput('');
   };
 
   return (

@@ -1,7 +1,7 @@
 import { DraftPlanButton } from '@/app/features/plans/components/draft-plan-button';
+import { usePlanStatusPatch } from '@/app/features/plans/use-plan-status-patch';
 import { useSimilarIdeas } from '@/app/hooks';
 import { checkIdeaOverlap } from '@/app/services/ideas-api';
-import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
@@ -29,7 +29,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
   const [overlapVerdict, setOverlapVerdict] = useState<OverlapVerdict | null>(null);
   const [overlapError, setOverlapError] = useState<string | null>(null);
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
-  const loadPlans = useAppStore((s) => s.loadPlans);
+  const { patch } = usePlanStatusPatch();
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
@@ -110,17 +110,15 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
 
   const handleExtendSimilar = async (candidateId: string, existingLog: LogEntry[] | undefined) => {
     setExtendingId(candidateId);
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const newLog: LogEntry = { date: today, text: title.trim() };
-      await updatePlan(candidateId, { log: [...(existingLog ?? []), newLog] });
-      await loadPlans();
-      onClose();
-    } catch (err) {
-      toast({ title: 'Extend failed', description: (err as Error).message, variant: 'error' });
-    } finally {
-      setExtendingId(null);
-    }
+    const today = new Date().toISOString().slice(0, 10);
+    const newLog: LogEntry = { date: today, text: title.trim() };
+    const ok = await patch(
+      candidateId,
+      { log: [...(existingLog ?? []), newLog] },
+      { errorTitle: 'Extend failed' },
+    );
+    setExtendingId(null);
+    if (ok) onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

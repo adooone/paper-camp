@@ -99,25 +99,6 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * Phase-tools toolbar accent (Audit / Refresh / +). Same blob-recolor mechanism
- * as .intent-button-* above, but a group tint rather than a go/stop/log meaning —
- * kept separate so the intent vocabulary stays semantic. Uses paper-ui's soft
- * $color-accent-green-light (#B5D4BA); hover/active stay within that soft range.
- */
-.accent-button-green:not(:disabled) svg path:first-child {
-  fill: #b5d4ba !important;
-}
-.accent-button-green:hover:not(:disabled) svg path:first-child {
-  fill: #a8ccae !important;
-}
-.accent-button-green:active:not(:disabled) svg path:first-child {
-  fill: #9bc5a2 !important;
-}
-.accent-button-green:not(:disabled) {
-  color: #1a1917 !important;
-}
-
-/*
  * The Status card's Quality/Tests/Consistency stamps are plain <button>s that
  * launch check runs on click, but paper-ui's Stamp has no interactive states of
  * its own — so this supplies the hover/pressed affordance that tells people
