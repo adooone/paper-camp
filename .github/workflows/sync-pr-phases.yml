@@ -1,0 +1,59 @@
+name: Sync PR Phases
+
+on:
+  push:
+    branches:
+      - feat/*
+      - fix/*
+      - refactor/*
+      - chore/*
+      - docs/*
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  sync-pr-phases:
+    name: Sync PR Phases
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # The CLI runs under bun ("cli": "bun src/cli/index.ts").
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate Scout app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.SCOUT_APP_ID }}
+          private-key: ${{ secrets.SCOUT_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
+
+      # Best-effort: on the very first push draft-pr.yml may not have created
+      # the PR yet, in which case there's nothing to sync into — don't fail
+      # the workflow over a race that resolves itself on the next push.
+      - name: Render plan phases into PR body
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: pnpm cli sync-pr-phases "$BRANCH"
+        continue-on-error: true

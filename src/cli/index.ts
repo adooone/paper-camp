@@ -8,7 +8,7 @@ import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { computePlanContentHash } from '../core/content-hash';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parser';
-import { resolvePlanForPrRef } from '../core/pr';
+import { resolvePlanForPrRef, syncPlanPhasesToPr } from '../core/pr';
 import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import {
@@ -530,6 +530,22 @@ program
       return;
     }
     console.log(JSON.stringify(resolved, null, 2));
+  });
+
+program
+  .command('sync-pr-phases <ref>')
+  .description(
+    "Rewrite a PR's (number or branch) body to render its plan's phases as a task list, preserving the Plan line (used by the Scout CI workflows)",
+  )
+  .action(async (ref: string) => {
+    const root = process.cwd();
+    const result = await syncPlanPhasesToPr(root, ref);
+    if (result === 'unresolved') {
+      console.error(`Could not sync plan phases to a PR for "${ref}"`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(result);
   });
 
 // The two commands below are internal — invoked by the scaffolded

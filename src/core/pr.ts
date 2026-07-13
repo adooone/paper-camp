@@ -1,7 +1,14 @@
 import { spawn } from 'node:child_process';
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { EntityType, PhaseItem, PrInfo, ReviewDecision, ReviewThread } from '../types/index';
+import type {
+  EntityEntry,
+  EntityType,
+  PhaseItem,
+  PrInfo,
+  ReviewDecision,
+  ReviewThread,
+} from '../types/index';
 import { parseEntityFile } from './parser';
 
 interface PrMapCacheEntry {
@@ -397,6 +404,36 @@ export interface ResolvedPlanForPr {
   phases: PhaseItem[];
 }
 
+interface ResolvedPlanContext {
+  id: string;
+  view: GhPrViewRow | undefined;
+  entry: EntityEntry;
+}
+
+/**
+ * Shared first half of every plan↔PR lookup: `gh pr view` the ref, resolve the
+ * plan id (body `**Plan:**` line, falling back to the branch), and parse its
+ * entity file. Factored out so `resolvePlanForPrRef` (read-only) and
+ * `syncPlanPhasesToPr` (which also needs `view.body` to rewrite) can't drift.
+ */
+async function resolvePlanContext(
+  root: string,
+  ref: string,
+): Promise<ResolvedPlanContext | undefined> {
+  const view = await runGhPrView(root, ref);
+  const id = resolveEntityIdFromPrRef(view?.body, view?.headRefName ?? ref);
+  if (!id) return undefined;
+
+  const file = await findEntityFile(root, id);
+  if (!file) return undefined;
+
+  const { entries } = parseEntityFile(await readFile(file, 'utf-8'));
+  const entry = entries[0];
+  if (!entry) return undefined;
+
+  return { id, view, entry };
+}
+
 /**
  * Resolves the plan a PR (given by number or branch) mirrors, and parses
  * `papercamp/ideas/<ID>.md` for the fields the mirroring workflows need. `ref`
@@ -410,16 +447,67 @@ export async function resolvePlanForPrRef(
   root: string,
   ref: string,
 ): Promise<ResolvedPlanForPr | undefined> {
-  const view = await runGhPrView(root, ref);
-  const id = resolveEntityIdFromPrRef(view?.body, view?.headRefName ?? ref);
-  if (!id) return undefined;
-
-  const file = await findEntityFile(root, id);
-  if (!file) return undefined;
-
-  const { entries } = parseEntityFile(await readFile(file, 'utf-8'));
-  const entry = entries[0];
-  if (!entry) return undefined;
-
+  const context = await resolvePlanContext(root, ref);
+  if (!context) return undefined;
+  const { id, entry } = context;
   return { id, kind: entry.type, tags: entry.tags, phases: entry.phases };
+}
+
+const PHASES_SECTION_START = '<!-- papercamp:phases:start -->';
+const PHASES_SECTION_END = '<!-- papercamp:phases:end -->';
+const PHASES_SECTION_RE = new RegExp(`${PHASES_SECTION_START}[\\s\\S]*?${PHASES_SECTION_END}`);
+
+/**
+ * Renders a plan's `### Phases` as a GitHub task-list checklist and
+ * inserts/replaces it in a PR body between marker comments, leaving
+ * everything else — notably the `**Plan:**` line `draft-pr.yml` stamps — untouched.
+ * Idempotent: the same `phases` always renders the same section text, so a
+ * caller can compare the result to the current body and skip the `gh pr edit`
+ * call when nothing changed.
+ */
+export function renderPlanPhasesIntoBody(body: string, phases: PhaseItem[]): string {
+  const items = phases.map((phase) => `- [${phase.done ? 'x' : ' '}] ${phase.text}`).join('\n');
+  const section = `${PHASES_SECTION_START}\n### Phases\n${items}\n${PHASES_SECTION_END}`;
+
+  if (PHASES_SECTION_RE.test(body)) return body.replace(PHASES_SECTION_RE, section);
+  const trimmed = body.trimEnd();
+  return trimmed.length > 0 ? `${trimmed}\n\n${section}` : section;
+}
+
+/**
+ * `gh pr edit <ref> --body-file -` — rewrites a PR's body from stdin (avoids
+ * argv length/escaping limits a `--body` flag would hit on a large body).
+ */
+function runGhPrEditBody(root: string, ref: string, body: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['pr', 'edit', ref, '--body-file', '-'], {
+      cwd: root,
+      stdio: ['pipe', 'ignore', 'pipe'],
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => resolve(code === 0));
+    proc.on('error', () => resolve(false));
+    proc.stdin?.end(body);
+  });
+}
+
+export type SyncPlanPhasesResult = 'updated' | 'unchanged' | 'unresolved';
+
+/**
+ * On push to a plan branch: rewrites the PR body's phases checklist to match
+ * `### Phases` in the plan file, preserving the `**Plan:**` line and
+ * everything else. Only calls `gh pr edit` when the rendered body actually
+ * differs from the PR's current body, so rerunning on an unchanged plan is a
+ * no-op — the idempotency `renderPlanPhasesIntoBody` makes possible.
+ */
+export async function syncPlanPhasesToPr(root: string, ref: string): Promise<SyncPlanPhasesResult> {
+  const context = await resolvePlanContext(root, ref);
+  if (!context?.view) return 'unresolved';
+  const { view, entry } = context;
+
+  const newBody = renderPlanPhasesIntoBody(view.body, entry.phases);
+  if (newBody === view.body) return 'unchanged';
+
+  const ok = await runGhPrEditBody(root, ref, newBody);
+  return ok ? 'updated' : 'unresolved';
 }

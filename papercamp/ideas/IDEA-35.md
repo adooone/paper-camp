@@ -30,7 +30,7 @@ The wiring reuses what exists: each piece is a small `pull_request`/`push`-trigg
 ### Phases
 - [x] Build the plan↔PR resolver helper
       A small CLI entry in `src/` (invoked from workflows like the existing core consumers) that, given a PR number or branch, resolves the plan id from the `**Plan:**` line `draft-pr.yml` writes (falling back to the branch name), parses `papercamp/ideas/<ID>.md` with the `src/core` parser, and prints the fields the later phases need (`kind`, `tags`, phases with checked state). Every later phase calls this instead of re-implementing resolution.
-- [ ] Render plan phases as a PR task list
+- [x] Render plan phases as a PR task list
       On push to a plan branch, rewrite the plan section of the PR body to render `### Phases` as a GitHub task-list checklist, ticking items that are `- [x]` in the file, while preserving the existing `**Plan:**` line. Idempotent — re-running on an unchanged plan produces no edit.
 - [ ] Auto-label PRs from kind and tags
       Apply labels derived from the plan's `kind` (feat/fix/…) and `tags`, reusing the same area vocabulary as the commit `scope-enum` so PRs categorize themselves. Create missing labels idempotently; never remove labels a human added by hand.

@@ -5,8 +5,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   clearPrCache,
   fetchUnresolvedThreads,
+  renderPlanPhasesIntoBody,
   resolvePlanForPrRef,
   resolvePrsByEntity,
+  syncPlanPhasesToPr,
 } from './pr';
 
 /** Puts a fake `gh` on PATH that answers from `script` and counts invocations
@@ -322,5 +324,109 @@ describe('resolvePlanForPrRef', () => {
       `echo '{"body":"**Plan:** \`IDEA-99\`","headRefName":"feat/idea-99-x"}'`,
     );
     expect(await resolvePlanForPrRef(root, '1')).toBeUndefined();
+  });
+});
+
+describe('renderPlanPhasesIntoBody', () => {
+  const phases = [
+    { done: true, text: 'Phase one' },
+    { done: false, text: 'Phase two' },
+  ];
+
+  it('appends a marker-delimited phases section when the body has none', () => {
+    const body = '**Plan:** `IDEA-9` — see the plan.\n\nSome intro text.';
+    expect(renderPlanPhasesIntoBody(body, phases)).toBe(
+      '**Plan:** `IDEA-9` — see the plan.\n\nSome intro text.\n\n' +
+        '<!-- papercamp:phases:start -->\n### Phases\n- [x] Phase one\n- [ ] Phase two\n<!-- papercamp:phases:end -->',
+    );
+  });
+
+  it('replaces an existing phases section in place, leaving the rest of the body untouched', () => {
+    const before =
+      '**Plan:** `IDEA-9`\n\n<!-- papercamp:phases:start -->\n### Phases\n- [ ] Phase one\n- [ ] Phase two\n<!-- papercamp:phases:end -->\n\nTrailer.';
+    expect(renderPlanPhasesIntoBody(before, phases)).toBe(
+      '**Plan:** `IDEA-9`\n\n<!-- papercamp:phases:start -->\n### Phases\n- [x] Phase one\n- [ ] Phase two\n<!-- papercamp:phases:end -->\n\nTrailer.',
+    );
+  });
+
+  it('is idempotent: re-rendering the same phases onto its own output changes nothing', () => {
+    const once = renderPlanPhasesIntoBody('**Plan:** `IDEA-9`', phases);
+    expect(renderPlanPhasesIntoBody(once, phases)).toBe(once);
+  });
+});
+
+describe('syncPlanPhasesToPr', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` with the JSON in `viewFixture` (via `cat`, so a
+   * multi-line body can't be mangled by `sh`'s escape-interpreting `echo`) and
+   * capturing any `pr edit --body-file -` stdin into `captureFile` (unwritten if
+   * edit is never called). */
+  function withGhPrViewAndEdit(
+    viewFixture: { body: string; headRefName: string },
+    captureFile: string,
+  ): { root: string; callCount: () => number } {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-view-'));
+    const fixtureFile = join(fixtureDir, 'view.json');
+    writeFileSync(fixtureFile, JSON.stringify(viewFixture));
+    const { root, callCount } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\ncat "${fixtureFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "edit" ]; then\ncat > "${captureFile}"\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return { root, callCount };
+  }
+
+  function writeEntityFile(root: string, id: string): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\ntags:\n  - ci\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [x] Phase one\n- [ ] Phase two\n`,
+    );
+  }
+
+  it('rewrites the PR body via gh pr edit and reports "updated" when the plan changed', async () => {
+    const captureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-edit-'));
+    const captureFile = join(captureDir, 'body');
+    const { root } = withGhPrViewAndEdit(
+      { body: '**Plan:** `IDEA-9` — see the plan.', headRefName: 'feat/idea-9-x' },
+      captureFile,
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPlanPhasesToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(readFileSync(captureFile, 'utf-8')).toBe(
+      '**Plan:** `IDEA-9` — see the plan.\n\n' +
+        '<!-- papercamp:phases:start -->\n### Phases\n- [x] Phase one\n- [ ] Phase two\n<!-- papercamp:phases:end -->',
+    );
+  });
+
+  it('reports "unchanged" and does not call gh pr edit when the body already matches', async () => {
+    const captureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-edit-'));
+    const captureFile = join(captureDir, 'body');
+    const syncedBody = renderPlanPhasesIntoBody('**Plan:** `IDEA-9`', [
+      { done: true, text: 'Phase one' },
+      { done: false, text: 'Phase two' },
+    ]);
+    const { root, callCount } = withGhPrViewAndEdit(
+      { body: syncedBody, headRefName: 'feat/idea-9-x' },
+      captureFile,
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPlanPhasesToPr(root, '42');
+    expect(result).toBe('unchanged');
+    expect(callCount()).toBe(1); // only the `pr view` call — no `pr edit`
+  });
+
+  it('resolves "unresolved" when no PR exists yet for the branch', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20');
+
+    expect(await syncPlanPhasesToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
   });
 });
