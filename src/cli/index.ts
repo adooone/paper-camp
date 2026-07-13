@@ -8,6 +8,7 @@ import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { computePlanContentHash } from '../core/content-hash';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parser';
+import { resolvePlanForPrRef } from '../core/pr';
 import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import {
@@ -513,6 +514,22 @@ program
       console.error(`Failed to start MCP server: ${(error as Error).message}`);
       process.exit(1);
     }
+  });
+
+program
+  .command('resolve-pr <ref>')
+  .description(
+    'Resolve the plan a PR (number or branch) mirrors and print its kind/tags/phases as JSON (used by the Scout CI workflows)',
+  )
+  .action(async (ref: string) => {
+    const root = process.cwd();
+    const resolved = await resolvePlanForPrRef(root, ref);
+    if (!resolved) {
+      console.error(`Could not resolve a plan for "${ref}"`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(JSON.stringify(resolved, null, 2));
   });
 
 // The two commands below are internal — invoked by the scaffolded

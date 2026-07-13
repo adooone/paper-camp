@@ -1,5 +1,8 @@
 import { spawn } from 'node:child_process';
-import type { PrInfo, ReviewDecision, ReviewThread } from '../types/index';
+import { readFile, stat } from 'node:fs/promises';
+import { join } from 'node:path';
+import type { EntityType, PhaseItem, PrInfo, ReviewDecision, ReviewThread } from '../types/index';
+import { parseEntityFile } from './parser';
 
 interface PrMapCacheEntry {
   /** A `Map` (possibly empty) once `gh` resolved; `undefined` = couldn't resolve. */
@@ -54,13 +57,21 @@ const STATE_RANK: Record<PrInfo['state'], number> = { merged: 4, open: 3, draft:
  * The entity id a PR references — its `**Plan:** \`IDEA-N\`` body line (stamped
  * by draft-pr.yml), falling back to the `feat/idea-N-…` id prefix of its head
  * branch. Both key off the stable id, never the title, so a renamed entity's PR
- * still resolves.
+ * still resolves. Shared by the row-level index (`prEntityId`) and the
+ * single-ref lookup (`resolvePlanForPrRef`).
  */
-function prEntityId(row: GhPrRow): string | null {
-  const fromBody = row.body?.match(/\*\*Plan:\*\*\s*`?([A-Za-z]+-\d+)`?/);
+export function resolveEntityIdFromPrRef(
+  body: string | null | undefined,
+  branch: string | null | undefined,
+): string | null {
+  const fromBody = body?.match(/\*\*Plan:\*\*\s*`?([A-Za-z]+-\d+)`?/);
   if (fromBody) return fromBody[1].toUpperCase();
-  const fromBranch = row.headRefName?.match(/^[a-z]+\/([a-z]+-\d+)-/);
+  const fromBranch = branch?.match(/^[a-z]+\/([a-z]+-\d+)-/);
   return fromBranch ? fromBranch[1].toUpperCase() : null;
+}
+
+function prEntityId(row: GhPrRow): string | null {
+  return resolveEntityIdFromPrRef(row.body, row.headRefName);
 }
 
 interface ReviewSignal {
@@ -326,4 +337,89 @@ export async function resolvePrsByEntity(
 /** Test-only: clears the module-level PR cache between test cases. */
 export function clearPrCache(): void {
   cache.clear();
+}
+
+interface GhPrViewRow {
+  body: string;
+  headRefName: string;
+}
+
+/**
+ * `gh pr view <ref>` — `ref` accepts a PR number or a branch name interchangeably,
+ * so callers don't need to know which they were given. Resolves `undefined` when
+ * no PR exists yet for `ref` (e.g. the first push, before `draft-pr.yml` runs),
+ * same "can't resolve, not a confirmed empty result" contract as `runGhPrListAll`.
+ */
+function runGhPrView(root: string, ref: string): Promise<GhPrViewRow | undefined> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['pr', 'view', ref, '--json', 'body,headRefName'], {
+      cwd: root,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    proc.stdout?.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => {
+      if (code !== 0) {
+        resolve(undefined);
+        return;
+      }
+      try {
+        resolve(JSON.parse(stdout) as GhPrViewRow);
+      } catch {
+        resolve(undefined);
+      }
+    });
+    proc.on('error', () => resolve(undefined));
+  });
+}
+
+async function findEntityFile(root: string, id: string): Promise<string | null> {
+  for (const dir of ['ideas', join('ideas', 'archive')]) {
+    const file = join(root, 'papercamp', dir, `${id}.md`);
+    try {
+      await stat(file);
+      return file;
+    } catch {
+      // not here — try the next candidate
+    }
+  }
+  return null;
+}
+
+/** The fields later Scout workflows need to mirror a plan onto its PR. */
+export interface ResolvedPlanForPr {
+  id: string;
+  kind?: EntityType;
+  tags: string[];
+  phases: PhaseItem[];
+}
+
+/**
+ * Resolves the plan a PR (given by number or branch) mirrors, and parses
+ * `papercamp/ideas/<ID>.md` for the fields the mirroring workflows need. `ref`
+ * is passed straight to `gh pr view`, so both a PR number and a branch name
+ * work; when no PR exists yet for a branch, falls back to reading the plan id
+ * out of the branch name itself (same convention `draft-pr.yml` uses to name
+ * the PR in the first place). Returns `undefined` when the id can't be
+ * resolved at all, or when it doesn't match a file under `papercamp/ideas/`.
+ */
+export async function resolvePlanForPrRef(
+  root: string,
+  ref: string,
+): Promise<ResolvedPlanForPr | undefined> {
+  const view = await runGhPrView(root, ref);
+  const id = resolveEntityIdFromPrRef(view?.body, view?.headRefName ?? ref);
+  if (!id) return undefined;
+
+  const file = await findEntityFile(root, id);
+  if (!file) return undefined;
+
+  const { entries } = parseEntityFile(await readFile(file, 'utf-8'));
+  const entry = entries[0];
+  if (!entry) return undefined;
+
+  return { id, kind: entry.type, tags: entry.tags, phases: entry.phases };
 }

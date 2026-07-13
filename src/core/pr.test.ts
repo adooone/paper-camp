@@ -1,8 +1,13 @@
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { clearPrCache, fetchUnresolvedThreads, resolvePrsByEntity } from './pr';
+import {
+  clearPrCache,
+  fetchUnresolvedThreads,
+  resolvePlanForPrRef,
+  resolvePrsByEntity,
+} from './pr';
 
 /** Puts a fake `gh` on PATH that answers from `script` and counts invocations
  * (via a call-count file), so tests don't shell out to the real GitHub CLI. */
@@ -244,5 +249,78 @@ describe('fetchUnresolvedThreads', () => {
     const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
     process.env.PATH = `${root}:${originalPath}`;
     expect(await fetchUnresolvedThreads(root, 'https://github.com/o/r/pull/2')).toEqual([]);
+  });
+});
+
+describe('resolvePlanForPrRef', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` with `viewScript` regardless of the ref passed. */
+  function withGhPrView(viewScript: string): { root: string } {
+    const { root } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\n${viewScript}\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return { root };
+  }
+
+  function writeEntityFile(root: string, id: string, extra = ''): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\ntags:\n  - ci\n  - github\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [x] Phase one\n- [ ] Phase two\n${extra}`,
+    );
+  }
+
+  it('resolves the plan id from the PR body Plan line and returns kind/tags/phases', async () => {
+    const { root } = withGhPrView(
+      `echo '{"body":"intro. **Plan:** \`IDEA-9\` for the plan.","headRefName":"feat/idea-9-x"}'`,
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const resolved = await resolvePlanForPrRef(root, '42');
+    expect(resolved).toEqual({
+      id: 'IDEA-9',
+      kind: 'feat',
+      tags: ['ci', 'github'],
+      phases: [
+        { done: true, text: 'Phase one', description: undefined, source: undefined },
+        { done: false, text: 'Phase two', description: undefined, source: undefined },
+      ],
+    });
+  });
+
+  it('falls back to the head branch id prefix when the PR body has no Plan line', async () => {
+    const { root } = withGhPrView(
+      `echo '{"body":"no plan line","headRefName":"feat/idea-12-some-title"}'`,
+    );
+    writeEntityFile(root, 'IDEA-12');
+
+    const resolved = await resolvePlanForPrRef(root, 'feat/idea-12-some-title');
+    expect(resolved?.id).toBe('IDEA-12');
+  });
+
+  it('falls back to parsing the ref itself as a branch when no PR exists yet', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20');
+
+    const resolved = await resolvePlanForPrRef(root, 'feat/idea-20-some-title');
+    expect(resolved?.id).toBe('IDEA-20');
+  });
+
+  it('resolves undefined when no id can be resolved at all', async () => {
+    const { root } = withGhPrView(`echo '{"body":"nothing here","headRefName":"main"}'`);
+    expect(await resolvePlanForPrRef(root, 'main')).toBeUndefined();
+  });
+
+  it('resolves undefined when the resolved id has no matching entity file', async () => {
+    const { root } = withGhPrView(
+      `echo '{"body":"**Plan:** \`IDEA-99\`","headRefName":"feat/idea-99-x"}'`,
+    );
+    expect(await resolvePlanForPrRef(root, '1')).toBeUndefined();
   });
 });
