@@ -8,7 +8,12 @@ import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { computePlanContentHash } from '../core/content-hash';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parser';
-import { resolvePlanForPrRef, syncPlanPhasesToPr, syncPrLabelsToPr } from '../core/pr';
+import {
+  resolvePlanForPrRef,
+  syncPlanPhasesToPr,
+  syncPrLabelsToPr,
+  syncPrReadinessToPr,
+} from '../core/pr';
 import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import {
@@ -558,6 +563,22 @@ program
     const result = await syncPrLabelsToPr(root, ref);
     if (result === 'unresolved') {
       console.error(`Could not sync plan labels to a PR for "${ref}"`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(result);
+  });
+
+program
+  .command('sync-pr-readiness <ref>')
+  .description(
+    "Flip a PR (number or branch) to ready for review once its plan's phases are all checked, or close it when the plan is dropped (used by the Scout CI workflows)",
+  )
+  .action(async (ref: string) => {
+    const root = process.cwd();
+    const result = await syncPrReadinessToPr(root, ref);
+    if (result === 'unresolved') {
+      console.error(`Could not sync PR readiness for "${ref}"`);
       process.exitCode = 1;
       return;
     }

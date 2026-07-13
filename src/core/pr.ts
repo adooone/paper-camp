@@ -351,6 +351,8 @@ interface GhPrViewRow {
   body: string;
   headRefName: string;
   labels: { name: string }[];
+  isDraft: boolean;
+  state: string;
 }
 
 /**
@@ -361,10 +363,14 @@ interface GhPrViewRow {
  */
 function runGhPrView(root: string, ref: string): Promise<GhPrViewRow | undefined> {
   return new Promise((resolve) => {
-    const proc = spawn('gh', ['pr', 'view', ref, '--json', 'body,headRefName,labels'], {
-      cwd: root,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    const proc = spawn(
+      'gh',
+      ['pr', 'view', ref, '--json', 'body,headRefName,labels,isDraft,state'],
+      {
+        cwd: root,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
     let stdout = '';
     proc.stdout?.on('data', (d: Buffer) => {
       stdout += d.toString();
@@ -623,4 +629,64 @@ export async function syncPrLabelsToPr(root: string, ref: string): Promise<SyncP
 
   const ok = await runGhPrAddLabels(root, ref, missing);
   return ok ? 'updated' : 'unresolved';
+}
+
+/** `gh pr ready <ref>` — flips a draft PR to ready for review. */
+function runGhPrReady(root: string, ref: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['pr', 'ready', ref], {
+      cwd: root,
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => resolve(code === 0));
+    proc.on('error', () => resolve(false));
+  });
+}
+
+/** `gh pr close <ref>` — closes a PR without merging, for a plan marked `dropped`. */
+function runGhPrClose(root: string, ref: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['pr', 'close', ref], {
+      cwd: root,
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => resolve(code === 0));
+    proc.on('error', () => resolve(false));
+  });
+}
+
+export type SyncPrReadinessResult = 'ready' | 'closed' | 'unchanged' | 'unresolved';
+
+/**
+ * On push to a plan branch: one-way plan → PR readiness, never plan status.
+ * A stored `dropped` override closes an open PR (abandonment leaves no other
+ * trace to derive from, per `core/status.ts`). Otherwise, once every phase in
+ * the plan is checked, a draft PR flips to ready for review — the phases list
+ * is the derived `review` signal ([[IDEA-56]]). Anything already in the target
+ * state (a non-draft PR with all phases done, an already-closed dropped PR) is
+ * a no-op, so rerunning on an unchanged plan doesn't call `gh` again. Marking a
+ * plan `done` on merge is deliberately not done here — that's [[IDEA-56]]'s
+ * derivation from the merged PR, not a write this function makes.
+ */
+export async function syncPrReadinessToPr(
+  root: string,
+  ref: string,
+): Promise<SyncPrReadinessResult> {
+  const context = await resolvePlanContext(root, ref);
+  if (!context?.view) return 'unresolved';
+  const { view, entry } = context;
+
+  if (entry.status === 'dropped') {
+    if (view.state !== 'OPEN') return 'unchanged';
+    const ok = await runGhPrClose(root, ref);
+    return ok ? 'closed' : 'unresolved';
+  }
+
+  const allPhasesDone = entry.phases.length > 0 && entry.phases.every((phase) => phase.done);
+  if (!allPhasesDone || !view.isDraft) return 'unchanged';
+
+  const ok = await runGhPrReady(root, ref);
+  return ok ? 'ready' : 'unresolved';
 }

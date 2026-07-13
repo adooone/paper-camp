@@ -68,3 +68,13 @@ jobs:
           BRANCH: ${{ github.ref_name }}
         run: pnpm cli sync-pr-labels "$BRANCH"
         continue-on-error: true
+
+      # One-way, plan -> PR: flips a draft PR to ready once every phase is
+      # checked, or closes it when the plan carries a `dropped` override.
+      # Never writes plan status back — merge -> done is IDEA-56's derivation.
+      - name: Flip PR readiness from phases and the dropped override
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: pnpm cli sync-pr-readiness "$BRANCH"
+        continue-on-error: true

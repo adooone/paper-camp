@@ -11,6 +11,7 @@ import {
   resolvePrsByEntity,
   syncPlanPhasesToPr,
   syncPrLabelsToPr,
+  syncPrReadinessToPr,
 } from './pr';
 
 /** Puts a fake `gh` on PATH that answers from `script` and counts invocations
@@ -571,5 +572,126 @@ describe('syncPrLabelsToPr', () => {
     writeEntityFile(root, 'IDEA-20');
 
     expect(await syncPrLabelsToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
+  });
+});
+
+describe('syncPrReadinessToPr', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` (with isDraft/state), `pr ready`, and `pr
+   * close`, logging the latter two to `actionFile` so tests can assert which
+   * (if either) fired. */
+  function withGhForReadiness(viewFixture: {
+    body: string;
+    headRefName: string;
+    isDraft: boolean;
+    state: string;
+  }): { root: string; callCount: () => number; actions: () => string[] } {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-readiness-'));
+    const viewFile = join(fixtureDir, 'view.json');
+    writeFileSync(viewFile, JSON.stringify({ ...viewFixture, labels: [] }));
+    const actionFile = join(fixtureDir, 'actions');
+    writeFileSync(actionFile, '');
+
+    const { root, callCount } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\ncat "${viewFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "ready" ]; then\necho ready >> "${actionFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "close" ]; then\necho close >> "${actionFile}"\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return {
+      root,
+      callCount,
+      actions: () => readFileSync(actionFile, 'utf-8').trim().split('\n').filter(Boolean),
+    };
+  }
+
+  function writeEntityFile(
+    root: string,
+    id: string,
+    opts: { status?: string; phases: string } = { phases: '- [x] Phase one\n- [x] Phase two\n' },
+  ): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    const statusLine = opts.status ? `status: ${opts.status}\n` : '';
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\n${statusLine}tags:\n  - ci\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n${opts.phases}`,
+    );
+  }
+
+  it('flips a draft PR to ready when every phase is checked, reporting "ready"', async () => {
+    const { root, actions } = withGhForReadiness({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      isDraft: true,
+      state: 'OPEN',
+    });
+    writeEntityFile(root, 'IDEA-9', { phases: '- [x] Phase one\n- [x] Phase two\n' });
+
+    expect(await syncPrReadinessToPr(root, '42')).toBe('ready');
+    expect(actions()).toEqual(['ready']);
+  });
+
+  it('reports "unchanged" and does not call gh again when the PR is already ready', async () => {
+    const { root, callCount, actions } = withGhForReadiness({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      isDraft: false,
+      state: 'OPEN',
+    });
+    writeEntityFile(root, 'IDEA-9', { phases: '- [x] Phase one\n- [x] Phase two\n' });
+
+    expect(await syncPrReadinessToPr(root, '42')).toBe('unchanged');
+    expect(actions()).toEqual([]);
+    expect(callCount()).toBe(1); // only the `pr view` call
+  });
+
+  it('reports "unchanged" when phases are still incomplete, even for a draft PR', async () => {
+    const { root, actions } = withGhForReadiness({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      isDraft: true,
+      state: 'OPEN',
+    });
+    writeEntityFile(root, 'IDEA-9', { phases: '- [x] Phase one\n- [ ] Phase two\n' });
+
+    expect(await syncPrReadinessToPr(root, '42')).toBe('unchanged');
+    expect(actions()).toEqual([]);
+  });
+
+  it('closes an open PR when the plan carries a dropped override, reporting "closed"', async () => {
+    const { root, actions } = withGhForReadiness({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      isDraft: false,
+      state: 'OPEN',
+    });
+    writeEntityFile(root, 'IDEA-9', { status: 'dropped', phases: '- [ ] Phase one\n' });
+
+    expect(await syncPrReadinessToPr(root, '42')).toBe('closed');
+    expect(actions()).toEqual(['close']);
+  });
+
+  it('reports "unchanged" and does not re-close an already-closed dropped PR', async () => {
+    const { root, actions, callCount } = withGhForReadiness({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      isDraft: false,
+      state: 'CLOSED',
+    });
+    writeEntityFile(root, 'IDEA-9', { status: 'dropped', phases: '- [ ] Phase one\n' });
+
+    expect(await syncPrReadinessToPr(root, '42')).toBe('unchanged');
+    expect(actions()).toEqual([]);
+    expect(callCount()).toBe(1);
+  });
+
+  it('resolves "unresolved" when no PR exists yet for the branch', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20', { phases: '- [x] Phase one\n' });
+
+    expect(await syncPrReadinessToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
   });
 });
