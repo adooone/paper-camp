@@ -25,7 +25,7 @@ Pairs with [[IDEA-59]] (the comment-trimming pass), which is cleanest to run rig
       Move the per-file `WandIcon` and other redefined glyph SVGs into one icons module, and replace the local copies with imports.
 - [x] Route the action pattern through `usePlanStatusPatch`
       Fold the hand-rolled `try/catch → toast → reload` call sites onto the existing `usePlanStatusPatch` helper so there's one owner of the pattern.
-- [ ] Split `stack-panel.tsx` into per-section components
+- [x] Split `stack-panel.tsx` into per-section components
       Break the ~1230-line file into Commit, Status/Findings, Agent-log, and Activity components under `components/`, matching §4's feature-folder layout, with `stack-panel.tsx` composing them.
 - [ ] Prune the dead exports knip flags
       Remove the genuinely-dead unused exports/symbols (~24), keeping the intentional public API of the `core`/`mcp` entry points; re-run knip to confirm.
