@@ -1,37 +1,16 @@
 import { join } from 'node:path';
 import { computePlanContentHash } from '../../core/content-hash';
 import { parseEntityFile } from '../../core/parser';
+import { COMMIT_SCOPES } from '../../core/scopes';
 import { prependProgressItem as prependProgressLine, todayDateString } from '../../core/serializer';
 import type { PhaseItem, PlanEntry } from '../../types/index';
 import type { GitManager } from './git';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 
-// Valid commit scopes — keep in sync with .commitlintrc.json's `scope-enum`.
 // The agent derives its commit scope from a plan's tags, but tags are free-form
 // and may not be valid scopes (e.g. FEAT-29's first tag was `freshness`). Picking
 // the first tag that IS a scope — else a safe default — keeps agent-authored
 // commits passing the Consistency check instead of red-lining CI.
-const COMMIT_SCOPES = new Set([
-  'core',
-  'cli',
-  'app',
-  'server',
-  'agent',
-  'audit',
-  'plans',
-  'ideas',
-  'docs',
-  'settings',
-  'stack',
-  'ui',
-  'ci',
-  'config',
-  'deps',
-  'repo',
-  'release',
-  'main',
-]);
-
 function resolveCommitScope(plan: Pick<PlanEntry, 'tags'>): string {
   return plan.tags?.find((tag) => COMMIT_SCOPES.has(tag)) ?? 'plans';
 }

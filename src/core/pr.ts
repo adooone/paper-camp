@@ -10,6 +10,7 @@ import type {
   ReviewThread,
 } from '../types/index';
 import { parseEntityFile } from './parser';
+import { COMMIT_SCOPES } from './scopes';
 
 interface PrMapCacheEntry {
   /** A `Map` (possibly empty) once `gh` resolved; `undefined` = couldn't resolve. */
@@ -349,6 +350,7 @@ export function clearPrCache(): void {
 interface GhPrViewRow {
   body: string;
   headRefName: string;
+  labels: { name: string }[];
 }
 
 /**
@@ -359,7 +361,7 @@ interface GhPrViewRow {
  */
 function runGhPrView(root: string, ref: string): Promise<GhPrViewRow | undefined> {
   return new Promise((resolve) => {
-    const proc = spawn('gh', ['pr', 'view', ref, '--json', 'body,headRefName'], {
+    const proc = spawn('gh', ['pr', 'view', ref, '--json', 'body,headRefName,labels'], {
       cwd: root,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -509,5 +511,116 @@ export async function syncPlanPhasesToPr(root: string, ref: string): Promise<Syn
   if (newBody === view.body) return 'unchanged';
 
   const ok = await runGhPrEditBody(root, ref, newBody);
+  return ok ? 'updated' : 'unresolved';
+}
+
+/**
+ * The labels a PR should carry for a plan: its `kind` (feat/fix/…, the
+ * type-enum values) plus whichever `tags` are also recognized commit scopes
+ * (`COMMIT_SCOPES` — the same area vocabulary `.commitlintrc.json`'s
+ * `scope-enum` uses), so free-form tags that aren't area names don't leak
+ * into GitHub labels. Order-stable and de-duped.
+ */
+export function derivePrLabels(plan: Pick<ResolvedPlanForPr, 'kind' | 'tags'>): string[] {
+  const labels = new Set<string>();
+  if (plan.kind) labels.add(plan.kind);
+  for (const tag of plan.tags) {
+    if (COMMIT_SCOPES.has(tag)) labels.add(tag);
+  }
+  return [...labels];
+}
+
+interface GhLabelRow {
+  name: string;
+}
+
+/** `gh label list` — the repo's existing labels, so creation only happens for ones missing. */
+function runGhLabelList(root: string): Promise<Set<string> | undefined> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['label', 'list', '--limit', '200', '--json', 'name'], {
+      cwd: root,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    proc.stdout?.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => {
+      if (code !== 0) {
+        resolve(undefined);
+        return;
+      }
+      try {
+        const rows = JSON.parse(stdout) as GhLabelRow[];
+        resolve(new Set(rows.map((r) => r.name)));
+      } catch {
+        resolve(undefined);
+      }
+    });
+    proc.on('error', () => resolve(undefined));
+  });
+}
+
+/**
+ * `gh label create <name>` — no `--force`, so a label a human already created
+ * (and possibly recolored/described) is never touched; this only fires for
+ * names `runGhLabelList` confirmed are missing from the repo.
+ */
+function runGhLabelCreate(root: string, name: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['label', 'create', name, '--color', 'ededed'], {
+      cwd: root,
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => resolve(code === 0));
+    proc.on('error', () => resolve(false));
+  });
+}
+
+/** `gh pr edit <ref> --add-label <a,b,c>` — additive only, never removes an existing label. */
+function runGhPrAddLabels(root: string, ref: string, labels: string[]): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['pr', 'edit', ref, '--add-label', labels.join(',')], {
+      cwd: root,
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => resolve(code === 0));
+    proc.on('error', () => resolve(false));
+  });
+}
+
+export type SyncPrLabelsResult = 'updated' | 'unchanged' | 'unresolved';
+
+/**
+ * On push to a plan branch: applies the labels `derivePrLabels` derives from
+ * the plan's `kind`/`tags`, creating any that don't exist in the repo yet.
+ * Additive only — a label already on the PR (human-added or from a previous
+ * run) is left alone, and a plan label no longer implied by the file is not
+ * removed, so a human's own labeling is never clobbered. Only calls `gh` to
+ * add labels that are actually missing from the PR, so rerunning on an
+ * unchanged plan is a no-op.
+ */
+export async function syncPrLabelsToPr(root: string, ref: string): Promise<SyncPrLabelsResult> {
+  const context = await resolvePlanContext(root, ref);
+  if (!context?.view) return 'unresolved';
+  const { view, entry } = context;
+
+  const desired = derivePrLabels({ kind: entry.type, tags: entry.tags });
+  const current = new Set((view.labels ?? []).map((l) => l.name));
+  const missing = desired.filter((label) => !current.has(label));
+  if (missing.length === 0) return 'unchanged';
+
+  const repoLabels = await runGhLabelList(root);
+  if (repoLabels) {
+    const toCreate = missing.filter((label) => !repoLabels.has(label));
+    for (const label of toCreate) {
+      await runGhLabelCreate(root, label);
+    }
+  }
+
+  const ok = await runGhPrAddLabels(root, ref, missing);
   return ok ? 'updated' : 'unresolved';
 }

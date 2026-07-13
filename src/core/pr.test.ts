@@ -4,11 +4,13 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   clearPrCache,
+  derivePrLabels,
   fetchUnresolvedThreads,
   renderPlanPhasesIntoBody,
   resolvePlanForPrRef,
   resolvePrsByEntity,
   syncPlanPhasesToPr,
+  syncPrLabelsToPr,
 } from './pr';
 
 /** Puts a fake `gh` on PATH that answers from `script` and counts invocations
@@ -428,5 +430,146 @@ describe('syncPlanPhasesToPr', () => {
     writeEntityFile(root, 'IDEA-20');
 
     expect(await syncPlanPhasesToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
+  });
+});
+
+describe('derivePrLabels', () => {
+  it('combines kind with tags that are also recognized commit scopes', () => {
+    expect(derivePrLabels({ kind: 'feat', tags: ['ci', 'freshness', 'plans'] })).toEqual([
+      'feat',
+      'ci',
+      'plans',
+    ]);
+  });
+
+  it('drops tags that are not in the commit-scope vocabulary', () => {
+    expect(derivePrLabels({ kind: 'fix', tags: ['freshness', 'random-idea'] })).toEqual(['fix']);
+  });
+
+  it('omits the kind label when the plan has no kind', () => {
+    expect(derivePrLabels({ tags: ['ci'] })).toEqual(['ci']);
+  });
+
+  it('de-dupes when kind and a tag collide', () => {
+    expect(derivePrLabels({ kind: 'feat', tags: ['feat', 'ci'] })).toEqual(['feat', 'ci']);
+  });
+});
+
+describe('syncPrLabelsToPr', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` (with labels), `label list`, `label create`,
+   * and `pr edit --add-label`, logging the latter two to files so tests can
+   * assert exactly which labels were created/added. */
+  function withGhForLabels(
+    viewFixture: { body: string; headRefName: string; labels: string[] },
+    existingRepoLabels: string[],
+  ): {
+    root: string;
+    callCount: () => number;
+    createdLabels: () => string[];
+    addedLabels: () => string[];
+  } {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-labels-'));
+    const viewFile = join(fixtureDir, 'view.json');
+    writeFileSync(
+      viewFile,
+      JSON.stringify({
+        body: viewFixture.body,
+        headRefName: viewFixture.headRefName,
+        labels: viewFixture.labels.map((name) => ({ name })),
+      }),
+    );
+    const repoLabelsFile = join(fixtureDir, 'repo-labels.json');
+    writeFileSync(repoLabelsFile, JSON.stringify(existingRepoLabels.map((name) => ({ name }))));
+    const createdFile = join(fixtureDir, 'created');
+    writeFileSync(createdFile, '');
+    const addedFile = join(fixtureDir, 'added');
+    writeFileSync(addedFile, '');
+
+    const { root, callCount } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\ncat "${viewFile}"\nelif [ "$1" = "label" ] && [ "$2" = "list" ]; then\ncat "${repoLabelsFile}"\nelif [ "$1" = "label" ] && [ "$2" = "create" ]; then\necho "$3" >> "${createdFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "edit" ]; then\necho "$5" >> "${addedFile}"\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return {
+      root,
+      callCount,
+      createdLabels: () => readFileSync(createdFile, 'utf-8').trim().split('\n').filter(Boolean),
+      addedLabels: () =>
+        readFileSync(addedFile, 'utf-8')
+          .trim()
+          .split('\n')
+          .filter(Boolean)
+          .flatMap((line) => line.split(',')),
+    };
+  }
+
+  function writeEntityFile(root: string, id: string): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\ntags:\n  - ci\n  - freshness\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [ ] Phase one\n`,
+    );
+  }
+
+  it('creates missing labels and adds them, reporting "updated"', async () => {
+    const { root, createdLabels, addedLabels } = withGhForLabels(
+      { body: '**Plan:** `IDEA-9`', headRefName: 'feat/idea-9-x', labels: [] },
+      [],
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPrLabelsToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(createdLabels().sort()).toEqual(['ci', 'feat']);
+    expect(addedLabels().sort()).toEqual(['ci', 'feat']);
+  });
+
+  it('does not recreate a label that already exists in the repo', async () => {
+    const { root, createdLabels, addedLabels } = withGhForLabels(
+      { body: '**Plan:** `IDEA-9`', headRefName: 'feat/idea-9-x', labels: [] },
+      ['ci'],
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPrLabelsToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(createdLabels()).toEqual(['feat']);
+    expect(addedLabels().sort()).toEqual(['ci', 'feat']);
+  });
+
+  it('reports "unchanged" and calls only gh pr view when the PR already has all derived labels', async () => {
+    const { root, callCount } = withGhForLabels(
+      { body: '**Plan:** `IDEA-9`', headRefName: 'feat/idea-9-x', labels: ['ci', 'feat'] },
+      ['ci', 'feat'],
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPrLabelsToPr(root, '42');
+    expect(result).toBe('unchanged');
+    expect(callCount()).toBe(1); // only the `pr view` call
+  });
+
+  it('never removes an existing label — only adds the missing ones', async () => {
+    const { root, addedLabels } = withGhForLabels(
+      { body: '**Plan:** `IDEA-9`', headRefName: 'feat/idea-9-x', labels: ['human-added', 'ci'] },
+      ['ci', 'feat', 'human-added'],
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPrLabelsToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(addedLabels()).toEqual(['feat']); // human-added label untouched, not re-sent
+  });
+
+  it('resolves "unresolved" when no PR exists yet for the branch', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20');
+
+    expect(await syncPrLabelsToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
   });
 });

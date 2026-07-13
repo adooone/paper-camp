@@ -1,4 +1,4 @@
-name: Sync PR Phases
+name: Sync PR Metadata
 
 on:
   push:
@@ -11,11 +11,12 @@ on:
 
 permissions:
   contents: read
+  issues: write
   pull-requests: write
 
 jobs:
-  sync-pr-phases:
-    name: Sync PR Phases
+  sync-pr-metadata:
+    name: Sync PR Metadata
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -46,6 +47,7 @@ jobs:
           app-id: ${{ secrets.SCOUT_APP_ID }}
           private-key: ${{ secrets.SCOUT_PRIVATE_KEY }}
           permission-contents: read
+          permission-issues: write
           permission-pull-requests: write
 
       # Best-effort: on the very first push draft-pr.yml may not have created
@@ -56,4 +58,13 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           BRANCH: ${{ github.ref_name }}
         run: pnpm cli sync-pr-phases "$BRANCH"
+        continue-on-error: true
+
+      # Labels are created idempotently and only ever added, never removed —
+      # a human-applied label always survives this step.
+      - name: Apply labels from plan kind/tags
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: pnpm cli sync-pr-labels "$BRANCH"
         continue-on-error: true
