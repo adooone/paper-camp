@@ -1,3 +1,27 @@
+## Quality-status "stale" requires both lint and format stale, not either
+
+**Date:** 2026-07-13
+**Status:** decided
+
+**Context:** IDEA-58 phase 1 extracted the duplicated `qualityStatus`/`testStatus`/
+`consistencyStatus` derivation out of `status-bar.tsx` and `stack-panel.tsx` into
+one shared `deriveCheckStatuses` helper. The two copies had silently diverged:
+`status-bar.tsx` treated the combined "Quality" status as `stale` if *either*
+lint or format was stale, while `stack-panel.tsx` only reported `stale` when
+*both* were. Unifying to one helper meant picking one behavior.
+
+**Decision:** Keep `stack-panel.tsx`'s semantics — `stale` only when both lint
+and format are stale; if either has already reported pass/fail, the merged
+status reflects that instead of masking it as stale. `status-bar.tsx` now
+follows the same rule via `src/app/utils/check-status.ts`.
+
+**Rationale:** Lint and format are triggered together in every call site, so the
+partial-stale state is transient; treating a known pass/fail as more useful
+information than a stale flag on the other check matches how the Stack panel's
+more deliberate `useMemo` version already worked.
+
+---
+
 ## Status derives from the PR (matched by id), not from local branches
 
 **Date:** 2026-07-09

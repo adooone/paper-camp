@@ -27,6 +27,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { findFocusPlan } from '../features/plans/helpers';
 import { commitChanges, pushChanges, suggestCommitMessage, syncToMain } from '../services/git-api';
 import { useAppStore } from '../stores/app-store';
+import { deriveCheckStatuses } from '../utils/check-status';
 import { summarizeQualityFailure, summarizeTestFailure } from '../utils/check-summary';
 
 const COMMIT_TITLE_STORAGE_KEY = 'papercamp.commitTitle';
@@ -230,17 +231,10 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
 
   const activePlan = useMemo(() => findFocusPlan(plans?.entries), [plans?.entries]);
 
-  const qualityStatus: CheckStatus = useMemo(() => {
-    const lintStatus = statusData?.lint?.status ?? 'stale';
-    const formatStatus = statusData?.format?.status ?? 'stale';
-    if (lintStatus === 'running' || formatStatus === 'running') return 'running';
-    if (lintStatus === 'fail' || formatStatus === 'fail') return 'fail';
-    if (lintStatus === 'stale' && formatStatus === 'stale') return 'stale';
-    return 'pass';
-  }, [statusData]);
-  const testStatus: CheckStatus = statusData?.test?.status ?? 'stale';
-  // Codebase consistency (knip + dependency-cruiser) — mirrors the CI "Consistency" job.
-  const consistencyStatus: CheckStatus = statusData?.consistency?.status ?? 'stale';
+  const { qualityStatus, testStatus, consistencyStatus } = useMemo(
+    () => deriveCheckStatuses(statusData),
+    [statusData],
+  );
   const anyChecksRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
   // Plan/decision *document* consistency (dangling refs, blocked plans) — a separate

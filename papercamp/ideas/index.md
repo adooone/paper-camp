@@ -59,3 +59,8 @@
 | IDEA-55 | Actualise all ideas at once | feat | done | app, plans, agent |
 | IDEA-56 | Derive status from git and PR state | feat | done | app, github, plans, core |
 | IDEA-57 | Drive PR review fixes from the app | feat | done | app, github, plans, agent |
+| IDEA-58 | Simplify and de-dupe the codebase | refactor | idea | app, refactor, core |
+| IDEA-59 | Trim comments to the essential | refactor | idea | app, core, refactor, docs |
+| IDEA-60 | Group code into domain subfolders | refactor | idea | app, refactor, core |
+| IDEA-61 | Speed up API reads and refetch churn | refactor | idea | app, core, performance |
+| IDEA-62 | AI-suggested idea drafts | feat | idea | app, ideas, agent |

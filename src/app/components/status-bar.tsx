@@ -1,5 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
+import { deriveCheckStatuses } from '@/app/utils/check-status';
 import type { CheckStatus } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles, useToast } from '@dendelion/paper-ui';
 
@@ -69,19 +70,7 @@ export const StatusBar = () => {
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const { toast } = useToast();
 
-  const qualityChecks: CheckStatus[] = [
-    status?.lint?.status ?? 'stale',
-    status?.format?.status ?? 'stale',
-  ];
-  const qualityStatus: CheckStatus = qualityChecks.includes('running')
-    ? 'running'
-    : qualityChecks.includes('fail')
-      ? 'fail'
-      : qualityChecks.includes('stale')
-        ? 'stale'
-        : 'pass';
-  const testStatus: CheckStatus = status?.test?.status ?? 'stale';
-  const consistencyStatus: CheckStatus = status?.consistency?.status ?? 'stale';
+  const { qualityStatus, testStatus, consistencyStatus } = deriveCheckStatuses(status);
   const anyChecksRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
   const agentActive =
