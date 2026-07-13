@@ -492,7 +492,7 @@ export function renderPlanPhasesIntoBody(body: string, phases: PhaseItem[]): str
   const items = phases.map((phase) => `- [${phase.done ? 'x' : ' '}] ${phase.text}`).join('\n');
   const section = `${PHASES_SECTION_START}\n### Phases\n${items}\n${PHASES_SECTION_END}`;
 
-  if (PHASES_SECTION_RE.test(body)) return body.replace(PHASES_SECTION_RE, section);
+  if (PHASES_SECTION_RE.test(body)) return body.replace(PHASES_SECTION_RE, () => section);
   const trimmed = body.trimEnd();
   return trimmed.length > 0 ? `${trimmed}\n\n${section}` : section;
 }
@@ -758,7 +758,7 @@ function runGhPrCommentCreate(root: string, ref: string, body: string): Promise<
 }
 
 /**
- * `gh api repos/<owner>/<repo>/issues/comments/<id> -X PATCH -f body=@-` — edits an
+ * `gh api repos/<owner>/<repo>/issues/comments/<id> -X PATCH -F body=@-` — edits an
  * existing comment by its REST id, reading the new body from stdin. There's no
  * `gh pr comment --edit` by marker, so this is the one place `core/pr.ts` drops to
  * the raw REST API rather than a `gh pr`/`gh label` subcommand.
@@ -778,7 +778,7 @@ function runGhApiPatchComment(
         `repos/${owner}/${repo}/issues/comments/${commentId}`,
         '-X',
         'PATCH',
-        '-f',
+        '-F',
         'body=@-',
       ],
       { cwd: root, stdio: ['pipe', 'ignore', 'pipe'] },
