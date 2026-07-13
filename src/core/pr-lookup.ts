@@ -279,6 +279,17 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
       ],
       { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] },
     );
+    let settled = false;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn();
+    };
+    const timer = setTimeout(() => {
+      proc.kill();
+      settle(() => resolve(undefined));
+    }, GH_API_TIMEOUT_MS);
     let stdout = '';
     proc.stdout?.on('data', (d: Buffer) => {
       stdout += d.toString();
@@ -286,31 +297,33 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
     // Drain stderr — an unread pipe can fill and hang the subprocess.
     proc.stderr?.on('data', () => {});
     proc.on('close', (code) => {
-      // Non-zero covers "no gh binary", "not authenticated", "offline", and "not
-      // a GitHub remote" alike — all mean "can't resolve", not "no PRs", so the
-      // caller must fall back rather than treat this as a confirmed empty set.
-      if (code !== 0) {
-        resolve(undefined);
-        return;
-      }
-      try {
-        const rows = JSON.parse(stdout) as GhPrRow[];
-        const byId = new Map<string, PrInfo>();
-        for (const row of rows) {
-          const id = prEntityId(row);
-          if (!id) continue;
-          const info = toPrInfo(row);
-          const existing = byId.get(id);
-          if (!existing || STATE_RANK[info.state] > STATE_RANK[existing.state]) {
-            byId.set(id, info);
-          }
+      settle(() => {
+        // Non-zero covers "no gh binary", "not authenticated", "offline", and "not
+        // a GitHub remote" alike — all mean "can't resolve", not "no PRs", so the
+        // caller must fall back rather than treat this as a confirmed empty set.
+        if (code !== 0) {
+          resolve(undefined);
+          return;
         }
-        enrichWithReviewSignal(root, byId).then(() => resolve(byId));
-      } catch {
-        resolve(undefined);
-      }
+        try {
+          const rows = JSON.parse(stdout) as GhPrRow[];
+          const byId = new Map<string, PrInfo>();
+          for (const row of rows) {
+            const id = prEntityId(row);
+            if (!id) continue;
+            const info = toPrInfo(row);
+            const existing = byId.get(id);
+            if (!existing || STATE_RANK[info.state] > STATE_RANK[existing.state]) {
+              byId.set(id, info);
+            }
+          }
+          enrichWithReviewSignal(root, byId).then(() => resolve(byId));
+        } catch {
+          resolve(undefined);
+        }
+      });
     });
-    proc.on('error', () => resolve(undefined));
+    proc.on('error', () => settle(() => resolve(undefined)));
   });
 }
 

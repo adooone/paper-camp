@@ -1,6 +1,6 @@
 import { createIdea } from '@/app/services/ideas-api';
 import { useAppStore } from '@/app/stores/app-store';
-import { IconButton } from '@dendelion/paper-ui';
+import { IconButton, LightbulbIcon } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { CreateIdeaModal } from './create-idea-modal';
 
@@ -17,7 +17,7 @@ export const NewIdeaButton = () => {
   return (
     <>
       <IconButton
-        icon={<span>+</span>}
+        icon={<LightbulbIcon size={16} />}
         variant="ghost"
         size="small"
         label="New idea"

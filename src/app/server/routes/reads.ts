@@ -4,9 +4,9 @@ import {
   parseDecisions,
   parseOpenQuestions,
   parseProgress,
-} from '@/core/parser';
-import { readNoteEntries, readWorkEntries } from '@/core/readers';
-import { coerceAgentConfig } from '@/types/index';
+} from '../../../core/parser';
+import { readNoteEntries, readWorkEntries } from '../../../core/readers';
+import { coerceAgentConfig } from '../../../types/index';
 import { campFile, readMaybe } from '../helpers';
 import { listConfigFiles } from './config';
 import type { ReadRoute } from './types';

@@ -1,5 +1,5 @@
+import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { CSSProperties } from 'react';
-import { color, fontFamily, fontSize, space } from '../../styles/tokens';
 
 export const deskBg = color.deskBg;
 export const deskLight = color.deskLight;

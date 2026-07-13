@@ -55,50 +55,6 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * paper-ui's Button renders its colored fill as an SVG <path> layered behind the
- * label, not a CSS background — so a bright color means recoloring that path
- * directly. !important is needed because paper-ui's own hover/active rules
- * (e.g. .primary:hover .blobFill) have higher specificity than a single class
- * from outside the component. Applied by `IntentButton` (app/components/intent-button.tsx),
- * which names the go/stop/log intent once instead of each call site picking a color.
- */
-.intent-button-go svg path:first-child {
-  fill: #b7d9bc !important;
-}
-.intent-button-go:hover svg path:first-child {
-  fill: #a3ccaa !important;
-}
-.intent-button-go:active svg path:first-child {
-  fill: #8fbe98 !important;
-}
-
-.intent-button-stop svg path:first-child {
-  fill: #f0c9a4 !important;
-}
-.intent-button-stop:hover svg path:first-child {
-  fill: #eabb8c !important;
-}
-.intent-button-stop:active svg path:first-child {
-  fill: #e3ac74 !important;
-}
-
-.intent-button-log svg path:first-child {
-  fill: #d2c0e0 !important;
-}
-.intent-button-log:hover svg path:first-child {
-  fill: #c3a9d6 !important;
-}
-.intent-button-log:active svg path:first-child {
-  fill: #b392cb !important;
-}
-
-.intent-button-go,
-.intent-button-stop,
-.intent-button-log {
-  color: #1a1917 !important;
-}
-
-/*
  * The Status card's Quality/Tests/Consistency stamps are plain <button>s that
  * launch check runs on click, but paper-ui's Stamp has no interactive states of
  * its own — so this supplies the hover/pressed affordance that tells people

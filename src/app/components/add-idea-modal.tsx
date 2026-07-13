@@ -109,12 +109,16 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
     }
   };
 
-  const handleExtendSimilar = async (candidateId: string, existingLog: LogEntry[] | undefined) => {
+  const handleExtendSimilar = async (
+    candidateId: string,
+    candidateTitle: string,
+    existingLog: LogEntry[] | undefined,
+  ) => {
     setExtendingId(candidateId);
     const today = new Date().toISOString().slice(0, 10);
     const newLog: LogEntry = { date: today, text: title.trim() };
     const ok = await patch(
-      candidateId,
+      candidateTitle,
       { log: [...(existingLog ?? []), newLog] },
       { errorTitle: 'Extend failed' },
     );
@@ -203,7 +207,8 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
                         size="small"
                         disabled={!candidate.id || !title.trim() || extendingId !== null}
                         onClick={() =>
-                          candidate.id && handleExtendSimilar(candidate.id, candidate.log)
+                          candidate.id &&
+                          handleExtendSimilar(candidate.id, candidate.title, candidate.log)
                         }
                       >
                         {extendingId === candidate.id ? 'Extending…' : 'Extend it instead'}

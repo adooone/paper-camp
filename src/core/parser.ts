@@ -25,9 +25,14 @@ import {
 
 const HEADING_RE = /^##\s+(.+?)\s*$/;
 const FIELD_RE = /^\*\*([A-Za-z][A-Za-z-]*):\*\*\s*(.*)$/;
-const PHASES_HEADING_RE = /^###\s+Phases\s*$/i;
-const LOG_HEADING_RE = /^###\s+Log\s*$/i;
-const CLARIFICATIONS_HEADING_RE = /^###\s+Clarifications\s*$/i;
+// Read h2 OR h3 for these sections. The serializer only ever writes `###`, but
+// generic markdown tooling (CodeRabbit, markdownlint) flags an h3 that isn't
+// preceded by an h2 and "helpfully" demotes it to `##` — which previously made
+// the whole section vanish silently. Accepting both means such an edit can't
+// destroy phases/log data; the next serialize re-canonicalizes it back to `###`.
+const PHASES_HEADING_RE = /^#{2,3}\s+Phases\s*$/i;
+const LOG_HEADING_RE = /^#{2,3}\s+Log\s*$/i;
+const CLARIFICATIONS_HEADING_RE = /^#{2,3}\s+Clarifications\s*$/i;
 const SUB_HEADING_RE = /^#{2,3}\s+/;
 const CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.*)$/;
 const PHASE_SOURCE_RE = /^\[review\]\s+(.*)$/;

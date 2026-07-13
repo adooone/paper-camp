@@ -1,9 +1,9 @@
+import { useAppStore } from '@/app/stores/app-store';
+import { fontFamily, fontSize, layout, space } from '@/app/styles/tokens';
+import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { Divider, IconButton, Spinner } from '@dendelion/paper-ui';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef } from 'react';
-import { useAppStore } from '../../stores/app-store';
-import { fontFamily, fontSize, layout, space } from '../../styles/tokens';
-import { deriveCheckStatuses } from '../../utils/check-status';
 import { AgentSection } from './agent-section';
 import { CommitSection } from './commit-section';
 import {
@@ -45,14 +45,16 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     loadGitStatus,
     loadAgentStatus,
   });
-  refreshRef.current = {
-    loadProgress,
-    loadPlans,
-    loadStatus,
-    loadConsistency,
-    loadGitStatus,
-    loadAgentStatus,
-  };
+  useEffect(() => {
+    refreshRef.current = {
+      loadProgress,
+      loadPlans,
+      loadStatus,
+      loadConsistency,
+      loadGitStatus,
+      loadAgentStatus,
+    };
+  });
 
   useEffect(() => {
     refreshRef.current.loadProgress();

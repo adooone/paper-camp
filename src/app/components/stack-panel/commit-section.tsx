@@ -1,3 +1,12 @@
+import { findFocusPlan } from '@/app/features/plans/helpers';
+import {
+  commitChanges,
+  pushChanges,
+  suggestCommitMessage,
+  syncToMain,
+} from '@/app/services/git-api';
+import { useAppStore } from '@/app/stores/app-store';
+import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import {
   Accordion,
   Alert,
@@ -9,16 +18,7 @@ import {
   Textarea,
   Tooltip,
 } from '@dendelion/paper-ui';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { findFocusPlan } from '../../features/plans/helpers';
-import {
-  commitChanges,
-  pushChanges,
-  suggestCommitMessage,
-  syncToMain,
-} from '../../services/git-api';
-import { useAppStore } from '../../stores/app-store';
-import { fontFamily, fontSize, space } from '../../styles/tokens';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MergeIcon, PushIcon, WandIcon } from '../icons';
 import { deskChalk, deskTextMuted, sectionLabelStyle } from './shared';
 
@@ -142,10 +142,25 @@ export const CommitSection = () => {
     writeStoredCommitField(COMMIT_MESSAGE_STORAGE_KEY, commitMessage);
   }, [commitMessage]);
 
+  const knownPathsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (gitStatus) {
-      setSelectedFiles(new Set(gitStatus.map((e) => e.path)));
-    }
+    if (!gitStatus) return;
+    // Snapshot + advance the ref OUTSIDE the setState updater. Mutating it inside
+    // makes the updater impure, and StrictMode double-invokes updaters: the first
+    // pass would fill `known` with every path so the second pass selects nothing,
+    // leaving the file list empty (and the Suggest/Commit buttons disabled).
+    const known = knownPathsRef.current;
+    knownPathsRef.current = new Set(gitStatus.map((e) => e.path));
+    setSelectedFiles((prev) => {
+      const next = new Set<string>();
+      for (const entry of gitStatus) {
+        // Auto-select newly-seen files; preserve the user's existing choice otherwise.
+        if (!known.has(entry.path) || prev.has(entry.path)) {
+          next.add(entry.path);
+        }
+      }
+      return next;
+    });
   }, [gitStatus]);
 
   const handleToggleFile = useCallback((path: string) => {

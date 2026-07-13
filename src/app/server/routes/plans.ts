@@ -1,12 +1,12 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readEntities } from '@/core/readers';
+import { readEntities } from '../../../core/readers';
 import {
   archiveEntityFile,
   assignEntityId,
   formatEntityFile,
   todayDateString,
-} from '@/core/serializer';
+} from '../../../core/serializer';
 import {
   AGENT_IDS,
   type AgentId,
@@ -15,7 +15,7 @@ import {
   PLAN_KINDS,
   type PhaseItem,
   type PlanStatus,
-} from '@/types/index';
+} from '../../../types/index';
 import {
   campFile,
   checkBranchConflictForPlan,

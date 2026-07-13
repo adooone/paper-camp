@@ -1,8 +1,8 @@
+import { useAppStore } from '@/app/stores/app-store';
+import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { AGENT_LABELS, type AgentTaskStatus } from '@/types/index';
 import { Accordion, Card, CloseIcon, IconButton, Spinner, Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { useAppStore } from '../../stores/app-store';
-import { fontFamily, fontSize, space } from '../../styles/tokens';
 import {
   chalkStatusFill,
   chalkStatusText,

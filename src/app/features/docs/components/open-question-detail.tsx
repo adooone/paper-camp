@@ -3,7 +3,7 @@ import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { resolveOpenQuestion } from '@/app/services/docs-api';
 import { useAppStore } from '@/app/stores';
 import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
-import { Button, Input, Modal, Stamp, Textarea } from '@dendelion/paper-ui';
+import { Button, Input, Modal, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { QUESTION_STATUS_STAMP } from '../../plans/constants';
@@ -15,6 +15,7 @@ export const OpenQuestionDetail = () => {
   const loadDecisions = useAppStore((s) => s.loadDecisions);
   const loadOpenQuestions = useAppStore((s) => s.loadOpenQuestions);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [decision, setDecision] = useState('');
@@ -50,8 +51,13 @@ export const OpenQuestionDetail = () => {
       await resolveOpenQuestion(question.title, decision.trim(), rationale.trim() || undefined);
       setModalOpen(false);
       await Promise.all([loadDecisions(), loadOpenQuestions()]);
-    } catch {
+    } catch (err) {
       setLoading(false);
+      toast({
+        title: 'Resolve failed',
+        description: (err as Error).message,
+        variant: 'error',
+      });
     }
   };
 

@@ -1,11 +1,11 @@
+import { useAppStore } from '@/app/stores/app-store';
+import { fontFamily, fontSize, space } from '@/app/styles/tokens';
+import { deriveCheckStatuses } from '@/app/utils/check-status';
+import { summarizeQualityFailure, summarizeTestFailure } from '@/app/utils/check-summary';
 import type { CheckStatus, ConsistencyIssue } from '@/types/index';
 import { Card, CopyButton, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo, useState } from 'react';
-import { useAppStore } from '../../stores/app-store';
-import { fontFamily, fontSize, space } from '../../styles/tokens';
-import { deriveCheckStatuses } from '../../utils/check-status';
-import { summarizeQualityFailure, summarizeTestFailure } from '../../utils/check-summary';
 import {
   chalkStatusFill,
   chalkStatusText,

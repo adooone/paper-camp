@@ -33,6 +33,12 @@ reviews:
         - plans.md entries use ## Title, Status/Id/Kind/Idea/Created/Updated/Tags frontmatter, ### Phases with - [ ] checkboxes
         - progress.md entries are reverse-chronological dated entries with - bullet points
         - Commit messages follow format: type(scope): Description (capitalized, not lowercase imperative)
+    - path: "papercamp/**"
+      instructions: |
+        These are Paper Camp data files parsed by src/core/parser.ts — the markdown format is load-bearing, not free-form prose:
+        - The `### Phases`, `### Log`, and `### Clarifications` sections are INTENTIONALLY h3 and must stay h3. Do NOT suggest demoting them to `## ` for "heading hierarchy" — the parser and serializer key off these exact headings, and a wrong level was a real source of silently-lost phase data.
+        - Idea/plan bodies deliberately have no h1/h2 before those h3 sections; that is by design, not a markdown-lint violation.
+        - Do not reformat the `- [ ]` phase checkboxes or their 6-space-indented description lines.
     - path: ".github/workflows/*.yml"
       instructions: |
         Follow this repo's CI/CD workflow conventions (AGENTS.md's Branch workflow, ci.yml patterns):
