@@ -59,6 +59,9 @@ export const transition = {
 
 export const color = {
   textPrimary: '#1A1917',
+  // Slightly darker than textPrimary; used specifically for long-form prose
+  // bodies (decisions, notes, open questions, repo docs, progress entries).
+  textProse: '#1C1B18',
   textSecondary: '#68635C',
   textTertiary: '#A8A399',
   accentAmber: '#D4A373',

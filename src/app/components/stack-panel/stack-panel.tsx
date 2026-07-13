@@ -6,7 +6,15 @@ import { fontFamily, fontSize, layout, space } from '../../styles/tokens';
 import { deriveCheckStatuses } from '../../utils/check-status';
 import { AgentSection } from './agent-section';
 import { CommitSection } from './commit-section';
-import { CHALKBOARD_TEXTURE, deskBg, deskBorder, deskChalk, deskLight, deskText } from './shared';
+import {
+  CHALKBOARD_TEXTURE,
+  chalkStatusText,
+  deskBg,
+  deskBorder,
+  deskChalk,
+  deskLight,
+  deskText,
+} from './shared';
 import { StatusSection } from './status-section';
 
 interface StackPanelProps {
@@ -120,7 +128,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
                       width: 8,
                       height: 8,
                       borderRadius: '50%',
-                      background: '#d6a0a0',
+                      background: chalkStatusText.fail,
                       boxShadow: '0 0 6px rgba(214, 160, 160, 0.9)',
                     }}
                   />

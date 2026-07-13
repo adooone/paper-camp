@@ -1,4 +1,4 @@
-import type { AgentRunOptions } from '../../../types/index';
+import type { AgentRunOptions } from '@/types/index';
 import type { ParsedAgentLine } from './claude-code';
 
 export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {

@@ -3,11 +3,12 @@ import { checkIdeaOverlap } from '@/app/services/ideas-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
-import { Button, Card, Input, Modal, Stamp, Switch, Textarea } from '@dendelion/paper-ui';
+import { Button, Card, Input, Modal, Switch, Textarea } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { usePlanStatusPatch } from '../use-plan-status-patch';
 import { DraftPlanButton } from './draft-plan-button';
+import { PlanIdStamp } from './plan-id-stamp';
 
 interface CreateIdeaModalProps {
   open: boolean;
@@ -156,11 +157,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
                     <div
                       style={{ display: 'flex', alignItems: 'center', gap: space[2], minWidth: 0 }}
                     >
-                      {candidate.id && (
-                        <Stamp size="small" fillColor="rgba(0,0,0,0.08)">
-                          {candidate.id}
-                        </Stamp>
-                      )}
+                      <PlanIdStamp id={candidate.id} />
                       <span
                         style={{
                           overflow: 'hidden',

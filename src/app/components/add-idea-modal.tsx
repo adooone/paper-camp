@@ -1,4 +1,5 @@
 import { DraftPlanButton } from '@/app/features/plans/components/draft-plan-button';
+import { PlanIdStamp } from '@/app/features/plans/components/plan-id-stamp';
 import { usePlanStatusPatch } from '@/app/features/plans/use-plan-status-patch';
 import { useSimilarIdeas } from '@/app/hooks';
 import { checkIdeaOverlap } from '@/app/services/ideas-api';
@@ -6,7 +7,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
 import { PLAN_KINDS } from '@/types/index';
-import { Button, Card, Input, Modal, Select, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
+import { Button, Card, Input, Modal, Select, Textarea, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 
@@ -176,11 +177,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
                     <div
                       style={{ display: 'flex', alignItems: 'center', gap: space[2], minWidth: 0 }}
                     >
-                      {candidate.id && (
-                        <Stamp size="small" fillColor="rgba(0,0,0,0.08)">
-                          {candidate.id}
-                        </Stamp>
-                      )}
+                      <PlanIdStamp id={candidate.id} />
                       <span
                         style={{
                           overflow: 'hidden',

@@ -235,6 +235,8 @@ const IdeaGroupRowCard = ({
           }}
         >
           {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
+          {/* Raw <button>: a chromeless click target wrapping icon + title text,
+              not a paper-ui Button. */}
           <button type="button" onClick={() => onOpenIdea?.(idea.title)} style={titleButtonStyle}>
             <LightbulbIcon />
             <span style={titleTextStyle}>{idea.title}</span>
@@ -276,6 +278,8 @@ const IdeaGroupRowCard = ({
             onDeleteIdea={onDeleteIdea}
             showHeader={false}
           />
+          {/* Raw <button>: an inline text link, not LinkButton — this one needs a
+              muted opacity/font-size rather than LinkButton's fixed amber style. */}
           {shouldCollapseDone && (
             <button
               type="button"

@@ -1,9 +1,11 @@
+import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
-import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
+import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import type { IdeaEntry } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../constants';
 import { ExtendIdeaButton } from './extend-idea-button';
+import { PlanIdStamp } from './plan-id-stamp';
 
 interface NoteDetailProps {
   idea: IdeaEntry;
@@ -17,26 +19,19 @@ export const NoteDetail = ({ idea }: NoteDetailProps) => {
         fontFamily: fontFamily.body,
         fontSize: fontSize.base,
         lineHeight: lineHeight.relaxed,
-        color: '#1C1B18',
+        color: color.textProse,
       }}
     >
       <h2
         style={{
-          fontFamily: fontFamily.serif,
-          fontWeight: 600,
-          fontSize: '1.75rem',
+          ...detailHeadingStyle,
           margin: `0 0 ${space[4]}`,
-          lineHeight: lineHeight.tight,
           display: 'flex',
           alignItems: 'center',
           gap: space[3],
         }}
       >
-        {idea.id && (
-          <Stamp size="small" fillColor="rgba(0,0,0,0.08)">
-            {idea.id}
-          </Stamp>
-        )}
+        <PlanIdStamp id={idea.id ?? undefined} />
         {idea.title}
         {idea.status && (
           <Stamp

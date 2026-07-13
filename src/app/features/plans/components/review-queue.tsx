@@ -41,6 +41,8 @@ export const ReviewQueue = ({ plans, onOpenPlan }: ReviewQueueProps) => {
                 justifyContent: 'space-between',
               }}
             >
+              {/* Raw <button>: makes the whole row clickable with no button chrome
+                  of its own — a paper-ui Button would draw its own background. */}
               <button
                 type="button"
                 onClick={() => onOpenPlan(plan.title)}

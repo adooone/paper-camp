@@ -6,7 +6,13 @@ import { useAppStore } from '../../stores/app-store';
 import { fontFamily, fontSize, space } from '../../styles/tokens';
 import { deriveCheckStatuses } from '../../utils/check-status';
 import { summarizeQualityFailure, summarizeTestFailure } from '../../utils/check-summary';
-import { deskChalk, deskTextMuted, sectionLabelStyle } from './shared';
+import {
+  chalkStatusFill,
+  chalkStatusText,
+  deskChalk,
+  deskTextMuted,
+  sectionLabelStyle,
+} from './shared';
 
 export const StatusSection = () => {
   const statusData = useAppStore((s) => s.status);
@@ -62,15 +68,11 @@ export const StatusSection = () => {
       <Card surface="chalkboard" size="small" className="stack-card-fill">
         {(() => {
           const statusFill: Record<CheckStatus, string> = {
-            pass: '#2d5a3b',
-            fail: '#5a2d2d',
-            running: '#5a4a2d',
+            ...chalkStatusFill,
             stale: 'transparent',
           };
           const statusText: Record<CheckStatus, string | undefined> = {
-            pass: '#b5d6b5',
-            fail: '#d6a0a0',
-            running: '#d6c4a0',
+            ...chalkStatusText,
             stale: undefined,
           };
           const anyRunning = anyChecksRunning;
@@ -193,8 +195,8 @@ export const StatusSection = () => {
                       <Stamp
                         surface="chalkboard"
                         size="small"
-                        fillColor={hasIssues ? '#5a2d2d' : '#2d5a3b'}
-                        textColor={hasIssues ? '#d6a0a0' : '#b5d6b5'}
+                        fillColor={hasIssues ? chalkStatusFill.fail : chalkStatusFill.pass}
+                        textColor={hasIssues ? chalkStatusText.fail : chalkStatusText.pass}
                       >
                         Docs
                       </Stamp>
@@ -307,7 +309,9 @@ export const StatusSection = () => {
                   testStatus === 'pass' &&
                   consistencyStatus === 'pass'
                 ) {
-                  primaryLine = <span style={{ color: '#b5d6b5' }}>All checks passing.</span>;
+                  primaryLine = (
+                    <span style={{ color: chalkStatusText.pass }}>All checks passing.</span>
+                  );
                 } else {
                   primaryLine = (
                     <span style={{ color: deskTextMuted, opacity: 0.6 }}>

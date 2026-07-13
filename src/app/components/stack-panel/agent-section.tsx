@@ -3,7 +3,13 @@ import { Accordion, Card, CloseIcon, IconButton, Spinner, Stamp } from '@dendeli
 import { useState } from 'react';
 import { useAppStore } from '../../stores/app-store';
 import { fontFamily, fontSize, space } from '../../styles/tokens';
-import { deskChalk, deskTextMuted, sectionLabelStyle } from './shared';
+import {
+  chalkStatusFill,
+  chalkStatusText,
+  deskChalk,
+  deskTextMuted,
+  sectionLabelStyle,
+} from './shared';
 
 export const AgentSection = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
@@ -83,18 +89,18 @@ export const AgentSection = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
                 {(() => {
                   const statusFill: Record<AgentTaskStatus, string> = {
-                    starting: '#5a4a2d',
-                    running: '#5a4a2d',
-                    stopping: '#5a4a2d',
-                    done: '#2d5a3b',
-                    error: '#5a2d2d',
+                    starting: chalkStatusFill.running,
+                    running: chalkStatusFill.running,
+                    stopping: chalkStatusFill.running,
+                    done: chalkStatusFill.pass,
+                    error: chalkStatusFill.fail,
                   };
                   const statusText: Record<AgentTaskStatus, string> = {
-                    starting: '#d6c4a0',
-                    running: '#d6c4a0',
-                    stopping: '#d6c4a0',
-                    done: '#b5d6b5',
-                    error: '#d6a0a0',
+                    starting: chalkStatusText.running,
+                    running: chalkStatusText.running,
+                    stopping: chalkStatusText.running,
+                    done: chalkStatusText.pass,
+                    error: chalkStatusText.fail,
                   };
                   return (
                     <Stamp

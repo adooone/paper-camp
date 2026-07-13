@@ -278,6 +278,10 @@ export const CommitSection = () => {
                         cursor: 'pointer',
                       }}
                     >
+                      {/* Raw checkbox, not paper-ui's Checkbox: this row's mono file-path
+                          layout with independently colored staged/unstaged text doesn't
+                          fit Checkbox's single `label` slot, and its own blob/sketch
+                          chrome would clash with this chalkboard file list. */}
                       <input
                         type="checkbox"
                         checked={selectedFiles.has(entry.path)}

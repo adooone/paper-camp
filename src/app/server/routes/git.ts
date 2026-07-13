@@ -1,4 +1,4 @@
-import { entityToPlan, readEntities, readWorkEntries } from '../../../core/readers';
+import { entityToPlan, readEntities, readWorkEntries } from '@/core/readers';
 import { findFocusPlan } from '../../features/plans/helpers';
 import { suggestCommitMessage } from '../commit-suggest';
 import { campFile } from '../helpers';

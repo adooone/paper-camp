@@ -1,6 +1,6 @@
 import { Markdown } from '@/app/components/markdown';
 import { useAppStore } from '@/app/stores/app-store';
-import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
+import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 
 export const ProgressTimeline = () => {
   const progress = useAppStore((s) => s.progress);
@@ -47,7 +47,7 @@ export const ProgressTimeline = () => {
                   fontFamily: fontFamily.body,
                   fontSize: fontSize.sm,
                   lineHeight: 1.55,
-                  color: '#1C1B18',
+                  color: color.textProse,
                   paddingLeft: space[4],
                   borderLeft: '2px solid rgba(0,0,0,0.08)',
                 }}

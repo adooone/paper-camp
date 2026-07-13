@@ -1,4 +1,5 @@
 import { IntentButton } from '@/app/components';
+import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import { createPlanBranch } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
@@ -16,7 +17,7 @@ import {
   useToast,
 } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { STATUS_COLOR } from '../constants';
+import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import { phaseProgress, relativeDate } from '../helpers';
 import { usePlanStatusPatch } from '../use-plan-status-patch';
 import { AddReviewPhasesButton } from './add-review-phases-button';
@@ -139,11 +140,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       >
         <h2
           style={{
-            fontFamily: fontFamily.serif,
-            fontWeight: 600,
-            fontSize: '1.75rem',
+            ...detailHeadingStyle,
             margin: 0,
-            lineHeight: lineHeight.tight,
             display: 'flex',
             alignItems: 'center',
             gap: space[3],
@@ -344,7 +342,11 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                   >
                     {phase.text}
                     {phase.source === 'review' && (
-                      <Stamp size="small" fillColor="rgba(155, 122, 181, 0.25)" textColor="#7B5E9E">
+                      <Stamp
+                        size="small"
+                        fillColor={STATUS_STAMP.review.fill}
+                        textColor={STATUS_STAMP.review.text}
+                      >
                         review
                       </Stamp>
                     )}

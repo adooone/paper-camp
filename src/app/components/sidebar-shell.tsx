@@ -39,6 +39,8 @@ export const SidebarShell = ({
 
   return (
     <>
+      {/* Raw <button>: a full-screen invisible backdrop that closes the drawer on
+          click/tap — not a paper-ui Button, which draws its own visible chrome. */}
       {mobileOpen && (
         <button
           type="button"

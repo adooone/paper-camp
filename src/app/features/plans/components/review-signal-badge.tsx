@@ -1,7 +1,7 @@
 import { space } from '@/app/styles/tokens';
 import type { PrInfo } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
-import { REVIEW_DECISION_LABEL, REVIEW_DECISION_STAMP } from '../constants';
+import { REVIEW_DECISION_LABEL, REVIEW_DECISION_STAMP, STATUS_STAMP } from '../constants';
 
 interface ReviewSignalBadgeProps {
   pr: PrInfo;
@@ -29,7 +29,11 @@ export const ReviewSignalBadge = ({ pr }: ReviewSignalBadgeProps) => {
         </Stamp>
       )}
       {Boolean(unresolvedThreadCount) && (
-        <Stamp size="small" fillColor="rgba(212, 163, 115, 0.25)" textColor="#A67B4F">
+        <Stamp
+          size="small"
+          fillColor={STATUS_STAMP['in-progress'].fill}
+          textColor={STATUS_STAMP['in-progress'].text}
+        >
           {unresolvedThreadCount} unaddressed comment{unresolvedThreadCount === 1 ? '' : 's'}
           {hasNewCommentsSincePush ? ' · new' : ''}
         </Stamp>

@@ -2,6 +2,7 @@
 id: IDEA-58
 title: Simplify and de-dupe the codebase
 type: refactor
+status: review
 created: 2026-07-13
 tags:
   - app
@@ -31,5 +32,5 @@ Pairs with [[IDEA-59]] (the comment-trimming pass), which is cleanest to run rig
       Remove the genuinely-dead unused exports/symbols (~24), keeping the intentional public API of the `core`/`mcp` entry points; re-run knip to confirm.
 - [x] Untangle the two import cycles
       Break the `core/pr.ts ↔ core/readers.ts` and `services/docs-api.ts ↔ stores/app-store.ts` `no-circular` warnings so depcruise reports an acyclic graph.
-- [ ] Sweep `src/app` for style-guide conformance
+- [x] Sweep `src/app` for style-guide conformance
       Replace token literals with `styles/tokens.ts` values, swap raw HTML for the paper-ui component where one exists, and fix (or explicitly document) import paths that reach deeper than the guide allows.
