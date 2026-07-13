@@ -10,6 +10,7 @@ import { computePlanContentHash } from '../core/content-hash';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parser';
 import {
   resolvePlanForPrRef,
+  syncConsistencyCommentToPr,
   syncPlanPhasesToPr,
   syncPrLabelsToPr,
   syncPrReadinessToPr,
@@ -579,6 +580,22 @@ program
     const result = await syncPrReadinessToPr(root, ref);
     if (result === 'unresolved') {
       console.error(`Could not sync PR readiness for "${ref}"`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(result);
+  });
+
+program
+  .command('sync-pr-consistency <ref>')
+  .description(
+    "Upsert a sticky Scout comment on a PR (number or branch) with findConsistencyIssues' results and the plan's convergence-audit staleness (used by the Scout CI workflows)",
+  )
+  .action(async (ref: string) => {
+    const root = process.cwd();
+    const result = await syncConsistencyCommentToPr(root, ref);
+    if (result === 'unresolved') {
+      console.error(`Could not sync consistency checks to a PR for "${ref}"`);
       process.exitCode = 1;
       return;
     }

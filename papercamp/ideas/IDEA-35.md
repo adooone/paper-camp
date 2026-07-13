@@ -2,6 +2,7 @@
 id: IDEA-35
 title: Mirror plans onto GitHub PRs
 type: feat
+status: review
 created: 2026-07-04
 updated: 2026-07-08
 tags:
@@ -36,5 +37,5 @@ The wiring reuses what exists: each piece is a small `pull_request`/`push`-trigg
       Apply labels derived from the plan's `kind` (feat/fix/…) and `tags`, reusing the same area vocabulary as the commit `scope-enum` so PRs categorize themselves. Create missing labels idempotently; never remove labels a human added by hand.
 - [x] Flip PR readiness from phases and the dropped override
       On push, when every phase is checked (derived `review`), flip the draft PR to ready for review; when the file carries the `dropped` override, close the PR. Read from the plan's phases and override via the resolver — one-way plan → PR, and it never writes plan status (marking `done` on merge is [[IDEA-56]]'s derivation, not a write here).
-- [ ] Post consistency checks as a PR comment
+- [x] Post consistency checks as a PR comment
       Run `findConsistencyIssues` (and the convergence-audit summary where one exists for the plan) against the PR's branch and upsert a single sticky Scout comment with the results, so Paper Camp's structured checks sit alongside CI and CodeRabbit where review actually happens.

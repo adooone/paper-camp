@@ -6,9 +6,11 @@ import {
   clearPrCache,
   derivePrLabels,
   fetchUnresolvedThreads,
+  renderConsistencyComment,
   renderPlanPhasesIntoBody,
   resolvePlanForPrRef,
   resolvePrsByEntity,
+  syncConsistencyCommentToPr,
   syncPlanPhasesToPr,
   syncPrLabelsToPr,
   syncPrReadinessToPr,
@@ -693,5 +695,194 @@ describe('syncPrReadinessToPr', () => {
     writeEntityFile(root, 'IDEA-20', { phases: '- [x] Phase one\n' });
 
     expect(await syncPrReadinessToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
+  });
+});
+
+describe('renderConsistencyComment', () => {
+  it('renders a clean-bill-of-health message when there are no issues', () => {
+    const body = renderConsistencyComment([]);
+    expect(body).toContain('<!-- papercamp:consistency:start -->');
+    expect(body).toContain('No consistency issues found.');
+  });
+
+  it('lists each issue by kind, section, and message', () => {
+    const body = renderConsistencyComment([
+      {
+        kind: 'blocked-plan-active',
+        section: 'open-questions',
+        title: 'Storage format?',
+        planId: 'IDEA-9',
+        message: 'Still open but blocks "Some plan" (IDEA-9), already in-progress',
+      },
+    ]);
+    expect(body).toContain(
+      '- **blocked-plan-active** (open-questions): Still open but blocks "Some plan" (IDEA-9), already in-progress',
+    );
+  });
+
+  it('notes a stale convergence audit', () => {
+    const body = renderConsistencyComment([], { audited: '2026-07-01', stale: true });
+    expect(body).toContain('Convergence audit: last run `2026-07-01`, plan has changed since');
+  });
+
+  it('notes a current convergence audit', () => {
+    const body = renderConsistencyComment([], { audited: '2026-07-01', stale: false });
+    expect(body).toContain('Convergence audit: last run `2026-07-01`, still current.');
+  });
+
+  it('omits the audit line entirely when no audit is recorded', () => {
+    const body = renderConsistencyComment([]);
+    expect(body).not.toContain('Convergence audit');
+  });
+});
+
+describe('syncConsistencyCommentToPr', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` (with url/comments), capturing `pr comment
+   * --body-file -` (create) and `api ... -X PATCH` (update) stdin into separate
+   * files so tests can assert which (if either) fired. */
+  function withGhForConsistency(viewFixture: {
+    body: string;
+    headRefName: string;
+    url: string;
+    comments: { body: string; url: string }[];
+  }): {
+    root: string;
+    createdFile: string;
+    patchedFile: string;
+  } {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-consistency-'));
+    const viewFile = join(fixtureDir, 'view.json');
+    writeFileSync(
+      viewFile,
+      JSON.stringify({ ...viewFixture, labels: [], isDraft: false, state: 'OPEN' }),
+    );
+    const createdFile = join(fixtureDir, 'created');
+    const patchedFile = join(fixtureDir, 'patched');
+
+    const { root } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\ncat "${viewFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "comment" ]; then\ncat > "${createdFile}"\nelif [ "$1" = "api" ]; then\ncat > "${patchedFile}"\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return { root, createdFile, patchedFile };
+  }
+
+  function writeEntityFile(
+    root: string,
+    id: string,
+    opts: { audited?: string; auditedHash?: string; phases?: string; status?: string } = {},
+  ): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    const auditLines =
+      opts.audited && opts.auditedHash
+        ? `audited: ${opts.audited}\naudited-hash: ${opts.auditedHash}\n`
+        : '';
+    const statusLine = opts.status ? `status: ${opts.status}\n` : '';
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\n${statusLine}${auditLines}tags:\n  - ci\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n${opts.phases ?? '- [x] Phase one\n'}`,
+    );
+  }
+
+  it('creates a new sticky comment when none exists yet', async () => {
+    const { root, createdFile, patchedFile } = withGhForConsistency({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      url: 'https://github.com/o/r/pull/42',
+      comments: [],
+    });
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncConsistencyCommentToPr(root, '42');
+    expect(result).toBe('created');
+    expect(readFileSync(createdFile, 'utf-8')).toContain('No consistency issues found.');
+    expect(() => readFileSync(patchedFile, 'utf-8')).toThrow();
+  });
+
+  it('reports "unchanged" and calls neither create nor patch when the sticky comment already matches', async () => {
+    const body = renderConsistencyComment([]);
+    const { root, createdFile, patchedFile } = withGhForConsistency({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      url: 'https://github.com/o/r/pull/42',
+      comments: [{ body, url: 'https://github.com/o/r/pull/42#issuecomment-1' }],
+    });
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncConsistencyCommentToPr(root, '42');
+    expect(result).toBe('unchanged');
+    expect(() => readFileSync(createdFile, 'utf-8')).toThrow();
+    expect(() => readFileSync(patchedFile, 'utf-8')).toThrow();
+  });
+
+  it('PATCHes the existing sticky comment via its REST id when its content differs', async () => {
+    const staleBody = renderConsistencyComment([
+      {
+        kind: 'dangling-superseded-by',
+        section: 'decisions',
+        title: 'Old decision',
+        message: 'stale',
+      },
+    ]);
+    const { root, createdFile, patchedFile } = withGhForConsistency({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      url: 'https://github.com/o/r/pull/42',
+      comments: [{ body: staleBody, url: 'https://github.com/o/r/pull/42#issuecomment-555' }],
+    });
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncConsistencyCommentToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(readFileSync(patchedFile, 'utf-8')).toContain('No consistency issues found.');
+    expect(() => readFileSync(createdFile, 'utf-8')).toThrow();
+  });
+
+  it('surfaces a blocked-plan-active issue found across the checked-out branch state', async () => {
+    const { root, createdFile } = withGhForConsistency({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      url: 'https://github.com/o/r/pull/42',
+      comments: [],
+    });
+    writeEntityFile(root, 'IDEA-9', { status: 'in-progress', phases: '- [ ] Phase one\n' });
+    writeFileSync(
+      join(root, 'papercamp', 'open-questions.md'),
+      '## Should we block?\n\n**Status:** open\n**Raised:** 2026-07-01\n**Blocks:** IDEA-9\n\nBody.\n',
+    );
+
+    const result = await syncConsistencyCommentToPr(root, '42');
+    expect(result).toBe('created');
+    const posted = readFileSync(createdFile, 'utf-8');
+    expect(posted).toContain('blocked-plan-active');
+    expect(posted).toContain('IDEA-9');
+  });
+
+  it('reports the convergence audit as stale when the plan changed since it was recorded', async () => {
+    const { root, createdFile } = withGhForConsistency({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      url: 'https://github.com/o/r/pull/42',
+      comments: [],
+    });
+    writeEntityFile(root, 'IDEA-9', { audited: '2026-07-01', auditedHash: 'stale-hash' });
+
+    const result = await syncConsistencyCommentToPr(root, '42');
+    expect(result).toBe('created');
+    expect(readFileSync(createdFile, 'utf-8')).toContain(
+      'Convergence audit: last run `2026-07-01`, plan has changed since',
+    );
+  });
+
+  it('resolves "unresolved" when no PR exists yet for the branch', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20');
+
+    expect(await syncConsistencyCommentToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
   });
 });

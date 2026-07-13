@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
+  ConsistencyIssue,
   EntityEntry,
   EntityType,
   PhaseItem,
@@ -9,7 +10,14 @@ import type {
   ReviewDecision,
   ReviewThread,
 } from '../types/index';
-import { parseEntityFile } from './parser';
+import { computePlanContentHash } from './content-hash';
+import {
+  findConsistencyIssues,
+  parseDecisions,
+  parseEntityFile,
+  parseOpenQuestions,
+} from './parser';
+import { entityToPlan, readEntities } from './readers';
 import { COMMIT_SCOPES } from './scopes';
 
 interface PrMapCacheEntry {
@@ -347,12 +355,19 @@ export function clearPrCache(): void {
   cache.clear();
 }
 
+interface GhPrCommentRow {
+  body: string;
+  url: string;
+}
+
 interface GhPrViewRow {
   body: string;
   headRefName: string;
   labels: { name: string }[];
   isDraft: boolean;
   state: string;
+  url: string;
+  comments: GhPrCommentRow[];
 }
 
 /**
@@ -365,7 +380,7 @@ function runGhPrView(root: string, ref: string): Promise<GhPrViewRow | undefined
   return new Promise((resolve) => {
     const proc = spawn(
       'gh',
-      ['pr', 'view', ref, '--json', 'body,headRefName,labels,isDraft,state'],
+      ['pr', 'view', ref, '--json', 'body,headRefName,labels,isDraft,state,url,comments'],
       {
         cwd: root,
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -689,4 +704,155 @@ export async function syncPrReadinessToPr(
 
   const ok = await runGhPrReady(root, ref);
   return ok ? 'ready' : 'unresolved';
+}
+
+const CONSISTENCY_SECTION_START = '<!-- papercamp:consistency:start -->';
+const CONSISTENCY_SECTION_END = '<!-- papercamp:consistency:end -->';
+
+interface AuditSummary {
+  audited: string;
+  /** Whether the plan's content has changed since the stored `audited-hash`. */
+  stale: boolean;
+}
+
+/**
+ * Renders `findConsistencyIssues`' repo-wide results, plus the plan's own
+ * convergence-audit staleness where one has been recorded, as a sticky PR
+ * comment body wrapped in marker comments (same `find/replace-by-marker`
+ * shape as `renderPlanPhasesIntoBody`). Deterministic for the same inputs, so
+ * a caller can compare against the existing sticky comment and skip the `gh`
+ * call when nothing changed.
+ */
+export function renderConsistencyComment(issues: ConsistencyIssue[], audit?: AuditSummary): string {
+  const lines = ['### Paper Camp checks', ''];
+  if (issues.length === 0) {
+    lines.push('No consistency issues found.');
+  } else {
+    for (const issue of issues) {
+      lines.push(`- **${issue.kind}** (${issue.section}): ${issue.message}`);
+    }
+  }
+  if (audit) {
+    lines.push('');
+    lines.push(
+      audit.stale
+        ? `Convergence audit: last run \`${audit.audited}\`, plan has changed since — due for a re-audit.`
+        : `Convergence audit: last run \`${audit.audited}\`, still current.`,
+    );
+  }
+  return `${CONSISTENCY_SECTION_START}\n${lines.join('\n')}\n${CONSISTENCY_SECTION_END}`;
+}
+
+/** `gh pr comment <ref> --body-file -` — posts a new top-level PR comment from stdin. */
+function runGhPrCommentCreate(root: string, ref: string, body: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['pr', 'comment', ref, '--body-file', '-'], {
+      cwd: root,
+      stdio: ['pipe', 'ignore', 'pipe'],
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => resolve(code === 0));
+    proc.on('error', () => resolve(false));
+    proc.stdin?.end(body);
+  });
+}
+
+/**
+ * `gh api repos/<owner>/<repo>/issues/comments/<id> -X PATCH -f body=@-` — edits an
+ * existing comment by its REST id, reading the new body from stdin. There's no
+ * `gh pr comment --edit` by marker, so this is the one place `core/pr.ts` drops to
+ * the raw REST API rather than a `gh pr`/`gh label` subcommand.
+ */
+function runGhApiPatchComment(
+  root: string,
+  owner: string,
+  repo: string,
+  commentId: string,
+  body: string,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn(
+      'gh',
+      [
+        'api',
+        `repos/${owner}/${repo}/issues/comments/${commentId}`,
+        '-X',
+        'PATCH',
+        '-f',
+        'body=@-',
+      ],
+      { cwd: root, stdio: ['pipe', 'ignore', 'pipe'] },
+    );
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => resolve(code === 0));
+    proc.on('error', () => resolve(false));
+    proc.stdin?.end(body);
+  });
+}
+
+/** Extracts the numeric REST comment id from a comment's `html_url` (`...#issuecomment-123`) — the
+ * `id` field in `gh pr view --json comments` is a GraphQL node id, not usable with the REST PATCH endpoint. */
+function parseCommentRestId(url: string): string | null {
+  const match = url.match(/issuecomment-(\d+)/);
+  return match ? match[1] : null;
+}
+
+export type SyncConsistencyCommentResult = 'created' | 'updated' | 'unchanged' | 'unresolved';
+
+/**
+ * On push to a plan branch: upserts a single sticky Scout comment on the PR with
+ * `findConsistencyIssues`' repo-wide results (dangling decision/question links, an
+ * open question blocking an already-active plan) and, when the plan carries a
+ * recorded convergence audit, whether it's gone stale since — so Paper Camp's own
+ * structured checks sit next to CI and CodeRabbit where review actually happens.
+ * Reads decisions/open-questions/plans straight off the checked-out branch (same
+ * corpus `/api/consistency` reads), not scoped to just this plan, since most issue
+ * kinds aren't plan-specific. Finds the existing sticky comment by its marker and
+ * PATCHes it via the REST id parsed from its URL rather than `gh pr comment
+ * --edit-last`, which isn't safe once Scout has posted any other unrelated comment.
+ * Only calls `gh` when the rendered body actually changed, so a rerun on an
+ * unchanged repo state is a no-op.
+ */
+export async function syncConsistencyCommentToPr(
+  root: string,
+  ref: string,
+): Promise<SyncConsistencyCommentResult> {
+  const context = await resolvePlanContext(root, ref);
+  if (!context?.view?.url) return 'unresolved';
+  const { view, entry } = context;
+
+  const [decisionsRaw, openQuestionsRaw, { entries: entityEntries }] = await Promise.all([
+    readFile(join(root, 'papercamp', 'decisions.md'), 'utf-8').catch(() => ''),
+    readFile(join(root, 'papercamp', 'open-questions.md'), 'utf-8').catch(() => ''),
+    readEntities(join(root, 'papercamp', 'ideas')),
+  ]);
+  const plans = entityEntries.filter((e) => e.kind !== 'note').map((e) => entityToPlan(e));
+  const issues = findConsistencyIssues(
+    parseDecisions(decisionsRaw).entries,
+    parseOpenQuestions(openQuestionsRaw).entries,
+    plans,
+  );
+
+  const audit: AuditSummary | undefined =
+    entry.audited && entry.auditedHash
+      ? {
+          audited: entry.audited,
+          stale: computePlanContentHash(entry) !== entry.auditedHash,
+        }
+      : undefined;
+
+  const body = renderConsistencyComment(issues, audit);
+
+  const existing = (view.comments ?? []).find((c) => c.body.includes(CONSISTENCY_SECTION_START));
+  if (existing) {
+    if (existing.body === body) return 'unchanged';
+    const parsedUrl = parsePrUrl(view.url);
+    const commentId = parseCommentRestId(existing.url);
+    if (!parsedUrl || !commentId) return 'unresolved';
+    const ok = await runGhApiPatchComment(root, parsedUrl.owner, parsedUrl.repo, commentId, body);
+    return ok ? 'updated' : 'unresolved';
+  }
+
+  const ok = await runGhPrCommentCreate(root, ref, body);
+  return ok ? 'created' : 'unresolved';
 }

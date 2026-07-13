@@ -78,3 +78,12 @@ jobs:
           BRANCH: ${{ github.ref_name }}
         run: pnpm cli sync-pr-readiness "$BRANCH"
         continue-on-error: true
+
+      # Upserts a single sticky comment — safe to rerun on every push, it only
+      # edits/creates when the rendered checks actually changed.
+      - name: Post consistency checks as a PR comment
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: pnpm cli sync-pr-consistency "$BRANCH"
+        continue-on-error: true
