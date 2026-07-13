@@ -4,6 +4,11 @@
   "description": "Local-first, AI-native project management with retro aesthetics",
   "type": "module",
   "packageManager": "pnpm@10.12.1",
+  "pnpm": {
+    "overrides": {
+      "fast-uri": ">=3.1.2"
+    }
+  },
   "bin": {
     "paper-camp": "./dist/cli/index.js"
   },

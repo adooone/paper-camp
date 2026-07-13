@@ -12,6 +12,73 @@ export interface ApiMiddleware {
   agent: AgentManager;
 }
 
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/** The hostname out of a `Host`/`Origin`-style value, minus any port. */
+function hostOf(value: string | undefined): string {
+  if (!value) return '';
+  const h = value.trim().toLowerCase();
+  if (h.startsWith('[')) return h.slice(1, h.indexOf(']')); // [::1]:3333
+  return h.split(':')[0];
+}
+
+/**
+ * A host we trust to actually point at this machine — loopback, private LAN, or
+ * Tailscale/mDNS names. This API runs git and launches auto-permission agents, so
+ * it must reject requests bearing an attacker-controlled public `Host` (DNS
+ * rebinding) even though it may be bound on a LAN interface for legitimate use.
+ * Extra hosts can be allowed via PAPERCAMP_ALLOWED_HOSTS (comma-separated).
+ */
+export function isTrustedHost(host: string): boolean {
+  if (!host) return false;
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+  if (host.endsWith('.ts.net') || host.endsWith('.local')) return true; // Tailscale / mDNS
+  const extra = process.env.PAPERCAMP_ALLOWED_HOSTS;
+  if (
+    extra
+      ?.split(',')
+      .map((s) => s.trim().toLowerCase())
+      .includes(host)
+  ) {
+    return true;
+  }
+  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/);
+  if (m) {
+    const a = Number(m[1]);
+    const b = Number(m[2]);
+    return (
+      a === 10 || // 10.0.0.0/8
+      a === 127 || // loopback
+      (a === 192 && b === 168) || // 192.168.0.0/16
+      (a === 172 && b >= 16 && b <= 31) || // 172.16.0.0/12
+      (a === 100 && b >= 64 && b <= 127) // Tailscale CGNAT 100.64.0.0/10
+    );
+  }
+  return false;
+}
+
+/** Blocks DNS-rebinding (foreign Host) and cross-site CSRF (foreign Origin on a
+ *  state-changing call). Returns true if the request should be rejected. */
+export function isForbiddenRequest(req: {
+  headers: { host?: string; origin?: string };
+  method?: string;
+}): boolean {
+  if (!isTrustedHost(hostOf(req.headers.host))) return true;
+  if (MUTATING_METHODS.has(req.method ?? '')) {
+    const origin = req.headers.origin;
+    if (origin) {
+      let originHost = 'invalid';
+      try {
+        originHost = hostOf(new URL(origin).host);
+      } catch {
+        // malformed Origin — treat as untrusted
+      }
+      if (!isTrustedHost(originHost)) return true;
+    }
+  }
+  return false;
+}
+
 export function createApiMiddleware(root: string): ApiMiddleware {
   const activity = createActivityManager(root);
   const git = createGitManager(root);
@@ -28,6 +95,13 @@ export function createApiMiddleware(root: string): ApiMiddleware {
 
   const handler = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const pathname = (req.url ?? '').split('?')[0];
+
+    // Only guard our own /api surface — static assets / Vite HMR fall through to
+    // next() untouched so the SPA still loads from any interface.
+    if (pathname.startsWith('/api/') && isForbiddenRequest(req)) {
+      sendJson(res, 403, { error: 'Forbidden: request failed the Host/Origin check' });
+      return;
+    }
 
     const route = routes.find((r) => r.method === req.method && r.path === pathname);
     if (route) {

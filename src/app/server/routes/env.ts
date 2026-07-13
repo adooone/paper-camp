@@ -19,7 +19,10 @@ export function envRoutes({ root }: RouteContext): Route[] {
           fileExists(envPath),
           fileExists(examplePath),
         ]);
-        const entries = exists ? parseEnv(await readMaybe(envPath)) : [];
+        const parsed = exists ? parseEnv(await readMaybe(envPath)) : [];
+        // Never send secret values over the wire — only which keys are set. The
+        // editor shows a masked placeholder and only submits values the user types.
+        const entries = parsed.map((e) => ({ key: e.key, value: '', isSet: true }));
         const exampleKeys = exampleExists
           ? parseEnv(await readMaybe(examplePath)).map((e) => e.key)
           : [];
@@ -35,7 +38,12 @@ export function envRoutes({ root }: RouteContext): Route[] {
       path: '/api/env',
       handle: async (req, res) => {
         const body = await readBody(req);
-        const { entries } = JSON.parse(body) as { entries?: EnvEntry[] };
+        // `keep` marks a key the user left untouched — since GET no longer sends
+        // secret values, the server backfills its existing value rather than
+        // blanking it. New/edited keys carry their value as usual.
+        const { entries } = JSON.parse(body) as {
+          entries?: (EnvEntry & { keep?: boolean })[];
+        };
         if (!Array.isArray(entries)) {
           sendJson(res, 400, { error: 'entries is required' });
           return;
@@ -54,7 +62,12 @@ export function envRoutes({ root }: RouteContext): Route[] {
         }
         const envPath = join(root, '.env');
         const current = await readMaybe(envPath);
-        await writeFile(envPath, applyEnvEntries(current, entries));
+        const existing = new Map(parseEnv(current).map((e) => [e.key, e.value]));
+        const resolved: EnvEntry[] = entries.map((e) => ({
+          key: e.key,
+          value: e.keep ? (existing.get(e.key) ?? '') : e.value,
+        }));
+        await writeFile(envPath, applyEnvEntries(current, resolved));
         sendJson(res, 200, { ok: true });
       },
     },

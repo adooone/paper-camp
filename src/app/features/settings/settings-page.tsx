@@ -524,7 +524,7 @@ const EnvSection = () => {
 
   const handleSave = async () => {
     const trimmed = rows
-      .map((row) => ({ key: row.key.trim(), value: row.value }))
+      .map((row) => ({ key: row.key.trim(), value: row.value, isSet: row.isSet }))
       .filter((row) => row.key.length > 0);
     const keys = new Set(trimmed.map((row) => row.key));
     if (keys.size !== trimmed.length) {
@@ -533,10 +533,19 @@ const EnvSection = () => {
     }
     setError(null);
     setSaving(true);
-    const ok = await saveEnv(trimmed);
+    // A set key left blank keeps its existing (withheld) value; a typed value
+    // replaces it. The server never received the old secret, so it backfills.
+    const ok = await saveEnv(
+      trimmed.map((row) => ({
+        key: row.key,
+        value: row.value,
+        keep: !!row.isSet && row.value === '',
+      })),
+    );
     setSaving(false);
     if (ok) {
-      setRows(trimmed);
+      // Everything just saved now exists with a withheld value — reflect that.
+      setRows(trimmed.map((row) => ({ key: row.key, value: '', isSet: true })));
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } else {
@@ -594,7 +603,7 @@ const EnvSection = () => {
                   <Input
                     type={masked ? 'password' : 'text'}
                     value={row.value}
-                    placeholder="value"
+                    placeholder={row.isSet ? '•••••• set — leave blank to keep' : 'value'}
                     style={{ fontFamily: fontFamily.mono, flex: 1 }}
                     onChange={(e) => updateRow(index, { value: e.target.value })}
                   />

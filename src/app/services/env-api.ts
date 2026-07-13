@@ -16,7 +16,11 @@ export const fetchEnv = async (): Promise<EnvFile> => {
   }
 };
 
-export const saveEnv = async (entries: EnvEntry[]): Promise<boolean> => {
+/** `keep` preserves a set key's existing value server-side (the client never has
+ *  it, since GET withholds secret values). */
+export type EnvEntryInput = { key: string; value: string; keep?: boolean };
+
+export const saveEnv = async (entries: EnvEntryInput[]): Promise<boolean> => {
   try {
     const response = await fetch('/api/env', {
       method: 'POST',

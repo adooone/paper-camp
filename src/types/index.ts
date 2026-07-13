@@ -195,6 +195,9 @@ export interface ProgressEntry {
 export interface EnvEntry {
   key: string;
   value: string;
+  /** Set on GET responses: the key exists in .env but its value is withheld
+   *  (secrets are never sent to the client). Absent when writing. */
+  isSet?: boolean;
 }
 
 export interface AgentConfig {
