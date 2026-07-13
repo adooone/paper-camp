@@ -1,8 +1,20 @@
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { clearPrCache, fetchUnresolvedThreads, resolvePrsByEntity } from './pr';
+import {
+  clearPrCache,
+  derivePrLabels,
+  fetchUnresolvedThreads,
+  renderConsistencyComment,
+  renderPlanPhasesIntoBody,
+  resolvePlanForPrRef,
+  resolvePrsByEntity,
+  syncConsistencyCommentToPr,
+  syncPlanPhasesToPr,
+  syncPrLabelsToPr,
+  syncPrReadinessToPr,
+} from './pr';
 
 /** Puts a fake `gh` on PATH that answers from `script` and counts invocations
  * (via a call-count file), so tests don't shell out to the real GitHub CLI. */
@@ -244,5 +256,633 @@ describe('fetchUnresolvedThreads', () => {
     const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
     process.env.PATH = `${root}:${originalPath}`;
     expect(await fetchUnresolvedThreads(root, 'https://github.com/o/r/pull/2')).toEqual([]);
+  });
+});
+
+describe('resolvePlanForPrRef', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` with `viewScript` regardless of the ref passed. */
+  function withGhPrView(viewScript: string): { root: string } {
+    const { root } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\n${viewScript}\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return { root };
+  }
+
+  function writeEntityFile(root: string, id: string, extra = ''): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\ntags:\n  - ci\n  - github\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [x] Phase one\n- [ ] Phase two\n${extra}`,
+    );
+  }
+
+  it('resolves the plan id from the PR body Plan line and returns kind/tags/phases', async () => {
+    const { root } = withGhPrView(
+      `echo '{"body":"intro. **Plan:** \`IDEA-9\` for the plan.","headRefName":"feat/idea-9-x"}'`,
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const resolved = await resolvePlanForPrRef(root, '42');
+    expect(resolved).toEqual({
+      id: 'IDEA-9',
+      kind: 'feat',
+      tags: ['ci', 'github'],
+      phases: [
+        { done: true, text: 'Phase one', description: undefined, source: undefined },
+        { done: false, text: 'Phase two', description: undefined, source: undefined },
+      ],
+    });
+  });
+
+  it('falls back to the head branch id prefix when the PR body has no Plan line', async () => {
+    const { root } = withGhPrView(
+      `echo '{"body":"no plan line","headRefName":"feat/idea-12-some-title"}'`,
+    );
+    writeEntityFile(root, 'IDEA-12');
+
+    const resolved = await resolvePlanForPrRef(root, 'feat/idea-12-some-title');
+    expect(resolved?.id).toBe('IDEA-12');
+  });
+
+  it('falls back to parsing the ref itself as a branch when no PR exists yet', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20');
+
+    const resolved = await resolvePlanForPrRef(root, 'feat/idea-20-some-title');
+    expect(resolved?.id).toBe('IDEA-20');
+  });
+
+  it('resolves undefined when no id can be resolved at all', async () => {
+    const { root } = withGhPrView(`echo '{"body":"nothing here","headRefName":"main"}'`);
+    expect(await resolvePlanForPrRef(root, 'main')).toBeUndefined();
+  });
+
+  it('resolves undefined when the resolved id has no matching entity file', async () => {
+    const { root } = withGhPrView(
+      `echo '{"body":"**Plan:** \`IDEA-99\`","headRefName":"feat/idea-99-x"}'`,
+    );
+    expect(await resolvePlanForPrRef(root, '1')).toBeUndefined();
+  });
+});
+
+describe('renderPlanPhasesIntoBody', () => {
+  const phases = [
+    { done: true, text: 'Phase one' },
+    { done: false, text: 'Phase two' },
+  ];
+
+  it('appends a marker-delimited phases section when the body has none', () => {
+    const body = '**Plan:** `IDEA-9` — see the plan.\n\nSome intro text.';
+    expect(renderPlanPhasesIntoBody(body, phases)).toBe(
+      '**Plan:** `IDEA-9` — see the plan.\n\nSome intro text.\n\n' +
+        '<!-- papercamp:phases:start -->\n### Phases\n- [x] Phase one\n- [ ] Phase two\n<!-- papercamp:phases:end -->',
+    );
+  });
+
+  it('replaces an existing phases section in place, leaving the rest of the body untouched', () => {
+    const before =
+      '**Plan:** `IDEA-9`\n\n<!-- papercamp:phases:start -->\n### Phases\n- [ ] Phase one\n- [ ] Phase two\n<!-- papercamp:phases:end -->\n\nTrailer.';
+    expect(renderPlanPhasesIntoBody(before, phases)).toBe(
+      '**Plan:** `IDEA-9`\n\n<!-- papercamp:phases:start -->\n### Phases\n- [x] Phase one\n- [ ] Phase two\n<!-- papercamp:phases:end -->\n\nTrailer.',
+    );
+  });
+
+  it('is idempotent: re-rendering the same phases onto its own output changes nothing', () => {
+    const once = renderPlanPhasesIntoBody('**Plan:** `IDEA-9`', phases);
+    expect(renderPlanPhasesIntoBody(once, phases)).toBe(once);
+  });
+});
+
+describe('syncPlanPhasesToPr', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` with the JSON in `viewFixture` (via `cat`, so a
+   * multi-line body can't be mangled by `sh`'s escape-interpreting `echo`) and
+   * capturing any `pr edit --body-file -` stdin into `captureFile` (unwritten if
+   * edit is never called). */
+  function withGhPrViewAndEdit(
+    viewFixture: { body: string; headRefName: string },
+    captureFile: string,
+  ): { root: string; callCount: () => number } {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-view-'));
+    const fixtureFile = join(fixtureDir, 'view.json');
+    writeFileSync(fixtureFile, JSON.stringify(viewFixture));
+    const { root, callCount } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\ncat "${fixtureFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "edit" ]; then\ncat > "${captureFile}"\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return { root, callCount };
+  }
+
+  function writeEntityFile(root: string, id: string): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\ntags:\n  - ci\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [x] Phase one\n- [ ] Phase two\n`,
+    );
+  }
+
+  it('rewrites the PR body via gh pr edit and reports "updated" when the plan changed', async () => {
+    const captureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-edit-'));
+    const captureFile = join(captureDir, 'body');
+    const { root } = withGhPrViewAndEdit(
+      { body: '**Plan:** `IDEA-9` — see the plan.', headRefName: 'feat/idea-9-x' },
+      captureFile,
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPlanPhasesToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(readFileSync(captureFile, 'utf-8')).toBe(
+      '**Plan:** `IDEA-9` — see the plan.\n\n' +
+        '<!-- papercamp:phases:start -->\n### Phases\n- [x] Phase one\n- [ ] Phase two\n<!-- papercamp:phases:end -->',
+    );
+  });
+
+  it('reports "unchanged" and does not call gh pr edit when the body already matches', async () => {
+    const captureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-edit-'));
+    const captureFile = join(captureDir, 'body');
+    const syncedBody = renderPlanPhasesIntoBody('**Plan:** `IDEA-9`', [
+      { done: true, text: 'Phase one' },
+      { done: false, text: 'Phase two' },
+    ]);
+    const { root, callCount } = withGhPrViewAndEdit(
+      { body: syncedBody, headRefName: 'feat/idea-9-x' },
+      captureFile,
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPlanPhasesToPr(root, '42');
+    expect(result).toBe('unchanged');
+    expect(callCount()).toBe(1); // only the `pr view` call — no `pr edit`
+  });
+
+  it('resolves "unresolved" when no PR exists yet for the branch', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20');
+
+    expect(await syncPlanPhasesToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
+  });
+});
+
+describe('derivePrLabels', () => {
+  it('combines kind with tags that are also recognized commit scopes', () => {
+    expect(derivePrLabels({ kind: 'feat', tags: ['ci', 'freshness', 'plans'] })).toEqual([
+      'feat',
+      'ci',
+      'plans',
+    ]);
+  });
+
+  it('drops tags that are not in the commit-scope vocabulary', () => {
+    expect(derivePrLabels({ kind: 'fix', tags: ['freshness', 'random-idea'] })).toEqual(['fix']);
+  });
+
+  it('omits the kind label when the plan has no kind', () => {
+    expect(derivePrLabels({ tags: ['ci'] })).toEqual(['ci']);
+  });
+
+  it('de-dupes when kind and a tag collide', () => {
+    expect(derivePrLabels({ kind: 'feat', tags: ['feat', 'ci'] })).toEqual(['feat', 'ci']);
+  });
+});
+
+describe('syncPrLabelsToPr', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` (with labels), `label list`, `label create`,
+   * and `pr edit --add-label`, logging the latter two to files so tests can
+   * assert exactly which labels were created/added. */
+  function withGhForLabels(
+    viewFixture: { body: string; headRefName: string; labels: string[] },
+    existingRepoLabels: string[],
+  ): {
+    root: string;
+    callCount: () => number;
+    createdLabels: () => string[];
+    addedLabels: () => string[];
+  } {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-labels-'));
+    const viewFile = join(fixtureDir, 'view.json');
+    writeFileSync(
+      viewFile,
+      JSON.stringify({
+        body: viewFixture.body,
+        headRefName: viewFixture.headRefName,
+        labels: viewFixture.labels.map((name) => ({ name })),
+      }),
+    );
+    const repoLabelsFile = join(fixtureDir, 'repo-labels.json');
+    writeFileSync(repoLabelsFile, JSON.stringify(existingRepoLabels.map((name) => ({ name }))));
+    const createdFile = join(fixtureDir, 'created');
+    writeFileSync(createdFile, '');
+    const addedFile = join(fixtureDir, 'added');
+    writeFileSync(addedFile, '');
+
+    const { root, callCount } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\ncat "${viewFile}"\nelif [ "$1" = "label" ] && [ "$2" = "list" ]; then\ncat "${repoLabelsFile}"\nelif [ "$1" = "label" ] && [ "$2" = "create" ]; then\necho "$3" >> "${createdFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "edit" ]; then\necho "$5" >> "${addedFile}"\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return {
+      root,
+      callCount,
+      createdLabels: () => readFileSync(createdFile, 'utf-8').trim().split('\n').filter(Boolean),
+      addedLabels: () =>
+        readFileSync(addedFile, 'utf-8')
+          .trim()
+          .split('\n')
+          .filter(Boolean)
+          .flatMap((line) => line.split(',')),
+    };
+  }
+
+  function writeEntityFile(root: string, id: string): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\ntags:\n  - ci\n  - freshness\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [ ] Phase one\n`,
+    );
+  }
+
+  it('creates missing labels and adds them, reporting "updated"', async () => {
+    const { root, createdLabels, addedLabels } = withGhForLabels(
+      { body: '**Plan:** `IDEA-9`', headRefName: 'feat/idea-9-x', labels: [] },
+      [],
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPrLabelsToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(createdLabels().sort()).toEqual(['ci', 'feat']);
+    expect(addedLabels().sort()).toEqual(['ci', 'feat']);
+  });
+
+  it('does not recreate a label that already exists in the repo', async () => {
+    const { root, createdLabels, addedLabels } = withGhForLabels(
+      { body: '**Plan:** `IDEA-9`', headRefName: 'feat/idea-9-x', labels: [] },
+      ['ci'],
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPrLabelsToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(createdLabels()).toEqual(['feat']);
+    expect(addedLabels().sort()).toEqual(['ci', 'feat']);
+  });
+
+  it('reports "unchanged" and calls only gh pr view when the PR already has all derived labels', async () => {
+    const { root, callCount } = withGhForLabels(
+      { body: '**Plan:** `IDEA-9`', headRefName: 'feat/idea-9-x', labels: ['ci', 'feat'] },
+      ['ci', 'feat'],
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPrLabelsToPr(root, '42');
+    expect(result).toBe('unchanged');
+    expect(callCount()).toBe(1); // only the `pr view` call
+  });
+
+  it('never removes an existing label — only adds the missing ones', async () => {
+    const { root, addedLabels } = withGhForLabels(
+      { body: '**Plan:** `IDEA-9`', headRefName: 'feat/idea-9-x', labels: ['human-added', 'ci'] },
+      ['ci', 'feat', 'human-added'],
+    );
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPrLabelsToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(addedLabels()).toEqual(['feat']); // human-added label untouched, not re-sent
+  });
+
+  it('resolves "unresolved" when no PR exists yet for the branch', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20');
+
+    expect(await syncPrLabelsToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
+  });
+});
+
+describe('syncPrReadinessToPr', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` (with isDraft/state), `pr ready`, and `pr
+   * close`, logging the latter two to `actionFile` so tests can assert which
+   * (if either) fired. */
+  function withGhForReadiness(viewFixture: {
+    body: string;
+    headRefName: string;
+    isDraft: boolean;
+    state: string;
+  }): { root: string; callCount: () => number; actions: () => string[] } {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-readiness-'));
+    const viewFile = join(fixtureDir, 'view.json');
+    writeFileSync(viewFile, JSON.stringify({ ...viewFixture, labels: [] }));
+    const actionFile = join(fixtureDir, 'actions');
+    writeFileSync(actionFile, '');
+
+    const { root, callCount } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\ncat "${viewFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "ready" ]; then\necho ready >> "${actionFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "close" ]; then\necho close >> "${actionFile}"\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return {
+      root,
+      callCount,
+      actions: () => readFileSync(actionFile, 'utf-8').trim().split('\n').filter(Boolean),
+    };
+  }
+
+  function writeEntityFile(
+    root: string,
+    id: string,
+    opts: { status?: string; phases: string } = { phases: '- [x] Phase one\n- [x] Phase two\n' },
+  ): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    const statusLine = opts.status ? `status: ${opts.status}\n` : '';
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\n${statusLine}tags:\n  - ci\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n${opts.phases}`,
+    );
+  }
+
+  it('flips a draft PR to ready when every phase is checked, reporting "ready"', async () => {
+    const { root, actions } = withGhForReadiness({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      isDraft: true,
+      state: 'OPEN',
+    });
+    writeEntityFile(root, 'IDEA-9', { phases: '- [x] Phase one\n- [x] Phase two\n' });
+
+    expect(await syncPrReadinessToPr(root, '42')).toBe('ready');
+    expect(actions()).toEqual(['ready']);
+  });
+
+  it('reports "unchanged" and does not call gh again when the PR is already ready', async () => {
+    const { root, callCount, actions } = withGhForReadiness({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      isDraft: false,
+      state: 'OPEN',
+    });
+    writeEntityFile(root, 'IDEA-9', { phases: '- [x] Phase one\n- [x] Phase two\n' });
+
+    expect(await syncPrReadinessToPr(root, '42')).toBe('unchanged');
+    expect(actions()).toEqual([]);
+    expect(callCount()).toBe(1); // only the `pr view` call
+  });
+
+  it('reports "unchanged" when phases are still incomplete, even for a draft PR', async () => {
+    const { root, actions } = withGhForReadiness({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      isDraft: true,
+      state: 'OPEN',
+    });
+    writeEntityFile(root, 'IDEA-9', { phases: '- [x] Phase one\n- [ ] Phase two\n' });
+
+    expect(await syncPrReadinessToPr(root, '42')).toBe('unchanged');
+    expect(actions()).toEqual([]);
+  });
+
+  it('closes an open PR when the plan carries a dropped override, reporting "closed"', async () => {
+    const { root, actions } = withGhForReadiness({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      isDraft: false,
+      state: 'OPEN',
+    });
+    writeEntityFile(root, 'IDEA-9', { status: 'dropped', phases: '- [ ] Phase one\n' });
+
+    expect(await syncPrReadinessToPr(root, '42')).toBe('closed');
+    expect(actions()).toEqual(['close']);
+  });
+
+  it('reports "unchanged" and does not re-close an already-closed dropped PR', async () => {
+    const { root, actions, callCount } = withGhForReadiness({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      isDraft: false,
+      state: 'CLOSED',
+    });
+    writeEntityFile(root, 'IDEA-9', { status: 'dropped', phases: '- [ ] Phase one\n' });
+
+    expect(await syncPrReadinessToPr(root, '42')).toBe('unchanged');
+    expect(actions()).toEqual([]);
+    expect(callCount()).toBe(1);
+  });
+
+  it('resolves "unresolved" when no PR exists yet for the branch', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20', { phases: '- [x] Phase one\n' });
+
+    expect(await syncPrReadinessToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
+  });
+});
+
+describe('renderConsistencyComment', () => {
+  it('renders a clean-bill-of-health message when there are no issues', () => {
+    const body = renderConsistencyComment([]);
+    expect(body).toContain('<!-- papercamp:consistency:start -->');
+    expect(body).toContain('No consistency issues found.');
+  });
+
+  it('lists each issue by kind, section, and message', () => {
+    const body = renderConsistencyComment([
+      {
+        kind: 'blocked-plan-active',
+        section: 'open-questions',
+        title: 'Storage format?',
+        planId: 'IDEA-9',
+        message: 'Still open but blocks "Some plan" (IDEA-9), already in-progress',
+      },
+    ]);
+    expect(body).toContain(
+      '- **blocked-plan-active** (open-questions): Still open but blocks "Some plan" (IDEA-9), already in-progress',
+    );
+  });
+
+  it('notes a stale convergence audit', () => {
+    const body = renderConsistencyComment([], { audited: '2026-07-01', stale: true });
+    expect(body).toContain('Convergence audit: last run `2026-07-01`, plan has changed since');
+  });
+
+  it('notes a current convergence audit', () => {
+    const body = renderConsistencyComment([], { audited: '2026-07-01', stale: false });
+    expect(body).toContain('Convergence audit: last run `2026-07-01`, still current.');
+  });
+
+  it('omits the audit line entirely when no audit is recorded', () => {
+    const body = renderConsistencyComment([]);
+    expect(body).not.toContain('Convergence audit');
+  });
+});
+
+describe('syncConsistencyCommentToPr', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` (with url/comments), capturing `pr comment
+   * --body-file -` (create) and `api ... -X PATCH` (update) stdin into separate
+   * files so tests can assert which (if either) fired. */
+  function withGhForConsistency(viewFixture: {
+    body: string;
+    headRefName: string;
+    url: string;
+    comments: { body: string; url: string }[];
+  }): {
+    root: string;
+    createdFile: string;
+    patchedFile: string;
+  } {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-consistency-'));
+    const viewFile = join(fixtureDir, 'view.json');
+    writeFileSync(
+      viewFile,
+      JSON.stringify({ ...viewFixture, labels: [], isDraft: false, state: 'OPEN' }),
+    );
+    const createdFile = join(fixtureDir, 'created');
+    const patchedFile = join(fixtureDir, 'patched');
+
+    const { root } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\ncat "${viewFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "comment" ]; then\ncat > "${createdFile}"\nelif [ "$1" = "api" ]; then\ncat > "${patchedFile}"\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return { root, createdFile, patchedFile };
+  }
+
+  function writeEntityFile(
+    root: string,
+    id: string,
+    opts: { audited?: string; auditedHash?: string; phases?: string; status?: string } = {},
+  ): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    const auditLines =
+      opts.audited && opts.auditedHash
+        ? `audited: ${opts.audited}\naudited-hash: ${opts.auditedHash}\n`
+        : '';
+    const statusLine = opts.status ? `status: ${opts.status}\n` : '';
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\n${statusLine}${auditLines}tags:\n  - ci\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n${opts.phases ?? '- [x] Phase one\n'}`,
+    );
+  }
+
+  it('creates a new sticky comment when none exists yet', async () => {
+    const { root, createdFile, patchedFile } = withGhForConsistency({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      url: 'https://github.com/o/r/pull/42',
+      comments: [],
+    });
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncConsistencyCommentToPr(root, '42');
+    expect(result).toBe('created');
+    expect(readFileSync(createdFile, 'utf-8')).toContain('No consistency issues found.');
+    expect(() => readFileSync(patchedFile, 'utf-8')).toThrow();
+  });
+
+  it('reports "unchanged" and calls neither create nor patch when the sticky comment already matches', async () => {
+    const body = renderConsistencyComment([]);
+    const { root, createdFile, patchedFile } = withGhForConsistency({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      url: 'https://github.com/o/r/pull/42',
+      comments: [{ body, url: 'https://github.com/o/r/pull/42#issuecomment-1' }],
+    });
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncConsistencyCommentToPr(root, '42');
+    expect(result).toBe('unchanged');
+    expect(() => readFileSync(createdFile, 'utf-8')).toThrow();
+    expect(() => readFileSync(patchedFile, 'utf-8')).toThrow();
+  });
+
+  it('PATCHes the existing sticky comment via its REST id when its content differs', async () => {
+    const staleBody = renderConsistencyComment([
+      {
+        kind: 'dangling-superseded-by',
+        section: 'decisions',
+        title: 'Old decision',
+        message: 'stale',
+      },
+    ]);
+    const { root, createdFile, patchedFile } = withGhForConsistency({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      url: 'https://github.com/o/r/pull/42',
+      comments: [{ body: staleBody, url: 'https://github.com/o/r/pull/42#issuecomment-555' }],
+    });
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncConsistencyCommentToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(readFileSync(patchedFile, 'utf-8')).toContain('No consistency issues found.');
+    expect(() => readFileSync(createdFile, 'utf-8')).toThrow();
+  });
+
+  it('surfaces a blocked-plan-active issue found across the checked-out branch state', async () => {
+    const { root, createdFile } = withGhForConsistency({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      url: 'https://github.com/o/r/pull/42',
+      comments: [],
+    });
+    writeEntityFile(root, 'IDEA-9', { status: 'in-progress', phases: '- [ ] Phase one\n' });
+    writeFileSync(
+      join(root, 'papercamp', 'open-questions.md'),
+      '## Should we block?\n\n**Status:** open\n**Raised:** 2026-07-01\n**Blocks:** IDEA-9\n\nBody.\n',
+    );
+
+    const result = await syncConsistencyCommentToPr(root, '42');
+    expect(result).toBe('created');
+    const posted = readFileSync(createdFile, 'utf-8');
+    expect(posted).toContain('blocked-plan-active');
+    expect(posted).toContain('IDEA-9');
+  });
+
+  it('reports the convergence audit as stale when the plan changed since it was recorded', async () => {
+    const { root, createdFile } = withGhForConsistency({
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+      url: 'https://github.com/o/r/pull/42',
+      comments: [],
+    });
+    writeEntityFile(root, 'IDEA-9', { audited: '2026-07-01', auditedHash: 'stale-hash' });
+
+    const result = await syncConsistencyCommentToPr(root, '42');
+    expect(result).toBe('created');
+    expect(readFileSync(createdFile, 'utf-8')).toContain(
+      'Convergence audit: last run `2026-07-01`, plan has changed since',
+    );
+  });
+
+  it('resolves "unresolved" when no PR exists yet for the branch', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20');
+
+    expect(await syncConsistencyCommentToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
   });
 });

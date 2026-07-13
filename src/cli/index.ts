@@ -8,6 +8,13 @@ import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { computePlanContentHash } from '../core/content-hash';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parser';
+import {
+  resolvePlanForPrRef,
+  syncConsistencyCommentToPr,
+  syncPlanPhasesToPr,
+  syncPrLabelsToPr,
+  syncPrReadinessToPr,
+} from '../core/pr';
 import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import {
@@ -513,6 +520,86 @@ program
       console.error(`Failed to start MCP server: ${(error as Error).message}`);
       process.exit(1);
     }
+  });
+
+program
+  .command('resolve-pr <ref>')
+  .description(
+    'Resolve the plan a PR (number or branch) mirrors and print its kind/tags/phases as JSON (used by the Scout CI workflows)',
+  )
+  .action(async (ref: string) => {
+    const root = process.cwd();
+    const resolved = await resolvePlanForPrRef(root, ref);
+    if (!resolved) {
+      console.error(`Could not resolve a plan for "${ref}"`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(JSON.stringify(resolved, null, 2));
+  });
+
+program
+  .command('sync-pr-phases <ref>')
+  .description(
+    "Rewrite a PR's (number or branch) body to render its plan's phases as a task list, preserving the Plan line (used by the Scout CI workflows)",
+  )
+  .action(async (ref: string) => {
+    const root = process.cwd();
+    const result = await syncPlanPhasesToPr(root, ref);
+    if (result === 'unresolved') {
+      console.error(`Could not sync plan phases to a PR for "${ref}"`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(result);
+  });
+
+program
+  .command('sync-pr-labels <ref>')
+  .description(
+    "Apply labels derived from a plan's kind/tags to its PR (number or branch), creating missing labels as needed (used by the Scout CI workflows)",
+  )
+  .action(async (ref: string) => {
+    const root = process.cwd();
+    const result = await syncPrLabelsToPr(root, ref);
+    if (result === 'unresolved') {
+      console.error(`Could not sync plan labels to a PR for "${ref}"`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(result);
+  });
+
+program
+  .command('sync-pr-readiness <ref>')
+  .description(
+    "Flip a PR (number or branch) to ready for review once its plan's phases are all checked, or close it when the plan is dropped (used by the Scout CI workflows)",
+  )
+  .action(async (ref: string) => {
+    const root = process.cwd();
+    const result = await syncPrReadinessToPr(root, ref);
+    if (result === 'unresolved') {
+      console.error(`Could not sync PR readiness for "${ref}"`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(result);
+  });
+
+program
+  .command('sync-pr-consistency <ref>')
+  .description(
+    "Upsert a sticky Scout comment on a PR (number or branch) with findConsistencyIssues' results and the plan's convergence-audit staleness (used by the Scout CI workflows)",
+  )
+  .action(async (ref: string) => {
+    const root = process.cwd();
+    const result = await syncConsistencyCommentToPr(root, ref);
+    if (result === 'unresolved') {
+      console.error(`Could not sync consistency checks to a PR for "${ref}"`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(result);
   });
 
 // The two commands below are internal — invoked by the scaffolded
