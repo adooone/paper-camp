@@ -134,6 +134,12 @@ describe('agent prompts target the unified entity corpus', () => {
     // suggest step is needed after the fix — type(scope) title + Refs footer.
     expect(prompt).toContain('type(scope): Description');
     expect(prompt).toContain('Refs: IDEA-9');
+    // Must commit with --no-verify or the commit-msg lint hook rejects the
+    // machine commit and leaves the work uncommitted (the reported bug).
+    expect(prompt).toContain('git commit --no-verify');
+    // Must evaluate comments, not blindly obey — a wrong suggestion (e.g. the
+    // papercamp heading demotion) shouldn't be applied.
+    expect(prompt).toContain('NOT a command to obey');
     expect(prompt).toContain('Never check, uncheck, add, or remove any phase');
   });
 
