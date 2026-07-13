@@ -17,7 +17,7 @@ export interface AgentAdapter {
   options: AgentOptionsDescriptor;
 }
 
-export const DEFAULT_AGENT_ID: AgentId = 'claude-code';
+const DEFAULT_AGENT_ID: AgentId = 'claude-code';
 
 export const AGENTS: Record<AgentId, AgentAdapter> = {
   'claude-code': {

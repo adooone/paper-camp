@@ -3,7 +3,7 @@ import { PLAN_STATUSES } from '@/types/index';
 import { phasePercentage } from './helpers';
 
 export type PlanSortKey = 'status' | 'updated' | 'created' | 'title' | 'id' | 'progress';
-export type SortDirection = 'asc' | 'desc';
+type SortDirection = 'asc' | 'desc';
 
 export interface PlanListFilters {
   statuses: PlanStatus[];
@@ -16,10 +16,10 @@ export interface PlanListFilters {
 }
 
 /** Excludes done/dropped so 40+ closed plans stay out of first paint until a chip reveals them. */
-export const DEFAULT_VISIBLE_STATUSES: PlanStatus[] = ['in-progress', 'review', 'planned', 'idea'];
+const DEFAULT_VISIBLE_STATUSES: PlanStatus[] = ['in-progress', 'review', 'planned', 'idea'];
 
 /** Mirrors DEFAULT_VISIBLE_STATUSES: closed notes stay out of first paint too. */
-export const DEFAULT_VISIBLE_NOTE_STATUSES: IdeaStatus[] = ['open'];
+const DEFAULT_VISIBLE_NOTE_STATUSES: IdeaStatus[] = ['open'];
 
 export const DEFAULT_PLAN_LIST_FILTERS: PlanListFilters = {
   statuses: DEFAULT_VISIBLE_STATUSES,
@@ -177,7 +177,7 @@ export interface NoteRow {
   idea: IdeaEntry;
 }
 
-export interface PlanRow {
+interface PlanRow {
   type: 'plan';
   plan: PlanEntry;
 }

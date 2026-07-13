@@ -12,7 +12,7 @@ import { readBody, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 /** Repo config files the dashboard may list and read — nothing outside this set. */
-export const CONFIG_ALLOWLIST = [
+const CONFIG_ALLOWLIST = [
   'biome.json',
   'tsconfig.json',
   'tailwind.config.ts',

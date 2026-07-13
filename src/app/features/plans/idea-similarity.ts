@@ -27,8 +27,8 @@ export interface SimilarityOptions {
   limit?: number;
 }
 
-export const DEFAULT_SIMILARITY_THRESHOLD = 0.2;
-export const DEFAULT_SIMILARITY_LIMIT = 5;
+const DEFAULT_SIMILARITY_THRESHOLD = 0.2;
+const DEFAULT_SIMILARITY_LIMIT = 5;
 
 // Title/tag matches count for more than a body match: a shared word in the
 // title or an explicit tag is a much stronger duplicate signal than one

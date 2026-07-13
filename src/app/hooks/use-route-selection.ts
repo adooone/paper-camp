@@ -1,8 +1,8 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { useParams } from '@tanstack/react-router';
 
-export const DOC_SECTIONS = ['decisions', 'questions', 'progress', 'repo-docs'] as const;
-export type DocSection = (typeof DOC_SECTIONS)[number];
+const DOC_SECTIONS = ['decisions', 'questions', 'progress', 'repo-docs'] as const;
+type DocSection = (typeof DOC_SECTIONS)[number];
 
 /** The plan title selected via the `/plans/$planId` route param. */
 export function useActivePlanTitle(): string | null {
@@ -17,7 +17,7 @@ export function useActiveIdeaTitle(): string | null {
 }
 
 /** The docs section selected via the `/docs/$section` route param. */
-export function useActiveDocSection(): DocSection | null {
+function useActiveDocSection(): DocSection | null {
   const { section } = useParams({ strict: false });
   return DOC_SECTIONS.includes(section as DocSection) ? (section as DocSection) : null;
 }

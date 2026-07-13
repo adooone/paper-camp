@@ -18,18 +18,6 @@ export const STATUS_LABEL: Record<PlanEntry['status'], string> = {
   dropped: 'Dropped',
 };
 
-export const STATUS_ACCENT: Record<
-  PlanEntry['status'],
-  'blue' | 'green' | 'amber' | 'rose' | 'slate'
-> = {
-  idea: 'slate',
-  planned: 'blue',
-  'in-progress': 'amber',
-  review: 'slate',
-  done: 'green',
-  dropped: 'rose',
-};
-
 export const STATUS_STAMP: Record<PlanEntry['status'], { fill: string; text: string }> = {
   idea: { fill: 'rgba(138, 155, 168, 0.25)', text: '#5E7080' },
   planned: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
