@@ -21,7 +21,7 @@ Best run right after [[IDEA-58]], so the sweep reviews the already-simplified, d
 ### Phases
 - [x] Rewrite CODE_STYLE.md §7 to the firmer bar
       Replace "prefer self-describing names over comments" with the earns-its-place rule: a comment must explain a *why* not derivable from the code (environment quirk, non-obvious protocol shape, security/correctness rationale, or a paper-ui gap per §1). State explicitly that restating the next line, narrating history, or labelling an obvious block does not qualify.
-- [ ] Inventory the load-bearing comments to preserve
+- [x] Inventory the load-bearing comments to preserve
       Before sweeping, collect the comments that encode real institutional knowledge so the sweep spares them: the headless `stream-json` shape (`agents/claude-code.ts`), the git `-- :(literal)` pathspec and rename-source handling (`server/git.ts`), the DNS-rebinding / Host-Origin rationale (`server/api.ts`), the Vite-restart agent-orphan note (`vite.app.config.ts`), and any similar ones surfaced while reading.
 - [ ] Sweep `src/server` and `src/agents`
       Remove comments that restate code, mark sections a good name would announce, or preserve superseded history; rename unclear names instead of annotating them. Keep the inventoried load-bearing comments intact.
