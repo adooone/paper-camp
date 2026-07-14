@@ -1,6 +1,7 @@
 import { watch } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
+import { invalidateCorpusCache } from './corpus-cache';
 
 /**
  * Live-refresh notifier over SSE. Watches the whole papercamp/ directory and
@@ -37,8 +38,12 @@ export function createActivityManager(root: string) {
 
   try {
     // Debounced so a burst of writes (e.g. a plan file plus its regenerated
-    // index.md) collapses into a single refresh tick.
+    // index.md) collapses into a single refresh tick. The /api/plans and
+    // /api/ideas corpus cache (corpus-cache.ts) is invalidated on every raw
+    // event, not just the debounced tick, so a read racing a write never sees
+    // stale entries.
     watch(join(root, 'papercamp'), { recursive: true }, () => {
+      invalidateCorpusCache();
       if (timer) clearTimeout(timer);
       timer = setTimeout(broadcast, 300);
     });

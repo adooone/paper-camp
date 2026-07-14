@@ -7,9 +7,14 @@ import {
 } from '@/core/parse';
 import { readNoteEntries, readWorkEntries } from '@/core/readers';
 import { coerceAgentConfig } from '@/types/index';
+import { cached } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
 import { listConfigFiles } from './system';
 import type { ReadRoute } from './types';
+
+/** Cached readWorkEntries — shared by /api/plans and /api/consistency, one root per key. */
+const cachedWorkEntries = (root: string) =>
+  cached(`work:${root}`, () => readWorkEntries(campFile(root, 'ideas')));
 
 export const readRoutes: ReadRoute[] = [
   {
@@ -27,7 +32,7 @@ export const readRoutes: ReadRoute[] = [
   },
   {
     path: '/api/plans',
-    handler: async (root) => readWorkEntries(campFile(root, 'ideas')),
+    handler: async (root) => cachedWorkEntries(root),
   },
   {
     path: '/api/progress',
@@ -46,7 +51,8 @@ export const readRoutes: ReadRoute[] = [
   },
   {
     path: '/api/ideas',
-    handler: async (root) => readNoteEntries(campFile(root, 'ideas')),
+    handler: async (root) =>
+      cached(`notes:${root}`, () => readNoteEntries(campFile(root, 'ideas'))),
   },
   {
     path: '/api/consistency',
@@ -54,7 +60,7 @@ export const readRoutes: ReadRoute[] = [
       const [decisionsRaw, openQuestionsRaw, plansResult] = await Promise.all([
         readMaybe(campFile(root, 'decisions.md')),
         readMaybe(campFile(root, 'open-questions.md')),
-        readWorkEntries(campFile(root, 'ideas')),
+        cachedWorkEntries(root),
       ]);
       const decisions = parseDecisions(decisionsRaw);
       const openQuestions = parseOpenQuestions(openQuestionsRaw);

@@ -24,7 +24,7 @@ Overlaps with [[IDEA-58]] (both touch `readers.ts` and the Stack panel) but is s
       Record before-numbers for `/api/git/status`, `/api/plans`, `/api/consistency`, and `/api/status` so the after-comparison in the acceptance gate has something to measure against.
 - [x] Parallelise the corpus read
       In `core/readers.ts`, replace the sequential `for … await readFile` with `Promise.all` over the independent per-file read+parse so latency stops scaling linearly with the corpus.
-- [ ] Cache the parsed corpus off the existing watcher
+- [x] Cache the parsed corpus off the existing watcher
       Hang an in-process cache of the parsed `papercamp/ideas` tree off `activity.ts`'s debounced `fs.watch` signal — invalidate on change, serve parsed entries otherwise — so repeat `/api/plans` and `/api/ideas` reads are near-free.
 - [ ] Parallelise the git status spawns
       Run the independent `getStatus`, `getAheadCount`, and `getBranchHygieneStatus` with `Promise.all` (or fold them into fewer `git` invocations) so `/api/git/status` stops paying for them in series.
