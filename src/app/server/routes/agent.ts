@@ -96,7 +96,6 @@ async function findIdeaById(root: string, ideaId: string): Promise<IdeaEntry | u
 
 export function agentRoutes({ root, git, status, agent }: RouteContext): Route[] {
   return [
-    // GET /api/agent/status — current agent task state, if any
     {
       method: 'GET',
       path: '/api/agent/status',
@@ -105,7 +104,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/launch — start a headless agent on one plan phase
     {
       method: 'POST',
       path: '/api/agent/launch',
@@ -138,7 +136,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/launch-audit — start a headless agent on a plan-scoped convergence audit
     {
       method: 'POST',
       path: '/api/agent/launch-audit',
@@ -168,7 +165,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/launch-reconcile — start a headless agent that reconciles stale prose in a plan
     {
       method: 'POST',
       path: '/api/agent/launch-reconcile',
@@ -204,7 +200,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/launch-draft — start a headless agent that drafts a new plan from an idea
     {
       method: 'POST',
       path: '/api/agent/launch-draft',
@@ -233,7 +228,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/launch-extend — start a headless agent to extend an idea's body
     {
       method: 'POST',
       path: '/api/agent/launch-extend',
@@ -260,7 +254,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/launch-reconcile-all — start a batch reconcile sweep across all open ideas/plans
     {
       method: 'POST',
       path: '/api/agent/launch-reconcile-all',
@@ -281,7 +274,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/launch-run-all — run every unchecked phase sequentially with per-phase commits
     {
       method: 'POST',
       path: '/api/agent/launch-run-all',
@@ -311,9 +303,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/launch-fix-review — fetch the plan's unresolved PR review
-    // threads via `gh api` and launch a headless agent to fix them on the plan's
-    // own (already checked-out) branch and push
     {
       method: 'POST',
       path: '/api/agent/launch-fix-review',
@@ -355,8 +344,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // GET /api/agent/reconcile-queue — per-entity before snapshots from the most
-    // recent batch reconcile sweep, for the client to turn into a review queue
     {
       method: 'GET',
       path: '/api/agent/reconcile-queue',
@@ -365,7 +352,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // POST /api/agent/stop — kill the running agent task
     {
       method: 'POST',
       path: '/api/agent/stop',

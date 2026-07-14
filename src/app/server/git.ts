@@ -363,7 +363,6 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   async function runGitSync(): Promise<void> {
-    // Clean sync: checkout main, fetch, and fast-forward merge
     await runGit(['checkout', 'main']);
     await runGit(['fetch', '--prune']);
     await runGit(['merge', '--ff-only', 'origin/main']);

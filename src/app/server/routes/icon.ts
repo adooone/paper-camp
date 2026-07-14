@@ -14,7 +14,6 @@ const MIME_BY_EXT: Record<string, string> = {
 
 export function iconRoutes({ root }: RouteContext): Route[] {
   return [
-    // GET /api/icon — serve project icon
     {
       method: 'GET',
       path: '/api/icon',
@@ -36,7 +35,6 @@ export function iconRoutes({ root }: RouteContext): Route[] {
       },
     },
 
-    // POST /api/icon — upload project icon
     {
       method: 'POST',
       path: '/api/icon',

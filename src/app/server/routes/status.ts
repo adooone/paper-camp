@@ -3,7 +3,6 @@ import type { Route, RouteContext } from './types';
 
 export function statusRoutes({ activity, agent, git, status }: RouteContext): Route[] {
   return [
-    // GET /api/status — return current lint/format/test check results
     {
       method: 'GET',
       path: '/api/status',
@@ -12,7 +11,6 @@ export function statusRoutes({ activity, agent, git, status }: RouteContext): Ro
       },
     },
 
-    // POST /api/status/check?name=lint|format|test|consistency — trigger a one-off check run
     {
       method: 'POST',
       path: '/api/status/check',
@@ -27,7 +25,6 @@ export function statusRoutes({ activity, agent, git, status }: RouteContext): Ro
       },
     },
 
-    // POST /api/status/fix — run `biome check . --write` to auto-fix lint/format issues
     {
       method: 'POST',
       path: '/api/status/fix',
@@ -37,7 +34,6 @@ export function statusRoutes({ activity, agent, git, status }: RouteContext): Ro
       },
     },
 
-    // GET /api/activity/stream — SSE endpoint for live activity events
     {
       method: 'GET',
       path: '/api/activity/stream',

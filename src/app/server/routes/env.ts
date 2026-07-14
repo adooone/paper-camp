@@ -8,7 +8,6 @@ import type { Route, RouteContext } from './types';
 
 export function envRoutes({ root }: RouteContext): Route[] {
   return [
-    // GET /api/env — read the project root's .env, masked client-side only
     {
       method: 'GET',
       path: '/api/env',
@@ -32,7 +31,6 @@ export function envRoutes({ root }: RouteContext): Route[] {
       },
     },
 
-    // POST /api/env — write the full desired entry set back to .env
     {
       method: 'POST',
       path: '/api/env',

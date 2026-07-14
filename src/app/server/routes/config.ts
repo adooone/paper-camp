@@ -33,7 +33,6 @@ export async function listConfigFiles(root: string): Promise<{ files: string[] }
 
 export function configRoutes({ root }: RouteContext): Route[] {
   return [
-    // POST /api/config — update editable fields in papercamp/config.json (port, projectName)
     {
       method: 'POST',
       path: '/api/config',
@@ -108,7 +107,6 @@ export function configRoutes({ root }: RouteContext): Route[] {
       },
     },
 
-    // GET /api/configs — list readable config files, or ?name=... for one file's content
     {
       method: 'GET',
       path: '/api/configs',

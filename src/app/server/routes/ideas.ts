@@ -9,7 +9,6 @@ import type { Route, RouteContext } from './types';
 
 export function ideaRoutes({ root, agent }: RouteContext): Route[] {
   return [
-    // POST /api/ideas — create a new entity ("New idea": refine-first, or a note)
     {
       method: 'POST',
       path: '/api/ideas',
@@ -47,9 +46,8 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
       },
     },
 
-    // POST /api/ideas/check-overlap — IDEA-44 Tier 2: on-demand AI triage of typed
-    // text against the ideas index. Read-only — never edits a file, so unlike
-    // launch-draft/launch-extend it returns the verdict directly instead of via polling.
+    // Read-only — never edits a file, so unlike launch-draft/launch-extend it returns
+    // the verdict directly instead of via polling.
     {
       method: 'POST',
       path: '/api/ideas/check-overlap',
