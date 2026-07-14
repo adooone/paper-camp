@@ -1,4 +1,4 @@
-import type { AgentRunOptions } from '../../../types/index';
+import type { AgentRunOptions } from '@/types/index';
 
 export interface ParsedAgentLine {
   text: string;

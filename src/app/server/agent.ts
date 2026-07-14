@@ -4,9 +4,10 @@ import { readFile, stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { computePlanContentHash } from '../../core/content-hash';
-import { parseEntityFile, parsePlanFile } from '../../core/parser';
-import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '../../core/readers';
+import { buildReconcilePrompt } from '@/app/features/plans/prompts';
+import { parseEntityFile, parsePlanFile } from '@/core/parse';
+import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
+import { computePlanContentHash } from '@/core/serialize';
 import {
   type AgentId,
   type AgentTaskState,
@@ -20,8 +21,7 @@ import {
   type ReconcileQueueItem,
   type TaskKind,
   coerceAgentConfig,
-} from '../../types/index';
-import { buildReconcilePrompt } from '../features/plans/prompts';
+} from '@/types/index';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 
 const MAX_LINES = 50;

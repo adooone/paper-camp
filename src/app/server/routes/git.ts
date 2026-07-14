@@ -1,5 +1,5 @@
-import { entityToPlan, readEntities, readWorkEntries } from '../../../core/readers';
-import { findFocusPlan } from '../../features/plans/helpers';
+import { findFocusPlan } from '@/app/features/plans/helpers';
+import { entityToPlan, readEntities, readWorkEntries } from '@/core/readers';
 import { suggestCommitMessage } from '../commit-suggest';
 import { campFile } from '../helpers';
 import { readBody, sendJson } from '../http';

@@ -127,19 +127,14 @@ Examples already in flight:
 
 Organize code like this:
 
-```
+```text
 src/app/
-  components/        # Cross-cutting UI pieces (Markdown, PageTitle, StackPanel)
-  features/          # One folder per route-level feature
+  components/        # Cross-cutting UI used by >1 feature (Markdown, PageTitle, StackPanel)
+  features/          # One folder per route-level feature (see the feature template below)
     plans/
-      components/    # Feature-local components
-      constants.ts   # Feature-local constants
-      helpers.ts     # Pure helper functions
-      index.ts       # Public exports
     docs/
-    focus/
     settings/
-  server/            # Dev-server middleware / SSE
+  server/            # Dev-server middleware / SSE / API routes
   services/          # Client-side API callers
   stores/            # Zustand stores
   styles/            # Tailwind entry + token mirror
@@ -147,12 +142,60 @@ src/app/
 
 Rules:
 
-- `features/` owns route-level screens and their local components.
+- `features/` owns route-level screens and their local code.
 - `services/` owns all `fetch()` calls to `/api/*`. Components do not call
   `fetch()` directly.
-- `components/` is only for pieces used by more than one feature.
-- Each feature and each of `components/`, `services/`, and `stores/` has an
+- top-level `components/` is only for pieces used by more than one feature.
+- Each feature, and each of `components/`, `services/`, and `stores/`, has an
   `index.ts` barrel file.
+
+### The feature template
+
+A feature keeps only a few anchors at its top and sorts everything else into
+by-role folders, each with its own `index.ts` barrel:
+
+```text
+features/plans/
+  plans-page.tsx     # the route entry ({feature}-page.tsx)
+  index.ts           # public barrel
+  constants.ts       # feature-wide constants (an anchor when used across the feature)
+  hooks/             # React hooks (use-*.ts)
+  helpers/           # pure feature logic (selectors, parsers, similarity, diff, …)
+  prompts/           # feature-specific agent prompt builders (if any)
+  views/             # composed, page-level view components
+  modals/            # dialog components
+  actions/           # small action components (the *-button.tsx family)
+  components/         # shared UI atoms local to the feature (stamps, bars, …)
+```
+
+- **Anchors** at the top: the `index.ts` barrel, the `{feature}-page.tsx`
+  entry, styles, and genuinely feature-wide files (e.g. `constants.ts`).
+  Nothing else sits loose at the feature root.
+- **By-role folders** hold everything else. `hooks/`, `helpers/`, `prompts/`,
+  `views/`, `modals/`, `actions/`, `components/` are the standard buckets — add
+  one only once it has members. (A vague `utils/` junk-drawer is not a role: if
+  you can't say what a file *is*, don't group it yet.)
+- **Colocate tests** in a `__tests__/` subfolder inside the folder they cover
+  (`helpers/__tests__/diff.test.ts`).
+- Each folder's `index.ts` re-exports its files, and consumers import from the
+  folder barrel (`@/app/features/plans/helpers`) — so moving a file between
+  folders is an internal change. Two caveats: server-side code imports feature
+  logic by **relative** path, not `@/` (the Vite config loads it at eval time
+  where the alias doesn't resolve); and a cross-folder reference that would loop
+  back through a barrel should import the **specific file** to avoid a cycle
+  (depcruise fails the build on cycles).
+
+### Non-feature modules group by domain
+
+Outside `features/`, the same anchors-plus-subfolders idea applies, but the
+subfolders are named for the **domain** of logic rather than its role:
+`core/` → `parse/`, `serialize/`, `git-pr/`, `status/`; `server/routes/` →
+`content/`, `system/`. Same barrel-and-anchor rules; `@/core` / `@/app/services`
+consumers stay unchanged.
+
+**Soft ceiling:** once a folder passes ~8–10 files (anchors included), group.
+Below that, flat is the more readable choice — `docs/` and `settings/` stay as
+`{feature}-page.tsx + index.ts + components/`. Don't group pre-emptively.
 
 ## 5. Naming and formatting
 
@@ -161,7 +204,11 @@ Rules:
 - Services: `{domain}-api.ts`, async named exports.
 - Helpers: camelCase, pure where possible.
 - Event handlers: `handleXxx` (e.g., `handleSubmit`, `handleTogglePhase`).
-- Imports: use `@/` aliases; do not reach through `../../` more than one level.
+- Imports: use `@/` aliases everywhere, including `src/app/server`; do not reach
+  through `../../` more than one level. (The dev config loads the server via
+  Vite's `ssrLoadModule` so `@/` resolves there too — see `vite.app.config.ts`.
+  Don't reintroduce a static `import` of the server into that config; it would
+  bundle the server graph in raw Node where `@/` can't resolve.)
 
 ## 6. Motion
 

@@ -1,20 +1,18 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useActiveIdeaTitle, useActivePlanTitle } from '@/app/hooks';
-import { deletePlan } from '@/app/services/plans-api';
+import { deletePlan } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Breadcrumb, Card } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { DeleteIdeaModal } from './components/delete-idea-modal';
-import { EntityDetail } from './components/entity-detail';
-import { ListView } from './components/list-view';
-import { NoteDetail } from './components/note-detail';
-import { PlansHeader } from './components/plans-header';
-import { PlansListSkeleton } from './components/plans-list-skeleton';
-import { ReconcileQueueReview } from './components/reconcile-queue-review';
-import { ReviewQueue } from './components/review-queue';
-import { selectWorklistRows } from './plan-list-selector';
+import { selectWorklistRows } from './helpers';
+import { DeleteIdeaModal } from './modals';
+import { ReconcileQueueReview } from './views';
+import { EntityDetail } from './views';
+import { NoteDetail } from './views';
+import { ReviewQueue } from './views';
+import { ListView, PlansHeader, PlansListSkeleton } from './views';
 
 export const PlansPage = () => {
   const { plans, plansError, ideaEntries, loadPlans, planFilters } = useAppStore();

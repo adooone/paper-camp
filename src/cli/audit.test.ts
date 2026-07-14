@@ -3,8 +3,8 @@ import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { computePlanContentHash } from '../core/content-hash';
-import { parseEntityFile } from '../core/parser';
+import { parseEntityFile } from '../core/parse';
+import { computePlanContentHash } from '../core/serialize';
 
 // Exercises `paper-camp audit` as a real subprocess (via bun, matching the "cli" script)
 // so the skip/re-audit decision is verified end to end through argument parsing, plan

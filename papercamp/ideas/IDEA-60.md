@@ -7,6 +7,7 @@ tags:
   - app
   - refactor
   - core
+status: review
 ---
 
 Several folders have gone flat and wide: `features/plans/components` holds 32 files, `core` 22, with `server/routes`, `services`, and `components` in the 10–13 range. A flat list that long stops communicating structure — you can't tell at a glance which files belong together. Reorganise so every folder keeps only a few anchor files at its top and pushes the rest into subfolders grouped by what the code *is about*.
@@ -16,3 +17,18 @@ Several folders have gone flat and wide: `features/plans/components` holds 32 fi
 - **Codify it in the style guide.** `CODE_STYLE.md` §4 currently prescribes a single flat `components/` per feature; update it to describe the anchors-plus-domain-subfolders layout and the soft file-count ceiling, so the structure doesn't re-flatten over time.
 
 Complements [[IDEA-58]] (which de-dupes and splits oversized files) — grouping is most useful once that pass has decided what the units are, so run it alongside or just after. Structure-only: no behaviour change, and with barrels preserving the public import paths the check suite (`tsc`/`biome`/tests/consistency) is the acceptance gate.
+
+### Phases
+- [x] Codify the layout rule in the style guide
+      Rewrite `CODE_STYLE.md` §4 to replace the single flat `components/`-per-feature prescription with the anchors-plus-domain-subfolders layout: name the anchors that stay at the top (barrel, main entry, styles, feature-wide files), describe the domain-subfolder-with-barrel pattern, and state the soft ~8–10-file ceiling that triggers grouping. Do this first so later phases have a written target.
+- [x] Group `features/plans/components` into domain subfolders
+      Split the 32-file folder into domain subfolders (e.g. `phases/`, `commit/`, `review/`, `agent/`, `idea/`), leaving only the barrel/entry/styles and feature-wide files at the top. Give each subfolder an `index.ts` that re-exports through the parent barrel so `@/features/plans` import paths stay stable.
+- [x] Group `core` into domain subfolders
+      Split the 22-file `core` into domain subfolders (e.g. `parse/`, `serialize/`, `git-pr/`, `status/`) with per-subfolder barrels re-exported through the `core` barrel, keeping `@/core` consumers unchanged.
+- [x] Group the remaining wide folders
+      Apply the same anchors-plus-subfolders pass to `server/routes`, `services`, and `components` (each in the 10–13 range), grouping by domain and preserving import paths via barrels. Leave folders already under the ceiling alone.
+- [x] Verify the check suite stays green
+      Run `tsc --noEmit`, `biome`, tests, and the consistency check to confirm the reorg is behaviour-neutral and no import path drifted — the acceptance gate. Confirm the "no `../../` deeper than one level" rule (§5) still holds after the moves.
+
+### Log
+- 2026-07-14: Scope was too narrow. The original phases grouped only the big *subfolders* (`plans/components`, `core`, `server/routes`, `services`) but left each feature's own root flat — `features/plans` still had 15 loose `.ts` files (helpers, prompts, selectors, similarity, diff, findings, a hook + their tests) beside a half-grouped `components/`. Restructured `features/plans` to a full by-role feature template: root = 3 anchors (`plans-page.tsx`, `index.ts`, `constants.ts`); everything else into `hooks/`, `helpers/`, `prompts/`, `views/`, `modals/`, `actions/` (the `*-button.tsx` family), and `components/` (UI atoms), each with an `index.ts` barrel and tests colocated in `__tests__/`. Dissolved the old `components/{agent,commit,phases,review,idea,worklist}` domain subfolders into these role folders. Client code imports the folder barrels (`@/app/features/plans/{helpers,hooks,…}`), server code uses relative paths (the `@/`-in-vite-config-eval trap), and two button↔modal cross-folder refs import the specific file to avoid barrel cycles (depcruise is now an error gate). Codified the template in `CODE_STYLE.md` §4 (by-role for features; domain-grouping stays for `core`/`server`). `tsc`, `biome`, `pnpm run consistency` (0 violations), and 300 tests all green. `docs`/`settings` stay flat — under the ~8–10 ceiling.

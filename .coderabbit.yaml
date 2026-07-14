@@ -22,7 +22,7 @@ reviews:
         - Follow design tokens from src/app/styles/tokens.ts (fontFamily, space, fontSize, layout constants) — no hardcoded spacing or font stacks
         - Luminari font reserved for page H1s, markdown headings, and deliberate title moments only; body text uses the project-wide default (Cormorant Garamond)
         - Naming: PascalCase components with {Name}Props interface, camelCase helpers and event handlers (handleXxx), PascalCase files
-        - Imports use @/ aliases, avoid ../../ more than one level
+        - Imports use @/ aliases everywhere (including src/app/server), avoid ../../ more than one level. Do not suggest a static top-level import of the server into vite.app.config.ts — it loads the API via server.ssrLoadModule so @/ resolves; a static import would bundle the server in raw Node and break the dev server.
         - Feature folders at src/app/features/{name}/, services at src/app/services/, cross-cutting at src/app/components/
         - framer-motion for route transitions, list animations, panel slides — keep restrained, respect reduced-motion
         - Layout stability: reserve space for changing content (visibility:hidden instead of conditional mount), center content within fixed-height containers, empty states match populated state height

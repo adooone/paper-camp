@@ -56,7 +56,7 @@ structured metadata. The markdown body below frontmatter has an optional prose
 rationale, then `### Clarifications`, `### Phases`, and `### Log` sections — the same
 grammar plans have always used, now shared by every entity regardless of whether it has
 grown phases yet. The frontmatter is parsed by a real YAML library (the `yaml` package)
-and validated against one zod schema, `entityFrontmatterSchema` in `src/core/schemas.ts`
+and validated against one zod schema, `entityFrontmatterSchema` in `src/core/parse/schemas.ts`
 (the single source of truth); the old `planFrontmatterSchema`/`ideaFrontmatterSchema`
 still exist in the same file but are only reachable through `paper-camp migrate`, reading
 a pre-migration two-file corpus.
@@ -155,14 +155,14 @@ Two `.refine()` checks enforce the note/status asymmetry: a `kind: 'note'` entit
 status must be one of `open|done|dropped`, and `status: 'open'` is only valid when
 `kind === 'note'` — so a plan-bearing entity can never carry a stale hand-set status.
 
-Source: `src/core/schemas.ts` — `entityFrontmatterSchema` is the single source of truth;
+Source: `src/core/parse/schemas.ts` — `entityFrontmatterSchema` is the single source of truth;
 the JSON Schema above is generated from it via zod v4's built-in `toJSONSchema()`.
 
 ### Index file
 
 `papercamp/ideas/index.md` is generated on every write — never hand-edited
 (`regenerateIndexes` in `src/app/server/helpers.ts` for the API, `formatEntitiesIndex`
-in `src/core/serializer.ts` for the CLI paths). It provides a fast overview without
+in `src/core/serialize/serializer.ts` for the CLI paths). It provides a fast overview without
 scanning every entity file:
 
 ```markdown
@@ -183,7 +183,7 @@ entries from `/api/plans`/`/api/ideas` instead).
 ### Archive mechanism
 
 An entity moving to `done` or `dropped` ends with a **file move** — `archiveEntityFile`
-(`src/core/serializer.ts`) renames `papercamp/ideas/<ID>.md` to
+(`src/core/serialize/serializer.ts`) renames `papercamp/ideas/<ID>.md` to
 `papercamp/ideas/archive/<ID>.md`; the move itself has no parse-and-re-serialize step.
 One nuance: the dashboard's `PATCH /api/plans` first re-serializes the file to record the
 new `status` and stamp `updated`, *then* moves it — so an entity closed through the UI is
@@ -207,7 +207,7 @@ These have been moved into the visible `papercamp/` directory:
 
 This eliminates the confusion of having two top-level project directories with different
 visibility conventions. The config schema (zod `paperCampConfigSchema` in
-`src/core/schemas.ts`) has grown `nextId` and `defaultAgents` (per-task agent/model/effort)
+`src/core/parse/schemas.ts`) has grown `nextId` and `defaultAgents` (per-task agent/model/effort)
 since. `nextId` is now a single live counter, `nextId.idea`, that every new entity mints
 its lifetime `IDEA-N` id from (`assignEntityId`, delegating to `assignPlanId(configPath,
 'idea')`); the old per-kind fields (`feat`, `fix`, `chore`, `docs`, `refactor`) remain in
@@ -373,7 +373,7 @@ Bin entry: `paper-camp` → `dist/cli/index.js`, built with `commander`. Impleme
 Paper Camp plugs into Claude Code itself rather than only offering a dashboard: any
 project with a `papercamp/` folder gets its memory loaded and kept current with zero
 prompting. `paper-camp init` scaffolds three surfaces (see `scaffoldClaudeCodeIntegration`
-in `src/core/scaffold.ts`, static contents in `src/core/templates.ts`), each following
+in `src/core/scaffold/scaffold.ts`, static contents in `src/core/scaffold/templates.ts`), each following
 init's existing no-clobber contract — an already-present file is left untouched.
 
 1. **The skill** (`.claude/skills/paper-camp/SKILL.md`) — auto-discovered whenever the
@@ -417,14 +417,14 @@ reimplementing file access.
 Source tree under `src/`:
 
 - `src/types/index.ts` — shared types: `EntityEntry` (the unified storage type — `id`, `title`, optional `type`/`kind: 'note'`, `status`, `agent`, `created`/`updated`/`audited`/`auditedHash`, `tags`, `body`, `phases`, `log`/`clarifications`), `EntityType`/`EntityStatus` (aliases over `PlanKind`/`PlanStatus` plus the note-only `'open'` status), `PlanKind`/`PLAN_KINDS` (`feat | fix | chore | docs | refactor`, matching Conventional Commits' type strings), `PlanEntry`/`IdeaEntry` — now projections of `EntityEntry` (see `src/core/readers.ts` below), not the storage shape — `DecisionEntry`, `OpenQuestionEntry`, `ProgressEntry`, `PhaseItem` (`text`, optional `description` for the collapsible long form, optional `source: 'review'`), `PaperCampConfig` (`nextId: Partial<Record<PlanKind, number>> & { idea?: number }` — `idea` is the one live counter, the rest are pre-migration leftovers — plus optional `port`, `defaultAgents`), plus the agent/status/git vocabulary the app server shares with the UI: `AGENT_IDS`/`AgentConfig`/`DefaultAgentsMap`/`DEFAULT_AGENTS`/`TaskKind`/`AgentTaskState`, `CheckStatus`/`CheckResult`/`CheckName`, `GitStatusEntry`/`BranchHygieneStatus`, `ConsistencyIssue`, `EnvEntry`.
-- `src/core/schemas.ts` — all the zod schemas: the `**Field:**`-block schemas for the monolithic files (`planFieldsSchema` — legacy, `decisionFieldsSchema`, `openQuestionFieldsSchema`), `entityFrontmatterSchema` (the live per-file frontmatter schema — single source of truth for the unified format), the legacy `planFrontmatterSchema`/`ideaFrontmatterSchema` (kept only for `paper-camp migrate` reading a pre-migration two-file corpus), and `paperCampConfigSchema`/`agentConfigSchema` for `config.json`. `src/core/frontmatter-schemas.ts` is a thin re-export barrel kept so older references to that path don't break.
-- `src/core/parser.ts` — pure string → data parsing, no filesystem access: `parseEntityFile` (parse a single YAML-frontmatter entity file, validate against `entityFrontmatterSchema`, collect warnings instead of throwing; bodies get their `### Phases`/`### Log`/`### Clarifications` sections extracted — a `kind: note` entity with a non-empty Phases section is flagged as a warning), `parseFrontmatter` (low-level YAML frontmatter reader). Legacy `parsePlanFile`/`parseIdeaFile` still exist, reachable only from `paper-camp migrate` reading a pre-migration corpus. Still-active monolithic parsers for non-migrated files: `parseDecisions`/`parseOpenQuestions`/`parseProgress`, backed by `parseRawEntries` (generic `## heading` + fields + body splitter). `findConsistencyIssues` cross-checks decisions/questions/plans.
+- `src/core/parse/schemas.ts` — all the zod schemas: the `**Field:**`-block schemas for the monolithic files (`planFieldsSchema` — legacy, `decisionFieldsSchema`, `openQuestionFieldsSchema`), `entityFrontmatterSchema` (the live per-file frontmatter schema — single source of truth for the unified format), the legacy `planFrontmatterSchema`/`ideaFrontmatterSchema` (kept only for `paper-camp migrate` reading a pre-migration two-file corpus), and `paperCampConfigSchema`/`agentConfigSchema` for `config.json`. `src/core/parse/frontmatter-schemas.ts` is a thin re-export barrel kept so older references to that path don't break.
+- `src/core/parse/parser.ts` — pure string → data parsing, no filesystem access: `parseEntityFile` (parse a single YAML-frontmatter entity file, validate against `entityFrontmatterSchema`, collect warnings instead of throwing; bodies get their `### Phases`/`### Log`/`### Clarifications` sections extracted — a `kind: note` entity with a non-empty Phases section is flagged as a warning), `parseFrontmatter` (low-level YAML frontmatter reader). Legacy `parsePlanFile`/`parseIdeaFile` still exist, reachable only from `paper-camp migrate` reading a pre-migration corpus. Still-active monolithic parsers for non-migrated files: `parseDecisions`/`parseOpenQuestions`/`parseProgress`, backed by `parseRawEntries` (generic `## heading` + fields + body splitter). `findConsistencyIssues` cross-checks decisions/questions/plans.
 - `src/core/readers.ts` — the filesystem layer on top of parser.ts, now a single reader over the unified directory: `readEntities(ideasDir)` scans `ideas/` and `ideas/archive/` (skipping `index.md`) through `parseEntityFile`. Two thin adapter views sit on top, kept only so the plan-shaped/idea-shaped UI and API surfaces don't need to change yet: `readWorkEntries` (filters `kind !== 'note'`, maps via `entityToPlan` to `PlanEntry[]` — what `/api/plans` serves) and `readNoteEntries` (filters `kind === 'note'`, maps via `entityToIdea` to `IdeaEntry[]` — what `/api/ideas` serves). `readPlansMerged`/`readIdeasMerged` and the old per-dir `readAllPlanFiles`/`readAllIdeaFiles` no longer exist.
 - `src/core/env.ts` — `parseEnv`/serialize helpers for `.env` files (`KEY=value` lines, quoting rules), backing the Settings page's Environment Variables editor via `/api/env`.
-- `src/core/serializer.ts` — per-file writers: `formatEntityFile` (produce a YAML-frontmatter + body file for the unified entity — used by `add plan`, `migrate`, `POST /api/plans`, `POST /api/ideas`, and every PATCH rewrite via the server's `entityFileInput`/`writeEntityFile` helpers); `formatEntitiesIndex` (rewrite `ideas/index.md` after any mutation); `archiveEntityFile` (rename an entity file into `ideas/archive/`); `assignEntityId` (mints the next lifetime `IDEA-N`, delegating to `assignPlanId(configPath, 'idea')` against the single `nextId.idea` counter — a freed ID must never be reassigned; calls are chained through a module-level promise so same-process callers can't mint duplicates, while cross-process races — CLI vs dev server — are an accepted gap); `serializeFrontmatter` (low-level YAML serializer). Legacy `formatPlanFile`/`formatIdeaFile` still exist for `paper-camp migrate`. Still-active monolithic writers: `formatDecisionEntry`/`formatOpenQuestionEntry`/`formatOpenQuestions`/`formatProgressEntry` plus `appendBlock` (used by the open-question resolve flow).
-- `src/core/scaffold.ts` — `initProject`, used by `init`; also `scaffoldClaudeCodeIntegration`, which writes the four Claude Code native-integration surfaces (see above) from the static templates in `src/core/templates.ts`.
+- `src/core/serialize/serializer.ts` — per-file writers: `formatEntityFile` (produce a YAML-frontmatter + body file for the unified entity — used by `add plan`, `migrate`, `POST /api/plans`, `POST /api/ideas`, and every PATCH rewrite via the server's `entityFileInput`/`writeEntityFile` helpers); `formatEntitiesIndex` (rewrite `ideas/index.md` after any mutation); `archiveEntityFile` (rename an entity file into `ideas/archive/`); `assignEntityId` (mints the next lifetime `IDEA-N`, delegating to `assignPlanId(configPath, 'idea')` against the single `nextId.idea` counter — a freed ID must never be reassigned; calls are chained through a module-level promise so same-process callers can't mint duplicates, while cross-process races — CLI vs dev server — are an accepted gap); `serializeFrontmatter` (low-level YAML serializer). Legacy `formatPlanFile`/`formatIdeaFile` still exist for `paper-camp migrate`. Still-active monolithic writers: `formatDecisionEntry`/`formatOpenQuestionEntry`/`formatOpenQuestions`/`formatProgressEntry` plus `appendBlock` (used by the open-question resolve flow).
+- `src/core/scaffold/scaffold.ts` — `initProject`, used by `init`; also `scaffoldClaudeCodeIntegration`, which writes the four Claude Code native-integration surfaces (see above) from the static templates in `src/core/scaffold/templates.ts`.
 - `src/cli/session-focus.ts` / `post-tool-use-log.ts` — the bodies behind the `session-focus` and `post-tool-use-log` CLI subcommands the scaffolded hooks shell out to (see "Claude Code native integration" above).
-- `src/core/index.ts` — public core API; re-exports `env`/`parser`/`readers`/`schemas`/`scaffold`/`serializer` and the shared types (`frontmatter-schemas.ts` is imported by path, not via the barrel).
+- `src/core/index.ts` — public core API; re-exports `env`/`readers`/the `parse`/`git-pr`/`scaffold`/`serialize` domain subfolders (each with its own `index.ts` barrel) and the shared types (`frontmatter-schemas.ts` is imported by path, not via any barrel).
 - `src/cli/index.ts` — the commander CLI.
 - `src/cli/dev-server.ts` — `startDevServer({ root, port })`, the plain `node:http` server `paper-camp dev` runs: reuses `createApiMiddleware` for `/api/*`, serves the built `dist/app` statically otherwise, with an `index.html` SPA fallback.
 - `src/mcp/tools.ts` — the MCP stdio server's tools, all routed through the same `src/core` serializers as the dashboard routes (never a raw file write) so id allocation, archive-on-done, and index regeneration behave identically. Read tools: `list_plans`/`get_plan` (over `readWorkEntries`), `list_open_questions`, `list_decisions`. Write tools, serialized through a module-level mutex so concurrent stdio calls can't race id-minting: `add_idea`, `draft_plan` (same as `add_idea` but sets `type`, and checks branch conflicts first), `update_phase` (toggle a phase by index, optionally update status, archive on done/dropped), `append_progress`, `resolve_open_question`.
@@ -508,7 +508,7 @@ Sidebar navigation lives in the nav island (a floating pill fixed near the botto
 ## Current implementation status
 
 **Built and tested:**
-- `src/types`, `src/core/schemas.ts` (+ the `frontmatter-schemas.ts` barrel), `src/core/parser.ts`, `src/core/readers.ts`, `src/core/env.ts`, `src/core/serializer.ts`, `src/core/scaffold.ts`, `src/core/templates.ts`, `src/core/index.ts`
+- `src/types`, `src/core/parse/schemas.ts` (+ the `frontmatter-schemas.ts` barrel), `src/core/parse/parser.ts`, `src/core/readers.ts`, `src/core/env.ts`, `src/core/serialize/serializer.ts`, `src/core/scaffold/scaffold.ts`, `src/core/scaffold/templates.ts`, `src/core/index.ts`
 - Claude Code native integration: skill (`.claude/skills/paper-camp/SKILL.md`), SessionStart focus hook, opt-in PostToolUse new-file logger — all scaffolded by `init`, see "Claude Code native integration" above
 - `src/cli/index.ts` — `init`, `dev` (real, see below), `add plan`, `migrate`, `audit`, `mcp`
 - `src/cli/dev-server.ts` — static + API server for installed consumers

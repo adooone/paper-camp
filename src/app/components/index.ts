@@ -1,6 +1,6 @@
 export { LinkButton } from './link-button';
 export { Markdown } from './markdown';
-export { ProjectIdentityHeader } from './project-identity-header';
-export { SidebarShell } from './sidebar-shell';
 export { StackPanel } from './stack-panel';
-export { StatusBar } from './status-bar';
+export { ProjectIdentityHeader } from './shell/project-identity-header';
+export { SidebarShell } from './shell/sidebar-shell';
+export { StatusBar } from './shell/status-bar';

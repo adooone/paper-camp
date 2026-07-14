@@ -2,7 +2,7 @@ import {
   DEFAULT_PLAN_LIST_FILTERS,
   type PlanListFilters,
   type PlanSortKey,
-} from '@/app/features/plans/plan-list-selector';
+} from '@/app/features/plans/helpers';
 import type {
   AgentTaskState,
   BranchHygieneStatus,
@@ -36,13 +36,13 @@ import {
 import {
   fetchConsistency,
   fetchDecisions,
+  fetchIdeas,
   fetchOpenQuestions,
+  fetchPlans,
   fetchProgress,
   fetchRepoDocs,
-} from '../services/docs-api';
+} from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
-import { fetchIdeas } from '../services/ideas-api';
-import { fetchPlans } from '../services/plans-api';
 import type { StatusState } from '../services/status-api';
 import { fetchStatus, triggerCheck, triggerQualityFix } from '../services/status-api';
 

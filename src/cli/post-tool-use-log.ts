@@ -1,6 +1,6 @@
 import { relative } from 'node:path';
 import { campFile, fileExists, readMaybe } from '../app/server/helpers';
-import { prependProgressItem } from '../core/serializer';
+import { prependProgressItem } from '../core/serialize';
 import type { PaperCampConfig } from '../types/index';
 
 interface PostToolUseInput {

@@ -1,12 +1,8 @@
 import { agentRoutes } from './agent';
-import { configRoutes } from './config';
-import { docsRoutes } from './docs';
-import { envRoutes } from './env';
+import { docsRoutes, ideaRoutes, planRoutes } from './content';
 import { gitRoutes } from './git';
-import { iconRoutes } from './icon';
-import { ideaRoutes } from './ideas';
-import { planRoutes } from './plans';
 import { statusRoutes } from './status';
+import { configRoutes, envRoutes, iconRoutes } from './system';
 import type { Route, RouteContext } from './types';
 
 export { readRoutes } from './reads';

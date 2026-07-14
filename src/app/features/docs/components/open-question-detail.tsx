@@ -1,6 +1,6 @@
 import { LinkButton, Markdown } from '@/app/components';
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
-import { resolveOpenQuestion } from '@/app/services/docs-api';
+import { resolveOpenQuestion } from '@/app/services/content';
 import { useAppStore } from '@/app/stores';
 import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import { Button, Input, Modal, Stamp, Textarea, useToast } from '@dendelion/paper-ui';

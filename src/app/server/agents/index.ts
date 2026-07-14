@@ -1,11 +1,11 @@
-import { AGENT_OPTIONS } from '../../../types/index';
+import { AGENT_OPTIONS } from '@/types/index';
 import type {
   AgentId,
   AgentOptionsDescriptor,
   AgentRunOptions,
   DefaultAgentsMap,
   TaskKind,
-} from '../../../types/index';
+} from '@/types/index';
 import * as claudeCode from './claude-code';
 import type { ParsedAgentLine } from './claude-code';
 import * as opencode from './opencode';

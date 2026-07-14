@@ -2,7 +2,9 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { resolve } from 'path';
-import { type ApiMiddleware, createApiMiddleware } from './src/app/server/api';
+// Type-only — erased before esbuild bundles this config, so it does NOT pull the
+// server's runtime graph (and its `@/` imports) into the config bundle.
+import type { ApiMiddleware } from './src/app/server/api';
 
 // Vite restarts its dev middleware in-process on every server-side file change
 // (not just on Ctrl-C), which would otherwise re-run createApiMiddleware() and
@@ -15,17 +17,37 @@ function papercampApi(): Plugin {
   return {
     name: 'papercamp-api',
     configureServer(server) {
-      const api = g.__paperCampApi ?? createApiMiddleware(process.cwd());
-      g.__paperCampApi = api;
-      server.middlewares.use(api);
-      if (!g.__paperCampShutdownRegistered) {
-        g.__paperCampShutdownRegistered = true;
-        const shutdown = () => {
-          api.agent.killCurrent();
+      // Load the API middleware through Vite's SSR module pipeline rather than a
+      // static top-level import. A static import makes esbuild bundle the whole
+      // server graph into this config file, evaluated in raw Node where the `@/`
+      // alias does not resolve — so any `@/` value import under src/app/server
+      // crashed `pnpm dev` at config load. ssrLoadModule resolves `@/` (and TS)
+      // the same way the app build does, so server code can use `@/` freely.
+      let pending: Promise<ApiMiddleware> | null = null;
+      const loadApi = async (): Promise<ApiMiddleware> => {
+        if (g.__paperCampApi) return g.__paperCampApi;
+        const mod = (await server.ssrLoadModule('/src/app/server/api.ts')) as {
+          createApiMiddleware: (root: string) => ApiMiddleware;
         };
-        process.on('SIGINT', shutdown);
-        process.on('SIGTERM', shutdown);
-      }
+        const api = mod.createApiMiddleware(process.cwd());
+        g.__paperCampApi = api;
+        if (!g.__paperCampShutdownRegistered) {
+          g.__paperCampShutdownRegistered = true;
+          const shutdown = () => api.agent.killCurrent();
+          process.on('SIGINT', shutdown);
+          process.on('SIGTERM', shutdown);
+        }
+        return api;
+      };
+      server.middlewares.use((req, res, next) => {
+        pending ??= loadApi();
+        pending
+          .then((api) => api(req, res, next))
+          .catch((err) => {
+            server.config.logger.error(`papercamp-api failed to load: ${err}`);
+            next();
+          });
+      });
     },
   };
 }
