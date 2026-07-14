@@ -125,6 +125,22 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       },
     },
 
+    // Plain fast-forward pull of the current branch — distinct from /sync, which
+    // switches to main first. Used by the Stack panel's "Pull" quick-action so a
+    // stale local branch (e.g. main behind origin/main) can be refreshed in place.
+    {
+      method: 'POST',
+      path: '/api/git/pull',
+      handle: async (_req, res) => {
+        try {
+          await git.runGitPull();
+          sendJson(res, 200, { ok: true });
+        } catch (error) {
+          sendJson(res, 409, { error: (error as Error).message });
+        }
+      },
+    },
+
     {
       method: 'POST',
       path: '/api/git/suggest-commit-message',

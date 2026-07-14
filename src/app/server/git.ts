@@ -368,6 +368,16 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await runGit(['merge', '--ff-only', 'origin/main']);
   }
 
+  // Update the current branch in place from its origin counterpart, without
+  // switching branches (that's runGitSync's job). Fast-forward only, so it can
+  // never create a merge commit or leave conflicts — if the branch has diverged
+  // or has no matching origin ref, the ff-only merge fails loudly instead.
+  async function runGitPull(): Promise<void> {
+    await runGit(['fetch', '--prune']);
+    const branch = getCurrentBranch();
+    await runGit(['merge', '--ff-only', `origin/${branch}`]);
+  }
+
   return {
     async getStatus(): Promise<GitStatusEntry[]> {
       return runGitStatus();
@@ -383,6 +393,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     isMergedIntoMain,
     getBranchHygieneStatus,
     runGitSync,
+    runGitPull,
     subscribe(res: ServerResponse) {
       clients.add(res);
       res.on('close', () => clients.delete(res));

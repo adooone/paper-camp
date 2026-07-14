@@ -18,3 +18,19 @@ A quick pass over the live API surfaced the hot paths: `/api/git/status` ~170ms,
 - **(Stretch) Client render + bundle.** Confirm the zustand selectors stay narrow so a single-field update doesn't re-render the whole tree, and lazy-load the non-default routes (Docs/Settings) so the initial dashboard payload is smaller.
 
 Overlaps with [[IDEA-58]] (both touch `readers.ts` and the Stack panel) but is scoped to speed, not readability — worth its own pass so a cache or a parallelised read isn't lost inside a larger refactor. Behaviour is unchanged; the check suite plus a before/after timing of the endpoints above is the acceptance gate.
+
+### Phases
+- [x] Capture baseline endpoint timings
+      Record before-numbers for `/api/git/status`, `/api/plans`, `/api/consistency`, and `/api/status` so the after-comparison in the acceptance gate has something to measure against.
+- [ ] Parallelise the corpus read
+      In `core/readers.ts`, replace the sequential `for … await readFile` with `Promise.all` over the independent per-file read+parse so latency stops scaling linearly with the corpus.
+- [ ] Cache the parsed corpus off the existing watcher
+      Hang an in-process cache of the parsed `papercamp/ideas` tree off `activity.ts`'s debounced `fs.watch` signal — invalidate on change, serve parsed entries otherwise — so repeat `/api/plans` and `/api/ideas` reads are near-free.
+- [ ] Parallelise the git status spawns
+      Run the independent `getStatus`, `getAheadCount`, and `getBranchHygieneStatus` with `Promise.all` (or fold them into fewer `git` invocations) so `/api/git/status` stops paying for them in series.
+- [ ] Coalesce the SSE-driven refetch
+      Scope the `stack-panel.tsx` reload to what actually changed and/or debounce it client-side so one papercamp change no longer stampedes all six loaders at once.
+- [ ] (Stretch) Client render + bundle
+      Confirm the zustand selectors stay narrow so a single-field update doesn't re-render the whole tree, and lazy-load the non-default routes (Docs/Settings) to shrink the initial dashboard payload.
+- [ ] Run the acceptance gate
+      Run the check suite and re-time the endpoints above, comparing against the baseline to confirm the wins with behaviour unchanged.

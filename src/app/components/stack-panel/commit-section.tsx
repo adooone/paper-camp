@@ -1,6 +1,7 @@
 import { findFocusPlan } from '@/app/features/plans/helpers';
 import {
   commitChanges,
+  pullFromOrigin,
   pushChanges,
   suggestCommitMessage,
   syncToMain,
@@ -19,7 +20,7 @@ import {
   Tooltip,
 } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MergeIcon, PushIcon, WandIcon } from '../icons';
+import { MergeIcon, PullIcon, PushIcon, WandIcon } from '../icons';
 import { deskChalk, deskTextMuted, sectionLabelStyle } from './shared';
 
 const COMMIT_TITLE_STORAGE_KEY = 'papercamp.commitTitle';
@@ -64,6 +65,8 @@ function writeStoredCommitField(key: string, value: string): void {
 
 export const CommitSection = () => {
   const plans = useAppStore((s) => s.plans);
+  const loadPlans = useAppStore((s) => s.loadPlans);
+  const loadIdeas = useAppStore((s) => s.loadIdeas);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
@@ -88,6 +91,8 @@ export const CommitSection = () => {
   const [suggestError, setSuggestError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [pulling, setPulling] = useState(false);
+  const [pullError, setPullError] = useState<string | null>(null);
 
   const activePlan = useMemo(() => findFocusPlan(plans?.entries), [plans?.entries]);
 
@@ -222,13 +227,31 @@ export const CommitSection = () => {
     try {
       const isClean = gitStatus && gitStatus.length === 0;
       await syncToMain(isClean ? 'clean' : 'dirty');
-      await loadGitStatus();
+      // A sync can pull new commits (entities added/edited upstream), so refresh
+      // the worklist too — reloading only git status would leave the plans/ideas
+      // list showing stale pre-pull data until a full page reload.
+      await Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
     } catch (err) {
       setSyncError((err as Error).message);
     } finally {
       setSyncing(false);
     }
-  }, [gitStatus, loadGitStatus]);
+  }, [gitStatus, loadGitStatus, loadPlans, loadIdeas]);
+
+  const handlePull = useCallback(async () => {
+    setPulling(true);
+    setPullError(null);
+    try {
+      await pullFromOrigin();
+      // Same as sync: the pull may bring in upstream entity changes, so refresh
+      // the worklist alongside git status rather than requiring a page reload.
+      await Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
+    } catch (err) {
+      setPullError((err as Error).message);
+    } finally {
+      setPulling(false);
+    }
+  }, [loadGitStatus, loadPlans, loadIdeas]);
 
   const handleSuggestFromChanges = useCallback(async () => {
     if (selectedFiles.size === 0) return;
@@ -426,22 +449,41 @@ export const CommitSection = () => {
                     {syncError}
                   </Alert>
                 )}
-                <Tooltip
-                  content={
-                    gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined
-                  }
-                  surface="chalkboard"
-                >
+                {pullError && (
+                  <Alert surface="chalkboard" dismissible onDismiss={() => setPullError(null)}>
+                    {pullError}
+                  </Alert>
+                )}
+                <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
+                  <Tooltip
+                    content={
+                      gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined
+                    }
+                    surface="chalkboard"
+                  >
+                    <Button
+                      surface="chalkboard"
+                      size="small"
+                      icon={<MergeIcon size={14} />}
+                      disabled={syncing || gitBranchHygiene === 'clean-on-main'}
+                      onClick={handleSync}
+                    >
+                      {syncing ? 'Syncing…' : 'Sync to main'}
+                    </Button>
+                  </Tooltip>
+                  {/* Distinct from Sync: fast-forwards the current branch in place,
+                      so it stays enabled on clean main (where Sync is a no-op) to
+                      pull down origin/main. */}
                   <Button
                     surface="chalkboard"
                     size="small"
-                    icon={<MergeIcon size={14} />}
-                    disabled={syncing || gitBranchHygiene === 'clean-on-main'}
-                    onClick={handleSync}
+                    icon={<PullIcon size={14} />}
+                    disabled={pulling}
+                    onClick={handlePull}
                   >
-                    {syncing ? 'Syncing…' : 'Sync to main'}
+                    {pulling ? 'Pulling…' : 'Pull'}
                   </Button>
-                </Tooltip>
+                </div>
               </>
             )}
           </div>
