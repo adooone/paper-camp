@@ -11,7 +11,7 @@ import {
   regenerateIndexes,
   writeEntityFile,
 } from '../app/server/helpers';
-import { parseDecisions, parseEntityFile, parseOpenQuestions } from '../core/parser';
+import { parseDecisions, parseEntityFile, parseOpenQuestions } from '../core/parse';
 import { entityToPlan, readEntities, readWorkEntries } from '../core/readers';
 import {
   appendBlock,
@@ -22,7 +22,7 @@ import {
   formatOpenQuestions,
   prependProgressItem,
   todayDateString,
-} from '../core/serializer';
+} from '../core/serialize';
 import { PLAN_KINDS, PLAN_STATUSES } from '../types/index';
 import {
   decisionEntrySchema,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { formatIdeaFile, formatPlanFile } from '../serialize/serializer';
 import { parseFrontmatter, parseIdeaFile, parsePlanFile } from './parser';
-import { formatIdeaFile, formatPlanFile } from './serializer';
 
 const testSchema = z.object({
   id: z.string(),

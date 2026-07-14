@@ -3,7 +3,7 @@ import { watch } from 'node:fs';
 import { lstat, readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
-import { branchName } from '../../core/branch';
+import { branchName } from '../../core/git-pr';
 import type { BranchHygieneStatus, GitStatusEntry, PlanEntry } from '../../types';
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];

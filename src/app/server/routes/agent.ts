@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { fetchUnresolvedThreads, resolvePrsByEntity } from '../../../core/pr';
+import { fetchUnresolvedThreads, resolvePrsByEntity } from '../../../core/git-pr';
 import { entityToPlan, readEntities } from '../../../core/readers';
 import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry } from '../../../types/index';
 import { buildFixReviewPrompt } from '../../features/plans/prompts';

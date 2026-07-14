@@ -1,4 +1,4 @@
-import type { EntityStatus, PhaseItem, PrInfo } from '../types/index';
+import type { EntityStatus, PhaseItem, PrInfo } from '../../types/index';
 
 /** The subset of an entity's shape the status ladder needs to look at. */
 export interface StatusDerivationInput {

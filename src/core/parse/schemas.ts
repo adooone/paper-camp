@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AGENT_IDS } from '../types/index';
+import { AGENT_IDS } from '../../types/index';
 
 export const agentConfigSchema = z.preprocess(
   (v) => (typeof v === 'string' ? { agent: v } : v),

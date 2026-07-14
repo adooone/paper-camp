@@ -1,7 +1,7 @@
 import { findFocusPlan } from '../app/features/plans/helpers';
 import { createGitManager } from '../app/server/git';
 import { campFile, fileExists, readMaybe } from '../app/server/helpers';
-import { parseProgress } from '../core/parser';
+import { parseProgress } from '../core/parse';
 import { readWorkEntries } from '../core/readers';
 import type { PlanEntry } from '../types/index';
 

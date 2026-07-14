@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import type { EntityEntry, LogEntry, PhaseItem } from '../types/index';
+import type { EntityEntry, LogEntry, PhaseItem } from '../../types/index';
 
 export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);

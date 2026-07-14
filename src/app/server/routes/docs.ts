@@ -1,11 +1,11 @@
 import { writeFile } from 'node:fs/promises';
-import { parseOpenQuestions } from '../../../core/parser';
+import { parseOpenQuestions } from '../../../core/parse';
 import {
   appendBlock,
   formatDecisionEntry,
   formatOpenQuestions,
   todayDateString,
-} from '../../../core/serializer';
+} from '../../../core/serialize';
 import { campFile, readMaybe } from '../helpers';
 import { readBody, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';

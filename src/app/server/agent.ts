@@ -4,9 +4,9 @@ import { readFile, stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { computePlanContentHash } from '../../core/content-hash';
-import { parseEntityFile, parsePlanFile } from '../../core/parser';
+import { parseEntityFile, parsePlanFile } from '../../core/parse';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '../../core/readers';
+import { computePlanContentHash } from '../../core/serialize';
 import {
   type AgentId,
   type AgentTaskState,

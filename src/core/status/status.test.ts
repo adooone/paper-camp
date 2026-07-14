@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PrInfo } from '../types/index';
+import type { PrInfo } from '../../types/index';
 import { deriveStatus } from './status';
 
 const phase = (done: boolean) => ({ done, text: 'phase' });

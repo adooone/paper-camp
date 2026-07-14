@@ -1,7 +1,7 @@
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { PaperCampConfig } from '../types/index';
-import { paperCampConfigSchema } from './schemas';
+import type { PaperCampConfig } from '../../types/index';
+import { paperCampConfigSchema } from '../parse/schemas';
 import { CLAUDE_SETTINGS_JSON, SKILL_MD_CONTENT } from './templates';
 
 export const PAPER_CAMP_VERSION = '0.1.0';

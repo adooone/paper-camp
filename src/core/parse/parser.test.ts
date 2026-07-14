@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DecisionEntry, OpenQuestionEntry, PlanEntry } from '../types/index';
+import type { DecisionEntry, OpenQuestionEntry, PlanEntry } from '../../types/index';
 import {
   findConsistencyIssues,
   parseDecisions,

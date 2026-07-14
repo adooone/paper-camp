@@ -4,7 +4,7 @@ import {
   parseDecisions,
   parseOpenQuestions,
   parseProgress,
-} from '../../../core/parser';
+} from '../../../core/parse';
 import { readNoteEntries, readWorkEntries } from '../../../core/readers';
 import { coerceAgentConfig } from '../../../types/index';
 import { campFile, readMaybe } from '../helpers';

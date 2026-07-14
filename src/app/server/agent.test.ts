@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { parseEntityFile } from '../../core/parser';
+import { parseEntityFile } from '../../core/parse';
 import { entityToPlan } from '../../core/readers';
 import type { PhaseItem, PlanEntry } from '../../types/index';
 import { buildAgentPrompt, createAgentManager } from './agent';

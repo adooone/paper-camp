@@ -6,7 +6,7 @@ import {
   assignEntityId,
   formatEntityFile,
   todayDateString,
-} from '../../../core/serializer';
+} from '../../../core/serialize';
 import {
   AGENT_IDS,
   type AgentId,

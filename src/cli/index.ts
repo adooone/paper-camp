@@ -6,23 +6,23 @@ import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
-import { computePlanContentHash } from '../core/content-hash';
-import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parser';
 import {
   resolvePlanForPrRef,
   syncConsistencyCommentToPr,
   syncPlanPhasesToPr,
   syncPrLabelsToPr,
   syncPrReadinessToPr,
-} from '../core/pr';
+} from '../core/git-pr';
+import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parse';
 import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
+import { computePlanContentHash } from '../core/serialize';
 import {
   assignEntityId,
   formatEntitiesIndex,
   formatEntityFile,
   todayDateString,
-} from '../core/serializer';
+} from '../core/serialize';
 import { startMcpServer } from '../mcp/server';
 import {
   type AgentRunOptions,

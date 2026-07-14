@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import type { PrInfo, ReviewDecision, ReviewThread } from '../types/index';
+import type { PrInfo, ReviewDecision, ReviewThread } from '../../types/index';
 
 interface PrMapCacheEntry {
   /** A `Map` (possibly empty) once `gh` resolved; `undefined` = couldn't resolve. */

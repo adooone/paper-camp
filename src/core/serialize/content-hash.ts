@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { PhaseItem } from '../types/index';
+import type { PhaseItem } from '../../types/index';
 
 interface PlanContentInput {
   body: string;

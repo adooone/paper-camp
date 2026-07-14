@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PhaseItem } from '../types/index';
+import type { PhaseItem } from '../../types/index';
 import { computePlanContentHash } from './content-hash';
 
 const PHASES: PhaseItem[] = [

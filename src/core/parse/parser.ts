@@ -13,7 +13,7 @@ import type {
   PlanEntry,
   ProgressEntry,
   RawEntry,
-} from '../types/index';
+} from '../../types/index';
 import {
   decisionFieldsSchema,
   entityFrontmatterSchema,
@@ -106,8 +106,8 @@ function parseDatedListEntries(
   lines: string[],
   start: number,
   end: number,
-): import('../types/index').LogEntry[] {
-  const entries: import('../types/index').LogEntry[] = [];
+): import('../../types/index').LogEntry[] {
+  const entries: import('../../types/index').LogEntry[] = [];
   for (let i = start; i < end; i++) {
     const match = lines[i].match(LOG_ENTRY_RE);
     if (match) {
@@ -120,18 +120,18 @@ function parseDatedListEntries(
 function extractDatedList(
   body: string,
   headingRe: RegExp,
-): { body: string; entries: import('../types/index').LogEntry[] } {
+): { body: string; entries: import('../../types/index').LogEntry[] } {
   return extractSection(body, headingRe, parseDatedListEntries);
 }
 
-function extractLog(body: string): { body: string; log: import('../types/index').LogEntry[] } {
+function extractLog(body: string): { body: string; log: import('../../types/index').LogEntry[] } {
   const { body: remaining, entries } = extractDatedList(body, LOG_HEADING_RE);
   return { body: remaining, log: entries };
 }
 
 function extractClarifications(body: string): {
   body: string;
-  clarifications: import('../types/index').LogEntry[];
+  clarifications: import('../../types/index').LogEntry[];
 } {
   const { body: remaining, entries } = extractDatedList(body, CLARIFICATIONS_HEADING_RE);
   return { body: remaining, clarifications: entries };

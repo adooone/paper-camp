@@ -10,8 +10,8 @@ import type {
   PlanStatus,
   PrInfo,
 } from '../types/index';
-import { parseEntityFile } from './parser';
-import { resolvePrsByEntity } from './pr-lookup';
+import { resolvePrsByEntity } from './git-pr/pr-lookup';
+import { parseEntityFile } from './parse/parser';
 import { deriveStatus } from './status';
 
 // Reads the unified entity corpus under papercamp/ideas/ — one file per

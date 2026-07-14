@@ -1,16 +1,16 @@
 import { spawn } from 'node:child_process';
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { ConsistencyIssue, EntityEntry, EntityType, PhaseItem } from '../types/index';
-import { computePlanContentHash } from './content-hash';
+import type { ConsistencyIssue, EntityEntry, EntityType, PhaseItem } from '../../types/index';
 import {
   findConsistencyIssues,
   parseDecisions,
   parseEntityFile,
   parseOpenQuestions,
-} from './parser';
+} from '../parse/parser';
+import { entityToPlan, readEntities } from '../readers';
+import { computePlanContentHash } from '../serialize/content-hash';
 import { parsePrUrl, resolveEntityIdFromPrRef } from './pr-lookup';
-import { entityToPlan, readEntities } from './readers';
 import { COMMIT_SCOPES } from './scopes';
 
 export { clearPrCache, fetchUnresolvedThreads, resolvePrsByEntity } from './pr-lookup';
