@@ -8,12 +8,24 @@ import {
   useRouterState,
 } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel, StatusBar } from './components';
-import { DocsPage, DocsSidebar } from './features/docs/index';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
-import { SettingsPage, SettingsSidebar } from './features/settings/index';
 import { useAppStore } from './stores/app-store';
+
+// Docs and Settings are not the default route — lazy-load them so the initial
+// dashboard bundle only ships the Plans area. Both the page and its sidebar
+// slot come from the same dynamic import, so they share one chunk.
+const DocsPage = lazy(() => import('./features/docs/index').then((m) => ({ default: m.DocsPage })));
+const DocsSidebar = lazy(() =>
+  import('./features/docs/index').then((m) => ({ default: m.DocsSidebar })),
+);
+const SettingsPage = lazy(() =>
+  import('./features/settings/index').then((m) => ({ default: m.SettingsPage })),
+);
+const SettingsSidebar = lazy(() =>
+  import('./features/settings/index').then((m) => ({ default: m.SettingsSidebar })),
+);
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
@@ -183,8 +195,16 @@ const RootLayout = () => {
                       <PlanActionsColumn />
                     </>
                   )}
-                  {isDocsArea && <DocsSidebar />}
-                  {pathname === '/settings' && <SettingsSidebar />}
+                  {isDocsArea && (
+                    <Suspense fallback={null}>
+                      <DocsSidebar />
+                    </Suspense>
+                  )}
+                  {pathname === '/settings' && (
+                    <Suspense fallback={null}>
+                      <SettingsSidebar />
+                    </Suspense>
+                  )}
                 </SidebarShell>
               )}
               {/* Page column. Large: grow to fill the group. Small: basis 800 (the
@@ -208,7 +228,9 @@ const RootLayout = () => {
                         exit={shouldReduceMotion ? undefined : { opacity: 0, y: -8 }}
                         transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' }}
                       >
-                        <Outlet />
+                        <Suspense fallback={null}>
+                          <Outlet />
+                        </Suspense>
                       </motion.div>
                     </AnimatePresence>
                   </Page>

@@ -15,7 +15,11 @@ import { ReviewQueue } from './views';
 import { ListView, PlansHeader, PlansListSkeleton } from './views';
 
 export const PlansPage = () => {
-  const { plans, plansError, ideaEntries, loadPlans, planFilters } = useAppStore();
+  const plans = useAppStore((s) => s.plans);
+  const plansError = useAppStore((s) => s.plansError);
+  const ideaEntries = useAppStore((s) => s.ideaEntries);
+  const loadPlans = useAppStore((s) => s.loadPlans);
+  const planFilters = useAppStore((s) => s.planFilters);
   const activePlanTitle = useActivePlanTitle();
   const activeIdeaTitle = useActiveIdeaTitle();
   const navigate = useNavigate();

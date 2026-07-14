@@ -29,8 +29,12 @@ const snippet = (text: string, query: string, maxLen = 120): string => {
 };
 
 export const DocsSearch = ({ query }: DocsSearchProps) => {
-  const { decisions, openQuestions, progress, repoDocs, setActiveDocTitle, setDocSearchQuery } =
-    useAppStore();
+  const decisions = useAppStore((s) => s.decisions);
+  const openQuestions = useAppStore((s) => s.openQuestions);
+  const progress = useAppStore((s) => s.progress);
+  const repoDocs = useAppStore((s) => s.repoDocs);
+  const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
+  const setDocSearchQuery = useAppStore((s) => s.setDocSearchQuery);
   const navigate = useNavigate();
 
   const results: SearchMatch[] = [];
