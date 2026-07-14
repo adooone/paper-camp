@@ -25,7 +25,7 @@ Best run right after [[IDEA-58]], so the sweep reviews the already-simplified, d
       Before sweeping, collect the comments that encode real institutional knowledge so the sweep spares them: the headless `stream-json` shape (`agents/claude-code.ts`), the git `-- :(literal)` pathspec and rename-source handling (`server/git.ts`), the DNS-rebinding / Host-Origin rationale (`server/api.ts`), the Vite-restart agent-orphan note (`vite.app.config.ts`), and any similar ones surfaced while reading.
 - [x] Sweep `src/server` and `src/agents`
       Remove comments that restate code, mark sections a good name would announce, or preserve superseded history; rename unclear names instead of annotating them. Keep the inventoried load-bearing comments intact.
-- [ ] Sweep `src/core`
+- [x] Sweep `src/core`
       Same pass over the core corpus (parsers, readers, serializers, git/pr helpers) — strip narration and history, keep only the genuinely-explanatory comments, rename where a comment was compensating for a name.
 - [ ] Sweep `src/app`
       Same pass over the UI (features, components, stores, hooks, services), dropping section-label and restating comments and keeping only load-bearing rationale (e.g. documented paper-ui gaps).

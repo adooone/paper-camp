@@ -191,10 +191,6 @@ export async function appendBlock(filePath: string, block: string): Promise<void
   await writeFile(filePath, next, 'utf-8');
 }
 
-// ---------------------------------------------------------------------------
-// YAML frontmatter serializers  (used by the per-file plan/idea format)
-// ---------------------------------------------------------------------------
-
 export function serializeFrontmatter(data: Record<string, unknown>): string {
   let yaml = stringifyYaml(data);
   // stringifyYaml adds trailing newline by default
@@ -305,10 +301,10 @@ interface NewEntityFileInput {
 }
 
 /**
- * Serializes a unified entity file (FEAT-42 phases 7+) — same body sections as
- * formatPlanFile (Clarifications/Phases/Log), but `type` instead of `kind`, no
- * `idea:` backlink, and no `## id: title` body heading (title lives in
- * frontmatter only).
+ * Serializes a unified entity file — same body sections as formatPlanFile
+ * (Clarifications/Phases/Log), but `type` instead of `kind`, no `idea:`
+ * backlink, and no `## id: title` body heading (title lives in frontmatter
+ * only).
  */
 export function formatEntityFile(input: NewEntityFileInput): string {
   const frontmatter: Record<string, unknown> = {
@@ -364,8 +360,8 @@ export function formatEntityFile(input: NewEntityFileInput): string {
 
 /**
  * Mints the next lifetime IDEA-N entity id from the unified `nextId.idea`
- * counter — the single id space every entity lives in after the FEAT-42
- * migration. Same chaining/guarantees as assignPlanId (which it delegates to).
+ * counter — the single id space every entity lives in. Same
+ * chaining/guarantees as assignPlanId (which it delegates to).
  */
 export async function assignEntityId(configPath: string): Promise<string | undefined> {
   return assignPlanId(configPath, 'idea');
@@ -429,10 +425,7 @@ export async function archiveEntityFile(root: string, entityId: string): Promise
   }
 }
 
-// ---------------------------------------------------------------------------
-// Index file generator  (papercamp/ideas/index.md — the one unified table)
-// ---------------------------------------------------------------------------
-
+/** Generates papercamp/ideas/index.md, the one unified table. */
 export function formatEntitiesIndex(entities: EntityEntry[]): string {
   if (entities.length === 0) return '# Ideas\n\nNo ideas yet.\n';
 

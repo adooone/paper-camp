@@ -329,9 +329,10 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
 
 /**
  * Every PR in the repo indexed by the entity id it references, resolved via a
- * single `gh pr list` and cached for `ttlMs` — see IDEA-56's PR-driven status
- * derivation. `undefined` when the lookup can't resolve at all (no `gh`, not
- * authenticated, offline, no GitHub remote); callers fall back to stored status.
+ * single `gh pr list` and cached for `ttlMs`, feeding `core/status.ts`'s
+ * PR-driven status derivation. `undefined` when the lookup can't resolve at
+ * all (no `gh`, not authenticated, offline, no GitHub remote); callers fall
+ * back to stored status.
  * An entity simply absent from the returned map has no PR (a confirmed answer).
  */
 export async function resolvePrsByEntity(

@@ -72,9 +72,7 @@ async function findEntityFile(root: string, id: string): Promise<string | null> 
     try {
       await stat(file);
       return file;
-    } catch {
-      // not here — try the next candidate
-    }
+    } catch {}
   }
   return null;
 }
@@ -339,11 +337,12 @@ export type SyncPrReadinessResult = 'ready' | 'closed' | 'unchanged' | 'unresolv
  * A stored `dropped` override closes an open PR (abandonment leaves no other
  * trace to derive from, per `core/status.ts`). Otherwise, once every phase in
  * the plan is checked, a draft PR flips to ready for review — the phases list
- * is the derived `review` signal ([[IDEA-56]]). Anything already in the target
- * state (a non-draft PR with all phases done, an already-closed dropped PR) is
- * a no-op, so rerunning on an unchanged plan doesn't call `gh` again. Marking a
- * plan `done` on merge is deliberately not done here — that's [[IDEA-56]]'s
- * derivation from the merged PR, not a write this function makes.
+ * is the derived `review` signal per `core/status.ts`. Anything already in the
+ * target state (a non-draft PR with all phases done, an already-closed
+ * dropped PR) is a no-op, so rerunning on an unchanged plan doesn't call `gh`
+ * again. Marking a plan `done` on merge is deliberately not done here — that's
+ * `core/status.ts`'s derivation from the merged PR, not a write this function
+ * makes.
  */
 export async function syncPrReadinessToPr(
   root: string,

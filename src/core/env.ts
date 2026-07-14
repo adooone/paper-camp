@@ -50,7 +50,7 @@ export function applyEnvEntries(content: string, entries: EnvEntry[]): string {
       result.push(line);
       continue;
     }
-    if (!desired.has(match.key)) continue; // key removed
+    if (!desired.has(match.key)) continue;
     result.push(`${match.key}=${quoteIfNeeded(desired.get(match.key) ?? '')}`);
     desired.delete(match.key);
   }

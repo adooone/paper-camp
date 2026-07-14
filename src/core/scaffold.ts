@@ -52,8 +52,6 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
 
   await mkdir(campDir, { recursive: true });
 
-  // Unified entity directory: one file per idea (plan as a section), with an
-  // archive/ for done/dropped entities and one generated index.
   const ideasDir = join(campDir, 'ideas');
   await mkdir(ideasDir, { recursive: true });
   const entityArchiveDir = join(ideasDir, 'archive');
@@ -66,7 +64,6 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
     await writeFile(ideasIndex, ideasBody, 'utf-8');
   }
 
-  // Monolithic files for the remaining sections
   for (const name of MONOLITHIC_FILES) {
     const filePath = join(campDir, name);
     if (!(await exists(filePath))) {
