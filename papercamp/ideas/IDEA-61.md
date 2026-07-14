@@ -2,6 +2,7 @@
 id: IDEA-61
 title: Speed up API reads and refetch churn
 type: refactor
+status: review
 created: 2026-07-13
 tags:
   - app
@@ -32,5 +33,5 @@ Overlaps with [[IDEA-58]] (both touch `readers.ts` and the Stack panel) but is s
       Scope the `stack-panel.tsx` reload to what actually changed and/or debounce it client-side so one papercamp change no longer stampedes all six loaders at once.
 - [x] (Stretch) Client render + bundle
       Confirm the zustand selectors stay narrow so a single-field update doesn't re-render the whole tree, and lazy-load the non-default routes (Docs/Settings) to shrink the initial dashboard payload.
-- [ ] Run the acceptance gate
+- [x] Run the acceptance gate
       Run the check suite and re-time the endpoints above, comparing against the baseline to confirm the wins with behaviour unchanged.
