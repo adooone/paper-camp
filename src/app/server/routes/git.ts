@@ -21,10 +21,12 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       method: 'GET',
       path: '/api/git/status',
       handle: async (_req, res) => {
-        const entries = await git.getStatus();
         const branch = git.getCurrentBranch();
-        const ahead = await git.getAheadCount();
-        const branchHygiene = await git.getBranchHygieneStatus();
+        const [entries, ahead, branchHygiene] = await Promise.all([
+          git.getStatus(),
+          git.getAheadCount(),
+          git.getBranchHygieneStatus(),
+        ]);
         sendJson(res, 200, { branch, entries, ahead, branchHygiene });
       },
     },

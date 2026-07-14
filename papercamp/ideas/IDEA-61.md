@@ -26,7 +26,7 @@ Overlaps with [[IDEA-58]] (both touch `readers.ts` and the Stack panel) but is s
       In `core/readers.ts`, replace the sequential `for … await readFile` with `Promise.all` over the independent per-file read+parse so latency stops scaling linearly with the corpus.
 - [x] Cache the parsed corpus off the existing watcher
       Hang an in-process cache of the parsed `papercamp/ideas` tree off `activity.ts`'s debounced `fs.watch` signal — invalidate on change, serve parsed entries otherwise — so repeat `/api/plans` and `/api/ideas` reads are near-free.
-- [ ] Parallelise the git status spawns
+- [x] Parallelise the git status spawns
       Run the independent `getStatus`, `getAheadCount`, and `getBranchHygieneStatus` with `Promise.all` (or fold them into fewer `git` invocations) so `/api/git/status` stops paying for them in series.
 - [ ] Coalesce the SSE-driven refetch
       Scope the `stack-panel.tsx` reload to what actually changed and/or debounce it client-side so one papercamp change no longer stampedes all six loaders at once.
