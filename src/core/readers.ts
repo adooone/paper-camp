@@ -50,14 +50,17 @@ export async function readEntities(
   for (const dir of [ideasDir, join(ideasDir, 'archive')]) {
     const files = (await readdirMaybe(dir)).filter((f) => f.endsWith('.md') && f !== 'index.md');
     fileCount += files.length;
-    for (const file of files) {
-      const content = await readFileMaybe(join(dir, file));
-      if (!content) {
-        warnings.push({ title: file, message: 'Could not read entity file' });
-        continue;
-      }
-      const result = parseEntityFile(content);
-      entries.push(...result.entries);
+    const parsed = await Promise.all(
+      files.map(async (file) => {
+        const content = await readFileMaybe(join(dir, file));
+        if (!content) {
+          return { warnings: [{ title: file, message: 'Could not read entity file' }] };
+        }
+        return parseEntityFile(content);
+      }),
+    );
+    for (const result of parsed) {
+      if ('entries' in result) entries.push(...result.entries);
       warnings.push(...result.warnings);
     }
   }
