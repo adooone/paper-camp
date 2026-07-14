@@ -12,11 +12,9 @@ export const agentConfigSchema = z.preprocess(
 
 export const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
 
-// ---------------------------------------------------------------------------
-// Field-based schemas  (used by the monolithic `plans.md`/`decisions.md`/
-// `open-questions.md` format — one file with multiple `## Heading` entries,
-// each having `**Field:** value` lines below the heading.)
-// ---------------------------------------------------------------------------
+// Field-based schemas, used by the monolithic `plans.md`/`decisions.md`/
+// `open-questions.md` format: one file with multiple `## Heading` entries,
+// each having `**Field:** value` lines below the heading.
 
 export const planFieldsSchema = z.object({
   status: z.enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped']),
@@ -42,15 +40,11 @@ export const openQuestionFieldsSchema = z.object({
   blocks: z.string().optional(),
 });
 
-// ---------------------------------------------------------------------------
-// YAML frontmatter schemas  (used by the per-file plan/idea format —
-// one file per plan/idea, metadata in `---`-delimited YAML frontmatter,
-// markdown body below.)
-//
-// These are the single source of truth for the per-file format. The
-// field-based schemas above exist only until the migration from monolithic
-// files (phase 7 of FEAT-24) is complete.
-// ---------------------------------------------------------------------------
+// YAML frontmatter schemas, used by the per-file plan/idea format: one file
+// per plan/idea, metadata in `---`-delimited YAML frontmatter, markdown body
+// below. These are the single source of truth for the per-file format; the
+// field-based schemas above exist only until the monolithic-file format is
+// fully migrated away.
 
 export const planFrontmatterSchema = z.object({
   id: z.string().describe('Permanent plan ID, e.g. FEAT-24'),
@@ -91,12 +85,10 @@ export const ideaFrontmatterSchema = z
     path: ['status'],
   });
 
-// ---------------------------------------------------------------------------
-// Unified entity schema  (FEAT-42 phases 7+ — one file per entity: an "idea"
-// for its whole life, with the plan as an optional `### Phases` body section.
-// Replaces planFrontmatterSchema/ideaFrontmatterSchema once the migration
-// lands; until then the legacy pair above keeps reading the two-file corpus.)
-// ---------------------------------------------------------------------------
+// Unified entity schema: one file per entity — an "idea" for its whole life,
+// with the plan as an optional `### Phases` body section. Replaces
+// planFrontmatterSchema/ideaFrontmatterSchema once the migration lands; until
+// then the legacy pair above keeps reading the two-file corpus.
 
 export const entityFrontmatterSchema = z
   .object({

@@ -271,10 +271,6 @@ export function parseOpenQuestions(markdown: string): ParseResult<OpenQuestionEn
   return { entries, warnings };
 }
 
-// ---------------------------------------------------------------------------
-// YAML frontmatter parser  (used by the per-file plan/idea format)
-// ---------------------------------------------------------------------------
-
 const FRONTMATTER_RE = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n)?/;
 
 /**
@@ -330,16 +326,11 @@ export function parseFrontmatter<T>(
 }
 
 /**
- * Parse a single per-plan file with YAML frontmatter.
- * The body after frontmatter is scanned for ### Phases and ### Log sections,
- * same as the monolithic parser.
- */
-/**
- * Parses a unified entity file (FEAT-42 phases 7+): one file per entity — an
- * "idea" for its whole life, plan as an optional `### Phases` body section.
- * Same body pipeline as parsePlanFile (Phases/Log/Clarifications extraction);
- * the frontmatter differs: `type` instead of `kind`, no `idea:` backlink, and
- * the note/status asymmetry from the idea schema folded in.
+ * Parses a unified entity file: one file per entity — an "idea" for its whole
+ * life, plan as an optional `### Phases` body section. Same body pipeline as
+ * parsePlanFile (Phases/Log/Clarifications extraction); the frontmatter
+ * differs: `type` instead of `kind`, no `idea:` backlink, and the note/status
+ * asymmetry from the idea schema folded in.
  */
 export function parseEntityFile(content: string): ParseResult<EntityEntry> {
   const warnings: ParseWarning[] = [];

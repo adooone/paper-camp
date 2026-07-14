@@ -3,9 +3,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     try {
       await navigator.clipboard.writeText(text);
       return true;
-    } catch {
-      // fall through
-    }
+    } catch {}
   }
   const textarea = document.createElement('textarea');
   textarea.value = text;

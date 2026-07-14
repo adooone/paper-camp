@@ -14,16 +14,11 @@ import { parseEntityFile } from './parser';
 import { resolvePrsByEntity } from './pr-lookup';
 import { deriveStatus } from './status';
 
-// ---------------------------------------------------------------------------
-// Unified entity reader  (FEAT-42 phases 8–9: one corpus under papercamp/ideas/,
-// one file per entity — an "idea" for its whole life, plan as a Phases section.)
-//
-// Everything here touches the filesystem; the pure string -> data parsing it
-// builds on lives in parser.ts. The legacy two-file readers
-// (readPlansMerged/readIdeasMerged and the per-dir scanners) retired with the
-// migration; `paper-camp migrate` reads legacy shapes through the old parsers
-// directly.
-// ---------------------------------------------------------------------------
+// Reads the unified entity corpus under papercamp/ideas/ — one file per
+// entity, plan as an optional Phases section. Everything here touches the
+// filesystem; the pure string -> data parsing it builds on lives in
+// parser.ts. `paper-camp migrate` reads legacy two-file-format shapes through
+// the old parsers directly, not through this module.
 
 async function readdirMaybe(dir: string): Promise<string[]> {
   try {
@@ -115,14 +110,6 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
   };
 }
 
-/**
- * Every entity (including notes) with `status` replaced by its derived value —
- * for callers that need the resolved lifecycle without the PlanEntry reshape,
- * namely index generation and the branch-guard (see IDEA-56). One `gh` PR
- * listing resolves every entity's PR (matched by id), cached. This is a shallow
- * copy: it never touches disk, so it's safe to feed straight back into
- * `entityToPlan`/`deriveStatus` elsewhere without risking a stale-status write.
- */
 /** readEntities plus the one-shot PR resolution both derivation paths share. */
 async function readEntitiesAndPrs(ideasDir: string) {
   const { entries, warnings } = await readEntities(ideasDir);
@@ -130,6 +117,14 @@ async function readEntitiesAndPrs(ideasDir: string) {
   return { entries, warnings, prs, resolved: prs !== undefined };
 }
 
+/**
+ * Every entity (including notes) with `status` replaced by its derived value —
+ * for callers that need the resolved lifecycle without the PlanEntry reshape,
+ * namely index generation and the branch-guard. One `gh` PR listing resolves
+ * every entity's PR (matched by id), cached. This is a shallow copy: it never
+ * touches disk, so it's safe to feed straight back into
+ * `entityToPlan`/`deriveStatus` elsewhere without risking a stale-status write.
+ */
 export async function readEntitiesWithDerivedStatus(
   ideasDir: string,
 ): Promise<ParseResult<EntityEntry>> {

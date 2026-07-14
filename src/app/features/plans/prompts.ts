@@ -148,11 +148,11 @@ ${plansContext}
 Use the open entities above only to avoid duplicating in-flight scope and to match phase granularity. Edit only papercamp/ideas/${idea.id ?? '<ID>'}.md — never create, edit, move, or rename any other file.`;
 }
 
-// IDEA-57: the "fix review comments" launch path. Unlike every prompt above, this
-// one runs on the plan's *existing* branch against an *already-open* PR — it edits
-// arbitrary source files (whatever each thread points at, not just the entity
-// file) and must commit and push so the same PR picks up the fix, rather than
-// leaving a diff for the app to detect via file content.
+// Unlike every prompt above, this one runs on the plan's *existing* branch
+// against an *already-open* PR — it edits arbitrary source files (whatever each
+// thread points at, not just the entity file) and must commit and push so the
+// same PR picks up the fix, rather than leaving a diff for the app to detect
+// via file content.
 export function buildFixReviewPrompt(plan: PlanEntry, threads: ReviewThread[]): string {
   if (threads.length === 0) {
     return `You were launched to fix review comments on the open PR for the plan "${plan.title}" (${plan.id ?? 'no id'}), but no unresolved review threads were found. Make no changes at all — do not edit, commit, or push anything.`;
@@ -185,10 +185,10 @@ Rules:
 - If a comment needs a decision only a human can make, say so in your final summary instead of guessing.`;
 }
 
-// IDEA-44 Tier 2: the on-demand "Check overlap" action. Unlike every prompt above,
-// this one is read-only (see server/agent.ts's runReadOnlyPrompt / runOverlapCheck) —
-// it never edits a file, so its "done" condition is the JSON verdict in its own
-// stdout, not a mechanical check against the repo.
+// Unlike every prompt above, this one is read-only (see server/agent.ts's
+// runReadOnlyPrompt / runOverlapCheck) — it never edits a file, so its "done"
+// condition is the JSON verdict in its own stdout, not a mechanical check
+// against the repo.
 export function buildOverlapCheckPrompt(text: string, candidates: SimilarityCandidate[]): string {
   const index = candidates.length
     ? candidates

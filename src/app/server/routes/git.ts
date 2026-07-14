@@ -17,7 +17,6 @@ Report the final branch and status to verify the sync completed.`;
 
 export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
   return [
-    // GET /api/git/status — return working tree status
     {
       method: 'GET',
       path: '/api/git/status',
@@ -30,7 +29,6 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       },
     },
 
-    // POST /api/git/branch — create (or switch to) a plan's feature branch, on request.
     // Branch management is manual: nothing else in the app switches branches.
     {
       method: 'POST',
@@ -57,7 +55,6 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       },
     },
 
-    // POST /api/git/push — push the current branch to its upstream
     {
       method: 'POST',
       path: '/api/git/push',
@@ -71,7 +68,6 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       },
     },
 
-    // POST /api/git/commit — stage files and create a commit
     {
       method: 'POST',
       path: '/api/git/commit',
@@ -95,7 +91,6 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       },
     },
 
-    // POST /api/git/sync — sync to main (clean: inline, dirty: agent task)
     {
       method: 'POST',
       path: '/api/git/sync',
@@ -116,13 +111,11 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             sendJson(res, 409, { error: 'Working tree is no longer clean — refresh and retry' });
             return;
           }
-          // Inline sync: checkout main, fetch, fast-forward merge
           await git.runGitSync();
           sendJson(res, 200, { ok: true });
           return;
         }
 
-        // Dirty mode: launch agent task
         const result = agent.startSync(DIRTY_SYNC_PROMPT);
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });
@@ -132,7 +125,6 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       },
     },
 
-    // POST /api/git/suggest-commit-message — agent-written title/body from the actual diff
     {
       method: 'POST',
       path: '/api/git/suggest-commit-message',

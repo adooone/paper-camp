@@ -2,6 +2,7 @@
 id: IDEA-59
 title: Trim comments to the essential
 type: refactor
+status: review
 created: 2026-07-13
 tags:
   - app
@@ -17,3 +18,17 @@ The codebase leans heavily on explanatory comments — many narrate what the cod
 - **Sweep the rest.** Remove comments that restate code, mark sections a good name would announce, or preserve superseded history. Where a comment was compensating for an unclear name, rename instead of annotate.
 
 Best run right after [[IDEA-58]], so the sweep reviews the already-simplified, de-duplicated code rather than commenting on lines about to move or disappear. Docs-and-comments only — behaviour is unchanged, so `tsc`/`biome`/tests staying green is the whole acceptance check.
+
+### Phases
+- [x] Rewrite CODE_STYLE.md §7 to the firmer bar
+      Replace "prefer self-describing names over comments" with the earns-its-place rule: a comment must explain a *why* not derivable from the code (environment quirk, non-obvious protocol shape, security/correctness rationale, or a paper-ui gap per §1). State explicitly that restating the next line, narrating history, or labelling an obvious block does not qualify.
+- [x] Inventory the load-bearing comments to preserve
+      Before sweeping, collect the comments that encode real institutional knowledge so the sweep spares them: the headless `stream-json` shape (`agents/claude-code.ts`), the git `-- :(literal)` pathspec and rename-source handling (`server/git.ts`), the DNS-rebinding / Host-Origin rationale (`server/api.ts`), the Vite-restart agent-orphan note (`vite.app.config.ts`), and any similar ones surfaced while reading.
+- [x] Sweep `src/app/server` and `src/app/server/agents`
+      Remove comments that restate code, mark sections a good name would announce, or preserve superseded history; rename unclear names instead of annotating them. Keep the inventoried load-bearing comments intact.
+- [x] Sweep `src/core`
+      Same pass over the core corpus (parsers, readers, serializers, git/pr helpers) — strip narration and history, keep only the genuinely-explanatory comments, rename where a comment was compensating for a name.
+- [x] Sweep `src/app`
+      Same pass over the UI (features, components, stores, hooks, services), dropping section-label and restating comments and keeping only load-bearing rationale (e.g. documented paper-ui gaps).
+- [x] Verify the check suite stays green
+      Confirm behaviour is unchanged: `tsc --noEmit`, `npx biome check .`, and `pnpm test` all clean, then set this idea's phases complete.

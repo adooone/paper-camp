@@ -35,7 +35,6 @@ function findWorkEntity(entries: EntityEntry[], key: string): EntityEntry | unde
 
 export function planRoutes({ root, git }: RouteContext): Route[] {
   return [
-    // DELETE /api/plans?title=... — remove a work entity from the corpus
     {
       method: 'DELETE',
       path: '/api/plans',
@@ -63,7 +62,6 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
       },
     },
 
-    // POST /api/plans — create a new work entity ("Quick plan": status idea, typed)
     {
       method: 'POST',
       path: '/api/plans',
@@ -113,7 +111,6 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
       },
     },
 
-    // PATCH /api/plans?title=... — update an existing work entity
     {
       method: 'PATCH',
       path: '/api/plans',

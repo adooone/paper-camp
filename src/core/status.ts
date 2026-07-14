@@ -13,9 +13,9 @@ function allChecked(entity: StatusDerivationInput): boolean {
 
 /**
  * Derives lifecycle status from the entity's phases and its GitHub PR instead of
- * trusting the stored `status` field, so it can't drift from reality — see
- * IDEA-56. Tracking keys off the PR (matched by id), not a local branch: the PR
- * is canonical across clones and survives the branch being deleted after merge.
+ * trusting the stored `status` field, so it can't drift from reality. Tracking
+ * keys off the PR (matched by id), not a local branch: the PR is canonical
+ * across clones and survives the branch being deleted after merge.
  *
  * Ladder: idea (no phases) -> planned (phases, no PR) -> in-progress (PR open or
  * draft) -> review (PR open/draft AND every phase checked) -> done (PR merged).

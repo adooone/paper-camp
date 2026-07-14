@@ -730,7 +730,6 @@ export function createAgentManager(
             break;
           }
 
-          // Gate 1: did the phase checkbox actually flip?
           const progressed = await didTaskProgress(task);
           if (!progressed) {
             failed++;
@@ -743,7 +742,6 @@ export function createAgentManager(
             break;
           }
 
-          // Gate 2: lint / format / test must all pass.
           if (runProjectChecks) {
             pushLine(task, `[verify] phase ${i + 1} — running lint/format/test`);
             const checksOk = await runProjectChecks();

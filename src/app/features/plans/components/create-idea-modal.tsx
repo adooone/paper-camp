@@ -33,7 +33,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const navigate = useNavigate();
   // Include `log` alongside the base candidate shape — Extend/Draft need it,
-  // beyond what the "Open it"-only shape from the previous phase carried.
+  // beyond what an "Open it"-only shape would carry.
   const similarIdeas = useSimilarIdeas(
     title,
     planEntries.map((p) => ({

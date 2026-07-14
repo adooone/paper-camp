@@ -5,8 +5,8 @@ import { useState } from 'react';
 
 /**
  * The plan-lifecycle write path shared by plan-actions-column.tsx and the
- * review queue (IDEA-39 phase 3) — same `updatePlan` + reload + error toast,
- * so approve/reject/dropped all go through one place instead of each caller
+ * review queue — same `updatePlan` + reload + error toast, so
+ * approve/reject/dropped all go through one place instead of each caller
  * re-implementing the try/catch/toast dance.
  */
 export const usePlanStatusPatch = () => {

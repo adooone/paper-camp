@@ -12,7 +12,6 @@ import type { Route, RouteContext } from './types';
 
 export function docsRoutes({ root }: RouteContext): Route[] {
   return [
-    // POST /api/open-questions/resolve?title=... — resolve an open question with a new decision
     {
       method: 'POST',
       path: '/api/open-questions/resolve',
