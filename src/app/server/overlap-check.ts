@@ -1,5 +1,5 @@
 import type { OverlapVerdict } from '../../types/index';
-import type { SimilarityCandidate } from '../features/plans/idea-similarity';
+import type { SimilarityCandidate } from '../features/plans/helpers';
 import { buildOverlapCheckPrompt } from '../features/plans/prompts';
 
 const VALID_VERDICTS: OverlapVerdict['verdict'][] = ['existing', 'extend', 'new'];

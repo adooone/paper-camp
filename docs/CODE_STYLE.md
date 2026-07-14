@@ -129,20 +129,12 @@ Organize code like this:
 
 ```
 src/app/
-  components/        # Cross-cutting UI pieces (Markdown, PageTitle, StackPanel)
-  features/          # One folder per route-level feature
+  components/        # Cross-cutting UI used by >1 feature (Markdown, PageTitle, StackPanel)
+  features/          # One folder per route-level feature (see the feature template below)
     plans/
-      components/    # Feature-local components, grouped by domain (see below)
-        phases/
-        commit/
-        review/
-      constants.ts   # Feature-local constants
-      helpers.ts     # Pure helper functions
-      index.ts       # Public exports
     docs/
-    focus/
     settings/
-  server/            # Dev-server middleware / SSE
+  server/            # Dev-server middleware / SSE / API routes
   services/          # Client-side API callers
   stores/            # Zustand stores
   styles/            # Tailwind entry + token mirror
@@ -150,38 +142,60 @@ src/app/
 
 Rules:
 
-- `features/` owns route-level screens and their local components.
+- `features/` owns route-level screens and their local code.
 - `services/` owns all `fetch()` calls to `/api/*`. Components do not call
   `fetch()` directly.
-- `components/` is only for pieces used by more than one feature.
-- Each feature and each of `components/`, `services/`, and `stores/` has an
+- top-level `components/` is only for pieces used by more than one feature.
+- Each feature, and each of `components/`, `services/`, and `stores/`, has an
   `index.ts` barrel file.
 
-### Anchors stay at the top; everything else groups by domain
+### The feature template
 
-Any folder — a feature, `core`, `services`, `server/routes` — keeps only a
-small set of anchor files at its top level:
+A feature keeps only a few anchors at its top and sorts everything else into
+by-role folders, each with its own `index.ts` barrel:
 
-- the `index.ts` barrel,
-- the main entry (`{feature}.ts` / `{feature}-page.tsx`),
-- styles,
-- a handful of files that are genuinely feature-wide (used by most or all of
-  the folder's other files, not just one corner of it).
+```
+features/plans/
+  plans-page.tsx     # the route entry ({feature}-page.tsx)
+  index.ts           # public barrel
+  constants.ts       # feature-wide constants (an anchor when used across the feature)
+  hooks/             # React hooks (use-*.ts)
+  helpers/           # pure feature logic (selectors, parsers, similarity, diff, …)
+  prompts/           # feature-specific agent prompt builders (if any)
+  views/             # composed, page-level view components
+  modals/            # dialog components
+  actions/           # small action components (the *-button.tsx family)
+  components/         # shared UI atoms local to the feature (stamps, bars, …)
+```
 
-Everything else moves into subfolders named for the domain of logic they
-hold, not for its shape — `phases/`, `commit/`, `review/`, `agent/`, `idea/`
-for `features/plans/components`; `parse/`, `serialize/`, `git-pr/`, `status/`
-for `core`. A generic `utils/` or `helpers/` bucket does not count as a
-domain — if you can't name what the files are *about*, don't group them yet.
+- **Anchors** at the top: the `index.ts` barrel, the `{feature}-page.tsx`
+  entry, styles, and genuinely feature-wide files (e.g. `constants.ts`).
+  Nothing else sits loose at the feature root.
+- **By-role folders** hold everything else. `hooks/`, `helpers/`, `prompts/`,
+  `views/`, `modals/`, `actions/`, `components/` are the standard buckets — add
+  one only once it has members. (A vague `utils/` junk-drawer is not a role: if
+  you can't say what a file *is*, don't group it yet.)
+- **Colocate tests** in a `__tests__/` subfolder inside the folder they cover
+  (`helpers/__tests__/diff.test.ts`).
+- Each folder's `index.ts` re-exports its files, and consumers import from the
+  folder barrel (`@/app/features/plans/helpers`) — so moving a file between
+  folders is an internal change. Two caveats: server-side code imports feature
+  logic by **relative** path, not `@/` (the Vite config loads it at eval time
+  where the alias doesn't resolve); and a cross-folder reference that would loop
+  back through a barrel should import the **specific file** to avoid a cycle
+  (depcruise fails the build on cycles).
 
-Each domain subfolder gets its own `index.ts` and re-exports through the
-parent barrel, so consumers keep importing from the top (`@/features/plans`,
-`@/core`) — grouping is an internal move, never a breaking one. The
-`../../`-depth rule in §5 still applies from inside a subfolder.
+### Non-feature modules group by domain
 
-**Soft ceiling:** once a folder passes ~8–10 files (anchors included), group
-the non-anchor files into domain subfolders. Below that, a flat folder is
-still the more readable choice — don't group pre-emptively.
+Outside `features/`, the same anchors-plus-subfolders idea applies, but the
+subfolders are named for the **domain** of logic rather than its role:
+`core/` → `parse/`, `serialize/`, `git-pr/`, `status/`; `server/routes/` →
+`content/`, `system/`. Same barrel-and-anchor rules; `@/core` / `@/app/services`
+consumers stay unchanged.
+
+**Soft ceiling:** once a folder passes ~8–10 files (anchors included), group.
+Below that, flat is the more readable choice — `docs/` and `settings/` stay as
+`{feature}-page.tsx + index.ts + components/`. Don't group pre-emptively.
 
 ## 5. Naming and formatting
 

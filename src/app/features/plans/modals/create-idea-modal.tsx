@@ -1,28 +1,25 @@
-import { DraftPlanButton } from '@/app/features/plans/actions/draft-plan-button';
-import { PlanIdStamp } from '@/app/features/plans/components/plan-id-stamp';
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useSimilarIdeas } from '@/app/hooks';
 import { checkIdeaOverlap } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
-import { PLAN_KINDS } from '@/types/index';
-import { Button, Card, Input, Modal, Select, Textarea, useToast } from '@dendelion/paper-ui';
+import { Button, Card, Input, Modal, Switch, Textarea } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { DraftPlanButton } from '../actions/draft-plan-button';
+import { PlanIdStamp } from '../components';
 
-interface AddIdeaModalProps {
+interface CreateIdeaModalProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (idea: { title: string; content?: string; kind: string }) => Promise<void>;
+  onAdd: (idea: { title: string; content?: string; kind?: 'idea' | 'note' }) => Promise<void>;
 }
 
-const kindOptions = PLAN_KINDS.map((k) => ({ value: k, label: k }));
-
-export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
+export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [kind, setKind] = useState('feat');
+  const [isNote, setIsNote] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [extendingId, setExtendingId] = useState<string | null>(null);
@@ -35,7 +32,8 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const navigate = useNavigate();
-  const { toast } = useToast();
+  // Include `log` alongside the base candidate shape — Extend/Draft need it,
+  // beyond what an "Open it"-only shape would carry.
   const similarIdeas = useSimilarIdeas(
     title,
     planEntries.map((p) => ({
@@ -51,7 +49,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
     if (open) {
       setTitle('');
       setContent('');
-      setKind('feat');
+      setIsNote(false);
       setLoading(false);
       setError(null);
       setCheckingOverlap(false);
@@ -59,15 +57,6 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
       setOverlapError(null);
     }
   }, [open]);
-
-  // Editing the text after a check invalidates the verdict — clear it so stale
-  // overlap guidance isn't shown against text it no longer describes. title/content
-  // are the change triggers, not read in the effect body.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: text is a trigger, not read
-  useEffect(() => {
-    setOverlapVerdict(null);
-    setOverlapError(null);
-  }, [title, content]);
 
   const handleOpenSimilar = (matchTitle: string) => {
     onClose();
@@ -97,16 +86,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
 
   const handleOpenVerdictTarget = (targetId: string) => {
     const match = planEntries.find((p) => p.id === targetId);
-    if (match) {
-      handleOpenSimilar(match.title);
-    } else {
-      // Stale/hallucinated id from the verdict — tell the user instead of no-op.
-      toast({
-        title: 'Plan not found',
-        description: `No plan with id ${targetId}`,
-        variant: 'error',
-      });
-    }
+    if (match) handleOpenSimilar(match.title);
   };
 
   const handleExtendSimilar = async (
@@ -135,12 +115,12 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
       await onAdd({
         title: title.trim(),
         content: content.trim() || undefined,
-        kind,
+        kind: isNote ? 'note' : undefined,
       });
       onClose();
     } catch (err) {
-      // Surface the failure and re-enable the form so the user can retry —
-      // without the finally the modal would stay stuck disabled on any onAdd reject.
+      // Without this the modal stays stuck disabled if onAdd rejects; surface the
+      // error and re-enable the form so the user can retry.
       setError((err as Error).message);
     } finally {
       setLoading(false);
@@ -148,7 +128,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Quick plan" size="small">
+    <Modal open={open} onClose={onClose} title="New idea" size="small">
       <form
         onSubmit={handleSubmit}
         style={{ display: 'flex', flexDirection: 'column', gap: space[4] }}
@@ -157,7 +137,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
           label="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Backlog item title…"
+          placeholder="Idea title…"
           disabled={loading}
           autoFocus
           required
@@ -267,13 +247,6 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
             </Card>
           )}
         </div>
-        <Select
-          label="Kind"
-          value={kind}
-          onChange={(value) => setKind(value)}
-          options={kindOptions}
-          disabled={loading}
-        />
         <Textarea
           label="Description"
           value={content}
@@ -281,6 +254,12 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
           placeholder="Optional details…"
           disabled={loading}
           rows={4}
+        />
+        <Switch
+          label="Note — never needs a plan"
+          checked={isNote}
+          onChange={(e) => setIsNote(e.target.checked)}
+          disabled={loading}
         />
         {error && (
           <p style={{ margin: 0, color: color.accentRoseDark, fontSize: fontSize.sm }}>{error}</p>

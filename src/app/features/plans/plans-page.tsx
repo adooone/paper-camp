@@ -6,12 +6,13 @@ import { space } from '@/app/styles/tokens';
 import { Breadcrumb, Card } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { ReconcileQueueReview } from './components/commit';
-import { EntityDetail } from './components/entity-detail';
-import { DeleteIdeaModal, NoteDetail } from './components/idea';
-import { ReviewQueue } from './components/review';
-import { ListView, PlansHeader, PlansListSkeleton } from './components/worklist';
-import { selectWorklistRows } from './plan-list-selector';
+import { selectWorklistRows } from './helpers';
+import { DeleteIdeaModal } from './modals';
+import { ReconcileQueueReview } from './views';
+import { EntityDetail } from './views';
+import { NoteDetail } from './views';
+import { ReviewQueue } from './views';
+import { ListView, PlansHeader, PlansListSkeleton } from './views';
 
 export const PlansPage = () => {
   const { plans, plansError, ideaEntries, loadPlans, planFilters } = useAppStore();

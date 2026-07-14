@@ -2,7 +2,7 @@ import {
   DEFAULT_PLAN_LIST_FILTERS,
   type PlanListFilters,
   type PlanSortKey,
-} from '@/app/features/plans/plan-list-selector';
+} from '@/app/features/plans/helpers';
 import type {
   AgentTaskState,
   BranchHygieneStatus,

@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
 import {
   type SimilarityCandidate,
   type SimilarityMatch,
   type SimilarityOptions,
   scoreIdeaSimilarity,
-} from '../features/plans/idea-similarity';
+} from '@/app/features/plans/helpers';
+import { useEffect, useMemo, useState } from 'react';
 
 const DEFAULT_DEBOUNCE_MS = 250;
 

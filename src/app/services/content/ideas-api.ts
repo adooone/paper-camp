@@ -1,4 +1,4 @@
-import type { SimilarityCandidate } from '@/app/features/plans/idea-similarity';
+import type { SimilarityCandidate } from '@/app/features/plans/helpers';
 import type { IdeaEntry, OverlapVerdict, ParseResult } from '@/types/index';
 
 export const fetchIdeas = async (): Promise<ParseResult<IdeaEntry>> => {
