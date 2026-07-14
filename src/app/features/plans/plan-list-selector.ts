@@ -108,8 +108,8 @@ const countBy = <Entry, Value>(
 };
 
 /**
- * Factored out of list-view.tsx so IDEA-43's idea-grouped tree can reuse the
- * same filtering/sorting/counting logic over the flat plans.entries array.
+ * Factored out of list-view.tsx so the idea-grouped tree can reuse the same
+ * filtering/sorting/counting logic over the flat plans.entries array.
  */
 export const selectPlanRows = (
   entries: PlanEntry[],

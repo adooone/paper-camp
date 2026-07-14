@@ -301,16 +301,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
   runCheck: async (name) => {
     try {
       await triggerCheck(name);
-    } catch {
-      // ignore
-    }
+    } catch {}
   },
   fixQuality: async () => {
     try {
       await triggerQualityFix();
-    } catch {
-      // ignore
-    }
+    } catch {}
   },
 
   commitInFlight: false,

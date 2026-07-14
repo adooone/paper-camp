@@ -12,11 +12,10 @@ const CHECK_VARIANT: Record<CheckStatus, 'success' | 'error' | 'warning' | 'neut
   stale: 'neutral',
 };
 
-// Shrinks the quick-action button labels to match the bar's 2xs text.
 const btnStyle = { fontSize: fontSize['2xs'] };
 
 /**
- * Full-width status strip under the header (IDEA-39, reworked): an at-a-glance
+ * Full-width status strip under the header: an at-a-glance
  * row of git state + check status, plus quick actions that fire immediately —
  * commit, run tests, fix quality — without opening the Stack panel. The Stack
  * panel stays the full control surface; the user opens it themselves.

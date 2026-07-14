@@ -1,6 +1,6 @@
 /**
- * Keyword-overlap similarity matcher for IDEA-44's "similar ideas" strip.
- * Deliberately AI-free (Tier 1 in the plan) — the corpus is small enough
+ * Keyword-overlap similarity matcher for the "similar ideas" strip.
+ * Deliberately AI-free — the corpus is small enough
  * (~45 ideas) that scoring shared tokens between the typed text and each
  * candidate's title/body/tags is enough to surface plausible duplicates.
  * Pure and framework-free so both capture points (New-idea modal,

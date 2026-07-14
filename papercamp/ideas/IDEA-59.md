@@ -27,7 +27,7 @@ Best run right after [[IDEA-58]], so the sweep reviews the already-simplified, d
       Remove comments that restate code, mark sections a good name would announce, or preserve superseded history; rename unclear names instead of annotating them. Keep the inventoried load-bearing comments intact.
 - [x] Sweep `src/core`
       Same pass over the core corpus (parsers, readers, serializers, git/pr helpers) — strip narration and history, keep only the genuinely-explanatory comments, rename where a comment was compensating for a name.
-- [ ] Sweep `src/app`
+- [x] Sweep `src/app`
       Same pass over the UI (features, components, stores, hooks, services), dropping section-label and restating comments and keeping only load-bearing rationale (e.g. documented paper-ui gaps).
 - [ ] Verify the check suite stays green
       Confirm behaviour is unchanged: `tsc --noEmit`, `npx biome check .`, and `pnpm test` all clean, then set this idea's phases complete.

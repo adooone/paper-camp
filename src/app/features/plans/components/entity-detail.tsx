@@ -103,7 +103,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     const nextPhases: PhaseItem[] = plan.phases.map((phase, i) =>
       i === index ? { ...phase, done: !phase.done } : phase,
     );
-    // Auto-set to review when last phase is checked
     const allChecked = nextPhases.every((p) => p.done);
     if (allChecked && plan.status === 'in-progress') {
       await patchByTitle(plan.title, { phases: nextPhases, status: 'review' });

@@ -67,8 +67,8 @@ export const PlanActionsColumn = () => {
 
           <div>
             <div style={sectionLabelStyle}>Status</div>
-            {/* Status derives from phases/branch/PR (IDEA-56) and is read-only
-                here; the dropped/reopen override lives in Actions below since
+            {/* Status derives from phases/branch/PR and is read-only here; the
+                dropped/reopen override lives in Actions below since
                 abandonment leaves no branch or PR to derive it from. */}
             <Stamp
               size="small"
@@ -102,9 +102,9 @@ export const PlanActionsColumn = () => {
               {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
 
               {underReview && (
-                // Done normally derives from the PR merging (IDEA-56); this is the
-                // offline/no-GitHub fallback the idea calls out — it only sticks
-                // once the live PR lookup can't resolve a merge either way.
+                // Done normally derives from the PR merging; this is the
+                // offline/no-GitHub fallback — it only sticks once the live PR
+                // lookup can't resolve a merge either way.
                 <ListItem
                   size="small"
                   icon={<span style={{ color: color.accentGreenDark }}>✓</span>}

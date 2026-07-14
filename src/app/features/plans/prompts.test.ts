@@ -25,10 +25,10 @@ const plan: PlanEntry = {
   clarifications: [],
 };
 
-// Guards the FEAT-42 unified-entity migration: the agent prompts must point at
-// papercamp/ideas/<ID>.md (one file per entity), never the retired
-// papercamp/plans/ tree or the legacy monolithic files. A draft agent that
-// creates a new plan file is exactly the regression this suite exists to catch.
+// The agent prompts must point at papercamp/ideas/<ID>.md (one file per
+// entity), never the retired papercamp/plans/ tree or the legacy monolithic
+// files. A draft agent that creates a new plan file is exactly the regression
+// this suite exists to catch.
 describe('agent prompts target the unified entity corpus', () => {
   it('plan-draft prompt edits the idea file in place, adding Phases and type', () => {
     const prompt = buildPlanDraftPrompt(idea, []);
@@ -93,7 +93,7 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).toContain('progress.md');
   });
 
-  // IDEA-44 Tier 2's "Check overlap" action is read-only — it never edits a file, so its
+  // The "Check overlap" action is read-only — it never edits a file, so its
   // guardrails are the opposite of every other prompt above: no tools, no file access.
   it('overlap-check prompt is read-only and asks for a mechanically-parseable verdict', () => {
     const prompt = buildOverlapCheckPrompt('A new intention', [
@@ -110,8 +110,8 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).toContain('(no existing ideas yet)');
   });
 
-  // IDEA-57: the fix-review launch path runs on the plan's already-open PR
-  // branch and must push, unlike every prompt above.
+  // The fix-review launch path runs on the plan's already-open PR branch and
+  // must push, unlike every prompt above.
   it('fix-review prompt renders each unresolved thread with its location and pushes the fix', () => {
     const threads: ReviewThread[] = [
       {
