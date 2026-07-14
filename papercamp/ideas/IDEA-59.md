@@ -2,6 +2,7 @@
 id: IDEA-59
 title: Trim comments to the essential
 type: refactor
+status: review
 created: 2026-07-13
 tags:
   - app
@@ -29,5 +30,5 @@ Best run right after [[IDEA-58]], so the sweep reviews the already-simplified, d
       Same pass over the core corpus (parsers, readers, serializers, git/pr helpers) — strip narration and history, keep only the genuinely-explanatory comments, rename where a comment was compensating for a name.
 - [x] Sweep `src/app`
       Same pass over the UI (features, components, stores, hooks, services), dropping section-label and restating comments and keeping only load-bearing rationale (e.g. documented paper-ui gaps).
-- [ ] Verify the check suite stays green
+- [x] Verify the check suite stays green
       Confirm behaviour is unchanged: `tsc --noEmit`, `npx biome check .`, and `pnpm test` all clean, then set this idea's phases complete.
