@@ -174,11 +174,23 @@ Use `framer-motion` for:
 For *when* motion is warranted at all and how restrained it should be, see
 "Motion" in [`UX_PRINCIPLES.md`](UX_PRINCIPLES.md).
 
-## 7. Comments
+## 7. Comments earn their place
 
-Prefer self-describing names over comments. When paper-ui has a real gap, note
-it inline. When a workaround exists for an environment quirk (e.g., clipboard
-over non-secure origins), document the "why" in a short block comment.
+A comment must explain a *why* that isn't derivable from the code: an
+environment quirk (e.g., clipboard over non-secure origins), a non-obvious
+protocol shape, a security or correctness rationale, or a paper-ui gap (§1).
+If none of those apply, don't write it.
+
+These do not qualify, and should be a rename instead:
+
+- Restating what the next line already says.
+- Narrating history ("used to do X", "changed from Y") — git and
+  `papercamp/progress.md` hold that.
+- Labelling an obvious block ("// handlers", "// render") — a good name or a
+  short function does that job.
+
+If a comment is compensating for an unclear name, rename the thing instead of
+annotating it.
 
 UX/UI principles (layout stability, visual hierarchy, motion restraint, and so
 on) live in [`UX_PRINCIPLES.md`](UX_PRINCIPLES.md), not here — this file is
