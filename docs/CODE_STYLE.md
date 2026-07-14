@@ -127,7 +127,7 @@ Examples already in flight:
 
 Organize code like this:
 
-```
+```text
 src/app/
   components/        # Cross-cutting UI used by >1 feature (Markdown, PageTitle, StackPanel)
   features/          # One folder per route-level feature (see the feature template below)
@@ -154,7 +154,7 @@ Rules:
 A feature keeps only a few anchors at its top and sorts everything else into
 by-role folders, each with its own `index.ts` barrel:
 
-```
+```text
 features/plans/
   plans-page.tsx     # the route entry ({feature}-page.tsx)
   index.ts           # public barrel
@@ -204,7 +204,11 @@ Below that, flat is the more readable choice — `docs/` and `settings/` stay as
 - Services: `{domain}-api.ts`, async named exports.
 - Helpers: camelCase, pure where possible.
 - Event handlers: `handleXxx` (e.g., `handleSubmit`, `handleTogglePhase`).
-- Imports: use `@/` aliases; do not reach through `../../` more than one level.
+- Imports: use `@/` aliases everywhere, including `src/app/server`; do not reach
+  through `../../` more than one level. (The dev config loads the server via
+  Vite's `ssrLoadModule` so `@/` resolves there too — see `vite.app.config.ts`.
+  Don't reintroduce a static `import` of the server into that config; it would
+  bundle the server graph in raw Node where `@/` can't resolve.)
 
 ## 6. Motion
 

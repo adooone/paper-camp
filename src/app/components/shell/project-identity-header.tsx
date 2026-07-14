@@ -8,7 +8,7 @@ interface ProjectIdentityHeaderProps {
 
 export const ProjectIdentityHeader = ({ size = 'md' }: ProjectIdentityHeaderProps) => {
   const { projectName, iconDataUri, loading } = useProjectIdentity();
-  const iconSize = size === 'sm' ? 20 : 18;
+  const iconSize = size === 'sm' ? 18 : 20;
   const textSize = size === 'sm' ? fontSize.sm : fontSize.md;
 
   return (

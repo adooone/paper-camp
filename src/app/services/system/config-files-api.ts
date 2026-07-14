@@ -1,6 +1,7 @@
 export const fetchConfigs = async (): Promise<string[]> => {
   try {
     const response = await fetch('/api/configs');
+    if (!response.ok) return [];
     const data = (await response.json()) as { files: string[] };
     return data.files;
   } catch {

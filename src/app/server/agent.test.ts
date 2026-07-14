@@ -3,10 +3,10 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { parseEntityFile } from '@/core/parse';
+import { entityToPlan } from '@/core/readers';
+import type { PhaseItem, PlanEntry } from '@/types/index';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { parseEntityFile } from '../../core/parse';
-import { entityToPlan } from '../../core/readers';
-import type { PhaseItem, PlanEntry } from '../../types/index';
 import { buildAgentPrompt, createAgentManager } from './agent';
 
 // The manager is exercised with a fake adapter whose "agent" is a short `node -e`

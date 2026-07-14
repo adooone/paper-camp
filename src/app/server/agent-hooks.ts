@@ -1,9 +1,9 @@
 import { join } from 'node:path';
-import { COMMIT_SCOPES } from '../../core/git-pr';
-import { parseEntityFile } from '../../core/parse';
-import { computePlanContentHash } from '../../core/serialize';
-import { prependProgressItem as prependProgressLine, todayDateString } from '../../core/serialize';
-import type { PhaseItem, PlanEntry } from '../../types/index';
+import { COMMIT_SCOPES } from '@/core/git-pr';
+import { parseEntityFile } from '@/core/parse';
+import { computePlanContentHash } from '@/core/serialize';
+import { prependProgressItem as prependProgressLine, todayDateString } from '@/core/serialize';
+import type { PhaseItem, PlanEntry } from '@/types/index';
 import type { GitManager } from './git';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 

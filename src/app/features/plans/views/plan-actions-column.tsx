@@ -107,6 +107,7 @@ export const PlanActionsColumn = () => {
                 // lookup can't resolve a merge either way.
                 <ListItem
                   size="small"
+                  // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
                   icon={<span style={{ color: color.accentGreenDark }}>✓</span>}
                   onClick={() => patch({ status: 'done' })}
                   disabled={updating}

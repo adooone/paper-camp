@@ -10,6 +10,7 @@ export interface EnvFile {
 export const fetchEnv = async (): Promise<EnvFile> => {
   try {
     const response = await fetch('/api/env');
+    if (!response.ok) return { exists: false, exampleExists: false, entries: [], missingKeys: [] };
     return await response.json();
   } catch {
     return { exists: false, exampleExists: false, entries: [], missingKeys: [] };

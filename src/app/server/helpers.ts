@@ -1,8 +1,8 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readEntitiesWithDerivedStatus } from '../../core/readers';
-import { formatEntitiesIndex, formatEntityFile } from '../../core/serialize';
-import type { BranchHygieneStatus, EntityEntry } from '../../types/index';
+import { readEntitiesWithDerivedStatus } from '@/core/readers';
+import { formatEntitiesIndex, formatEntityFile } from '@/core/serialize';
+import type { BranchHygieneStatus, EntityEntry } from '@/types/index';
 
 export async function readMaybe(path: string): Promise<string> {
   try {

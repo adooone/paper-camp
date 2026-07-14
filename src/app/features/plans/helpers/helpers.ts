@@ -4,7 +4,7 @@ export const relativeDate = (dateStr: string): string => {
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) return dateStr;
   const days = Math.floor((Date.now() - date.getTime()) / 86400000);
-  if (days === 0) return 'today';
+  if (days <= 0) return 'today';
   if (days === 1) return 'yesterday';
   if (days < 7) return `${days}d ago`;
   if (days < 30) return `${Math.floor(days / 7)}w ago`;
@@ -18,10 +18,7 @@ export const phaseProgress = (plan: PlanEntry) => {
   return { done, total: plan.phases.length, pct: Math.round((done / plan.phases.length) * 100) };
 };
 
-export const phasePercentage = (plan: PlanEntry): number | null => {
-  if (plan.phases.length === 0) return null;
-  return Math.round((plan.phases.filter((p) => p.done).length / plan.phases.length) * 100);
-};
+export const phasePercentage = (plan: PlanEntry): number | null => phaseProgress(plan)?.pct ?? null;
 
 export const findFocusPlan = (
   plans: PlanEntry[] | undefined,
