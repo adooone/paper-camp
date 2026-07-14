@@ -66,15 +66,31 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
 
   useEffect(() => {
     const es = new EventSource('/api/activity/stream');
-    es.onmessage = () => {
-      refreshRef.current.loadProgress();
-      refreshRef.current.loadPlans();
-      refreshRef.current.loadStatus();
-      refreshRef.current.loadConsistency();
-      refreshRef.current.loadGitStatus();
-      refreshRef.current.loadAgentStatus();
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    es.onmessage = (event) => {
+      // Only react to actual change ticks — the initial "Watching for
+      // changes…" connect message needs no refetch, the mount effect above
+      // already loaded everything. Debounced client-side too: an agent
+      // writing several files in quick succession still produces one SSE
+      // tick per debounced server-side broadcast, but a burst of tabs/
+      // reconnects or back-to-back broadcasts would otherwise stampede all
+      // six loaders once per tick.
+      const payload = JSON.parse(event.data) as { message?: string };
+      if (payload.message !== 'changed') return;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        refreshRef.current.loadProgress();
+        refreshRef.current.loadPlans();
+        refreshRef.current.loadStatus();
+        refreshRef.current.loadConsistency();
+        refreshRef.current.loadGitStatus();
+        refreshRef.current.loadAgentStatus();
+      }, 250);
     };
-    return () => es.close();
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      es.close();
+    };
   }, []);
 
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(

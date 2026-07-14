@@ -28,7 +28,7 @@ Overlaps with [[IDEA-58]] (both touch `readers.ts` and the Stack panel) but is s
       Hang an in-process cache of the parsed `papercamp/ideas` tree off `activity.ts`'s debounced `fs.watch` signal — invalidate on change, serve parsed entries otherwise — so repeat `/api/plans` and `/api/ideas` reads are near-free.
 - [x] Parallelise the git status spawns
       Run the independent `getStatus`, `getAheadCount`, and `getBranchHygieneStatus` with `Promise.all` (or fold them into fewer `git` invocations) so `/api/git/status` stops paying for them in series.
-- [ ] Coalesce the SSE-driven refetch
+- [x] Coalesce the SSE-driven refetch
       Scope the `stack-panel.tsx` reload to what actually changed and/or debounce it client-side so one papercamp change no longer stampedes all six loaders at once.
 - [ ] (Stretch) Client render + bundle
       Confirm the zustand selectors stay narrow so a single-field update doesn't re-render the whole tree, and lazy-load the non-default routes (Docs/Settings) to shrink the initial dashboard payload.
