@@ -11,7 +11,7 @@ import type {
   PrInfo,
 } from '../types/index';
 import { parseEntityFile } from './parser';
-import { resolvePrsByEntity } from './pr';
+import { resolvePrsByEntity } from './pr-lookup';
 import { deriveStatus } from './status';
 
 // ---------------------------------------------------------------------------

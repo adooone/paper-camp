@@ -1,3 +1,4 @@
+import { LightbulbIcon, NoteIcon } from '@/app/components/icons';
 import { fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
@@ -51,41 +52,6 @@ const titleTextStyle: React.CSSProperties = {
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
 };
-
-const LightbulbIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    style={{ opacity: 0.55, flexShrink: 0 }}
-  >
-    <title>Idea</title>
-    <path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-3.5 10.9c.53.4.9 1.03.9 1.72V15h5.2v-.38c0-.69.37-1.32.9-1.72A6 6 0 0 0 12 2Z" />
-  </svg>
-);
-
-const NoteIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    style={{ opacity: 0.55, flexShrink: 0 }}
-  >
-    <title>Note</title>
-    <path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" />
-    <path d="M15 3v6h6" />
-  </svg>
-);
 
 /**
  * A table-shaped list mirroring plan-rows.tsx, but over FEAT-42's two-level
@@ -269,6 +235,8 @@ const IdeaGroupRowCard = ({
           }}
         >
           {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
+          {/* Raw <button>: a chromeless click target wrapping icon + title text,
+              not a paper-ui Button. */}
           <button type="button" onClick={() => onOpenIdea?.(idea.title)} style={titleButtonStyle}>
             <LightbulbIcon />
             <span style={titleTextStyle}>{idea.title}</span>
@@ -310,6 +278,8 @@ const IdeaGroupRowCard = ({
             onDeleteIdea={onDeleteIdea}
             showHeader={false}
           />
+          {/* Raw <button>: an inline text link, not LinkButton — this one needs a
+              muted opacity/font-size rather than LinkButton's fixed amber style. */}
           {shouldCollapseDone && (
             <button
               type="button"

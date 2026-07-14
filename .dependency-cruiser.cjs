@@ -7,10 +7,7 @@ module.exports = {
   forbidden: [
     {
       name: 'no-circular',
-      // Warning, not error: one known cycle exists today (docs-api ↔ app-store,
-      // already broken at runtime via a dynamic import). Kept visible so no NEW
-      // cycles creep in; promote to 'error' once that one is refactored out.
-      severity: 'warn',
+      severity: 'error',
       comment: 'Circular dependencies make modules hard to test and reason about.',
       from: {},
       to: { circular: true },

@@ -1,3 +1,4 @@
+import { hostname } from 'node:os';
 import { afterEach, describe, expect, it } from 'vitest';
 import { isForbiddenRequest, isTrustedHost } from './api';
 
@@ -34,6 +35,11 @@ describe('isTrustedHost', () => {
     ]) {
       expect(isTrustedHost(host), host).toBe(false);
     }
+  });
+
+  it("trusts this machine's own hostname (e.g. opening http://deimos:3333)", () => {
+    const self = hostname().toLowerCase().split('.')[0];
+    expect(isTrustedHost(self)).toBe(true);
   });
 
   it('honours the PAPERCAMP_ALLOWED_HOSTS escape hatch', () => {

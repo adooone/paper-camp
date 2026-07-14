@@ -1,12 +1,13 @@
 import { DraftPlanButton } from '@/app/features/plans/components/draft-plan-button';
+import { PlanIdStamp } from '@/app/features/plans/components/plan-id-stamp';
+import { usePlanStatusPatch } from '@/app/features/plans/use-plan-status-patch';
 import { useSimilarIdeas } from '@/app/hooks';
 import { checkIdeaOverlap } from '@/app/services/ideas-api';
-import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
 import { PLAN_KINDS } from '@/types/index';
-import { Button, Card, Input, Modal, Select, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
+import { Button, Card, Input, Modal, Select, Textarea, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 
@@ -29,7 +30,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
   const [overlapVerdict, setOverlapVerdict] = useState<OverlapVerdict | null>(null);
   const [overlapError, setOverlapError] = useState<string | null>(null);
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
-  const loadPlans = useAppStore((s) => s.loadPlans);
+  const { patch } = usePlanStatusPatch();
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
@@ -108,19 +109,21 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
     }
   };
 
-  const handleExtendSimilar = async (candidateId: string, existingLog: LogEntry[] | undefined) => {
+  const handleExtendSimilar = async (
+    candidateId: string,
+    candidateTitle: string,
+    existingLog: LogEntry[] | undefined,
+  ) => {
     setExtendingId(candidateId);
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const newLog: LogEntry = { date: today, text: title.trim() };
-      await updatePlan(candidateId, { log: [...(existingLog ?? []), newLog] });
-      await loadPlans();
-      onClose();
-    } catch (err) {
-      toast({ title: 'Extend failed', description: (err as Error).message, variant: 'error' });
-    } finally {
-      setExtendingId(null);
-    }
+    const today = new Date().toISOString().slice(0, 10);
+    const newLog: LogEntry = { date: today, text: title.trim() };
+    const ok = await patch(
+      candidateTitle,
+      { log: [...(existingLog ?? []), newLog] },
+      { errorTitle: 'Extend failed' },
+    );
+    setExtendingId(null);
+    if (ok) onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -178,11 +181,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
                     <div
                       style={{ display: 'flex', alignItems: 'center', gap: space[2], minWidth: 0 }}
                     >
-                      {candidate.id && (
-                        <Stamp size="small" fillColor="rgba(0,0,0,0.08)">
-                          {candidate.id}
-                        </Stamp>
-                      )}
+                      <PlanIdStamp id={candidate.id} />
                       <span
                         style={{
                           overflow: 'hidden',
@@ -208,7 +207,8 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
                         size="small"
                         disabled={!candidate.id || !title.trim() || extendingId !== null}
                         onClick={() =>
-                          candidate.id && handleExtendSimilar(candidate.id, candidate.log)
+                          candidate.id &&
+                          handleExtendSimilar(candidate.id, candidate.title, candidate.log)
                         }
                       >
                         {extendingId === candidate.id ? 'Extending…' : 'Extend it instead'}

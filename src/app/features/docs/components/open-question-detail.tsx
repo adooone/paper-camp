@@ -1,16 +1,21 @@
 import { LinkButton, Markdown } from '@/app/components';
+import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { resolveOpenQuestion } from '@/app/services/docs-api';
 import { useAppStore } from '@/app/stores';
 import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
-import { Button, Input, Modal, Stamp, Textarea } from '@dendelion/paper-ui';
+import { Button, Input, Modal, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { QUESTION_STATUS_STAMP } from '../../plans/constants';
 
 export const OpenQuestionDetail = () => {
   const openQuestions = useAppStore((s) => s.openQuestions);
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
+  const loadDecisions = useAppStore((s) => s.loadDecisions);
+  const loadOpenQuestions = useAppStore((s) => s.loadOpenQuestions);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [decision, setDecision] = useState('');
@@ -45,24 +50,20 @@ export const OpenQuestionDetail = () => {
     try {
       await resolveOpenQuestion(question.title, decision.trim(), rationale.trim() || undefined);
       setModalOpen(false);
-    } catch {
+      await Promise.all([loadDecisions(), loadOpenQuestions()]);
+    } catch (err) {
       setLoading(false);
+      toast({
+        title: 'Resolve failed',
+        description: (err as Error).message,
+        variant: 'error',
+      });
     }
   };
 
   return (
     <div>
-      <h2
-        style={{
-          fontFamily: fontFamily.serif,
-          fontWeight: 600,
-          fontSize: '1.75rem',
-          margin: `0 0 ${space[3]}`,
-          lineHeight: lineHeight.tight,
-        }}
-      >
-        {question.title}
-      </h2>
+      <h2 style={{ ...detailHeadingStyle, margin: `0 0 ${space[3]}` }}>{question.title}</h2>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: space[2], marginBottom: space[5] }}>
         <span className="text-sm" style={{ opacity: 0.5 }}>
@@ -70,10 +71,8 @@ export const OpenQuestionDetail = () => {
         </span>
         <Stamp
           size="small"
-          fillColor={
-            question.status === 'open' ? 'rgba(212, 163, 115, 0.25)' : 'rgba(143, 185, 150, 0.25)'
-          }
-          textColor={question.status === 'open' ? color.accentAmberDark : color.accentGreenDark}
+          fillColor={QUESTION_STATUS_STAMP[question.status].fill}
+          textColor={QUESTION_STATUS_STAMP[question.status].text}
         >
           {question.status}
         </Stamp>
@@ -95,7 +94,7 @@ export const OpenQuestionDetail = () => {
           fontFamily: fontFamily.body,
           fontSize: fontSize.base,
           lineHeight: lineHeight.relaxed,
-          color: '#1C1B18',
+          color: color.textProse,
         }}
       >
         <Markdown>{question.body}</Markdown>

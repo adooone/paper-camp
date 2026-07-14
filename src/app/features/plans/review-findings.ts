@@ -1,7 +1,7 @@
 import type { PhaseItem } from '@/types/index';
 
 /** Loose shape: field names vary across /code-review's JSON output and similar tools. */
-export interface ReviewFinding {
+interface ReviewFinding {
   description?: string;
   title?: string;
   summary?: string;
@@ -21,7 +21,7 @@ const formatLocation = (finding: ReviewFinding): string | undefined => {
   return `${finding.file}:${start}${end}`;
 };
 
-export const findingToPhase = (finding: ReviewFinding, index: number): PhaseItem => {
+const findingToPhase = (finding: ReviewFinding, index: number): PhaseItem => {
   const text = finding.description ?? finding.title ?? finding.summary;
   if (!text?.trim()) {
     throw new Error(`Finding ${index + 1} has no description/title/summary`);

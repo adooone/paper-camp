@@ -1,13 +1,14 @@
 import { useSimilarIdeas } from '@/app/hooks';
 import { checkIdeaOverlap } from '@/app/services/ideas-api';
-import { updatePlan } from '@/app/services/plans-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
-import { Button, Card, Input, Modal, Stamp, Switch, Textarea, useToast } from '@dendelion/paper-ui';
+import { Button, Card, Input, Modal, Switch, Textarea } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { usePlanStatusPatch } from '../use-plan-status-patch';
 import { DraftPlanButton } from './draft-plan-button';
+import { PlanIdStamp } from './plan-id-stamp';
 
 interface CreateIdeaModalProps {
   open: boolean;
@@ -26,12 +27,11 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
   const [overlapVerdict, setOverlapVerdict] = useState<OverlapVerdict | null>(null);
   const [overlapError, setOverlapError] = useState<string | null>(null);
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
-  const loadPlans = useAppStore((s) => s.loadPlans);
+  const { patch } = usePlanStatusPatch();
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy =
     agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const navigate = useNavigate();
-  const { toast } = useToast();
   // Include `log` alongside the base candidate shape — Extend/Draft need it,
   // beyond what the "Open it"-only shape from the previous phase carried.
   const similarIdeas = useSimilarIdeas(
@@ -89,19 +89,21 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
     if (match) handleOpenSimilar(match.title);
   };
 
-  const handleExtendSimilar = async (candidateId: string, existingLog: LogEntry[] | undefined) => {
+  const handleExtendSimilar = async (
+    candidateId: string,
+    candidateTitle: string,
+    existingLog: LogEntry[] | undefined,
+  ) => {
     setExtendingId(candidateId);
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const newLog: LogEntry = { date: today, text: title.trim() };
-      await updatePlan(candidateId, { log: [...(existingLog ?? []), newLog] });
-      await loadPlans();
-      onClose();
-    } catch (err) {
-      toast({ title: 'Extend failed', description: (err as Error).message, variant: 'error' });
-    } finally {
-      setExtendingId(null);
-    }
+    const today = new Date().toISOString().slice(0, 10);
+    const newLog: LogEntry = { date: today, text: title.trim() };
+    const ok = await patch(
+      candidateTitle,
+      { log: [...(existingLog ?? []), newLog] },
+      { errorTitle: 'Extend failed' },
+    );
+    setExtendingId(null);
+    if (ok) onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -159,11 +161,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
                     <div
                       style={{ display: 'flex', alignItems: 'center', gap: space[2], minWidth: 0 }}
                     >
-                      {candidate.id && (
-                        <Stamp size="small" fillColor="rgba(0,0,0,0.08)">
-                          {candidate.id}
-                        </Stamp>
-                      )}
+                      <PlanIdStamp id={candidate.id} />
                       <span
                         style={{
                           overflow: 'hidden',
@@ -189,7 +187,8 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
                         size="small"
                         disabled={!candidate.id || !title.trim() || extendingId !== null}
                         onClick={() =>
-                          candidate.id && handleExtendSimilar(candidate.id, candidate.log)
+                          candidate.id &&
+                          handleExtendSimilar(candidate.id, candidate.title, candidate.log)
                         }
                       >
                         {extendingId === candidate.id ? 'Extending…' : 'Extend it instead'}

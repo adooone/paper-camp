@@ -1,7 +1,6 @@
-import { IntentButton } from '@/app/components';
 import { space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
-import { Card } from '@dendelion/paper-ui';
+import { Button, Card } from '@dendelion/paper-ui';
 import { usePlanStatusPatch } from '../use-plan-status-patch';
 import { PlanIdStamp } from './plan-id-stamp';
 
@@ -41,6 +40,8 @@ export const ReviewQueue = ({ plans, onOpenPlan }: ReviewQueueProps) => {
                 justifyContent: 'space-between',
               }}
             >
+              {/* Raw <button>: makes the whole row clickable with no button chrome
+                  of its own — a paper-ui Button would draw its own background. */}
               <button
                 type="button"
                 onClick={() => onOpenPlan(plan.title)}
@@ -72,22 +73,22 @@ export const ReviewQueue = ({ plans, onOpenPlan }: ReviewQueueProps) => {
                 </span>
               </button>
               <div style={{ display: 'flex', gap: space[2], flexShrink: 0 }}>
-                <IntentButton
-                  intent="stop"
+                <Button
+                  variant="danger"
                   size="small"
                   onClick={() => patch(plan.title, { status: 'in-progress' })}
                   disabled={updating}
                 >
                   Needs changes
-                </IntentButton>
-                <IntentButton
-                  intent="go"
+                </Button>
+                <Button
+                  variant="primary"
                   size="small"
                   onClick={() => patch(plan.title, { status: 'done' })}
                   disabled={updating}
                 >
                   Approve
-                </IntentButton>
+                </Button>
               </div>
             </div>
           </Card>

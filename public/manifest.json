@@ -1,0 +1,13 @@
+{
+  "name": "Paper Camp",
+  "short_name": "Paper Camp",
+  "description": "Local-first, AI-native project management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDFCF8",
+  "theme_color": "#FDFCF8",
+  "icons": [
+    { "src": "/img/paper-logo.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/img/paper-logo.png", "type": "image/png", "sizes": "300x300" }
+  ]
+}

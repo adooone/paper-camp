@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { hostname } from 'node:os';
 import { createActivityManager } from './activity';
 import { type AgentManager, createAgentManager } from './agent';
 import { createAgentHooks } from './agent-hooks';
@@ -13,6 +14,20 @@ export interface ApiMiddleware {
 }
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+// This machine's own hostname (`deimos`) and its short form — trusted because an
+// attacker rebinding DNS controls their *own* public domain, never the victim's
+// real hostname, so accepting it can't widen the rebinding surface.
+const SELF_HOSTNAMES = new Set(
+  (() => {
+    try {
+      const h = hostname().toLowerCase();
+      return [h, h.split('.')[0]];
+    } catch {
+      return [];
+    }
+  })(),
+);
 
 /** The hostname out of a `Host`/`Origin`-style value, minus any port. */
 function hostOf(value: string | undefined): string {
@@ -32,6 +47,7 @@ function hostOf(value: string | undefined): string {
 export function isTrustedHost(host: string): boolean {
   if (!host) return false;
   if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+  if (SELF_HOSTNAMES.has(host)) return true; // this machine's own hostname
   if (host.endsWith('.ts.net') || host.endsWith('.local')) return true; // Tailscale / mDNS
   const extra = process.env.PAPERCAMP_ALLOWED_HOSTS;
   if (

@@ -7,12 +7,12 @@ import { AGENT_IDS, PLAN_KINDS, PLAN_STATUSES } from '../types/index';
  * already returns, so MCP clients see the same data.
  */
 
-export const logEntrySchema = z.object({
+const logEntrySchema = z.object({
   date: z.string(),
   text: z.string(),
 });
 
-export const phaseItemSchema = z.object({
+const phaseItemSchema = z.object({
   done: z.boolean(),
   text: z.string(),
   description: z.string().optional(),

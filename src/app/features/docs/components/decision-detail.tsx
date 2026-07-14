@@ -1,8 +1,10 @@
 import { LinkButton, Markdown } from '@/app/components';
+import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import { Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { DECISION_STATUS_STAMP } from '../../plans/constants';
 
 export const DecisionDetail = () => {
   const decisions = useAppStore((s) => s.decisions);
@@ -18,17 +20,7 @@ export const DecisionDetail = () => {
 
   return (
     <div>
-      <h2
-        style={{
-          fontFamily: fontFamily.serif,
-          fontWeight: 600,
-          fontSize: '1.75rem',
-          margin: `0 0 ${space[3]}`,
-          lineHeight: lineHeight.tight,
-        }}
-      >
-        {decision.title}
-      </h2>
+      <h2 style={{ ...detailHeadingStyle, margin: `0 0 ${space[3]}` }}>{decision.title}</h2>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: space[2], marginBottom: space[5] }}>
         <span className="text-sm" style={{ opacity: 0.5 }}>
@@ -36,12 +28,8 @@ export const DecisionDetail = () => {
         </span>
         <Stamp
           size="small"
-          fillColor={
-            decision.status === 'decided'
-              ? 'rgba(143, 185, 150, 0.25)'
-              : 'rgba(201, 139, 139, 0.25)'
-          }
-          textColor={decision.status === 'decided' ? color.accentGreenDark : '#6E3A3A'}
+          fillColor={DECISION_STATUS_STAMP[decision.status].fill}
+          textColor={DECISION_STATUS_STAMP[decision.status].text}
         >
           {decision.status}
         </Stamp>
@@ -78,7 +66,7 @@ export const DecisionDetail = () => {
           fontFamily: fontFamily.body,
           fontSize: fontSize.base,
           lineHeight: lineHeight.relaxed,
-          color: '#1C1B18',
+          color: color.textProse,
         }}
       >
         <Markdown>{decision.body}</Markdown>

@@ -43,7 +43,7 @@ export const AddReviewPhasesButton = ({ onAdd, disabled }: AddReviewPhasesButton
     <>
       <Tooltip content="Add /code-review findings as phases">
         <IconButton
-          className="accent-button-green"
+          variant="ghost"
           size="small"
           onClick={() => setOpen(true)}
           disabled={disabled}

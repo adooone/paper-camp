@@ -10,7 +10,7 @@ import { statusRoutes } from './status';
 import type { Route, RouteContext } from './types';
 
 export { readRoutes } from './reads';
-export type { ReadRoute, Route, RouteContext } from './types';
+export type { Route, RouteContext } from './types';
 
 export function buildRoutes(ctx: RouteContext): Route[] {
   return [

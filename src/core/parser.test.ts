@@ -3,6 +3,7 @@ import type { DecisionEntry, OpenQuestionEntry, PlanEntry } from '../types/index
 import {
   findConsistencyIssues,
   parseDecisions,
+  parseEntityFile,
   parseIdeas,
   parseOpenQuestions,
   parsePlans,
@@ -423,6 +424,41 @@ Some body.
     expect(ideas).toHaveLength(1);
     expect(ideas[0].id).toBeNull();
     expect(ideas[0].title).toBe('A stray thought without markdown.');
+  });
+});
+
+describe('parseEntityFile', () => {
+  const entity = (phasesHeading: string) => `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+${phasesHeading}
+- [x] first
+- [ ] second
+`;
+
+  it('extracts phases under the canonical ### heading', () => {
+    const { entries, warnings } = parseEntityFile(entity('### Phases'));
+    expect(warnings).toEqual([]);
+    expect(entries[0].phases).toEqual([
+      { done: true, text: 'first' },
+      { done: false, text: 'second' },
+    ]);
+  });
+
+  it('still extracts phases when a linter demoted ### Phases to ## Phases', () => {
+    // Regression: a generic markdown-heading "fix" (### → ##) must not silently
+    // make the whole Phases section vanish. The serializer re-canonicalizes to ###.
+    const { entries } = parseEntityFile(entity('## Phases'));
+    expect(entries[0].phases).toEqual([
+      { done: true, text: 'first' },
+      { done: false, text: 'second' },
+    ]);
   });
 });
 

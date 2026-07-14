@@ -102,6 +102,8 @@ export const PlanFilterColumn = () => {
               {STATUS_CHIP_ORDER.map((status) => {
                 const isActive = activeStatuses.has(status);
                 return (
+                  // Raw <button>: a full-width toggle row (dot + label + count), not
+                  // a paper-ui Button, which draws its own filled/washed chrome.
                   <button
                     key={status}
                     type="button"
@@ -151,6 +153,8 @@ export const PlanFilterColumn = () => {
               {visibleTags.map((tag) => {
                 const isActive = activeTags.has(tag);
                 return (
+                  // Raw <button>: a toggleable tag chip with its own border/background
+                  // treatment, not a paper-ui Button.
                   <button
                     key={tag}
                     type="button"
@@ -170,6 +174,8 @@ export const PlanFilterColumn = () => {
                   </button>
                 );
               })}
+              {/* Raw <button>: an inline text link, not LinkButton — this one needs its
+                  own muted opacity/font-size rather than LinkButton's fixed amber style. */}
               {hiddenCount > 0 && (
                 <button type="button" onClick={() => setTagsExpanded(true)} style={linkStyle}>
                   +{hiddenCount} more
