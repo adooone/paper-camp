@@ -24,7 +24,7 @@ Complements [[IDEA-58]] (which de-dupes and splits oversized files) — grouping
       Split the 32-file folder into domain subfolders (e.g. `phases/`, `commit/`, `review/`, `agent/`, `idea/`), leaving only the barrel/entry/styles and feature-wide files at the top. Give each subfolder an `index.ts` that re-exports through the parent barrel so `@/features/plans` import paths stay stable.
 - [x] Group `core` into domain subfolders
       Split the 22-file `core` into domain subfolders (e.g. `parse/`, `serialize/`, `git-pr/`, `status/`) with per-subfolder barrels re-exported through the `core` barrel, keeping `@/core` consumers unchanged.
-- [ ] Group the remaining wide folders
+- [x] Group the remaining wide folders
       Apply the same anchors-plus-subfolders pass to `server/routes`, `services`, and `components` (each in the 10–13 range), grouping by domain and preserving import paths via barrels. Leave folders already under the ceiling alone.
 - [ ] Verify the check suite stays green
       Run `tsc --noEmit`, `biome`, tests, and the consistency check to confirm the reorg is behaviour-neutral and no import path drifted — the acceptance gate. Confirm the "no `../../` deeper than one level" rule (§5) still holds after the moves.

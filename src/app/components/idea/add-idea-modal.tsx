@@ -2,7 +2,7 @@ import { DraftPlanButton } from '@/app/features/plans/components/agent';
 import { PlanIdStamp } from '@/app/features/plans/components/plan-id-stamp';
 import { usePlanStatusPatch } from '@/app/features/plans/use-plan-status-patch';
 import { useSimilarIdeas } from '@/app/hooks';
-import { checkIdeaOverlap } from '@/app/services/ideas-api';
+import { checkIdeaOverlap } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';

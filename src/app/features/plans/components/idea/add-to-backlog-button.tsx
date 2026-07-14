@@ -1,5 +1,5 @@
-import { AddIdeaModal } from '@/app/components/add-idea-modal';
-import { createPlan } from '@/app/services/plans-api';
+import { AddIdeaModal } from '@/app/components/idea/add-idea-modal';
+import { createPlan } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { IconButton, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';

@@ -1,11 +1,11 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { assignEntityId, formatEntityFile, todayDateString } from '../../../core/serialize';
-import type { SimilarityCandidate } from '../../features/plans/idea-similarity';
-import { campFile, regenerateIndexes } from '../helpers';
-import { readBody, sendJson } from '../http';
-import { checkIdeaOverlap } from '../overlap-check';
-import type { Route, RouteContext } from './types';
+import { assignEntityId, formatEntityFile, todayDateString } from '../../../../core/serialize';
+import type { SimilarityCandidate } from '../../../features/plans/idea-similarity';
+import { campFile, regenerateIndexes } from '../../helpers';
+import { readBody, sendJson } from '../../http';
+import { checkIdeaOverlap } from '../../overlap-check';
+import type { Route, RouteContext } from '../types';
 
 export function ideaRoutes({ root, agent }: RouteContext): Route[] {
   return [

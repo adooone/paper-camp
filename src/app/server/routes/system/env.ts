@@ -1,10 +1,10 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { applyEnvEntries, parseEnv } from '../../../core/env';
-import type { EnvEntry } from '../../../types/index';
-import { fileExists, readMaybe } from '../helpers';
-import { readBody, sendJson } from '../http';
-import type { Route, RouteContext } from './types';
+import { applyEnvEntries, parseEnv } from '../../../../core/env';
+import type { EnvEntry } from '../../../../types/index';
+import { fileExists, readMaybe } from '../../helpers';
+import { readBody, sendJson } from '../../http';
+import type { Route, RouteContext } from '../types';
 
 export function envRoutes({ root }: RouteContext): Route[] {
   return [

@@ -1,7 +1,7 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readBody, sendJson } from '../http';
-import type { Route, RouteContext } from './types';
+import { readBody, sendJson } from '../../http';
+import type { Route, RouteContext } from '../types';
 
 const MIME_BY_EXT: Record<string, string> = {
   svg: 'image/svg+xml',

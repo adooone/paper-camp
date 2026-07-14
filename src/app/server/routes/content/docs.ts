@@ -1,14 +1,14 @@
 import { writeFile } from 'node:fs/promises';
-import { parseOpenQuestions } from '../../../core/parse';
+import { parseOpenQuestions } from '../../../../core/parse';
 import {
   appendBlock,
   formatDecisionEntry,
   formatOpenQuestions,
   todayDateString,
-} from '../../../core/serialize';
-import { campFile, readMaybe } from '../helpers';
-import { readBody, requestUrl, sendJson } from '../http';
-import type { Route, RouteContext } from './types';
+} from '../../../../core/serialize';
+import { campFile, readMaybe } from '../../helpers';
+import { readBody, requestUrl, sendJson } from '../../http';
+import type { Route, RouteContext } from '../types';
 
 export function docsRoutes({ root }: RouteContext): Route[] {
   return [

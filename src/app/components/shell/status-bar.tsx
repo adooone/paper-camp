@@ -3,7 +3,7 @@ import { color, fontSize, space } from '@/app/styles/tokens';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import type { CheckStatus } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles, useToast } from '@dendelion/paper-ui';
-import { CommitIcon, RunIcon, WandIcon } from './icons';
+import { CommitIcon, RunIcon, WandIcon } from '../icons';
 
 const CHECK_VARIANT: Record<CheckStatus, 'success' | 'error' | 'warning' | 'neutral'> = {
   pass: 'success',

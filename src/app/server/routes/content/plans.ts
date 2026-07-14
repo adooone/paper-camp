@@ -1,12 +1,12 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readEntities } from '../../../core/readers';
+import { readEntities } from '../../../../core/readers';
 import {
   archiveEntityFile,
   assignEntityId,
   formatEntityFile,
   todayDateString,
-} from '../../../core/serialize';
+} from '../../../../core/serialize';
 import {
   AGENT_IDS,
   type AgentId,
@@ -15,7 +15,7 @@ import {
   PLAN_KINDS,
   type PhaseItem,
   type PlanStatus,
-} from '../../../types/index';
+} from '../../../../types/index';
 import {
   campFile,
   checkBranchConflictForPlan,
@@ -24,9 +24,9 @@ import {
   readMaybe,
   regenerateIndexes,
   writeEntityFile,
-} from '../helpers';
-import { readBody, requestUrl, sendJson } from '../http';
-import type { Route, RouteContext } from './types';
+} from '../../helpers';
+import { readBody, requestUrl, sendJson } from '../../http';
+import type { Route, RouteContext } from '../types';
 
 /** Work entities only (never notes), matched by title or id. */
 function findWorkEntity(entries: EntityEntry[], key: string): EntityEntry | undefined {

@@ -1,4 +1,4 @@
-import { updatePlan } from '@/app/services/plans-api';
+import { updatePlan } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';

@@ -1,5 +1,4 @@
-import { fetchIconDataUri } from '@/app/services/icon-api';
-import { fetchPackageName } from '@/app/services/package-api';
+import { fetchIconDataUri, fetchPackageName } from '@/app/services/system';
 import { useEffect, useState } from 'react';
 
 const kebabToTitle = (s: string) =>

@@ -6,10 +6,10 @@ import {
   type DefaultAgentsMap,
   type PaperCampConfig,
   coerceAgentConfig,
-} from '../../../types/index';
-import { readMaybe } from '../helpers';
-import { readBody, requestUrl, sendJson } from '../http';
-import type { Route, RouteContext } from './types';
+} from '../../../../types/index';
+import { readMaybe } from '../../helpers';
+import { readBody, requestUrl, sendJson } from '../../http';
+import type { Route, RouteContext } from '../types';
 
 /** Repo config files the dashboard may list and read — nothing outside this set. */
 const CONFIG_ALLOWLIST = [

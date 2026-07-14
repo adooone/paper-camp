@@ -1,4 +1,4 @@
-import { createIdea } from '@/app/services/ideas-api';
+import { createIdea } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { IconButton, LightbulbIcon } from '@dendelion/paper-ui';
 import { useState } from 'react';

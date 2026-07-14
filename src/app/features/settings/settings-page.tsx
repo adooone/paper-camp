@@ -1,9 +1,13 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useProjectIdentity } from '@/app/hooks';
-import { fetchConfig, saveConfig } from '@/app/services/config-api';
-import { fetchConfigFile } from '@/app/services/config-files-api';
-import { fetchEnv, saveEnv } from '@/app/services/env-api';
-import { uploadIcon } from '@/app/services/icon-api';
+import {
+  fetchConfig,
+  fetchConfigFile,
+  fetchEnv,
+  saveConfig,
+  saveEnv,
+  uploadIcon,
+} from '@/app/services/system';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import {

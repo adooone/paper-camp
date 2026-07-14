@@ -1,6 +1,6 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useActiveIdeaTitle, useActivePlanTitle } from '@/app/hooks';
-import { deletePlan } from '@/app/services/plans-api';
+import { deletePlan } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import { Breadcrumb, Card } from '@dendelion/paper-ui';
