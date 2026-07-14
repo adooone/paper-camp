@@ -1,10 +1,9 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, space } from '@/app/styles/tokens';
 import { IconButton, Select } from '@dendelion/paper-ui';
-import type { PlanSortKey } from '../plan-list-selector';
-import { ActualiseAllButton } from './actualise-all-button';
-import { AddToBacklogButton } from './add-to-backlog-button';
-import { NewIdeaButton } from './new-idea-button';
+import type { PlanSortKey } from '../../plan-list-selector';
+import { ActualiseAllButton } from '../commit';
+import { AddToBacklogButton, NewIdeaButton } from '../idea';
 
 const SORT_OPTIONS: { value: PlanSortKey; label: string }[] = [
   { value: 'status', label: 'Status' },

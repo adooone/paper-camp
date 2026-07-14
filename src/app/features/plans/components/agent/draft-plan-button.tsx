@@ -3,7 +3,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { Button, Tooltip, useToast } from '@dendelion/paper-ui';
-import { buildPlanDraftPrompt } from '../prompts';
+import { buildPlanDraftPrompt } from '../../prompts';
 
 interface DraftPlanButtonProps {
   idea: IdeaEntry;

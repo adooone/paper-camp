@@ -3,7 +3,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import type { IdeaEntry } from '@/types/index';
 import { Button, Tooltip, useToast } from '@dendelion/paper-ui';
-import { buildIdeaExtendPrompt } from '../prompts';
+import { buildIdeaExtendPrompt } from '../../prompts';
 
 interface ExtendIdeaButtonProps {
   idea: IdeaEntry;

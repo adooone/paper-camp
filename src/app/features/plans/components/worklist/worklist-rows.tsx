@@ -3,11 +3,10 @@ import { fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../constants';
-import type { IdeaGroupRow, NoteRow, WorklistRow } from '../plan-list-selector';
-import { DraftPlanButton } from './draft-plan-button';
-import { ExtendIdeaButton } from './extend-idea-button';
-import { PlanIdStamp } from './plan-id-stamp';
+import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../../constants';
+import type { IdeaGroupRow, NoteRow, WorklistRow } from '../../plan-list-selector';
+import { DraftPlanButton, ExtendIdeaButton } from '../agent';
+import { PlanIdStamp } from '../plan-id-stamp';
 import { PlanRows } from './plan-rows';
 
 /** Past this many children, done ones collapse behind a "+N done" toggle (per FEAT-42). */

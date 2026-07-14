@@ -1,7 +1,7 @@
 import { space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { useEffect, useRef } from 'react';
-import type { WorklistRow } from '../plan-list-selector';
+import type { WorklistRow } from '../../plan-list-selector';
 import { WorklistRows } from './worklist-rows';
 
 interface ListViewProps {

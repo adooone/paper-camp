@@ -2,7 +2,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { Button, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { buildReconcilePrompt } from '../prompts';
+import { buildReconcilePrompt } from '../../prompts';
 
 interface ReconcileButtonProps {
   plan: PlanEntry;

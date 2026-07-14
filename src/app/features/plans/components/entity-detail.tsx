@@ -19,18 +19,18 @@ import { useState } from 'react';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import { phaseProgress, relativeDate } from '../helpers';
 import { usePlanStatusPatch } from '../use-plan-status-patch';
-import { AddReviewPhasesButton } from './add-review-phases-button';
-import { AgentStartButton } from './agent-start-button';
-import { AuditPhasesButton } from './audit-phases-button';
+import { DraftPlanButton, ExtendIdeaButton } from './agent';
 import { CollapsibleText } from './collapsible-text';
-import { DraftPlanButton } from './draft-plan-button';
-import { ExtendIdeaButton } from './extend-idea-button';
-import { PhaseCopyButton } from './phase-copy-button';
+import { ReconcileButton } from './commit';
+import {
+  AddReviewPhasesButton,
+  AgentStartButton,
+  AuditPhasesButton,
+  PhaseCopyButton,
+} from './phases';
 import { PlanIdStamp } from './plan-id-stamp';
-import { PrBadge } from './pr-badge';
 import { ProgressBar } from './progress-bar';
-import { ReconcileButton } from './reconcile-button';
-import { ReviewSignalBadge } from './review-signal-badge';
+import { PrBadge, ReviewSignalBadge } from './review';
 
 interface EntityDetailProps {
   plan: PlanEntry;

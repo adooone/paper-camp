@@ -5,8 +5,8 @@ import { AGENT_IDS, AGENT_LABELS, type AgentId } from '@/types/index';
 import { Card, ListItem, Select, Stamp } from '@dendelion/paper-ui';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { usePlanStatusPatch } from '../use-plan-status-patch';
-import { FixReviewButton } from './fix-review-button';
-import { RunAllPhasesButton } from './run-all-phases-button';
+import { RunAllPhasesButton } from './phases';
+import { FixReviewButton } from './review';
 
 const sectionLabelStyle: React.CSSProperties = {
   fontSize: fontSize['2xs'],

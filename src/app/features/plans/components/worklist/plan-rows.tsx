@@ -1,10 +1,10 @@
 import { fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Card, IconButton, Stamp } from '@dendelion/paper-ui';
-import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { phaseProgress, relativeDate } from '../helpers';
-import { PlanIdStamp } from './plan-id-stamp';
-import { ProgressBar } from './progress-bar';
+import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../../constants';
+import { phaseProgress, relativeDate } from '../../helpers';
+import { PlanIdStamp } from '../plan-id-stamp';
+import { ProgressBar } from '../progress-bar';
 
 interface PlanRowsProps {
   plans: PlanEntry[];

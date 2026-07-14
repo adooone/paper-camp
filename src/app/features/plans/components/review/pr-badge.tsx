@@ -2,7 +2,7 @@ import { GithubIcon } from '@/app/components/icons';
 import { space } from '@/app/styles/tokens';
 import type { PrInfo } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
-import { PR_STATE_LABEL, PR_STATE_STAMP } from '../constants';
+import { PR_STATE_LABEL, PR_STATE_STAMP } from '../../constants';
 
 interface PrBadgeProps {
   pr: PrInfo;

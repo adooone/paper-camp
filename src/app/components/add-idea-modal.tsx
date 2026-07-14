@@ -1,4 +1,4 @@
-import { DraftPlanButton } from '@/app/features/plans/components/draft-plan-button';
+import { DraftPlanButton } from '@/app/features/plans/components/agent';
 import { PlanIdStamp } from '@/app/features/plans/components/plan-id-stamp';
 import { usePlanStatusPatch } from '@/app/features/plans/use-plan-status-patch';
 import { useSimilarIdeas } from '@/app/hooks';

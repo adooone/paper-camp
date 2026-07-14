@@ -1,7 +1,7 @@
 import { space } from '@/app/styles/tokens';
 import type { PrInfo } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
-import { REVIEW_DECISION_LABEL, REVIEW_DECISION_STAMP, STATUS_STAMP } from '../constants';
+import { REVIEW_DECISION_LABEL, REVIEW_DECISION_STAMP, STATUS_STAMP } from '../../constants';
 
 interface ReviewSignalBadgeProps {
   pr: PrInfo;

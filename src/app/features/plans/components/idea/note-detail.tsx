@@ -3,9 +3,9 @@ import { Markdown } from '@/app/components/markdown';
 import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import type { IdeaEntry } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
-import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../constants';
-import { ExtendIdeaButton } from './extend-idea-button';
-import { PlanIdStamp } from './plan-id-stamp';
+import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../../constants';
+import { ExtendIdeaButton } from '../agent';
+import { PlanIdStamp } from '../plan-id-stamp';
 
 interface NoteDetailProps {
   idea: IdeaEntry;

@@ -1,8 +1,8 @@
 import { space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Button, Card } from '@dendelion/paper-ui';
-import { usePlanStatusPatch } from '../use-plan-status-patch';
-import { PlanIdStamp } from './plan-id-stamp';
+import { usePlanStatusPatch } from '../../use-plan-status-patch';
+import { PlanIdStamp } from '../plan-id-stamp';
 
 interface ReviewQueueProps {
   plans: PlanEntry[];

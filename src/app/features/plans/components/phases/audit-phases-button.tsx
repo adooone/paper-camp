@@ -2,7 +2,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { Button, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { buildConvergenceAuditPrompt } from '../prompts';
+import { buildConvergenceAuditPrompt } from '../../prompts';
 
 interface AuditPhasesButtonProps {
   plan: PlanEntry;

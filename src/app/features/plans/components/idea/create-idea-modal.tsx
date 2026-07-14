@@ -6,9 +6,9 @@ import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
 import { Button, Card, Input, Modal, Switch, Textarea } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { usePlanStatusPatch } from '../use-plan-status-patch';
-import { DraftPlanButton } from './draft-plan-button';
-import { PlanIdStamp } from './plan-id-stamp';
+import { usePlanStatusPatch } from '../../use-plan-status-patch';
+import { DraftPlanButton } from '../agent';
+import { PlanIdStamp } from '../plan-id-stamp';
 
 interface CreateIdeaModalProps {
   open: boolean;

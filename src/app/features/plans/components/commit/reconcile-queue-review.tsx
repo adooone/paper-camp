@@ -1,6 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { useEffect } from 'react';
-import { usePlanStatusPatch } from '../use-plan-status-patch';
+import { usePlanStatusPatch } from '../../use-plan-status-patch';
 import { ReconcileDiffPanel } from './reconcile-diff-panel';
 
 /**

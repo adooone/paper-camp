@@ -2,7 +2,7 @@ import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tok
 import type { PhaseItem, PlanEntry } from '@/types/index';
 import { Button, Modal } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { type DiffToken, diffWords } from '../diff';
+import { type DiffToken, diffWords } from '../../diff';
 
 interface ReconcileDiffPanelProps {
   plan: PlanEntry;

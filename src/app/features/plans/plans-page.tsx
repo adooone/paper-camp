@@ -6,14 +6,11 @@ import { space } from '@/app/styles/tokens';
 import { Breadcrumb, Card } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { DeleteIdeaModal } from './components/delete-idea-modal';
+import { ReconcileQueueReview } from './components/commit';
 import { EntityDetail } from './components/entity-detail';
-import { ListView } from './components/list-view';
-import { NoteDetail } from './components/note-detail';
-import { PlansHeader } from './components/plans-header';
-import { PlansListSkeleton } from './components/plans-list-skeleton';
-import { ReconcileQueueReview } from './components/reconcile-queue-review';
-import { ReviewQueue } from './components/review-queue';
+import { DeleteIdeaModal, NoteDetail } from './components/idea';
+import { ReviewQueue } from './components/review';
+import { ListView, PlansHeader, PlansListSkeleton } from './components/worklist';
 import { selectWorklistRows } from './plan-list-selector';
 
 export const PlansPage = () => {

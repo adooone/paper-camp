@@ -2,7 +2,7 @@ import { space } from '@/app/styles/tokens';
 import type { PhaseItem } from '@/types/index';
 import { Alert, Button, IconButton, Modal, PlusIcon, Textarea, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { parseReviewFindings } from '../review-findings';
+import { parseReviewFindings } from '../../review-findings';
 
 interface AddReviewPhasesButtonProps {
   onAdd: (phases: PhaseItem[]) => Promise<void>;
