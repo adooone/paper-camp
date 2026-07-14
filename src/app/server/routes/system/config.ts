@@ -6,7 +6,7 @@ import {
   type DefaultAgentsMap,
   type PaperCampConfig,
   coerceAgentConfig,
-} from '../../../../types/index';
+} from '@/types/index';
 import { readMaybe } from '../../helpers';
 import { readBody, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';

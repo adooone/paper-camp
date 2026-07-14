@@ -7,6 +7,7 @@ tags:
   - app
   - refactor
   - core
+status: review
 ---
 
 Several folders have gone flat and wide: `features/plans/components` holds 32 files, `core` 22, with `server/routes`, `services`, and `components` in the 10–13 range. A flat list that long stops communicating structure — you can't tell at a glance which files belong together. Reorganise so every folder keeps only a few anchor files at its top and pushes the rest into subfolders grouped by what the code *is about*.
@@ -26,5 +27,5 @@ Complements [[IDEA-58]] (which de-dupes and splits oversized files) — grouping
       Split the 22-file `core` into domain subfolders (e.g. `parse/`, `serialize/`, `git-pr/`, `status/`) with per-subfolder barrels re-exported through the `core` barrel, keeping `@/core` consumers unchanged.
 - [x] Group the remaining wide folders
       Apply the same anchors-plus-subfolders pass to `server/routes`, `services`, and `components` (each in the 10–13 range), grouping by domain and preserving import paths via barrels. Leave folders already under the ceiling alone.
-- [ ] Verify the check suite stays green
+- [x] Verify the check suite stays green
       Run `tsc --noEmit`, `biome`, tests, and the consistency check to confirm the reorg is behaviour-neutral and no import path drifted — the acceptance gate. Confirm the "no `../../` deeper than one level" rule (§5) still holds after the moves.
