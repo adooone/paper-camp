@@ -132,7 +132,10 @@ src/app/
   components/        # Cross-cutting UI pieces (Markdown, PageTitle, StackPanel)
   features/          # One folder per route-level feature
     plans/
-      components/    # Feature-local components
+      components/    # Feature-local components, grouped by domain (see below)
+        phases/
+        commit/
+        review/
       constants.ts   # Feature-local constants
       helpers.ts     # Pure helper functions
       index.ts       # Public exports
@@ -153,6 +156,32 @@ Rules:
 - `components/` is only for pieces used by more than one feature.
 - Each feature and each of `components/`, `services/`, and `stores/` has an
   `index.ts` barrel file.
+
+### Anchors stay at the top; everything else groups by domain
+
+Any folder — a feature, `core`, `services`, `server/routes` — keeps only a
+small set of anchor files at its top level:
+
+- the `index.ts` barrel,
+- the main entry (`{feature}.ts` / `{feature}-page.tsx`),
+- styles,
+- a handful of files that are genuinely feature-wide (used by most or all of
+  the folder's other files, not just one corner of it).
+
+Everything else moves into subfolders named for the domain of logic they
+hold, not for its shape — `phases/`, `commit/`, `review/`, `agent/`, `idea/`
+for `features/plans/components`; `parse/`, `serialize/`, `git-pr/`, `status/`
+for `core`. A generic `utils/` or `helpers/` bucket does not count as a
+domain — if you can't name what the files are *about*, don't group them yet.
+
+Each domain subfolder gets its own `index.ts` and re-exports through the
+parent barrel, so consumers keep importing from the top (`@/features/plans`,
+`@/core`) — grouping is an internal move, never a breaking one. The
+`../../`-depth rule in §5 still applies from inside a subfolder.
+
+**Soft ceiling:** once a folder passes ~8–10 files (anchors included), group
+the non-anchor files into domain subfolders. Below that, a flat folder is
+still the more readable choice — don't group pre-emptively.
 
 ## 5. Naming and formatting
 

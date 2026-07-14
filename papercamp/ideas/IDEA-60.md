@@ -16,3 +16,15 @@ Several folders have gone flat and wide: `features/plans/components` holds 32 fi
 - **Codify it in the style guide.** `CODE_STYLE.md` §4 currently prescribes a single flat `components/` per feature; update it to describe the anchors-plus-domain-subfolders layout and the soft file-count ceiling, so the structure doesn't re-flatten over time.
 
 Complements [[IDEA-58]] (which de-dupes and splits oversized files) — grouping is most useful once that pass has decided what the units are, so run it alongside or just after. Structure-only: no behaviour change, and with barrels preserving the public import paths the check suite (`tsc`/`biome`/tests/consistency) is the acceptance gate.
+
+### Phases
+- [x] Codify the layout rule in the style guide
+      Rewrite `CODE_STYLE.md` §4 to replace the single flat `components/`-per-feature prescription with the anchors-plus-domain-subfolders layout: name the anchors that stay at the top (barrel, main entry, styles, feature-wide files), describe the domain-subfolder-with-barrel pattern, and state the soft ~8–10-file ceiling that triggers grouping. Do this first so later phases have a written target.
+- [ ] Group `features/plans/components` into domain subfolders
+      Split the 32-file folder into domain subfolders (e.g. `phases/`, `commit/`, `review/`, `agent/`, `idea/`), leaving only the barrel/entry/styles and feature-wide files at the top. Give each subfolder an `index.ts` that re-exports through the parent barrel so `@/features/plans` import paths stay stable.
+- [ ] Group `core` into domain subfolders
+      Split the 22-file `core` into domain subfolders (e.g. `parse/`, `serialize/`, `git-pr/`, `status/`) with per-subfolder barrels re-exported through the `core` barrel, keeping `@/core` consumers unchanged.
+- [ ] Group the remaining wide folders
+      Apply the same anchors-plus-subfolders pass to `server/routes`, `services`, and `components` (each in the 10–13 range), grouping by domain and preserving import paths via barrels. Leave folders already under the ceiling alone.
+- [ ] Verify the check suite stays green
+      Run `tsc --noEmit`, `biome`, tests, and the consistency check to confirm the reorg is behaviour-neutral and no import path drifted — the acceptance gate. Confirm the "no `../../` deeper than one level" rule (§5) still holds after the moves.
