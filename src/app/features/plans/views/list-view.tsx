@@ -10,7 +10,6 @@ interface ListViewProps {
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
   onOpenIdea?: (title: string) => void;
-  onDeleteIdea?: (title: string) => void;
 }
 
 export const ListView = ({
@@ -19,7 +18,6 @@ export const ListView = ({
   activePlanTitle,
   onOpenPlan,
   onOpenIdea,
-  onDeleteIdea,
 }: ListViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +36,6 @@ export const ListView = ({
           activePlanTitle={activePlanTitle}
           onOpenPlan={onOpenPlan}
           onOpenIdea={onOpenIdea}
-          onDeleteIdea={onDeleteIdea}
         />
       ) : (
         // Plans exist but the active filters/search matched none. Without this the

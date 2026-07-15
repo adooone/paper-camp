@@ -20,7 +20,6 @@ interface WorklistRowsProps {
   onOpenPlan?: (title: string) => void;
   onOpenIdea?: (title: string) => void;
   /** Backlog-only: deletes a plan still in "idea" status. Adds a trailing column. */
-  onDeleteIdea?: (title: string) => void;
 }
 
 const headerLabelStyle: React.CSSProperties = {
@@ -66,10 +65,9 @@ export const WorklistRows = ({
   activePlanTitle,
   onOpenPlan,
   onOpenIdea,
-  onDeleteIdea,
 }: WorklistRowsProps) => {
   const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set());
-  const gridClass = onDeleteIdea ? 'plan-rows-grid plan-rows-grid--deletable' : 'plan-rows-grid';
+  const gridClass = 'plan-rows-grid';
 
   const toggleExpanded = (ideaTitle: string) => {
     setExpandedDone((prev) => {
@@ -91,7 +89,6 @@ export const WorklistRows = ({
           </span>
           <span style={headerLabelStyle}>Progress</span>
           <span style={headerLabelStyle}>Status</span>
-          {onDeleteIdea && <span style={headerLabelStyle} />}
         </div>
       </Card>
       {rows.map((row) => {
@@ -102,20 +99,12 @@ export const WorklistRows = ({
               plans={[row.plan]}
               activePlanTitle={activePlanTitle}
               onOpen={onOpenPlan}
-              onDeleteIdea={onDeleteIdea}
               showHeader={false}
             />
           );
         }
         if (row.type === 'note') {
-          return (
-            <NoteRowCard
-              key={row.idea.title}
-              row={row}
-              onOpen={onOpenIdea}
-              hasTrailingColumn={Boolean(onDeleteIdea)}
-            />
-          );
+          return <NoteRowCard key={row.idea.title} row={row} onOpen={onOpenIdea} />;
         }
         return (
           <IdeaGroupRowCard
@@ -125,7 +114,6 @@ export const WorklistRows = ({
             activePlanTitle={activePlanTitle}
             onOpenPlan={onOpenPlan}
             onOpenIdea={onOpenIdea}
-            onDeleteIdea={onDeleteIdea}
             expanded={expandedDone.has(row.idea.title)}
             onToggleExpanded={() => toggleExpanded(row.idea.title)}
           />
@@ -138,11 +126,9 @@ export const WorklistRows = ({
 const NoteRowCard = ({
   row,
   onOpen,
-  hasTrailingColumn,
 }: {
   row: NoteRow;
   onOpen?: (title: string) => void;
-  hasTrailingColumn: boolean;
 }) => {
   const idea = row.idea;
   const status = idea.status ?? 'open';
@@ -164,11 +150,7 @@ const NoteRowCard = ({
       style={{ cursor: onOpen ? 'pointer' : undefined, borderRadius: 10 }}
     >
       <Card size="small" texture="canvas" className="plan-row-card">
-        <div
-          className={
-            hasTrailingColumn ? 'plan-rows-grid plan-rows-grid--deletable' : 'plan-rows-grid'
-          }
-        >
+        <div className={'plan-rows-grid'}>
           {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
           <span style={{ ...titleButtonStyle, cursor: 'inherit' }}>
             <NoteIcon />
@@ -187,7 +169,6 @@ const NoteRowCard = ({
           >
             {IDEA_STATUS_LABEL[status]}
           </Stamp>
-          {hasTrailingColumn && <span />}
         </div>
       </Card>
     </div>
@@ -200,7 +181,6 @@ interface IdeaGroupRowCardProps {
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
   onOpenIdea?: (title: string) => void;
-  onDeleteIdea?: (title: string) => void;
   expanded: boolean;
   onToggleExpanded: () => void;
 }
@@ -211,7 +191,6 @@ const IdeaGroupRowCard = ({
   activePlanTitle,
   onOpenPlan,
   onOpenIdea,
-  onDeleteIdea,
   expanded,
   onToggleExpanded,
 }: IdeaGroupRowCardProps) => {
@@ -274,7 +253,6 @@ const IdeaGroupRowCard = ({
             plans={visibleChildren}
             activePlanTitle={activePlanTitle}
             onOpen={onOpenPlan}
-            onDeleteIdea={onDeleteIdea}
             showHeader={false}
           />
           {/* Raw <button>: an inline text link, not LinkButton — this one needs a

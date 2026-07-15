@@ -65,3 +65,5 @@
 | IDEA-61 | Speed up API reads and refetch churn | refactor | done | app, core, performance |
 | IDEA-62 | AI-suggested idea drafts | feat | review | app, ideas, agent |
 | IDEA-63 | Sweep comments to the §7 bar | refactor | idea | app, core, refactor, docs |
+| IDEA-64 | Sort the worklist by column header | feat | idea | app, plans, ui |
+| IDEA-65 | Parallel agents and a task log | feat | idea | app, agent, stack, ui |

@@ -23,5 +23,8 @@ export const triggerQualityFix = async (): Promise<void> => {
 // Drops the server's resolved-PR cache so the reads that follow re-fetch review
 // state from `gh` rather than replaying the cache window.
 export const dropServerCaches = async (): Promise<void> => {
-  await fetch('/api/refresh', { method: 'POST' });
+  const response = await fetch('/api/refresh', { method: 'POST' });
+  if (!response.ok) {
+    throw new Error(`Failed to drop caches: ${response.statusText}`);
+  }
 };

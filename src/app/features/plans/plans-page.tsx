@@ -1,6 +1,5 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useActiveIdeaTitle, useActivePlanTitle } from '@/app/hooks';
-import { deletePlan } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import type { SuggestionEntry } from '@/types/index';
@@ -8,11 +7,10 @@ import { Breadcrumb, Card, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { selectWorklistRows } from './helpers';
-import { DeleteIdeaModal, PromoteSuggestionModal } from './modals';
+import { PromoteSuggestionModal } from './modals';
 import { ReconcileQueueReview } from './views';
 import { EntityDetail } from './views';
 import { NoteDetail } from './views';
-import { ReviewQueue } from './views';
 import { ListView, PlansHeader, PlansListSkeleton, SuggestionsSection } from './views';
 
 export const PlansPage = () => {
@@ -40,14 +38,7 @@ export const PlansPage = () => {
     navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(title) } });
   };
 
-  const [deleteIdeaTitle, setDeleteIdeaTitle] = useState<string | null>(null);
   const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);
-
-  const handleDeleteIdea = async (title: string) => {
-    await deletePlan(title);
-    await loadPlans();
-    if (activePlanTitle === title) navigate({ to: '/' });
-  };
 
   const handleDismissSuggestion = async (suggestion: SuggestionEntry) => {
     try {
@@ -96,7 +87,6 @@ export const PlansPage = () => {
   }
 
   const { rows } = selectWorklistRows(plans.entries, ideaEntries, planFilters);
-  const reviewPlans = plans.entries.filter((p) => p.status === 'review');
 
   // The reconcile review queue is a self-contained modal driven by store state,
   // not by which branch is active — render it once above the branching so it
@@ -132,8 +122,6 @@ export const PlansPage = () => {
         <div>
           <PlansHeader />
 
-          <ReviewQueue plans={reviewPlans} onOpenPlan={handleOpenPlan} />
-
           {plans.warnings.length > 0 && (
             <Card size="small" accent accentColor="amber">
               <p style={{ margin: 0, fontWeight: 600 }}>Some entries couldn't be parsed</p>
@@ -159,7 +147,6 @@ export const PlansPage = () => {
               activePlanTitle={activePlanTitle}
               onOpenPlan={handleOpenPlan}
               onOpenIdea={handleOpenIdea}
-              onDeleteIdea={setDeleteIdeaTitle}
             />
           )}
 
@@ -167,12 +154,6 @@ export const PlansPage = () => {
             suggestions={suggestions}
             onOpen={setOpenSuggestion}
             onDismiss={handleDismissSuggestion}
-          />
-
-          <DeleteIdeaModal
-            title={deleteIdeaTitle}
-            onClose={() => setDeleteIdeaTitle(null)}
-            onConfirm={handleDeleteIdea}
           />
 
           <PromoteSuggestionModal

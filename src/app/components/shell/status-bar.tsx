@@ -65,9 +65,7 @@ export const StatusBar = () => {
         gap: space[3],
         height: '32px',
         padding: `0 ${space[4]}`,
-        // Separator faces the content it divides — the bar sits on the bottom edge,
-        // so the rule belongs on top.
-        borderTop: '1px solid rgba(0,0,0,0.08)',
+        borderBottom: '1px solid rgba(0,0,0,0.08)',
         fontSize: fontSize['2xs'],
         flexShrink: 0,
         boxSizing: 'border-box',

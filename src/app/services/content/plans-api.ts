@@ -24,10 +24,6 @@ export const createPlan = async (idea: {
   });
 };
 
-export const deletePlan = async (title: string): Promise<void> => {
-  await fetch(`/api/plans?title=${encodeURIComponent(title)}`, { method: 'DELETE' });
-};
-
 export const updatePlan = async (
   title: string,
   updates: {
