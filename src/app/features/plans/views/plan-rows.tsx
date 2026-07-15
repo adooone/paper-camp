@@ -10,8 +10,6 @@ interface PlanRowsProps {
   plans: PlanEntry[];
   activePlanTitle?: string | null;
   onOpen?: (title: string) => void;
-  /** Backlog-only: deletes a plan still in "idea" status. Adds a trailing column. */
-  onDeleteIdea?: (title: string) => void;
   /** FEAT-42: worklist-rows.tsx nests this under an idea-group header, which already
    * carries its own header row — set false there so it isn't repeated per group. */
   showHeader?: boolean;
@@ -32,14 +30,8 @@ const headerLabelStyle: React.CSSProperties = {
  * the title owns the space, status is a Stamp, and any editing (including
  * status changes) happens inside the plan the row opens.
  */
-export const PlanRows = ({
-  plans,
-  activePlanTitle,
-  onOpen,
-  onDeleteIdea,
-  showHeader = true,
-}: PlanRowsProps) => {
-  const gridClass = onDeleteIdea ? 'plan-rows-grid plan-rows-grid--deletable' : 'plan-rows-grid';
+export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: PlanRowsProps) => {
+  const gridClass = 'plan-rows-grid';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
       {showHeader && (
@@ -52,7 +44,6 @@ export const PlanRows = ({
             </span>
             <span style={headerLabelStyle}>Progress</span>
             <span style={headerLabelStyle}>Status</span>
-            {onDeleteIdea && <span style={headerLabelStyle} />}
           </div>
         </Card>
       )}
@@ -119,30 +110,6 @@ export const PlanRows = ({
                     {STATUS_LABEL[plan.status]}
                   </Stamp>
                 </div>
-                {onDeleteIdea &&
-                  (plan.status === 'idea' ? (
-                    <IconButton
-                      icon={<span>×</span>}
-                      variant="ghost"
-                      size="small"
-                      label="Delete"
-                      // Small IconButton is a fixed 40×40; shrink it so it doesn't
-                      // out-tall the row's ~30px content and make backlog rows
-                      // stand taller than the rest.
-                      style={{ width: 28, height: 28 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteIdea(plan.title);
-                      }}
-                      onKeyDown={(e) => {
-                        // Keep Enter/Space from bubbling to the row's onKeyDown — otherwise
-                        // one keypress both deletes the plan and opens its detail view.
-                        if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
-                      }}
-                    />
-                  ) : (
-                    <span />
-                  ))}
               </div>
             </Card>
           </div>

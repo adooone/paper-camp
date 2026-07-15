@@ -2,7 +2,9 @@
 id: IDEA-62
 title: AI-suggested idea drafts
 type: feat
+status: in-progress
 created: 2026-07-13
+updated: 2026-07-15
 tags:
   - app
   - ideas
@@ -17,3 +19,15 @@ Agents often surface "you might want to do X" while working, but there's nowhere
 - **Click → modal → "Move to ideas".** Clicking a card opens a small modal with the description and a **Move to ideas** button. That launches a refining agent (a new `prompts.ts` builder, sibling to the draft/extend prompts in [[IDEA-15]]) which expands the one-liner into a full idea: assigns an id via `assignEntityId`, writes `papercamp/ideas/IDEA-N.md`, regenerates the index, and removes the promoted line from `suggestions.md`. Dismissing a card just deletes its line.
 
 The whole point is that suggestions stay cheap and disposable — no id allocation, no index churn, no status lifecycle — until a human decides one is worth the refinement pass that turns it into a real, owned idea.
+
+### Phases
+- [x] Parse the suggestions store
+      Add `papercamp/suggestions.md` as a monolithic doc sibling to `decisions.md`/`open-questions.md`/`progress.md`, and teach `core/parser` its per-line grammar (title + one-line description, no `id`, no `status`) plus the dated append-only block like [[IDEA-43]]'s `### Log`. It never counts as a plan/idea and never appears in `ideas/index.md`.
+- [x] Expose suggestions over the API
+      Add a `/api/suggestions` read endpoint over the parsed store and a store slice to hold the entries, wiring the loader into the existing fetch fanout.
+- [x] Render the "Suggested from AI" section
+      Below the worklist, render suggestions as plain cards that match idea rows visually but drop the id stamp and status — just a title.
+- [x] Let agents append suggestions
+      Add a manual "Suggest ideas" action plus a `prompts.ts` builder that launches an agent to scan the repo and existing corpus and append new entries via the dated grammar, reusing the agent-launch plumbing.
+- [x] Promote a suggestion to a real idea
+      Clicking a card opens a small modal showing the description with a **Move to ideas** button; that launches a refining agent (a new `prompts.ts` builder, sibling to [[IDEA-15]]'s draft/extend prompts) which expands the one-liner into a full idea — assigning an id via `assignEntityId`, writing `papercamp/ideas/IDEA-N.md`, regenerating the index, and removing the promoted line. Dismissing a card just deletes its line.

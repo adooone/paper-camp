@@ -26,6 +26,7 @@ export function createActivityManager(root: string) {
     const data = `data: ${JSON.stringify({
       message: 'changed',
       timestamp: new Date().toISOString(),
+      type: 'activity',
     })}\n\n`;
     for (const client of clients) {
       try {

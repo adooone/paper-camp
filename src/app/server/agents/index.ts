@@ -44,6 +44,7 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   'fix-review': 'phase',
   draft: 'planDraft',
   extend: 'ideaExtend',
+  suggest: 'ideaExtend',
   'commit-suggest': 'commitSuggest',
   'overlap-check': 'commitSuggest',
 };

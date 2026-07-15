@@ -13,7 +13,13 @@ import { computePlanContentHash } from '../serialize/content-hash';
 import { parsePrUrl, resolveEntityIdFromPrRef } from './pr-lookup';
 import { COMMIT_SCOPES } from './scopes';
 
-export { clearPrCache, fetchUnresolvedThreads, resolvePrsByEntity } from './pr-lookup';
+export {
+  clearPrCache,
+  fetchUnresolvedThreads,
+  replyToReviewThread,
+  resolvePrsByEntity,
+  resolveReviewThread,
+} from './pr-lookup';
 
 interface GhPrCommentRow {
   body: string;

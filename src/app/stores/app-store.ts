@@ -18,6 +18,7 @@ import type {
   PlanEntry,
   PlanStatus,
   ProgressEntry,
+  SuggestionEntry,
 } from '@/types/index';
 import { create } from 'zustand';
 import {
@@ -31,9 +32,11 @@ import {
   launchPlanDraft,
   launchPlanReconcile,
   launchRunAll,
+  launchSuggestIdeas,
   stopAgent,
 } from '../services/agent-api';
 import {
+  dismissSuggestion as dismissSuggestionApi,
   fetchConsistency,
   fetchDecisions,
   fetchIdeas,
@@ -41,10 +44,17 @@ import {
   fetchPlans,
   fetchProgress,
   fetchRepoDocs,
+  fetchSuggestions,
+  promoteSuggestion as promoteSuggestionApi,
 } from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
 import type { StatusState } from '../services/status-api';
-import { fetchStatus, triggerCheck, triggerQualityFix } from '../services/status-api';
+import {
+  dropServerCaches,
+  fetchStatus,
+  triggerCheck,
+  triggerQualityFix,
+} from '../services/status-api';
 
 type AppStore = {
   plans: ParseResult<PlanEntry> | null;
@@ -73,6 +83,16 @@ type AppStore = {
   openQuestionsLoading: boolean;
   loadOpenQuestions: () => Promise<void>;
 
+  suggestions: SuggestionEntry[];
+  suggestionsLoading: boolean;
+  loadSuggestions: () => Promise<void>;
+  // IDEA-62 phase 5: mechanical half of "Move to ideas" — mints the id, writes the
+  // idea file, and removes the suggestion's line, then reloads suggestions/plans/ideas.
+  // Returns the new idea's id, for the caller to follow up with launchIdeaExtend.
+  promoteSuggestion: (suggestion: SuggestionEntry) => Promise<string>;
+  // Dismissing a suggestion just deletes its line — no id was ever minted for it.
+  dismissSuggestion: (suggestion: SuggestionEntry) => Promise<void>;
+
   progress: ProgressEntry[];
   progressLoading: boolean;
   loadProgress: () => Promise<void>;
@@ -95,6 +115,12 @@ type AppStore = {
 
   status: StatusState | null;
   loadStatus: () => Promise<void>;
+  // Manual "refresh everything" for the worklist header: drops the server's PR
+  // cache, then re-reads every worklist source so review/check/git signals are
+  // live rather than TTL-bound. Resolves with whether the read actually landed,
+  // so the caller can tell the user the truth instead of always claiming success.
+  refreshAll: () => Promise<{ ok: boolean; error?: string }>;
+  refreshing: boolean;
   runCheck: (name: CheckName) => Promise<void>;
   fixQuality: () => Promise<void>;
   // One-click commit for the status bar: suggests a message from the diff and
@@ -129,6 +155,7 @@ type AppStore = {
   launchPlanDraft: (ideaId: string, prompt: string) => Promise<void>;
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
   launchBatchReconcile: () => Promise<void>;
+  launchSuggestIdeas: (prompt: string) => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
   launchFixReview: (planId: string) => Promise<void>;
   stopAgent: () => Promise<void>;
@@ -246,6 +273,27 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
+  suggestions: [],
+  suggestionsLoading: true,
+  loadSuggestions: async () => {
+    set({ suggestionsLoading: true });
+    try {
+      const data = await fetchSuggestions();
+      set({ suggestions: data.entries, suggestionsLoading: false });
+    } catch {
+      set({ suggestions: [], suggestionsLoading: false });
+    }
+  },
+  promoteSuggestion: async (suggestion) => {
+    const { id } = await promoteSuggestionApi(suggestion);
+    await Promise.all([get().loadSuggestions(), get().loadPlans(), get().loadIdeas()]);
+    return id;
+  },
+  dismissSuggestion: async (suggestion) => {
+    await dismissSuggestionApi(suggestion);
+    await get().loadSuggestions();
+  },
+
   progress: [],
   progressLoading: true,
   loadProgress: async () => {
@@ -290,12 +338,39 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setSettingsConfigFiles: (files) => set({ settingsConfigFiles: files }),
 
   status: null,
+  refreshing: false,
   loadStatus: async () => {
     try {
       const data = await fetchStatus();
       set({ status: data });
     } catch {
       // keep previous status
+    }
+  },
+  refreshAll: async () => {
+    set({ refreshing: true });
+    try {
+      // Best-effort: a failed cache drop still leaves the reads below worth
+      // running (they'd just serve cached PR state), so it must not abort them.
+      await dropServerCaches().catch(() => {});
+      // Each loader owns its own error handling and keeps prior state on failure,
+      // so one failing source can't blank the rest of the page.
+      await Promise.all([
+        get().loadPlans(),
+        get().loadIdeas(),
+        get().loadSuggestions(),
+        get().loadStatus(),
+        get().loadConsistency(),
+        get().loadGitStatus(),
+        get().loadAgentStatus(),
+      ]);
+      // The loaders swallow their own errors, so `plansError` is the one signal
+      // that says whether the refresh actually reached the server — without it a
+      // refresh against a dead server would still report success.
+      const error = get().plansError;
+      return error ? { ok: false, error } : { ok: true };
+    } finally {
+      set({ refreshing: false });
     }
   },
   runCheck: async (name) => {
@@ -467,6 +542,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     // are shown even if the previous batch's 'done' was already consumed.
     set({ batchReconcileConsumed: false });
     await launchBatchReconcile();
+    await get().loadAgentStatus();
+  },
+  launchSuggestIdeas: async (prompt) => {
+    await launchSuggestIdeas(prompt);
     await get().loadAgentStatus();
   },
   launchRunAll: async (planId) => {

@@ -21,7 +21,7 @@ async function exists(path: string): Promise<boolean> {
   }
 }
 
-const MONOLITHIC_FILES = ['progress.md', 'decisions.md', 'open-questions.md'];
+const MONOLITHIC_FILES = ['progress.md', 'decisions.md', 'open-questions.md', 'suggestions.md'];
 
 export interface InitOptions {
   projectName: string;

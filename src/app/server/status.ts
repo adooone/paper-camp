@@ -36,8 +36,12 @@ export function createStatusManager(root: string) {
   const running = new Set<CheckName>();
   const queued = new Set<CheckName>();
 
+  // `type` is what the client routes on: it can't refetch everything for every
+  // tick (an agent alone emits a line per log row), so each producer names itself
+  // and the client maps that to the one loader it needs. Untyped events used to be
+  // dropped wholesale, which is what made check clicks look dead.
   function broadcast(event: { message: string; timestamp: string }) {
-    const data = `data: ${JSON.stringify(event)}\n\n`;
+    const data = `data: ${JSON.stringify({ ...event, type: 'status' })}\n\n`;
     for (const client of clients) {
       try {
         client.write(data);
@@ -193,7 +197,7 @@ export function createStatusManager(root: string) {
         const result = snapshot[name];
         if (result.status !== 'stale') {
           res.write(
-            `data: ${JSON.stringify({ message: `${name}: ${result.status}`, timestamp: result.lastRun })}\n\n`,
+            `data: ${JSON.stringify({ message: `${name}: ${result.status}`, timestamp: result.lastRun, type: 'status' })}\n\n`,
           );
         }
       }

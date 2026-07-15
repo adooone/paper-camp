@@ -8,6 +8,7 @@ import {
   parseOpenQuestions,
   parsePlans,
   parseProgress,
+  parseSuggestions,
 } from './parser';
 
 describe('parsePlans', () => {
@@ -485,5 +486,39 @@ describe('parseProgress', () => {
 
   it('returns an empty array for an empty file', () => {
     expect(parseProgress('')).toEqual([]);
+  });
+});
+
+describe('parseSuggestions', () => {
+  it('parses a dated title + one-line description entry', () => {
+    const md =
+      '- 2026-07-15: Cache the docs sidebar tree — repeated navigation re-parses the same markdown on every click.\n';
+    const entries = parseSuggestions(md);
+    expect(entries).toEqual([
+      {
+        date: '2026-07-15',
+        title: 'Cache the docs sidebar tree',
+        description: 'repeated navigation re-parses the same markdown on every click.',
+      },
+    ]);
+  });
+
+  it('parses multiple appended entries in order', () => {
+    const md = `- 2026-07-14: First idea — first description.
+- 2026-07-15: Second idea — second description.
+`;
+    const entries = parseSuggestions(md);
+    expect(entries).toHaveLength(2);
+    expect(entries[0].title).toBe('First idea');
+    expect(entries[1].title).toBe('Second idea');
+  });
+
+  it('ignores non-matching lines', () => {
+    const md = `# Suggestions\n\nSome free prose that isn't an entry.\n`;
+    expect(parseSuggestions(md)).toEqual([]);
+  });
+
+  it('returns an empty array for an empty file', () => {
+    expect(parseSuggestions('')).toEqual([]);
   });
 });

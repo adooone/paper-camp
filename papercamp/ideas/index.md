@@ -36,11 +36,11 @@
 | IDEA-32 | Migrate to paper-ui 0.5.0 | feat | done | app, ui, deps |
 | IDEA-33 | Adopt paper-ui 0.5.0 components | feat | done | app, ui |
 | IDEA-34 | Responsive layout and Stack panel redesign | feat | done | app, ui, layout, navigation, stack, paper-ui, responsive |
-| IDEA-35 | Mirror plans onto GitHub PRs | feat | planned | ci, github, plans |
+| IDEA-35 | Mirror plans onto GitHub PRs | feat | done | ci, github, plans |
 | IDEA-36 | Schedule repo digest and nudges | feat | dropped | ci, github, agent |
 | IDEA-37 | Fable capability-window tasks | note | done |  |
 | IDEA-38 | Densify the plans worklist | feat | done | app, ui, plans, ideas |
-| IDEA-39 | Build the focus cockpit | feat | review | app, ui, plans, stack |
+| IDEA-39 | Build the focus cockpit | feat | done | app, ui, plans, stack |
 | IDEA-40 | Make sub-views real routes | feat | done | app, ui, routing, navigation |
 | IDEA-41 | Settings and affordance polish | fix | done | app, ui, settings |
 | IDEA-42 | Filter and sort the plans list | feat | done | app, ui, plans |
@@ -59,8 +59,11 @@
 | IDEA-55 | Actualise all ideas at once | feat | done | app, plans, agent |
 | IDEA-56 | Derive status from git and PR state | feat | done | app, github, plans, core |
 | IDEA-57 | Drive PR review fixes from the app | feat | done | app, github, plans, agent |
-| IDEA-58 | Simplify and de-dupe the codebase | refactor | review | app, refactor, core |
-| IDEA-59 | Trim comments to the essential | refactor | idea | app, core, refactor, docs |
-| IDEA-60 | Group code into domain subfolders | refactor | idea | app, refactor, core |
-| IDEA-61 | Speed up API reads and refetch churn | refactor | idea | app, core, performance |
-| IDEA-62 | AI-suggested idea drafts | feat | idea | app, ideas, agent |
+| IDEA-58 | Simplify and de-dupe the codebase | refactor | done | app, refactor, core |
+| IDEA-59 | Trim comments to the essential | refactor | done | app, core, refactor, docs |
+| IDEA-60 | Group code into domain subfolders | refactor | done | app, refactor, core |
+| IDEA-61 | Speed up API reads and refetch churn | refactor | done | app, core, performance |
+| IDEA-62 | AI-suggested idea drafts | feat | review | app, ideas, agent |
+| IDEA-63 | Sweep comments to the §7 bar | refactor | idea | app, core, refactor, docs |
+| IDEA-64 | Sort the worklist by column header | feat | idea | app, plans, ui |
+| IDEA-65 | Parallel agents and a task log | feat | idea | app, agent, stack, ui |

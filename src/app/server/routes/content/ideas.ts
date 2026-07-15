@@ -1,8 +1,14 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
-import { assignEntityId, formatEntityFile, todayDateString } from '@/core/serialize';
-import { campFile, regenerateIndexes } from '../../helpers';
+import {
+  assignEntityId,
+  formatEntityFile,
+  removeSuggestionLine,
+  todayDateString,
+} from '@/core/serialize';
+import type { SuggestionEntry } from '@/types/index';
+import { campFile, readMaybe, regenerateIndexes } from '../../helpers';
 import { readBody, sendJson } from '../../http';
 import { checkIdeaOverlap } from '../../overlap-check';
 import type { Route, RouteContext } from '../types';
@@ -43,6 +49,75 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         await regenerateIndexes(root);
         sendJson(res, 201, { ok: true, id: newId });
+      },
+    },
+
+    // IDEA-62 phase 5, "Move to ideas": the mechanical half of promoting a suggestion.
+    // Mints the id, writes the idea file (body = the suggestion's one-liner), removes
+    // the promoted line from suggestions.md, and regenerates the index — all
+    // synchronous, no agent involved (mirrors POST /api/ideas above). The client
+    // follows this with a normal launch-extend call (buildSuggestionPromotePrompt) to
+    // do the qualitative expansion, since by then this is a normal idea entity.
+    {
+      method: 'POST',
+      path: '/api/suggestions/promote',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { suggestion } = JSON.parse(reqBody) as { suggestion?: SuggestionEntry };
+        if (!suggestion?.title || !suggestion.date) {
+          sendJson(res, 400, { error: 'suggestion is required' });
+          return;
+        }
+        const suggestionsPath = campFile(root, 'suggestions.md');
+        const raw = await readMaybe(suggestionsPath);
+        const updated = removeSuggestionLine(raw, suggestion);
+        if (updated === raw) {
+          sendJson(res, 404, { error: 'suggestion not found' });
+          return;
+        }
+        const configPath = join(root, 'papercamp', 'config.json');
+        const newId = await assignEntityId(configPath);
+        if (!newId) {
+          sendJson(res, 500, { error: 'could not assign entity ID' });
+          return;
+        }
+        const ideasDir = campFile(root, 'ideas');
+        await mkdir(ideasDir, { recursive: true });
+        const entityContent = formatEntityFile({
+          id: newId,
+          title: suggestion.title,
+          status: 'idea',
+          created: todayDateString(),
+          body: suggestion.description,
+        });
+        await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
+        await writeFile(suggestionsPath, updated, 'utf-8');
+        await regenerateIndexes(root);
+        sendJson(res, 201, { ok: true, id: newId });
+      },
+    },
+
+    // IDEA-62 phase 5: dismissing a suggestion just deletes its line — no id was ever
+    // minted for it, so there's nothing else to clean up.
+    {
+      method: 'POST',
+      path: '/api/suggestions/dismiss',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { suggestion } = JSON.parse(reqBody) as { suggestion?: SuggestionEntry };
+        if (!suggestion?.title || !suggestion.date) {
+          sendJson(res, 400, { error: 'suggestion is required' });
+          return;
+        }
+        const suggestionsPath = campFile(root, 'suggestions.md');
+        const raw = await readMaybe(suggestionsPath);
+        const updated = removeSuggestionLine(raw, suggestion);
+        if (updated === raw) {
+          sendJson(res, 404, { error: 'suggestion not found' });
+          return;
+        }
+        await writeFile(suggestionsPath, updated, 'utf-8');
+        sendJson(res, 200, { ok: true });
       },
     },
 

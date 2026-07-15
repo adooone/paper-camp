@@ -13,9 +13,6 @@ import { ProjectIdentityHeader, SidebarShell, StackPanel, StatusBar } from './co
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
 import { useAppStore } from './stores/app-store';
 
-// Docs and Settings are not the default route — lazy-load them so the initial
-// dashboard bundle only ships the Plans area. Both the page and its sidebar
-// slot come from the same dynamic import, so they share one chunk.
 const DocsPage = lazy(() =>
   import('@/app/features/docs/index').then((m) => ({ default: m.DocsPage })),
 );
@@ -53,16 +50,13 @@ function writeStoredStackOpen(value: boolean): void {
   }
 }
 
-// At/above this width the Stack panel is pinned open (the layout reserves 480px for
-// it — see the min-[1440px]:pr-[480px] wrapper) and the sidebar+page group fills the
-// remaining width; below it the panel overlays and can be toggled. Keep in sync with
-// that Tailwind class, which must stay a static literal.
+// Keep in sync with the min-[1440px]:pr-[480px] wrapper (Tailwind needs a literal).
 const LARGE_SCREEN_QUERY = '(min-width: 1440px)';
 
-// On large screens the sidebar+page group fills the available width, leaving a
-// two-grid-cell (64px) margin on each side. The Layout already pads its content by
-// one 32px cell, so we add just one more cell here to reach the two-cell total.
 const CONTENT_MARGIN = 32;
+
+// Mirrors paper-ui `.content`'s padding, which the strip and scroller bleed back out of.
+const LAYOUT_CONTENT_PAD = 32;
 
 /** Subscribe to a CSS media query; re-renders when it starts/stops matching. */
 function useMediaQuery(query: string): boolean {
@@ -84,6 +78,7 @@ const RootLayout = () => {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
+  const loadSuggestions = useAppStore((s) => s.loadSuggestions);
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
@@ -101,7 +96,8 @@ const RootLayout = () => {
   useEffect(() => {
     loadPlans();
     loadIdeas();
-  }, [loadPlans, loadIdeas]);
+    loadSuggestions();
+  }, [loadPlans, loadIdeas, loadSuggestions]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body — close the mobile sidebar on every route change.
   useEffect(() => {
@@ -109,10 +105,12 @@ const RootLayout = () => {
   }, [pathname]);
 
   return (
-    <ToastProvider>
-      <div className="h-screen box-border min-[1440px]:pr-[480px]">
+    <ToastProvider position="bottom-left">
+      <div className="h-screen box-border min-[1440px]:pr-[480px] flex flex-col">
+        <StatusBar />
         <Layout
-          background={{ texture: 'paper', ruledType: 'grid', ruledColor: 'blue' }}
+          style={{ flex: '1 1 0%', minHeight: 0, height: 'auto' }}
+          background={{ texture: 'speckle', ruledType: 'grid', ruledColor: 'blue' }}
           showHeader
           headerTexture="parchment"
           showSidebar={false}
@@ -161,66 +159,69 @@ const RootLayout = () => {
             </>
           }
         >
-          {/* Full-width status strip under the header: ambient git/check glance
-              + immediate quick actions (commit / run tests / fix quality).
-              -32px top/sides bleeds it out of the Layout's 32px content padding
-              (paper-ui `.content`) so it sits flush under the header, edge to edge;
-              the 32px bottom margin restores the content's top padding below it. */}
-          <div style={{ margin: '-32px -32px 32px' }}>
-            <StatusBar />
-          </div>
-          <div className="flex h-full min-h-0 justify-center items-stretch box-border overflow-hidden">
-            {/* The sidebar + page form one group. On large screens it fills the
-                available width (page grows past 800) with a two-grid-cell margin on
-                each side. Below that it shrinks to its content (sidebar + gap + up to
-                an 800px page) and `justify-center` above keeps it centered, so the
-                filters card sits directly beside the page with only contentGap
-                between them — never pinned to the far left with a gap. */}
+          <div className="flex flex-col h-full min-h-0">
+            {/* Bled out of `.content`'s padding: the scrollbar renders at this box's
+                edge, and content should pass under the header/strip, not stop short. */}
             <div
-              className="flex h-full min-h-0 min-w-0"
+              className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto"
               style={{
-                gap: layoutConfig.contentGap,
-                ...(isLarge
-                  ? { width: '100%', paddingLeft: CONTENT_MARGIN, paddingRight: CONTENT_MARGIN }
-                  : {}),
+                marginTop: -LAYOUT_CONTENT_PAD,
+                marginLeft: -LAYOUT_CONTENT_PAD,
+                marginRight: -LAYOUT_CONTENT_PAD,
+                paddingTop: LAYOUT_CONTENT_PAD,
+                paddingBottom: LAYOUT_CONTENT_PAD,
+                paddingLeft: LAYOUT_CONTENT_PAD,
+                paddingRight: LAYOUT_CONTENT_PAD,
               }}
             >
-              {hasSidebar && (
-                <SidebarShell
-                  routeKey={pathname}
-                  mobileOpen={mobileSidebarOpen}
-                  onMobileClose={() => setMobileSidebarOpen(false)}
-                >
-                  {isPlansArea && (
-                    <>
-                      <PlanFilterColumn />
-                      <PlanActionsColumn />
-                    </>
-                  )}
-                  {isDocsArea && (
-                    <Suspense fallback={null}>
-                      <DocsSidebar />
-                    </Suspense>
-                  )}
-                  {pathname === '/settings' && (
-                    <Suspense fallback={null}>
-                      <SettingsSidebar />
-                    </Suspense>
-                  )}
-                </SidebarShell>
-              )}
-              {/* Page column. Large: grow to fill the group. Small: basis 800 (the
-                  Page's own max-width), may shrink but never grows, so there's no
-                  empty stretch for the Page to re-center inside and drift away. */}
+              {/* --pc-sidebar-h: the sticky sidebar can't size off this group (it's as
+                  tall as the page). lg only — below that it's a full-height drawer. */}
               <div
-                className="flex flex-col min-h-0 min-w-0"
-                style={{ flex: isLarge ? '1 1 0%' : '0 1 800px' }}
+                className="flex min-w-0 justify-center lg:[--pc-sidebar-h:calc(100vh-128px)]"
+                style={{
+                  gap: layoutConfig.contentGap,
+                  width: '100%',
+                  ...(isLarge ? { paddingLeft: CONTENT_MARGIN, paddingRight: CONTENT_MARGIN } : {}),
+                }}
               >
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                {hasSidebar && (
+                  <SidebarShell
+                    routeKey={pathname}
+                    mobileOpen={mobileSidebarOpen}
+                    onMobileClose={() => setMobileSidebarOpen(false)}
+                  >
+                    {isPlansArea && (
+                      <>
+                        <PlanFilterColumn />
+                        <PlanActionsColumn />
+                      </>
+                    )}
+                    {isDocsArea && (
+                      <Suspense fallback={null}>
+                        <DocsSidebar />
+                      </Suspense>
+                    )}
+                    {pathname === '/settings' && (
+                      <Suspense fallback={null}>
+                        <SettingsSidebar />
+                      </Suspense>
+                    )}
+                  </SidebarShell>
+                )}
+                <div
+                  className="flex flex-col min-w-0"
+                  style={{ flex: isLarge ? '1 1 0%' : '0 1 800px' }}
+                >
+                  {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
+                      stretch, so without it the sheet sizes to its content. */}
                   <Page
                     texture={{ texture: 'parchment' }}
                     outline
-                    style={{ height: 'auto', ...(isLarge ? { maxWidth: 'none' } : {}) }}
+                    style={{
+                      height: 'auto',
+                      width: '100%',
+                      ...(isLarge ? { maxWidth: 'none' } : {}),
+                    }}
                   >
                     <AnimatePresence mode="wait">
                       <motion.div
@@ -246,8 +247,7 @@ const RootLayout = () => {
         open={stackOpen}
         pinned={isLarge}
         onToggle={() => {
-          // Keep the persistence side effect out of the setState updater (updaters
-          // must be pure — StrictMode double-invokes them).
+          // Updaters must be pure — StrictMode double-invokes them.
           const next = !stackOpen;
           writeStoredStackOpen(next);
           setStackOpen(next);

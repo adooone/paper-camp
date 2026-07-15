@@ -36,6 +36,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
+  const loadSuggestions = useAppStore((s) => s.loadSuggestions);
   const shouldReduceMotion = useReducedMotion();
   const refreshRef = useRef({
     loadProgress,
@@ -44,6 +45,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     loadConsistency,
     loadGitStatus,
     loadAgentStatus,
+    loadSuggestions,
   });
   useEffect(() => {
     refreshRef.current = {
@@ -53,6 +55,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       loadConsistency,
       loadGitStatus,
       loadAgentStatus,
+      loadSuggestions,
     };
   });
 
@@ -66,29 +69,48 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
 
   useEffect(() => {
     const es = new EventSource('/api/activity/stream');
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    // One timer per event type, not one shared: an agent streaming a line per log
+    // row must not keep pushing a pending check refresh out of reach. Each type
+    // maps to the narrowest loader that can show it — a check tick doesn't need
+    // the plans list, and an agent line doesn't need git status.
+    const timers: Record<string, ReturnType<typeof setTimeout> | undefined> = {};
+    const schedule = (key: string, run: () => void, ms: number) => {
+      if (timers[key]) clearTimeout(timers[key]);
+      timers[key] = setTimeout(run, ms);
+    };
     es.onmessage = (event) => {
-      // Only react to actual change ticks — the initial "Watching for
-      // changes…" connect message needs no refetch, the mount effect above
-      // already loaded everything. Debounced client-side too: an agent
-      // writing several files in quick succession still produces one SSE
-      // tick per debounced server-side broadcast, but a burst of tabs/
-      // reconnects or back-to-back broadcasts would otherwise stampede all
-      // six loaders once per tick.
-      const payload = JSON.parse(event.data) as { message?: string };
+      const payload = JSON.parse(event.data) as { message?: string; type?: string };
+      // Check stamps (Quality/Tests/Consistency) live entirely off these — the
+      // 'running' tick IS the loading state, so it must reach loadStatus.
+      if (payload.type === 'status') {
+        schedule('status', () => refreshRef.current.loadStatus(), 80);
+        return;
+      }
+      // Agent progress, including the one-shot commit-suggest run.
+      if (payload.type === 'agent') {
+        schedule('agent', () => refreshRef.current.loadAgentStatus(), 120);
+        return;
+      }
+      // A file actually changed on disk: the only tick broad enough to warrant
+      // reloading everything. Debounced so an agent writing several files in
+      // quick succession doesn't stampede all six loaders per tick.
       if (payload.message !== 'changed') return;
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        refreshRef.current.loadProgress();
-        refreshRef.current.loadPlans();
-        refreshRef.current.loadStatus();
-        refreshRef.current.loadConsistency();
-        refreshRef.current.loadGitStatus();
-        refreshRef.current.loadAgentStatus();
-      }, 250);
+      schedule(
+        'activity',
+        () => {
+          refreshRef.current.loadProgress();
+          refreshRef.current.loadPlans();
+          refreshRef.current.loadSuggestions();
+          refreshRef.current.loadStatus();
+          refreshRef.current.loadConsistency();
+          refreshRef.current.loadGitStatus();
+          refreshRef.current.loadAgentStatus();
+        },
+        250,
+      );
     };
     return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
+      for (const timer of Object.values(timers)) if (timer) clearTimeout(timer);
       es.close();
     };
   }, []);

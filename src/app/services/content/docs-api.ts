@@ -3,6 +3,7 @@ import type {
   DecisionEntry,
   OpenQuestionEntry,
   ProgressEntry,
+  SuggestionEntry,
 } from '@/types/index';
 
 export const fetchDecisions = async () => {
@@ -24,6 +25,36 @@ export const fetchOpenQuestions = async () => {
 export const fetchProgress = async () => {
   const res = await fetch('/api/progress');
   return res.json() as Promise<{ entries: ProgressEntry[] }>;
+};
+
+export const fetchSuggestions = async () => {
+  const res = await fetch('/api/suggestions');
+  return res.json() as Promise<{ entries: SuggestionEntry[] }>;
+};
+
+export const promoteSuggestion = async (suggestion: SuggestionEntry) => {
+  const res = await fetch('/api/suggestions/promote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ suggestion }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to promote suggestion' }));
+    throw new Error(err.error);
+  }
+  return res.json() as Promise<{ ok: boolean; id: string }>;
+};
+
+export const dismissSuggestion = async (suggestion: SuggestionEntry) => {
+  const res = await fetch('/api/suggestions/dismiss', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ suggestion }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to dismiss suggestion' }));
+    throw new Error(err.error);
+  }
 };
 
 export const fetchRepoDocs = async () => {

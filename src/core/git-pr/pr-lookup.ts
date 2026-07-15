@@ -122,23 +122,42 @@ function runGhApiGraphql<T>(
   repo: string,
   number: string,
 ): Promise<T | undefined> {
+  // `number` goes through -F (typed) so it lands as the Int! the queries declare;
+  // everything else is a plain string.
+  return runGhApiGraphqlArgs<T>(root, [
+    '-f',
+    `query=${query}`,
+    '-f',
+    `owner=${owner}`,
+    '-f',
+    `repo=${repo}`,
+    '-F',
+    `number=${number}`,
+  ]);
+}
+
+/**
+ * Variable-passing sibling of `runGhApiGraphql` for the review-thread mutations,
+ * whose variables are all `ID!`/`String!` and so all pass through -f.
+ */
+function runGhApiGraphqlVars<T>(
+  root: string,
+  query: string,
+  vars: Record<string, string>,
+): Promise<T | undefined> {
+  const args = ['-f', `query=${query}`];
+  for (const [key, value] of Object.entries(vars)) {
+    args.push('-f', `${key}=${value}`);
+  }
+  return runGhApiGraphqlArgs<T>(root, args);
+}
+
+function runGhApiGraphqlArgs<T>(root: string, args: string[]): Promise<T | undefined> {
   return new Promise((resolve) => {
-    const proc = spawn(
-      'gh',
-      [
-        'api',
-        'graphql',
-        '-f',
-        `query=${query}`,
-        '-f',
-        `owner=${owner}`,
-        '-f',
-        `repo=${repo}`,
-        '-F',
-        `number=${number}`,
-      ],
-      { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] },
-    );
+    const proc = spawn('gh', ['api', 'graphql', ...args], {
+      cwd: root,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
     let settled = false;
     const settle = (fn: () => void) => {
       if (settled) return;
@@ -201,6 +220,7 @@ query($owner: String!, $repo: String!, $number: Int!) {
     pullRequest(number: $number) {
       reviewThreads(first: 100) {
         nodes {
+          id
           isResolved
           comments(first: 1) { nodes { path line body author { login } } }
         }
@@ -217,6 +237,7 @@ interface GraphqlThreadComment {
 }
 
 interface GraphqlThreadNode {
+  id: string;
   isResolved: boolean;
   comments: { nodes: GraphqlThreadComment[] };
 }
@@ -238,14 +259,58 @@ export async function fetchUnresolvedThreads(root: string, url: string): Promise
   const nodes = data?.data?.repository?.pullRequest?.reviewThreads.nodes ?? [];
   return nodes
     .filter((n) => !n.isResolved)
-    .map((n) => n.comments.nodes[0])
-    .filter((c): c is GraphqlThreadComment => Boolean(c))
-    .map((c) => ({
+    .map((n) => ({ id: n.id, comment: n.comments.nodes[0] }))
+    .filter((t): t is { id: string; comment: GraphqlThreadComment } => Boolean(t.comment))
+    .map(({ id, comment: c }) => ({
+      id,
       ...(c.path ? { path: c.path } : {}),
       ...(c.line != null ? { line: c.line } : {}),
       ...(c.author?.login ? { author: c.author.login } : {}),
       body: c.body,
     }));
+}
+
+const RESOLVE_THREAD_MUTATION = `
+mutation($threadId: ID!) {
+  resolveReviewThread(input: { threadId: $threadId }) {
+    thread { id isResolved }
+  }
+}`;
+
+const REPLY_THREAD_MUTATION = `
+mutation($threadId: ID!, $body: String!) {
+  addPullRequestReviewThreadReply(input: { pullRequestReviewThreadId: $threadId, body: $body }) {
+    comment { id }
+  }
+}`;
+
+/**
+ * Marks a review thread resolved. Called once the fix that addresses it is
+ * actually pushed (see the git push route) — resolving earlier would mark the
+ * thread done against code the PR can't see yet. Best-effort: returns false on
+ * any failure rather than throwing, since a failed resolve must not fail a push.
+ */
+export async function resolveReviewThread(root: string, threadId: string): Promise<boolean> {
+  const data = await runGhApiGraphqlVars<{
+    data?: { resolveReviewThread?: { thread?: { isResolved: boolean } } };
+  }>(root, RESOLVE_THREAD_MUTATION, { threadId });
+  return Boolean(data?.data?.resolveReviewThread?.thread?.isResolved);
+}
+
+/**
+ * Posts a reply on a review thread — used to record why the agent deliberately
+ * skipped a comment, so a rejected suggestion reads as a reasoned decision
+ * rather than silence. Best-effort, same as resolveReviewThread.
+ */
+export async function replyToReviewThread(
+  root: string,
+  threadId: string,
+  body: string,
+): Promise<boolean> {
+  const data = await runGhApiGraphqlVars<{
+    data?: { addPullRequestReviewThreadReply?: { comment?: { id: string } } };
+  }>(root, REPLY_THREAD_MUTATION, { threadId, body });
+  return Boolean(data?.data?.addPullRequestReviewThreadReply?.comment?.id);
 }
 
 /** Best-effort: enriches open/draft entries in place with review-thread signal. */
@@ -349,7 +414,11 @@ export async function resolvePrsByEntity(
   return prs;
 }
 
-/** Test-only: clears the module-level PR cache between test cases. */
+/**
+ * Clears the module-level PR cache. Used by the manual refresh route
+ * (`POST /api/refresh`) so a user-triggered refresh re-resolves PR/review state
+ * instead of replaying the TTL window, and by tests to isolate cases.
+ */
 export function clearPrCache(): void {
   cache.clear();
 }

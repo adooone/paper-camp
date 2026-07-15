@@ -1,5 +1,15 @@
 import type { AgentTaskState, ReconcileQueueItem } from '@/types/index';
 
+const handleAgentResponse = async (
+  response: Response,
+  fallback = 'Launch failed',
+): Promise<void> => {
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: fallback }));
+    throw new Error(err.error);
+  }
+};
+
 export const fetchAgentStatus = async (): Promise<AgentTaskState | null> => {
   const response = await fetch('/api/agent/status');
   return response.json();
@@ -16,10 +26,7 @@ export const launchAgent = async (planId: string, phaseIndex: number): Promise<v
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, phaseIndex }),
   });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
-    throw new Error(err.error);
-  }
+  await handleAgentResponse(response);
 };
 
 export const launchPlanAudit = async (planId: string, prompt: string): Promise<void> => {
@@ -28,10 +35,7 @@ export const launchPlanAudit = async (planId: string, prompt: string): Promise<v
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, prompt }),
   });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
-    throw new Error(err.error);
-  }
+  await handleAgentResponse(response);
 };
 
 export const launchPlanReconcile = async (planId: string, prompt: string): Promise<void> => {
@@ -40,10 +44,7 @@ export const launchPlanReconcile = async (planId: string, prompt: string): Promi
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, prompt }),
   });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
-    throw new Error(err.error);
-  }
+  await handleAgentResponse(response);
 };
 
 export const launchPlanDraft = async (ideaId: string, prompt: string): Promise<void> => {
@@ -52,10 +53,7 @@ export const launchPlanDraft = async (ideaId: string, prompt: string): Promise<v
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ideaId, prompt }),
   });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
-    throw new Error(err.error);
-  }
+  await handleAgentResponse(response);
 };
 
 export const launchIdeaExtend = async (ideaId: string, prompt: string): Promise<void> => {
@@ -64,18 +62,21 @@ export const launchIdeaExtend = async (ideaId: string, prompt: string): Promise<
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ideaId, prompt }),
   });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
-    throw new Error(err.error);
-  }
+  await handleAgentResponse(response);
+};
+
+export const launchSuggestIdeas = async (prompt: string): Promise<void> => {
+  const response = await fetch('/api/agent/launch-suggest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  await handleAgentResponse(response);
 };
 
 export const launchBatchReconcile = async (): Promise<void> => {
   const response = await fetch('/api/agent/launch-reconcile-all', { method: 'POST' });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
-    throw new Error(err.error);
-  }
+  await handleAgentResponse(response);
 };
 
 export const launchRunAll = async (planId: string): Promise<void> => {
@@ -84,10 +85,7 @@ export const launchRunAll = async (planId: string): Promise<void> => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),
   });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
-    throw new Error(err.error);
-  }
+  await handleAgentResponse(response);
 };
 
 export const launchFixReview = async (planId: string): Promise<void> => {
@@ -96,16 +94,10 @@ export const launchFixReview = async (planId: string): Promise<void> => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),
   });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
-    throw new Error(err.error);
-  }
+  await handleAgentResponse(response);
 };
 
 export const stopAgent = async (): Promise<void> => {
   const response = await fetch('/api/agent/stop', { method: 'POST' });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Stop failed' }));
-    throw new Error(err.error);
-  }
+  await handleAgentResponse(response, 'Stop failed');
 };

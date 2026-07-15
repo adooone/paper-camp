@@ -71,11 +71,28 @@ export type ReviewDecision = 'approved' | 'changes-requested' | 'review-required
  * fed to `buildFixReviewPrompt` in `prompts.ts`.
  */
 export interface ReviewThread {
+  /** GraphQL node id — what `resolveReviewThread`/`replyToReviewThread` address. */
+  id: string;
   /** File path the comment is anchored to; absent for a PR-level (not diff-anchored) comment. */
   path?: string;
   line?: number;
   author?: string;
   body: string;
+}
+
+/**
+ * What a fix-review agent reports back, parsed from the JSON object its prompt
+ * requires as its final line. The agent no longer commits — a human does — so
+ * this carries the message it proposes plus its per-comment verdicts, which drive
+ * which PR threads get resolved (once the fix is pushed) and which get a reply
+ * explaining why they were left alone.
+ */
+export interface FixReviewResult {
+  commit: { title: string; message: string };
+  /** Thread ids the agent says its changes settle. */
+  addressed: string[];
+  /** Thread ids it deliberately left alone, each with the reason to post back. */
+  skipped: { threadId: string; why: string }[];
 }
 
 /** Live-resolved PR info for an entity's branch — see `core/pr.ts`. */
@@ -192,6 +209,17 @@ export interface ProgressEntry {
   items: string[];
 }
 
+/**
+ * A single line in `papercamp/suggestions.md` — an agent's disposable "you
+ * might want to do X" hunch. No `id`, no `status`: it only becomes a real
+ * idea if a human promotes it (see IDEA-62).
+ */
+export interface SuggestionEntry {
+  date: string;
+  title: string;
+  description: string;
+}
+
 export interface EnvEntry {
   key: string;
   value: string;
@@ -305,6 +333,7 @@ export type TaskKind =
   | 'run-all'
   | 'draft'
   | 'extend'
+  | 'suggest'
   | 'commit-suggest'
   | 'overlap-check'
   | 'sync'
@@ -320,6 +349,12 @@ export interface AgentTaskState {
   ideaId?: string;
   agentId: AgentId;
   lines: string[];
+  /**
+   * fix-review only, once it has reported: the commit message the agent proposes
+   * for the work it left uncommitted. The commit form prefills from this — the
+   * agent knows the intent behind each fix, which a diff-based suggestion doesn't.
+   */
+  suggestedCommit?: { title: string; message: string };
 }
 
 // The AI Check-overlap action's triage result (IDEA-44 Tier 2): does the typed

@@ -223,18 +223,34 @@ For *when* motion is warranted at all and how restrained it should be, see
 
 ## 7. Comments earn their place
 
-A comment must explain a *why* that isn't derivable from the code: an
-environment quirk (e.g., clipboard over non-secure origins), a non-obvious
-protocol shape, a security or correctness rationale, or a paper-ui gap (§1).
-If none of those apply, don't write it.
+**The code is the documentation. The default number of comments is zero.**
 
-These do not qualify, and should be a rename instead:
+A comment must clear *all three* bars, or it doesn't ship:
+
+1. It states a *why* that is genuinely **not derivable** from the code — an
+   environment quirk (clipboard over non-secure origins), a spec footgun (auto
+   cross-axis margins suppress flex `stretch`), a protocol shape, a security
+   constraint, or a paper-ui gap (§1).
+2. Rediscovering it would cost a future reader **real debugging time**.
+3. It fits in **one line** (two at the absolute most).
+
+If you're writing a third line, you're explaining yourself, not the constraint —
+delete it and put the reasoning in the commit message, where it belongs.
+
+The bar is deliberately harsh because "explains a why" alone is too easy to
+argue for: almost any prose passes it, which is how the codebase drifted to
+~8% comment lines. When in doubt, delete. If the comment is load-bearing, the
+next reader will feel its absence and can add one line back.
+
+These never qualify — rename or restructure instead:
 
 - Restating what the next line already says.
-- Narrating history ("used to do X", "changed from Y") — git and
-  `papercamp/progress.md` hold that.
+- Narrating history or a decision ("used to do X", "changed from Y", "this is
+  better because") — git, the PR, and `papercamp/progress.md` hold that.
 - Labelling an obvious block ("// handlers", "// render") — a good name or a
   short function does that job.
+- Explaining your own reasoning for a change. That is commit-message content.
+- Paraphrasing a type or a prop name.
 
 If a comment is compensating for an unclear name, rename the thing instead of
 annotating it.

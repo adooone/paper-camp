@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { parseEntityFile } from '@/core/parse';
 import { entityToPlan } from '@/core/readers';
-import type { PhaseItem, PlanEntry } from '@/types/index';
+import type { PhaseItem, PlanEntry, ReviewThread } from '@/types/index';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAgentPrompt, createAgentManager } from './agent';
 
@@ -311,52 +311,66 @@ describe('start (single phase)', () => {
 });
 
 describe('startFixReview', () => {
-  const COMMIT_AND_PUSH = `
-const { execSync } = require('node:child_process');
-execSync('git commit -q --allow-empty -m "fix review comments"');
-execSync('git push -q');
-`;
+  const THREADS: ReviewThread[] = [
+    { id: 'PRRT_one', path: 'src/a.ts', body: 'first comment' },
+    { id: 'PRRT_two', path: 'src/b.ts', body: 'second comment' },
+  ];
 
-  const COMMIT_WITHOUT_PUSH = `
-const { execSync } = require('node:child_process');
-execSync('git commit -q --allow-empty -m "fix review comments"');
-`;
+  /** The agent's contract is its final JSON line — it must NOT commit. */
+  const reportScript = (result: unknown) =>
+    `console.log(${JSON.stringify(JSON.stringify(result))});`;
 
-  it('finishes cleanly when the agent commits and pushes', async () => {
+  const VERDICT = {
+    commit: { title: 'fix(app): Address review comments', message: 'body\n\nRefs: IDEA-9' },
+    addressed: [1],
+    skipped: [{ n: 2, why: 'repo is kebab-case' }],
+  };
+
+  it('finishes cleanly and maps the agent verdict back to thread ids', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
-    agentScript.current = COMMIT_AND_PUSH;
+    agentScript.current = reportScript(VERDICT);
     const manager = createAgentManager(root);
 
-    const result = await manager.startFixReview(plan, 'fix these comments');
+    const result = manager.startFixReview(plan, 'fix these comments', THREADS);
     expect(result).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     await new Promise((resolve) => setTimeout(resolve, 200));
     expect(manager.getStatus()?.lines.join('\n')).not.toContain('verify manually');
+    // 1-based verdicts resolve against the thread list the prompt numbered.
+    expect(manager.getFixReviewResult()).toEqual({
+      commit: VERDICT.commit,
+      addressed: ['PRRT_one'],
+      skipped: [{ threadId: 'PRRT_two', why: 'repo is kebab-case' }],
+    });
   });
 
-  it('warns when the agent commits locally but the push never lands', async () => {
+  it('treats a run that skips every comment as success, not a failure', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
-    agentScript.current = COMMIT_WITHOUT_PUSH;
+    agentScript.current = reportScript({
+      commit: { title: 'chore(app): No changes needed', message: '' },
+      addressed: [],
+      skipped: [
+        { n: 1, why: 'wrong about this codebase' },
+        { n: 2, why: 'conflicts with the established style' },
+      ],
+    });
     const manager = createAgentManager(root);
 
-    await manager.startFixReview(plan, 'fix these comments');
+    manager.startFixReview(plan, 'fix these comments', THREADS);
     expect(await waitForStatus(manager, settled)).toBe('done');
-    const start = Date.now();
-    while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
-      Date.now() - start < 5000
-    ) {
-      await new Promise((resolve) => setTimeout(resolve, 20));
-    }
-    expect(manager.getStatus()?.lines.join('\n')).toContain('no new commit was pushed');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    // Evaluating every comment and correctly rejecting them all IS the job done.
+    expect(manager.getStatus()?.lines.join('\n')).not.toContain('verify manually');
+    expect(manager.getFixReviewResult()?.addressed).toEqual([]);
+    expect(manager.getFixReviewResult()?.skipped).toHaveLength(2);
   });
 
-  it('warns when the agent exits cleanly without committing anything', async () => {
+  it('warns when the agent exits without reporting a verdict', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
     agentScript.current = 'process.exit(0)';
     const manager = createAgentManager(root);
 
-    await manager.startFixReview(plan, 'fix these comments');
+    manager.startFixReview(plan, 'fix these comments', THREADS);
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
@@ -365,7 +379,73 @@ execSync('git commit -q --allow-empty -m "fix review comments"');
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    expect(manager.getStatus()?.lines.join('\n')).toContain('no new commit was pushed');
+    expect(manager.getStatus()?.lines.join('\n')).toContain(
+      'without reporting which comments it addressed',
+    );
+    expect(manager.getFixReviewResult()).toBeNull();
+  });
+
+  it('rejects a verdict that omits a thread index', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = reportScript({
+      commit: { title: 'fix(app): Address review comments', message: 'body' },
+      addressed: [1],
+      skipped: [],
+    });
+    const manager = createAgentManager(root);
+
+    manager.startFixReview(plan, 'fix these comments', THREADS);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const start = Date.now();
+    while (
+      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      Date.now() - start < 5000
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(manager.getFixReviewResult()).toBeNull();
+  });
+
+  it('rejects a verdict with a duplicate thread index', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = reportScript({
+      commit: { title: 'fix(app): Address review comments', message: 'body' },
+      addressed: [1, 1],
+      skipped: [{ n: 2, why: 'not applicable' }],
+    });
+    const manager = createAgentManager(root);
+
+    manager.startFixReview(plan, 'fix these comments', THREADS);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const start = Date.now();
+    while (
+      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      Date.now() - start < 5000
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(manager.getFixReviewResult()).toBeNull();
+  });
+
+  it('rejects a verdict that lists the same thread as both addressed and skipped', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = reportScript({
+      commit: { title: 'fix(app): Address review comments', message: 'body' },
+      addressed: [1],
+      skipped: [{ n: 1, why: 'also skipped' }],
+    });
+    const manager = createAgentManager(root);
+
+    manager.startFixReview(plan, 'fix these comments', THREADS);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const start = Date.now();
+    while (
+      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      Date.now() - start < 5000
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(manager.getFixReviewResult()).toBeNull();
   });
 
   it('rejects concurrent starts while another agent task is running', async () => {
@@ -374,7 +454,7 @@ execSync('git commit -q --allow-empty -m "fix review comments"');
     const manager = createAgentManager(root);
 
     expect(manager.start(plan, 0)).toEqual({ ok: true });
-    expect(await manager.startFixReview(plan, 'fix these comments')).toEqual({
+    expect(manager.startFixReview(plan, 'fix these comments', THREADS)).toEqual({
       ok: false,
       error: 'An agent task is already running',
     });

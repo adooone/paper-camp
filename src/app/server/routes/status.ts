@@ -1,3 +1,4 @@
+import { clearPrCache } from '@/core/git-pr';
 import { requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
@@ -8,6 +9,18 @@ export function statusRoutes({ activity, agent, git, status }: RouteContext): Ro
       path: '/api/status',
       handle: (_req, res) => {
         sendJson(res, 200, status.getStatus());
+      },
+    },
+
+    // Drops the resolved-PR cache so the *next* worklist read re-shells out to
+    // `gh` instead of serving up to PR_CACHE_TTL_MS-old review state. Without
+    // this a manual refresh would re-render the same stale PR/review signal.
+    {
+      method: 'POST',
+      path: '/api/refresh',
+      handle: (_req, res) => {
+        clearPrCache();
+        sendJson(res, 200, { ok: true });
       },
     },
 

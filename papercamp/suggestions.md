@@ -1,0 +1,2 @@
+- 2026-07-15: Overlap check on promote — POST /api/suggestions/promote mints an idea with no duplicate detection, unlike the manual New Idea path's check-overlap guard
+- 2026-07-15: De-dup suggestion lines — parseSuggestions keeps identical entries, so two same-title-same-date suggestions collide on the React key `date-title` and dismiss removes the wrong card
