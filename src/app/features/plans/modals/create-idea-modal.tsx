@@ -29,8 +29,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
   const { patch } = usePlanStatusPatch();
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
+  const agentBusy = agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
   const navigate = useNavigate();
   // Include `log` alongside the base candidate shape — Extend/Draft need it,
   // beyond what an "Open it"-only shape would carry.

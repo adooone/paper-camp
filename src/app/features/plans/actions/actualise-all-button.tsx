@@ -8,8 +8,7 @@ export const ActualiseAllButton = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const [launching, setLaunching] = useState(false);
 
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
+  const agentBusy = agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
 
   const handleClick = async () => {
     setLaunching(true);

@@ -143,7 +143,7 @@ type AppStore = {
   // so callers like quickCommit can tell that apart from a real success.
   loadGitStatus: () => Promise<boolean>;
 
-  agentStatus: AgentTaskState | null;
+  agentStatus: AgentTaskState[];
   loadAgentStatus: () => Promise<void>;
   launchAgent: (planId: string, phaseIndex: number) => Promise<void>;
   launchPlanAudit: (planId: string, prompt: string) => Promise<void>;
@@ -174,7 +174,7 @@ type AppStore = {
   reconcileQueue: ReconcilePreview[];
   removeFromReconcileQueue: (planId: string) => void;
   // Guards loadAgentStatus against re-fetching/re-appending the same batch reconcile
-  // sweep's results on every poll while its task stays 'done' as `current`.
+  // sweep's results on every poll while its task stays 'done' in the task list.
   batchReconcileConsumed: boolean;
 };
 
@@ -444,7 +444,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  agentStatus: null,
+  agentStatus: [],
   loadAgentStatus: async () => {
     try {
       const data = await fetchAgentStatus();
@@ -454,12 +454,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
       // here (not in ReconcileButton) so it fires regardless of which plan view is
       // mounted.
       const pending = get().pendingReconcile;
-      if (pending && data?.taskKind === 'reconcile' && data.planId === pending.planId) {
-        if (data.status === 'done') {
+      const reconcileTask = pending
+        ? data.find((t) => t.taskKind === 'reconcile' && t.planId === pending.planId)
+        : undefined;
+      if (pending && reconcileTask) {
+        if (reconcileTask.status === 'done') {
           // loadPlans first: if it throws, pendingReconcile stays set and retries.
           await get().loadPlans();
           set((s) => ({ reconcileQueue: [...s.reconcileQueue, pending], pendingReconcile: null }));
-        } else if (data.status === 'error') {
+        } else if (reconcileTask.status === 'error') {
           set({ pendingReconcile: null });
         }
       }
@@ -469,11 +472,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
       // never captured a `before` snapshot itself. Guarded by batchReconcileConsumed
       // so repeated polls of the same 'done' status don't re-append the same entries;
       // the guard is reset at the next launch (see launchBatchReconcile).
-      if (
-        data?.taskKind === 'batch-reconcile' &&
-        data.status === 'done' &&
-        !get().batchReconcileConsumed
-      ) {
+      const batchTask = data.find((t) => t.taskKind === 'batch-reconcile');
+      if (batchTask?.status === 'done' && !get().batchReconcileConsumed) {
         const results = await fetchReconcileQueue();
         if (results && results.length > 0) {
           await get().loadPlans();

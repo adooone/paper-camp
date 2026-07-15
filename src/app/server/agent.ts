@@ -164,8 +164,8 @@ export function createAgentManager(
   // review threads when the fix finally reaches the PR.
   let pendingFixReviewResult: FixReviewResult | null = null;
 
-  function broadcast(message: string) {
-    const data = `data: ${JSON.stringify({ message, timestamp: new Date().toISOString(), type: 'agent' })}\n\n`;
+  function broadcast(message: string, taskId?: string) {
+    const data = `data: ${JSON.stringify({ message, timestamp: new Date().toISOString(), type: 'agent', taskId })}\n\n`;
     for (const client of clients) {
       try {
         client.write(data);
@@ -178,12 +178,12 @@ export function createAgentManager(
   function pushLine(task: AgentTask, text: string) {
     task.lines.push(text);
     if (task.lines.length > MAX_LINES) task.lines.shift();
-    broadcast(text);
+    broadcast(text, task.id);
   }
 
   function setStatus(task: AgentTask, status: AgentTaskStatus) {
     task.status = status;
-    broadcast(`agent: ${status}`);
+    broadcast(`agent: ${status}`, task.id);
   }
 
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
@@ -1105,10 +1105,11 @@ export function createAgentManager(
     return { ok: true };
   }
 
-  function getStatus(): AgentTaskState | null {
-    const task = currentTask();
-    if (!task) return null;
-    return {
+  // Newest-launched first — `tasks` is insertion-ordered by launch (each task gets
+  // a fresh id, so no re-insertion ever reorders it), so reversing it is enough.
+  function getStatus(): AgentTaskState[] {
+    return [...tasks.values()].reverse().map((task) => ({
+      id: task.id,
       status: task.status,
       taskKind: task.taskKind,
       planTitle: task.planTitle,
@@ -1118,7 +1119,7 @@ export function createAgentManager(
       agentId: task.agentId,
       lines: [...task.lines],
       ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
-    };
+    }));
   }
 
   // The most recent batch-reconcile sweep's per-entity results, or null if the
@@ -1191,7 +1192,7 @@ export interface AgentManager {
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
   stop: () => Result;
-  getStatus: () => AgentTaskState | null;
+  getStatus: () => AgentTaskState[];
   getReconcileQueue: () => ReconcileQueueItem[] | null;
   subscribe: (res: ServerResponse) => void;
   killCurrent: () => void;

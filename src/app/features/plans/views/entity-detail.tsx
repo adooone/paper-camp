@@ -55,17 +55,12 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
-  const agentPhaseIndex =
-    agentBusy && agentStatus !== null && agentStatus.planId === plan.id
-      ? agentStatus.phaseIndex
-      : null;
-  const auditRunning =
-    agentBusy &&
-    agentStatus !== null &&
-    agentStatus.planId === plan.id &&
-    agentStatus.phaseIndex === undefined;
+  const agentBusy = agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
+  const planTask = agentStatus.find(
+    (t) => t.planId === plan.id && t.status !== 'done' && t.status !== 'error',
+  );
+  const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
+  const auditRunning = planTask !== undefined && planTask.phaseIndex === undefined;
   const [logInput, setLogInput] = useState('');
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
@@ -358,7 +353,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                   <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
                     <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
                     {!phase.done && agentPhaseIndex === index ? (
-                      <Spinner size="small" label={`Agent ${agentStatus?.status}…`} />
+                      <Spinner size="small" label={`Agent ${planTask?.status}…`} />
                     ) : (
                       !phase.done && (
                         <AgentStartButton

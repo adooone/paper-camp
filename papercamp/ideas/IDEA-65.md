@@ -35,7 +35,7 @@ The prize is that the cheap read-only prompts stop queueing behind long ones —
       Replace the global busy flag with a partition by what a task writes: always-safe, disjoint entity writers (`suggest` vs `reconcile`/`draft`/`extend`), and exclusive (`phase`/`run-all`/`fix-review`/`sync`). A launch is admitted unless its write-set collides with a running task.
 - [x] Fan `current` into a task registry
       Turn `let current` into a keyed collection and give every task an id; thread that id through `getStatus`, `getReconcileQueue`, `getFixReviewResult`, `stop`, `killCurrent`, and the ~50 other `current` reads.
-- [ ] Carry the task id on the SSE tick and client state
+- [x] Carry the task id on the SSE tick and client state
       Make the `type: 'agent'` tick say which task moved; turn `AgentTaskState` and the client's `agentStatus` mirror from a single object into lists.
 - [ ] Make the Stack Agent card a real stack
       Render the 3 most recent tasks newest-on-top, each with its own status and stop control, so a finished run stays visible instead of being overwritten by the next launch.

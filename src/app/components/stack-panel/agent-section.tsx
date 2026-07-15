@@ -12,7 +12,9 @@ import {
 } from './shared';
 
 export const AgentSection = () => {
-  const agentStatus = useAppStore((s) => s.agentStatus);
+  // Most-recently-launched task only, for now — showing the rest as a real stack
+  // is IDEA-65 phase 5's job.
+  const agentStatus = useAppStore((s) => s.agentStatus[0] ?? null);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
   const [agentLogExpanded, setAgentLogExpanded] = useState(false);
 

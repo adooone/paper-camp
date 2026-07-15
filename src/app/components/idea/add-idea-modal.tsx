@@ -32,8 +32,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
   const { patch } = usePlanStatusPatch();
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
+  const agentBusy = agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
   const navigate = useNavigate();
   const { toast } = useToast();
   const similarIdeas = useSimilarIdeas(

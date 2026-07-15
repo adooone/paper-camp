@@ -10,7 +10,7 @@ const handleAgentResponse = async (
   }
 };
 
-export const fetchAgentStatus = async (): Promise<AgentTaskState | null> => {
+export const fetchAgentStatus = async (): Promise<AgentTaskState[]> => {
   const response = await fetch('/api/agent/status');
   return response.json();
 };

@@ -34,8 +34,7 @@ export const PlanActionsColumn = () => {
   const plan = activePlanTitle ? plans?.entries.find((p) => p.title === activePlanTitle) : null;
   if (!plan) return null;
 
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
+  const agentBusy = agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
   const inProgress = plan.status === 'in-progress';
   const underReview = plan.status === 'review';
   const dropped = plan.status === 'dropped';

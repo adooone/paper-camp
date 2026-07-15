@@ -341,6 +341,7 @@ export type TaskKind =
   | 'fix-review';
 
 export interface AgentTaskState {
+  id: string;
   status: AgentTaskStatus;
   taskKind: TaskKind;
   planTitle: string;

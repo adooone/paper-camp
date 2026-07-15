@@ -95,6 +95,12 @@ async function makeRoot(planMd: string): Promise<{ root: string; plan: PlanEntry
 
 type Manager = ReturnType<typeof createAgentManager>;
 
+// Most-recently-launched task — mirrors the old single-slot getStatus() shape for
+// tests that only ever have one task in flight at a time.
+function currentStatus(manager: Manager) {
+  return manager.getStatus()[0];
+}
+
 async function waitForStatus(
   manager: Manager,
   done: (status: string) => boolean,
@@ -102,11 +108,11 @@ async function waitForStatus(
 ): Promise<string> {
   const start = Date.now();
   for (;;) {
-    const status = manager.getStatus()?.status;
+    const status = currentStatus(manager)?.status;
     if (status && done(status)) return status;
     if (Date.now() - start > timeoutMs) {
       throw new Error(
-        `timed out waiting; last status: ${status}, lines: ${manager.getStatus()?.lines.join(' | ')}`,
+        `timed out waiting; last status: ${status}, lines: ${currentStatus(manager)?.lines.join(' | ')}`,
       );
     }
     await new Promise((resolve) => setTimeout(resolve, 20));
@@ -197,7 +203,7 @@ describe('startRunAllPhases', () => {
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('checkbox did not flip');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('checkbox did not flip');
     // Stopped after the first phase: no second spawn, no commit, no review handoff.
     expect(spawns).toHaveLength(1);
     expect(onPhaseCommit).not.toHaveBeenCalled();
@@ -212,7 +218,7 @@ describe('startRunAllPhases', () => {
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('agent error');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('agent error');
     expect(onPhaseCommit).not.toHaveBeenCalled();
   });
 
@@ -225,7 +231,7 @@ describe('startRunAllPhases', () => {
 
     manager.startRunAllPhases(plan, async () => false);
     expect(await waitForStatus(manager, settled)).toBe('error');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('project checks failed');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('project checks failed');
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
   });
@@ -351,7 +357,7 @@ describe('start (single phase)', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     // The post-run verification is async; give it a beat before asserting no warning.
     await new Promise((resolve) => setTimeout(resolve, 200));
-    expect(manager.getStatus()?.lines.join('\n')).not.toContain('verify manually');
+    expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
   });
 
   it('warns when the agent exits cleanly without checking off the phase', async () => {
@@ -363,12 +369,12 @@ describe('start (single phase)', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      !currentStatus(manager)?.lines.join('\n').includes('verify manually') &&
       Date.now() - start < 5000
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    expect(manager.getStatus()?.lines.join('\n')).toContain(
+    expect(currentStatus(manager)?.lines.join('\n')).toContain(
       'did not check off this phase in the plan file',
     );
   });
@@ -405,7 +411,7 @@ describe('startFixReview', () => {
     expect(result).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     await new Promise((resolve) => setTimeout(resolve, 200));
-    expect(manager.getStatus()?.lines.join('\n')).not.toContain('verify manually');
+    expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
     // 1-based verdicts resolve against the thread list the prompt numbered.
     expect(manager.getFixReviewResult()).toEqual({
       commit: VERDICT.commit,
@@ -430,7 +436,7 @@ describe('startFixReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     await new Promise((resolve) => setTimeout(resolve, 200));
     // Evaluating every comment and correctly rejecting them all IS the job done.
-    expect(manager.getStatus()?.lines.join('\n')).not.toContain('verify manually');
+    expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
     expect(manager.getFixReviewResult()?.addressed).toEqual([]);
     expect(manager.getFixReviewResult()?.skipped).toHaveLength(2);
   });
@@ -444,12 +450,12 @@ describe('startFixReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      !currentStatus(manager)?.lines.join('\n').includes('verify manually') &&
       Date.now() - start < 5000
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    expect(manager.getStatus()?.lines.join('\n')).toContain(
+    expect(currentStatus(manager)?.lines.join('\n')).toContain(
       'without reporting which comments it addressed',
     );
     expect(manager.getFixReviewResult()).toBeNull();
@@ -468,7 +474,7 @@ describe('startFixReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      !currentStatus(manager)?.lines.join('\n').includes('verify manually') &&
       Date.now() - start < 5000
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -489,7 +495,7 @@ describe('startFixReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      !currentStatus(manager)?.lines.join('\n').includes('verify manually') &&
       Date.now() - start < 5000
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -510,7 +516,7 @@ describe('startFixReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      !currentStatus(manager)?.lines.join('\n').includes('verify manually') &&
       Date.now() - start < 5000
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -545,10 +551,10 @@ describe('stop and getStatus', () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const manager = createAgentManager(root);
-    expect(manager.getStatus()).toBeNull();
+    expect(manager.getStatus()).toEqual([]);
 
     manager.startRunAllPhases(plan);
-    const state = manager.getStatus();
+    const state = currentStatus(manager);
     expect(state).toMatchObject({
       taskKind: 'run-all',
       planTitle: 'Test plan',
@@ -589,7 +595,7 @@ fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated pl
 
     expect(manager.startBatchReconcile()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
 
     const queue = manager.getReconcileQueue();
     expect(queue).toEqual([
@@ -604,7 +610,7 @@ fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated pl
 
     expect(manager.startBatchReconcile()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — no drift found');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('[done] IDEA-1 — no drift found');
     expect(manager.getReconcileQueue()).toEqual([]);
   });
 
@@ -629,7 +635,7 @@ Plan body.
 
     expect(manager.startBatchReconcile()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
   });
 
   it('excludes an entity whose stored status is done', async () => {
@@ -647,7 +653,9 @@ Plan body.
 
     expect(manager.startBatchReconcile()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('No open ideas or plans to reconcile.');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain(
+      'No open ideas or plans to reconcile.',
+    );
   });
 
   it('returns null once a different task kind becomes current', async () => {
