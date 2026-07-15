@@ -13,6 +13,7 @@ import type {
   PlanEntry,
   ProgressEntry,
   RawEntry,
+  SuggestionEntry,
 } from '../../types/index';
 import {
   decisionFieldsSchema,
@@ -549,5 +550,26 @@ export function parseProgress(markdown: string): ProgressEntry[] {
     entries.push({ date, items });
   }
 
+  return entries;
+}
+
+const SUGGESTION_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s+(.+?)\s+—\s+(.*)$/;
+
+/**
+ * suggestions.md is a flat, append-only line log — sibling to decisions.md/
+ * open-questions.md/progress.md but with no `## Heading` per entry and no
+ * `**Field:**` lines: each line already carries its own date, title, and a
+ * one-line description (like plans' dated `### Log` grammar), and there is
+ * no `id` or `status` since a suggestion never counts as a plan/idea until a
+ * human promotes it.
+ */
+export function parseSuggestions(markdown: string): SuggestionEntry[] {
+  const entries: SuggestionEntry[] = [];
+  for (const line of markdown.split('\n')) {
+    const match = line.match(SUGGESTION_ENTRY_RE);
+    if (match) {
+      entries.push({ date: match[1], title: match[2].trim(), description: match[3].trim() });
+    }
+  }
   return entries;
 }

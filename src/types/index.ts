@@ -192,6 +192,17 @@ export interface ProgressEntry {
   items: string[];
 }
 
+/**
+ * A single line in `papercamp/suggestions.md` — an agent's disposable "you
+ * might want to do X" hunch. No `id`, no `status`: it only becomes a real
+ * idea if a human promotes it (see IDEA-62).
+ */
+export interface SuggestionEntry {
+  date: string;
+  title: string;
+  description: string;
+}
+
 export interface EnvEntry {
   key: string;
   value: string;
