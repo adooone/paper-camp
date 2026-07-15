@@ -65,6 +65,7 @@ function writeStoredCommitField(key: string, value: string): void {
 
 export const CommitSection = () => {
   const plans = useAppStore((s) => s.plans);
+  const agentStatus = useAppStore((s) => s.agentStatus);
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
@@ -132,6 +133,22 @@ export const CommitSection = () => {
       setCommitTitle(suggestedTitle);
     }
   }, [suggestedTitle, commitTitle]);
+
+  // A finished fix-review leaves its work uncommitted and reports the message it
+  // wants that work committed under. It beats both the heuristic default above and
+  // a diff-based suggestion — the agent knows why it made each change — so it wins
+  // outright. Keyed by content so it applies once per run and doesn't fight the
+  // user's own edits afterwards.
+  const appliedAgentCommitRef = useRef<string | null>(null);
+  useEffect(() => {
+    const suggested = agentStatus?.suggestedCommit;
+    if (!suggested) return;
+    const key = `${suggested.title}\n${suggested.message}`;
+    if (appliedAgentCommitRef.current === key) return;
+    appliedAgentCommitRef.current = key;
+    setCommitTitle(suggested.title);
+    setCommitMessage(suggested.message);
+  }, [agentStatus?.suggestedCommit]);
 
   useEffect(() => {
     if (suggestedMessage && !commitMessage) {

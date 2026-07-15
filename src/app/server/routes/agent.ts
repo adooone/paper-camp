@@ -356,7 +356,9 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           return;
         }
         const prompt = buildFixReviewPrompt(plan, threads);
-        const result = await agent.startFixReview(plan, prompt);
+        // Same `threads` array the prompt numbered, so the agent's 1-based verdicts
+        // map back to the right thread ids.
+        const result = agent.startFixReview(plan, prompt, threads);
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });
           return;

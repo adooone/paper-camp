@@ -110,17 +110,19 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).toContain('(no existing ideas yet)');
   });
 
-  // The fix-review launch path runs on the plan's already-open PR branch and
-  // must push, unlike every prompt above.
-  it('fix-review prompt renders each unresolved thread with its location and pushes the fix', () => {
+  // The fix-review launch path runs on the plan's already-open PR branch, but
+  // deliberately does NOT commit: a human reviews and commits the work, using
+  // the message the agent proposes (it knows the intent behind each fix).
+  it('fix-review prompt renders each unresolved thread and leaves the work uncommitted', () => {
     const threads: ReviewThread[] = [
       {
+        id: 'PRRT_1',
         path: 'src/core/pr.ts',
         line: 42,
         author: 'coderabbitai',
         body: 'This can throw on empty input.',
       },
-      { body: 'General comment with no diff anchor.' },
+      { id: 'PRRT_2', body: 'General comment with no diff anchor.' },
     ];
     const prompt = buildFixReviewPrompt(plan, threads);
     expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
@@ -129,14 +131,16 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).toContain('This can throw on empty input.');
     expect(prompt).toContain('(general PR comment)');
     expect(prompt).toContain('General comment with no diff anchor.');
-    expect(prompt).toContain('Commit your changes and push');
-    // The commit must land with a convention-following message so no manual
-    // suggest step is needed after the fix — type(scope) title + Refs footer.
+    // The human commits, so the agent must not: it only proposes the message.
+    expect(prompt).toContain('Do NOT commit, push, stage, or create a branch');
+    expect(prompt).not.toContain('git commit --no-verify');
     expect(prompt).toContain('type(scope): Description');
     expect(prompt).toContain('Refs: IDEA-9');
-    // Must commit with --no-verify or the commit-msg lint hook rejects the
-    // machine commit and leaves the work uncommitted (the reported bug).
-    expect(prompt).toContain('git commit --no-verify');
+    // Every comment must be accounted for as addressed or skipped — that split
+    // drives which PR threads get resolved (on push) vs replied to.
+    expect(prompt).toContain('"addressed"');
+    expect(prompt).toContain('"skipped"');
+    expect(prompt).toContain('from 1 to 2');
     // Must evaluate comments, not blindly obey — a wrong suggestion (e.g. the
     // papercamp heading demotion) shouldn't be applied.
     expect(prompt).toContain('NOT a command to obey');
@@ -147,6 +151,6 @@ describe('agent prompts target the unified entity corpus', () => {
     const prompt = buildFixReviewPrompt(plan, []);
     expect(prompt).toContain('no unresolved review threads were found');
     expect(prompt).toContain('do not edit, commit, or push anything');
-    expect(prompt).not.toContain('Commit your changes and push');
+    expect(prompt).not.toContain('"addressed"');
   });
 });

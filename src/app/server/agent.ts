@@ -14,11 +14,13 @@ import {
   type AgentTaskStatus,
   DEFAULT_AGENTS,
   type DefaultAgentsMap,
+  type FixReviewResult,
   type IdeaEntry,
   type PaperCampConfig,
   type PhaseItem,
   type PlanEntry,
   type ReconcileQueueItem,
+  type ReviewThread,
   type TaskKind,
   coerceAgentConfig,
 } from '@/types/index';
@@ -51,11 +53,14 @@ interface AgentTask {
   // this task isn't scoped to any single entity — success is judged by whether that
   // count grew, not by any id.
   suggestBaseline?: number;
-  // For fix-review tasks: the branch's HEAD commit hash before launch. This task edits
-  // arbitrary source files (whatever each review thread points at), so there's no
-  // markdown snapshot to diff against like reconcile — success is judged by whether
-  // the agent committed (and pushed) at least once, per its prompt's instructions.
-  fixReviewBaseline?: string;
+  // For fix-review tasks: the threads handed to the prompt, in the order it numbered
+  // them, so the agent's 1-based verdicts can be mapped back to thread ids.
+  fixReviewThreads?: ReviewThread[];
+  // For fix-review tasks: the verdicts parsed off the agent's final JSON line. This
+  // task edits arbitrary source files and deliberately doesn't commit (a human does),
+  // so there's no markdown snapshot or commit to diff against — emitting a parseable
+  // result IS the job, and that's what success is judged on.
+  fixReviewResult?: FixReviewResult;
   // For a batch-reconcile sweep: one entry per entity whose reconcile actually changed
   // its prose, holding the pre-run snapshot so the client can review/revert it later.
   // Read by GET /api/agent/reconcile-queue.
@@ -96,47 +101,6 @@ function readDefaultAgentIds(root: string): DefaultAgentsMap {
 }
 
 type Result = { ok: true } | { ok: false; error: string };
-
-/** Current HEAD commit hash of the repo at `root`, or `null` if `git` can't resolve it. */
-function getHeadCommit(root: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const proc = spawn('git', ['rev-parse', 'HEAD'], {
-      cwd: root,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    let stdout = '';
-    proc.stdout?.on('data', (d: Buffer) => {
-      stdout += d.toString();
-    });
-    proc.stderr?.on('data', () => {});
-    proc.on('close', (code) => resolve(code === 0 ? stdout.trim() : null));
-    proc.on('error', () => resolve(null));
-  });
-}
-
-/** True if local HEAD matches its upstream remote-tracking ref, i.e. the push landed. */
-function isHeadPushed(root: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const proc = spawn('git', ['rev-parse', 'HEAD', '@{u}'], {
-      cwd: root,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    let stdout = '';
-    proc.stdout?.on('data', (d: Buffer) => {
-      stdout += d.toString();
-    });
-    proc.stderr?.on('data', () => {});
-    proc.on('close', (code) => {
-      if (code !== 0) {
-        resolve(false);
-        return;
-      }
-      const [head, upstream] = stdout.trim().split('\n');
-      resolve(Boolean(head) && head === upstream);
-    });
-    proc.on('error', () => resolve(false));
-  });
-}
 
 export function buildAgentPrompt(plan: PlanEntry, phase: PhaseItem, phaseIndex: number): string {
   const details = phase.description ? `Phase details:\n${phase.description}\n\n` : '';
@@ -197,10 +161,10 @@ export function createAgentManager(
         return (idea.log?.length ?? 0) > task.ideaLogBaseline;
       }
       if (task.taskKind === 'fix-review') {
-        if (task.fixReviewBaseline === undefined) return null;
-        const head = await getHeadCommit(root);
-        if (head === null || head === task.fixReviewBaseline) return false;
-        return await isHeadPushed(root);
+        // Parsed on completion (see finishTask). A run that evaluates every comment
+        // and correctly skips them all changed no files yet still did its job, so
+        // success is "reported a verdict", not "edited something".
+        return task.fixReviewResult !== undefined;
       }
       if (task.taskKind === 'reconcile') {
         const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
@@ -239,9 +203,52 @@ export function createAgentManager(
     }
   }
 
+  /**
+   * Pulls the fix-review verdict off the agent's output. Its prompt requires a JSON
+   * object as the final line; scan from the end so a JSON-looking snippet quoted
+   * earlier in the reply (e.g. echoing a review comment) can't win over the real one.
+   */
+  function parseFixReviewResult(task: AgentTask): FixReviewResult | undefined {
+    const threads = task.fixReviewThreads ?? [];
+    const text = task.lines.join('\n');
+    const candidates = text.match(
+      /\{[\s\S]*?"addressed"[\s\S]*?\}\s*$|\{[\s\S]*"addressed"[\s\S]*\}/g,
+    );
+    if (!candidates?.length) return undefined;
+    for (const candidate of [...candidates].reverse()) {
+      try {
+        const parsed = JSON.parse(candidate) as {
+          commit?: { title?: string; message?: string };
+          addressed?: number[];
+          skipped?: { n?: number; why?: string }[];
+        };
+        if (!parsed.commit?.title) continue;
+        // The agent numbers comments 1-based against the list the prompt gave it;
+        // anything out of range is dropped rather than trusted.
+        const idAt = (n: number | undefined): string | undefined =>
+          typeof n === 'number' ? threads[n - 1]?.id : undefined;
+        return {
+          commit: { title: parsed.commit.title, message: parsed.commit.message ?? '' },
+          addressed: (parsed.addressed ?? [])
+            .map(idAt)
+            .filter((id): id is string => id !== undefined),
+          skipped: (parsed.skipped ?? [])
+            .map((s) => ({ threadId: idAt(s.n), why: s.why ?? '' }))
+            .filter((s): s is { threadId: string; why: string } => s.threadId !== undefined),
+        };
+      } catch {
+        // try the next candidate
+      }
+    }
+    return undefined;
+  }
+
   function finishTask(task: AgentTask, error: boolean) {
     setStatus(task, error ? 'error' : 'done');
     if (error) return;
+    if (task.taskKind === 'fix-review') {
+      task.fixReviewResult = parseFixReviewResult(task);
+    }
     didTaskProgress(task).then((progressed) => {
       if (current === task && progressed === false) {
         const warning =
@@ -252,7 +259,7 @@ export function createAgentManager(
               : task.taskKind === 'suggest'
                 ? 'Agent finished without appending any suggestions — nothing new found'
                 : task.taskKind === 'fix-review'
-                  ? 'Warning: agent finished but no new commit was pushed — verify manually'
+                  ? 'Warning: agent finished without reporting which comments it addressed — verify manually'
                   : task.ideaId !== undefined
                     ? `Warning: agent finished but ${task.ideaId} gained no Phases section — verify manually`
                     : task.phaseIndex !== undefined
@@ -321,7 +328,7 @@ export function createAgentManager(
       | 'ideaLogBaseline'
       | 'reconcileBaseline'
       | 'suggestBaseline'
-      | 'fixReviewBaseline'
+      | 'fixReviewThreads'
     >,
   ): Result {
     if (isBusy()) {
@@ -393,16 +400,15 @@ export function createAgentManager(
   }
 
   // Fix-review launch mode: unlike every other plan-scoped launch, this one runs on
-  // the plan's existing branch against an already-open PR and is judged by whether
-  // the agent committed at least once (per its prompt, it also pushes) — there's no
-  // markdown snapshot to diff since it edits whatever files the review threads point
-  // at. Async only because it needs the pre-launch HEAD commit; launch() itself still
-  // does its busy-check/reserve synchronously once called.
-  async function startFixReview(plan: PlanEntry, prompt: string): Promise<Result> {
-    const fixReviewBaseline = (await getHeadCommit(root)) ?? undefined;
+  // the plan's existing branch against an already-open PR and edits whatever files the
+  // review threads point at, so there's no markdown snapshot to diff. It deliberately
+  // doesn't commit — a human does, using the message it proposes — so success is the
+  // verdict it reports back (see parseFixReviewResult). `threads` is kept in the order
+  // the prompt numbered them, so those 1-based verdicts map back to thread ids.
+  function startFixReview(plan: PlanEntry, prompt: string, threads: ReviewThread[]): Result {
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
       taskKind: 'fix-review',
-      fixReviewBaseline,
+      fixReviewThreads: threads,
     });
   }
 
@@ -989,6 +995,7 @@ export function createAgentManager(
       ideaId: current.ideaId,
       agentId: current.agentId,
       lines: [...current.lines],
+      ...(current.fixReviewResult ? { suggestedCommit: current.fixReviewResult.commit } : {}),
     };
   }
 
@@ -1000,10 +1007,20 @@ export function createAgentManager(
     return [...(current.reconcileResults ?? [])];
   }
 
+  // The most recent fix-review run's verdict, or null if the current (or most
+  // recently finished) task isn't a fix-review that reported one. Consumed by the
+  // commit form (to prefill the agent's proposed message) and by the push route,
+  // which resolves the addressed threads once the fix actually reaches the PR.
+  function getFixReviewResult(): FixReviewResult | null {
+    if (!current || current.taskKind !== 'fix-review') return null;
+    return current.fixReviewResult ?? null;
+  }
+
   return {
     start,
     startForPlan,
     startFixReview,
+    getFixReviewResult,
     startForIdea,
     startForIdeaExtend,
     startBatchReconcile,
@@ -1030,7 +1047,8 @@ export function createAgentManager(
 export interface AgentManager {
   start: (plan: PlanEntry, phaseIndex: number) => Result;
   startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
-  startFixReview: (plan: PlanEntry, prompt: string) => Promise<Result>;
+  startFixReview: (plan: PlanEntry, prompt: string, threads: ReviewThread[]) => Result;
+  getFixReviewResult: () => FixReviewResult | null;
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchReconcile: () => Result;
