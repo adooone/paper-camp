@@ -2,6 +2,83 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0](https://github.com/adooone/paper-camp/compare/v0.7.0...v0.8.0) (2026-07-15)
+
+
+### Features
+
+* **app:** Add the needs-review queue ([e294e3f](https://github.com/adooone/paper-camp/commit/e294e3f3d6c2537d185bbcd47662b7c68fb8b598))
+* **app:** Build the ambient header status cluster ([814676e](https://github.com/adooone/paper-camp/commit/814676e5d1b719d9288bff0a2872d04187cb912a))
+* **app:** Course-correct focus cockpit, restore Stack panel ([ab100a3](https://github.com/adooone/paper-camp/commit/ab100a313d551a888a4fbfec3a593a6d0bd95ff6))
+* **app:** Expose suggestions over the API ([ae74238](https://github.com/adooone/paper-camp/commit/ae742389a2530fe47346cef009e3ce3757e47a7c))
+* **app:** Let agents append suggestions ([229f1d0](https://github.com/adooone/paper-camp/commit/229f1d03b52e8883ebbc8e136b46190cf88f40ba))
+* **app:** Let fix-review agents propose commits and hint the SSE stream ([147b37f](https://github.com/adooone/paper-camp/commit/147b37f0a413fb498c6add0a8d41a2c7d7ee3924))
+* **app:** mark IDEA-39 review ([1da445b](https://github.com/adooone/paper-camp/commit/1da445b742ab0a1bb483f74b34a2204e1b4a85d1))
+* **app:** Parse the suggestions store ([2024f70](https://github.com/adooone/paper-camp/commit/2024f709dd14a05681d2bb46a7954d68ed96d7eb))
+* **app:** Promote a suggestion to a real idea ([d30cf1e](https://github.com/adooone/paper-camp/commit/d30cf1e31c778cf8a7d29a0354392b33e2642482))
+* **app:** Render the "Suggested from AI" section ([7d490cf](https://github.com/adooone/paper-camp/commit/7d490cf8d496327d34b44f81725a48baf3a2a4a8))
+* **app:** Render the focus plan hero card ([154b222](https://github.com/adooone/paper-camp/commit/154b222300dcccf0376aed7381850a9b80123fcf))
+* **app:** Slim the Stack panel to a git/activity drawer ([1eb78ba](https://github.com/adooone/paper-camp/commit/1eb78ba56c8e2f6bd7ffda5a34a037d48ebb3b9f))
+* **app:** Summon commit from the header ([62daa9b](https://github.com/adooone/paper-camp/commit/62daa9bc642768cf577c2e6c2cf2647e54be4f7b))
+* **app:** Type-check and visual pass ([7061f82](https://github.com/adooone/paper-camp/commit/7061f821979b770a251ff5045470c6239bee93c4))
+* **app:** updates ([e2fca0c](https://github.com/adooone/paper-camp/commit/e2fca0c8d6ef048806db3b9e1f82599911665da0))
+* **app:** updates ([57a7fd5](https://github.com/adooone/paper-camp/commit/57a7fd5c300389622ae8c663ef8f93d80debe81a))
+* **ci:** Auto-label PRs from kind and tags ([55aa66a](https://github.com/adooone/paper-camp/commit/55aa66a77b52a0822716bba62bae6e19fa13720f))
+* **ci:** Build the plan↔PR resolver helper ([0a6a351](https://github.com/adooone/paper-camp/commit/0a6a351ac9a31a9152defe1901d17d073eb5e942))
+* **ci:** Flip PR readiness from phases and the dropped override ([1180c35](https://github.com/adooone/paper-camp/commit/1180c35510b06bcfbaca035851143ad480bb05c1))
+* **ci:** Post consistency checks as a PR comment ([8e367fe](https://github.com/adooone/paper-camp/commit/8e367fe386c8d9acab259ce508a85f0939b76441))
+* **ci:** Render plan phases as a PR task list ([6142ab5](https://github.com/adooone/paper-camp/commit/6142ab57de9deb464917b91a5f80b22ceb1fbdc2))
+* **plans:** Revert focus-plan hero card, keep list uniform ([3dbfcbe](https://github.com/adooone/paper-camp/commit/3dbfcbee409faccc7ca44cc6d81ac66dea8da717))
+* **plans:** Revert focus-plan hero card, keep status bar quick-commit ([cc0b1d4](https://github.com/adooone/paper-camp/commit/cc0b1d4f237feb02773761f9468b82774f48b1d2))
+* **plans:** Revert focus-plan hero, wire status bar to quickCommit ([26046c5](https://github.com/adooone/paper-camp/commit/26046c56994949750c89a80e14db4b3eec926d15))
+
+
+### Bug Fixes
+
+* **app:** Address PR review findings for IDEA-61 ([4465736](https://github.com/adooone/paper-camp/commit/4465736eb63f8d5068354994319baec1526a663e))
+* **app:** Extract agent-launch error handling and fix suggestion-line matching ([b2679c3](https://github.com/adooone/paper-camp/commit/b2679c3496d1c7bb3da12160469eff34f38479bf))
+* **app:** Move status bar separator to bottom edge ([10e9b0f](https://github.com/adooone/paper-camp/commit/10e9b0f4b32c62a0545b7e88f707ec082e43bff6))
+* **app:** Respect reduced-motion preference in refresh button ([6ccdce3](https://github.com/adooone/paper-camp/commit/6ccdce3d8a6209b696af491677dba79a801852f5))
+* **app:** Settle review threads right after fix-review finishes ([c3994bb](https://github.com/adooone/paper-camp/commit/c3994bb7b581481816f6cb77623f9ca683a5b29d))
+* **core:** Fix phase-body replacer and PATCH flag in PR sync ([ef9e074](https://github.com/adooone/paper-camp/commit/ef9e074241c4c321e02a1e6c9d362484dc3d5f52))
+* **server:** Lock API to trusted hosts and stop leaking env secrets ([fb786f9](https://github.com/adooone/paper-camp/commit/fb786f95ac70f4546dce66963cbf79563c294350))
+
+
+### Code Refactoring
+
+* **app:** (Stretch) Client render + bundle ([72cf7d6](https://github.com/adooone/paper-camp/commit/72cf7d6e55e8930a73886f61e0046360665d6a13))
+* **app:** Cache the parsed corpus off the existing watcher ([eb65354](https://github.com/adooone/paper-camp/commit/eb6535499c94304d8f073f9453df3e1f31db91c9))
+* **app:** Capture baseline endpoint timings ([bf335ce](https://github.com/adooone/paper-camp/commit/bf335ce7b5747bbdb9df07bc115a6899bd7dd258))
+* **app:** Coalesce the SSE-driven refetch ([a8e8345](https://github.com/adooone/paper-camp/commit/a8e8345568311d69c17f6e95d711a3f26e767ce7))
+* **app:** Codify the layout rule in the style guide ([03689ab](https://github.com/adooone/paper-camp/commit/03689abb948c8573b11729125861ee04dfcaa952))
+* **app:** Consolidate the inline icon/glyph SVGs ([0729008](https://github.com/adooone/paper-camp/commit/0729008abf35db6450051aee06a9da2c83316b83))
+* **app:** De-dupe imports, assets, and dead code across the app ([8f42476](https://github.com/adooone/paper-camp/commit/8f42476ae78b1ec3ad69848cce9c60aad71733b8))
+* **app:** Extract the check-status derivation into one helper ([40b4c22](https://github.com/adooone/paper-camp/commit/40b4c22a1ebcce06be8f40398d6068366f6589f0))
+* **app:** Group `core` into domain subfolders ([46bdc9a](https://github.com/adooone/paper-camp/commit/46bdc9a5bab16653a2419b745a16db07c7151f3a))
+* **app:** Group `features/plans/components` into domain subfolders ([382ae35](https://github.com/adooone/paper-camp/commit/382ae35030f7c58e2f04dfe4f727fc85ab6f9cc0))
+* **app:** Group the remaining wide folders ([d6a98f0](https://github.com/adooone/paper-camp/commit/d6a98f0f11bca293cac25d8d4bafdf7ef34b4fb2))
+* **app:** Inventory the load-bearing comments to preserve ([245feed](https://github.com/adooone/paper-camp/commit/245feed40c9dc80abdca7044a8f99558f430195c))
+* **app:** Parallelise the corpus read ([00f3f7e](https://github.com/adooone/paper-camp/commit/00f3f7ed4af098605fd237d792befc80a53800ff))
+* **app:** Parallelise the git status spawns ([7bb9a7b](https://github.com/adooone/paper-camp/commit/7bb9a7b8e058482bab33b39f4ba6598591da6d45))
+* **app:** Prune the dead exports knip flags ([4a2b669](https://github.com/adooone/paper-camp/commit/4a2b6691f702ded8bb4b53e6cb09fb6c5246031e))
+* **app:** Restyle status bar, fix sticky sidebar, tighten comments ([cd6a00f](https://github.com/adooone/paper-camp/commit/cd6a00ffaf0f2fef60938446b45c424b4ab9e222))
+* **app:** Rewrite CODE_STYLE.md §7 to the firmer bar ([10167da](https://github.com/adooone/paper-camp/commit/10167da88b0de046b02dbf8fb54a2adef6ddab5b))
+* **app:** Route the action pattern through `usePlanStatusPatch` ([ea50558](https://github.com/adooone/paper-camp/commit/ea505584d3ad6a53851aaf626ec126835d0b73a0))
+* **app:** Run the acceptance gate ([fb416b2](https://github.com/adooone/paper-camp/commit/fb416b24b38c38c1507433d6eb44781b780e5d72))
+* **app:** Split `stack-panel.tsx` into per-section components ([baa5088](https://github.com/adooone/paper-camp/commit/baa5088f15118d443893bc7dd4ea1f00eb7c04b1))
+* **app:** Sweep `src/app` ([369a725](https://github.com/adooone/paper-camp/commit/369a725f597324be8acf930caf550ff90b1dbc6e))
+* **app:** Sweep `src/app` for style-guide conformance ([2f66198](https://github.com/adooone/paper-camp/commit/2f66198d98318ca375101ab70a8aa1364dbed476))
+* **app:** Sweep `src/core` ([390660b](https://github.com/adooone/paper-camp/commit/390660b662c9eca8f69f6c266a437967fea717ce))
+* **app:** Sweep `src/server` and `src/agents` ([c2427a1](https://github.com/adooone/paper-camp/commit/c2427a1abd31ae046e78d955484710b59b776ec6))
+* **app:** Untangle the two import cycles ([ab60d62](https://github.com/adooone/paper-camp/commit/ab60d624d244c0aa25f0f1ae4ec075c21d13fdd1))
+* **app:** updates ([380a78a](https://github.com/adooone/paper-camp/commit/380a78af575cd8e705f17b0c5e97e0859528e475))
+* **app:** updates ([7de331b](https://github.com/adooone/paper-camp/commit/7de331b44d3231d2228f2891b84ce12b844ab5ce))
+* **app:** updates ([60c3dda](https://github.com/adooone/paper-camp/commit/60c3ddacfe62b14079527621eb8d233dfeb8390f))
+* **app:** updates ([43822ba](https://github.com/adooone/paper-camp/commit/43822ba5ffce0a04a7eb2794f15beb1363a8b584))
+* **app:** Verify the check suite stays green ([8ae40d4](https://github.com/adooone/paper-camp/commit/8ae40d4d2ea0f27e74c616b0123111bf2fa4b95c))
+* **app:** Verify the check suite stays green ([ab6e949](https://github.com/adooone/paper-camp/commit/ab6e949e701173b732e93ced9827408c42bfbc57))
+* **plans:** Restructure features/plans by role, not domain ([39fc8da](https://github.com/adooone/paper-camp/commit/39fc8da03e4315713e797c75b3f89faab11a2b9e))
+
 ## [0.7.0](https://github.com/adooone/paper-camp/compare/v0.6.0...v0.7.0) (2026-07-11)
 
 
