@@ -91,8 +91,10 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
           await git.push();
           // The fix is only visible to the PR once it's pushed, which is why the
           // review threads are settled here rather than when the agent finished:
-          // resolving earlier would mark threads done against unpushed code.
+          // resolving earlier would mark threads done against unpushed code. Consumed
+          // afterward so a later, unrelated push can't replay the same replies.
           const review = await settleReviewThreads(agent.getFixReviewResult());
+          if (review) agent.consumeFixReviewResult();
           sendJson(res, 200, { ok: true, ...(review ? { review } : {}) });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });

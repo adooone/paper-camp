@@ -128,6 +128,10 @@ export function createAgentManager(
 ) {
   const clients = new Set<ServerResponse>();
   let current: AgentTask | null = null;
+  // Survives past `current` being replaced by the next task: a human can launch
+  // another agent run before pushing, and the verdict must still be there to settle
+  // review threads when the fix finally reaches the PR.
+  let pendingFixReviewResult: FixReviewResult | null = null;
 
   function broadcast(message: string) {
     const data = `data: ${JSON.stringify({ message, timestamp: new Date().toISOString(), type: 'agent' })}\n\n`;
@@ -207,40 +211,44 @@ export function createAgentManager(
    * Pulls the fix-review verdict off the agent's output. Its prompt requires a JSON
    * object as the final line; scan from the end so a JSON-looking snippet quoted
    * earlier in the reply (e.g. echoing a review comment) can't win over the real one.
+   * A verdict is only trusted if it accounts for every thread exactly once — a
+   * partial or overlapping partition would settle some threads and silently
+   * strand the rest unresolved.
    */
   function parseFixReviewResult(task: AgentTask): FixReviewResult | undefined {
     const threads = task.fixReviewThreads ?? [];
-    const text = task.lines.join('\n');
-    const candidates = text.match(
-      /\{[\s\S]*?"addressed"[\s\S]*?\}\s*$|\{[\s\S]*"addressed"[\s\S]*\}/g,
-    );
-    if (!candidates?.length) return undefined;
-    for (const candidate of [...candidates].reverse()) {
-      try {
-        const parsed = JSON.parse(candidate) as {
-          commit?: { title?: string; message?: string };
-          addressed?: number[];
-          skipped?: { n?: number; why?: string }[];
-        };
-        if (!parsed.commit?.title) continue;
-        // The agent numbers comments 1-based against the list the prompt gave it;
-        // anything out of range is dropped rather than trusted.
-        const idAt = (n: number | undefined): string | undefined =>
-          typeof n === 'number' ? threads[n - 1]?.id : undefined;
-        return {
-          commit: { title: parsed.commit.title, message: parsed.commit.message ?? '' },
-          addressed: (parsed.addressed ?? [])
-            .map(idAt)
-            .filter((id): id is string => id !== undefined),
-          skipped: (parsed.skipped ?? [])
-            .map((s) => ({ threadId: idAt(s.n), why: s.why ?? '' }))
-            .filter((s): s is { threadId: string; why: string } => s.threadId !== undefined),
-        };
-      } catch {
-        // try the next candidate
+    const candidate = task.lines.findLast((line) => line.trim().length > 0);
+    if (!candidate) return undefined;
+    try {
+      const parsed = JSON.parse(candidate) as {
+        commit?: { title?: string; message?: string };
+        addressed?: number[];
+        skipped?: { n?: number; why?: string }[];
+      };
+      if (!parsed.commit?.title) return undefined;
+      const addressedNs = parsed.addressed ?? [];
+      const skipped = parsed.skipped ?? [];
+      const seen = new Set<number>();
+      for (const n of addressedNs) seen.add(n);
+      for (const s of skipped) {
+        if (typeof s.n !== 'number' || !s.why) return undefined;
+        seen.add(s.n);
       }
+      const total = addressedNs.length + skipped.length;
+      const inRange = (n: number) => Number.isInteger(n) && n >= 1 && n <= threads.length;
+      // Every thread index must appear exactly once across both lists: no gaps,
+      // no duplicates, and no index shared between addressed and skipped.
+      if (total !== threads.length || seen.size !== threads.length) return undefined;
+      if (![...seen].every(inRange)) return undefined;
+      const idAt = (n: number): string => threads[n - 1].id;
+      return {
+        commit: { title: parsed.commit.title, message: parsed.commit.message ?? '' },
+        addressed: addressedNs.map(idAt),
+        skipped: skipped.map((s) => ({ threadId: idAt(s.n as number), why: s.why as string })),
+      };
+    } catch {
+      return undefined;
     }
-    return undefined;
   }
 
   function finishTask(task: AgentTask, error: boolean) {
@@ -248,6 +256,7 @@ export function createAgentManager(
     if (error) return;
     if (task.taskKind === 'fix-review') {
       task.fixReviewResult = parseFixReviewResult(task);
+      if (task.fixReviewResult) pendingFixReviewResult = task.fixReviewResult;
     }
     didTaskProgress(task).then((progressed) => {
       if (current === task && progressed === false) {
@@ -1007,13 +1016,18 @@ export function createAgentManager(
     return [...(current.reconcileResults ?? [])];
   }
 
-  // The most recent fix-review run's verdict, or null if the current (or most
-  // recently finished) task isn't a fix-review that reported one. Consumed by the
-  // commit form (to prefill the agent's proposed message) and by the push route,
-  // which resolves the addressed threads once the fix actually reaches the PR.
+  // The most recent fix-review run's verdict that hasn't yet been consumed by a
+  // push. Read by the commit form (to prefill the agent's proposed message) and by
+  // the push route, which resolves the addressed threads once the fix actually
+  // reaches the PR. Survives further agent launches — see `pendingFixReviewResult`.
   function getFixReviewResult(): FixReviewResult | null {
-    if (!current || current.taskKind !== 'fix-review') return null;
-    return current.fixReviewResult ?? null;
+    return pendingFixReviewResult;
+  }
+
+  // Clears the pending verdict once the push route has settled its threads, so a
+  // later unrelated push can't replay the same resolve/reply calls.
+  function consumeFixReviewResult(): void {
+    pendingFixReviewResult = null;
   }
 
   return {
@@ -1021,6 +1035,7 @@ export function createAgentManager(
     startForPlan,
     startFixReview,
     getFixReviewResult,
+    consumeFixReviewResult,
     startForIdea,
     startForIdeaExtend,
     startBatchReconcile,
@@ -1049,6 +1064,7 @@ export interface AgentManager {
   startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
   startFixReview: (plan: PlanEntry, prompt: string, threads: ReviewThread[]) => Result;
   getFixReviewResult: () => FixReviewResult | null;
+  consumeFixReviewResult: () => void;
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchReconcile: () => Result;

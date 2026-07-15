@@ -142,7 +142,10 @@ export const CommitSection = () => {
   const appliedAgentCommitRef = useRef<string | null>(null);
   useEffect(() => {
     const suggested = agentStatus?.suggestedCommit;
-    if (!suggested) return;
+    if (!suggested) {
+      appliedAgentCommitRef.current = null;
+      return;
+    }
     const key = `${suggested.title}\n${suggested.message}`;
     if (appliedAgentCommitRef.current === key) return;
     appliedAgentCommitRef.current = key;

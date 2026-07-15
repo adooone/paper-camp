@@ -36,6 +36,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
+  const loadSuggestions = useAppStore((s) => s.loadSuggestions);
   const shouldReduceMotion = useReducedMotion();
   const refreshRef = useRef({
     loadProgress,
@@ -44,6 +45,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     loadConsistency,
     loadGitStatus,
     loadAgentStatus,
+    loadSuggestions,
   });
   useEffect(() => {
     refreshRef.current = {
@@ -53,6 +55,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       loadConsistency,
       loadGitStatus,
       loadAgentStatus,
+      loadSuggestions,
     };
   });
 
@@ -97,6 +100,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         () => {
           refreshRef.current.loadProgress();
           refreshRef.current.loadPlans();
+          refreshRef.current.loadSuggestions();
           refreshRef.current.loadStatus();
           refreshRef.current.loadConsistency();
           refreshRef.current.loadGitStatus();

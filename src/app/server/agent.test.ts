@@ -385,6 +385,69 @@ describe('startFixReview', () => {
     expect(manager.getFixReviewResult()).toBeNull();
   });
 
+  it('rejects a verdict that omits a thread index', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = reportScript({
+      commit: { title: 'fix(app): Address review comments', message: 'body' },
+      addressed: [1],
+      skipped: [],
+    });
+    const manager = createAgentManager(root);
+
+    manager.startFixReview(plan, 'fix these comments', THREADS);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const start = Date.now();
+    while (
+      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      Date.now() - start < 5000
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(manager.getFixReviewResult()).toBeNull();
+  });
+
+  it('rejects a verdict with a duplicate thread index', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = reportScript({
+      commit: { title: 'fix(app): Address review comments', message: 'body' },
+      addressed: [1, 1],
+      skipped: [{ n: 2, why: 'not applicable' }],
+    });
+    const manager = createAgentManager(root);
+
+    manager.startFixReview(plan, 'fix these comments', THREADS);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const start = Date.now();
+    while (
+      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      Date.now() - start < 5000
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(manager.getFixReviewResult()).toBeNull();
+  });
+
+  it('rejects a verdict that lists the same thread as both addressed and skipped', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = reportScript({
+      commit: { title: 'fix(app): Address review comments', message: 'body' },
+      addressed: [1],
+      skipped: [{ n: 1, why: 'also skipped' }],
+    });
+    const manager = createAgentManager(root);
+
+    manager.startFixReview(plan, 'fix these comments', THREADS);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const start = Date.now();
+    while (
+      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      Date.now() - start < 5000
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(manager.getFixReviewResult()).toBeNull();
+  });
+
   it('rejects concurrent starts while another agent task is running', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
     agentScript.current = 'setTimeout(() => process.exit(0), 5000)';
