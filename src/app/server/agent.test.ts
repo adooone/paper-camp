@@ -271,6 +271,51 @@ describe('startRunAllPhases', () => {
   });
 });
 
+describe('write-set collision gate', () => {
+  it('admits a disjoint entity-writer while one is running, but rejects same-entity and exclusive launches', async () => {
+    const { root, plan: plan1 } = await makeRoot(PLAN_TWO_PHASES);
+    const plan2Md = PLAN_TWO_PHASES.replace('IDEA-1', 'IDEA-2').replace('Test plan', 'Second plan');
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), plan2Md);
+    const plan2 = entityToPlan(parseEntityFile(plan2Md).entries[0]);
+
+    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
+    const manager = createAgentManager(root);
+
+    expect(manager.startForPlan(plan1, 'prompt', 'reconcile')).toEqual({ ok: true });
+    // Different entity: admitted even though a reconcile is already running (the
+    // write-set gate replaces the old blanket isBusy() flag).
+    expect(manager.startForPlan(plan2, 'prompt', 'reconcile')).toEqual({ ok: true });
+    // Same entity as the now-current task: still rejected.
+    expect(manager.startForPlan(plan2, 'prompt', 'reconcile')).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+    // Exclusive kind (worktree-wide): rejected regardless of which entity is idle.
+    expect(manager.start(plan1, 0)).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+
+    // Let both spawned children exit on their own before the test ends.
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  });
+
+  it('rejects a suggest-ideas launch while an exclusive task is running', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
+    const manager = createAgentManager(root);
+
+    expect(manager.start(plan, 0)).toEqual({ ok: true });
+    expect(await manager.startSuggest('prompt')).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+
+    manager.stop();
+    await waitForStatus(manager, settled);
+  });
+});
+
 describe('start (single phase)', () => {
   it('finishes cleanly when the agent checks off the phase', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
