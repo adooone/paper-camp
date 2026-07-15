@@ -111,7 +111,8 @@ const RootLayout = () => {
   }, [pathname]);
 
   return (
-    <ToastProvider>
+    // bottom-left keeps toasts clear of the Stack panel, which is pinned right.
+    <ToastProvider position="bottom-left">
       <div className="h-screen box-border min-[1440px]:pr-[480px]">
         <Layout
           background={{ texture: 'paper', ruledType: 'grid', ruledColor: 'blue' }}

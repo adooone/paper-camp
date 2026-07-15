@@ -49,7 +49,12 @@ import {
 } from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
 import type { StatusState } from '../services/status-api';
-import { fetchStatus, triggerCheck, triggerQualityFix } from '../services/status-api';
+import {
+  dropServerCaches,
+  fetchStatus,
+  triggerCheck,
+  triggerQualityFix,
+} from '../services/status-api';
 
 type AppStore = {
   plans: ParseResult<PlanEntry> | null;
@@ -110,6 +115,12 @@ type AppStore = {
 
   status: StatusState | null;
   loadStatus: () => Promise<void>;
+  // Manual "refresh everything" for the worklist header: drops the server's PR
+  // cache, then re-reads every worklist source so review/check/git signals are
+  // live rather than TTL-bound. Resolves with whether the read actually landed,
+  // so the caller can tell the user the truth instead of always claiming success.
+  refreshAll: () => Promise<{ ok: boolean; error?: string }>;
+  refreshing: boolean;
   runCheck: (name: CheckName) => Promise<void>;
   fixQuality: () => Promise<void>;
   // One-click commit for the status bar: suggests a message from the diff and
@@ -327,12 +338,39 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setSettingsConfigFiles: (files) => set({ settingsConfigFiles: files }),
 
   status: null,
+  refreshing: false,
   loadStatus: async () => {
     try {
       const data = await fetchStatus();
       set({ status: data });
     } catch {
       // keep previous status
+    }
+  },
+  refreshAll: async () => {
+    set({ refreshing: true });
+    try {
+      // Best-effort: a failed cache drop still leaves the reads below worth
+      // running (they'd just serve cached PR state), so it must not abort them.
+      await dropServerCaches().catch(() => {});
+      // Each loader owns its own error handling and keeps prior state on failure,
+      // so one failing source can't blank the rest of the page.
+      await Promise.all([
+        get().loadPlans(),
+        get().loadIdeas(),
+        get().loadSuggestions(),
+        get().loadStatus(),
+        get().loadConsistency(),
+        get().loadGitStatus(),
+        get().loadAgentStatus(),
+      ]);
+      // The loaders swallow their own errors, so `plansError` is the one signal
+      // that says whether the refresh actually reached the server — without it a
+      // refresh against a dead server would still report success.
+      const error = get().plansError;
+      return error ? { ok: false, error } : { ok: true };
+    } finally {
+      set({ refreshing: false });
     }
   },
   runCheck: async (name) => {

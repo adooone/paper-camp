@@ -349,7 +349,11 @@ export async function resolvePrsByEntity(
   return prs;
 }
 
-/** Test-only: clears the module-level PR cache between test cases. */
+/**
+ * Clears the module-level PR cache. Used by the manual refresh route
+ * (`POST /api/refresh`) so a user-triggered refresh re-resolves PR/review state
+ * instead of replaying the TTL window, and by tests to isolate cases.
+ */
 export function clearPrCache(): void {
   cache.clear();
 }

@@ -6,6 +6,7 @@ import {
   ActualiseAllButton,
   AddToBacklogButton,
   NewIdeaButton,
+  RefreshButton,
   SuggestIdeasButton,
 } from '../actions';
 
@@ -89,6 +90,7 @@ export const PlansHeader = () => {
           variant="ghost"
           onClick={togglePlanSortDirection}
         />
+        <RefreshButton />
       </div>
 
       <NewIdeaButton />

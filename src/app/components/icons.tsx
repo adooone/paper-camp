@@ -75,6 +75,23 @@ export const MergeIcon = ({ size = 16 }: IconProps) => (
   </svg>
 );
 
+export const RefreshIcon = ({ size = 16 }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+    <polyline points="21 3 21 9 15 9" />
+  </svg>
+);
+
 export const RunIcon = ({ size = 12 }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
     <path d="M6 4l11 6-11 6z" />

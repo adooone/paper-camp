@@ -19,3 +19,9 @@ export const triggerCheck = async (name: CheckName): Promise<void> => {
 export const triggerQualityFix = async (): Promise<void> => {
   await fetch('/api/status/fix', { method: 'POST' });
 };
+
+// Drops the server's resolved-PR cache so the reads that follow re-fetch review
+// state from `gh` rather than replaying the cache window.
+export const dropServerCaches = async (): Promise<void> => {
+  await fetch('/api/refresh', { method: 'POST' });
+};
