@@ -3,11 +3,12 @@ import { useActiveIdeaTitle, useActivePlanTitle } from '@/app/hooks';
 import { deletePlan } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
-import { Breadcrumb, Card } from '@dendelion/paper-ui';
+import type { SuggestionEntry } from '@/types/index';
+import { Breadcrumb, Card, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { selectWorklistRows } from './helpers';
-import { DeleteIdeaModal } from './modals';
+import { DeleteIdeaModal, PromoteSuggestionModal } from './modals';
 import { ReconcileQueueReview } from './views';
 import { EntityDetail } from './views';
 import { NoteDetail } from './views';
@@ -23,7 +24,9 @@ export const PlansPage = () => {
   const planFilters = useAppStore((s) => s.planFilters);
   const activePlanTitle = useActivePlanTitle();
   const activeIdeaTitle = useActiveIdeaTitle();
+  const dismissSuggestion = useAppStore((s) => s.dismissSuggestion);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleBack = () => {
     navigate({ to: '/' });
@@ -38,11 +41,24 @@ export const PlansPage = () => {
   };
 
   const [deleteIdeaTitle, setDeleteIdeaTitle] = useState<string | null>(null);
+  const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);
 
   const handleDeleteIdea = async (title: string) => {
     await deletePlan(title);
     await loadPlans();
     if (activePlanTitle === title) navigate({ to: '/' });
+  };
+
+  const handleDismissSuggestion = async (suggestion: SuggestionEntry) => {
+    try {
+      await dismissSuggestion(suggestion);
+    } catch (err) {
+      toast({
+        title: 'Failed to dismiss suggestion',
+        description: (err as Error).message,
+        variant: 'error',
+      });
+    }
   };
 
   const activePlan = activePlanTitle
@@ -147,12 +163,21 @@ export const PlansPage = () => {
             />
           )}
 
-          <SuggestionsSection suggestions={suggestions} />
+          <SuggestionsSection
+            suggestions={suggestions}
+            onOpen={setOpenSuggestion}
+            onDismiss={handleDismissSuggestion}
+          />
 
           <DeleteIdeaModal
             title={deleteIdeaTitle}
             onClose={() => setDeleteIdeaTitle(null)}
             onConfirm={handleDeleteIdea}
+          />
+
+          <PromoteSuggestionModal
+            suggestion={openSuggestion}
+            onClose={() => setOpenSuggestion(null)}
           />
         </div>
       )}

@@ -36,6 +36,7 @@ import {
   stopAgent,
 } from '../services/agent-api';
 import {
+  dismissSuggestion as dismissSuggestionApi,
   fetchConsistency,
   fetchDecisions,
   fetchIdeas,
@@ -44,6 +45,7 @@ import {
   fetchProgress,
   fetchRepoDocs,
   fetchSuggestions,
+  promoteSuggestion as promoteSuggestionApi,
 } from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
 import type { StatusState } from '../services/status-api';
@@ -79,6 +81,12 @@ type AppStore = {
   suggestions: SuggestionEntry[];
   suggestionsLoading: boolean;
   loadSuggestions: () => Promise<void>;
+  // IDEA-62 phase 5: mechanical half of "Move to ideas" — mints the id, writes the
+  // idea file, and removes the suggestion's line, then reloads suggestions/plans/ideas.
+  // Returns the new idea's id, for the caller to follow up with launchIdeaExtend.
+  promoteSuggestion: (suggestion: SuggestionEntry) => Promise<string>;
+  // Dismissing a suggestion just deletes its line — no id was ever minted for it.
+  dismissSuggestion: (suggestion: SuggestionEntry) => Promise<void>;
 
   progress: ProgressEntry[];
   progressLoading: boolean;
@@ -264,6 +272,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
     } catch {
       set({ suggestions: [], suggestionsLoading: false });
     }
+  },
+  promoteSuggestion: async (suggestion) => {
+    const { id } = await promoteSuggestionApi(suggestion);
+    await Promise.all([get().loadSuggestions(), get().loadPlans(), get().loadIdeas()]);
+    return id;
+  },
+  dismissSuggestion: async (suggestion) => {
+    await dismissSuggestionApi(suggestion);
+    await get().loadSuggestions();
   },
 
   progress: [],
