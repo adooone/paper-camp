@@ -33,7 +33,7 @@ The prize is that the cheap read-only prompts stop queueing behind long ones —
       Exempt `commit-suggest`/`overlap-check` from the `isBusy()` gate — read-only, no-tools prompts should never block or be blocked. Self-contained slice, no registry needed.
 - [x] Define the write-set collision gate
       Replace the global busy flag with a partition by what a task writes: always-safe, disjoint entity writers (`suggest` vs `reconcile`/`draft`/`extend`), and exclusive (`phase`/`run-all`/`fix-review`/`sync`). A launch is admitted unless its write-set collides with a running task.
-- [ ] Fan `current` into a task registry
+- [x] Fan `current` into a task registry
       Turn `let current` into a keyed collection and give every task an id; thread that id through `getStatus`, `getReconcileQueue`, `getFixReviewResult`, `stop`, `killCurrent`, and the ~50 other `current` reads.
 - [ ] Carry the task id on the SSE tick and client state
       Make the `type: 'agent'` tick say which task moved; turn `AgentTaskState` and the client's `agentStatus` mirror from a single object into lists.

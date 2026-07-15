@@ -300,6 +300,31 @@ describe('write-set collision gate', () => {
     await new Promise((resolve) => setTimeout(resolve, 600));
   });
 
+  it('rejects a launch colliding with an older running task, not just the most recently launched one', async () => {
+    const { root, plan: plan1 } = await makeRoot(PLAN_TWO_PHASES);
+    const plan2Md = PLAN_TWO_PHASES.replace('IDEA-1', 'IDEA-2').replace('Test plan', 'Second plan');
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), plan2Md);
+    const plan2 = entityToPlan(parseEntityFile(plan2Md).entries[0]);
+
+    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
+    const manager = createAgentManager(root);
+
+    // Two disjoint entity-writers running at once: IDEA-1 (launched first) and
+    // IDEA-2 (launched second, now the most-recently-launched task).
+    expect(manager.startForPlan(plan1, 'prompt', 'reconcile')).toEqual({ ok: true });
+    expect(manager.startForPlan(plan2, 'prompt', 'reconcile')).toEqual({ ok: true });
+    // A second IDEA-1 reconcile must still collide with the *older* running task,
+    // even though it's no longer the most recently launched one — the gate has to
+    // check every running task in the registry, not just the last slot.
+    expect(manager.startForPlan(plan1, 'prompt', 'reconcile')).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+
+    // Let both spawned children exit on their own before the test ends.
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  });
+
   it('rejects a suggest-ideas launch while an exclusive task is running', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = 'setTimeout(() => process.exit(0), 400)';
