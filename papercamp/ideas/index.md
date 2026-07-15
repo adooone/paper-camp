@@ -64,3 +64,4 @@
 | IDEA-60 | Group code into domain subfolders | refactor | done | app, refactor, core |
 | IDEA-61 | Speed up API reads and refetch churn | refactor | done | app, core, performance |
 | IDEA-62 | AI-suggested idea drafts | feat | review | app, ideas, agent |
+| IDEA-63 | Sweep comments to the §7 bar | refactor | idea | app, core, refactor, docs |

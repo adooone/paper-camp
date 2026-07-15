@@ -65,7 +65,12 @@ export const SidebarShell = ({
         style={{
           width: layout.sidebarWidth,
           flexShrink: 0,
-          height: '100%',
+          // At lg+ this sticks inside the scrolling content area, whose group is as
+          // tall as the page — so `100%` would make the sidebar page-height and it
+          // would scroll away instead of sticking. The layout hands it the gap
+          // between the fixed chrome via --pc-sidebar-h; `100%` stays the fallback
+          // for the mobile drawer, which is `fixed inset-y-0` and wants full height.
+          height: 'var(--pc-sidebar-h, 100%)',
           display: 'flex',
           flexDirection: 'column',
           background: mobileOpen ? 'var(--pui-bg-base)' : 'transparent',
