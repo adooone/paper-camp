@@ -874,6 +874,8 @@ export function createAgentManager(
   // constructs its own arguments so it never picks up the shared adapter's
   // `--permission-mode auto` flag — these calls must stay deny-by-default since the
   // model is only ever supposed to read the prompt text handed to it on stdin.
+  // Exempt from isBusy(): never blocks and is never blocked by the long-running task
+  // in `current`, so it must not touch that slot either (see the task comment below).
   const READONLY_PROMPT_TIMEOUT_MS = 60_000;
   const STDIN_MAX_BYTES = 10 * 1024 * 1024;
 
@@ -882,9 +884,6 @@ export function createAgentManager(
     taskKind: 'commit-suggest' | 'overlap-check',
     planTitle: string,
   ): Promise<string> {
-    if (isBusy()) {
-      return Promise.reject(new Error('An agent task is already running'));
-    }
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
       return Promise.reject(new Error('Prompt exceeds the 10MB stdin limit'));
     }
@@ -909,6 +908,9 @@ export function createAgentManager(
         cwd: root,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
+      // Deliberately not tracked on the shared `current` slot: read-only prompts run
+      // alongside whatever else is going, so a concurrent task overwriting `current`
+      // must not cause this call's own close/error handlers to drop their result.
       const task: AgentTask = {
         taskKind,
         planTitle,
@@ -918,7 +920,6 @@ export function createAgentManager(
         proc,
         lines: [],
       };
-      current = task;
       setStatus(task, 'running');
 
       let settled = false;
@@ -930,16 +931,14 @@ export function createAgentManager(
       };
       const timeout = setTimeout(() => {
         settle(() => {
-          if (current === task) {
-            pushLine(task, `${planTitle} timed out`);
-            setStatus(task, 'error');
-            if (!proc.killed) proc.kill('SIGTERM');
-            // Escalate if SIGTERM is ignored (e.g. stuck reading stdin), so the
-            // child doesn't leak — same as stop()/run-all/batch-reconcile.
-            setTimeout(() => {
-              if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
-            }, 5000);
-          }
+          pushLine(task, `${planTitle} timed out`);
+          setStatus(task, 'error');
+          if (!proc.killed) proc.kill('SIGTERM');
+          // Escalate if SIGTERM is ignored (e.g. stuck reading stdin), so the
+          // child doesn't leak — same as stop()/run-all/batch-reconcile.
+          setTimeout(() => {
+            if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
+          }, 5000);
           reject(new Error(`${planTitle} timed out`));
         });
       }, READONLY_PROMPT_TIMEOUT_MS);
@@ -957,13 +956,7 @@ export function createAgentManager(
         stderr += d.toString();
       });
       proc.on('close', (code) => {
-        if (current !== task) return;
         settle(() => {
-          if (task.status === 'stopping') {
-            setStatus(task, 'done');
-            reject(new Error('Stopped'));
-            return;
-          }
           if (code === 0) {
             setStatus(task, 'done');
             // opencode outputs JSON events — extract text content to find the response.
@@ -990,7 +983,6 @@ export function createAgentManager(
         });
       });
       proc.on('error', (err) => {
-        if (current !== task) return;
         settle(() => {
           pushLine(task, `Failed to spawn agent: ${err.message}`);
           setStatus(task, 'error');

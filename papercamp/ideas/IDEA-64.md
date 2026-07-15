@@ -20,3 +20,15 @@ The state and the sort itself already exist and are untouched — `PlanListFilte
 - **Keyboard and a11y.** Real `<button>`s in the header cells with `aria-sort` on the column, not click handlers on text.
 
 Follows the same instinct as removing the "needs review" section: fewer abstract controls stacked above the list, more acting directly on what's shown. Behaviour of the sort is unchanged, so the check suite plus clicking each column is the gate.
+
+### Phases
+- [ ] Resolve the `created` key with no column
+      `sortKey` covers `status`/`updated`/`created`/`title`/`id`/`progress` but no column maps to `created` and the actions column isn't sortable. Decide before wiring: drop `created` from the key union (and any callerless references) so every key reaches a header, or surface `created` as a column. Default to dropping unless there's a reason to show it.
+- [ ] Confirm paper-ui `Table` header support
+      Read the real `Table` source + showcase in the paper-ui sibling repo (`~/dev/paper-ui`), not just the `.d.ts`, to find how header cells render and whether they take arbitrary content / render props — so the header buttons and `aria-sort` sit on the supported seam rather than a hand-rolled header.
+- [ ] Make the header labels sortable buttons
+      In `worklist-rows.tsx`, turn each sortable column label (`Id`/`Title`/`Updated`/`Progress`/`Status`) into a real `<button>` that calls `setPlanSortKey`, or `togglePlanSortDirection` when it's already the active key. No handlers on plain text.
+- [ ] Add the active-key caret and `aria-sort`
+      Show a caret on the sorted column reflecting `sortDirection` (the only ordering signal now the `Select` is gone), and set `aria-sort` on the active column so keyboard/AT users see the state. Non-sorted columns carry no caret and no `aria-sort`.
+- [ ] Gate: checks plus click each column
+      Run `tsc --noEmit`, `npx biome check .`, and `pnpm test`, then click each sortable header once to sort and again to flip. Sort behaviour is unchanged from the old `Select`, so this is the acceptance gate.

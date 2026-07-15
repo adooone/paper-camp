@@ -20,9 +20,9 @@ ${diffText}`;
 
 /**
  * One-shot, read-only agent call — not the long-running phase/task system in agent.ts.
- * The actual process spawn lives in agent.ts's runCommitSuggest, which tracks it on the
- * shared `current` task so the UI's Agent card shows it running; this module only builds
- * the prompt and parses the result.
+ * The actual process spawn lives in agent.ts's runCommitSuggest, which runs independently
+ * of the shared `current` task so it's never blocked by (and never blocks) a running
+ * phase/reconcile/etc; this module only builds the prompt and parses the result.
  */
 export async function suggestCommitMessage(
   diffText: string,

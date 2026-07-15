@@ -27,3 +27,21 @@ So the gate becomes "does this task's write-set collide with a running one", not
 - **Keep `killCurrent` honest.** The config plugin registers it on SIGINT/SIGTERM to avoid orphaning a child; with many tasks it must kill all of them.
 
 The prize is that the cheap read-only prompts stop queueing behind long ones — today a commit-suggest can't run while a phase is going, which is most of why the app feels blocked. Start there: allowing the always-safe kinds through is a small, self-contained slice that doesn't need the registry.
+
+### Phases
+- [x] Let the always-safe kinds through
+      Exempt `commit-suggest`/`overlap-check` from the `isBusy()` gate — read-only, no-tools prompts should never block or be blocked. Self-contained slice, no registry needed.
+- [ ] Define the write-set collision gate
+      Replace the global busy flag with a partition by what a task writes: always-safe, disjoint entity writers (`suggest` vs `reconcile`/`draft`/`extend`), and exclusive (`phase`/`run-all`/`fix-review`/`sync`). A launch is admitted unless its write-set collides with a running task.
+- [ ] Fan `current` into a task registry
+      Turn `let current` into a keyed collection and give every task an id; thread that id through `getStatus`, `getReconcileQueue`, `getFixReviewResult`, `stop`, `killCurrent`, and the ~50 other `current` reads.
+- [ ] Carry the task id on the SSE tick and client state
+      Make the `type: 'agent'` tick say which task moved; turn `AgentTaskState` and the client's `agentStatus` mirror from a single object into lists.
+- [ ] Make the Stack Agent card a real stack
+      Render the 3 most recent tasks newest-on-top, each with its own status and stop control, so a finished run stays visible instead of being overwritten by the next launch.
+- [ ] Persist finished tasks to a log file
+      Append each finished task (kind, plan, agent, start/end, outcome) to a file next to the corpus or under a dotfile — a machine record distinct from the plan's `progress.md` narrative.
+- [ ] Add a tasks page for the log
+      Read the persisted log and render the history of what ran, surviving a dev-server restart.
+- [ ] Make `killCurrent` kill every task
+      Update the SIGINT/SIGTERM handler in the config plugin to tear down all running children, not just one.
