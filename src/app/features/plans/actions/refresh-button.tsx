@@ -1,7 +1,7 @@
 import { RefreshIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import { IconButton, useToast } from '@dendelion/paper-ui';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 /**
  * Manual "actualise data" for the worklist header. Distinct from `ActualiseAllButton`,
@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 export const RefreshButton = () => {
   const refreshAll = useAppStore((s) => s.refreshAll);
   const refreshing = useAppStore((s) => s.refreshing);
+  const shouldReduceMotion = useReducedMotion();
   const { toast } = useToast();
 
   const handleClick = async () => {
@@ -37,9 +38,9 @@ export const RefreshButton = () => {
       icon={
         <motion.span
           style={{ display: 'inline-flex' }}
-          animate={{ rotate: refreshing ? 360 : 0 }}
+          animate={{ rotate: refreshing && !shouldReduceMotion ? 360 : 0 }}
           transition={
-            refreshing
+            refreshing && !shouldReduceMotion
               ? { repeat: Number.POSITIVE_INFINITY, ease: 'linear', duration: 0.8 }
               : { duration: 0 }
           }
