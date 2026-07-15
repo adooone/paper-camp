@@ -12,12 +12,13 @@ import { ReconcileQueueReview } from './views';
 import { EntityDetail } from './views';
 import { NoteDetail } from './views';
 import { ReviewQueue } from './views';
-import { ListView, PlansHeader, PlansListSkeleton } from './views';
+import { ListView, PlansHeader, PlansListSkeleton, SuggestionsSection } from './views';
 
 export const PlansPage = () => {
   const plans = useAppStore((s) => s.plans);
   const plansError = useAppStore((s) => s.plansError);
   const ideaEntries = useAppStore((s) => s.ideaEntries);
+  const suggestions = useAppStore((s) => s.suggestions);
   const loadPlans = useAppStore((s) => s.loadPlans);
   const planFilters = useAppStore((s) => s.planFilters);
   const activePlanTitle = useActivePlanTitle();
@@ -145,6 +146,8 @@ export const PlansPage = () => {
               onDeleteIdea={setDeleteIdeaTitle}
             />
           )}
+
+          <SuggestionsSection suggestions={suggestions} />
 
           <DeleteIdeaModal
             title={deleteIdeaTitle}

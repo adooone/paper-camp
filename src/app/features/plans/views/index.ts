@@ -8,4 +8,5 @@ export * from './plans-header';
 export * from './plans-list-skeleton';
 export * from './reconcile-queue-review';
 export * from './review-queue';
+export * from './suggestions-section';
 export * from './worklist-rows';
