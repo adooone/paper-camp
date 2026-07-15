@@ -27,14 +27,9 @@ export const commitChanges = async (
   await throwIfNotOk(response, 'Commit failed');
 };
 
-export interface PushResult {
-  review?: { resolved: number; replied: number };
-}
-
-export const pushChanges = async (): Promise<PushResult> => {
+export const pushChanges = async (): Promise<void> => {
   const response = await fetch('/api/git/push', { method: 'POST' });
   await throwIfNotOk(response, 'Push failed');
-  return (await response.json().catch(() => ({}))) as PushResult;
 };
 
 export const suggestCommitMessage = async (

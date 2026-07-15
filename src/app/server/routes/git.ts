@@ -1,7 +1,5 @@
 import { findFocusPlan } from '@/app/features/plans/helpers';
-import { replyToReviewThread, resolveReviewThread } from '@/core/git-pr';
 import { entityToPlan, readEntities, readWorkEntries } from '@/core/readers';
-import type { FixReviewResult } from '@/types/index';
 import { suggestCommitMessage } from '../commit-suggest';
 import { campFile } from '../helpers';
 import { readBody, sendJson } from '../http';
@@ -18,30 +16,6 @@ const DIRTY_SYNC_PROMPT = `Sync the current branch to main by:
 Report the final branch and status to verify the sync completed.`;
 
 export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
-  /**
-   * Settles the PR threads a fix-review run reported on: resolve the ones its
-   * changes addressed, and reply (leaving them open) to the ones it deliberately
-   * skipped, so a rejected suggestion reads as a reasoned decision rather than
-   * silence. Entirely best-effort — a GitHub hiccup must never fail the push that
-   * already succeeded, so failures are counted, not thrown.
-   */
-  async function settleReviewThreads(
-    result: FixReviewResult | null,
-  ): Promise<{ resolved: number; replied: number } | null> {
-    if (!result || (result.addressed.length === 0 && result.skipped.length === 0)) return null;
-    const resolved = await Promise.all(
-      result.addressed.map((threadId) => resolveReviewThread(root, threadId).catch(() => false)),
-    );
-    const replied = await Promise.all(
-      result.skipped.map((s) =>
-        replyToReviewThread(root, s.threadId, `Left as-is by the fix-review agent: ${s.why}`).catch(
-          () => false,
-        ),
-      ),
-    );
-    return { resolved: resolved.filter(Boolean).length, replied: replied.filter(Boolean).length };
-  }
-
   return [
     {
       method: 'GET',
@@ -89,13 +63,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         try {
           await git.push();
-          // The fix is only visible to the PR once it's pushed, which is why the
-          // review threads are settled here rather than when the agent finished:
-          // resolving earlier would mark threads done against unpushed code. Consumed
-          // afterward so a later, unrelated push can't replay the same replies.
-          const review = await settleReviewThreads(agent.getFixReviewResult());
-          if (review) agent.consumeFixReviewResult();
-          sendJson(res, 200, { ok: true, ...(review ? { review } : {}) });
+          sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
         }

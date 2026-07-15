@@ -5,6 +5,7 @@ import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { buildReconcilePrompt } from '@/app/features/plans/prompts';
+import { replyToReviewThread, resolveReviewThread } from '@/core/git-pr';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
 import { computePlanContentHash } from '@/core/serialize';
@@ -251,12 +252,43 @@ export function createAgentManager(
     }
   }
 
+  // Resolve what the run fixed and reply to what it rejected, as soon as it reports.
+  // Deliberately not deferred to the push: the verdict is in-memory, and any restart
+  // in the human-paced gap before a push silently drops it. Threads therefore resolve
+  // against changes still uncommitted locally — accepted, since the alternative is
+  // resolving nothing at all.
+  function settleReviewThreads(task: AgentTask, result: FixReviewResult): void {
+    void (async () => {
+      const resolved = await Promise.all(
+        result.addressed.map((id) => resolveReviewThread(root, id).catch(() => false)),
+      );
+      const replied = await Promise.all(
+        result.skipped.map((s) =>
+          replyToReviewThread(
+            root,
+            s.threadId,
+            `Left as-is by the fix-review agent: ${s.why}`,
+          ).catch(() => false),
+        ),
+      );
+      const ok = resolved.filter(Boolean).length;
+      const said = replied.filter(Boolean).length;
+      pushLine(
+        task,
+        `Resolved ${ok}/${result.addressed.length} review threads, replied to ${said}`,
+      );
+    })();
+  }
+
   function finishTask(task: AgentTask, error: boolean) {
     setStatus(task, error ? 'error' : 'done');
     if (error) return;
     if (task.taskKind === 'fix-review') {
       task.fixReviewResult = parseFixReviewResult(task);
-      if (task.fixReviewResult) pendingFixReviewResult = task.fixReviewResult;
+      if (task.fixReviewResult) {
+        pendingFixReviewResult = task.fixReviewResult;
+        settleReviewThreads(task, task.fixReviewResult);
+      }
     }
     didTaskProgress(task).then((progressed) => {
       if (current === task && progressed === false) {
