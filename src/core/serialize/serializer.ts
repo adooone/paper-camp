@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
 import type { EntityEntry, LogEntry, PhaseItem, SuggestionEntry } from '../../types/index';
+import { SUGGESTION_ENTRY_RE } from '../parse/parser';
 
 export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -426,19 +427,29 @@ export async function archiveEntityFile(root: string, entityId: string): Promise
 }
 
 /**
- * Removes one line from suggestions.md's flat log, matching the exact literal
- * form parseSuggestions produces its entries from (`- YYYY-MM-DD: Title — description`).
- * Only the first match is removed — suggestions carry no id, so an exact-text
- * match is the only way to address a specific line (see IDEA-62's promote/dismiss
- * routes, both of which call this before writing the file back).
+ * Removes one line from suggestions.md's flat log. Re-parses each candidate
+ * line with parseSuggestions' own grammar and compares the parsed fields —
+ * not a reconstructed literal string — since parseSuggestions trims title/
+ * description and a reconstruction would miss extra internal whitespace an
+ * LLM-authored line might contain. Only the first match is removed —
+ * suggestions carry no id, so field matching is the only way to address a
+ * specific line (see IDEA-62's promote/dismiss routes, both of which call
+ * this before writing the file back).
  */
 export function removeSuggestionLine(markdown: string, target: SuggestionEntry): string {
-  const targetLine = `- ${target.date}: ${target.title} — ${target.description}`;
   let removed = false;
   const lines = markdown.split('\n').filter((line) => {
-    if (!removed && line.trim() === targetLine) {
-      removed = true;
-      return false;
+    if (!removed) {
+      const match = line.match(SUGGESTION_ENTRY_RE);
+      if (
+        match &&
+        match[1] === target.date &&
+        match[2].trim() === target.title &&
+        match[3].trim() === target.description
+      ) {
+        removed = true;
+        return false;
+      }
     }
     return true;
   });

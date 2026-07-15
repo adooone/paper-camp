@@ -553,7 +553,7 @@ export function parseProgress(markdown: string): ProgressEntry[] {
   return entries;
 }
 
-const SUGGESTION_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s+(.+?)\s+—\s+(.*)$/;
+export const SUGGESTION_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s+(.+?)\s+—\s+(.*)$/;
 
 /**
  * suggestions.md is a flat, append-only line log — sibling to decisions.md/
