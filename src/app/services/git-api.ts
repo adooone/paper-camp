@@ -53,6 +53,12 @@ export const syncToMain = async (mode: 'clean' | 'dirty'): Promise<void> => {
   await throwIfNotOk(response, 'Sync failed');
 };
 
+// Fast-forward the current branch from origin in place (no branch switch).
+export const pullFromOrigin = async (): Promise<void> => {
+  const response = await fetch('/api/git/pull', { method: 'POST' });
+  await throwIfNotOk(response, 'Pull failed');
+};
+
 export const createPlanBranch = async (planId: string): Promise<string> => {
   const response = await fetch('/api/git/branch', {
     method: 'POST',

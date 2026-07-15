@@ -21,9 +21,11 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       method: 'GET',
       path: '/api/git/status',
       handle: async (_req, res) => {
-        const entries = await git.getStatus();
         const branch = git.getCurrentBranch();
-        const ahead = await git.getAheadCount();
+        // getStatus and getBranchHygieneStatus both run `git status` under the hood;
+        // running them concurrently races on .git/index.lock. getAheadCount spawns an
+        // unrelated `git rev-list`, so it stays parallel with the first status call.
+        const [entries, ahead] = await Promise.all([git.getStatus(), git.getAheadCount()]);
         const branchHygiene = await git.getBranchHygieneStatus();
         sendJson(res, 200, { branch, entries, ahead, branchHygiene });
       },
@@ -122,6 +124,22 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
           return;
         }
         sendJson(res, 202, { ok: true });
+      },
+    },
+
+    // Plain fast-forward pull of the current branch — distinct from /sync, which
+    // switches to main first. Used by the Stack panel's "Pull" quick-action so a
+    // stale local branch (e.g. main behind origin/main) can be refreshed in place.
+    {
+      method: 'POST',
+      path: '/api/git/pull',
+      handle: async (_req, res) => {
+        try {
+          await git.runGitPull();
+          sendJson(res, 200, { ok: true });
+        } catch (error) {
+          sendJson(res, 409, { error: (error as Error).message });
+        }
       },
     },
 

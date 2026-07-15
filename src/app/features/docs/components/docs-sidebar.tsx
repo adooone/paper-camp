@@ -24,24 +24,22 @@ const EmptyState = ({ children }: { children: React.ReactNode }) => (
 );
 
 export const DocsSidebar = () => {
-  const {
-    decisions,
-    openQuestions,
-    progress,
-    repoDocs,
-    decisionsLoading,
-    openQuestionsLoading,
-    progressLoading,
-    repoDocsLoading,
-    loadDecisions,
-    loadOpenQuestions,
-    loadProgress,
-    loadRepoDocs,
-    activeDocTitle,
-    setActiveDocTitle,
-    docSearchQuery,
-    setDocSearchQuery,
-  } = useAppStore();
+  const decisions = useAppStore((s) => s.decisions);
+  const openQuestions = useAppStore((s) => s.openQuestions);
+  const progress = useAppStore((s) => s.progress);
+  const repoDocs = useAppStore((s) => s.repoDocs);
+  const decisionsLoading = useAppStore((s) => s.decisionsLoading);
+  const openQuestionsLoading = useAppStore((s) => s.openQuestionsLoading);
+  const progressLoading = useAppStore((s) => s.progressLoading);
+  const repoDocsLoading = useAppStore((s) => s.repoDocsLoading);
+  const loadDecisions = useAppStore((s) => s.loadDecisions);
+  const loadOpenQuestions = useAppStore((s) => s.loadOpenQuestions);
+  const loadProgress = useAppStore((s) => s.loadProgress);
+  const loadRepoDocs = useAppStore((s) => s.loadRepoDocs);
+  const activeDocTitle = useAppStore((s) => s.activeDocTitle);
+  const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
+  const docSearchQuery = useAppStore((s) => s.docSearchQuery);
+  const setDocSearchQuery = useAppStore((s) => s.setDocSearchQuery);
   const activeDocSection = useResolvedDocSection();
   const navigate = useNavigate();
 
