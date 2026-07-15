@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@dendelion/paper-ui':
-        specifier: 0.7.4
-        version: 0.7.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 0.7.5
+        version: 0.7.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(zod@4.4.3)
@@ -265,8 +265,8 @@ packages:
       conventional-commits-parser:
         optional: true
 
-  '@dendelion/paper-ui@0.7.4':
-    resolution: {integrity: sha512-7vOtV8l7mPPeCtqLJ6uE4KsjnlPidWQRc/4DMJRVpEof2mGBaYUMCn9NTI8fa8ccAmJ7OrRf+Z6XR658RVtlgA==}
+  '@dendelion/paper-ui@0.7.5':
+    resolution: {integrity: sha512-ladHLJLkZcZLu1M7lhpvhlwVJ9Qys6ps+9vRBDIEDYaCxXDZ5n+yKrpPFNiwIRGJIXXEZYsfa+SKJgtzCfxIog==}
     peerDependencies:
       react: ^18.0.0
       react-dom: ^18.0.0
@@ -2942,7 +2942,7 @@ snapshots:
     optionalDependencies:
       conventional-commits-parser: 6.4.0
 
-  '@dendelion/paper-ui@0.7.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@dendelion/paper-ui@0.7.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       clsx: 2.1.1
       framer-motion: 12.40.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

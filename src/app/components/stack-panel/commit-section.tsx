@@ -18,6 +18,7 @@ import {
   Stamp,
   Textarea,
   Tooltip,
+  useToast,
 } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MergeIcon, PullIcon, PushIcon, WandIcon } from '../icons';
@@ -73,6 +74,7 @@ export const CommitSection = () => {
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
   const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
+  const { toast } = useToast();
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const setCommitInFlight = useAppStore((s) => s.setCommitInFlight);
 
@@ -232,14 +234,23 @@ export const CommitSection = () => {
     setPushing(true);
     setPushError(null);
     try {
-      await pushChanges();
+      const { review } = await pushChanges();
       await loadGitStatus();
+      if (review) {
+        toast({
+          title: 'Pushed',
+          description: `${review.resolved} review comment${review.resolved === 1 ? '' : 's'} resolved${
+            review.replied ? `, ${review.replied} replied` : ''
+          }.`,
+          variant: review.resolved || review.replied ? 'success' : 'warning',
+        });
+      }
     } catch (err) {
       setPushError((err as Error).message);
     } finally {
       setPushing(false);
     }
-  }, [loadGitStatus]);
+  }, [loadGitStatus, toast]);
 
   const handleSync = useCallback(async () => {
     setSyncing(true);
