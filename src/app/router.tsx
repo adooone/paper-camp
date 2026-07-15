@@ -84,6 +84,7 @@ const RootLayout = () => {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
+  const loadSuggestions = useAppStore((s) => s.loadSuggestions);
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
@@ -101,7 +102,8 @@ const RootLayout = () => {
   useEffect(() => {
     loadPlans();
     loadIdeas();
-  }, [loadPlans, loadIdeas]);
+    loadSuggestions();
+  }, [loadPlans, loadIdeas, loadSuggestions]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body — close the mobile sidebar on every route change.
   useEffect(() => {

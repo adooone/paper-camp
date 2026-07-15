@@ -18,6 +18,7 @@ import type {
   PlanEntry,
   PlanStatus,
   ProgressEntry,
+  SuggestionEntry,
 } from '@/types/index';
 import { create } from 'zustand';
 import {
@@ -41,6 +42,7 @@ import {
   fetchPlans,
   fetchProgress,
   fetchRepoDocs,
+  fetchSuggestions,
 } from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
 import type { StatusState } from '../services/status-api';
@@ -72,6 +74,10 @@ type AppStore = {
   openQuestions: OpenQuestionEntry[];
   openQuestionsLoading: boolean;
   loadOpenQuestions: () => Promise<void>;
+
+  suggestions: SuggestionEntry[];
+  suggestionsLoading: boolean;
+  loadSuggestions: () => Promise<void>;
 
   progress: ProgressEntry[];
   progressLoading: boolean;
@@ -243,6 +249,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ openQuestions: data.entries, openQuestionsLoading: false });
     } catch {
       set({ openQuestions: [], openQuestionsLoading: false });
+    }
+  },
+
+  suggestions: [],
+  suggestionsLoading: true,
+  loadSuggestions: async () => {
+    set({ suggestionsLoading: true });
+    try {
+      const data = await fetchSuggestions();
+      set({ suggestions: data.entries, suggestionsLoading: false });
+    } catch {
+      set({ suggestions: [], suggestionsLoading: false });
     }
   },
 

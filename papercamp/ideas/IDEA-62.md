@@ -21,7 +21,7 @@ The whole point is that suggestions stay cheap and disposable — no id allocati
 ### Phases
 - [x] Parse the suggestions store
       Add `papercamp/suggestions.md` as a monolithic doc sibling to `decisions.md`/`open-questions.md`/`progress.md`, and teach `core/parser` its per-line grammar (title + one-line description, no `id`, no `status`) plus the dated append-only block like [[IDEA-43]]'s `### Log`. It never counts as a plan/idea and never appears in `ideas/index.md`.
-- [ ] Expose suggestions over the API
+- [x] Expose suggestions over the API
       Add a `/api/suggestions` read endpoint over the parsed store and a store slice to hold the entries, wiring the loader into the existing fetch fanout.
 - [ ] Render the "Suggested from AI" section
       Below the worklist, render suggestions as plain cards that match idea rows visually but drop the id stamp and status — just a title.
