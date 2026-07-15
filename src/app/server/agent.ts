@@ -5,7 +5,7 @@ import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { buildReconcilePrompt } from '@/app/features/plans/prompts';
-import { parseEntityFile, parsePlanFile } from '@/core/parse';
+import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
 import { computePlanContentHash } from '@/core/serialize';
 import {
@@ -23,6 +23,7 @@ import {
   coerceAgentConfig,
 } from '@/types/index';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
+import { campFile, readMaybe } from './helpers';
 
 const MAX_LINES = 50;
 // Maximum wall-clock time per phase before treating it as a stall/clarifying-question hang.
@@ -46,6 +47,10 @@ interface AgentTask {
   // For reconcile tasks: snapshot of body + phase text before launch, since a reconcile
   // rewrites prose in place rather than growing Phases/Log like an audit does.
   reconcileBaseline?: string;
+  // For a suggest task: line count of papercamp/suggestions.md before launch, since
+  // this task isn't scoped to any single entity — success is judged by whether that
+  // count grew, not by any id.
+  suggestBaseline?: number;
   // For fix-review tasks: the branch's HEAD commit hash before launch. This task edits
   // arbitrary source files (whatever each review thread points at), so there's no
   // markdown snapshot to diff against like reconcile — success is judged by whether
@@ -206,6 +211,11 @@ export function createAgentManager(
           task.reconcileBaseline
         );
       }
+      if (task.taskKind === 'suggest') {
+        if (task.suggestBaseline === undefined) return null;
+        const suggestions = parseSuggestions(await readMaybe(campFile(root, 'suggestions.md')));
+        return suggestions.length > task.suggestBaseline;
+      }
       const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
       if (task.ideaId !== undefined) {
         // In-place drafting: success is the entity gaining its Phases section.
@@ -239,13 +249,15 @@ export function createAgentManager(
             ? `Warning: agent finished but the idea body for ${task.ideaId} did not change — verify manually`
             : task.taskKind === 'reconcile'
               ? 'Warning: agent finished but the plan body and phase text did not change — verify manually'
-              : task.taskKind === 'fix-review'
-                ? 'Warning: agent finished but no new commit was pushed — verify manually'
-                : task.ideaId !== undefined
-                  ? `Warning: agent finished but ${task.ideaId} gained no Phases section — verify manually`
-                  : task.phaseIndex !== undefined
-                    ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
-                    : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
+              : task.taskKind === 'suggest'
+                ? 'Agent finished without appending any suggestions — nothing new found'
+                : task.taskKind === 'fix-review'
+                  ? 'Warning: agent finished but no new commit was pushed — verify manually'
+                  : task.ideaId !== undefined
+                    ? `Warning: agent finished but ${task.ideaId} gained no Phases section — verify manually`
+                    : task.phaseIndex !== undefined
+                      ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
+                      : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
         pushLine(task, warning);
       }
       if (current === task && task.taskKind === 'audit' && task.planId && progressed === true) {
@@ -308,6 +320,7 @@ export function createAgentManager(
       | 'ideaId'
       | 'ideaLogBaseline'
       | 'reconcileBaseline'
+      | 'suggestBaseline'
       | 'fixReviewBaseline'
     >,
   ): Result {
@@ -422,6 +435,19 @@ export function createAgentManager(
 
   function startSync(prompt: string): Result {
     return launch({ planTitle: 'Sync to main' }, prompt, { taskKind: 'sync' });
+  }
+
+  // Suggest-ideas launch mode: not scoped to any existing entity — the agent scans
+  // the repo and corpus and appends zero or more dated lines to suggestions.md.
+  // Success is judged by whether that line count grew (see didTaskProgress).
+  async function startSuggest(prompt: string): Promise<Result> {
+    if (isBusy()) {
+      return { ok: false, error: 'An agent task is already running' };
+    }
+    const suggestBaseline = parseSuggestions(
+      await readMaybe(campFile(root, 'suggestions.md')),
+    ).length;
+    return launch({ planTitle: 'Suggest ideas' }, prompt, { taskKind: 'suggest', suggestBaseline });
   }
 
   async function findBatchPlanFile(plansDir: string, id: string): Promise<string | null> {
@@ -983,6 +1009,7 @@ export function createAgentManager(
     startBatchReconcile,
     startRunAllPhases,
     startSync,
+    startSuggest,
     runCommitSuggest,
     runOverlapCheck,
     stop,
@@ -1009,6 +1036,7 @@ export interface AgentManager {
   startBatchReconcile: () => Result;
   startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<boolean>) => Result;
   startSync: (prompt: string) => Result;
+  startSuggest: (prompt: string) => Promise<Result>;
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
   stop: () => Result;

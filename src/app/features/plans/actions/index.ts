@@ -10,3 +10,4 @@ export * from './new-idea-button';
 export * from './phase-copy-button';
 export * from './reconcile-button';
 export * from './run-all-phases-button';
+export * from './suggest-ideas-button';

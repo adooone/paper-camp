@@ -1,4 +1,4 @@
-import type { IdeaEntry, PlanEntry, ReviewThread } from '@/types/index';
+import type { IdeaEntry, PlanEntry, ReviewThread, SuggestionEntry } from '@/types/index';
 import type { SimilarityCandidate } from '../helpers';
 
 // Wording notes for these prompts: they all run headless (`claude -p` /
@@ -183,6 +183,42 @@ Rules:
 - Never touch the YAML frontmatter of any entity file.
 - Never check, uncheck, add, or remove any phase in ${plan.id ?? 'the plan'}'s \`### Phases\` list — this pass fixes review comments, not plan bookkeeping.
 - If a comment needs a decision only a human can make, say so in your final summary instead of guessing.`;
+}
+
+// Unlike buildIdeaExtendPrompt/buildPlanDraftPrompt, this one isn't scoped to a
+// single idea — it scans the whole corpus and appends zero or more lines to the
+// suggestions.md holding pen (see server/agent.ts's startSuggest), so there's no
+// entity id to check success against; that's why suggestBaseline (a plain line
+// count) is what didTaskProgress compares instead.
+export function buildSuggestIdeasPrompt(
+  ideas: IdeaEntry[],
+  existingSuggestions: SuggestionEntry[],
+): string {
+  const ideaIndex = ideas.length
+    ? ideas.map((idea) => `### ${idea.id ?? 'no id'}: ${idea.title}\n${idea.body}`).join('\n\n')
+    : '(no ideas yet)';
+
+  const suggestionList = existingSuggestions.length
+    ? existingSuggestions.map((s) => `- ${s.date}: ${s.title} — ${s.description}`).join('\n')
+    : '(none yet)';
+
+  return `You are scanning this repository for ideas worth suggesting, to append to papercamp/suggestions.md — a lightweight holding pen, sibling to decisions.md/open-questions.md/progress.md. Edit only that one file.
+
+Existing ideas (do not repeat anything already covered here):
+${ideaIndex}
+
+Existing suggestions already in the holding pen (do not repeat these either):
+${suggestionList}
+
+Task:
+1. Explore this codebase for gaps, rough edges, or "you might want to do X" hunches that aren't already an idea or an existing suggestion above — things like missing error handling, an obvious follow-up to recent work, a TODO left in code, or a UX gap you notice while reading the app.
+2. For each genuinely new one you find (0 to a handful — do not force a quota), append one line to papercamp/suggestions.md formatted exactly \`- YYYY-MM-DD: Title — one-line description\`, using today's date. Keep the title short (a few words, like an idea title) and the description to a single physical line (no literal line breaks).
+3. If you find nothing worth suggesting, make no edits at all — no empty line, no placeholder.
+
+Rules:
+- Append only — never modify, reorder, or delete any existing line in suggestions.md.
+- Never create papercamp/ideas/ files or touch ideas/index.md — a suggestion is not an idea until a human promotes it.
+- Never touch any other file in the repo.`;
 }
 
 // Unlike every prompt above, this one is read-only (see server/agent.ts's

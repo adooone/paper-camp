@@ -70,6 +70,18 @@ export const launchIdeaExtend = async (ideaId: string, prompt: string): Promise<
   }
 };
 
+export const launchSuggestIdeas = async (prompt: string): Promise<void> => {
+  const response = await fetch('/api/agent/launch-suggest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Launch failed' }));
+    throw new Error(err.error);
+  }
+};
+
 export const launchBatchReconcile = async (): Promise<void> => {
   const response = await fetch('/api/agent/launch-reconcile-all', { method: 'POST' });
   if (!response.ok) {

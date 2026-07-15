@@ -2,8 +2,12 @@ import type { PlanSortKey } from '@/app/features/plans/helpers';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, space } from '@/app/styles/tokens';
 import { IconButton, Select } from '@dendelion/paper-ui';
-import { ActualiseAllButton } from '../actions';
-import { AddToBacklogButton, NewIdeaButton } from '../actions';
+import {
+  ActualiseAllButton,
+  AddToBacklogButton,
+  NewIdeaButton,
+  SuggestIdeasButton,
+} from '../actions';
 
 const SORT_OPTIONS: { value: PlanSortKey; label: string }[] = [
   { value: 'status', label: 'Status' },
@@ -89,6 +93,7 @@ export const PlansHeader = () => {
 
       <NewIdeaButton />
       <AddToBacklogButton />
+      <SuggestIdeasButton />
       <ActualiseAllButton />
     </div>
   );

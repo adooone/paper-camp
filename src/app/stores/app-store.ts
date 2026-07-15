@@ -32,6 +32,7 @@ import {
   launchPlanDraft,
   launchPlanReconcile,
   launchRunAll,
+  launchSuggestIdeas,
   stopAgent,
 } from '../services/agent-api';
 import {
@@ -135,6 +136,7 @@ type AppStore = {
   launchPlanDraft: (ideaId: string, prompt: string) => Promise<void>;
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
   launchBatchReconcile: () => Promise<void>;
+  launchSuggestIdeas: (prompt: string) => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
   launchFixReview: (planId: string) => Promise<void>;
   stopAgent: () => Promise<void>;
@@ -485,6 +487,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     // are shown even if the previous batch's 'done' was already consumed.
     set({ batchReconcileConsumed: false });
     await launchBatchReconcile();
+    await get().loadAgentStatus();
+  },
+  launchSuggestIdeas: async (prompt) => {
+    await launchSuggestIdeas(prompt);
     await get().loadAgentStatus();
   },
   launchRunAll: async (planId) => {

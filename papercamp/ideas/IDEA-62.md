@@ -25,7 +25,7 @@ The whole point is that suggestions stay cheap and disposable — no id allocati
       Add a `/api/suggestions` read endpoint over the parsed store and a store slice to hold the entries, wiring the loader into the existing fetch fanout.
 - [x] Render the "Suggested from AI" section
       Below the worklist, render suggestions as plain cards that match idea rows visually but drop the id stamp and status — just a title.
-- [ ] Let agents append suggestions
+- [x] Let agents append suggestions
       Add a manual "Suggest ideas" action plus a `prompts.ts` builder that launches an agent to scan the repo and existing corpus and append new entries via the dated grammar, reusing the agent-launch plumbing.
 - [ ] Promote a suggestion to a real idea
       Clicking a card opens a small modal showing the description with a **Move to ideas** button; that launches a refining agent (a new `prompts.ts` builder, sibling to [[IDEA-15]]'s draft/extend prompts) which expands the one-liner into a full idea — assigning an id via `assignEntityId`, writing `papercamp/ideas/IDEA-N.md`, regenerating the index, and removing the promoted line. Dismissing a card just deletes its line.

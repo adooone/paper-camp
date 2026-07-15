@@ -316,6 +316,7 @@ export type TaskKind =
   | 'run-all'
   | 'draft'
   | 'extend'
+  | 'suggest'
   | 'commit-suggest'
   | 'overlap-check'
   | 'sync'

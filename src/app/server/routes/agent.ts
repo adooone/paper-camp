@@ -256,6 +256,27 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
     {
       method: 'POST',
+      path: '/api/agent/launch-suggest',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { prompt } = JSON.parse(reqBody) as { prompt?: string };
+        if (!prompt) {
+          sendJson(res, 400, { error: 'prompt is required' });
+          return;
+        }
+        // No branch-conflict guard: this only appends lines to suggestions.md, not
+        // code — fine on any branch (see launch-draft/launch-extend).
+        const result = await agent.startSuggest(prompt);
+        if (!result.ok) {
+          sendJson(res, 409, { error: result.error });
+          return;
+        }
+        sendJson(res, 202, { ok: true });
+      },
+    },
+
+    {
+      method: 'POST',
       path: '/api/agent/launch-reconcile-all',
       handle: async (_req, res) => {
         // Batch reconcile can rewrite many entity files — gate it behind the same
