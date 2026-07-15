@@ -13,7 +13,11 @@ export function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
   if (hit) return hit as Promise<T>;
 
   const promise = load().catch((error) => {
-    cache.delete(key); // don't let a failed read poison the cache
+    // Only evict if we're still the cached entry — a delayed rejection from a
+    // stale promise must not clobber a newer one populated after an invalidate.
+    if (cache.get(key) === promise) {
+      cache.delete(key);
+    }
     throw error;
   });
   cache.set(key, promise);

@@ -16,15 +16,17 @@ import { useAppStore } from './stores/app-store';
 // Docs and Settings are not the default route — lazy-load them so the initial
 // dashboard bundle only ships the Plans area. Both the page and its sidebar
 // slot come from the same dynamic import, so they share one chunk.
-const DocsPage = lazy(() => import('./features/docs/index').then((m) => ({ default: m.DocsPage })));
+const DocsPage = lazy(() =>
+  import('@/app/features/docs/index').then((m) => ({ default: m.DocsPage })),
+);
 const DocsSidebar = lazy(() =>
-  import('./features/docs/index').then((m) => ({ default: m.DocsSidebar })),
+  import('@/app/features/docs/index').then((m) => ({ default: m.DocsSidebar })),
 );
 const SettingsPage = lazy(() =>
-  import('./features/settings/index').then((m) => ({ default: m.SettingsPage })),
+  import('@/app/features/settings/index').then((m) => ({ default: m.SettingsPage })),
 );
 const SettingsSidebar = lazy(() =>
-  import('./features/settings/index').then((m) => ({ default: m.SettingsSidebar })),
+  import('@/app/features/settings/index').then((m) => ({ default: m.SettingsSidebar })),
 );
 
 const navItems = [

@@ -22,11 +22,11 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       path: '/api/git/status',
       handle: async (_req, res) => {
         const branch = git.getCurrentBranch();
-        const [entries, ahead, branchHygiene] = await Promise.all([
-          git.getStatus(),
-          git.getAheadCount(),
-          git.getBranchHygieneStatus(),
-        ]);
+        // getStatus and getBranchHygieneStatus both run `git status` under the hood;
+        // running them concurrently races on .git/index.lock. getAheadCount spawns an
+        // unrelated `git rev-list`, so it stays parallel with the first status call.
+        const [entries, ahead] = await Promise.all([git.getStatus(), git.getAheadCount()]);
+        const branchHygiene = await git.getBranchHygieneStatus();
         sendJson(res, 200, { branch, entries, ahead, branchHygiene });
       },
     },
