@@ -4,6 +4,7 @@ import type {
   OpenQuestionEntry,
   ProgressEntry,
   SuggestionEntry,
+  TaskLogEntry,
 } from '@/types/index';
 
 export const fetchDecisions = async () => {
@@ -25,6 +26,11 @@ export const fetchOpenQuestions = async () => {
 export const fetchProgress = async () => {
   const res = await fetch('/api/progress');
   return res.json() as Promise<{ entries: ProgressEntry[] }>;
+};
+
+export const fetchTaskLog = async () => {
+  const res = await fetch('/api/tasks');
+  return res.json() as Promise<{ entries: TaskLogEntry[] }>;
 };
 
 export const fetchSuggestions = async () => {

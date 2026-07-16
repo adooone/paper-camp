@@ -9,6 +9,7 @@ import {
   parsePlans,
   parseProgress,
   parseSuggestions,
+  parseTaskLog,
 } from './parser';
 
 describe('parsePlans', () => {
@@ -486,6 +487,50 @@ describe('parseProgress', () => {
 
   it('returns an empty array for an empty file', () => {
     expect(parseProgress('')).toEqual([]);
+  });
+});
+
+describe('parseTaskLog', () => {
+  it('parses one entry per JSON line', () => {
+    const entryA = {
+      id: 'a',
+      taskKind: 'phase',
+      planId: 'FEAT-1',
+      planTitle: 'Some plan',
+      agentId: 'claude-code',
+      startedAt: '2026-07-15T10:00:00.000Z',
+      endedAt: '2026-07-15T10:05:00.000Z',
+      outcome: 'done',
+    };
+    const entryB = {
+      id: 'b',
+      taskKind: 'commit-suggest',
+      planTitle: 'Some plan',
+      agentId: 'claude-code',
+      startedAt: '2026-07-15T10:06:00.000Z',
+      endedAt: '2026-07-15T10:06:30.000Z',
+      outcome: 'error',
+    };
+    const jsonl = `${JSON.stringify(entryA)}\n${JSON.stringify(entryB)}\n`;
+    expect(parseTaskLog(jsonl)).toEqual([entryA, entryB]);
+  });
+
+  it('skips malformed lines and blank lines rather than failing the whole read', () => {
+    const entry = {
+      id: 'a',
+      taskKind: 'phase',
+      planTitle: 'Some plan',
+      agentId: 'claude-code',
+      startedAt: '2026-07-15T10:00:00.000Z',
+      endedAt: '2026-07-15T10:05:00.000Z',
+      outcome: 'done',
+    };
+    const jsonl = `${JSON.stringify(entry)}\n\nnot json\n`;
+    expect(parseTaskLog(jsonl)).toEqual([entry]);
+  });
+
+  it('returns an empty array for an empty file', () => {
+    expect(parseTaskLog('')).toEqual([]);
   });
 });
 

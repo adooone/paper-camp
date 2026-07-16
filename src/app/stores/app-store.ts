@@ -19,6 +19,7 @@ import type {
   PlanStatus,
   ProgressEntry,
   SuggestionEntry,
+  TaskLogEntry,
 } from '@/types/index';
 import { create } from 'zustand';
 import {
@@ -45,6 +46,7 @@ import {
   fetchProgress,
   fetchRepoDocs,
   fetchSuggestions,
+  fetchTaskLog,
   promoteSuggestion as promoteSuggestionApi,
 } from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
@@ -96,6 +98,10 @@ type AppStore = {
   progress: ProgressEntry[];
   progressLoading: boolean;
   loadProgress: () => Promise<void>;
+
+  taskLog: TaskLogEntry[];
+  taskLogLoading: boolean;
+  loadTaskLog: () => Promise<void>;
 
   repoDocs: { name: string; content: string }[];
   repoDocsLoading: boolean;
@@ -303,6 +309,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ progress: data.entries, progressLoading: false });
     } catch {
       set({ progress: [], progressLoading: false });
+    }
+  },
+
+  taskLog: [],
+  taskLogLoading: true,
+  loadTaskLog: async () => {
+    set({ taskLogLoading: true });
+    try {
+      const data = await fetchTaskLog();
+      set({ taskLog: data.entries, taskLogLoading: false });
+    } catch {
+      set({ taskLog: [], taskLogLoading: false });
     }
   },
 
