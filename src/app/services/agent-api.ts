@@ -97,7 +97,11 @@ export const launchFixReview = async (planId: string): Promise<void> => {
   await handleAgentResponse(response);
 };
 
-export const stopAgent = async (): Promise<void> => {
-  const response = await fetch('/api/agent/stop', { method: 'POST' });
+export const stopAgent = async (taskId?: string): Promise<void> => {
+  const response = await fetch('/api/agent/stop', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ taskId }),
+  });
   await handleAgentResponse(response, 'Stop failed');
 };

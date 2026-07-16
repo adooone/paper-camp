@@ -1088,9 +1088,12 @@ export function createAgentManager(
     return runReadOnlyPrompt(prompt, 'overlap-check', 'Check idea overlap');
   }
 
-  function stop(): Result {
-    const task = currentTask();
-    if (!task) {
+  // Defaults to the most-recently-launched task (old single-slot behavior) when no id
+  // is given, so existing callers/tests keep working; the Stack card's per-task stop
+  // control passes an explicit id since several tasks can be running at once.
+  function stop(taskId?: string): Result {
+    const task = taskId ? tasks.get(taskId) : currentTask();
+    if (!task || isTaskDone(task)) {
       return { ok: false, error: 'No agent task running' };
     }
     setStatus(task, 'stopping');
@@ -1191,7 +1194,7 @@ export interface AgentManager {
   startSuggest: (prompt: string) => Promise<Result>;
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
-  stop: () => Result;
+  stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
   getReconcileQueue: () => ReconcileQueueItem[] | null;
   subscribe: (res: ServerResponse) => void;

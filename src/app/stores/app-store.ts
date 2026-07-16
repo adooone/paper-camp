@@ -158,7 +158,7 @@ type AppStore = {
   launchSuggestIdeas: (prompt: string) => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
   launchFixReview: (planId: string) => Promise<void>;
-  stopAgent: () => Promise<void>;
+  stopAgent: (taskId?: string) => Promise<void>;
 
   // Snapshot captured when a single-plan reconcile is launched, held at store level
   // (not in the button component) so an in-flight reconcile's completion is still
@@ -556,8 +556,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await launchFixReview(planId);
     await get().loadAgentStatus();
   },
-  stopAgent: async () => {
-    await stopAgent();
+  stopAgent: async (taskId) => {
+    await stopAgent(taskId);
     await get().loadAgentStatus();
   },
 
