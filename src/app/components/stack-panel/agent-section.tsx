@@ -62,60 +62,73 @@ const AgentTaskCard = ({
   };
 
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: click-through is a pointer-only convenience; the Stop button remains independently keyboard-reachable.
+    // biome-ignore lint/a11y/useSemanticElements: the Stop IconButton nests inside, and a native <button> can't contain another button.
     <div
+      role="button"
+      tabIndex={0}
       onClick={openTaskPage}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: space[2],
-        flex: '0 0 auto',
-        cursor: 'pointer',
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openTaskPage();
+        }
       }}
+      style={{ cursor: 'pointer', borderRadius: 10 }}
     >
-      <span
-        style={{
-          fontFamily: fontFamily.serif,
-          fontWeight: 600,
-          fontSize: fontSize.sm,
-          color: deskChalk,
-          // minWidth: 0 lets this flex item shrink below its content
-          // width — without it overflow/ellipsis never triggers.
-          minWidth: 0,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {task.planTitle}
-        {taskSubtitle(task)} · {AGENT_LABELS[task.agentId]}
-      </span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-        <Stamp
-          surface="chalkboard"
-          size="small"
-          fillColor={statusFill[task.status]}
-          textColor={statusText[task.status]}
+      <Card surface="chalkboard" size="small" className="stack-task-card">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: space[2],
+          }}
         >
-          {task.status}
-        </Stamp>
-        {(task.status === 'running' ||
-          task.status === 'starting' ||
-          task.status === 'stopping') && (
-          <IconButton
-            icon={<CloseIcon />}
-            variant="ghost"
-            size="small"
-            label="Stop agent"
-            onClick={(e) => {
-              e.stopPropagation();
-              onStop(task.id);
+          <span
+            style={{
+              fontFamily: fontFamily.serif,
+              fontWeight: 600,
+              fontSize: fontSize.sm,
+              color: deskChalk,
+              // minWidth: 0 lets this flex item shrink below its content
+              // width — without it overflow/ellipsis never triggers.
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
-            disabled={task.status === 'stopping'}
-          />
-        )}
-      </div>
+          >
+            {task.planTitle}
+            {taskSubtitle(task)} · {AGENT_LABELS[task.agentId]}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+            <Stamp
+              surface="chalkboard"
+              size="small"
+              fillColor={statusFill[task.status]}
+              textColor={statusText[task.status]}
+            >
+              {task.status}
+            </Stamp>
+            {(task.status === 'running' ||
+              task.status === 'starting' ||
+              task.status === 'stopping') && (
+              <IconButton
+                icon={<CloseIcon />}
+                variant="ghost"
+                size="small"
+                label="Stop agent"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStop(task.id);
+                }}
+                disabled={task.status === 'stopping'}
+              />
+            )}
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };
@@ -135,36 +148,19 @@ export const AgentSection = () => {
       }}
     >
       <div style={sectionLabelStyle}>Agent</div>
-      <Card surface="chalkboard" size="small" className="stack-card-fill">
-        {visibleTasks.length > 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: space[4],
-              height: '100%',
-              minHeight: 0,
-              overflowY: 'auto',
-            }}
-          >
-            {visibleTasks.map((task) => (
-              <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
-            ))}
-          </div>
-        ) : (
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>No agent running.</p>
-          </div>
-        )}
-      </Card>
+      {visibleTasks.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+          {visibleTasks.map((task) => (
+            <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
+          ))}
+        </div>
+      ) : (
+        <Card surface="chalkboard" size="small">
+          <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0, textAlign: 'center' }}>
+            No agent running.
+          </p>
+        </Card>
+      )}
     </div>
   );
 };
