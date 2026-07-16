@@ -5,6 +5,7 @@ import {
   parseOpenQuestions,
   parseProgress,
   parseSuggestions,
+  parseTaskLog,
 } from '@/core/parse';
 import { readNoteEntries, readWorkEntries } from '@/core/readers';
 import { coerceAgentConfig } from '@/types/index';
@@ -54,6 +55,12 @@ export const readRoutes: ReadRoute[] = [
     path: '/api/suggestions',
     handler: async (root) => ({
       entries: parseSuggestions(await readMaybe(campFile(root, 'suggestions.md'))),
+    }),
+  },
+  {
+    path: '/api/tasks',
+    handler: async (root) => ({
+      entries: parseTaskLog(await readMaybe(campFile(root, 'tasks.log'))),
     }),
   },
   {

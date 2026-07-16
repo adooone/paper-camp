@@ -378,8 +378,10 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
     {
       method: 'POST',
       path: '/api/agent/stop',
-      handle: (_req, res) => {
-        const result = agent.stop();
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { taskId } = reqBody ? (JSON.parse(reqBody) as { taskId?: string }) : {};
+        const result = agent.stop(taskId);
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });
           return;

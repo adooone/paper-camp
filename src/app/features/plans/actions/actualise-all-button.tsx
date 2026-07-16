@@ -5,11 +5,7 @@ import { useState } from 'react';
 
 export const ActualiseAllButton = () => {
   const launchBatchReconcile = useAppStore((s) => s.launchBatchReconcile);
-  const agentStatus = useAppStore((s) => s.agentStatus);
   const [launching, setLaunching] = useState(false);
-
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
 
   const handleClick = async () => {
     setLaunching(true);
@@ -27,7 +23,7 @@ export const ActualiseAllButton = () => {
       variant="ghost"
       size="small"
       onClick={handleClick}
-      disabled={agentBusy || launching}
+      disabled={launching}
       style={{ color: color.textSecondary }}
     >
       Actualise all

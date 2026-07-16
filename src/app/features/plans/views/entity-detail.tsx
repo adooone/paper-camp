@@ -2,7 +2,7 @@ import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
-import { useAppStore } from '@/app/stores/app-store';
+import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
@@ -17,7 +17,7 @@ import {
   useToast,
 } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { DraftPlanButton, ExtendIdeaButton } from '../actions';
+import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
   AddReviewPhasesButton,
@@ -55,17 +55,12 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
-  const agentPhaseIndex =
-    agentBusy && agentStatus !== null && agentStatus.planId === plan.id
-      ? agentStatus.phaseIndex
-      : null;
-  const auditRunning =
-    agentBusy &&
-    agentStatus !== null &&
-    agentStatus.planId === plan.id &&
-    agentStatus.phaseIndex === undefined;
+  const agentBusy = useAppStore(selectAgentBusy);
+  const planTask = agentStatus.find(
+    (t) => t.planId === plan.id && t.status !== 'done' && t.status !== 'error',
+  );
+  const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
+  const auditRunning = planTask?.taskKind === 'audit';
   const [logInput, setLogInput] = useState('');
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
@@ -209,6 +204,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           )}
           {plan.pr && <PrBadge pr={plan.pr} />}
           {plan.pr && <ReviewSignalBadge pr={plan.pr} />}
+          <RefreshButton />
         </div>
       )}
 
@@ -304,9 +300,9 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
               {auditRunning && <Spinner size="small" label="Audit running…" />}
               {(plan.status === 'review' || plan.status === 'done') && (
-                <AuditPhasesButton plan={plan} disabled={agentBusy} />
+                <AuditPhasesButton plan={plan} />
               )}
-              {plan.status !== 'done' && <ReconcileButton plan={plan} disabled={agentBusy} />}
+              {plan.status !== 'done' && <ReconcileButton plan={plan} />}
               <AddReviewPhasesButton onAdd={handleAddReviewPhases} disabled={updating} />
             </div>
           </div>
@@ -358,7 +354,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                   <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
                     <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
                     {!phase.done && agentPhaseIndex === index ? (
-                      <Spinner size="small" label={`Agent ${agentStatus?.status}…`} />
+                      <Spinner size="small" label={`Agent ${planTask?.status}…`} />
                     ) : (
                       !phase.done && (
                         <AgentStartButton

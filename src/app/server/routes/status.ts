@@ -1,4 +1,5 @@
 import { clearPrCache } from '@/core/git-pr';
+import { invalidateCorpusCache } from '../corpus-cache';
 import { requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
@@ -20,6 +21,10 @@ export function statusRoutes({ activity, agent, git, status }: RouteContext): Ro
       path: '/api/refresh',
       handle: (_req, res) => {
         clearPrCache();
+        // Also drop the parsed-corpus cache: it bakes PR state into each entry and is
+        // only invalidated by the local file watcher, so a PR appearing on GitHub
+        // (no local file change) would otherwise keep serving PR-less entries.
+        invalidateCorpusCache();
         sendJson(res, 200, { ok: true });
       },
     },

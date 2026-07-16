@@ -31,9 +31,6 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
   const [overlapError, setOverlapError] = useState<string | null>(null);
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
   const { patch } = usePlanStatusPatch();
-  const agentStatus = useAppStore((s) => s.agentStatus);
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const navigate = useNavigate();
   const { toast } = useToast();
   const similarIdeas = useSimilarIdeas(
@@ -227,7 +224,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
               type="button"
               variant="ghost"
               size="small"
-              disabled={!title.trim() || checkingOverlap || agentBusy}
+              disabled={!title.trim() || checkingOverlap}
               onClick={handleCheckOverlap}
             >
               {checkingOverlap ? 'Checking overlap…' : 'Check overlap'}

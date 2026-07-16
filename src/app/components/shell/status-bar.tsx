@@ -35,10 +35,10 @@ export const StatusBar = () => {
   const { qualityStatus, testStatus, consistencyStatus } = deriveCheckStatuses(status);
   const anyChecksRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
-  const agentActive =
-    agentStatus?.status === 'running' ||
-    agentStatus?.status === 'starting' ||
-    agentStatus?.status === 'stopping';
+  const activeTask = agentStatus.find(
+    (t) => t.status === 'running' || t.status === 'starting' || t.status === 'stopping',
+  );
+  const agentActive = activeTask !== undefined;
 
   const changedFileCount = gitStatus?.length ?? 0;
 
@@ -84,7 +84,7 @@ export const StatusBar = () => {
         <span style={{ opacity: 0.6 }}>
           {changedFileCount > 0 ? `${changedFileCount} changed` : 'clean'}
         </span>
-        {agentActive && <Spinner size="small" label={`Agent ${agentStatus?.status}…`} />}
+        {agentActive && <Spinner size="small" label={`Agent ${activeTask?.status}…`} />}
       </div>
 
       <div style={{ flex: 1 }} />

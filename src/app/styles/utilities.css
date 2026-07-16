@@ -89,6 +89,15 @@ header[class*="layout-module__header___"] {
 }
 
 /*
+ * A Stack Agent card's click-through lands here with ?taskId=; same highlight
+ * ring as .plan-row-highlighted so the linked row is findable once scrolled to.
+ */
+.task-row-highlighted {
+  outline: 2px solid rgba(200, 154, 90, 0.5);
+  outline-offset: -2px;
+}
+
+/*
  * The dense plans list (plan-rows.tsx) is a table-shaped stack of Cards, not
  * paper-ui's Table: a kraft header card over one-line paper row cards. The
  * shared grid template is what keeps the header and every row's columns
@@ -135,4 +144,42 @@ header[class*="layout-module__header___"] {
   grid-template-columns: 76px minmax(0, 1fr) 112px 140px;
   gap: 0.625rem;
   align-items: center;
+}
+
+/*
+ * The tasks log (tasks-page.tsx) mirrors .plan-rows-grid too, with a leading
+ * chevron column — clicking a row unfolds its persisted output underneath.
+ * Below the sidebar-collapse breakpoint the two timestamp columns disappear
+ * (cells carry the task-rows-cell-time class).
+ */
+.task-rows-grid {
+  display: grid;
+  grid-template-columns: 20px 116px minmax(0, 1fr) 88px 128px 128px 72px;
+  gap: 0.625rem;
+  align-items: center;
+}
+
+.task-rows-chevron svg {
+  transition: transform 150ms ease-out;
+}
+.task-rows-chevron[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+
+@media (max-width: 1023px) {
+  .task-rows-grid {
+    grid-template-columns: 20px 116px minmax(0, 1fr) 88px 72px;
+  }
+  .task-rows-cell-time {
+    display: none;
+  }
+}
+
+/*
+ * The Stack's Agent section is a column of one Card per task; Card's smallest
+ * padding is still sized for content cards, so tighten it to a single-line row
+ * fit — same reach-into-the-nested-div pattern as .plan-row-card above.
+ */
+.stack-task-card [class*="textureLayer"] {
+  padding: 0.5rem 0.875rem;
 }

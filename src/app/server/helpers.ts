@@ -24,6 +24,13 @@ export async function fileExists(path: string): Promise<boolean> {
 
 export const campFile = (root: string, name: string) => join(root, 'papercamp', name);
 
+/**
+ * A dotfile dir alongside the corpus for machine-generated task output, distinct
+ * from papercamp/ itself (which is the human-authored/agent-authored corpus).
+ */
+export const taskLogFile = (root: string, taskId: string) =>
+  join(root, 'papercamp', '.task-logs', `${taskId}.log`);
+
 export type EntityFileInput = Parameters<typeof formatEntityFile>[0];
 
 /**

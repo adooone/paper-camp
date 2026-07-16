@@ -56,7 +56,12 @@ Plan body.
 const roots: string[] = [];
 
 afterAll(async () => {
-  await Promise.all(roots.map((root) => rm(root, { recursive: true, force: true })));
+  // maxRetries/retryDelay: a few tests deliberately leave a subprocess killed but not
+  // yet reaped when their assertions finish; its close handler can still append to
+  // tasks.log after this cleanup starts, racing a bare rm into ENOTEMPTY.
+  await Promise.all(
+    roots.map((root) => rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 })),
+  );
 });
 
 beforeEach(() => {
@@ -95,6 +100,12 @@ async function makeRoot(planMd: string): Promise<{ root: string; plan: PlanEntry
 
 type Manager = ReturnType<typeof createAgentManager>;
 
+// Most-recently-launched task — mirrors the old single-slot getStatus() shape for
+// tests that only ever have one task in flight at a time.
+function currentStatus(manager: Manager) {
+  return manager.getStatus()[0];
+}
+
 async function waitForStatus(
   manager: Manager,
   done: (status: string) => boolean,
@@ -102,11 +113,11 @@ async function waitForStatus(
 ): Promise<string> {
   const start = Date.now();
   for (;;) {
-    const status = manager.getStatus()?.status;
+    const status = currentStatus(manager)?.status;
     if (status && done(status)) return status;
     if (Date.now() - start > timeoutMs) {
       throw new Error(
-        `timed out waiting; last status: ${status}, lines: ${manager.getStatus()?.lines.join(' | ')}`,
+        `timed out waiting; last status: ${status}, lines: ${currentStatus(manager)?.lines.join(' | ')}`,
       );
     }
     await new Promise((resolve) => setTimeout(resolve, 20));
@@ -197,7 +208,7 @@ describe('startRunAllPhases', () => {
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('checkbox did not flip');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('checkbox did not flip');
     // Stopped after the first phase: no second spawn, no commit, no review handoff.
     expect(spawns).toHaveLength(1);
     expect(onPhaseCommit).not.toHaveBeenCalled();
@@ -212,7 +223,7 @@ describe('startRunAllPhases', () => {
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('agent error');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('agent error');
     expect(onPhaseCommit).not.toHaveBeenCalled();
   });
 
@@ -225,7 +236,7 @@ describe('startRunAllPhases', () => {
 
     manager.startRunAllPhases(plan, async () => false);
     expect(await waitForStatus(manager, settled)).toBe('error');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('project checks failed');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('project checks failed');
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
   });
@@ -271,6 +282,96 @@ describe('startRunAllPhases', () => {
   });
 });
 
+describe('write-set collision gate', () => {
+  it('admits a disjoint entity-writer while one is running, but rejects same-entity and exclusive launches', async () => {
+    const { root, plan: plan1 } = await makeRoot(PLAN_TWO_PHASES);
+    const plan2Md = PLAN_TWO_PHASES.replace('IDEA-1', 'IDEA-2').replace('Test plan', 'Second plan');
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), plan2Md);
+    const plan2 = entityToPlan(parseEntityFile(plan2Md).entries[0]);
+
+    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
+    const manager = createAgentManager(root);
+
+    expect(manager.startForPlan(plan1, 'prompt', 'reconcile')).toEqual({ ok: true });
+    // Different entity: admitted even though a reconcile is already running (the
+    // write-set gate replaces the old blanket isBusy() flag).
+    expect(manager.startForPlan(plan2, 'prompt', 'reconcile')).toEqual({ ok: true });
+    // Same entity as the now-current task: still rejected.
+    expect(manager.startForPlan(plan2, 'prompt', 'reconcile')).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+    // Exclusive kind (worktree-wide): rejected regardless of which entity is idle.
+    expect(manager.start(plan1, 0)).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+
+    // Let both spawned children exit on their own before the test ends.
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  });
+
+  it('rejects a launch colliding with an older running task, not just the most recently launched one', async () => {
+    const { root, plan: plan1 } = await makeRoot(PLAN_TWO_PHASES);
+    const plan2Md = PLAN_TWO_PHASES.replace('IDEA-1', 'IDEA-2').replace('Test plan', 'Second plan');
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), plan2Md);
+    const plan2 = entityToPlan(parseEntityFile(plan2Md).entries[0]);
+
+    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
+    const manager = createAgentManager(root);
+
+    // Two disjoint entity-writers running at once: IDEA-1 (launched first) and
+    // IDEA-2 (launched second, now the most-recently-launched task).
+    expect(manager.startForPlan(plan1, 'prompt', 'reconcile')).toEqual({ ok: true });
+    expect(manager.startForPlan(plan2, 'prompt', 'reconcile')).toEqual({ ok: true });
+    // A second IDEA-1 reconcile must still collide with the *older* running task,
+    // even though it's no longer the most recently launched one — the gate has to
+    // check every running task in the registry, not just the last slot.
+    expect(manager.startForPlan(plan1, 'prompt', 'reconcile')).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+
+    // Let both spawned children exit on their own before the test ends.
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  });
+
+  it('rejects a suggest-ideas launch while an exclusive task is running', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
+    const manager = createAgentManager(root);
+
+    expect(manager.start(plan, 0)).toEqual({ ok: true });
+    expect(await manager.startSuggest('prompt')).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+
+    manager.stop();
+    await waitForStatus(manager, settled);
+  });
+
+  it('registers a read-only prompt as a task, but never lets it collide with a real launch', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const manager = createAgentManager(root);
+
+    // Fire-and-forget: runCommitSuggest registers and starts its task synchronously,
+    // before the (broken-on-purpose, since this manager only mocks the phase
+    // adapter) child process resolves the promise — swallow the rejection.
+    const pending = manager.runCommitSuggest('prompt').catch(() => undefined);
+    const readOnlyTask = manager.getStatus().find((t) => t.taskKind === 'commit-suggest');
+    expect(readOnlyTask?.status).toBe('running');
+
+    // A read-only task's write-set is `{ scope: 'none' }` — even while it's still
+    // registered as running, it must never collide with a real launch's write-set.
+    expect(manager.start(plan, 0)).toEqual({ ok: true });
+
+    manager.stop();
+    await pending;
+    await waitForStatus(manager, settled);
+  });
+});
+
 describe('start (single phase)', () => {
   it('finishes cleanly when the agent checks off the phase', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
@@ -281,7 +382,7 @@ describe('start (single phase)', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     // The post-run verification is async; give it a beat before asserting no warning.
     await new Promise((resolve) => setTimeout(resolve, 200));
-    expect(manager.getStatus()?.lines.join('\n')).not.toContain('verify manually');
+    expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
   });
 
   it('warns when the agent exits cleanly without checking off the phase', async () => {
@@ -293,12 +394,12 @@ describe('start (single phase)', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      !currentStatus(manager)?.lines.join('\n').includes('verify manually') &&
       Date.now() - start < 5000
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    expect(manager.getStatus()?.lines.join('\n')).toContain(
+    expect(currentStatus(manager)?.lines.join('\n')).toContain(
       'did not check off this phase in the plan file',
     );
   });
@@ -307,6 +408,73 @@ describe('start (single phase)', () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     const manager = createAgentManager(root);
     expect(manager.start(plan, 99)).toEqual({ ok: false, error: 'Phase not found' });
+  });
+});
+
+describe('task log', () => {
+  it('appends a done entry with kind, plan, agent, and start/end to papercamp/tasks.log', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    const taskId = currentStatus(manager)?.id;
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    const raw = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const lines = raw.trim().split('\n');
+    const entry = JSON.parse(lines[lines.length - 1]);
+    expect(entry).toMatchObject({
+      id: taskId,
+      taskKind: 'phase',
+      planId: 'IDEA-1',
+      planTitle: 'Test plan',
+      agentId: 'claude-code',
+      outcome: 'done',
+    });
+    expect(new Date(entry.startedAt).getTime()).toBeLessThanOrEqual(
+      new Date(entry.endedAt).getTime(),
+    );
+  });
+
+  it('appends an error entry when the agent exits nonzero', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(3)';
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    const raw = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
+    expect(entry.outcome).toBe('error');
+  });
+
+  it('persists the finished task’s output lines to a per-task file', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    const taskId = currentStatus(manager)?.id;
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    // The write is fire-and-forget off setStatus(), so it can land slightly after
+    // getStatus() already reports 'done' — poll instead of reading once.
+    const logPath = join(root, 'papercamp', '.task-logs', `${taskId}.log`);
+    const start = Date.now();
+    const expected = currentStatus(manager)?.lines.join('\n');
+    let raw: string | undefined;
+    while (Date.now() - start < 2000) {
+      try {
+        raw = await readFile(logPath, 'utf-8');
+        if (raw === expected) break;
+      } catch {
+        // Ignore ENOENT while waiting for the fire-and-forget write
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(raw).toBe(expected);
   });
 });
 
@@ -335,8 +503,32 @@ describe('startFixReview', () => {
     expect(result).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     await new Promise((resolve) => setTimeout(resolve, 200));
-    expect(manager.getStatus()?.lines.join('\n')).not.toContain('verify manually');
+    expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
     // 1-based verdicts resolve against the thread list the prompt numbered.
+    expect(manager.getFixReviewResult()).toEqual({
+      commit: VERDICT.commit,
+      addressed: ['PRRT_one'],
+      skipped: [{ threadId: 'PRRT_two', why: 'repo is kebab-case' }],
+    });
+  });
+
+  it('accepts a verdict wrapped in a markdown code fence', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    // Real failure seen 2026-07-16: the model fenced its verdict despite the
+    // prompt's "no code fences", so the last non-empty line was ``` and the
+    // whole settle step silently no-oped.
+    agentScript.current = [
+      'console.log("Summary of what was fixed.");',
+      'console.log("\\u0060\\u0060\\u0060json");',
+      `console.log(${JSON.stringify(JSON.stringify(VERDICT))});`,
+      'console.log("\\u0060\\u0060\\u0060");',
+    ].join('\n');
+    const manager = createAgentManager(root);
+
+    manager.startFixReview(plan, 'fix these comments', THREADS);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
     expect(manager.getFixReviewResult()).toEqual({
       commit: VERDICT.commit,
       addressed: ['PRRT_one'],
@@ -360,7 +552,7 @@ describe('startFixReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     await new Promise((resolve) => setTimeout(resolve, 200));
     // Evaluating every comment and correctly rejecting them all IS the job done.
-    expect(manager.getStatus()?.lines.join('\n')).not.toContain('verify manually');
+    expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
     expect(manager.getFixReviewResult()?.addressed).toEqual([]);
     expect(manager.getFixReviewResult()?.skipped).toHaveLength(2);
   });
@@ -374,12 +566,12 @@ describe('startFixReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      !currentStatus(manager)?.lines.join('\n').includes('verify manually') &&
       Date.now() - start < 5000
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    expect(manager.getStatus()?.lines.join('\n')).toContain(
+    expect(currentStatus(manager)?.lines.join('\n')).toContain(
       'without reporting which comments it addressed',
     );
     expect(manager.getFixReviewResult()).toBeNull();
@@ -398,7 +590,7 @@ describe('startFixReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      !currentStatus(manager)?.lines.join('\n').includes('verify manually') &&
       Date.now() - start < 5000
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -419,7 +611,7 @@ describe('startFixReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      !currentStatus(manager)?.lines.join('\n').includes('verify manually') &&
       Date.now() - start < 5000
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -440,7 +632,7 @@ describe('startFixReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
-      !manager.getStatus()?.lines.join('\n').includes('verify manually') &&
+      !currentStatus(manager)?.lines.join('\n').includes('verify manually') &&
       Date.now() - start < 5000
     ) {
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -475,10 +667,10 @@ describe('stop and getStatus', () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const manager = createAgentManager(root);
-    expect(manager.getStatus()).toBeNull();
+    expect(manager.getStatus()).toEqual([]);
 
     manager.startRunAllPhases(plan);
-    const state = manager.getStatus();
+    const state = currentStatus(manager);
     expect(state).toMatchObject({
       taskKind: 'run-all',
       planTitle: 'Test plan',
@@ -519,7 +711,7 @@ fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated pl
 
     expect(manager.startBatchReconcile()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
 
     const queue = manager.getReconcileQueue();
     expect(queue).toEqual([
@@ -534,7 +726,7 @@ fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated pl
 
     expect(manager.startBatchReconcile()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — no drift found');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('[done] IDEA-1 — no drift found');
     expect(manager.getReconcileQueue()).toEqual([]);
   });
 
@@ -559,7 +751,7 @@ Plan body.
 
     expect(manager.startBatchReconcile()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
   });
 
   it('excludes an entity whose stored status is done', async () => {
@@ -577,7 +769,9 @@ Plan body.
 
     expect(manager.startBatchReconcile()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    expect(manager.getStatus()?.lines.join('\n')).toContain('No open ideas or plans to reconcile.');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain(
+      'No open ideas or plans to reconcile.',
+    );
   });
 
   it('returns null once a different task kind becomes current', async () => {

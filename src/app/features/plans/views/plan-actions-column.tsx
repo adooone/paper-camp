@@ -1,6 +1,6 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlanTitle } from '@/app/hooks';
-import { useAppStore } from '@/app/stores/app-store';
+import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { AGENT_IDS, AGENT_LABELS, type AgentId } from '@/types/index';
 import { Card, ListItem, Select, Stamp } from '@dendelion/paper-ui';
@@ -28,14 +28,11 @@ const sectionLabelStyle: React.CSSProperties = {
 export const PlanActionsColumn = () => {
   const plans = useAppStore((s) => s.plans);
   const activePlanTitle = useActivePlanTitle();
-  const agentStatus = useAppStore((s) => s.agentStatus);
+  const agentBusy = useAppStore(selectAgentBusy);
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
 
   const plan = activePlanTitle ? plans?.entries.find((p) => p.title === activePlanTitle) : null;
   if (!plan) return null;
-
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const inProgress = plan.status === 'in-progress';
   const underReview = plan.status === 'review';
   const dropped = plan.status === 'dropped';

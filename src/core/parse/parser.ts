@@ -14,6 +14,7 @@ import type {
   ProgressEntry,
   RawEntry,
   SuggestionEntry,
+  TaskLogEntry,
 } from '../../types/index';
 import {
   decisionFieldsSchema,
@@ -550,6 +551,21 @@ export function parseProgress(markdown: string): ProgressEntry[] {
     entries.push({ date, items });
   }
 
+  return entries;
+}
+
+/** tasks.log is JSON Lines — one TaskLogEntry per line. Skip lines that fail to parse rather than fail the whole read (a truncated last line from a crash shouldn't hide the rest). */
+export function parseTaskLog(raw: string): TaskLogEntry[] {
+  const entries: TaskLogEntry[] = [];
+  for (const line of raw.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      entries.push(JSON.parse(trimmed) as TaskLogEntry);
+    } catch {
+      // skip malformed line
+    }
+  }
   return entries;
 }
 

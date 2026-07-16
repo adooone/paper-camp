@@ -140,18 +140,18 @@ export const CommitSection = () => {
   // outright. Keyed by content so it applies once per run and doesn't fight the
   // user's own edits afterwards.
   const appliedAgentCommitRef = useRef<string | null>(null);
+  const suggestedCommit = agentStatus.find((t) => t.suggestedCommit)?.suggestedCommit;
   useEffect(() => {
-    const suggested = agentStatus?.suggestedCommit;
-    if (!suggested) {
+    if (!suggestedCommit) {
       appliedAgentCommitRef.current = null;
       return;
     }
-    const key = `${suggested.title}\n${suggested.message}`;
+    const key = `${suggestedCommit.title}\n${suggestedCommit.message}`;
     if (appliedAgentCommitRef.current === key) return;
     appliedAgentCommitRef.current = key;
-    setCommitTitle(suggested.title);
-    setCommitMessage(suggested.message);
-  }, [agentStatus?.suggestedCommit]);
+    setCommitTitle(suggestedCommit.title);
+    setCommitMessage(suggestedCommit.message);
+  }, [suggestedCommit]);
 
   useEffect(() => {
     if (suggestedMessage && !commitMessage) {

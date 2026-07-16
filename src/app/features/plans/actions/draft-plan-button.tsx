@@ -12,9 +12,6 @@ interface DraftPlanButtonProps {
 
 export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
   const launchPlanDraft = useAppStore((s) => s.launchPlanDraft);
-  const agentStatus = useAppStore((s) => s.agentStatus);
-  const agentBusy =
-    agentStatus !== null && agentStatus.status !== 'done' && agentStatus.status !== 'error';
   const { state, errorMessage, run } = useActionFeedback();
   const { toast } = useToast();
 
@@ -58,7 +55,7 @@ export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
         variant="ghost"
         size="small"
         onClick={handleClick}
-        disabled={agentBusy || state === 'loading' || !idea.id}
+        disabled={state === 'loading' || !idea.id}
         style={{ color: state === 'error' ? color.accentRoseDark : color.textSecondary }}
       >
         {label}

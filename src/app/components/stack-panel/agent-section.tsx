@@ -1,20 +1,158 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
-import { AGENT_LABELS, type AgentTaskStatus } from '@/types/index';
-import { Accordion, Card, CloseIcon, IconButton, Spinner, Stamp } from '@dendelion/paper-ui';
-import { useState } from 'react';
-import {
-  chalkStatusFill,
-  chalkStatusText,
-  deskChalk,
-  deskTextMuted,
-  sectionLabelStyle,
-} from './shared';
+import { AGENT_LABELS, type AgentTaskState, type AgentTaskStatus } from '@/types/index';
+import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
+import { chalkStatusFill, chalkStatusText, deskChalk, sectionLabelStyle } from './shared';
+
+const MAX_VISIBLE_TASKS = 3;
+// One task card's rendered height (single content line, .stack-task-card's
+// tightened 0.5rem padding) plus the gap between stacked cards — reserved so
+// the empty state doesn't shrink the panel when tasks finish and clear.
+const TASK_CARD_HEIGHT = '2.75rem';
+const taskStackMinHeight = `calc(${MAX_VISIBLE_TASKS} * ${TASK_CARD_HEIGHT} + ${MAX_VISIBLE_TASKS - 1} * ${space[2]})`;
+
+const taskSubtitle = (task: AgentTaskState): string => {
+  switch (task.taskKind) {
+    case 'phase':
+      return task.phaseIndex !== undefined ? ` — phase ${task.phaseIndex + 1}` : '';
+    case 'audit':
+      return ' — audit';
+    case 'batch-reconcile':
+      return ' — batch reconcile';
+    case 'reconcile':
+      return ' — reconcile';
+    case 'fix-review':
+      return ' — fixing review comments';
+    case 'draft':
+      return ' — drafting';
+    case 'extend':
+      return ' — extending';
+    case 'commit-suggest':
+      return ' — suggesting commit message';
+    case 'overlap-check':
+      return ' — checking overlap';
+    case 'sync':
+      return ' — syncing to main';
+    case 'run-all':
+      return ' — run all phases';
+    default:
+      return '';
+  }
+};
+
+const AgentTaskCard = ({
+  task,
+  onStop,
+}: {
+  task: AgentTaskState;
+  onStop: (taskId: string) => Promise<void>;
+}) => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const openTaskPage = () => navigate({ to: '/tasks', search: { taskId: task.id } });
+
+  const handleStop = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await onStop(task.id);
+    } catch (err) {
+      toast({
+        title: 'Failed to stop agent',
+        description: (err as Error).message,
+        variant: 'error',
+      });
+    }
+  };
+
+  const statusFill: Record<AgentTaskStatus, string> = {
+    starting: chalkStatusFill.running,
+    running: chalkStatusFill.running,
+    stopping: chalkStatusFill.running,
+    done: chalkStatusFill.pass,
+    error: chalkStatusFill.fail,
+  };
+  const statusText: Record<AgentTaskStatus, string> = {
+    starting: chalkStatusText.running,
+    running: chalkStatusText.running,
+    stopping: chalkStatusText.running,
+    done: chalkStatusText.pass,
+    error: chalkStatusText.fail,
+  };
+
+  return (
+    // biome-ignore lint/a11y/useSemanticElements: the Stop IconButton nests inside, and a native <button> can't contain another button.
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={openTaskPage}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openTaskPage();
+        }
+      }}
+      style={{ cursor: 'pointer', borderRadius: 10 }}
+    >
+      <Card surface="chalkboard" size="small" className="stack-task-card">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: space[2],
+          }}
+        >
+          <span
+            style={{
+              fontFamily: fontFamily.serif,
+              fontWeight: 600,
+              fontSize: fontSize.sm,
+              color: deskChalk,
+              // minWidth: 0 lets this flex item shrink below its content
+              // width — without it overflow/ellipsis never triggers.
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {task.planTitle}
+            {taskSubtitle(task)} · {AGENT_LABELS[task.agentId]}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+            <Stamp
+              surface="chalkboard"
+              size="small"
+              fillColor={statusFill[task.status]}
+              textColor={statusText[task.status]}
+            >
+              {task.status}
+            </Stamp>
+            {(task.status === 'running' ||
+              task.status === 'starting' ||
+              task.status === 'stopping') && (
+              <IconButton
+                icon={<CloseIcon />}
+                variant="ghost"
+                size="small"
+                label="Stop agent"
+                onClick={handleStop}
+                disabled={task.status === 'stopping'}
+              />
+            )}
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
 
 export const AgentSection = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
-  const [agentLogExpanded, setAgentLogExpanded] = useState(false);
+  const visibleTasks = agentStatus.slice(0, MAX_VISIBLE_TASKS);
 
   return (
     <div
@@ -26,167 +164,27 @@ export const AgentSection = () => {
       }}
     >
       <div style={sectionLabelStyle}>Agent</div>
-      <Card surface="chalkboard" size="small" className="stack-card-fill">
-        {agentStatus ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              minHeight: 0,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: space[2],
-                marginBottom: space[1],
-                flexShrink: 0,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: fontFamily.serif,
-                  fontWeight: 600,
-                  fontSize: fontSize.sm,
-                  color: deskChalk,
-                  // minWidth: 0 lets this flex item shrink below its content
-                  // width — without it overflow/ellipsis never triggers.
-                  minWidth: 0,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {agentStatus.planTitle}
-                {agentStatus.taskKind === 'phase' && agentStatus.phaseIndex !== undefined
-                  ? ` — phase ${agentStatus.phaseIndex + 1}`
-                  : agentStatus.taskKind === 'audit'
-                    ? ' — audit'
-                    : agentStatus.taskKind === 'batch-reconcile'
-                      ? ' — batch reconcile'
-                      : agentStatus.taskKind === 'reconcile'
-                        ? ' — reconcile'
-                        : agentStatus.taskKind === 'fix-review'
-                          ? ' — fixing review comments'
-                          : agentStatus.taskKind === 'draft'
-                            ? ' — drafting'
-                            : agentStatus.taskKind === 'extend'
-                              ? ' — extending'
-                              : agentStatus.taskKind === 'commit-suggest'
-                                ? ' — suggesting commit message'
-                                : agentStatus.taskKind === 'overlap-check'
-                                  ? ' — checking overlap'
-                                  : agentStatus.taskKind === 'sync'
-                                    ? ' — syncing to main'
-                                    : agentStatus.taskKind === 'run-all'
-                                      ? ' — run all phases'
-                                      : ''}{' '}
-                · {AGENT_LABELS[agentStatus.agentId]}
-              </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-                {(() => {
-                  const statusFill: Record<AgentTaskStatus, string> = {
-                    starting: chalkStatusFill.running,
-                    running: chalkStatusFill.running,
-                    stopping: chalkStatusFill.running,
-                    done: chalkStatusFill.pass,
-                    error: chalkStatusFill.fail,
-                  };
-                  const statusText: Record<AgentTaskStatus, string> = {
-                    starting: chalkStatusText.running,
-                    running: chalkStatusText.running,
-                    stopping: chalkStatusText.running,
-                    done: chalkStatusText.pass,
-                    error: chalkStatusText.fail,
-                  };
-                  return (
-                    <Stamp
-                      surface="chalkboard"
-                      size="small"
-                      fillColor={statusFill[agentStatus.status]}
-                      textColor={statusText[agentStatus.status]}
-                    >
-                      {agentStatus.status}
-                    </Stamp>
-                  );
-                })()}
-                {(agentStatus.status === 'running' ||
-                  agentStatus.status === 'starting' ||
-                  agentStatus.status === 'stopping') && (
-                  <IconButton
-                    icon={<CloseIcon />}
-                    variant="ghost"
-                    size="small"
-                    label="Stop agent"
-                    onClick={stopAgentTask}
-                    disabled={agentStatus.status === 'stopping'}
-                  />
-                )}
-              </div>
-            </div>
-            {agentStatus.lines.length > 0 && (
-              <>
-                <span
-                  style={{
-                    fontFamily: fontFamily.mono,
-                    fontSize: fontSize['2xs'],
-                    color: deskTextMuted,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    marginBottom: space[2],
-                    flexShrink: 0,
-                  }}
-                >
-                  {agentStatus.lines[agentStatus.lines.length - 1]}
-                </span>
-                <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
-                  <Accordion
-                    title={`${agentStatus.lines.length} line${agentStatus.lines.length === 1 ? '' : 's'}`}
-                    expanded={agentLogExpanded}
-                    onToggle={() => setAgentLogExpanded(!agentLogExpanded)}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: space[1],
-                        fontFamily: fontFamily.mono,
-                        fontSize: fontSize['2xs'],
-                        color: deskTextMuted,
-                        paddingTop: space[2],
-                        maxHeight: 160,
-                        overflowY: 'auto',
-                      }}
-                    >
-                      {agentStatus.lines.map((line, i) => (
-                        <span key={`${i}-${line}`} style={{ whiteSpace: 'pre-wrap' }}>
-                          {line}
-                        </span>
-                      ))}
-                    </div>
-                  </Accordion>
-                </div>
-              </>
-            )}
-          </div>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: visibleTasks.length > 0 ? 'flex-start' : 'center',
+          gap: space[2],
+          minHeight: taskStackMinHeight,
+        }}
+      >
+        {visibleTasks.length > 0 ? (
+          visibleTasks.map((task) => (
+            <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
+          ))
         ) : (
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>No agent running.</p>
-          </div>
+          <Card surface="chalkboard" size="small">
+            <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0, textAlign: 'center' }}>
+              No agent running.
+            </p>
+          </Card>
         )}
-      </Card>
+      </div>
     </div>
   );
 };

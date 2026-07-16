@@ -79,7 +79,11 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       timers[key] = setTimeout(run, ms);
     };
     es.onmessage = (event) => {
-      const payload = JSON.parse(event.data) as { message?: string; type?: string };
+      const payload = JSON.parse(event.data) as {
+        message?: string;
+        type?: string;
+        taskId?: string;
+      };
       // Check stamps (Quality/Tests/Consistency) live entirely off these — the
       // 'running' tick IS the loading state, so it must reach loadStatus.
       if (payload.type === 'status') {
@@ -127,10 +131,9 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     testStatus === 'fail' ||
     consistencyStatus === 'fail' ||
     hasDocIssues;
-  const agentActive =
-    agentStatus?.status === 'running' ||
-    agentStatus?.status === 'starting' ||
-    agentStatus?.status === 'stopping';
+  const agentActive = agentStatus.some(
+    (t) => t.status === 'running' || t.status === 'starting' || t.status === 'stopping',
+  );
 
   return (
     <>

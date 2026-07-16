@@ -1,8 +1,9 @@
 import { type ChildProcess, spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { readFile, stat } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { buildReconcilePrompt } from '@/app/features/plans/prompts';
 import { replyToReviewThread, resolveReviewThread } from '@/core/git-pr';
@@ -23,19 +24,24 @@ import {
   type ReconcileQueueItem,
   type ReviewThread,
   type TaskKind,
+  type TaskLogEntry,
   coerceAgentConfig,
 } from '@/types/index';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
-import { campFile, readMaybe } from './helpers';
+import { campFile, readMaybe, taskLogFile } from './helpers';
 
 const MAX_LINES = 50;
 // Maximum wall-clock time per phase before treating it as a stall/clarifying-question hang.
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
 
 interface AgentTask {
+  id: string;
   taskKind: TaskKind;
   planTitle: string;
   planId?: string;
+  // Set at task creation; paired with the terminal timestamp in the persisted
+  // task log (see logTaskCompletion) so the log has a start/end, not just an end.
+  startedAt: string;
   // Absent for a plan-scoped task (e.g. a convergence audit spanning every phase),
   // present for a single-phase task.
   phaseIndex?: number;
@@ -111,6 +117,8 @@ ${details}Plan context: ${plan.body}
 
 Do only this phase — do not start any other phase, even if it looks quick.
 
+Comments: the code is the documentation. Default to zero comments. Per docs/CODE_STYLE.md §7, a comment ships only if it states a *why* that is not derivable from the code AND would cost a future reader real debugging time AND fits in one line. Never narrate what the code does, restate a type, label a block, or explain your reasoning for a change — that belongs in the commit message and your progress.md bullet, not the source. When in doubt, delete it.
+
 Execution environment: you are a headless automated agent running in a terminal. There is no browser, display, or GUI available to you. Verify your work only with terminal commands — type-check, lint, and tests (e.g. \`pnpm run check-types\`, \`pnpm run lint\`, \`pnpm test\`). Never attempt visual or browser-based verification: do not open the app in a browser, navigate to a dev-server URL or address, take screenshots, or run any GUI/visual check — even if this phase or the plan text describes one (e.g. "check in Chrome", a \`host:port\` address, "visual pass"). If a phase's only verification is visual, make the code change, then note in your progress.md bullet that visual confirmation is left to a human, and do not block on it.
 
 Leave the build green before you finish. The verification that gates this phase runs lint, format, type-check, and tests over the WHOLE project — not just the files you edited. Run \`pnpm run check-types\` and \`npx biome check . --write\` and make the entire repo pass. If a lint, format, or type error appears anywhere — including in a file you did not modify and did not introduce — fix it. "It's unrelated to my phase" / "it's pre-existing" is never a reason to leave a red check: a broken check blocks this phase regardless of who caused it. Keeping the whole project's checks green is part of completing your phase, not a separate phase — so this does not conflict with "do only this phase." Keep such incidental fixes minimal and correct.
@@ -128,14 +136,42 @@ export function createAgentManager(
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
 ) {
   const clients = new Set<ServerResponse>();
-  let current: AgentTask | null = null;
-  // Survives past `current` being replaced by the next task: a human can launch
+  // Keyed registry replacing the old single `current` slot: the write-set gate (see
+  // admit() below) can admit several write-disjoint tasks at once, so task state has
+  // to live in a collection, not one variable. `lastLaunchedId` tracks whichever task
+  // was launched most recently — the getStatus()/stop()/killCurrent() surface is still
+  // single-task shaped (that's the next phase's job), so it mirrors the old `current`
+  // semantics on top of the registry rather than exposing the whole list yet.
+  const tasks = new Map<string, AgentTask>();
+  let lastLaunchedId: string | undefined;
+
+  function currentTask(): AgentTask | undefined {
+    return lastLaunchedId ? tasks.get(lastLaunchedId) : undefined;
+  }
+
+  function runningTasks(): AgentTask[] {
+    return [...tasks.values()].filter((task) => !isTaskDone(task));
+  }
+
+  // A task instance is "superseded" once a later launch takes over the
+  // most-recently-launched slot — the same thing the old `current !== task`
+  // comparison detected, just against the registry instead of a bare variable.
+  function isSuperseded(task: AgentTask): boolean {
+    return lastLaunchedId !== task.id;
+  }
+
+  function registerTask(task: AgentTask): void {
+    tasks.set(task.id, task);
+    lastLaunchedId = task.id;
+  }
+
+  // Survives past a task being replaced by the next launch: a human can launch
   // another agent run before pushing, and the verdict must still be there to settle
   // review threads when the fix finally reaches the PR.
   let pendingFixReviewResult: FixReviewResult | null = null;
 
-  function broadcast(message: string) {
-    const data = `data: ${JSON.stringify({ message, timestamp: new Date().toISOString(), type: 'agent' })}\n\n`;
+  function broadcast(message: string, taskId?: string) {
+    const data = `data: ${JSON.stringify({ message, timestamp: new Date().toISOString(), type: 'agent', taskId })}\n\n`;
     for (const client of clients) {
       try {
         client.write(data);
@@ -148,12 +184,53 @@ export function createAgentManager(
   function pushLine(task: AgentTask, text: string) {
     task.lines.push(text);
     if (task.lines.length > MAX_LINES) task.lines.shift();
-    broadcast(text);
+    broadcast(text, task.id);
+  }
+
+  // Append-only, one JSON object per line — a machine record of what ran that
+  // survives a dev-server restart, unlike the in-memory registry. Best-effort:
+  // a log write failure must never take down the task whose outcome it's recording.
+  function logTaskCompletion(task: AgentTask, outcome: 'done' | 'error') {
+    const entry: TaskLogEntry = {
+      id: task.id,
+      taskKind: task.taskKind,
+      planId: task.planId,
+      planTitle: task.planTitle,
+      agentId: task.agentId,
+      startedAt: task.startedAt,
+      endedAt: new Date().toISOString(),
+      outcome,
+    };
+    appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(() => {});
+    // The output lines only ever lived on the in-memory task and die with the
+    // process otherwise — write them out per-task so a past task's page still has
+    // something to show after a restart. Best-effort, same reasoning as above.
+    const file = taskLogFile(root, task.id);
+    mkdir(dirname(file), { recursive: true })
+      .then(() => writeFile(file, task.lines.join('\n'), 'utf-8'))
+      .catch(() => {});
+  }
+
+  // Completed tasks are already durable via tasks.log (logTaskCompletion below);
+  // this just bounds the in-memory registry so getStatus()'s payload and its
+  // per-task log clones don't grow for the life of the dev server.
+  const MAX_COMPLETED_TASKS = 20;
+
+  function pruneCompletedTasks(): void {
+    const completed = [...tasks.entries()].filter(([, t]) => isTaskDone(t));
+    const excess = completed.length - MAX_COMPLETED_TASKS;
+    for (let i = 0; i < excess; i++) {
+      tasks.delete(completed[i][0]);
+    }
   }
 
   function setStatus(task: AgentTask, status: AgentTaskStatus) {
     task.status = status;
-    broadcast(`agent: ${status}`);
+    broadcast(`agent: ${status}`, task.id);
+    if (status === 'done' || status === 'error') {
+      logTaskCompletion(task, status);
+      pruneCompletedTasks();
+    }
   }
 
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
@@ -209,17 +286,33 @@ export function createAgentManager(
   }
 
   /**
-   * Pulls the fix-review verdict off the agent's output. Its prompt requires a JSON
-   * object as the final line; scan from the end so a JSON-looking snippet quoted
-   * earlier in the reply (e.g. echoing a review comment) can't win over the real one.
-   * A verdict is only trusted if it accounts for every thread exactly once — a
-   * partial or overlapping partition would settle some threads and silently
-   * strand the rest unresolved.
+   * Pulls the fix-review verdict off the agent's output. Its prompt requires a raw
+   * JSON object as the final line, but models wrap it in a ```json fence anyway —
+   * and an adapter can push a whole multi-line message as one entry — so flatten
+   * to physical lines and scan backwards for the last line that validates as a
+   * complete verdict, rather than trusting the very last non-empty line to be it.
+   * Scanning from the end keeps a JSON-looking snippet quoted earlier in the reply
+   * (e.g. echoing a review comment) from winning over the real one. A verdict is
+   * only trusted if it accounts for every thread exactly once — a partial or
+   * overlapping partition would settle some threads and silently strand the rest
+   * unresolved.
    */
   function parseFixReviewResult(task: AgentTask): FixReviewResult | undefined {
     const threads = task.fixReviewThreads ?? [];
-    const candidate = task.lines.findLast((line) => line.trim().length > 0);
-    if (!candidate) return undefined;
+    const lines = task.lines.flatMap((entry) => entry.split('\n'));
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const candidate = lines[i].trim();
+      if (!candidate.startsWith('{')) continue;
+      const result = validateFixReviewVerdict(candidate, threads);
+      if (result) return result;
+    }
+    return undefined;
+  }
+
+  function validateFixReviewVerdict(
+    candidate: string,
+    threads: ReviewThread[],
+  ): FixReviewResult | undefined {
     try {
       const parsed = JSON.parse(candidate) as {
         commit?: { title?: string; message?: string };
@@ -291,7 +384,7 @@ export function createAgentManager(
       }
     }
     didTaskProgress(task).then((progressed) => {
-      if (current === task && progressed === false) {
+      if (progressed === false) {
         const warning =
           task.taskKind === 'extend'
             ? `Warning: agent finished but the idea body for ${task.ideaId} did not change — verify manually`
@@ -308,17 +401,26 @@ export function createAgentManager(
                       : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
         pushLine(task, warning);
       }
-      if (current === task && task.taskKind === 'audit' && task.planId && progressed === true) {
+      if (task.taskKind === 'audit' && task.planId && progressed === true) {
         onAuditComplete?.(task.planId, 0).catch(() => {});
       }
     });
+  }
+
+  // A task's own status is the source of truth for "has this task already
+  // finished" — it can't lean on registry membership for that, since the collision
+  // gate (see admit() below) can let several write-disjoint tasks be registered and
+  // running at once. Comparing identity against a single slot would make a task's
+  // own completion handlers silently no-op mid-run, orphaning it.
+  function isTaskDone(task: AgentTask): boolean {
+    return task.status === 'done' || task.status === 'error';
   }
 
   function attachReader(task: AgentTask) {
     if (!task.proc.stdout) return;
     const rl = createInterface({ input: task.proc.stdout });
     rl.on('line', (line) => {
-      if (current !== task || !line.trim()) return;
+      if (isTaskDone(task) || !line.trim()) return;
       const parsed = task.adapter.parseLine(line);
       if (!parsed) return;
       pushLine(task, parsed.text);
@@ -328,7 +430,7 @@ export function createAgentManager(
     });
 
     task.proc.on('close', (code) => {
-      if (current !== task) return;
+      if (isTaskDone(task)) return;
       if (task.status === 'starting' || task.status === 'running') {
         finishTask(task, code !== 0);
       } else if (task.status === 'stopping') {
@@ -337,7 +439,7 @@ export function createAgentManager(
     });
 
     task.proc.on('error', (err) => {
-      if (current !== task) return;
+      if (isTaskDone(task)) return;
       pushLine(task, `Failed to spawn agent: ${err.message}`);
       setStatus(task, 'error');
     });
@@ -350,13 +452,78 @@ export function createAgentManager(
     });
   }
 
-  function isBusy(): boolean {
-    return current !== null && current.status !== 'done' && current.status !== 'error';
+  // What a task kind writes, not what it's called — the actual collision surface.
+  // 'worktree' covers anything that edits source, commits, checks out, or pushes:
+  // one git working tree means only one of those can ever run. 'suggestions' and
+  // 'entities' are narrower: two entity-writers only collide if they touch the same
+  // entity, and a suggestions-writer never collides with an entity-writer since they
+  // touch different files. `ids: 'all'` (batch-reconcile) collides with every entity
+  // writer since it sweeps the whole corpus, not one id.
+  type WriteSet =
+    | { scope: 'none' }
+    | { scope: 'suggestions' }
+    | { scope: 'entities'; ids: 'all' | string[] }
+    | { scope: 'worktree' };
+
+  const EXCLUSIVE_KINDS = new Set<TaskKind>(['phase', 'run-all', 'fix-review', 'sync']);
+  const ENTITY_WRITER_KINDS = new Set<TaskKind>([
+    'audit',
+    'reconcile',
+    'batch-reconcile',
+    'draft',
+    'extend',
+  ]);
+  // Read-only, no-tools prompts (see runReadOnlyPrompt): now registered as tasks so
+  // they show up in getStatus()/the Stack, but they touch nothing, so they must
+  // never collide with — or be blocked by — anything else.
+  const READONLY_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check']);
+
+  function writeSetFor(taskKind: TaskKind, entityId?: string): WriteSet {
+    if (READONLY_KINDS.has(taskKind)) return { scope: 'none' };
+    if (EXCLUSIVE_KINDS.has(taskKind)) return { scope: 'worktree' };
+    if (taskKind === 'suggest') return { scope: 'suggestions' };
+    if (taskKind === 'batch-reconcile') return { scope: 'entities', ids: 'all' };
+    if (ENTITY_WRITER_KINDS.has(taskKind)) {
+      // No id to scope to (shouldn't happen in practice) — fail closed to
+      // worktree-wide rather than silently letting collision checks pass.
+      return entityId ? { scope: 'entities', ids: [entityId] } : { scope: 'worktree' };
+    }
+    return { scope: 'worktree' };
+  }
+
+  function writeSetsCollide(a: WriteSet, b: WriteSet): boolean {
+    if (a.scope === 'none' || b.scope === 'none') return false;
+    if (a.scope === 'worktree' || b.scope === 'worktree') return true;
+    if (a.scope === 'suggestions' || b.scope === 'suggestions') {
+      return a.scope === b.scope;
+    }
+    if (a.ids === 'all' || b.ids === 'all') return true;
+    return a.ids.some((id) => b.ids.includes(id));
+  }
+
+  function currentEntityId(task: AgentTask): string | undefined {
+    return task.planId ?? task.ideaId;
+  }
+
+  // Replaces the old global isBusy() gate: a launch is admitted unless its write-set
+  // collides with ANY currently running task, not just the most recently launched
+  // one — the registry can hold several write-disjoint tasks at once (e.g. a
+  // reconcile on IDEA-1 alongside a draft on IDEA-2), so every one of them is a
+  // candidate for collision, not just the last.
+  function admit(taskKind: TaskKind, entityId?: string): Result | null {
+    const incoming = writeSetFor(taskKind, entityId);
+    for (const task of runningTasks()) {
+      const running = writeSetFor(task.taskKind, currentEntityId(task));
+      if (writeSetsCollide(running, incoming)) {
+        return { ok: false, error: 'An agent task is already running' };
+      }
+    }
+    return null;
   }
 
   // Shared by start()/startForPlan()/startForIdea(): synchronous on purpose, same
-  // race-avoidance reasoning as the busy-guard above — no `await` between the guard
-  // check and reserving `current`.
+  // race-avoidance reasoning as the admission gate above — no `await` between the
+  // guard check and registering the task.
   function launch(
     identity: { planTitle: string; planId?: string; agentOverride?: AgentId },
     prompt: string,
@@ -372,9 +539,8 @@ export function createAgentManager(
       | 'fixReviewThreads'
     >,
   ): Result {
-    if (isBusy()) {
-      return { ok: false, error: 'An agent task is already running' };
-    }
+    const blocked = admit(scope.taskKind, identity.planId ?? scope.ideaId);
+    if (blocked) return blocked;
     const defaultAgents = readDefaultAgentIds(root);
     const {
       id: agentId,
@@ -388,6 +554,8 @@ export function createAgentManager(
     });
     const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
     const task: AgentTask = {
+      id: randomUUID(),
+      startedAt: new Date().toISOString(),
       planTitle: identity.planTitle,
       planId: identity.planId,
       status: 'starting',
@@ -397,16 +565,15 @@ export function createAgentManager(
       lines: [],
       ...scope,
     };
-    current = task;
+    registerTask(task);
     attachReader(task);
     setStatus(task, 'running');
     return { ok: true };
   }
 
   function start(plan: PlanEntry, phaseIndex: number): Result {
-    if (isBusy()) {
-      return { ok: false, error: 'An agent task is already running' };
-    }
+    const blocked = admit('phase', plan.id);
+    if (blocked) return blocked;
     const phase = plan.phases[phaseIndex];
     if (!phase) {
       return { ok: false, error: 'Phase not found' };
@@ -488,9 +655,8 @@ export function createAgentManager(
   // the repo and corpus and appends zero or more dated lines to suggestions.md.
   // Success is judged by whether that line count grew (see didTaskProgress).
   async function startSuggest(prompt: string): Promise<Result> {
-    if (isBusy()) {
-      return { ok: false, error: 'An agent task is already running' };
-    }
+    const blocked = admit('suggest');
+    if (blocked) return blocked;
     const suggestBaseline = parseSuggestions(
       await readMaybe(campFile(root, 'suggestions.md')),
     ).length;
@@ -518,9 +684,8 @@ export function createAgentManager(
   // `before` baseline right before its run, since (unlike single Reconcile, where the client captures that
   // snapshot at launch) the server is the only party in the loop here.
   function startBatchReconcile(): Result {
-    if (isBusy()) {
-      return { ok: false, error: 'An agent task is already running' };
-    }
+    const blocked = admit('batch-reconcile');
+    if (blocked) return blocked;
     const defaultAgents = readDefaultAgentIds(root);
     // Task-level agent is for status display only; each entity re-resolves its own
     // below so a per-entity `agent:` override in a mixed batch is honored.
@@ -533,6 +698,8 @@ export function createAgentManager(
       stdio: 'ignore',
     });
     const task: AgentTask = {
+      id: randomUUID(),
+      startedAt: new Date().toISOString(),
       taskKind: 'batch-reconcile',
       planTitle: 'Batch reconcile',
       status: 'starting',
@@ -542,7 +709,7 @@ export function createAgentManager(
       lines: [],
       reconcileResults: [],
     };
-    current = task;
+    registerTask(task);
     setStatus(task, 'running');
 
     (async () => {
@@ -553,10 +720,8 @@ export function createAgentManager(
           .map((e) => entityToPlan(e));
 
         if (candidates.length === 0) {
-          if (current === task) {
-            pushLine(task, 'No open ideas or plans to reconcile.');
-            setStatus(task, 'done');
-          }
+          pushLine(task, 'No open ideas or plans to reconcile.');
+          setStatus(task, 'done');
           return;
         }
 
@@ -570,7 +735,7 @@ export function createAgentManager(
         const total = candidates.length;
 
         for (const [index, plan] of candidates.entries()) {
-          if (current !== task || task.status === 'stopping') break;
+          if (task.status === 'stopping') break;
           if (!plan.id) {
             skipped++;
             continue;
@@ -603,7 +768,6 @@ export function createAgentManager(
           if (proc.stdout) {
             const rl = createInterface({ input: proc.stdout });
             rl.on('line', (line) => {
-              if (current !== task) return;
               const parsed = entAdapter.parseLine(line);
               if (parsed?.text && parsed.text !== 'Agent is working…') {
                 pushLine(task, `  ${parsed.text}`);
@@ -614,8 +778,8 @@ export function createAgentManager(
           proc.stderr?.on('data', () => {});
 
           // Wait with a timeout so one entity's stall/clarifying-question hang is a
-          // failure rather than blocking the whole sweep and pinning the agent slot
-          // (isBusy() stuck true) — same SIGTERM→SIGKILL escalation as startRunAllPhases.
+          // failure rather than blocking the whole sweep — same SIGTERM→SIGKILL
+          // escalation as startRunAllPhases.
           let timedOut = false;
           const procDone = new Promise<boolean>((resolve) => {
             proc.on('close', (code) => resolve(code === 0));
@@ -630,8 +794,6 @@ export function createAgentManager(
           }, PHASE_TIMEOUT_MS);
           const success = await procDone;
           clearTimeout(timeoutHandle);
-
-          if (current !== task) return;
 
           if (timedOut) {
             failed++;
@@ -671,8 +833,6 @@ export function createAgentManager(
           }
         }
 
-        if (current !== task) return;
-
         if (task.status === 'stopping') {
           setStatus(task, 'done');
           return;
@@ -684,10 +844,8 @@ export function createAgentManager(
         );
         setStatus(task, failed > 0 ? 'error' : 'done');
       } catch (err) {
-        if (current === task) {
-          pushLine(task, `Batch reconcile failed: ${(err as Error).message}`);
-          setStatus(task, 'error');
-        }
+        pushLine(task, `Batch reconcile failed: ${(err as Error).message}`);
+        setStatus(task, 'error');
       }
     })();
 
@@ -699,9 +857,8 @@ export function createAgentManager(
   // branch management is manual (see the "Branch creation is manual" decision).
   // Stops on first failure; calls onPhaseCommit (wired at construction) after each verified success.
   function startRunAllPhases(plan: PlanEntry, runProjectChecks?: () => Promise<boolean>): Result {
-    if (isBusy()) {
-      return { ok: false, error: 'An agent task is already running' };
-    }
+    const blocked = admit('run-all', plan.id);
+    if (blocked) return blocked;
     const unchecked = plan.phases
       .map((phase, i) => ({ phase, i }))
       .filter(({ phase }) => !phase.done);
@@ -720,6 +877,8 @@ export function createAgentManager(
 
     const stubProc = spawn('sh', ['-c', 'exit 0'], { cwd: root, stdio: 'ignore' });
     const task: AgentTask = {
+      id: randomUUID(),
+      startedAt: new Date().toISOString(),
       taskKind: 'run-all',
       planTitle: plan.title,
       planId: plan.id,
@@ -729,7 +888,7 @@ export function createAgentManager(
       proc: stubProc,
       lines: [],
     };
-    current = task;
+    registerTask(task);
     setStatus(task, 'running');
 
     (async () => {
@@ -739,7 +898,7 @@ export function createAgentManager(
         let failed = 0;
 
         for (const { phase, i } of unchecked) {
-          if (current !== task || task.status === 'stopping') break;
+          if (isSuperseded(task) || task.status === 'stopping') break;
 
           // Set phaseIndex so didTaskProgress can verify the right checkbox.
           task.phaseIndex = i;
@@ -755,7 +914,7 @@ export function createAgentManager(
           if (proc.stdout) {
             const rl = createInterface({ input: proc.stdout });
             rl.on('line', (line) => {
-              if (current !== task) return;
+              if (isSuperseded(task)) return;
               const parsed = adapter.parseLine(line);
               if (parsed?.text && parsed.text !== 'Agent is working…') {
                 pushLine(task, `  ${parsed.text}`);
@@ -786,7 +945,7 @@ export function createAgentManager(
           const exitedOk = await procDone;
           clearTimeout(timeoutHandle);
 
-          if (current !== task) return;
+          if (isSuperseded(task)) return;
 
           if (timedOut) {
             failed++;
@@ -818,7 +977,7 @@ export function createAgentManager(
           if (runProjectChecks) {
             pushLine(task, `[verify] phase ${i + 1} — running lint/format/test`);
             const checksOk = await runProjectChecks();
-            if (current !== task) return;
+            if (isSuperseded(task)) return;
             if (!checksOk) {
               failed++;
               pushLine(task, `[fail] phase ${i + 1} — project checks failed, stopping`);
@@ -833,7 +992,7 @@ export function createAgentManager(
           }
         }
 
-        if (current !== task) return;
+        if (isSuperseded(task)) return;
 
         if (task.status === 'stopping') {
           setStatus(task, 'done');
@@ -859,7 +1018,7 @@ export function createAgentManager(
           setStatus(task, 'done');
         }
       } catch (err) {
-        if (current === task) {
+        if (!isSuperseded(task)) {
           pushLine(task, `Run all phases failed: ${(err as Error).message}`);
           setStatus(task, 'error');
         }
@@ -874,6 +1033,9 @@ export function createAgentManager(
   // constructs its own arguments so it never picks up the shared adapter's
   // `--permission-mode auto` flag — these calls must stay deny-by-default since the
   // model is only ever supposed to read the prompt text handed to it on stdin.
+  // Never routed through admit(): its write-set is `{ scope: 'none' }` (see
+  // writeSetFor), so it can never block or be blocked by anything. It IS registered
+  // in `tasks` below so it shows up in getStatus()/the Stack like any other run.
   const READONLY_PROMPT_TIMEOUT_MS = 60_000;
   const STDIN_MAX_BYTES = 10 * 1024 * 1024;
 
@@ -882,9 +1044,6 @@ export function createAgentManager(
     taskKind: 'commit-suggest' | 'overlap-check',
     planTitle: string,
   ): Promise<string> {
-    if (isBusy()) {
-      return Promise.reject(new Error('An agent task is already running'));
-    }
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
       return Promise.reject(new Error('Prompt exceeds the 10MB stdin limit'));
     }
@@ -910,6 +1069,8 @@ export function createAgentManager(
         stdio: ['pipe', 'pipe', 'pipe'],
       });
       const task: AgentTask = {
+        id: randomUUID(),
+        startedAt: new Date().toISOString(),
         taskKind,
         planTitle,
         status: 'starting',
@@ -918,7 +1079,7 @@ export function createAgentManager(
         proc,
         lines: [],
       };
-      current = task;
+      registerTask(task);
       setStatus(task, 'running');
 
       let settled = false;
@@ -930,16 +1091,14 @@ export function createAgentManager(
       };
       const timeout = setTimeout(() => {
         settle(() => {
-          if (current === task) {
-            pushLine(task, `${planTitle} timed out`);
-            setStatus(task, 'error');
-            if (!proc.killed) proc.kill('SIGTERM');
-            // Escalate if SIGTERM is ignored (e.g. stuck reading stdin), so the
-            // child doesn't leak — same as stop()/run-all/batch-reconcile.
-            setTimeout(() => {
-              if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
-            }, 5000);
-          }
+          pushLine(task, `${planTitle} timed out`);
+          setStatus(task, 'error');
+          if (!proc.killed) proc.kill('SIGTERM');
+          // Escalate if SIGTERM is ignored (e.g. stuck reading stdin), so the
+          // child doesn't leak — same as stop()/run-all/batch-reconcile.
+          setTimeout(() => {
+            if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
+          }, 5000);
           reject(new Error(`${planTitle} timed out`));
         });
       }, READONLY_PROMPT_TIMEOUT_MS);
@@ -957,13 +1116,7 @@ export function createAgentManager(
         stderr += d.toString();
       });
       proc.on('close', (code) => {
-        if (current !== task) return;
         settle(() => {
-          if (task.status === 'stopping') {
-            setStatus(task, 'done');
-            reject(new Error('Stopped'));
-            return;
-          }
           if (code === 0) {
             setStatus(task, 'done');
             // opencode outputs JSON events — extract text content to find the response.
@@ -990,7 +1143,6 @@ export function createAgentManager(
         });
       });
       proc.on('error', (err) => {
-        if (current !== task) return;
         settle(() => {
           pushLine(task, `Failed to spawn agent: ${err.message}`);
           setStatus(task, 'error');
@@ -1008,44 +1160,57 @@ export function createAgentManager(
     return runReadOnlyPrompt(prompt, 'overlap-check', 'Check idea overlap');
   }
 
-  function stop(): Result {
-    if (!current) {
+  // Defaults to the most-recently-launched task (old single-slot behavior) when no id
+  // is given, so existing callers/tests keep working; the Stack card's per-task stop
+  // control passes an explicit id since several tasks can be running at once.
+  function stop(taskId?: string): Result {
+    const task = taskId ? tasks.get(taskId) : currentTask();
+    if (!task || isTaskDone(task)) {
       return { ok: false, error: 'No agent task running' };
     }
-    const task = current;
     setStatus(task, 'stopping');
     if (!task.proc.killed) task.proc.kill('SIGTERM');
     // SIGTERM can be ignored or delayed indefinitely; without this escalation a hung
-    // process leaves `current` stuck in 'stopping' forever, permanently blocking start().
+    // process leaves the task stuck in 'stopping' forever, permanently blocking start().
     setTimeout(() => {
-      if (current === task && task.status === 'stopping') {
+      // Escalate regardless of isSuperseded: that flag only tracks the
+      // most-recently-launched task, so an explicitly stopped older task (still
+      // valid in the multi-task registry) would otherwise never get SIGKILL'd.
+      if (
+        task.status === 'stopping' &&
+        task.proc.exitCode === null &&
+        task.proc.signalCode === null
+      ) {
         task.proc.kill('SIGKILL');
       }
     }, 5000);
     return { ok: true };
   }
 
-  function getStatus(): AgentTaskState | null {
-    if (!current) return null;
-    return {
-      status: current.status,
-      taskKind: current.taskKind,
-      planTitle: current.planTitle,
-      planId: current.planId,
-      phaseIndex: current.phaseIndex,
-      ideaId: current.ideaId,
-      agentId: current.agentId,
-      lines: [...current.lines],
-      ...(current.fixReviewResult ? { suggestedCommit: current.fixReviewResult.commit } : {}),
-    };
+  // Newest-launched first — `tasks` is insertion-ordered by launch (each task gets
+  // a fresh id, so no re-insertion ever reorders it), so reversing it is enough.
+  function getStatus(): AgentTaskState[] {
+    return [...tasks.values()].reverse().map((task) => ({
+      id: task.id,
+      status: task.status,
+      taskKind: task.taskKind,
+      planTitle: task.planTitle,
+      planId: task.planId,
+      phaseIndex: task.phaseIndex,
+      ideaId: task.ideaId,
+      agentId: task.agentId,
+      lines: [...task.lines],
+      ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
+    }));
   }
 
   // The most recent batch-reconcile sweep's per-entity results, or null if the
-  // current (or most recently finished) task isn't a batch-reconcile sweep. Stays
-  // available until the next agent task launch replaces `current`.
+  // most recently launched task isn't a batch-reconcile sweep. Stays available
+  // until the next agent task launch takes over that slot.
   function getReconcileQueue(): ReconcileQueueItem[] | null {
-    if (!current || current.taskKind !== 'batch-reconcile') return null;
-    return [...(current.reconcileResults ?? [])];
+    const task = currentTask();
+    if (!task || task.taskKind !== 'batch-reconcile') return null;
+    return [...(task.reconcileResults ?? [])];
   }
 
   // The most recent fix-review run's verdict that hasn't yet been consumed by a
@@ -1083,10 +1248,39 @@ export function createAgentManager(
       clients.add(res);
       res.on('close', () => clients.delete(res));
     },
-    killCurrent() {
-      if (current?.proc && !current.proc.killed) {
-        current.proc.kill();
-      }
+    // Kills every child process still running, not just the most-recently-launched
+    // task — several tasks (including read-only prompts) can be running
+    // concurrently under the write-set gate, and orphaning any of them on shutdown
+    // defeats the point of registering it.
+    // Returns a promise so the shutdown handler can await it before exiting —
+    // firing SIGTERM and immediately calling process.exit() would race the
+    // SIGKILL escalation timer below, defeating it entirely.
+    killCurrent(): Promise<void> {
+      // `killed` only reflects whether kill() was called, not whether the process
+      // has actually exited — gate on exitCode/signalCode instead, and escalate to
+      // SIGKILL for anything that ignores SIGTERM, same as stop()'s fallback.
+      const stillRunning = (proc: ChildProcess) =>
+        proc.exitCode === null && proc.signalCode === null;
+      const procs = [...tasks.values()].map((task) => task.proc).filter(stillRunning);
+      if (procs.length === 0) return Promise.resolve();
+      for (const proc of procs) proc.kill('SIGTERM');
+      return new Promise((resolve) => {
+        let remaining = procs.length;
+        const onExit = () => {
+          remaining--;
+          if (remaining <= 0) {
+            clearTimeout(timer);
+            resolve();
+          }
+        };
+        for (const proc of procs) proc.once('exit', onExit);
+        const timer = setTimeout(() => {
+          for (const proc of procs) {
+            if (stillRunning(proc)) proc.kill('SIGKILL');
+          }
+          resolve();
+        }, 2000);
+      });
     },
   };
 }
@@ -1105,9 +1299,9 @@ export interface AgentManager {
   startSuggest: (prompt: string) => Promise<Result>;
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
-  stop: () => Result;
-  getStatus: () => AgentTaskState | null;
+  stop: (taskId?: string) => Result;
+  getStatus: () => AgentTaskState[];
   getReconcileQueue: () => ReconcileQueueItem[] | null;
   subscribe: (res: ServerResponse) => void;
-  killCurrent: () => void;
+  killCurrent: () => Promise<void>;
 }

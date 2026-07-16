@@ -2,7 +2,7 @@
 id: IDEA-65
 title: Parallel agents and a task log
 type: feat
-status: idea
+status: review
 created: 2026-07-15
 tags:
   - app
@@ -27,3 +27,27 @@ So the gate becomes "does this task's write-set collide with a running one", not
 - **Keep `killCurrent` honest.** The config plugin registers it on SIGINT/SIGTERM to avoid orphaning a child; with many tasks it must kill all of them.
 
 The prize is that the cheap read-only prompts stop queueing behind long ones — today a commit-suggest can't run while a phase is going, which is most of why the app feels blocked. Start there: allowing the always-safe kinds through is a small, self-contained slice that doesn't need the registry.
+
+### Phases
+- [x] Let the always-safe kinds through
+      Exempt `commit-suggest`/`overlap-check` from the `isBusy()` gate — read-only, no-tools prompts should never block or be blocked. Self-contained slice, no registry needed.
+- [x] Define the write-set collision gate
+      Replace the global busy flag with a partition by what a task writes: always-safe, disjoint entity writers (`suggest` vs `reconcile`/`draft`/`extend`), and exclusive (`phase`/`run-all`/`fix-review`/`sync`). A launch is admitted unless its write-set collides with a running task.
+- [x] Fan `current` into a task registry
+      Turn `let current` into a keyed collection and give every task an id; thread that id through `getStatus`, `getReconcileQueue`, `getFixReviewResult`, `stop`, `killCurrent`, and the ~50 other `current` reads.
+- [x] Carry the task id on the SSE tick and client state
+      Make the `type: 'agent'` tick say which task moved; turn `AgentTaskState` and the client's `agentStatus` mirror from a single object into lists.
+- [x] Make the Stack Agent card a real stack
+      Render the 3 most recent tasks newest-on-top, each with its own status and stop control, so a finished run stays visible instead of being overwritten by the next launch.
+- [x] Persist finished tasks to a log file
+      Append each finished task (kind, plan, agent, start/end, outcome) to a file next to the corpus or under a dotfile — a machine record distinct from the plan's `progress.md` narrative.
+- [x] Add a tasks page for the log
+      Read the persisted log and render the history of what ran, surviving a dev-server restart.
+- [x] Make `killCurrent` kill every task
+      Update the SIGINT/SIGTERM handler in the config plugin to tear down all running children, not just one.
+- [x] Register read-only calls as tasks
+      `runReadOnlyPrompt` (commit-suggest, overlap-check) logs to `tasks.log` but never calls `registerTask`, so those runs never appear in `getStatus()` or the Stack. Every agent invocation — including suggesting a commit message — must register a task and show as a card, per the requirement "every time we call an agent we put an agent task".
+- [x] Persist each task's log lines
+      `tasks.log` records only `{id, kind, title, agent, start/end, outcome}` — not the output lines, which live only in the in-memory registry and die on restart. So "open a task to see its logs" can't show anything for a past task. Persist the lines (per-task file, or lines on the log entry) and have the Tasks page read them so a task opens to its own log.
+- [x] Link a Stack card to its task page
+      A Stack task card's only action is Stop (`onStop`). Add a click-through that navigates to the Tasks page for that task id, so a card is a simple title + actions with no inline dropdown/detail — the detail lives on the task page.
