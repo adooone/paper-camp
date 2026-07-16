@@ -35,6 +35,7 @@ export const fetchTaskLog = async () => {
 
 export const fetchTaskLogLines = async (id: string) => {
   const res = await fetch(`/api/tasks/log?id=${encodeURIComponent(id)}`);
+  if (!res.ok) throw new Error(`Failed to fetch task log: ${res.status}`);
   return res.json() as Promise<{ lines: string[] }>;
 };
 

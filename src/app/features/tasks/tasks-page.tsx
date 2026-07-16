@@ -84,6 +84,9 @@ const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
 
 const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boolean }) => {
   const [expanded, setExpanded] = useState(highlighted);
+  useEffect(() => {
+    if (highlighted) setExpanded(true);
+  }, [highlighted]);
   const toggle = () => setExpanded((v) => !v);
 
   return (

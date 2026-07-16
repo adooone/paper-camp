@@ -578,8 +578,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await get().loadAgentStatus();
   },
   stopAgent: async (taskId) => {
-    await stopAgent(taskId);
-    await get().loadAgentStatus();
+    try {
+      await stopAgent(taskId);
+    } finally {
+      await get().loadAgentStatus();
+    }
   },
 
   pendingReconcile: null,

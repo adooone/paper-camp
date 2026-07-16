@@ -463,15 +463,18 @@ describe('task log', () => {
     // getStatus() already reports 'done' — poll instead of reading once.
     const logPath = join(root, 'papercamp', '.task-logs', `${taskId}.log`);
     const start = Date.now();
+    const expected = currentStatus(manager)?.lines.join('\n');
     let raw: string | undefined;
-    while (raw === undefined && Date.now() - start < 2000) {
+    while (Date.now() - start < 2000) {
       try {
         raw = await readFile(logPath, 'utf-8');
+        if (raw === expected) break;
       } catch {
-        await new Promise((resolve) => setTimeout(resolve, 20));
+        // Ignore ENOENT while waiting for the fire-and-forget write
       }
+      await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    expect(raw).toBe(currentStatus(manager)?.lines.join('\n'));
+    expect(raw).toBe(expected);
   });
 });
 

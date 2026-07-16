@@ -1,0 +1,78 @@
+Running Edit…
+Tool finished
+Running Edit…
+Tool finished
+Running Edit…
+Tool finished
+Now update the store's `stopAgent` to refresh status even on failure:
+Running Edit…
+Tool finished
+Running Edit…
+Tool finished
+Running Edit…
+Tool finished
+Now comment 6, the flaky test in agent.test.ts:
+Running Read…
+Tool finished
+Running Edit…
+Tool finished
+Running Bash…
+Tool finished
+Running Read…
+Tool finished
+Running Read…
+Tool finished
+Running Bash…
+Tool finished
+Running Bash…
+Tool finished
+Running Read…
+Tool finished
+Running Bash…
+Tool finished
+Running Read…
+Tool finished
+Running Bash…
+Tool finished
+Running Bash…
+Tool finished
+Running Bash…
+Tool finished
+Running Bash…
+Tool finished
+Running Bash…
+Tool finished
+All checks green. Let me verify the final agent-section.tsx diff looks correct.
+Running Bash…
+Tool finished
+Good. Now the summary of what was fixed and skipped.
+
+I addressed comments 3, 5, 6, and 7; skipped 1, 2, and 4:
+
+- **#3** `agent-section.tsx`: Stop button now awaits `onStop`, shows an error toast on rejection, and the store's `stopAgent` refreshes status in a `finally` so failures still resync.
+- **#5** `tasks-page.tsx`: `TaskRow` now has a `useEffect` that expands the row whenever it becomes the URL-highlighted task, not just on mount.
+- **#6** `agent.test.ts`: the per-task log poll now waits for content to match the expected string rather than stopping at the first (possibly partial) read.
+- **#7** `docs-api.ts`: `fetchTaskLogLines` now throws on a non-OK response instead of casting an error body.
+- **#2** (already-correct doc comments) and **#1**/**#4** (layout-stability / raw-HTML-comment requests) were skipped — reasons below.
+
+All checks are green: `tsc --noEmit`, `biome check .`, `pnpm test` (321 tests).
+
+```json
+{"commit": {"title": "fix(app): Handle stop-agent errors and task-row/test races", "message": "Await stopAgent in the Stack card so rejections surface as a toast and still refresh status, keep a task row expanded when it becomes the URL-highlighted task, guard fetchTaskLogLines against non-OK responses, and poll for the exact expected content in the per-task log test to remove a race with the fire-and-forget write.\n\nRefs: IDEA-65"}, "addressed": [3, 5, 6, 7], "skipped": [{"n": 1, "why": "Full-page loading/empty/populated branching here mirrors the established pattern in plans-page.tsx (which also swaps in a different subtree per state rather than reserving height), and the raw div/span/p usage mirrors plan-rows.tsx's identical table-shaped-list-of-Cards pattern, which carries no per-element gap comments either — UX_PRINCIPLES.md's reserve-space rule is scoped to dense state-driven panels like the Stack, not full list pages like this one."}, {"n": 2, "why": "Already accurate: both commit-suggest.ts and overlap-check.ts's docstrings already name runReadOnlyPrompt() as the concrete spawn owner, with the wrapper functions described as delegating to it."}, {"n": 4, "why": "The Agent card row height is content-driven CSS (Card's textureLayer padding), not a fixed pixel value in code, so a stable-height container would need a guessed min-height I can't verify renders correctly without opening a browser — risking a worse visual regression than the current shift; leaving this for a human with visual access to size it."}]}
+```
+Good. Now the summary of what was fixed and skipped.
+
+I addressed comments 3, 5, 6, and 7; skipped 1, 2, and 4:
+
+- **#3** `agent-section.tsx`: Stop button now awaits `onStop`, shows an error toast on rejection, and the store's `stopAgent` refreshes status in a `finally` so failures still resync.
+- **#5** `tasks-page.tsx`: `TaskRow` now has a `useEffect` that expands the row whenever it becomes the URL-highlighted task, not just on mount.
+- **#6** `agent.test.ts`: the per-task log poll now waits for content to match the expected string rather than stopping at the first (possibly partial) read.
+- **#7** `docs-api.ts`: `fetchTaskLogLines` now throws on a non-OK response instead of casting an error body.
+- **#2** (already-correct doc comments) and **#1**/**#4** (layout-stability / raw-HTML-comment requests) were skipped — reasons below.
+
+All checks are green: `tsc --noEmit`, `biome check .`, `pnpm test` (321 tests).
+
+```json
+{"commit": {"title": "fix(app): Handle stop-agent errors and task-row/test races", "message": "Await stopAgent in the Stack card so rejections surface as a toast and still refresh status, keep a task row expanded when it becomes the URL-highlighted task, guard fetchTaskLogLines against non-OK responses, and poll for the exact expected content in the per-task log test to remove a race with the fire-and-forget write.\n\nRefs: IDEA-65"}, "addressed": [3, 5, 6, 7], "skipped": [{"n": 1, "why": "Full-page loading/empty/populated branching here mirrors the established pattern in plans-page.tsx (which also swaps in a different subtree per state rather than reserving height), and the raw div/span/p usage mirrors plan-rows.tsx's identical table-shaped-list-of-Cards pattern, which carries no per-element gap comments either — UX_PRINCIPLES.md's reserve-space rule is scoped to dense state-driven panels like the Stack, not full list pages like this one."}, {"n": 2, "why": "Already accurate: both commit-suggest.ts and overlap-check.ts's docstrings already name runReadOnlyPrompt() as the concrete spawn owner, with the wrapper functions described as delegating to it."}, {"n": 4, "why": "The Agent card row height is content-driven CSS (Card's textureLayer padding), not a fixed pixel value in code, so a stable-height container would need a guessed min-height I can't verify renders correctly without opening a browser — risking a worse visual regression than the current shift; leaving this for a human with visual access to size it."}]}
+```
+Warning: agent finished without reporting which comments it addressed — verify manually

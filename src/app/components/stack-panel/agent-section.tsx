@@ -1,7 +1,7 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { AGENT_LABELS, type AgentTaskState, type AgentTaskStatus } from '@/types/index';
-import { Card, CloseIcon, IconButton, Stamp } from '@dendelion/paper-ui';
+import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { chalkStatusFill, chalkStatusText, deskChalk, sectionLabelStyle } from './shared';
 
@@ -41,10 +41,24 @@ const AgentTaskCard = ({
   onStop,
 }: {
   task: AgentTaskState;
-  onStop: (taskId: string) => void;
+  onStop: (taskId: string) => Promise<void>;
 }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const openTaskPage = () => navigate({ to: '/tasks', search: { taskId: task.id } });
+
+  const handleStop = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await onStop(task.id);
+    } catch (err) {
+      toast({
+        title: 'Failed to stop agent',
+        description: (err as Error).message,
+        variant: 'error',
+      });
+    }
+  };
 
   const statusFill: Record<AgentTaskStatus, string> = {
     starting: chalkStatusFill.running,
@@ -119,10 +133,7 @@ const AgentTaskCard = ({
                 variant="ghost"
                 size="small"
                 label="Stop agent"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStop(task.id);
-                }}
+                onClick={handleStop}
                 disabled={task.status === 'stopping'}
               />
             )}
