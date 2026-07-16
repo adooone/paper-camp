@@ -6,6 +6,11 @@ import { useNavigate } from '@tanstack/react-router';
 import { chalkStatusFill, chalkStatusText, deskChalk, sectionLabelStyle } from './shared';
 
 const MAX_VISIBLE_TASKS = 3;
+// One task card's rendered height (single content line, .stack-task-card's
+// tightened 0.5rem padding) plus the gap between stacked cards — reserved so
+// the empty state doesn't shrink the panel when tasks finish and clear.
+const TASK_CARD_HEIGHT = '2.75rem';
+const taskStackMinHeight = `calc(${MAX_VISIBLE_TASKS} * ${TASK_CARD_HEIGHT} + ${MAX_VISIBLE_TASKS - 1} * ${space[2]})`;
 
 const taskSubtitle = (task: AgentTaskState): string => {
   switch (task.taskKind) {
@@ -159,19 +164,27 @@ export const AgentSection = () => {
       }}
     >
       <div style={sectionLabelStyle}>Agent</div>
-      {visibleTasks.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
-          {visibleTasks.map((task) => (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: visibleTasks.length > 0 ? 'flex-start' : 'center',
+          gap: space[2],
+          minHeight: taskStackMinHeight,
+        }}
+      >
+        {visibleTasks.length > 0 ? (
+          visibleTasks.map((task) => (
             <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
-          ))}
-        </div>
-      ) : (
-        <Card surface="chalkboard" size="small">
-          <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0, textAlign: 'center' }}>
-            No agent running.
-          </p>
-        </Card>
-      )}
+          ))
+        ) : (
+          <Card surface="chalkboard" size="small">
+            <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0, textAlign: 'center' }}>
+              No agent running.
+            </p>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
