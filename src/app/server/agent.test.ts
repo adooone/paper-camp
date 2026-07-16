@@ -512,6 +512,30 @@ describe('startFixReview', () => {
     });
   });
 
+  it('accepts a verdict wrapped in a markdown code fence', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    // Real failure seen 2026-07-16: the model fenced its verdict despite the
+    // prompt's "no code fences", so the last non-empty line was ``` and the
+    // whole settle step silently no-oped.
+    agentScript.current = [
+      'console.log("Summary of what was fixed.");',
+      'console.log("\\u0060\\u0060\\u0060json");',
+      `console.log(${JSON.stringify(JSON.stringify(VERDICT))});`,
+      'console.log("\\u0060\\u0060\\u0060");',
+    ].join('\n');
+    const manager = createAgentManager(root);
+
+    manager.startFixReview(plan, 'fix these comments', THREADS);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
+    expect(manager.getFixReviewResult()).toEqual({
+      commit: VERDICT.commit,
+      addressed: ['PRRT_one'],
+      skipped: [{ threadId: 'PRRT_two', why: 'repo is kebab-case' }],
+    });
+  });
+
   it('treats a run that skips every comment as success, not a failure', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
     agentScript.current = reportScript({

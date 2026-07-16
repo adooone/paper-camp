@@ -286,17 +286,33 @@ export function createAgentManager(
   }
 
   /**
-   * Pulls the fix-review verdict off the agent's output. Its prompt requires a JSON
-   * object as the final line; scan from the end so a JSON-looking snippet quoted
-   * earlier in the reply (e.g. echoing a review comment) can't win over the real one.
-   * A verdict is only trusted if it accounts for every thread exactly once — a
-   * partial or overlapping partition would settle some threads and silently
-   * strand the rest unresolved.
+   * Pulls the fix-review verdict off the agent's output. Its prompt requires a raw
+   * JSON object as the final line, but models wrap it in a ```json fence anyway —
+   * and an adapter can push a whole multi-line message as one entry — so flatten
+   * to physical lines and scan backwards for the last line that validates as a
+   * complete verdict, rather than trusting the very last non-empty line to be it.
+   * Scanning from the end keeps a JSON-looking snippet quoted earlier in the reply
+   * (e.g. echoing a review comment) from winning over the real one. A verdict is
+   * only trusted if it accounts for every thread exactly once — a partial or
+   * overlapping partition would settle some threads and silently strand the rest
+   * unresolved.
    */
   function parseFixReviewResult(task: AgentTask): FixReviewResult | undefined {
     const threads = task.fixReviewThreads ?? [];
-    const candidate = task.lines.findLast((line) => line.trim().length > 0);
-    if (!candidate) return undefined;
+    const lines = task.lines.flatMap((entry) => entry.split('\n'));
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const candidate = lines[i].trim();
+      if (!candidate.startsWith('{')) continue;
+      const result = validateFixReviewVerdict(candidate, threads);
+      if (result) return result;
+    }
+    return undefined;
+  }
+
+  function validateFixReviewVerdict(
+    candidate: string,
+    threads: ReviewThread[],
+  ): FixReviewResult | undefined {
     try {
       const parsed = JSON.parse(candidate) as {
         commit?: { title?: string; message?: string };
