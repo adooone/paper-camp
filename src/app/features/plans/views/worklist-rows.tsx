@@ -89,6 +89,7 @@ export const WorklistRows = ({
   const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set());
   const gridClass = 'plan-rows-grid';
   const sortKey = useAppStore((s) => s.planFilters.sortKey);
+  const sortDirection = useAppStore((s) => s.planFilters.sortDirection);
   const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);
   const togglePlanSortDirection = useAppStore((s) => s.togglePlanSortDirection);
 
@@ -110,17 +111,23 @@ export const WorklistRows = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
       <Card size="small" texture="kraft" className="plan-row-card">
         <div className={gridClass}>
-          {SORT_COLUMNS.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              className={key === 'updated' ? 'plan-rows-cell-updated' : undefined}
-              style={headerButtonStyle}
-              onClick={() => handleSort(key)}
-            >
-              {label}
-            </button>
-          ))}
+          {SORT_COLUMNS.map(({ key, label }) => {
+            const active = key === sortKey;
+            return (
+              <span
+                key={key}
+                className={key === 'updated' ? 'plan-rows-cell-updated' : undefined}
+                aria-sort={
+                  active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined
+                }
+              >
+                <button type="button" style={headerButtonStyle} onClick={() => handleSort(key)}>
+                  {label}
+                  {active && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                </button>
+              </span>
+            );
+          })}
         </div>
       </Card>
       {rows.map((row) => {
