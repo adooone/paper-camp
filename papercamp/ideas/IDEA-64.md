@@ -2,7 +2,7 @@
 id: IDEA-64
 title: Sort the worklist by column header
 type: feat
-status: idea
+status: review
 created: 2026-07-15
 tags:
   - app
@@ -30,5 +30,5 @@ Follows the same instinct as removing the "needs review" section: fewer abstract
       In `worklist-rows.tsx`, turn each sortable column label (`Id`/`Title`/`Updated`/`Progress`/`Status`) into a real `<button>` that calls `setPlanSortKey`, or `togglePlanSortDirection` when it's already the active key. No handlers on plain text.
 - [x] Add the active-key caret and `aria-sort`
       Show a caret on the sorted column reflecting `sortDirection` (the only ordering signal now the `Select` is gone), and set `aria-sort` on the active column so keyboard/AT users see the state. Non-sorted columns carry no caret and no `aria-sort`.
-- [ ] Gate: checks plus click each column
+- [x] Gate: checks plus click each column
       Run `tsc --noEmit`, `npx biome check .`, and `pnpm test`, then click each sortable header once to sort and again to flip. Sort behaviour is unchanged from the old `Select`, so this is the acceptance gate.
