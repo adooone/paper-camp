@@ -1,9 +1,10 @@
 import { PageTitle } from '@/app/components/page-title';
+import { fetchTaskLogLines } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
-import { color, fontFamily } from '@/app/styles/tokens';
+import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { AGENT_LABELS, type TaskKind, type TaskLogEntry } from '@/types/index';
 import { Stamp, Table } from '@dendelion/paper-ui';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const TASK_KIND_LABELS: Record<TaskKind, string> = {
   phase: 'Phase run',
@@ -21,6 +22,35 @@ const TASK_KIND_LABELS: Record<TaskKind, string> = {
 };
 
 const formatTimestamp = (iso: string) => new Date(iso).toLocaleString();
+
+// Fetches its own row's persisted output lazily, only once a row is expanded —
+// the Tasks page never has the full history's output loaded at once.
+const TaskLogLines = ({ id }: { id: string }) => {
+  const [lines, setLines] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    setLines(null);
+    fetchTaskLogLines(id)
+      .then((data) => setLines(data.lines))
+      .catch(() => setLines([]));
+  }, [id]);
+
+  if (lines === null) return <p style={{ opacity: 0.5 }}>Loading…</p>;
+  if (lines.length === 0) return <p style={{ opacity: 0.5 }}>No output recorded.</p>;
+  return (
+    <pre
+      style={{
+        fontFamily: fontFamily.mono,
+        fontSize: fontSize.sm,
+        margin: 0,
+        padding: space[3],
+        whiteSpace: 'pre-wrap',
+      }}
+    >
+      {lines.join('\n')}
+    </pre>
+  );
+};
 
 const outcomeStamp = (outcome: TaskLogEntry['outcome']) => (
   <Stamp
@@ -91,6 +121,9 @@ export const TasksPage = () => {
               cell: (row: TaskLogEntry) => outcomeStamp(row.outcome),
             },
           ]}
+          expandable={{
+            render: (row: TaskLogEntry) => <TaskLogLines id={row.id} />,
+          }}
         />
       )}
     </div>

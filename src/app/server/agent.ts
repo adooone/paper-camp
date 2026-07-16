@@ -1,9 +1,9 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { appendFile, readFile, stat } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { buildReconcilePrompt } from '@/app/features/plans/prompts';
 import { replyToReviewThread, resolveReviewThread } from '@/core/git-pr';
@@ -28,7 +28,7 @@ import {
   coerceAgentConfig,
 } from '@/types/index';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
-import { campFile, readMaybe } from './helpers';
+import { campFile, readMaybe, taskLogFile } from './helpers';
 
 const MAX_LINES = 50;
 // Maximum wall-clock time per phase before treating it as a stall/clarifying-question hang.
@@ -202,6 +202,13 @@ export function createAgentManager(
       outcome,
     };
     appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(() => {});
+    // The output lines only ever lived on the in-memory task and die with the
+    // process otherwise — write them out per-task so a past task's page still has
+    // something to show after a restart. Best-effort, same reasoning as above.
+    const file = taskLogFile(root, task.id);
+    mkdir(dirname(file), { recursive: true })
+      .then(() => writeFile(file, task.lines.join('\n'), 'utf-8'))
+      .catch(() => {});
   }
 
   // Completed tasks are already durable via tasks.log (logTaskCompletion below);

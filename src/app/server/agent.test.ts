@@ -449,6 +449,30 @@ describe('task log', () => {
     const entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
     expect(entry.outcome).toBe('error');
   });
+
+  it('persists the finished task’s output lines to a per-task file', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    const taskId = currentStatus(manager)?.id;
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    // The write is fire-and-forget off setStatus(), so it can land slightly after
+    // getStatus() already reports 'done' — poll instead of reading once.
+    const logPath = join(root, 'papercamp', '.task-logs', `${taskId}.log`);
+    const start = Date.now();
+    let raw: string | undefined;
+    while (raw === undefined && Date.now() - start < 2000) {
+      try {
+        raw = await readFile(logPath, 'utf-8');
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+    }
+    expect(raw).toBe(currentStatus(manager)?.lines.join('\n'));
+  });
 });
 
 describe('startFixReview', () => {

@@ -33,6 +33,11 @@ export const fetchTaskLog = async () => {
   return res.json() as Promise<{ entries: TaskLogEntry[] }>;
 };
 
+export const fetchTaskLogLines = async (id: string) => {
+  const res = await fetch(`/api/tasks/log?id=${encodeURIComponent(id)}`);
+  return res.json() as Promise<{ lines: string[] }>;
+};
+
 export const fetchSuggestions = async () => {
   const res = await fetch('/api/suggestions');
   return res.json() as Promise<{ entries: SuggestionEntry[] }>;
