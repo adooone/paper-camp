@@ -2,7 +2,7 @@ import type { IdeaEntry, IdeaStatus, PlanEntry, PlanStatus } from '@/types/index
 import { PLAN_STATUSES } from '@/types/index';
 import { phasePercentage } from './helpers';
 
-export type PlanSortKey = 'status' | 'updated' | 'created' | 'title' | 'id' | 'progress';
+export type PlanSortKey = 'status' | 'updated' | 'title' | 'id' | 'progress';
 type SortDirection = 'asc' | 'desc';
 
 export interface PlanListFilters {
@@ -81,8 +81,6 @@ const comparePlans = (a: PlanEntry, b: PlanEntry, key: PlanSortKey): number => {
     }
     case 'updated':
       return updatedTimestamp(b) - updatedTimestamp(a);
-    case 'created':
-      return new Date(b.created).getTime() - new Date(a.created).getTime();
     case 'title':
       return a.title.localeCompare(b.title);
     case 'id':
