@@ -1,5 +1,6 @@
 import { LightbulbIcon, NoteIcon } from '@/app/components/icons';
-import type { IdeaGroupRow, NoteRow, WorklistRow } from '@/app/features/plans/helpers';
+import type { IdeaGroupRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
+import { useAppStore } from '@/app/stores/app-store';
 import { fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
@@ -29,6 +30,25 @@ const headerLabelStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
   overflow: 'hidden',
 };
+
+const headerButtonStyle: React.CSSProperties = {
+  ...headerLabelStyle,
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  cursor: 'pointer',
+  font: 'inherit',
+  color: 'inherit',
+  textAlign: 'left',
+};
+
+const SORT_COLUMNS: { key: PlanSortKey; label: string }[] = [
+  { key: 'id', label: 'Id' },
+  { key: 'title', label: 'Title' },
+  { key: 'updated', label: 'Updated' },
+  { key: 'progress', label: 'Progress' },
+  { key: 'status', label: 'Status' },
+];
 
 const titleButtonStyle: React.CSSProperties = {
   display: 'flex',
@@ -68,6 +88,14 @@ export const WorklistRows = ({
 }: WorklistRowsProps) => {
   const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set());
   const gridClass = 'plan-rows-grid';
+  const sortKey = useAppStore((s) => s.planFilters.sortKey);
+  const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);
+  const togglePlanSortDirection = useAppStore((s) => s.togglePlanSortDirection);
+
+  const handleSort = (key: PlanSortKey) => {
+    if (key === sortKey) togglePlanSortDirection();
+    else setPlanSortKey(key);
+  };
 
   const toggleExpanded = (ideaTitle: string) => {
     setExpandedDone((prev) => {
@@ -82,13 +110,17 @@ export const WorklistRows = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
       <Card size="small" texture="kraft" className="plan-row-card">
         <div className={gridClass}>
-          <span style={headerLabelStyle}>Id</span>
-          <span style={headerLabelStyle}>Title</span>
-          <span className="plan-rows-cell-updated" style={headerLabelStyle}>
-            Updated
-          </span>
-          <span style={headerLabelStyle}>Progress</span>
-          <span style={headerLabelStyle}>Status</span>
+          {SORT_COLUMNS.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              className={key === 'updated' ? 'plan-rows-cell-updated' : undefined}
+              style={headerButtonStyle}
+              onClick={() => handleSort(key)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </Card>
       {rows.map((row) => {
