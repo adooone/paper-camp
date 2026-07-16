@@ -2,7 +2,7 @@
 id: IDEA-65
 title: Parallel agents and a task log
 type: feat
-status: idea
+status: review
 created: 2026-07-15
 tags:
   - app
@@ -43,5 +43,5 @@ The prize is that the cheap read-only prompts stop queueing behind long ones —
       Append each finished task (kind, plan, agent, start/end, outcome) to a file next to the corpus or under a dotfile — a machine record distinct from the plan's `progress.md` narrative.
 - [x] Add a tasks page for the log
       Read the persisted log and render the history of what ran, surviving a dev-server restart.
-- [ ] Make `killCurrent` kill every task
+- [x] Make `killCurrent` kill every task
       Update the SIGINT/SIGTERM handler in the config plugin to tear down all running children, not just one.

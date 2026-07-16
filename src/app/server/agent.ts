@@ -134,6 +134,9 @@ export function createAgentManager(
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
 ) {
   const clients = new Set<ServerResponse>();
+  // Read-only prompts (commit-suggest/overlap-check) never join `tasks` below, but their
+  // children still need to die on shutdown — tracked separately so killCurrent() reaches them.
+  const readOnlyProcs = new Set<ChildProcess>();
   // Keyed registry replacing the old single `current` slot: the write-set gate (see
   // admit() below) can admit several write-disjoint tasks at once, so task state has
   // to live in a collection, not one variable. `lastLaunchedId` tracks whichever task
@@ -1020,6 +1023,8 @@ export function createAgentManager(
         cwd: root,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
+      readOnlyProcs.add(proc);
+      proc.on('close', () => readOnlyProcs.delete(proc));
       // Deliberately never registered in the task registry: read-only prompts run
       // alongside whatever else is going, so a concurrent task's own bookkeeping
       // must not cause this call's own close/error handlers to drop their result.
@@ -1195,12 +1200,18 @@ export function createAgentManager(
       clients.add(res);
       res.on('close', () => clients.delete(res));
     },
-    // Still targets only the most-recently-launched task, matching the old
-    // single-slot behavior — killing every registered task is a later phase's job.
+    // Kills every child process still running, not just the most-recently-launched
+    // task — several tasks (plus untracked read-only prompts) can be running
+    // concurrently under the write-set gate, and orphaning any of them on shutdown
+    // defeats the point of registering it.
     killCurrent() {
-      const task = currentTask();
-      if (task?.proc && !task.proc.killed) {
-        task.proc.kill();
+      for (const task of tasks.values()) {
+        if (task.proc && !task.proc.killed) {
+          task.proc.kill();
+        }
+      }
+      for (const proc of readOnlyProcs) {
+        if (!proc.killed) proc.kill();
       }
     },
   };
