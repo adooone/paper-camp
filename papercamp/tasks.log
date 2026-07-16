@@ -6,3 +6,4 @@
 {"id":"f8a5bf99-431d-4f99-ad4e-88413131c428","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-16T10:43:54.517Z","endedAt":"2026-07-16T10:44:04.645Z","outcome":"done"}
 {"id":"f0b6f2a6-7993-42b7-beab-8173b6f30556","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-16T12:18:34.583Z","endedAt":"2026-07-16T12:18:43.268Z","outcome":"done"}
 {"id":"eced1430-7914-49cf-a2db-c2a6503b0b17","taskKind":"fix-review","planId":"IDEA-65","planTitle":"Parallel agents and a task log","agentId":"claude-code","startedAt":"2026-07-16T12:18:57.153Z","endedAt":"2026-07-16T12:21:35.704Z","outcome":"done"}
+{"id":"803dbe30-859f-4302-88b9-0c24074b93dd","taskKind":"run-all","planId":"IDEA-64","planTitle":"Sort the worklist by column header","agentId":"claude-code","startedAt":"2026-07-16T18:48:02.463Z","endedAt":"2026-07-16T19:01:19.676Z","outcome":"done"}

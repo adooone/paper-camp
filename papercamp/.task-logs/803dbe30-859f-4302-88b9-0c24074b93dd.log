@@ -1,0 +1,50 @@
+  Tool finished
+  Running Read…
+  Tool finished
+  Not all phases checked yet (gate phase remains), so no `status:` change needed.
+  Running Edit…
+  Tool finished
+  Running Read…
+  Tool finished
+  Today's heading exists at top. Add the new bullet after the phase-3 entry (line 4).
+  Running Edit…
+  Tool finished
+  Phase 4 complete: header cells now show a ▲/▼ caret on the active sort column and set `aria-sort` accordingly. Checkbox flipped in IDEA-64.md, progress.md updated, and `tsc --noEmit` / `npx biome check . --write` / `pnpm test` (322 tests) all pass. Only the gate phase remains, so plan `status` stays `idea`.
+  Phase 4 complete: header cells now show a ▲/▼ caret on the active sort column and set `aria-sort` accordingly. Checkbox flipped in IDEA-64.md, progress.md updated, and `tsc --noEmit` / `npx biome check . --write` / `pnpm test` (322 tests) all pass. Only the gate phase remains, so plan `status` stays `idea`.
+[verify] phase 4 — running lint/format/test
+[commit] phase 4 — Add the active-key caret and `aria-sort`
+[phase 5/5] Gate: checks plus click each column
+  Agent session started
+  Running Bash…
+  Tool finished
+  Type-check passes. Now lint and tests.
+  Running Bash…
+  Tool finished
+  Running Bash…
+  Tool finished
+  All checks pass (tsc, biome, 322 tests). No browser is available in this headless environment, so clicking through the UI is left to a human — let me confirm the current header implementation matches expectations before closing out.
+  Running Bash…
+  Tool finished
+  Running Bash…
+  Tool finished
+  Running Read…
+  Tool finished
+  This matches the prior phases' work — real `<button>`s with `aria-sort` on the `<span>` wrapper, caret shown on the active key, `setPlanSortKey`/`togglePlanSortDirection` wired via the store. All checks are green. Now let's update the plan file.
+  Running Bash…
+  Tool finished
+  Running Edit…
+  Tool finished
+  Running Edit…
+  Tool finished
+  All five phases are checked, so status moved to `review`. Now progress.md.
+  Running Bash…
+  Tool finished
+  Today's heading exists at top. Adding the new bullet as the last entry for 2026-07-16 (right before IDEA-65 entries, to keep chronological/topical grouping with prior IDEA-64 bullets).
+  Running Edit…
+  Tool finished
+  Phase 5 complete. `tsc --noEmit`, `npx biome check .`, and `pnpm test` all pass clean (322 tests). Code review of `worklist-rows.tsx` confirms it matches the plan's acceptance criteria (real buttons, `aria-sort`, caret, store wiring); clicking through in a browser is left to a human since no browser is available here. Marked the phase checked, added a progress.md bullet, and set the plan's `status` to `review` — all 5 phases are now checked.
+  Phase 5 complete. `tsc --noEmit`, `npx biome check .`, and `pnpm test` all pass clean (322 tests). Code review of `worklist-rows.tsx` confirms it matches the plan's acceptance criteria (real buttons, `aria-sort`, caret, store wiring); clicking through in a browser is left to a human since no browser is available here. Marked the phase checked, added a progress.md bullet, and set the plan's `status` to `review` — all 5 phases are now checked.
+[verify] phase 5 — running lint/format/test
+[commit] phase 5 — Gate: checks plus click each column
+All 5 phase(s) completed
+[review] setting plan status to review
