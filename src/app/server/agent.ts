@@ -136,9 +136,6 @@ export function createAgentManager(
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
 ) {
   const clients = new Set<ServerResponse>();
-  // Read-only prompts (commit-suggest/overlap-check) never join `tasks` below, but their
-  // children still need to die on shutdown — tracked separately so killCurrent() reaches them.
-  const readOnlyProcs = new Set<ChildProcess>();
   // Keyed registry replacing the old single `current` slot: the write-set gate (see
   // admit() below) can admit several write-disjoint tasks at once, so task state has
   // to live in a collection, not one variable. `lastLaunchedId` tracks whichever task
@@ -440,6 +437,7 @@ export function createAgentManager(
   // touch different files. `ids: 'all'` (batch-reconcile) collides with every entity
   // writer since it sweeps the whole corpus, not one id.
   type WriteSet =
+    | { scope: 'none' }
     | { scope: 'suggestions' }
     | { scope: 'entities'; ids: 'all' | string[] }
     | { scope: 'worktree' };
@@ -452,8 +450,13 @@ export function createAgentManager(
     'draft',
     'extend',
   ]);
+  // Read-only, no-tools prompts (see runReadOnlyPrompt): now registered as tasks so
+  // they show up in getStatus()/the Stack, but they touch nothing, so they must
+  // never collide with — or be blocked by — anything else.
+  const READONLY_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check']);
 
   function writeSetFor(taskKind: TaskKind, entityId?: string): WriteSet {
+    if (READONLY_KINDS.has(taskKind)) return { scope: 'none' };
     if (EXCLUSIVE_KINDS.has(taskKind)) return { scope: 'worktree' };
     if (taskKind === 'suggest') return { scope: 'suggestions' };
     if (taskKind === 'batch-reconcile') return { scope: 'entities', ids: 'all' };
@@ -462,13 +465,11 @@ export function createAgentManager(
       // worktree-wide rather than silently letting collision checks pass.
       return entityId ? { scope: 'entities', ids: [entityId] } : { scope: 'worktree' };
     }
-    // commit-suggest/overlap-check never reach here — runReadOnlyPrompt doesn't
-    // register a task at all (see the comment above it), so they never need a
-    // write-set of their own.
     return { scope: 'worktree' };
   }
 
   function writeSetsCollide(a: WriteSet, b: WriteSet): boolean {
+    if (a.scope === 'none' || b.scope === 'none') return false;
     if (a.scope === 'worktree' || b.scope === 'worktree') return true;
     if (a.scope === 'suggestions' || b.scope === 'suggestions') {
       return a.scope === b.scope;
@@ -1009,8 +1010,9 @@ export function createAgentManager(
   // constructs its own arguments so it never picks up the shared adapter's
   // `--permission-mode auto` flag — these calls must stay deny-by-default since the
   // model is only ever supposed to read the prompt text handed to it on stdin.
-  // Exempt from admit(): never blocks and is never blocked by any registered task,
-  // so it must not register itself either (see the task comment below).
+  // Never routed through admit(): its write-set is `{ scope: 'none' }` (see
+  // writeSetFor), so it can never block or be blocked by anything. It IS registered
+  // in `tasks` below so it shows up in getStatus()/the Stack like any other run.
   const READONLY_PROMPT_TIMEOUT_MS = 60_000;
   const STDIN_MAX_BYTES = 10 * 1024 * 1024;
 
@@ -1043,11 +1045,6 @@ export function createAgentManager(
         cwd: root,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
-      readOnlyProcs.add(proc);
-      proc.on('close', () => readOnlyProcs.delete(proc));
-      // Deliberately never registered in the task registry: read-only prompts run
-      // alongside whatever else is going, so a concurrent task's own bookkeeping
-      // must not cause this call's own close/error handlers to drop their result.
       const task: AgentTask = {
         id: randomUUID(),
         startedAt: new Date().toISOString(),
@@ -1059,6 +1056,7 @@ export function createAgentManager(
         proc,
         lines: [],
       };
+      registerTask(task);
       setStatus(task, 'running');
 
       let settled = false;
@@ -1228,7 +1226,7 @@ export function createAgentManager(
       res.on('close', () => clients.delete(res));
     },
     // Kills every child process still running, not just the most-recently-launched
-    // task — several tasks (plus untracked read-only prompts) can be running
+    // task — several tasks (including read-only prompts) can be running
     // concurrently under the write-set gate, and orphaning any of them on shutdown
     // defeats the point of registering it.
     // Returns a promise so the shutdown handler can await it before exiting —
@@ -1240,9 +1238,7 @@ export function createAgentManager(
       // SIGKILL for anything that ignores SIGTERM, same as stop()'s fallback.
       const stillRunning = (proc: ChildProcess) =>
         proc.exitCode === null && proc.signalCode === null;
-      const procs = [...[...tasks.values()].map((task) => task.proc), ...readOnlyProcs].filter(
-        stillRunning,
-      );
+      const procs = [...tasks.values()].map((task) => task.proc).filter(stillRunning);
       if (procs.length === 0) return Promise.resolve();
       for (const proc of procs) proc.kill('SIGTERM');
       return new Promise((resolve) => {

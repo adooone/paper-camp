@@ -350,6 +350,26 @@ describe('write-set collision gate', () => {
     manager.stop();
     await waitForStatus(manager, settled);
   });
+
+  it('registers a read-only prompt as a task, but never lets it collide with a real launch', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const manager = createAgentManager(root);
+
+    // Fire-and-forget: runCommitSuggest registers and starts its task synchronously,
+    // before the (broken-on-purpose, since this manager only mocks the phase
+    // adapter) child process resolves the promise — swallow the rejection.
+    const pending = manager.runCommitSuggest('prompt').catch(() => undefined);
+    const readOnlyTask = manager.getStatus().find((t) => t.taskKind === 'commit-suggest');
+    expect(readOnlyTask?.status).toBe('running');
+
+    // A read-only task's write-set is `{ scope: 'none' }` — even while it's still
+    // registered as running, it must never collide with a real launch's write-set.
+    expect(manager.start(plan, 0)).toEqual({ ok: true });
+
+    manager.stop();
+    await pending;
+    await waitForStatus(manager, settled);
+  });
 });
 
 describe('start (single phase)', () => {
