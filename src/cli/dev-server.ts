@@ -78,8 +78,8 @@ export async function startDevServer({ root, port }: DevServerOptions): Promise<
     });
   });
 
-  const shutdown = () => {
-    apiMiddleware.agent.killCurrent();
+  const shutdown = async () => {
+    await apiMiddleware.agent.killCurrent();
     process.exit(0);
   };
   process.on('SIGINT', shutdown);

@@ -215,6 +215,7 @@ Task:
 Rules:
 - Never touch the YAML frontmatter of any entity file.
 - Never check, uncheck, add, or remove any phase in ${plan.id ?? 'the plan'}'s \`### Phases\` list — this pass fixes review comments, not plan bookkeeping.
+- Do not add explanatory comments to the code. Per docs/CODE_STYLE.md §7 the default is zero: only a one-line, non-derivable *why* ships. Put your reasoning in the commit message, never the source.
 - If a comment needs a decision only a human can make, skip it and say so in its \`why\` instead of guessing.`;
 }
 

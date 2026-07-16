@@ -117,6 +117,8 @@ ${details}Plan context: ${plan.body}
 
 Do only this phase — do not start any other phase, even if it looks quick.
 
+Comments: the code is the documentation. Default to zero comments. Per docs/CODE_STYLE.md §7, a comment ships only if it states a *why* that is not derivable from the code AND would cost a future reader real debugging time AND fits in one line. Never narrate what the code does, restate a type, label a block, or explain your reasoning for a change — that belongs in the commit message and your progress.md bullet, not the source. When in doubt, delete it.
+
 Execution environment: you are a headless automated agent running in a terminal. There is no browser, display, or GUI available to you. Verify your work only with terminal commands — type-check, lint, and tests (e.g. \`pnpm run check-types\`, \`pnpm run lint\`, \`pnpm test\`). Never attempt visual or browser-based verification: do not open the app in a browser, navigate to a dev-server URL or address, take screenshots, or run any GUI/visual check — even if this phase or the plan text describes one (e.g. "check in Chrome", a \`host:port\` address, "visual pass"). If a phase's only verification is visual, make the code change, then note in your progress.md bullet that visual confirmation is left to a human, and do not block on it.
 
 Leave the build green before you finish. The verification that gates this phase runs lint, format, type-check, and tests over the WHOLE project — not just the files you edited. Run \`pnpm run check-types\` and \`npx biome check . --write\` and make the entire repo pass. If a lint, format, or type error appears anywhere — including in a file you did not modify and did not introduce — fix it. "It's unrelated to my phase" / "it's pre-existing" is never a reason to leave a red check: a broken check blocks this phase regardless of who caused it. Keeping the whole project's checks green is part of completing your phase, not a separate phase — so this does not conflict with "do only this phase." Keep such incidental fixes minimal and correct.
@@ -205,10 +207,26 @@ export function createAgentManager(
     appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(() => {});
   }
 
+  // Completed tasks are already durable via tasks.log (logTaskCompletion below);
+  // this just bounds the in-memory registry so getStatus()'s payload and its
+  // per-task log clones don't grow for the life of the dev server.
+  const MAX_COMPLETED_TASKS = 20;
+
+  function pruneCompletedTasks(): void {
+    const completed = [...tasks.entries()].filter(([, t]) => isTaskDone(t));
+    const excess = completed.length - MAX_COMPLETED_TASKS;
+    for (let i = 0; i < excess; i++) {
+      tasks.delete(completed[i][0]);
+    }
+  }
+
   function setStatus(task: AgentTask, status: AgentTaskStatus) {
     task.status = status;
     broadcast(`agent: ${status}`, task.id);
-    if (status === 'done' || status === 'error') logTaskCompletion(task, status);
+    if (status === 'done' || status === 'error') {
+      logTaskCompletion(task, status);
+      pruneCompletedTasks();
+    }
   }
 
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
@@ -440,7 +458,9 @@ export function createAgentManager(
     if (taskKind === 'suggest') return { scope: 'suggestions' };
     if (taskKind === 'batch-reconcile') return { scope: 'entities', ids: 'all' };
     if (ENTITY_WRITER_KINDS.has(taskKind)) {
-      return { scope: 'entities', ids: entityId ? [entityId] : [] };
+      // No id to scope to (shouldn't happen in practice) — fail closed to
+      // worktree-wide rather than silently letting collision checks pass.
+      return entityId ? { scope: 'entities', ids: [entityId] } : { scope: 'worktree' };
     }
     // commit-suggest/overlap-check never reach here — runReadOnlyPrompt doesn't
     // register a task at all (see the comment above it), so they never need a
@@ -1132,7 +1152,14 @@ export function createAgentManager(
     // SIGTERM can be ignored or delayed indefinitely; without this escalation a hung
     // process leaves the task stuck in 'stopping' forever, permanently blocking start().
     setTimeout(() => {
-      if (!isSuperseded(task) && task.status === 'stopping') {
+      // Escalate regardless of isSuperseded: that flag only tracks the
+      // most-recently-launched task, so an explicitly stopped older task (still
+      // valid in the multi-task registry) would otherwise never get SIGKILL'd.
+      if (
+        task.status === 'stopping' &&
+        task.proc.exitCode === null &&
+        task.proc.signalCode === null
+      ) {
         task.proc.kill('SIGKILL');
       }
     }, 5000);
@@ -1204,15 +1231,37 @@ export function createAgentManager(
     // task — several tasks (plus untracked read-only prompts) can be running
     // concurrently under the write-set gate, and orphaning any of them on shutdown
     // defeats the point of registering it.
-    killCurrent() {
-      for (const task of tasks.values()) {
-        if (task.proc && !task.proc.killed) {
-          task.proc.kill();
-        }
-      }
-      for (const proc of readOnlyProcs) {
-        if (!proc.killed) proc.kill();
-      }
+    // Returns a promise so the shutdown handler can await it before exiting —
+    // firing SIGTERM and immediately calling process.exit() would race the
+    // SIGKILL escalation timer below, defeating it entirely.
+    killCurrent(): Promise<void> {
+      // `killed` only reflects whether kill() was called, not whether the process
+      // has actually exited — gate on exitCode/signalCode instead, and escalate to
+      // SIGKILL for anything that ignores SIGTERM, same as stop()'s fallback.
+      const stillRunning = (proc: ChildProcess) =>
+        proc.exitCode === null && proc.signalCode === null;
+      const procs = [...[...tasks.values()].map((task) => task.proc), ...readOnlyProcs].filter(
+        stillRunning,
+      );
+      if (procs.length === 0) return Promise.resolve();
+      for (const proc of procs) proc.kill('SIGTERM');
+      return new Promise((resolve) => {
+        let remaining = procs.length;
+        const onExit = () => {
+          remaining--;
+          if (remaining <= 0) {
+            clearTimeout(timer);
+            resolve();
+          }
+        };
+        for (const proc of procs) proc.once('exit', onExit);
+        const timer = setTimeout(() => {
+          for (const proc of procs) {
+            if (stillRunning(proc)) proc.kill('SIGKILL');
+          }
+          resolve();
+        }, 2000);
+      });
     },
   };
 }
@@ -1235,5 +1284,5 @@ export interface AgentManager {
   getStatus: () => AgentTaskState[];
   getReconcileQueue: () => ReconcileQueueItem[] | null;
   subscribe: (res: ServerResponse) => void;
-  killCurrent: () => void;
+  killCurrent: () => Promise<void>;
 }

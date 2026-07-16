@@ -1,4 +1,4 @@
-import { useAppStore } from '@/app/stores/app-store';
+import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import { Button, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -15,11 +15,9 @@ export const SuggestIdeasButton = () => {
   const launchSuggestIdeas = useAppStore((s) => s.launchSuggestIdeas);
   const ideaEntries = useAppStore((s) => s.ideaEntries);
   const suggestions = useAppStore((s) => s.suggestions);
-  const agentStatus = useAppStore((s) => s.agentStatus);
+  const agentBusy = useAppStore(selectAgentBusy);
   const { toast } = useToast();
   const [launching, setLaunching] = useState(false);
-
-  const agentBusy = agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
 
   const handleClick = async () => {
     setLaunching(true);

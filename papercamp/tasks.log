@@ -1,0 +1,2 @@
+{"id":"4cc056a2-9ef4-4dad-ab3c-e9545812c1ed","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-16T08:10:03.183Z","endedAt":"2026-07-16T08:10:14.873Z","outcome":"done"}
+{"id":"435c39ef-a492-4abb-9d58-8937d36c32a9","taskKind":"fix-review","planId":"IDEA-65","planTitle":"Parallel agents and a task log","agentId":"claude-code","startedAt":"2026-07-16T08:05:27.967Z","endedAt":"2026-07-16T08:17:50.545Z","outcome":"done"}

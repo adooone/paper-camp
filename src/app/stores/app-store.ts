@@ -58,7 +58,7 @@ import {
   triggerQualityFix,
 } from '../services/status-api';
 
-type AppStore = {
+export type AppStore = {
   plans: ParseResult<PlanEntry> | null;
   plansLoading: boolean;
   plansError: string | null;
@@ -188,6 +188,9 @@ interface ReconcilePreview {
   planId: string;
   before: { body: string; phases: PlanEntry['phases'] };
 }
+
+export const selectAgentBusy = (s: AppStore) =>
+  s.agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
 
 export const useAppStore = create<AppStore>((set, get) => ({
   plans: null,

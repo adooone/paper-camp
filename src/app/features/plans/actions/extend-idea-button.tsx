@@ -18,8 +18,6 @@ interface ExtendIdeaButtonProps {
  */
 export const ExtendIdeaButton = ({ idea, compact }: ExtendIdeaButtonProps) => {
   const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);
-  const agentStatus = useAppStore((s) => s.agentStatus);
-  const agentBusy = agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
   const { state, errorMessage, run } = useActionFeedback();
   const { toast } = useToast();
   const ideaId = idea.id;
@@ -70,7 +68,7 @@ export const ExtendIdeaButton = ({ idea, compact }: ExtendIdeaButtonProps) => {
         variant="ghost"
         size="small"
         onClick={handleClick}
-        disabled={agentBusy || state === 'loading' || !ideaId}
+        disabled={state === 'loading' || !ideaId}
         style={{ color: state === 'error' ? color.accentRoseDark : undefined }}
       >
         {label}

@@ -6,9 +6,10 @@ const VALID_VERDICTS: OverlapVerdict['verdict'][] = ['existing', 'extend', 'new'
 
 /**
  * One-shot, read-only agent call — not the long-running phase/task system in agent.ts.
- * The actual process spawn lives in agent.ts's runOverlapCheck, which runs independently
- * of the shared `current` task so it's never blocked by (and never blocks) a running
- * phase/reconcile/etc; this module only builds the prompt and parses the result.
+ * The actual process spawn lives in agent.ts's runReadOnlyPrompt() (runOverlapCheck
+ * there only delegates to it), which runs independently of the task registry so it's
+ * never blocked by (and never blocks) a running phase/reconcile/etc; this module only
+ * builds the prompt and parses the result.
  */
 export async function checkIdeaOverlap(
   text: string,
