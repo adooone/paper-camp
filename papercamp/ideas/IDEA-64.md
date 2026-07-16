@@ -22,7 +22,7 @@ The state and the sort itself already exist and are untouched — `PlanListFilte
 Follows the same instinct as removing the "needs review" section: fewer abstract controls stacked above the list, more acting directly on what's shown. Behaviour of the sort is unchanged, so the check suite plus clicking each column is the gate.
 
 ### Phases
-- [ ] Resolve the `created` key with no column
+- [x] Resolve the `created` key with no column
       `sortKey` covers `status`/`updated`/`created`/`title`/`id`/`progress` but no column maps to `created` and the actions column isn't sortable. Decide before wiring: drop `created` from the key union (and any callerless references) so every key reaches a header, or surface `created` as a column. Default to dropping unless there's a reason to show it.
 - [ ] Confirm paper-ui `Table` header support
       Read the real `Table` source + showcase in the paper-ui sibling repo (`~/dev/paper-ui`), not just the `.d.ts`, to find how header cells render and whether they take arbitrary content / render props — so the header buttons and `aria-sort` sit on the supported seam rather than a hand-rolled header.
