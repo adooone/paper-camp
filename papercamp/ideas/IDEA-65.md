@@ -39,7 +39,7 @@ The prize is that the cheap read-only prompts stop queueing behind long ones —
       Make the `type: 'agent'` tick say which task moved; turn `AgentTaskState` and the client's `agentStatus` mirror from a single object into lists.
 - [x] Make the Stack Agent card a real stack
       Render the 3 most recent tasks newest-on-top, each with its own status and stop control, so a finished run stays visible instead of being overwritten by the next launch.
-- [ ] Persist finished tasks to a log file
+- [x] Persist finished tasks to a log file
       Append each finished task (kind, plan, agent, start/end, outcome) to a file next to the corpus or under a dotfile — a machine record distinct from the plan's `progress.md` narrative.
 - [ ] Add a tasks page for the log
       Read the persisted log and render the history of what ran, surviving a dev-server restart.

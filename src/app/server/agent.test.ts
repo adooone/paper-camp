@@ -56,7 +56,12 @@ Plan body.
 const roots: string[] = [];
 
 afterAll(async () => {
-  await Promise.all(roots.map((root) => rm(root, { recursive: true, force: true })));
+  // maxRetries/retryDelay: a few tests deliberately leave a subprocess killed but not
+  // yet reaped when their assertions finish; its close handler can still append to
+  // tasks.log after this cleanup starts, racing a bare rm into ENOTEMPTY.
+  await Promise.all(
+    roots.map((root) => rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 })),
+  );
 });
 
 beforeEach(() => {
@@ -383,6 +388,46 @@ describe('start (single phase)', () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     const manager = createAgentManager(root);
     expect(manager.start(plan, 99)).toEqual({ ok: false, error: 'Phase not found' });
+  });
+});
+
+describe('task log', () => {
+  it('appends a done entry with kind, plan, agent, and start/end to papercamp/tasks.log', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    const taskId = currentStatus(manager)?.id;
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    const raw = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const lines = raw.trim().split('\n');
+    const entry = JSON.parse(lines[lines.length - 1]);
+    expect(entry).toMatchObject({
+      id: taskId,
+      taskKind: 'phase',
+      planId: 'IDEA-1',
+      planTitle: 'Test plan',
+      agentId: 'claude-code',
+      outcome: 'done',
+    });
+    expect(new Date(entry.startedAt).getTime()).toBeLessThanOrEqual(
+      new Date(entry.endedAt).getTime(),
+    );
+  });
+
+  it('appends an error entry when the agent exits nonzero', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(3)';
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    const raw = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
+    expect(entry.outcome).toBe('error');
   });
 });
 

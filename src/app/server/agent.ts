@@ -1,7 +1,7 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { readFile, stat } from 'node:fs/promises';
+import { appendFile, readFile, stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
@@ -24,6 +24,7 @@ import {
   type ReconcileQueueItem,
   type ReviewThread,
   type TaskKind,
+  type TaskLogEntry,
   coerceAgentConfig,
 } from '@/types/index';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
@@ -38,6 +39,9 @@ interface AgentTask {
   taskKind: TaskKind;
   planTitle: string;
   planId?: string;
+  // Set at task creation; paired with the terminal timestamp in the persisted
+  // task log (see logTaskCompletion) so the log has a start/end, not just an end.
+  startedAt: string;
   // Absent for a plan-scoped task (e.g. a convergence audit spanning every phase),
   // present for a single-phase task.
   phaseIndex?: number;
@@ -181,9 +185,27 @@ export function createAgentManager(
     broadcast(text, task.id);
   }
 
+  // Append-only, one JSON object per line — a machine record of what ran that
+  // survives a dev-server restart, unlike the in-memory registry. Best-effort:
+  // a log write failure must never take down the task whose outcome it's recording.
+  function logTaskCompletion(task: AgentTask, outcome: 'done' | 'error') {
+    const entry: TaskLogEntry = {
+      id: task.id,
+      taskKind: task.taskKind,
+      planId: task.planId,
+      planTitle: task.planTitle,
+      agentId: task.agentId,
+      startedAt: task.startedAt,
+      endedAt: new Date().toISOString(),
+      outcome,
+    };
+    appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(() => {});
+  }
+
   function setStatus(task: AgentTask, status: AgentTaskStatus) {
     task.status = status;
     broadcast(`agent: ${status}`, task.id);
+    if (status === 'done' || status === 'error') logTaskCompletion(task, status);
   }
 
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
@@ -486,6 +508,7 @@ export function createAgentManager(
     const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
     const task: AgentTask = {
       id: randomUUID(),
+      startedAt: new Date().toISOString(),
       planTitle: identity.planTitle,
       planId: identity.planId,
       status: 'starting',
@@ -629,6 +652,7 @@ export function createAgentManager(
     });
     const task: AgentTask = {
       id: randomUUID(),
+      startedAt: new Date().toISOString(),
       taskKind: 'batch-reconcile',
       planTitle: 'Batch reconcile',
       status: 'starting',
@@ -807,6 +831,7 @@ export function createAgentManager(
     const stubProc = spawn('sh', ['-c', 'exit 0'], { cwd: root, stdio: 'ignore' });
     const task: AgentTask = {
       id: randomUUID(),
+      startedAt: new Date().toISOString(),
       taskKind: 'run-all',
       planTitle: plan.title,
       planId: plan.id,
@@ -1000,6 +1025,7 @@ export function createAgentManager(
       // must not cause this call's own close/error handlers to drop their result.
       const task: AgentTask = {
         id: randomUUID(),
+        startedAt: new Date().toISOString(),
         taskKind,
         planTitle,
         status: 'starting',

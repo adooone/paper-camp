@@ -340,6 +340,22 @@ export type TaskKind =
   | 'reconcile'
   | 'fix-review';
 
+/**
+ * One line of the persisted task log (papercamp/tasks.log, JSON Lines) — the
+ * machine's record of what ran, distinct from progress.md's prose narrative.
+ * Survives a dev-server restart, unlike the in-memory task registry.
+ */
+export interface TaskLogEntry {
+  id: string;
+  taskKind: TaskKind;
+  planId?: string;
+  planTitle: string;
+  agentId: AgentId;
+  startedAt: string;
+  endedAt: string;
+  outcome: 'done' | 'error';
+}
+
 export interface AgentTaskState {
   id: string;
   status: AgentTaskStatus;
