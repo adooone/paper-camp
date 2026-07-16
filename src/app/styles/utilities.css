@@ -89,6 +89,15 @@ header[class*="layout-module__header___"] {
 }
 
 /*
+ * A Stack Agent card's click-through lands here with ?taskId=; same highlight
+ * ring as .plan-row-highlighted so the linked row is findable once scrolled to.
+ */
+.task-row-highlighted {
+  outline: 2px solid rgba(200, 154, 90, 0.5);
+  outline-offset: -2px;
+}
+
+/*
  * The dense plans list (plan-rows.tsx) is a table-shaped stack of Cards, not
  * paper-ui's Table: a kraft header card over one-line paper row cards. The
  * shared grid template is what keeps the header and every row's columns

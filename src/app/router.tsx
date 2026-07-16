@@ -299,6 +299,9 @@ const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/tasks',
   component: TasksPage,
+  validateSearch: (search: Record<string, unknown>): { taskId?: string } => ({
+    taskId: typeof search.taskId === 'string' ? search.taskId : undefined,
+  }),
 });
 
 const routeTree = rootRoute.addChildren([

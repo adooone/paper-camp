@@ -2,7 +2,7 @@
 id: IDEA-65
 title: Parallel agents and a task log
 type: feat
-status: planned
+status: review
 created: 2026-07-15
 tags:
   - app
@@ -49,5 +49,5 @@ The prize is that the cheap read-only prompts stop queueing behind long ones —
       `runReadOnlyPrompt` (commit-suggest, overlap-check) logs to `tasks.log` but never calls `registerTask`, so those runs never appear in `getStatus()` or the Stack. Every agent invocation — including suggesting a commit message — must register a task and show as a card, per the requirement "every time we call an agent we put an agent task".
 - [x] Persist each task's log lines
       `tasks.log` records only `{id, kind, title, agent, start/end, outcome}` — not the output lines, which live only in the in-memory registry and die on restart. So "open a task to see its logs" can't show anything for a past task. Persist the lines (per-task file, or lines on the log entry) and have the Tasks page read them so a task opens to its own log.
-- [ ] Link a Stack card to its task page
+- [x] Link a Stack card to its task page
       A Stack task card's only action is Stop (`onStop`). Add a click-through that navigates to the Tasks page for that task id, so a card is a simple title + actions with no inline dropdown/detail — the detail lives on the task page.
