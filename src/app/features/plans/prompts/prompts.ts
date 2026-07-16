@@ -207,10 +207,10 @@ Task:
 5. End your reply with ONLY this JSON object as its final line — no code fences, no prose after it:
 {"commit": {"title": "type(scope): Description", "message": "why these changes were made\\n\\nRefs: ${plan.id ?? '<ID>'}"}, "addressed": [1], "skipped": [{"n": 2, "why": "one sentence"}]}
    - \`commit\` is the message a human will commit your work under, so describe what you actually did and why — you know the intent behind each fix, which a diff alone doesn't show. Follow this repo's convention: \`type(scope): Description\`, where type is one of feat|fix|chore|docs|refactor and scope is a subsystem area from core, cli, app, server, agent, plans, ideas, docs, settings, stack, ui, ci, config, deps — pick the area the fixes most affect. Keep the title under 100 characters with no trailing period, and end the body with a \`Refs: ${plan.id ?? '<ID>'}\` line (the plan id goes in that footer, never in the scope).
-   - \`addressed\` lists the numbers of the comments you actually fixed. Each one gets resolved on the PR once the human pushes, so only list a comment here if your change genuinely settles it.
+   - \`addressed\` lists the numbers of the comments the current code genuinely settles — whether you fixed them in this run or found them already fixed by an earlier commit. Each one gets resolved on the PR, so only list a comment here if the code as it now stands does what the comment asks.
    - \`skipped\` lists the ones you deliberately did not fix, each with a one-sentence \`why\`. Each \`why\` is posted publicly as a reply on that PR thread and the thread stays open, so write it as a reasoned explanation addressed to the reviewer.
    - Every comment number from 1 to ${threads.length} must appear in exactly one of the two lists.
-   - If you changed nothing at all, still emit the object with an empty \`addressed\` and every comment in \`skipped\`.
+   - If you changed nothing at all, still emit the object — comments already settled by earlier commits go in \`addressed\`, the rest in \`skipped\`.
 
 Rules:
 - Never touch the YAML frontmatter of any entity file.
