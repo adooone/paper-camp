@@ -1,0 +1,1 @@
+Ignoring 14 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects["/home/croco/dev/paper-camp"].hasTrustDialogAccepted: true in /home/croco/.claude.json.
