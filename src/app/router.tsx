@@ -62,7 +62,6 @@ const CONTENT_MARGIN = 32;
 // Mirrors paper-ui `.content`'s padding, which the strip and scroller bleed back out of.
 const LAYOUT_CONTENT_PAD = 32;
 
-/** Subscribe to a CSS media query; re-renders when it starts/stops matching. */
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia(query).matches : false,
@@ -103,7 +102,7 @@ const RootLayout = () => {
     loadSuggestions();
   }, [loadPlans, loadIdeas, loadSuggestions]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body — close the mobile sidebar on every route change.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body.
   useEffect(() => {
     setMobileSidebarOpen(false);
   }, [pathname]);

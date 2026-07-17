@@ -30,8 +30,7 @@ export const StatusSection = () => {
   );
   const anyChecksRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
-  // Plan/decision *document* consistency (dangling refs, blocked plans) — a separate
-  // concern from the code-consistency check, surfaced in its own "Docs" stamp.
+  // `consistency` is doc findings (dangling refs, blocked plans), distinct from consistencyStatus (code check).
   const hasDocIssues = consistency.length > 0;
 
   const handleFindingClick = useCallback(
@@ -81,10 +80,6 @@ export const StatusSection = () => {
           const qualityFixPrompt = `Fix the failing lint/format checks in this repo.\n\nLint output:\n${statusData?.lint?.output || '(none)'}\n\nFormat output:\n${statusData?.format?.output || '(none)'}`;
           const testFixPrompt = `Fix the failing tests in this repo. Output from the last test run:\n\n${statusData?.test?.output || '(no output captured)'}`;
 
-          // One shape for the three check-run stamps (Quality / Tests / Consistency),
-          // each a click-to-run button colored by its check status. Extracted per the
-          // repo's "3 copies = extract" rule; the Docs stamp below is a different shape
-          // (a findings toggle) and stays separate.
           const checkButton = (opts: {
             label: string;
             status: CheckStatus;
@@ -92,10 +87,8 @@ export const StatusSection = () => {
             onClick: () => void;
           }) => (
             <Tooltip content={opts.title} surface="chalkboard">
-              {/* Raw <button>, not paper-ui Button/IconButton: the clickable target
-                  is a Stamp with its own chalkboard chrome, so we need a bare,
-                  chrome-less button wrapping it rather than a component that draws
-                  its own button surface. */}
+              {/* Raw <button>: the clickable target is a Stamp, so it needs a
+                  chrome-less wrapper rather than a component with its own button surface. */}
               <button
                 type="button"
                 className="stack-check-btn"
@@ -175,9 +168,6 @@ export const StatusSection = () => {
                     }
                     surface="chalkboard"
                   >
-                    {/* Raw <button> for the same reason as the check stamps above:
-                        the clickable target is a Stamp, so no paper-ui Button/IconButton
-                        equivalent fits. */}
                     <button
                       type="button"
                       className={hasIssues ? 'stack-check-btn' : undefined}

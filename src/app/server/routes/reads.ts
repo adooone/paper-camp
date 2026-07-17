@@ -87,9 +87,8 @@ export const readRoutes: ReadRoute[] = [
       const raw = await readMaybe(join(root, 'papercamp', 'config.json'));
       if (!raw) return null;
       const config = JSON.parse(raw);
-      // Coerce legacy bare-string defaultAgents (e.g. "phase": "opencode") into
-      // the { agent, model?, effort? } shape the settings UI expects — old
-      // config.json files predate FEAT-26 and would otherwise crash the page.
+      // Coerce legacy bare-string defaultAgents into { agent, model?, effort? } —
+      // old config.json files predate FEAT-26 and would otherwise crash the page.
       if (config?.defaultAgents) {
         config.defaultAgents = {
           phase: coerceAgentConfig(config.defaultAgents.phase),

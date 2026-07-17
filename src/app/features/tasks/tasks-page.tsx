@@ -36,8 +36,6 @@ const headerLabelStyle: React.CSSProperties = {
   overflow: 'hidden',
 };
 
-// Fetches its own row's persisted output lazily, only once a row is expanded —
-// the Tasks page never has the full history's output loaded at once.
 const TaskLogLines = ({ id }: { id: string }) => {
   const [lines, setLines] = useState<string[] | null>(null);
 

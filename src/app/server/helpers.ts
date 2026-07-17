@@ -24,20 +24,14 @@ export async function fileExists(path: string): Promise<boolean> {
 
 export const campFile = (root: string, name: string) => join(root, 'papercamp', name);
 
-/**
- * A dotfile dir alongside the corpus for machine-generated task output, distinct
- * from papercamp/ itself (which is the human-authored/agent-authored corpus).
- */
+// Dotfile dir for machine-generated task output, distinct from the human/agent-authored corpus.
 export const taskLogFile = (root: string, taskId: string) =>
   join(root, 'papercamp', '.task-logs', `${taskId}.log`);
 
 export type EntityFileInput = Parameters<typeof formatEntityFile>[0];
 
-/**
- * Serializer input for re-writing an existing entity file: carries every field of
- * the parsed entry so a partial update can't silently drop the type, agent
- * override, or tags, with `overrides` applied on top.
- */
+// Carries every field of the parsed entry so a partial update can't silently
+// drop the type, agent override, or tags; `overrides` applies on top.
 export function entityFileInput(
   entry: EntityEntry,
   overrides: Partial<EntityFileInput> = {},
@@ -66,7 +60,6 @@ export async function writeEntityFile(path: string, input: EntityFileInput): Pro
   await writeFile(path, `${formatEntityFile(input)}\n`, 'utf-8');
 }
 
-/** Rewrites the one unified index (papercamp/ideas/index.md) from derived status. */
 export async function regenerateIndexes(root: string): Promise<void> {
   const ideasDir = campFile(root, 'ideas');
   const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
@@ -83,22 +76,17 @@ export async function checkBranchConflictForPlan(
   targetPlanId?: string,
 ): Promise<string | null> {
   const activePlanId = git.getFeatureBranchPlanId();
-  // Working on the current branch's own plan (e.g. running its phases) is always
-  // allowed — this must come before any hygiene/other check so you can never be
-  // blocked from advancing the plan you're already on.
+  // Must come before the hygiene check so you're never blocked from advancing your own plan.
   if (targetPlanId && activePlanId === targetPlanId) return null;
-  // Not on a feature branch (on main, etc.) — nothing to finish first.
   if (!activePlanId) return null;
 
-  // Only relevant when starting a *different* plan than the one this branch is for.
   const hygiene = await git.getBranchHygieneStatus();
   if (hygiene === 'stale-merged') {
     return "You're on a merged branch — switch to main before starting another plan";
   }
 
-  // Note: branches created before the entity migration carry legacy <KIND>-<N>
-  // ids that no longer match any entity, so this lookup misses and the guard
-  // stays silent for them — new branches key off the entity's IDEA-N id.
+  // Pre-migration branches carry legacy <KIND>-<N> ids that match no entity,
+  // so the lookup misses and the guard stays silent for them.
   const { entries } = await readEntitiesWithDerivedStatus(campFile(root, 'ideas'));
   const activePlan = entries.find((e) => e.id === activePlanId && e.kind !== 'note');
   if (!activePlan || activePlan.status === 'done' || activePlan.status === 'dropped') return null;

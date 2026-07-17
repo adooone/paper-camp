@@ -1,12 +1,5 @@
-/**
- * Keyword-overlap similarity matcher for the "similar ideas" strip.
- * Deliberately AI-free — the corpus is small enough
- * (~45 ideas) that scoring shared tokens between the typed text and each
- * candidate's title/body/tags is enough to surface plausible duplicates.
- * Pure and framework-free so both capture points (New-idea modal,
- * Quick-plan path) can share it; `useSimilarIdeas` (app/hooks) wraps this
- * with debouncing for live typing.
- */
+/** Deliberately AI-free: the ~45-idea corpus is small enough that scoring
+ * shared tokens is enough to surface plausible duplicates. */
 
 export interface SimilarityCandidate {
   id: string | null | undefined;
@@ -30,9 +23,7 @@ export interface SimilarityOptions {
 const DEFAULT_SIMILARITY_THRESHOLD = 0.2;
 const DEFAULT_SIMILARITY_LIMIT = 5;
 
-// Title/tag matches count for more than a body match: a shared word in the
-// title or an explicit tag is a much stronger duplicate signal than one
-// buried in prose.
+// A shared word in the title/tags is a stronger duplicate signal than one buried in prose.
 const TITLE_WEIGHT = 3;
 const TAG_WEIGHT = 2;
 const BODY_WEIGHT = 1;
@@ -85,10 +76,6 @@ const overlapCount = (query: Set<string>, field: Set<string>): number => {
   return count;
 };
 
-/**
- * Scores `text` against every candidate's title/body/tags and returns
- * matches above `threshold`, ranked highest-score first, capped at `limit`.
- */
 export function scoreIdeaSimilarity<T extends SimilarityCandidate>(
   text: string,
   candidates: T[],

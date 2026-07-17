@@ -27,9 +27,8 @@ export const SidebarShell = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileOpen, onMobileClose]);
 
-  // When the drawer opens, move focus into it (it acts as a modal dialog below
-  // the lg breakpoint); restore focus to whatever was focused before — the
-  // hamburger trigger — when it closes.
+  // Move focus into the drawer on open (it acts as a modal below lg); restore
+  // focus to the hamburger trigger on close.
   useEffect(() => {
     if (!mobileOpen) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
@@ -39,8 +38,7 @@ export const SidebarShell = ({
 
   return (
     <>
-      {/* Raw <button>: a full-screen invisible backdrop that closes the drawer on
-          click/tap — not a paper-ui Button, which draws its own visible chrome. */}
+      {/* Raw <button>: invisible backdrop — a paper-ui Button draws its own visible chrome. */}
       {mobileOpen && (
         <button
           type="button"
@@ -53,8 +51,7 @@ export const SidebarShell = ({
       )}
       <aside
         ref={asideRef}
-        // Dialog semantics only while acting as a mobile drawer — at lg+ this is
-        // an in-flow navigation sidebar, not a modal.
+        // Dialog semantics only as a mobile drawer — at lg+ it's an in-flow sidebar.
         role={mobileOpen ? 'dialog' : undefined}
         aria-modal={mobileOpen || undefined}
         aria-label="Sidebar navigation"
@@ -65,11 +62,9 @@ export const SidebarShell = ({
         style={{
           width: layout.sidebarWidth,
           flexShrink: 0,
-          // At lg+ this sticks inside the scrolling content area, whose group is as
-          // tall as the page — so `100%` would make the sidebar page-height and it
-          // would scroll away instead of sticking. The layout hands it the gap
-          // between the fixed chrome via --pc-sidebar-h; `100%` stays the fallback
-          // for the mobile drawer, which is `fixed inset-y-0` and wants full height.
+          // `100%` alone would make the sticky sidebar page-height and scroll away;
+          // --pc-sidebar-h caps it to the gap between the fixed chrome. `100%` stays
+          // the fallback for the mobile drawer, which wants full height.
           height: 'var(--pc-sidebar-h, 100%)',
           display: 'flex',
           flexDirection: 'column',

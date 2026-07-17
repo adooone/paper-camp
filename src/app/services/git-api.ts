@@ -1,7 +1,5 @@
 import type { GitStatusResponse } from '@/types/index';
 
-// Shared error-unwrap for the git API calls — unwrap the server's { error } body
-// (falling back to a generic message) and throw it. Extracted per the "3 copies" rule.
 async function throwIfNotOk(response: Response, fallbackError: string): Promise<void> {
   if (response.ok) return;
   const err = await response.json().catch(() => ({ error: fallbackError }));

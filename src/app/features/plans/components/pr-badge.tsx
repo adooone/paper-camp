@@ -8,7 +8,6 @@ interface PrBadgeProps {
   pr: PrInfo;
 }
 
-/** The GitHub-icon PR badge — number + draft/open/closed/merged, linking out. */
 export const PrBadge = ({ pr }: PrBadgeProps) => (
   <a
     href={pr.url}

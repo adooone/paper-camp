@@ -23,13 +23,8 @@ const headerLabelStyle: React.CSSProperties = {
   overflow: 'hidden',
 };
 
-/**
- * A table-shaped list built from Cards, not paper-ui's Table: a kraft header
- * card over compact one-line paper rows, all sharing the .plan-rows-grid
- * column template (utilities.css) so the columns line up. Rows are read-only —
- * the title owns the space, status is a Stamp, and any editing (including
- * status changes) happens inside the plan the row opens.
- */
+// Built from Cards, not paper-ui's Table, sharing the .plan-rows-grid column
+// template (utilities.css) so the header and rows line up.
 export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: PlanRowsProps) => {
   const gridClass = 'plan-rows-grid';
   return (

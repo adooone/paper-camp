@@ -6,9 +6,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { chalkStatusFill, chalkStatusText, deskChalk, sectionLabelStyle } from './shared';
 
 const MAX_VISIBLE_TASKS = 3;
-// One task card's rendered height (single content line, .stack-task-card's
-// tightened 0.5rem padding) plus the gap between stacked cards — reserved so
-// the empty state doesn't shrink the panel when tasks finish and clear.
+// One task card's rendered height plus card gap, reserved so the empty state
+// doesn't shrink the panel when tasks finish and clear.
 const TASK_CARD_HEIGHT = '2.75rem';
 const taskStackMinHeight = `calc(${MAX_VISIBLE_TASKS} * ${TASK_CARD_HEIGHT} + ${MAX_VISIBLE_TASKS - 1} * ${space[2]})`;
 
@@ -110,9 +109,7 @@ const AgentTaskCard = ({
               fontWeight: 600,
               fontSize: fontSize.sm,
               color: deskChalk,
-              // minWidth: 0 lets this flex item shrink below its content
-              // width — without it overflow/ellipsis never triggers.
-              minWidth: 0,
+              minWidth: 0, // lets this flex item shrink below content width so overflow/ellipsis can trigger
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',

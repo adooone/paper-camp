@@ -14,12 +14,7 @@ const CHECK_VARIANT: Record<CheckStatus, 'success' | 'error' | 'warning' | 'neut
 
 const btnStyle = { fontSize: fontSize['2xs'] };
 
-/**
- * Full-width status strip under the header: an at-a-glance
- * row of git state + check status, plus quick actions that fire immediately —
- * commit, run tests, fix quality — without opening the Stack panel. The Stack
- * panel stays the full control surface; the user opens it themselves.
- */
+// Ambient status + immediate quick actions; the Stack panel remains the full control surface.
 export const StatusBar = () => {
   const status = useAppStore((s) => s.status);
   const agentStatus = useAppStore((s) => s.agentStatus);
@@ -74,7 +69,6 @@ export const StatusBar = () => {
         whiteSpace: 'nowrap',
       }}
     >
-      {/* Left: git + agent status */}
       <div style={{ display: 'flex', alignItems: 'center', gap: space[3], flexShrink: 0 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
           <span style={{ opacity: 0.5 }}>⌥</span>
@@ -89,7 +83,6 @@ export const StatusBar = () => {
 
       <div style={{ flex: 1 }} />
 
-      {/* Right: check status + immediate quick actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexShrink: 0 }}>
         <Tooltip content="Quality (lint + format)">
           <Stamp size="small" variant={CHECK_VARIANT[qualityStatus]}>

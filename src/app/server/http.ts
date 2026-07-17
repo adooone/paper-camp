@@ -1,6 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-/** Uniform JSON responder — every API route replies through this. */
 export function sendJson(res: ServerResponse, statusCode: number, data: unknown): void {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json');

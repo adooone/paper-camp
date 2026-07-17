@@ -11,7 +11,6 @@ export function summarizeQualityFailure(lintOutput: string, formatOutput: string
   return 'Lint or format check failed.';
 }
 
-/** One-sentence summary of a failed `vitest run`, parsed from its own summary line. */
 export function summarizeTestFailure(output: string): string {
   const match = output.match(/Tests\s+(\d+) failed/);
   if (match) return `${match[1]} test${match[1] === '1' ? '' : 's'} failed.`;

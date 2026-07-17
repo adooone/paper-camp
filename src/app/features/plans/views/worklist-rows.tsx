@@ -10,7 +10,7 @@ import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../constants';
 import { PlanRows } from './plan-rows';
 
-/** Past this many children, done ones collapse behind a "+N done" toggle (per FEAT-42). */
+/** Past this many children, done ones collapse behind a "+N done" toggle. */
 const DONE_COLLAPSE_THRESHOLD = 5;
 
 interface WorklistRowsProps {
@@ -20,7 +20,6 @@ interface WorklistRowsProps {
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
   onOpenIdea?: (title: string) => void;
-  /** Backlog-only: deletes a plan still in "idea" status. Adds a trailing column. */
 }
 
 const headerLabelStyle: React.CSSProperties = {
@@ -71,14 +70,6 @@ const titleTextStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
-/**
- * A table-shaped list mirroring plan-rows.tsx, but over FEAT-42's two-level
- * WorklistRow tree instead of a flat PlanEntry array: idea-group parents in
- * the row-card language (lightbulb, Extend/Draft-plan actions, a derived
- * children summary in place of a status stamp), their linked plans indented
- * beneath as ordinary plan-rows.tsx rows, orphan plans and notes as their own
- * top-level rows. Nesting stops at this one level, matching the selector.
- */
 export const WorklistRows = ({
   rows,
   plans,

@@ -20,11 +20,8 @@ export interface Route {
   handle: (req: IncomingMessage, res: ServerResponse) => Promise<void> | void;
 }
 
-/**
- * Read-only data routes matched by pathname alone, whatever the method — tried only
- * after every Route. (Pathname-only matching is legacy behavior the dashboard relies
- * on; new endpoints should be Routes.)
- */
+// Matched by pathname alone, whatever the method, after every Route — legacy
+// behavior the dashboard relies on; new endpoints should be Routes.
 export interface ReadRoute {
   path: string;
   handler: (root: string) => Promise<unknown>;

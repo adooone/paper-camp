@@ -8,11 +8,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 const DEFAULT_DEBOUNCE_MS = 250;
 
-/**
- * Debounced live-matching for IDEA-44's "similar ideas" strip: re-scores
- * `text` against `candidates` `debounceMs` after typing settles, so a fast
- * typist doesn't re-run the scorer on every keystroke.
- */
+/** Re-scores `debounceMs` after typing settles, so a fast typist doesn't
+ * re-run the scorer on every keystroke. */
 export function useSimilarIdeas<T extends SimilarityCandidate>(
   text: string,
   candidates: T[],

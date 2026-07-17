@@ -3,11 +3,7 @@ export interface DiffToken {
   text: string;
 }
 
-/**
- * Word-level diff via LCS, for comparing short prose (plan body, phase text/
- * description) rather than whole files. O(n*m) — fine for the short strings
- * a reconcile pass rewrites, not meant for large documents.
- */
+// O(n*m) LCS — fine for the short prose strings a reconcile pass rewrites, not large documents.
 export function diffWords(before: string, after: string): DiffToken[] {
   const a = before.split(/(\s+)/).filter((t) => t !== '');
   const b = after.split(/(\s+)/).filter((t) => t !== '');

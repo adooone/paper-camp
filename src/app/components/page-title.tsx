@@ -5,10 +5,7 @@ interface PageTitleProps {
   children: ReactNode;
 }
 
-/**
- * paper-ui's compiled CSS resets h1-h6 to font-size/font-weight: inherit (Tailwind
- * preflight), so a plain <h1> renders at body text size. This is the deliberate override.
- */
+// paper-ui's compiled CSS resets h1-h6 to inherit (Tailwind preflight), hence this override.
 export const PageTitle = ({ children }: PageTitleProps) => {
   return (
     <h1

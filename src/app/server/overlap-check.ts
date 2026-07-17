@@ -4,13 +4,9 @@ import type { OverlapVerdict } from '@/types/index';
 
 const VALID_VERDICTS: OverlapVerdict['verdict'][] = ['existing', 'extend', 'new'];
 
-/**
- * One-shot, read-only agent call — not the long-running phase/task system in agent.ts.
- * The actual process spawn lives in agent.ts's runReadOnlyPrompt() (runOverlapCheck
- * there only delegates to it), which runs independently of the task registry so it's
- * never blocked by (and never blocks) a running phase/reconcile/etc; this module only
- * builds the prompt and parses the result.
- */
+// One-shot, read-only agent call, not the long-running phase/task system in
+// agent.ts: runs independently of the task registry, so it's never blocked by
+// (and never blocks) a running phase/reconcile/etc.
 export async function checkIdeaOverlap(
   text: string,
   candidates: SimilarityCandidate[],
@@ -27,9 +23,7 @@ export async function checkIdeaOverlap(
   try {
     const parsed = JSON.parse(output) as { result?: string };
     if (typeof parsed.result === 'string') resultText = parsed.result;
-  } catch {
-    // fall through with raw output
-  }
+  } catch {}
 
   const match = resultText.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('Agent did not return a parseable overlap verdict');

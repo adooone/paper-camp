@@ -26,8 +26,7 @@ import { deskChalk, deskTextMuted, sectionLabelStyle } from './shared';
 const COMMIT_TITLE_STORAGE_KEY = 'papercamp.commitTitle';
 const COMMIT_MESSAGE_STORAGE_KEY = 'papercamp.commitMessage';
 
-// Subsystem-area scopes — keep in sync with .commitlintrc.json's `scope-enum`
-// (release/main are release-bot-only and intentionally excluded from suggestions).
+// Keep in sync with .commitlintrc.json's `scope-enum` (release/main are release-bot-only, excluded here).
 const COMMIT_SCOPES = [
   'core',
   'cli',
@@ -98,9 +97,7 @@ export const CommitSection = () => {
   const activePlan = useMemo(() => findFocusPlan(plans?.entries), [plans?.entries]);
 
   const suggestedScope = useMemo(() => {
-    // Scope is a subsystem area, never the plan id. Prefer the plan's first tag
-    // that's a known scope (matches AGENTS.md's "usually the plan's primary tag"
-    // rule); fall back to `repo`. The plan id goes in the Refs: footer instead.
+    // Scope is a subsystem area, not the plan id (AGENTS.md: plan's primary tag); plan id goes in Refs: footer.
     const tagScope = activePlan?.tags?.find((t) => COMMIT_SCOPES.includes(t));
     return tagScope ?? 'repo';
   }, [activePlan]);
@@ -119,7 +116,6 @@ export const CommitSection = () => {
 
   const suggestedMessage = useMemo(() => {
     if (!activePlan) return '';
-    // Plan id lives in a Refs: footer (commit-scope convention), not the scope.
     const refs = activePlan.id ? `Refs: ${activePlan.id}` : '';
     const phaseBody =
       !allPhasesDone && activePlan.phases.length
@@ -134,11 +130,8 @@ export const CommitSection = () => {
     }
   }, [suggestedTitle, commitTitle]);
 
-  // A finished fix-review leaves its work uncommitted and reports the message it
-  // wants that work committed under. It beats both the heuristic default above and
-  // a diff-based suggestion — the agent knows why it made each change — so it wins
-  // outright. Keyed by content so it applies once per run and doesn't fight the
-  // user's own edits afterwards.
+  // A fix-review's suggested commit wins over heuristics/diff suggestions (the agent
+  // knows why each change was made); keyed by content so it applies once per run.
   const appliedAgentCommitRef = useRef<string | null>(null);
   const suggestedCommit = agentStatus.find((t) => t.suggestedCommit)?.suggestedCommit;
   useEffect(() => {
@@ -170,16 +163,13 @@ export const CommitSection = () => {
   const knownPathsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!gitStatus) return;
-    // Snapshot + advance the ref OUTSIDE the setState updater. Mutating it inside
-    // makes the updater impure, and StrictMode double-invokes updaters: the first
-    // pass would fill `known` with every path so the second pass selects nothing,
-    // leaving the file list empty (and the Suggest/Commit buttons disabled).
+    // Snapshot ref before setState: mutating it inside the updater is unsafe under
+    // StrictMode's double-invoke, which would empty the file list on the second pass.
     const known = knownPathsRef.current;
     knownPathsRef.current = new Set(gitStatus.map((e) => e.path));
     setSelectedFiles((prev) => {
       const next = new Set<string>();
       for (const entry of gitStatus) {
-        // Auto-select newly-seen files; preserve the user's existing choice otherwise.
         if (!known.has(entry.path) || prev.has(entry.path)) {
           next.add(entry.path);
         }
@@ -246,9 +236,7 @@ export const CommitSection = () => {
     setSyncError(null);
     try {
       await syncToMain();
-      // A sync can pull new commits (entities added/edited upstream), so refresh
-      // the worklist too — reloading only git status would leave the plans/ideas
-      // list showing stale pre-pull data until a full page reload.
+      // Sync can pull upstream commits, so refresh plans/ideas too — git-status alone would leave them stale.
       await Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
     } catch (err) {
       setSyncError((err as Error).message);
@@ -262,8 +250,7 @@ export const CommitSection = () => {
     setPullError(null);
     try {
       await pullFromOrigin();
-      // Same as sync: the pull may bring in upstream entity changes, so refresh
-      // the worklist alongside git status rather than requiring a page reload.
+      // Pull can also bring upstream entity changes, so refresh plans/ideas alongside git status.
       await Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
     } catch (err) {
       setPullError((err as Error).message);
@@ -335,10 +322,8 @@ export const CommitSection = () => {
                         cursor: 'pointer',
                       }}
                     >
-                      {/* Raw checkbox, not paper-ui's Checkbox: this row's mono file-path
-                          layout with independently colored staged/unstaged text doesn't
-                          fit Checkbox's single `label` slot, and its own blob/sketch
-                          chrome would clash with this chalkboard file list. */}
+                      {/* Raw checkbox: paper-ui's Checkbox has one label slot (can't fit this
+                          multi-color mono layout) and its blob/sketch chrome would clash here. */}
                       <input
                         type="checkbox"
                         checked={selectedFiles.has(entry.path)}
@@ -377,9 +362,8 @@ export const CommitSection = () => {
               }}
             >
               {gitBranchHygiene === 'stale-merged' ? (
-                // Merged branch: committing here only strands more work off main, so
-                // the agent-backed dirty sync (stash → main → ff, changes carried not
-                // lost) replaces the commit controls instead of sitting under them.
+                // stale-merged: committing here would strand work off main, so dirty
+                // sync (stash → main → ff) replaces the commit controls.
                 <>
                   {syncError && (
                     <Alert surface="chalkboard" dismissible onDismiss={() => setSyncError(null)}>
@@ -518,9 +502,7 @@ export const CommitSection = () => {
                       {syncing ? 'Syncing…' : 'Sync to main'}
                     </Button>
                   </Tooltip>
-                  {/* Distinct from Sync: fast-forwards the current branch in place,
-                      so it stays enabled on clean main (where Sync is a no-op) to
-                      pull down origin/main. */}
+                  {/* Pull fast-forwards in place, so unlike Sync it stays enabled on clean main. */}
                   <Button
                     surface="chalkboard"
                     size="small"

@@ -7,12 +7,8 @@ interface ReviewSignalBadgeProps {
   pr: PrInfo;
 }
 
-/**
- * The review-state signal next to `PrBadge`: GitHub's review decision plus an
- * unresolved-thread count, so a reviewed-but-not-fixed PR is visible in the
- * worklist without opening GitHub. Renders nothing when the resolver had no
- * signal to report (closed/merged PRs, or a failed `gh api` enrichment call).
- */
+// Renders nothing when the resolver had no signal to report (closed/merged
+// PRs, or a failed `gh api` enrichment call).
 export const ReviewSignalBadge = ({ pr }: ReviewSignalBadgeProps) => {
   const { reviewDecision, unresolvedThreadCount, hasNewCommentsSincePush } = pr;
   if (!reviewDecision && !unresolvedThreadCount) return null;

@@ -27,10 +27,8 @@ export interface DevServerOptions {
   port: number;
 }
 
-/**
- * Serves the pre-built dashboard SPA (dist/app) plus the papercamp/ API, for an
- * installed package where there's no Vite runtime available (it's a devDependency).
- */
+/** Serves the pre-built dashboard SPA (dist/app), for an installed package
+ * where there's no Vite runtime available (it's a devDependency). */
 export async function startDevServer({ root, port }: DevServerOptions): Promise<void> {
   const staticDir = appDir();
   const indexPath = join(staticDir, 'index.html');
@@ -47,9 +45,8 @@ export async function startDevServer({ root, port }: DevServerOptions): Promise<
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
     const filePath = join(staticDir, pathname === '/' ? 'index.html' : pathname);
 
-    // join() normalizes `..`, so a crafted path like /../../.env would resolve
-    // outside the asset directory and serve arbitrary files (the server binds all
-    // interfaces). Anything that escapes staticDir gets the SPA fallback instead.
+    // join() normalizes `..`, so a crafted path like /../../.env would otherwise
+    // escape staticDir and serve arbitrary files; treat it as the SPA fallback instead.
     const escapesStaticDir = filePath !== staticDir && !filePath.startsWith(staticDir + sep);
 
     try {

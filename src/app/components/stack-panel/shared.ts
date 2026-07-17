@@ -18,8 +18,6 @@ export const sectionLabelStyle: CSSProperties = {
   marginBottom: space[3],
 };
 
-// Chalkboard-surface status colors (pass/fail/running), shared by the check
-// stamps in status-section.tsx and the agent stamp in agent-section.tsx.
 export const chalkStatusFill = {
   pass: '#2d5a3b',
   fail: '#5a2d2d',

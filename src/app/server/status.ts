@@ -19,8 +19,7 @@ const CHECK_COMMANDS: Record<CheckName, string> = {
   consistency: 'pnpm run consistency',
 };
 
-// Auto-fix pass (format + safe lint) shared by the "Fix" action and the run-all
-// verification gate's pre-check.
+// Shared by the "Fix" action and the run-all verification gate's pre-check.
 const BIOME_FIX_COMMAND = 'npx biome check . --write';
 
 export type StatusManager = ReturnType<typeof createStatusManager>;
@@ -36,10 +35,8 @@ export function createStatusManager(root: string) {
   const running = new Set<CheckName>();
   const queued = new Set<CheckName>();
 
-  // `type` is what the client routes on: it can't refetch everything for every
-  // tick (an agent alone emits a line per log row), so each producer names itself
-  // and the client maps that to the one loader it needs. Untyped events used to be
-  // dropped wholesale, which is what made check clicks look dead.
+  // `type` lets the client route without refetching everything each tick (an agent
+  // emits a line per log row); untyped events used to be dropped, making check clicks look dead.
   function broadcast(event: { message: string; timestamp: string }) {
     const data = `data: ${JSON.stringify({ ...event, type: 'status' })}\n\n`;
     for (const client of clients) {
@@ -140,22 +137,12 @@ export function createStatusManager(root: string) {
     // watcher not available (src/ doesn't exist or platform doesn't support recursive)
   }
 
-  // One-shot: spawn fresh processes for all three checks and resolve true only if
-  // all pass. Intentionally bypasses the queue so callers get a clean result that
-  // reflects the current working tree rather than a stale cached status.
-  //
-  // Auto-fix first: run `biome check . --write` before the check-mode gate so a
-  // trivial formatting difference — in agent-written code, or a pre-existing nit
-  // in a file an earlier phase touched but this one didn't — can't hard-fail an
-  // autonomous run-all phase. This mirrors what a human does before committing;
-  // the applied fixes get picked up by the phase commit (which stages `-A`). Only
-  // issues that survive the auto-fix (real lint errors, test failures) fail the
-  // phase. The fixer's own exit code is ignored — the real gate is the checks below.
+  // Bypasses the queue for a result reflecting the live tree; runs the auto-fixer
+  // first so pre-existing formatting nits can't hard-fail an autonomous run-all phase — only real lint/test failures do.
   function runChecksAndWait(): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       const runChecks = () => {
-        // Gate stays lint/format/test — the consistency check (knip/depcruise) is a
-        // manual/dashboard check, not part of the per-phase run-all gate.
+        // consistency (knip/depcruise) is a manual/dashboard check, not part of this gate.
         const names: CheckName[] = ['lint', 'format', 'test'];
         const passed = new Map<CheckName, boolean>();
         let pending = names.length;

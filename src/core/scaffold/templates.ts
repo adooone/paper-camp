@@ -1,9 +1,4 @@
-/**
- * Static file contents scaffolded by `paper-camp init` for the Claude Code
- * native integration: the discoverable skill and the SessionStart/PostToolUse
- * hook wiring. Kept in one place so `init`'s no-clobber writes stay simple
- * string dumps.
- */
+// Kept in one place so `init`'s no-clobber writes stay simple string dumps.
 
 export const SKILL_MD_CONTENT = `---
 name: paper-camp

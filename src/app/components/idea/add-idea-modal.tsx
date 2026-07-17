@@ -57,9 +57,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
     }
   }, [open]);
 
-  // Editing the text after a check invalidates the verdict — clear it so stale
-  // overlap guidance isn't shown against text it no longer describes. title/content
-  // are the change triggers, not read in the effect body.
+  // Clear the verdict when the text changes so stale overlap guidance isn't shown.
   // biome-ignore lint/correctness/useExhaustiveDependencies: text is a trigger, not read
   useEffect(() => {
     setOverlapVerdict(null);
@@ -136,8 +134,6 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
       });
       onClose();
     } catch (err) {
-      // Surface the failure and re-enable the form so the user can retry —
-      // without the finally the modal would stay stuck disabled on any onAdd reject.
       setError((err as Error).message);
     } finally {
       setLoading(false);

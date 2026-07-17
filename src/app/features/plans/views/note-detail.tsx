@@ -11,7 +11,6 @@ interface NoteDetailProps {
   idea: IdeaEntry;
 }
 
-/** Detail view for a note entity — reference material that never grows phases. */
 export const NoteDetail = ({ idea }: NoteDetailProps) => {
   return (
     <div

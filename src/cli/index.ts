@@ -207,7 +207,6 @@ program
     });
     await writeFile(join(ideasDir, `${id}.md`), `${entityContent}\n`, 'utf-8');
 
-    // Regenerate the unified index
     const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
     await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries), 'utf-8');
 
@@ -244,7 +243,6 @@ program
       return out;
     }
 
-    // Legacy ideas live flat in ideas/; legacy plans in plans/ + plans/archive/.
     const legacyIdeas = (
       await readLegacyDir(ideasDir, (c) => {
         const r = parseIdeaFile(c);
@@ -279,7 +277,6 @@ program
       written++;
     };
 
-    // Ideas: merge with their plan(s), or pass through as planless entities.
     for (const idea of legacyIdeas) {
       const ideaId = idea.id as string;
       const plans = (plansByIdea.get(ideaId) ?? []).sort(
@@ -320,7 +317,6 @@ program
       }
     }
 
-    // Orphan plans (no idea backlink): mint fresh lifetime ids in chronological order.
     const orphans = legacyPlans
       .filter((p) => !p.idea)
       .sort(

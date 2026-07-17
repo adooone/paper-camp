@@ -11,11 +11,8 @@ interface ExtendIdeaButtonProps {
   compact?: boolean;
 }
 
-/**
- * Shared by idea-detail.tsx and worklist-rows.tsx's idea-group parent row — looks
- * up the idea fresh from the store at click-time (not the possibly-stale `idea`
- * prop) so a second Extend after the first one's Log entry landed still works.
- */
+/** Looks up the idea fresh from the store at click-time (not the possibly-stale
+ * `idea` prop) so a second Extend after the first one's Log entry landed still works. */
 export const ExtendIdeaButton = ({ idea, compact }: ExtendIdeaButtonProps) => {
   const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);
   const { state, errorMessage, run } = useActionFeedback();

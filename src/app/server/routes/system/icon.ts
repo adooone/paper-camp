@@ -27,9 +27,7 @@ export function iconRoutes({ root }: RouteContext): Route[] {
             res.setHeader('Cache-Control', 'no-cache');
             res.end(data);
             return;
-          } catch {
-            /* try next */
-          }
+          } catch {}
         }
         sendJson(res, 404, { error: 'no icon uploaded' });
       },

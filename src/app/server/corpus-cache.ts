@@ -1,11 +1,5 @@
-/**
- * In-process cache for the read-only `/api/plans` and `/api/ideas` corpus reads.
- * Scoped to those two routes deliberately: other callers of readEntities/
- * readWorkEntries/readNoteEntries (agent runs, plan create/update/delete) read
- * their own recent writes back within the same request and must never see a
- * stale cache entry, so they stay uncached. `activity.ts`'s fs.watch callback
- * calls invalidate() on every papercamp/ change.
- */
+// Scoped to /api/plans and /api/ideas only: other callers read their own recent
+// writes back within the same request and must never see a stale entry.
 const cache = new Map<string, Promise<unknown>>();
 
 export function cached<T>(key: string, load: () => Promise<T>): Promise<T> {

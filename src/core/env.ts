@@ -25,7 +25,6 @@ function matchEntry(line: string): { key: string; value: string } | null {
   return match ? { key: match[1], value: unquote(match[2]) } : null;
 }
 
-/** Parses `KEY=value` lines, skipping comments and blank lines. */
 export function parseEnv(content: string): EnvEntry[] {
   const entries: EnvEntry[] = [];
   for (const line of content.split('\n')) {
@@ -35,10 +34,6 @@ export function parseEnv(content: string): EnvEntry[] {
   return entries;
 }
 
-/**
- * Replaces matched-key lines in place, drops keys no longer present, and appends
- * new keys at the end — preserving comments and the ordering of every untouched line.
- */
 export function applyEnvEntries(content: string, entries: EnvEntry[]): string {
   const desired = new Map(entries.map((e) => [e.key, e.value]));
   const lines = content.length > 0 ? content.split('\n') : [];
