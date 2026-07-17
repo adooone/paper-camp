@@ -5,16 +5,6 @@ import { campFile } from '../helpers';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
-const DIRTY_SYNC_PROMPT = `Sync the current branch to main by:
-1. Stashing or committing any uncommitted changes (do not use \`git reset --hard\` or \`git clean -fd\` without an explicit confirmation step)
-2. Relocating any mis-filed content (e.g., any new entities written to a legacy path like \`papercamp/plans.md\` or \`papercamp/plans/\` instead of per-file \`papercamp/ideas/*.md\`)
-3. Checking out main: \`git checkout main\`
-4. Fetching from origin: \`git fetch --prune\`
-5. Fast-forwarding the merge: \`git merge --ff-only origin/main\`
-6. Confirming success
-
-Report the final branch and status to verify the sync completed.`;
-
 export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
   return [
     {
@@ -96,34 +86,13 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
     {
       method: 'POST',
       path: '/api/git/sync',
-      handle: async (req, res) => {
-        const body = await readBody(req);
-        const { mode } = JSON.parse(body) as { mode?: string };
-        if (mode !== 'clean' && mode !== 'dirty') {
-          sendJson(res, 400, { error: "mode must be 'clean' or 'dirty'" });
-          return;
-        }
-
-        if (mode === 'clean') {
-          // Re-verify cleanliness server-side — the client's `mode` is derived from
-          // a possibly-stale status snapshot, and checking out main against an
-          // actually-dirty tree could fail confusingly or carry changes onto main.
-          const currentStatus = await git.getStatus();
-          if (currentStatus.length > 0) {
-            sendJson(res, 409, { error: 'Working tree is no longer clean — refresh and retry' });
-            return;
-          }
+      handle: async (_req, res) => {
+        try {
           await git.runGitSync();
           sendJson(res, 200, { ok: true });
-          return;
+        } catch (error) {
+          sendJson(res, 409, { error: (error as Error).message });
         }
-
-        const result = agent.startSync(DIRTY_SYNC_PROMPT);
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
       },
     },
 

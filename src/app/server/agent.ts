@@ -647,10 +647,6 @@ export function createAgentManager(
     });
   }
 
-  function startSync(prompt: string): Result {
-    return launch({ planTitle: 'Sync to main' }, prompt, { taskKind: 'sync' });
-  }
-
   // Suggest-ideas launch mode: not scoped to any existing entity — the agent scans
   // the repo and corpus and appends zero or more dated lines to suggestions.md.
   // Success is judged by whether that line count grew (see didTaskProgress).
@@ -1237,7 +1233,6 @@ export function createAgentManager(
     startForIdeaExtend,
     startBatchReconcile,
     startRunAllPhases,
-    startSync,
     startSuggest,
     runCommitSuggest,
     runOverlapCheck,
@@ -1295,7 +1290,6 @@ export interface AgentManager {
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchReconcile: () => Result;
   startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<boolean>) => Result;
-  startSync: (prompt: string) => Result;
   startSuggest: (prompt: string) => Promise<Result>;
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;

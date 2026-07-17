@@ -8,3 +8,5 @@
 {"id":"eced1430-7914-49cf-a2db-c2a6503b0b17","taskKind":"fix-review","planId":"IDEA-65","planTitle":"Parallel agents and a task log","agentId":"claude-code","startedAt":"2026-07-16T12:18:57.153Z","endedAt":"2026-07-16T12:21:35.704Z","outcome":"done"}
 {"id":"803dbe30-859f-4302-88b9-0c24074b93dd","taskKind":"run-all","planId":"IDEA-64","planTitle":"Sort the worklist by column header","agentId":"claude-code","startedAt":"2026-07-16T18:48:02.463Z","endedAt":"2026-07-16T19:01:19.676Z","outcome":"done"}
 {"id":"32508a23-230a-4b94-a313-4f693c71883e","taskKind":"suggest","planTitle":"Suggest ideas","agentId":"claude-code","startedAt":"2026-07-16T19:32:03.589Z","endedAt":"2026-07-16T19:33:24.896Z","outcome":"done"}
+{"id":"5a086f7b-0b91-470c-a8f0-1c8200e76b07","taskKind":"sync","planTitle":"Sync to main","agentId":"claude-code","startedAt":"2026-07-17T07:47:32.071Z","endedAt":"2026-07-17T07:49:22.921Z","outcome":"done"}
+{"id":"cee5d96a-da6b-4962-aeaa-ca7625b367cc","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-17T09:00:39.594Z","endedAt":"2026-07-17T09:00:48.912Z","outcome":"done"}

@@ -22,3 +22,5 @@ Show the escape hatch exactly when the branch is done: render a Sync button in t
       In `commit-section.tsx`'s has-changes branch, when `gitBranchHygiene === 'stale-merged'`, render a full-width Sync button (with the existing `syncError` alert) under the Commit button, calling the existing `handleSync` — which already resolves to `mode: 'dirty'` and launches the sync agent.
 - [x] Gate and confirm the states
       `tsc --noEmit`, `biome check`, tests green; confirm by inspection that the clean states are untouched and the new button appears only when the tree is dirty AND hygiene is `stale-merged`.
+- [x] Replace the commit controls instead of stacking under them
+      On a merged branch, committing only strands more work off main — so when hygiene is `stale-merged`, the sync button takes the place of the suggest/title/message/Commit controls entirely (the changed-files list stays visible above). No disabled Commit button to explain; one action, the right one.

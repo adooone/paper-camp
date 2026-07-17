@@ -246,6 +246,24 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     return result.stdout.toString().trim();
   }
 
+  // Merged-ness must be judged against origin/main when it exists: the local main
+  // ref only advances on checkout+pull — the very thing sync does — so after a
+  // GitHub-side merge a branch compared against local main never looks merged.
+  async function mainRef(): Promise<string> {
+    return runGit(['rev-parse', '--verify', '--quiet', 'refs/remotes/origin/main'])
+      .then(() => 'origin/main')
+      .catch(() => 'main');
+  }
+
+  let lastOriginMainFetch = 0;
+  // Fire-and-forget so a status poll never blocks on the network; the next poll
+  // (SSE-driven, frequent) reads the refreshed ref.
+  function refreshOriginMainQuietly(): void {
+    if (Date.now() - lastOriginMainFetch < 60_000) return;
+    lastOriginMainFetch = Date.now();
+    void runGit(['fetch', 'origin', 'main']).catch(() => {});
+  }
+
   async function isMergedIntoMain(): Promise<boolean> {
     const currentBranch = getCurrentBranch();
     if (currentBranch === 'main' || currentBranch === 'master') return false;
@@ -255,7 +273,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       // it can tell 'stale-merged' apart from 'stale-no-upstream'. Conflating them
       // here missed the common case: a pushed branch merged via PR (still has an
       // upstream) would never report 'stale-merged'.
-      const mergedBranches = await runGit(['branch', '--merged', 'main']);
+      const mergedBranches = await runGit(['branch', '--merged', await mainRef()]);
       return mergedBranches.split('\n').some((line) => {
         const branch = line.trim().replace(/^\*\s+/, '');
         return branch === currentBranch;
@@ -266,6 +284,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   async function getBranchHygieneStatus(): Promise<BranchHygieneStatus> {
+    refreshOriginMainQuietly();
     const currentBranch = getCurrentBranch();
     const status = await runGitStatus();
     const isDirty = status.length > 0;
@@ -279,7 +298,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     // at main's tip, or one with un-merged local work (with or without an upstream),
     // is normal active work, not stale.
     if (await isMergedIntoMain()) {
-      const behind = await runGit(['rev-list', '--count', 'HEAD..main'])
+      const behind = await runGit(['rev-list', '--count', `HEAD..${await mainRef()}`])
         .then((n) => Number.parseInt(n.trim(), 10) || 0)
         .catch(() => 0);
       if (behind > 0) return 'stale-merged';
@@ -363,9 +382,32 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   async function runGitSync(): Promise<void> {
-    await runGit(['checkout', 'main']);
-    await runGit(['fetch', '--prune']);
-    await runGit(['merge', '--ff-only', 'origin/main']);
+    // Uncommitted changes ride across the switch in a stash — deterministic, unlike
+    // the sync agent this replaced, which once stranded them un-popped (IDEA-67).
+    const dirty = (await runGitStatus()).length > 0;
+    if (dirty) {
+      await runGit(['stash', 'push', '--include-untracked', '-m', 'papercamp-sync']);
+    }
+    let syncError: unknown;
+    try {
+      await runGit(['checkout', 'main']);
+      await runGit(['fetch', '--prune']);
+      await runGit(['merge', '--ff-only', 'origin/main']);
+    } catch (err) {
+      syncError = err;
+    }
+    if (dirty) {
+      try {
+        await runGit(['stash', 'pop']);
+      } catch {
+        if (!syncError) {
+          throw new Error(
+            'Synced to main, but restoring your changes hit a conflict — resolve the markers in the working tree; the originals are still in `git stash`',
+          );
+        }
+      }
+    }
+    if (syncError) throw syncError;
   }
 
   // Update the current branch in place from its origin counterpart, without
