@@ -29,7 +29,7 @@ Structure-only: no behaviour change, so `tsc`/`biome`/tests/consistency are the 
       `core/git-pr/pr.ts` (110) and `core/git-pr/pr-lookup.ts` (81) — collapse the `/** ... */` blocks that paraphrase the signature, keeping only the `gh` CLI exit-code semantics. Report before/after per file.
 - [x] Sweep the two server files
       `server/agent.ts` (104) and `server/git.ts` (55) against the default-zero bar. Report before/after per file.
-- [ ] Sweep the store / serialize / types trio
+- [x] Sweep the store / serialize / types trio
       `stores/app-store.ts` (64), `core/serialize/serializer.ts` (63), `types/index.ts` (58) — but preserve the parser's h3 `### Phases` grammar note (a wrong "fix" silently breaks parsing, see [[IDEA-58]]) and StrictMode updater purity. Report before/after per file.
 - [ ] Sweep the remaining long tail across `src/`
       Everything outside the seven density files, same bar. Where a comment only compensates for an unclear name, rename — a rename, not a behaviour refactor. Report before/after per file.
