@@ -23,7 +23,7 @@ tags:
 Structure-only: no behaviour change, so `tsc`/`biome`/tests/consistency are the gate, plus the comment-line count as the actual measure — report it before/after per file rather than claiming "swept". If the number doesn't move, the pass didn't happen.
 
 ### Phases
-- [ ] Baseline the comment-line count per file
+- [x] Baseline the comment-line count per file
       Record the current per-file counts across `src/` (the seven density files and the total 1431 / 7.8%) so each later phase can report before/after against a fixed starting number rather than a re-measured one.
 - [ ] Sweep the git-pr docstring pair against §7
       `core/git-pr/pr.ts` (110) and `core/git-pr/pr-lookup.ts` (81) — collapse the `/** ... */` blocks that paraphrase the signature, keeping only the `gh` CLI exit-code semantics. Report before/after per file.
