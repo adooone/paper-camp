@@ -426,6 +426,27 @@ export const CommitSection = () => {
               >
                 {committing || commitInFlight ? 'Committing…' : 'Commit'}
               </Button>
+              {/* Escape hatch off a finished branch: dirty sync is agent-backed
+                  (stash → main → ff), so leftover changes are carried, not lost. */}
+              {gitBranchHygiene === 'stale-merged' && (
+                <>
+                  {syncError && (
+                    <Alert surface="chalkboard" dismissible onDismiss={() => setSyncError(null)}>
+                      {syncError}
+                    </Alert>
+                  )}
+                  <Button
+                    surface="chalkboard"
+                    size="small"
+                    fullWidth
+                    icon={<MergeIcon size={14} />}
+                    disabled={syncing}
+                    onClick={handleSync}
+                  >
+                    {syncing ? 'Syncing…' : 'Branch merged — sync to main'}
+                  </Button>
+                </>
+              )}
             </div>
           </>
         ) : (

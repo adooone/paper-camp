@@ -1,0 +1,40 @@
+Agent session started
+Running Read…
+Tool finished
+Running Bash…
+Tool finished
+Running Bash…
+Tool finished
+Running Read…
+Tool finished
+Running Read…
+Tool finished
+Running Read…
+Tool finished
+Running Bash…
+Tool finished
+Running Bash…
+Tool finished
+Running Read…
+Tool finished
+Both worklist views are wired through `WorklistRows`. Two genuinely new things stand out from the just-landed sort work:
+
+1. **`aria-sort` is inert.** Commit `0593d98` set `aria-sort` on plain `<span>`s inside a role-less grid `<div>` (`worklist-rows.tsx:120`). Without `role="columnheader"`/`role="row"`, ARIA ignores `aria-sort` — so the accessibility signal that phase added doesn't actually reach assistive tech. The progress note even flagged there's no real `<th>` here.
+
+2. **Dead static header in `plan-rows.tsx`.** `PlanRows`' `showHeader` defaults `true` (lines 37–49), but the only caller, `WorklistRows`, always passes `showHeader={false}`. So that non-sortable header — the pre-sort version the worklist header superseded — never renders in the app.
+
+Appending both:
+Running Edit…
+Tool finished
+Added two suggestions to `papercamp/suggestions.md`, both surfaced while reading the just-landed sort work:
+
+- **`aria-sort` is inert** — it's set on plain `<span>`s in a role-less grid, so screen readers ignore it. A concrete follow-up to commit `0593d98`.
+- **Dead static header in `plan-rows.tsx`** — the `showHeader` default-true path is now unreachable, since the only caller always passes `false`.
+
+No other files touched.
+Added two suggestions to `papercamp/suggestions.md`, both surfaced while reading the just-landed sort work:
+
+- **`aria-sort` is inert** — it's set on plain `<span>`s in a role-less grid, so screen readers ignore it. A concrete follow-up to commit `0593d98`.
+- **Dead static header in `plan-rows.tsx`** — the `showHeader` default-true path is now unreachable, since the only caller always passes `false`.
+
+No other files touched.
