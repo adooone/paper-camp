@@ -208,6 +208,37 @@ describe('runGitSync', () => {
     expect(git(root, 'stash', 'list')).toBe('');
   });
 
+  it('restores staged changes as staged, not just as a working-tree edit', async () => {
+    // Regression: a bare `git stash pop` drops the index, so a file staged
+    // before sync would land back unstaged afterward.
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-9-staged');
+    await writeFile(join(root, 'README.md'), 'staged edit\n');
+    git(root, 'add', 'README.md');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(git(root, 'diff', '--cached', '--name-only')).toBe('README.md');
+  });
+
+  it('leaves a pre-existing unrelated stash alone', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-10-prestash');
+    await writeFile(join(root, 'pre.txt'), 'pre-existing\n');
+    git(root, 'add', 'pre.txt');
+    git(root, 'stash', 'push', '-m', 'unrelated-pre-existing-stash');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(await readFile(join(root, 'README.md'), 'utf-8')).toBe('edited\n');
+    expect(git(root, 'stash', 'list')).toContain('unrelated-pre-existing-stash');
+  });
+
   it('reports a pop conflict and keeps the changes in the stash', async () => {
     const root = await initRepo();
     await addOrigin(root);

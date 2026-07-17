@@ -398,7 +398,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
     if (dirty) {
       try {
-        await runGit(['stash', 'pop']);
+        await runGit(['stash', 'pop', '--index']);
       } catch {
         if (!syncError) {
           throw new Error(

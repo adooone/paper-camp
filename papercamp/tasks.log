@@ -10,3 +10,4 @@
 {"id":"32508a23-230a-4b94-a313-4f693c71883e","taskKind":"suggest","planTitle":"Suggest ideas","agentId":"claude-code","startedAt":"2026-07-16T19:32:03.589Z","endedAt":"2026-07-16T19:33:24.896Z","outcome":"done"}
 {"id":"5a086f7b-0b91-470c-a8f0-1c8200e76b07","taskKind":"sync","planTitle":"Sync to main","agentId":"claude-code","startedAt":"2026-07-17T07:47:32.071Z","endedAt":"2026-07-17T07:49:22.921Z","outcome":"done"}
 {"id":"cee5d96a-da6b-4962-aeaa-ca7625b367cc","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-17T09:00:39.594Z","endedAt":"2026-07-17T09:00:48.912Z","outcome":"done"}
+{"id":"342f02f7-7c55-4a11-a9e1-c1faad8bf1d8","taskKind":"fix-review","planId":"IDEA-67","planTitle":"Deterministic dirty sync","agentId":"claude-code","startedAt":"2026-07-17T09:17:30.929Z","endedAt":"2026-07-17T09:22:10.538Z","outcome":"done"}
