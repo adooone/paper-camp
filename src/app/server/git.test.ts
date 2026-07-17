@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -130,6 +130,22 @@ describe('getBranchHygieneStatus', () => {
     expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
   });
 
+  it('reports stale-merged via origin/main when the local main ref is stale', async () => {
+    // The real workflow: PR merged on the remote, local main never checked out
+    // since — comparing against local main alone never sees the merge.
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-6-done');
+    await commitFile(root, 'feature.txt', 'done\n', 'finish feature');
+    git(root, 'checkout', 'main');
+    git(root, 'merge', '--no-ff', '-m', 'merge feature', 'feat/feat-6-done');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    git(root, 'checkout', 'feat/feat-6-done');
+    const manager = gitManager(root);
+    expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
+  });
+
   it('reports clean-on-main on a clean main checkout', async () => {
     const root = await initRepo();
     const manager = gitManager(root);
@@ -172,6 +188,74 @@ describe('isMergedIntoMain', () => {
     await commitFile(root, 'feature.txt', 'new\n', 'add feature');
     const manager = gitManager(root);
     expect(await manager.isMergedIntoMain()).toBe(false);
+  });
+});
+
+describe('runGitSync', () => {
+  it('carries uncommitted and untracked changes onto main', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-7-done');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    await writeFile(join(root, 'notes.txt'), 'untracked\n');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(manager.getCurrentBranch()).toBe('main');
+    expect(await readFile(join(root, 'README.md'), 'utf-8')).toBe('edited\n');
+    expect(await readFile(join(root, 'notes.txt'), 'utf-8')).toBe('untracked\n');
+    expect(git(root, 'stash', 'list')).toBe('');
+  });
+
+  it('restores staged changes as staged, not just as a working-tree edit', async () => {
+    // Regression: a bare `git stash pop` drops the index, so a file staged
+    // before sync would land back unstaged afterward.
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-9-staged');
+    await writeFile(join(root, 'README.md'), 'staged edit\n');
+    git(root, 'add', 'README.md');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(git(root, 'diff', '--cached', '--name-only')).toBe('README.md');
+  });
+
+  it('leaves a pre-existing unrelated stash alone', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-10-prestash');
+    await writeFile(join(root, 'pre.txt'), 'pre-existing\n');
+    git(root, 'add', 'pre.txt');
+    git(root, 'stash', 'push', '-m', 'unrelated-pre-existing-stash');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(await readFile(join(root, 'README.md'), 'utf-8')).toBe('edited\n');
+    expect(git(root, 'stash', 'list')).toContain('unrelated-pre-existing-stash');
+  });
+
+  it('reports a pop conflict and keeps the changes in the stash', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-8-conflict');
+    // Conflicting upstream: main's README moves on the remote while the local
+    // main ref stays behind, so the ff-merge is what brings the conflict in.
+    git(root, 'checkout', 'main');
+    await commitFile(root, 'README.md', 'upstream\n', 'upstream change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    git(root, 'checkout', 'feat/feat-8-conflict');
+    await writeFile(join(root, 'README.md'), 'local edit\n');
+    const manager = gitManager(root);
+
+    await expect(manager.runGitSync()).rejects.toThrow(/git stash/);
+    expect(manager.getCurrentBranch()).toBe('main');
+    expect(git(root, 'stash', 'list')).toContain('papercamp-sync');
   });
 });
 

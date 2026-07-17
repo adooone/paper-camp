@@ -245,8 +245,7 @@ export const CommitSection = () => {
     setSyncing(true);
     setSyncError(null);
     try {
-      const isClean = gitStatus && gitStatus.length === 0;
-      await syncToMain(isClean ? 'clean' : 'dirty');
+      await syncToMain();
       // A sync can pull new commits (entities added/edited upstream), so refresh
       // the worklist too — reloading only git status would leave the plans/ideas
       // list showing stale pre-pull data until a full page reload.
@@ -256,7 +255,7 @@ export const CommitSection = () => {
     } finally {
       setSyncing(false);
     }
-  }, [gitStatus, loadGitStatus, loadPlans, loadIdeas]);
+  }, [loadGitStatus, loadPlans, loadIdeas]);
 
   const handlePull = useCallback(async () => {
     setPulling(true);
@@ -377,58 +376,10 @@ export const CommitSection = () => {
                 marginTop: space[3],
               }}
             >
-              {suggestError && (
-                <Alert surface="chalkboard" dismissible onDismiss={() => setSuggestError(null)}>
-                  {suggestError}
-                </Alert>
-              )}
-              <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
-                <div style={{ flex: 1 }}>
-                  <Input
-                    surface="chalkboard"
-                    size="small"
-                    placeholder="Commit title"
-                    value={commitTitle}
-                    onChange={(e) => setCommitTitle(e.currentTarget.value)}
-                  />
-                </div>
-                <IconButton
-                  icon={<WandIcon size={16} />}
-                  surface="chalkboard"
-                  size="small"
-                  label="Suggest title and message from the diff"
-                  disabled={selectedFiles.size === 0 || suggesting}
-                  onClick={handleSuggestFromChanges}
-                  wobble={suggesting ? 1 : 0}
-                />
-              </div>
-              <Textarea
-                surface="chalkboard"
-                size="small"
-                placeholder="Commit message (optional)"
-                value={commitMessage}
-                onChange={(e) => setCommitMessage(e.currentTarget.value)}
-                rows={2}
-              />
-              {commitError && (
-                <Alert surface="chalkboard" dismissible onDismiss={() => setCommitError(null)}>
-                  {commitError}
-                </Alert>
-              )}
-              <Button
-                surface="chalkboard"
-                size="small"
-                fullWidth
-                disabled={
-                  selectedFiles.size === 0 || !commitTitle.trim() || committing || commitInFlight
-                }
-                onClick={handleCommit}
-              >
-                {committing || commitInFlight ? 'Committing…' : 'Commit'}
-              </Button>
-              {/* Escape hatch off a finished branch: dirty sync is agent-backed
-                  (stash → main → ff), so leftover changes are carried, not lost. */}
-              {gitBranchHygiene === 'stale-merged' && (
+              {gitBranchHygiene === 'stale-merged' ? (
+                // Merged branch: committing here only strands more work off main, so
+                // the agent-backed dirty sync (stash → main → ff, changes carried not
+                // lost) replaces the commit controls instead of sitting under them.
                 <>
                   {syncError && (
                     <Alert surface="chalkboard" dismissible onDismiss={() => setSyncError(null)}>
@@ -444,6 +395,61 @@ export const CommitSection = () => {
                     onClick={handleSync}
                   >
                     {syncing ? 'Syncing…' : 'Branch merged — sync to main'}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {suggestError && (
+                    <Alert surface="chalkboard" dismissible onDismiss={() => setSuggestError(null)}>
+                      {suggestError}
+                    </Alert>
+                  )}
+                  <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
+                    <div style={{ flex: 1 }}>
+                      <Input
+                        surface="chalkboard"
+                        size="small"
+                        placeholder="Commit title"
+                        value={commitTitle}
+                        onChange={(e) => setCommitTitle(e.currentTarget.value)}
+                      />
+                    </div>
+                    <IconButton
+                      icon={<WandIcon size={16} />}
+                      surface="chalkboard"
+                      size="small"
+                      label="Suggest title and message from the diff"
+                      disabled={selectedFiles.size === 0 || suggesting}
+                      onClick={handleSuggestFromChanges}
+                      wobble={suggesting ? 1 : 0}
+                    />
+                  </div>
+                  <Textarea
+                    surface="chalkboard"
+                    size="small"
+                    placeholder="Commit message (optional)"
+                    value={commitMessage}
+                    onChange={(e) => setCommitMessage(e.currentTarget.value)}
+                    rows={2}
+                  />
+                  {commitError && (
+                    <Alert surface="chalkboard" dismissible onDismiss={() => setCommitError(null)}>
+                      {commitError}
+                    </Alert>
+                  )}
+                  <Button
+                    surface="chalkboard"
+                    size="small"
+                    fullWidth
+                    disabled={
+                      selectedFiles.size === 0 ||
+                      !commitTitle.trim() ||
+                      committing ||
+                      commitInFlight
+                    }
+                    onClick={handleCommit}
+                  >
+                    {committing || commitInFlight ? 'Committing…' : 'Commit'}
                   </Button>
                 </>
               )}
