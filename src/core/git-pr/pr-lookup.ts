@@ -2,19 +2,13 @@ import { spawn } from 'node:child_process';
 import type { PrInfo, ReviewDecision, ReviewThread } from '../../types/index';
 
 interface PrMapCacheEntry {
-  /** A `Map` (possibly empty) once `gh` resolved; `undefined` = couldn't resolve. */
+  /** `undefined` means `gh` couldn't resolve, distinct from a resolved-but-empty `Map`. */
   prs: Map<string, PrInfo> | undefined;
   fetchedAt: number;
 }
 
-// Keyed by repo root: a long-lived process (server/MCP) can serve more than one repo.
 const cache = new Map<string, PrMapCacheEntry>();
 
-/**
- * Cache window for the resolved PR set — long enough that a worklist read doesn't
- * re-shell out to `gh` on every request, short enough that a merge or state
- * change shows up within the same working session.
- */
 const PR_CACHE_TTL_MS = 5 * 60 * 1000;
 
 interface GhPrRow {
@@ -46,17 +40,8 @@ function toPrInfo(row: GhPrRow): PrInfo {
   return { number: row.number, url: row.url, state, ...(reviewDecision && { reviewDecision }) };
 }
 
-// When an entity has more than one PR, the most-advanced wins: a merge beats an
-// open reattempt beats a draft beats an abandoned close.
 const STATE_RANK: Record<PrInfo['state'], number> = { merged: 4, open: 3, draft: 2, closed: 1 };
 
-/**
- * The entity id a PR references — its `**Plan:** \`IDEA-N\`` body line (stamped
- * by draft-pr.yml), falling back to the `feat/idea-N-…` id prefix of its head
- * branch. Both key off the stable id, never the title, so a renamed entity's PR
- * still resolves. Shared by the row-level index (`prEntityId`) and the
- * single-ref lookup (`resolvePlanForPrRef` in `pr.ts`).
- */
 export function resolveEntityIdFromPrRef(
   body: string | null | undefined,
   branch: string | null | undefined,
@@ -95,11 +80,6 @@ interface GraphqlPullRequest {
   reviews: { nodes: { createdAt: string }[] };
 }
 
-/**
- * Splits a PR's `html_url` into the owner/repo/number a `gh api graphql` call
- * needs. Also used by `pr.ts`'s consistency-comment sync to build the REST
- * PATCH endpoint for editing an existing sticky comment.
- */
 export function parsePrUrl(url: string): { owner: string; repo: string; number: string } | null {
   const match = url.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
   if (!match) return null;
@@ -109,12 +89,7 @@ export function parsePrUrl(url: string): { owner: string; repo: string; number: 
 
 const GH_API_TIMEOUT_MS = 15_000;
 
-/**
- * Shared `gh api graphql` runner: resolves `undefined` on any spawn/exit/parse
- * failure. Bounded by a timeout — this is called once per open/draft PR via
- * `Promise.all` (see `enrichWithReviewSignal`), so a single stalled `gh` call must
- * not be able to hang the whole worklist resolution.
- */
+/** Resolves `undefined` on any spawn/exit/parse failure — never throws. */
 function runGhApiGraphql<T>(
   root: string,
   query: string,
@@ -122,8 +97,6 @@ function runGhApiGraphql<T>(
   repo: string,
   number: string,
 ): Promise<T | undefined> {
-  // `number` goes through -F (typed) so it lands as the Int! the queries declare;
-  // everything else is a plain string.
   return runGhApiGraphqlArgs<T>(root, [
     '-f',
     `query=${query}`,
@@ -136,10 +109,6 @@ function runGhApiGraphql<T>(
   ]);
 }
 
-/**
- * Variable-passing sibling of `runGhApiGraphql` for the review-thread mutations,
- * whose variables are all `ID!`/`String!` and so all pass through -f.
- */
 function runGhApiGraphqlVars<T>(
   root: string,
   query: string,
@@ -191,11 +160,7 @@ function runGhApiGraphqlArgs<T>(root: string, args: string[]): Promise<T | undef
   });
 }
 
-/**
- * `gh pr list` has no field for review-thread resolution or activity timing, so
- * this is the one `gh api` call the list pass can't fold in — run only for
- * open/draft PRs (a merged/closed PR has no review loop left to surface).
- */
+/** `gh pr list` has no field for review-thread resolution or activity timing. */
 async function fetchReviewSignal(root: string, url: string): Promise<ReviewSignal | undefined> {
   const parsed = parsePrUrl(url);
   if (!parsed) return undefined;
@@ -242,14 +207,7 @@ interface GraphqlThreadNode {
   comments: { nodes: GraphqlThreadComment[] };
 }
 
-/**
- * Per-comment detail for a PR's unresolved review threads, for the fix-review
- * launch path (`POST /api/agent/launch-fix-review`) to hand to
- * `buildFixReviewPrompt`. Each thread is represented by its first comment, since
- * that's the one that states what needs fixing. Best-effort: resolves `[]` on
- * any failure so a launch with no readable threads falls back to
- * `buildFixReviewPrompt`'s own empty-threads guard rather than erroring out.
- */
+/** Best-effort: resolves `[]` on any failure rather than throwing. */
 export async function fetchUnresolvedThreads(root: string, url: string): Promise<ReviewThread[]> {
   const parsed = parsePrUrl(url);
   if (!parsed) return [];
@@ -284,12 +242,7 @@ mutation($threadId: ID!, $body: String!) {
   }
 }`;
 
-/**
- * Marks a review thread resolved. Called once the fix that addresses it is
- * actually pushed (see the git push route) — resolving earlier would mark the
- * thread done against code the PR can't see yet. Best-effort: returns false on
- * any failure rather than throwing, since a failed resolve must not fail a push.
- */
+/** Best-effort: returns `false` on any failure — a failed resolve must not fail the push that triggered it. */
 export async function resolveReviewThread(root: string, threadId: string): Promise<boolean> {
   const data = await runGhApiGraphqlVars<{
     data?: { resolveReviewThread?: { thread?: { isResolved: boolean } } };
@@ -297,11 +250,6 @@ export async function resolveReviewThread(root: string, threadId: string): Promi
   return Boolean(data?.data?.resolveReviewThread?.thread?.isResolved);
 }
 
-/**
- * Posts a reply on a review thread — used to record why the agent deliberately
- * skipped a comment, so a rejected suggestion reads as a reasoned decision
- * rather than silence. Best-effort, same as resolveReviewThread.
- */
 export async function replyToReviewThread(
   root: string,
   threadId: string,
@@ -313,7 +261,6 @@ export async function replyToReviewThread(
   return Boolean(data?.data?.addPullRequestReviewThreadReply?.comment?.id);
 }
 
-/** Best-effort: enriches open/draft entries in place with review-thread signal. */
 async function enrichWithReviewSignal(root: string, byId: Map<string, PrInfo>): Promise<void> {
   const active = [...byId.entries()].filter(
     ([, info]) => info.state === 'open' || info.state === 'draft',
@@ -334,9 +281,6 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
         'list',
         '--state',
         'all',
-        // High cap rather than pagination: one entity maps to one PR, so this
-        // only matters for repos with thousands of PRs. An entity whose PR falls
-        // past the cap simply has no live signal and falls back to stored status.
         '--limit',
         '2000',
         '--json',
@@ -363,9 +307,8 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
     proc.stderr?.on('data', () => {});
     proc.on('close', (code) => {
       settle(() => {
-        // Non-zero covers "no gh binary", "not authenticated", "offline", and "not
-        // a GitHub remote" alike — all mean "can't resolve", not "no PRs", so the
-        // caller must fall back rather than treat this as a confirmed empty set.
+        // Non-zero means "can't resolve" (no gh, offline, unauthenticated), not "no
+        // PRs" — caller must fall back rather than treat this as a confirmed empty set.
         if (code !== 0) {
           resolve(undefined);
           return;
@@ -392,14 +335,7 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
   });
 }
 
-/**
- * Every PR in the repo indexed by the entity id it references, resolved via a
- * single `gh pr list` and cached for `ttlMs`, feeding `core/status.ts`'s
- * PR-driven status derivation. `undefined` when the lookup can't resolve at
- * all (no `gh`, not authenticated, offline, no GitHub remote); callers fall
- * back to stored status.
- * An entity simply absent from the returned map has no PR (a confirmed answer).
- */
+/** `undefined` means the lookup couldn't resolve at all; callers fall back to stored status. */
 export async function resolvePrsByEntity(
   root: string,
   ttlMs = PR_CACHE_TTL_MS,
@@ -407,18 +343,12 @@ export async function resolvePrsByEntity(
   const cached = cache.get(root);
   if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.prs;
   const prs = await runGhPrListAll(root);
-  // Only cache a successful resolution — caching an `undefined` (transient gh
-  // failure, offline) would pin the whole worklist to stored status for the full
-  // TTL instead of retrying on the next read.
+  // Only cache a successful resolution — caching `undefined` would pin the whole
+  // worklist to stored status for the full TTL instead of retrying on the next read.
   if (prs !== undefined) cache.set(root, { prs, fetchedAt: Date.now() });
   return prs;
 }
 
-/**
- * Clears the module-level PR cache. Used by the manual refresh route
- * (`POST /api/refresh`) so a user-triggered refresh re-resolves PR/review state
- * instead of replaying the TTL window, and by tests to isolate cases.
- */
 export function clearPrCache(): void {
   cache.clear();
 }

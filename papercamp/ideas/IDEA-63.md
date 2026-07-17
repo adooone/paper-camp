@@ -25,7 +25,7 @@ Structure-only: no behaviour change, so `tsc`/`biome`/tests/consistency are the 
 ### Phases
 - [x] Baseline the comment-line count per file
       Record the current per-file counts across `src/` (the seven density files and the total 1431 / 7.8%) so each later phase can report before/after against a fixed starting number rather than a re-measured one.
-- [ ] Sweep the git-pr docstring pair against §7
+- [x] Sweep the git-pr docstring pair against §7
       `core/git-pr/pr.ts` (110) and `core/git-pr/pr-lookup.ts` (81) — collapse the `/** ... */` blocks that paraphrase the signature, keeping only the `gh` CLI exit-code semantics. Report before/after per file.
 - [ ] Sweep the two server files
       `server/agent.ts` (104) and `server/git.ts` (55) against the default-zero bar. Report before/after per file.
