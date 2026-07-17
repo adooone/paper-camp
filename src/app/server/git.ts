@@ -8,21 +8,15 @@ import type { BranchHygieneStatus, GitStatusEntry, PlanEntry } from '../../types
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 
-// Git expands pathspec magic (e.g. `:/`) even after `--`, which can broaden a
-// command beyond the caller-selected files. Force every API-supplied path to be
-// treated literally so selections can't widen to unrelated files.
+// Git expands pathspec magic (e.g. `:/`) even after `--`; force literal so a
+// caller-selected path can't silently widen to unrelated files.
 const toLiteralPathspec = (file: string) => `:(literal)${file}`;
 
 export type GitManager = ReturnType<typeof createGitManager>;
 
 export interface GitManagerOptions {
-  /**
-   * Start the recursive fs watchers on `.git/` and `src/` that push live status
-   * ticks to SSE subscribers. Defaults to true; tests disable it because Node's
-   * recursive-watch fallback crashes uncatchably when a watched tree is deleted
-   * (e.g. a temp repo being cleaned up), and the watchers live for the process
-   * lifetime with no close handle.
-   */
+  // Tests disable this: Node's recursive-watch fallback crashes uncatchably
+  // when a watched tree is deleted (e.g. a temp repo cleanup).
   watch?: boolean;
 }
 
@@ -61,9 +55,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
 
   function runGit(args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
-      // quotepath=off keeps non-ASCII paths (e.g. Cyrillic filenames) as raw UTF-8 in
-      // porcelain output instead of octal-escaped quoted strings the parser would
-      // pass through garbled, breaking every downstream pathspec.
+      // quotepath=off: non-ASCII paths stay raw UTF-8 instead of octal-escaped,
+      // which would otherwise garble every downstream pathspec.
       const proc = spawn('git', ['-c', 'core.quotepath=off', ...args], {
         cwd: root,
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -106,8 +99,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
           .filter((e): e is GitStatusEntry & { renameSource: string } => !!e.renameSource)
           .map((e) => [e.path, e.renameSource]),
       );
-      // Files already fully staged (no pending worktree change) have nothing left for
-      // `git add` to match — passing them anyway makes git fail with "did not match any files".
+      // A fully-staged file has nothing left for `git add` to match; passing it
+      // anyway makes git fail with "did not match any files".
       const toAdd = files.filter((f) => {
         const status = statusByPath.get(f);
         return status === undefined || status[1] !== ' ';
@@ -117,21 +110,14 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       }
     }
     const args = ['commit'];
-    // Machine-generated commits (agent per-phase / run-review) opt out of the
-    // commit-msg hook: their message format is controlled in code and kept
-    // valid-by-construction, so a human-oriented lint hook has nothing to catch
-    // and must never abort an unattended run. Interactive/UI commits leave this
-    // off and stay subject to the hook.
+    // Machine-generated commit messages are valid-by-construction and must never
+    // be blocked by a human-oriented lint hook.
     if (options?.noVerify) args.push('--no-verify');
     args.push('-m', title);
     if (message) args.push('-m', message);
-    // Restrict the commit to the selected files so unrelated already-staged
-    // paths aren't swept in; an empty selection falls through to "commit
-    // whatever's staged", which is the intended behavior for that case.
     if (files.length > 0) {
-      // A staged rename spans two paths. Restricting the commit to the new path alone
-      // records the add but leaves the old path's staged deletion behind — HEAD ends
-      // up with both files. Include the rename source so the deletion lands too.
+      // A staged rename spans two paths; restricting to the new path alone would
+      // leave the old path's staged deletion behind, so include the source too.
       const pathspecs = files.flatMap((f) => {
         const source = renameSources.get(f);
         return source ? [f, source] : [f];
@@ -142,9 +128,6 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   function ensureBranch(plan: PlanEntry): void {
-    // Branch prefix comes from the entity's type; an entity started before it
-    // was classified still gets a branch (defaulting to feat) rather than
-    // silently working on whatever branch happens to be checked out.
     const branch = branchName(plan.id, plan.kind, plan.title);
     if (!branch) return;
 
@@ -159,7 +142,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
 
     const result = spawnSync('git', ['checkout', '-b', branch, 'main'], { cwd: root });
     if (result.status !== 0) {
-      // Branch already exists — just check it out
+      // Branch already exists — just check it out.
       const checkoutResult = spawnSync('git', ['checkout', branch], { cwd: root });
       if (checkoutResult.status !== 0) {
         throw new Error(
@@ -178,9 +161,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         message: 'Working tree status updated',
         timestamp: new Date().toISOString(),
       });
-    } catch {
-      // git not available or not a repo
-    }
+    } catch {}
   }
 
   if (options.watch !== false) {
@@ -193,9 +174,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
           timer = setTimeout(refresh, 500);
         }
       });
-    } catch {
-      // watcher not available
-    }
+    } catch {}
 
     const srcDir = join(root, 'src');
     let srcTimer: ReturnType<typeof setTimeout> | null = null;
@@ -204,9 +183,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         if (srcTimer) clearTimeout(srcTimer);
         srcTimer = setTimeout(refresh, 500);
       });
-    } catch {
-      // src/ doesn't exist or watcher not available
-    }
+    } catch {}
   }
 
   async function hasUpstream(): Promise<boolean> {
@@ -218,9 +195,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
-  // Counts commits on HEAD not yet on the upstream branch. When no upstream is
-  // configured (e.g. a fresh branch that's never been pushed), every local commit
-  // not reachable from any remote-tracking branch counts as ahead.
+  // No upstream: fall back to commits not reachable from any remote-tracking branch.
   async function getAheadCount(): Promise<number> {
     try {
       const args = (await hasUpstream())
@@ -246,9 +221,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     return result.stdout.toString().trim();
   }
 
-  // Merged-ness must be judged against origin/main when it exists: the local main
-  // ref only advances on checkout+pull — the very thing sync does — so after a
-  // GitHub-side merge a branch compared against local main never looks merged.
+  // Local main only advances on checkout+pull, so a GitHub-side merge never shows
+  // up there — compare against origin/main when it exists.
   async function mainRef(): Promise<string> {
     return runGit(['rev-parse', '--verify', '--quiet', 'refs/remotes/origin/main'])
       .then(() => 'origin/main')
@@ -269,10 +243,6 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     if (currentBranch === 'main' || currentBranch === 'master') return false;
 
     try {
-      // Merged status only — the upstream check lives in getBranchHygieneStatus so
-      // it can tell 'stale-merged' apart from 'stale-no-upstream'. Conflating them
-      // here missed the common case: a pushed branch merged via PR (still has an
-      // upstream) would never report 'stale-merged'.
       const mergedBranches = await runGit(['branch', '--merged', await mainRef()]);
       return mergedBranches.split('\n').some((line) => {
         const branch = line.trim().replace(/^\*\s+/, '');
@@ -293,10 +263,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       return isDirty ? 'dirty' : 'clean-on-main';
     }
 
-    // Only "stale" if the branch is fully merged into main AND main has advanced
-    // past it — i.e. its work is done and elsewhere. A freshly-created branch still
-    // at main's tip, or one with un-merged local work (with or without an upstream),
-    // is normal active work, not stale.
+    // "Stale" requires both merged AND main having advanced past it, not just merged.
     if (await isMergedIntoMain()) {
       const behind = await runGit(['rev-list', '--count', `HEAD..${await mainRef()}`])
         .then((n) => Number.parseInt(n.trim(), 10) || 0)
@@ -313,11 +280,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     return match ? match[1].toUpperCase() : null;
   }
 
-  /**
-   * Diff text for the given paths, capped to a sane size for feeding into a prompt.
-   * Plain `git diff` skips untracked files entirely, so those are read directly and
-   * presented as new-file content instead.
-   */
+  // Plain `git diff` skips untracked files, so those are read directly instead.
   async function diff(files: string[], maxChars = 12000): Promise<string> {
     if (files.length === 0) return '';
     const blocked = files.find((file) => AI_DIFF_BLOCKLIST.some((pattern) => pattern.test(file)));
@@ -353,8 +316,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
 
     for (const file of files.filter((f) => untracked.has(f))) {
       const filePath = join(root, file);
-      // lstat (not stat) so a symlink is identified as such instead of followed —
-      // otherwise its target's content, possibly outside the repo, leaks into the AI prompt.
+      // lstat, not stat: following a symlink could leak content from outside the repo.
       const stats = await lstat(filePath).catch(() => null);
       if (!stats) continue;
       if (stats.isSymbolicLink()) {
@@ -382,8 +344,6 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   async function runGitSync(): Promise<void> {
-    // Uncommitted changes ride across the switch in a stash — deterministic, unlike
-    // the sync agent this replaced, which once stranded them un-popped (IDEA-67).
     const dirty = (await runGitStatus()).length > 0;
     if (dirty) {
       await runGit(['stash', 'push', '--include-untracked', '-m', 'papercamp-sync']);
@@ -410,10 +370,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     if (syncError) throw syncError;
   }
 
-  // Update the current branch in place from its origin counterpart, without
-  // switching branches (that's runGitSync's job). Fast-forward only, so it can
-  // never create a merge commit or leave conflicts — if the branch has diverged
-  // or has no matching origin ref, the ff-only merge fails loudly instead.
+  // Fast-forward only, so a diverged branch fails loudly instead of merging.
   async function runGitPull(): Promise<void> {
     await runGit(['fetch', '--prune']);
     const branch = getCurrentBranch();

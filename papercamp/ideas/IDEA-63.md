@@ -27,7 +27,7 @@ Structure-only: no behaviour change, so `tsc`/`biome`/tests/consistency are the 
       Record the current per-file counts across `src/` (the seven density files and the total 1431 / 7.8%) so each later phase can report before/after against a fixed starting number rather than a re-measured one.
 - [x] Sweep the git-pr docstring pair against §7
       `core/git-pr/pr.ts` (110) and `core/git-pr/pr-lookup.ts` (81) — collapse the `/** ... */` blocks that paraphrase the signature, keeping only the `gh` CLI exit-code semantics. Report before/after per file.
-- [ ] Sweep the two server files
+- [x] Sweep the two server files
       `server/agent.ts` (104) and `server/git.ts` (55) against the default-zero bar. Report before/after per file.
 - [ ] Sweep the store / serialize / types trio
       `stores/app-store.ts` (64), `core/serialize/serializer.ts` (63), `types/index.ts` (58) — but preserve the parser's h3 `### Phases` grammar note (a wrong "fix" silently breaks parsing, see [[IDEA-58]]) and StrictMode updater purity. Report before/after per file.
