@@ -30,7 +30,7 @@ Three improvements to the ideas surface: the page finally calls things what they
       Optional `subject:` frontmatter — types, parser, serializer round-trip with tests; absent key renders as the virtual "No subject", no file migration.
 - [x] Group the worklist by subject
       Subject group headers over the existing rows (No subject last), following the idea-group pattern already in `worklist-rows.tsx`.
-- [ ] Manage subjects from Settings
+- [x] Manage subjects from Settings
       New Subjects sidebar view: add/rename/remove, persisted in the papercamp config; a removed subject demotes its ideas to No subject at read time without touching files.
 - [ ] Pick a subject in idea details
       Set/change/clear from the detail view, writing only the frontmatter line.

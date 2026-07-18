@@ -273,6 +273,8 @@ export interface PaperCampConfig {
   defaultAgents?: DefaultAgentsMap;
   /** Off by default. When true, the PostToolUse hook logs new-file creations to progress.md. */
   autoLogNewFiles?: boolean;
+  /** The managed subject list; an idea's `subject` not present here renders as "No subject". */
+  subjects?: string[];
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';

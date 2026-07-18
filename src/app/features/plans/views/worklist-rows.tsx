@@ -1,6 +1,7 @@
 import { LightbulbIcon, NoteIcon } from '@/app/components/icons';
 import type { IdeaGroupRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
 import { groupRowsBySubject } from '@/app/features/plans/helpers';
+import { useProjectSubjects } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
@@ -88,6 +89,7 @@ export const WorklistRows = ({
   onOpenIdea,
 }: WorklistRowsProps) => {
   const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set());
+  const { subjects: validSubjects, loading: subjectsLoading } = useProjectSubjects();
   const gridClass = 'plan-rows-grid';
   const sortKey = useAppStore((s) => s.planFilters.sortKey);
   const sortDirection = useAppStore((s) => s.planFilters.sortDirection);
@@ -137,7 +139,7 @@ export const WorklistRows = ({
     );
   };
 
-  const groups = groupRowsBySubject(rows);
+  const groups = groupRowsBySubject(rows, subjectsLoading ? undefined : validSubjects);
   const showSubjectHeaders = groups.length > 1;
 
   return (

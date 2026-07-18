@@ -192,4 +192,15 @@ describe('groupRowsBySubject', () => {
   it('produces no groups for an empty row list', () => {
     expect(groupRowsBySubject([])).toEqual([]);
   });
+
+  it('demotes a row whose subject is not in validSubjects to "No subject"', () => {
+    const rows = [
+      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend' }) },
+      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Deleted subject' }) },
+    ];
+    expect(groupRowsBySubject(rows, ['Backend'])).toEqual([
+      { subject: 'Backend', rows: [rows[0]] },
+      { subject: null, rows: [rows[1]] },
+    ]);
+  });
 });

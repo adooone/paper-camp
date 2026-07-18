@@ -179,15 +179,20 @@ const subjectOf = (row: WorklistRow): string | undefined =>
   row.type === 'plan' ? row.plan.subject : row.idea.subject;
 
 /** Groups already-sorted worklist rows by subject, keeping each row's relative
- * order; rows with no subject collect into the virtual "No subject" group, last. */
-export const groupRowsBySubject = (rows: WorklistRow[]): SubjectGroup[] => {
+ * order; rows with no subject collect into the virtual "No subject" group, last.
+ * When `validSubjects` is given, a row whose subject isn't in it (e.g. removed
+ * from Settings) demotes to "No subject" without touching the idea file. */
+export const groupRowsBySubject = (
+  rows: WorklistRow[],
+  validSubjects?: string[],
+): SubjectGroup[] => {
   const order: string[] = [];
   const bySubject = new Map<string, WorklistRow[]>();
   const noSubject: WorklistRow[] = [];
 
   for (const row of rows) {
     const subject = subjectOf(row);
-    if (!subject) {
+    if (!subject || (validSubjects && !validSubjects.includes(subject))) {
       noSubject.push(row);
       continue;
     }
