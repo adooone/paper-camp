@@ -2,7 +2,7 @@
 id: IDEA-73
 title: Smooth the page transitions
 type: fix
-status: idea
+status: review
 created: 2026-07-17
 tags:
   - app
@@ -39,5 +39,5 @@ Fix direction, to be confirmed by a quick profile first: crossfade or opacity-on
       Apply what the profile says: opacity-only crossfade without mode="wait" and without a blank Suspense gap — or remove the transition if that's what smooth requires. Keep reduced-motion behaviour.
 - [x] Simplify the remaining usage
       One shared transition config; downgrade framer usage that plain CSS covers; keep the Stack panel slide (it's the one animation doing real work).
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green; page switches verified smooth in Chrome against the dev server on the real pages, not a synthetic demo.
