@@ -24,7 +24,7 @@ Three improvements to the ideas surface: the page finally calls things what they
 - **Detail view polish.** (1) The refresh button moves to the top-right corner of the detail view — today it sits inline in the meta row among branch/PR badges. (2) The Log section becomes **Comments**: visually separated from the idea body (its own surface, not a continuation of the prose), entries rendered chat-style — date-stamped bubbles in a column — with a full-width composer at the bottom and the send button aligned right, replacing today's awkward side-by-side textarea+button. UI rename only: the file grammar keeps the load-bearing `### Log` heading (`LOG_HEADING_RE` in the parser), so nothing breaks in the corpus or the agents that append to it.
 
 ### Phases
-- [ ] Rename Plans to Ideas
+- [x] Rename Plans to Ideas
       Visible page title (`plans-header.tsx`) and nav label; routes, paths, and feature-folder names unchanged.
 - [ ] Add the subject field to entities
       Optional `subject:` frontmatter — types, parser, serializer round-trip with tests; absent key renders as the virtual "No subject", no file migration.

@@ -31,7 +31,7 @@ const TasksPage = lazy(() =>
 );
 
 const navItems = [
-  { id: 'plans', label: 'Plans', path: '/' },
+  { id: 'plans', label: 'Ideas', path: '/' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'tasks', label: 'Tasks', path: '/tasks' },
   { id: 'settings', label: 'Settings', path: '/settings' },

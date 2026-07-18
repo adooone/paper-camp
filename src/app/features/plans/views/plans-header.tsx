@@ -28,7 +28,7 @@ export const PlansHeader = () => {
           lineHeight: 1.1,
         }}
       >
-        Plans
+        Ideas
       </h1>
 
       <RefreshButton />
