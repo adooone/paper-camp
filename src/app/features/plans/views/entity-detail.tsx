@@ -144,11 +144,14 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           <PlanIdStamp id={plan.id} />
           {plan.title}
         </h2>
-        <span className="text-sm" style={{ opacity: 0.45, flexShrink: 0, whiteSpace: 'nowrap' }}>
-          {plan.updated
-            ? `updated ${relativeDate(plan.updated)}`
-            : `created ${relativeDate(plan.created)}`}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexShrink: 0 }}>
+          <span className="text-sm" style={{ opacity: 0.45, whiteSpace: 'nowrap' }}>
+            {plan.updated
+              ? `updated ${relativeDate(plan.updated)}`
+              : `created ${relativeDate(plan.created)}`}
+          </span>
+          <RefreshButton />
+        </div>
       </div>
 
       <div
@@ -220,7 +223,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           )}
           {plan.pr && <PrBadge pr={plan.pr} />}
           {plan.pr && <ReviewSignalBadge pr={plan.pr} />}
-          <RefreshButton />
         </div>
       )}
 
@@ -405,41 +407,62 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             opacity: 0.65,
           }}
         >
-          Log
+          Comments
         </h3>
-        {plan.log && plan.log.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: space[2],
-              marginBottom: space[3],
-            }}
-          >
-            {plan.log.map((entry, i) => (
-              <div key={`${entry.date}-${i}`} className="text-sm" style={{ opacity: 0.75 }}>
-                <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
-                {entry.text}
-              </div>
-            ))}
+        <Card size="small">
+          {plan.log && plan.log.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: space[3],
+                marginBottom: space[4],
+              }}
+            >
+              {plan.log.map((entry, i) => (
+                <div
+                  key={`${entry.date}-${i}`}
+                  style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+                >
+                  <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
+                    {entry.date}
+                  </span>
+                  <div
+                    className="text-sm"
+                    style={{
+                      background: 'rgba(0,0,0,0.05)',
+                      borderRadius: space[2],
+                      padding: `${space[2]} ${space[3]}`,
+                      alignSelf: 'flex-start',
+                      maxWidth: '100%',
+                      opacity: 0.85,
+                    }}
+                  >
+                    {entry.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+            <Textarea
+              value={logInput}
+              onChange={(e) => setLogInput(e.target.value)}
+              placeholder="Add a comment…"
+              rows={2}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={handleAddLogEntry}
+                disabled={updating || !logInput.trim()}
+              >
+                Send
+              </Button>
+            </div>
           </div>
-        )}
-        <div style={{ display: 'flex', gap: space[2], alignItems: 'flex-end' }}>
-          <Textarea
-            value={logInput}
-            onChange={(e) => setLogInput(e.target.value)}
-            placeholder="Add a log entry…"
-            rows={2}
-          />
-          <Button
-            variant="secondary"
-            size="small"
-            onClick={handleAddLogEntry}
-            disabled={updating || !logInput.trim()}
-          >
-            Add entry
-          </Button>
-        </div>
+        </Card>
       </div>
     </div>
   );
