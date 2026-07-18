@@ -2,7 +2,7 @@
 id: IDEA-71
 title: Run order for the worklist
 type: feat
-status: idea
+status: review
 created: 2026-07-17
 tags:
   - app
@@ -26,5 +26,5 @@ Design follows the [[IDEA-70]] subject pattern: one optional frontmatter key, vi
       Ordered first ascending, unordered after by created date, as the default sort; keep [[IDEA-64]] header sorting intact with order as a sortable column.
 - [x] Set the order from the UI
       Up/down controls on the worklist row (neighbour swap, minimal frontmatter writes) and an order field in the idea detail view.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green (round-trip + sort covered); reorder a few ideas in the app and confirm the list and files agree.
