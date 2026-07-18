@@ -2,7 +2,7 @@
 id: IDEA-68
 title: Trim the UI to what's used
 type: refactor
-status: idea
+status: review
 created: 2026-07-17
 tags:
   - app
@@ -21,15 +21,15 @@ The app has grown surfaces nobody visits. Minimise to the features actually used
 - **Sweep what the removals orphan.** Client slices, fetchers, and components that only served the removed views (`fetchDecisions`/`fetchOpenQuestions` and friends) go with them — but only after checking what the Stack still reads (the consistency card consumes doc issues; `progress` may feed more than the timeline). Server routes can stay if the CLI or checks use them; the sweep is client-first.
 
 ### Phases
-- [ ] Trim Docs to general docs only
+- [x] Trim Docs to general docs only
       Remove the Decisions/Open Questions/Progress sidebar sections and their `/docs/$section` detail views; keep repo docs and search over them. Re-point or drop `status-section.tsx`'s consistency-finding navigation and prune the removed sections from docs-search.
-- [ ] Trim Settings to General
+- [x] Trim Settings to General
       Drop the Environment and Config Files sections from `settings-sidebar.tsx`/`settings-page.tsx`; config editing is code-only from here on. The boot-time config read stays.
-- [ ] Group the Tasks list by date
+- [x] Group the Tasks list by date
       One group per day, newest first: a kraft date header over that day's task rows, reusing the existing task-rows pattern; timestamps within a row can slim down once the date lives in the header.
-- [ ] Sweep orphaned client code
+- [x] Sweep orphaned client code
       Delete slices/fetchers/components only the removed views used, after confirming what the Stack panel still consumes (doc-issue findings, progress reads). Corpus files, agent writes, and server routes with non-UI consumers stay.
-- [ ] Make git errors readable toasts
+- [x] Make git errors readable toasts
       `runGit` includes stdout in the rejection when stderr is empty (so "nothing to commit" survives); commit/push/sync/pull failures surface as toasts with a one-line summary instead of raw multi-line git output in inline Alerts; a failed commit also refreshes git status so stale "changed files" don't invite a doomed retry.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, full tests; click through Docs, Settings, and Tasks to confirm the kept surfaces still work and nothing dangles; force a commit and push failure and confirm both read as one-line toasts.

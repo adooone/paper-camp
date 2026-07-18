@@ -24,17 +24,8 @@ const EmptyState = ({ children }: { children: React.ReactNode }) => (
 );
 
 export const DocsSidebar = () => {
-  const decisions = useAppStore((s) => s.decisions);
-  const openQuestions = useAppStore((s) => s.openQuestions);
-  const progress = useAppStore((s) => s.progress);
   const repoDocs = useAppStore((s) => s.repoDocs);
-  const decisionsLoading = useAppStore((s) => s.decisionsLoading);
-  const openQuestionsLoading = useAppStore((s) => s.openQuestionsLoading);
-  const progressLoading = useAppStore((s) => s.progressLoading);
   const repoDocsLoading = useAppStore((s) => s.repoDocsLoading);
-  const loadDecisions = useAppStore((s) => s.loadDecisions);
-  const loadOpenQuestions = useAppStore((s) => s.loadOpenQuestions);
-  const loadProgress = useAppStore((s) => s.loadProgress);
   const loadRepoDocs = useAppStore((s) => s.loadRepoDocs);
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
@@ -44,16 +35,8 @@ export const DocsSidebar = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadDecisions();
-    loadOpenQuestions();
-    loadProgress();
     loadRepoDocs();
-  }, [loadDecisions, loadOpenQuestions, loadProgress, loadRepoDocs]);
-
-  const handleSelectDecision = (title: string) => {
-    navigate({ to: '/docs/$section', params: { section: 'decisions' } });
-    setActiveDocTitle(title);
-  };
+  }, [loadRepoDocs]);
 
   return (
     <>
@@ -86,69 +69,6 @@ export const DocsSidebar = () => {
           ))
         ) : (
           <EmptyState>No repo docs found</EmptyState>
-        )}
-      </SidebarSection>
-
-      <SidebarSection label="Decisions">
-        {decisionsLoading && decisions.length === 0 ? (
-          <EmptyState>Loading…</EmptyState>
-        ) : decisions.length > 0 ? (
-          decisions.map((d) => (
-            <ListItem
-              key={d.title}
-              size="small"
-              active={activeDocSection === 'decisions' && activeDocTitle === d.title}
-              onClick={() => handleSelectDecision(d.title)}
-            >
-              {d.title}
-            </ListItem>
-          ))
-        ) : (
-          <EmptyState>No decisions yet</EmptyState>
-        )}
-      </SidebarSection>
-
-      <SidebarSection label="Open Questions">
-        {openQuestionsLoading && openQuestions.length === 0 ? (
-          <EmptyState>Loading…</EmptyState>
-        ) : openQuestions.length > 0 ? (
-          openQuestions.map((q) => (
-            <ListItem
-              key={q.title}
-              size="small"
-              active={activeDocSection === 'questions' && activeDocTitle === q.title}
-              onClick={() => {
-                navigate({ to: '/docs/$section', params: { section: 'questions' } });
-                setActiveDocTitle(q.title);
-              }}
-            >
-              {q.title}
-            </ListItem>
-          ))
-        ) : (
-          <EmptyState>No open questions</EmptyState>
-        )}
-      </SidebarSection>
-
-      <SidebarSection label="Progress">
-        {progressLoading && progress.length === 0 ? (
-          <EmptyState>Loading…</EmptyState>
-        ) : progress.length > 0 ? (
-          progress.map((p) => (
-            <ListItem
-              key={p.date}
-              size="small"
-              active={activeDocSection === 'progress' && activeDocTitle === p.date}
-              onClick={() => {
-                navigate({ to: '/docs/$section', params: { section: 'progress' } });
-                setActiveDocTitle(p.date);
-              }}
-            >
-              {p.date}
-            </ListItem>
-          ))
-        ) : (
-          <EmptyState>No progress entries</EmptyState>
         )}
       </SidebarSection>
     </>

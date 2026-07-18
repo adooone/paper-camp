@@ -1,7 +1,7 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { useParams } from '@tanstack/react-router';
 
-const DOC_SECTIONS = ['decisions', 'questions', 'progress', 'repo-docs'] as const;
+const DOC_SECTIONS = ['repo-docs'] as const;
 type DocSection = (typeof DOC_SECTIONS)[number];
 
 export function useActivePlanTitle(): string | null {

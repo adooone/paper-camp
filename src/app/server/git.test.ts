@@ -467,6 +467,14 @@ describe('commit', () => {
     expect(headFiles).not.toContain('old-name.txt');
   });
 
+  it("rejects with git's stdout explanation when there is nothing to commit", async () => {
+    // git writes "nothing to commit" to stdout, not stderr — a rejection built from
+    // stderr alone would surface only a contentless "exited with code 1".
+    const root = await initRepo();
+    const manager = gitManager(root);
+    await expect(manager.commit([], 'commit staged')).rejects.toThrow(/nothing to commit/);
+  });
+
   it('handles non-ASCII filenames without octal quoting', async () => {
     const root = await initRepo();
     await writeFile(join(root, 'файл.md'), 'вміст\n');

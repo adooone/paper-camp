@@ -1,12 +1,5 @@
 import { color } from '@/app/styles/tokens';
-import type {
-  DecisionStatus,
-  IdeaStatus,
-  PlanEntry,
-  PrState,
-  QuestionStatus,
-  ReviewDecision,
-} from '@/types/index';
+import type { IdeaStatus, PlanEntry, PrState, ReviewDecision } from '@/types/index';
 
 export const STATUS_COLOR: Record<PlanEntry['status'], string> = {
   'in-progress': '#C89A5A',
@@ -72,14 +65,4 @@ export const REVIEW_DECISION_STAMP: Record<ReviewDecision, { fill: string; text:
   approved: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
   'changes-requested': { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
   'review-required': { fill: 'rgba(212, 163, 115, 0.25)', text: '#A67B4F' },
-};
-
-export const DECISION_STATUS_STAMP: Record<DecisionStatus, { fill: string; text: string }> = {
-  decided: { fill: 'rgba(143, 185, 150, 0.25)', text: color.accentGreenDark },
-  superseded: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
-};
-
-export const QUESTION_STATUS_STAMP: Record<QuestionStatus, { fill: string; text: string }> = {
-  open: { fill: 'rgba(212, 163, 115, 0.25)', text: color.accentAmberDark },
-  resolved: { fill: 'rgba(143, 185, 150, 0.25)', text: color.accentGreenDark },
 };

@@ -26,7 +26,6 @@ interface StackPanelProps {
 
 export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) => {
   const isOpen = open || pinned;
-  const loadProgress = useAppStore((s) => s.loadProgress);
   const loadPlans = useAppStore((s) => s.loadPlans);
   const statusData = useAppStore((s) => s.status);
   const loadStatus = useAppStore((s) => s.loadStatus);
@@ -38,7 +37,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   const loadSuggestions = useAppStore((s) => s.loadSuggestions);
   const shouldReduceMotion = useReducedMotion();
   const refreshRef = useRef({
-    loadProgress,
     loadPlans,
     loadStatus,
     loadConsistency,
@@ -48,7 +46,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   });
   useEffect(() => {
     refreshRef.current = {
-      loadProgress,
       loadPlans,
       loadStatus,
       loadConsistency,
@@ -59,7 +56,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   });
 
   useEffect(() => {
-    refreshRef.current.loadProgress();
     refreshRef.current.loadStatus();
     refreshRef.current.loadConsistency();
     refreshRef.current.loadGitStatus();
@@ -98,7 +94,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       schedule(
         'activity',
         () => {
-          refreshRef.current.loadProgress();
           refreshRef.current.loadPlans();
           refreshRef.current.loadSuggestions();
           refreshRef.current.loadStatus();

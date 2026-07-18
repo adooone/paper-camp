@@ -73,7 +73,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         if (code === 0) {
           resolve(stdout);
         } else {
-          reject(new Error(stderr || `git ${args[0]} exited with code ${code}`));
+          reject(new Error(stderr || stdout || `git ${args[0]} exited with code ${code}`));
         }
       });
       proc.on('error', reject);

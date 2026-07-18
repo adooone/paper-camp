@@ -22,10 +22,24 @@ const TASK_KIND_LABELS: Record<TaskKind, string> = {
   'fix-review': 'Fix review',
 };
 
-const formatTimestamp = (iso: string) => {
+const pad = (n: number) => String(n).padStart(2, '0');
+
+const dayKey = (iso: string) => {
   const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+const formatDayHeader = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+const formatTime = (iso: string) => {
+  const d = new Date(iso);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
 const headerLabelStyle: React.CSSProperties = {
@@ -139,18 +153,7 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
                 whiteSpace: 'nowrap',
               }}
             >
-              {formatTimestamp(entry.startedAt)}
-            </span>
-            <span
-              className="task-rows-cell-time"
-              style={{
-                fontFamily: fontFamily.mono,
-                fontSize: fontSize.xs,
-                opacity: 0.55,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {formatTimestamp(entry.endedAt)}
+              {formatTime(entry.startedAt)}–{formatTime(entry.endedAt)}
             </span>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <Stamp
@@ -196,6 +199,14 @@ export const TasksPage = () => {
 
   const sorted = [...taskLog].sort((a, b) => b.endedAt.localeCompare(a.endedAt));
 
+  const groups: { key: string; entries: TaskLogEntry[] }[] = [];
+  for (const entry of sorted) {
+    const key = dayKey(entry.endedAt);
+    const group = groups.at(-1);
+    if (group?.key === key) group.entries.push(entry);
+    else groups.push({ key, entries: [entry] });
+  }
+
   return (
     <div ref={containerRef}>
       <PageTitle>Tasks</PageTitle>
@@ -212,16 +223,25 @@ export const TasksPage = () => {
               <span style={headerLabelStyle}>Plan</span>
               <span style={headerLabelStyle}>Agent</span>
               <span className="task-rows-cell-time" style={headerLabelStyle}>
-                Started
-              </span>
-              <span className="task-rows-cell-time" style={headerLabelStyle}>
-                Ended
+                Time
               </span>
               <span style={headerLabelStyle}>Outcome</span>
             </div>
           </Card>
-          {sorted.map((entry) => (
-            <TaskRow key={entry.id} entry={entry} highlighted={entry.id === taskId} />
+          {groups.map((group) => (
+            <div
+              key={group.key}
+              style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+            >
+              <Card size="small" texture="kraft" className="plan-row-card">
+                <span style={{ ...headerLabelStyle, opacity: 0.75 }}>
+                  {formatDayHeader(group.entries[0].endedAt)}
+                </span>
+              </Card>
+              {group.entries.map((entry) => (
+                <TaskRow key={entry.id} entry={entry} highlighted={entry.id === taskId} />
+              ))}
+            </div>
           ))}
         </div>
       )}

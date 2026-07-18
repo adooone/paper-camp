@@ -20,7 +20,6 @@ export const StatusSection = () => {
   const fixQuality = useAppStore((s) => s.fixQuality);
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
-  const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const navigate = useNavigate();
   const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
 
@@ -33,25 +32,25 @@ export const StatusSection = () => {
   // `consistency` is doc findings (dangling refs, blocked plans), distinct from consistencyStatus (code check).
   const hasDocIssues = consistency.length > 0;
 
+  const blockedPlanFor = useCallback(
+    (issue: ConsistencyIssue) =>
+      issue.kind === 'blocked-plan-active' && issue.planId
+        ? plans?.entries.find((p) => p.id === issue.planId)
+        : undefined,
+    [plans?.entries],
+  );
+
   const handleFindingClick = useCallback(
     (issue: ConsistencyIssue) => {
-      if (issue.kind === 'blocked-plan-active' && issue.planId) {
-        const blockedPlan = plans?.entries.find((p) => p.id === issue.planId);
-        if (blockedPlan) {
-          navigate({
-            to: '/plans/$planId',
-            params: { planId: encodeURIComponent(blockedPlan.title) },
-          });
-          return;
-        }
+      const blockedPlan = blockedPlanFor(issue);
+      if (blockedPlan) {
+        navigate({
+          to: '/plans/$planId',
+          params: { planId: encodeURIComponent(blockedPlan.title) },
+        });
       }
-      setActiveDocTitle(issue.title);
-      navigate({
-        to: '/docs/$section',
-        params: { section: issue.section === 'open-questions' ? 'questions' : 'decisions' },
-      });
     },
-    [plans?.entries, navigate, setActiveDocTitle],
+    [blockedPlanFor, navigate],
   );
 
   return (
@@ -210,22 +209,26 @@ export const StatusSection = () => {
                             color: deskTextMuted,
                           }}
                         >
-                          <button
-                            type="button"
-                            onClick={() => handleFindingClick(issue)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              padding: 0,
-                              color: deskChalk,
-                              textDecoration: 'underline',
-                              cursor: 'pointer',
-                              font: 'inherit',
-                              textAlign: 'left',
-                            }}
-                          >
-                            {issue.message}
-                          </button>
+                          {blockedPlanFor(issue) ? (
+                            <button
+                              type="button"
+                              onClick={() => handleFindingClick(issue)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
+                                color: deskChalk,
+                                textDecoration: 'underline',
+                                cursor: 'pointer',
+                                font: 'inherit',
+                                textAlign: 'left',
+                              }}
+                            >
+                              {issue.message}
+                            </button>
+                          ) : (
+                            <span style={{ textAlign: 'left' }}>{issue.message}</span>
+                          )}
                         </div>
                       ))}
                     </div>

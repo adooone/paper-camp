@@ -1,3 +1,27 @@
+## Do push/sync/pull failure toasts need a one-line summary, not raw git stderr?
+
+**Status:** resolved
+**Raised:** 2026-07-18
+**Resolved:** 2026-07-18 — yes; `gitErrorSummary` in `commit-section.tsx` now reduces all four git-failure toasts to the marked line (`!` / `error:` / `fatal:`) or the last non-empty line ("nothing to commit, working tree clean"), so the toast carries the one line that states the problem.
+**Blocks:** —
+
+IDEA-68 phase 5 moved commit/push/sync/pull failures from small inline `Alert`s to
+`useToast` toasts, and made `runGit` (`git.ts`) include stdout in the rejection when
+stderr is empty (so "nothing to commit" survives). For the commit case that's a real
+one-line message. But `commit-section.tsx`'s `handlePush`/`handleSync`/`handlePull`
+catch blocks pass `(err as Error).message` straight into the toast `description` with
+no trimming, and neither `git.ts`'s `push()` nor the `/api/git/push` route summarizes
+it. A real non-fast-forward push rejection is git's native multi-line stderr (`!
+[rejected] ... (fetch first)` plus ~4 lines of `hint:` text) — paper-ui's `ToastCard`
+(`toast-card.tsx`) doesn't truncate `.description`, so that whole block would render
+inside the toast, just relocated from the old cramped `Alert` rather than reduced to
+"a one-line human summary" as the phase intended. No browser in this environment to
+confirm the rendered result, so this is unverified rather than confirmed broken —
+worth a human check (force a real push rejection) before treating phase 5's toast
+work as fully satisfying the "one-line" goal. If it needs fixing, the fix belongs in
+`git.ts`'s `push()` (extract just the `! [rejected] ...` summary line) or a shared
+client-side error-summarizer, not a full inline-Alert-style dump.
+
 ## Does the scaffolded Claude Code skill need an entity-migration pass?
 
 **Status:** open

@@ -18,6 +18,7 @@ import {
   Stamp,
   Textarea,
   Tooltip,
+  useToast,
 } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MergeIcon, PullIcon, PushIcon, WandIcon } from '../icons';
@@ -53,6 +54,19 @@ function readStoredCommitField(key: string): string {
   }
 }
 
+// Git failures arrive as multi-line output ("To github…\n ! [rejected]…\nhint:…");
+// a toast wants the one line that states the problem.
+function gitErrorSummary(message: string): string {
+  const lines = message
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const marked = lines.find(
+    (line) => line.startsWith('!') || line.startsWith('error:') || line.startsWith('fatal:'),
+  );
+  return marked ?? lines.at(-1) ?? message;
+}
+
 function writeStoredCommitField(key: string, value: string): void {
   try {
     if (value) localStorage.setItem(key, value);
@@ -85,14 +99,11 @@ export const CommitSection = () => {
   );
   const [committing, setCommitting] = useState(false);
   const [pushing, setPushing] = useState(false);
-  const [pushError, setPushError] = useState<string | null>(null);
-  const [commitError, setCommitError] = useState<string | null>(null);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [syncError, setSyncError] = useState<string | null>(null);
   const [pulling, setPulling] = useState(false);
-  const [pullError, setPullError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const activePlan = useMemo(() => findFocusPlan(plans?.entries), [plans?.entries]);
 
@@ -191,7 +202,6 @@ export const CommitSection = () => {
     if (!commitTitle.trim() || commitInFlight) return;
     setCommitting(true);
     setCommitInFlight(true);
-    setCommitError(null);
     try {
       await commitChanges(
         [...selectedFiles],
@@ -203,7 +213,14 @@ export const CommitSection = () => {
       setCommitExpanded(false);
       await loadGitStatus();
     } catch (err) {
-      setCommitError((err as Error).message);
+      toast({
+        title: 'Commit failed',
+        description: gitErrorSummary((err as Error).message),
+        variant: 'error',
+      });
+      // A failed commit can leave stale "changed files" behind (e.g. nothing left to
+      // commit), which would otherwise invite a doomed retry.
+      await loadGitStatus();
     } finally {
       setCommitting(false);
       setCommitInFlight(false);
@@ -216,48 +233,58 @@ export const CommitSection = () => {
     loadGitStatus,
     commitInFlight,
     setCommitInFlight,
+    toast,
   ]);
 
   const handlePush = useCallback(async () => {
     setPushing(true);
-    setPushError(null);
     try {
       await pushChanges();
       await loadGitStatus();
     } catch (err) {
-      setPushError((err as Error).message);
+      toast({
+        title: 'Push failed',
+        description: gitErrorSummary((err as Error).message),
+        variant: 'error',
+      });
     } finally {
       setPushing(false);
     }
-  }, [loadGitStatus]);
+  }, [loadGitStatus, toast]);
 
   const handleSync = useCallback(async () => {
     setSyncing(true);
-    setSyncError(null);
     try {
       await syncToMain();
       // Sync can pull upstream commits, so refresh plans/ideas too — git-status alone would leave them stale.
       await Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
     } catch (err) {
-      setSyncError((err as Error).message);
+      toast({
+        title: 'Sync failed',
+        description: gitErrorSummary((err as Error).message),
+        variant: 'error',
+      });
     } finally {
       setSyncing(false);
     }
-  }, [loadGitStatus, loadPlans, loadIdeas]);
+  }, [loadGitStatus, loadPlans, loadIdeas, toast]);
 
   const handlePull = useCallback(async () => {
     setPulling(true);
-    setPullError(null);
     try {
       await pullFromOrigin();
       // Pull can also bring upstream entity changes, so refresh plans/ideas alongside git status.
       await Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
     } catch (err) {
-      setPullError((err as Error).message);
+      toast({
+        title: 'Pull failed',
+        description: gitErrorSummary((err as Error).message),
+        variant: 'error',
+      });
     } finally {
       setPulling(false);
     }
-  }, [loadGitStatus, loadPlans, loadIdeas]);
+  }, [loadGitStatus, loadPlans, loadIdeas, toast]);
 
   const handleSuggestFromChanges = useCallback(async () => {
     if (selectedFiles.size === 0) return;
@@ -364,23 +391,16 @@ export const CommitSection = () => {
               {gitBranchHygiene === 'stale-merged' ? (
                 // stale-merged: committing here would strand work off main, so dirty
                 // sync (stash → main → ff) replaces the commit controls.
-                <>
-                  {syncError && (
-                    <Alert surface="chalkboard" dismissible onDismiss={() => setSyncError(null)}>
-                      {syncError}
-                    </Alert>
-                  )}
-                  <Button
-                    surface="chalkboard"
-                    size="small"
-                    fullWidth
-                    icon={<MergeIcon size={14} />}
-                    disabled={syncing}
-                    onClick={handleSync}
-                  >
-                    {syncing ? 'Syncing…' : 'Branch merged — sync to main'}
-                  </Button>
-                </>
+                <Button
+                  surface="chalkboard"
+                  size="small"
+                  fullWidth
+                  icon={<MergeIcon size={14} />}
+                  disabled={syncing}
+                  onClick={handleSync}
+                >
+                  {syncing ? 'Syncing…' : 'Branch merged — sync to main'}
+                </Button>
               ) : (
                 <>
                   {suggestError && (
@@ -416,11 +436,6 @@ export const CommitSection = () => {
                     onChange={(e) => setCommitMessage(e.currentTarget.value)}
                     rows={2}
                   />
-                  {commitError && (
-                    <Alert surface="chalkboard" dismissible onDismiss={() => setCommitError(null)}>
-                      {commitError}
-                    </Alert>
-                  )}
                   <Button
                     surface="chalkboard"
                     size="small"
@@ -457,11 +472,6 @@ export const CommitSection = () => {
                   All changes committed — {gitAhead} commit{gitAhead === 1 ? '' : 's'} ready to
                   push.
                 </p>
-                {pushError && (
-                  <Alert surface="chalkboard" dismissible onDismiss={() => setPushError(null)}>
-                    {pushError}
-                  </Alert>
-                )}
                 <Button
                   surface="chalkboard"
                   size="small"
@@ -475,16 +485,6 @@ export const CommitSection = () => {
             ) : (
               <>
                 <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>No changed files.</p>
-                {syncError && (
-                  <Alert surface="chalkboard" dismissible onDismiss={() => setSyncError(null)}>
-                    {syncError}
-                  </Alert>
-                )}
-                {pullError && (
-                  <Alert surface="chalkboard" dismissible onDismiss={() => setPullError(null)}>
-                    {pullError}
-                  </Alert>
-                )}
                 <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
                   <Tooltip
                     content={
