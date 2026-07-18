@@ -1,5 +1,5 @@
 import { fetchConfig, saveConfig } from '@/app/services/system';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface ProjectSubjects {
   subjects: string[];
@@ -12,12 +12,16 @@ export interface ProjectSubjects {
 export const useProjectSubjects = (): ProjectSubjects => {
   const [subjects, setSubjects] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const subjectsRef = useRef<string[]>([]);
+  const queueRef = useRef<Promise<unknown>>(Promise.resolve());
 
   useEffect(() => {
     let cancelled = false;
     fetchConfig().then((config) => {
       if (!cancelled) {
-        setSubjects(config?.subjects ?? []);
+        const loaded = config?.subjects ?? [];
+        subjectsRef.current = loaded;
+        setSubjects(loaded);
         setLoading(false);
       }
     });
@@ -26,25 +30,38 @@ export const useProjectSubjects = (): ProjectSubjects => {
     };
   }, []);
 
-  const persist = async (next: string[]) => {
-    const ok = await saveConfig({ subjects: next });
-    if (ok) setSubjects(next);
-    return ok;
+  // Chains each mutation off the latest committed state so a slow save can't be
+  // clobbered by a faster one racing ahead of it.
+  const enqueue = (mutate: (current: string[]) => string[] | false): Promise<boolean> => {
+    const run = queueRef.current.then(async () => {
+      const next = mutate(subjectsRef.current);
+      if (next === false) return false;
+      const ok = await saveConfig({ subjects: next });
+      if (ok) {
+        subjectsRef.current = next;
+        setSubjects(next);
+      }
+      return ok;
+    });
+    queueRef.current = run;
+    return run;
   };
 
-  const addSubject = (name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed || subjects.includes(trimmed)) return Promise.resolve(false);
-    return persist([...subjects, trimmed]);
-  };
+  const addSubject = (name: string) =>
+    enqueue((current) => {
+      const trimmed = name.trim();
+      if (!trimmed || current.includes(trimmed)) return false;
+      return [...current, trimmed];
+    });
 
-  const renameSubject = (from: string, to: string) => {
-    const trimmed = to.trim();
-    if (!trimmed || (trimmed !== from && subjects.includes(trimmed))) return Promise.resolve(false);
-    return persist(subjects.map((s) => (s === from ? trimmed : s)));
-  };
+  const renameSubject = (from: string, to: string) =>
+    enqueue((current) => {
+      const trimmed = to.trim();
+      if (!trimmed || (trimmed !== from && current.includes(trimmed))) return false;
+      return current.map((s) => (s === from ? trimmed : s));
+    });
 
-  const removeSubject = (name: string) => persist(subjects.filter((s) => s !== name));
+  const removeSubject = (name: string) => enqueue((current) => current.filter((s) => s !== name));
 
   return { subjects, loading, addSubject, renameSubject, removeSubject };
 };

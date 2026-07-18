@@ -166,7 +166,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         <Select
           size="small"
           width={180}
-          value={plan.subject ?? NO_SUBJECT}
+          value={plan.subject && subjects.includes(plan.subject) ? plan.subject : NO_SUBJECT}
           onChange={handleSubjectChange}
           disabled={updating}
           options={[

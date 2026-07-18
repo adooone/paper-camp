@@ -91,7 +91,9 @@ const RootLayout = () => {
     ? 'plans'
     : isDocsArea
       ? 'docs'
-      : navItems.find((item) => item.path === pathname)?.id;
+      : isSettingsArea
+        ? 'settings'
+        : navItems.find((item) => item.path === pathname)?.id;
   const hasSidebar = isPlansArea || isDocsArea || isSettingsArea;
   const sidebarAreaKey = isPlansArea ? 'plans' : isDocsArea ? 'docs' : 'settings';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
