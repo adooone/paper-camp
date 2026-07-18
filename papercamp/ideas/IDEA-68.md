@@ -29,7 +29,7 @@ The app has grown surfaces nobody visits. Minimise to the features actually used
       One group per day, newest first: a kraft date header over that day's task rows, reusing the existing task-rows pattern; timestamps within a row can slim down once the date lives in the header.
 - [x] Sweep orphaned client code
       Delete slices/fetchers/components only the removed views used, after confirming what the Stack panel still consumes (doc-issue findings, progress reads). Corpus files, agent writes, and server routes with non-UI consumers stay.
-- [ ] Make git errors readable toasts
+- [x] Make git errors readable toasts
       `runGit` includes stdout in the rejection when stderr is empty (so "nothing to commit" survives); commit/push/sync/pull failures surface as toasts with a one-line summary instead of raw multi-line git output in inline Alerts; a failed commit also refreshes git status so stale "changed files" don't invite a doomed retry.
 - [ ] Gate the pass
       `tsc --noEmit`, `biome check`, full tests; click through Docs, Settings, and Tasks to confirm the kept surfaces still work and nothing dangles; force a commit and push failure and confirm both read as one-line toasts.
