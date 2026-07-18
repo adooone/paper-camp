@@ -20,7 +20,6 @@ export const StatusSection = () => {
   const fixQuality = useAppStore((s) => s.fixQuality);
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
-  const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const navigate = useNavigate();
   const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
 
@@ -42,16 +41,10 @@ export const StatusSection = () => {
             to: '/plans/$planId',
             params: { planId: encodeURIComponent(blockedPlan.title) },
           });
-          return;
         }
       }
-      setActiveDocTitle(issue.title);
-      navigate({
-        to: '/docs/$section',
-        params: { section: issue.section === 'open-questions' ? 'questions' : 'decisions' },
-      });
     },
-    [plans?.entries, navigate, setActiveDocTitle],
+    [plans?.entries, navigate],
   );
 
   return (
@@ -210,22 +203,26 @@ export const StatusSection = () => {
                             color: deskTextMuted,
                           }}
                         >
-                          <button
-                            type="button"
-                            onClick={() => handleFindingClick(issue)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              padding: 0,
-                              color: deskChalk,
-                              textDecoration: 'underline',
-                              cursor: 'pointer',
-                              font: 'inherit',
-                              textAlign: 'left',
-                            }}
-                          >
-                            {issue.message}
-                          </button>
+                          {issue.kind === 'blocked-plan-active' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleFindingClick(issue)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
+                                color: deskChalk,
+                                textDecoration: 'underline',
+                                cursor: 'pointer',
+                                font: 'inherit',
+                                textAlign: 'left',
+                              }}
+                            >
+                              {issue.message}
+                            </button>
+                          ) : (
+                            <span style={{ textAlign: 'left' }}>{issue.message}</span>
+                          )}
                         </div>
                       ))}
                     </div>

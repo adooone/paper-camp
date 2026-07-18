@@ -21,7 +21,7 @@ The app has grown surfaces nobody visits. Minimise to the features actually used
 - **Sweep what the removals orphan.** Client slices, fetchers, and components that only served the removed views (`fetchDecisions`/`fetchOpenQuestions` and friends) go with them — but only after checking what the Stack still reads (the consistency card consumes doc issues; `progress` may feed more than the timeline). Server routes can stay if the CLI or checks use them; the sweep is client-first.
 
 ### Phases
-- [ ] Trim Docs to general docs only
+- [x] Trim Docs to general docs only
       Remove the Decisions/Open Questions/Progress sidebar sections and their `/docs/$section` detail views; keep repo docs and search over them. Re-point or drop `status-section.tsx`'s consistency-finding navigation and prune the removed sections from docs-search.
 - [ ] Trim Settings to General
       Drop the Environment and Config Files sections from `settings-sidebar.tsx`/`settings-page.tsx`; config editing is code-only from here on. The boot-time config read stays.
