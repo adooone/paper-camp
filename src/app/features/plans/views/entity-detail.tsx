@@ -1,6 +1,7 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
+import { useProjectSubjects } from '@/app/hooks/use-project-subjects';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
@@ -9,6 +10,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Select,
   Spinner,
   Stamp,
   Table,
@@ -36,6 +38,8 @@ interface EntityDetailProps {
   plan: PlanEntry;
 }
 
+const NO_SUBJECT = '__no-subject__';
+
 /** Parses the entity id a feature branch encodes (feat/idea-43-… → IDEA-43). */
 function branchEntityId(branch: string | null): string | null {
   const match = branch?.match(/^[a-z]+\/([a-z]+-\d+)-/);
@@ -48,6 +52,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
+  const { subjects } = useProjectSubjects();
   const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
@@ -102,6 +107,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
   };
 
+  const handleSubjectChange = async (value: string) => {
+    await patchByTitle(plan.title, { subject: value === NO_SUBJECT ? null : value });
+  };
+
   const handleAddLogEntry = async () => {
     if (!logInput.trim()) return;
     const today = new Date().toISOString().slice(0, 10);
@@ -142,15 +151,32 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         </span>
       </div>
 
-      {plan.tags.length > 0 && (
-        <div style={{ display: 'flex', gap: space[2], flexWrap: 'wrap', marginBottom: space[4] }}>
-          {plan.tags.map((tag) => (
-            <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
-              {tag}
-            </Stamp>
-          ))}
-        </div>
-      )}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: space[2],
+          flexWrap: 'wrap',
+          marginBottom: space[4],
+        }}
+      >
+        <Select
+          size="small"
+          width={180}
+          value={plan.subject ?? NO_SUBJECT}
+          onChange={handleSubjectChange}
+          disabled={updating}
+          options={[
+            { value: NO_SUBJECT, label: 'No subject' },
+            ...subjects.map((s) => ({ value: s, label: s })),
+          ]}
+        />
+        {plan.tags.map((tag) => (
+          <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
+            {tag}
+          </Stamp>
+        ))}
+      </div>
 
       {(showBranchRow || plan.pr) && (
         <div

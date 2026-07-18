@@ -32,7 +32,7 @@ Three improvements to the ideas surface: the page finally calls things what they
       Subject group headers over the existing rows (No subject last), following the idea-group pattern already in `worklist-rows.tsx`.
 - [x] Manage subjects from Settings
       New Subjects sidebar view: add/rename/remove, persisted in the papercamp config; a removed subject demotes its ideas to No subject at read time without touching files.
-- [ ] Pick a subject in idea details
+- [x] Pick a subject in idea details
       Set/change/clear from the detail view, writing only the frontmatter line.
 - [ ] Polish the detail view
       Refresh button to the top-right corner; Log becomes Comments — separate surface, chat-style date-stamped entries, full-width bottom composer with right-aligned send. File grammar keeps `### Log`.

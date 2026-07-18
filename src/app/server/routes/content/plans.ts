@@ -127,6 +127,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           status?: PlanStatus | null;
           log?: LogEntry[];
           agent?: AgentId | null;
+          subject?: string | null;
         };
         if (updates.agent && !AGENT_IDS.includes(updates.agent)) {
           sendJson(res, 400, { error: 'agent must be a known agent id' });
@@ -161,6 +162,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           ...(updates.phases !== undefined && { phases: updates.phases }),
           ...(updates.log !== undefined && { log: updates.log }),
           ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
+          ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
           updated: todayDateString(),
         };
 

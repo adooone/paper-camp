@@ -33,6 +33,8 @@ export const updatePlan = async (
     status?: PlanStatus | null;
     log?: LogEntry[];
     agent?: AgentId | null;
+    /** `null` clears the frontmatter key, rendering the idea under "No subject". */
+    subject?: string | null;
   },
 ): Promise<void> => {
   const response = await fetch(`/api/plans?title=${encodeURIComponent(title)}`, {
