@@ -1,5 +1,6 @@
 import { LightbulbIcon, NoteIcon } from '@/app/components/icons';
 import type { IdeaGroupRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
+import { groupRowsBySubject } from '@/app/features/plans/helpers';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
@@ -28,6 +29,15 @@ const headerLabelStyle: React.CSSProperties = {
   opacity: 0.6,
   whiteSpace: 'nowrap',
   overflow: 'hidden',
+};
+
+const subjectHeaderStyle: React.CSSProperties = {
+  fontSize: fontSize.sm,
+  fontWeight: 700,
+  opacity: 0.5,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+  padding: `${space[3]} ${space[1]} 0`,
 };
 
 const headerButtonStyle: React.CSSProperties = {
@@ -98,6 +108,38 @@ export const WorklistRows = ({
     });
   };
 
+  const renderRow = (row: WorklistRow) => {
+    if (row.type === 'plan') {
+      return (
+        <PlanRows
+          key={row.plan.title}
+          plans={[row.plan]}
+          activePlanTitle={activePlanTitle}
+          onOpen={onOpenPlan}
+          showHeader={false}
+        />
+      );
+    }
+    if (row.type === 'note') {
+      return <NoteRowCard key={row.idea.title} row={row} onOpen={onOpenIdea} />;
+    }
+    return (
+      <IdeaGroupRowCard
+        key={row.idea.title}
+        row={row}
+        plans={plans}
+        activePlanTitle={activePlanTitle}
+        onOpenPlan={onOpenPlan}
+        onOpenIdea={onOpenIdea}
+        expanded={expandedDone.has(row.idea.title)}
+        onToggleExpanded={() => toggleExpanded(row.idea.title)}
+      />
+    );
+  };
+
+  const groups = groupRowsBySubject(rows);
+  const showSubjectHeaders = groups.length > 1;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
       <Card size="small" texture="kraft" className="plan-row-card">
@@ -121,34 +163,17 @@ export const WorklistRows = ({
           })}
         </div>
       </Card>
-      {rows.map((row) => {
-        if (row.type === 'plan') {
-          return (
-            <PlanRows
-              key={row.plan.title}
-              plans={[row.plan]}
-              activePlanTitle={activePlanTitle}
-              onOpen={onOpenPlan}
-              showHeader={false}
-            />
-          );
-        }
-        if (row.type === 'note') {
-          return <NoteRowCard key={row.idea.title} row={row} onOpen={onOpenIdea} />;
-        }
-        return (
-          <IdeaGroupRowCard
-            key={row.idea.title}
-            row={row}
-            plans={plans}
-            activePlanTitle={activePlanTitle}
-            onOpenPlan={onOpenPlan}
-            onOpenIdea={onOpenIdea}
-            expanded={expandedDone.has(row.idea.title)}
-            onToggleExpanded={() => toggleExpanded(row.idea.title)}
-          />
-        );
-      })}
+      {showSubjectHeaders
+        ? groups.map((group) => (
+            <div
+              key={group.subject ?? '__no-subject__'}
+              style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+            >
+              <div style={subjectHeaderStyle}>{group.subject ?? 'No subject'}</div>
+              {group.rows.map(renderRow)}
+            </div>
+          ))
+        : rows.map(renderRow)}
     </div>
   );
 };

@@ -106,6 +106,8 @@ export interface PlanEntry {
   audited?: string;
   auditedHash?: string;
   tags: string[];
+  /** Absent renders under the virtual "No subject" group. */
+  subject?: string;
   body: string;
   phases: PhaseItem[];
   log?: LogEntry[];
@@ -153,6 +155,8 @@ export interface IdeaEntry {
   body: string;
   kind?: IdeaKind;
   status?: IdeaStatus;
+  /** Absent renders under the virtual "No subject" group. */
+  subject?: string;
   log?: LogEntry[];
 }
 
