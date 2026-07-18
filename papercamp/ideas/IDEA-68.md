@@ -27,7 +27,7 @@ The app has grown surfaces nobody visits. Minimise to the features actually used
       Drop the Environment and Config Files sections from `settings-sidebar.tsx`/`settings-page.tsx`; config editing is code-only from here on. The boot-time config read stays.
 - [x] Group the Tasks list by date
       One group per day, newest first: a kraft date header over that day's task rows, reusing the existing task-rows pattern; timestamps within a row can slim down once the date lives in the header.
-- [ ] Sweep orphaned client code
+- [x] Sweep orphaned client code
       Delete slices/fetchers/components only the removed views used, after confirming what the Stack panel still consumes (doc-issue findings, progress reads). Corpus files, agent writes, and server routes with non-UI consumers stay.
 - [ ] Make git errors readable toasts
       `runGit` includes stdout in the rejection when stderr is empty (so "nothing to commit" survives); commit/push/sync/pull failures surface as toasts with a one-line summary instead of raw multi-line git output in inline Alerts; a failed commit also refreshes git status so stale "changed files" don't invite a doomed retry.

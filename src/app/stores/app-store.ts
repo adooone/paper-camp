@@ -8,16 +8,13 @@ import type {
   BranchHygieneStatus,
   CheckName,
   ConsistencyIssue,
-  DecisionEntry,
   GitStatusEntry,
   GitStatusResponse,
   IdeaEntry,
   IdeaStatus,
-  OpenQuestionEntry,
   ParseResult,
   PlanEntry,
   PlanStatus,
-  ProgressEntry,
   SuggestionEntry,
   TaskLogEntry,
 } from '@/types/index';
@@ -39,11 +36,8 @@ import {
 import {
   dismissSuggestion as dismissSuggestionApi,
   fetchConsistency,
-  fetchDecisions,
   fetchIdeas,
-  fetchOpenQuestions,
   fetchPlans,
-  fetchProgress,
   fetchRepoDocs,
   fetchSuggestions,
   fetchTaskLog,
@@ -76,23 +70,11 @@ export type AppStore = {
   setPlanSortKey: (sortKey: PlanSortKey) => void;
   togglePlanSortDirection: () => void;
 
-  decisions: DecisionEntry[];
-  decisionsLoading: boolean;
-  loadDecisions: () => Promise<void>;
-
-  openQuestions: OpenQuestionEntry[];
-  openQuestionsLoading: boolean;
-  loadOpenQuestions: () => Promise<void>;
-
   suggestions: SuggestionEntry[];
   suggestionsLoading: boolean;
   loadSuggestions: () => Promise<void>;
   promoteSuggestion: (suggestion: SuggestionEntry) => Promise<string>;
   dismissSuggestion: (suggestion: SuggestionEntry) => Promise<void>;
-
-  progress: ProgressEntry[];
-  progressLoading: boolean;
-  loadProgress: () => Promise<void>;
 
   taskLog: TaskLogEntry[];
   taskLogLoading: boolean;
@@ -107,12 +89,6 @@ export type AppStore = {
 
   docSearchQuery: string;
   setDocSearchQuery: (query: string) => void;
-
-  activeSettingsSection: string;
-  setActiveSettingsSection: (section: string) => void;
-
-  settingsConfigFiles: string[];
-  setSettingsConfigFiles: (files: string[]) => void;
 
   status: StatusState | null;
   loadStatus: () => Promise<void>;
@@ -235,30 +211,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
       },
     })),
 
-  decisions: [],
-  decisionsLoading: true,
-  loadDecisions: async () => {
-    set({ decisionsLoading: true });
-    try {
-      const data = await fetchDecisions();
-      set({ decisions: data.entries, decisionsLoading: false });
-    } catch {
-      set({ decisions: [], decisionsLoading: false });
-    }
-  },
-
-  openQuestions: [],
-  openQuestionsLoading: true,
-  loadOpenQuestions: async () => {
-    set({ openQuestionsLoading: true });
-    try {
-      const data = await fetchOpenQuestions();
-      set({ openQuestions: data.entries, openQuestionsLoading: false });
-    } catch {
-      set({ openQuestions: [], openQuestionsLoading: false });
-    }
-  },
-
   suggestions: [],
   suggestionsLoading: true,
   loadSuggestions: async () => {
@@ -278,18 +230,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
   dismissSuggestion: async (suggestion) => {
     await dismissSuggestionApi(suggestion);
     await get().loadSuggestions();
-  },
-
-  progress: [],
-  progressLoading: true,
-  loadProgress: async () => {
-    set({ progressLoading: true });
-    try {
-      const data = await fetchProgress();
-      set({ progress: data.entries, progressLoading: false });
-    } catch {
-      set({ progress: [], progressLoading: false });
-    }
   },
 
   taskLog: [],
@@ -328,12 +268,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   docSearchQuery: '',
   setDocSearchQuery: (query) => set({ docSearchQuery: query }),
-
-  activeSettingsSection: 'general',
-  setActiveSettingsSection: (section) => set({ activeSettingsSection: section }),
-
-  settingsConfigFiles: [],
-  setSettingsConfigFiles: (files) => set({ settingsConfigFiles: files }),
 
   status: null,
   refreshing: false,
