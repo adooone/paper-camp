@@ -25,7 +25,7 @@ The app has grown surfaces nobody visits. Minimise to the features actually used
       Remove the Decisions/Open Questions/Progress sidebar sections and their `/docs/$section` detail views; keep repo docs and search over them. Re-point or drop `status-section.tsx`'s consistency-finding navigation and prune the removed sections from docs-search.
 - [x] Trim Settings to General
       Drop the Environment and Config Files sections from `settings-sidebar.tsx`/`settings-page.tsx`; config editing is code-only from here on. The boot-time config read stays.
-- [ ] Group the Tasks list by date
+- [x] Group the Tasks list by date
       One group per day, newest first: a kraft date header over that day's task rows, reusing the existing task-rows pattern; timestamps within a row can slim down once the date lives in the header.
 - [ ] Sweep orphaned client code
       Delete slices/fetchers/components only the removed views used, after confirming what the Stack panel still consumes (doc-issue findings, progress reads). Corpus files, agent writes, and server routes with non-UI consumers stay.

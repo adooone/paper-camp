@@ -149,12 +149,12 @@ header[class*="layout-module__header___"] {
 /*
  * The tasks log (tasks-page.tsx) mirrors .plan-rows-grid too, with a leading
  * chevron column — clicking a row unfolds its persisted output underneath.
- * Below the sidebar-collapse breakpoint the two timestamp columns disappear
+ * Below the sidebar-collapse breakpoint the timestamp column disappears
  * (cells carry the task-rows-cell-time class).
  */
 .task-rows-grid {
   display: grid;
-  grid-template-columns: 20px 116px minmax(0, 1fr) 88px 128px 128px 72px;
+  grid-template-columns: 20px 116px minmax(0, 1fr) 88px 150px 72px;
   gap: 0.625rem;
   align-items: center;
 }
