@@ -49,8 +49,9 @@ export function configRoutes({ root }: RouteContext): Route[] {
           projectName?: string;
           defaultAgent?: AgentId;
           defaultAgents?: Record<string, unknown>;
+          subjects?: unknown;
         };
-        const { port, projectName, defaultAgent } = bodyParsed;
+        const { port, projectName, defaultAgent, subjects } = bodyParsed;
         const rawDefaultAgents = bodyParsed.defaultAgents;
         if (port !== undefined && (!Number.isInteger(port) || port <= 0)) {
           sendJson(res, 400, { error: 'port must be a positive integer' });
@@ -58,6 +59,13 @@ export function configRoutes({ root }: RouteContext): Route[] {
         }
         if (projectName !== undefined && projectName.trim().length === 0) {
           sendJson(res, 400, { error: 'projectName must not be empty' });
+          return;
+        }
+        if (
+          subjects !== undefined &&
+          (!Array.isArray(subjects) || subjects.some((s) => typeof s !== 'string' || !s.trim()))
+        ) {
+          sendJson(res, 400, { error: 'subjects must be an array of non-empty strings' });
           return;
         }
         if (defaultAgent !== undefined && !AGENT_IDS.includes(defaultAgent)) {
@@ -101,6 +109,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
           ...(port !== undefined && { port }),
           ...(projectName !== undefined && { projectName: projectName.trim() }),
           ...(resolvedDefaultAgents && { defaultAgents: resolvedDefaultAgents }),
+          ...(subjects !== undefined && { subjects: (subjects as string[]).map((s) => s.trim()) }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
         sendJson(res, 200, { ok: true });

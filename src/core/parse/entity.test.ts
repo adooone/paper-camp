@@ -47,6 +47,35 @@ Rationale prose.
     expect(e.clarifications).toEqual([{ date: '2026-07-05', text: 'scope confirmed' }]);
   });
 
+  it('parses a subject key when present', () => {
+    const content = `---
+id: IDEA-47
+title: Has a subject
+status: idea
+created: 2026-07-05
+subject: Onboarding
+---
+Prose.
+`;
+    const { entries, warnings } = parseEntityFile(content);
+    expect(warnings).toEqual([]);
+    expect(entries[0].subject).toBe('Onboarding');
+  });
+
+  it('leaves subject undefined when the key is absent (virtual "No subject")', () => {
+    const content = `---
+id: IDEA-48
+title: No subject
+status: idea
+created: 2026-07-05
+---
+Prose.
+`;
+    const { entries, warnings } = parseEntityFile(content);
+    expect(warnings).toEqual([]);
+    expect(entries[0].subject).toBeUndefined();
+  });
+
   it('parses a phaseless idea-status entity (the pre-plan state)', () => {
     const content = `---
 id: IDEA-46
@@ -138,6 +167,7 @@ describe('formatEntityFile round-trip', () => {
       audited: '2026-07-05',
       auditedHash: 'abc123',
       tags: ['core', 'ideas'],
+      subject: 'Core infra',
       body: 'Rationale prose.',
       phases: [
         { text: 'First phase', done: true, description: 'Details.' },
@@ -154,6 +184,7 @@ describe('formatEntityFile round-trip', () => {
     expect(e.type).toBe('feat');
     expect(e.status).toBe('planned');
     expect(e.auditedHash).toBe('abc123');
+    expect(e.subject).toBe('Core infra');
     expect(e.body).toBe(input.body);
     expect(e.phases).toHaveLength(2);
     expect(e.phases[1].source).toBe('review');
@@ -173,8 +204,10 @@ describe('formatEntityFile round-trip', () => {
     expect(serialized).not.toContain('type:');
     expect(serialized).not.toContain('kind:');
     expect(serialized).not.toContain('idea:');
+    expect(serialized).not.toContain('subject:');
     const { entries } = parseEntityFile(serialized);
     expect(entries[0].body).toBe('Just prose.');
+    expect(entries[0].subject).toBeUndefined();
   });
 });
 

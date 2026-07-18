@@ -265,6 +265,7 @@ interface NewEntityFileInput {
   audited?: string;
   auditedHash?: string;
   tags?: string[];
+  subject?: string;
   body?: string;
   phases?: PhaseItem[];
   log?: LogEntry[];
@@ -285,6 +286,7 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   if (input.audited) frontmatter.audited = input.audited;
   if (input.auditedHash) frontmatter['audited-hash'] = input.auditedHash;
   if (input.tags && input.tags.length > 0) frontmatter.tags = input.tags;
+  if (input.subject) frontmatter.subject = input.subject;
 
   const sections: string[] = [serializeFrontmatter(frontmatter)];
 

@@ -169,6 +169,48 @@ interface PlanRow {
 
 export type WorklistRow = IdeaGroupRow | NoteRow | PlanRow;
 
+export interface SubjectGroup {
+  /** null is the virtual "No subject" group. */
+  subject: string | null;
+  rows: WorklistRow[];
+}
+
+const subjectOf = (row: WorklistRow): string | undefined =>
+  row.type === 'plan' ? row.plan.subject : row.idea.subject;
+
+/** Groups already-sorted worklist rows by subject, keeping each row's relative
+ * order; rows with no subject collect into the virtual "No subject" group, last.
+ * When `validSubjects` is given, a row whose subject isn't in it (e.g. removed
+ * from Settings) demotes to "No subject" without touching the idea file. */
+export const groupRowsBySubject = (
+  rows: WorklistRow[],
+  validSubjects?: string[],
+): SubjectGroup[] => {
+  const order: string[] = [];
+  const bySubject = new Map<string, WorklistRow[]>();
+  const noSubject: WorklistRow[] = [];
+
+  for (const row of rows) {
+    const subject = subjectOf(row);
+    if (!subject || (validSubjects && !validSubjects.includes(subject))) {
+      noSubject.push(row);
+      continue;
+    }
+    if (!bySubject.has(subject)) {
+      order.push(subject);
+      bySubject.set(subject, []);
+    }
+    bySubject.get(subject)?.push(row);
+  }
+
+  const groups: SubjectGroup[] = order.map((subject) => ({
+    subject,
+    rows: bySubject.get(subject) ?? [],
+  }));
+  if (noSubject.length > 0) groups.push({ subject: null, rows: noSubject });
+  return groups;
+};
+
 export interface WorklistResult {
   rows: WorklistRow[];
   statusCounts: Record<PlanStatus, number>;

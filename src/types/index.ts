@@ -106,6 +106,8 @@ export interface PlanEntry {
   audited?: string;
   auditedHash?: string;
   tags: string[];
+  /** Absent renders under the virtual "No subject" group. */
+  subject?: string;
   body: string;
   phases: PhaseItem[];
   log?: LogEntry[];
@@ -153,6 +155,8 @@ export interface IdeaEntry {
   body: string;
   kind?: IdeaKind;
   status?: IdeaStatus;
+  /** Absent renders under the virtual "No subject" group. */
+  subject?: string;
   log?: LogEntry[];
 }
 
@@ -180,6 +184,8 @@ export interface EntityEntry {
   audited?: string;
   auditedHash?: string;
   tags: string[];
+  /** Absent renders as the virtual "No subject" group. */
+  subject?: string;
   body: string;
   phases: PhaseItem[];
   log?: LogEntry[];
@@ -267,6 +273,8 @@ export interface PaperCampConfig {
   defaultAgents?: DefaultAgentsMap;
   /** Off by default. When true, the PostToolUse hook logs new-file creations to progress.md. */
   autoLogNewFiles?: boolean;
+  /** The managed subject list; an idea's `subject` not present here renders as "No subject". */
+  subjects?: string[];
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';

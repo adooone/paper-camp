@@ -31,7 +31,7 @@ const TasksPage = lazy(() =>
 );
 
 const navItems = [
-  { id: 'plans', label: 'Plans', path: '/' },
+  { id: 'plans', label: 'Ideas', path: '/' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'tasks', label: 'Tasks', path: '/tasks' },
   { id: 'settings', label: 'Settings', path: '/settings' },
@@ -86,12 +86,15 @@ const RootLayout = () => {
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
+  const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
   const activeId = isPlansArea
     ? 'plans'
     : isDocsArea
       ? 'docs'
-      : navItems.find((item) => item.path === pathname)?.id;
-  const hasSidebar = isPlansArea || isDocsArea || pathname === '/settings';
+      : isSettingsArea
+        ? 'settings'
+        : navItems.find((item) => item.path === pathname)?.id;
+  const hasSidebar = isPlansArea || isDocsArea || isSettingsArea;
   const sidebarAreaKey = isPlansArea ? 'plans' : isDocsArea ? 'docs' : 'settings';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -206,7 +209,7 @@ const RootLayout = () => {
                         <DocsSidebar />
                       </Suspense>
                     )}
-                    {pathname === '/settings' && (
+                    {isSettingsArea && (
                       <Suspense fallback={null}>
                         <SettingsSidebar />
                       </Suspense>
@@ -292,6 +295,11 @@ const settingsRoute = createRoute({
   path: '/settings',
   component: SettingsPage,
 });
+const settingsSectionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/settings/$section',
+  component: SettingsPage,
+});
 
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -309,6 +317,7 @@ const routeTree = rootRoute.addChildren([
   docsRoute,
   docsSectionRoute,
   settingsRoute,
+  settingsSectionRoute,
   tasksRoute,
 ]);
 

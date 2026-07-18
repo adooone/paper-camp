@@ -48,6 +48,7 @@ export function entityFileInput(
     audited: entry.audited,
     auditedHash: entry.auditedHash,
     tags: entry.tags,
+    subject: entry.subject,
     body: entry.body,
     phases: entry.phases,
     log: entry.log,

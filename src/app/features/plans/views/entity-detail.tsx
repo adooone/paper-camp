@@ -1,6 +1,7 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
+import { useProjectSubjects } from '@/app/hooks/use-project-subjects';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
@@ -9,6 +10,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Select,
   Spinner,
   Stamp,
   Table,
@@ -36,6 +38,8 @@ interface EntityDetailProps {
   plan: PlanEntry;
 }
 
+const NO_SUBJECT = '__no-subject__';
+
 /** Parses the entity id a feature branch encodes (feat/idea-43-… → IDEA-43). */
 function branchEntityId(branch: string | null): string | null {
   const match = branch?.match(/^[a-z]+\/([a-z]+-\d+)-/);
@@ -48,6 +52,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
+  const { subjects } = useProjectSubjects();
   const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
@@ -102,6 +107,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
   };
 
+  const handleSubjectChange = async (value: string) => {
+    await patchByTitle(plan.title, { subject: value === NO_SUBJECT ? null : value });
+  };
+
   const handleAddLogEntry = async () => {
     if (!logInput.trim()) return;
     const today = new Date().toISOString().slice(0, 10);
@@ -135,22 +144,42 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           <PlanIdStamp id={plan.id} />
           {plan.title}
         </h2>
-        <span className="text-sm" style={{ opacity: 0.45, flexShrink: 0, whiteSpace: 'nowrap' }}>
-          {plan.updated
-            ? `updated ${relativeDate(plan.updated)}`
-            : `created ${relativeDate(plan.created)}`}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexShrink: 0 }}>
+          <span className="text-sm" style={{ opacity: 0.45, whiteSpace: 'nowrap' }}>
+            {plan.updated
+              ? `updated ${relativeDate(plan.updated)}`
+              : `created ${relativeDate(plan.created)}`}
+          </span>
+          <RefreshButton />
+        </div>
       </div>
 
-      {plan.tags.length > 0 && (
-        <div style={{ display: 'flex', gap: space[2], flexWrap: 'wrap', marginBottom: space[4] }}>
-          {plan.tags.map((tag) => (
-            <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
-              {tag}
-            </Stamp>
-          ))}
-        </div>
-      )}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: space[2],
+          flexWrap: 'wrap',
+          marginBottom: space[4],
+        }}
+      >
+        <Select
+          size="small"
+          width={180}
+          value={plan.subject && subjects.includes(plan.subject) ? plan.subject : NO_SUBJECT}
+          onChange={handleSubjectChange}
+          disabled={updating}
+          options={[
+            { value: NO_SUBJECT, label: 'No subject' },
+            ...subjects.map((s) => ({ value: s, label: s })),
+          ]}
+        />
+        {plan.tags.map((tag) => (
+          <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
+            {tag}
+          </Stamp>
+        ))}
+      </div>
 
       {(showBranchRow || plan.pr) && (
         <div
@@ -194,7 +223,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           )}
           {plan.pr && <PrBadge pr={plan.pr} />}
           {plan.pr && <ReviewSignalBadge pr={plan.pr} />}
-          <RefreshButton />
         </div>
       )}
 
@@ -379,41 +407,62 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             opacity: 0.65,
           }}
         >
-          Log
+          Comments
         </h3>
-        {plan.log && plan.log.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: space[2],
-              marginBottom: space[3],
-            }}
-          >
-            {plan.log.map((entry, i) => (
-              <div key={`${entry.date}-${i}`} className="text-sm" style={{ opacity: 0.75 }}>
-                <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
-                {entry.text}
-              </div>
-            ))}
+        <Card size="small">
+          {plan.log && plan.log.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: space[3],
+                marginBottom: space[4],
+              }}
+            >
+              {plan.log.map((entry, i) => (
+                <div
+                  key={`${entry.date}-${i}`}
+                  style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+                >
+                  <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
+                    {entry.date}
+                  </span>
+                  <div
+                    className="text-sm"
+                    style={{
+                      background: 'rgba(0,0,0,0.05)',
+                      borderRadius: space[2],
+                      padding: `${space[2]} ${space[3]}`,
+                      alignSelf: 'flex-start',
+                      maxWidth: '100%',
+                      opacity: 0.85,
+                    }}
+                  >
+                    {entry.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+            <Textarea
+              value={logInput}
+              onChange={(e) => setLogInput(e.target.value)}
+              placeholder="Add a comment…"
+              rows={2}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={handleAddLogEntry}
+                disabled={updating || !logInput.trim()}
+              >
+                Send
+              </Button>
+            </div>
           </div>
-        )}
-        <div style={{ display: 'flex', gap: space[2], alignItems: 'flex-end' }}>
-          <Textarea
-            value={logInput}
-            onChange={(e) => setLogInput(e.target.value)}
-            placeholder="Add a log entry…"
-            rows={2}
-          />
-          <Button
-            variant="secondary"
-            size="small"
-            onClick={handleAddLogEntry}
-            disabled={updating || !logInput.trim()}
-          >
-            Add entry
-          </Button>
-        </div>
+        </Card>
       </div>
     </div>
   );

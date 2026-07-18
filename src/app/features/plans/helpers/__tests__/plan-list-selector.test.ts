@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_PLAN_LIST_FILTERS,
   deriveChildrenSummary,
+  groupRowsBySubject,
   selectPlanRows,
   selectWorklistRows,
 } from '../plan-list-selector';
@@ -160,6 +161,46 @@ describe('selectWorklistRows', () => {
     expect(rows.map((r) => (r.type === 'plan' ? r.plan.title : r.idea.title))).toEqual([
       'Top plan',
       'Grouped idea',
+    ]);
+  });
+});
+
+describe('groupRowsBySubject', () => {
+  it('groups plan and note rows by subject, in first-seen order', () => {
+    const rows = [
+      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend' }) },
+      { type: 'note' as const, idea: idea({ title: 'B', subject: 'Frontend' }) },
+      { type: 'plan' as const, plan: plan({ title: 'C', subject: 'Backend' }) },
+    ];
+    expect(groupRowsBySubject(rows)).toEqual([
+      { subject: 'Backend', rows: [rows[0], rows[2]] },
+      { subject: 'Frontend', rows: [rows[1]] },
+    ]);
+  });
+
+  it('collects subjectless rows into a virtual "No subject" group, ordered last', () => {
+    const rows = [
+      { type: 'plan' as const, plan: plan({ title: 'No subject plan' }) },
+      { type: 'plan' as const, plan: plan({ title: 'Subject plan', subject: 'Backend' }) },
+    ];
+    expect(groupRowsBySubject(rows)).toEqual([
+      { subject: 'Backend', rows: [rows[1]] },
+      { subject: null, rows: [rows[0]] },
+    ]);
+  });
+
+  it('produces no groups for an empty row list', () => {
+    expect(groupRowsBySubject([])).toEqual([]);
+  });
+
+  it('demotes a row whose subject is not in validSubjects to "No subject"', () => {
+    const rows = [
+      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend' }) },
+      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Deleted subject' }) },
+    ];
+    expect(groupRowsBySubject(rows, ['Backend'])).toEqual([
+      { subject: 'Backend', rows: [rows[0]] },
+      { subject: null, rows: [rows[1]] },
     ]);
   });
 });

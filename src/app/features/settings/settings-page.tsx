@@ -1,5 +1,5 @@
 import { PageTitle } from '@/app/components/page-title';
-import { useProjectIdentity } from '@/app/hooks';
+import { useActiveSettingsSection, useProjectIdentity } from '@/app/hooks';
 import { fetchConfig, saveConfig, uploadIcon } from '@/app/services/system';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import {
@@ -14,6 +14,7 @@ import {
 } from '@/types/index';
 import { Alert, Button, Card, Divider, Input, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useRef, useState } from 'react';
+import { SubjectsSection } from './components/subjects-section';
 
 const TASK_TYPE_KEYS = ['phase', 'planDraft', 'ideaExtend', 'commitSuggest'] as const;
 type TaskTypeKey = (typeof TASK_TYPE_KEYS)[number];
@@ -383,10 +384,11 @@ const GeneralSection = () => {
 };
 
 export const SettingsPage = () => {
+  const section = useActiveSettingsSection();
   return (
     <div>
       <PageTitle>Settings</PageTitle>
-      <GeneralSection />
+      {section === 'subjects' ? <SubjectsSection /> : <GeneralSection />}
     </div>
   );
 };

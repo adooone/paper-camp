@@ -4,6 +4,9 @@ import { useParams } from '@tanstack/react-router';
 const DOC_SECTIONS = ['repo-docs'] as const;
 type DocSection = (typeof DOC_SECTIONS)[number];
 
+const SETTINGS_SECTIONS = ['subjects'] as const;
+export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
+
 export function useActivePlanTitle(): string | null {
   const { planId } = useParams({ strict: false });
   return typeof planId === 'string' ? decodeURIComponent(planId) : null;
@@ -17,6 +20,14 @@ export function useActiveIdeaTitle(): string | null {
 function useActiveDocSection(): DocSection | null {
   const { section } = useParams({ strict: false });
   return DOC_SECTIONS.includes(section as DocSection) ? (section as DocSection) : null;
+}
+
+/** null means the bare `/settings` general section. */
+export function useActiveSettingsSection(): SettingsSection | null {
+  const { section } = useParams({ strict: false });
+  return SETTINGS_SECTIONS.includes(section as SettingsSection)
+    ? (section as SettingsSection)
+    : null;
 }
 
 // For bare `/docs` with no section, falls back to the pre-selected repo doc

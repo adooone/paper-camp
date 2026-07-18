@@ -2,7 +2,7 @@
 id: IDEA-70
 title: Subjects and idea-detail polish
 type: feat
-status: idea
+status: review
 created: 2026-07-17
 tags:
   - app
@@ -24,17 +24,17 @@ Three improvements to the ideas surface: the page finally calls things what they
 - **Detail view polish.** (1) The refresh button moves to the top-right corner of the detail view — today it sits inline in the meta row among branch/PR badges. (2) The Log section becomes **Comments**: visually separated from the idea body (its own surface, not a continuation of the prose), entries rendered chat-style — date-stamped bubbles in a column — with a full-width composer at the bottom and the send button aligned right, replacing today's awkward side-by-side textarea+button. UI rename only: the file grammar keeps the load-bearing `### Log` heading (`LOG_HEADING_RE` in the parser), so nothing breaks in the corpus or the agents that append to it.
 
 ### Phases
-- [ ] Rename Plans to Ideas
+- [x] Rename Plans to Ideas
       Visible page title (`plans-header.tsx`) and nav label; routes, paths, and feature-folder names unchanged.
-- [ ] Add the subject field to entities
+- [x] Add the subject field to entities
       Optional `subject:` frontmatter — types, parser, serializer round-trip with tests; absent key renders as the virtual "No subject", no file migration.
-- [ ] Group the worklist by subject
+- [x] Group the worklist by subject
       Subject group headers over the existing rows (No subject last), following the idea-group pattern already in `worklist-rows.tsx`.
-- [ ] Manage subjects from Settings
+- [x] Manage subjects from Settings
       New Subjects sidebar view: add/rename/remove, persisted in the papercamp config; a removed subject demotes its ideas to No subject at read time without touching files.
-- [ ] Pick a subject in idea details
+- [x] Pick a subject in idea details
       Set/change/clear from the detail view, writing only the frontmatter line.
-- [ ] Polish the detail view
+- [x] Polish the detail view
       Refresh button to the top-right corner; Log becomes Comments — separate surface, chat-style date-stamped entries, full-width bottom composer with right-aligned send. File grammar keeps `### Log`.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green (parser/serializer round-trip covered); click through grouping, settings management, picker, and comments in the app.
