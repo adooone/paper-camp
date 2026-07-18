@@ -6,6 +6,13 @@ import { ProgressBar } from '../components';
 import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { phaseProgress, relativeDate } from '../helpers';
 
+export interface RowMoveControls {
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}
+
 interface PlanRowsProps {
   plans: PlanEntry[];
   activePlanTitle?: string | null;
@@ -13,6 +20,9 @@ interface PlanRowsProps {
   /** FEAT-42: worklist-rows.tsx nests this under an idea-group header, which already
    * carries its own header row — set false there so it isn't repeated per group. */
   showHeader?: boolean;
+  /** Only the top-level worklist call site passes this — idea-group children have
+   * no visible order column, so they render without up/down controls. */
+  getMoveControls?: (plan: PlanEntry) => RowMoveControls | undefined;
 }
 
 const headerLabelStyle: React.CSSProperties = {
@@ -23,9 +33,56 @@ const headerLabelStyle: React.CSSProperties = {
   overflow: 'hidden',
 };
 
+const arrowButtonStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  margin: 0,
+  cursor: 'pointer',
+  font: 'inherit',
+  fontSize: 8,
+  lineHeight: 1,
+  color: 'inherit',
+};
+
+export const OrderMoveArrows = ({ move }: { move: RowMoveControls }) => (
+  <span style={{ display: 'flex', flexDirection: 'column' }}>
+    <button
+      type="button"
+      style={{ ...arrowButtonStyle, opacity: move.canMoveUp ? 0.6 : 0.2 }}
+      disabled={!move.canMoveUp}
+      aria-label="Move up"
+      onClick={(e) => {
+        e.stopPropagation();
+        move.onMoveUp();
+      }}
+    >
+      ▲
+    </button>
+    <button
+      type="button"
+      style={{ ...arrowButtonStyle, opacity: move.canMoveDown ? 0.6 : 0.2 }}
+      disabled={!move.canMoveDown}
+      aria-label="Move down"
+      onClick={(e) => {
+        e.stopPropagation();
+        move.onMoveDown();
+      }}
+    >
+      ▼
+    </button>
+  </span>
+);
+
 // Built from Cards, not paper-ui's Table, sharing the .plan-rows-grid column
 // template (utilities.css) so the header and rows line up.
-export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: PlanRowsProps) => {
+export const PlanRows = ({
+  plans,
+  activePlanTitle,
+  onOpen,
+  showHeader = true,
+  getMoveControls,
+}: PlanRowsProps) => {
   const gridClass = 'plan-rows-grid';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
@@ -45,6 +102,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
       )}
       {plans.map((plan) => {
         const progress = phaseProgress(plan);
+        const move = getMoveControls?.(plan);
         return (
           <div
             key={plan.title}
@@ -66,8 +124,17 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
           >
             <Card size="small" texture="canvas" className="plan-row-card">
               <div className={gridClass}>
-                <span className="text-sm" style={{ opacity: plan.order !== undefined ? 0.6 : 0.3 }}>
+                <span
+                  className="text-sm"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: space[1],
+                    opacity: plan.order !== undefined ? 0.6 : 0.3,
+                  }}
+                >
                   {plan.order ?? '—'}
+                  {move && <OrderMoveArrows move={move} />}
                 </span>
                 <PlanIdStamp id={plan.id} />
                 <span

@@ -28,8 +28,14 @@ import {
 import { readBody, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
-function findWorkEntity(entries: EntityEntry[], key: string): EntityEntry | undefined {
-  return entries.find((e) => e.kind !== 'note' && (e.title === key || e.id === key));
+function findWorkEntity(
+  entries: EntityEntry[],
+  key: string,
+  opts?: { includeNotes?: boolean },
+): EntityEntry | undefined {
+  return entries.find(
+    (e) => (opts?.includeNotes || e.kind !== 'note') && (e.title === key || e.id === key),
+  );
 }
 
 export function planRoutes({ root, git }: RouteContext): Route[] {
@@ -128,6 +134,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           log?: LogEntry[];
           agent?: AgentId | null;
           subject?: string | null;
+          order?: number | null;
         };
         if (updates.agent && !AGENT_IDS.includes(updates.agent)) {
           sendJson(res, 400, { error: 'agent must be a known agent id' });
@@ -136,7 +143,9 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
 
         const ideasDir = campFile(root, 'ideas');
         const { entries } = await readEntities(ideasDir);
-        const target = findWorkEntity(entries, title.trim());
+        // order is the one field notes can carry too — the up/down worklist
+        // controls need to reorder a note against its plan/idea neighbours.
+        const target = findWorkEntity(entries, title.trim(), { includeNotes: true });
 
         if (!target) {
           sendJson(res, 404, { error: 'entity not found' });
@@ -163,6 +172,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           ...(updates.log !== undefined && { log: updates.log }),
           ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
           ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
+          ...(updates.order !== undefined && { order: updates.order ?? undefined }),
           updated: todayDateString(),
         };
 

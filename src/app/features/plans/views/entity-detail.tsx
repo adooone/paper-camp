@@ -10,6 +10,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Input,
   Select,
   Spinner,
   Stamp,
@@ -18,7 +19,7 @@ import {
   Tooltip,
   useToast,
 } from '@dendelion/paper-ui';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
@@ -62,6 +63,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
   const auditRunning = planTask?.taskKind === 'audit';
   const [logInput, setLogInput] = useState('');
+  const [orderInput, setOrderInput] = useState(plan.order !== undefined ? String(plan.order) : '');
+  useEffect(() => {
+    setOrderInput(plan.order !== undefined ? String(plan.order) : '');
+  }, [plan.order]);
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
   const ideaView: IdeaEntry = {
@@ -109,6 +114,17 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
   const handleSubjectChange = async (value: string) => {
     await patchByTitle(plan.title, { subject: value === NO_SUBJECT ? null : value });
+  };
+
+  const handleOrderBlur = async () => {
+    const trimmed = orderInput.trim();
+    const nextOrder = trimmed === '' ? null : Number(trimmed);
+    if (nextOrder !== null && !Number.isInteger(nextOrder)) {
+      setOrderInput(plan.order !== undefined ? String(plan.order) : '');
+      return;
+    }
+    if (nextOrder === (plan.order ?? null)) return;
+    await patchByTitle(plan.title, { order: nextOrder });
   };
 
   const handleAddLogEntry = async () => {
@@ -174,6 +190,18 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             ...subjects.map((s) => ({ value: s, label: s })),
           ]}
         />
+        <div style={{ width: 90 }}>
+          <Input
+            type="number"
+            size="small"
+            label="Order"
+            placeholder="—"
+            value={orderInput}
+            onChange={(e) => setOrderInput(e.target.value)}
+            onBlur={handleOrderBlur}
+            disabled={updating}
+          />
+        </div>
         {plan.tags.map((tag) => (
           <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
             {tag}

@@ -1,6 +1,7 @@
 import { LightbulbIcon, NoteIcon } from '@/app/components/icons';
 import type { IdeaGroupRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
 import { groupRowsBySubject } from '@/app/features/plans/helpers';
+import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useProjectSubjects } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontSize, space } from '@/app/styles/tokens';
@@ -10,7 +11,8 @@ import { useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton } from '../actions';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../constants';
-import { PlanRows } from './plan-rows';
+import type { RowMoveControls } from './plan-rows';
+import { OrderMoveArrows, PlanRows } from './plan-rows';
 
 /** Past this many children, done ones collapse behind a "+N done" toggle. */
 const DONE_COLLAPSE_THRESHOLD = 5;
@@ -82,6 +84,11 @@ const titleTextStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+const rowTitle = (row: WorklistRow): string =>
+  row.type === 'plan' ? row.plan.title : row.idea.title;
+const rowOrder = (row: WorklistRow): number | undefined =>
+  row.type === 'plan' ? row.plan.order : row.idea.order;
+
 export const WorklistRows = ({
   rows,
   plans,
@@ -96,6 +103,7 @@ export const WorklistRows = ({
   const sortDirection = useAppStore((s) => s.planFilters.sortDirection);
   const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);
   const togglePlanSortDirection = useAppStore((s) => s.togglePlanSortDirection);
+  const { patch } = usePlanStatusPatch();
 
   const handleSort = (key: PlanSortKey) => {
     if (key === sortKey) togglePlanSortDirection();
@@ -111,7 +119,38 @@ export const WorklistRows = ({
     });
   };
 
-  const renderRow = (row: WorklistRow) => {
+  // Swaps only the two `order:` values involved — everything else about the
+  // two rows is left untouched.
+  const swapOrder = async (a: WorklistRow, b: WorklistRow) => {
+    const aOrder = rowOrder(a);
+    const bOrder = rowOrder(b);
+    await patch(rowTitle(a), { order: bOrder ?? null });
+    await patch(rowTitle(b), { order: aOrder ?? null });
+  };
+
+  // Up/down only moves rows within the order actually shown, so a swap always
+  // has a visible effect; sorting by anything else, "up" wouldn't move the row.
+  const moveControlsFor =
+    (list: WorklistRow[]) =>
+    (row: WorklistRow): RowMoveControls | undefined => {
+      if (sortKey !== 'order') return undefined;
+      const index = list.indexOf(row);
+      const prev = list[index - 1];
+      const next = list[index + 1];
+      return {
+        canMoveUp: Boolean(prev),
+        canMoveDown: Boolean(next),
+        onMoveUp: () => {
+          if (prev) void swapOrder(row, prev);
+        },
+        onMoveDown: () => {
+          if (next) void swapOrder(row, next);
+        },
+      };
+    };
+
+  const renderRow = (row: WorklistRow, list: WorklistRow[]) => {
+    const getMoveControls = moveControlsFor(list);
     if (row.type === 'plan') {
       return (
         <PlanRows
@@ -120,11 +159,19 @@ export const WorklistRows = ({
           activePlanTitle={activePlanTitle}
           onOpen={onOpenPlan}
           showHeader={false}
+          getMoveControls={(p) => getMoveControls({ type: 'plan', plan: p })}
         />
       );
     }
     if (row.type === 'note') {
-      return <NoteRowCard key={row.idea.title} row={row} onOpen={onOpenIdea} />;
+      return (
+        <NoteRowCard
+          key={row.idea.title}
+          row={row}
+          onOpen={onOpenIdea}
+          move={getMoveControls(row)}
+        />
+      );
     }
     return (
       <IdeaGroupRowCard
@@ -173,10 +220,10 @@ export const WorklistRows = ({
               style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
             >
               <div style={subjectHeaderStyle}>{group.subject ?? 'No subject'}</div>
-              {group.rows.map(renderRow)}
+              {group.rows.map((row) => renderRow(row, group.rows))}
             </div>
           ))
-        : rows.map(renderRow)}
+        : rows.map((row) => renderRow(row, rows))}
     </div>
   );
 };
@@ -184,9 +231,11 @@ export const WorklistRows = ({
 const NoteRowCard = ({
   row,
   onOpen,
+  move,
 }: {
   row: NoteRow;
   onOpen?: (title: string) => void;
+  move?: RowMoveControls;
 }) => {
   const idea = row.idea;
   const status = idea.status ?? 'open';
@@ -209,8 +258,17 @@ const NoteRowCard = ({
     >
       <Card size="small" texture="canvas" className="plan-row-card">
         <div className={'plan-rows-grid'}>
-          <span className="text-sm" style={{ opacity: idea.order !== undefined ? 0.6 : 0.3 }}>
+          <span
+            className="text-sm"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: space[1],
+              opacity: idea.order !== undefined ? 0.6 : 0.3,
+            }}
+          >
             {idea.order ?? '—'}
+            {move && <OrderMoveArrows move={move} />}
           </span>
           {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
           <span style={{ ...titleButtonStyle, cursor: 'inherit' }}>
