@@ -2,6 +2,58 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0](https://github.com/adooone/paper-camp/compare/v0.8.0...v0.9.0) (2026-07-18)
+
+
+### Features
+
+* **app:** Add a tasks page for the log ([45d3616](https://github.com/adooone/paper-camp/commit/45d361639bcef8541f4643ee0a99b3950ab02291))
+* **app:** Add refresh button and fix busy/audit-status detection ([e4fbcca](https://github.com/adooone/paper-camp/commit/e4fbcca8a01c88be8356437a1da50c044964b55d))
+* **app:** Add the active-key caret and `aria-sort` ([0593d98](https://github.com/adooone/paper-camp/commit/0593d98d72be72045765c5dfe601a8645a3d66bd))
+* **app:** Carry the task id on the SSE tick and client state ([0be8193](https://github.com/adooone/paper-camp/commit/0be81939e2b4319031a98610f42a04b87521f05d))
+* **app:** Confirm paper-ui `Table` header support ([b73b090](https://github.com/adooone/paper-camp/commit/b73b090a3c05d1457e4e00ff2dabe9cc67a11237))
+* **app:** Define the write-set collision gate ([7e2fca2](https://github.com/adooone/paper-camp/commit/7e2fca267ae3d43d34165e5f90281072cccf8671))
+* **app:** Fan `current` into a task registry ([634b513](https://github.com/adooone/paper-camp/commit/634b5132bb54ddfa2fcca75e6d259743c642563e))
+* **app:** Gate: checks plus click each column ([a3afd99](https://github.com/adooone/paper-camp/commit/a3afd990fc82be9d95d4290ca1833fd0b5d4dcfc))
+* **app:** Let the always-safe kinds through ([35a5b5a](https://github.com/adooone/paper-camp/commit/35a5b5a14f2b6a33d81796834776c01fa5c5c227))
+* **app:** Link a Stack card to its task page ([535982f](https://github.com/adooone/paper-camp/commit/535982f7cd8f69b95c6a4971c128818d134edcac))
+* **app:** Make `killCurrent` kill every task ([88fe5c2](https://github.com/adooone/paper-camp/commit/88fe5c27c4ff5acc5a61e11efe19836df6c14da4))
+* **app:** Make the header labels sortable buttons ([738bf9c](https://github.com/adooone/paper-camp/commit/738bf9c14c28b444cca699a7ebb503ded77616c8))
+* **app:** Make the Stack Agent card a real stack ([605bd19](https://github.com/adooone/paper-camp/commit/605bd19b4a536c5c47fa8d52c840717304b5abe6))
+* **app:** Persist each task's log lines ([cff0748](https://github.com/adooone/paper-camp/commit/cff07489e524781ccbb91810c057542227bd73b9))
+* **app:** Persist finished tasks to a log file ([e5b12ba](https://github.com/adooone/paper-camp/commit/e5b12ba61fff7f87d1315904094ea14968c2a426))
+* **app:** Polish Stack agent cards and Tasks page list ([2f2bb1d](https://github.com/adooone/paper-camp/commit/2f2bb1d669d0012403ee7d7cb82bd71eb14e6f53))
+* **app:** Register read-only calls as tasks ([903eb4c](https://github.com/adooone/paper-camp/commit/903eb4c6422bd92ba7c8aca64cf7b41dd3a3471e))
+* **app:** Resolve the `created` key with no column ([f72db58](https://github.com/adooone/paper-camp/commit/f72db588a143a95f551b12bf016076f28d846a6c))
+* **app:** updates ([38e594c](https://github.com/adooone/paper-camp/commit/38e594ca561d9ccd002f07ce951769cbb22b3930))
+
+
+### Bug Fixes
+
+* **agent:** Parse fenced fix-review verdicts robustly ([e31c7dd](https://github.com/adooone/paper-camp/commit/e31c7dd548491c7d426e6d532ef83d0f1a679ced))
+* **app:** Handle stop/fetch errors and auto-expand highlighted task row ([60389b0](https://github.com/adooone/paper-camp/commit/60389b0e9999cc007bbdd8fd3bd90bd31eb228dc))
+* **server:** Make dirty sync deterministic and fix stale-merged gate ([3cb8374](https://github.com/adooone/paper-camp/commit/3cb83746154d1b18a50717a4f8a5cf7b3cc6b3e9))
+* **server:** Preserve staged index across dirty-sync stash ([024e491](https://github.com/adooone/paper-camp/commit/024e491b0554662e68522253f6b4cd920879308e))
+* **stack:** Reserve stable height for Agent task stack ([52057b1](https://github.com/adooone/paper-camp/commit/52057b1f454b9187825825a9335e81c7f81ab7aa))
+* **stack:** Reserve stable height for Agent task stack ([d2c394d](https://github.com/adooone/paper-camp/commit/d2c394db13cbdc1c907b8d321b5d8c19ff5c8f5c))
+* **stack:** Reserve stable height for Agent task stack ([b1591e6](https://github.com/adooone/paper-camp/commit/b1591e624f05ba6d36299b3cb691b866793daf77))
+* **stack:** Sync to main from a dirty merged branch ([b6cc75e](https://github.com/adooone/paper-camp/commit/b6cc75e927c1c3787f4157b46155b874b4678451))
+
+
+### Code Refactoring
+
+* **app:** Baseline the comment-line count per file ([8a11411](https://github.com/adooone/paper-camp/commit/8a114115817c17006f03379da5ebd4441cf6f052))
+* **app:** Gate and report the net movement ([b34f4e4](https://github.com/adooone/paper-camp/commit/b34f4e4be2beabeb4d7dda944d0e896c09a510c0))
+* **app:** Sweep the git-pr docstring pair against §7 ([1fe15e1](https://github.com/adooone/paper-camp/commit/1fe15e115ed0d39f5a8a1764b5a393ec2a407b0d))
+* **app:** Sweep the remaining long tail across `src/` ([46cef12](https://github.com/adooone/paper-camp/commit/46cef12b87a87475b42831cf84622c30afbd4350))
+* **app:** Sweep the store / serialize / types trio ([694e826](https://github.com/adooone/paper-camp/commit/694e8263bad4c43800c8a58f401ca80df211d6f4))
+* **app:** Sweep the two server files ([32f5171](https://github.com/adooone/paper-camp/commit/32f517171b57620e96971332c24800e48d4132a2))
+
+
+### Documentation
+
+* **ideas:** Update IDEA-63's stale baseline to the verified 1536/8.2% ([c55c670](https://github.com/adooone/paper-camp/commit/c55c670ac91e69a5227941e16c26c429b1379eed))
+
 ## [0.8.0](https://github.com/adooone/paper-camp/compare/v0.7.0...v0.8.0) (2026-07-15)
 
 
