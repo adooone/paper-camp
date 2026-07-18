@@ -1,0 +1,21 @@
+Agent session started
+Running Bash…
+Tool finished
+Running Read…
+Tool finished
+Running Edit…
+Tool finished
+Now run the check suite (structure-only doc edit, but per instructions still validate).
+Running Bash…
+Tool finished
+Running Bash…
+Tool finished
+Both clean. This is a plan-file-only change with no code/test impact, so I'll skip the test run's relevance but confirm nothing else changed.
+Running Bash…
+Tool finished
+Only the plan file changed, as expected. Updated the stale `1431 / 7.8%` baseline in the phase-1 instruction (line 27) to the verified `1536 / 8.2%` from `progress.md`'s phase-1 remeasurement, while leaving line 14's reference to IDEA-59's original stale figure untouched (it's historical context about that prior plan, not the fixed baseline later phases measured against). No phases touched, no frontmatter touched, `tsc`/`biome` clean.
+
+{"commit": {"title": "docs(ideas): Update IDEA-63's stale baseline to the verified 1536/8.2%", "message": "Phase 1's fixed baseline in the plan text still said 1431/7.8% (IDEA-59's stale number) even though progress.md records the actual phase-1 remeasurement as 1536/8.2%, leaving the plan internally inconsistent for future verification.\n\nRefs: IDEA-63"}, "addressed": [1], "skipped": []}
+Only the plan file changed, as expected. Updated the stale `1431 / 7.8%` baseline in the phase-1 instruction (line 27) to the verified `1536 / 8.2%` from `progress.md`'s phase-1 remeasurement, while leaving line 14's reference to IDEA-59's original stale figure untouched (it's historical context about that prior plan, not the fixed baseline later phases measured against). No phases touched, no frontmatter touched, `tsc`/`biome` clean.
+
+{"commit": {"title": "docs(ideas): Update IDEA-63's stale baseline to the verified 1536/8.2%", "message": "Phase 1's fixed baseline in the plan text still said 1431/7.8% (IDEA-59's stale number) even though progress.md records the actual phase-1 remeasurement as 1536/8.2%, leaving the plan internally inconsistent for future verification.\n\nRefs: IDEA-63"}, "addressed": [1], "skipped": []}
