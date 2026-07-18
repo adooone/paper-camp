@@ -12,7 +12,7 @@ interface StatusSnapshot {
 }
 
 const CHECK_COMMANDS: Record<CheckName, string> = {
-  lint: 'npx biome lint .',
+  lint: 'npx biome lint . && node scripts/check-comments.mjs',
   format: 'npx biome format .',
   test: 'npx vitest run',
   // Codebase consistency — mirrors the CI "Consistency" job (dead code + architecture).

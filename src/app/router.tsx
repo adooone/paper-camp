@@ -7,7 +7,7 @@ import {
   useNavigate,
   useRouterState,
 } from '@tanstack/react-router';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel, StatusBar } from './components';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
@@ -182,7 +182,7 @@ const RootLayout = () => {
               {/* --pc-sidebar-h: the sticky sidebar can't size off this group (it's as
                   tall as the page). lg only — below that it's a full-height drawer. */}
               <div
-                className="flex min-w-0 justify-center lg:[--pc-sidebar-h:calc(100vh-128px)]"
+                className="flex min-w-0 justify-center lg:[--pc-sidebar-h:calc(100vh-160px)]"
                 style={{
                   gap: layoutConfig.contentGap,
                   width: '100%',
@@ -217,31 +217,28 @@ const RootLayout = () => {
                   className="flex flex-col min-w-0"
                   style={{ flex: isLarge ? '1 1 0%' : '0 1 800px' }}
                 >
-                  {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
-                      stretch, so without it the sheet sizes to its content. */}
-                  <Page
-                    texture={{ texture: 'parchment' }}
-                    outline
-                    style={{
-                      height: 'auto',
-                      width: '100%',
-                      ...(isLarge ? { maxWidth: 'none' } : {}),
-                    }}
+                  <motion.div
+                    key={pathname}
+                    {...crossfadeVariants(shouldReduceMotion)}
+                    transition={crossfadeTransition(shouldReduceMotion)}
+                    style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}
                   >
-                    <div style={{ position: 'relative' }}>
-                      <AnimatePresence>
-                        <motion.div
-                          key={pathname}
-                          {...crossfadeVariants(shouldReduceMotion)}
-                          transition={crossfadeTransition(shouldReduceMotion)}
-                        >
-                          <Suspense fallback={null}>
-                            <Outlet />
-                          </Suspense>
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-                  </Page>
+                    {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
+                        stretch, so without it the sheet sizes to its content. */}
+                    <Page
+                      texture={{ texture: 'parchment' }}
+                      outline
+                      style={{
+                        minHeight: 'calc(100vh - 160px)',
+                        width: '100%',
+                        ...(isLarge ? { maxWidth: 'none' } : {}),
+                      }}
+                    >
+                      <Suspense fallback={null}>
+                        <Outlet />
+                      </Suspense>
+                    </Page>
+                  </motion.div>
                 </div>
               </div>
             </div>

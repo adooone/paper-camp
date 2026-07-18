@@ -1,19 +1,20 @@
 import type { TargetAndTransition, Transition } from 'framer-motion';
 
-export function crossfadeTransition(shouldReduceMotion: boolean | null): Transition {
-  return { duration: shouldReduceMotion ? 0 : 0.15, ease: 'easeOut' };
+export function crossfadeTransition(shouldReduceMotion: boolean | null, delay = 0): Transition {
+  return shouldReduceMotion
+    ? { duration: 0, ease: 'easeOut' }
+    : { duration: 0.18, ease: 'easeOut', delay };
 }
 
-// Exit's `position: 'absolute'` is applied instantly rather than interpolated, taking the
-// leaving element out of flow so it overlays the entering one instead of pushing it down.
-export function crossfadeVariants(shouldReduceMotion: boolean | null): {
+export function crossfadeVariants(
+  shouldReduceMotion: boolean | null,
+  from: { x?: number; y?: number } = { y: 8 },
+): {
   initial: TargetAndTransition | undefined;
   animate: TargetAndTransition;
-  exit: TargetAndTransition | undefined;
 } {
   return {
-    initial: shouldReduceMotion ? undefined : { opacity: 0 },
-    animate: { opacity: 1 },
-    exit: shouldReduceMotion ? undefined : { opacity: 0, position: 'absolute', inset: 0 },
+    initial: shouldReduceMotion ? undefined : { opacity: 0, ...from },
+    animate: { opacity: 1, x: 0, y: 0 },
   };
 }

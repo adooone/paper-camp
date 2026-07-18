@@ -1,6 +1,6 @@
 import { crossfadeTransition, crossfadeVariants } from '@/app/styles/motion';
 import { layout, space } from '@/app/styles/tokens';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 
 interface SidebarShellProps {
@@ -75,15 +75,13 @@ export const SidebarShell = ({
         }}
       >
         <div style={{ flex: 1, overflowY: 'auto', paddingTop: space[5], position: 'relative' }}>
-          <AnimatePresence>
-            <motion.div
-              key={routeKey}
-              {...crossfadeVariants(shouldReduceMotion)}
-              transition={crossfadeTransition(shouldReduceMotion)}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+          <motion.div
+            key={routeKey}
+            {...crossfadeVariants(shouldReduceMotion, { x: -8 })}
+            transition={crossfadeTransition(shouldReduceMotion, 0.08)}
+          >
+            {children}
+          </motion.div>
         </div>
       </aside>
     </>
