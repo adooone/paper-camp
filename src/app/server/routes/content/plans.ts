@@ -1,6 +1,7 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readEntities } from '@/core/readers';
+import { readEntities, readWorkEntries } from '@/core/readers';
+import { normalizeRunOrder } from '@/core/run-order';
 import {
   archiveEntityFile,
   assignEntityId,
@@ -28,8 +29,14 @@ import {
 import { readBody, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
-function findWorkEntity(entries: EntityEntry[], key: string): EntityEntry | undefined {
-  return entries.find((e) => e.kind !== 'note' && (e.title === key || e.id === key));
+function findWorkEntity(
+  entries: EntityEntry[],
+  key: string,
+  opts?: { includeNotes?: boolean },
+): EntityEntry | undefined {
+  return entries.find(
+    (e) => (opts?.includeNotes || e.kind !== 'note') && (e.title === key || e.id === key),
+  );
 }
 
 export function planRoutes({ root, git }: RouteContext): Route[] {
@@ -128,6 +135,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           log?: LogEntry[];
           agent?: AgentId | null;
           subject?: string | null;
+          order?: number | null;
         };
         if (updates.agent && !AGENT_IDS.includes(updates.agent)) {
           sendJson(res, 400, { error: 'agent must be a known agent id' });
@@ -136,7 +144,9 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
 
         const ideasDir = campFile(root, 'ideas');
         const { entries } = await readEntities(ideasDir);
-        const target = findWorkEntity(entries, title.trim());
+        // order is the one field notes can carry too — the up/down worklist
+        // controls need to reorder a note against its plan/idea neighbours.
+        const target = findWorkEntity(entries, title.trim(), { includeNotes: true });
 
         if (!target) {
           sendJson(res, 404, { error: 'entity not found' });
@@ -163,6 +173,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           ...(updates.log !== undefined && { log: updates.log }),
           ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
           ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
+          ...(updates.order !== undefined && { order: updates.order ?? undefined }),
           updated: todayDateString(),
         };
 
@@ -184,6 +195,43 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         }
 
         await writeEntityFile(targetFile, entityFileInput(updatedEntry));
+
+        // Any status/order write can break the run-order invariant (contiguous
+        // 1..N over planned/in-progress/review); reflow the rest to restore it.
+        // Classification uses DERIVED status (readWorkEntries) — stored overrides
+        // lag reality (merged-PR entries stay `review`, phased ideas stay `idea`).
+        if (updates.order !== undefined || updates.status !== undefined) {
+          const moved =
+            typeof updates.order === 'number' ? { id: target.id, order: updates.order } : undefined;
+          const { entries: work } = await readWorkEntries(ideasDir);
+          const derived = new Map(work.map((w) => [w.id, w.status as string | undefined]));
+          const nextEntries = entries.map((e) => (e.id === target.id ? updatedEntry : e));
+          // Notes have no derived PlanStatus (readWorkEntries excludes them), so they sit
+          // outside the planned/in-progress/review invariant reflow enforces — leave their
+          // order as written rather than have them read as unordered and get cleared.
+          const classified = nextEntries
+            .filter((e) => e.kind !== 'note')
+            .map((e) => ({
+              id: e.id,
+              order: e.order,
+              created: e.created,
+              status:
+                e.id === target.id && updates.status !== undefined
+                  ? (updates.status ?? undefined)
+                  : (derived.get(e.id) ?? e.status),
+            }));
+          for (const change of normalizeRunOrder(classified, moved)) {
+            const primaryFile = join(ideasDir, `${change.id}.md`);
+            const file = (await fileExists(primaryFile))
+              ? primaryFile
+              : join(ideasDir, 'archive', `${change.id}.md`);
+            if (!(await fileExists(file))) continue;
+            const changedEntry = nextEntries.find((e) => e.id === change.id);
+            if (!changedEntry) continue;
+            await writeEntityFile(file, entityFileInput({ ...changedEntry, order: change.order }));
+          }
+        }
+
         await regenerateIndexes(root);
 
         // `done` is derived from a merged PR and needs no archiving; `dropped` has no

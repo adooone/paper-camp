@@ -46,6 +46,7 @@ describe('selectPlanRows', () => {
     ];
     const { rows } = selectPlanRows(entries, {
       ...DEFAULT_PLAN_LIST_FILTERS,
+      sortKey: 'status',
       statuses: ['in-progress', 'review', 'planned', 'idea'],
     });
     expect(rows.map((p) => p.title)).toEqual([
@@ -93,6 +94,45 @@ describe('selectPlanRows', () => {
     ];
     const { tagCounts } = selectPlanRows(entries);
     expect(tagCounts.ui).toBe(1);
+  });
+
+  it('sorts ordered entries ascending first, then unordered entries by created date, by default', () => {
+    const entries = [
+      plan({ title: 'unordered-new', status: 'planned', created: '2026-02-01' }),
+      plan({ title: 'ordered-2', status: 'planned', order: 2 }),
+      plan({ title: 'unordered-old', status: 'planned', created: '2026-01-01' }),
+      plan({ title: 'ordered-1', status: 'planned', order: 1 }),
+    ];
+    const { rows } = selectPlanRows(entries, {
+      ...DEFAULT_PLAN_LIST_FILTERS,
+      statuses: ['planned'],
+    });
+    expect(rows.map((p) => p.title)).toEqual([
+      'ordered-1',
+      'ordered-2',
+      'unordered-old',
+      'unordered-new',
+    ]);
+  });
+
+  it('keeps unordered entries last even when sorting order descending', () => {
+    const entries = [
+      plan({ title: 'unordered-new', status: 'planned', created: '2026-02-01' }),
+      plan({ title: 'ordered-2', status: 'planned', order: 2 }),
+      plan({ title: 'unordered-old', status: 'planned', created: '2026-01-01' }),
+      plan({ title: 'ordered-1', status: 'planned', order: 1 }),
+    ];
+    const { rows } = selectPlanRows(entries, {
+      ...DEFAULT_PLAN_LIST_FILTERS,
+      statuses: ['planned'],
+      sortDirection: 'desc',
+    });
+    expect(rows.map((p) => p.title)).toEqual([
+      'ordered-2',
+      'ordered-1',
+      'unordered-old',
+      'unordered-new',
+    ]);
   });
 });
 
@@ -156,11 +196,26 @@ describe('selectWorklistRows', () => {
     ];
     const { rows } = selectWorklistRows(plans, ideas, {
       ...DEFAULT_PLAN_LIST_FILTERS,
+      sortKey: 'status',
       statuses: ['in-progress', 'planned'],
     });
     expect(rows.map((r) => (r.type === 'plan' ? r.plan.title : r.idea.title))).toEqual([
       'Top plan',
       'Grouped idea',
+    ]);
+  });
+
+  it('sorts by order by default, taking an idea-group or note row order from the idea itself', () => {
+    const ideas = [
+      idea({ id: 'IDEA-7', title: 'Grouped idea', order: 2 }),
+      idea({ id: 'IDEA-8', title: 'Note', kind: 'note', order: 1 }),
+    ];
+    const plans = [plan({ title: 'Orphan plan', idea: undefined, order: 3 })];
+    const { rows } = selectWorklistRows(plans, ideas);
+    expect(rows.map((r) => (r.type === 'plan' ? r.plan.title : r.idea.title))).toEqual([
+      'Note',
+      'Grouped idea',
+      'Orphan plan',
     ]);
   });
 });

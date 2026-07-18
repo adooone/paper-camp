@@ -57,13 +57,21 @@
 | IDEA-53 | Fix Review status bugs | fix | done | app, plans, core |
 | IDEA-54 | Default font and Stack panel cleanup | refactor | done | app, ui, paper-ui |
 | IDEA-55 | Actualise all ideas at once | feat | done | app, plans, agent |
-| IDEA-56 | Derive status from git and PR state | feat | done | app, github, plans, core |
+| IDEA-56 | Derive status from git and PR state | feat | dropped | app, github, plans, core |
 | IDEA-57 | Drive PR review fixes from the app | feat | done | app, github, plans, agent |
 | IDEA-58 | Simplify and de-dupe the codebase | refactor | done | app, refactor, core |
 | IDEA-59 | Trim comments to the essential | refactor | done | app, core, refactor, docs |
 | IDEA-60 | Group code into domain subfolders | refactor | done | app, refactor, core |
 | IDEA-61 | Speed up API reads and refetch churn | refactor | done | app, core, performance |
-| IDEA-62 | AI-suggested idea drafts | feat | review | app, ideas, agent |
-| IDEA-63 | Sweep comments to the §7 bar | refactor | idea | app, core, refactor, docs |
-| IDEA-64 | Sort the worklist by column header | feat | idea | app, plans, ui |
-| IDEA-65 | Parallel agents and a task log | feat | idea | app, agent, stack, ui |
+| IDEA-62 | AI-suggested idea drafts | feat | done | app, ideas, agent |
+| IDEA-63 | Sweep comments to the §7 bar | refactor | done | app, core, refactor, docs |
+| IDEA-64 | Sort the worklist by column header | feat | done | app, plans, ui |
+| IDEA-65 | Parallel agents and a task log | feat | done | app, agent, stack, ui |
+| IDEA-66 | Sync from a dirty merged branch | fix | done | app, stack, git, ux |
+| IDEA-67 | Deterministic dirty sync | fix | done | app, server, git, agent |
+| IDEA-68 | Trim the UI to what's used | refactor | done | app, ui, docs, settings, tasks |
+| IDEA-69 | Slim the codebase for release | refactor | planned | app, core, cli, refactor |
+| IDEA-70 | Subjects and idea-detail polish | feat | done | app, plans, ideas, settings, ui |
+| IDEA-71 | Run order for the worklist | feat | review | app, plans, ideas, ui |
+| IDEA-72 | Truthful status and one-click archive | feat | planned | app, plans, agent, git, ui |
+| IDEA-73 | Smooth the page transitions | fix | done | app, ui, performance |

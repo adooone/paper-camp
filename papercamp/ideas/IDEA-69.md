@@ -4,11 +4,14 @@ title: Slim the codebase for release
 type: refactor
 status: idea
 created: 2026-07-17
+updated: 2026-07-18
 tags:
   - app
   - core
   - cli
   - refactor
+subject: Code health
+order: 3
 ---
 
 Full-code simplification pass before the next release: minimal, clean source with no behaviour change. [[IDEA-63]] already swept comments to 2.8%; this is the same discipline applied to the code itself. Non-test `src/` sits at **17,584 lines**, and the mass is concentrated the same way the comments were:

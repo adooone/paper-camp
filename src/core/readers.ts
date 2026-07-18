@@ -75,6 +75,7 @@ export function entityToPlan(e: EntityEntry, pr?: PrInfo, prLookupResolved = fal
     auditedHash: e.auditedHash,
     tags: e.tags,
     subject: e.subject,
+    order: e.order,
     body: e.body,
     phases: e.phases,
     log: e.log,
@@ -91,6 +92,8 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
     kind: 'note',
     status: e.status as IdeaStatus,
     subject: e.subject,
+    order: e.order,
+    created: e.created,
     log: e.log,
   };
 }

@@ -4,12 +4,15 @@ title: Truthful status and one-click archive
 type: feat
 status: idea
 created: 2026-07-17
+updated: 2026-07-18
 tags:
   - app
   - plans
   - agent
   - git
   - ui
+subject: Workflow
+order: 2
 ---
 
 The app already knows the truth about a plan's state and doesn't say it: the task registry knows an agent is working on IDEA-nn right now (the row still says *Planned*), and PR lookup knows the branch merged (the file still sits in `ideas/` as *review* forever, since `done` is a human-only promotion nobody performs). Two fixes, one principle — **derive the displayed truth, write files only at the human decision point.** Absorbs the dormant [[IDEA-56]] ("Derive status from git and PR state"), which had the same thesis and never started.

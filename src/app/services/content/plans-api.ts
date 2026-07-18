@@ -35,6 +35,8 @@ export const updatePlan = async (
     agent?: AgentId | null;
     /** `null` clears the frontmatter key, rendering the idea under "No subject". */
     subject?: string | null;
+    /** `null` clears the frontmatter key, so the row falls back to unordered. */
+    order?: number | null;
   },
 ): Promise<void> => {
   const response = await fetch(`/api/plans?title=${encodeURIComponent(title)}`, {

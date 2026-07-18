@@ -108,6 +108,8 @@ export interface PlanEntry {
   tags: string[];
   /** Absent renders under the virtual "No subject" group. */
   subject?: string;
+  /** Absent means unordered — sorts after all ordered entries, by created date. */
+  order?: number;
   body: string;
   phases: PhaseItem[];
   log?: LogEntry[];
@@ -157,6 +159,10 @@ export interface IdeaEntry {
   status?: IdeaStatus;
   /** Absent renders under the virtual "No subject" group. */
   subject?: string;
+  /** Absent means unordered — sorts after all ordered entries, by created date. */
+  order?: number;
+  /** Fallback sort key for unordered entries — see `order`. Absent on view-model-only IdeaEntry literals that never enter the worklist sort. */
+  created?: string;
   log?: LogEntry[];
 }
 
@@ -186,6 +192,8 @@ export interface EntityEntry {
   tags: string[];
   /** Absent renders as the virtual "No subject" group. */
   subject?: string;
+  /** Absent means unordered — sorts after all ordered entries, by created date. */
+  order?: number;
   body: string;
   phases: PhaseItem[];
   log?: LogEntry[];

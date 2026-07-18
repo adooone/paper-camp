@@ -1,4 +1,4 @@
-import { space } from '@/app/styles/tokens';
+import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { ReactNode } from 'react';
 
 interface SidebarSectionProps {
@@ -20,12 +20,12 @@ export const SidebarSection = ({ label, children, action }: SidebarSectionProps)
         }}
       >
         <span
-          className="text-xs"
           style={{
+            fontFamily: fontFamily.handwritten,
+            fontSize: fontSize.xs,
             fontWeight: 600,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            opacity: 0.4,
+            lineHeight: 1,
+            opacity: 0.45,
           }}
         >
           {label}
