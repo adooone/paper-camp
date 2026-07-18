@@ -32,6 +32,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
       {showHeader && (
         <Card size="small" texture="kraft" className="plan-row-card">
           <div className={gridClass}>
+            <span style={headerLabelStyle}>Order</span>
             <span style={headerLabelStyle}>Id</span>
             <span style={headerLabelStyle}>Title</span>
             <span className="plan-rows-cell-updated" style={headerLabelStyle}>
@@ -65,6 +66,9 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
           >
             <Card size="small" texture="canvas" className="plan-row-card">
               <div className={gridClass}>
+                <span className="text-sm" style={{ opacity: plan.order !== undefined ? 0.6 : 0.3 }}>
+                  {plan.order ?? '—'}
+                </span>
                 <PlanIdStamp id={plan.id} />
                 <span
                   style={{

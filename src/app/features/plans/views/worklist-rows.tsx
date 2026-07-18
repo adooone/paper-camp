@@ -53,6 +53,7 @@ const headerButtonStyle: React.CSSProperties = {
 };
 
 const SORT_COLUMNS: { key: PlanSortKey; label: string }[] = [
+  { key: 'order', label: 'Order' },
   { key: 'id', label: 'Id' },
   { key: 'title', label: 'Title' },
   { key: 'updated', label: 'Updated' },
@@ -208,6 +209,9 @@ const NoteRowCard = ({
     >
       <Card size="small" texture="canvas" className="plan-row-card">
         <div className={'plan-rows-grid'}>
+          <span className="text-sm" style={{ opacity: idea.order !== undefined ? 0.6 : 0.3 }}>
+            {idea.order ?? '—'}
+          </span>
           {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
           <span style={{ ...titleButtonStyle, cursor: 'inherit' }}>
             <NoteIcon />

@@ -111,7 +111,7 @@ header[class*="layout-module__header___"] {
      the flexible title is therefore a fixed width — that's what keeps the header
      labels sitting exactly over the row cells. Title owns the rest; Page caps
      content around ~750px, so the fixed columns stay lean. */
-  grid-template-columns: 76px minmax(0, 1fr) 84px 96px 112px;
+  grid-template-columns: 56px 76px minmax(0, 1fr) 84px 96px 112px;
   gap: 0.625rem;
   align-items: center;
 }
@@ -127,7 +127,7 @@ header[class*="layout-module__header___"] {
 
 @media (max-width: 1023px) {
   .plan-rows-grid {
-    grid-template-columns: 76px minmax(0, 1fr) 96px 112px;
+    grid-template-columns: 56px 76px minmax(0, 1fr) 96px 112px;
   }
   .plan-rows-cell-updated {
     display: none;

@@ -2,7 +2,7 @@ import type { IdeaEntry, IdeaStatus, PlanEntry, PlanStatus } from '@/types/index
 import { PLAN_STATUSES } from '@/types/index';
 import { phasePercentage } from './helpers';
 
-export type PlanSortKey = 'status' | 'updated' | 'title' | 'id' | 'progress';
+export type PlanSortKey = 'status' | 'updated' | 'title' | 'id' | 'progress' | 'order';
 type SortDirection = 'asc' | 'desc';
 
 export interface PlanListFilters {
@@ -25,7 +25,7 @@ export const DEFAULT_PLAN_LIST_FILTERS: PlanListFilters = {
   statuses: DEFAULT_VISIBLE_STATUSES,
   tags: [],
   search: '',
-  sortKey: 'status',
+  sortKey: 'order',
   sortDirection: 'asc',
   noteStatuses: DEFAULT_VISIBLE_NOTE_STATUSES,
 };
@@ -47,6 +47,11 @@ export interface PlanListResult {
 
 const updatedTimestamp = (plan: PlanEntry): number => {
   const parsed = new Date(plan.updated ?? plan.created).getTime();
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const createdTimestamp = (plan: PlanEntry): number => {
+  const parsed = new Date(plan.created).getTime();
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
@@ -82,6 +87,12 @@ const comparePlans = (a: PlanEntry, b: PlanEntry, key: PlanSortKey): number => {
       return idNumber(a) - idNumber(b);
     case 'progress':
       return (phasePercentage(b) ?? -1) - (phasePercentage(a) ?? -1);
+    case 'order': {
+      if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
+      if (a.order !== undefined) return -1;
+      if (b.order !== undefined) return 1;
+      return createdTimestamp(a) - createdTimestamp(b);
+    }
     default:
       return 0;
   }
@@ -240,6 +251,7 @@ const worklistSortProxy = (row: WorklistRow): PlanEntry => {
       tags: [],
       body: row.idea.body,
       phases: [],
+      order: row.idea.order,
     };
   }
 
@@ -258,6 +270,7 @@ const worklistSortProxy = (row: WorklistRow): PlanEntry => {
     }),
     title: row.idea.title,
     id: row.idea.id ?? undefined,
+    order: row.idea.order,
   };
 };
 

@@ -18,6 +18,7 @@ export const PlansListSkeleton = () => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }} aria-hidden="true">
     <Card size="small" texture="kraft" className="plan-row-card">
       <div className="plan-rows-grid">
+        <Skeleton variant="text" width={36} />
         <Skeleton variant="text" width={28} />
         <Skeleton variant="text" width={44} />
         <span className="plan-rows-cell-updated">
@@ -30,6 +31,7 @@ export const PlansListSkeleton = () => (
     {ROWS.map((r) => (
       <Card key={r.key} size="small" className="plan-row-card">
         <div className="plan-rows-grid">
+          <Skeleton variant="text" width={16} />
           <Skeleton variant="rect" width={44} height={18} />
           <Skeleton variant="text" width={r.title} />
           <span className="plan-rows-cell-updated">

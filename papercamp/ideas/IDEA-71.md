@@ -22,7 +22,7 @@ Design follows the [[IDEA-70]] subject pattern: one optional frontmatter key, vi
 ### Phases
 - [x] Add the order field to entities
       Optional `order:` integer frontmatter — types, parser, serializer round-trip with tests; absent key sorts as unordered, no migration.
-- [ ] Sort the worklist by run order
+- [x] Sort the worklist by run order
       Ordered first ascending, unordered after by created date, as the default sort; keep [[IDEA-64]] header sorting intact with order as a sortable column.
 - [ ] Set the order from the UI
       Up/down controls on the worklist row (neighbour swap, minimal frontmatter writes) and an order field in the idea detail view.
