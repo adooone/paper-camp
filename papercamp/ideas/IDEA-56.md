@@ -2,6 +2,7 @@
 id: IDEA-56
 title: Derive status from git and PR state
 type: feat
+status: dropped
 created: 2026-07-08
 updated: 2026-07-09
 tags:
@@ -10,6 +11,8 @@ tags:
   - plans
   - core
 ---
+
+Absorbed into [[IDEA-72]] (display-time effective status + one-click archive) — same thesis, narrower and shippable; this file stays as the original reasoning.
 
 Status is a stored frontmatter field, so keeping it honest means writing files: a plan reaching review, a branch being cut, the PR merging — each is a hand edit or an agent/CI commit, and the classic failure is drift (the index says `in-progress`, the file says `review`, the PR is already merged, and nobody updated anything). [[IDEA-35]] and the first cut of this idea both tried to *sync* the stored field from GitHub, which still means a commit on every merge. The better move is to stop storing the lifecycle status at all and **derive it from signals that already exist** — the phases, the branch, and the PR — so it can't go stale because there's nothing to keep in sync.
 
