@@ -36,9 +36,8 @@ export function envRoutes({ root }: RouteContext): Route[] {
       path: '/api/env',
       handle: async (req, res) => {
         const body = await readBody(req);
-        // `keep` marks a key the user left untouched — since GET no longer sends
-        // secret values, the server backfills its existing value rather than
-        // blanking it. New/edited keys carry their value as usual.
+        // `keep` marks a key left untouched: since GET never sends secret values, the
+        // server backfills the existing value instead of blanking it.
         const { entries } = JSON.parse(body) as {
           entries?: (EnvEntry & { keep?: boolean })[];
         };

@@ -3,12 +3,8 @@ import { useAppStore } from '@/app/stores/app-store';
 import { IconButton, useToast } from '@dendelion/paper-ui';
 import { motion, useReducedMotion } from 'framer-motion';
 
-/**
- * Manual "actualise data" for the worklist header. Distinct from `ActualiseAllButton`,
- * which launches a reconcile agent that *rewrites* entities — this only re-reads
- * what's already there (plans, ideas, suggestions, checks, git, PR/review state),
- * dropping the server's PR cache first so review signals aren't TTL-bound.
- */
+/** Only re-reads what's already there — distinct from `ActualiseAllButton`, which
+ * launches a reconcile agent that rewrites entities. */
 export const RefreshButton = () => {
   const refreshAll = useAppStore((s) => s.refreshAll);
   const refreshing = useAppStore((s) => s.refreshing);

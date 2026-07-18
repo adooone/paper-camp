@@ -38,9 +38,7 @@ export const ListView = ({
           onOpenIdea={onOpenIdea}
         />
       ) : (
-        // Plans exist but the active filters/search matched none. Without this the
-        // list renders blank — PlansPage only handles the "no plans at all" case.
-        // Show an explicit empty state instead (docs/UX_PRINCIPLES.md).
+        // PlansPage only handles the "no plans at all" case; this covers filters matching none.
         <p style={{ opacity: 0.5, padding: `${space[6]} 0`, textAlign: 'center' }}>
           No plans match your filters.
         </p>

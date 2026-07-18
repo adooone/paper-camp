@@ -38,7 +38,6 @@ export interface PhaseItem {
   source?: 'review';
 }
 
-/** Raw shape produced by the generic heading-block parser, before per-file validation. */
 export interface RawEntry {
   title: string;
   fields: Record<string, string>;
@@ -64,12 +63,7 @@ export type PrState = 'draft' | 'open' | 'closed' | 'merged';
 /** GitHub's PR review decision, as surfaced by `gh pr list --json reviewDecision`. */
 export type ReviewDecision = 'approved' | 'changes-requested' | 'review-required';
 
-/**
- * A single unresolved review comment/thread on a PR — the per-comment detail
- * `PrInfo.unresolvedThreadCount` only counts. Fetched by the fix-review launch
- * path (not `core/pr.ts`'s worklist resolver, which only needs the count) and
- * fed to `buildFixReviewPrompt` in `prompts.ts`.
- */
+// Per-comment detail; PrInfo.unresolvedThreadCount only counts these.
 export interface ReviewThread {
   /** GraphQL node id — what `resolveReviewThread`/`replyToReviewThread` address. */
   id: string;
@@ -80,18 +74,10 @@ export interface ReviewThread {
   body: string;
 }
 
-/**
- * What a fix-review agent reports back, parsed from the JSON object its prompt
- * requires as its final line. The agent no longer commits — a human does — so
- * this carries the message it proposes plus its per-comment verdicts, which drive
- * which PR threads get resolved (once the fix is pushed) and which get a reply
- * explaining why they were left alone.
- */
+// Parsed from the JSON object a fix-review agent's prompt requires as its final line.
 export interface FixReviewResult {
   commit: { title: string; message: string };
-  /** Thread ids the agent says its changes settle. */
   addressed: string[];
-  /** Thread ids it deliberately left alone, each with the reason to post back. */
   skipped: { threadId: string; why: string }[];
 }
 
@@ -124,7 +110,6 @@ export interface PlanEntry {
   phases: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
-  /** Live-resolved PR for this entity's branch, when one exists — see `core/pr.ts`. */
   pr?: PrInfo;
 }
 
@@ -171,11 +156,8 @@ export interface IdeaEntry {
   log?: LogEntry[];
 }
 
-// ---------------------------------------------------------------------------
-// Unified entity  (FEAT-42 phases 7+ — one file per entity: an "idea" for its
-// whole life, plan as an optional Phases section. Replaces PlanEntry/IdeaEntry
-// once the migration cutover lands.)
-// ---------------------------------------------------------------------------
+// Unified entity — one file per entity, plan as an optional Phases section.
+// Supersedes PlanEntry/IdeaEntry once the migration cutover lands.
 
 /** Work classification — same Conventional-Commits values as PlanKind; `kind` renamed to `type` in the unified schema. */
 export type EntityType = PlanKind;
@@ -209,11 +191,7 @@ export interface ProgressEntry {
   items: string[];
 }
 
-/**
- * A single line in `papercamp/suggestions.md` — an agent's disposable "you
- * might want to do X" hunch. No `id`, no `status`: it only becomes a real
- * idea if a human promotes it (see IDEA-62).
- */
+// No `id`/`status`: it only becomes a real idea if a human promotes it.
 export interface SuggestionEntry {
   date: string;
   title: string;
@@ -223,8 +201,7 @@ export interface SuggestionEntry {
 export interface EnvEntry {
   key: string;
   value: string;
-  /** Set on GET responses: the key exists in .env but its value is withheld
-   *  (secrets are never sent to the client). Absent when writing. */
+  /** Set on GET responses when the value is withheld — secrets never reach the client. */
   isSet?: boolean;
 }
 
@@ -257,8 +234,7 @@ export function coerceAgentConfig(v: unknown): AgentConfig {
   const toAgent = (a: unknown): AgentId =>
     AGENT_IDS.includes(a as AgentId) ? (a as AgentId) : 'claude-code';
   if (typeof v === 'string') return { agent: toAgent(v) };
-  // Tolerate null/undefined and partial legacy entries — a missing key must not
-  // throw (that would 500 the /api/config read this coercion exists to protect).
+  // A missing key must not throw — that would 500 the /api/config read this protects.
   const obj = (v ?? {}) as Record<string, unknown>;
   return {
     agent: toAgent(obj.agent),
@@ -340,11 +316,8 @@ export type TaskKind =
   | 'reconcile'
   | 'fix-review';
 
-/**
- * One line of the persisted task log (papercamp/tasks.log, JSON Lines) — the
- * machine's record of what ran, distinct from progress.md's prose narrative.
- * Survives a dev-server restart, unlike the in-memory task registry.
- */
+// Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
+// unlike the in-memory task registry.
 export interface TaskLogEntry {
   id: string;
   taskKind: TaskKind;
@@ -366,25 +339,16 @@ export interface AgentTaskState {
   ideaId?: string;
   agentId: AgentId;
   lines: string[];
-  /**
-   * fix-review only, once it has reported: the commit message the agent proposes
-   * for the work it left uncommitted. The commit form prefills from this — the
-   * agent knows the intent behind each fix, which a diff-based suggestion doesn't.
-   */
+  // fix-review only: prefills the commit form once the agent has reported.
   suggestedCommit?: { title: string; message: string };
 }
 
-// The AI Check-overlap action's triage result (IDEA-44 Tier 2): does the typed
-// text belong inside an existing idea, extend one, or is it genuinely new?
 export interface OverlapVerdict {
   verdict: 'existing' | 'extend' | 'new';
   targetId: string | null;
   reasoning: string;
 }
 
-// A single entity's proposed rewrite from a batch reconcile sweep, held server-side
-// (see startBatchReconcile in agent.ts) and served via GET /api/agent/reconcile-queue
-// once the sweep's `before` snapshot for that entity is known to have changed.
 export interface ReconcileQueueItem {
   planId: string;
   title: string;

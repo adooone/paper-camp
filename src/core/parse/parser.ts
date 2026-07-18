@@ -275,12 +275,6 @@ export function parseOpenQuestions(markdown: string): ParseResult<OpenQuestionEn
 
 const FRONTMATTER_RE = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n)?/;
 
-/**
- * Extracts and validates YAML frontmatter from a markdown string.
- * Returns the parsed data + body without warnings on success.
- * Returns partial data + warnings when frontmatter is absent, malformed,
- * or fails schema validation — never throws.
- */
 export function parseFrontmatter<T>(
   content: string,
   schema: z.ZodType<T>,
@@ -327,13 +321,6 @@ export function parseFrontmatter<T>(
   return { data: result.data, body, warnings };
 }
 
-/**
- * Parses a unified entity file: one file per entity — an "idea" for its whole
- * life, plan as an optional `### Phases` body section. Same body pipeline as
- * parsePlanFile (Phases/Log/Clarifications extraction); the frontmatter
- * differs: `type` instead of `kind`, no `idea:` backlink, and the note/status
- * asymmetry from the idea schema folded in.
- */
 export function parseEntityFile(content: string): ParseResult<EntityEntry> {
   const warnings: ParseWarning[] = [];
   const {
@@ -425,9 +412,6 @@ export function parsePlanFile(content: string): ParseResult<PlanEntry> {
   return { entries: [entry], warnings };
 }
 
-/**
- * Parse a single per-idea file with YAML frontmatter.
- */
 export function parseIdeaFile(content: string): ParseResult<IdeaEntry> {
   const {
     data: frontmatter,
@@ -457,8 +441,6 @@ const IDEA_ID_RE = /^(IDEA-\d+):\s*/;
 
 const IDEA_SEPARATOR_RE = /\n---+\n/;
 
-/** ideas.md is split into sections by `---` separators. Each section has an optional
- * `## IDEA-N:` heading prefix followed by a short title, and a prose body. */
 export function parseIdeas(markdown: string): IdeaEntry[] {
   const sections = markdown.split(IDEA_SEPARATOR_RE).filter(Boolean);
   return sections.map((section) => {
@@ -473,9 +455,6 @@ export function parseIdeas(markdown: string): IdeaEntry[] {
   });
 }
 
-/** Read-only cross-reference checks over already-parsed decisions/open-questions/plans —
- * dangling `resolved-by`/`superseded-by` titles, and open questions blocking an
- * already-active plan. */
 export function findConsistencyIssues(
   decisions: DecisionEntry[],
   openQuestions: OpenQuestionEntry[],
@@ -527,7 +506,6 @@ export function findConsistencyIssues(
 const PROGRESS_HEADING_RE = /^##\s+(\d{4}-\d{2}-\d{2})\s*$/;
 const BULLET_RE = /^[-*]\s+(.*)$/;
 
-/** progress.md is an append-only date log, not a record-based file — no fields, no validation. */
 export function parseProgress(markdown: string): ProgressEntry[] {
   const lines = markdown.split('\n');
   const headingIndices: number[] = [];
@@ -562,23 +540,14 @@ export function parseTaskLog(raw: string): TaskLogEntry[] {
     if (!trimmed) continue;
     try {
       entries.push(JSON.parse(trimmed) as TaskLogEntry);
-    } catch {
-      // skip malformed line
-    }
+    } catch {}
   }
   return entries;
 }
 
 export const SUGGESTION_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s+(.+?)\s+—\s+(.*)$/;
 
-/**
- * suggestions.md is a flat, append-only line log — sibling to decisions.md/
- * open-questions.md/progress.md but with no `## Heading` per entry and no
- * `**Field:**` lines: each line already carries its own date, title, and a
- * one-line description (like plans' dated `### Log` grammar), and there is
- * no `id` or `status` since a suggestion never counts as a plan/idea until a
- * human promotes it.
- */
+// No `id`/`status` fields: a suggestion isn't a plan/idea until a human promotes it.
 export function parseSuggestions(markdown: string): SuggestionEntry[] {
   const entries: SuggestionEntry[] = [];
   for (const line of markdown.split('\n')) {

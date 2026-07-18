@@ -20,8 +20,7 @@ import { StatusSection } from './status-section';
 interface StackPanelProps {
   open: boolean;
   onToggle: () => void;
-  // When pinned (large screens), the panel is always visible and can't be closed:
-  // the reopen handle and the close button are both hidden.
+  // When pinned, the reopen handle and close button are both hidden.
   pinned?: boolean;
 }
 
@@ -69,10 +68,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
 
   useEffect(() => {
     const es = new EventSource('/api/activity/stream');
-    // One timer per event type, not one shared: an agent streaming a line per log
-    // row must not keep pushing a pending check refresh out of reach. Each type
-    // maps to the narrowest loader that can show it — a check tick doesn't need
-    // the plans list, and an agent line doesn't need git status.
+    // One timer per event type: an agent streaming a line per log row must not keep
+    // pushing a pending check refresh out of reach.
     const timers: Record<string, ReturnType<typeof setTimeout> | undefined> = {};
     const schedule = (key: string, run: () => void, ms: number) => {
       if (timers[key]) clearTimeout(timers[key]);
@@ -95,9 +92,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         schedule('agent', () => refreshRef.current.loadAgentStatus(), 120);
         return;
       }
-      // A file actually changed on disk: the only tick broad enough to warrant
-      // reloading everything. Debounced so an agent writing several files in
-      // quick succession doesn't stampede all six loaders per tick.
+      // A file actually changed on disk: the only tick broad enough to reload everything.
+      // Debounced so an agent writing several files in succession doesn't stampede all six loaders.
       if (payload.message !== 'changed') return;
       schedule(
         'activity',
@@ -149,9 +145,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
               right: 0,
               top: '50%',
               transform: 'translateY(-50%)',
-              // Above the Layout header (z-200): the panel sits outside the main
-              // layout, so nothing from it may paint on top of the stack.
-              zIndex: 300,
+              zIndex: 300, // above the Layout header's z-200
               borderRadius: '6px 0 0 6px',
               background: deskBg,
               backgroundImage: `${CHALKBOARD_TEXTURE}, linear-gradient(135deg, ${deskLight} 0%, ${deskBg} 60%)`,

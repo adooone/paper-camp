@@ -14,12 +14,6 @@ import { resolvePrsByEntity } from './git-pr/pr-lookup';
 import { parseEntityFile } from './parse/parser';
 import { deriveStatus } from './status';
 
-// Reads the unified entity corpus under papercamp/ideas/ — one file per
-// entity, plan as an optional Phases section. Everything here touches the
-// filesystem; the pure string -> data parsing it builds on lives in
-// parser.ts. `paper-camp migrate` reads legacy two-file-format shapes through
-// the old parsers directly, not through this module.
-
 async function readdirMaybe(dir: string): Promise<string[]> {
   try {
     return await readdir(dir);
@@ -36,10 +30,6 @@ async function readFileMaybe(path: string): Promise<string> {
   }
 }
 
-/**
- * Reads every entity from the unified directory, including its `archive/`
- * subdirectory (done/dropped entities live there). Excludes index.md.
- */
 export async function readEntities(
   ideasDir: string,
 ): Promise<ParseResult<EntityEntry> & { fileCount: number }> {
@@ -68,18 +58,9 @@ export async function readEntities(
   return { entries, warnings, fileCount };
 }
 
-/**
- * PlanEntry view of a work entity (anything that isn't a note): `kind` is the
- * entity's `type`. Lets the plan-shaped pipeline (API responses, prompts, UI)
- * keep working until the UI morphs to entities directly.
- *
- * `status` is derived from phases + PR state rather than read straight off
- * `e.status` — see `deriveStatus`. `pr` is the entity's resolved PR (or
- * `undefined`); `prLookupResolved` is whether the PR listing succeeded (a
- * failed/absent lookup falls back to the stored override). Note this only
- * affects the *view*: `e.status` itself stays the raw stored override, so
- * round-tripping an `EntityEntry` back to disk never persists a derived value.
- */
+// status is derived via deriveStatus, not read from e.status: e.status stays the
+// raw stored override so round-tripping an EntityEntry back to disk never persists
+// a derived value.
 export function entityToPlan(e: EntityEntry, pr?: PrInfo, prLookupResolved = false): PlanEntry {
   return {
     title: e.title,
@@ -101,7 +82,6 @@ export function entityToPlan(e: EntityEntry, pr?: PrInfo, prLookupResolved = fal
   };
 }
 
-/** IdeaEntry view of a note entity, for the note-shaped API/UI surface. */
 export function entityToIdea(e: EntityEntry): IdeaEntry {
   return {
     id: e.id,
@@ -113,21 +93,15 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
   };
 }
 
-/** readEntities plus the one-shot PR resolution both derivation paths share. */
 async function readEntitiesAndPrs(ideasDir: string) {
   const { entries, warnings } = await readEntities(ideasDir);
   const prs = await resolvePrsByEntity(join(ideasDir, '..', '..'));
   return { entries, warnings, prs, resolved: prs !== undefined };
 }
 
-/**
- * Every entity (including notes) with `status` replaced by its derived value —
- * for callers that need the resolved lifecycle without the PlanEntry reshape,
- * namely index generation and the branch-guard. One `gh` PR listing resolves
- * every entity's PR (matched by id), cached. This is a shallow copy: it never
- * touches disk, so it's safe to feed straight back into
- * `entityToPlan`/`deriveStatus` elsewhere without risking a stale-status write.
- */
+// One `gh` PR listing resolves every entity's PR (cached); this is a shallow copy
+// that never touches disk, so it's safe to feed back into entityToPlan/deriveStatus
+// elsewhere without risking a stale-status write.
 export async function readEntitiesWithDerivedStatus(
   ideasDir: string,
 ): Promise<ParseResult<EntityEntry>> {
@@ -139,7 +113,6 @@ export async function readEntitiesWithDerivedStatus(
   return { entries: derived, warnings };
 }
 
-/** All work entities (non-notes) in PlanEntry shape — the `/api/plans` view. */
 export async function readWorkEntries(ideasDir: string): Promise<ParseResult<PlanEntry>> {
   const { entries, warnings, prs, resolved } = await readEntitiesAndPrs(ideasDir);
   return {
@@ -150,7 +123,6 @@ export async function readWorkEntries(ideasDir: string): Promise<ParseResult<Pla
   };
 }
 
-/** All note entities in IdeaEntry shape — the `/api/ideas` view. */
 export async function readNoteEntries(ideasDir: string): Promise<ParseResult<IdeaEntry>> {
   const { entries, warnings } = await readEntities(ideasDir);
   return {

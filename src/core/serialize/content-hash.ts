@@ -6,12 +6,8 @@ interface PlanContentInput {
   phases: PhaseItem[];
 }
 
-/**
- * Hashes a plan's meaningful content (phases + body prose), deliberately
- * ignoring `audited`/`audited-hash` and any other metadata so that
- * stamping the audit fields never changes the hash of the content it
- * describes.
- */
+// Deliberately excludes `audited`/`audited-hash` so stamping the audit fields
+// never changes the hash of the content it describes.
 export function computePlanContentHash(plan: PlanContentInput): string {
   const serialized = JSON.stringify({
     body: plan.body,

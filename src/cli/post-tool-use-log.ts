@@ -19,13 +19,8 @@ async function readConfig(root: string): Promise<PaperCampConfig | null> {
   }
 }
 
-/**
- * Opt-in PostToolUse hook body: logs brand-new files to progress.md.
- * Off unless papercamp/config.json sets `autoLogNewFiles: true`. Fires only for a Write
- * whose structuredPatch is empty — Claude Code leaves that empty when the Write tool
- * created the file rather than overwriting existing content — so edits, reads, searches,
- * and bash (none of which are Write calls) never match.
- */
+// Fires only for a Write whose structuredPatch is empty — Claude Code leaves that
+// empty when the Write tool created the file rather than overwriting existing content.
 export async function logNewFile(root: string, input: PostToolUseInput): Promise<void> {
   const config = await readConfig(root);
   if (!config?.autoLogNewFiles) return;

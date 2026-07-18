@@ -13,9 +13,8 @@ export const ReconcileButton = ({ plan, disabled }: ReconcileButtonProps) => {
   const launchPlanReconcile = useAppStore((s) => s.launchPlanReconcile);
   const [launching, setLaunching] = useState(false);
 
-  // The pre-launch snapshot and completion handling live in the store
-  // (see launchPlanReconcile / loadAgentStatus), so an in-flight reconcile still
-  // surfaces its diff panel even if this button unmounts (user navigates away).
+  // Snapshot + completion handling live in the store (launchPlanReconcile /
+  // loadAgentStatus), so an in-flight reconcile still shows its diff panel even if this button unmounts.
   const handleClick = async () => {
     if (!plan.id) return;
     setLaunching(true);

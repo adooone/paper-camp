@@ -30,13 +30,6 @@ const sectionLabelStyle: React.CSSProperties = {
   margin: `0 0 ${space[2]}`,
 };
 
-/**
- * The plans-list filters as a paper-texture "Filters" card, rendered in the router's
- * sidebar slot for `/` so it sits beside the list. Filter state lives in the store
- * (planFilters) so this card and the list stay in sync across the two subtrees. The
- * title, toolbar, and sort control live in the page header instead. Hidden while a
- * plan detail is open.
- */
 export const PlanFilterColumn = () => {
   const plans = useAppStore((s) => s.plans);
   const activePlanTitle = useActivePlanTitle();
@@ -71,8 +64,7 @@ export const PlanFilterColumn = () => {
   };
 
   return (
-    // Pull up by the SidebarShell's top padding so the card's top edge lines up
-    // with the Page surface (which starts flush at the top of the content row).
+    // Pull up by the SidebarShell's top padding to line up with the Page.
     <div style={{ marginTop: `calc(-1 * ${space[5]})` }}>
       <Card surface="paper" texture="speckle" size="small">
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
@@ -102,8 +94,7 @@ export const PlanFilterColumn = () => {
               {STATUS_CHIP_ORDER.map((status) => {
                 const isActive = activeStatuses.has(status);
                 return (
-                  // Raw <button>: a full-width toggle row (dot + label + count), not
-                  // a paper-ui Button, which draws its own filled/washed chrome.
+                  // Raw <button>: paper-ui Button draws its own filled/washed chrome.
                   <button
                     key={status}
                     type="button"
@@ -153,8 +144,7 @@ export const PlanFilterColumn = () => {
               {visibleTags.map((tag) => {
                 const isActive = activeTags.has(tag);
                 return (
-                  // Raw <button>: a toggleable tag chip with its own border/background
-                  // treatment, not a paper-ui Button.
+                  // Raw <button>: paper-ui Button doesn't offer this border/background treatment.
                   <button
                     key={tag}
                     type="button"
@@ -174,8 +164,7 @@ export const PlanFilterColumn = () => {
                   </button>
                 );
               })}
-              {/* Raw <button>: an inline text link, not LinkButton — this one needs its
-                  own muted opacity/font-size rather than LinkButton's fixed amber style. */}
+              {/* Raw <button>: needs a muted opacity/font-size LinkButton's fixed amber style can't give. */}
               {hiddenCount > 0 && (
                 <button type="button" onClick={() => setTagsExpanded(true)} style={linkStyle}>
                   +{hiddenCount} more

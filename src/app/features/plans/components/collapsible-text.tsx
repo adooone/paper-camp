@@ -3,19 +3,13 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 
 interface CollapsibleTextProps {
   children: ReactNode;
-  /** Lines shown while collapsed. */
   collapsedLines?: number;
   /** Changing this collapses again and re-measures — e.g. the active plan id. */
   resetKey?: string;
 }
 
-/**
- * Clamps long body text to the first few lines with a "Show more" toggle, so a
- * long idea rationale doesn't push the phases/actions below the fold. Uses a
- * line-clamp (clean cut on a line boundary, browser-drawn ellipsis) rather than a
- * gradient fade, which would have to guess the textured paper background colour.
- * The toggle only appears when the content actually overflows the clamp.
- */
+/** Uses a line-clamp (clean line-boundary cut, browser ellipsis) instead of a
+ * gradient fade, which would have to guess the textured paper background colour. */
 export const CollapsibleText = ({
   children,
   collapsedLines = 3,
@@ -25,12 +19,10 @@ export const CollapsibleText = ({
   const [expanded, setExpanded] = useState(false);
   const [overflows, setOverflows] = useState(false);
 
-  // A new entity collapses again from the top.
   // biome-ignore lint/correctness/useExhaustiveDependencies: resetKey is the trigger, not read
   useLayoutEffect(() => setExpanded(false), [resetKey]);
 
-  // resetKey re-measures on entity change: a clamped element's clientHeight is
-  // fixed, so a body swap alone won't trip the ResizeObserver below.
+  // A clamped element's clientHeight is fixed, so a body swap alone won't trip the ResizeObserver.
   // biome-ignore lint/correctness/useExhaustiveDependencies: resetKey is a re-measure trigger
   useLayoutEffect(() => {
     if (expanded) return; // keep the last measurement while open, so the toggle stays
@@ -60,13 +52,8 @@ export const CollapsibleText = ({
       >
         {children}
       </div>
-      {/* Raw <button>: paper-ui's Button is a filled/washed control with no bare
-          text-link variant, and this is a quiet inline disclosure link (matching
-          the worklist and filter "Show less" toggles). Conditionally mounted
-          rather than reserved with visibility:hidden: `overflows` is measured in
-          useLayoutEffect (pre-paint), so the toggle is already in the first
-          painted frame — no jump to reserve against — and short bodies that never
-          overflow don't carry a permanent empty gap. */}
+      {/* Raw <button>: paper-ui's Button has no bare text-link variant. Conditionally
+          mounted, not visibility:hidden — `overflows` is measured pre-paint. */}
       {overflows && (
         <button
           type="button"

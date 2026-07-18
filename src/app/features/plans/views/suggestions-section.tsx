@@ -9,14 +9,6 @@ interface SuggestionsSectionProps {
   onDismiss: (suggestion: SuggestionEntry) => void;
 }
 
-/**
- * IDEA-62 phase 3/5: the "holding pen" rendered below the worklist. Cards reuse
- * the idea-row Card styling (canvas texture, plan-row-card class) but drop
- * the id stamp and status Stamp that idea rows carry — a suggestion has
- * neither until a human promotes it, so the card is just a title. Clicking a
- * card opens the promote/dismiss modal (onOpen); the trailing × dismisses it
- * directly, same "×" IconButton plan-rows.tsx uses for backlog-idea deletion.
- */
 export const SuggestionsSection = ({ suggestions, onOpen, onDismiss }: SuggestionsSectionProps) => {
   if (suggestions.length === 0) return null;
 
@@ -30,8 +22,7 @@ export const SuggestionsSection = ({ suggestions, onOpen, onDismiss }: Suggestio
           <div key={`${suggestion.date}-${suggestion.title}`} style={{ borderRadius: 10 }}>
             <Card size="small" texture="canvas" className="plan-row-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-                {/* Raw <button>: a chromeless click target wrapping icon + title text,
-                    not a paper-ui Button — matches worklist-rows.tsx's titleButtonStyle. */}
+                {/* Raw <button>, not paper-ui's Button — matches worklist-rows.tsx's titleButtonStyle. */}
                 <button
                   type="button"
                   onClick={() => onOpen(suggestion)}

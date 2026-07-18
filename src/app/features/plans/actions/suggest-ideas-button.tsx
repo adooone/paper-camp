@@ -4,13 +4,8 @@ import { Button, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { buildSuggestIdeasPrompt } from '../prompts';
 
-/**
- * Manual trigger for IDEA-62 phase 4: launches an agent that scans the repo and
- * existing corpus and appends new lines to papercamp/suggestions.md via the dated
- * grammar. Not scoped to any plan or idea, so — unlike ActualiseAllButton, which
- * still needs the branch-conflict guard because it rewrites entity prose — this
- * needs no id and no guard (see launch-suggest's route comment).
- */
+// Not scoped to any plan or idea, so — unlike ActualiseAllButton, which rewrites
+// entity prose — this needs no branch-conflict guard.
 export const SuggestIdeasButton = () => {
   const launchSuggestIdeas = useAppStore((s) => s.launchSuggestIdeas);
   const ideaEntries = useAppStore((s) => s.ideaEntries);

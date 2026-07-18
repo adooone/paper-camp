@@ -1,11 +1,8 @@
 import { z } from 'zod';
 import { AGENT_IDS, PLAN_KINDS, PLAN_STATUSES } from '../types/index';
 
-/**
- * Output shapes for MCP read tools, mirroring the PlanEntry/OpenQuestionEntry/
- * DecisionEntry/ParseWarning shapes the dashboard API (`src/app/server/routes/reads.ts`)
- * already returns, so MCP clients see the same data.
- */
+// Mirrors the PlanEntry/OpenQuestionEntry/DecisionEntry/ParseWarning shapes the
+// dashboard API (src/app/server/routes/reads.ts) returns, so MCP clients see the same data.
 
 const logEntrySchema = z.object({
   date: z.string(),

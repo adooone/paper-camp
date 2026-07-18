@@ -17,12 +17,8 @@ function renderPlanLine(plan: PlanEntry): string {
   return lines.join('\n');
 }
 
-/**
- * Derives a focus block from live papercamp/ state — the in-progress plan (preferring
- * the one tied to the current feature branch), plus the last 3 progress.md bullets.
- * No stored `now.md`: this is recomputed every session so it can't drift from the
- * plans/log it's summarizing.
- */
+// No stored `now.md`: recomputed every session so it can't drift from the
+// plans/log it's summarizing.
 export async function buildSessionFocus(root: string): Promise<string | null> {
   if (!(await fileExists(campFile(root, 'ideas')))) return null;
 

@@ -13,17 +13,15 @@ export function statusRoutes({ activity, agent, git, status }: RouteContext): Ro
       },
     },
 
-    // Drops the resolved-PR cache so the *next* worklist read re-shells out to
-    // `gh` instead of serving up to PR_CACHE_TTL_MS-old review state. Without
-    // this a manual refresh would re-render the same stale PR/review signal.
+    // Drops the resolved-PR cache so the next worklist read re-shells out to `gh`
+    // instead of serving up to PR_CACHE_TTL_MS-old review state.
     {
       method: 'POST',
       path: '/api/refresh',
       handle: (_req, res) => {
         clearPrCache();
-        // Also drop the parsed-corpus cache: it bakes PR state into each entry and is
-        // only invalidated by the local file watcher, so a PR appearing on GitHub
-        // (no local file change) would otherwise keep serving PR-less entries.
+        // The corpus cache bakes PR state into each entry and is only invalidated by
+        // the file watcher, so a PR appearing on GitHub alone wouldn't refresh it.
         invalidateCorpusCache();
         sendJson(res, 200, { ok: true });
       },

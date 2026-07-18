@@ -67,8 +67,7 @@ export type AppStore = {
   ideaEntries: IdeaEntry[];
   loadIdeas: () => Promise<void>;
 
-  // Plans-list filters, lifted here so the left filter column and the list itself
-  // (separate subtrees since the column renders in the sidebar slot) share one source.
+  // Lifted here (not local state) so the sidebar filter column and the list share one source.
   planFilters: PlanListFilters;
   togglePlanStatus: (status: PlanStatus) => void;
   togglePlanTag: (tag: string) => void;
@@ -88,11 +87,7 @@ export type AppStore = {
   suggestions: SuggestionEntry[];
   suggestionsLoading: boolean;
   loadSuggestions: () => Promise<void>;
-  // IDEA-62 phase 5: mechanical half of "Move to ideas" — mints the id, writes the
-  // idea file, and removes the suggestion's line, then reloads suggestions/plans/ideas.
-  // Returns the new idea's id, for the caller to follow up with launchIdeaExtend.
   promoteSuggestion: (suggestion: SuggestionEntry) => Promise<string>;
-  // Dismissing a suggestion just deletes its line — no id was ever minted for it.
   dismissSuggestion: (suggestion: SuggestionEntry) => Promise<void>;
 
   progress: ProgressEntry[];
@@ -121,20 +116,12 @@ export type AppStore = {
 
   status: StatusState | null;
   loadStatus: () => Promise<void>;
-  // Manual "refresh everything" for the worklist header: drops the server's PR
-  // cache, then re-reads every worklist source so review/check/git signals are
-  // live rather than TTL-bound. Resolves with whether the read actually landed,
-  // so the caller can tell the user the truth instead of always claiming success.
   refreshAll: () => Promise<{ ok: boolean; error?: string }>;
   refreshing: boolean;
   runCheck: (name: CheckName) => Promise<void>;
   fixQuality: () => Promise<void>;
-  // One-click commit for the status bar: suggests a message from the diff and
-  // commits every changed file (the same suggest+commit the Stack form uses).
-  // Returns a result so the caller can toast success/failure.
   quickCommit: () => Promise<{ ok: boolean; title?: string; error?: string; warning?: string }>;
-  // Shared across the status bar's quickCommit and the Stack panel's commit
-  // form so the two flows can't race the same commit request.
+  // Shared by the status bar and the Stack panel so the two commit flows can't race.
   commitInFlight: boolean;
   setCommitInFlight: (inFlight: boolean) => void;
 
@@ -145,8 +132,7 @@ export type AppStore = {
   gitBranch: string | null;
   gitAhead: number;
   gitBranchHygiene: BranchHygieneStatus | null;
-  // Resolves to false when the refresh silently failed (state is unchanged/stale)
-  // so callers like quickCommit can tell that apart from a real success.
+  // Resolves false on failure (state left stale) so callers like quickCommit can tell.
   loadGitStatus: () => Promise<boolean>;
 
   agentStatus: AgentTaskState[];
@@ -166,21 +152,12 @@ export type AppStore = {
   launchFixReview: (planId: string) => Promise<void>;
   stopAgent: (taskId?: string) => Promise<void>;
 
-  // Snapshot captured when a single-plan reconcile is launched, held at store level
-  // (not in the button component) so an in-flight reconcile's completion is still
-  // handled if the user navigates away before the agent finishes. Consumed by
-  // loadAgentStatus when the reconcile task reaches 'done', at which point it's
-  // pushed onto reconcileQueue.
+  // Held at store level (not in the button component) so completion is still
+  // handled by loadAgentStatus if the user navigates away before the agent finishes.
   pendingReconcile: ReconcilePreview | null;
-  // Ordered queue of proposed rewrites awaiting review, one entry per entity, each
-  // held for a before/after diff panel until the user approves (keeps it) or
-  // discards (reverts it). Fed either by a single Reconcile completing (one entry)
-  // or by a batch reconcile sweep completing (many entries at once, fetched from
-  // GET /api/agent/reconcile-queue — see loadAgentStatus).
   reconcileQueue: ReconcilePreview[];
   removeFromReconcileQueue: (planId: string) => void;
-  // Guards loadAgentStatus against re-fetching/re-appending the same batch reconcile
-  // sweep's results on every poll while its task stays 'done' in the task list.
+  // Guards loadAgentStatus against re-appending the same batch sweep on every poll.
   batchReconcileConsumed: boolean;
 };
 
@@ -364,18 +341,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
     try {
       const data = await fetchStatus();
       set({ status: data });
-    } catch {
-      // keep previous status
-    }
+    } catch {}
   },
   refreshAll: async () => {
     set({ refreshing: true });
     try {
-      // Best-effort: a failed cache drop still leaves the reads below worth
-      // running (they'd just serve cached PR state), so it must not abort them.
       await dropServerCaches().catch(() => {});
-      // Each loader owns its own error handling and keeps prior state on failure,
-      // so one failing source can't blank the rest of the page.
       await Promise.all([
         get().loadPlans(),
         get().loadIdeas(),
@@ -385,9 +356,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         get().loadGitStatus(),
         get().loadAgentStatus(),
       ]);
-      // The loaders swallow their own errors, so `plansError` is the one signal
-      // that says whether the refresh actually reached the server — without it a
-      // refresh against a dead server would still report success.
+      // plansError is the one loader that surfaces failure; the rest swallow theirs.
       const error = get().plansError;
       return error ? { ok: false, error } : { ok: true };
     } finally {
@@ -440,9 +409,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     try {
       const data = await fetchConsistency();
       set({ consistency: data });
-    } catch {
-      // keep previous status
-    }
+    } catch {}
   },
 
   gitStatus: null,
@@ -460,7 +427,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
       });
       return true;
     } catch {
-      // keep previous status
       return false;
     }
   },
@@ -471,9 +437,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const data = await fetchAgentStatus();
       set({ agentStatus: data });
 
-      // Hand a finished single-plan reconcile's snapshot to the review queue. Lives
-      // here (not in ReconcileButton) so it fires regardless of which plan view is
-      // mounted.
       const pending = get().pendingReconcile;
       const reconcileTask = pending
         ? data.find((t) => t.taskKind === 'reconcile' && t.planId === pending.planId)
@@ -488,11 +451,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
         }
       }
 
-      // Hand a finished batch reconcile sweep's per-entity snapshots to the review
-      // queue, fetched from the server since (unlike single Reconcile) the client
-      // never captured a `before` snapshot itself. Guarded by batchReconcileConsumed
-      // so repeated polls of the same 'done' status don't re-append the same entries;
-      // the guard is reset at the next launch (see launchBatchReconcile).
       const batchTask = data.find((t) => t.taskKind === 'batch-reconcile');
       if (batchTask?.status === 'done' && !get().batchReconcileConsumed) {
         const results = await fetchReconcileQueue();
@@ -505,15 +463,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
             ],
           }));
         }
-        // Mark consumed only after the fetch+append succeeds. If fetchReconcileQueue
-        // throws, the catch below leaves the guard false so the next poll retries,
-        // rather than permanently skipping a finished batch. The guard is reset at
-        // launch (see launchBatchReconcile), not by observing a non-'done' poll.
+        // Set only after the fetch+append succeeds, so a throw here leaves it false and retries.
         set({ batchReconcileConsumed: true });
       }
-    } catch {
-      // keep previous status
-    }
+    } catch {}
   },
   launchAgent: async (planId, phaseIndex) => {
     await launchAgent(planId, phaseIndex);
@@ -524,12 +477,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await get().loadAgentStatus();
   },
   launchPlanReconcile: async (planId, prompt, before) => {
-    // Don't clobber an in-flight reconcile's snapshot: if one is already pending
-    // (same plan or not), refuse rather than overwrite it. Only one agent task
-    // runs at a time, so a second launch would 409 anyway — and clearing the slot
-    // on that failure would strip the earlier reconcile's diff safety net. A
-    // same-plan relaunch is reachable too (navigate away mid-reconcile and back —
-    // ReconcileButton's local `launching` flag resets on remount).
+    // Refuse rather than overwrite: clearing an existing pendingReconcile on a second
+    // launch would strip its diff safety net, and a same-plan relaunch is reachable
+    // (navigate away mid-reconcile and back resets ReconcileButton's local flag).
     const existing = get().pendingReconcile;
     if (existing) {
       throw new Error(
@@ -538,8 +488,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
           : 'A reconcile is already in progress for another plan',
       );
     }
-    // Record the pre-launch snapshot in the store before firing, so completion
-    // is handled by loadAgentStatus even if the launching component unmounts.
     set({ pendingReconcile: { planId, before } });
     try {
       await launchPlanReconcile(planId, prompt);
@@ -558,9 +506,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await get().loadAgentStatus();
   },
   launchBatchReconcile: async () => {
-    // Reset the consumed guard at launch (not by polling for an intermediate
-    // non-'done' status, which a fast poll can miss) so this sweep's results
-    // are shown even if the previous batch's 'done' was already consumed.
+    // Reset here, not by polling for a non-'done' status — a fast poll can miss it.
     set({ batchReconcileConsumed: false });
     await launchBatchReconcile();
     await get().loadAgentStatus();

@@ -1,10 +1,8 @@
 import type { IdeaEntry, PlanEntry, ReviewThread, SuggestionEntry } from '@/types/index';
 import type { SimilarityCandidate } from '../helpers';
 
-// Wording notes for these prompts: they all run headless (`claude -p` /
-// `opencode run` — see server/agents/), so they must never ask questions or wait
-// for input, and each one's "done" condition is checked mechanically by
-// agent.ts's didTaskProgress.
+// These prompts run headless (`claude -p` / `opencode run`), so they must never ask
+// questions or wait for input; each "done" condition is checked mechanically by agent.ts's didTaskProgress.
 
 export function buildConvergenceAuditPrompt(plan: PlanEntry): string {
   const phaseList = plan.phases
@@ -102,14 +100,8 @@ Keep unchanged:
 Append only — never rewrite or delete the idea's existing body or prior Log lines.`;
 }
 
-// Unlike buildIdeaExtendPrompt, this one only ever fires once per idea, right after
-// promote-suggestion's route has already minted the id, written the idea file (body =
-// the suggestion's one-liner), regenerated the index, and removed the line from
-// suggestions.md — see server/routes/content/ideas.ts's POST /api/suggestions/promote.
-// This prompt's job is purely the qualitative expansion; it reuses the same 'extend'
-// launch path (agent.startForIdeaExtend) and Log-append success check as
-// buildIdeaExtendPrompt, since by the time this prompt runs the idea is a normal
-// entity like any other.
+// Fires once per idea, right after promote-suggestion's route mints the id and writes
+// the idea file (server/routes/content/ideas.ts's POST /api/suggestions/promote); reuses buildIdeaExtendPrompt's launch path and success check.
 export function buildSuggestionPromotePrompt(idea: IdeaEntry): string {
   return `You are fleshing out the idea ${idea.id ?? 'no id'} ("${idea.title}"), stored as a single file at papercamp/ideas/${idea.id ?? '<ID>'}.md. Edit only that file, and within it only the \`### Log\` section.
 
@@ -174,11 +166,8 @@ ${plansContext}
 Use the open entities above only to avoid duplicating in-flight scope and to match phase granularity. Edit only papercamp/ideas/${idea.id ?? '<ID>'}.md — never create, edit, move, or rename any other file.`;
 }
 
-// Unlike every prompt above, this one runs on the plan's *existing* branch
-// against an *already-open* PR — it edits arbitrary source files (whatever each
-// thread points at, not just the entity file) and must commit and push so the
-// same PR picks up the fix, rather than leaving a diff for the app to detect
-// via file content.
+// Unlike the others, this runs on the plan's existing branch against an open PR and
+// edits arbitrary source files; it must commit+push itself since there's no entity diff for the app to detect.
 export function buildFixReviewPrompt(plan: PlanEntry, threads: ReviewThread[]): string {
   if (threads.length === 0) {
     return `You were launched to fix review comments on the open PR for the plan "${plan.title}" (${plan.id ?? 'no id'}), but no unresolved review threads were found. Make no changes at all — do not edit, commit, or push anything.`;
@@ -219,11 +208,8 @@ Rules:
 - If a comment needs a decision only a human can make, skip it and say so in its \`why\` instead of guessing.`;
 }
 
-// Unlike buildIdeaExtendPrompt/buildPlanDraftPrompt, this one isn't scoped to a
-// single idea — it scans the whole corpus and appends zero or more lines to the
-// suggestions.md holding pen (see server/agent.ts's startSuggest), so there's no
-// entity id to check success against; that's why suggestBaseline (a plain line
-// count) is what didTaskProgress compares instead.
+// Scans the whole corpus rather than one idea and appends to suggestions.md, so
+// there's no entity id to check success against — didTaskProgress compares suggestBaseline (a line count) instead.
 export function buildSuggestIdeasPrompt(
   ideas: IdeaEntry[],
   existingSuggestions: SuggestionEntry[],
@@ -255,10 +241,8 @@ Rules:
 - Never touch any other file in the repo.`;
 }
 
-// Unlike every prompt above, this one is read-only (see server/agent.ts's
-// runReadOnlyPrompt / runOverlapCheck) — it never edits a file, so its "done"
-// condition is the JSON verdict in its own stdout, not a mechanical check
-// against the repo.
+// Read-only (server/agent.ts's runReadOnlyPrompt/runOverlapCheck) — never edits a
+// file, so success is the JSON verdict in stdout, not a file-based check.
 export function buildOverlapCheckPrompt(text: string, candidates: SimilarityCandidate[]): string {
   const index = candidates.length
     ? candidates

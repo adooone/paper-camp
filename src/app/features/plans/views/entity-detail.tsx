@@ -36,11 +36,6 @@ interface EntityDetailProps {
   plan: PlanEntry;
 }
 
-/**
- * The one detail view for a work entity — idea-shaped until it has phases
- * (markdown rationale plus Draft-plan/Extend actions), plan-shaped after
- * (phases table, run controls, review actions). Notes render NoteDetail instead.
- */
 /** Parses the entity id a feature branch encodes (feat/idea-43-… → IDEA-43). */
 function branchEntityId(branch: string | null): string | null {
   const match = branch?.match(/^[a-z]+\/([a-z]+-\d+)-/);
@@ -64,8 +59,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const [logInput, setLogInput] = useState('');
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
-  // The IdeaEntry view of this entity, for the idea-scoped agent actions
-  // (draft/extend prompts take the idea shape).
   const ideaView: IdeaEntry = {
     id: plan.id ?? null,
     title: plan.title,
@@ -73,8 +66,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     log: plan.log,
   };
   const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
-  // Branch management is manual — the app never switches branches on its own.
-  // Surface where work would land, and offer the plan's branch as one click.
+  // The app never switches branches on its own; this just offers the plan's branch as one click.
   const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
   const showBranchRow =
     plan.status === 'planned' || plan.status === 'in-progress' || plan.status === 'review';
@@ -121,7 +113,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
   return (
     <div>
-      {/* Title on the left, updated/created on the right, same line. */}
       <div
         style={{
           display: 'flex',
@@ -161,7 +152,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         </div>
       )}
 
-      {/* Git branch + PR grouped together. */}
       {(showBranchRow || plan.pr) && (
         <div
           style={{
@@ -208,7 +198,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         </div>
       )}
 
-      {/* Progress bar: full width, last element of the header. */}
       {progress !== null && (
         <div
           style={{ display: 'flex', alignItems: 'center', gap: space[3], marginBottom: space[4] }}

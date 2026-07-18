@@ -14,8 +14,6 @@ export interface DerivedCheckStatuses {
   consistencyStatus: CheckStatus;
 }
 
-/** Combines lint+format into one "Quality" status and passes test/consistency
- * through, shared by the Status bar's stamps and the Stack panel's Status section. */
 export function deriveCheckStatuses(status: StatusState | null | undefined): DerivedCheckStatuses {
   return {
     qualityStatus: combine([status?.lint?.status ?? 'stale', status?.format?.status ?? 'stale']),

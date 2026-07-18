@@ -58,7 +58,6 @@ export function docsRoutes({ root }: RouteContext): Route[] {
           return;
         }
 
-        // Both targets validated — now write the two files.
         const decisionBlock = formatDecisionEntry({
           title: decision.trim(),
           date: todayDateString(),

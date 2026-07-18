@@ -1,5 +1,4 @@
-// Mirror of paper-ui's _tokens.scss values for use in TS/TSX.
-// Keep this in sync with the upstream source of truth.
+// Mirror of paper-ui's _tokens.scss values — keep in sync with that upstream source.
 
 export const fontFamily = {
   serif: "'Luminari', 'Cormorant Garamond', Georgia, serif",

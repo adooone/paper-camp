@@ -12,10 +12,8 @@ export const agentConfigSchema = z.preprocess(
 
 export const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
 
-// Field-based schemas, used by the monolithic `plans.md`/`decisions.md`/
-// `open-questions.md` format: one file with multiple `## Heading` entries,
-// each having `**Field:** value` lines below the heading.
-
+// Field-based schemas: the monolithic `plans.md`/`decisions.md`/`open-questions.md`
+// format, `## Heading` entries with `**Field:** value` lines below each heading.
 export const planFieldsSchema = z.object({
   status: z.enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped']),
   kind: z.enum(['feat', 'fix', 'chore', 'docs', 'refactor']).optional(),
@@ -40,12 +38,9 @@ export const openQuestionFieldsSchema = z.object({
   blocks: z.string().optional(),
 });
 
-// YAML frontmatter schemas, used by the per-file plan/idea format: one file
-// per plan/idea, metadata in `---`-delimited YAML frontmatter, markdown body
-// below. These are the single source of truth for the per-file format; the
-// field-based schemas above exist only until the monolithic-file format is
-// fully migrated away.
-
+// YAML frontmatter schemas: the per-file plan/idea format, `---`-delimited YAML
+// metadata plus a markdown body. Field-based schemas above exist only until the
+// monolithic-file format is fully migrated away.
 export const planFrontmatterSchema = z.object({
   id: z.string().describe('Permanent plan ID, e.g. FEAT-24'),
   title: z.string().describe('Human-readable plan name, e.g. "Plan storage architecture"'),
@@ -85,11 +80,8 @@ export const ideaFrontmatterSchema = z
     path: ['status'],
   });
 
-// Unified entity schema: one file per entity — an "idea" for its whole life,
-// with the plan as an optional `### Phases` body section. Replaces
-// planFrontmatterSchema/ideaFrontmatterSchema once the migration lands; until
-// then the legacy pair above keeps reading the two-file corpus.
-
+// Unified entity schema: one file per entity, with the plan as an optional
+// `### Phases` body section. Replaces the legacy pair above once migration lands.
 export const entityFrontmatterSchema = z
   .object({
     id: z.string().describe('Permanent lifetime entity ID, e.g. IDEA-45 — never changes'),
@@ -145,9 +137,8 @@ export const paperCampConfigSchema = z.object({
   initializedAt: z.string(),
   nextId: z
     .object({
-      // The unified-entity counter: all new entities mint lifetime IDEA-N ids
-      // from here. The per-kind counters are legacy, still present in
-      // pre-migration configs.
+      // idea: unified-entity counter, all new entities mint lifetime IDEA-N ids from
+      // here. The rest are legacy per-kind counters, still present in old configs.
       idea: z.number().optional(),
       feat: z.number().optional(),
       fix: z.number().optional(),

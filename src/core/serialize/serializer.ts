@@ -10,14 +10,8 @@ export function todayDateString(): string {
 
 let idAssignmentChain: Promise<unknown> = Promise.resolve();
 
-/**
- * Mints the next `<KIND>-<N>` plan ID from the persistent counter in `papercamp/config.json`,
- * incrementing and writing it back. Calls are chained through a module-level promise so two
- * near-simultaneous calls within this process never read the same counter value and mint a
- * duplicate ID — this does not protect against a concurrent call from a separate process (e.g.
- * the CLI racing the dev server), which is an accepted gap for a local single-user tool.
- * Returns undefined if the config file is missing or has no `nextId` counters yet.
- */
+// Chained through a module-level promise so two near-simultaneous calls in this process
+// never read the same counter value; a concurrent second process is an accepted gap.
 export async function assignPlanId(configPath: string, kind: string): Promise<string | undefined> {
   const run = idAssignmentChain.then(async () => {
     let config: { nextId?: Record<string, number> } | null = null;
@@ -137,12 +131,6 @@ export function formatProgressEntry(date: string, items: string[]): string {
   return [`## ${date}`, ...items.map((item) => `- ${item}`)].join('\n');
 }
 
-/**
- * Prepends a single bullet under today's `## YYYY-MM-DD` heading at the top of a
- * progress.md file, creating the heading if today's isn't already there (newest
- * day stays first). Shared by the agent's progress hook and the PostToolUse
- * new-file logger so both write the same grammar.
- */
 export async function prependProgressItem(progressPath: string, item: string): Promise<void> {
   const heading = `## ${todayDateString()}`;
   let raw = '';
@@ -165,19 +153,16 @@ export async function prependProgressItem(progressPath: string, item: string): P
   }
 }
 
-/** Serializes an array of plan entries back to a plans.md file. */
 export function formatPlans(entries: NewPlanInput[]): string {
   if (entries.length === 0) return '';
   return `${entries.map((entry) => formatPlanEntry(entry)).join('\n\n')}\n`;
 }
 
-/** Serializes an array of open-question entries back to an open-questions.md file. */
 export function formatOpenQuestions(entries: NewOpenQuestionInput[]): string {
   if (entries.length === 0) return '';
   return `${entries.map((entry) => formatOpenQuestionEntry(entry)).join('\n\n')}\n`;
 }
 
-/** Appends a pre-formatted block to a papercamp file, separated by a single blank line. */
 export async function appendBlock(filePath: string, block: string): Promise<void> {
   await mkdir(dirname(filePath), { recursive: true });
   let existing = '';
@@ -193,9 +178,7 @@ export async function appendBlock(filePath: string, block: string): Promise<void
 }
 
 export function serializeFrontmatter(data: Record<string, unknown>): string {
-  let yaml = stringifyYaml(data);
-  // stringifyYaml adds trailing newline by default
-  yaml = yaml.trimEnd();
+  const yaml = stringifyYaml(data).trimEnd();
   return `---\n${yaml}\n---`;
 }
 
@@ -217,19 +200,6 @@ interface NewPlanFileInput {
   clarifications?: LogEntry[];
 }
 
-/**
- * Serializes a plan entry as a standalone file with YAML frontmatter.
- * Output format:
- *   ---
- *   id: FEAT-24
- *   kind: feat
- *   ...
- *   ---
- *   body...
- *
- *   ### Phases
- *   ...
- */
 export function formatPlanFile(input: NewPlanFileInput): string {
   const frontmatter: Record<string, unknown> = {
     id: input.id,
@@ -301,12 +271,6 @@ interface NewEntityFileInput {
   clarifications?: LogEntry[];
 }
 
-/**
- * Serializes a unified entity file — same body sections as formatPlanFile
- * (Clarifications/Phases/Log), but `type` instead of `kind`, no `idea:`
- * backlink, and no `## id: title` body heading (title lives in frontmatter
- * only).
- */
 export function formatEntityFile(input: NewEntityFileInput): string {
   const frontmatter: Record<string, unknown> = {
     id: input.id,
@@ -359,11 +323,6 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   return sections.join('\n\n').trimEnd();
 }
 
-/**
- * Mints the next lifetime IDEA-N entity id from the unified `nextId.idea`
- * counter — the single id space every entity lives in. Same
- * chaining/guarantees as assignPlanId (which it delegates to).
- */
 export async function assignEntityId(configPath: string): Promise<string | undefined> {
   return assignPlanId(configPath, 'idea');
 }
@@ -378,9 +337,6 @@ interface NewIdeaFileInput {
   log?: LogEntry[];
 }
 
-/**
- * Serializes an idea entry as a standalone file with YAML frontmatter.
- */
 export function formatIdeaFile(input: NewIdeaFileInput): string {
   const frontmatter: Record<string, unknown> = {
     id: input.id,
@@ -404,11 +360,6 @@ export function formatIdeaFile(input: NewIdeaFileInput): string {
   return parts.join('\n\n').trimEnd();
 }
 
-/**
- * Moves an entity from papercamp/ideas/<id>.md to papercamp/ideas/archive/<id>.md.
- * This is a pure file move — no parse-and-re-serialize step.
- * Returns true if the file was moved, false if no file exists for this entity.
- */
 export async function archiveEntityFile(root: string, entityId: string): Promise<boolean> {
   const ideasDir = join(root, 'papercamp', 'ideas');
   const archiveDir = join(ideasDir, 'archive');
@@ -426,16 +377,8 @@ export async function archiveEntityFile(root: string, entityId: string): Promise
   }
 }
 
-/**
- * Removes one line from suggestions.md's flat log. Re-parses each candidate
- * line with parseSuggestions' own grammar and compares the parsed fields —
- * not a reconstructed literal string — since parseSuggestions trims title/
- * description and a reconstruction would miss extra internal whitespace an
- * LLM-authored line might contain. Only the first match is removed —
- * suggestions carry no id, so field matching is the only way to address a
- * specific line (see IDEA-62's promote/dismiss routes, both of which call
- * this before writing the file back).
- */
+// Compares re-parsed fields, not a reconstructed string — parseSuggestions trims
+// whitespace an LLM-authored line might contain, so a literal match could miss.
 export function removeSuggestionLine(markdown: string, target: SuggestionEntry): string {
   let removed = false;
   const lines = markdown.split('\n').filter((line) => {
@@ -456,7 +399,6 @@ export function removeSuggestionLine(markdown: string, target: SuggestionEntry):
   return removed ? lines.join('\n') : markdown;
 }
 
-/** Generates papercamp/ideas/index.md, the one unified table. */
 export function formatEntitiesIndex(entities: EntityEntry[]): string {
   if (entities.length === 0) return '# Ideas\n\nNo ideas yet.\n';
 

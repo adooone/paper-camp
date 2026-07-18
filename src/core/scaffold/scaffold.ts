@@ -28,12 +28,6 @@ export interface InitOptions {
   intent?: string;
 }
 
-/**
- * Scaffolds papercamp/config.json and papercamp/ directory structure.
- * Creates per-file plan/idea directories and index files, plus monolithic
- * files for the remaining sections (progress, decisions, open-questions).
- * Never overwrites existing files.
- */
 export async function initProject(targetDir: string, options: InitOptions): Promise<void> {
   const campDir = join(targetDir, 'papercamp');
   const configPath = join(campDir, 'config.json');
@@ -76,12 +70,6 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
   await scaffoldClaudeCodeIntegration(targetDir);
 }
 
-/**
- * Scaffolds the Claude Code native-integration surfaces: the auto-discovered
- * skill and the SessionStart/PostToolUse hook wiring in `.claude/settings.json`.
- * Each piece follows the same no-clobber contract as the rest of init — an
- * existing file is left untouched rather than merged into.
- */
 async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<void> {
   const skillDir = join(targetDir, '.claude', 'skills', 'paper-camp');
   await mkdir(skillDir, { recursive: true });

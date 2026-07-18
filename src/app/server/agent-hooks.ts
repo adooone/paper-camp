@@ -7,19 +7,13 @@ import type { PhaseItem, PlanEntry } from '@/types/index';
 import type { GitManager } from './git';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 
-// The agent derives its commit scope from a plan's tags, but tags are free-form
-// and may not be valid scopes (e.g. FEAT-29's first tag was `freshness`). Picking
-// the first tag that IS a scope — else a safe default — keeps agent-authored
-// commits passing the Consistency check instead of red-lining CI.
+// Plan tags are free-form and may not be valid scopes (e.g. FEAT-29's first tag was
+// `freshness`); the first tag that IS a scope, else a safe default, keeps agent-authored commits passing Consistency.
 function resolveCommitScope(plan: Pick<PlanEntry, 'tags'>): string {
   return plan.tags?.find((tag) => COMMIT_SCOPES.has(tag)) ?? 'plans';
 }
 
-/**
- * Callbacks the agent manager invokes as tasks progress: stamping audit dates,
- * committing per-phase work, and handing a finished run over to review. Kept out of
- * api.ts so the middleware only wires managers together.
- */
+// Kept out of api.ts so the middleware only wires managers together.
 export function createAgentHooks(root: string, git: GitManager) {
   async function prependProgressItem(item: string): Promise<void> {
     await prependProgressLine(campFile(root, 'progress.md'), item);

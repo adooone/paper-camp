@@ -2,7 +2,7 @@
 id: IDEA-63
 title: Sweep comments to the §7 bar
 type: refactor
-status: idea
+status: review
 created: 2026-07-15
 tags:
   - app
@@ -23,15 +23,15 @@ tags:
 Structure-only: no behaviour change, so `tsc`/`biome`/tests/consistency are the gate, plus the comment-line count as the actual measure — report it before/after per file rather than claiming "swept". If the number doesn't move, the pass didn't happen.
 
 ### Phases
-- [ ] Baseline the comment-line count per file
-      Record the current per-file counts across `src/` (the seven density files and the total 1431 / 7.8%) so each later phase can report before/after against a fixed starting number rather than a re-measured one.
-- [ ] Sweep the git-pr docstring pair against §7
+- [x] Baseline the comment-line count per file
+      Record the current per-file counts across `src/` (the seven density files and the total 1536 / 8.2%, re-measured in phase 1 — the plan's original 1431 / 7.8% had gone stale) so each later phase can report before/after against a fixed starting number rather than a re-measured one.
+- [x] Sweep the git-pr docstring pair against §7
       `core/git-pr/pr.ts` (110) and `core/git-pr/pr-lookup.ts` (81) — collapse the `/** ... */` blocks that paraphrase the signature, keeping only the `gh` CLI exit-code semantics. Report before/after per file.
-- [ ] Sweep the two server files
+- [x] Sweep the two server files
       `server/agent.ts` (104) and `server/git.ts` (55) against the default-zero bar. Report before/after per file.
-- [ ] Sweep the store / serialize / types trio
+- [x] Sweep the store / serialize / types trio
       `stores/app-store.ts` (64), `core/serialize/serializer.ts` (63), `types/index.ts` (58) — but preserve the parser's h3 `### Phases` grammar note (a wrong "fix" silently breaks parsing, see [[IDEA-58]]) and StrictMode updater purity. Report before/after per file.
-- [ ] Sweep the remaining long tail across `src/`
+- [x] Sweep the remaining long tail across `src/`
       Everything outside the seven density files, same bar. Where a comment only compensates for an unclear name, rename — a rename, not a behaviour refactor. Report before/after per file.
-- [ ] Gate and report the net movement
+- [x] Gate and report the net movement
       Run `tsc`/`biome`/tests, confirm the load-bearing survivors remain (`gh` exit-code semantics, the `### Phases` grammar, StrictMode purity, the `--sketch-clip` geometry), and report the total before/after comment-line count. If the number didn't move, the pass didn't happen.

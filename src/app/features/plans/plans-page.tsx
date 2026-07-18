@@ -76,8 +76,7 @@ export const PlansPage = () => {
     return (
       <div>
         <PlansHeader />
-        {/* The skeleton is aria-hidden, so announce the loading state to AT here.
-            <output> carries an implicit role="status". */}
+        {/* Skeleton is aria-hidden; <output>'s implicit role="status" announces this instead. */}
         <output aria-live="polite" className="sr-only">
           Loading plans…
         </output>
@@ -88,9 +87,8 @@ export const PlansPage = () => {
 
   const { rows } = selectWorklistRows(plans.entries, ideaEntries, planFilters);
 
-  // The reconcile review queue is a self-contained modal driven by store state,
-  // not by which branch is active — render it once above the branching so it
-  // isn't duplicated across the plan/idea/list views.
+  // Driven by store state, not by which branch is active — render once above the
+  // branching so it isn't duplicated across the plan/idea/list views.
   return (
     <>
       <ReconcileQueueReview />

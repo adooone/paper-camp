@@ -40,11 +40,8 @@ function json(data: Record<string, unknown>) {
   };
 }
 
-/**
- * Registers the v1 read tools, each a thin wrapper over the same `src/core`
- * readers/parsers the dashboard's `/api/*` routes call (`src/app/server/routes/reads.ts`),
- * so MCP clients see identical data shapes.
- */
+// Wraps the same `src/core` readers/parsers as the dashboard's `/api/*` routes
+// (src/app/server/routes/reads.ts), so MCP clients see identical data shapes.
 export function registerReadTools(server: McpServer, root: string): void {
   server.registerTool(
     'list_plans',
@@ -115,19 +112,11 @@ export function registerReadTools(server: McpServer, root: string): void {
   );
 }
 
-/**
- * Registers the v1 write tools, each routed through the same `src/core` serializers
- * the dashboard's route handlers (`src/app/server/routes/plans.ts`/`ideas.ts`/`docs.ts`)
- * call — never a raw file write — so id allocation, archive-on-drop, and index
- * regeneration hold identically. `draft_plan` and `update_phase` also run the same
- * `checkBranchConflictForPlan` guard those routes enforce, so an MCP client can't
- * start or advance a plan a dashboard user would be blocked from.
- */
+// Routes through the same core serializers and checkBranchConflictForPlan guard as the
+// dashboard's route handlers, so an MCP client can't do what a dashboard user is blocked from.
 export function registerWriteTools(server: McpServer, root: string, git: GitManager): void {
-  // The stdio transport can multiplex concurrent tool calls, and the read-then-write
-  // id allocation in add_idea / draft_plan would otherwise be able to interleave and
-  // mint duplicate ids. A promise-chain mutex serializes id-allocating writes so each
-  // sees the previous one's committed state.
+  // stdio can multiplex concurrent calls; without this, add_idea/draft_plan's
+  // read-then-write id allocation could interleave and mint duplicate ids.
   let writeChain: Promise<unknown> = Promise.resolve();
   const runExclusive = <T>(fn: () => Promise<T>): Promise<T> => {
     const result = writeChain.then(fn, fn);
@@ -260,9 +249,8 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       await writeEntityFile(targetFile, entityFileInput(updatedEntry));
       await regenerateIndexes(root);
 
-      // `done` is derived from a merged PR, so it never needs archiving on its own —
-      // moving the file would just be a needless commit. `dropped` has no such signal,
-      // so it stays the one status that still archives on write.
+      // `done` is derived from a merged PR and needs no archiving; `dropped` has no
+      // such signal, so it's the one status that still archives on write.
       if (status === 'dropped') {
         await archiveEntityFile(root, target.id);
       }

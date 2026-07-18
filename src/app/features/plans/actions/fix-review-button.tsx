@@ -9,9 +9,8 @@ interface FixReviewButtonProps {
   disabled?: boolean;
 }
 
-// Unlike every other launch button, the prompt isn't built here — the
-// unresolved review threads only exist server-side (a `gh api` call), so the
-// route itself fetches them and builds the prompt via buildFixReviewPrompt.
+// Unlike other launch buttons, the prompt isn't built here — unresolved review
+// threads only exist server-side (a `gh api` call), so the route builds it via buildFixReviewPrompt.
 export const FixReviewButton = ({ plan, disabled }: FixReviewButtonProps) => {
   const launchFixReview = useAppStore((s) => s.launchFixReview);
   const [launching, setLaunching] = useState(false);

@@ -52,12 +52,8 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
       },
     },
 
-    // IDEA-62 phase 5, "Move to ideas": the mechanical half of promoting a suggestion.
-    // Mints the id, writes the idea file (body = the suggestion's one-liner), removes
-    // the promoted line from suggestions.md, and regenerates the index — all
-    // synchronous, no agent involved (mirrors POST /api/ideas above). The client
-    // follows this with a normal launch-extend call (buildSuggestionPromotePrompt) to
-    // do the qualitative expansion, since by then this is a normal idea entity.
+    // Mints the id, writes the idea file, removes the suggestion line, and regenerates
+    // the index synchronously; the client follows with a launch-extend call for the qualitative expansion.
     {
       method: 'POST',
       path: '/api/suggestions/promote',
@@ -97,8 +93,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
       },
     },
 
-    // IDEA-62 phase 5: dismissing a suggestion just deletes its line — no id was ever
-    // minted for it, so there's nothing else to clean up.
+    // Dismissing just deletes the line — no id was ever minted, so there's nothing else to clean up.
     {
       method: 'POST',
       path: '/api/suggestions/dismiss',

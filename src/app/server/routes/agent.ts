@@ -8,7 +8,6 @@ import { campFile, checkBranchConflictForPlan, fileExists } from '../helpers';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
-/** Resolves an entity's file path, checking the archive subdirectory as a fallback. */
 async function resolveEntityFilePath(root: string, entityId: string): Promise<string | null> {
   const primary = join(campFile(root, 'ideas'), `${entityId}.md`);
   if (await fileExists(primary)) return primary;
@@ -17,11 +16,8 @@ async function resolveEntityFilePath(root: string, entityId: string): Promise<st
   return null;
 }
 
-/**
- * Known path/identifier renames from this project's own history (see progress.md),
- * cheap enough to fix with plain substitution before spending a model call on the
- * rest of a plan's drift.
- */
+// Known renames from this project's own history (see progress.md), cheap enough to
+// fix with plain substitution before spending a model call on the rest of the drift.
 const KNOWN_RENAMES: ReadonlyArray<readonly [string, string]> = [
   ['`plans.md`', '`papercamp/ideas/`'],
   ['`ideas.md`', '`papercamp/ideas/`'],
@@ -33,11 +29,8 @@ const KNOWN_RENAMES: ReadonlyArray<readonly [string, string]> = [
   ['taskPercentage', 'phasePercentage'],
 ];
 
-/**
- * Applies KNOWN_RENAMES line-by-line, skipping the YAML frontmatter and any
- * checked phase line (plus its indented continuation lines) — the same
- * guardrails the AI reconcile pass itself enforces.
- */
+// Skips the YAML frontmatter and any checked phase line (plus its indented
+// continuation lines) — the same guardrails the AI reconcile pass itself enforces.
 function applyKnownRenames(content: string): { content: string; changed: boolean } {
   const frontmatterEnd = content.startsWith('---\n') ? content.indexOf('\n---', 4) + 4 : -1;
   const frontmatter = frontmatterEnd >= 4 ? content.slice(0, frontmatterEnd) : '';
@@ -69,14 +62,12 @@ function applyKnownRenames(content: string): { content: string; changed: boolean
   return { content: frontmatter + lines.join('\n'), changed };
 }
 
-/** Work-entity lookup in PlanEntry shape, for the plan-scoped agent tasks. */
 async function findPlanById(root: string, planId: string): Promise<PlanEntry | undefined> {
   const { entries } = await readEntities(campFile(root, 'ideas'));
   const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
   return entity ? entityToPlan(entity) : undefined;
 }
 
-/** IdeaEntry view of any entity, for the idea-scoped tasks (draft/extend). */
 function toIdeaEntry(e: EntityEntry): IdeaEntry {
   return {
     id: e.id,
@@ -215,10 +206,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           sendJson(res, 404, { error: 'idea not found' });
           return;
         }
-        // No branch-conflict guard here: drafting only edits the idea's markdown to
-        // add phases — it's planning, not code work, so it's fine on any branch. The
-        // guard stays on the execution paths (run-all / single-phase) that actually
-        // change code and must land on a specific branch.
+        // No branch-conflict guard: drafting only edits the idea's markdown, not code.
         const result = agent.startForIdea(idea, prompt);
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });
@@ -243,8 +231,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           sendJson(res, 404, { error: 'idea not found' });
           return;
         }
-        // No branch-conflict guard: extending only edits the idea's prose/log, not
-        // code — fine on any branch (see launch-draft).
+        // No branch-conflict guard: extending only edits the idea's prose/log, not code.
         const result = agent.startForIdeaExtend(idea, prompt);
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });
@@ -264,8 +251,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           sendJson(res, 400, { error: 'prompt is required' });
           return;
         }
-        // No branch-conflict guard: this only appends lines to suggestions.md, not
-        // code — fine on any branch (see launch-draft/launch-extend).
+        // No branch-conflict guard: this only appends lines to suggestions.md, not code.
         const result = await agent.startSuggest(prompt);
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });
@@ -279,8 +265,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       method: 'POST',
       path: '/api/agent/launch-reconcile-all',
       handle: async (_req, res) => {
-        // Batch reconcile can rewrite many entity files — gate it behind the same
-        // active-plan guard the other write-capable agent routes use.
         const conflict = await checkBranchConflictForPlan(root, git);
         if (conflict) {
           sendJson(res, 409, { error: conflict });

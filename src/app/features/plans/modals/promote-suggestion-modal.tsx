@@ -10,14 +10,8 @@ interface PromoteSuggestionModalProps {
   onClose: () => void;
 }
 
-/**
- * IDEA-62 phase 5: "Move to ideas" launches a two-step promotion — first the
- * mechanical part (mint an id, write the idea file, drop the line from
- * suggestions.md — see POST /api/suggestions/promote), then a normal
- * launch-extend agent run (buildSuggestionPromotePrompt) to flesh out the
- * one-liner. The second step reuses the idea id looked up from the store
- * right after promoteSuggestion's reload, same pattern ExtendIdeaButton uses.
- */
+// Two-step promotion: mint the idea file mechanically (promoteSuggestion), then
+// launch a normal launch-extend agent run to flesh out the one-liner.
 export const PromoteSuggestionModal = ({ suggestion, onClose }: PromoteSuggestionModalProps) => {
   const promoteSuggestion = useAppStore((s) => s.promoteSuggestion);
   const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);

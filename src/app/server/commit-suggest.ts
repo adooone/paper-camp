@@ -18,13 +18,8 @@ Diff:
 ${diffText}`;
 }
 
-/**
- * One-shot, read-only agent call — not the long-running phase/task system in agent.ts.
- * The actual process spawn lives in agent.ts's runReadOnlyPrompt() (runCommitSuggest
- * there only delegates to it), which runs independently of the task registry so it's
- * never blocked by (and never blocks) a running phase/reconcile/etc; this module only
- * builds the prompt and parses the result.
- */
+// One-shot read-only agent call: the process spawn lives in agent.ts's runReadOnlyPrompt(),
+// independent of the task registry so it's never blocked by a running phase/reconcile/etc.
 export async function suggestCommitMessage(
   diffText: string,
   planContext: string | undefined,
@@ -41,9 +36,7 @@ export async function suggestCommitMessage(
   try {
     const parsed = JSON.parse(output) as { result?: string };
     if (typeof parsed.result === 'string') resultText = parsed.result;
-  } catch {
-    // fall through with raw output
-  }
+  } catch {}
 
   const match = resultText.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('Agent did not return a parseable commit message');

@@ -3,12 +3,8 @@ import { useAppStore } from '@/app/stores/app-store';
 import { useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
-/**
- * The plan-lifecycle write path shared by plan-actions-column.tsx and the
- * review queue — same `updatePlan` + reload + error toast, so
- * approve/reject/dropped all go through one place instead of each caller
- * re-implementing the try/catch/toast dance.
- */
+// Shared by plan-actions-column.tsx and the review queue so approve/reject/dropped
+// go through one updatePlan + reload + error-toast path instead of each caller reimplementing it.
 export const usePlanStatusPatch = () => {
   const loadPlans = useAppStore((s) => s.loadPlans);
   const { toast } = useToast();

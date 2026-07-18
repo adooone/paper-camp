@@ -28,7 +28,6 @@ import {
 import { readBody, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
-/** Work entities only (never notes), matched by title or id. */
 function findWorkEntity(entries: EntityEntry[], key: string): EntityEntry | undefined {
   return entries.find((e) => e.kind !== 'note' && (e.title === key || e.id === key));
 }
@@ -76,8 +75,8 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'title is required' });
           return;
         }
-        // Server-side branch-hygiene guard — the UI disables this client-side,
-        // but a stale-branch request must not create an entity by bypassing it.
+        // The UI disables this client-side, but a stale-branch request must not
+        // create an entity by bypassing that check.
         const conflict = await checkBranchConflictForPlan(root, git);
         if (conflict) {
           sendJson(res, 409, { error: conflict });
@@ -143,9 +142,8 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           return;
         }
 
-        // readEntities scans ideas/ AND archive/, so target may be archived (done/
-        // dropped). Resolve the file in either location — otherwise editing or
-        // reopening an archived entity (e.g. clearing a dropped override) 404s.
+        // target may be archived (done/dropped); resolve either location or
+        // reopening an archived entity 404s.
         const primaryFile = join(ideasDir, `${target.id}.md`);
         const targetFile = (await fileExists(primaryFile))
           ? primaryFile
@@ -166,13 +164,9 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           updated: todayDateString(),
         };
 
-        // Closing a reviewed plan (done/dropped) is intentionally NOT branch-guarded:
-        // it isn't starting new work, and the common flow is to approve/close after the
-        // PR merges — by which point you're on main or a merged branch, not the plan's
-        // own. The branch-conflict guard stays on the work-starting paths (agent launches
-        // and plan creation).
+        // Closing (done/dropped) is intentionally NOT branch-guarded: it isn't starting
+        // new work, and approval typically happens after the branch is already merged.
 
-        // Demote other in-progress entities when starting a new one
         if (updates.status === 'in-progress') {
           for (const other of entries) {
             if (other.id !== target.id && other.kind !== 'note' && other.status === 'in-progress') {
@@ -190,9 +184,8 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         await writeEntityFile(targetFile, entityFileInput(updatedEntry));
         await regenerateIndexes(root);
 
-        // `done` is derived from a merged PR, so it never needs archiving on its own —
-        // moving the file would just be a needless commit. `dropped` has no such signal,
-        // so it stays the one status that still archives on write.
+        // `done` is derived from a merged PR and needs no archiving; `dropped` has no
+        // such signal, so it's the one status that still archives on write.
         if (updates.status === 'dropped') {
           await archiveEntityFile(root, target.id);
         }

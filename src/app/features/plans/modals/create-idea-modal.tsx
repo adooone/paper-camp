@@ -29,8 +29,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
   const { patch } = usePlanStatusPatch();
   const navigate = useNavigate();
-  // Include `log` alongside the base candidate shape — Extend/Draft need it,
-  // beyond what an "Open it"-only shape would carry.
+  // `log` included here (unlike the overlap-check candidates below): Extend/Draft need it.
   const similarIdeas = useSimilarIdeas(
     title,
     planEntries.map((p) => ({

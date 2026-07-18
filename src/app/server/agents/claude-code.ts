@@ -15,14 +15,8 @@ export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
     '--verbose',
     '--permission-mode',
     'auto',
-    // These are headless, terminal-only jobs. Hard-block every path out of the
-    // terminal so a phase can't try to "visually check" the running app — a
-    // prompt instruction alone can't stop a tool the agent can actually reach.
-    // --strict-mcp-config drops ALL ambient MCP servers (the developer's
-    // browser / computer-use / chrome servers get inherited otherwise, since
-    // there's no project .mcp.json), independent of their names; --disallowedTools
-    // blocks the built-in web tools. Verification must go through the terminal
-    // (type-check / lint / tests), never a browser or fetched URL.
+    // Headless jobs must be terminal-only: --strict-mcp-config drops ambient MCP
+    // servers (browser/computer-use) and --disallowedTools blocks web tools, so a phase can't "visually check" the app.
     '--strict-mcp-config',
     '--disallowedTools',
     'WebFetch',
@@ -33,12 +27,8 @@ export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
   return args;
 }
 
-/**
- * Shape confirmed by a live `claude -p ... --output-format stream-json` smoke test
- * (see decisions.md, "Confirm Claude Code's headless stream-json shape..."), not guessed
- * from --help. Unknown subtypes fall through to a generic status line rather than being
- * dropped or throwing, since new bookkeeping subtypes (e.g. thinking_tokens) can appear.
- */
+/** Shape confirmed by a live stream-json smoke test (decisions.md), not --help docs.
+ *  Unknown subtypes fall through to a generic status line since new ones can appear. */
 export function parseLine(line: string): ParsedAgentLine | null {
   let json: Record<string, unknown>;
   try {

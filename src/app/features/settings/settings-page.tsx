@@ -104,9 +104,8 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave }: AgentTaskRowProp
     const newId = v as AgentId;
     const newOpts = AGENT_OPTIONS[newId];
     const newConfig: AgentConfig = { agent: newId };
-    // Only carry the model over if the new agent accepts it: free-text (null) takes
-    // anything, an enumerated list must contain it — otherwise a claude model like
-    // 'opus' would leak into opencode and fail at launch.
+    // Only carry the model over if the new agent accepts it — otherwise a claude
+    // model like 'opus' would leak into opencode and fail at launch.
     if (
       agentConfig.model &&
       (newOpts.model === null || newOpts.model?.includes(agentConfig.model))

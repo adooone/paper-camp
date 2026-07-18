@@ -17,14 +17,6 @@ const sectionLabelStyle: React.CSSProperties = {
   margin: `0 0 ${space[2]}`,
 };
 
-/**
- * The open plan's lifecycle/execution controls, as a paper-texture "Plan" card in
- * the router's sidebar slot for `/` — mirroring the Filters card it replaces while a
- * plan detail is open. Status is read-only here (derived from phases/branch/PR,
- * IDEA-56) alongside the dropped/reopen override, the agent select, run-all-phases,
- * and the review-close action; the detail view keeps the body, phases table, and log.
- * Reads the active plan from the store so it stays in sync with the detail subtree.
- */
 export const PlanActionsColumn = () => {
   const plans = useAppStore((s) => s.plans);
   const activePlanTitle = useActivePlanTitle();
@@ -64,9 +56,8 @@ export const PlanActionsColumn = () => {
 
           <div>
             <div style={sectionLabelStyle}>Status</div>
-            {/* Status derives from phases/branch/PR and is read-only here; the
-                dropped/reopen override lives in Actions below since
-                abandonment leaves no branch or PR to derive it from. */}
+            {/* Read-only: the dropped/reopen override lives in Actions below since
+                abandonment leaves no branch or PR to derive status from. */}
             <Stamp
               size="small"
               fillColor={STATUS_STAMP[plan.status].fill}
@@ -90,8 +81,6 @@ export const PlanActionsColumn = () => {
             />
           </div>
 
-          {/* One consistent action list instead of scattered filled buttons —
-              each row is a quiet paper ListItem with a meaning-colored glyph. */}
           <div>
             <div style={sectionLabelStyle}>Actions</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
@@ -99,9 +88,8 @@ export const PlanActionsColumn = () => {
               {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
 
               {underReview && (
-                // Done normally derives from the PR merging; this is the
-                // offline/no-GitHub fallback — it only sticks once the live PR
-                // lookup can't resolve a merge either way.
+                // Offline fallback: sticks only once the live PR lookup can't resolve
+                // a merge either way (done normally derives from the PR merging).
                 <ListItem
                   size="small"
                   // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.

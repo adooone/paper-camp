@@ -3,19 +3,8 @@ import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { invalidateCorpusCache } from './corpus-cache';
 
-/**
- * Live-refresh notifier over SSE. Watches the whole papercamp/ directory and
- * pushes a tick whenever anything under it changes, so connected dashboards
- * refetch.
- *
- * It deliberately does NOT synthesize a human-readable activity feed: the only
- * consumer (stack-panel.tsx) ignores the event payload and treats every tick as
- * a generic "something changed, reload everything" signal. Watching the
- * directory recursively covers the per-file `plans/` and `ideas/` trees (incl.
- * `plans/archive/`) as well as the monolithic `decisions.md`,
- * `open-questions.md`, and `progress.md` — replacing the old hardcoded list that
- * still pointed at the removed legacy `plans.md`.
- */
+// The only consumer (stack-panel.tsx) ignores the event payload and treats every
+// tick as a generic "something changed, reload everything" signal.
 export type ActivityManager = ReturnType<typeof createActivityManager>;
 
 export function createActivityManager(root: string) {
@@ -38,11 +27,8 @@ export function createActivityManager(root: string) {
   }
 
   try {
-    // Debounced so a burst of writes (e.g. a plan file plus its regenerated
-    // index.md) collapses into a single refresh tick. The /api/plans and
-    // /api/ideas corpus cache (corpus-cache.ts) is invalidated on every raw
-    // event, not just the debounced tick, so a read racing a write never sees
-    // stale entries.
+    // Cache invalidation runs on every raw event, not just the debounced broadcast,
+    // so a read racing a write never sees stale entries.
     watch(join(root, 'papercamp'), { recursive: true }, () => {
       invalidateCorpusCache();
       if (timer) clearTimeout(timer);

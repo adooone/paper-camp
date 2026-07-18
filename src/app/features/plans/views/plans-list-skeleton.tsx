@@ -12,12 +12,8 @@ const ROWS = [
   { key: 'f', title: '58%' },
 ];
 
-/**
- * Loading placeholder for the worklist — mirrors `PlanRows`' kraft header + paper
- * rows on the shared `.plan-rows-grid` template, so the layout doesn't jump when
- * the real rows arrive. Shown while `/api/plans` resolves (it derives status from
- * a `gh` PR lookup, so a cold read can take a moment).
- */
+// Mirrors PlanRows' layout on the shared .plan-rows-grid template so nothing jumps
+// when /api/plans resolves (status derives from a `gh` PR lookup, so a cold read can take a moment).
 export const PlansListSkeleton = () => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }} aria-hidden="true">
     <Card size="small" texture="kraft" className="plan-row-card">
