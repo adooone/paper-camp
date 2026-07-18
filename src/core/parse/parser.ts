@@ -362,6 +362,7 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     auditedHash: frontmatter['audited-hash'],
     tags: frontmatter.tags ?? [],
     subject: frontmatter.subject,
+    order: frontmatter.order,
     body,
     phases,
     log,

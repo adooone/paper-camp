@@ -119,6 +119,11 @@ export const entityFrontmatterSchema = z
       .string()
       .optional()
       .describe('Subject group name; absent renders as the virtual "No subject" group'),
+    order: z
+      .number()
+      .int()
+      .optional()
+      .describe('Run order; absent means unordered, sorting after ordered entries'),
   })
   .refine(
     (data) =>
