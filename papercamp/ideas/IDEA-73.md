@@ -35,7 +35,7 @@ Fix direction, to be confirmed by a quick profile first: crossfade or opacity-on
 ### Phases
 - [x] Profile and pin the cause
       Reproduce the lag with the Performance panel against the live dev server; confirm or kill the three suspects (mode="wait" sequencing, textured-container repaint, mount-work during entrance) and inventory all 4 framer usage sites.
-- [ ] Fix the route transition
+- [x] Fix the route transition
       Apply what the profile says: opacity-only crossfade without mode="wait" and without a blank Suspense gap — or remove the transition if that's what smooth requires. Keep reduced-motion behaviour.
 - [ ] Simplify the remaining usage
       One shared transition config; downgrade framer usage that plain CSS covers; keep the Stack panel slide (it's the one animation doing real work).

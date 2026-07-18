@@ -91,6 +91,7 @@ const RootLayout = () => {
       ? 'docs'
       : navItems.find((item) => item.path === pathname)?.id;
   const hasSidebar = isPlansArea || isDocsArea || pathname === '/settings';
+  const sidebarAreaKey = isPlansArea ? 'plans' : isDocsArea ? 'docs' : 'settings';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -189,7 +190,7 @@ const RootLayout = () => {
               >
                 {hasSidebar && (
                   <SidebarShell
-                    routeKey={pathname}
+                    routeKey={sidebarAreaKey}
                     mobileOpen={mobileSidebarOpen}
                     onMobileClose={() => setMobileSidebarOpen(false)}
                   >
@@ -226,19 +227,25 @@ const RootLayout = () => {
                       ...(isLarge ? { maxWidth: 'none' } : {}),
                     }}
                   >
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={pathname}
-                        initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={shouldReduceMotion ? undefined : { opacity: 0, y: -8 }}
-                        transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' }}
-                      >
-                        <Suspense fallback={null}>
-                          <Outlet />
-                        </Suspense>
-                      </motion.div>
-                    </AnimatePresence>
+                    <div style={{ position: 'relative' }}>
+                      <AnimatePresence>
+                        <motion.div
+                          key={pathname}
+                          initial={shouldReduceMotion ? undefined : { opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={
+                            shouldReduceMotion
+                              ? undefined
+                              : { opacity: 0, position: 'absolute', inset: 0 }
+                          }
+                          transition={{ duration: shouldReduceMotion ? 0 : 0.15, ease: 'easeOut' }}
+                        >
+                          <Suspense fallback={null}>
+                            <Outlet />
+                          </Suspense>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
                   </Page>
                 </div>
               </div>
