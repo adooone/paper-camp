@@ -180,6 +180,8 @@ export interface EntityEntry {
   audited?: string;
   auditedHash?: string;
   tags: string[];
+  /** Absent renders as the virtual "No subject" group. */
+  subject?: string;
   body: string;
   phases: PhaseItem[];
   log?: LogEntry[];

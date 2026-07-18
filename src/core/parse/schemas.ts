@@ -115,6 +115,10 @@ export const entityFrontmatterSchema = z
         'Content hash of the entity at last audit, used to detect edits regardless of mtime',
       ),
     tags: z.array(z.string()).optional().describe('Tagging categories'),
+    subject: z
+      .string()
+      .optional()
+      .describe('Subject group name; absent renders as the virtual "No subject" group'),
   })
   .refine(
     (data) =>

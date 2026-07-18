@@ -26,7 +26,7 @@ Three improvements to the ideas surface: the page finally calls things what they
 ### Phases
 - [x] Rename Plans to Ideas
       Visible page title (`plans-header.tsx`) and nav label; routes, paths, and feature-folder names unchanged.
-- [ ] Add the subject field to entities
+- [x] Add the subject field to entities
       Optional `subject:` frontmatter — types, parser, serializer round-trip with tests; absent key renders as the virtual "No subject", no file migration.
 - [ ] Group the worklist by subject
       Subject group headers over the existing rows (No subject last), following the idea-group pattern already in `worklist-rows.tsx`.
