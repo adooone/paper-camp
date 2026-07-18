@@ -1,0 +1,66 @@
+  Tool finished
+  All 327 tests pass. Let's do a final biome check to confirm clean, then verify final files.
+  Running Bash…
+  Tool finished
+  Let me review the final state of the touched files.
+  Running Read…
+  Tool finished
+  Running Read…
+  Tool finished
+  Good, both already visible in earlier tool output/notes. Now update the plan file and progress.md.
+  Running Edit…
+  Tool finished
+  Running Read…
+  Tool finished
+  Today's heading exists at the top. Add the bullet.
+  Running Edit…
+  Tool finished
+  Phase 3 is complete. Summary:
+
+- Added `src/app/styles/motion.ts` — a shared `crossfadeTransition`/`crossfadeVariants` pair, extracted from phase 2's `router.tsx` fade.
+- `router.tsx` and `sidebar-shell.tsx` now both use it; `sidebar-shell.tsx` also lost its leftover `mode="wait"` and `y`-slide, so it now crossfades in sync with the page instead of running its own exit→enter cycle.
+- `refresh-button.tsx`'s spin is now a plain CSS `.pc-spin` class (with its own `prefers-reduced-motion` handling), dropping its `framer-motion` dependency entirely.
+- `stack-panel.tsx` left untouched, as directed — its slide is real work and its handle needs framer's unmount animation.
+- `tsc`, `biome check --write`, and `pnpm test` (327 tests) are all clean. Visual confirmation is left for phase 4 or a human (no browser here).
+
+Plan checkbox flipped to `[x]` (3/4 done, not `review` yet — phase 4 remains) and `progress.md` updated.
+  Phase 3 is complete. Summary:
+
+- Added `src/app/styles/motion.ts` — a shared `crossfadeTransition`/`crossfadeVariants` pair, extracted from phase 2's `router.tsx` fade.
+- `router.tsx` and `sidebar-shell.tsx` now both use it; `sidebar-shell.tsx` also lost its leftover `mode="wait"` and `y`-slide, so it now crossfades in sync with the page instead of running its own exit→enter cycle.
+- `refresh-button.tsx`'s spin is now a plain CSS `.pc-spin` class (with its own `prefers-reduced-motion` handling), dropping its `framer-motion` dependency entirely.
+- `stack-panel.tsx` left untouched, as directed — its slide is real work and its handle needs framer's unmount animation.
+- `tsc`, `biome check --write`, and `pnpm test` (327 tests) are all clean. Visual confirmation is left for phase 4 or a human (no browser here).
+
+Plan checkbox flipped to `[x]` (3/4 done, not `review` yet — phase 4 remains) and `progress.md` updated.
+[verify] phase 3 — running lint/format/test
+[commit] phase 3 — Simplify the remaining usage
+[phase 4/4] Gate the pass
+  Agent session started
+  Running Bash…
+  Tool finished
+  Running Bash…
+  Tool finished
+  Type-check passes clean. Running lint and tests next.
+  Running Bash…
+  Tool finished
+  Running Bash…
+  Tool finished
+  All green: types, lint/format, and 327 tests pass. Now update the plan file and progress log.
+  Running Edit…
+  Tool finished
+  Running Edit…
+  Tool finished
+  Running Bash…
+  Tool finished
+  Good, "review" is a valid status value. Now updating progress.md.
+  Running Bash…
+  Tool finished
+  Running Edit…
+  Tool finished
+  Phase 4 done. Type-check, lint/format, and the full test suite (327 tests) all pass with no code changes needed. IDEA-73's plan file has all 4 phases checked and `status: review` — the Chrome visual smoothness check is left for a human since this environment has no browser.
+  Phase 4 done. Type-check, lint/format, and the full test suite (327 tests) all pass with no code changes needed. IDEA-73's plan file has all 4 phases checked and `status: review` — the Chrome visual smoothness check is left for a human since this environment has no browser.
+[verify] phase 4 — running lint/format/test
+[commit] phase 4 — Gate the pass
+All 4 phase(s) completed
+[review] setting plan status to review
