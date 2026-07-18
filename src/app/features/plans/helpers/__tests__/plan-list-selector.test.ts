@@ -114,6 +114,26 @@ describe('selectPlanRows', () => {
       'unordered-new',
     ]);
   });
+
+  it('keeps unordered entries last even when sorting order descending', () => {
+    const entries = [
+      plan({ title: 'unordered-new', status: 'planned', created: '2026-02-01' }),
+      plan({ title: 'ordered-2', status: 'planned', order: 2 }),
+      plan({ title: 'unordered-old', status: 'planned', created: '2026-01-01' }),
+      plan({ title: 'ordered-1', status: 'planned', order: 1 }),
+    ];
+    const { rows } = selectPlanRows(entries, {
+      ...DEFAULT_PLAN_LIST_FILTERS,
+      statuses: ['planned'],
+      sortDirection: 'desc',
+    });
+    expect(rows.map((p) => p.title)).toEqual([
+      'ordered-2',
+      'ordered-1',
+      'unordered-old',
+      'unordered-new',
+    ]);
+  });
 });
 
 describe('deriveChildrenSummary', () => {

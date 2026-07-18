@@ -145,20 +145,18 @@ export const WorklistRows = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
       <div style={{ display: 'flex', alignItems: 'center' }}>
+        {/* biome-ignore lint/a11y/useSemanticElements: this gutter sits outside the row grid, not inside a <table>; a real <th> would need a <tr>/<table> ancestor. */}
         <span
+          role="columnheader"
           style={{ flex: `0 0 ${ROW_MARKER_WIDTH}px`, display: 'flex', justifyContent: 'center' }}
+          aria-sort={
+            sortKey === 'order' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined
+          }
         >
           <button
             type="button"
             style={headerButtonStyle}
             aria-label="Sort by run order"
-            aria-sort={
-              sortKey === 'order'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : undefined
-            }
             onClick={() => handleSort('order')}
           >
             #{sortKey === 'order' && (sortDirection === 'asc' ? '▲' : '▼')}
@@ -171,7 +169,9 @@ export const WorklistRows = ({
                 const active = key === sortKey;
                 return (
                   <span
+                    // biome-ignore lint/a11y/useSemanticElements: this grid row is CSS-grid, not a <table>; a real <th> would need a <tr>/<table> ancestor.
                     key={key}
+                    role="columnheader"
                     className={key === 'updated' ? 'plan-rows-cell-updated' : undefined}
                     aria-sort={
                       active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined

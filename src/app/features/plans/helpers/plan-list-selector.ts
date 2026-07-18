@@ -71,31 +71,43 @@ const matchesTags = (plan: PlanEntry, tags: Set<string>): boolean => {
   return plan.tags.some((tag) => tags.has(tag));
 };
 
-/** `sortDirection` flips the sign rather than redefining "natural" per key. */
-const comparePlans = (a: PlanEntry, b: PlanEntry, key: PlanSortKey): number => {
-  switch (key) {
-    case 'status': {
-      const byStatus = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
-      if (byStatus !== 0) return byStatus;
-      return updatedTimestamp(b) - updatedTimestamp(a);
+/** `sortDirection` flips the sign rather than redefining "natural" per key, except
+ * for `order`, where unordered rows must stay last regardless of direction. */
+const comparePlans = (
+  a: PlanEntry,
+  b: PlanEntry,
+  key: PlanSortKey,
+  direction: SortDirection = 'asc',
+): number => {
+  if (key === 'order') {
+    if (a.order !== undefined && b.order !== undefined) {
+      const dirMul = direction === 'desc' ? -1 : 1;
+      return dirMul * (a.order - b.order);
     }
-    case 'updated':
-      return updatedTimestamp(b) - updatedTimestamp(a);
-    case 'title':
-      return a.title.localeCompare(b.title);
-    case 'id':
-      return idNumber(a) - idNumber(b);
-    case 'progress':
-      return (phasePercentage(b) ?? -1) - (phasePercentage(a) ?? -1);
-    case 'order': {
-      if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
-      if (a.order !== undefined) return -1;
-      if (b.order !== undefined) return 1;
-      return createdTimestamp(a) - createdTimestamp(b);
-    }
-    default:
-      return 0;
+    if (a.order !== undefined) return -1;
+    if (b.order !== undefined) return 1;
+    return createdTimestamp(a) - createdTimestamp(b);
   }
+  const cmp = (() => {
+    switch (key) {
+      case 'status': {
+        const byStatus = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+        if (byStatus !== 0) return byStatus;
+        return updatedTimestamp(b) - updatedTimestamp(a);
+      }
+      case 'updated':
+        return updatedTimestamp(b) - updatedTimestamp(a);
+      case 'title':
+        return a.title.localeCompare(b.title);
+      case 'id':
+        return idNumber(a) - idNumber(b);
+      case 'progress':
+        return (phasePercentage(b) ?? -1) - (phasePercentage(a) ?? -1);
+      default:
+        return 0;
+    }
+  })();
+  return direction === 'desc' ? -cmp : cmp;
 };
 
 const countBy = <Entry, Value>(
@@ -138,10 +150,7 @@ export const selectPlanRows = (
         matchesTags(plan, tagSet) &&
         matchesSearch(plan, filters.search),
     )
-    .sort((a, b) => {
-      const cmp = comparePlans(a, b, filters.sortKey);
-      return filters.sortDirection === 'desc' ? -cmp : cmp;
-    });
+    .sort((a, b) => comparePlans(a, b, filters.sortKey, filters.sortDirection));
 
   return { rows, statusCounts, tagCounts };
 };
@@ -247,7 +256,7 @@ const worklistSortProxy = (row: WorklistRow): PlanEntry => {
       title: row.idea.title,
       id: row.idea.id ?? undefined,
       status: NOTE_STATUS_TIER[row.idea.status ?? 'open'],
-      created: '',
+      created: row.idea.created ?? '',
       tags: [],
       body: row.idea.body,
       phases: [],
@@ -263,7 +272,7 @@ const worklistSortProxy = (row: WorklistRow): PlanEntry => {
   return {
     ...(mostAdvanced ?? {
       status: 'idea' as const,
-      created: '',
+      created: row.idea.created ?? '',
       tags: [],
       body: row.idea.body,
       phases: [],
@@ -328,10 +337,14 @@ export const selectWorklistRows = (
     rows.push({ type: 'note', idea });
   }
 
-  rows.sort((a, b) => {
-    const cmp = comparePlans(worklistSortProxy(a), worklistSortProxy(b), filters.sortKey);
-    return filters.sortDirection === 'desc' ? -cmp : cmp;
-  });
+  rows.sort((a, b) =>
+    comparePlans(
+      worklistSortProxy(a),
+      worklistSortProxy(b),
+      filters.sortKey,
+      filters.sortDirection,
+    ),
+  );
 
   return { rows, statusCounts, tagCounts, noteStatusCounts };
 };

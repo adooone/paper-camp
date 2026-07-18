@@ -206,17 +206,25 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           const { entries: work } = await readWorkEntries(ideasDir);
           const derived = new Map(work.map((w) => [w.id, w.status as string | undefined]));
           const nextEntries = entries.map((e) => (e.id === target.id ? updatedEntry : e));
-          const classified = nextEntries.map((e) => ({
-            id: e.id,
-            order: e.order,
-            created: e.created,
-            status:
-              e.id === target.id && updates.status !== undefined
-                ? (updates.status ?? undefined)
-                : (derived.get(e.id) ?? e.status),
-          }));
+          // Notes have no derived PlanStatus (readWorkEntries excludes them), so they sit
+          // outside the planned/in-progress/review invariant reflow enforces — leave their
+          // order as written rather than have them read as unordered and get cleared.
+          const classified = nextEntries
+            .filter((e) => e.kind !== 'note')
+            .map((e) => ({
+              id: e.id,
+              order: e.order,
+              created: e.created,
+              status:
+                e.id === target.id && updates.status !== undefined
+                  ? (updates.status ?? undefined)
+                  : (derived.get(e.id) ?? e.status),
+            }));
           for (const change of normalizeRunOrder(classified, moved)) {
-            const file = join(ideasDir, `${change.id}.md`);
+            const primaryFile = join(ideasDir, `${change.id}.md`);
+            const file = (await fileExists(primaryFile))
+              ? primaryFile
+              : join(ideasDir, 'archive', `${change.id}.md`);
             if (!(await fileExists(file))) continue;
             const changedEntry = nextEntries.find((e) => e.id === change.id);
             if (!changedEntry) continue;

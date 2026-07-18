@@ -93,6 +93,7 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
     status: e.status as IdeaStatus,
     subject: e.subject,
     order: e.order,
+    created: e.created,
     log: e.log,
   };
 }

@@ -161,6 +161,8 @@ export interface IdeaEntry {
   subject?: string;
   /** Absent means unordered — sorts after all ordered entries, by created date. */
   order?: number;
+  /** Fallback sort key for unordered entries — see `order`. Absent on view-model-only IdeaEntry literals that never enter the worklist sort. */
+  created?: string;
   log?: LogEntry[];
 }
 
