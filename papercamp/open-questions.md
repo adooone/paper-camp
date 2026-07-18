@@ -1,7 +1,8 @@
 ## Do push/sync/pull failure toasts need a one-line summary, not raw git stderr?
 
-**Status:** open
+**Status:** resolved
 **Raised:** 2026-07-18
+**Resolved:** 2026-07-18 — yes; `gitErrorSummary` in `commit-section.tsx` now reduces all four git-failure toasts to the marked line (`!` / `error:` / `fatal:`) or the last non-empty line ("nothing to commit, working tree clean"), so the toast carries the one line that states the problem.
 **Blocks:** —
 
 IDEA-68 phase 5 moved commit/push/sync/pull failures from small inline `Alert`s to

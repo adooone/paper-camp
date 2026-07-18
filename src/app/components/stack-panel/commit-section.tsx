@@ -54,6 +54,19 @@ function readStoredCommitField(key: string): string {
   }
 }
 
+// Git failures arrive as multi-line output ("To github…\n ! [rejected]…\nhint:…");
+// a toast wants the one line that states the problem.
+function gitErrorSummary(message: string): string {
+  const lines = message
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const marked = lines.find(
+    (line) => line.startsWith('!') || line.startsWith('error:') || line.startsWith('fatal:'),
+  );
+  return marked ?? lines.at(-1) ?? message;
+}
+
 function writeStoredCommitField(key: string, value: string): void {
   try {
     if (value) localStorage.setItem(key, value);
@@ -200,7 +213,11 @@ export const CommitSection = () => {
       setCommitExpanded(false);
       await loadGitStatus();
     } catch (err) {
-      toast({ title: 'Commit failed', description: (err as Error).message, variant: 'error' });
+      toast({
+        title: 'Commit failed',
+        description: gitErrorSummary((err as Error).message),
+        variant: 'error',
+      });
       // A failed commit can leave stale "changed files" behind (e.g. nothing left to
       // commit), which would otherwise invite a doomed retry.
       await loadGitStatus();
@@ -225,7 +242,11 @@ export const CommitSection = () => {
       await pushChanges();
       await loadGitStatus();
     } catch (err) {
-      toast({ title: 'Push failed', description: (err as Error).message, variant: 'error' });
+      toast({
+        title: 'Push failed',
+        description: gitErrorSummary((err as Error).message),
+        variant: 'error',
+      });
     } finally {
       setPushing(false);
     }
@@ -238,7 +259,11 @@ export const CommitSection = () => {
       // Sync can pull upstream commits, so refresh plans/ideas too — git-status alone would leave them stale.
       await Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
     } catch (err) {
-      toast({ title: 'Sync failed', description: (err as Error).message, variant: 'error' });
+      toast({
+        title: 'Sync failed',
+        description: gitErrorSummary((err as Error).message),
+        variant: 'error',
+      });
     } finally {
       setSyncing(false);
     }
@@ -251,7 +276,11 @@ export const CommitSection = () => {
       // Pull can also bring upstream entity changes, so refresh plans/ideas alongside git status.
       await Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
     } catch (err) {
-      toast({ title: 'Pull failed', description: (err as Error).message, variant: 'error' });
+      toast({
+        title: 'Pull failed',
+        description: gitErrorSummary((err as Error).message),
+        variant: 'error',
+      });
     } finally {
       setPulling(false);
     }
