@@ -4,12 +4,14 @@ title: Subjects and idea-detail polish
 type: feat
 status: review
 created: 2026-07-17
+updated: 2026-07-18
 tags:
   - app
   - plans
   - ideas
   - settings
   - ui
+subject: App UI
 ---
 
 Three improvements to the ideas surface: the page finally calls things what they are, ideas get an epic-like grouping entity, and the detail view gets its two sore spots fixed.

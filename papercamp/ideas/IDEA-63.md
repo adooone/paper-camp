@@ -4,11 +4,13 @@ title: Sweep comments to the §7 bar
 type: refactor
 status: review
 created: 2026-07-15
+updated: 2026-07-18
 tags:
   - app
   - core
   - refactor
   - docs
+subject: Code health
 ---
 
 [[IDEA-59]] set out to do this and reached `review` without moving the number: `src/` still carries 1431 comment lines, 7.8% of non-test source. The sweep wasn't skipped — it ran against a bar that couldn't reject anything. §7 said a comment "must explain a *why* that isn't derivable from the code", and almost any prose can be argued to clear that, so a pass could delete the obvious restatements, honestly report itself green, and leave every multi-paragraph block standing. Agents kept adding new ones for the same reason.

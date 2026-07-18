@@ -4,11 +4,14 @@ title: Run order for the worklist
 type: feat
 status: review
 created: 2026-07-17
+updated: 2026-07-18
 tags:
   - app
   - plans
   - ideas
   - ui
+subject: Frontend
+order: 1
 ---
 
 The worklist answers "what exists" but not "what do I run next" — sequencing lives only as prose inside idea bodies ("sequence after [[IDEA-68]]"), invisible in the list. Give ideas an explicit run order instead of a priority enum or a dependency graph: both of those are ceremony, and the actual need is a queue the user can see and adjust.
@@ -26,5 +29,7 @@ Design follows the [[IDEA-70]] subject pattern: one optional frontmatter key, vi
       Ordered first ascending, unordered after by created date, as the default sort; keep [[IDEA-64]] header sorting intact with order as a sortable column.
 - [x] Set the order from the UI
       Up/down controls on the worklist row (neighbour swap, minimal frontmatter writes) and an order field in the idea detail view.
+- [x] Enforce order as an invariant
+      Order stopped being optional: `normalizeRunOrder` (`core/run-order.ts`) keeps a contiguous 1..N over entries whose DERIVED status is planned/in-progress/review (stored overrides lag reality — merged-PR entries still say `review`, phased ideas still say `idea`) and clears order everywhere else; the plans PATCH route reflows the whole set after any status/order write, clamping requested slots to 1..N; the detail field renders only for those statuses and reverts on empty input. Also fixed `entityFileInput` silently dropping `order` from every entity write — the bug that had been eating stored orders.
 - [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green (round-trip + sort covered); reorder a few ideas in the app and confirm the list and files agree.

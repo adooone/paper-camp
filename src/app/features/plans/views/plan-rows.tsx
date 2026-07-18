@@ -1,17 +1,10 @@
-import { fontSize, space } from '@/app/styles/tokens';
+import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
-import { Card, IconButton, Stamp } from '@dendelion/paper-ui';
+import { Card, Stamp } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { phaseProgress, relativeDate } from '../helpers';
-
-export interface RowMoveControls {
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-}
 
 interface PlanRowsProps {
   plans: PlanEntry[];
@@ -20,9 +13,6 @@ interface PlanRowsProps {
   /** FEAT-42: worklist-rows.tsx nests this under an idea-group header, which already
    * carries its own header row — set false there so it isn't repeated per group. */
   showHeader?: boolean;
-  /** Only the top-level worklist call site passes this — idea-group children have
-   * no visible order column, so they render without up/down controls. */
-  getMoveControls?: (plan: PlanEntry) => RowMoveControls | undefined;
 }
 
 const headerLabelStyle: React.CSSProperties = {
@@ -33,151 +23,128 @@ const headerLabelStyle: React.CSSProperties = {
   overflow: 'hidden',
 };
 
-const arrowButtonStyle: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
-  padding: 0,
-  margin: 0,
-  cursor: 'pointer',
-  font: 'inherit',
-  fontSize: 8,
-  lineHeight: 1,
-  color: 'inherit',
-};
+export const ROW_MARKER_WIDTH = 36;
 
-export const OrderMoveArrows = ({ move }: { move: RowMoveControls }) => (
-  <span style={{ display: 'flex', flexDirection: 'column' }}>
-    <button
-      type="button"
-      style={{ ...arrowButtonStyle, opacity: move.canMoveUp ? 0.6 : 0.2 }}
-      disabled={!move.canMoveUp}
-      aria-label="Move up"
-      onClick={(e) => {
-        e.stopPropagation();
-        move.onMoveUp();
-      }}
-    >
-      ▲
-    </button>
-    <button
-      type="button"
-      style={{ ...arrowButtonStyle, opacity: move.canMoveDown ? 0.6 : 0.2 }}
-      disabled={!move.canMoveDown}
-      aria-label="Move down"
-      onClick={(e) => {
-        e.stopPropagation();
-        move.onMoveDown();
-      }}
-    >
-      ▼
-    </button>
+/** The gutter outside a row card: run-order stamp, a check for done, or blank. */
+export const RowMarker = ({ order, done }: { order?: number; done?: boolean }) => (
+  <span
+    style={{
+      flex: `0 0 ${ROW_MARKER_WIDTH}px`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}
+  >
+    {done ? (
+      <span aria-label="Done" style={{ color: color.accentGreenDark, fontSize: fontSize.sm }}>
+        ✓
+      </span>
+    ) : order !== undefined ? (
+      <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
+        <span style={{ fontFamily: fontFamily.handwritten, fontSize: fontSize.xs, lineHeight: 1 }}>
+          {order}
+        </span>
+      </Stamp>
+    ) : null}
   </span>
 );
 
 // Built from Cards, not paper-ui's Table, sharing the .plan-rows-grid column
 // template (utilities.css) so the header and rows line up.
-export const PlanRows = ({
-  plans,
-  activePlanTitle,
-  onOpen,
-  showHeader = true,
-  getMoveControls,
-}: PlanRowsProps) => {
+export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: PlanRowsProps) => {
   const gridClass = 'plan-rows-grid';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
       {showHeader && (
-        <Card size="small" texture="kraft" className="plan-row-card">
-          <div className={gridClass}>
-            <span style={headerLabelStyle}>Order</span>
-            <span style={headerLabelStyle}>Id</span>
-            <span style={headerLabelStyle}>Title</span>
-            <span className="plan-rows-cell-updated" style={headerLabelStyle}>
-              Updated
-            </span>
-            <span style={headerLabelStyle}>Progress</span>
-            <span style={headerLabelStyle}>Status</span>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ flex: `0 0 ${ROW_MARKER_WIDTH}px` }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Card size="small" texture="kraft" className="plan-row-card">
+              <div className={gridClass}>
+                <span style={headerLabelStyle}>Id</span>
+                <span style={headerLabelStyle}>Title</span>
+                <span className="plan-rows-cell-updated" style={headerLabelStyle}>
+                  Updated
+                </span>
+                <span style={headerLabelStyle}>Progress</span>
+                <span style={headerLabelStyle}>Status</span>
+              </div>
+            </Card>
           </div>
-        </Card>
+        </div>
       )}
       {plans.map((plan) => {
         const progress = phaseProgress(plan);
-        const move = getMoveControls?.(plan);
         return (
-          <div
-            key={plan.title}
-            role={onOpen ? 'button' : undefined}
-            tabIndex={onOpen ? 0 : undefined}
-            onClick={onOpen ? () => onOpen(plan.title) : undefined}
-            onKeyDown={
-              onOpen
-                ? (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onOpen(plan.title);
+          <div key={plan.title} style={{ display: 'flex', alignItems: 'center' }}>
+            <RowMarker order={plan.order} done={plan.status === 'done'} />
+            <div
+              role={onOpen ? 'button' : undefined}
+              tabIndex={onOpen ? 0 : undefined}
+              onClick={onOpen ? () => onOpen(plan.title) : undefined}
+              onKeyDown={
+                onOpen
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onOpen(plan.title);
+                      }
                     }
-                  }
-                : undefined
-            }
-            className={plan.title === activePlanTitle ? 'plan-row-highlighted' : undefined}
-            style={{ cursor: onOpen ? 'pointer' : undefined, borderRadius: 10 }}
-          >
-            <Card size="small" texture="canvas" className="plan-row-card">
-              <div className={gridClass}>
-                <span
-                  className="text-sm"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: space[1],
-                    opacity: plan.order !== undefined ? 0.6 : 0.3,
-                  }}
-                >
-                  {plan.order ?? '—'}
-                  {move && <OrderMoveArrows move={move} />}
-                </span>
-                <PlanIdStamp id={plan.id} />
-                <span
-                  style={{
-                    fontWeight: 600,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {plan.title}
-                </span>
-                <span
-                  className="plan-rows-cell-updated text-sm"
-                  style={{ opacity: 0.45, whiteSpace: 'nowrap' }}
-                >
-                  {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
-                </span>
-                {progress ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <ProgressBar pct={progress.pct} color={STATUS_COLOR[plan.status]} />
-                    </div>
-                    <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
-                      {progress.done}/{progress.total}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-sm" style={{ opacity: 0.3 }}>
-                    —
-                  </span>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
-                  <Stamp
-                    size="small"
-                    fillColor={STATUS_STAMP[plan.status].fill}
-                    textColor={STATUS_STAMP[plan.status].text}
+                  : undefined
+              }
+              className={plan.title === activePlanTitle ? 'plan-row-highlighted' : undefined}
+              style={{
+                cursor: onOpen ? 'pointer' : undefined,
+                borderRadius: 10,
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              <Card size="small" texture="canvas" className="plan-row-card">
+                <div className={gridClass}>
+                  <PlanIdStamp id={plan.id} />
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
                   >
-                    {STATUS_LABEL[plan.status]}
-                  </Stamp>
+                    {plan.title}
+                  </span>
+                  <span
+                    className="plan-rows-cell-updated text-sm"
+                    style={{ opacity: 0.45, whiteSpace: 'nowrap' }}
+                  >
+                    {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
+                  </span>
+                  {progress ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <ProgressBar pct={progress.pct} color={STATUS_COLOR[plan.status]} />
+                      </div>
+                      <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
+                        {progress.done}/{progress.total}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-sm" style={{ opacity: 0.3 }}>
+                      —
+                    </span>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
+                    <Stamp
+                      size="small"
+                      fillColor={STATUS_STAMP[plan.status].fill}
+                      textColor={STATUS_STAMP[plan.status].text}
+                    >
+                      {STATUS_LABEL[plan.status]}
+                    </Stamp>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
           </div>
         );
       })}

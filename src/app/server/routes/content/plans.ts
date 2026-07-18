@@ -1,6 +1,7 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readEntities } from '@/core/readers';
+import { readEntities, readWorkEntries } from '@/core/readers';
+import { normalizeRunOrder } from '@/core/run-order';
 import {
   archiveEntityFile,
   assignEntityId,
@@ -194,6 +195,35 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         }
 
         await writeEntityFile(targetFile, entityFileInput(updatedEntry));
+
+        // Any status/order write can break the run-order invariant (contiguous
+        // 1..N over planned/in-progress/review); reflow the rest to restore it.
+        // Classification uses DERIVED status (readWorkEntries) — stored overrides
+        // lag reality (merged-PR entries stay `review`, phased ideas stay `idea`).
+        if (updates.order !== undefined || updates.status !== undefined) {
+          const moved =
+            typeof updates.order === 'number' ? { id: target.id, order: updates.order } : undefined;
+          const { entries: work } = await readWorkEntries(ideasDir);
+          const derived = new Map(work.map((w) => [w.id, w.status as string | undefined]));
+          const nextEntries = entries.map((e) => (e.id === target.id ? updatedEntry : e));
+          const classified = nextEntries.map((e) => ({
+            id: e.id,
+            order: e.order,
+            created: e.created,
+            status:
+              e.id === target.id && updates.status !== undefined
+                ? (updates.status ?? undefined)
+                : (derived.get(e.id) ?? e.status),
+          }));
+          for (const change of normalizeRunOrder(classified, moved)) {
+            const file = join(ideasDir, `${change.id}.md`);
+            if (!(await fileExists(file))) continue;
+            const changedEntry = nextEntries.find((e) => e.id === change.id);
+            if (!changedEntry) continue;
+            await writeEntityFile(file, entityFileInput({ ...changedEntry, order: change.order }));
+          }
+        }
+
         await regenerateIndexes(root);
 
         // `done` is derived from a merged PR and needs no archiving; `dropped` has no

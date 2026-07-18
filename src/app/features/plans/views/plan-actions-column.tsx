@@ -1,18 +1,22 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlanTitle } from '@/app/hooks';
+import { useProjectSubjects } from '@/app/hooks/use-project-subjects';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { AGENT_IDS, AGENT_LABELS, type AgentId } from '@/types/index';
-import { Card, ListItem, Select, Stamp } from '@dendelion/paper-ui';
+import { Card, Input, ListItem, Select, Stamp } from '@dendelion/paper-ui';
+import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
 import { FixReviewButton } from '../actions';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
 
+const NO_SUBJECT = '__no-subject__';
+
 const sectionLabelStyle: React.CSSProperties = {
-  fontSize: fontSize['2xs'],
+  fontFamily: fontFamily.handwritten,
+  fontSize: fontSize.xs,
   fontWeight: 600,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
+  lineHeight: 1,
   color: color.textTertiary,
   margin: `0 0 ${space[2]}`,
 };
@@ -22,8 +26,13 @@ export const PlanActionsColumn = () => {
   const activePlanTitle = useActivePlanTitle();
   const agentBusy = useAppStore(selectAgentBusy);
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
+  const { subjects } = useProjectSubjects();
 
   const plan = activePlanTitle ? plans?.entries.find((p) => p.title === activePlanTitle) : null;
+  const [orderInput, setOrderInput] = useState('');
+  useEffect(() => {
+    setOrderInput(plan?.order !== undefined ? String(plan?.order) : '');
+  }, [plan?.order]);
   if (!plan) return null;
   const inProgress = plan.status === 'in-progress';
   const underReview = plan.status === 'review';
@@ -37,6 +46,21 @@ export const PlanActionsColumn = () => {
   );
 
   const patch = (updates: Parameters<typeof patchByTitle>[1]) => patchByTitle(plan.title, updates);
+
+  // Order is an invariant (contiguous 1..N over planned/in-progress/review):
+  // the field only shows for those statuses and an empty value reverts.
+  const hasRunOrder = inProgress || underReview || plan.status === 'planned';
+
+  const handleOrderBlur = async () => {
+    const trimmed = orderInput.trim();
+    const nextOrder = Number(trimmed);
+    if (trimmed === '' || !Number.isInteger(nextOrder) || nextOrder < 1) {
+      setOrderInput(plan.order !== undefined ? String(plan.order) : '');
+      return;
+    }
+    if (nextOrder === plan.order) return;
+    await patch({ order: nextOrder });
+  };
 
   return (
     // Pull up by the SidebarShell's top padding to line up with the Page.
@@ -68,6 +92,36 @@ export const PlanActionsColumn = () => {
           </div>
 
           <div>
+            <div style={sectionLabelStyle}>Subject</div>
+            <Select
+              size="small"
+              value={plan.subject && subjects.includes(plan.subject) ? plan.subject : NO_SUBJECT}
+              onChange={(value) => patch({ subject: value === NO_SUBJECT ? null : value })}
+              disabled={updating}
+              options={[
+                { value: NO_SUBJECT, label: 'No subject' },
+                ...subjects.map((s) => ({ value: s, label: s })),
+              ]}
+            />
+          </div>
+
+          {hasRunOrder && (
+            <div>
+              <div style={sectionLabelStyle}>Order</div>
+              <Input
+                type="number"
+                size="small"
+                aria-label="Run order"
+                min={1}
+                value={orderInput}
+                onChange={(e) => setOrderInput(e.target.value)}
+                onBlur={handleOrderBlur}
+                disabled={updating}
+              />
+            </div>
+          )}
+
+          <div>
             <div style={sectionLabelStyle}>Agent</div>
             <Select
               size="small"
@@ -80,6 +134,21 @@ export const PlanActionsColumn = () => {
               ]}
             />
           </div>
+
+          {plan.tags.length > 0 && (
+            <div>
+              <div style={sectionLabelStyle}>Tags</div>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: space[1], flexWrap: 'wrap' }}
+              >
+                {plan.tags.map((tag) => (
+                  <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
+                    {tag}
+                  </Stamp>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
             <div style={sectionLabelStyle}>Actions</div>

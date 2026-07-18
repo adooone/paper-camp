@@ -1,7 +1,6 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
-import { useProjectSubjects } from '@/app/hooks/use-project-subjects';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
@@ -39,8 +38,6 @@ interface EntityDetailProps {
   plan: PlanEntry;
 }
 
-const NO_SUBJECT = '__no-subject__';
-
 /** Parses the entity id a feature branch encodes (feat/idea-43-… → IDEA-43). */
 function branchEntityId(branch: string | null): string | null {
   const match = branch?.match(/^[a-z]+\/([a-z]+-\d+)-/);
@@ -53,7 +50,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
-  const { subjects } = useProjectSubjects();
   const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
@@ -63,10 +59,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
   const auditRunning = planTask?.taskKind === 'audit';
   const [logInput, setLogInput] = useState('');
-  const [orderInput, setOrderInput] = useState(plan.order !== undefined ? String(plan.order) : '');
-  useEffect(() => {
-    setOrderInput(plan.order !== undefined ? String(plan.order) : '');
-  }, [plan.order]);
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
   const ideaView: IdeaEntry = {
@@ -112,21 +104,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
   };
 
-  const handleSubjectChange = async (value: string) => {
-    await patchByTitle(plan.title, { subject: value === NO_SUBJECT ? null : value });
-  };
-
-  const handleOrderBlur = async () => {
-    const trimmed = orderInput.trim();
-    const nextOrder = trimmed === '' ? null : Number(trimmed);
-    if (nextOrder !== null && !Number.isInteger(nextOrder)) {
-      setOrderInput(plan.order !== undefined ? String(plan.order) : '');
-      return;
-    }
-    if (nextOrder === (plan.order ?? null)) return;
-    await patchByTitle(plan.title, { order: nextOrder });
-  };
-
   const handleAddLogEntry = async () => {
     if (!logInput.trim()) return;
     const today = new Date().toISOString().slice(0, 10);
@@ -168,66 +145,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           </span>
           <RefreshButton />
         </div>
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: space[2],
-          flexWrap: 'wrap',
-          marginBottom: space[4],
-        }}
-      >
-        <span className="text-sm" style={{ opacity: 0.5, whiteSpace: 'nowrap' }}>
-          Subject
-        </span>
-        <Select
-          size="small"
-          width={160}
-          value={plan.subject && subjects.includes(plan.subject) ? plan.subject : NO_SUBJECT}
-          onChange={handleSubjectChange}
-          disabled={updating}
-          options={[
-            { value: NO_SUBJECT, label: 'No subject' },
-            ...subjects.map((s) => ({ value: s, label: s })),
-          ]}
-        />
-        <span
-          className="text-sm"
-          style={{ opacity: 0.5, whiteSpace: 'nowrap', marginLeft: space[2] }}
-        >
-          Order
-        </span>
-        <div style={{ width: 64 }}>
-          <Input
-            type="number"
-            size="small"
-            aria-label="Run order"
-            placeholder="—"
-            value={orderInput}
-            onChange={(e) => setOrderInput(e.target.value)}
-            onBlur={handleOrderBlur}
-            disabled={updating}
-          />
-        </div>
-        {plan.tags.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: space[2],
-              flexWrap: 'wrap',
-              marginLeft: 'auto',
-            }}
-          >
-            {plan.tags.map((tag) => (
-              <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
-                {tag}
-              </Stamp>
-            ))}
-          </div>
-        )}
       </div>
 
       {(showBranchRow || plan.pr) && (

@@ -31,5 +31,6 @@
       "model": "sonnet",
       "effort": "low"
     }
-  }
+  },
+  "subjects": ["Frontend", "Code health", "Workflow"]
 }
