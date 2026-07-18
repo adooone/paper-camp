@@ -179,9 +179,12 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           marginBottom: space[4],
         }}
       >
+        <span className="text-sm" style={{ opacity: 0.5, whiteSpace: 'nowrap' }}>
+          Subject
+        </span>
         <Select
           size="small"
-          width={180}
+          width={160}
           value={plan.subject && subjects.includes(plan.subject) ? plan.subject : NO_SUBJECT}
           onChange={handleSubjectChange}
           disabled={updating}
@@ -190,11 +193,17 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             ...subjects.map((s) => ({ value: s, label: s })),
           ]}
         />
-        <div style={{ width: 90 }}>
+        <span
+          className="text-sm"
+          style={{ opacity: 0.5, whiteSpace: 'nowrap', marginLeft: space[2] }}
+        >
+          Order
+        </span>
+        <div style={{ width: 64 }}>
           <Input
             type="number"
             size="small"
-            label="Order"
+            aria-label="Run order"
             placeholder="—"
             value={orderInput}
             onChange={(e) => setOrderInput(e.target.value)}
@@ -202,11 +211,23 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             disabled={updating}
           />
         </div>
-        {plan.tags.map((tag) => (
-          <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
-            {tag}
-          </Stamp>
-        ))}
+        {plan.tags.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: space[2],
+              flexWrap: 'wrap',
+              marginLeft: 'auto',
+            }}
+          >
+            {plan.tags.map((tag) => (
+              <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
+                {tag}
+              </Stamp>
+            ))}
+          </div>
+        )}
       </div>
 
       {(showBranchRow || plan.pr) && (
