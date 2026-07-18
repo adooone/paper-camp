@@ -166,6 +166,20 @@ header[class*="layout-module__header___"] {
   transform: rotate(90deg);
 }
 
+@keyframes pc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.pc-spin {
+  animation: pc-spin 0.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc-spin {
+    animation: none;
+  }
+}
+
 @media (max-width: 1023px) {
   .task-rows-grid {
     grid-template-columns: 20px 116px minmax(0, 1fr) 88px 72px;

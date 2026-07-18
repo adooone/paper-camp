@@ -1,14 +1,12 @@
 import { RefreshIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import { IconButton, useToast } from '@dendelion/paper-ui';
-import { motion, useReducedMotion } from 'framer-motion';
 
 /** Only re-reads what's already there — distinct from `ActualiseAllButton`, which
  * launches a reconcile agent that rewrites entities. */
 export const RefreshButton = () => {
   const refreshAll = useAppStore((s) => s.refreshAll);
   const refreshing = useAppStore((s) => s.refreshing);
-  const shouldReduceMotion = useReducedMotion();
   const { toast } = useToast();
 
   const handleClick = async () => {
@@ -32,17 +30,9 @@ export const RefreshButton = () => {
   return (
     <IconButton
       icon={
-        <motion.span
-          style={{ display: 'inline-flex' }}
-          animate={{ rotate: refreshing && !shouldReduceMotion ? 360 : 0 }}
-          transition={
-            refreshing && !shouldReduceMotion
-              ? { repeat: Number.POSITIVE_INFINITY, ease: 'linear', duration: 0.8 }
-              : { duration: 0 }
-          }
-        >
+        <span style={{ display: 'inline-flex' }} className={refreshing ? 'pc-spin' : undefined}>
           <RefreshIcon size={16} />
-        </motion.span>
+        </span>
       }
       label={refreshing ? 'Refreshing…' : 'Refresh data'}
       size="small"

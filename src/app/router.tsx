@@ -12,6 +12,7 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel, StatusBar } from './components';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
 import { useAppStore } from './stores/app-store';
+import { crossfadeTransition, crossfadeVariants } from './styles/motion';
 
 const DocsPage = lazy(() =>
   import('@/app/features/docs/index').then((m) => ({ default: m.DocsPage })),
@@ -231,14 +232,8 @@ const RootLayout = () => {
                       <AnimatePresence>
                         <motion.div
                           key={pathname}
-                          initial={shouldReduceMotion ? undefined : { opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={
-                            shouldReduceMotion
-                              ? undefined
-                              : { opacity: 0, position: 'absolute', inset: 0 }
-                          }
-                          transition={{ duration: shouldReduceMotion ? 0 : 0.15, ease: 'easeOut' }}
+                          {...crossfadeVariants(shouldReduceMotion)}
+                          transition={crossfadeTransition(shouldReduceMotion)}
                         >
                           <Suspense fallback={null}>
                             <Outlet />
