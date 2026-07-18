@@ -2,7 +2,7 @@
 id: IDEA-68
 title: Trim the UI to what's used
 type: refactor
-status: idea
+status: review
 created: 2026-07-17
 tags:
   - app
@@ -31,5 +31,5 @@ The app has grown surfaces nobody visits. Minimise to the features actually used
       Delete slices/fetchers/components only the removed views used, after confirming what the Stack panel still consumes (doc-issue findings, progress reads). Corpus files, agent writes, and server routes with non-UI consumers stay.
 - [x] Make git errors readable toasts
       `runGit` includes stdout in the rejection when stderr is empty (so "nothing to commit" survives); commit/push/sync/pull failures surface as toasts with a one-line summary instead of raw multi-line git output in inline Alerts; a failed commit also refreshes git status so stale "changed files" don't invite a doomed retry.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, full tests; click through Docs, Settings, and Tasks to confirm the kept surfaces still work and nothing dangles; force a commit and push failure and confirm both read as one-line toasts.
