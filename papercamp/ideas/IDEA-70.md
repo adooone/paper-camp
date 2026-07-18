@@ -2,7 +2,7 @@
 id: IDEA-70
 title: Subjects and idea-detail polish
 type: feat
-status: idea
+status: review
 created: 2026-07-17
 tags:
   - app
@@ -36,5 +36,5 @@ Three improvements to the ideas surface: the page finally calls things what they
       Set/change/clear from the detail view, writing only the frontmatter line.
 - [x] Polish the detail view
       Refresh button to the top-right corner; Log becomes Comments — separate surface, chat-style date-stamped entries, full-width bottom composer with right-aligned send. File grammar keeps `### Log`.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green (parser/serializer round-trip covered); click through grouping, settings management, picker, and comments in the app.
