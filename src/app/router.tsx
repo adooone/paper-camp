@@ -58,8 +58,6 @@ function writeStoredStackOpen(value: boolean): void {
 // Keep in sync with the min-[1440px]:pr-[480px] wrapper (Tailwind needs a literal).
 const LARGE_SCREEN_QUERY = '(min-width: 1440px)';
 
-const CONTENT_MARGIN = 32;
-
 // Mirrors paper-ui `.content`'s padding, which the strip and scroller bleed back out of.
 const LAYOUT_CONTENT_PAD = 32;
 
@@ -189,7 +187,6 @@ const RootLayout = () => {
                 style={{
                   gap: layoutConfig.contentGap,
                   width: '100%',
-                  ...(isLarge ? { paddingLeft: CONTENT_MARGIN, paddingRight: CONTENT_MARGIN } : {}),
                 }}
               >
                 {hasSidebar && (
