@@ -1,4 +1,4 @@
-import type { PlanEntry } from '@/types/index';
+import type { AgentTaskState, PlanEntry } from '@/types/index';
 
 export const relativeDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -19,6 +19,24 @@ export const phaseProgress = (plan: PlanEntry) => {
 };
 
 export const phasePercentage = (plan: PlanEntry): number | null => phaseProgress(plan)?.pct ?? null;
+
+export const runningTaskForPlan = (
+  planId: string | undefined,
+  agentStatus: AgentTaskState[],
+): AgentTaskState | undefined =>
+  planId
+    ? agentStatus.find((t) => t.planId === planId && t.status !== 'done' && t.status !== 'error')
+    : undefined;
+
+/** Overlays a live agent task onto the stored/derived status for display only —
+ * frontmatter and the derived status used for filtering/sorting stay untouched. */
+export const effectiveStatus = (
+  plan: PlanEntry,
+  agentStatus: AgentTaskState[],
+): PlanEntry['status'] => {
+  if (plan.status === 'done' || plan.status === 'dropped') return plan.status;
+  return runningTaskForPlan(plan.id, agentStatus) ? 'in-progress' : plan.status;
+};
 
 export const findFocusPlan = (
   plans: PlanEntry[] | undefined,

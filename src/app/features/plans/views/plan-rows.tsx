@@ -1,10 +1,12 @@
+import { MergeIcon } from '@/app/components/icons';
+import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
-import { Card, Stamp } from '@dendelion/paper-ui';
+import { Card, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
-import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { phaseProgress, relativeDate } from '../helpers';
+import { PR_STATE_STAMP, STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
+import { effectiveStatus, phaseProgress, relativeDate } from '../helpers';
 
 interface PlanRowsProps {
   plans: PlanEntry[];
@@ -53,6 +55,7 @@ export const RowMarker = ({ order, done }: { order?: number; done?: boolean }) =
 // template (utilities.css) so the header and rows line up.
 export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: PlanRowsProps) => {
   const gridClass = 'plan-rows-grid';
+  const agentStatus = useAppStore((s) => s.agentStatus);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
       {showHeader && (
@@ -75,6 +78,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
       )}
       {plans.map((plan) => {
         const progress = phaseProgress(plan);
+        const status = effectiveStatus(plan, agentStatus);
         return (
           <div key={plan.title} style={{ display: 'flex', alignItems: 'center' }}>
             <RowMarker order={plan.order} done={plan.status === 'done'} />
@@ -122,7 +126,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
                   {progress ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <ProgressBar pct={progress.pct} color={STATUS_COLOR[plan.status]} />
+                        <ProgressBar pct={progress.pct} color={STATUS_COLOR[status]} />
                       </div>
                       <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
                         {progress.done}/{progress.total}
@@ -136,11 +140,18 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
                   <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
                     <Stamp
                       size="small"
-                      fillColor={STATUS_STAMP[plan.status].fill}
-                      textColor={STATUS_STAMP[plan.status].text}
+                      fillColor={STATUS_STAMP[status].fill}
+                      textColor={STATUS_STAMP[status].text}
                     >
-                      {STATUS_LABEL[plan.status]}
+                      {STATUS_LABEL[status]}
                     </Stamp>
+                    {plan.pr?.state === 'merged' && (
+                      <Tooltip content={`Merged in #${plan.pr.number}`}>
+                        <span style={{ display: 'inline-flex', color: PR_STATE_STAMP.merged.text }}>
+                          <MergeIcon size={14} />
+                        </span>
+                      </Tooltip>
+                    )}
                   </div>
                 </div>
               </Card>
