@@ -30,7 +30,7 @@ Honesty mechanism, same as IDEA-63: baseline first, report per-file before/after
 ### Phases
 - [x] Baseline and dead-code inventory
       Record per-file line counts across non-test `src/` (the hotspots above and the 17,584 total) and inventory unused/under-used exports (git-pr's 15, store selectors, route helpers) so later phases diff against fixed numbers and deletions are provable.
-- [ ] Split and shrink server/agent.ts
+- [x] Split and shrink server/agent.ts
       Extract the shared launch scaffold the ~8 modes re-spell, and move fix-review settle + task-log persistence into their own modules; the registry/gate stays the core. Report before/after (1148 → n).
 - [ ] Slim the client hotspots
       `commit-section.tsx`: split file-list / commit-form / branch-actions and cut the 21-hook body down; `app-store.ts`: collapse the repeated load-slice pattern into one factory; sweep `entity-detail.tsx` (420) and `worklist-rows.tsx` (313) with the same eye. Settings-page is expected to shrink via IDEA-68 first — only slim what remains.

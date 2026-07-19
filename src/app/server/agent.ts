@@ -1,12 +1,11 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { appendFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { buildReconcilePrompt } from '@/app/features/plans/prompts';
-import { replyToReviewThread, resolveReviewThread } from '@/core/git-pr';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
 import { computePlanContentHash } from '@/core/serialize';
@@ -24,11 +23,13 @@ import {
   type ReconcileQueueItem,
   type ReviewThread,
   type TaskKind,
-  type TaskLogEntry,
   coerceAgentConfig,
 } from '@/types/index';
+import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
-import { campFile, readMaybe, taskLogFile } from './helpers';
+import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
+import { campFile, readMaybe } from './helpers';
+import { logTaskCompletion } from './task-log';
 
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -133,6 +134,25 @@ export function createAgentManager(
     lastLaunchedId = task.id;
   }
 
+  function newTask(
+    base: Pick<AgentTask, 'taskKind' | 'planTitle' | 'agentId' | 'adapter' | 'proc'> &
+      Partial<AgentTask>,
+  ): AgentTask {
+    return {
+      id: randomUUID(),
+      startedAt: new Date().toISOString(),
+      status: 'starting',
+      lines: [],
+      ...base,
+    };
+  }
+
+  function registerAndStart(task: AgentTask): AgentTask {
+    registerTask(task);
+    setStatus(task, 'running');
+    return task;
+  }
+
   // Outlives task replacement: a human can launch another run before pushing,
   // and the verdict must still be there to settle threads once the fix is pushed.
   let pendingFixReviewResult: FixReviewResult | null = null;
@@ -154,25 +174,6 @@ export function createAgentManager(
     broadcast(text, task.id);
   }
 
-  // Best-effort: a log write failure must never take down the task it's recording.
-  function logTaskCompletion(task: AgentTask, outcome: 'done' | 'error') {
-    const entry: TaskLogEntry = {
-      id: task.id,
-      taskKind: task.taskKind,
-      planId: task.planId,
-      planTitle: task.planTitle,
-      agentId: task.agentId,
-      startedAt: task.startedAt,
-      endedAt: new Date().toISOString(),
-      outcome,
-    };
-    appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(() => {});
-    const file = taskLogFile(root, task.id);
-    mkdir(dirname(file), { recursive: true })
-      .then(() => writeFile(file, task.lines.join('\n'), 'utf-8'))
-      .catch(() => {});
-  }
-
   const MAX_COMPLETED_TASKS = 20;
 
   function pruneCompletedTasks(): void {
@@ -187,7 +188,7 @@ export function createAgentManager(
     task.status = status;
     broadcast(`agent: ${status}`, task.id);
     if (status === 'done' || status === 'error') {
-      logTaskCompletion(task, status);
+      logTaskCompletion(root, task, status);
       pruneCompletedTasks();
     }
   }
@@ -240,88 +241,14 @@ export function createAgentManager(
     }
   }
 
-  // Scans lines backwards for the last valid verdict JSON, since models wrap it in
-  // a ```json fence and an earlier quoted snippet could otherwise win instead.
-  function parseFixReviewResult(task: AgentTask): FixReviewResult | undefined {
-    const threads = task.fixReviewThreads ?? [];
-    const lines = task.lines.flatMap((entry) => entry.split('\n'));
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const candidate = lines[i].trim();
-      if (!candidate.startsWith('{')) continue;
-      const result = validateFixReviewVerdict(candidate, threads);
-      if (result) return result;
-    }
-    return undefined;
-  }
-
-  function validateFixReviewVerdict(
-    candidate: string,
-    threads: ReviewThread[],
-  ): FixReviewResult | undefined {
-    try {
-      const parsed = JSON.parse(candidate) as {
-        commit?: { title?: string; message?: string };
-        addressed?: number[];
-        skipped?: { n?: number; why?: string }[];
-      };
-      if (!parsed.commit?.title) return undefined;
-      const addressedNs = parsed.addressed ?? [];
-      const skipped = parsed.skipped ?? [];
-      const seen = new Set<number>();
-      for (const n of addressedNs) seen.add(n);
-      for (const s of skipped) {
-        if (typeof s.n !== 'number' || !s.why) return undefined;
-        seen.add(s.n);
-      }
-      const total = addressedNs.length + skipped.length;
-      const inRange = (n: number) => Number.isInteger(n) && n >= 1 && n <= threads.length;
-      // Every thread index must appear exactly once: no gaps, dupes, or overlap.
-      if (total !== threads.length || seen.size !== threads.length) return undefined;
-      if (![...seen].every(inRange)) return undefined;
-      const idAt = (n: number): string => threads[n - 1].id;
-      return {
-        commit: { title: parsed.commit.title, message: parsed.commit.message ?? '' },
-        addressed: addressedNs.map(idAt),
-        skipped: skipped.map((s) => ({ threadId: idAt(s.n as number), why: s.why as string })),
-      };
-    } catch {
-      return undefined;
-    }
-  }
-
-  // Not deferred to the push: the verdict lives in memory and a restart in the
-  // human-paced gap before a push would silently drop it.
-  function settleReviewThreads(task: AgentTask, result: FixReviewResult): void {
-    void (async () => {
-      const resolved = await Promise.all(
-        result.addressed.map((id) => resolveReviewThread(root, id).catch(() => false)),
-      );
-      const replied = await Promise.all(
-        result.skipped.map((s) =>
-          replyToReviewThread(
-            root,
-            s.threadId,
-            `Left as-is by the fix-review agent: ${s.why}`,
-          ).catch(() => false),
-        ),
-      );
-      const ok = resolved.filter(Boolean).length;
-      const said = replied.filter(Boolean).length;
-      pushLine(
-        task,
-        `Resolved ${ok}/${result.addressed.length} review threads, replied to ${said}`,
-      );
-    })();
-  }
-
   function finishTask(task: AgentTask, error: boolean) {
     setStatus(task, error ? 'error' : 'done');
     if (error) return;
     if (task.taskKind === 'fix-review') {
-      task.fixReviewResult = parseFixReviewResult(task);
+      task.fixReviewResult = parseFixReviewResult(task.lines, task.fixReviewThreads ?? []);
       if (task.fixReviewResult) {
         pendingFixReviewResult = task.fixReviewResult;
-        settleReviewThreads(task, task.fixReviewResult);
+        settleReviewThreads(root, task.fixReviewResult, (text) => pushLine(task, text));
       }
     }
     didTaskProgress(task).then((progressed) => {
@@ -474,21 +401,16 @@ export function createAgentManager(
       taskKind: scope.taskKind,
     });
     const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
-    const task: AgentTask = {
-      id: randomUUID(),
-      startedAt: new Date().toISOString(),
+    const task = newTask({
       planTitle: identity.planTitle,
       planId: identity.planId,
-      status: 'starting',
       agentId,
       adapter,
       proc,
-      lines: [],
       ...scope,
-    };
-    registerTask(task);
+    });
+    registerAndStart(task);
     attachReader(task);
-    setStatus(task, 'running');
     return { ok: true };
   }
 
@@ -587,20 +509,16 @@ export function createAgentManager(
       cwd: root,
       stdio: 'ignore',
     });
-    const task: AgentTask = {
-      id: randomUUID(),
-      startedAt: new Date().toISOString(),
-      taskKind: 'batch-reconcile',
-      planTitle: 'Batch reconcile',
-      status: 'starting',
-      agentId,
-      adapter,
-      proc: stubProc,
-      lines: [],
-      reconcileResults: [],
-    };
-    registerTask(task);
-    setStatus(task, 'running');
+    const task = registerAndStart(
+      newTask({
+        taskKind: 'batch-reconcile',
+        planTitle: 'Batch reconcile',
+        agentId,
+        adapter,
+        proc: stubProc,
+        reconcileResults: [],
+      }),
+    );
 
     (async () => {
       try {
@@ -664,23 +582,7 @@ export function createAgentManager(
           // Drain stderr — an unread pipe can fill and hang the subprocess.
           proc.stderr?.on('data', () => {});
 
-          // Wait with a timeout so one entity's stall/clarifying-question hang is a
-          // failure rather than blocking the whole sweep — same SIGTERM→SIGKILL
-          // escalation as startRunAllPhases.
-          let timedOut = false;
-          const procDone = new Promise<boolean>((resolve) => {
-            proc.on('close', (code) => resolve(code === 0));
-            proc.on('error', () => resolve(false));
-          });
-          const timeoutHandle = setTimeout(() => {
-            timedOut = true;
-            if (!proc.killed) proc.kill('SIGTERM');
-            setTimeout(() => {
-              if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
-            }, 5000);
-          }, PHASE_TIMEOUT_MS);
-          const success = await procDone;
-          clearTimeout(timeoutHandle);
+          const { ok: success, timedOut } = await runProcessWithTimeout(proc, PHASE_TIMEOUT_MS);
 
           if (timedOut) {
             failed++;
@@ -756,20 +658,16 @@ export function createAgentManager(
     } = resolveAgent({ agentId: plan.agent, defaultAgents, taskKind: 'run-all' });
 
     const stubProc = spawn('sh', ['-c', 'exit 0'], { cwd: root, stdio: 'ignore' });
-    const task: AgentTask = {
-      id: randomUUID(),
-      startedAt: new Date().toISOString(),
-      taskKind: 'run-all',
-      planTitle: plan.title,
-      planId: plan.id,
-      status: 'starting',
-      agentId,
-      adapter,
-      proc: stubProc,
-      lines: [],
-    };
-    registerTask(task);
-    setStatus(task, 'running');
+    const task = registerAndStart(
+      newTask({
+        taskKind: 'run-all',
+        planTitle: plan.title,
+        planId: plan.id,
+        agentId,
+        adapter,
+        proc: stubProc,
+      }),
+    );
 
     (async () => {
       try {
@@ -803,22 +701,7 @@ export function createAgentManager(
           }
           proc.stderr?.on('data', () => {});
 
-          let timedOut = false;
-          const procDone = new Promise<boolean>((resolve) => {
-            proc.on('close', (code) => resolve(code === 0));
-            proc.on('error', () => resolve(false));
-          });
-          const timeoutHandle = setTimeout(() => {
-            timedOut = true;
-            if (!proc.killed) proc.kill('SIGTERM');
-            setTimeout(() => {
-              if (proc.exitCode === null && proc.signalCode === null) {
-                proc.kill('SIGKILL');
-              }
-            }, 5000);
-          }, PHASE_TIMEOUT_MS);
-          const exitedOk = await procDone;
-          clearTimeout(timeoutHandle);
+          const { ok: exitedOk, timedOut } = await runProcessWithTimeout(proc, PHASE_TIMEOUT_MS);
 
           if (isSuperseded(task)) return;
 
@@ -937,19 +820,7 @@ export function createAgentManager(
         cwd: root,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
-      const task: AgentTask = {
-        id: randomUUID(),
-        startedAt: new Date().toISOString(),
-        taskKind,
-        planTitle,
-        status: 'starting',
-        agentId,
-        adapter,
-        proc,
-        lines: [],
-      };
-      registerTask(task);
-      setStatus(task, 'running');
+      const task = registerAndStart(newTask({ taskKind, planTitle, agentId, adapter, proc }));
 
       let settled = false;
       const settle = (fn: () => void) => {
@@ -962,10 +833,7 @@ export function createAgentManager(
         settle(() => {
           pushLine(task, `${planTitle} timed out`);
           setStatus(task, 'error');
-          if (!proc.killed) proc.kill('SIGTERM');
-          setTimeout(() => {
-            if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
-          }, 5000);
+          killWithEscalation(proc);
           reject(new Error(`${planTitle} timed out`));
         });
       }, READONLY_PROMPT_TIMEOUT_MS);
@@ -1033,18 +901,7 @@ export function createAgentManager(
       return { ok: false, error: 'No agent task running' };
     }
     setStatus(task, 'stopping');
-    if (!task.proc.killed) task.proc.kill('SIGTERM');
-    // SIGTERM can be ignored or delayed indefinitely, leaving the task stuck in
-    // 'stopping' forever and permanently blocking start() without this escalation.
-    setTimeout(() => {
-      if (
-        task.status === 'stopping' &&
-        task.proc.exitCode === null &&
-        task.proc.signalCode === null
-      ) {
-        task.proc.kill('SIGKILL');
-      }
-    }, 5000);
+    killWithEscalation(task.proc);
     return { ok: true };
   }
 
