@@ -198,6 +198,8 @@ export interface EntityEntry {
   phases: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
+  /** Set by readEntities from which of the two scanned dirs the file came from, not the frontmatter. */
+  archived?: boolean;
 }
 
 export interface ProgressEntry {

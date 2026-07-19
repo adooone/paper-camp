@@ -7,7 +7,7 @@ import {
   parseSuggestions,
   parseTaskLog,
 } from '@/core/parse';
-import { readNoteEntries, readWorkEntries } from '@/core/readers';
+import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
 import { coerceAgentConfig } from '@/types/index';
 import { cached } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
@@ -67,6 +67,11 @@ export const readRoutes: ReadRoute[] = [
     path: '/api/ideas',
     handler: async (root) =>
       cached(`notes:${root}`, () => readNoteEntries(campFile(root, 'ideas'))),
+  },
+  {
+    path: '/api/archivable-ideas',
+    handler: async (root) =>
+      cached(`archivable:${root}`, () => findArchivableIdeas(campFile(root, 'ideas'))),
   },
   {
     path: '/api/consistency',

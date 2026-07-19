@@ -12,7 +12,7 @@ import type {
 } from '../types/index';
 import { resolvePrsByEntity } from './git-pr/pr-lookup';
 import { parseEntityFile } from './parse/parser';
-import { deriveStatus } from './status';
+import { deriveStatus, isArchivable } from './status';
 
 async function readdirMaybe(dir: string): Promise<string[]> {
   try {
@@ -38,6 +38,7 @@ export async function readEntities(
   let fileCount = 0;
 
   for (const dir of [ideasDir, join(ideasDir, 'archive')]) {
+    const archived = dir !== ideasDir;
     const files = (await readdirMaybe(dir)).filter((f) => f.endsWith('.md') && f !== 'index.md');
     fileCount += files.length;
     const parsed = await Promise.all(
@@ -50,7 +51,9 @@ export async function readEntities(
       }),
     );
     for (const result of parsed) {
-      if ('entries' in result) entries.push(...result.entries);
+      if ('entries' in result) {
+        entries.push(...result.entries.map((e) => ({ ...e, archived })));
+      }
       warnings.push(...result.warnings);
     }
   }
@@ -126,6 +129,22 @@ export async function readWorkEntries(ideasDir: string): Promise<ParseResult<Pla
       .map((e) => entityToPlan(e, prs?.get(e.id), resolved)),
     warnings,
   };
+}
+
+export interface ArchivableIdea {
+  id: string;
+  title: string;
+  pr: PrInfo;
+}
+
+// Merged PR + review/done status + file still in ideasDir (not ideas/archive/): the
+// human promotion (archive + status: done) is overdue but nothing writes it automatically.
+export async function findArchivableIdeas(ideasDir: string): Promise<ArchivableIdea[]> {
+  const { entries, prs } = await readEntitiesAndPrs(ideasDir);
+  return entries.flatMap((e) => {
+    const pr = prs?.get(e.id);
+    return pr && isArchivable(e, pr) ? [{ id: e.id, title: e.title, pr }] : [];
+  });
 }
 
 export async function readNoteEntries(ideasDir: string): Promise<ParseResult<IdeaEntry>> {

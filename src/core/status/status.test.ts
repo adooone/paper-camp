@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PrInfo } from '../../types/index';
-import { deriveStatus } from './status';
+import { deriveStatus, isArchivable } from './status';
 
 const phase = (done: boolean) => ({ done, text: 'phase' });
 const pr = (state: PrInfo['state']): PrInfo => ({ number: 1, url: 'u', state });
@@ -66,5 +66,30 @@ describe('deriveStatus', () => {
     expect(
       deriveStatus({ kind: 'note', status: 'done', phases: [phase(true)] }, undefined, true),
     ).toBe('done');
+  });
+});
+
+describe('isArchivable', () => {
+  it('is true for a merged PR with review or done phases', () => {
+    expect(isArchivable({ phases: [phase(true)] }, pr('merged'))).toBe(true);
+    expect(isArchivable({ phases: [phase(true)], status: 'done' }, pr('merged'))).toBe(true);
+  });
+
+  it('is false without a merged PR', () => {
+    expect(isArchivable({ phases: [phase(true)] }, undefined)).toBe(false);
+    expect(isArchivable({ phases: [phase(true)] }, pr('open'))).toBe(false);
+    expect(isArchivable({ phases: [phase(true)] }, pr('closed'))).toBe(false);
+  });
+
+  it('is false for a note, even with a merged PR', () => {
+    expect(isArchivable({ kind: 'note', phases: [] }, pr('merged'))).toBe(false);
+  });
+
+  it('is false once the file already lives in ideas/archive/', () => {
+    expect(isArchivable({ phases: [phase(true)], archived: true }, pr('merged'))).toBe(false);
+  });
+
+  it('is false when a stored dropped wins over the merged PR', () => {
+    expect(isArchivable({ phases: [phase(true)], status: 'dropped' }, pr('merged'))).toBe(false);
   });
 });
