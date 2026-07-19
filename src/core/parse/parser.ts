@@ -6,6 +6,7 @@ import type {
   EntityEntry,
   IdeaEntry,
   IdeaStatus,
+  LogEntry,
   OpenQuestionEntry,
   ParseResult,
   ParseWarning,
@@ -16,6 +17,7 @@ import type {
   SuggestionEntry,
   TaskLogEntry,
 } from '../../types/index';
+import { CLARIFICATIONS_SECTION, LOG_SECTION, PHASES_SECTION, type SectionDef } from '../sections';
 import {
   decisionFieldsSchema,
   entityFrontmatterSchema,
@@ -27,26 +29,11 @@ import {
 
 const HEADING_RE = /^##\s+(.+?)\s*$/;
 const FIELD_RE = /^\*\*([A-Za-z][A-Za-z-]*):\*\*\s*(.*)$/;
-// Read h2 OR h3 for these sections. The serializer only ever writes `###`, but
-// generic markdown tooling (CodeRabbit, markdownlint) flags an h3 that isn't
-// preceded by an h2 and "helpfully" demotes it to `##` — which previously made
-// the whole section vanish silently. Accepting both means such an edit can't
-// destroy phases/log data; the next serialize re-canonicalizes it back to `###`.
-const PHASES_HEADING_RE = /^#{2,3}\s+Phases\s*$/i;
-const LOG_HEADING_RE = /^#{2,3}\s+Log\s*$/i;
-const CLARIFICATIONS_HEADING_RE = /^#{2,3}\s+Clarifications\s*$/i;
 const SUB_HEADING_RE = /^#{2,3}\s+/;
-const CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.*)$/;
-const PHASE_SOURCE_RE = /^\[review\]\s+(.*)$/;
-const LOG_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
 
-function extractSection<T>(
-  body: string,
-  headingRe: RegExp,
-  parseFn: (lines: string[], start: number, end: number) => T[],
-): { body: string; entries: T[] } {
+function extractSection<T>(body: string, section: SectionDef<T>): { body: string; entries: T[] } {
   const lines = body.split('\n');
-  const sectionStart = lines.findIndex((line) => headingRe.test(line));
+  const sectionStart = lines.findIndex((line) => section.headingRe.test(line));
   if (sectionStart === -1) return { body, entries: [] };
 
   let sectionEnd = lines.length;
@@ -57,86 +44,29 @@ function extractSection<T>(
     }
   }
 
-  const entries = parseFn(lines, sectionStart + 1, sectionEnd);
+  const entries = section.parseEntries(lines, sectionStart + 1, sectionEnd);
   const remaining = [...lines.slice(0, sectionStart), ...lines.slice(sectionEnd)].join('\n').trim();
   return { body: remaining, entries };
 }
 
-function parsePhaseEntries(lines: string[], start: number, end: number): PhaseItem[] {
-  const phases: PhaseItem[] = [];
-  let i = start;
-  while (i < end) {
-    const match = lines[i].match(CHECKBOX_RE);
-    if (match) {
-      const done = match[1].toLowerCase() === 'x';
-      const rawText = match[2].trim();
-      const sourceMatch = rawText.match(PHASE_SOURCE_RE);
-      const text = sourceMatch ? sourceMatch[1].trim() : rawText;
-      const source = sourceMatch ? ('review' as const) : undefined;
-      const descriptionLines: string[] = [];
-      i++;
-      while (i < end) {
-        const next = lines[i];
-        if (next.trim() === '') break;
-        if (CHECKBOX_RE.test(next) || SUB_HEADING_RE.test(next)) break;
-        if (/^\s/.test(next)) {
-          descriptionLines.push(next.trimStart());
-          i++;
-        } else {
-          break;
-        }
-      }
-      phases.push({
-        done,
-        text,
-        description: descriptionLines.length > 0 ? descriptionLines.join('\n') : undefined,
-        source,
-      });
-    } else {
-      i++;
-    }
-  }
-  return phases;
-}
-
-function extractPhases(body: string): { body: string; phases: PhaseItem[] } {
-  const result = extractSection(body, PHASES_HEADING_RE, parsePhaseEntries);
-  return { body: result.body, phases: result.entries };
-}
-
-function parseDatedListEntries(
-  lines: string[],
-  start: number,
-  end: number,
-): import('../../types/index').LogEntry[] {
-  const entries: import('../../types/index').LogEntry[] = [];
-  for (let i = start; i < end; i++) {
-    const match = lines[i].match(LOG_ENTRY_RE);
-    if (match) {
-      entries.push({ date: match[1], text: match[2].trim() });
-    }
-  }
-  return entries;
-}
-
-function extractDatedList(
-  body: string,
-  headingRe: RegExp,
-): { body: string; entries: import('../../types/index').LogEntry[] } {
-  return extractSection(body, headingRe, parseDatedListEntries);
-}
-
-function extractLog(body: string): { body: string; log: import('../../types/index').LogEntry[] } {
-  const { body: remaining, entries } = extractDatedList(body, LOG_HEADING_RE);
-  return { body: remaining, log: entries };
-}
-
-function extractClarifications(body: string): {
+/** Every entry file (plan, entity, raw ## block) carries the same three optional
+ * trailing sections in the same order — extract them together so callers stop
+ * re-spelling the phases/log/clarifications sequence three times. */
+function extractStandardSections(body: string): {
   body: string;
-  clarifications: import('../../types/index').LogEntry[];
+  phases: PhaseItem[];
+  log: LogEntry[];
+  clarifications: LogEntry[];
 } {
-  const { body: remaining, entries } = extractDatedList(body, CLARIFICATIONS_HEADING_RE);
-  return { body: remaining, clarifications: entries };
+  const afterPhases = extractSection(body, PHASES_SECTION);
+  const afterLog = extractSection(afterPhases.body, LOG_SECTION);
+  const afterClarifications = extractSection(afterLog.body, CLARIFICATIONS_SECTION);
+  return {
+    body: afterClarifications.body,
+    phases: afterPhases.entries,
+    log: afterLog.entries,
+    clarifications: afterClarifications.entries,
+  };
 }
 
 export function parseRawEntries(markdown: string): RawEntry[] {
@@ -169,11 +99,7 @@ export function parseRawEntries(markdown: string): RawEntry[] {
     while (cursor < block.length && block[cursor].trim() === '') cursor++;
 
     const rawBody = block.slice(cursor).join('\n').trim();
-    let { body, phases } = extractPhases(rawBody);
-    const { body: bodyAfterLog, log } = extractLog(body);
-    body = bodyAfterLog;
-    const { body: bodyAfterClarifications, clarifications } = extractClarifications(body);
-    body = bodyAfterClarifications;
+    const { body, phases, log, clarifications } = extractStandardSections(rawBody);
 
     entries.push({ title, fields, body, phases, log, clarifications });
   }
@@ -334,13 +260,7 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     return { entries: [], warnings };
   }
 
-  let body = rawBody;
-  const { body: bodyAfterPhases, phases } = extractPhases(body);
-  body = bodyAfterPhases;
-  const { body: bodyAfterLog, log } = extractLog(body);
-  body = bodyAfterLog;
-  const { body: bodyAfterClarifications, clarifications } = extractClarifications(body);
-  body = bodyAfterClarifications;
+  const { body, phases, log, clarifications } = extractStandardSections(rawBody);
 
   if (frontmatter.kind === 'note' && phases.length > 0) {
     warnings.push({
@@ -385,13 +305,7 @@ export function parsePlanFile(content: string): ParseResult<PlanEntry> {
     return { entries: [], warnings };
   }
 
-  let body = rawBody;
-  const { body: bodyAfterPhases, phases } = extractPhases(body);
-  body = bodyAfterPhases;
-  const { body: bodyAfterLog, log } = extractLog(body);
-  body = bodyAfterLog;
-  const { body: bodyAfterClarifications, clarifications } = extractClarifications(body);
-  body = bodyAfterClarifications;
+  const { body, phases, log, clarifications } = extractStandardSections(rawBody);
 
   const entry: PlanEntry = {
     title: frontmatter.title,
@@ -425,7 +339,7 @@ export function parseIdeaFile(content: string): ParseResult<IdeaEntry> {
     return { entries: [], warnings: fmWarnings };
   }
 
-  const { body, log } = extractLog(rawBody);
+  const { body, entries: log } = extractSection(rawBody, LOG_SECTION);
 
   const entry: IdeaEntry = {
     id: frontmatter.id,

@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
 import type { EntityEntry, LogEntry, PhaseItem, SuggestionEntry } from '../../types/index';
 import { SUGGESTION_ENTRY_RE } from '../parse/parser';
+import { CLARIFICATIONS_SECTION, LOG_SECTION, PHASES_SECTION } from '../sections';
 
 export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -61,29 +62,13 @@ export function formatPlanEntry(input: NewPlanInput): string {
   lines.push('');
   if (input.body) lines.push(input.body, '');
   if (input.clarifications && input.clarifications.length > 0) {
-    lines.push('### Clarifications');
-    for (const entry of input.clarifications) {
-      lines.push(`- ${entry.date}: ${entry.text}`);
-    }
-    lines.push('');
+    lines.push(...CLARIFICATIONS_SECTION.formatLines(input.clarifications), '');
   }
   if (input.phases && input.phases.length > 0) {
-    lines.push('### Phases');
-    for (const phase of input.phases) {
-      const text = phase.source === 'review' ? `[review] ${phase.text}` : phase.text;
-      lines.push(`- [${phase.done ? 'x' : ' '}] ${text}`);
-      if (phase.description) {
-        for (const paragraphLine of phase.description.split('\n')) {
-          lines.push(`      ${paragraphLine}`);
-        }
-      }
-    }
+    lines.push(...PHASES_SECTION.formatLines(input.phases));
   }
   if (input.log && input.log.length > 0) {
-    lines.push('', '### Log');
-    for (const entry of input.log) {
-      lines.push(`- ${entry.date}: ${entry.text}`);
-    }
+    lines.push('', ...LOG_SECTION.formatLines(input.log));
   }
   return lines.join('\n').trimEnd();
 }
@@ -220,33 +205,15 @@ export function formatPlanFile(input: NewPlanFileInput): string {
   if (input.body) sections.push(input.body);
 
   if (input.clarifications && input.clarifications.length > 0) {
-    const lines = ['### Clarifications'];
-    for (const entry of input.clarifications) {
-      lines.push(`- ${entry.date}: ${entry.text}`);
-    }
-    sections.push(lines.join('\n'));
+    sections.push(CLARIFICATIONS_SECTION.formatLines(input.clarifications).join('\n'));
   }
 
   if (input.phases && input.phases.length > 0) {
-    const lines = ['### Phases'];
-    for (const phase of input.phases) {
-      const text = phase.source === 'review' ? `[review] ${phase.text}` : phase.text;
-      lines.push(`- [${phase.done ? 'x' : ' '}] ${text}`);
-      if (phase.description) {
-        for (const descLine of phase.description.split('\n')) {
-          lines.push(`      ${descLine}`);
-        }
-      }
-    }
-    sections.push(lines.join('\n'));
+    sections.push(PHASES_SECTION.formatLines(input.phases).join('\n'));
   }
 
   if (input.log && input.log.length > 0) {
-    const lines = ['### Log'];
-    for (const entry of input.log) {
-      lines.push(`- ${entry.date}: ${entry.text}`);
-    }
-    sections.push(lines.join('\n'));
+    sections.push(LOG_SECTION.formatLines(input.log).join('\n'));
   }
 
   return sections.join('\n\n').trimEnd();
@@ -295,33 +262,15 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   if (input.body) sections.push(input.body);
 
   if (input.clarifications && input.clarifications.length > 0) {
-    const lines = ['### Clarifications'];
-    for (const entry of input.clarifications) {
-      lines.push(`- ${entry.date}: ${entry.text}`);
-    }
-    sections.push(lines.join('\n'));
+    sections.push(CLARIFICATIONS_SECTION.formatLines(input.clarifications).join('\n'));
   }
 
   if (input.phases && input.phases.length > 0) {
-    const lines = ['### Phases'];
-    for (const phase of input.phases) {
-      const text = phase.source === 'review' ? `[review] ${phase.text}` : phase.text;
-      lines.push(`- [${phase.done ? 'x' : ' '}] ${text}`);
-      if (phase.description) {
-        for (const descLine of phase.description.split('\n')) {
-          lines.push(`      ${descLine}`);
-        }
-      }
-    }
-    sections.push(lines.join('\n'));
+    sections.push(PHASES_SECTION.formatLines(input.phases).join('\n'));
   }
 
   if (input.log && input.log.length > 0) {
-    const lines = ['### Log'];
-    for (const entry of input.log) {
-      lines.push(`- ${entry.date}: ${entry.text}`);
-    }
-    sections.push(lines.join('\n'));
+    sections.push(LOG_SECTION.formatLines(input.log).join('\n'));
   }
 
   return sections.join('\n\n').trimEnd();
@@ -354,11 +303,7 @@ export function formatIdeaFile(input: NewIdeaFileInput): string {
   parts.push(input.body ? `${heading}\n\n${input.body}` : heading);
 
   if (input.log && input.log.length > 0) {
-    const lines = ['### Log'];
-    for (const entry of input.log) {
-      lines.push(`- ${entry.date}: ${entry.text}`);
-    }
-    parts.push(lines.join('\n'));
+    parts.push(LOG_SECTION.formatLines(input.log).join('\n'));
   }
 
   return parts.join('\n\n').trimEnd();
