@@ -27,7 +27,7 @@ The app already knows the truth about a plan's state and doesn't say it: the tas
       Server-side read returning ideas with a merged PR, status review/done, file still in `ideas/` — pure data, no agent.
 - [x] Add the Archive action
       A confirm list of archivable ideas; one click per idea (or archive-all) moves the file to `ideas/archive/`, sets `status: done` in the same write, refreshes the index; count badge for discoverability.
-- [ ] Close the absorbed idea
+- [x] Close the absorbed idea
       [[IDEA-56]] marked dropped-as-absorbed with a pointer here (done at filing time), so the backlog carries one statement of this thesis, not two.
 - [ ] Gate the pass
       `tsc --noEmit`, `biome check`, tests green (archivable detection covered); run an agent task and watch the live status flip; archive a merged idea end-to-end in the app.
