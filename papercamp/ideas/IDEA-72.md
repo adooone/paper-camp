@@ -2,7 +2,7 @@
 id: IDEA-72
 title: Truthful status and one-click archive
 type: feat
-status: idea
+status: review
 created: 2026-07-17
 updated: 2026-07-18
 tags:
@@ -29,5 +29,5 @@ The app already knows the truth about a plan's state and doesn't say it: the tas
       A confirm list of archivable ideas; one click per idea (or archive-all) moves the file to `ideas/archive/`, sets `status: done` in the same write, refreshes the index; count badge for discoverability.
 - [x] Close the absorbed idea
       [[IDEA-56]] marked dropped-as-absorbed with a pointer here (done at filing time), so the backlog carries one statement of this thesis, not two.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green (archivable detection covered); run an agent task and watch the live status flip; archive a merged idea end-to-end in the app.
