@@ -2,7 +2,7 @@
 id: IDEA-69
 title: Slim the codebase for release
 type: refactor
-status: idea
+status: review
 created: 2026-07-17
 updated: 2026-07-18
 tags:
@@ -38,5 +38,5 @@ Honesty mechanism, same as IDEA-63: baseline first, report per-file before/after
       `parser.ts`/`serializer.ts`: merge the mirrored per-section handling so one table drives both directions where possible; `pr.ts`/`pr-lookup.ts`: cut the export surface to what callers use and fold single-caller helpers in. Report per-file.
 - [x] Slim the CLI and MCP layer
       `cli/index.ts`: table-drive the command dispatch; `mcp/tools.ts`: dedupe wrappers that re-spell server reads. Report per-file.
-- [ ] Gate and report the release numbers
+- [x] Gate and report the release numbers
       `tsc --noEmit`, `biome check`, full tests green; total before/after line count across `src/`, per-file for every touched hotspot, and confirmation the comment ratio stayed at IDEA-63's level.
