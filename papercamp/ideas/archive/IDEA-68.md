@@ -11,7 +11,7 @@ tags:
   - docs
   - settings
   - tasks
-subject: App UI
+subject: Frontend
 ---
 
 The app has grown surfaces nobody visits. Minimise to the features actually used, and make the ones that stay denser. This is UI-only pruning: the `papercamp/` corpus files and every agent/server write to them stay exactly as they are — agents keep logging decisions, open questions, and progress; the app just stops rendering reading views for them.

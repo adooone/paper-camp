@@ -11,7 +11,7 @@ tags:
   - ideas
   - settings
   - ui
-subject: App UI
+subject: Frontend
 ---
 
 Three improvements to the ideas surface: the page finally calls things what they are, ideas get an epic-like grouping entity, and the detail view gets its two sore spots fixed.

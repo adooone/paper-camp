@@ -70,7 +70,7 @@
 | IDEA-66 | Sync from a dirty merged branch | fix | done | app, stack, git, ux |
 | IDEA-67 | Deterministic dirty sync | fix | done | app, server, git, agent |
 | IDEA-68 | Trim the UI to what's used | refactor | done | app, ui, docs, settings, tasks |
-| IDEA-69 | Slim the codebase for release | refactor | planned | app, core, cli, refactor |
+| IDEA-69 | Slim the codebase for release | refactor | done | app, core, cli, refactor |
 | IDEA-70 | Subjects and idea-detail polish | feat | done | app, plans, ideas, settings, ui |
 | IDEA-71 | Run order for the worklist | feat | done | app, plans, ideas, ui |
 | IDEA-72 | Truthful status and one-click archive | feat | done | app, plans, agent, git, ui |
