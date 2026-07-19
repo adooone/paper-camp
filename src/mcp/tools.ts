@@ -40,6 +40,10 @@ function json(data: Record<string, unknown>) {
   };
 }
 
+function fetchWorkEntries(root: string) {
+  return readWorkEntries(campFile(root, 'ideas'));
+}
+
 // Wraps the same `src/core` readers/parsers as the dashboard's `/api/*` routes
 // (src/app/server/routes/reads.ts), so MCP clients see identical data shapes.
 export function registerReadTools(server: McpServer, root: string): void {
@@ -55,7 +59,7 @@ export function registerReadTools(server: McpServer, root: string): void {
       },
     },
     async () => {
-      const result = await readWorkEntries(campFile(root, 'ideas'));
+      const result = await fetchWorkEntries(root);
       return json({ ...result });
     },
   );
@@ -73,7 +77,7 @@ export function registerReadTools(server: McpServer, root: string): void {
       },
     },
     async ({ id }) => {
-      const { entries } = await readWorkEntries(campFile(root, 'ideas'));
+      const { entries } = await fetchWorkEntries(root);
       const entry = entries.find((p) => p.id === id) ?? null;
       return json({ entry });
     },
@@ -127,6 +131,29 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     return result;
   };
 
+  async function createIdeaEntity(input: {
+    title: string;
+    content?: string;
+    type?: string;
+  }): Promise<string> {
+    const configPath = join(root, 'papercamp', 'config.json');
+    const id = await assignEntityId(configPath);
+    if (!id) throw new Error('could not assign entity ID');
+    const ideasDir = campFile(root, 'ideas');
+    await mkdir(ideasDir, { recursive: true });
+    const content = formatEntityFile({
+      id,
+      title: input.title.trim(),
+      type: input.type,
+      status: 'idea',
+      created: todayDateString(),
+      body: input.content?.trim(),
+    });
+    await writeFile(join(ideasDir, `${id}.md`), `${content}\n`, 'utf-8');
+    await regenerateIndexes(root);
+    return id;
+  }
+
   server.registerTool(
     'add_idea',
     {
@@ -141,21 +168,8 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     ({ title, content }) =>
       runExclusive(async () => {
         if (!title.trim()) throw new Error('title is required');
-        const configPath = join(root, 'papercamp', 'config.json');
-        const newId = await assignEntityId(configPath);
-        if (!newId) throw new Error('could not assign entity ID');
-        const ideasDir = campFile(root, 'ideas');
-        await mkdir(ideasDir, { recursive: true });
-        const ideaContent = formatEntityFile({
-          id: newId,
-          title: title.trim(),
-          status: 'idea',
-          created: todayDateString(),
-          body: content?.trim(),
-        });
-        await writeFile(join(ideasDir, `${newId}.md`), `${ideaContent}\n`, 'utf-8');
-        await regenerateIndexes(root);
-        return json({ ok: true, id: newId });
+        const id = await createIdeaEntity({ title, content });
+        return json({ ok: true, id });
       }),
   );
 
@@ -177,24 +191,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         if (!title.trim()) throw new Error('title is required');
         const conflict = await checkBranchConflictForPlan(root, git);
         if (conflict) throw new Error(conflict);
-        const planKind = kind ?? 'feat';
-        const configPath = join(root, 'papercamp', 'config.json');
-        const id = await assignEntityId(configPath);
-        if (!id) throw new Error('could not assign entity ID');
-
-        const ideasDir = campFile(root, 'ideas');
-        await mkdir(ideasDir, { recursive: true });
-
-        const planContent = formatEntityFile({
-          id,
-          title: title.trim(),
-          type: planKind,
-          status: 'idea',
-          created: todayDateString(),
-          body: content?.trim(),
-        });
-        await writeFile(join(ideasDir, `${id}.md`), `${planContent}\n`, 'utf-8');
-        await regenerateIndexes(root);
+        const id = await createIdeaEntity({ title, content, type: kind ?? 'feat' });
         return json({ ok: true, id });
       }),
   );
