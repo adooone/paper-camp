@@ -8,6 +8,7 @@ import {
 } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
+import type { BranchHygieneStatus, GitStatusEntry, PlanEntry } from '@/types/index';
 import {
   Accordion,
   Alert,
@@ -22,7 +23,7 @@ import {
 } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MergeIcon, PullIcon, PushIcon, WandIcon } from '../icons';
-import { deskChalk, deskTextMuted, sectionLabelStyle } from './shared';
+import { deskChalk, deskTextMuted, gitErrorSummary, sectionLabelStyle } from './shared';
 
 const COMMIT_TITLE_STORAGE_KEY = 'papercamp.commitTitle';
 const COMMIT_MESSAGE_STORAGE_KEY = 'papercamp.commitMessage';
@@ -54,19 +55,6 @@ function readStoredCommitField(key: string): string {
   }
 }
 
-// Git failures arrive as multi-line output ("To github…\n ! [rejected]…\nhint:…");
-// a toast wants the one line that states the problem.
-function gitErrorSummary(message: string): string {
-  const lines = message
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const marked = lines.find(
-    (line) => line.startsWith('!') || line.startsWith('error:') || line.startsWith('fatal:'),
-  );
-  return marked ?? lines.at(-1) ?? message;
-}
-
 function writeStoredCommitField(key: string, value: string): void {
   try {
     if (value) localStorage.setItem(key, value);
@@ -76,21 +64,117 @@ function writeStoredCommitField(key: string, value: string): void {
   }
 }
 
-export const CommitSection = () => {
+function deriveSuggestedCommit(plan: PlanEntry | undefined): { title: string; message: string } {
+  if (!plan) return { title: '', message: '' };
+  // Scope is a subsystem area, not the plan id (AGENTS.md: plan's primary tag); plan id goes in Refs: footer.
+  const scope = plan.tags?.find((t) => COMMIT_SCOPES.includes(t)) ?? 'repo';
+  const kind = plan.kind ?? 'feat';
+  const allDone = Boolean(plan.phases.length) && plan.phases.every((phase) => phase.done);
+  const title = allDone ? `${kind}(${scope}): updates` : `${kind}(${scope}): ${plan.title}`;
+  const refs = plan.id ? `Refs: ${plan.id}` : '';
+  const phaseBody =
+    !allDone && plan.phases.length ? plan.phases.map((phase) => `- ${phase.text}`).join('\n') : '';
+  return { title, message: [phaseBody, refs].filter(Boolean).join('\n\n') };
+}
+
+function useSelectedFiles(gitStatus: GitStatusEntry[] | null) {
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const knownPathsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!gitStatus) return;
+    // Snapshot ref before setState: mutating it inside the updater is unsafe under
+    // StrictMode's double-invoke, which would empty the file list on the second pass.
+    const known = knownPathsRef.current;
+    knownPathsRef.current = new Set(gitStatus.map((e) => e.path));
+    setSelectedFiles((prev) => {
+      const next = new Set<string>();
+      for (const entry of gitStatus) {
+        if (!known.has(entry.path) || prev.has(entry.path)) next.add(entry.path);
+      }
+      return next;
+    });
+  }, [gitStatus]);
+
+  const onToggleFile = useCallback((path: string) => {
+    setSelectedFiles((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }, []);
+
+  return { selectedFiles, onToggleFile };
+}
+
+const CommitFileList = ({
+  gitStatus,
+  expanded,
+  onToggleExpanded,
+  selectedFiles,
+  onToggleFile,
+}: {
+  gitStatus: GitStatusEntry[];
+  expanded: boolean;
+  onToggleExpanded: () => void;
+  selectedFiles: Set<string>;
+  onToggleFile: (path: string) => void;
+}) => (
+  <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
+    <Accordion
+      title={`${gitStatus.length} file${gitStatus.length === 1 ? '' : 's'} changed`}
+      expanded={expanded}
+      onToggle={onToggleExpanded}
+    >
+      <div
+        style={{ display: 'flex', flexDirection: 'column', gap: space[2], paddingTop: space[2] }}
+      >
+        {gitStatus.map((entry) => (
+          <label
+            key={entry.path}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: space[2],
+              fontFamily: fontFamily.mono,
+              fontSize: fontSize['2xs'],
+              color: deskChalk,
+              cursor: 'pointer',
+            }}
+          >
+            {/* Raw checkbox: paper-ui's Checkbox has one label slot (can't fit this
+                multi-color mono layout) and its blob/sketch chrome would clash here. */}
+            <input
+              type="checkbox"
+              checked={selectedFiles.has(entry.path)}
+              onChange={() => onToggleFile(entry.path)}
+              style={{ accentColor: deskChalk }}
+            />
+            <span style={{ color: entry.staged ? deskChalk : deskTextMuted, minWidth: 24 }}>
+              {entry.status}
+            </span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {entry.path}
+            </span>
+          </label>
+        ))}
+      </div>
+    </Accordion>
+  </div>
+);
+
+const CommitForm = ({
+  selectedFiles,
+  onCommitted,
+}: { selectedFiles: Set<string>; onCommitted: () => void }) => {
   const plans = useAppStore((s) => s.plans);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const loadPlans = useAppStore((s) => s.loadPlans);
-  const loadIdeas = useAppStore((s) => s.loadIdeas);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
-  const gitStatus = useAppStore((s) => s.gitStatus);
-  const gitBranch = useAppStore((s) => s.gitBranch);
-  const gitAhead = useAppStore((s) => s.gitAhead);
-  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const setCommitInFlight = useAppStore((s) => s.setCommitInFlight);
+  const { toast } = useToast();
 
-  const [commitExpanded, setCommitExpanded] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [commitTitle, setCommitTitle] = useState(() =>
     readStoredCommitField(COMMIT_TITLE_STORAGE_KEY),
   );
@@ -98,47 +182,17 @@ export const CommitSection = () => {
     readStoredCommitField(COMMIT_MESSAGE_STORAGE_KEY),
   );
   const [committing, setCommitting] = useState(false);
-  const [pushing, setPushing] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [pulling, setPulling] = useState(false);
-  const { toast } = useToast();
 
   const activePlan = useMemo(() => findFocusPlan(plans?.entries), [plans?.entries]);
-
-  const suggestedScope = useMemo(() => {
-    // Scope is a subsystem area, not the plan id (AGENTS.md: plan's primary tag); plan id goes in Refs: footer.
-    const tagScope = activePlan?.tags?.find((t) => COMMIT_SCOPES.includes(t));
-    return tagScope ?? 'repo';
-  }, [activePlan]);
-
-  const allPhasesDone = useMemo(
-    () => Boolean(activePlan?.phases.length) && activePlan!.phases.every((phase) => phase.done),
+  const { title: suggestedTitle, message: suggestedMessage } = useMemo(
+    () => deriveSuggestedCommit(activePlan),
     [activePlan],
   );
 
-  const suggestedTitle = useMemo(() => {
-    if (!activePlan) return '';
-    const kind = activePlan.kind ?? 'feat';
-    if (allPhasesDone) return `${kind}(${suggestedScope}): updates`;
-    return `${kind}(${suggestedScope}): ${activePlan.title}`;
-  }, [activePlan, suggestedScope, allPhasesDone]);
-
-  const suggestedMessage = useMemo(() => {
-    if (!activePlan) return '';
-    const refs = activePlan.id ? `Refs: ${activePlan.id}` : '';
-    const phaseBody =
-      !allPhasesDone && activePlan.phases.length
-        ? activePlan.phases.map((phase) => `- ${phase.text}`).join('\n')
-        : '';
-    return [phaseBody, refs].filter(Boolean).join('\n\n');
-  }, [activePlan, allPhasesDone]);
-
   useEffect(() => {
-    if (suggestedTitle && !commitTitle) {
-      setCommitTitle(suggestedTitle);
-    }
+    if (suggestedTitle && !commitTitle) setCommitTitle(suggestedTitle);
   }, [suggestedTitle, commitTitle]);
 
   // A fix-review's suggested commit wins over heuristics/diff suggestions (the agent
@@ -158,9 +212,7 @@ export const CommitSection = () => {
   }, [suggestedCommit]);
 
   useEffect(() => {
-    if (suggestedMessage && !commitMessage) {
-      setCommitMessage(suggestedMessage);
-    }
+    if (suggestedMessage && !commitMessage) setCommitMessage(suggestedMessage);
   }, [suggestedMessage, commitMessage]);
 
   useEffect(() => {
@@ -170,33 +222,6 @@ export const CommitSection = () => {
   useEffect(() => {
     writeStoredCommitField(COMMIT_MESSAGE_STORAGE_KEY, commitMessage);
   }, [commitMessage]);
-
-  const knownPathsRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    if (!gitStatus) return;
-    // Snapshot ref before setState: mutating it inside the updater is unsafe under
-    // StrictMode's double-invoke, which would empty the file list on the second pass.
-    const known = knownPathsRef.current;
-    knownPathsRef.current = new Set(gitStatus.map((e) => e.path));
-    setSelectedFiles((prev) => {
-      const next = new Set<string>();
-      for (const entry of gitStatus) {
-        if (!known.has(entry.path) || prev.has(entry.path)) {
-          next.add(entry.path);
-        }
-      }
-      return next;
-    });
-  }, [gitStatus]);
-
-  const handleToggleFile = useCallback((path: string) => {
-    setSelectedFiles((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  }, []);
 
   const handleCommit = useCallback(async () => {
     if (!commitTitle.trim() || commitInFlight) return;
@@ -210,7 +235,7 @@ export const CommitSection = () => {
       );
       setCommitTitle(suggestedTitle);
       setCommitMessage('');
-      setCommitExpanded(false);
+      onCommitted();
       await loadGitStatus();
     } catch (err) {
       toast({
@@ -233,58 +258,9 @@ export const CommitSection = () => {
     loadGitStatus,
     commitInFlight,
     setCommitInFlight,
+    onCommitted,
     toast,
   ]);
-
-  const handlePush = useCallback(async () => {
-    setPushing(true);
-    try {
-      await pushChanges();
-      await loadGitStatus();
-    } catch (err) {
-      toast({
-        title: 'Push failed',
-        description: gitErrorSummary((err as Error).message),
-        variant: 'error',
-      });
-    } finally {
-      setPushing(false);
-    }
-  }, [loadGitStatus, toast]);
-
-  const handleSync = useCallback(async () => {
-    setSyncing(true);
-    try {
-      await syncToMain();
-      // Sync can pull upstream commits, so refresh plans/ideas too — git-status alone would leave them stale.
-      await Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
-    } catch (err) {
-      toast({
-        title: 'Sync failed',
-        description: gitErrorSummary((err as Error).message),
-        variant: 'error',
-      });
-    } finally {
-      setSyncing(false);
-    }
-  }, [loadGitStatus, loadPlans, loadIdeas, toast]);
-
-  const handlePull = useCallback(async () => {
-    setPulling(true);
-    try {
-      await pullFromOrigin();
-      // Pull can also bring upstream entity changes, so refresh plans/ideas alongside git status.
-      await Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
-    } catch (err) {
-      toast({
-        title: 'Pull failed',
-        description: gitErrorSummary((err as Error).message),
-        variant: 'error',
-      });
-    } finally {
-      setPulling(false);
-    }
-  }, [loadGitStatus, loadPlans, loadIdeas, toast]);
 
   const handleSuggestFromChanges = useCallback(async () => {
     if (selectedFiles.size === 0) return;
@@ -300,6 +276,193 @@ export const CommitSection = () => {
       setSuggesting(false);
     }
   }, [selectedFiles]);
+
+  return (
+    <>
+      {suggestError && (
+        <Alert surface="chalkboard" dismissible onDismiss={() => setSuggestError(null)}>
+          {suggestError}
+        </Alert>
+      )}
+      <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
+        <div style={{ flex: 1 }}>
+          <Input
+            surface="chalkboard"
+            size="small"
+            placeholder="Commit title"
+            value={commitTitle}
+            onChange={(e) => setCommitTitle(e.currentTarget.value)}
+          />
+        </div>
+        <IconButton
+          icon={<WandIcon size={16} />}
+          surface="chalkboard"
+          size="small"
+          label="Suggest title and message from the diff"
+          disabled={selectedFiles.size === 0 || suggesting}
+          onClick={handleSuggestFromChanges}
+          wobble={suggesting ? 1 : 0}
+        />
+      </div>
+      <Textarea
+        surface="chalkboard"
+        size="small"
+        placeholder="Commit message (optional)"
+        value={commitMessage}
+        onChange={(e) => setCommitMessage(e.currentTarget.value)}
+        rows={2}
+      />
+      <Button
+        surface="chalkboard"
+        size="small"
+        fullWidth
+        disabled={selectedFiles.size === 0 || !commitTitle.trim() || committing || commitInFlight}
+        onClick={handleCommit}
+      >
+        {committing || commitInFlight ? 'Committing…' : 'Commit'}
+      </Button>
+    </>
+  );
+};
+
+// Shared by push/sync/pull below: run an action, flag it busy meanwhile, and
+// toast a one-line summary if it throws — the only thing the three differ on.
+function useTrackedAction(failTitle: string) {
+  const { toast } = useToast();
+  const [running, setRunning] = useState(false);
+  const run = useCallback(
+    async (action: () => Promise<void>) => {
+      setRunning(true);
+      try {
+        await action();
+      } catch (err) {
+        toast({
+          title: failTitle,
+          description: gitErrorSummary((err as Error).message),
+          variant: 'error',
+        });
+      } finally {
+        setRunning(false);
+      }
+    },
+    [toast, failTitle],
+  );
+  return [running, run] as const;
+}
+
+function useBranchSync() {
+  const loadGitStatus = useAppStore((s) => s.loadGitStatus);
+  const loadPlans = useAppStore((s) => s.loadPlans);
+  const loadIdeas = useAppStore((s) => s.loadIdeas);
+  // Sync/pull can bring upstream commits, so refresh plans/ideas too — git-status alone would leave them stale.
+  const refreshAfterUpstream = () => Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
+
+  const [pushing, runPush] = useTrackedAction('Push failed');
+  const [syncing, runSync] = useTrackedAction('Sync failed');
+  const [pulling, runPull] = useTrackedAction('Pull failed');
+
+  const handlePush = () =>
+    runPush(async () => {
+      await pushChanges();
+      await loadGitStatus();
+    });
+  const handleSync = () =>
+    runSync(async () => {
+      await syncToMain();
+      await refreshAfterUpstream();
+    });
+  const handlePull = () =>
+    runPull(async () => {
+      await pullFromOrigin();
+      await refreshAfterUpstream();
+    });
+
+  return { pushing, syncing, pulling, handlePush, handleSync, handlePull };
+}
+
+const StaleMergedSyncButton = () => {
+  const { syncing, handleSync } = useBranchSync();
+  return (
+    // stale-merged: committing here would strand work off main, so dirty
+    // sync (stash → main → ff) replaces the commit controls.
+    <Button
+      surface="chalkboard"
+      size="small"
+      fullWidth
+      icon={<MergeIcon size={14} />}
+      disabled={syncing}
+      onClick={handleSync}
+    >
+      {syncing ? 'Syncing…' : 'Branch merged — sync to main'}
+    </Button>
+  );
+};
+
+const NoChangesActions = ({
+  gitAhead,
+  gitBranchHygiene,
+}: { gitAhead: number; gitBranchHygiene: BranchHygieneStatus | null }) => {
+  const { pushing, syncing, pulling, handlePush, handleSync, handlePull } = useBranchSync();
+
+  if (gitAhead > 0) {
+    return (
+      <>
+        <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>
+          All changes committed — {gitAhead} commit{gitAhead === 1 ? '' : 's'} ready to push.
+        </p>
+        <Button
+          surface="chalkboard"
+          size="small"
+          icon={<PushIcon size={14} />}
+          disabled={pushing}
+          onClick={handlePush}
+        >
+          {pushing ? 'Pushing…' : `Push ${gitAhead} commit${gitAhead === 1 ? '' : 's'}`}
+        </Button>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>No changed files.</p>
+      <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
+        <Tooltip
+          content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined}
+          surface="chalkboard"
+        >
+          <Button
+            surface="chalkboard"
+            size="small"
+            icon={<MergeIcon size={14} />}
+            disabled={syncing || gitBranchHygiene === 'clean-on-main'}
+            onClick={handleSync}
+          >
+            {syncing ? 'Syncing…' : 'Sync to main'}
+          </Button>
+        </Tooltip>
+        {/* Pull fast-forwards in place, so unlike Sync it stays enabled on clean main. */}
+        <Button
+          surface="chalkboard"
+          size="small"
+          icon={<PullIcon size={14} />}
+          disabled={pulling}
+          onClick={handlePull}
+        >
+          {pulling ? 'Pulling…' : 'Pull'}
+        </Button>
+      </div>
+    </>
+  );
+};
+
+export const CommitSection = () => {
+  const gitStatus = useAppStore((s) => s.gitStatus);
+  const gitBranch = useAppStore((s) => s.gitBranch);
+  const gitAhead = useAppStore((s) => s.gitAhead);
+  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
+  const { selectedFiles, onToggleFile } = useSelectedFiles(gitStatus);
+  const [commitExpanded, setCommitExpanded] = useState(false);
 
   return (
     <div
@@ -322,63 +485,13 @@ export const CommitSection = () => {
       <Card surface="chalkboard" size="small" className="stack-card-fill">
         {gitStatus && gitStatus.length > 0 ? (
           <>
-            <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
-              <Accordion
-                title={`${gitStatus.length} file${gitStatus.length === 1 ? '' : 's'} changed`}
-                expanded={commitExpanded}
-                onToggle={() => setCommitExpanded(!commitExpanded)}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: space[2],
-                    paddingTop: space[2],
-                  }}
-                >
-                  {gitStatus.map((entry) => (
-                    <label
-                      key={entry.path}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: space[2],
-                        fontFamily: fontFamily.mono,
-                        fontSize: fontSize['2xs'],
-                        color: deskChalk,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {/* Raw checkbox: paper-ui's Checkbox has one label slot (can't fit this
-                          multi-color mono layout) and its blob/sketch chrome would clash here. */}
-                      <input
-                        type="checkbox"
-                        checked={selectedFiles.has(entry.path)}
-                        onChange={() => handleToggleFile(entry.path)}
-                        style={{ accentColor: deskChalk }}
-                      />
-                      <span
-                        style={{
-                          color: entry.staged ? deskChalk : deskTextMuted,
-                          minWidth: 24,
-                        }}
-                      >
-                        {entry.status}
-                      </span>
-                      <span
-                        style={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {entry.path}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </Accordion>
-            </div>
+            <CommitFileList
+              gitStatus={gitStatus}
+              expanded={commitExpanded}
+              onToggleExpanded={() => setCommitExpanded(!commitExpanded)}
+              selectedFiles={selectedFiles}
+              onToggleFile={onToggleFile}
+            />
             <div
               style={{
                 flexShrink: 0,
@@ -389,68 +502,12 @@ export const CommitSection = () => {
               }}
             >
               {gitBranchHygiene === 'stale-merged' ? (
-                // stale-merged: committing here would strand work off main, so dirty
-                // sync (stash → main → ff) replaces the commit controls.
-                <Button
-                  surface="chalkboard"
-                  size="small"
-                  fullWidth
-                  icon={<MergeIcon size={14} />}
-                  disabled={syncing}
-                  onClick={handleSync}
-                >
-                  {syncing ? 'Syncing…' : 'Branch merged — sync to main'}
-                </Button>
+                <StaleMergedSyncButton />
               ) : (
-                <>
-                  {suggestError && (
-                    <Alert surface="chalkboard" dismissible onDismiss={() => setSuggestError(null)}>
-                      {suggestError}
-                    </Alert>
-                  )}
-                  <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
-                    <div style={{ flex: 1 }}>
-                      <Input
-                        surface="chalkboard"
-                        size="small"
-                        placeholder="Commit title"
-                        value={commitTitle}
-                        onChange={(e) => setCommitTitle(e.currentTarget.value)}
-                      />
-                    </div>
-                    <IconButton
-                      icon={<WandIcon size={16} />}
-                      surface="chalkboard"
-                      size="small"
-                      label="Suggest title and message from the diff"
-                      disabled={selectedFiles.size === 0 || suggesting}
-                      onClick={handleSuggestFromChanges}
-                      wobble={suggesting ? 1 : 0}
-                    />
-                  </div>
-                  <Textarea
-                    surface="chalkboard"
-                    size="small"
-                    placeholder="Commit message (optional)"
-                    value={commitMessage}
-                    onChange={(e) => setCommitMessage(e.currentTarget.value)}
-                    rows={2}
-                  />
-                  <Button
-                    surface="chalkboard"
-                    size="small"
-                    fullWidth
-                    disabled={
-                      selectedFiles.size === 0 ||
-                      !commitTitle.trim() ||
-                      committing ||
-                      commitInFlight
-                    }
-                    onClick={handleCommit}
-                  >
-                    {committing || commitInFlight ? 'Committing…' : 'Commit'}
-                  </Button>
-                </>
+                <CommitForm
+                  selectedFiles={selectedFiles}
+                  onCommitted={() => setCommitExpanded(false)}
+                />
               )}
             </div>
           </>
@@ -466,55 +523,7 @@ export const CommitSection = () => {
               gap: space[3],
             }}
           >
-            {gitAhead > 0 ? (
-              <>
-                <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>
-                  All changes committed — {gitAhead} commit{gitAhead === 1 ? '' : 's'} ready to
-                  push.
-                </p>
-                <Button
-                  surface="chalkboard"
-                  size="small"
-                  icon={<PushIcon size={14} />}
-                  disabled={pushing}
-                  onClick={handlePush}
-                >
-                  {pushing ? 'Pushing…' : `Push ${gitAhead} commit${gitAhead === 1 ? '' : 's'}`}
-                </Button>
-              </>
-            ) : (
-              <>
-                <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>No changed files.</p>
-                <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
-                  <Tooltip
-                    content={
-                      gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined
-                    }
-                    surface="chalkboard"
-                  >
-                    <Button
-                      surface="chalkboard"
-                      size="small"
-                      icon={<MergeIcon size={14} />}
-                      disabled={syncing || gitBranchHygiene === 'clean-on-main'}
-                      onClick={handleSync}
-                    >
-                      {syncing ? 'Syncing…' : 'Sync to main'}
-                    </Button>
-                  </Tooltip>
-                  {/* Pull fast-forwards in place, so unlike Sync it stays enabled on clean main. */}
-                  <Button
-                    surface="chalkboard"
-                    size="small"
-                    icon={<PullIcon size={14} />}
-                    disabled={pulling}
-                    onClick={handlePull}
-                  >
-                    {pulling ? 'Pulling…' : 'Pull'}
-                  </Button>
-                </div>
-              </>
-            )}
+            <NoChangesActions gitAhead={gitAhead} gitBranchHygiene={gitBranchHygiene} />
           </div>
         )}
       </Card>

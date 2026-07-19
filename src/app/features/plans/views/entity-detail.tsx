@@ -3,14 +3,12 @@ import { Markdown } from '@/app/components/markdown';
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
-import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
+import { fontFamily, fontSize, space } from '@/app/styles/tokens';
+import type { AgentTaskState, IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
   Button,
   Card,
   Checkbox,
-  Input,
-  Select,
   Spinner,
   Stamp,
   Table,
@@ -18,7 +16,7 @@ import {
   Tooltip,
   useToast,
 } from '@dendelion/paper-ui';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
@@ -44,6 +42,197 @@ function branchEntityId(branch: string | null): string | null {
   return match ? match[1].toUpperCase() : null;
 }
 
+const sectionHeadingStyle = {
+  fontFamily: fontFamily.serif,
+  fontSize: fontSize.sm,
+  fontWeight: 600,
+  opacity: 0.65,
+};
+
+const PhasesSection = ({
+  plan,
+  auditRunning,
+  agentBusy,
+  agentPhaseIndex,
+  planTask,
+  updating,
+  onTogglePhase,
+  onAddReviewPhases,
+}: {
+  plan: PlanEntry;
+  auditRunning: boolean;
+  agentBusy: boolean;
+  agentPhaseIndex: number | null | undefined;
+  planTask: AgentTaskState | undefined;
+  updating: boolean;
+  onTogglePhase: (index: number) => void;
+  onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
+}) => (
+  <div style={{ marginBottom: space[8] }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: space[3],
+        marginBottom: space[3],
+      }}
+    >
+      <h3 style={{ ...sectionHeadingStyle, margin: 0 }}>Phases</h3>
+      <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+        {auditRunning && <Spinner size="small" label="Audit running…" />}
+        {(plan.status === 'review' || plan.status === 'done') && <AuditPhasesButton plan={plan} />}
+        {plan.status !== 'done' && <ReconcileButton plan={plan} />}
+        <AddReviewPhasesButton onAdd={onAddReviewPhases} disabled={updating} />
+      </div>
+    </div>
+    <Table
+      data={plan.phases}
+      columns={[
+        {
+          key: 'checkbox',
+          header: 'Status',
+          cell: (phase: PhaseItem, index: number) => (
+            <Checkbox
+              checked={phase.done}
+              onChange={() => onTogglePhase(index)}
+              disabled={updating}
+            />
+          ),
+          width: 2,
+        },
+        {
+          key: 'title',
+          header: 'Title',
+          cell: (phase: PhaseItem) => (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: space[2],
+                textDecoration: phase.done ? 'line-through' : 'none',
+                opacity: phase.done ? 0.45 : 1,
+              }}
+            >
+              {phase.text}
+              {phase.source === 'review' && (
+                <Stamp
+                  size="small"
+                  fillColor={STATUS_STAMP.review.fill}
+                  textColor={STATUS_STAMP.review.text}
+                >
+                  review
+                </Stamp>
+              )}
+            </span>
+          ),
+        },
+        {
+          key: 'actions',
+          header: 'Actions',
+          cell: (phase: PhaseItem, index: number) => (
+            <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
+              <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
+              {!phase.done && agentPhaseIndex === index ? (
+                <Spinner size="small" label={`Agent ${planTask?.status}…`} />
+              ) : (
+                !phase.done && (
+                  <AgentStartButton planId={plan.id} phaseIndex={index} disabled={agentBusy} />
+                )
+              )}
+            </div>
+          ),
+          width: 5,
+        },
+      ]}
+      expandable={{
+        render: (phase: PhaseItem) => phase.description ?? null,
+      }}
+      showExpandColumn={false}
+      rowClassName={(phase: PhaseItem) =>
+        phase.source === 'review' ? 'phase-row-review' : undefined
+      }
+    />
+  </div>
+);
+
+const CommentsSection = ({
+  log,
+  updating,
+  onAdd,
+}: {
+  log: LogEntry[] | undefined;
+  updating: boolean;
+  onAdd: (text: string) => Promise<boolean>;
+}) => {
+  const [logInput, setLogInput] = useState('');
+
+  const handleAdd = async () => {
+    if (!logInput.trim()) return;
+    if (await onAdd(logInput.trim())) setLogInput('');
+  };
+
+  return (
+    <div style={{ marginBottom: space[8] }}>
+      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Comments</h3>
+      <Card size="small">
+        {log && log.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: space[3],
+              marginBottom: space[4],
+            }}
+          >
+            {log.map((entry, i) => (
+              <div
+                key={`${entry.date}-${i}`}
+                style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+              >
+                <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
+                  {entry.date}
+                </span>
+                <div
+                  className="text-sm"
+                  style={{
+                    background: 'rgba(0,0,0,0.05)',
+                    borderRadius: space[2],
+                    padding: `${space[2]} ${space[3]}`,
+                    alignSelf: 'flex-start',
+                    maxWidth: '100%',
+                    opacity: 0.85,
+                  }}
+                >
+                  {entry.text}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+          <Textarea
+            value={logInput}
+            onChange={(e) => setLogInput(e.target.value)}
+            placeholder="Add a comment…"
+            rows={2}
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={handleAdd}
+              disabled={updating || !logInput.trim()}
+            >
+              Send
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const allPlans = useAppStore((s) => s.plans);
   const gitBranch = useAppStore((s) => s.gitBranch);
@@ -56,7 +245,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const planTask = runningTaskForPlan(plan.id, agentStatus);
   const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
   const auditRunning = planTask?.taskKind === 'audit';
-  const [logInput, setLogInput] = useState('');
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
   const ideaView: IdeaEntry = {
@@ -84,7 +272,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       setBranching(false);
     }
   };
-  const allDone = progress !== null && progress.done === progress.total && progress.total > 0;
 
   const handleTogglePhase = async (index: number) => {
     const nextPhases: PhaseItem[] = plan.phases.map((phase, i) =>
@@ -102,13 +289,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
   };
 
-  const handleAddLogEntry = async () => {
-    if (!logInput.trim()) return;
+  const handleAddLogEntry = async (text: string) => {
     const today = new Date().toISOString().slice(0, 10);
-    const newLog: LogEntry = { date: today, text: logInput.trim().replace(/\n/g, ' ') };
-    const updatedLog = [...(plan.log ?? []), newLog];
-    const ok = await patchByTitle(plan.title, { log: updatedLog });
-    if (ok) setLogInput('');
+    const newLog: LogEntry = { date: today, text: text.replace(/\n/g, ' ') };
+    return patchByTitle(plan.title, { log: [...(plan.log ?? []), newLog] });
   };
 
   return (
@@ -216,17 +400,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
       {plan.clarifications && plan.clarifications.length > 0 && (
         <div style={{ marginBottom: space[5] }}>
-          <h3
-            style={{
-              fontFamily: fontFamily.serif,
-              fontSize: fontSize.sm,
-              fontWeight: 600,
-              margin: `0 0 ${space[3]}`,
-              opacity: 0.65,
-            }}
-          >
-            Clarifications
-          </h3>
+          <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Clarifications</h3>
           <div
             style={{
               display: 'flex',
@@ -260,177 +434,19 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       )}
 
       {hasPhases && (
-        <div style={{ marginBottom: space[8] }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: space[3],
-              marginBottom: space[3],
-            }}
-          >
-            <h3
-              style={{
-                fontFamily: fontFamily.serif,
-                fontSize: fontSize.sm,
-                fontWeight: 600,
-                margin: 0,
-                opacity: 0.65,
-              }}
-            >
-              Phases
-            </h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-              {auditRunning && <Spinner size="small" label="Audit running…" />}
-              {(plan.status === 'review' || plan.status === 'done') && (
-                <AuditPhasesButton plan={plan} />
-              )}
-              {plan.status !== 'done' && <ReconcileButton plan={plan} />}
-              <AddReviewPhasesButton onAdd={handleAddReviewPhases} disabled={updating} />
-            </div>
-          </div>
-          <Table
-            data={plan.phases}
-            columns={[
-              {
-                key: 'checkbox',
-                header: 'Status',
-                cell: (phase: PhaseItem, index: number) => (
-                  <Checkbox
-                    checked={phase.done}
-                    onChange={() => handleTogglePhase(index)}
-                    disabled={updating}
-                  />
-                ),
-                width: 2,
-              },
-              {
-                key: 'title',
-                header: 'Title',
-                cell: (phase: PhaseItem) => (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: space[2],
-                      textDecoration: phase.done ? 'line-through' : 'none',
-                      opacity: phase.done ? 0.45 : 1,
-                    }}
-                  >
-                    {phase.text}
-                    {phase.source === 'review' && (
-                      <Stamp
-                        size="small"
-                        fillColor={STATUS_STAMP.review.fill}
-                        textColor={STATUS_STAMP.review.text}
-                      >
-                        review
-                      </Stamp>
-                    )}
-                  </span>
-                ),
-              },
-              {
-                key: 'actions',
-                header: 'Actions',
-                cell: (phase: PhaseItem, index: number) => (
-                  <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
-                    <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
-                    {!phase.done && agentPhaseIndex === index ? (
-                      <Spinner size="small" label={`Agent ${planTask?.status}…`} />
-                    ) : (
-                      !phase.done && (
-                        <AgentStartButton
-                          planId={plan.id}
-                          phaseIndex={index}
-                          disabled={agentBusy}
-                        />
-                      )
-                    )}
-                  </div>
-                ),
-                width: 5,
-              },
-            ]}
-            expandable={{
-              render: (phase: PhaseItem) => phase.description ?? null,
-            }}
-            showExpandColumn={false}
-            rowClassName={(phase: PhaseItem) =>
-              phase.source === 'review' ? 'phase-row-review' : undefined
-            }
-          />
-        </div>
+        <PhasesSection
+          plan={plan}
+          auditRunning={auditRunning}
+          agentBusy={agentBusy}
+          agentPhaseIndex={agentPhaseIndex}
+          planTask={planTask}
+          updating={updating}
+          onTogglePhase={handleTogglePhase}
+          onAddReviewPhases={handleAddReviewPhases}
+        />
       )}
 
-      <div style={{ marginBottom: space[8] }}>
-        <h3
-          style={{
-            fontFamily: fontFamily.serif,
-            fontSize: fontSize.sm,
-            fontWeight: 600,
-            margin: `0 0 ${space[3]}`,
-            opacity: 0.65,
-          }}
-        >
-          Comments
-        </h3>
-        <Card size="small">
-          {plan.log && plan.log.length > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: space[3],
-                marginBottom: space[4],
-              }}
-            >
-              {plan.log.map((entry, i) => (
-                <div
-                  key={`${entry.date}-${i}`}
-                  style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
-                >
-                  <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
-                    {entry.date}
-                  </span>
-                  <div
-                    className="text-sm"
-                    style={{
-                      background: 'rgba(0,0,0,0.05)',
-                      borderRadius: space[2],
-                      padding: `${space[2]} ${space[3]}`,
-                      alignSelf: 'flex-start',
-                      maxWidth: '100%',
-                      opacity: 0.85,
-                    }}
-                  >
-                    {entry.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
-            <Textarea
-              value={logInput}
-              onChange={(e) => setLogInput(e.target.value)}
-              placeholder="Add a comment…"
-              rows={2}
-            />
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={handleAddLogEntry}
-                disabled={updating || !logInput.trim()}
-              >
-                Send
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
+      <CommentsSection log={plan.log} updating={updating} onAdd={handleAddLogEntry} />
     </div>
   );
 };

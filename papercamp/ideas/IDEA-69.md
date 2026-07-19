@@ -2,7 +2,7 @@
 id: IDEA-69
 title: Slim the codebase for release
 type: refactor
-status: idea
+status: review
 created: 2026-07-17
 updated: 2026-07-18
 tags:
@@ -28,15 +28,15 @@ Rules of the pass: no behaviour change (tests are the gate, and they stay — 5,
 Honesty mechanism, same as IDEA-63: baseline first, report per-file before/after line counts each phase, and gate on the total. If the number didn't move, the pass didn't happen.
 
 ### Phases
-- [ ] Baseline and dead-code inventory
+- [x] Baseline and dead-code inventory
       Record per-file line counts across non-test `src/` (the hotspots above and the 17,584 total) and inventory unused/under-used exports (git-pr's 15, store selectors, route helpers) so later phases diff against fixed numbers and deletions are provable.
-- [ ] Split and shrink server/agent.ts
+- [x] Split and shrink server/agent.ts
       Extract the shared launch scaffold the ~8 modes re-spell, and move fix-review settle + task-log persistence into their own modules; the registry/gate stays the core. Report before/after (1148 → n).
-- [ ] Slim the client hotspots
+- [x] Slim the client hotspots
       `commit-section.tsx`: split file-list / commit-form / branch-actions and cut the 21-hook body down; `app-store.ts`: collapse the repeated load-slice pattern into one factory; sweep `entity-detail.tsx` (420) and `worklist-rows.tsx` (313) with the same eye. Settings-page is expected to shrink via IDEA-68 first — only slim what remains.
-- [ ] Tighten the core round-trip and git-pr surface
+- [x] Tighten the core round-trip and git-pr surface
       `parser.ts`/`serializer.ts`: merge the mirrored per-section handling so one table drives both directions where possible; `pr.ts`/`pr-lookup.ts`: cut the export surface to what callers use and fold single-caller helpers in. Report per-file.
-- [ ] Slim the CLI and MCP layer
+- [x] Slim the CLI and MCP layer
       `cli/index.ts`: table-drive the command dispatch; `mcp/tools.ts`: dedupe wrappers that re-spell server reads. Report per-file.
-- [ ] Gate and report the release numbers
+- [x] Gate and report the release numbers
       `tsc --noEmit`, `biome check`, full tests green; total before/after line count across `src/`, per-file for every touched hotspot, and confirmation the comment ratio stayed at IDEA-63's level.

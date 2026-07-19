@@ -152,43 +152,55 @@ interface ReconcilePreview {
 export const selectAgentBusy = (s: AppStore) =>
   s.agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
 
+type SetState = (partial: Partial<AppStore>) => void;
+
+// Collapses the fetch → set-on-success → fallback-on-error shape every load-slice below
+// re-spelled by hand; `loadingKey` is only needed by slices that show a spinner meanwhile.
+function loadSlice<T>(
+  set: SetState,
+  fetcher: () => Promise<T>,
+  apply: (data: T) => Partial<AppStore>,
+  fallback: (err: unknown) => Partial<AppStore> = () => ({}),
+  loadingKey?: keyof AppStore,
+): () => Promise<void> {
+  return async () => {
+    if (loadingKey) set({ [loadingKey]: true } as Partial<AppStore>);
+    try {
+      const data = await fetcher();
+      set({ ...apply(data), ...(loadingKey && { [loadingKey]: false }) });
+    } catch (err) {
+      set({ ...fallback(err), ...(loadingKey && { [loadingKey]: false }) });
+    }
+  };
+}
+
 export const useAppStore = create<AppStore>((set, get) => ({
   plans: null,
   plansLoading: false,
   plansError: null,
-  loadPlans: async () => {
-    set({ plansLoading: true });
-    try {
-      const data = await fetchPlans();
-      set({
-        plans: data,
-        plansError: null,
-        plansLoading: false,
-      });
-    } catch (err) {
-      set({ plansError: String(err), plansLoading: false });
-    }
-  },
+  loadPlans: loadSlice(
+    set,
+    fetchPlans,
+    (data) => ({ plans: data, plansError: null }),
+    (err) => ({ plansError: String(err) }),
+    'plansLoading',
+  ),
 
   ideaEntries: [],
-  loadIdeas: async () => {
-    try {
-      const result = await fetchIdeas();
-      set({ ideaEntries: result.entries });
-    } catch {
-      set({ ideaEntries: [] });
-    }
-  },
+  loadIdeas: loadSlice(
+    set,
+    fetchIdeas,
+    (result) => ({ ideaEntries: result.entries }),
+    () => ({ ideaEntries: [] }),
+  ),
 
   archivableIdeas: [],
-  loadArchivableIdeas: async () => {
-    try {
-      const entries = await fetchArchivableIdeas();
-      set({ archivableIdeas: entries });
-    } catch {
-      set({ archivableIdeas: [] });
-    }
-  },
+  loadArchivableIdeas: loadSlice(
+    set,
+    fetchArchivableIdeas,
+    (entries) => ({ archivableIdeas: entries }),
+    () => ({ archivableIdeas: [] }),
+  ),
   archiveIdeas: async (ids) => {
     await archiveIdeasApi(ids);
     await Promise.all([get().loadArchivableIdeas(), get().loadPlans(), get().loadIdeas()]);
@@ -234,15 +246,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   suggestions: [],
   suggestionsLoading: true,
-  loadSuggestions: async () => {
-    set({ suggestionsLoading: true });
-    try {
-      const data = await fetchSuggestions();
-      set({ suggestions: data.entries, suggestionsLoading: false });
-    } catch {
-      set({ suggestions: [], suggestionsLoading: false });
-    }
-  },
+  loadSuggestions: loadSlice(
+    set,
+    fetchSuggestions,
+    (data) => ({ suggestions: data.entries }),
+    () => ({ suggestions: [] }),
+    'suggestionsLoading',
+  ),
   promoteSuggestion: async (suggestion) => {
     const { id } = await promoteSuggestionApi(suggestion);
     await Promise.all([get().loadSuggestions(), get().loadPlans(), get().loadIdeas()]);
@@ -255,15 +265,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   taskLog: [],
   taskLogLoading: true,
-  loadTaskLog: async () => {
-    set({ taskLogLoading: true });
-    try {
-      const data = await fetchTaskLog();
-      set({ taskLog: data.entries, taskLogLoading: false });
-    } catch {
-      set({ taskLog: [], taskLogLoading: false });
-    }
-  },
+  loadTaskLog: loadSlice(
+    set,
+    fetchTaskLog,
+    (data) => ({ taskLog: data.entries }),
+    () => ({ taskLog: [] }),
+    'taskLogLoading',
+  ),
 
   repoDocs: [],
   repoDocsLoading: true,
@@ -292,12 +300,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   status: null,
   refreshing: false,
-  loadStatus: async () => {
-    try {
-      const data = await fetchStatus();
-      set({ status: data });
-    } catch {}
-  },
+  loadStatus: loadSlice(set, fetchStatus, (data) => ({ status: data })),
   refreshAll: async () => {
     set({ refreshing: true });
     try {
@@ -361,12 +364,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   consistency: [],
-  loadConsistency: async () => {
-    try {
-      const data = await fetchConsistency();
-      set({ consistency: data });
-    } catch {}
-  },
+  loadConsistency: loadSlice(set, fetchConsistency, (data) => ({ consistency: data })),
 
   gitStatus: null,
   gitBranch: null,

@@ -52,10 +52,6 @@ export function resolveEntityIdFromPrRef(
   return fromBranch ? fromBranch[1].toUpperCase() : null;
 }
 
-function prEntityId(row: GhPrRow): string | null {
-  return resolveEntityIdFromPrRef(row.body, row.headRefName);
-}
-
 interface ReviewSignal {
   unresolvedThreadCount: number;
   hasNewCommentsSincePush: boolean;
@@ -317,7 +313,7 @@ function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> 
           const rows = JSON.parse(stdout) as GhPrRow[];
           const byId = new Map<string, PrInfo>();
           for (const row of rows) {
-            const id = prEntityId(row);
+            const id = resolveEntityIdFromPrRef(row.body, row.headRefName);
             if (!id) continue;
             const info = toPrInfo(row);
             const existing = byId.get(id);

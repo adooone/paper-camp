@@ -36,6 +36,11 @@ import { startDevServer } from './dev-server';
 import { logNewFile } from './post-tool-use-log';
 import { buildSessionFocus } from './session-focus';
 
+function fail(message: string): void {
+  console.error(message);
+  process.exitCode = 1;
+}
+
 async function exists(path: string): Promise<boolean> {
   try {
     await stat(path);
@@ -137,8 +142,7 @@ program
       console.log('  .claude/settings.json     (SessionStart + PostToolUse hooks)');
     } catch (error) {
       if (error instanceof AlreadyInitializedError) {
-        console.error(error.message);
-        process.exitCode = 1;
+        fail(error.message);
         return;
       }
       throw error;
@@ -169,18 +173,15 @@ program
   .option('-k, --kind <kind>', `plan kind (${PLAN_KINDS.join('|')})`, 'feat')
   .action(async (type: string, name: string | undefined, opts: { kind: string }) => {
     if (type !== 'plan') {
-      console.error(`Unknown type "${type}". Supported types: plan`);
-      process.exitCode = 1;
+      fail(`Unknown type "${type}". Supported types: plan`);
       return;
     }
     if (!name) {
-      console.error('Usage: paper-camp add plan <name> [--kind feat|fix|chore|docs|refactor]');
-      process.exitCode = 1;
+      fail('Usage: paper-camp add plan <name> [--kind feat|fix|chore|docs|refactor]');
       return;
     }
     if (!PLAN_KINDS.includes(opts.kind as (typeof PLAN_KINDS)[number])) {
-      console.error(`Unknown kind "${opts.kind}". Supported kinds: ${PLAN_KINDS.join(', ')}`);
-      process.exitCode = 1;
+      fail(`Unknown kind "${opts.kind}". Supported kinds: ${PLAN_KINDS.join(', ')}`);
       return;
     }
 
@@ -190,8 +191,7 @@ program
     const id = await assignEntityId(configPath);
 
     if (!id) {
-      console.error('Could not assign entity ID — is the project initialized?');
-      process.exitCode = 1;
+      fail('Could not assign entity ID — is the project initialized?');
       return;
     }
 
@@ -387,8 +387,7 @@ program
     try {
       config = JSON.parse(configRaw) as typeof config;
     } catch {
-      console.error('Invalid papercamp/config.json');
-      process.exitCode = 1;
+      fail('Invalid papercamp/config.json');
       return;
     }
     const rawAgents = config.defaultAgents;
@@ -527,76 +526,59 @@ program
     const root = process.cwd();
     const resolved = await resolvePlanForPrRef(root, ref);
     if (!resolved) {
-      console.error(`Could not resolve a plan for "${ref}"`);
-      process.exitCode = 1;
+      fail(`Could not resolve a plan for "${ref}"`);
       return;
     }
     console.log(JSON.stringify(resolved, null, 2));
   });
 
-program
-  .command('sync-pr-phases <ref>')
-  .description(
-    "Rewrite a PR's (number or branch) body to render its plan's phases as a task list, preserving the Plan line (used by the Scout CI workflows)",
-  )
-  .action(async (ref: string) => {
-    const root = process.cwd();
-    const result = await syncPlanPhasesToPr(root, ref);
-    if (result === 'unresolved') {
-      console.error(`Could not sync plan phases to a PR for "${ref}"`);
-      process.exitCode = 1;
-      return;
-    }
-    console.log(result);
-  });
+function registerPrSyncCommand(
+  name: string,
+  description: string,
+  syncFn: (root: string, ref: string) => Promise<string | 'unresolved'>,
+  failVerb: string,
+): void {
+  program
+    .command(`${name} <ref>`)
+    .description(description)
+    .action(async (ref: string) => {
+      const root = process.cwd();
+      const result = await syncFn(root, ref);
+      if (result === 'unresolved') {
+        fail(`Could not ${failVerb} for "${ref}"`);
+        return;
+      }
+      console.log(result);
+    });
+}
 
-program
-  .command('sync-pr-labels <ref>')
-  .description(
-    "Apply labels derived from a plan's kind/tags to its PR (number or branch), creating missing labels as needed (used by the Scout CI workflows)",
-  )
-  .action(async (ref: string) => {
-    const root = process.cwd();
-    const result = await syncPrLabelsToPr(root, ref);
-    if (result === 'unresolved') {
-      console.error(`Could not sync plan labels to a PR for "${ref}"`);
-      process.exitCode = 1;
-      return;
-    }
-    console.log(result);
-  });
+registerPrSyncCommand(
+  'sync-pr-phases',
+  "Rewrite a PR's (number or branch) body to render its plan's phases as a task list, preserving the Plan line (used by the Scout CI workflows)",
+  syncPlanPhasesToPr,
+  'sync plan phases to a PR',
+);
 
-program
-  .command('sync-pr-readiness <ref>')
-  .description(
-    "Flip a PR (number or branch) to ready for review once its plan's phases are all checked, or close it when the plan is dropped (used by the Scout CI workflows)",
-  )
-  .action(async (ref: string) => {
-    const root = process.cwd();
-    const result = await syncPrReadinessToPr(root, ref);
-    if (result === 'unresolved') {
-      console.error(`Could not sync PR readiness for "${ref}"`);
-      process.exitCode = 1;
-      return;
-    }
-    console.log(result);
-  });
+registerPrSyncCommand(
+  'sync-pr-labels',
+  "Apply labels derived from a plan's kind/tags to its PR (number or branch), creating missing labels as needed (used by the Scout CI workflows)",
+  syncPrLabelsToPr,
+  'sync plan labels to a PR',
+);
 
-program
-  .command('sync-pr-consistency <ref>')
-  .description(
-    "Upsert a sticky Scout comment on a PR (number or branch) with findConsistencyIssues' results and the plan's convergence-audit staleness (used by the Scout CI workflows)",
-  )
-  .action(async (ref: string) => {
-    const root = process.cwd();
-    const result = await syncConsistencyCommentToPr(root, ref);
-    if (result === 'unresolved') {
-      console.error(`Could not sync consistency checks to a PR for "${ref}"`);
-      process.exitCode = 1;
-      return;
-    }
-    console.log(result);
-  });
+registerPrSyncCommand(
+  'sync-pr-readiness',
+  "Flip a PR (number or branch) to ready for review once its plan's phases are all checked, or close it when the plan is dropped (used by the Scout CI workflows)",
+  syncPrReadinessToPr,
+  'sync PR readiness',
+);
+
+registerPrSyncCommand(
+  'sync-pr-consistency',
+  "Upsert a sticky Scout comment on a PR (number or branch) with findConsistencyIssues' results and the plan's convergence-audit staleness (used by the Scout CI workflows)",
+  syncConsistencyCommentToPr,
+  'sync consistency checks to a PR',
+);
 
 // The two commands below are internal — invoked by the scaffolded
 // `.claude/settings.json` hooks, not by users.

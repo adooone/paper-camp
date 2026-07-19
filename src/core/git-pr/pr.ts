@@ -78,7 +78,7 @@ async function findEntityFile(root: string, id: string): Promise<string | null> 
   return null;
 }
 
-export interface ResolvedPlanForPr {
+interface ResolvedPlanForPr {
   id: string;
   kind?: EntityType;
   tags: string[];
@@ -145,9 +145,10 @@ function runGhPrEditBody(root: string, ref: string, body: string): Promise<boole
   });
 }
 
-export type SyncPlanPhasesResult = 'updated' | 'unchanged' | 'unresolved';
-
-export async function syncPlanPhasesToPr(root: string, ref: string): Promise<SyncPlanPhasesResult> {
+export async function syncPlanPhasesToPr(
+  root: string,
+  ref: string,
+): Promise<'updated' | 'unchanged' | 'unresolved'> {
   const context = await resolvePlanContext(root, ref);
   if (!context?.view) return 'unresolved';
   const { view, entry } = context;
@@ -223,9 +224,10 @@ function runGhPrAddLabels(root: string, ref: string, labels: string[]): Promise<
   });
 }
 
-export type SyncPrLabelsResult = 'updated' | 'unchanged' | 'unresolved';
-
-export async function syncPrLabelsToPr(root: string, ref: string): Promise<SyncPrLabelsResult> {
+export async function syncPrLabelsToPr(
+  root: string,
+  ref: string,
+): Promise<'updated' | 'unchanged' | 'unresolved'> {
   const context = await resolvePlanContext(root, ref);
   if (!context?.view) return 'unresolved';
   const { view, entry } = context;
@@ -271,12 +273,10 @@ function runGhPrClose(root: string, ref: string): Promise<boolean> {
   });
 }
 
-export type SyncPrReadinessResult = 'ready' | 'closed' | 'unchanged' | 'unresolved';
-
 export async function syncPrReadinessToPr(
   root: string,
   ref: string,
-): Promise<SyncPrReadinessResult> {
+): Promise<'ready' | 'closed' | 'unchanged' | 'unresolved'> {
   const context = await resolvePlanContext(root, ref);
   if (!context?.view) return 'unresolved';
   const { view, entry } = context;
@@ -363,18 +363,10 @@ function runGhApiPatchComment(
   });
 }
 
-/** The `id` from `gh pr view --json comments` is a GraphQL node id, unusable with the REST PATCH endpoint. */
-function parseCommentRestId(url: string): string | null {
-  const match = url.match(/issuecomment-(\d+)/);
-  return match ? match[1] : null;
-}
-
-export type SyncConsistencyCommentResult = 'created' | 'updated' | 'unchanged' | 'unresolved';
-
 export async function syncConsistencyCommentToPr(
   root: string,
   ref: string,
-): Promise<SyncConsistencyCommentResult> {
+): Promise<'created' | 'updated' | 'unchanged' | 'unresolved'> {
   const context = await resolvePlanContext(root, ref);
   if (!context?.view?.url) return 'unresolved';
   const { view, entry } = context;
@@ -405,7 +397,8 @@ export async function syncConsistencyCommentToPr(
   if (existing) {
     if (existing.body === body) return 'unchanged';
     const parsedUrl = parsePrUrl(view.url);
-    const commentId = parseCommentRestId(existing.url);
+    // The `id` from `gh pr view --json comments` is a GraphQL node id, unusable with the REST PATCH endpoint.
+    const commentId = existing.url.match(/issuecomment-(\d+)/)?.[1];
     if (!parsedUrl || !commentId) return 'unresolved';
     const ok = await runGhApiPatchComment(root, parsedUrl.owner, parsedUrl.repo, commentId, body);
     return ok ? 'updated' : 'unresolved';
