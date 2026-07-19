@@ -2,9 +2,9 @@
 id: IDEA-62
 title: AI-suggested idea drafts
 type: feat
-status: review
+status: done
 created: 2026-07-13
-updated: 2026-07-15
+updated: 2026-07-19
 tags:
   - app
   - ideas

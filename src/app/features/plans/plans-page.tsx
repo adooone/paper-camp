@@ -11,7 +11,13 @@ import { PromoteSuggestionModal } from './modals';
 import { ReconcileQueueReview } from './views';
 import { EntityDetail } from './views';
 import { NoteDetail } from './views';
-import { ListView, PlansHeader, PlansListSkeleton, SuggestionsSection } from './views';
+import {
+  ArchiveSection,
+  ListView,
+  PlansHeader,
+  PlansListSkeleton,
+  SuggestionsSection,
+} from './views';
 
 export const PlansPage = () => {
   const plans = useAppStore((s) => s.plans);
@@ -147,6 +153,8 @@ export const PlansPage = () => {
               onOpenIdea={handleOpenIdea}
             />
           )}
+
+          <ArchiveSection />
 
           <SuggestionsSection
             suggestions={suggestions}

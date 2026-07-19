@@ -72,6 +72,6 @@
 | IDEA-68 | Trim the UI to what's used | refactor | done | app, ui, docs, settings, tasks |
 | IDEA-69 | Slim the codebase for release | refactor | planned | app, core, cli, refactor |
 | IDEA-70 | Subjects and idea-detail polish | feat | done | app, plans, ideas, settings, ui |
-| IDEA-71 | Run order for the worklist | feat | review | app, plans, ideas, ui |
-| IDEA-72 | Truthful status and one-click archive | feat | planned | app, plans, agent, git, ui |
+| IDEA-71 | Run order for the worklist | feat | done | app, plans, ideas, ui |
+| IDEA-72 | Truthful status and one-click archive | feat | done | app, plans, agent, git, ui |
 | IDEA-73 | Smooth the page transitions | fix | done | app, ui, performance |

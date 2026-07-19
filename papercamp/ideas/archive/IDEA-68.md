@@ -2,9 +2,9 @@
 id: IDEA-68
 title: Trim the UI to what's used
 type: refactor
-status: review
+status: done
 created: 2026-07-17
-updated: 2026-07-18
+updated: 2026-07-19
 tags:
   - app
   - ui

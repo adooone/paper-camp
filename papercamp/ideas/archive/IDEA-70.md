@@ -2,9 +2,9 @@
 id: IDEA-70
 title: Subjects and idea-detail polish
 type: feat
-status: review
+status: done
 created: 2026-07-17
-updated: 2026-07-18
+updated: 2026-07-19
 tags:
   - app
   - plans

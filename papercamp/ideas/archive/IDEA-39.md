@@ -4,7 +4,7 @@ title: Build the focus cockpit
 type: feat
 status: done
 created: 2026-07-04
-updated: 2026-07-11
+updated: 2026-07-19
 tags:
   - app
   - ui

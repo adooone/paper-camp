@@ -2,8 +2,9 @@
 id: IDEA-59
 title: Trim comments to the essential
 type: refactor
-status: review
+status: done
 created: 2026-07-13
+updated: 2026-07-19
 tags:
   - app
   - core

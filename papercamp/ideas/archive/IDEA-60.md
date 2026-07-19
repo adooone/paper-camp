@@ -2,12 +2,13 @@
 id: IDEA-60
 title: Group code into domain subfolders
 type: refactor
+status: done
 created: 2026-07-13
+updated: 2026-07-19
 tags:
   - app
   - refactor
   - core
-status: review
 ---
 
 Several folders have gone flat and wide: `features/plans/components` holds 32 files, `core` 22, with `server/routes`, `services`, and `components` in the 10–13 range. A flat list that long stops communicating structure — you can't tell at a glance which files belong together. Reorganise so every folder keeps only a few anchor files at its top and pushes the rest into subfolders grouped by what the code *is about*.

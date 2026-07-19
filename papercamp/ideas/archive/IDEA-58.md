@@ -2,8 +2,9 @@
 id: IDEA-58
 title: Simplify and de-dupe the codebase
 type: refactor
-status: review
+status: done
 created: 2026-07-13
+updated: 2026-07-19
 tags:
   - app
   - refactor

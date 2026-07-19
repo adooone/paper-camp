@@ -2,8 +2,9 @@
 id: IDEA-65
 title: Parallel agents and a task log
 type: feat
-status: review
+status: done
 created: 2026-07-15
+updated: 2026-07-19
 tags:
   - app
   - agent

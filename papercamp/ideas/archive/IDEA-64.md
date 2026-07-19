@@ -2,8 +2,9 @@
 id: IDEA-64
 title: Sort the worklist by column header
 type: feat
-status: review
+status: done
 created: 2026-07-15
+updated: 2026-07-19
 tags:
   - app
   - plans

@@ -2,9 +2,9 @@
 id: IDEA-63
 title: Sweep comments to the §7 bar
 type: refactor
-status: review
+status: done
 created: 2026-07-15
-updated: 2026-07-18
+updated: 2026-07-19
 tags:
   - app
   - core

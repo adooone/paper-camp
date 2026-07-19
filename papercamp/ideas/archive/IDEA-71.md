@@ -2,9 +2,9 @@
 id: IDEA-71
 title: Run order for the worklist
 type: feat
-status: review
+status: done
 created: 2026-07-17
-updated: 2026-07-18
+updated: 2026-07-19
 tags:
   - app
   - plans

@@ -2,9 +2,9 @@
 id: IDEA-73
 title: Smooth the page transitions
 type: fix
-status: review
+status: done
 created: 2026-07-17
-updated: 2026-07-18
+updated: 2026-07-19
 tags:
   - app
   - ui

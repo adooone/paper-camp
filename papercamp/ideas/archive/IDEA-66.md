@@ -2,8 +2,9 @@
 id: IDEA-66
 title: Sync from a dirty merged branch
 type: fix
-status: review
+status: done
 created: 2026-07-16
+updated: 2026-07-19
 tags:
   - app
   - stack

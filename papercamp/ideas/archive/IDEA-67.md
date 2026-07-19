@@ -2,8 +2,9 @@
 id: IDEA-67
 title: Deterministic dirty sync
 type: fix
-status: review
+status: done
 created: 2026-07-17
+updated: 2026-07-19
 tags:
   - app
   - server

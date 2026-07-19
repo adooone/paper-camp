@@ -2,9 +2,9 @@
 id: IDEA-72
 title: Truthful status and one-click archive
 type: feat
-status: review
+status: done
 created: 2026-07-17
-updated: 2026-07-18
+updated: 2026-07-19
 tags:
   - app
   - plans
