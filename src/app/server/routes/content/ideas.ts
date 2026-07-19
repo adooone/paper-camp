@@ -1,6 +1,7 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
+import { readEntities } from '@/core/readers';
 import {
   assignEntityId,
   formatEntityFile,
@@ -8,7 +9,14 @@ import {
   todayDateString,
 } from '@/core/serialize';
 import type { SuggestionEntry } from '@/types/index';
-import { campFile, readMaybe, regenerateIndexes } from '../../helpers';
+import {
+  campFile,
+  entityFileInput,
+  fileExists,
+  readMaybe,
+  regenerateIndexes,
+  writeEntityFile,
+} from '../../helpers';
 import { readBody, sendJson } from '../../http';
 import { checkIdeaOverlap } from '../../overlap-check';
 import type { Route, RouteContext } from '../types';
@@ -113,6 +121,43 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
         }
         await writeFile(suggestionsPath, updated, 'utf-8');
         sendJson(res, 200, { ok: true });
+      },
+    },
+
+    // The click that promotes to `done` IS the archive decision, so the frontmatter
+    // change is written straight to the archive destination — never to the ideasDir
+    // copy — instead of a write-then-move. Silently skips ids that no longer resolve
+    // (already archived, or the id list going stale between list and click).
+    {
+      method: 'POST',
+      path: '/api/ideas/archive',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { ids } = JSON.parse(reqBody) as { ids?: string[] };
+        if (!ids?.length) {
+          sendJson(res, 400, { error: 'ids is required' });
+          return;
+        }
+        const ideasDir = campFile(root, 'ideas');
+        const archiveDir = join(ideasDir, 'archive');
+        const { entries } = await readEntities(ideasDir);
+        await mkdir(archiveDir, { recursive: true });
+
+        const archived: string[] = [];
+        for (const id of ids) {
+          const target = entries.find((e) => e.id === id && e.kind !== 'note' && !e.archived);
+          const sourcePath = join(ideasDir, `${id}.md`);
+          if (!target || !(await fileExists(sourcePath))) continue;
+          await writeEntityFile(
+            join(archiveDir, `${id}.md`),
+            entityFileInput(target, { status: 'done', updated: todayDateString() }),
+          );
+          await unlink(sourcePath);
+          archived.push(id);
+        }
+
+        await regenerateIndexes(root);
+        sendJson(res, 200, { ok: true, archived });
       },
     },
 

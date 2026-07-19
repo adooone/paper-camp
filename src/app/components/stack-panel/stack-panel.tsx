@@ -5,6 +5,7 @@ import { Divider, IconButton, Spinner } from '@dendelion/paper-ui';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef } from 'react';
 import { AgentSection } from './agent-section';
+import { ArchiveSection } from './archive-section';
 import { CommitSection } from './commit-section';
 import {
   CHALKBOARD_TEXTURE,
@@ -35,6 +36,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
   const loadSuggestions = useAppStore((s) => s.loadSuggestions);
+  const loadArchivableIdeas = useAppStore((s) => s.loadArchivableIdeas);
   const shouldReduceMotion = useReducedMotion();
   const refreshRef = useRef({
     loadPlans,
@@ -43,6 +45,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     loadGitStatus,
     loadAgentStatus,
     loadSuggestions,
+    loadArchivableIdeas,
   });
   useEffect(() => {
     refreshRef.current = {
@@ -52,6 +55,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       loadGitStatus,
       loadAgentStatus,
       loadSuggestions,
+      loadArchivableIdeas,
     };
   });
 
@@ -60,6 +64,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     refreshRef.current.loadConsistency();
     refreshRef.current.loadGitStatus();
     refreshRef.current.loadAgentStatus();
+    refreshRef.current.loadArchivableIdeas();
   }, []);
 
   useEffect(() => {
@@ -100,6 +105,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           refreshRef.current.loadConsistency();
           refreshRef.current.loadGitStatus();
           refreshRef.current.loadAgentStatus();
+          refreshRef.current.loadArchivableIdeas();
         },
         250,
       );
@@ -261,6 +267,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           <AgentSection />
           <Divider surface="chalkboard" />
           <StatusSection />
+          <ArchiveSection />
           <CommitSection />
         </div>
       </motion.div>

@@ -117,6 +117,12 @@ export interface PlanEntry {
   pr?: PrInfo;
 }
 
+export interface ArchivableIdea {
+  id: string;
+  title: string;
+  pr: PrInfo;
+}
+
 export interface DecisionEntry {
   title: string;
   date: string;

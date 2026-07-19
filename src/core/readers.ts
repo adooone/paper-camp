@@ -1,6 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
+  ArchivableIdea,
   EntityEntry,
   IdeaEntry,
   IdeaStatus,
@@ -129,12 +130,6 @@ export async function readWorkEntries(ideasDir: string): Promise<ParseResult<Pla
       .map((e) => entityToPlan(e, prs?.get(e.id), resolved)),
     warnings,
   };
-}
-
-export interface ArchivableIdea {
-  id: string;
-  title: string;
-  pr: PrInfo;
 }
 
 // Merged PR + review/done status + file still in ideasDir (not ideas/archive/): the
