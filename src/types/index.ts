@@ -117,6 +117,12 @@ export interface PlanEntry {
   pr?: PrInfo;
 }
 
+export interface ArchivableIdea {
+  id: string;
+  title: string;
+  pr: PrInfo;
+}
+
 export interface DecisionEntry {
   title: string;
   date: string;
@@ -198,6 +204,8 @@ export interface EntityEntry {
   phases: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
+  /** Set by readEntities from which of the two scanned dirs the file came from, not the frontmatter. */
+  archived?: boolean;
 }
 
 export interface ProgressEntry {

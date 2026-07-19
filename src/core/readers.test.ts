@@ -6,6 +6,7 @@ import { clearPrCache } from './git-pr/pr';
 import {
   entityToIdea,
   entityToPlan,
+  findArchivableIdeas,
   readEntities,
   readEntitiesWithDerivedStatus,
   readNoteEntries,
@@ -298,6 +299,63 @@ describe('status derivation from PR state', () => {
     await readEntitiesWithDerivedStatus(dir);
     const { entries: raw } = await readEntities(dir);
     expect(raw.find((e) => e.id === 'IDEA-9')?.status).toBeUndefined();
+  });
+});
+
+describe('findArchivableIdeas', () => {
+  it('lists a merged, review/done idea still in ideasDir, skipping notes and already-archived files', async () => {
+    installGh([
+      prRow('IDEA-12', 'MERGED', { number: 7, url: 'https://github.com/o/r/pull/7' }),
+      prRow('IDEA-13', 'MERGED'),
+      prRow('IDEA-14', 'OPEN'),
+    ]);
+    const dir = tmpIdeas();
+    write(dir, {
+      id: 'IDEA-12',
+      title: 'Ready to archive',
+      type: 'feat',
+      created: '2026-07-01',
+      body: 'x',
+      phases: [{ text: 'One', done: true }],
+    });
+    write(
+      dir,
+      {
+        id: 'IDEA-13',
+        title: 'Already archived',
+        type: 'feat',
+        status: 'done',
+        created: '2026-07-01',
+        body: 'x',
+        phases: [{ text: 'One', done: true }],
+      },
+      true,
+    );
+    write(dir, {
+      id: 'IDEA-14',
+      title: 'Still open',
+      type: 'feat',
+      created: '2026-07-01',
+      body: 'x',
+      phases: [{ text: 'One', done: true }],
+    });
+    write(dir, {
+      id: 'IDEA-15',
+      title: 'A note',
+      kind: 'note',
+      status: 'open',
+      created: '2026-07-01',
+      body: 'x',
+    });
+
+    const archivable = await findArchivableIdeas(dir);
+    expect(archivable).toEqual([
+      {
+        id: 'IDEA-12',
+        title: 'Ready to archive',
+        pr: { number: 7, url: expect.any(String), state: 'merged' },
+      },
+    ]);
   });
 });
 

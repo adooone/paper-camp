@@ -32,7 +32,7 @@ import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
-import { phaseProgress, relativeDate } from '../helpers';
+import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -53,9 +53,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
-  const planTask = agentStatus.find(
-    (t) => t.planId === plan.id && t.status !== 'done' && t.status !== 'error',
-  );
+  const planTask = runningTaskForPlan(plan.id, agentStatus);
   const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
   const auditRunning = planTask?.taskKind === 'audit';
   const [logInput, setLogInput] = useState('');
@@ -197,7 +195,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           style={{ display: 'flex', alignItems: 'center', gap: space[3], marginBottom: space[4] }}
         >
           <div style={{ flex: 1 }}>
-            <ProgressBar pct={progress.pct} color={STATUS_COLOR[plan.status]} />
+            <ProgressBar
+              pct={progress.pct}
+              color={STATUS_COLOR[effectiveStatus(plan, agentStatus)]}
+            />
           </div>
           <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
             {progress.done}/{progress.total}

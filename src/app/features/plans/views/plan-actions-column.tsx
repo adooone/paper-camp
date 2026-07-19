@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
 import { FixReviewButton } from '../actions';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
+import { effectiveStatus } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
 
@@ -25,6 +26,7 @@ export const PlanActionsColumn = () => {
   const plans = useAppStore((s) => s.plans);
   const activePlanTitle = useActivePlanTitle();
   const agentBusy = useAppStore(selectAgentBusy);
+  const agentStatus = useAppStore((s) => s.agentStatus);
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const { subjects } = useProjectSubjects();
 
@@ -34,6 +36,7 @@ export const PlanActionsColumn = () => {
     setOrderInput(plan?.order !== undefined ? String(plan?.order) : '');
   }, [plan?.order]);
   if (!plan) return null;
+  const displayStatus = effectiveStatus(plan, agentStatus);
   const inProgress = plan.status === 'in-progress';
   const underReview = plan.status === 'review';
   const dropped = plan.status === 'dropped';
@@ -84,10 +87,10 @@ export const PlanActionsColumn = () => {
                 abandonment leaves no branch or PR to derive status from. */}
             <Stamp
               size="small"
-              fillColor={STATUS_STAMP[plan.status].fill}
-              textColor={STATUS_STAMP[plan.status].text}
+              fillColor={STATUS_STAMP[displayStatus].fill}
+              textColor={STATUS_STAMP[displayStatus].text}
             >
-              {STATUS_LABEL[plan.status]}
+              {STATUS_LABEL[displayStatus]}
             </Stamp>
           </div>
 

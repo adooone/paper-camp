@@ -6,6 +6,10 @@ export interface StatusDerivationInput {
   phases: PhaseItem[];
 }
 
+export interface ArchivabilityInput extends StatusDerivationInput {
+  archived?: boolean;
+}
+
 function allChecked(entity: StatusDerivationInput): boolean {
   return entity.phases.length > 0 && entity.phases.every((p) => p.done);
 }
@@ -32,4 +36,12 @@ export function deriveStatus(
   // Confirmed no PR, but a stored terminal `done` (e.g. an unmatchable legacy PR) still wins.
   if (entity.status === 'done') return 'done';
   return entity.phases.length > 0 ? 'planned' : 'idea';
+}
+
+// A merged PR can still derive to `dropped` (a stored override wins over the PR — see
+// deriveStatus), so this re-derives rather than trusting `pr.state === 'merged'` alone.
+export function isArchivable(entity: ArchivabilityInput, pr: PrInfo | undefined): boolean {
+  if (entity.kind === 'note' || entity.archived || pr?.state !== 'merged') return false;
+  const status = deriveStatus(entity, pr, true);
+  return status === 'review' || status === 'done';
 }

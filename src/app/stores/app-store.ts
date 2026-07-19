@@ -5,6 +5,7 @@ import {
 } from '@/app/features/plans/helpers';
 import type {
   AgentTaskState,
+  ArchivableIdea,
   BranchHygieneStatus,
   CheckName,
   ConsistencyIssue,
@@ -34,7 +35,9 @@ import {
   stopAgent,
 } from '../services/agent-api';
 import {
+  archiveIdeas as archiveIdeasApi,
   dismissSuggestion as dismissSuggestionApi,
+  fetchArchivableIdeas,
   fetchConsistency,
   fetchIdeas,
   fetchPlans,
@@ -60,6 +63,10 @@ export type AppStore = {
 
   ideaEntries: IdeaEntry[];
   loadIdeas: () => Promise<void>;
+
+  archivableIdeas: ArchivableIdea[];
+  loadArchivableIdeas: () => Promise<void>;
+  archiveIdeas: (ids: string[]) => Promise<void>;
 
   // Lifted here (not local state) so the sidebar filter column and the list share one source.
   planFilters: PlanListFilters;
@@ -173,6 +180,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
+  archivableIdeas: [],
+  loadArchivableIdeas: async () => {
+    try {
+      const entries = await fetchArchivableIdeas();
+      set({ archivableIdeas: entries });
+    } catch {
+      set({ archivableIdeas: [] });
+    }
+  },
+  archiveIdeas: async (ids) => {
+    await archiveIdeasApi(ids);
+    await Promise.all([get().loadArchivableIdeas(), get().loadPlans(), get().loadIdeas()]);
+  },
+
   planFilters: DEFAULT_PLAN_LIST_FILTERS,
   togglePlanStatus: (status) =>
     set((s) => ({
@@ -284,6 +305,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       await Promise.all([
         get().loadPlans(),
         get().loadIdeas(),
+        get().loadArchivableIdeas(),
         get().loadSuggestions(),
         get().loadStatus(),
         get().loadConsistency(),
