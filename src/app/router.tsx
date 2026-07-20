@@ -29,9 +29,13 @@ const SettingsSidebar = lazy(() =>
 const TasksPage = lazy(() =>
   import('@/app/features/tasks/index').then((m) => ({ default: m.TasksPage })),
 );
+const RoadmapPage = lazy(() =>
+  import('@/app/features/roadmap/index').then((m) => ({ default: m.RoadmapPage })),
+);
 
 const navItems = [
   { id: 'plans', label: 'Ideas', path: '/' },
+  { id: 'roadmap', label: 'Roadmap', path: '/roadmap' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'tasks', label: 'Tasks', path: '/tasks' },
   { id: 'settings', label: 'Settings', path: '/settings' },
@@ -298,6 +302,12 @@ const settingsSectionRoute = createRoute({
   component: SettingsPage,
 });
 
+const roadmapRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/roadmap',
+  component: RoadmapPage,
+});
+
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/tasks',
@@ -316,6 +326,7 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
   settingsSectionRoute,
   tasksRoute,
+  roadmapRoute,
 ]);
 
 export const router = createRouter({ routeTree });

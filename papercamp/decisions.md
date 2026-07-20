@@ -1,3 +1,31 @@
+## Runtime stays server-first; no desktop shell; mobile via PWA
+
+**Date:** 2026-07-19
+**Status:** decided
+
+**Context:** Preparing for actual usage raised the runtime question: the app is
+a Vite-served web app today — should it become a desktop application (Electron/
+Tauri), and how should a phone control the flow? The app's essence constrains
+the answer: it must own filesystem access (the corpus), a git working tree, and
+long-lived agent child processes, so a local server exists in every
+architecture; the only real question is what the client shell is.
+
+**Decision:** Server-first, permanently: a packaged local server (the future
+`paper-camp` command) owning files/git/agents, with the browser as the client.
+No desktop shell now — a browser tab loses nothing for a monitoring-and-control
+surface. Mobile is a PWA over the same responsive web app (already reachable
+via Tailscale), with push notifications; a native or wrapped app only if the
+PWA ceiling is genuinely hit. Revisit the desktop shell only if tray presence,
+OS notifications, or autostart become real needs — and then prefer Tauri over
+Electron (system webview, no bundled Chromium).
+
+**Rationale:** One codebase serves desktop browser, remote, and phone; the
+server is the product and every client is thin. Electron would add per-OS
+packaging and update burden to deliver features (tray, notifications) that PWA
+push and a pinned tab approximate at near-zero cost. The mobile use-case is
+directing the flow — approve, promote, archive, nudge, watch the stack — not
+authoring; that's exactly what a responsive control surface does well.
+
 ## Quality-status "stale" requires both lint and format stale, not either
 
 **Date:** 2026-07-13

@@ -16,6 +16,11 @@ The roadmap is the map; `papercamp/ideas/` is the queue. An item graduates by
 becoming an idea (capture → subject → run order) through the normal flow, and
 this file gets pruned when it does. Horizons are ordered by intent, not dates.
 
+Items too big for one idea graduate differently: a **big bet** becomes a
+**Subject**, and gets decomposed into a run-ordered sequence of ideas under it
+— the same machinery that ships small things, aimed at a large one. The bet
+stays on this map until its first idea is captured.
+
 ## Horizon 1 — Ready for daily use
 
 The app works end-to-end for its author. This horizon makes it trustworthy for
@@ -25,7 +30,10 @@ a second person.
   example idea, empty states that teach ("No ideas yet — capture one or ask for
   suggestions"), and USAGE.md surfaced on first open.
 - **Packaging** — one command in any repo: scaffold `papercamp/`, start the
-  desk. No cloning this repo to use the method.
+  desk. No cloning this repo to use the method. The runtime stays
+  server-first: a local server owning files/git/agents, the browser as the
+  client — no desktop shell unless tray/notification needs earn one later
+  (see decisions.md, 2026-07-19).
 - **Dev-server reload honesty** — server code changes silently don't apply
   until restart (the globalThis API cache). Either hot-reload routes or show a
   visible "restart needed" signal. This footgun bit three times in one week.
@@ -61,6 +69,17 @@ The loop works; make it smarter and more observable.
   can share a desk without stepping on each other.
 - **Remote/hosted mode** — the desk reachable from anywhere (the Tailscale
   workflow, made first-class), agents running on a box that isn't your laptop.
+- **Mobile control desk** — direct the flow from a phone: check the agent
+  stack, approve/promote/archive, nudge a run. PWA over the existing
+  responsive web app first (it already reaches phones via Tailscale), push
+  notifications included; a native wrapper only if the PWA ceiling is hit.
+  A big bet: graduates as a Subject, starting with responsive-polish ideas.
+- **Project genesis** — Paper Camp as the starting point for new
+  applications: scan an existing repo you like, distill its stack and
+  conventions (checks, CI, style docs, structure) into a reusable template,
+  then `init` new projects from it — corpus, guardrails, and scaffolding in
+  one move. The scan is agent work; the template is part of the corpus
+  format. A big bet: graduates as a Subject.
 - **The format as the product** — document the corpus schema properly so other
   tools (editors, bots, dashboards) can read and write it. Paper Camp the app
   is one client of Paper Camp the format.

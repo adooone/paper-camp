@@ -1,4 +1,4 @@
-import type { ConsistencyIssue, SuggestionEntry, TaskLogEntry } from '@/types/index';
+import type { ConsistencyIssue, Roadmap, SuggestionEntry, TaskLogEntry } from '@/types/index';
 
 export const fetchTaskLog = async () => {
   const res = await fetch('/api/tasks');
@@ -44,6 +44,11 @@ export const dismissSuggestion = async (suggestion: SuggestionEntry) => {
 export const fetchRepoDocs = async () => {
   const res = await fetch('/api/docs');
   return res.json() as Promise<{ files: { name: string; content: string }[] }>;
+};
+
+export const fetchRoadmap = async () => {
+  const res = await fetch('/api/roadmap');
+  return res.json() as Promise<Roadmap | null>;
 };
 
 export const fetchConsistency = async () => {
