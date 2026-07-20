@@ -36,7 +36,7 @@ export const useProjectSubjects = (): ProjectSubjects => {
     const run = queueRef.current.then(async () => {
       const next = mutate(subjectsRef.current);
       if (next === false) return false;
-      const ok = await saveConfig({ subjects: next });
+      const { ok } = await saveConfig({ subjects: next });
       if (ok) {
         subjectsRef.current = next;
         setSubjects(next);

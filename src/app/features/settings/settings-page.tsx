@@ -199,37 +199,37 @@ const GeneralSection = () => {
       commitSuggest: current?.commitSuggest ?? DEFAULT_AGENTS.commitSuggest,
       [key]: newEntry,
     };
-    const ok = await saveConfig({ defaultAgents: updated });
+    const { ok, error } = await saveConfig({ defaultAgents: updated });
     if (ok) {
       setConfig((prev) => (prev ? { ...prev, defaultAgents: updated } : prev));
       toast({ title: 'Saved', variant: 'success' });
     } else {
-      toast({ title: 'Failed to save', variant: 'error' });
+      toast({ title: 'Failed to save', description: error, variant: 'error' });
     }
   };
 
   const handleSavePort = async () => {
     const port = Number(portInput);
     if (!config || !Number.isInteger(port) || port <= 0 || port === config.port) return;
-    const ok = await saveConfig({ port });
+    const { ok, error } = await saveConfig({ port });
     if (ok) {
       setConfig((prev) => (prev ? { ...prev, port } : prev));
       toast({ title: 'Saved', variant: 'success' });
     } else {
-      toast({ title: 'Failed to save', variant: 'error' });
+      toast({ title: 'Failed to save', description: error, variant: 'error' });
     }
   };
 
   const handleSaveName = async () => {
     const projectName = nameInput.trim();
     if (!config || !projectName || projectName === config.projectName) return;
-    const ok = await saveConfig({ projectName });
+    const { ok, error } = await saveConfig({ projectName });
     if (ok) {
       setConfig((prev) => (prev ? { ...prev, projectName } : prev));
       setNameInput(projectName);
       toast({ title: 'Saved', variant: 'success' });
     } else {
-      toast({ title: 'Failed to save', variant: 'error' });
+      toast({ title: 'Failed to save', description: error, variant: 'error' });
     }
   };
 
