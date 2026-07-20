@@ -220,6 +220,21 @@ export interface SuggestionEntry {
   description: string;
 }
 
+export interface RoadmapItem {
+  name: string;
+  description: string;
+}
+
+export interface RoadmapHorizon {
+  title: string;
+  items: RoadmapItem[];
+}
+
+export interface Roadmap {
+  goal: string;
+  horizons: RoadmapHorizon[];
+}
+
 export interface EnvEntry {
   key: string;
   value: string;

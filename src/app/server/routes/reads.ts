@@ -8,6 +8,7 @@ import {
   parseTaskLog,
 } from '@/core/parse';
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
+import { parseRoadmap } from '@/core/roadmap';
 import { coerceAgentConfig } from '@/types/index';
 import { cached } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
@@ -106,9 +107,16 @@ export const readRoutes: ReadRoute[] = [
     },
   },
   {
+    path: '/api/roadmap',
+    handler: async (root) => {
+      const raw = await readMaybe(join(root, 'ROADMAP.md'));
+      return raw ? parseRoadmap(raw) : null;
+    },
+  },
+  {
     path: '/api/docs',
     handler: async (root) => {
-      const docNames = ['MAIN.md', 'README.md', 'CHANGELOG.md', 'LICENSE'];
+      const docNames = ['USAGE.md', 'MAIN.md', 'README.md', 'CHANGELOG.md', 'LICENSE'];
       const files: { name: string; content: string }[] = [];
       for (const name of docNames) {
         const content = await readMaybe(join(root, name));

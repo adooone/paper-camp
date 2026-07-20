@@ -2,13 +2,14 @@ import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
 import { readEntities } from '@/core/readers';
+import { removeRoadmapItem } from '@/core/roadmap';
 import {
   assignEntityId,
   formatEntityFile,
   removeSuggestionLine,
   todayDateString,
 } from '@/core/serialize';
-import type { SuggestionEntry } from '@/types/index';
+import type { RoadmapItem, SuggestionEntry } from '@/types/index';
 import {
   campFile,
   entityFileInput,
@@ -96,6 +97,57 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         await writeFile(suggestionsPath, updated, 'utf-8');
+        await regenerateIndexes(root);
+        sendJson(res, 201, { ok: true, id: newId });
+      },
+    },
+
+    // Same mint-write-remove-regenerate shape as suggestions/promote, but the source
+    // line lives in ROADMAP.md and the removal match key is (horizon title, item name)
+    // rather than a suggestion's (date, title).
+    {
+      method: 'POST',
+      path: '/api/roadmap/promote',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { horizonTitle, item, subject } = JSON.parse(reqBody) as {
+          horizonTitle?: string;
+          item?: RoadmapItem;
+          subject?: string;
+        };
+        if (!horizonTitle || !item?.name) {
+          sendJson(res, 400, { error: 'horizonTitle and item are required' });
+          return;
+        }
+        const roadmapPath = join(root, 'ROADMAP.md');
+        const raw = await readMaybe(roadmapPath);
+        if (!raw) {
+          sendJson(res, 404, { error: 'ROADMAP.md not found' });
+          return;
+        }
+        const updated = removeRoadmapItem(raw, horizonTitle, item.name);
+        if (updated === raw) {
+          sendJson(res, 404, { error: 'roadmap item not found' });
+          return;
+        }
+        const configPath = join(root, 'papercamp', 'config.json');
+        const newId = await assignEntityId(configPath);
+        if (!newId) {
+          sendJson(res, 500, { error: 'could not assign entity ID' });
+          return;
+        }
+        const ideasDir = campFile(root, 'ideas');
+        await mkdir(ideasDir, { recursive: true });
+        const entityContent = formatEntityFile({
+          id: newId,
+          title: item.name,
+          status: 'idea',
+          created: todayDateString(),
+          subject: subject?.trim() || undefined,
+          body: `${item.description}\n\nFrom the roadmap: ${horizonTitle}.`,
+        });
+        await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
+        await writeFile(roadmapPath, updated, 'utf-8');
         await regenerateIndexes(root);
         sendJson(res, 201, { ok: true, id: newId });
       },

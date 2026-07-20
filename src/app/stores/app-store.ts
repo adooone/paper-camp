@@ -16,6 +16,7 @@ import type {
   ParseResult,
   PlanEntry,
   PlanStatus,
+  RoadmapItem,
   SuggestionEntry,
   TaskLogEntry,
 } from '@/types/index';
@@ -44,6 +45,7 @@ import {
   fetchRepoDocs,
   fetchSuggestions,
   fetchTaskLog,
+  promoteRoadmapItem as promoteRoadmapItemApi,
   promoteSuggestion as promoteSuggestionApi,
 } from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
@@ -82,6 +84,12 @@ export type AppStore = {
   loadSuggestions: () => Promise<void>;
   promoteSuggestion: (suggestion: SuggestionEntry) => Promise<string>;
   dismissSuggestion: (suggestion: SuggestionEntry) => Promise<void>;
+
+  promoteRoadmapItem: (
+    horizonTitle: string,
+    item: RoadmapItem,
+    subject?: string,
+  ) => Promise<string>;
 
   taskLog: TaskLogEntry[];
   taskLogLoading: boolean;
@@ -261,6 +269,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
   dismissSuggestion: async (suggestion) => {
     await dismissSuggestionApi(suggestion);
     await get().loadSuggestions();
+  },
+
+  promoteRoadmapItem: async (horizonTitle, item, subject) => {
+    const { id } = await promoteRoadmapItemApi(horizonTitle, item, subject);
+    await Promise.all([get().loadPlans(), get().loadIdeas()]);
+    return id;
   },
 
   taskLog: [],
