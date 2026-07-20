@@ -2,8 +2,9 @@ import { PageTitle } from '@/app/components/page-title';
 import { fetchRoadmap } from '@/app/services/content/docs-api';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { Roadmap, RoadmapItem } from '@/types/index';
-import { Card } from '@dendelion/paper-ui';
+import { Button, Card } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
+import { PromoteRoadmapItemModal } from './promote-roadmap-item-modal';
 
 const horizonHeaderStyle: React.CSSProperties = {
   fontFamily: fontFamily.handwritten,
@@ -14,11 +15,22 @@ const horizonHeaderStyle: React.CSSProperties = {
   padding: `${space[2]} ${space[1]} 0`,
 };
 
-const RoadmapItemRow = ({ item }: { item: RoadmapItem }) => (
+const RoadmapItemRow = ({
+  item,
+  onPromote,
+}: {
+  item: RoadmapItem;
+  onPromote: () => void;
+}) => (
   <Card size="small" texture="canvas" className="plan-row-card">
-    <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
-      <span style={{ fontWeight: 600 }}>{item.name}</span>
-      <span style={{ fontSize: fontSize.sm, opacity: 0.7 }}>{item.description}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: space[1], flex: 1 }}>
+        <span style={{ fontWeight: 600 }}>{item.name}</span>
+        <span style={{ fontSize: fontSize.sm, opacity: 0.7 }}>{item.description}</span>
+      </div>
+      <Button type="button" variant="ghost" size="small" onClick={onPromote}>
+        Promote to idea
+      </Button>
     </div>
   </Card>
 );
@@ -26,6 +38,9 @@ const RoadmapItemRow = ({ item }: { item: RoadmapItem }) => (
 export const RoadmapPage = () => {
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(true);
+  const [promoting, setPromoting] = useState<{ horizonTitle: string; item: RoadmapItem } | null>(
+    null,
+  );
 
   useEffect(() => {
     fetchRoadmap()
@@ -89,11 +104,21 @@ export const RoadmapPage = () => {
           >
             <div style={horizonHeaderStyle}>{horizon.title}</div>
             {horizon.items.map((item) => (
-              <RoadmapItemRow key={item.name} item={item} />
+              <RoadmapItemRow
+                key={item.name}
+                item={item}
+                onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
+              />
             ))}
           </div>
         ))}
       </div>
+      <PromoteRoadmapItemModal
+        horizonTitle={promoting?.horizonTitle ?? null}
+        item={promoting?.item ?? null}
+        onClose={() => setPromoting(null)}
+        onPromoted={() => fetchRoadmap().then(setRoadmap)}
+      />
     </div>
   );
 };

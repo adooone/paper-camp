@@ -120,6 +120,27 @@ Keep unchanged:
 Append only — never rewrite or delete the idea's existing body or prior Log lines.`;
 }
 
+// Fires once per idea, right after roadmap-promote's route mints the id and writes the
+// idea file (server/routes/content/ideas.ts's POST /api/roadmap/promote); reuses
+// buildIdeaExtendPrompt's launch path and success check, same as buildSuggestionPromotePrompt.
+export function buildRoadmapPromotePrompt(idea: IdeaEntry, horizonTitle: string): string {
+  return `You are fleshing out the idea ${idea.id ?? 'no id'} ("${idea.title}"), stored as a single file at papercamp/ideas/${idea.id ?? '<ID>'}.md. Edit only that file, and within it only the \`### Log\` section.
+
+This idea was just promoted from a roadmap item under "${horizonTitle}" in ROADMAP.md — its current body is only that item's one-line description plus a provenance note, with no deeper context yet:
+${idea.body}
+
+Task:
+1. Explore this codebase and find what is relevant to the idea: the files it would touch, existing helpers or patterns it should build on, and constraints visible in the code.
+2. Write up what you found as a single dated entry — name specific files and symbols, describe a workable approach, and include the architectural context you found. Sharpen the idea's original intent, do not redirect it.
+3. Append exactly one line to the \`### Log\` section, formatted \`- YYYY-MM-DD: <what you found>\`, creating that section at the end of the file if it does not exist. Use today's date, and keep the entry to that single physical line (no literal line breaks).
+
+Keep unchanged:
+- the YAML frontmatter (id, title, status)
+- the original body prose beneath the frontmatter
+
+Append only — never rewrite or delete the idea's existing body or prior Log lines.`;
+}
+
 export function buildPlanDraftPrompt(idea: IdeaEntry, otherPlans: PlanEntry[]): string {
   const openPlans = otherPlans.filter((p) => p.status !== 'done');
   const plansContext = openPlans.length

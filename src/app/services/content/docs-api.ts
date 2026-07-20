@@ -1,4 +1,10 @@
-import type { ConsistencyIssue, Roadmap, SuggestionEntry, TaskLogEntry } from '@/types/index';
+import type {
+  ConsistencyIssue,
+  Roadmap,
+  RoadmapItem,
+  SuggestionEntry,
+  TaskLogEntry,
+} from '@/types/index';
 
 export const fetchTaskLog = async () => {
   const res = await fetch('/api/tasks');
@@ -49,6 +55,23 @@ export const fetchRepoDocs = async () => {
 export const fetchRoadmap = async () => {
   const res = await fetch('/api/roadmap');
   return res.json() as Promise<Roadmap | null>;
+};
+
+export const promoteRoadmapItem = async (
+  horizonTitle: string,
+  item: RoadmapItem,
+  subject?: string,
+) => {
+  const res = await fetch('/api/roadmap/promote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ horizonTitle, item, subject }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to promote roadmap item' }));
+    throw new Error(err.error);
+  }
+  return res.json() as Promise<{ ok: boolean; id: string }>;
 };
 
 export const fetchConsistency = async () => {
