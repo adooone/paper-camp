@@ -32,10 +32,5 @@
       "effort": "low"
     }
   },
-  "subjects": [
-    "Frontend",
-    "Code health",
-    "Workflow",
-    "App UI"
-  ]
+  "subjects": ["Frontend", "Code health", "Workflow", "App UI"]
 }
