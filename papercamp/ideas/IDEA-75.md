@@ -1,7 +1,7 @@
 ---
 id: IDEA-75
 title: Error surfacing consistency
-status: idea
+status: review
 created: 2026-07-20
 subject: Workflow
 type: fix
@@ -21,4 +21,4 @@ From the roadmap: Horizon 1 — Ready for daily use.
       `settings-page.tsx`'s "Failed to save" toast shows no description; add the one-line reason so config errors match the git and agent toasts.
 - [x] Sweep remaining failure toasts for consistency
       Check the other `toast(... variant: 'error')` call sites for raw multi-line messages or missing descriptions and align them with the shared formatter.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
