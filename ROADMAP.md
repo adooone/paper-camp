@@ -44,9 +44,6 @@ a second person.
 
 The loop works; make it smarter and more observable.
 
-- **Goal & roadmap in the app** — this file rendered as a first-class surface:
-  north star on top, horizons as groups, one-click "promote to idea" (the
-  suggestion-promotion machinery already does 90% of this).
 - **Insight from the task log** — `tasks.log` already records every run;
   surface cycle time per idea, agent success/retry rates, cost of a phase.
   The Tasks page becomes a dashboard, not just a log.

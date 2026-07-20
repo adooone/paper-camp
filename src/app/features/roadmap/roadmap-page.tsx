@@ -1,3 +1,4 @@
+import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
 import { fetchRoadmap } from '@/app/services/content/docs-api';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
@@ -38,6 +39,7 @@ const RoadmapItemRow = ({
 export const RoadmapPage = () => {
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [promoting, setPromoting] = useState<{ horizonTitle: string; item: RoadmapItem } | null>(
     null,
   );
@@ -45,6 +47,7 @@ export const RoadmapPage = () => {
   useEffect(() => {
     fetchRoadmap()
       .then(setRoadmap)
+      .catch(() => setLoadFailed(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -53,6 +56,17 @@ export const RoadmapPage = () => {
       <div>
         <PageTitle>Roadmap</PageTitle>
         <p style={{ opacity: 0.5 }}>Loading…</p>
+      </div>
+    );
+  }
+
+  if (loadFailed) {
+    return (
+      <div>
+        <PageTitle>Roadmap</PageTitle>
+        <p style={{ opacity: 0.5 }}>
+          Couldn't load the roadmap — the server may need a restart to pick up new routes.
+        </p>
       </div>
     );
   }
@@ -85,16 +99,16 @@ export const RoadmapPage = () => {
         >
           The goal
         </span>
-        <p
+        <div
           style={{
             fontFamily: fontFamily.serif,
             fontSize: fontSize.lg,
             lineHeight: 1.4,
-            margin: `${space[2]} 0 0`,
+            marginTop: space[2],
           }}
         >
-          {roadmap.goal}
-        </p>
+          <Markdown>{roadmap.goal}</Markdown>
+        </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: space[6] }}>
         {roadmap.horizons.map((horizon) => (

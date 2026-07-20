@@ -54,6 +54,7 @@ export const fetchRepoDocs = async () => {
 
 export const fetchRoadmap = async () => {
   const res = await fetch('/api/roadmap');
+  if (!res.ok) throw new Error(`Failed to fetch roadmap: ${res.status}`);
   return res.json() as Promise<Roadmap | null>;
 };
 

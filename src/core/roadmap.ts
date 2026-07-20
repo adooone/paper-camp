@@ -2,8 +2,8 @@ import type { Roadmap, RoadmapItem } from '../types/index';
 
 const H2_RE = /^##\s+/;
 const GOAL_HEADING_RE = /^##\s+The goal\s*$/i;
-const HORIZON_HEADING_RE = /^##\s+(Horizon\s+\d+\s*—.*)$/i;
-const ITEM_RE = /^-\s+\*\*(.+?)\*\*\s+—\s+(.*)$/;
+const HORIZON_HEADING_RE = /^##\s+(Horizon\s+\d+\s*[—-].*)\r?$/i;
+const ITEM_RE = /^-\s+\*\*(.+?)\*\*\s+[—-]\s+(.*)\r?$/;
 const ITEM_CONTINUATION_RE = /^\s+\S/;
 
 function parseItems(lines: string[], start: number, end: number): RoadmapItem[] {
