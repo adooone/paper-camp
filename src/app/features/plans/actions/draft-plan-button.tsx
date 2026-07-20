@@ -1,6 +1,7 @@
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { Button, Tooltip, useToast } from '@dendelion/paper-ui';
 import { buildPlanDraftPrompt } from '../prompts';
@@ -24,7 +25,7 @@ export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
       } catch (err) {
         toast({
           title: 'Draft failed',
-          description: (err as Error).message,
+          description: oneLineErrorSummary((err as Error).message),
           variant: 'error',
         });
         throw err;

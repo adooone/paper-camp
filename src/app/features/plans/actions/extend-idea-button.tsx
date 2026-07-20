@@ -1,6 +1,7 @@
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry } from '@/types/index';
 import { Button, Tooltip, useToast } from '@dendelion/paper-ui';
 import { buildIdeaExtendPrompt } from '../prompts';
@@ -31,7 +32,7 @@ export const ExtendIdeaButton = ({ idea, compact }: ExtendIdeaButtonProps) => {
       } catch (err) {
         toast({
           title: 'Extension failed',
-          description: (err as Error).message,
+          description: oneLineErrorSummary((err as Error).message),
           variant: 'error',
         });
         throw err;

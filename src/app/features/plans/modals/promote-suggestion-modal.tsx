@@ -1,6 +1,7 @@
 import { buildSuggestionPromotePrompt } from '@/app/features/plans/prompts';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { SuggestionEntry } from '@/types/index';
 import { Button, Modal, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
@@ -41,7 +42,7 @@ export const PromoteSuggestionModal = ({ suggestion, onClose }: PromoteSuggestio
           // no background research ran, not that the promotion itself failed.
           toast({
             title: 'Idea created, but the refine agent failed to launch',
-            description: (err as Error).message,
+            description: oneLineErrorSummary((err as Error).message),
             variant: 'error',
           });
         }

@@ -1,5 +1,6 @@
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { Button, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { buildSuggestIdeasPrompt } from '../prompts';
@@ -21,7 +22,7 @@ export const SuggestIdeasButton = () => {
     } catch (err) {
       toast({
         title: 'Failed to launch',
-        description: (err as Error).message,
+        description: oneLineErrorSummary((err as Error).message),
         variant: 'error',
       });
     } finally {
