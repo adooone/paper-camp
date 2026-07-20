@@ -2,7 +2,7 @@
 id: IDEA-74
 title: Goal and roadmap in the app
 type: feat
-status: idea
+status: review
 created: 2026-07-19
 tags:
   - app
@@ -27,7 +27,7 @@ The promotion machinery already exists: [[IDEA-62]]'s suggestion flow takes a on
       Goal as masthead, horizons as groups of item row cards, served by a new read route; decide route-vs-Docs-section during layout and record the call in the idea log.
 - [x] Promote an item to an idea
       Per-item action through the existing suggestion-promotion path (refining agent, id mint, index regen) plus bullet removal from `ROADMAP.md` in the same operation; subject picked at promotion.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green (parser round-trip covered); promote one real item end-to-end in the app and confirm the file, the queue, and the view all agree.
 
 ### Log

@@ -37,8 +37,6 @@ a second person.
 - **Dev-server reload honesty** — server code changes silently don't apply
   until restart (the globalThis API cache). Either hot-reload routes or show a
   visible "restart needed" signal. This footgun bit three times in one week.
-- **Error surfacing consistency** — every failure path reads as a one-line
-  toast (git errors do now; agent-launch and config errors should match).
 - **Review-queue hygiene** — the archive flow exists; adopt the habit loop it
   enables: nothing sits in `review` for more than a few days.
 
