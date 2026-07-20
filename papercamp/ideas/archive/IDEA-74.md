@@ -2,8 +2,9 @@
 id: IDEA-74
 title: Goal and roadmap in the app
 type: feat
-status: review
+status: done
 created: 2026-07-19
+updated: 2026-07-20
 tags:
   - app
   - docs
