@@ -108,7 +108,14 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/docs',
     handler: async (root) => {
-      const docNames = ['MAIN.md', 'README.md', 'CHANGELOG.md', 'LICENSE'];
+      const docNames = [
+        'USAGE.md',
+        'ROADMAP.md',
+        'MAIN.md',
+        'README.md',
+        'CHANGELOG.md',
+        'LICENSE',
+      ];
       const files: { name: string; content: string }[] = [];
       for (const name of docNames) {
         const content = await readMaybe(join(root, name));
