@@ -318,6 +318,14 @@ export interface CheckResult {
 
 export type CheckName = 'lint' | 'format' | 'test' | 'consistency';
 
+export type CapabilityStatus = 'ok' | 'warn' | 'missing';
+
+export interface CapabilityResult {
+  id: string;
+  status: CapabilityStatus;
+  detail: string;
+}
+
 export interface GitStatusEntry {
   path: string;
   status: string;
