@@ -2,7 +2,7 @@
 id: IDEA-76
 title: First-run access setup
 type: feat
-status: idea
+status: review
 created: 2026-07-20
 tags:
   - app
@@ -29,5 +29,5 @@ The right posture is **detect, instruct, verify — never collect**. The app spa
       Settings section listing capability rows — status stamp, what it unlocks, the exact fix command, per-row re-check; surfaced prominently (or routed to) when anything is missing on a fresh install, with `setupDismissed` in config to opt out.
 - [x] Gate features on capabilities
       PR features and agent launches read the capability report: disabled-with-hint instead of runtime errors; StatusBar indicator while gaps exist. No behavior change when everything is present.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green; verify in a scratch `init` project with no `gh` auth and no agent CLI that the app opens clean, points at Setup, and every gated feature explains itself instead of erroring.
