@@ -1,5 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { IconButton, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
@@ -23,7 +24,7 @@ export const AgentStartButton = ({ planId, phaseIndex, disabled }: AgentStartBut
     } catch (err) {
       toast({
         title: 'Failed to start agent',
-        description: (err as Error).message,
+        description: oneLineErrorSummary((err as Error).message),
         variant: 'error',
       });
     } finally {

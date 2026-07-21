@@ -4,6 +4,7 @@ import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { AgentTaskState, IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
   Button,
@@ -267,7 +268,11 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       toast({ title: 'Branch ready', description: `Now on ${branch}`, variant: 'success' });
       await loadGitStatus();
     } catch (err) {
-      toast({ title: 'Branch failed', description: (err as Error).message, variant: 'error' });
+      toast({
+        title: 'Branch failed',
+        description: oneLineErrorSummary((err as Error).message),
+        variant: 'error',
+      });
     } finally {
       setBranching(false);
     }

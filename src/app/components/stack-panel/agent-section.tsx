@@ -1,5 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { AGENT_LABELS, type AgentTaskState, type AgentTaskStatus } from '@/types/index';
 import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -58,7 +59,7 @@ const AgentTaskCard = ({
     } catch (err) {
       toast({
         title: 'Failed to stop agent',
-        description: (err as Error).message,
+        description: oneLineErrorSummary((err as Error).message),
         variant: 'error',
       });
     }

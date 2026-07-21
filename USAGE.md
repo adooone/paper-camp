@@ -78,10 +78,28 @@ survives any tool — the app is optional at every step.
 - **CI**: commitlint on every commit, quality/tests/consistency jobs, draft-PR
   automation, CodeRabbit review, release-please for versioning.
 
+## Installing into your own project
+
+Paper Camp ships on npm. In any git repo:
+
+```bash
+npx @dendelion/paper-camp init      # scaffold papercamp/ + Claude Code hooks
+npx @dendelion/paper-camp dev       # dashboard at localhost:3333 (-p to change)
+```
+
+`init` creates the corpus and the `.claude/` integration (a paper-camp skill
+plus session hooks), so Claude Code sessions in that repo work the method
+natively. For the full loop you also want `gh auth login` (PR features) and a
+coding agent CLI (`claude` or `opencode`) on PATH. Note the published version
+trails this repo's main — cut a release to ship the newest desk.
+
+Working on Paper Camp itself is the clone path instead: `pnpm install`,
+`pnpm dev`, open `localhost:3333`.
+
 ## Introducing someone
 
-1. Clone, `pnpm install`, `pnpm dev`, then open `localhost:3333`
-   (`gh auth login` first for the PR features).
+1. `npx @dendelion/paper-camp init` in a repo of theirs (or yours), then
+   `npx @dendelion/paper-camp dev`.
 2. Have them read this page in the Docs tab.
 3. First exercise: capture a small real idea → *Extend* → *Draft plan* →
    *Create branch* → run one phase → commit from the Stack panel. One loop

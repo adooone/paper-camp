@@ -75,5 +75,6 @@
 | IDEA-71 | Run order for the worklist | feat | done | app, plans, ideas, ui |
 | IDEA-72 | Truthful status and one-click archive | feat | done | app, plans, agent, git, ui |
 | IDEA-73 | Smooth the page transitions | fix | done | app, ui, performance |
-| IDEA-74 | Goal and roadmap in the app | feat | planned | app, docs, plans, ui |
-| IDEA-75 | Error surfacing consistency | — | idea |  |
+| IDEA-74 | Goal and roadmap in the app | feat | done | app, docs, plans, ui |
+| IDEA-75 | Error surfacing consistency | fix | review | errors, ui, toast |
+| IDEA-76 | First-run access setup | feat | planned | app, settings, agent, git, ux |
