@@ -84,6 +84,7 @@ export const StatusBar = () => {
         {agentActive && <Spinner size="small" label={`Agent ${activeTask?.status}…`} />}
         {capabilityGapCount > 0 && (
           <Tooltip content="Some features are disabled — open Setup to fix">
+            {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}
             <button
               type="button"
               onClick={() => navigate({ to: '/settings/$section', params: { section: 'setup' } })}

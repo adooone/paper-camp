@@ -7,7 +7,7 @@ import {
   type CapabilityStatus,
 } from '@/types/index';
 import { Alert, Button, Card, Divider, Stamp, useToast } from '@dendelion/paper-ui';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface CapabilityMeta {
   label: string;
@@ -111,18 +111,28 @@ const CapabilityRow = ({
 
 export const SetupSection = () => {
   const [capabilities, setCapabilities] = useState<CapabilityResult[] | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [reloadingId, setReloadingId] = useState<string | null>(null);
   const [setupDismissed, setSetupDismissed] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchCapabilities().then(setCapabilities);
-    fetchConfig().then((c) => setSetupDismissed(c?.setupDismissed ?? false));
+  const applyCapabilities = useCallback((result: CapabilityResult[] | null) => {
+    if (result === null) {
+      setLoadFailed(true);
+      return;
+    }
+    setLoadFailed(false);
+    setCapabilities(result);
   }, []);
+
+  useEffect(() => {
+    fetchCapabilities().then(applyCapabilities);
+    fetchConfig().then((c) => setSetupDismissed(c?.setupDismissed ?? false));
+  }, [applyCapabilities]);
 
   const handleRecheck = async (id: string) => {
     setReloadingId(id);
-    setCapabilities(await fetchCapabilities());
+    applyCapabilities(await fetchCapabilities());
     setReloadingId(null);
   };
 
@@ -144,7 +154,12 @@ export const SetupSection = () => {
       <div style={{ marginBottom: space[6] }}>
         <h2 style={{ margin: 0 }}>Setup</h2>
       </div>
-      {capabilities === null && <p>Loading…</p>}
+      {capabilities === null && !loadFailed && <p>Loading…</p>}
+      {loadFailed && (
+        <div style={{ marginBottom: space[4] }}>
+          <Alert variant="warning">Failed to load capabilities. Try refreshing.</Alert>
+        </div>
+      )}
       {capabilities && (
         <>
           {!allOk && (

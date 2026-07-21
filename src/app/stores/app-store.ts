@@ -3,6 +3,7 @@ import {
   type PlanListFilters,
   type PlanSortKey,
 } from '@/app/features/plans/helpers';
+import { fetchCapabilities } from '@/app/services/system';
 import type {
   AgentTaskState,
   ArchivableIdea,
@@ -57,7 +58,6 @@ import {
   triggerCheck,
   triggerQualityFix,
 } from '../services/status-api';
-import { fetchCapabilities } from '../services/system';
 
 export type AppStore = {
   plans: ParseResult<PlanEntry> | null;
@@ -422,7 +422,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   loadCapabilities: loadSlice(
     set,
     fetchCapabilities,
-    (data) => ({ capabilities: data }),
+    (data) => ({ capabilities: data ?? [] }),
     () => ({ capabilities: [] }),
   ),
 

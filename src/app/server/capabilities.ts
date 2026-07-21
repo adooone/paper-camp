@@ -10,7 +10,12 @@ interface ProbeResult {
 
 function run(command: string, args: string[], cwd: string): Promise<ProbeResult> {
   return new Promise((resolve) => {
-    const proc = spawn(command, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+    const proc = spawn(command, args, {
+      cwd,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 5000,
+      killSignal: 'SIGTERM',
+    });
     let stdout = '';
     let stderr = '';
     proc.stdout?.on('data', (d: Buffer) => {

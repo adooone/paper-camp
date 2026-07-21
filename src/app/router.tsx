@@ -1,3 +1,6 @@
+import { ProjectIdentityHeader, SidebarShell, StackPanel, StatusBar } from '@/app/components';
+import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
+import { fetchCapabilities, fetchConfig } from '@/app/services/system';
 import { Button, IconButton, Layout, Page, ToastProvider, layoutConfig } from '@dendelion/paper-ui';
 import {
   Outlet,
@@ -9,9 +12,6 @@ import {
 } from '@tanstack/react-router';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import { ProjectIdentityHeader, SidebarShell, StackPanel, StatusBar } from './components';
-import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
-import { fetchCapabilities, fetchConfig } from './services/system';
 import { useAppStore } from './stores/app-store';
 import { crossfadeTransition, crossfadeVariants } from './styles/motion';
 
@@ -120,7 +120,7 @@ const RootLayout = () => {
     firstRunChecked.current = true;
     Promise.all([fetchConfig(), fetchCapabilities()]).then(([config, capabilities]) => {
       if (config?.setupDismissed) return;
-      if (capabilities.every((c) => c.status === 'ok')) return;
+      if (capabilities === null || capabilities.every((c) => c.status === 'ok')) return;
       navigate({ to: '/settings/$section', params: { section: 'setup' } });
     });
   }, [pathname, navigate]);
