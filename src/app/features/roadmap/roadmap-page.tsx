@@ -16,19 +16,32 @@ const horizonHeaderStyle: React.CSSProperties = {
   padding: `${space[2]} ${space[1]} 0`,
 };
 
-const RoadmapItemRow = ({
-  item,
+const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+const CandidateRow = ({
+  name,
   onPromote,
 }: {
-  item: RoadmapItem;
+  name: string;
   onPromote: () => void;
 }) => (
-  <Card size="small" texture="canvas" className="plan-row-card">
+  <Card size="small" texture="kraft" className="plan-row-card">
     <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: space[1], flex: 1 }}>
-        <span style={{ fontWeight: 600 }}>{item.name}</span>
-        <span style={{ fontSize: fontSize.sm, opacity: 0.7 }}>{item.description}</span>
-      </div>
+      <span style={{ flex: 1 }}>{name}</span>
       <Button type="button" variant="ghost" size="small" onClick={onPromote}>
         Promote to idea
       </Button>
@@ -36,13 +49,81 @@ const RoadmapItemRow = ({
   </Card>
 );
 
+const RoadmapItemRow = ({
+  item,
+  onPromote,
+  onPromoteCandidate,
+}: {
+  item: RoadmapItem;
+  onPromote: () => void;
+  onPromoteCandidate: (candidateName: string) => void;
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const hasCandidates = item.candidates.length > 0;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+      <Card size="small" texture="canvas" className="plan-row-card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
+          {hasCandidates && (
+            <button
+              type="button"
+              aria-expanded={expanded}
+              onClick={() => setExpanded((v) => !v)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                opacity: 0.5,
+                padding: 0,
+                transform: expanded ? 'rotate(90deg)' : undefined,
+              }}
+            >
+              <ChevronRightIcon />
+            </button>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: space[1], flex: 1 }}>
+            <span style={{ fontWeight: 600 }}>{item.name}</span>
+            <span style={{ fontSize: fontSize.sm, opacity: 0.7 }}>{item.description}</span>
+          </div>
+          <Button type="button" variant="ghost" size="small" onClick={onPromote}>
+            Promote to idea
+          </Button>
+        </div>
+      </Card>
+      {hasCandidates && expanded && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: space[1],
+            paddingLeft: space[6],
+          }}
+        >
+          {item.candidates.map((candidateName) => (
+            <CandidateRow
+              key={candidateName}
+              name={candidateName}
+              onPromote={() => onPromoteCandidate(candidateName)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const RoadmapPage = () => {
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [promoting, setPromoting] = useState<{ horizonTitle: string; item: RoadmapItem } | null>(
-    null,
-  );
+  const [promoting, setPromoting] = useState<{
+    horizonTitle: string;
+    item: RoadmapItem;
+    candidateName?: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchRoadmap()
@@ -122,6 +203,9 @@ export const RoadmapPage = () => {
                 key={item.name}
                 item={item}
                 onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
+                onPromoteCandidate={(candidateName) =>
+                  setPromoting({ horizonTitle: horizon.title, item, candidateName })
+                }
               />
             ))}
           </div>
@@ -130,6 +214,7 @@ export const RoadmapPage = () => {
       <PromoteRoadmapItemModal
         horizonTitle={promoting?.horizonTitle ?? null}
         item={promoting?.item ?? null}
+        candidateName={promoting?.candidateName}
         onClose={() => setPromoting(null)}
         onPromoted={() => fetchRoadmap().then(setRoadmap)}
       />

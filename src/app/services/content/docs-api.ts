@@ -62,11 +62,12 @@ export const promoteRoadmapItem = async (
   horizonTitle: string,
   item: RoadmapItem,
   subject?: string,
+  candidateName?: string,
 ) => {
   const res = await fetch('/api/roadmap/promote', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ horizonTitle, item, subject }),
+    body: JSON.stringify({ horizonTitle, item, subject, candidateName }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Failed to promote roadmap item' }));

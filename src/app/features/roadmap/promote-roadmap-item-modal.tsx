@@ -12,6 +12,7 @@ const NO_SUBJECT = '__no-subject__';
 interface PromoteRoadmapItemModalProps {
   horizonTitle: string | null;
   item: RoadmapItem | null;
+  candidateName?: string | null;
   onClose: () => void;
   onPromoted: () => void;
 }
@@ -19,6 +20,7 @@ interface PromoteRoadmapItemModalProps {
 export const PromoteRoadmapItemModal = ({
   horizonTitle,
   item,
+  candidateName,
   onClose,
   onPromoted,
 }: PromoteRoadmapItemModalProps) => {
@@ -32,11 +34,13 @@ export const PromoteRoadmapItemModal = ({
 
   useEffect(() => {
     if (item) {
-      setSubject(NO_SUBJECT);
+      // A candidate defaults to its parent item's name — the "big bet becomes a
+      // Subject" rule — but the picker still lets the user override it.
+      setSubject(candidateName ? item.name : NO_SUBJECT);
       setLoading(false);
       setError(null);
     }
-  }, [item]);
+  }, [item, candidateName]);
 
   const handlePromote = async () => {
     if (!item || !horizonTitle) return;
@@ -47,6 +51,7 @@ export const PromoteRoadmapItemModal = ({
         horizonTitle,
         item,
         subject === NO_SUBJECT ? undefined : subject,
+        candidateName ?? undefined,
       );
       const idea = useAppStore.getState().ideaEntries.find((e) => e.id === id);
       if (idea) {
@@ -72,9 +77,14 @@ export const PromoteRoadmapItemModal = ({
   };
 
   return (
-    <Modal open={item !== null} onClose={onClose} title={item?.name ?? ''} size="small">
+    <Modal
+      open={item !== null}
+      onClose={onClose}
+      title={candidateName ?? item?.name ?? ''}
+      size="small"
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
-        <p style={{ margin: 0, opacity: 0.8 }}>{item?.description}</p>
+        {!candidateName && <p style={{ margin: 0, opacity: 0.8 }}>{item?.description}</p>}
         <div>
           <Select
             size="small"

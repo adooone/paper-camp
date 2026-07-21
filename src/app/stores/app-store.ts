@@ -91,6 +91,7 @@ export type AppStore = {
     horizonTitle: string,
     item: RoadmapItem,
     subject?: string,
+    candidateName?: string,
   ) => Promise<string>;
 
   taskLog: TaskLogEntry[];
@@ -290,8 +291,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await get().loadSuggestions();
   },
 
-  promoteRoadmapItem: async (horizonTitle, item, subject) => {
-    const { id } = await promoteRoadmapItemApi(horizonTitle, item, subject);
+  promoteRoadmapItem: async (horizonTitle, item, subject, candidateName) => {
+    const { id } = await promoteRoadmapItemApi(horizonTitle, item, subject, candidateName);
     await Promise.all([get().loadPlans(), get().loadIdeas()]);
     return id;
   },
