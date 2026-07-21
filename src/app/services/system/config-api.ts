@@ -21,6 +21,7 @@ export const saveConfig = async (updates: {
   defaultAgent?: AgentId;
   defaultAgents?: DefaultAgentsMap;
   subjects?: string[];
+  setupDismissed?: boolean;
 }): Promise<SaveConfigResult> => {
   try {
     const response = await fetch('/api/config', {

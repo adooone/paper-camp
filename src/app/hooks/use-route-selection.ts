@@ -4,7 +4,7 @@ import { useParams } from '@tanstack/react-router';
 const DOC_SECTIONS = ['repo-docs'] as const;
 type DocSection = (typeof DOC_SECTIONS)[number];
 
-const SETTINGS_SECTIONS = ['subjects'] as const;
+const SETTINGS_SECTIONS = ['subjects', 'setup'] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 export function useActivePlanTitle(): string | null {

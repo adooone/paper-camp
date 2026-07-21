@@ -8,9 +8,10 @@ import {
   useRouterState,
 } from '@tanstack/react-router';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { ProjectIdentityHeader, SidebarShell, StackPanel, StatusBar } from './components';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from './features/plans/index';
+import { fetchCapabilities, fetchConfig } from './services/system';
 import { useAppStore } from './stores/app-store';
 import { crossfadeTransition, crossfadeVariants } from './styles/motion';
 
@@ -102,12 +103,25 @@ const RootLayout = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
+  const firstRunChecked = useRef(false);
 
   useEffect(() => {
     loadPlans();
     loadIdeas();
     loadSuggestions();
   }, [loadPlans, loadIdeas, loadSuggestions]);
+
+  // Land fresh installs (or any install with an incomplete capability) on Setup
+  // instead of letting them discover gaps by hitting a broken PR badge or agent button.
+  useEffect(() => {
+    if (firstRunChecked.current || pathname !== '/') return;
+    firstRunChecked.current = true;
+    Promise.all([fetchConfig(), fetchCapabilities()]).then(([config, capabilities]) => {
+      if (config?.setupDismissed) return;
+      if (capabilities.every((c) => c.status === 'ok')) return;
+      navigate({ to: '/settings/$section', params: { section: 'setup' } });
+    });
+  }, [pathname, navigate]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body.
   useEffect(() => {
