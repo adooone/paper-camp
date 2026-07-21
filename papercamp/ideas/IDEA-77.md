@@ -28,7 +28,7 @@ An indented `- ` line under an item is a candidate: a named, promotable slice th
 - **Visual linking through the subject.** The item row shows a live graduation count ("2 in queue, 1 shipped") computed by matching ideas whose subject equals the item name; clicking it opens the Ideas page filtered to that subject. The promoted idea's provenance line gains the item name ("From the roadmap: Horizon 3 — Mobile control desk"), so map → queue and idea → map both navigate.
 
 ### Phases
-- [ ] Extend the roadmap grammar with candidates
+- [x] Extend the roadmap grammar with candidates
       `parseRoadmap`: indented `- ` bullets under an item become `candidates: string[]` (description continuation still works for indented prose without the bullet marker); `removeRoadmapItem` gains single-candidate removal with round-trip fidelity. Tests for parse, continuation-vs-candidate disambiguation, and removal.
 - [ ] Render and promote candidates
       Roadmap page: chevron-expandable items listing candidate rows, per-candidate Promote through the existing promotion path with subject defaulted to the item name (auto-created in config if new); candidate bullet removed from `ROADMAP.md` on promote.

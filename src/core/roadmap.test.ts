@@ -23,6 +23,10 @@ Some horizon prose.
 - **First-run experience** — \`init\` produces a welcoming empty corpus: seeded
   example idea, empty states that teach.
 - **Packaging** — one command in any repo.
+- **Mobile control desk** — direct the flow from a phone.
+  - Responsive polish for phone widths
+  - PWA manifest + install to home screen
+  - Push notifications for task/check events
 
 ## Horizon 2 — A deeper desk
 
@@ -47,14 +51,47 @@ describe('parseRoadmap', () => {
 
   it('joins a wrapped item description onto one line', () => {
     const { horizons } = parseRoadmap(SAMPLE);
-    expect(horizons[0].items).toEqual([
-      {
-        name: 'First-run experience',
-        description:
-          '`init` produces a welcoming empty corpus: seeded example idea, empty states that teach.',
-      },
-      { name: 'Packaging', description: 'one command in any repo.' },
-    ]);
+    expect(horizons[0].items[0]).toEqual({
+      name: 'First-run experience',
+      description:
+        '`init` produces a welcoming empty corpus: seeded example idea, empty states that teach.',
+      candidates: [],
+    });
+    expect(horizons[0].items[1]).toEqual({
+      name: 'Packaging',
+      description: 'one command in any repo.',
+      candidates: [],
+    });
+  });
+
+  it('collects indented `- ` bullets under an item as candidates', () => {
+    const { horizons } = parseRoadmap(SAMPLE);
+    expect(horizons[0].items[2]).toEqual({
+      name: 'Mobile control desk',
+      description: 'direct the flow from a phone.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'PWA manifest + install to home screen',
+        'Push notifications for task/check events',
+      ],
+    });
+  });
+
+  it('still treats indented prose without a bullet marker as description continuation', () => {
+    const withContinuation = SAMPLE.replace(
+      '- **Mobile control desk** — direct the flow from a phone.\n',
+      '- **Mobile control desk** — direct the flow from a phone,\n  wrapped onto a second line.\n',
+    );
+    const { horizons } = parseRoadmap(withContinuation);
+    expect(horizons[0].items[2]).toEqual({
+      name: 'Mobile control desk',
+      description: 'direct the flow from a phone, wrapped onto a second line.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'PWA manifest + install to home screen',
+        'Push notifications for task/check events',
+      ],
+    });
   });
 
   it('returns an empty roadmap for markdown with no matching headings', () => {
@@ -71,7 +108,7 @@ describe('removeRoadmapItem', () => {
     );
     const { horizons } = parseRoadmap(result);
     expect(horizons[1].items).toEqual([]);
-    expect(horizons[0].items).toHaveLength(2);
+    expect(horizons[0].items).toHaveLength(3);
   });
 
   it('removes a wrapped item bullet including its continuation lines', () => {
@@ -81,11 +118,55 @@ describe('removeRoadmapItem', () => {
       'First-run experience',
     );
     const { horizons } = parseRoadmap(result);
-    expect(horizons[0].items).toEqual([
-      { name: 'Packaging', description: 'one command in any repo.' },
-    ]);
+    expect(horizons[0].items[0]).toEqual({
+      name: 'Packaging',
+      description: 'one command in any repo.',
+      candidates: [],
+    });
     expect(result).not.toContain('First-run experience');
     expect(result).not.toContain('seeded');
+  });
+
+  it('removes an item bullet along with its candidate bullets', () => {
+    const result = removeRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items.map((i) => i.name)).toEqual(['First-run experience', 'Packaging']);
+    expect(result).not.toContain('Mobile control desk');
+    expect(result).not.toContain('Responsive polish for phone widths');
+  });
+
+  it('removes a single candidate bullet, leaving the item and its other candidates in place', () => {
+    const result = removeRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+      'PWA manifest + install to home screen',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[2]).toEqual({
+      name: 'Mobile control desk',
+      description: 'direct the flow from a phone.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'Push notifications for task/check events',
+      ],
+    });
+    expect(result).not.toContain('PWA manifest + install to home screen');
+  });
+
+  it('is a no-op when the candidate name does not match', () => {
+    expect(
+      removeRoadmapItem(
+        SAMPLE,
+        'Horizon 1 — Ready for daily use',
+        'Mobile control desk',
+        'No such candidate',
+      ),
+    ).toBe(SAMPLE);
   });
 
   it('is a no-op when the horizon does not exist', () => {
@@ -101,7 +182,10 @@ describe('removeRoadmapItem', () => {
   it('round-trips against the real ROADMAP.md-shaped grammar without corrupting later horizons', () => {
     const result = removeRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'Packaging');
     const { horizons } = parseRoadmap(result);
-    expect(horizons[0].items.map((i) => i.name)).toEqual(['First-run experience']);
+    expect(horizons[0].items.map((i) => i.name)).toEqual([
+      'First-run experience',
+      'Mobile control desk',
+    ]);
     expect(horizons[1].items.map((i) => i.name)).toEqual(['Goal & roadmap in the app']);
   });
 });
