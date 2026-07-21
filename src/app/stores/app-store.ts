@@ -78,6 +78,7 @@ export type AppStore = {
   togglePlanTag: (tag: string) => void;
   toggleNoteStatus: (status: IdeaStatus) => void;
   setPlanSearch: (search: string) => void;
+  setSubjectFilter: (subject: string | null) => void;
   setPlanSortKey: (sortKey: PlanSortKey) => void;
   togglePlanSortDirection: () => void;
 
@@ -263,6 +264,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       },
     })),
   setPlanSearch: (search) => set((s) => ({ planFilters: { ...s.planFilters, search } })),
+  setSubjectFilter: (subject) => set((s) => ({ planFilters: { ...s.planFilters, subject } })),
   setPlanSortKey: (sortKey) => set((s) => ({ planFilters: { ...s.planFilters, sortKey } })),
   togglePlanSortDirection: () =>
     set((s) => ({

@@ -285,6 +285,9 @@ const plansRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: PlansPage,
+  validateSearch: (search: Record<string, unknown>): { subject?: string } => ({
+    subject: typeof search.subject === 'string' ? search.subject : undefined,
+  }),
 });
 const planDetailRoute = createRoute({
   getParentRoute: () => rootRoute,

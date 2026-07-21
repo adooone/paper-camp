@@ -1,11 +1,23 @@
 import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
 import { fetchRoadmap } from '@/app/services/content/docs-api';
+import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
-import type { Roadmap, RoadmapItem } from '@/types/index';
+import type { PlanEntry, Roadmap, RoadmapItem } from '@/types/index';
 import { Button, Card } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { PromoteRoadmapItemModal } from './promote-roadmap-item-modal';
+
+const graduationLabel = (graduated: PlanEntry[]): string | null => {
+  if (graduated.length === 0) return null;
+  const shipped = graduated.filter((p) => p.status === 'done').length;
+  const queued = graduated.filter((p) => p.status !== 'done' && p.status !== 'dropped').length;
+  const parts: string[] = [];
+  if (queued > 0) parts.push(`${queued} in queue`);
+  if (shipped > 0) parts.push(`${shipped} shipped`);
+  return parts.length > 0 ? parts.join(', ') : null;
+};
 
 const horizonHeaderStyle: React.CSSProperties = {
   fontFamily: fontFamily.handwritten,
@@ -51,15 +63,20 @@ const CandidateRow = ({
 
 const RoadmapItemRow = ({
   item,
+  graduated,
   onPromote,
   onPromoteCandidate,
+  onViewGraduated,
 }: {
   item: RoadmapItem;
+  graduated: PlanEntry[];
   onPromote: () => void;
   onPromoteCandidate: (candidateName: string) => void;
+  onViewGraduated: () => void;
 }) => {
   const [expanded, setExpanded] = useState(false);
   const hasCandidates = item.candidates.length > 0;
+  const label = graduationLabel(graduated);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
@@ -87,6 +104,24 @@ const RoadmapItemRow = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: space[1], flex: 1 }}>
             <span style={{ fontWeight: 600 }}>{item.name}</span>
             <span style={{ fontSize: fontSize.sm, opacity: 0.7 }}>{item.description}</span>
+            {label && (
+              <button
+                type="button"
+                onClick={onViewGraduated}
+                style={{
+                  alignSelf: 'flex-start',
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  fontSize: fontSize['2xs'],
+                  opacity: 0.65,
+                  textDecoration: 'underline',
+                }}
+              >
+                {label}
+              </button>
+            )}
           </div>
           <Button type="button" variant="ghost" size="small" onClick={onPromote}>
             Promote to idea
@@ -124,6 +159,8 @@ export const RoadmapPage = () => {
     item: RoadmapItem;
     candidateName?: string;
   } | null>(null);
+  const plans = useAppStore((s) => s.plans);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchRoadmap()
@@ -202,10 +239,12 @@ export const RoadmapPage = () => {
               <RoadmapItemRow
                 key={item.name}
                 item={item}
+                graduated={plans?.entries.filter((p) => p.subject === item.name) ?? []}
                 onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
                 onPromoteCandidate={(candidateName) =>
                   setPromoting({ horizonTitle: horizon.title, item, candidateName })
                 }
+                onViewGraduated={() => navigate({ to: '/', search: { subject: item.name } })}
               />
             ))}
           </div>
