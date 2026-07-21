@@ -76,5 +76,7 @@
 | IDEA-72 | Truthful status and one-click archive | feat | done | app, plans, agent, git, ui |
 | IDEA-73 | Smooth the page transitions | fix | done | app, ui, performance |
 | IDEA-74 | Goal and roadmap in the app | feat | done | app, docs, plans, ui |
-| IDEA-75 | Error surfacing consistency | fix | review | errors, ui, toast |
-| IDEA-76 | First-run access setup | feat | planned | app, settings, agent, git, ux |
+| IDEA-75 | Error surfacing consistency | fix | done | errors, ui, toast |
+| IDEA-76 | First-run access setup | feat | done | app, settings, agent, git, ux |
+| IDEA-77 | Candidate ideas under roadmap items | feat | planned | app, plans, docs, ui |
+| IDEA-78 | Responsive polish for phone widths | — | idea |  |

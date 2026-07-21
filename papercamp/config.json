@@ -8,7 +8,7 @@
     "chore": 2,
     "docs": 4,
     "refactor": 5,
-    "idea": 78
+    "idea": 79
   },
   "defaultAgents": {
     "phase": {
@@ -36,6 +36,7 @@
     "Frontend",
     "Code health",
     "Workflow",
-    "App UI"
+    "App UI",
+    "Mobile control desk"
   ]
 }

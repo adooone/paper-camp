@@ -2,7 +2,7 @@
 id: IDEA-77
 title: Candidate ideas under roadmap items
 type: feat
-status: idea
+status: review
 created: 2026-07-21
 tags:
   - app
@@ -34,5 +34,5 @@ An indented `- ` line under an item is a candidate: a named, promotable slice th
       Roadmap page: chevron-expandable items listing candidate rows, per-candidate Promote through the existing promotion path with subject defaulted to the item name (auto-created in config if new); candidate bullet removed from `ROADMAP.md` on promote.
 - [x] Link map and queue both ways
       Item rows show the graduated-idea count via subject match, clicking through to the Ideas page pre-filtered to that subject (the filter store already supports it or gains a subject filter); promoted ideas' provenance line carries the item name.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green; seed Mobile control desk's real candidates into ROADMAP.md (safe once the grammar landed), promote one end-to-end, and confirm the count, the filter click-through, and the backlink all agree.
