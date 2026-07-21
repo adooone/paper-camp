@@ -1,7 +1,7 @@
-import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
+import { selectAgentBusy, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { Button, useToast } from '@dendelion/paper-ui';
+import { Button, Tooltip, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { buildSuggestIdeasPrompt } from '../prompts';
 
@@ -12,6 +12,7 @@ export const SuggestIdeasButton = () => {
   const ideaEntries = useAppStore((s) => s.ideaEntries);
   const suggestions = useAppStore((s) => s.suggestions);
   const agentBusy = useAppStore(selectAgentBusy);
+  const hasAgent = useAppStore(selectHasAnyAgent);
   const { toast } = useToast();
   const [launching, setLaunching] = useState(false);
 
@@ -31,14 +32,16 @@ export const SuggestIdeasButton = () => {
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="small"
-      onClick={handleClick}
-      disabled={agentBusy || launching}
-      style={{ color: color.textSecondary }}
-    >
-      Suggest ideas
-    </Button>
+    <Tooltip content={hasAgent ? undefined : 'No agent CLI found — set up in Settings'}>
+      <Button
+        variant="ghost"
+        size="small"
+        onClick={handleClick}
+        disabled={agentBusy || launching || !hasAgent}
+        style={{ color: color.textSecondary }}
+      >
+        Suggest ideas
+      </Button>
+    </Tooltip>
   );
 };

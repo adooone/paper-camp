@@ -50,8 +50,9 @@ export function configRoutes({ root }: RouteContext): Route[] {
           defaultAgent?: AgentId;
           defaultAgents?: Record<string, unknown>;
           subjects?: unknown;
+          setupDismissed?: boolean;
         };
-        const { port, projectName, defaultAgent, subjects } = bodyParsed;
+        const { port, projectName, defaultAgent, subjects, setupDismissed } = bodyParsed;
         const rawDefaultAgents = bodyParsed.defaultAgents;
         if (port !== undefined && (!Number.isInteger(port) || port <= 0)) {
           sendJson(res, 400, { error: 'port must be a positive integer' });
@@ -70,6 +71,10 @@ export function configRoutes({ root }: RouteContext): Route[] {
         }
         if (defaultAgent !== undefined && !AGENT_IDS.includes(defaultAgent)) {
           sendJson(res, 400, { error: 'defaultAgent must be a known agent id' });
+          return;
+        }
+        if (setupDismissed !== undefined && typeof setupDismissed !== 'boolean') {
+          sendJson(res, 400, { error: 'setupDismissed must be a boolean' });
           return;
         }
         if (rawDefaultAgents !== undefined) {
@@ -110,6 +115,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
           ...(projectName !== undefined && { projectName: projectName.trim() }),
           ...(resolvedDefaultAgents && { defaultAgents: resolvedDefaultAgents }),
           ...(subjects !== undefined && { subjects: (subjects as string[]).map((s) => s.trim()) }),
+          ...(setupDismissed !== undefined && { setupDismissed }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
         sendJson(res, 200, { ok: true });

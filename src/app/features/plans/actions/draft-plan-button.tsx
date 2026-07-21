@@ -1,5 +1,5 @@
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
-import { useAppStore } from '@/app/stores/app-store';
+import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
@@ -13,6 +13,7 @@ interface DraftPlanButtonProps {
 
 export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
   const launchPlanDraft = useAppStore((s) => s.launchPlanDraft);
+  const hasAgent = useAppStore(selectHasAnyAgent);
   const { state, errorMessage, run } = useActionFeedback();
   const { toast } = useToast();
 
@@ -46,9 +47,11 @@ export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
   const title =
     state === 'error'
       ? (errorMessage ?? 'Draft failed')
-      : idea.id
-        ? undefined
-        : 'Idea needs an ID before an agent can run';
+      : !idea.id
+        ? 'Idea needs an ID before an agent can run'
+        : !hasAgent
+          ? 'No agent CLI found — set up in Settings'
+          : undefined;
 
   return (
     <Tooltip content={title}>
@@ -56,7 +59,7 @@ export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
         variant="ghost"
         size="small"
         onClick={handleClick}
-        disabled={state === 'loading' || !idea.id}
+        disabled={state === 'loading' || !idea.id || !hasAgent}
         style={{ color: state === 'error' ? color.accentRoseDark : color.textSecondary }}
       >
         {label}

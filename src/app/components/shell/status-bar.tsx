@@ -1,8 +1,9 @@
-import { useAppStore } from '@/app/stores/app-store';
+import { selectCapabilityGapCount, useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import type { CheckStatus } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles, useToast } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { CommitIcon, RunIcon, WandIcon } from '../icons';
 
 const CHECK_VARIANT: Record<CheckStatus, 'success' | 'error' | 'warning' | 'neutral'> = {
@@ -25,7 +26,9 @@ export const StatusBar = () => {
   const fixQuality = useAppStore((s) => s.fixQuality);
   const quickCommit = useAppStore((s) => s.quickCommit);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
+  const capabilityGapCount = useAppStore(selectCapabilityGapCount);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const { qualityStatus, testStatus, consistencyStatus } = deriveCheckStatuses(status);
   const anyChecksRunning =
@@ -79,6 +82,20 @@ export const StatusBar = () => {
           {changedFileCount > 0 ? `${changedFileCount} changed` : 'clean'}
         </span>
         {agentActive && <Spinner size="small" label={`Agent ${activeTask?.status}…`} />}
+        {capabilityGapCount > 0 && (
+          <Tooltip content="Some features are disabled — open Setup to fix">
+            {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/settings/$section', params: { section: 'setup' } })}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              <Stamp size="small" variant="warning">
+                Setup ({capabilityGapCount})
+              </Stamp>
+            </button>
+          </Tooltip>
+        )}
       </div>
 
       <div style={{ flex: 1 }} />

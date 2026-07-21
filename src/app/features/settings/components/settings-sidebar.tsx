@@ -17,6 +17,13 @@ export const SettingsSidebar = () => {
         >
           Project Info
         </ListItem>
+        <ListItem
+          size="small"
+          active={section === 'setup'}
+          onClick={() => navigate({ to: '/settings/$section', params: { section: 'setup' } })}
+        >
+          Setup
+        </ListItem>
       </SidebarSection>
       <SidebarSection label="Ideas">
         <ListItem

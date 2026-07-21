@@ -1,4 +1,4 @@
-import { useAppStore } from '@/app/stores/app-store';
+import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { Button, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -11,6 +11,7 @@ interface AuditPhasesButtonProps {
 
 export const AuditPhasesButton = ({ plan, disabled }: AuditPhasesButtonProps) => {
   const launchPlanAudit = useAppStore((s) => s.launchPlanAudit);
+  const hasAgent = useAppStore(selectHasAnyAgent);
   const [launching, setLaunching] = useState(false);
 
   const handleClick = async () => {
@@ -25,13 +26,19 @@ export const AuditPhasesButton = ({ plan, disabled }: AuditPhasesButtonProps) =>
     }
   };
 
+  const hint = !plan.id
+    ? 'Plan needs an ID before an agent can run'
+    : !hasAgent
+      ? 'No agent CLI found — set up in Settings'
+      : undefined;
+
   return (
-    <Tooltip content={plan.id ? undefined : 'Plan needs an ID before an agent can run'}>
+    <Tooltip content={hint}>
       <Button
         variant="ghost"
         size="small"
         onClick={handleClick}
-        disabled={disabled || launching || !plan.id}
+        disabled={disabled || launching || !plan.id || !hasAgent}
       >
         Audit
       </Button>

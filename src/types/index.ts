@@ -306,6 +306,8 @@ export interface PaperCampConfig {
   autoLogNewFiles?: boolean;
   /** The managed subject list; an idea's `subject` not present here renders as "No subject". */
   subjects?: string[];
+  /** Opts out of the first-run redirect to Settings > Setup while capabilities are incomplete. */
+  setupDismissed?: boolean;
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';
@@ -317,6 +319,14 @@ export interface CheckResult {
 }
 
 export type CheckName = 'lint' | 'format' | 'test' | 'consistency';
+
+export type CapabilityStatus = 'ok' | 'warn' | 'missing';
+
+export interface CapabilityResult {
+  id: string;
+  status: CapabilityStatus;
+  detail: string;
+}
 
 export interface GitStatusEntry {
   path: string;

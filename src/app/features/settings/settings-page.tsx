@@ -14,6 +14,7 @@ import {
 } from '@/types/index';
 import { Alert, Button, Card, Divider, Input, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useRef, useState } from 'react';
+import { SetupSection } from './components/setup-section';
 import { SubjectsSection } from './components/subjects-section';
 
 const TASK_TYPE_KEYS = ['phase', 'planDraft', 'ideaExtend', 'commitSuggest'] as const;
@@ -388,7 +389,13 @@ export const SettingsPage = () => {
   return (
     <div>
       <PageTitle>Settings</PageTitle>
-      {section === 'subjects' ? <SubjectsSection /> : <GeneralSection />}
+      {section === 'subjects' ? (
+        <SubjectsSection />
+      ) : section === 'setup' ? (
+        <SetupSection />
+      ) : (
+        <GeneralSection />
+      )}
     </div>
   );
 };

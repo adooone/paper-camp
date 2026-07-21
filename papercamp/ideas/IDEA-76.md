@@ -2,7 +2,7 @@
 id: IDEA-76
 title: First-run access setup
 type: feat
-status: idea
+status: review
 created: 2026-07-20
 tags:
   - app
@@ -23,11 +23,11 @@ The right posture is **detect, instruct, verify — never collect**. The app spa
 - **First-run routing.** On open, if the corpus is fresh or any capability is missing and setup wasn't dismissed, land on Setup first; a `setupDismissed` flag in `papercamp/config.json` keeps it from nagging.
 
 ### Phases
-- [ ] Probe capabilities server-side
+- [x] Probe capabilities server-side
       `/api/capabilities`: git repo + identity, `gh` installed/authenticated/origin-reachable, each agent adapter's presence and version — structured `{ id, status, detail }` rows with a re-check (no caching staleness; probes are cheap spawns). Tests over the probe parsing.
-- [ ] Build the Setup surface
+- [x] Build the Setup surface
       Settings section listing capability rows — status stamp, what it unlocks, the exact fix command, per-row re-check; surfaced prominently (or routed to) when anything is missing on a fresh install, with `setupDismissed` in config to opt out.
-- [ ] Gate features on capabilities
+- [x] Gate features on capabilities
       PR features and agent launches read the capability report: disabled-with-hint instead of runtime errors; StatusBar indicator while gaps exist. No behavior change when everything is present.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green; verify in a scratch `init` project with no `gh` auth and no agent CLI that the app opens clean, points at Setup, and every gated feature explains itself instead of erroring.
