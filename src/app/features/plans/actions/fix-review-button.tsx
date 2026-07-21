@@ -1,4 +1,4 @@
-import { useAppStore } from '@/app/stores/app-store';
+import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { ListItem, Tooltip } from '@dendelion/paper-ui';
@@ -13,6 +13,8 @@ interface FixReviewButtonProps {
 // threads only exist server-side (a `gh api` call), so the route builds it via buildFixReviewPrompt.
 export const FixReviewButton = ({ plan, disabled }: FixReviewButtonProps) => {
   const launchFixReview = useAppStore((s) => s.launchFixReview);
+  const hasAgent = useAppStore(selectHasAnyAgent);
+  const ghOk = useAppStore(selectGhOk);
   const [launching, setLaunching] = useState(false);
 
   const handleClick = async () => {
@@ -27,10 +29,17 @@ export const FixReviewButton = ({ plan, disabled }: FixReviewButtonProps) => {
     }
   };
 
-  const isDisabled = disabled || launching || !plan.id;
+  const isDisabled = disabled || launching || !plan.id || !hasAgent || !ghOk;
+  const hint = !plan.id
+    ? 'Plan needs an ID before an agent can run'
+    : !ghOk
+      ? 'GitHub CLI needs authentication — set up in Settings'
+      : !hasAgent
+        ? 'No agent CLI found — set up in Settings'
+        : undefined;
 
   return (
-    <Tooltip content={plan.id ? undefined : 'Plan needs an ID before an agent can run'}>
+    <Tooltip content={hint}>
       <ListItem
         size="small"
         // paper-ui has no flag icon (only CloseIcon, LightbulbIcon, CheckIcon, CopyIcon,

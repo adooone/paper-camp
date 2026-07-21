@@ -7,6 +7,7 @@ import type {
   AgentTaskState,
   ArchivableIdea,
   BranchHygieneStatus,
+  CapabilityResult,
   CheckName,
   ConsistencyIssue,
   GitStatusEntry,
@@ -56,6 +57,7 @@ import {
   triggerCheck,
   triggerQualityFix,
 } from '../services/status-api';
+import { fetchCapabilities } from '../services/system';
 
 export type AppStore = {
   plans: ParseResult<PlanEntry> | null;
@@ -126,6 +128,10 @@ export type AppStore = {
   // Resolves false on failure (state left stale) so callers like quickCommit can tell.
   loadGitStatus: () => Promise<boolean>;
 
+  // Empty until loaded; gating selectors treat empty as "unknown" and don't block on it.
+  capabilities: CapabilityResult[];
+  loadCapabilities: () => Promise<void>;
+
   agentStatus: AgentTaskState[];
   loadAgentStatus: () => Promise<void>;
   launchAgent: (planId: string, phaseIndex: number) => Promise<void>;
@@ -159,6 +165,19 @@ interface ReconcilePreview {
 
 export const selectAgentBusy = (s: AppStore) =>
   s.agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
+
+// Capabilities haven't loaded yet: don't block launches on an unknown state.
+export const selectHasAnyAgent = (s: AppStore) =>
+  s.capabilities.length === 0 ||
+  s.capabilities.some((c) => c.id.startsWith('agent:') && c.status === 'ok');
+
+export const selectGhOk = (s: AppStore) => {
+  const gh = s.capabilities.find((c) => c.id === 'gh');
+  return gh === undefined || gh.status === 'ok';
+};
+
+export const selectCapabilityGapCount = (s: AppStore) =>
+  s.capabilities.filter((c) => c.status !== 'ok').length;
 
 type SetState = (partial: Partial<AppStore>) => void;
 
@@ -398,6 +417,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
       return false;
     }
   },
+
+  capabilities: [],
+  loadCapabilities: loadSlice(
+    set,
+    fetchCapabilities,
+    (data) => ({ capabilities: data }),
+    () => ({ capabilities: [] }),
+  ),
 
   agentStatus: [],
   loadAgentStatus: async () => {

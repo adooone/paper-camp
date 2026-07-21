@@ -1,4 +1,4 @@
-import { useAppStore } from '@/app/stores/app-store';
+import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { IconButton, useToast } from '@dendelion/paper-ui';
@@ -12,6 +12,7 @@ interface AgentStartButtonProps {
 
 export const AgentStartButton = ({ planId, phaseIndex, disabled }: AgentStartButtonProps) => {
   const launchAgent = useAppStore((s) => s.launchAgent);
+  const hasAgent = useAppStore(selectHasAnyAgent);
   const { toast } = useToast();
   const [launching, setLaunching] = useState(false);
 
@@ -32,15 +33,21 @@ export const AgentStartButton = ({ planId, phaseIndex, disabled }: AgentStartBut
     }
   };
 
+  const label = !planId
+    ? 'Plan needs an ID before an agent can run'
+    : !hasAgent
+      ? 'No agent CLI found — set up in Settings'
+      : 'Start agent on this phase';
+
   return (
     <IconButton
       // Raw glyph: paper-ui has no play/run icon.
       icon={<span style={{ fontSize: 12, lineHeight: 1 }}>▶</span>}
       variant="ghost"
       size="small"
-      label={planId ? 'Start agent on this phase' : 'Plan needs an ID before an agent can run'}
+      label={label}
       onClick={handleStart}
-      disabled={disabled || launching || !planId}
+      disabled={disabled || launching || !planId || !hasAgent}
       className="transition-opacity"
       style={{ color: color.textSecondary }}
     />

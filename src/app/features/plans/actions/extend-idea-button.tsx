@@ -1,5 +1,5 @@
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
-import { useAppStore } from '@/app/stores/app-store';
+import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { color } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry } from '@/types/index';
@@ -16,6 +16,7 @@ interface ExtendIdeaButtonProps {
  * `idea` prop) so a second Extend after the first one's Log entry landed still works. */
 export const ExtendIdeaButton = ({ idea, compact }: ExtendIdeaButtonProps) => {
   const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);
+  const hasAgent = useAppStore(selectHasAnyAgent);
   const { state, errorMessage, run } = useActionFeedback();
   const { toast } = useToast();
   const ideaId = idea.id;
@@ -56,9 +57,11 @@ export const ExtendIdeaButton = ({ idea, compact }: ExtendIdeaButtonProps) => {
   const title =
     state === 'error'
       ? (errorMessage ?? 'Extension failed')
-      : ideaId
-        ? undefined
-        : 'Idea needs an ID before an agent can run';
+      : !ideaId
+        ? 'Idea needs an ID before an agent can run'
+        : !hasAgent
+          ? 'No agent CLI found — set up in Settings'
+          : undefined;
 
   return (
     <Tooltip content={title}>
@@ -66,7 +69,7 @@ export const ExtendIdeaButton = ({ idea, compact }: ExtendIdeaButtonProps) => {
         variant="ghost"
         size="small"
         onClick={handleClick}
-        disabled={state === 'loading' || !ideaId}
+        disabled={state === 'loading' || !ideaId || !hasAgent}
         style={{ color: state === 'error' ? color.accentRoseDark : undefined }}
       >
         {label}

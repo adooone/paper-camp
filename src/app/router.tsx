@@ -86,6 +86,7 @@ const RootLayout = () => {
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
   const loadSuggestions = useAppStore((s) => s.loadSuggestions);
+  const loadCapabilities = useAppStore((s) => s.loadCapabilities);
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
@@ -109,7 +110,8 @@ const RootLayout = () => {
     loadPlans();
     loadIdeas();
     loadSuggestions();
-  }, [loadPlans, loadIdeas, loadSuggestions]);
+    loadCapabilities();
+  }, [loadPlans, loadIdeas, loadSuggestions, loadCapabilities]);
 
   // Land fresh installs (or any install with an incomplete capability) on Setup
   // instead of letting them discover gaps by hitting a broken PR badge or agent button.

@@ -27,7 +27,7 @@ The right posture is **detect, instruct, verify — never collect**. The app spa
       `/api/capabilities`: git repo + identity, `gh` installed/authenticated/origin-reachable, each agent adapter's presence and version — structured `{ id, status, detail }` rows with a re-check (no caching staleness; probes are cheap spawns). Tests over the probe parsing.
 - [x] Build the Setup surface
       Settings section listing capability rows — status stamp, what it unlocks, the exact fix command, per-row re-check; surfaced prominently (or routed to) when anything is missing on a fresh install, with `setupDismissed` in config to opt out.
-- [ ] Gate features on capabilities
+- [x] Gate features on capabilities
       PR features and agent launches read the capability report: disabled-with-hint instead of runtime errors; StatusBar indicator while gaps exist. No behavior change when everything is present.
 - [ ] Gate the pass
       `tsc --noEmit`, `biome check`, tests green; verify in a scratch `init` project with no `gh` auth and no agent CLI that the app opens clean, points at Setup, and every gated feature explains itself instead of erroring.
