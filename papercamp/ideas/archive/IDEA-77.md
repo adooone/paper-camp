@@ -2,8 +2,9 @@
 id: IDEA-77
 title: Candidate ideas under roadmap items
 type: feat
-status: review
+status: done
 created: 2026-07-21
+updated: 2026-07-22
 tags:
   - app
   - plans

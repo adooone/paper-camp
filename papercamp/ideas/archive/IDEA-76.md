@@ -2,8 +2,9 @@
 id: IDEA-76
 title: First-run access setup
 type: feat
-status: review
+status: done
 created: 2026-07-20
+updated: 2026-07-22
 tags:
   - app
   - settings

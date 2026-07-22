@@ -1,11 +1,15 @@
 ---
 id: IDEA-75
 title: Error surfacing consistency
-status: review
-created: 2026-07-20
-subject: Workflow
 type: fix
-tags: [errors, ui, toast]
+status: done
+created: 2026-07-20
+updated: 2026-07-22
+tags:
+  - errors
+  - ui
+  - toast
+subject: Workflow
 ---
 
 every failure path reads as a one-line toast (git errors do now; agent-launch and config errors should match).
