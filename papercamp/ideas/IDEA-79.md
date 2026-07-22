@@ -9,6 +9,7 @@ tags:
   - cli
   - scaffold
   - app
+order: 2
 ---
 
 `init` produces a welcoming empty corpus: seeded example idea, empty states that teach ("No ideas yet — capture one or ask for suggestions"), and USAGE.md surfaced on first open.

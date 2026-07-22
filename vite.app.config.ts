@@ -6,11 +6,13 @@ import { resolve } from 'path';
 // server's runtime graph (and its `@/` imports) into the config bundle.
 import type { ApiMiddleware } from './src/app/server/api';
 
-// Vite restarts its dev middleware in-process on every server-side file change
-// (not just on Ctrl-C), which would otherwise re-run createApiMiddleware() and
-// silently orphan any agent task the previous instance was tracking — the new
-// instance's `current` starts at null while the old child process keeps running,
-// invisible to /api/agent/status. Persisting on globalThis survives those restarts.
+// Nothing invalidates `g.__paperCampApi` when src/app/server/** changes — those
+// files aren't config dependencies, so Vite never restarts for them, and loadApi()
+// below unconditionally returns the cached instance forever; only killing `pnpm dev`
+// clears it. The one restart that *can* happen in-process is editing this config
+// file itself, which Vite reinitializes via configureServer — globalThis survives
+// that so the live agent task (AgentManager's `tasks`/`lastLaunchedId`, and its
+// running child process) isn't silently orphaned mid-run.
 const g = globalThis as { __paperCampApi?: ApiMiddleware; __paperCampShutdownRegistered?: boolean };
 
 function papercampApi(): Plugin {

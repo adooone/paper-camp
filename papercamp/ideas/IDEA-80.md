@@ -6,6 +6,7 @@ created: 2026-07-22
 subject: Workflow
 type: fix
 tags: [dev-server, vite, api]
+order: 1
 ---
 
 server code changes silently don't apply until restart (the globalThis API cache). Either hot-reload routes or show a visible "restart needed" signal. This footgun bit three times in one week.
@@ -13,7 +14,7 @@ server code changes silently don't apply until restart (the globalThis API cache
 From the roadmap: Horizon 1 — Ready for daily use.
 
 ### Phases
-- [ ] Pin down the staleness boundary
+- [x] Pin down the staleness boundary
       Confirm the exact cause in `vite.app.config.ts`: `g.__paperCampApi` is cached on
       `globalThis` and reused across Vite's in-process restarts, so edits under
       `src/app/server/**` never re-run `createApiMiddleware()`. Note the one thing the
