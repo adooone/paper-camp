@@ -51,3 +51,4 @@
 {"id":"da5b23b1-d633-4ad0-9018-f7dbde58e5b0","taskKind":"draft","planTitle":"Draft plan for IDEA-80","agentId":"claude-code","startedAt":"2026-07-22T16:21:46.382Z","endedAt":"2026-07-22T16:22:50.038Z","outcome":"done"}
 {"id":"1e37aee5-6dd6-4710-aa93-4c88bd75eccc","taskKind":"draft","planTitle":"Draft plan for IDEA-78","agentId":"claude-code","startedAt":"2026-07-22T16:27:04.555Z","endedAt":"2026-07-22T16:27:42.320Z","outcome":"done"}
 {"id":"3bbf4fef-56c6-4c55-99f1-ca58097ab73a","taskKind":"run-all","planId":"IDEA-80","planTitle":"Dev-server reload honesty","agentId":"claude-code","startedAt":"2026-07-22T16:34:42.771Z","endedAt":"2026-07-22T17:00:21.601Z","outcome":"error"}
+{"id":"1ee87bec-8e9e-4f0c-88b3-3f010995dfeb","taskKind":"run-all","planId":"IDEA-80","planTitle":"Dev-server reload honesty","agentId":"claude-code","startedAt":"2026-07-22T17:09:39.996Z","endedAt":"2026-07-22T17:12:57.843Z","outcome":"done"}
