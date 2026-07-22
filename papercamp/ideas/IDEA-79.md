@@ -17,7 +17,7 @@ order: 2
 From the roadmap: Horizon 1 — Ready for daily use.
 
 ### Phases
-- [ ] Seed a welcoming example idea in `init`
+- [x] Seed a welcoming example idea in `init`
       Have `initProject` (`src/core/scaffold/scaffold.ts`) write a first example entity via `formatEntityFile`, minting the `nextId.idea` counter, so a fresh corpus opens with one idea that models the format instead of an empty index. Keep init's no-clobber contract — never overwrite an already-initialized corpus.
 - [ ] Rewrite empty states to teach
       Replace the terse "No plans yet" / "No plans pending review." / docs "Select a section" copy with next-action guidance ("No ideas yet — capture one or ask for suggestions"), pointing at the New idea button and the suggestions surface. Touch the Plans (`plans-page.tsx`), Review, and Docs empty states.

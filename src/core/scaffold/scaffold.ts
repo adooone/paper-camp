@@ -2,6 +2,7 @@ import { access, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { PaperCampConfig } from '../../types/index';
 import { paperCampConfigSchema } from '../parse/schemas';
+import { formatEntityFile, todayDateString } from '../serialize';
 import { CLAUDE_SETTINGS_JSON, SKILL_MD_CONTENT } from './templates';
 
 export const PAPER_CAMP_VERSION = '0.1.0';
@@ -40,7 +41,7 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
     version: PAPER_CAMP_VERSION,
     projectName: options.projectName,
     initializedAt: new Date().toISOString(),
-    nextId: { idea: 1 },
+    nextId: { idea: 2 },
   };
   paperCampConfigSchema.parse(config);
 
@@ -56,6 +57,17 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
       ? `# ${options.projectName}\n\n${options.intent}\n`
       : `# ${options.projectName}\n\nWhat are you building, and why?\n`;
     await writeFile(ideasIndex, ideasBody, 'utf-8');
+  }
+  const exampleIdeaPath = join(ideasDir, 'IDEA-1.md');
+  if (!(await exists(exampleIdeaPath))) {
+    const exampleIdea = formatEntityFile({
+      id: 'IDEA-1',
+      title: 'Capture your first idea',
+      status: 'idea',
+      created: todayDateString(),
+      body: "This is an example idea, in the format Paper Camp expects: a short title, a status, and a paragraph of context. Read it, then archive or delete it once you've written your own.\n\nUse the New idea button to capture what you're building next, or ask an agent for suggestions.",
+    });
+    await writeFile(exampleIdeaPath, `${exampleIdea}\n`, 'utf-8');
   }
 
   for (const name of MONOLITHIC_FILES) {
