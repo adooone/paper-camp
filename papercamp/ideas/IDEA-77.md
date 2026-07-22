@@ -2,7 +2,7 @@
 id: IDEA-77
 title: Candidate ideas under roadmap items
 type: feat
-status: idea
+status: review
 created: 2026-07-21
 tags:
   - app
@@ -28,11 +28,11 @@ An indented `- ` line under an item is a candidate: a named, promotable slice th
 - **Visual linking through the subject.** The item row shows a live graduation count ("2 in queue, 1 shipped") computed by matching ideas whose subject equals the item name; clicking it opens the Ideas page filtered to that subject. The promoted idea's provenance line gains the item name ("From the roadmap: Horizon 3 — Mobile control desk"), so map → queue and idea → map both navigate.
 
 ### Phases
-- [ ] Extend the roadmap grammar with candidates
-      `parseRoadmap`: indented `- ` bullets under an item become `candidates: string[]` (description continuation still works for indented prose without the bullet marker); `removeRoadmapItem` gains single-candidate removal with round-trip fidelity. Tests for parse, continuation-vs-candidate disambiguation, and removal.
-- [ ] Render and promote candidates
+- [x] Extend the roadmap grammar with candidates
+      `parseRoadmap`: an indented `-` bullet under an item becomes `candidates: string[]` (description continuation still works for indented prose without the bullet marker); `removeRoadmapItem` gains single-candidate removal with round-trip fidelity. Tests for parse, continuation-vs-candidate disambiguation, and removal.
+- [x] Render and promote candidates
       Roadmap page: chevron-expandable items listing candidate rows, per-candidate Promote through the existing promotion path with subject defaulted to the item name (auto-created in config if new); candidate bullet removed from `ROADMAP.md` on promote.
-- [ ] Link map and queue both ways
+- [x] Link map and queue both ways
       Item rows show the graduated-idea count via subject match, clicking through to the Ideas page pre-filtered to that subject (the filter store already supports it or gains a subject filter); promoted ideas' provenance line carries the item name.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green; seed Mobile control desk's real candidates into ROADMAP.md (safe once the grammar landed), promote one end-to-end, and confirm the count, the filter click-through, and the backlink all agree.

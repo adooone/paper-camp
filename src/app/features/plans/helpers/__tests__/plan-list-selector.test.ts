@@ -115,6 +115,21 @@ describe('selectPlanRows', () => {
     ]);
   });
 
+  it('filters by subject, exact match only', () => {
+    const entries = [
+      plan({ title: 'Mobile A', status: 'planned', subject: 'Mobile control desk' }),
+      plan({ title: 'Mobile B', status: 'planned', subject: 'Mobile control desk' }),
+      plan({ title: 'Other', status: 'planned', subject: 'Other subject' }),
+      plan({ title: 'No subject', status: 'planned' }),
+    ];
+    const { rows } = selectPlanRows(entries, {
+      ...DEFAULT_PLAN_LIST_FILTERS,
+      statuses: ['planned'],
+      subject: 'Mobile control desk',
+    });
+    expect(rows.map((p) => p.title)).toEqual(['Mobile A', 'Mobile B']);
+  });
+
   it('keeps unordered entries last even when sorting order descending', () => {
     const entries = [
       plan({ title: 'unordered-new', status: 'planned', created: '2026-02-01' }),
@@ -216,6 +231,23 @@ describe('selectWorklistRows', () => {
       'Note',
       'Grouped idea',
       'Orphan plan',
+    ]);
+  });
+
+  it('filters idea-groups and notes by subject too', () => {
+    const ideas = [
+      idea({ id: 'IDEA-9', title: 'Matching idea', subject: 'Mobile control desk' }),
+      idea({ id: 'IDEA-10', title: 'Other idea', subject: 'Other subject' }),
+      idea({ title: 'Matching note', kind: 'note', subject: 'Mobile control desk' }),
+      idea({ title: 'Other note', kind: 'note', subject: 'Other subject' }),
+    ];
+    const { rows } = selectWorklistRows([], ideas, {
+      ...DEFAULT_PLAN_LIST_FILTERS,
+      subject: 'Mobile control desk',
+    });
+    expect(rows.map((r) => (r.type === 'plan' ? r.plan.title : r.idea.title))).toEqual([
+      'Matching idea',
+      'Matching note',
     ]);
   });
 });

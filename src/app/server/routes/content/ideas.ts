@@ -5,6 +5,7 @@ import { readEntities } from '@/core/readers';
 import { removeRoadmapItem } from '@/core/roadmap';
 import {
   assignEntityId,
+  ensureSubject,
   formatEntityFile,
   removeSuggestionLine,
   todayDateString,
@@ -110,10 +111,11 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
       path: '/api/roadmap/promote',
       handle: async (req, res) => {
         const reqBody = await readBody(req);
-        const { horizonTitle, item, subject } = JSON.parse(reqBody) as {
+        const { horizonTitle, item, subject, candidateName } = JSON.parse(reqBody) as {
           horizonTitle?: string;
           item?: RoadmapItem;
           subject?: string;
+          candidateName?: string;
         };
         if (!horizonTitle || !item?.name) {
           sendJson(res, 400, { error: 'horizonTitle and item are required' });
@@ -125,9 +127,9 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           sendJson(res, 404, { error: 'ROADMAP.md not found' });
           return;
         }
-        const updated = removeRoadmapItem(raw, horizonTitle, item.name);
+        const updated = removeRoadmapItem(raw, horizonTitle, item.name, candidateName);
         if (updated === raw) {
-          sendJson(res, 404, { error: 'roadmap item not found' });
+          sendJson(res, 404, { error: 'roadmap item or candidate not found' });
           return;
         }
         const configPath = join(root, 'papercamp', 'config.json');
@@ -136,15 +138,21 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           sendJson(res, 500, { error: 'could not assign entity ID' });
           return;
         }
+        // A candidate's slice is a "big bet graduates as a Subject" moment: default the
+        // subject to the parent item's name and mint it if config.json doesn't have it yet.
+        const resolvedSubject = subject?.trim() || (candidateName ? item.name : undefined);
+        if (resolvedSubject) await ensureSubject(configPath, resolvedSubject);
         const ideasDir = campFile(root, 'ideas');
         await mkdir(ideasDir, { recursive: true });
         const entityContent = formatEntityFile({
           id: newId,
-          title: item.name,
+          title: candidateName ?? item.name,
           status: 'idea',
           created: todayDateString(),
-          subject: subject?.trim() || undefined,
-          body: `${item.description}\n\nFrom the roadmap: ${horizonTitle}.`,
+          subject: resolvedSubject,
+          body: candidateName
+            ? `From the roadmap: ${horizonTitle} — ${item.name}.`
+            : `${item.description}\n\nFrom the roadmap: ${horizonTitle}.`,
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         await writeFile(roadmapPath, updated, 'utf-8');

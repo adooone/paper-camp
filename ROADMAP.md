@@ -69,6 +69,8 @@ The loop works; make it smarter and more observable.
   responsive web app first (it already reaches phones via Tailscale), push
   notifications included; a native wrapper only if the PWA ceiling is hit.
   A big bet: graduates as a Subject, starting with responsive-polish ideas.
+  - PWA manifest + install to home screen
+  - Push notifications for task/check events
 - **Project genesis** — Paper Camp as the starting point for new
   applications: scan an existing repo you like, distill its stack and
   conventions (checks, CI, style docs, structure) into a reusable template,

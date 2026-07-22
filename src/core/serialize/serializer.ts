@@ -280,6 +280,25 @@ export async function assignEntityId(configPath: string): Promise<string | undef
   return assignPlanId(configPath, 'idea');
 }
 
+// Chained alongside id assignment so a candidate promote's id-mint and subject-create
+// writes to the same config.json can't clobber each other.
+export async function ensureSubject(configPath: string, subject: string): Promise<void> {
+  const run = idAssignmentChain.then(async () => {
+    let config: { subjects?: string[] } | null = null;
+    try {
+      config = JSON.parse(await readFile(configPath, 'utf-8')) as { subjects?: string[] };
+    } catch {
+      return;
+    }
+    const subjects = config.subjects ?? [];
+    if (subjects.includes(subject)) return;
+    config.subjects = [...subjects, subject];
+    await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);
+  });
+  idAssignmentChain = run.catch(() => undefined);
+  return run;
+}
+
 interface NewIdeaFileInput {
   id: string;
   title: string;

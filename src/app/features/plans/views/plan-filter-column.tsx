@@ -4,6 +4,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanStatus } from '@/types/index';
 import { Card, Input } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
 
@@ -37,6 +38,8 @@ export const PlanFilterColumn = () => {
   const togglePlanStatus = useAppStore((s) => s.togglePlanStatus);
   const togglePlanTag = useAppStore((s) => s.togglePlanTag);
   const setPlanSearch = useAppStore((s) => s.setPlanSearch);
+  const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
+  const navigate = useNavigate();
   const [tagsExpanded, setTagsExpanded] = useState(false);
 
   if (!plans || activePlanTitle) return null;
@@ -87,6 +90,27 @@ export const PlanFilterColumn = () => {
             value={filters.search}
             onChange={(event) => setPlanSearch(event.target.value)}
           />
+
+          {filters.subject !== null && (
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: space[2] }}
+              data-testid="subject-filter-chip"
+            >
+              <span style={{ fontSize: fontSize['2xs'], opacity: 0.7 }}>
+                Subject: {filters.subject}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubjectFilter(null);
+                  navigate({ to: '/', search: {} });
+                }}
+                style={linkStyle}
+              >
+                Clear
+              </button>
+            </div>
+          )}
 
           <div>
             <div style={sectionLabelStyle}>Status</div>

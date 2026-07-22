@@ -223,6 +223,7 @@ export interface SuggestionEntry {
 export interface RoadmapItem {
   name: string;
   description: string;
+  candidates: string[];
 }
 
 export interface RoadmapHorizon {

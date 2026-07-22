@@ -4,6 +4,7 @@ const H2_RE = /^##\s+/;
 const GOAL_HEADING_RE = /^##\s+The goal\s*$/i;
 const HORIZON_HEADING_RE = /^##\s+(Horizon\s+\d+\s*[—-].*)\r?$/i;
 const ITEM_RE = /^-\s+\*\*(.+?)\*\*\s+[—-]\s+(.*)\r?$/;
+const ITEM_CANDIDATE_RE = /^\s+-\s+(.+?)\r?$/;
 const ITEM_CONTINUATION_RE = /^\s+\S/;
 
 function parseItems(lines: string[], start: number, end: number): RoadmapItem[] {
@@ -16,12 +17,20 @@ function parseItems(lines: string[], start: number, end: number): RoadmapItem[] 
       continue;
     }
     const descParts = [match[2].trim()];
+    const candidates: string[] = [];
     i++;
-    while (i < end && ITEM_CONTINUATION_RE.test(lines[i]) && !ITEM_RE.test(lines[i])) {
+    while (i < end && !ITEM_RE.test(lines[i])) {
+      const candidateMatch = lines[i].match(ITEM_CANDIDATE_RE);
+      if (candidateMatch) {
+        candidates.push(candidateMatch[1].trim());
+        i++;
+        continue;
+      }
+      if (!ITEM_CONTINUATION_RE.test(lines[i])) break;
       descParts.push(lines[i].trim());
       i++;
     }
-    items.push({ name: match[1].trim(), description: descParts.join(' ') });
+    items.push({ name: match[1].trim(), description: descParts.join(' '), candidates });
   }
   return items;
 }
@@ -57,13 +66,15 @@ export function parseRoadmap(markdown: string): Roadmap {
   return { goal, horizons };
 }
 
-// Splices out one item's bullet (and its wrapped continuation lines) so the round trip
-// through parseRoadmap sees one fewer item and nothing else changes — used to promote an
-// item into an idea while keeping the roadmap the honest map of what hasn't started.
+// Splices out one item's bullet (and its wrapped continuation lines and candidates) so the
+// round trip through parseRoadmap sees one fewer item and nothing else changes — used to
+// promote an item into an idea while keeping the roadmap the honest map of what hasn't started.
+// Passing candidateName instead removes just that one candidate bullet, leaving the item in place.
 export function removeRoadmapItem(
   markdown: string,
   horizonTitle: string,
   itemName: string,
+  candidateName?: string,
 ): string {
   const lines = markdown.split('\n');
 
@@ -79,15 +90,24 @@ export function removeRoadmapItem(
       if (!itemMatch || itemMatch[1].trim() !== itemName) continue;
 
       let itemEnd = j + 1;
-      while (
-        itemEnd < end &&
-        ITEM_CONTINUATION_RE.test(lines[itemEnd]) &&
-        !ITEM_RE.test(lines[itemEnd])
-      ) {
+      while (itemEnd < end && !ITEM_RE.test(lines[itemEnd])) {
+        if (!ITEM_CONTINUATION_RE.test(lines[itemEnd])) break;
         itemEnd++;
       }
-      lines.splice(j, itemEnd - j);
-      return lines.join('\n');
+
+      if (candidateName === undefined) {
+        lines.splice(j, itemEnd - j);
+        return lines.join('\n');
+      }
+
+      for (let k = j + 1; k < itemEnd; k++) {
+        const candidateMatch = lines[k].match(ITEM_CANDIDATE_RE);
+        if (candidateMatch && candidateMatch[1].trim() === candidateName) {
+          lines.splice(k, 1);
+          return lines.join('\n');
+        }
+      }
+      return markdown;
     }
     return markdown;
   }

@@ -78,6 +78,7 @@ export type AppStore = {
   togglePlanTag: (tag: string) => void;
   toggleNoteStatus: (status: IdeaStatus) => void;
   setPlanSearch: (search: string) => void;
+  setSubjectFilter: (subject: string | null) => void;
   setPlanSortKey: (sortKey: PlanSortKey) => void;
   togglePlanSortDirection: () => void;
 
@@ -91,6 +92,7 @@ export type AppStore = {
     horizonTitle: string,
     item: RoadmapItem,
     subject?: string,
+    candidateName?: string,
   ) => Promise<string>;
 
   taskLog: TaskLogEntry[];
@@ -262,6 +264,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       },
     })),
   setPlanSearch: (search) => set((s) => ({ planFilters: { ...s.planFilters, search } })),
+  setSubjectFilter: (subject) => set((s) => ({ planFilters: { ...s.planFilters, subject } })),
   setPlanSortKey: (sortKey) => set((s) => ({ planFilters: { ...s.planFilters, sortKey } })),
   togglePlanSortDirection: () =>
     set((s) => ({
@@ -290,8 +293,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await get().loadSuggestions();
   },
 
-  promoteRoadmapItem: async (horizonTitle, item, subject) => {
-    const { id } = await promoteRoadmapItemApi(horizonTitle, item, subject);
+  promoteRoadmapItem: async (horizonTitle, item, subject, candidateName) => {
+    const { id } = await promoteRoadmapItemApi(horizonTitle, item, subject, candidateName);
     await Promise.all([get().loadPlans(), get().loadIdeas()]);
     return id;
   },

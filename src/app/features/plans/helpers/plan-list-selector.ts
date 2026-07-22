@@ -13,6 +13,8 @@ export interface PlanListFilters {
   sortDirection: SortDirection;
   /** Filter chip for `kind: note` ideas — separate lifecycle from PlanStatus. */
   noteStatuses: IdeaStatus[];
+  /** Set by a roadmap item's "N in queue" link; null means unfiltered. */
+  subject: string | null;
 }
 
 /** Excludes done/dropped so 40+ closed plans stay out of first paint until a chip reveals them. */
@@ -28,6 +30,7 @@ export const DEFAULT_PLAN_LIST_FILTERS: PlanListFilters = {
   sortKey: 'order',
   sortDirection: 'asc',
   noteStatuses: DEFAULT_VISIBLE_NOTE_STATUSES,
+  subject: null,
 };
 
 const STATUS_ORDER: Record<PlanStatus, number> = {
@@ -70,6 +73,9 @@ const matchesTags = (plan: PlanEntry, tags: Set<string>): boolean => {
   if (tags.size === 0) return true;
   return plan.tags.some((tag) => tags.has(tag));
 };
+
+const matchesSubject = (subject: string | undefined, filterSubject: string | null): boolean =>
+  filterSubject === null || subject === filterSubject;
 
 /** `sortDirection` flips the sign rather than redefining "natural" per key, except
  * for `order`, where unordered rows must stay last regardless of direction. */
@@ -133,13 +139,23 @@ export const selectPlanRows = (
   // Status/tag counts reflect every other active filter dimension (so a chip
   // shows the count it would have if you enabled it), but not themselves.
   const statusCounts = countBy(
-    entries.filter((plan) => matchesTags(plan, tagSet) && matchesSearch(plan, filters.search)),
+    entries.filter(
+      (plan) =>
+        matchesTags(plan, tagSet) &&
+        matchesSearch(plan, filters.search) &&
+        matchesSubject(plan.subject, filters.subject),
+    ),
     (plan) => [plan.status],
   ) as Record<PlanStatus, number>;
   for (const status of PLAN_STATUSES) statusCounts[status] ??= 0;
 
   const tagCounts = countBy(
-    entries.filter((plan) => statusSet.has(plan.status) && matchesSearch(plan, filters.search)),
+    entries.filter(
+      (plan) =>
+        statusSet.has(plan.status) &&
+        matchesSearch(plan, filters.search) &&
+        matchesSubject(plan.subject, filters.subject),
+    ),
     (plan) => plan.tags,
   );
 
@@ -148,7 +164,8 @@ export const selectPlanRows = (
       (plan) =>
         statusSet.has(plan.status) &&
         matchesTags(plan, tagSet) &&
-        matchesSearch(plan, filters.search),
+        matchesSearch(plan, filters.search) &&
+        matchesSubject(plan.subject, filters.subject),
     )
     .sort((a, b) => comparePlans(a, b, filters.sortKey, filters.sortDirection));
 
@@ -324,6 +341,9 @@ export const selectWorklistRows = (
   for (const idea of ideaParents) {
     const allChildren = idea.id ? (childrenByIdea.get(idea.id) ?? []) : [];
     const filteredChildren = selectPlanRows(allChildren, filters).rows;
+    // A child plan's own subject can diverge from its parent idea's, so a subject
+    // mismatch on the idea alone must not hide a group with a matching child.
+    if (!matchesSubject(idea.subject, filters.subject) && filteredChildren.length === 0) continue;
     if (filteredChildren.length === 0) {
       // Only a genuinely undrafted idea (no plans yet) falls back to search alone.
       if (allChildren.length > 0 || !matchesIdeaSearch(idea, filters.search)) continue;
@@ -334,6 +354,7 @@ export const selectWorklistRows = (
   for (const idea of notes) {
     if (!noteStatusSet.has(idea.status ?? 'open')) continue;
     if (!matchesIdeaSearch(idea, filters.search)) continue;
+    if (!matchesSubject(idea.subject, filters.subject)) continue;
     rows.push({ type: 'note', idea });
   }
 

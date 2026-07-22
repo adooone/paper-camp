@@ -4,8 +4,8 @@ import { useAppStore } from '@/app/stores/app-store';
 import { space } from '@/app/styles/tokens';
 import type { SuggestionEntry } from '@/types/index';
 import { Breadcrumb, Card, useToast } from '@dendelion/paper-ui';
-import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
 import { selectWorklistRows } from './helpers';
 import { PromoteSuggestionModal } from './modals';
 import { ReconcileQueueReview } from './views';
@@ -26,11 +26,17 @@ export const PlansPage = () => {
   const suggestions = useAppStore((s) => s.suggestions);
   const loadPlans = useAppStore((s) => s.loadPlans);
   const planFilters = useAppStore((s) => s.planFilters);
+  const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
   const activePlanTitle = useActivePlanTitle();
   const activeIdeaTitle = useActiveIdeaTitle();
   const dismissSuggestion = useAppStore((s) => s.dismissSuggestion);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { subject: subjectParam } = useSearch({ strict: false }) as { subject?: string };
+
+  useEffect(() => {
+    setSubjectFilter(subjectParam ?? null);
+  }, [subjectParam, setSubjectFilter]);
 
   const handleBack = () => {
     navigate({ to: '/' });
