@@ -6,13 +6,12 @@ import { resolve } from 'path';
 // server's runtime graph (and its `@/` imports) into the config bundle.
 import type { ApiMiddleware } from './src/app/server/api';
 
-// Nothing invalidates `g.__paperCampApi` when src/app/server/** changes — those
-// files aren't config dependencies, so Vite never restarts for them, and loadApi()
-// below unconditionally returns the cached instance forever; only killing `pnpm dev`
-// clears it. The one restart that *can* happen in-process is editing this config
-// file itself, which Vite reinitializes via configureServer — globalThis survives
-// that so the live agent task (AgentManager's `tasks`/`lastLaunchedId`, and its
-// running child process) isn't silently orphaned mid-run.
+// src/app/server/** isn't a config dependency, so Vite never restarts for it — the
+// watcher below clears `g.__paperCampApi` on change so loadApi() rebuilds it instead.
+// The one restart that *can* happen in-process is editing this config file itself,
+// which Vite reinitializes via configureServer — globalThis survives that so the live
+// agent task (AgentManager's `tasks`/`lastLaunchedId`, and its running child process)
+// isn't silently orphaned mid-run.
 const g = globalThis as { __paperCampApi?: ApiMiddleware; __paperCampShutdownRegistered?: boolean };
 
 function papercampApi(): Plugin {
@@ -35,12 +34,22 @@ function papercampApi(): Plugin {
         g.__paperCampApi = api;
         if (!g.__paperCampShutdownRegistered) {
           g.__paperCampShutdownRegistered = true;
-          const shutdown = () => api.agent.killCurrent();
+          // Reads g.__paperCampApi at signal time, not a closed-over `api`, so it still
+          // targets the live instance after a hot-reload has swapped it out.
+          const shutdown = () => g.__paperCampApi?.agent.killCurrent();
           process.on('SIGINT', shutdown);
           process.on('SIGTERM', shutdown);
         }
         return api;
       };
+      const serverRoot = resolve(__dirname, 'src/app/server');
+      server.watcher.on('change', (file) => {
+        if (!file.startsWith(serverRoot)) return;
+        const mod = server.moduleGraph.getModuleById(file);
+        if (mod) server.moduleGraph.invalidateModule(mod);
+        g.__paperCampApi = undefined;
+        pending = null;
+      });
       server.middlewares.use((req, res, next) => {
         pending ??= loadApi();
         pending

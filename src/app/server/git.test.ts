@@ -146,6 +146,20 @@ describe('getBranchHygieneStatus', () => {
     expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
   });
 
+  it('reports fine for a fresh branch cut from a stale local main', async () => {
+    // Regression: with origin/main as the merged-ness reference, a zero-commit
+    // branch from a lagging local main is an ancestor of origin/main and behind
+    // it — the exact stale-merged signature, but nothing was ever merged.
+    const root = await initRepo();
+    await addOrigin(root);
+    await commitFile(root, 'later.txt', 'later\n', 'later work on main');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    git(root, 'checkout', '-b', 'feat/feat-9-fresh');
+    const manager = gitManager(root);
+    expect(await manager.getBranchHygieneStatus()).toBe('fine');
+  });
+
   it('reports clean-on-main on a clean main checkout', async () => {
     const root = await initRepo();
     const manager = gitManager(root);

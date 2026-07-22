@@ -20,7 +20,7 @@ From the roadmap: Horizon 1 — Ready for daily use.
       `src/app/server/**` never re-run `createApiMiddleware()`. Note the one thing the
       cache legitimately protects — the live agent task (`agent.current`) that would be
       orphaned by a naive reload — since any fix must preserve it.
-- [ ] Hot-reload the server API graph on change
+- [x] Hot-reload the server API graph on change
       Watch `src/app/server/**` and, on change, rebuild the middleware via a fresh
       `ssrLoadModule('/src/app/server/api.ts')` (invalidate the SSR module first) instead
       of returning the stale cached instance, so route/handler edits apply live.

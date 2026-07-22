@@ -21,7 +21,7 @@ The fix: **squash-merge, with the PR title as the conventional commit.**
 - **Trim the sections.** `changelog-sections`: hide `refactor` and `docs` alongside `chore` — internal hygiene ("Sweep comments to the §7 bar") isn't release information; features and fixes are. The commits remain in history, just not in the notes.
 - **Guard the door.** A lightweight PR-title lint (the workflow validates its own format on retitle; a check fails if a hand-titled PR isn't conventional) so the squash commit can't silently fall out of the changelog.
 
-Not in scope: rewriting the already-published 0.9/0.10 notes (history is history), and agent-written release highlights (worth a thought once one-line-per-idea lands and the raw material is clean).
+Heads-up recorded for the implementer: squash-merge also breaks the hygiene check's ancestry-based `stale-merged` detection (squashed branch commits never become ancestors of main) — the merge-policy phase must switch `getBranchHygieneStatus` to the PR-state signal (`resolvePrsByEntity` already knows merged) or the sync-to-main escape hatch goes blind. Not in scope: rewriting the already-published 0.9/0.10 notes (history is history), and agent-written release highlights (worth a thought once one-line-per-idea lands and the raw material is clean).
 
 ### Phases
 - [ ] Retitle PRs conventionally
