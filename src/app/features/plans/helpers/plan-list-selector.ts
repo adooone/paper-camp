@@ -339,9 +339,11 @@ export const selectWorklistRows = (
   );
 
   for (const idea of ideaParents) {
-    if (!matchesSubject(idea.subject, filters.subject)) continue;
     const allChildren = idea.id ? (childrenByIdea.get(idea.id) ?? []) : [];
     const filteredChildren = selectPlanRows(allChildren, filters).rows;
+    // A child plan's own subject can diverge from its parent idea's, so a subject
+    // mismatch on the idea alone must not hide a group with a matching child.
+    if (!matchesSubject(idea.subject, filters.subject) && filteredChildren.length === 0) continue;
     if (filteredChildren.length === 0) {
       // Only a genuinely undrafted idea (no plans yet) falls back to search alone.
       if (allChildren.length > 0 || !matchesIdeaSearch(idea, filters.search)) continue;

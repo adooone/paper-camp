@@ -83,9 +83,11 @@ const RoadmapItemRow = ({
       <Card size="small" texture="canvas" className="plan-row-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
           {hasCandidates && (
+            // Raw <button>: icon-only toggle, paper-ui Button doesn't offer this compact chrome.
             <button
               type="button"
               aria-expanded={expanded}
+              aria-label={expanded ? 'Hide candidates' : 'Show candidates'}
               onClick={() => setExpanded((v) => !v)}
               style={{
                 display: 'inline-flex',

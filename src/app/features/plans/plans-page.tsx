@@ -35,7 +35,7 @@ export const PlansPage = () => {
   const { subject: subjectParam } = useSearch({ strict: false }) as { subject?: string };
 
   useEffect(() => {
-    if (subjectParam !== undefined) setSubjectFilter(subjectParam);
+    setSubjectFilter(subjectParam ?? null);
   }, [subjectParam, setSubjectFilter]);
 
   const handleBack = () => {
