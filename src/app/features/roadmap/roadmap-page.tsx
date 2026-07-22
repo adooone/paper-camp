@@ -1,23 +1,19 @@
 import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
+import { STATUS_STAMP } from '@/app/features/plans/constants';
 import { fetchRoadmap } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry, Roadmap, RoadmapItem } from '@/types/index';
-import { Button, Card } from '@dendelion/paper-ui';
+import { Button, Card, Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { PromoteRoadmapItemModal } from './promote-roadmap-item-modal';
 
-const graduationLabel = (graduated: PlanEntry[]): string | null => {
-  if (graduated.length === 0) return null;
-  const shipped = graduated.filter((p) => p.status === 'done').length;
-  const queued = graduated.filter((p) => p.status !== 'done' && p.status !== 'dropped').length;
-  const parts: string[] = [];
-  if (queued > 0) parts.push(`${queued} in queue`);
-  if (shipped > 0) parts.push(`${shipped} shipped`);
-  return parts.length > 0 ? parts.join(', ') : null;
-};
+const graduationCounts = (graduated: PlanEntry[]) => ({
+  shipped: graduated.filter((p) => p.status === 'done').length,
+  queued: graduated.filter((p) => p.status !== 'done' && p.status !== 'dropped').length,
+});
 
 const horizonHeaderStyle: React.CSSProperties = {
   fontFamily: fontFamily.handwritten,
@@ -26,6 +22,14 @@ const horizonHeaderStyle: React.CSSProperties = {
   opacity: 0.7,
   lineHeight: 1,
   padding: `${space[2]} ${space[1]} 0`,
+};
+
+const horizonPulseStyle: React.CSSProperties = {
+  fontFamily: fontFamily.body,
+  fontSize: fontSize['2xs'],
+  fontWeight: 400,
+  opacity: 0.5,
+  padding: `0 ${space[1]}`,
 };
 
 const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
@@ -76,58 +80,83 @@ const RoadmapItemRow = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const hasCandidates = item.candidates.length > 0;
-  const label = graduationLabel(graduated);
+  const { shipped, queued } = graduationCounts(graduated);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
       <Card size="small" texture="canvas" className="plan-row-card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
-          {hasCandidates && (
-            // Raw <button>: icon-only toggle, paper-ui Button doesn't offer this compact chrome.
-            <button
-              type="button"
-              aria-expanded={expanded}
-              aria-label={expanded ? 'Hide candidates' : 'Show candidates'}
-              onClick={() => setExpanded((v) => !v)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                opacity: 0.5,
-                padding: 0,
-                transform: expanded ? 'rotate(90deg)' : undefined,
-              }}
-            >
-              <ChevronRightIcon />
-            </button>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: space[1], flex: 1 }}>
-            <span style={{ fontWeight: 600 }}>{item.name}</span>
-            <span style={{ fontSize: fontSize.sm, opacity: 0.7 }}>{item.description}</span>
-            {label && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+            {hasCandidates && (
+              // Raw <button>: icon-only toggle, paper-ui Button doesn't offer this compact chrome.
+              <button
+                type="button"
+                aria-expanded={expanded}
+                aria-label={expanded ? 'Hide candidates' : 'Show candidates'}
+                onClick={() => setExpanded((v) => !v)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  opacity: 0.5,
+                  padding: 0,
+                  transform: expanded ? 'rotate(90deg)' : undefined,
+                }}
+              >
+                <ChevronRightIcon />
+              </button>
+            )}
+            <span style={{ fontWeight: 600, flex: 1 }}>{item.name}</span>
+            <Button type="button" variant="ghost" size="small" onClick={onPromote}>
+              Promote to idea
+            </Button>
+          </div>
+          <span className="roadmap-item-desc" style={{ fontSize: fontSize.sm, opacity: 0.7 }}>
+            {item.description}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
+            {(queued > 0 || shipped > 0) && (
               <button
                 type="button"
                 onClick={onViewGraduated}
                 style={{
-                  alignSelf: 'flex-start',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: space[1],
                   background: 'none',
                   border: 'none',
                   padding: 0,
                   cursor: 'pointer',
-                  fontSize: fontSize['2xs'],
-                  opacity: 0.65,
-                  textDecoration: 'underline',
                 }}
               >
-                {label}
+                {queued > 0 && (
+                  <Stamp
+                    size="small"
+                    fillColor={STATUS_STAMP.planned.fill}
+                    textColor={STATUS_STAMP.planned.text}
+                  >
+                    {queued} in queue
+                  </Stamp>
+                )}
+                {shipped > 0 && (
+                  <Stamp
+                    size="small"
+                    fillColor={STATUS_STAMP.done.fill}
+                    textColor={STATUS_STAMP.done.text}
+                  >
+                    {shipped} shipped
+                  </Stamp>
+                )}
               </button>
             )}
+            {hasCandidates && (
+              <Stamp size="small" fillColor="rgba(0, 0, 0, 0.06)" textColor="rgba(0, 0, 0, 0.55)">
+                {item.candidates.length} candidate{item.candidates.length === 1 ? '' : 's'}
+              </Stamp>
+            )}
           </div>
-          <Button type="button" variant="ghost" size="small" onClick={onPromote}>
-            Promote to idea
-          </Button>
         </div>
       </Card>
       {hasCandidates && expanded && (
@@ -148,6 +177,77 @@ const RoadmapItemRow = ({
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+const GoalBanner = ({ goal }: { goal: string }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [firstParagraph, ...restParagraphs] = goal.split(/\n{2,}/);
+  const hasMore = restParagraphs.length > 0;
+
+  return (
+    <div
+      style={{
+        marginBottom: space[6],
+        paddingBottom: space[4],
+        borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: fontFamily.handwritten,
+          fontSize: fontSize.xs,
+          fontWeight: 600,
+          opacity: 0.55,
+        }}
+      >
+        The goal
+      </span>
+      <div
+        style={{
+          fontFamily: fontFamily.serif,
+          fontSize: fontSize.lg,
+          lineHeight: 1.4,
+          marginTop: space[2],
+        }}
+      >
+        <div className={expanded ? undefined : 'roadmap-goal-line-clamp'}>
+          <Markdown>{firstParagraph}</Markdown>
+        </div>
+        {expanded && hasMore && <Markdown>{restParagraphs.join('\n\n')}</Markdown>}
+      </div>
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            marginTop: space[2],
+            cursor: 'pointer',
+            fontSize: fontSize['2xs'],
+            opacity: 0.65,
+            textDecoration: 'underline',
+          }}
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </div>
+  );
+};
+
+const HorizonPulse = ({
+  items,
+  graduatedByItem,
+}: { items: RoadmapItem[]; graduatedByItem: (item: RoadmapItem) => PlanEntry[] }) => {
+  const graduated = items.filter((item) => graduatedByItem(item).length > 0).length;
+  const charted = items.length - graduated;
+  return (
+    <div style={horizonPulseStyle}>
+      {graduated} graduated · {charted} charted
     </div>
   );
 };
@@ -200,48 +300,27 @@ export const RoadmapPage = () => {
     );
   }
 
+  const graduatedByItem = (item: RoadmapItem) =>
+    plans?.entries.filter((p) => p.subject === item.name) ?? [];
+
   return (
     <div>
-      <div
-        style={{
-          marginBottom: space[6],
-          paddingBottom: space[4],
-          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-        }}
-      >
-        <span
-          style={{
-            fontFamily: fontFamily.handwritten,
-            fontSize: fontSize.xs,
-            fontWeight: 600,
-            opacity: 0.55,
-          }}
-        >
-          The goal
-        </span>
-        <div
-          style={{
-            fontFamily: fontFamily.serif,
-            fontSize: fontSize.lg,
-            lineHeight: 1.4,
-            marginTop: space[2],
-          }}
-        >
-          <Markdown>{roadmap.goal}</Markdown>
-        </div>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: space[6] }}>
+      <GoalBanner goal={roadmap.goal} />
+      <div className="roadmap-horizons-grid">
         {roadmap.horizons.map((horizon) => (
           <div
             key={horizon.title}
             style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
           >
-            <div style={horizonHeaderStyle}>{horizon.title}</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
+              <div style={horizonHeaderStyle}>{horizon.title}</div>
+              <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
+            </div>
             {horizon.items.map((item) => (
               <RoadmapItemRow
                 key={item.name}
                 item={item}
-                graduated={plans?.entries.filter((p) => p.subject === item.name) ?? []}
+                graduated={graduatedByItem(item)}
                 onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
                 onPromoteCandidate={(candidateName) =>
                   setPromoting({ horizonTitle: horizon.title, item, candidateName })

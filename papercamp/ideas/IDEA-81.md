@@ -24,7 +24,7 @@ The redesign principle: **the map should look like a map, and the desk should be
 - **The queue points back.** Worklist subject-group headers whose name matches a roadmap item get a small map link to `/roadmap` with the item highlighted (`?item=` param + the existing highlight-ring pattern) — closing the loop the graduation counts opened.
 
 ### Phases
-- [ ] Compact the layout
+- [x] Compact the layout
       Slim expandable goal banner; horizons as responsive columns with progress lines in the headers; item cards clamped to name + two-line description + stamp row. Pure presentation over the existing `/api/roadmap` data.
 - [ ] Expand cards with live state
       Card expansion (chevron pattern): full description, candidates with per-candidate Promote (existing), and the graduated-ideas list with status stamps derived from the loaded plans by subject match.
