@@ -2,6 +2,98 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0](https://github.com/adooone/paper-camp/compare/v0.9.0...v0.10.0) (2026-07-22)
+
+
+### Features
+
+* **app:** Add the Archive action ([7e69fa9](https://github.com/adooone/paper-camp/commit/7e69fa9756ec91fb41c99e7e1061391cd4dc0f68))
+* **app:** Add the order field to entities ([25faa87](https://github.com/adooone/paper-camp/commit/25faa87aeb9f18163a2f9861c1105379c7e150a5))
+* **app:** Add the subject field to entities ([601f463](https://github.com/adooone/paper-camp/commit/601f46310ed90b153697097f9a67efc333a71009))
+* **app:** Build the Setup surface ([42c4395](https://github.com/adooone/paper-camp/commit/42c4395f93a6f4cf11936683a97b0ddfabb3c778))
+* **app:** Close the absorbed idea ([62b2b6c](https://github.com/adooone/paper-camp/commit/62b2b6c904c10cffc709ceefbbc55393d0ae13d3))
+* **app:** Derive effective status for display ([6fa6a5c](https://github.com/adooone/paper-camp/commit/6fa6a5cde698c39238d62c9155b45dcfa05abb86))
+* **app:** Detect archivable ideas ([2cca1fa](https://github.com/adooone/paper-camp/commit/2cca1fa66a2f5cdf02930fa4387328e7759b4b07))
+* **app:** Extend the roadmap grammar with candidates ([7d48548](https://github.com/adooone/paper-camp/commit/7d48548a2dbac3f2ac185564d824e7a1e080b98a))
+* **app:** Gate features on capabilities ([e3fcd41](https://github.com/adooone/paper-camp/commit/e3fcd41ffbd1b0bd430fa79a990de0493f4fd59c))
+* **app:** Gate the pass ([bdd82cb](https://github.com/adooone/paper-camp/commit/bdd82cbac8d04d389e33b236f81cf3f087d296e9))
+* **app:** Gate the pass ([017b0aa](https://github.com/adooone/paper-camp/commit/017b0aa9edcf294a43451bc41e1426c32c33e8ce))
+* **app:** Gate the pass ([65f5961](https://github.com/adooone/paper-camp/commit/65f5961a0993adfff1ea64fc1f86d7b6dde4120f))
+* **app:** Gate the pass ([27072c3](https://github.com/adooone/paper-camp/commit/27072c34ad50fa78c55a3a5037700b84a4791251))
+* **app:** Gate the pass ([82ca3ff](https://github.com/adooone/paper-camp/commit/82ca3ffe3b7abdd18a6ae70aced1c7e17d2250d2))
+* **app:** Gate the pass ([d8caa54](https://github.com/adooone/paper-camp/commit/d8caa54b7dabbd704f42cf5de19e5f340e2871e4))
+* **app:** Group the worklist by subject ([252a952](https://github.com/adooone/paper-camp/commit/252a9524ea3f8d472eb9faf103afa6cbc8d26c9d))
+* **app:** Link map and queue both ways ([0e07436](https://github.com/adooone/paper-camp/commit/0e07436aef7c68f704e0fd205fb7a3ec7b4025c7))
+* **app:** Manage subjects from Settings ([aa96916](https://github.com/adooone/paper-camp/commit/aa96916a46426dca258686ac25d557e224bf0b83))
+* **app:** Parse the roadmap grammar ([99efb8b](https://github.com/adooone/paper-camp/commit/99efb8b7f44350d4cbab084087a444b9ac6c3ade))
+* **app:** Pick a subject in idea details ([08a0057](https://github.com/adooone/paper-camp/commit/08a005705978b8627c715073a512d7e22b798dfc))
+* **app:** Polish the detail view ([ac03323](https://github.com/adooone/paper-camp/commit/ac0332351d7b7af01761aee80a36d12328bdae17))
+* **app:** Probe capabilities server-side ([16233db](https://github.com/adooone/paper-camp/commit/16233db126f38ad0e35b605791091b3cde427fa9))
+* **app:** Promote an item to an idea ([f8c73bb](https://github.com/adooone/paper-camp/commit/f8c73bb997fbf07f4e6bc52d87847680f0cd43db))
+* **app:** Rename Plans to Ideas ([e20a24a](https://github.com/adooone/paper-camp/commit/e20a24a3548d04b7992390310580643588adcd0b))
+* **app:** Render and promote candidates ([dba7379](https://github.com/adooone/paper-camp/commit/dba73798431e410371c8b137483d2b8c61fa0a3c))
+* **app:** Render the Roadmap surface ([a1bbc00](https://github.com/adooone/paper-camp/commit/a1bbc006f25277af39745fbb417dfe0e1e623485))
+* **app:** Set the order from the UI ([1558be7](https://github.com/adooone/paper-camp/commit/1558be745336a3e9e52b6baee22b4e1abc33ad4d))
+* **app:** Sort the worklist by run order ([6a4165b](https://github.com/adooone/paper-camp/commit/6a4165be3012be86f91e1c5b1703682106c93362))
+* **app:** updates ([937cd8a](https://github.com/adooone/paper-camp/commit/937cd8ab0e69d225804dea6db9371e0e7a285f6b))
+* **app:** updates ([c5afd3e](https://github.com/adooone/paper-camp/commit/c5afd3e80f512c335fe75bd8f4d381f7a99b58b6))
+* **app:** updates ([6f9c3f5](https://github.com/adooone/paper-camp/commit/6f9c3f5cad3e0171689fa64e1d4bc5fe03693f13))
+* **ideas:** Add subjects and order to idea frontmatter, sync index/progress ([a1582c4](https://github.com/adooone/paper-camp/commit/a1582c4940fe58a05a8704c9f7ccc7b47e80faf3))
+
+
+### Bug Fixes
+
+* **app:** Address IDEA-76 PR review comments ([ac96d25](https://github.com/adooone/paper-camp/commit/ac96d25d25955aad29844f6955771f9dc04f6166))
+* **app:** Address IDEA-76 PR review comments ([7847c48](https://github.com/adooone/paper-camp/commit/7847c48f4c628f32b2056534dcda7aab128fb4cb))
+* **app:** Address IDEA-77 review comments ([a65cd03](https://github.com/adooone/paper-camp/commit/a65cd030f5c498f23ae2fd7d58b438425d384374))
+* **app:** Address IDEA-77 review comments ([7d070a9](https://github.com/adooone/paper-camp/commit/7d070a920b429232c7ce540f8ca63c2961e250ae))
+* **app:** Align subject, order, and tags in entity detail meta row ([c0af82c](https://github.com/adooone/paper-camp/commit/c0af82cfd930c8ba1de6215df8b9750b2737dc36))
+* **app:** Fix the route transition ([0a171fc](https://github.com/adooone/paper-camp/commit/0a171fc506cf4adf0fc9bd1a73112979db77013a))
+* **app:** Gate the pass ([1d9db13](https://github.com/adooone/paper-camp/commit/1d9db13850efc6a629942f26c9f3f7243ca4d5d5))
+* **app:** Harden subject picker, config writes, and settings nav state ([7691358](https://github.com/adooone/paper-camp/commit/7691358fade392361429e3f70cf9d4277f8f2c96))
+* **app:** Harden subject picker, config writes, and settings nav state ([5cf2600](https://github.com/adooone/paper-camp/commit/5cf26004d81825bbea12dcc7b506dfb227bc8ee8))
+* **app:** Profile and pin the cause ([6929a66](https://github.com/adooone/paper-camp/commit/6929a6644c2292680e7cb83f2655c50cb90f6f9d))
+* **app:** Restore single 32px content inset on large screens ([471c6a3](https://github.com/adooone/paper-camp/commit/471c6a3d58017b5a81e61dde6fbe753f073b6ad9))
+* **app:** Simplify the remaining usage ([ae3c4a4](https://github.com/adooone/paper-camp/commit/ae3c4a403d7159c6a56d4f089822d48770d431cb))
+* **app:** Tune crossfade and add comment-ratio lint guard ([df923cb](https://github.com/adooone/paper-camp/commit/df923cbd6d69ff7bd93df4f95e3eb5ebc71dc9bd))
+* **app:** updates ([ca358ed](https://github.com/adooone/paper-camp/commit/ca358ed370194d8c6856da78bd8e9e3c2bc781b8))
+* **core:** Prune graduated roadmap item and harden roadmap regex ([3cbb0c6](https://github.com/adooone/paper-camp/commit/3cbb0c6027d6d0a7b42df3af6706a3966fb8075a))
+* **core:** Prune graduated roadmap item and harden roadmap regex ([c8b5346](https://github.com/adooone/paper-camp/commit/c8b534639185d0c09970a711fb335ea6525bdb81))
+* **core:** Prune graduated roadmap item and harden roadmap regex ([ea99fdc](https://github.com/adooone/paper-camp/commit/ea99fdcb0781bc819d1e785a5057a9345f675c36))
+* **plans:** Fix run-order sort direction, note reflow, and a11y attrs ([22d219d](https://github.com/adooone/paper-camp/commit/22d219d23f3e93e5b0b3221fa9a8965c37fc14ac))
+* **plans:** Fix run-order sort direction, note reflow, and a11y attrs ([ec58f8b](https://github.com/adooone/paper-camp/commit/ec58f8baee961e0793929290198280f7095a26ad))
+* **ui:** Generalize the git one-line summary into a shared error formatter ([211848f](https://github.com/adooone/paper-camp/commit/211848f62b587acfcd6254e036f8d08de2f8bcd7))
+* **ui:** Route agent-launch failures through the one-line summary ([2524c13](https://github.com/adooone/paper-camp/commit/2524c13b1bdaa3909b64185f06ba37f21119ec31))
+* **ui:** Surface config-save failures with their cause ([ded1727](https://github.com/adooone/paper-camp/commit/ded172796136514907c619629952b9c77e3939ae))
+* **ui:** Sweep remaining failure toasts for consistency ([dfb3ba4](https://github.com/adooone/paper-camp/commit/dfb3ba4616282f7f125f1ed1e285718d5035e089))
+* **ui:** Type-check and full pass ([12ff237](https://github.com/adooone/paper-camp/commit/12ff2372188a1b40d11c9516ad86dc624adb7cac))
+
+
+### Code Refactoring
+
+* **app:** Baseline and dead-code inventory ([b30afa5](https://github.com/adooone/paper-camp/commit/b30afa58b64b97f688f583de7ca942b2244766b9))
+* **app:** Gate and report the release numbers ([b6a2362](https://github.com/adooone/paper-camp/commit/b6a23624c76ea42607682975796135162517c4b3))
+* **app:** Gate the pass ([8438035](https://github.com/adooone/paper-camp/commit/8438035ab12d8d2361587067536f9c89d0e3820c))
+* **app:** Group the Tasks list by date ([4356dd0](https://github.com/adooone/paper-camp/commit/4356dd0d7bdb4fe950bc8baec2f7647172d8f82e))
+* **app:** Make git errors readable toasts ([e9b6df3](https://github.com/adooone/paper-camp/commit/e9b6df350db044d7fdf2e9168709023b71bab790))
+* **app:** Slim the CLI and MCP layer ([06628dd](https://github.com/adooone/paper-camp/commit/06628dd1feabc85cab334fea257380468d326af9))
+* **app:** Slim the client hotspots ([e466b48](https://github.com/adooone/paper-camp/commit/e466b48de7411848b4808e118a89b6edeac25198))
+* **app:** Split and shrink server/agent.ts ([66ee961](https://github.com/adooone/paper-camp/commit/66ee961ad19d63988d275755a5449148703394b2))
+* **app:** Sweep orphaned client code ([b3d42de](https://github.com/adooone/paper-camp/commit/b3d42decec45ae49f14ff534a4d40f3f51a75cab))
+* **app:** Tighten the core round-trip and git-pr surface ([94e38d4](https://github.com/adooone/paper-camp/commit/94e38d4330b9fe1b606cac55997ea08b494829aa))
+* **app:** Trim Docs to general docs only ([da53671](https://github.com/adooone/paper-camp/commit/da53671796ea41c371f03f57a87d8f7ad78771f3))
+* **app:** Trim Settings to General ([baf123c](https://github.com/adooone/paper-camp/commit/baf123c93db6ece9f9cea23f79cce29c824dd3ce))
+* **app:** updates ([7aa3121](https://github.com/adooone/paper-camp/commit/7aa31212c1d8bb917d1c44d9fe992391c19f6984))
+* **app:** updates ([6e92dc2](https://github.com/adooone/paper-camp/commit/6e92dc2ed097cecc35c116d8d8fe5b6a8729f228))
+
+
+### Documentation
+
+* **ideas:** Add IDEA-68 phase for readable git error toasts ([df085da](https://github.com/adooone/paper-camp/commit/df085da241226e509b74ebdce522dccaea386d4b))
+* **ideas:** File four new ideas and update statuses ([c81b1aa](https://github.com/adooone/paper-camp/commit/c81b1aa6d81fb8f0b0796de6c824141ee39104e5))
+* **ideas:** Sync IDEA-75 index row with frontmatter ([75b5a58](https://github.com/adooone/paper-camp/commit/75b5a589052c0b36b9477ef5cdfaed4a1aff998b))
+* **ideas:** Sync IDEA-75 index row with frontmatter ([8ce7883](https://github.com/adooone/paper-camp/commit/8ce788390ec6a1fe0100114ea4e8422a27c5e936))
+
 ## [0.9.0](https://github.com/adooone/paper-camp/compare/v0.8.0...v0.9.0) (2026-07-18)
 
 
