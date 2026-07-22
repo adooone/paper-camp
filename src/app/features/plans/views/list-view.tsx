@@ -40,7 +40,8 @@ export const ListView = ({
       ) : (
         // PlansPage only handles the "no plans at all" case; this covers filters matching none.
         <p style={{ opacity: 0.5, padding: `${space[6]} 0`, textAlign: 'center' }}>
-          No plans match your filters.
+          Nothing matches these filters — clear one, or check back once something moves into this
+          status.
         </p>
       )}
     </div>

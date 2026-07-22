@@ -6,6 +6,7 @@ import {
   StatusBar,
 } from '@/app/components';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
+import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
 import { Button, IconButton, Layout, Page, ToastProvider, layoutConfig } from '@dendelion/paper-ui';
 import {
@@ -93,6 +94,7 @@ const RootLayout = () => {
   const loadIdeas = useAppStore((s) => s.loadIdeas);
   const loadSuggestions = useAppStore((s) => s.loadSuggestions);
   const loadCapabilities = useAppStore((s) => s.loadCapabilities);
+  const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
@@ -125,11 +127,23 @@ const RootLayout = () => {
     if (firstRunChecked.current || pathname !== '/') return;
     firstRunChecked.current = true;
     Promise.all([fetchConfig(), fetchCapabilities()]).then(([config, capabilities]) => {
-      if (config?.setupDismissed) return;
-      if (capabilities === null || capabilities.every((c) => c.status === 'ok')) return;
-      navigate({ to: '/settings/$section', params: { section: 'setup' } });
+      if (
+        !config?.setupDismissed &&
+        capabilities !== null &&
+        !capabilities.every((c) => c.status === 'ok')
+      ) {
+        navigate({ to: '/settings/$section', params: { section: 'setup' } });
+        return;
+      }
+      // A corpus at or below `init`'s single seeded example idea (IDEA-1, no plans yet)
+      // hasn't been used for real work — point it at USAGE.md instead of an empty Ideas list.
+      Promise.all([fetchIdeas(), fetchPlans()]).then(([ideas, plans]) => {
+        if (ideas.entries.length > 1 || plans.entries.length > 0) return;
+        setActiveDocTitle('USAGE.md');
+        navigate({ to: '/docs' });
+      });
     });
-  }, [pathname, navigate]);
+  }, [pathname, navigate, setActiveDocTitle]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body.
   useEffect(() => {

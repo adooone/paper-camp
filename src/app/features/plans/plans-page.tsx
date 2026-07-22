@@ -147,8 +147,8 @@ export const PlansPage = () => {
 
           {plans.entries.length === 0 ? (
             <p style={{ opacity: 0.5 }}>
-              No plans yet. Run <code>paper-camp add plan &quot;name&quot;</code>, or add one to the
-              backlog above.
+              No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}
+              <strong>Suggest ideas</strong> to have an agent propose some.
             </p>
           ) : (
             <ListView
