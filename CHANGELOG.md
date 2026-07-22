@@ -45,6 +45,7 @@ All notable changes to this project will be documented in this file.
 
 * **app:** Address IDEA-76 PR review comments ([ac96d25](https://github.com/adooone/paper-camp/commit/ac96d25d25955aad29844f6955771f9dc04f6166))
 * **app:** Address IDEA-76 PR review comments ([7847c48](https://github.com/adooone/paper-camp/commit/7847c48f4c628f32b2056534dcda7aab128fb4cb))
+* **app:** Address IDEA-77 review comments ([8342869](https://github.com/adooone/paper-camp/commit/8342869c2627afb8681ce411a0ed4d87a774f5e9))
 * **app:** Address IDEA-77 review comments ([a65cd03](https://github.com/adooone/paper-camp/commit/a65cd030f5c498f23ae2fd7d58b438425d384374))
 * **app:** Address IDEA-77 review comments ([7d070a9](https://github.com/adooone/paper-camp/commit/7d070a920b429232c7ce540f8ca63c2961e250ae))
 * **app:** Align subject, order, and tags in entity detail meta row ([c0af82c](https://github.com/adooone/paper-camp/commit/c0af82cfd930c8ba1de6215df8b9750b2737dc36))
