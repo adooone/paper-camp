@@ -42,7 +42,9 @@ export const DocsPage = () => {
   return (
     <div>
       <PageTitle>Docs</PageTitle>
-      <p style={{ opacity: 0.5 }}>Select a section from the sidebar.</p>
+      <p style={{ opacity: 0.5 }}>
+        Pick a doc from the sidebar — start with a repo doc if you're new here.
+      </p>
     </div>
   );
 };

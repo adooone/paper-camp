@@ -54,3 +54,4 @@
 {"id":"1ee87bec-8e9e-4f0c-88b3-3f010995dfeb","taskKind":"run-all","planId":"IDEA-80","planTitle":"Dev-server reload honesty","agentId":"claude-code","startedAt":"2026-07-22T17:09:39.996Z","endedAt":"2026-07-22T17:12:57.843Z","outcome":"done"}
 {"id":"9d052c0e-4519-49d3-a6b9-9cfb2d4b2634","taskKind":"fix-review","planId":"IDEA-80","planTitle":"Dev-server reload honesty","agentId":"claude-code","startedAt":"2026-07-22T17:20:57.435Z","endedAt":"2026-07-22T17:27:32.552Z","outcome":"error"}
 {"id":"2cd01dd2-bb9e-4505-9df1-ebb1054acbd9","taskKind":"fix-review","planId":"IDEA-80","planTitle":"Dev-server reload honesty","agentId":"claude-code","startedAt":"2026-07-22T17:55:30.311Z","endedAt":"2026-07-22T17:56:41.707Z","outcome":"done"}
+{"id":"26913604-3c8c-4ac8-a150-15194fdb77fe","taskKind":"run-all","planId":"IDEA-79","planTitle":"First-run experience","agentId":"claude-code","startedAt":"2026-07-22T18:07:15.661Z","endedAt":"2026-07-22T18:18:26.871Z","outcome":"error"}
