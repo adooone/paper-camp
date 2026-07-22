@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { hostname } from 'node:os';
 import { createActivityManager } from './activity';
-import { type AgentManager, createAgentManager } from './agent';
+import { type AgentManager, type AgentManagerState, createAgentManager } from './agent';
 import { createAgentHooks } from './agent-hooks';
 import { createGitManager } from './git';
 import { sendJson } from './http';
@@ -87,7 +87,7 @@ export function isForbiddenRequest(req: {
   return false;
 }
 
-export function createApiMiddleware(root: string): ApiMiddleware {
+export function createApiMiddleware(root: string, agentState?: AgentManagerState): ApiMiddleware {
   const activity = createActivityManager(root);
   const git = createGitManager(root);
   const status = createStatusManager(root);
@@ -97,6 +97,7 @@ export function createApiMiddleware(root: string): ApiMiddleware {
     hooks.stampAuditDate,
     hooks.commitPhase,
     hooks.setRunReview,
+    agentState,
   );
 
   const routes = buildRoutes({ root, activity, agent, git, status });

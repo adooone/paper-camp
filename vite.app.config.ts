@@ -9,9 +9,11 @@ import type { AgentManagerState } from './src/app/server/agent';
 
 // src/app/server/** isn't a config dependency, so Vite never restarts for it — the
 // watcher below clears `g.__paperCampApi` on change so loadApi() rebuilds it instead,
-// after exporting the old instance's in-flight agent tasks/SSE clients into
-// `g.__paperCampAgentState` so the new instance can import them and a running task
-// (and its child process) survives the swap instead of being silently orphaned.
+// after stashing the old instance's shared agent state object in
+// `g.__paperCampAgentState` so the new instance is constructed against the very
+// same Map/Set/scalars — a running task's process listeners (still owned by the
+// old closure) and the new instance's getStatus()/subscribe() then read and write
+// one shared container instead of drifting apart across the swap.
 const g = globalThis as {
   __paperCampApi?: ApiMiddleware;
   __paperCampShutdownRegistered?: boolean;
@@ -32,16 +34,26 @@ function papercampApi(): Plugin {
       // Set once a hot-swap fails, so the next successful load knows to tell the
       // client the banner it raised is now stale.
       let reloadFailed = false;
+      // Shared by the watcher's eager reload and the middleware's lazy one, so a
+      // failure is logged/broadcast exactly once per rejected `pending`, however
+      // it was triggered.
+      const reportReloadFailure = (err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        server.config.logger.error(
+          `\n🛑 papercamp-api failed to reload — restart \`pnpm dev\`: ${message}\n`,
+          { timestamp: true },
+        );
+        reloadFailed = true;
+        server.ws.send({ type: 'custom', event: 'papercamp:server-reload-error', data: { message } });
+      };
       const loadApi = async (): Promise<ApiMiddleware> => {
         if (g.__paperCampApi) return g.__paperCampApi;
         const mod = (await server.ssrLoadModule('/src/app/server/api.ts')) as {
-          createApiMiddleware: (root: string) => ApiMiddleware;
+          createApiMiddleware: (root: string, agentState?: AgentManagerState) => ApiMiddleware;
         };
-        const api = mod.createApiMiddleware(process.cwd());
-        if (g.__paperCampAgentState) {
-          api.agent.importState(g.__paperCampAgentState);
-          g.__paperCampAgentState = undefined;
-        }
+        const agentState = g.__paperCampAgentState;
+        g.__paperCampAgentState = undefined;
+        const api = mod.createApiMiddleware(process.cwd(), agentState);
         g.__paperCampApi = api;
         if (reloadFailed) {
           reloadFailed = false;
@@ -57,32 +69,32 @@ function papercampApi(): Plugin {
         }
         return api;
       };
+      // Kicks off (and tracks) the reload itself rather than leaving it for the next
+      // request, so an idle dev session with only an open SSE connection still gets
+      // the failure banner the moment the watcher fires, not on the next HTTP hit.
+      const triggerReload = (): Promise<ApiMiddleware> => {
+        const attempt = loadApi().catch((err) => {
+          reportReloadFailure(err);
+          throw err;
+        });
+        pending = attempt;
+        return attempt;
+      };
       const serverRoot = resolve(__dirname, 'src/app/server');
       server.watcher.on('change', (file) => {
         if (!file.startsWith(serverRoot)) return;
         const mod = server.moduleGraph.getModuleById(file);
         if (mod) server.moduleGraph.invalidateModule(mod);
-        if (g.__paperCampApi) g.__paperCampAgentState = g.__paperCampApi.agent.exportState();
+        if (g.__paperCampApi) g.__paperCampAgentState = g.__paperCampApi.agent.getState();
         g.__paperCampApi = undefined;
-        pending = null;
+        // Fire-and-forget here: `reportReloadFailure` above already handles logging
+        // and the ws banner; this just keeps Node from flagging the rejection as
+        // unhandled when no request arrives to attach its own `.catch`.
+        triggerReload().catch(() => {});
       });
       server.middlewares.use((req, res, next) => {
-        pending ??= loadApi();
-        pending
-          .then((api) => api(req, res, next))
-          .catch((err) => {
-            const message = err instanceof Error ? err.message : String(err);
-            // A hot-swap that throws leaves `pending` rejected until the next edit under
-            // src/app/server/**, so every request fails the same way until then — loud on
-            // both ends since a silent 500 is exactly the footgun this phase closes.
-            server.config.logger.error(
-              `\n🛑 papercamp-api failed to reload — restart \`pnpm dev\`: ${message}\n`,
-              { timestamp: true },
-            );
-            reloadFailed = true;
-            server.ws.send({ type: 'custom', event: 'papercamp:server-reload-error', data: { message } });
-            next();
-          });
+        pending ??= triggerReload();
+        pending.then((api) => api(req, res, next)).catch(() => next());
       });
     },
   };
