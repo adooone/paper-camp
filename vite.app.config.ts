@@ -29,6 +29,9 @@ function papercampApi(): Plugin {
       // crashed `pnpm dev` at config load. ssrLoadModule resolves `@/` (and TS)
       // the same way the app build does, so server code can use `@/` freely.
       let pending: Promise<ApiMiddleware> | null = null;
+      // Set once a hot-swap fails, so the next successful load knows to tell the
+      // client the banner it raised is now stale.
+      let reloadFailed = false;
       const loadApi = async (): Promise<ApiMiddleware> => {
         if (g.__paperCampApi) return g.__paperCampApi;
         const mod = (await server.ssrLoadModule('/src/app/server/api.ts')) as {
@@ -40,6 +43,10 @@ function papercampApi(): Plugin {
           g.__paperCampAgentState = undefined;
         }
         g.__paperCampApi = api;
+        if (reloadFailed) {
+          reloadFailed = false;
+          server.ws.send({ type: 'custom', event: 'papercamp:server-reload-ok' });
+        }
         if (!g.__paperCampShutdownRegistered) {
           g.__paperCampShutdownRegistered = true;
           // Reads g.__paperCampApi at signal time, not a closed-over `api`, so it still
@@ -64,7 +71,16 @@ function papercampApi(): Plugin {
         pending
           .then((api) => api(req, res, next))
           .catch((err) => {
-            server.config.logger.error(`papercamp-api failed to load: ${err}`);
+            const message = err instanceof Error ? err.message : String(err);
+            // A hot-swap that throws leaves `pending` rejected until the next edit under
+            // src/app/server/**, so every request fails the same way until then — loud on
+            // both ends since a silent 500 is exactly the footgun this phase closes.
+            server.config.logger.error(
+              `\n🛑 papercamp-api failed to reload — restart \`pnpm dev\`: ${message}\n`,
+              { timestamp: true },
+            );
+            reloadFailed = true;
+            server.ws.send({ type: 'custom', event: 'papercamp:server-reload-error', data: { message } });
             next();
           });
       });
