@@ -26,17 +26,11 @@ stays on this map until its first idea is captured.
 The app works end-to-end for its author. This horizon makes it trustworthy for
 a second person.
 
-- **First-run experience** — `init` produces a welcoming empty corpus: seeded
-  example idea, empty states that teach ("No ideas yet — capture one or ask for
-  suggestions"), and USAGE.md surfaced on first open.
 - **Packaging** — one command in any repo: scaffold `papercamp/`, start the
   desk. No cloning this repo to use the method. The runtime stays
   server-first: a local server owning files/git/agents, the browser as the
   client — no desktop shell unless tray/notification needs earn one later
   (see decisions.md, 2026-07-19).
-- **Dev-server reload honesty** — server code changes silently don't apply
-  until restart (the globalThis API cache). Either hot-reload routes or show a
-  visible "restart needed" signal. This footgun bit three times in one week.
 - **Review-queue hygiene** — the archive flow exists; adopt the habit loop it
   enables: nothing sits in `review` for more than a few days.
 

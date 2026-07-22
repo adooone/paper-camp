@@ -8,7 +8,7 @@
     "chore": 2,
     "docs": 4,
     "refactor": 5,
-    "idea": 79
+    "idea": 82
   },
   "defaultAgents": {
     "phase": {
@@ -38,5 +38,6 @@
     "Workflow",
     "App UI",
     "Mobile control desk"
-  ]
+  ],
+  "setupDismissed": true
 }

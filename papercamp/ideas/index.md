@@ -80,3 +80,5 @@
 | IDEA-76 | First-run access setup | feat | done | app, settings, agent, git, ux |
 | IDEA-77 | Candidate ideas under roadmap items | feat | done | app, plans, docs, ui |
 | IDEA-78 | Responsive polish for phone widths | — | idea |  |
+| IDEA-79 | First-run experience | feat | idea | cli, scaffold, app |
+| IDEA-80 | Dev-server reload honesty | — | idea |  |
