@@ -1,6 +1,6 @@
 import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
-import { STATUS_STAMP } from '@/app/features/plans/constants';
+import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { fetchRoadmap } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
@@ -65,21 +65,58 @@ const CandidateRow = ({
   </Card>
 );
 
+const GraduatedRow = ({ plan, onOpen }: { plan: PlanEntry; onOpen: () => void }) => (
+  <Card size="small" texture="kraft" className="plan-row-card">
+    <button
+      type="button"
+      onClick={onOpen}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: space[3],
+        width: '100%',
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        cursor: 'pointer',
+        font: 'inherit',
+        color: 'inherit',
+        textAlign: 'left',
+      }}
+    >
+      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {plan.title}
+      </span>
+      <Stamp
+        size="small"
+        fillColor={STATUS_STAMP[plan.status].fill}
+        textColor={STATUS_STAMP[plan.status].text}
+      >
+        {STATUS_LABEL[plan.status]}
+      </Stamp>
+    </button>
+  </Card>
+);
+
 const RoadmapItemRow = ({
   item,
   graduated,
   onPromote,
   onPromoteCandidate,
   onViewGraduated,
+  onOpenGraduated,
 }: {
   item: RoadmapItem;
   graduated: PlanEntry[];
   onPromote: () => void;
   onPromoteCandidate: (candidateName: string) => void;
   onViewGraduated: () => void;
+  onOpenGraduated: (title: string) => void;
 }) => {
   const [expanded, setExpanded] = useState(false);
   const hasCandidates = item.candidates.length > 0;
+  const hasGraduated = graduated.length > 0;
+  const canExpand = hasCandidates || hasGraduated;
   const { shipped, queued } = graduationCounts(graduated);
 
   return (
@@ -87,12 +124,12 @@ const RoadmapItemRow = ({
       <Card size="small" texture="canvas" className="plan-row-card">
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-            {hasCandidates && (
+            {canExpand && (
               // Raw <button>: icon-only toggle, paper-ui Button doesn't offer this compact chrome.
               <button
                 type="button"
                 aria-expanded={expanded}
-                aria-label={expanded ? 'Hide candidates' : 'Show candidates'}
+                aria-label={expanded ? 'Collapse item' : 'Expand item'}
                 onClick={() => setExpanded((v) => !v)}
                 style={{
                   display: 'inline-flex',
@@ -113,7 +150,10 @@ const RoadmapItemRow = ({
               Promote to idea
             </Button>
           </div>
-          <span className="roadmap-item-desc" style={{ fontSize: fontSize.sm, opacity: 0.7 }}>
+          <span
+            className={expanded ? undefined : 'roadmap-item-desc'}
+            style={{ fontSize: fontSize.sm, opacity: 0.7 }}
+          >
             {item.description}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
@@ -159,7 +199,7 @@ const RoadmapItemRow = ({
           </div>
         </div>
       </Card>
-      {hasCandidates && expanded && (
+      {expanded && (
         <div
           style={{
             display: 'flex',
@@ -174,6 +214,9 @@ const RoadmapItemRow = ({
               name={candidateName}
               onPromote={() => onPromoteCandidate(candidateName)}
             />
+          ))}
+          {graduated.map((plan) => (
+            <GraduatedRow key={plan.title} plan={plan} onOpen={() => onOpenGraduated(plan.title)} />
           ))}
         </div>
       )}
@@ -326,6 +369,9 @@ export const RoadmapPage = () => {
                   setPromoting({ horizonTitle: horizon.title, item, candidateName })
                 }
                 onViewGraduated={() => navigate({ to: '/', search: { subject: item.name } })}
+                onOpenGraduated={(title) =>
+                  navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(title) } })
+                }
               />
             ))}
           </div>
