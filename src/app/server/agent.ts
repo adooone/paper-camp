@@ -34,7 +34,7 @@ import { logTaskCompletion } from './task-log';
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
 
-interface AgentTask {
+export interface AgentTask {
   id: string;
   taskKind: TaskKind;
   planTitle: string;
@@ -934,6 +934,19 @@ export function createAgentManager(
     pendingFixReviewResult = null;
   }
 
+  // Handed to a hot-reloaded replacement instance so in-flight tasks (and the SSE
+  // clients watching them) survive a dev-server code swap instead of being orphaned.
+  function exportState(): AgentManagerState {
+    return { tasks, lastLaunchedId, pendingFixReviewResult, clients };
+  }
+
+  function importState(state: AgentManagerState): void {
+    for (const [id, task] of state.tasks) tasks.set(id, task);
+    lastLaunchedId = state.lastLaunchedId;
+    pendingFixReviewResult = state.pendingFixReviewResult;
+    for (const client of state.clients) clients.add(client);
+  }
+
   return {
     start,
     startForPlan,
@@ -950,6 +963,8 @@ export function createAgentManager(
     stop,
     getStatus,
     getReconcileQueue,
+    exportState,
+    importState,
     subscribe(res: ServerResponse) {
       clients.add(res);
       res.on('close', () => clients.delete(res));
@@ -984,6 +999,13 @@ export function createAgentManager(
   };
 }
 
+export interface AgentManagerState {
+  tasks: Map<string, AgentTask>;
+  lastLaunchedId: string | undefined;
+  pendingFixReviewResult: FixReviewResult | null;
+  clients: Set<ServerResponse>;
+}
+
 export interface AgentManager {
   start: (plan: PlanEntry, phaseIndex: number) => Result;
   startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
@@ -1000,6 +1022,8 @@ export interface AgentManager {
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
   getReconcileQueue: () => ReconcileQueueItem[] | null;
+  exportState: () => AgentManagerState;
+  importState: (state: AgentManagerState) => void;
   subscribe: (res: ServerResponse) => void;
   killCurrent: () => Promise<void>;
 }

@@ -24,7 +24,7 @@ From the roadmap: Horizon 1 — Ready for daily use.
       Watch `src/app/server/**` and, on change, rebuild the middleware via a fresh
       `ssrLoadModule('/src/app/server/api.ts')` (invalidate the SSR module first) instead
       of returning the stale cached instance, so route/handler edits apply live.
-- [ ] Carry live agent state across the reload
+- [x] Carry live agent state across the reload
       Hand the old instance's `agent.current` (and any other in-flight tracking) to the
       new middleware so a running agent task survives the hot-reload rather than being
       silently orphaned — the exact regression the globalThis cache was added to prevent.

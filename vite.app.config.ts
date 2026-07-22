@@ -5,14 +5,18 @@ import { resolve } from 'path';
 // Type-only — erased before esbuild bundles this config, so it does NOT pull the
 // server's runtime graph (and its `@/` imports) into the config bundle.
 import type { ApiMiddleware } from './src/app/server/api';
+import type { AgentManagerState } from './src/app/server/agent';
 
 // src/app/server/** isn't a config dependency, so Vite never restarts for it — the
-// watcher below clears `g.__paperCampApi` on change so loadApi() rebuilds it instead.
-// The one restart that *can* happen in-process is editing this config file itself,
-// which Vite reinitializes via configureServer — globalThis survives that so the live
-// agent task (AgentManager's `tasks`/`lastLaunchedId`, and its running child process)
-// isn't silently orphaned mid-run.
-const g = globalThis as { __paperCampApi?: ApiMiddleware; __paperCampShutdownRegistered?: boolean };
+// watcher below clears `g.__paperCampApi` on change so loadApi() rebuilds it instead,
+// after exporting the old instance's in-flight agent tasks/SSE clients into
+// `g.__paperCampAgentState` so the new instance can import them and a running task
+// (and its child process) survives the swap instead of being silently orphaned.
+const g = globalThis as {
+  __paperCampApi?: ApiMiddleware;
+  __paperCampShutdownRegistered?: boolean;
+  __paperCampAgentState?: AgentManagerState;
+};
 
 function papercampApi(): Plugin {
   return {
@@ -31,6 +35,10 @@ function papercampApi(): Plugin {
           createApiMiddleware: (root: string) => ApiMiddleware;
         };
         const api = mod.createApiMiddleware(process.cwd());
+        if (g.__paperCampAgentState) {
+          api.agent.importState(g.__paperCampAgentState);
+          g.__paperCampAgentState = undefined;
+        }
         g.__paperCampApi = api;
         if (!g.__paperCampShutdownRegistered) {
           g.__paperCampShutdownRegistered = true;
@@ -47,6 +55,7 @@ function papercampApi(): Plugin {
         if (!file.startsWith(serverRoot)) return;
         const mod = server.moduleGraph.getModuleById(file);
         if (mod) server.moduleGraph.invalidateModule(mod);
+        if (g.__paperCampApi) g.__paperCampAgentState = g.__paperCampApi.agent.exportState();
         g.__paperCampApi = undefined;
         pending = null;
       });
