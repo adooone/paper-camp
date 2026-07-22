@@ -265,10 +265,18 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
 
     // "Stale" requires both merged AND main having advanced past it, not just merged.
     if (await isMergedIntoMain()) {
-      const behind = await runGit(['rev-list', '--count', `HEAD..${await mainRef()}`])
-        .then((n) => Number.parseInt(n.trim(), 10) || 0)
-        .catch(() => 0);
-      if (behind > 0) return 'stale-merged';
+      // A fresh branch cut from a stale local main is an ancestor of origin/main
+      // with zero commits of its own — "not started", never "merged".
+      const [head, mainTip] = await Promise.all([
+        runGit(['rev-parse', 'HEAD']).catch(() => ''),
+        runGit(['rev-parse', 'main']).catch(() => ''),
+      ]);
+      if (head && head.trim() !== mainTip.trim()) {
+        const behind = await runGit(['rev-list', '--count', `HEAD..${await mainRef()}`])
+          .then((n) => Number.parseInt(n.trim(), 10) || 0)
+          .catch(() => 0);
+        if (behind > 0) return 'stale-merged';
+      }
     }
 
     return isDirty ? 'dirty' : 'fine';

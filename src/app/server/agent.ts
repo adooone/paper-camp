@@ -34,7 +34,7 @@ import { logTaskCompletion } from './task-log';
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
 
-interface AgentTask {
+export interface AgentTask {
   id: string;
   taskKind: TaskKind;
   planTitle: string;
@@ -107,18 +107,30 @@ When the work is done:
 3. If every phase in the list is now checked, set the plan's \`status:\` frontmatter field to \`review\` — never \`done\`; per this repo's AGENTS.md a human promotes plans to done.`;
 }
 
+function createEmptyAgentState(): AgentManagerState {
+  return {
+    tasks: new Map(),
+    clients: new Set(),
+    lastLaunchedId: undefined,
+    pendingFixReviewResult: null,
+  };
+}
+
 export function createAgentManager(
   root: string,
   onAuditComplete?: (planId: string, gapPhases: number) => Promise<void>,
   onPhaseCommit?: (plan: PlanEntry, phase: PhaseItem, phaseIndex: number) => Promise<void>,
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
+  state: AgentManagerState = createEmptyAgentState(),
 ) {
-  const clients = new Set<ServerResponse>();
-  const tasks = new Map<string, AgentTask>();
-  let lastLaunchedId: string | undefined;
+  // `tasks`/`clients` are the same Map/Set a hot-reloaded replacement instance
+  // receives via `state`, so in-flight process listeners (registered on this
+  // closure) and the new instance's getStatus()/subscribe() read and write the
+  // same underlying collections instead of drifting apart after the swap.
+  const { tasks, clients } = state;
 
   function currentTask(): AgentTask | undefined {
-    return lastLaunchedId ? tasks.get(lastLaunchedId) : undefined;
+    return state.lastLaunchedId ? tasks.get(state.lastLaunchedId) : undefined;
   }
 
   function runningTasks(): AgentTask[] {
@@ -126,12 +138,12 @@ export function createAgentManager(
   }
 
   function isSuperseded(task: AgentTask): boolean {
-    return lastLaunchedId !== task.id;
+    return state.lastLaunchedId !== task.id;
   }
 
   function registerTask(task: AgentTask): void {
     tasks.set(task.id, task);
-    lastLaunchedId = task.id;
+    state.lastLaunchedId = task.id;
   }
 
   function newTask(
@@ -152,10 +164,6 @@ export function createAgentManager(
     setStatus(task, 'running');
     return task;
   }
-
-  // Outlives task replacement: a human can launch another run before pushing,
-  // and the verdict must still be there to settle threads once the fix is pushed.
-  let pendingFixReviewResult: FixReviewResult | null = null;
 
   function broadcast(message: string, taskId?: string) {
     const data = `data: ${JSON.stringify({ message, timestamp: new Date().toISOString(), type: 'agent', taskId })}\n\n`;
@@ -247,7 +255,7 @@ export function createAgentManager(
     if (task.taskKind === 'fix-review') {
       task.fixReviewResult = parseFixReviewResult(task.lines, task.fixReviewThreads ?? []);
       if (task.fixReviewResult) {
-        pendingFixReviewResult = task.fixReviewResult;
+        state.pendingFixReviewResult = task.fixReviewResult;
         settleReviewThreads(root, task.fixReviewResult, (text) => pushLine(task, text));
       }
     }
@@ -927,11 +935,11 @@ export function createAgentManager(
   }
 
   function getFixReviewResult(): FixReviewResult | null {
-    return pendingFixReviewResult;
+    return state.pendingFixReviewResult;
   }
 
   function consumeFixReviewResult(): void {
-    pendingFixReviewResult = null;
+    state.pendingFixReviewResult = null;
   }
 
   return {
@@ -950,6 +958,10 @@ export function createAgentManager(
     stop,
     getStatus,
     getReconcileQueue,
+    // Handed to a hot-reloaded replacement instance's constructor so both share
+    // this exact state object — in-flight tasks and their process listeners keep
+    // updating the same Map/Set/scalars the new instance reads.
+    getState: () => state,
     subscribe(res: ServerResponse) {
       clients.add(res);
       res.on('close', () => clients.delete(res));
@@ -984,6 +996,15 @@ export function createAgentManager(
   };
 }
 
+export interface AgentManagerState {
+  tasks: Map<string, AgentTask>;
+  lastLaunchedId: string | undefined;
+  // Outlives task replacement: a human can launch another run before pushing,
+  // and the verdict must still be there to settle threads once the fix is pushed.
+  pendingFixReviewResult: FixReviewResult | null;
+  clients: Set<ServerResponse>;
+}
+
 export interface AgentManager {
   start: (plan: PlanEntry, phaseIndex: number) => Result;
   startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
@@ -1000,6 +1021,7 @@ export interface AgentManager {
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
   getReconcileQueue: () => ReconcileQueueItem[] | null;
+  getState: () => AgentManagerState;
   subscribe: (res: ServerResponse) => void;
   killCurrent: () => Promise<void>;
 }

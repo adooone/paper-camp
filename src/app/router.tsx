@@ -1,4 +1,10 @@
-import { ProjectIdentityHeader, SidebarShell, StackPanel, StatusBar } from '@/app/components';
+import {
+  ProjectIdentityHeader,
+  ServerReloadBanner,
+  SidebarShell,
+  StackPanel,
+  StatusBar,
+} from '@/app/components';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
 import { Button, IconButton, Layout, Page, ToastProvider, layoutConfig } from '@dendelion/paper-ui';
@@ -133,6 +139,7 @@ const RootLayout = () => {
   return (
     <ToastProvider position="bottom-left">
       <div className="h-screen box-border min-[1440px]:pr-[480px] flex flex-col">
+        <ServerReloadBanner />
         <StatusBar />
         <Layout
           style={{ flex: '1 1 0%', minHeight: 0, height: 'auto' }}

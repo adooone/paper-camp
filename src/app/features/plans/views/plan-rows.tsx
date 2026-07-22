@@ -2,11 +2,11 @@ import { MergeIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
-import { Card, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { Card, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PR_STATE_STAMP, STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { effectiveStatus, phaseProgress, relativeDate } from '../helpers';
+import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
 
 interface PlanRowsProps {
   plans: PlanEntry[];
@@ -27,8 +27,16 @@ const headerLabelStyle: React.CSSProperties = {
 
 export const ROW_MARKER_WIDTH = 36;
 
-/** The gutter outside a row card: run-order stamp, a check for done, or blank. */
-export const RowMarker = ({ order, done }: { order?: number; done?: boolean }) => (
+/** The gutter outside a row card: spinner while an agent works, run-order stamp, a check for done, or blank. */
+export const RowMarker = ({
+  order,
+  done,
+  running,
+}: {
+  order?: number;
+  done?: boolean;
+  running?: boolean;
+}) => (
   <span
     style={{
       flex: `0 0 ${ROW_MARKER_WIDTH}px`,
@@ -37,7 +45,9 @@ export const RowMarker = ({ order, done }: { order?: number; done?: boolean }) =
       justifyContent: 'center',
     }}
   >
-    {done ? (
+    {running ? (
+      <Spinner size="small" label="Agent running" />
+    ) : done ? (
       <span aria-label="Done" style={{ color: color.accentGreenDark, fontSize: fontSize.sm }}>
         ✓
       </span>
@@ -81,7 +91,11 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
         const status = effectiveStatus(plan, agentStatus);
         return (
           <div key={plan.title} style={{ display: 'flex', alignItems: 'center' }}>
-            <RowMarker order={plan.order} done={plan.status === 'done'} />
+            <RowMarker
+              order={plan.order}
+              done={plan.status === 'done'}
+              running={Boolean(runningTaskForPlan(plan.id, agentStatus))}
+            />
             <div
               role={onOpen ? 'button' : undefined}
               tabIndex={onOpen ? 0 : undefined}
