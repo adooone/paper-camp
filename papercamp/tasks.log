@@ -58,3 +58,4 @@
 {"id":"9ccfba09-6a4d-4d20-8ec9-63986447c878","taskKind":"run-all","planId":"IDEA-79","planTitle":"First-run experience","agentId":"claude-code","startedAt":"2026-07-22T18:45:19.723Z","endedAt":"2026-07-22T18:55:47.355Z","outcome":"done"}
 {"id":"a40817ab-b41a-40fe-ab96-4b026d821490","taskKind":"run-all","planId":"IDEA-81","planTitle":"Make the roadmap look like a map","agentId":"claude-code","startedAt":"2026-07-23T08:38:52.608Z","endedAt":"2026-07-23T08:48:19.052Z","outcome":"done"}
 {"id":"cc2eaa09-3b7f-41c8-a3d4-219cef943e7d","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-23T08:49:41.201Z","endedAt":"2026-07-23T08:49:47.034Z","outcome":"done"}
+{"id":"841119e3-216a-4a1f-9df1-2d0df617e76a","taskKind":"run-all","planId":"IDEA-78","planTitle":"Responsive polish for phone widths","agentId":"claude-code","startedAt":"2026-07-23T08:54:15.807Z","endedAt":"2026-07-23T09:00:39.100Z","outcome":"error"}

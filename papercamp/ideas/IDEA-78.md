@@ -15,13 +15,13 @@ order: 4
 From the roadmap: Horizon 3 — Beyond one desk — Mobile control desk.
 
 ### Phases
-- [ ] Establish phone breakpoints and audit what breaks
+- [x] Establish phone breakpoints and audit what breaks
       Pin a phone breakpoint in `styles/tokens.ts` (`layout`) and walk the dashboard
       at ~375px, cataloguing the concrete failures: the left `SidebarShell` and the
       right-docked `StackPanel` both steal horizontal space the content needs, the
       nav-island pill, tables, and modals overflow. Output is the list of surfaces the
       later phases fix, no behaviour change yet.
-- [ ] Reflow the layout shell — sidebar and Stack panel as drawers
+- [x] Reflow the layout shell — sidebar and Stack panel as drawers
       Below the phone breakpoint, collapse the persistent left `SidebarShell` and the
       right `StackPanel` from always-docked columns into off-canvas drawers (toggled,
       overlaying the content) so `Outlet` gets the full viewport width; drop the

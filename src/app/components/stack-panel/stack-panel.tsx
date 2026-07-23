@@ -208,7 +208,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           top: 0,
           right: 0,
           bottom: 0,
-          width: layout.stackPanelWidth,
+          // Below the phone breakpoint the fixed 480px would overflow the viewport itself.
+          width: `min(${layout.stackPanelWidth}px, 100vw)`,
           borderLeft: '4px solid rgba(61, 53, 43, 0.12)',
           backgroundColor: deskBg,
           backgroundImage: `${CHALKBOARD_TEXTURE}, linear-gradient(135deg, ${deskLight} 0%, ${deskBg} 60%)`,
