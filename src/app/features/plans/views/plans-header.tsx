@@ -15,6 +15,7 @@ export const PlansHeader = () => {
         alignItems: 'center',
         gap: space[3],
         marginBottom: space[6],
+        flexWrap: 'wrap',
       }}
     >
       <h1

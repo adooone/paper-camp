@@ -77,10 +77,11 @@ const PhasesSection = ({
         justifyContent: 'space-between',
         gap: space[3],
         marginBottom: space[3],
+        flexWrap: 'wrap',
       }}
     >
       <h3 style={{ ...sectionHeadingStyle, margin: 0 }}>Phases</h3>
-      <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
         {auditRunning && <Spinner size="small" label="Audit running…" />}
         {(plan.status === 'review' || plan.status === 'done') && <AuditPhasesButton plan={plan} />}
         {plan.status !== 'done' && <ReconcileButton plan={plan} />}
@@ -153,6 +154,7 @@ const PhasesSection = ({
       rowClassName={(phase: PhaseItem) =>
         phase.source === 'review' ? 'phase-row-review' : undefined
       }
+      className="phase-table-phone"
     />
   </div>
 );
@@ -309,6 +311,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           justifyContent: 'space-between',
           gap: space[3],
           margin: `0 0 ${space[3]}`,
+          flexWrap: 'wrap',
         }}
       >
         <h2
@@ -319,6 +322,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             alignItems: 'center',
             gap: space[3],
             minWidth: 0,
+            flexWrap: 'wrap',
           }}
         >
           <PlanIdStamp id={plan.id} />

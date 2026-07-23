@@ -26,7 +26,7 @@ From the roadmap: Horizon 3 — Beyond one desk — Mobile control desk.
       right `StackPanel` from always-docked columns into off-canvas drawers (toggled,
       overlaying the content) so `Outlet` gets the full viewport width; drop the
       `stackPanelWidth` content padding at that width.
-- [ ] Stack the content surfaces
+- [x] Stack the content surfaces
       Make the Plans worklist/`PlanCard`, the phase `Table`, board view, and
       `EntityDetail`/`NoteDetail` reflow to a single column at phone width — tables and
       the kanban board go vertical rather than scrolling sideways, headers and stamp

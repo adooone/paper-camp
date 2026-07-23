@@ -144,6 +144,22 @@ header[class*="layout-module__header___"] {
 }
 
 /*
+ * Even with the updated column dropped, the remaining fixed columns (id,
+ * progress, status) crush the flexible title at phone width — stack every
+ * cell full-width instead.
+ */
+@media (max-width: 480px) {
+  .plan-rows-grid {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+  .idea-group-row-grid {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
+/*
  * The dense ideas list (idea-rows.tsx) mirrors .plan-rows-grid: same fixed-width
  * non-title columns for the same per-card alignment reason, but swaps progress
  * for a trailing action column (draft-plan button, or the linked-plans toggle).
@@ -198,6 +214,13 @@ header[class*="layout-module__header___"] {
   }
 }
 
+@media (max-width: 480px) {
+  .task-rows-grid {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
 /*
  * The Stack's Agent section is a column of one Card per task; Card's smallest
  * padding is still sized for content cards, so tighten it to a single-line row
@@ -221,6 +244,44 @@ header[class*="layout-module__header___"] {
   .roadmap-horizons-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 1.5rem;
+  }
+}
+
+/*
+ * paper-ui's phase Table is a real <table> with fixed pixel column widths
+ * (colgroup), which don't reflow — below phone width this drops every table
+ * element to block display so cells stack full-width instead of the
+ * tableScroll wrapper forcing a sideways scroll. The `class*=` selector reaches
+ * that CSS-module wrapper by its stable name part, same pattern as the header
+ * overrides above.
+ */
+@media (max-width: 480px) {
+  .phase-table-phone [class*="tableScroll"] {
+    overflow-x: visible;
+  }
+  .phase-table-phone table,
+  .phase-table-phone thead,
+  .phase-table-phone tbody,
+  .phase-table-phone tr,
+  .phase-table-phone th,
+  .phase-table-phone td {
+    display: block;
+    width: auto;
+  }
+  .phase-table-phone thead {
+    display: none;
+  }
+  .phase-table-phone tr {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  .phase-table-phone tr:last-child {
+    border-bottom: none;
+  }
+  .phase-table-phone td {
+    height: auto;
+    padding: 0.125rem 1rem;
+    border-bottom: none;
   }
 }
 

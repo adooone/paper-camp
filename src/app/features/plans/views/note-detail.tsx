@@ -28,6 +28,7 @@ export const NoteDetail = ({ idea }: NoteDetailProps) => {
           display: 'flex',
           alignItems: 'center',
           gap: space[3],
+          flexWrap: 'wrap',
         }}
       >
         <PlanIdStamp id={idea.id ?? undefined} />
