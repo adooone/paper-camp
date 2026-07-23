@@ -2,7 +2,7 @@
 id: IDEA-78
 title: Responsive polish for phone widths
 type: feat
-status: idea
+status: review
 created: 2026-07-21
 subject: Mobile control desk
 tags:
@@ -35,6 +35,6 @@ From the roadmap: Horizon 3 — Beyond one desk — Mobile control desk.
       Bump tap targets (checkboxes, `IconButton`s, card hit areas) to a comfortable
       minimum and reposition the floating nav island so Plans/Review/Docs/Settings and
       the drawer toggles are reachable one-handed near the bottom of the screen.
-- [ ] Gate the pass
+- [x] Gate the pass
       Run `tsc --noEmit`, `npx biome check . --write`, and `pnpm test`; confirm the
       comment-ratio guard stays under budget and nothing regressed at desktop widths.
