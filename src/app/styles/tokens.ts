@@ -90,4 +90,11 @@ export const layout = {
   stackPanelWidth: 480,
   headerHeight,
   contentGap: space[6],
+  // Below this, phone-specific layout rules kick in (drawers, stacked tables,
+  // touch targets). Sits under Tailwind's sm (640) so it doesn't collide with
+  // that default, with headroom above real phone widths (~375-428px).
+  phoneBreakpoint: 480,
+  // The fixed bottom nav bar phones get in place of the header's nav row (see
+  // utilities.css .phone-bottom-nav) — tall enough for 44px targets plus padding.
+  bottomNavHeight: 64,
 } as const;

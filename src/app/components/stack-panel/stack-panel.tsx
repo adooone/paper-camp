@@ -143,7 +143,9 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
             style={{
               position: 'fixed',
               right: 0,
-              top: '50%',
+              // var() so utilities.css can nudge it toward one-handed thumb reach
+              // below the phone breakpoint, without disturbing framer-motion's x animation.
+              top: 'var(--pc-stack-toggle-top, 50%)',
               transform: 'translateY(-50%)',
               zIndex: 300, // above the Layout header's z-200
               borderRadius: '6px 0 0 6px',
@@ -208,7 +210,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           top: 0,
           right: 0,
           bottom: 0,
-          width: layout.stackPanelWidth,
+          // Below the phone breakpoint the fixed 480px would overflow the viewport itself.
+          width: `min(${layout.stackPanelWidth}px, 100vw)`,
           borderLeft: '4px solid rgba(61, 53, 43, 0.12)',
           backgroundColor: deskBg,
           backgroundImage: `${CHALKBOARD_TEXTURE}, linear-gradient(135deg, ${deskLight} 0%, ${deskBg} 60%)`,

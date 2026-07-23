@@ -313,6 +313,7 @@ const IdeaGroupRowCard = ({
         <div style={{ flex: 1, minWidth: 0 }}>
           <Card size="small" texture="canvas" className="plan-row-card">
             <div
+              className="idea-group-row-grid"
               style={{
                 display: 'grid',
                 gridTemplateColumns: '76px minmax(0, 1fr) 84px 1fr',
