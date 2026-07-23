@@ -2,7 +2,7 @@
 id: IDEA-82
 title: Order that can never be empty
 type: fix
-status: idea
+status: review
 created: 2026-07-21
 tags:
   - app
@@ -28,5 +28,5 @@ Two layers, split by the house rule (deterministic file ops, judgment for agents
       New read-only task kind `prioritise` (registry-visible like commit-suggest): prompt over the worklist + roadmap, JSON verdict with full-permutation validation (every active id exactly once — the fix-review partition discipline); server applies via the normalizer and appends a one-line reason to each moved idea's log.
 - [x] Consolidate header actions into a Menu
       The worklist header's accumulating buttons (refresh, suggest ideas, actualise all, and now prioritise) move into a paper-ui `Menu` (trigger + `MenuEntry[]` items, already in the library) — one ⋯ actions trigger next to the title, each entry with its icon and disabled/running state; frequently-used refresh may stay outside, judged at implementation. Prioritise lives in this menu; verdict application refreshes the list so the stamps visibly reorder.
-- [ ] Gate the pass
+- [x] Gate the pass
       `tsc --noEmit`, `biome check`, tests green; draft a plan on an orderless idea and watch it gain a stamp without any PATCH; run the shuffle and confirm stamps, files, and per-idea log reasons all agree.
