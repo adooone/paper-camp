@@ -98,6 +98,15 @@ header[class*="layout-module__header___"] {
 }
 
 /*
+ * A worklist subject header's map link lands here with ?item=; same highlight
+ * ring as .plan-row-highlighted so the linked item is findable once scrolled to.
+ */
+.roadmap-item-highlighted {
+  outline: 2px solid rgba(200, 154, 90, 0.5);
+  outline-offset: -2px;
+}
+
+/*
  * The dense plans list (plan-rows.tsx) is a table-shaped stack of Cards, not
  * paper-ui's Table: a kraft header card over one-line paper row cards. The
  * shared grid template is what keeps the header and every row's columns
@@ -196,4 +205,34 @@ header[class*="layout-module__header___"] {
  */
 .stack-task-card [class*="textureLayer"] {
   padding: 0.5rem 0.875rem;
+}
+
+/*
+ * The Roadmap's horizons are columns of a survey, not a scroll — three
+ * side-by-side at lg fit the whole map on one screen; below that they stack
+ * so item cards keep readable width instead of shrinking to fit a column.
+ */
+.roadmap-horizons-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 1.5rem;
+}
+@media (max-width: 1023px) {
+  .roadmap-horizons-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+.roadmap-goal-line-clamp,
+.roadmap-item-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.roadmap-goal-line-clamp {
+  -webkit-line-clamp: 1;
+}
+.roadmap-item-desc {
+  -webkit-line-clamp: 2;
 }

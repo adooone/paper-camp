@@ -76,6 +76,30 @@ export const promoteRoadmapItem = async (
   return res.json() as Promise<{ ok: boolean; id: string }>;
 };
 
+export const addRoadmapItem = async (horizonTitle: string, name: string, description: string) => {
+  const res = await fetch('/api/roadmap/items', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ horizonTitle, name, description }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to add roadmap item' }));
+    throw new Error(err.error);
+  }
+};
+
+export const addRoadmapCandidate = async (horizonTitle: string, itemName: string, name: string) => {
+  const res = await fetch('/api/roadmap/candidates', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ horizonTitle, itemName, name }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to add roadmap candidate' }));
+    throw new Error(err.error);
+  }
+};
+
 export const fetchConsistency = async () => {
   const res = await fetch('/api/consistency');
   return res.json() as Promise<ConsistencyIssue[]>;

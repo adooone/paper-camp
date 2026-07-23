@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseRoadmap, removeRoadmapItem } from './roadmap';
+import { addRoadmapCandidate, addRoadmapItem, parseRoadmap, removeRoadmapItem } from './roadmap';
 
 const SAMPLE = `# Roadmap
 
@@ -187,5 +187,87 @@ describe('removeRoadmapItem', () => {
       'Mobile control desk',
     ]);
     expect(horizons[1].items.map((i) => i.name)).toEqual(['Goal & roadmap in the app']);
+  });
+});
+
+describe('addRoadmapItem', () => {
+  it('appends a new item bullet at the end of the horizon, round-tripping through parseRoadmap', () => {
+    const result = addRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Offline mode',
+      'work with no connection.',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items.map((i) => i.name)).toEqual([
+      'First-run experience',
+      'Packaging',
+      'Mobile control desk',
+      'Offline mode',
+    ]);
+    expect(horizons[0].items[3]).toEqual({
+      name: 'Offline mode',
+      description: 'work with no connection.',
+      candidates: [],
+    });
+  });
+
+  it('does not disturb the following horizon', () => {
+    const result = addRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'Offline mode', 'x.');
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[1].items.map((i) => i.name)).toEqual(['Goal & roadmap in the app']);
+  });
+
+  it('is a no-op when the horizon does not exist', () => {
+    expect(addRoadmapItem(SAMPLE, 'Horizon 9 — Nope', 'Offline mode', 'x.')).toBe(SAMPLE);
+  });
+});
+
+describe('addRoadmapCandidate', () => {
+  it('appends a new candidate bullet under the item, round-tripping through parseRoadmap', () => {
+    const result = addRoadmapCandidate(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+      'Offline queueing',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[2]).toEqual({
+      name: 'Mobile control desk',
+      description: 'direct the flow from a phone.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'PWA manifest + install to home screen',
+        'Push notifications for task/check events',
+        'Offline queueing',
+      ],
+    });
+  });
+
+  it('adds a first candidate to an item with none yet', () => {
+    const result = addRoadmapCandidate(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Packaging',
+      'Homebrew formula',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[1]).toEqual({
+      name: 'Packaging',
+      description: 'one command in any repo.',
+      candidates: ['Homebrew formula'],
+    });
+  });
+
+  it('is a no-op when the horizon does not exist', () => {
+    expect(
+      addRoadmapCandidate(SAMPLE, 'Horizon 9 — Nope', 'Mobile control desk', 'Offline queueing'),
+    ).toBe(SAMPLE);
+  });
+
+  it('is a no-op when the item does not exist', () => {
+    expect(
+      addRoadmapCandidate(SAMPLE, 'Horizon 1 — Ready for daily use', 'No such item', 'x'),
+    ).toBe(SAMPLE);
   });
 });
