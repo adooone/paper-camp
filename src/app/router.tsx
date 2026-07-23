@@ -346,6 +346,9 @@ const roadmapRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/roadmap',
   component: RoadmapPage,
+  validateSearch: (search: Record<string, unknown>): { item?: string } => ({
+    item: typeof search.item === 'string' ? search.item : undefined,
+  }),
 });
 
 const tasksRoute = createRoute({

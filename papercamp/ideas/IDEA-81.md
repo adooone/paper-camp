@@ -28,9 +28,9 @@ The redesign principle: **the map should look like a map, and the desk should be
       Slim expandable goal banner; horizons as responsive columns with progress lines in the headers; item cards clamped to name + two-line description + stamp row. Pure presentation over the existing `/api/roadmap` data.
 - [x] Expand cards with live state
       Card expansion (chevron pattern): full description, candidates with per-candidate Promote (existing), and the graduated-ideas list with status stamps derived from the loaded plans by subject match.
-- [ ] Write to the map from the UI
+- [x] Write to the map from the UI
       `POST /api/roadmap/items` and `/api/roadmap/candidates` appending a bullet via the grammar round-trip (with tests); "Add item" input per column, "Add candidate" per expanded card.
-- [ ] Link the queue back to the map
+- [x] Link the queue back to the map
       Subject-group headers in the worklist link to `/roadmap?item=<name>` when the subject matches an item; the roadmap highlights and scrolls to that item (existing highlight-ring + scrollIntoView pattern).
 - [ ] Gate the pass
       `tsc --noEmit`, `biome check`, tests green (grammar-append round-trip covered); click through in Chrome: whole map on one screen at lg, add an item and a candidate from the UI, promote a candidate, follow a subject header from the queue to its highlighted item.

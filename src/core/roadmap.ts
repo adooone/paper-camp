@@ -114,3 +114,65 @@ export function removeRoadmapItem(
 
   return markdown;
 }
+
+// Appends a new item bullet (`- **name** — description`) at the end of a horizon's item
+// list, in the same shape parseItems expects back. No-op (returns markdown unchanged) if
+// the horizon doesn't exist.
+export function addRoadmapItem(
+  markdown: string,
+  horizonTitle: string,
+  name: string,
+  description: string,
+): string {
+  const lines = markdown.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const horizonMatch = lines[i].match(HORIZON_HEADING_RE);
+    if (!horizonMatch || horizonMatch[1].trim() !== horizonTitle) continue;
+
+    let end = i + 1;
+    while (end < lines.length && !H2_RE.test(lines[end])) end++;
+
+    while (end > i + 1 && lines[end - 1].trim() === '') end--;
+    lines.splice(end, 0, `- **${name}** — ${description}`);
+    return lines.join('\n');
+  }
+
+  return markdown;
+}
+
+// Appends a new candidate bullet under an existing item, indented to match ITEM_CANDIDATE_RE.
+// No-op if the horizon or item doesn't exist.
+export function addRoadmapCandidate(
+  markdown: string,
+  horizonTitle: string,
+  itemName: string,
+  candidateName: string,
+): string {
+  const lines = markdown.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const horizonMatch = lines[i].match(HORIZON_HEADING_RE);
+    if (!horizonMatch || horizonMatch[1].trim() !== horizonTitle) continue;
+
+    let end = i + 1;
+    while (end < lines.length && !H2_RE.test(lines[end])) end++;
+
+    for (let j = i + 1; j < end; j++) {
+      const itemMatch = lines[j].match(ITEM_RE);
+      if (!itemMatch || itemMatch[1].trim() !== itemName) continue;
+
+      let itemEnd = j + 1;
+      while (itemEnd < end && !ITEM_RE.test(lines[itemEnd])) {
+        if (!ITEM_CONTINUATION_RE.test(lines[itemEnd])) break;
+        itemEnd++;
+      }
+
+      lines.splice(itemEnd, 0, `  - ${candidateName}`);
+      return lines.join('\n');
+    }
+    return markdown;
+  }
+
+  return markdown;
+}

@@ -1,13 +1,13 @@
 import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
-import { fetchRoadmap } from '@/app/services/content/docs-api';
+import { addRoadmapCandidate, addRoadmapItem, fetchRoadmap } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry, Roadmap, RoadmapItem } from '@/types/index';
-import { Button, Card, Stamp } from '@dendelion/paper-ui';
-import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { Button, Card, Input, Stamp } from '@dendelion/paper-ui';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useEffect, useRef, useState } from 'react';
 import { PromoteRoadmapItemModal } from './promote-roadmap-item-modal';
 
 const graduationCounts = (graduated: PlanEntry[]) => ({
@@ -65,6 +65,122 @@ const CandidateRow = ({
   </Card>
 );
 
+const AddCandidateForm = ({ onAdd }: { onAdd: (name: string) => Promise<void> }) => {
+  const [name, setName] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      await onAdd(name.trim());
+      setName('');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: space[2] }}>
+      <Input
+        size="small"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleAdd();
+        }}
+        placeholder="Add candidate…"
+        disabled={saving}
+        style={{ flex: 1 }}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="small"
+        onClick={handleAdd}
+        disabled={saving || !name.trim()}
+      >
+        Add
+      </Button>
+    </div>
+  );
+};
+
+const AddItemForm = ({
+  onAdd,
+}: {
+  onAdd: (name: string, description: string) => Promise<void>;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      await onAdd(name.trim(), description.trim());
+      setName('');
+      setDescription('');
+      setOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <Button type="button" variant="ghost" size="small" onClick={() => setOpen(true)}>
+        + Add item
+      </Button>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+      <Input
+        size="small"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Item name…"
+        disabled={saving}
+        autoFocus
+      />
+      <Input
+        size="small"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleAdd();
+        }}
+        placeholder="Description…"
+        disabled={saving}
+      />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="small"
+          onClick={() => setOpen(false)}
+          disabled={saving}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          size="small"
+          onClick={handleAdd}
+          disabled={saving || !name.trim()}
+        >
+          Add
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const GraduatedRow = ({ plan, onOpen }: { plan: PlanEntry; onOpen: () => void }) => (
   <Card size="small" texture="kraft" className="plan-row-card">
     <button
@@ -101,50 +217,53 @@ const GraduatedRow = ({ plan, onOpen }: { plan: PlanEntry; onOpen: () => void })
 const RoadmapItemRow = ({
   item,
   graduated,
+  highlighted,
   onPromote,
   onPromoteCandidate,
+  onAddCandidate,
   onViewGraduated,
   onOpenGraduated,
 }: {
   item: RoadmapItem;
   graduated: PlanEntry[];
+  highlighted: boolean;
   onPromote: () => void;
   onPromoteCandidate: (candidateName: string) => void;
+  onAddCandidate: (name: string) => Promise<void>;
   onViewGraduated: () => void;
   onOpenGraduated: (title: string) => void;
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(highlighted);
   const hasCandidates = item.candidates.length > 0;
-  const hasGraduated = graduated.length > 0;
-  const canExpand = hasCandidates || hasGraduated;
   const { shipped, queued } = graduationCounts(graduated);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+    <div
+      className={highlighted ? 'roadmap-item-highlighted' : undefined}
+      style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+    >
       <Card size="small" texture="canvas" className="plan-row-card">
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-            {canExpand && (
-              // Raw <button>: icon-only toggle, paper-ui Button doesn't offer this compact chrome.
-              <button
-                type="button"
-                aria-expanded={expanded}
-                aria-label={expanded ? 'Collapse item' : 'Expand item'}
-                onClick={() => setExpanded((v) => !v)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  opacity: 0.5,
-                  padding: 0,
-                  transform: expanded ? 'rotate(90deg)' : undefined,
-                }}
-              >
-                <ChevronRightIcon />
-              </button>
-            )}
+            {/* Raw <button>: icon-only toggle, paper-ui Button doesn't offer this compact chrome. */}
+            <button
+              type="button"
+              aria-expanded={expanded}
+              aria-label={expanded ? 'Collapse item' : 'Expand item'}
+              onClick={() => setExpanded((v) => !v)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                opacity: 0.5,
+                padding: 0,
+                transform: expanded ? 'rotate(90deg)' : undefined,
+              }}
+            >
+              <ChevronRightIcon />
+            </button>
             <span style={{ fontWeight: 600, flex: 1 }}>{item.name}</span>
             <Button type="button" variant="ghost" size="small" onClick={onPromote}>
               Promote to idea
@@ -218,6 +337,7 @@ const RoadmapItemRow = ({
           {graduated.map((plan) => (
             <GraduatedRow key={plan.title} plan={plan} onOpen={() => onOpenGraduated(plan.title)} />
           ))}
+          <AddCandidateForm onAdd={onAddCandidate} />
         </div>
       )}
     </div>
@@ -306,6 +426,8 @@ export const RoadmapPage = () => {
   } | null>(null);
   const plans = useAppStore((s) => s.plans);
   const navigate = useNavigate();
+  const { item: highlightedItem } = useSearch({ from: '/roadmap' });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchRoadmap()
@@ -313,6 +435,12 @@ export const RoadmapPage = () => {
       .catch(() => setLoadFailed(true))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!highlightedItem || loading) return;
+    const row = containerRef.current?.querySelector('.roadmap-item-highlighted');
+    row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlightedItem, loading]);
 
   if (loading) {
     return (
@@ -346,8 +474,18 @@ export const RoadmapPage = () => {
   const graduatedByItem = (item: RoadmapItem) =>
     plans?.entries.filter((p) => p.subject === item.name) ?? [];
 
+  const handleAddItem = async (horizonTitle: string, name: string, description: string) => {
+    await addRoadmapItem(horizonTitle, name, description);
+    setRoadmap(await fetchRoadmap());
+  };
+
+  const handleAddCandidate = async (horizonTitle: string, itemName: string, name: string) => {
+    await addRoadmapCandidate(horizonTitle, itemName, name);
+    setRoadmap(await fetchRoadmap());
+  };
+
   return (
-    <div>
+    <div ref={containerRef}>
       <GoalBanner goal={roadmap.goal} />
       <div className="roadmap-horizons-grid">
         {roadmap.horizons.map((horizon) => (
@@ -364,16 +502,21 @@ export const RoadmapPage = () => {
                 key={item.name}
                 item={item}
                 graduated={graduatedByItem(item)}
+                highlighted={item.name === highlightedItem}
                 onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
                 onPromoteCandidate={(candidateName) =>
                   setPromoting({ horizonTitle: horizon.title, item, candidateName })
                 }
+                onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
                 onViewGraduated={() => navigate({ to: '/', search: { subject: item.name } })}
                 onOpenGraduated={(title) =>
                   navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(title) } })
                 }
               />
             ))}
+            <AddItemForm
+              onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
+            />
           </div>
         ))}
       </div>

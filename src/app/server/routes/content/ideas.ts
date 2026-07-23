@@ -2,7 +2,7 @@ import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
 import { readEntities } from '@/core/readers';
-import { removeRoadmapItem } from '@/core/roadmap';
+import { addRoadmapCandidate, addRoadmapItem, removeRoadmapItem } from '@/core/roadmap';
 import {
   assignEntityId,
   ensureSubject,
@@ -158,6 +158,69 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
         await writeFile(roadmapPath, updated, 'utf-8');
         await regenerateIndexes(root);
         sendJson(res, 201, { ok: true, id: newId });
+      },
+    },
+
+    // Capture at the item level: appends a bullet to a horizon through the same
+    // parse-splice-write grammar removeRoadmapItem already round-trips.
+    {
+      method: 'POST',
+      path: '/api/roadmap/items',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { horizonTitle, name, description } = JSON.parse(reqBody) as {
+          horizonTitle?: string;
+          name?: string;
+          description?: string;
+        };
+        if (!horizonTitle || !name?.trim()) {
+          sendJson(res, 400, { error: 'horizonTitle and name are required' });
+          return;
+        }
+        const roadmapPath = join(root, 'ROADMAP.md');
+        const raw = await readMaybe(roadmapPath);
+        if (!raw) {
+          sendJson(res, 404, { error: 'ROADMAP.md not found' });
+          return;
+        }
+        const updated = addRoadmapItem(raw, horizonTitle, name.trim(), description?.trim() ?? '');
+        if (updated === raw) {
+          sendJson(res, 404, { error: 'horizon not found' });
+          return;
+        }
+        await writeFile(roadmapPath, updated, 'utf-8');
+        sendJson(res, 201, { ok: true });
+      },
+    },
+
+    // Capture at the candidate level: appends a bullet under an existing item.
+    {
+      method: 'POST',
+      path: '/api/roadmap/candidates',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { horizonTitle, itemName, name } = JSON.parse(reqBody) as {
+          horizonTitle?: string;
+          itemName?: string;
+          name?: string;
+        };
+        if (!horizonTitle || !itemName || !name?.trim()) {
+          sendJson(res, 400, { error: 'horizonTitle, itemName and name are required' });
+          return;
+        }
+        const roadmapPath = join(root, 'ROADMAP.md');
+        const raw = await readMaybe(roadmapPath);
+        if (!raw) {
+          sendJson(res, 404, { error: 'ROADMAP.md not found' });
+          return;
+        }
+        const updated = addRoadmapCandidate(raw, horizonTitle, itemName, name.trim());
+        if (updated === raw) {
+          sendJson(res, 404, { error: 'horizon or item not found' });
+          return;
+        }
+        await writeFile(roadmapPath, updated, 'utf-8');
+        sendJson(res, 201, { ok: true });
       },
     },
 

@@ -98,6 +98,15 @@ header[class*="layout-module__header___"] {
 }
 
 /*
+ * A worklist subject header's map link lands here with ?item=; same highlight
+ * ring as .plan-row-highlighted so the linked item is findable once scrolled to.
+ */
+.roadmap-item-highlighted {
+  outline: 2px solid rgba(200, 154, 90, 0.5);
+  outline-offset: -2px;
+}
+
+/*
  * The dense plans list (plan-rows.tsx) is a table-shaped stack of Cards, not
  * paper-ui's Table: a kraft header card over one-line paper row cards. The
  * shared grid template is what keeps the header and every row's columns

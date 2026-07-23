@@ -1,11 +1,13 @@
 import { LightbulbIcon, NoteIcon } from '@/app/components/icons';
 import type { IdeaGroupRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
 import { groupRowsBySubject } from '@/app/features/plans/helpers';
+import { useRoadmapItemNames } from '@/app/features/roadmap';
 import { useProjectSubjects } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton } from '../actions';
 import { PlanIdStamp } from '../components';
@@ -90,6 +92,8 @@ export const WorklistRows = ({
 }: WorklistRowsProps) => {
   const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set());
   const { subjects: validSubjects, loading: subjectsLoading } = useProjectSubjects();
+  const roadmapItemNames = useRoadmapItemNames();
+  const navigate = useNavigate();
   const gridClass = 'plan-rows-grid';
   const sortKey = useAppStore((s) => s.planFilters.sortKey);
   const sortDirection = useAppStore((s) => s.planFilters.sortDirection);
@@ -189,15 +193,33 @@ export const WorklistRows = ({
         </div>
       </div>
       {showSubjectHeaders
-        ? groups.map((group) => (
-            <div
-              key={group.subject ?? '__no-subject__'}
-              style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
-            >
-              <div style={subjectHeaderStyle}>{group.subject ?? 'No subject'}</div>
-              {group.rows.map((row) => renderRow(row))}
-            </div>
-          ))
+        ? groups.map((group) => {
+            const subject = group.subject;
+            return (
+              <div
+                key={subject ?? '__no-subject__'}
+                style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+              >
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
+                  <div style={subjectHeaderStyle}>{subject ?? 'No subject'}</div>
+                  {subject && roadmapItemNames.has(subject) && (
+                    <button
+                      type="button"
+                      onClick={() => navigate({ to: '/roadmap', search: { item: subject } })}
+                      style={{
+                        ...headerButtonStyle,
+                        opacity: 0.5,
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Map
+                    </button>
+                  )}
+                </div>
+                {group.rows.map((row) => renderRow(row))}
+              </div>
+            );
+          })
         : rows.map((row) => renderRow(row))}
     </div>
   );
