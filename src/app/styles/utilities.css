@@ -285,6 +285,88 @@ header[class*="layout-module__header___"] {
   }
 }
 
+/*
+ * paper-ui's smallest IconButton/Checkbox hit areas are 40px square — under the
+ * ~44px comfortable tap-target minimum. Bump both at phone width via the same
+ * hashed-class reach-in pattern as the header overrides above; `small` alone is
+ * too common a module-local class name, so it's paired with the component's own
+ * stable class to stay scoped to just these two.
+ */
+@media (max-width: 480px) {
+  button[class*="iconButton"][class*="small"] {
+    width: 44px;
+    height: 44px;
+  }
+  label[class*="wrapper"] [class*="boxWrapper"] {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/*
+ * The dense row cards (.plan-row-card, shared by Plans/Ideas/Tasks/Roadmap/
+ * worklist rows) are sized for desktop pointer precision; widen their tap area
+ * at phone width so a thumb doesn't need to land on a single-line-tall target.
+ */
+@media (max-width: 480px) {
+  .plan-row-card [class*="textureLayer"] {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+}
+
+/*
+ * Below the phone breakpoint the header's nav row (router.tsx) has no room to
+ * wrap or collapse (phase 1's audit flagged it as overflowing there) — hidden
+ * in favor of this fixed bottom bar, reachable one-handed near the thumb
+ * instead of packed into a non-wrapping top row.
+ */
+.phone-bottom-nav {
+  display: none;
+}
+:root {
+  --pc-content-pad-bottom: 32px;
+}
+@media (max-width: 480px) {
+  :root {
+    /* clears the fixed 64px bar (utilities.css .phone-bottom-nav) plus its own padding/safe-area */
+    --pc-content-pad-bottom: 96px;
+  }
+  .phone-bottom-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 250;
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 0.25rem;
+    padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
+    background: var(--pui-bg-base, #fff);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+  }
+  .phone-bottom-nav button {
+    min-height: 44px;
+  }
+}
+
+/*
+ * The Stack panel's closed-state reopen tab (stack-panel.tsx) defaults to
+ * vertical-center via `top: 50%`; nudge it down toward one-handed thumb reach
+ * at phone width without disturbing the translateY(-50%) framer-motion combines
+ * its x animation with. Sits above .phone-bottom-nav (64px + safe-area tall).
+ */
+:root {
+  --pc-stack-toggle-top: 50%;
+}
+@media (max-width: 480px) {
+  :root {
+    --pc-stack-toggle-top: 70%;
+  }
+}
+
 .roadmap-goal-line-clamp,
 .roadmap-item-desc {
   display: -webkit-box;

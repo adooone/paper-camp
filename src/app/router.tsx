@@ -49,6 +49,20 @@ const navItems = [
   { id: 'settings', label: 'Settings', path: '/settings' },
 ];
 
+const SidebarToggleIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 20 20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    aria-hidden="true"
+  >
+    <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
+  </svg>
+);
+
 const STACK_OPEN_KEY = 'stack-open';
 
 function readStoredStackOpen(): boolean {
@@ -169,27 +183,18 @@ const RootLayout = () => {
                 <IconButton
                   variant="ghost"
                   size="small"
-                  className="lg:hidden"
+                  className="lg:hidden max-[480px]:hidden"
                   label="Open sidebar"
                   onClick={() => setMobileSidebarOpen(true)}
-                  icon={
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
-                    </svg>
-                  }
+                  icon={<SidebarToggleIcon />}
                 />
               )}
               <ProjectIdentityHeader size="sm" />
               <div className="flex-1" />
-              <nav aria-label="Main navigation" className="flex items-center gap-1">
+              <nav
+                aria-label="Main navigation"
+                className="flex items-center gap-1 max-[480px]:hidden"
+              >
                 {navItems.map((item) => (
                   <Button
                     key={item.id}
@@ -216,7 +221,9 @@ const RootLayout = () => {
                 marginLeft: -LAYOUT_CONTENT_PAD,
                 marginRight: -LAYOUT_CONTENT_PAD,
                 paddingTop: LAYOUT_CONTENT_PAD,
-                paddingBottom: LAYOUT_CONTENT_PAD,
+                // var() so utilities.css can widen it below the phone breakpoint,
+                // clearing the fixed .phone-bottom-nav that replaces the header nav there.
+                paddingBottom: `var(--pc-content-pad-bottom, ${LAYOUT_CONTENT_PAD}px)`,
                 paddingLeft: LAYOUT_CONTENT_PAD,
                 paddingRight: LAYOUT_CONTENT_PAD,
               }}
@@ -296,6 +303,31 @@ const RootLayout = () => {
           setStackOpen(next);
         }}
       />
+      {/* Header's nav row (max-[480px]:hidden above) has nowhere to wrap below the
+          phone breakpoint — this fixed bottom bar replaces it, reachable one-handed. */}
+      <nav aria-label="Main navigation" className="phone-bottom-nav">
+        {hasSidebar && (
+          <IconButton
+            variant="ghost"
+            size="small"
+            label="Open sidebar"
+            onClick={() => setMobileSidebarOpen(true)}
+            icon={<SidebarToggleIcon />}
+          />
+        )}
+        {navItems.map((item) => (
+          <Button
+            key={item.id}
+            variant="ghost"
+            size="small"
+            isActive={item.id === activeId}
+            onClick={() => navigate({ to: item.path })}
+            aria-current={item.id === activeId ? 'page' : undefined}
+          >
+            {item.label}
+          </Button>
+        ))}
+      </nav>
     </ToastProvider>
   );
 };

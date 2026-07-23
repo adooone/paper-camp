@@ -31,7 +31,7 @@ From the roadmap: Horizon 3 — Beyond one desk — Mobile control desk.
       `EntityDetail`/`NoteDetail` reflow to a single column at phone width — tables and
       the kanban board go vertical rather than scrolling sideways, headers and stamp
       rows wrap instead of clipping.
-- [ ] Size touch targets and reach the nav island one-handed
+- [x] Size touch targets and reach the nav island one-handed
       Bump tap targets (checkboxes, `IconButton`s, card hit areas) to a comfortable
       minimum and reposition the floating nav island so Plans/Review/Docs/Settings and
       the drawer toggles are reachable one-handed near the bottom of the screen.

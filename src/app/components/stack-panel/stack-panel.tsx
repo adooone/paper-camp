@@ -143,7 +143,9 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
             style={{
               position: 'fixed',
               right: 0,
-              top: '50%',
+              // var() so utilities.css can nudge it toward one-handed thumb reach
+              // below the phone breakpoint, without disturbing framer-motion's x animation.
+              top: 'var(--pc-stack-toggle-top, 50%)',
               transform: 'translateY(-50%)',
               zIndex: 300, // above the Layout header's z-200
               borderRadius: '6px 0 0 6px',
