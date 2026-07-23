@@ -67,3 +67,4 @@
 {"id":"7e3bcf76-76a7-49b5-b77c-7087c9d96818","taskKind":"prioritise","planTitle":"Prioritise queue","agentId":"claude-code","startedAt":"2026-07-23T16:21:36.762Z","endedAt":"2026-07-23T16:21:45.768Z","outcome":"done"}
 {"id":"2c46873c-1cfb-4110-bf6a-d0e6649f5e63","taskKind":"prioritise","planTitle":"Prioritise queue","agentId":"claude-code","startedAt":"2026-07-23T16:24:09.113Z","endedAt":"2026-07-23T16:24:17.233Z","outcome":"done"}
 {"id":"82eae016-90ae-465e-b82e-b99df17666d7","taskKind":"prioritise","planTitle":"Prioritise queue","agentId":"claude-code","startedAt":"2026-07-23T16:25:57.483Z","endedAt":"2026-07-23T16:26:05.206Z","outcome":"done"}
+{"id":"0ec9634c-9c57-4752-996a-f6ee78b58806","taskKind":"run-all","planId":"IDEA-82","planTitle":"Order that can never be empty","agentId":"claude-code","startedAt":"2026-07-23T15:43:33.816Z","endedAt":"2026-07-23T16:28:03.809Z","outcome":"done"}
