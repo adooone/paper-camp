@@ -47,6 +47,7 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   suggest: 'ideaExtend',
   'commit-suggest': 'commitSuggest',
   'overlap-check': 'commitSuggest',
+  prioritise: 'commitSuggest',
 };
 
 export function resolveAgent(opts: {
