@@ -1,6 +1,12 @@
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
 import type { ArchivableIdea, IdeaEntry, OverlapVerdict, ParseResult } from '@/types/index';
 
+export interface PrioritiseResult {
+  ok: boolean;
+  moved: string[];
+  why: string;
+}
+
 export const fetchIdeas = async (): Promise<ParseResult<IdeaEntry>> => {
   const response = await fetch('/api/ideas');
   return response.json();
@@ -49,4 +55,11 @@ export const checkIdeaOverlap = async (
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Failed to check overlap');
   return data as OverlapVerdict;
+};
+
+export const prioritiseQueue = async (): Promise<PrioritiseResult> => {
+  const response = await fetch('/api/ideas/prioritise', { method: 'POST' });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Failed to prioritise queue');
+  return data as PrioritiseResult;
 };
