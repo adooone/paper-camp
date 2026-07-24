@@ -2,7 +2,7 @@
 id: IDEA-83
 title: One release line per idea
 type: fix
-status: idea
+status: review
 created: 2026-07-22
 tags:
   - ci
@@ -30,5 +30,5 @@ Heads-up recorded for the implementer: squash-merge also breaks the hygiene chec
       `release-please-config.json`: hide `refactor` and `docs` sections; verify the next release-please PR renders features and fixes only.
 - [x] Document the merge policy
       The human half: squash-merge enabled with "title and description" default (repo settings — recorded in `decisions.md` with the rationale that progress.md owns phase narrative); AGENTS.md / USAGE.md updated so the flow says squash.
-- [ ] Gate the pass
+- [x] Gate the pass
       Checks green; next merged idea produces exactly one conventional commit on main, and the following release-please PR shows one line for it with the idea id.
