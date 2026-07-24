@@ -69,6 +69,24 @@ jobs:
         run: pnpm cli sync-pr-labels "$BRANCH"
         continue-on-error: true
 
+      # Retitles the PR to `<type>(<scope>): <Idea title> (IDEA-N)` so a squash-merge
+      # inherits a valid conventional-commit title as the release commit.
+      - name: Retitle PR to a conventional commit from the idea
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: pnpm cli sync-pr-title "$BRANCH"
+        continue-on-error: true
+
+      # Not best-effort: fails the check (no continue-on-error) if the PR title still
+      # isn't conventional — e.g. hand-retitled after the sync step above ran — so a
+      # squash-merge can't silently drop the commit out of the release notes.
+      - name: Validate PR title is a conventional commit
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: pnpm cli validate-pr-title "$BRANCH"
+
       # One-way, plan -> PR: flips a draft PR to ready once every phase is
       # checked, or closes it when the plan carries a `dropped` override.
       # Never writes plan status back — merge -> done is IDEA-56's derivation.

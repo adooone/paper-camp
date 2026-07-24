@@ -24,7 +24,7 @@ The fix: **squash-merge, with the PR title as the conventional commit.**
 Heads-up recorded for the implementer: squash-merge also breaks the hygiene check's ancestry-based `stale-merged` detection (squashed branch commits never become ancestors of main) — the merge-policy phase must switch `getBranchHygieneStatus` to the PR-state signal (`resolvePrsByEntity` already knows merged) or the sync-to-main escape hatch goes blind. Not in scope: rewriting the already-published 0.9/0.10 notes (history is history), and agent-written release highlights (worth a thought once one-line-per-idea lands and the raw material is clean).
 
 ### Phases
-- [ ] Retitle PRs conventionally
+- [x] Retitle PRs conventionally
       `sync-pr-metadata.yml`: title format `<type>(<scope>): <Idea title> (IDEA-N)` from the idea's frontmatter type + primary-tag scope (fallback `feat(repo)`); validate the format and fail the check on non-conventional hand-titled PRs.
 - [ ] Trim changelog sections
       `release-please-config.json`: hide `refactor` and `docs` sections; verify the next release-please PR renders features and fixes only.
