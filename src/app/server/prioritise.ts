@@ -24,6 +24,9 @@ function validatePrioritiseVerdict(
     const seen = new Set(parsed.order);
     if (seen.size !== activeIds.length) return undefined;
     if (!activeIds.every((id) => seen.has(id))) return undefined;
+    // One non-empty reason per ordered id, same index, per the prompt's contract.
+    const whyLines = parsed.why.split('\n').filter((line) => line.trim().length > 0);
+    if (whyLines.length !== parsed.order.length) return undefined;
     return { order: parsed.order, why: parsed.why };
   } catch {
     return undefined;
@@ -102,7 +105,7 @@ export async function applyPrioritiseVerdict(
 
   const resolved = resolveFullOrder(classified, verdict.order);
   const originalOrder = new Map(classified.map((e) => [e.id, e.order]));
-  const whyLines = verdict.why.split('\n');
+  const whyLines = verdict.why.split('\n').filter((line) => line.trim().length > 0);
   const reasonFor = (id: string) => {
     const index = verdict.order.indexOf(id);
     return whyLines[index]?.trim() || 'Reprioritised by the shuffle agent.';
@@ -111,6 +114,7 @@ export async function applyPrioritiseVerdict(
   const moved = resolved.filter((e) => e.order !== originalOrder.get(e.id));
   if (moved.length === 0) return [];
 
+  const applied: string[] = [];
   for (const change of moved) {
     const primaryFile = join(ideasDir, `${change.id}.md`);
     const file = (await fileExists(primaryFile))
@@ -119,15 +123,28 @@ export async function applyPrioritiseVerdict(
     if (!(await fileExists(file))) continue;
     const entry = entries.find((e) => e.id === change.id);
     if (!entry) continue;
-    await writeEntityFile(
-      file,
-      entityFileInput(entry, {
-        order: change.order,
-        log: [...(entry.log ?? []), { date: todayDateString(), text: reasonFor(change.id) }],
-      }),
-    );
+    // Only entries the agent actually ranked get a log line — normalizeRunOrder's
+    // own clearing of stale order on now-inactive entries also lands in `moved`.
+    const isAgentRanked = verdict.order.includes(change.id);
+    try {
+      await writeEntityFile(
+        file,
+        entityFileInput(entry, {
+          order: change.order,
+          log: isAgentRanked
+            ? [...(entry.log ?? []), { date: todayDateString(), text: reasonFor(change.id) }]
+            : entry.log,
+        }),
+      );
+      applied.push(change.id);
+    } catch (err) {
+      await regenerateIndexes(root);
+      throw new Error(
+        `Prioritise partially applied (${applied.length}/${moved.length} ideas updated) before failing on ${change.id}: ${(err as Error).message}`,
+      );
+    }
   }
 
   await regenerateIndexes(root);
-  return moved.map((c) => c.id);
+  return applied;
 }
