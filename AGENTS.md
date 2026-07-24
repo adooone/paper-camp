@@ -108,6 +108,17 @@ directly on `main`. A draft PR is auto-created on first push.
   token via `actions/create-github-app-token`, using the `SCOUT_APP_ID`/
   `SCOUT_PRIVATE_KEY` repo secrets.
 
+- **Merging: squash, always.** The repo is configured to squash-merge (no
+  merge commits), default message "pull request title and description" —
+  GitHub uses the PR title as the squash commit's **subject** and the PR
+  description as its **body**. One commit per idea lands on `main`; the
+  per-phase commit history stays on the PR (and, more durably, in the idea's
+  own `### Log`/`progress.md` narrative) instead of duplicating it badly in
+  `git log`. `sync-pr-metadata.yml` keeps the PR title in conventional-commit
+  form (`<type>(<scope>): <Idea title> (IDEA-N)`) precisely so the inherited
+  squash commit subject is release-please-visible — see "Commit messages"
+  below.
+
 - **`main` stays pushable.** Direct pushes to `main` are allowed but
   *conventionally* reserved for:
   - Agent writes to `papercamp/ideas/` and `papercamp/progress.md` during phase execution
@@ -133,7 +144,12 @@ directly on `main`. A draft PR is auto-created on first push.
 
 ## Commit messages
 
-Format: `<type>(<scope>): <description>`
+Format: `<type>(<scope>): <description>`. This governs every commit an agent
+writes directly (phase commits on a feature branch, direct-to-`main` commits).
+The one exception is the commit `main` actually receives for a merged idea:
+that's the squash-merge commit, whose **subject** is the validated PR title
+(computed by `sync-pr-metadata.yml`, not hand-written to this format) and
+whose **body** is the PR description — see "Merging: squash, always." above.
 
 - `type` is one of `feat`, `fix`, `chore`, `docs`, `refactor` (commitlint's
   `type-enum`, matches plan `Kind`).

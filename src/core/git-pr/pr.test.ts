@@ -4,8 +4,10 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   clearPrCache,
+  computePrTitle,
   derivePrLabels,
   fetchUnresolvedThreads,
+  isConventionalPrTitle,
   renderConsistencyComment,
   renderPlanPhasesIntoBody,
   resolvePlanForPrRef,
@@ -14,6 +16,8 @@ import {
   syncPlanPhasesToPr,
   syncPrLabelsToPr,
   syncPrReadinessToPr,
+  syncPrTitleToPr,
+  validatePrTitle,
 } from './pr';
 
 /** Puts a fake `gh` on PATH that answers from `script` and counts invocations
@@ -458,6 +462,52 @@ describe('derivePrLabels', () => {
   });
 });
 
+describe('computePrTitle', () => {
+  it('builds `type(scope): title (id)` from the idea type and first recognized-scope tag', () => {
+    expect(
+      computePrTitle('IDEA-76', {
+        type: 'feat',
+        tags: ['app', 'onboarding'],
+        title: 'First run access setup',
+      }),
+    ).toBe('feat(app): First run access setup (IDEA-76)');
+  });
+
+  it('falls back to feat when the idea has no type', () => {
+    expect(computePrTitle('IDEA-9', { tags: ['ci'], title: 'Some plan' })).toBe(
+      'feat(ci): Some plan (IDEA-9)',
+    );
+  });
+
+  it('falls back to repo when no tag is a recognized commit scope', () => {
+    expect(
+      computePrTitle('IDEA-80', {
+        type: 'fix',
+        tags: ['dev-server', 'vite'],
+        title: 'Fix dev server',
+      }),
+    ).toBe('fix(repo): Fix dev server (IDEA-80)');
+  });
+});
+
+describe('isConventionalPrTitle', () => {
+  it('accepts a type(scope): description title', () => {
+    expect(isConventionalPrTitle('feat(app): First run access setup (IDEA-76)')).toBe(true);
+  });
+
+  it('rejects a hand-titled PR with no type/scope prefix', () => {
+    expect(isConventionalPrTitle('IDEA-76: First Run Access Setup')).toBe(false);
+  });
+
+  it('rejects an unrecognized scope', () => {
+    expect(isConventionalPrTitle('feat(nonsense): Some title')).toBe(false);
+  });
+
+  it('rejects an unrecognized type', () => {
+    expect(isConventionalPrTitle('build(app): Some title')).toBe(false);
+  });
+});
+
 describe('syncPrLabelsToPr', () => {
   const originalPath = process.env.PATH;
   afterEach(() => {
@@ -574,6 +624,130 @@ describe('syncPrLabelsToPr', () => {
     writeEntityFile(root, 'IDEA-20');
 
     expect(await syncPrLabelsToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
+  });
+});
+
+describe('syncPrTitleToPr', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  /** Fake `gh` answering `pr view` (with title) and logging any `pr edit --title`
+   * argument to `titleFile` so tests can assert whether/what it retitled. */
+  function withGhForTitle(viewFixture: {
+    title: string;
+    body: string;
+    headRefName: string;
+  }): { root: string; callCount: () => number; editedTitle: () => string | undefined } {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-title-'));
+    const viewFile = join(fixtureDir, 'view.json');
+    writeFileSync(viewFile, JSON.stringify({ ...viewFixture, labels: [] }));
+    const titleFile = join(fixtureDir, 'title');
+
+    const { root, callCount } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\ncat "${viewFile}"\nelif [ "$1" = "pr" ] && [ "$2" = "edit" ]; then\necho "$5" > "${titleFile}"\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return {
+      root,
+      callCount,
+      editedTitle: () => {
+        try {
+          return readFileSync(titleFile, 'utf-8').trim();
+        } catch {
+          return undefined;
+        }
+      },
+    };
+  }
+
+  function writeEntityFile(root: string, id: string): void {
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', `${id}.md`),
+      `---\nid: ${id}\ntitle: Some plan\ntype: feat\ntags:\n  - ci\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [ ] Phase one\n`,
+    );
+  }
+
+  it('retitles a hand-titled PR to the conventional-commit form, reporting "updated"', async () => {
+    const { root, editedTitle } = withGhForTitle({
+      title: 'IDEA-9: Some plan',
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+    });
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPrTitleToPr(root, '42');
+    expect(result).toBe('updated');
+    expect(editedTitle()).toBe('feat(ci): Some plan (IDEA-9)');
+  });
+
+  it('reports "unchanged" and calls only gh pr view when the title already matches', async () => {
+    const { root, callCount, editedTitle } = withGhForTitle({
+      title: 'feat(ci): Some plan (IDEA-9)',
+      body: '**Plan:** `IDEA-9`',
+      headRefName: 'feat/idea-9-x',
+    });
+    writeEntityFile(root, 'IDEA-9');
+
+    const result = await syncPrTitleToPr(root, '42');
+    expect(result).toBe('unchanged');
+    expect(editedTitle()).toBeUndefined();
+    expect(callCount()).toBe(1); // only the `pr view` call
+  });
+
+  it('resolves "unresolved" when no PR exists yet for the branch', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    writeEntityFile(root, 'IDEA-20');
+
+    expect(await syncPrTitleToPr(root, 'feat/idea-20-some-title')).toBe('unresolved');
+  });
+});
+
+describe('validatePrTitle', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  function withGhPrTitle(title: string): { root: string } {
+    const { root } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "view" ]; then\necho '{"title":"${title}"}'\nelse\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    return { root };
+  }
+
+  it('reports "valid" for a conventional-commit title', async () => {
+    const { root } = withGhPrTitle('feat(app): First run access setup (IDEA-76)');
+    expect(await validatePrTitle(root, '42')).toBe('valid');
+  });
+
+  it('reports "invalid" for a hand-titled, non-conventional title', async () => {
+    const { root } = withGhPrTitle('IDEA-76: First Run Access Setup');
+    expect(await validatePrTitle(root, '42')).toBe('invalid');
+  });
+
+  it('reports "no-pr" when no PR exists yet for the ref', async () => {
+    const { root } = installFakeGh('exit 1');
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await validatePrTitle(root, 'feat/idea-20-some-title')).toBe('no-pr');
+  });
+
+  it('reports "invalid" for a conventional title that names the wrong plan', async () => {
+    const { root } = installFakeGh(
+      `echo '{"title":"fix(ui): Other work (IDEA-999)","headRefName":"feat/idea-9-x"}'`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', 'IDEA-9.md'),
+      '---\nid: IDEA-9\ntitle: Some plan\ntype: feat\ntags:\n  - ci\n  - github\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [x] Phase one\n',
+    );
+
+    expect(await validatePrTitle(root, 'feat/idea-9-x')).toBe('invalid');
   });
 });
 

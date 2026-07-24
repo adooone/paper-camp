@@ -12,6 +12,8 @@ import {
   syncPlanPhasesToPr,
   syncPrLabelsToPr,
   syncPrReadinessToPr,
+  syncPrTitleToPr,
+  validatePrTitle,
 } from '../core/git-pr';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parse';
 import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
@@ -565,6 +567,28 @@ registerPrSyncCommand(
   syncPrLabelsToPr,
   'sync plan labels to a PR',
 );
+
+registerPrSyncCommand(
+  'sync-pr-title',
+  'Retitle a PR (number or branch) to `<type>(<scope>): <Idea title> (IDEA-N)` from its plan (used by the Scout CI workflows)',
+  syncPrTitleToPr,
+  'sync PR title',
+);
+
+program
+  .command('validate-pr-title <ref>')
+  .description(
+    "Fail if a PR's (number or branch) title is not a conventional-commit title — the squash-merge commit inherits it verbatim (used by the Scout CI workflows)",
+  )
+  .action(async (ref: string) => {
+    const root = process.cwd();
+    const result = await validatePrTitle(root, ref);
+    if (result === 'invalid') {
+      fail(`PR title is not a conventional commit (expected "type(scope): ..."): "${ref}"`);
+      return;
+    }
+    console.log(result);
+  });
 
 registerPrSyncCommand(
   'sync-pr-readiness',
