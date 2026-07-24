@@ -79,6 +79,9 @@
 | IDEA-75 | Error surfacing consistency | fix | done | errors, ui, toast |
 | IDEA-76 | First-run access setup | feat | done | app, settings, agent, git, ux |
 | IDEA-77 | Candidate ideas under roadmap items | feat | done | app, plans, docs, ui |
-| IDEA-78 | Responsive polish for phone widths | — | idea |  |
-| IDEA-79 | First-run experience | feat | idea | cli, scaffold, app |
-| IDEA-80 | Dev-server reload honesty | — | idea |  |
+| IDEA-78 | Responsive polish for phone widths | feat | done | app, ui, layout |
+| IDEA-79 | First-run experience | feat | done | cli, scaffold, app |
+| IDEA-80 | Dev-server reload honesty | fix | done | dev-server, vite, api |
+| IDEA-81 | Make the roadmap look like a map | feat | done | app, ui, plans, docs |
+| IDEA-82 | Order that can never be empty | fix | planned | app, server, plans, agent |
+| IDEA-83 | One release line per idea | fix | planned | ci, git, docs |

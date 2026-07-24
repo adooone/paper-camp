@@ -4,12 +4,11 @@ title: First-run experience
 type: feat
 status: review
 created: 2026-07-22
-subject: Workflow
 tags:
   - cli
   - scaffold
   - app
-order: 2
+subject: Workflow
 ---
 
 `init` produces a welcoming empty corpus: seeded example idea, empty states that teach ("No ideas yet — capture one or ask for suggestions"), and USAGE.md surfaced on first open.

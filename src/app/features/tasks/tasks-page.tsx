@@ -17,6 +17,7 @@ const TASK_KIND_LABELS: Record<TaskKind, string> = {
   suggest: 'Suggest ideas',
   'commit-suggest': 'Commit suggest',
   'overlap-check': 'Overlap check',
+  prioritise: 'Prioritise queue',
   sync: 'Sync',
   reconcile: 'Reconcile',
   'fix-review': 'Fix review',

@@ -38,6 +38,7 @@ import {
   stopAgent,
 } from '../services/agent-api';
 import {
+  type PrioritiseResult,
   archiveIdeas as archiveIdeasApi,
   dismissSuggestion as dismissSuggestionApi,
   fetchArchivableIdeas,
@@ -47,6 +48,7 @@ import {
   fetchRepoDocs,
   fetchSuggestions,
   fetchTaskLog,
+  prioritiseQueue,
   promoteRoadmapItem as promoteRoadmapItemApi,
   promoteSuggestion as promoteSuggestionApi,
 } from '../services/content';
@@ -149,6 +151,7 @@ export type AppStore = {
   launchSuggestIdeas: (prompt: string) => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
   launchFixReview: (planId: string) => Promise<void>;
+  launchPrioritise: () => Promise<PrioritiseResult>;
   stopAgent: (taskId?: string) => Promise<void>;
 
   // Held at store level (not in the button component) so completion is still
@@ -512,6 +515,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
   launchSuggestIdeas: async (prompt) => {
     await launchSuggestIdeas(prompt);
     await get().loadAgentStatus();
+  },
+  launchPrioritise: async () => {
+    const result = await prioritiseQueue();
+    await get().refreshAll();
+    return result;
   },
   launchRunAll: async (planId) => {
     await launchRunAll(planId);
