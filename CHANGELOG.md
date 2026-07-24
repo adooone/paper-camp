@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0](https://github.com/adooone/paper-camp/compare/v0.10.0...v0.11.0) (2026-07-24)
+
+
+### Features
+
+* **app:** Compact the layout ([1ac1389](https://github.com/adooone/paper-camp/commit/1ac138947a77235e73f233b04f062dc53c929b13))
+* **app:** Expand cards with live state ([1d217d6](https://github.com/adooone/paper-camp/commit/1d217d645e7957f1fdf84f292bf20835f6ee1a60))
+* **app:** Gate the pass ([6952f70](https://github.com/adooone/paper-camp/commit/6952f7084cb7730d4c43b0fcb54af318fd712aec))
+* **app:** Gate the pass ([33b3c91](https://github.com/adooone/paper-camp/commit/33b3c91ddd7342c960b3730708b1fa5d66a70243))
+* **app:** Link the queue back to the map ([02775ca](https://github.com/adooone/paper-camp/commit/02775ca5585babb881eaf0e887cb689ad2a5df38))
+* **app:** Reflow the layout shell — sidebar and Stack panel as drawers ([87290ad](https://github.com/adooone/paper-camp/commit/87290add0108e01dfb76092fc74a79bb03c21421))
+* **app:** Size touch targets and reach the nav island one-handed ([9e02fa2](https://github.com/adooone/paper-camp/commit/9e02fa299de80270136ece84269ab172b4c85c0f))
+* **app:** Stack the content surfaces ([4deaaf5](https://github.com/adooone/paper-camp/commit/4deaaf593f334be39111206e21931fdf7bebe696))
+* **app:** updates ([648265f](https://github.com/adooone/paper-camp/commit/648265f6217877f329e9140d3d950771471d7849))
+* **cli:** Gate the pass ([4dfbd73](https://github.com/adooone/paper-camp/commit/4dfbd7389add82e2053ca6d1543bc95a809bd7e9))
+* **cli:** Seed a welcoming example idea in `init` ([97eaa19](https://github.com/adooone/paper-camp/commit/97eaa19ede4ae5ea7fb23eb20f28dc9231c68236))
+* **cli:** Surface USAGE.md on first open ([f2cd372](https://github.com/adooone/paper-camp/commit/f2cd3721e6483418350317b5f0fac14e5749b2de))
+
+
+### Bug Fixes
+
+* **app:** Add the shuffle agent ([bd8a1b3](https://github.com/adooone/paper-camp/commit/bd8a1b35c4ac11c982ccd6a26b5d89a949138585))
+* **app:** Address IDEA-77 review comments ([3c98f31](https://github.com/adooone/paper-camp/commit/3c98f315ece1322c8f506bfd37987e70fb8cf392))
+* **app:** Consolidate header actions into a Menu ([7fd6a0d](https://github.com/adooone/paper-camp/commit/7fd6a0d00cffa301b23ff84b61b00f612fd6bf87))
+* **app:** Enforce the invariant at the watcher seam ([1839d63](https://github.com/adooone/paper-camp/commit/1839d63af712e919673886edf43f26ded92ff40d))
+* **app:** Gate the pass ([ea3f821](https://github.com/adooone/paper-camp/commit/ea3f821524ba5a34623bd69ff032886aa2d2d16b))
+* **plans:** Carry live agent state across the reload ([1790cc7](https://github.com/adooone/paper-camp/commit/1790cc77cf0c5d1f18e80a934a7f88e561e9dbf7))
+* **plans:** Gate the pass ([6b47124](https://github.com/adooone/paper-camp/commit/6b47124dacc21c922936b3fe0540921a5bc27778))
+* **plans:** Hot-reload the server API graph on change ([db79325](https://github.com/adooone/paper-camp/commit/db793256fb2b62156344ca0503941cfd86d00488))
+* **plans:** Pin down the staleness boundary ([30d8066](https://github.com/adooone/paper-camp/commit/30d8066033d1afc7087387f9ca8734c59fb1d9bd))
+* **repo:** updates ([eff32d8](https://github.com/adooone/paper-camp/commit/eff32d8b567ee05d2125aadde084c88253e21f07))
+* **repo:** updates ([840e552](https://github.com/adooone/paper-camp/commit/840e552365ba59e761ca1f77e5bffa2a9555bbf5))
+* **repo:** updates ([b2b2f64](https://github.com/adooone/paper-camp/commit/b2b2f64a26360ed45f78833ef0161db83fe7ee51))
+
 ## [0.10.0](https://github.com/adooone/paper-camp/compare/v0.9.0...v0.10.0) (2026-07-22)
 
 
