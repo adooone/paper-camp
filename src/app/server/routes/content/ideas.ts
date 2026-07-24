@@ -1,7 +1,7 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
-import { readEntities } from '@/core/readers';
+import { readEntities, readWorkEntries } from '@/core/readers';
 import { addRoadmapCandidate, addRoadmapItem, removeRoadmapItem } from '@/core/roadmap';
 import {
   assignEntityId,
@@ -21,6 +21,7 @@ import {
 } from '../../helpers';
 import { readBody, sendJson } from '../../http';
 import { checkIdeaOverlap } from '../../overlap-check';
+import { applyPrioritiseVerdict, getPrioritiseVerdict } from '../../prioritise';
 import type { Route, RouteContext } from '../types';
 
 export function ideaRoutes({ root, agent }: RouteContext): Route[] {
@@ -302,6 +303,24 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           }
           const verdict = await checkIdeaOverlap(text, candidates ?? [], agent.runOverlapCheck);
           sendJson(res, 200, verdict);
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
+        }
+      },
+    },
+
+    // Read-only agent proposes the order; the server applies it deterministically
+    // through the same normalizer the run-order-pass and plans PATCH route use.
+    {
+      method: 'POST',
+      path: '/api/ideas/prioritise',
+      handle: async (_req, res) => {
+        try {
+          const { entries } = await readWorkEntries(campFile(root, 'ideas'));
+          const roadmapText = await readMaybe(join(root, 'ROADMAP.md'));
+          const verdict = await getPrioritiseVerdict(entries, roadmapText, agent.runPrioritise);
+          const moved = await applyPrioritiseVerdict(root, verdict);
+          sendJson(res, 200, { ok: true, moved, why: verdict.why });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
         }

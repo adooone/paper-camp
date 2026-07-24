@@ -339,7 +339,7 @@ export function createAgentManager(
     'draft',
     'extend',
   ]);
-  const READONLY_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check']);
+  const READONLY_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check', 'prioritise']);
 
   function writeSetFor(taskKind: TaskKind, entityId?: string): WriteSet {
     if (READONLY_KINDS.has(taskKind)) return { scope: 'none' };
@@ -799,7 +799,7 @@ export function createAgentManager(
 
   function runReadOnlyPrompt(
     prompt: string,
-    taskKind: 'commit-suggest' | 'overlap-check',
+    taskKind: 'commit-suggest' | 'overlap-check' | 'prioritise',
     planTitle: string,
   ): Promise<string> {
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
@@ -903,6 +903,10 @@ export function createAgentManager(
     return runReadOnlyPrompt(prompt, 'overlap-check', 'Check idea overlap');
   }
 
+  function runPrioritise(prompt: string): Promise<string> {
+    return runReadOnlyPrompt(prompt, 'prioritise', 'Prioritise queue');
+  }
+
   function stop(taskId?: string): Result {
     const task = taskId ? tasks.get(taskId) : currentTask();
     if (!task || isTaskDone(task)) {
@@ -955,6 +959,7 @@ export function createAgentManager(
     startSuggest,
     runCommitSuggest,
     runOverlapCheck,
+    runPrioritise,
     stop,
     getStatus,
     getReconcileQueue,
@@ -1018,6 +1023,7 @@ export interface AgentManager {
   startSuggest: (prompt: string) => Promise<Result>;
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
+  runPrioritise: (prompt: string) => Promise<string>;
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
   getReconcileQueue: () => ReconcileQueueItem[] | null;

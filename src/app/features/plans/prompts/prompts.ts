@@ -290,3 +290,39 @@ Task: decide whether the new intention:
 Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
 {"verdict": "existing" | "extend" | "new", "targetId": "<the best-matching idea's id, or null if verdict is \\"new\\">", "reasoning": "<one sentence explaining the call>"}`;
 }
+
+// Read-only (server/agent.ts's runReadOnlyPrompt/runPrioritise) — never edits a
+// file; the server applies the verdict deterministically through normalizeRunOrder.
+export function buildPrioritisePrompt(worklist: PlanEntry[], roadmapText: string): string {
+  const active = worklist
+    .filter((p) => p.status === 'planned' || p.status === 'in-progress' || p.status === 'review')
+    .sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY));
+
+  const queue = active
+    .map((p) => {
+      const tags = p.tags.length ? ` (tags: ${p.tags.join(', ')})` : '';
+      return `${p.id ?? 'no id'}: ${p.title}${tags} — subject: ${p.subject ?? 'none'}, created: ${p.created}, status: ${p.status}\n${p.body}`;
+    })
+    .join('\n\n');
+
+  return `You are prioritising the run-order queue — the ordered set of planned/in-progress/review work, whose position determines what gets worked on next. Do not use any tools, do not read or edit any files — base your answer only on the text given below.
+
+Current queue, in existing run order:
+${queue || '(empty)'}
+
+ROADMAP.md, for horizon and dependency context:
+${roadmapText || '(no roadmap file)'}
+
+Task: decide the best run order for the queue above, weighing:
+- dependencies between ideas (one blocks or unblocks another)
+- how close each idea's subject is to the roadmap's near-term horizons vs. later ones
+- staleness (an idea sitting unstarted a long time vs. one just added)
+- size (a small idea ahead of a large one keeps the queue moving)
+
+Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
+{"order": ["${active[0]?.id ?? 'IDEA-N'}", "..."], "why": "one line per entry in order, same index, explaining that id's placement"}
+
+Rules:
+- "order" must contain every id from the current queue exactly once — no id added, dropped, or duplicated.
+- "why" must have exactly as many lines as "order" has entries, in the same order.`;
+}

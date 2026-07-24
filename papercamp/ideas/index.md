@@ -83,5 +83,5 @@
 | IDEA-79 | First-run experience | feat | done | cli, scaffold, app |
 | IDEA-80 | Dev-server reload honesty | fix | done | dev-server, vite, api |
 | IDEA-81 | Make the roadmap look like a map | feat | done | app, ui, plans, docs |
-| IDEA-82 | Order that can never be empty | fix | done | app, server, plans, agent |
-| IDEA-83 | One release line per idea | fix | planned | ci, git, docs |
+| IDEA-82 | Order that can never be empty | fix | review | app, server, plans, agent |
+| IDEA-83 | One release line per idea | fix | review | ci, git, docs |

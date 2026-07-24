@@ -92,6 +92,34 @@ export const RefreshIcon = ({ size = 16 }: IconProps) => (
   </svg>
 );
 
+export const MoreIcon = ({ size = 16 }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <circle cx="5" cy="12" r="2" />
+    <circle cx="12" cy="12" r="2" />
+    <circle cx="19" cy="12" r="2" />
+  </svg>
+);
+
+export const ShuffleIcon = ({ size = 16 }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="m18 4 3 3-3 3" />
+    <path d="M3 7h5.5a3 3 0 0 1 2.5 1.35L15 16.65A3 3 0 0 0 17.5 18H21" />
+    <path d="m18 20 3-3-3-3" />
+    <path d="M3 17h5.5a3 3 0 0 0 2.5-1.35" />
+    <path d="M13 8.35A3 3 0 0 1 15.5 7H21" />
+  </svg>
+);
+
 export const RunIcon = ({ size = 12 }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
     <path d="M6 4l11 6-11 6z" />

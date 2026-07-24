@@ -1,11 +1,5 @@
 import { color, fontFamily, space } from '@/app/styles/tokens';
-import {
-  ActualiseAllButton,
-  AddToBacklogButton,
-  NewIdeaButton,
-  RefreshButton,
-  SuggestIdeasButton,
-} from '../actions';
+import { AddToBacklogButton, NewIdeaButton, RefreshButton, WorklistActionsMenu } from '../actions';
 
 export const PlansHeader = () => {
   return (
@@ -35,8 +29,7 @@ export const PlansHeader = () => {
       <RefreshButton />
       <NewIdeaButton />
       <AddToBacklogButton />
-      <SuggestIdeasButton />
-      <ActualiseAllButton />
+      <WorklistActionsMenu />
     </div>
   );
 };

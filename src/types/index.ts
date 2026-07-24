@@ -362,6 +362,7 @@ export type TaskKind =
   | 'suggest'
   | 'commit-suggest'
   | 'overlap-check'
+  | 'prioritise'
   | 'sync'
   | 'reconcile'
   | 'fix-review';
@@ -397,6 +398,12 @@ export interface OverlapVerdict {
   verdict: 'existing' | 'extend' | 'new';
   targetId: string | null;
   reasoning: string;
+}
+
+/** `why` carries one line per entry in `order`, same index — the reason for that id's placement. */
+export interface PrioritiseVerdict {
+  order: string[];
+  why: string;
 }
 
 export interface ReconcileQueueItem {
