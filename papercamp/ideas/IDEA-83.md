@@ -26,9 +26,9 @@ Heads-up recorded for the implementer: squash-merge also breaks the hygiene chec
 ### Phases
 - [x] Retitle PRs conventionally
       `sync-pr-metadata.yml`: title format `<type>(<scope>): <Idea title> (IDEA-N)` from the idea's frontmatter type + primary-tag scope (fallback `feat(repo)`); validate the format and fail the check on non-conventional hand-titled PRs.
-- [ ] Trim changelog sections
+- [x] Trim changelog sections
       `release-please-config.json`: hide `refactor` and `docs` sections; verify the next release-please PR renders features and fixes only.
-- [ ] Document the merge policy
+- [x] Document the merge policy
       The human half: squash-merge enabled with "title and description" default (repo settings — recorded in `decisions.md` with the rationale that progress.md owns phase narrative); AGENTS.md / USAGE.md updated so the flow says squash.
 - [ ] Gate the pass
       Checks green; next merged idea produces exactly one conventional commit on main, and the following release-please PR shows one line for it with the idea id.

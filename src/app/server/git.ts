@@ -3,7 +3,7 @@ import { watch } from 'node:fs';
 import { lstat, readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
-import { branchName } from '@/core/git-pr';
+import { branchName, resolvePrsByEntity } from '@/core/git-pr';
 import type { BranchHygieneStatus, GitStatusEntry, PlanEntry } from '../../types';
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
@@ -253,6 +253,19 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
+  // Squash-merge deletes the branch and drops its commits from `main`, so
+  // ancestry (`isMergedIntoMain`) never sees a squashed branch as merged; the
+  // PR's own state is the only signal that survives the squash.
+  async function isBranchMerged(): Promise<boolean> {
+    const entityId = getFeatureBranchPlanId();
+    if (entityId) {
+      const prs = await resolvePrsByEntity(root);
+      const info = prs?.get(entityId);
+      if (info) return info.state === 'merged';
+    }
+    return isMergedIntoMain();
+  }
+
   async function getBranchHygieneStatus(): Promise<BranchHygieneStatus> {
     refreshOriginMainQuietly();
     const currentBranch = getCurrentBranch();
@@ -264,7 +277,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
 
     // "Stale" requires both merged AND main having advanced past it, not just merged.
-    if (await isMergedIntoMain()) {
+    if (await isBranchMerged()) {
       // A fresh branch cut from a stale local main is an ancestor of origin/main
       // with zero commits of its own — "not started", never "merged".
       const [head, mainTip] = await Promise.all([
