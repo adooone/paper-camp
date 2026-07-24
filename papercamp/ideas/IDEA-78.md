@@ -4,12 +4,11 @@ title: Responsive polish for phone widths
 type: feat
 status: review
 created: 2026-07-21
-subject: Mobile control desk
 tags:
   - app
   - ui
   - layout
-order: 4
+subject: Mobile control desk
 ---
 
 From the roadmap: Horizon 3 — Beyond one desk — Mobile control desk.
