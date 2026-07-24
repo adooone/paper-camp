@@ -73,3 +73,4 @@
 {"id":"e9274ec2-3e73-4336-9b02-403f3eebfcca","taskKind":"run-all","planId":"IDEA-83","planTitle":"One release line per idea","agentId":"claude-code","startedAt":"2026-07-24T17:57:42.950Z","endedAt":"2026-07-24T18:09:17.733Z","outcome":"error"}
 {"id":"4004c00f-f904-4bc0-98d3-003121072ab2","taskKind":"run-all","planId":"IDEA-83","planTitle":"One release line per idea","agentId":"claude-code","startedAt":"2026-07-24T18:15:35.983Z","endedAt":"2026-07-24T18:24:06.449Z","outcome":"done"}
 {"id":"ebacf3d5-249d-45b5-9072-dec1133b0098","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-24T18:28:31.538Z","endedAt":"2026-07-24T18:28:37.186Z","outcome":"done"}
+{"id":"b32027a8-3bdd-44c1-93ba-1210e118c1b7","taskKind":"fix-review","planId":"IDEA-83","planTitle":"One release line per idea","agentId":"claude-code","startedAt":"2026-07-24T19:12:27.164Z","endedAt":"2026-07-24T19:16:34.749Z","outcome":"done"}

@@ -258,12 +258,10 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   // PR's own state is the only signal that survives the squash.
   async function isBranchMerged(): Promise<boolean> {
     const entityId = getFeatureBranchPlanId();
-    if (entityId) {
-      const prs = await resolvePrsByEntity(root);
-      const info = prs?.get(entityId);
-      if (info) return info.state === 'merged';
-    }
-    return isMergedIntoMain();
+    if (!entityId) return isMergedIntoMain();
+    const prs = await resolvePrsByEntity(root);
+    if (prs === undefined) return isMergedIntoMain();
+    return prs.get(entityId)?.state === 'merged';
   }
 
   async function getBranchHygieneStatus(): Promise<BranchHygieneStatus> {

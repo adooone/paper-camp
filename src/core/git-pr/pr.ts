@@ -303,13 +303,20 @@ export async function syncPrTitleToPr(
 
 /** Not best-effort like the sync-* commands: a squash-merged commit inherits the
  * PR title verbatim, so an unconventional hand-typed title must fail the check
- * rather than pass silently and fall out of the changelog. */
+ * rather than pass silently and fall out of the changelog. When the branch/PR
+ * resolves to a plan, the title must match that plan's title exactly — a
+ * conventional but unrelated title (stale or hand-edited) is still invalid. */
 export async function validatePrTitle(
   root: string,
   ref: string,
 ): Promise<'valid' | 'invalid' | 'no-pr'> {
   const view = await runGhPrView(root, ref);
   if (!view) return 'no-pr';
+
+  const context = await resolvePlanContext(root, ref);
+  if (context) {
+    return view.title === computePrTitle(context.id, context.entry) ? 'valid' : 'invalid';
+  }
   return isConventionalPrTitle(view.title) ? 'valid' : 'invalid';
 }
 

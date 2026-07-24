@@ -735,6 +735,20 @@ describe('validatePrTitle', () => {
     process.env.PATH = `${root}:${originalPath}`;
     expect(await validatePrTitle(root, 'feat/idea-20-some-title')).toBe('no-pr');
   });
+
+  it('reports "invalid" for a conventional title that names the wrong plan', async () => {
+    const { root } = installFakeGh(
+      `echo '{"title":"fix(ui): Other work (IDEA-999)","headRefName":"feat/idea-9-x"}'`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    writeFileSync(
+      join(root, 'papercamp', 'ideas', 'IDEA-9.md'),
+      '---\nid: IDEA-9\ntitle: Some plan\ntype: feat\ntags:\n  - ci\n  - github\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [x] Phase one\n',
+    );
+
+    expect(await validatePrTitle(root, 'feat/idea-9-x')).toBe('invalid');
+  });
 });
 
 describe('syncPrReadinessToPr', () => {
