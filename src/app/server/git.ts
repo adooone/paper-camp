@@ -166,7 +166,10 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         ? 'origin/main'
         : 'main';
 
-    const result = spawnSync('git', ['checkout', '-b', branch, base], { cwd: root });
+    // --no-track: branching off a remote-tracking ref otherwise sets the new branch's
+    // upstream to origin/main, and git then refuses `git push` because the upstream
+    // name doesn't match the branch name.
+    const result = spawnSync('git', ['checkout', '-b', branch, '--no-track', base], { cwd: root });
     if (result.status !== 0) {
       // Surface git's real error (e.g. uncommitted changes would be overwritten),
       // not a fabricated "branch exists" fallback.
