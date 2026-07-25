@@ -140,17 +140,37 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     const currentBranch = currentResult.stdout.toString().trim();
     if (currentBranch === branch) return;
 
-    const result = spawnSync('git', ['checkout', '-b', branch, 'main'], { cwd: root });
-    if (result.status !== 0) {
-      // Branch already exists — just check it out.
+    // Whether the branch already exists decides create-vs-checkout — never infer it
+    // from a `checkout -b` failure, which also fires for a dirty/blocked worktree and
+    // would then surface the misleading "pathspec did not match" from a doomed retry.
+    const branchExists =
+      spawnSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`], { cwd: root })
+        .status === 0;
+
+    if (branchExists) {
       const checkoutResult = spawnSync('git', ['checkout', branch], { cwd: root });
       if (checkoutResult.status !== 0) {
-        throw new Error(
-          checkoutResult.stderr.toString().trim() ||
-            result.stderr.toString().trim() ||
-            `Unable to check out ${branch}`,
-        );
+        throw new Error(checkoutResult.stderr.toString().trim() || `Unable to check out ${branch}`);
       }
+      return;
+    }
+
+    // Base new branches on the freshest main available: refresh origin/main
+    // (best-effort — offline is fine) and prefer it over a possibly-stale local main,
+    // so a plan branch never starts life behind the remote.
+    spawnSync('git', ['fetch', 'origin', 'main'], { cwd: root });
+    const base =
+      spawnSync('git', ['rev-parse', '--verify', '--quiet', 'refs/remotes/origin/main'], {
+        cwd: root,
+      }).status === 0
+        ? 'origin/main'
+        : 'main';
+
+    const result = spawnSync('git', ['checkout', '-b', branch, base], { cwd: root });
+    if (result.status !== 0) {
+      // Surface git's real error (e.g. uncommitted changes would be overwritten),
+      // not a fabricated "branch exists" fallback.
+      throw new Error(result.stderr.toString().trim() || `Unable to create branch ${branch}`);
     }
   }
 
