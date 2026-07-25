@@ -7,6 +7,7 @@ export * from './extend-idea-button';
 export * from './fix-review-button';
 export * from './new-idea-button';
 export * from './phase-copy-button';
+export * from './apply-notes-button';
 export * from './reconcile-button';
 export * from './refresh-button';
 export * from './run-all-phases-button';

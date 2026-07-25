@@ -2,7 +2,10 @@ import { fetchIconDataUri, fetchPackageName } from '@/app/services/system';
 import { useEffect, useState } from 'react';
 
 const kebabToTitle = (s: string) =>
-  s.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  s
+    .replace(/^@[^/]+\//, '')
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 export interface ProjectIdentity {
   projectName: string | null;

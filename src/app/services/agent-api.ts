@@ -38,6 +38,15 @@ export const launchPlanAudit = async (planId: string, prompt: string): Promise<v
   await handleAgentResponse(response);
 };
 
+export const launchPlanRework = async (planId: string, prompt: string): Promise<void> => {
+  const response = await fetch('/api/agent/launch-rework', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId, prompt }),
+  });
+  await handleAgentResponse(response);
+};
+
 export const launchPlanReconcile = async (planId: string, prompt: string): Promise<void> => {
   const response = await fetch('/api/agent/launch-reconcile', {
     method: 'POST',

@@ -1,4 +1,4 @@
-import type { IdeaEntry, PlanEntry, ReviewThread, SuggestionEntry } from '@/types/index';
+import type { IdeaEntry, LogEntry, PlanEntry, ReviewThread, SuggestionEntry } from '@/types/index';
 import type { SimilarityCandidate } from '../helpers';
 
 // These prompts run headless (`claude -p` / `opencode run`), so they must never ask
@@ -42,6 +42,49 @@ Rules:
 - Never modify, reorder, check, uncheck, or delete any existing line, even if it looks stale, wrong, or redundant.
 - Never touch the YAML frontmatter.
 - Append only: new unchecked phases at the end of the list, plus the single Log line.`;
+}
+
+/**
+ * Turns the human comments on an entity into actual changes. The inverse of
+ * reconcile: reconcile may never touch phases, status, or the Log and only fixes
+ * prose that drifted from the code; this one exists to act on what the Log says.
+ */
+export function buildReworkPrompt(plan: PlanEntry, notes: LogEntry[]): string {
+  const hasPhases = plan.phases.length > 0;
+  const noun = hasPhases ? 'plan' : 'idea';
+  const phaseList = hasPhases
+    ? plan.phases
+        .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
+        .join('\n')
+    : '(none — this is a backlog idea with no phases yet)';
+  const noteList = notes.map((n) => `- ${n.date}: ${n.text}`).join('\n');
+
+  return `You are reworking the ${noun} "${plan.title}" (${plan.id ?? 'no id'}) from its author's notes, stored as a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md — if it is not there, it is archived at papercamp/ideas/archive/${plan.id ?? '<ID>'}.md. Edit only that file.
+
+Current status: ${plan.status}
+
+${hasPhases ? 'Plan' : 'Idea'} body: ${plan.body}
+
+Current phases:
+${phaseList}
+
+The author's notes — this is the work to act on:
+${noteList}
+
+Task: make the ${noun} reflect these notes, so that acting on the ${noun} afterwards delivers what the author asked for.
+
+1. Read each note and decide what it means for this ${noun}: new work to do, a correction to the body prose, or a statement that something believed finished is not.
+2. Add a phase for each piece of new work the notes describe — imperative title line, then an indented description naming the files or areas involved, matching the style of the existing phases.
+3. Reword body prose only where a note contradicts it.
+4. If the notes mean work remains on a ${noun} marked \`review\` or \`done\`, set \`status\` back to \`in-progress\` so it re-enters the queue. Leave the status alone otherwise.
+5. Append one line to the Log recording what you changed, dated today, so these notes are not applied twice.
+
+Hard guardrails, never violate these:
+- Never delete or un-check an already-completed phase — finished history stays, new work becomes new phases.
+- Never remove or reword the author's own note lines in the Log.
+- Never change anything the notes do not ask about: id, title, created, idea, tags, and unrelated prose stay byte-identical.
+- Never touch a different file, and never implement the work itself — you are editing the ${noun}, not the codebase.
+- If a note is purely a remark with nothing to act on, leave the ${noun} unchanged and say so in your Log line.`;
 }
 
 export function buildReconcilePrompt(plan: PlanEntry): string {

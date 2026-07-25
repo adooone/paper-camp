@@ -196,7 +196,7 @@ export function createAgentManager(
     task.status = status;
     broadcast(`agent: ${status}`, task.id);
     if (status === 'done' || status === 'error') {
-      logTaskCompletion(root, task, status);
+      void logTaskCompletion(root, task, status);
       pruneCompletedTasks();
     }
   }
@@ -213,7 +213,7 @@ export function createAgentManager(
       if (task.taskKind === 'fix-review') {
         return task.fixReviewResult !== undefined;
       }
-      if (task.taskKind === 'reconcile') {
+      if (task.taskKind === 'reconcile' || task.taskKind === 'rework') {
         const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
         const plan = entries.find((e) => e.id === task.planId && e.kind !== 'note');
         if (!plan || task.reconcileBaseline === undefined) return null;
@@ -264,17 +264,19 @@ export function createAgentManager(
         const warning =
           task.taskKind === 'extend'
             ? `Warning: agent finished but the idea body for ${task.ideaId} did not change — verify manually`
-            : task.taskKind === 'reconcile'
-              ? 'Warning: agent finished but the plan body and phase text did not change — verify manually'
-              : task.taskKind === 'suggest'
-                ? 'Agent finished without appending any suggestions — nothing new found'
-                : task.taskKind === 'fix-review'
-                  ? 'Warning: agent finished without reporting which comments it addressed — verify manually'
-                  : task.ideaId !== undefined
-                    ? `Warning: agent finished but ${task.ideaId} gained no Phases section — verify manually`
-                    : task.phaseIndex !== undefined
-                      ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
-                      : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
+            : task.taskKind === 'rework'
+              ? 'Warning: agent finished but your notes produced no change to the body or phases — verify manually'
+              : task.taskKind === 'reconcile'
+                ? 'Warning: agent finished but the plan body and phase text did not change — verify manually'
+                : task.taskKind === 'suggest'
+                  ? 'Agent finished without appending any suggestions — nothing new found'
+                  : task.taskKind === 'fix-review'
+                    ? 'Warning: agent finished without reporting which comments it addressed — verify manually'
+                    : task.ideaId !== undefined
+                      ? `Warning: agent finished but ${task.ideaId} gained no Phases section — verify manually`
+                      : task.phaseIndex !== undefined
+                        ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
+                        : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
         pushLine(task, warning);
       }
       if (task.taskKind === 'audit' && task.planId && progressed === true) {
@@ -335,6 +337,7 @@ export function createAgentManager(
   const ENTITY_WRITER_KINDS = new Set<TaskKind>([
     'audit',
     'reconcile',
+    'rework',
     'batch-reconcile',
     'draft',
     'extend',
@@ -439,11 +442,13 @@ export function createAgentManager(
   function startForPlan(
     plan: PlanEntry,
     prompt: string,
-    taskKind: 'audit' | 'reconcile' = 'audit',
+    taskKind: 'audit' | 'reconcile' | 'rework' = 'audit',
   ): Result {
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
       taskKind,
-      ...(taskKind === 'reconcile'
+      // Rework rewrites body/phases in place like reconcile, so it needs the same
+      // baseline snapshot to drive the before/after preview.
+      ...(taskKind === 'reconcile' || taskKind === 'rework'
         ? {
             reconcileBaseline: JSON.stringify({
               body: plan.body,
@@ -1012,7 +1017,11 @@ export interface AgentManagerState {
 
 export interface AgentManager {
   start: (plan: PlanEntry, phaseIndex: number) => Result;
-  startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
+  startForPlan: (
+    plan: PlanEntry,
+    prompt: string,
+    taskKind?: 'audit' | 'reconcile' | 'rework',
+  ) => Result;
   startFixReview: (plan: PlanEntry, prompt: string, threads: ReviewThread[]) => Result;
   getFixReviewResult: () => FixReviewResult | null;
   consumeFixReviewResult: () => void;

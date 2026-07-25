@@ -42,6 +42,8 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   sync: 'phase',
   reconcile: 'phase',
   'fix-review': 'phase',
+  // Rework writes new phases from prose notes — the same authoring job as drafting.
+  rework: 'planDraft',
   draft: 'planDraft',
   extend: 'ideaExtend',
   suggest: 'ideaExtend',

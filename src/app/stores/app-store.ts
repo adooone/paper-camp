@@ -33,6 +33,7 @@ import {
   launchPlanAudit,
   launchPlanDraft,
   launchPlanReconcile,
+  launchPlanRework,
   launchRunAll,
   launchSuggestIdeas,
   stopAgent,
@@ -145,6 +146,11 @@ export type AppStore = {
     prompt: string,
     before: ReconcilePreview['before'],
   ) => Promise<void>;
+  launchPlanRework: (
+    planId: string,
+    prompt: string,
+    before: ReconcilePreview['before'],
+  ) => Promise<void>;
   launchPlanDraft: (ideaId: string, prompt: string) => Promise<void>;
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
   launchBatchReconcile: () => Promise<void>;
@@ -157,8 +163,8 @@ export type AppStore = {
   // Held at store level (not in the button component) so completion is still
   // handled by loadAgentStatus if the user navigates away before the agent finishes.
   pendingReconcile: ReconcilePreview | null;
-  reconcileQueue: ReconcilePreview[];
-  removeFromReconcileQueue: (planId: string) => void;
+  reconcileQueue: QueuedReconcile[];
+  removeFromReconcileQueue: (previewId: string) => void;
   // Guards loadAgentStatus against re-appending the same batch sweep on every poll.
   batchReconcileConsumed: boolean;
 };
@@ -167,6 +173,15 @@ interface ReconcilePreview {
   planId: string;
   before: { body: string; phases: PlanEntry['phases'] };
 }
+
+// A queued preview carries its own id: two reconciles can run against the same
+// entity, and keying removal on planId alone would dismiss both at once.
+interface QueuedReconcile extends ReconcilePreview {
+  previewId: string;
+}
+
+let previewCounter = 0;
+const nextPreviewId = () => `preview-${++previewCounter}`;
 
 export const selectAgentBusy = (s: AppStore) =>
   s.agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
@@ -439,14 +454,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ agentStatus: data });
 
       const pending = get().pendingReconcile;
+      // rework rewrites the entity in place exactly like reconcile, so it lands in
+      // the same before/after preview queue.
       const reconcileTask = pending
-        ? data.find((t) => t.taskKind === 'reconcile' && t.planId === pending.planId)
+        ? data.find(
+            (t) =>
+              (t.taskKind === 'reconcile' || t.taskKind === 'rework') &&
+              t.planId === pending.planId,
+          )
         : undefined;
       if (pending && reconcileTask) {
         if (reconcileTask.status === 'done') {
           // loadPlans first: if it throws, pendingReconcile stays set and retries.
           await get().loadPlans();
-          set((s) => ({ reconcileQueue: [...s.reconcileQueue, pending], pendingReconcile: null }));
+          set((s) => ({
+            reconcileQueue: [...s.reconcileQueue, { ...pending, previewId: nextPreviewId() }],
+            pendingReconcile: null,
+          }));
         } else if (reconcileTask.status === 'error') {
           set({ pendingReconcile: null });
         }
@@ -460,7 +484,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
           set((s) => ({
             reconcileQueue: [
               ...s.reconcileQueue,
-              ...results.map((r) => ({ planId: r.planId, before: r.before })),
+              ...results.map((r) => ({
+                planId: r.planId,
+                before: r.before,
+                previewId: nextPreviewId(),
+              })),
             ],
           }));
         }
@@ -489,9 +517,39 @@ export const useAppStore = create<AppStore>((set, get) => ({
           : 'A reconcile is already in progress for another plan',
       );
     }
+    // An unreviewed preview for this entity blocks a relaunch: a second preview's
+    // `before` is the state *after* the first rewrite, so discarding them out of
+    // order would reinstate a rewrite the user already rejected.
+    if (get().reconcileQueue.some((item) => item.planId === planId)) {
+      throw new Error('Review the pending reconcile for this plan first');
+    }
     set({ pendingReconcile: { planId, before } });
     try {
       await launchPlanReconcile(planId, prompt);
+    } catch (err) {
+      set({ pendingReconcile: null });
+      throw err;
+    }
+    await get().loadAgentStatus();
+  },
+  launchPlanRework: async (planId, prompt, before) => {
+    // Shares pendingReconcile (and so the same before/after preview) with reconcile:
+    // both rewrite the entity file in place, and only one such rewrite may be
+    // outstanding at a time or the previews stack incoherently.
+    const existing = get().pendingReconcile;
+    if (existing) {
+      throw new Error(
+        existing.planId === planId
+          ? 'A rewrite is already in progress for this plan'
+          : 'A rewrite is already in progress for another plan',
+      );
+    }
+    if (get().reconcileQueue.some((item) => item.planId === planId)) {
+      throw new Error('Review the pending changes for this plan first');
+    }
+    set({ pendingReconcile: { planId, before } });
+    try {
+      await launchPlanRework(planId, prompt);
     } catch (err) {
       set({ pendingReconcile: null });
       throw err;
@@ -539,7 +597,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   pendingReconcile: null,
   reconcileQueue: [],
-  removeFromReconcileQueue: (planId) =>
-    set((s) => ({ reconcileQueue: s.reconcileQueue.filter((item) => item.planId !== planId) })),
+  removeFromReconcileQueue: (previewId) =>
+    set((s) => ({
+      reconcileQueue: s.reconcileQueue.filter((item) => item.previewId !== previewId),
+    })),
   batchReconcileConsumed: false,
 }));
