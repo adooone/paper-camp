@@ -1,7 +1,13 @@
 import { spawn } from 'node:child_process';
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { ConsistencyIssue, EntityEntry, EntityType, PhaseItem } from '../../types/index';
+import {
+  type ConsistencyIssue,
+  type EntityEntry,
+  type EntityType,
+  PLAN_KINDS,
+  type PhaseItem,
+} from '../../types/index';
 import {
   findConsistencyIssues,
   parseDecisions,
@@ -11,7 +17,7 @@ import {
 import { entityToPlan, readEntities } from '../readers';
 import { computePlanContentHash } from '../serialize/content-hash';
 import { parsePrUrl, resolveEntityIdFromPrRef } from './pr-lookup';
-import { COMMIT_SCOPES } from './scopes';
+import { COMMIT_SCOPES, resolvePrimaryScope } from './scopes';
 
 export {
   clearPrCache,
@@ -27,6 +33,7 @@ interface GhPrCommentRow {
 }
 
 interface GhPrViewRow {
+  title: string;
   body: string;
   headRefName: string;
   labels: { name: string }[];
@@ -41,7 +48,7 @@ function runGhPrView(root: string, ref: string): Promise<GhPrViewRow | undefined
   return new Promise((resolve) => {
     const proc = spawn(
       'gh',
-      ['pr', 'view', ref, '--json', 'body,headRefName,labels,isDraft,state,url,comments'],
+      ['pr', 'view', ref, '--json', 'title,body,headRefName,labels,isDraft,state,url,comments'],
       {
         cwd: root,
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -247,6 +254,70 @@ export async function syncPrLabelsToPr(
 
   const ok = await runGhPrAddLabels(root, ref, missing);
   return ok ? 'updated' : 'unresolved';
+}
+
+/** Squash-merge inherits this verbatim as the release commit, so the format has to
+ * be conventional-commit from the start, not just readable. */
+export function computePrTitle(
+  id: string,
+  entry: Pick<EntityEntry, 'type' | 'tags' | 'title'>,
+): string {
+  const type = entry.type ?? 'feat';
+  const scope = resolvePrimaryScope(entry.tags, 'repo');
+  return `${type}(${scope}): ${entry.title} (${id})`;
+}
+
+const CONVENTIONAL_PR_TITLE_RE = new RegExp(`^(${PLAN_KINDS.join('|')})\\(([a-z-]+)\\): .+$`);
+
+export function isConventionalPrTitle(title: string): boolean {
+  const match = title.match(CONVENTIONAL_PR_TITLE_RE);
+  return !!match && COMMIT_SCOPES.has(match[2]);
+}
+
+function runGhPrEditTitle(root: string, ref: string, title: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['pr', 'edit', ref, '--title', title], {
+      cwd: root,
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => resolve(code === 0));
+    proc.on('error', () => resolve(false));
+  });
+}
+
+export async function syncPrTitleToPr(
+  root: string,
+  ref: string,
+): Promise<'updated' | 'unchanged' | 'unresolved'> {
+  const context = await resolvePlanContext(root, ref);
+  if (!context?.view) return 'unresolved';
+  const { id, view, entry } = context;
+
+  const desired = computePrTitle(id, entry);
+  if (view.title === desired) return 'unchanged';
+
+  const ok = await runGhPrEditTitle(root, ref, desired);
+  return ok ? 'updated' : 'unresolved';
+}
+
+/** Not best-effort like the sync-* commands: a squash-merged commit inherits the
+ * PR title verbatim, so an unconventional hand-typed title must fail the check
+ * rather than pass silently and fall out of the changelog. When the branch/PR
+ * resolves to a plan, the title must match that plan's title exactly — a
+ * conventional but unrelated title (stale or hand-edited) is still invalid. */
+export async function validatePrTitle(
+  root: string,
+  ref: string,
+): Promise<'valid' | 'invalid' | 'no-pr'> {
+  const view = await runGhPrView(root, ref);
+  if (!view) return 'no-pr';
+
+  const context = await resolvePlanContext(root, ref);
+  if (context) {
+    return view.title === computePrTitle(context.id, context.entry) ? 'valid' : 'invalid';
+  }
+  return isConventionalPrTitle(view.title) ? 'valid' : 'invalid';
 }
 
 function runGhPrReady(root: string, ref: string): Promise<boolean> {

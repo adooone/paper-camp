@@ -10,7 +10,6 @@ tags:
   - plans
   - agent
 subject: Workflow
-order: 1
 ---
 
 The run-order invariant ([[IDEA-71]]: contiguous 1..N over planned/in-progress/review, visible as gutter stamps) has a hole: it's enforced only on the plans PATCH route. Every other way an idea enters the ordered set bypasses it — promotion routes mint new files, `POST /api/plans` creates them, and draft-plan agents write phases directly to disk, flipping derived status to `planned` without any route involved. Result observed in the wild: an entire generation of ideas (78–81) sitting in the queue with empty markers. An invariant that only holds on one write path isn't an invariant.

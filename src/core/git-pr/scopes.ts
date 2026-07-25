@@ -20,3 +20,9 @@ export const COMMIT_SCOPES = new Set([
   'release',
   'main',
 ]);
+
+/** Plan tags are free-form and may not be valid scopes; the first tag that IS one
+ * wins, else `fallback` — the one rule every commit-scope/PR-title site shares. */
+export function resolvePrimaryScope(tags: string[] | undefined, fallback: string): string {
+  return tags?.find((tag) => COMMIT_SCOPES.has(tag)) ?? fallback;
+}

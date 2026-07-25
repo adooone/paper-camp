@@ -1,3 +1,47 @@
+## Squash-merge is the merge policy; PR title is the release commit
+
+**Date:** 2026-07-24
+**Status:** decided
+
+**Context:** `IDEA-83` traced the v0.10.0 changelog's noise (six "Gate the
+pass" lines, phase titles with no idea context) to merge-commit PRs: every
+per-phase agent commit lands on `main` individually, and release-please
+compiles every one of them into the notes. The user-meaningful unit of
+change is the idea, not the phase — but the changelog's unit was the phase.
+Phases 1–2 already changed the mechanics (`sync-pr-metadata.yml` retitles
+PRs to `<type>(<scope>): <Idea title> (IDEA-N)`; `release-please-config.json`
+hides `refactor`/`docs`/`chore` sections) on the assumption that the repo
+would switch to squash-merge; this decision records that assumption as
+settled policy.
+
+**Decision:** GitHub's merge button is set to squash-merge, default commit
+message "pull request title and description" — a repo setting, not code, so
+it's a human/admin action rather than something this phase's agent flips via
+`gh api`. One commit per idea lands on `main`, titled from the PR (already
+kept conventional by `sync-pr-metadata.yml`). Per-phase commit history stays
+on the PR and, more durably, in the idea's own `### Log` and in
+`progress.md` — that corpus already narrates phases better than `git log`
+did, so `main`'s history stops duplicating it badly. `AGENTS.md`/`USAGE.md`
+now describe squash as the merge step, not a merge commit.
+
+Squash-merge also breaks `getBranchHygieneStatus`'s `stale-merged` detection
+in `src/app/server/git.ts`: it read merge status by ancestry (`git branch
+--merged`), and a squashed branch's commits never become ancestors of `main`
+after the squash rewrites history, so the sync-to-main escape hatch would
+silently stop firing. Fixed by checking the PR's own state first
+(`resolvePrsByEntity`, matched via the branch's `IDEA-N`) and falling back to
+the old ancestry check only when the PR lookup can't resolve (offline, no
+`gh`) — mirroring the existing "status derives from the PR" pattern this
+repo already uses for entity status derivation.
+
+**Rationale:** Squash was the only option that fixes the changelog without
+rewriting already-published history: merge commits keep every phase commit
+individually reachable from `main`, and rebase-merge would still deliver
+every phase commit (just linearized) rather than collapsing them to one.
+The PR-state fallback for hygiene detection follows the same precedent as
+"Status derives from the PR (matched by id), not from local branches" — the
+PR is the durable signal a squash/delete can't erase, ancestry can't.
+
 ## Runtime stays server-first; no desktop shell; mobile via PWA
 
 **Date:** 2026-07-19

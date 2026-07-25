@@ -46,7 +46,9 @@ survives any tool — the app is optional at every step.
    draft PR; it's promoted to ready when the plan reaches `review`.
 7. **Review.** CodeRabbit reviews the PR. *Fix review* launches an agent that
    addresses each thread, resolves what it fixed on GitHub, and replies with
-   reasons to what it declined. Approve and merge on GitHub.
+   reasons to what it declined. Approve and **squash-merge** on GitHub — one
+   commit per idea lands on `main`, titled from the idea (the per-phase
+   commit history stays on the PR and in this idea's own log).
 8. **Land.** A merged PR derives the idea to *done* automatically (status is
    derived from reality — phases, branch, PR — not from stale frontmatter).
    From the dead branch, *Sync to main* stash-carries anything loose and

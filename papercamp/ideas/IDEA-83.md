@@ -2,14 +2,14 @@
 id: IDEA-83
 title: One release line per idea
 type: fix
-status: idea
+status: review
 created: 2026-07-22
 tags:
   - ci
   - git
   - docs
 subject: Workflow
-order: 2
+order: 1
 ---
 
 The v0.10.0 release notes list six separate "Gate the pass" entries, three "updates", and a pile of phase titles that mean nothing without their idea ("Close the absorbed idea", "Detect archivable ideas"). Root cause is structural, not cosmetic: release-please compiles every conventional commit on main, and merge-commit PRs deliver every per-phase agent commit individually. The user-meaningful unit of change is the **idea** — one PR, one line — but the changelog's unit is the phase.
@@ -24,11 +24,11 @@ The fix: **squash-merge, with the PR title as the conventional commit.**
 Heads-up recorded for the implementer: squash-merge also breaks the hygiene check's ancestry-based `stale-merged` detection (squashed branch commits never become ancestors of main) — the merge-policy phase must switch `getBranchHygieneStatus` to the PR-state signal (`resolvePrsByEntity` already knows merged) or the sync-to-main escape hatch goes blind. Not in scope: rewriting the already-published 0.9/0.10 notes (history is history), and agent-written release highlights (worth a thought once one-line-per-idea lands and the raw material is clean).
 
 ### Phases
-- [ ] Retitle PRs conventionally
+- [x] Retitle PRs conventionally
       `sync-pr-metadata.yml`: title format `<type>(<scope>): <Idea title> (IDEA-N)` from the idea's frontmatter type + primary-tag scope (fallback `feat(repo)`); validate the format and fail the check on non-conventional hand-titled PRs.
-- [ ] Trim changelog sections
+- [x] Trim changelog sections
       `release-please-config.json`: hide `refactor` and `docs` sections; verify the next release-please PR renders features and fixes only.
-- [ ] Document the merge policy
+- [x] Document the merge policy
       The human half: squash-merge enabled with "title and description" default (repo settings — recorded in `decisions.md` with the rationale that progress.md owns phase narrative); AGENTS.md / USAGE.md updated so the flow says squash.
-- [ ] Gate the pass
+- [x] Gate the pass
       Checks green; next merged idea produces exactly one conventional commit on main, and the following release-please PR shows one line for it with the idea id.

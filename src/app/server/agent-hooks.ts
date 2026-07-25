@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { COMMIT_SCOPES } from '@/core/git-pr';
+import { resolvePrimaryScope } from '@/core/git-pr';
 import { parseEntityFile } from '@/core/parse';
 import { computePlanContentHash } from '@/core/serialize';
 import { prependProgressItem as prependProgressLine, todayDateString } from '@/core/serialize';
@@ -7,10 +7,8 @@ import type { PhaseItem, PlanEntry } from '@/types/index';
 import type { GitManager } from './git';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 
-// Plan tags are free-form and may not be valid scopes (e.g. FEAT-29's first tag was
-// `freshness`); the first tag that IS a scope, else a safe default, keeps agent-authored commits passing Consistency.
 function resolveCommitScope(plan: Pick<PlanEntry, 'tags'>): string {
-  return plan.tags?.find((tag) => COMMIT_SCOPES.has(tag)) ?? 'plans';
+  return resolvePrimaryScope(plan.tags, 'plans');
 }
 
 // Kept out of api.ts so the middleware only wires managers together.
