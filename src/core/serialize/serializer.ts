@@ -1,9 +1,15 @@
 import { mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import type { EntityEntry, LogEntry, PhaseItem, SuggestionEntry } from '../../types/index';
+import type {
+  EntityEntry,
+  LogEntry,
+  MarginNote,
+  PhaseItem,
+  SuggestionEntry,
+} from '../../types/index';
 import { SUGGESTION_ENTRY_RE } from '../parse/parser';
-import { CLARIFICATIONS_SECTION, LOG_SECTION, PHASES_SECTION } from '../sections';
+import { CLARIFICATIONS_SECTION, LOG_SECTION, NOTES_SECTION, PHASES_SECTION } from '../sections';
 
 export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -81,6 +87,7 @@ interface NewPlanInput {
   phases?: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
+  notes?: MarginNote[];
 }
 
 export function formatPlanEntry(input: NewPlanInput): string {
@@ -102,6 +109,9 @@ export function formatPlanEntry(input: NewPlanInput): string {
   }
   if (input.log && input.log.length > 0) {
     lines.push('', ...LOG_SECTION.formatLines(input.log));
+  }
+  if (input.notes && input.notes.length > 0) {
+    lines.push('', ...NOTES_SECTION.formatLines(input.notes));
   }
   return lines.join('\n').trimEnd();
 }
@@ -216,6 +226,7 @@ interface NewPlanFileInput {
   phases?: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
+  notes?: MarginNote[];
 }
 
 export function formatPlanFile(input: NewPlanFileInput): string {
@@ -249,6 +260,10 @@ export function formatPlanFile(input: NewPlanFileInput): string {
     sections.push(LOG_SECTION.formatLines(input.log).join('\n'));
   }
 
+  if (input.notes && input.notes.length > 0) {
+    sections.push(NOTES_SECTION.formatLines(input.notes).join('\n'));
+  }
+
   return sections.join('\n\n').trimEnd();
 }
 
@@ -271,6 +286,7 @@ interface NewEntityFileInput {
   phases?: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
+  notes?: MarginNote[];
 }
 
 export function formatEntityFile(input: NewEntityFileInput): string {
@@ -304,6 +320,10 @@ export function formatEntityFile(input: NewEntityFileInput): string {
 
   if (input.log && input.log.length > 0) {
     sections.push(LOG_SECTION.formatLines(input.log).join('\n'));
+  }
+
+  if (input.notes && input.notes.length > 0) {
+    sections.push(NOTES_SECTION.formatLines(input.notes).join('\n'));
   }
 
   return sections.join('\n\n').trimEnd();

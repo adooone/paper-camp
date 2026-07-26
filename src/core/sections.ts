@@ -1,9 +1,10 @@
-import type { LogEntry, PhaseItem } from '../types/index';
+import type { LogEntry, MarginNote, MarginNoteAnchor, PhaseItem } from '../types/index';
 
 const SUB_HEADING_RE = /^#{2,3}\s+/;
 const CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.*)$/;
 const PHASE_SOURCE_RE = /^\[review\]\s+(.*)$/;
 const DATED_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
+const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(.*)$/;
 
 function parsePhaseEntries(lines: string[], start: number, end: number): PhaseItem[] {
   const phases: PhaseItem[] = [];
@@ -67,6 +68,39 @@ function formatDatedLines(heading: string, entries: LogEntry[]): string[] {
   return [heading, ...entries.map((e) => `- ${e.date}: ${e.text}`)];
 }
 
+function formatAnchor(anchor: MarginNoteAnchor): string {
+  return anchor.kind === 'phase' ? `[phase:${anchor.index}]` : '[body]';
+}
+
+function parseNoteEntries(lines: string[], start: number, end: number): MarginNote[] {
+  const notes: MarginNote[] = [];
+  for (let i = start; i < end; i++) {
+    const match = lines[i].match(CHECKBOX_RE);
+    if (!match) continue;
+    const anchorMatch = match[2].trim().match(NOTE_ANCHOR_RE);
+    if (!anchorMatch) continue;
+    const anchor: MarginNoteAnchor = anchorMatch[1]
+      ? { kind: 'phase', index: Number(anchorMatch[1]) }
+      : { kind: 'body' };
+    notes.push({
+      anchor,
+      prose: anchorMatch[2].trim(),
+      state: match[1].toLowerCase() === 'x' ? 'resolved' : 'open',
+    });
+  }
+  return notes;
+}
+
+function formatNoteLines(notes: MarginNote[]): string[] {
+  const lines = ['### Notes'];
+  for (const note of notes) {
+    lines.push(
+      `- [${note.state === 'resolved' ? 'x' : ' '}] ${formatAnchor(note.anchor)} ${note.prose}`,
+    );
+  }
+  return lines;
+}
+
 /** A section's parse and format sides share the same heading, so this is the one
  * table both `core/parse/parser.ts` and `core/serialize/serializer.ts` drive from.
  * Headings match h2 OR h3 on read: the serializer only ever writes `###`, but generic
@@ -95,6 +129,12 @@ export const CLARIFICATIONS_SECTION: SectionDef<LogEntry> = {
   headingRe: /^#{2,3}\s+Clarifications\s*$/i,
   parseEntries: parseDatedEntries,
   formatLines: (entries) => formatDatedLines('### Clarifications', entries),
+};
+
+export const NOTES_SECTION: SectionDef<MarginNote> = {
+  headingRe: /^#{2,3}\s+Notes\s*$/i,
+  parseEntries: parseNoteEntries,
+  formatLines: formatNoteLines,
 };
 
 export { SUB_HEADING_RE };

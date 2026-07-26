@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DecisionEntry, OpenQuestionEntry, PlanEntry } from '../../types/index';
+import { formatEntityFile } from '../serialize/serializer';
 import {
   findConsistencyIssues,
   parseDecisions,
@@ -460,6 +461,61 @@ ${phasesHeading}
     expect(entries[0].phases).toEqual([
       { done: true, text: 'first' },
       { done: false, text: 'second' },
+    ]);
+  });
+
+  it('extracts Notes entries out of the body', () => {
+    const md = `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+### Notes
+- [ ] [phase:1] Reconsider the retry backoff here
+- [x] [body] Already addressed in the rewrite
+`;
+    const { entries, warnings } = parseEntityFile(md);
+    expect(warnings).toEqual([]);
+    expect(entries[0].notes).toEqual([
+      {
+        anchor: { kind: 'phase', index: 1 },
+        prose: 'Reconsider the retry backoff here',
+        state: 'open',
+      },
+      { anchor: { kind: 'body' }, prose: 'Already addressed in the rewrite', state: 'resolved' },
+    ]);
+    expect(entries[0].body).toBe('Body prose.');
+  });
+
+  it('round-trips notes through formatEntityFile', () => {
+    const written = formatEntityFile({
+      id: 'IDEA-99',
+      title: 'Tolerant heading',
+      type: 'feat',
+      created: '2026-07-13',
+      body: 'Body prose.',
+      notes: [
+        {
+          anchor: { kind: 'phase', index: 1 },
+          prose: 'Reconsider the retry backoff here',
+          state: 'open',
+        },
+        { anchor: { kind: 'body' }, prose: 'Already addressed in the rewrite', state: 'resolved' },
+      ],
+    });
+    const { entries, warnings } = parseEntityFile(written);
+    expect(warnings).toEqual([]);
+    expect(entries[0].notes).toEqual([
+      {
+        anchor: { kind: 'phase', index: 1 },
+        prose: 'Reconsider the retry backoff here',
+        state: 'open',
+      },
+      { anchor: { kind: 'body' }, prose: 'Already addressed in the rewrite', state: 'resolved' },
     ]);
   });
 });

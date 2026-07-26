@@ -23,7 +23,7 @@ Most of the plumbing exists: `PATCH /api/plans` already writes `body`, `phases`,
 Shares one primitive with [[IDEA-89]] — anchored human prose in, agent-applied structured change out. Build this first; [[IDEA-89]] then becomes mostly a second anchor point.
 
 ### Phases
-- [ ] Model the anchored margin note
+- [x] Model the anchored margin note
       Add a margin-note type — `anchor` (a phase index or a body section), `prose`, and an open/resolved `state` — to the shared types, and parse/serialize it as a `### Notes` body section that round-trips through `parseEntityFile`/`formatEntityFile` alongside the existing Phases/Log/Clarifications sections. Cover the round-trip in `parser.test.ts`.
 - [ ] Persist notes through `PATCH /api/plans`
       Extend the entity write path so adding, editing, and resolving a note saves via the existing PATCH route next to `body`/`phases`/`log`, and add the matching client wrapper in `plans-api.ts` / the app-store slice.
