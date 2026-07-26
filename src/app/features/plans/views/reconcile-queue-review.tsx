@@ -2,6 +2,7 @@ import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { useToast } from '@dendelion/paper-ui';
 import { useEffect, useRef } from 'react';
+import { resolveAppliedNotes } from '../helpers';
 import { ReconcileDiffPanel } from '../modals';
 
 export const ReconcileQueueReview = () => {
@@ -27,11 +28,20 @@ export const ReconcileQueueReview = () => {
 
   if (!head || !plan) return null;
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
+    // The agent already wrote body/phases to disk, so approve only has work left to do
+    // when notes were bundled into this rework: resolve the ones it addressed so they
+    // drop out of the queue instead of lingering as if never acted on.
+    if (head.notes && head.notes.length > 0) {
+      const ok = await patch(
+        plan.title,
+        { notes: resolveAppliedNotes(plan.notes, head.notes) },
+        { errorTitle: 'Could not resolve notes' },
+      );
+      if (!ok) return;
+    }
     removeFromReconcileQueue(head.previewId);
     reviewedCount.current += 1;
-    // The agent already wrote this to disk, so approve is a no-op — say so, or it's
-    // indistinguishable from a dead button.
     toast({
       title: 'Kept the reconciled version',
       description: `"${plan.title}" keeps the agent's rewrite.`,

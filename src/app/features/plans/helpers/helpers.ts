@@ -53,6 +53,22 @@ export const notesForAnchor = (
 export const openMarginNotes = (notes: MarginNote[] | undefined): MarginNote[] =>
   (notes ?? []).filter((note) => note.state === 'open');
 
+const sameAnchor = (a: MarginNoteAnchor, b: MarginNoteAnchor): boolean =>
+  a.kind === 'phase' && b.kind === 'phase' ? a.index === b.index : a.kind === b.kind;
+
+// Matches by (anchor, prose) rather than identity: a bundled note's array reference
+// won't survive the reload between launching a rework and approving its preview.
+export const resolveAppliedNotes = (
+  notes: MarginNote[] | undefined,
+  applied: MarginNote[],
+): MarginNote[] =>
+  (notes ?? []).map((note) =>
+    note.state === 'open' &&
+    applied.some((a) => sameAnchor(a.anchor, note.anchor) && a.prose === note.prose)
+      ? { ...note, state: 'resolved' as const }
+      : note,
+  );
+
 export const findFocusPlan = (
   plans: PlanEntry[] | undefined,
   activePlanTitle?: string | null,

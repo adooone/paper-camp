@@ -27,10 +27,12 @@ export const ReworkFromNotesButton = ({ plan, disabled }: ReworkFromNotesButtonP
     if (!plan.id || notes.length === 0) return;
     setLaunching(true);
     try {
-      await launchPlanRework(plan.id, buildReworkFromNotesPrompt(plan, notes), {
-        body: plan.body,
-        phases: plan.phases,
-      });
+      await launchPlanRework(
+        plan.id,
+        buildReworkFromNotesPrompt(plan, notes),
+        { body: plan.body, phases: plan.phases },
+        notes,
+      );
       toast({
         title: 'Reworking from your notes',
         description: 'The agent is reworking this entry — you can approve or discard the result.',
