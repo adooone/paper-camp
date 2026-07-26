@@ -77,7 +77,7 @@ is silently discarded.
 - [x] Migrate: strip `order:` and generate the initial list
       One-time pass over the ~12 entities carrying `order:` — remove the field from
       frontmatter and emit the list in the current sequence.
-- [ ] Treat the file as precious in sync's disposable-changes check
+- [x] Treat the file as precious in sync's disposable-changes check
       Ensure the deterministic sync ([[IDEA-94]], `dropDisposableLocalChanges` in
       `git.ts`) never silently discards the list the way it does `ideas/index.md`.
 - [ ] Type-check and full pass

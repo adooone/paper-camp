@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -251,6 +251,32 @@ describe('runGitSync', () => {
 
     expect(await readFile(join(root, 'README.md'), 'utf-8')).toBe('edited\n');
     expect(git(root, 'stash', 'list')).toContain('unrelated-pre-existing-stash');
+  });
+
+  it('keeps a local run-order.md edit that differs from origin/main, unlike the generated ideas index', async () => {
+    // run-order.md is intent (a chosen queue), so it must survive sync like any other
+    // hand-edited file — unlike ideas/index.md, which is derived output safe to drop
+    // and rebuild from the merged entities.
+    const root = await initRepo();
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-1 — first\n');
+    await writeFile(join(root, 'papercamp', 'ideas', 'index.md'), 'stale index\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'add run-order and ideas index');
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-11-runorder');
+    await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-2 — second\nIDEA-1 — first\n');
+    await writeFile(join(root, 'papercamp', 'ideas', 'index.md'), 'locally edited index\n');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(await readFile(join(root, 'papercamp', 'run-order.md'), 'utf-8')).toBe(
+      'IDEA-2 — second\nIDEA-1 — first\n',
+    );
+    expect(await readFile(join(root, 'papercamp', 'ideas', 'index.md'), 'utf-8')).toBe(
+      'stale index\n',
+    );
   });
 
   it('reports a pop conflict and keeps the changes in the stash', async () => {

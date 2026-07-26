@@ -393,6 +393,9 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
 
   // Rebuilt from the entity files by regenerateIndexes on every corpus mutation, so a
   // local edit to it is never the source of truth — only churn from the watcher.
+  // papercamp/run-order.md must never join this list: it is intent (the queue a human
+  // or the prioritise agent chose), not derived output, so a differing local copy has
+  // to survive sync the same way any other hand-edited file does.
   const GENERATED_CORPUS_FILES = ['papercamp/ideas/index.md'];
 
   // The corpus watcher constantly rewrites generated files and re-normalizes `order:`
