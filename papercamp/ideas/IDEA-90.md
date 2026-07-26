@@ -2,7 +2,7 @@
 id: IDEA-90
 title: Connections for every service
 type: feat
-status: idea
+status: review
 created: 2026-07-25
 updated: 2026-07-26
 tags:
@@ -29,4 +29,4 @@ Turn capabilities into a proper Connections surface: one row per service — age
       For each service, either run the sign-in flow or return the exact command to copy. Degrade gracefully when a CLI is absent.
 - [x] Build the Connections surface in Settings
       Replace the Setup section's static naming with one row per service — live status, what it unlocks, and a connect button or copyable command. Reuse [[IDEA-86]]'s indicator pattern.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
