@@ -76,3 +76,52 @@ export async function getMergePolicy(root: string): Promise<MergePolicyResult> {
     return { status: 'unavailable', reason: `could not parse gh api response for ${repo}` };
   }
 }
+
+export async function applyMergePolicy(root: string): Promise<MergePolicyResult> {
+  const repo = await resolveRepoSlug(root);
+  if (!repo) {
+    return {
+      status: 'unavailable',
+      reason:
+        'gh CLI is missing, unauthenticated, or the repository has no reachable GitHub origin',
+    };
+  }
+  const result = await runGh(
+    [
+      'api',
+      '-X',
+      'PATCH',
+      `repos/${repo}`,
+      '-F',
+      'allow_squash_merge=true',
+      '-F',
+      'allow_merge_commit=false',
+      '-F',
+      'allow_rebase_merge=false',
+      '-f',
+      'squash_merge_commit_title=PR_TITLE',
+      '-f',
+      'squash_merge_commit_message=PR_BODY',
+    ],
+    root,
+  );
+  if (result.code !== 0) {
+    return { status: 'unavailable', reason: `gh api -X PATCH repos/${repo} failed` };
+  }
+  try {
+    const parsed = JSON.parse(result.stdout) as GhRepoResponse;
+    return {
+      status: 'ok',
+      repo,
+      policy: {
+        allowSquashMerge: parsed.allow_squash_merge,
+        allowMergeCommit: parsed.allow_merge_commit,
+        allowRebaseMerge: parsed.allow_rebase_merge,
+        squashMergeCommitTitle: parsed.squash_merge_commit_title,
+        squashMergeCommitMessage: parsed.squash_merge_commit_message,
+      },
+    };
+  } catch {
+    return { status: 'unavailable', reason: `could not parse gh api response for ${repo}` };
+  }
+}

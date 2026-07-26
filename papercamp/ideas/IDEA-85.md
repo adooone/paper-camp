@@ -47,7 +47,7 @@ concern from the squash-merge policy).
       `allow_rebase_merge`, `squash_merge_commit_title`,
       `squash_merge_commit_message` — degrading cleanly when `gh` is missing or
       unauthenticated.
-- [ ] Apply the canonical squash policy from the server
+- [x] Apply the canonical squash policy from the server
       Add the write side: a `PATCH repos/{owner}/{repo}` through `gh`/API that
       sets the exact IDEA-83 values (`allow_squash_merge=true`,
       `allow_merge_commit=false`, `allow_rebase_merge=false`,
