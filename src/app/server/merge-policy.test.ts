@@ -135,6 +135,6 @@ describe('applyMergePolicy', () => {
     expect(recordedArgs).toContain('allow_rebase_merge=false');
     expect(recordedArgs).toContain('squash_merge_commit_title=PR_TITLE');
     expect(recordedArgs).toContain('squash_merge_commit_message=PR_BODY');
-    process.env.PAPERCAMP_GH_ARGS_FILE = undefined;
+    Reflect.deleteProperty(process.env, 'PAPERCAMP_GH_ARGS_FILE');
   }, 15000);
 });

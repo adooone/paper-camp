@@ -28,17 +28,14 @@ function matchesRecommended(policy: MergePolicy): boolean {
   return POLICY_ROWS.every((row) => policy[row.key] === RECOMMENDED[row.key]);
 }
 
-const PolicyRow = ({
-  label,
-  current,
-  recommended,
-  isLast,
-}: {
+interface PolicyRowProps {
   label: string;
   current: boolean | string;
   recommended: boolean | string;
   isLast: boolean;
-}) => {
+}
+
+const PolicyRow = ({ label, current, recommended, isLast }: PolicyRowProps) => {
   const matches = current === recommended;
   return (
     <>

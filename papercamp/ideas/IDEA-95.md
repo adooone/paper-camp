@@ -55,8 +55,11 @@ them into the horizon list would misrepresent them).
       time-ordered), and add it to the `Roadmap` type so those terms are first-class subjects.
 - [ ] Derive the subject vocabulary from `ROADMAP.md`
       Build the ordered vocabulary — horizon items grouped by horizon, plus standing concerns —
-      from the parsed roadmap so the roadmap is the single source of truth; retire
-      `config.json`'s `subjects` array and `ensureSubject` (or leave it only as a derived cache).
+      from the parsed roadmap so `ROADMAP.md` is the single writable source of truth. Retire
+      `config.json`'s `subjects` array and `ensureSubject` as writable state (one-way migration,
+      no fallback); if a derived cache is kept for read performance, it must be read-only,
+      regenerated from the parsed roadmap, with an explicit refresh strategy — never a second
+      place subjects can diverge from.
 - [ ] Stop minting subjects on promote
       Change `POST /api/roadmap/promote` (`src/app/server/routes/content/ideas.ts`) to no longer
       call `ensureSubject`; the promoted item now survives in the roadmap ([[IDEA-91]]) and is

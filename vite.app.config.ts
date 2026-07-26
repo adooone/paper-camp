@@ -33,6 +33,10 @@ function papercampApi(): Plugin {
       // crashed `pnpm dev` at config load. ssrLoadModule resolves `@/` (and TS)
       // the same way the app build does, so server code can use `@/` freely.
       let pending: Promise<ApiMiddleware> | null = null;
+      // Separate from `pending`: overlapping reloads must await the same construction
+      // rather than each starting their own, or the second clobbers g.__paperCampApi
+      // with a fresh middleware built from state the first load already consumed.
+      let inFlight: Promise<ApiMiddleware> | null = null;
       // Set once a hot-swap fails, so the next successful load knows to tell the
       // client the banner it raised is now stale.
       let reloadFailed = false;
@@ -50,32 +54,40 @@ function papercampApi(): Plugin {
       };
       const loadApi = async (): Promise<ApiMiddleware> => {
         if (g.__paperCampApi) return g.__paperCampApi;
-        const mod = (await server.ssrLoadModule('/src/app/server/api.ts')) as {
-          createApiMiddleware: (
-            root: string,
-            agentState?: AgentManagerState,
-            statusState?: StatusManagerState,
-          ) => ApiMiddleware;
-        };
-        const agentState = g.__paperCampAgentState;
-        const statusState = g.__paperCampStatusState;
-        g.__paperCampAgentState = undefined;
-        g.__paperCampStatusState = undefined;
-        const api = mod.createApiMiddleware(process.cwd(), agentState, statusState);
-        g.__paperCampApi = api;
-        if (reloadFailed) {
-          reloadFailed = false;
-          server.ws.send({ type: 'custom', event: 'papercamp:server-reload-ok' });
+        if (inFlight) return inFlight;
+        inFlight = (async () => {
+          const mod = (await server.ssrLoadModule('/src/app/server/api.ts')) as {
+            createApiMiddleware: (
+              root: string,
+              agentState?: AgentManagerState,
+              statusState?: StatusManagerState,
+            ) => ApiMiddleware;
+          };
+          const agentState = g.__paperCampAgentState;
+          const statusState = g.__paperCampStatusState;
+          g.__paperCampAgentState = undefined;
+          g.__paperCampStatusState = undefined;
+          const api = mod.createApiMiddleware(process.cwd(), agentState, statusState);
+          g.__paperCampApi = api;
+          if (reloadFailed) {
+            reloadFailed = false;
+            server.ws.send({ type: 'custom', event: 'papercamp:server-reload-ok' });
+          }
+          if (!g.__paperCampShutdownRegistered) {
+            g.__paperCampShutdownRegistered = true;
+            // Reads g.__paperCampApi at signal time, not a closed-over `api`, so it still
+            // targets the live instance after a hot-reload has swapped it out.
+            const shutdown = () => g.__paperCampApi?.agent.killCurrent();
+            process.on('SIGINT', shutdown);
+            process.on('SIGTERM', shutdown);
+          }
+          return api;
+        })();
+        try {
+          return await inFlight;
+        } finally {
+          inFlight = null;
         }
-        if (!g.__paperCampShutdownRegistered) {
-          g.__paperCampShutdownRegistered = true;
-          // Reads g.__paperCampApi at signal time, not a closed-over `api`, so it still
-          // targets the live instance after a hot-reload has swapped it out.
-          const shutdown = () => g.__paperCampApi?.agent.killCurrent();
-          process.on('SIGINT', shutdown);
-          process.on('SIGTERM', shutdown);
-        }
-        return api;
       };
       // Kicks off (and tracks) the reload itself rather than leaving it for the next
       // request, so an idle dev session with only an open SSE connection still gets

@@ -32,7 +32,7 @@ Depends on [[IDEA-91]]: without items surviving promotion there is no progress t
 - [ ] Add the Tree / Map / Timeline view-mode toggle
       A mode switch over the same roadmap data. Tree is today's structure reframed as the default mode; Map and Timeline are the new modes the switch selects between.
 - [ ] Derive a dated event stream for the Timeline
-      Collect events from each entity's `created`/`updated` dates, `tasks.log` run timestamps, and `progress.md`'s dated entries into one chronological model, keyed back to the roadmap item and entity each belongs to.
+      Collect events from append-only sources — each entity's `created` date, `tasks.log` run timestamps, and `progress.md`'s dated entries — into one chronological model, keyed back to the roadmap item and entity each belongs to. Exclude `updated`: it's a coarse last-touched signal, not historical event data — a current `updated` timestamp can't reconstruct when or how many changes happened, so feeding it into the Timeline would present inferred metadata as actual history.
 - [ ] Build the Timeline view
       Render the derived event stream along the lanes' time axis — what actually happened when — so movement against each horizon is visible rather than a static structure.
 - [ ] Build the Map view
