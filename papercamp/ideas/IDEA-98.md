@@ -74,7 +74,7 @@ is silently discarded.
       Have `readEntities`/`readWorkEntries` resolve each entity's rank from the list
       so the worklist sort (`plan-list-selector.ts`) and the drag/order control keep
       working once `order:` leaves the frontmatter.
-- [ ] Migrate: strip `order:` and generate the initial list
+- [x] Migrate: strip `order:` and generate the initial list
       One-time pass over the ~12 entities carrying `order:` — remove the field from
       frontmatter and emit the list in the current sequence.
 - [ ] Treat the file as precious in sync's disposable-changes check

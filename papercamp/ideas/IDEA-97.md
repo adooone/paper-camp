@@ -10,7 +10,7 @@ tags:
   - core
   - ui
 subject: Planning surface
-order: 10
+order: 12
 ---
 
 `papercamp/decisions.md` is 738 lines of settled calls with no UI — `GET /api/decisions` exists and nothing in the app consumes it. But unlike open questions, decisions already have a working consumer that is not human: `prompts.ts` feeds them to agents, and the project's own methodology says not to re-litigate a logged decision without flagging it. Decisions are guardrails.

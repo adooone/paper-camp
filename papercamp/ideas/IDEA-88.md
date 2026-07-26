@@ -10,7 +10,7 @@ tags:
   - plans
   - app
 subject: Planning surface
-order: 5
+order: 3
 ---
 
 An entity's identity is effectively frozen once created. The git branch is derived (`branchName(plan.id, plan.kind, plan.title)` in `src/app/server/git.ts`) with no override, so retitling silently diverges from the branch already holding the work, and there is no way to point an entity at a branch that already exists. The per-entity agent is settable through `PATCH /api/plans` (`agent`) but has no surface next to the rest of an entity's configuration.
