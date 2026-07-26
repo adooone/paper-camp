@@ -54,10 +54,10 @@ concern from the squash-merge policy).
       `squash_merge_commit_title=PR_TITLE`,
       `squash_merge_commit_message=PR_BODY`) and returns the resulting config so
       the UI can show what changed.
-- [ ] Expose read + apply as server routes
+- [x] Expose read + apply as server routes
       Wire both into the routes layer (e.g. `GET`/`POST` under the content or
       system routes) with typed payloads, mirroring the existing endpoint shapes.
-- [ ] Add the merge-policy control to Settings
+- [x] Add the merge-policy control to Settings
       A section in `src/app/features/settings` that shows the current values
       first (legible, not a black box), then a single "Apply recommended policy"
       action — settling the open question toward Paper Camp's opinionated

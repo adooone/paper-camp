@@ -107,3 +107,4 @@
 {"id":"48ffc086-ab6f-42b6-af65-095fd12c7f7c","taskKind":"draft","planTitle":"Draft plan for IDEA-93","agentId":"claude-code","startedAt":"2026-07-26T09:39:17.961Z","endedAt":"2026-07-26T09:40:03.715Z","outcome":"done"}
 {"id":"a523865a-38bc-4361-84f2-5576682bcda3","taskKind":"draft","planTitle":"Draft plan for IDEA-94","agentId":"claude-code","startedAt":"2026-07-26T09:41:55.839Z","endedAt":"2026-07-26T09:42:37.059Z","outcome":"done"}
 {"id":"21fa95a2-4f72-4a55-bc06-8c8b406e7646","taskKind":"prioritise","planTitle":"Prioritise queue","agentId":"claude-code","startedAt":"2026-07-26T10:10:39.762Z","endedAt":"2026-07-26T10:10:52.342Z","outcome":"done"}
+{"id":"1964aad9-5d8e-4551-857b-584a0d87b93e","taskKind":"run-all","planId":"IDEA-85","planTitle":"Apply the merge policy from Settings","agentId":"claude-code","startedAt":"2026-07-26T10:11:20.650Z","endedAt":"2026-07-26T10:35:26.389Z","outcome":"error"}

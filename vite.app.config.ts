@@ -6,6 +6,7 @@ import { resolve } from 'path';
 // server's runtime graph (and its `@/` imports) into the config bundle.
 import type { ApiMiddleware } from './src/app/server/api';
 import type { AgentManagerState } from './src/app/server/agent';
+import type { StatusManagerState } from './src/app/server/status';
 
 // src/app/server/** isn't a config dependency, so Vite never restarts for it — the
 // watcher below clears `g.__paperCampApi` on change so loadApi() rebuilds it instead,
@@ -18,6 +19,7 @@ const g = globalThis as {
   __paperCampApi?: ApiMiddleware;
   __paperCampShutdownRegistered?: boolean;
   __paperCampAgentState?: AgentManagerState;
+  __paperCampStatusState?: StatusManagerState;
 };
 
 function papercampApi(): Plugin {
@@ -49,11 +51,17 @@ function papercampApi(): Plugin {
       const loadApi = async (): Promise<ApiMiddleware> => {
         if (g.__paperCampApi) return g.__paperCampApi;
         const mod = (await server.ssrLoadModule('/src/app/server/api.ts')) as {
-          createApiMiddleware: (root: string, agentState?: AgentManagerState) => ApiMiddleware;
+          createApiMiddleware: (
+            root: string,
+            agentState?: AgentManagerState,
+            statusState?: StatusManagerState,
+          ) => ApiMiddleware;
         };
         const agentState = g.__paperCampAgentState;
+        const statusState = g.__paperCampStatusState;
         g.__paperCampAgentState = undefined;
-        const api = mod.createApiMiddleware(process.cwd(), agentState);
+        g.__paperCampStatusState = undefined;
+        const api = mod.createApiMiddleware(process.cwd(), agentState, statusState);
         g.__paperCampApi = api;
         if (reloadFailed) {
           reloadFailed = false;
@@ -85,7 +93,12 @@ function papercampApi(): Plugin {
         if (!file.startsWith(serverRoot)) return;
         const mod = server.moduleGraph.getModuleById(file);
         if (mod) server.moduleGraph.invalidateModule(mod);
-        if (g.__paperCampApi) g.__paperCampAgentState = g.__paperCampApi.agent.getState();
+        if (g.__paperCampApi) {
+          g.__paperCampAgentState = g.__paperCampApi.agent.getState();
+          // Without this the in-flight check guard resets on every server edit, and a
+          // fresh lint/test stacks on the ones still running until the box is starved.
+          g.__paperCampStatusState = g.__paperCampApi.getStatusState();
+        }
         g.__paperCampApi = undefined;
         // Fire-and-forget here: `reportReloadFailure` above already handles logging
         // and the ws banner; this just keeps Node from flagging the rejection as

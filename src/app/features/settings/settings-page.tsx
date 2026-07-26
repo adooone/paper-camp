@@ -14,6 +14,7 @@ import {
 } from '@/types/index';
 import { Alert, Button, Card, Divider, Input, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useRef, useState } from 'react';
+import { MergePolicySection } from './components/merge-policy-section';
 import { SetupSection } from './components/setup-section';
 import { SubjectsSection } from './components/subjects-section';
 
@@ -393,6 +394,8 @@ export const SettingsPage = () => {
         <SubjectsSection />
       ) : section === 'setup' ? (
         <SetupSection />
+      ) : section === 'merge-policy' ? (
+        <MergePolicySection />
       ) : (
         <GeneralSection />
       )}
