@@ -2,7 +2,7 @@
 id: IDEA-86
 title: Surface agent sign-in state in the app
 type: feat
-status: idea
+status: review
 created: 2026-07-25
 updated: 2026-07-26
 tags:
@@ -27,11 +27,11 @@ Provenance: surfaced 2026-07-25 when a lapsed CLI login made Draft and Extend fa
 ### Phases
 - [x] Add the `GET /api/agent/auth-status` probe route
       Run `claude auth status` for the configured agent and return `{loggedIn, authMethod, apiProvider}`; reuse the `probeCapabilities` shape and degrade gracefully (missing/unrecognized CLI → an unknown state, never a 500).
-- [ ] Surface the sign-in indicator in the Status panel
+- [x] Surface the sign-in indicator in the Status panel
       Consume the probe from the client and show an "Agent not signed in" indicator/banner before a task is attempted, so an auth failure is anticipated rather than mysterious.
-- [ ] Detect auth failures in agent task output
+- [x] Detect auth failures in agent task output
       When a task's output contains `Not logged in · Please run /login`, classify it as an auth error rather than a generic "error", so the UI can render a specific recovery instead of an opaque status.
-- [ ] Render the actionable fix for auth errors
+- [x] Render the actionable fix for auth errors
       For a tagged auth error, show the exact command (`claude auth login` / `claude setup-token`) with a copy button in place of the generic error state.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.

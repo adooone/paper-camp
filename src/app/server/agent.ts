@@ -33,6 +33,11 @@ import { logTaskCompletion } from './task-log';
 
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
+const AUTH_ERROR_MARKER = 'Not logged in · Please run /login';
+
+function isAuthError(text: string): boolean {
+  return text.includes(AUTH_ERROR_MARKER);
+}
 
 export interface AgentTask {
   id: string;
@@ -55,6 +60,7 @@ export interface AgentTask {
   adapter: AgentAdapter;
   proc: ChildProcess;
   lines: string[];
+  errorKind?: 'auth';
 }
 
 export function readDefaultAgentIds(root: string): DefaultAgentsMap {
@@ -95,7 +101,7 @@ ${details}Plan context: ${plan.body}
 
 Do only this phase — do not start any other phase, even if it looks quick.
 
-Comments: the code is the documentation. Default to zero comments. Per docs/CODE_STYLE.md §7, a comment ships only if it states a *why* that is not derivable from the code AND would cost a future reader real debugging time AND fits in one line. Never narrate what the code does, restate a type, label a block, or explain your reasoning for a change — that belongs in the commit message and your progress.md bullet, not the source. When in doubt, delete it.
+Comments: do NOT add any comments to the code — none. The code is the documentation. Every explanation, rationale, or "why" goes in your progress.md bullet and the commit message, never in the source. This is a hard rule. (Do not touch existing comments in code you are not otherwise changing.)
 
 Execution environment: you are a headless automated agent running in a terminal. There is no browser, display, or GUI available to you. Verify your work only with terminal commands — type-check, lint, and tests (e.g. \`pnpm run check-types\`, \`pnpm run lint\`, \`pnpm test\`). Never attempt visual or browser-based verification: do not open the app in a browser, navigate to a dev-server URL or address, take screenshots, or run any GUI/visual check — even if this phase or the plan text describes one (e.g. "check in Chrome", a \`host:port\` address, "visual pass"). If a phase's only verification is visual, make the code change, then note in your progress.md bullet that visual confirmation is left to a human, and do not block on it.
 
@@ -179,6 +185,7 @@ export function createAgentManager(
   function pushLine(task: AgentTask, text: string) {
     task.lines.push(text);
     if (task.lines.length > MAX_LINES) task.lines.shift();
+    if (isAuthError(text)) task.errorKind = 'auth';
     broadcast(text, task.id);
   }
 
@@ -305,9 +312,17 @@ export function createAgentManager(
       }
     });
 
+    let stderr = '';
+    task.proc.stderr?.on('data', (d: Buffer) => {
+      stderr += d.toString();
+    });
+
     task.proc.on('close', (code) => {
       if (isTaskDone(task)) return;
       if (task.status === 'starting' || task.status === 'running') {
+        // Plain-text CLI failures (e.g. an auth error) never reach parseLine's JSON
+        // parser, so this is the only place they surface in the task's own output.
+        if (code !== 0 && stderr.trim()) pushLine(task, stderr.trim());
         finishTask(task, code !== 0);
       } else if (task.status === 'stopping') {
         setStatus(task, 'done');
@@ -937,6 +952,7 @@ export function createAgentManager(
       agentId: task.agentId,
       lines: [...task.lines],
       ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
+      ...(task.errorKind ? { errorKind: task.errorKind } : {}),
     }));
   }
 

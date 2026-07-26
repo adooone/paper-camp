@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import type { AgentId, CapabilityResult } from '../../types';
+import type { AgentAuthStatus, AgentId, CapabilityResult } from '../../types';
 import { AGENTS } from './agents';
 
 interface ProbeResult {
@@ -95,12 +95,6 @@ export async function probeCapabilities(root: string): Promise<CapabilityResult[
     ...agentIds.map((id) => probeAgent(id, root)),
   ]);
   return [git, gh, ...agents];
-}
-
-export interface AgentAuthStatus {
-  loggedIn: boolean | null;
-  authMethod: string | null;
-  apiProvider: string | null;
 }
 
 const UNKNOWN_AUTH_STATUS: AgentAuthStatus = {

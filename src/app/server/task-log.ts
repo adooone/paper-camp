@@ -7,12 +7,11 @@ import { campFile, readMaybe, taskLogFile } from './helpers';
 const RETENTION_DAYS = 3;
 const RETENTION_MS = RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
-// Serialized: rewriting tasks.log is read-modify-write, so concurrent completions
-// would otherwise drop each other's entry.
+// Serialized: rewriting tasks.log is read-modify-write; concurrent completions would drop each other.
 let pruneChain: Promise<unknown> = Promise.resolve();
 
-// Drops runs past the retention window — both the tasks.log rows and their output files,
-// so a visible row never outlives its log. Best-effort: a failed prune never fails a task.
+// Drops runs past the retention window — rows and their output files, so no row outlives
+// its log. Best-effort: a failed prune never fails a task.
 function pruneExpiredTasks(root: string): Promise<void> {
   const run = pruneChain.then(async () => {
     const path = campFile(root, 'tasks.log');
@@ -73,8 +72,7 @@ export async function logTaskCompletion(
     endedAt: new Date().toISOString(),
     outcome,
   };
-  // Output file before the tasks.log row: the row is what makes a task visible, and a
-  // visible row whose output file doesn't exist yet reads as "No output recorded".
+  // Output file before the row: a visible row with no output file reads as "No output recorded".
   const file = taskLogFile(root, task.id);
   try {
     await mkdir(dirname(file), { recursive: true });

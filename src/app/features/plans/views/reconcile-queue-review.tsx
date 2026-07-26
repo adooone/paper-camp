@@ -10,8 +10,7 @@ export const ReconcileQueueReview = () => {
   const plans = useAppStore((s) => s.plans);
   const { patch } = usePlanStatusPatch();
   const { toast } = useToast();
-  // Counts previews already dismissed in this run so the header can read
-  // "2 of 3" — the queue itself only ever knows what is still pending.
+  // Counts dismissed previews so the header reads "2 of 3" — the queue only knows what's pending.
   const reviewedCount = useRef(0);
 
   const head = reconcileQueue[0] ?? null;
@@ -31,9 +30,8 @@ export const ReconcileQueueReview = () => {
   const handleApprove = () => {
     removeFromReconcileQueue(head.previewId);
     reviewedCount.current += 1;
-    // The agent already wrote this rewrite to disk, so approving changes nothing
-    // on its own — say so, or a successful approve is indistinguishable from a
-    // dead button.
+    // The agent already wrote this to disk, so approve is a no-op — say so, or it's
+    // indistinguishable from a dead button.
     toast({
       title: 'Kept the reconciled version',
       description: `"${plan.title}" keeps the agent's rewrite.`,

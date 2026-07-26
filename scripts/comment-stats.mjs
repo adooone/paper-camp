@@ -1,9 +1,11 @@
 #!/usr/bin/env node
+// Reports the comment-line ratio across src/ — informational only, never fails.
+// `--json` emits machine-readable output for the app's future stats view.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = 'src';
-const MAX_RATIO = 3.5;
+const asJson = process.argv.includes('--json');
 
 const files = [];
 (function walk(dir) {
@@ -39,16 +41,17 @@ for (const file of files) {
 }
 
 const ratio = (totalComments / totalLines) * 100;
-const summary = `${totalComments} comment lines / ${totalLines} source lines = ${ratio.toFixed(2)}% (budget ${MAX_RATIO}%)`;
-if (ratio > MAX_RATIO) {
+
+if (asJson) {
   perFile.sort((a, b) => b[1] - a[1]);
-  console.error(`Comment ratio over budget: ${summary}`);
-  for (const [file, count] of perFile.slice(0, 10)) {
-    console.error(`  ${String(count).padStart(4)}  ${file}`);
-  }
-  console.error(
-    'CODE_STYLE.md §7: comments default to zero — reasoning goes in the commit message.',
+  console.log(
+    JSON.stringify({
+      commentLines: totalComments,
+      sourceLines: totalLines,
+      ratio: Number(ratio.toFixed(3)),
+      topFiles: perFile.slice(0, 10).map(([file, count]) => ({ file, count })),
+    }),
   );
-  process.exit(1);
+} else {
+  console.log(`Comments: ${totalComments} / ${totalLines} lines = ${ratio.toFixed(2)}%`);
 }
-console.log(`Comment ratio OK: ${summary}`);

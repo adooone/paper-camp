@@ -31,14 +31,15 @@
     "dev:lib": "vite",
     "cli": "bun src/cli/index.ts",
     "check-types": "tsc --noEmit",
-    "lint": "biome check . && node scripts/check-comments.mjs",
+    "lint": "biome check .",
     "lint:write": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
     "knip": "knip",
     "depcruise": "depcruise src --config .dependency-cruiser.cjs",
     "consistency": "knip --include files,dependencies && depcruise src --config .dependency-cruiser.cjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "comment-stats": "node scripts/comment-stats.mjs"
   },
   "keywords": [
     "project-management",

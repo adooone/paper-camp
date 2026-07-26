@@ -409,6 +409,27 @@ describe('start (single phase)', () => {
     const manager = createAgentManager(root);
     expect(manager.start(plan, 99)).toEqual({ ok: false, error: 'Phase not found' });
   });
+
+  it('tags a lapsed CLI login as an auth error instead of a generic one', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `process.stderr.write('Not logged in · Please run /login\\n'); process.exit(1);`;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBe('auth');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('Not logged in · Please run /login');
+  });
+
+  it('leaves errorKind unset for a generic agent failure', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(1)';
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+  });
 });
 
 describe('task log', () => {

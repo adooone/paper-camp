@@ -3,8 +3,9 @@ import {
   type PlanListFilters,
   type PlanSortKey,
 } from '@/app/features/plans/helpers';
-import { fetchCapabilities } from '@/app/services/system';
+import { fetchAgentAuthStatus, fetchCapabilities } from '@/app/services/system';
 import type {
+  AgentAuthStatus,
   AgentTaskState,
   ArchivableIdea,
   BranchHygieneStatus,
@@ -137,6 +138,10 @@ export type AppStore = {
   capabilities: CapabilityResult[];
   loadCapabilities: () => Promise<void>;
 
+  // null until loaded or when the agent has no auth-status probe; loggedIn:null means unknown.
+  agentAuthStatus: AgentAuthStatus | null;
+  loadAgentAuthStatus: () => Promise<void>;
+
   agentStatus: AgentTaskState[];
   loadAgentStatus: () => Promise<void>;
   launchAgent: (planId: string, phaseIndex: number) => Promise<void>;
@@ -160,8 +165,8 @@ export type AppStore = {
   launchPrioritise: () => Promise<PrioritiseResult>;
   stopAgent: (taskId?: string) => Promise<void>;
 
-  // Held at store level (not in the button component) so completion is still
-  // handled by loadAgentStatus if the user navigates away before the agent finishes.
+  // At store level (not the button) so loadAgentStatus still handles completion if the
+  // user navigates away mid-run.
   pendingReconcile: ReconcilePreview | null;
   reconcileQueue: QueuedReconcile[];
   removeFromReconcileQueue: (previewId: string) => void;
@@ -198,6 +203,10 @@ export const selectGhOk = (s: AppStore) => {
 
 export const selectCapabilityGapCount = (s: AppStore) =>
   s.capabilities.filter((c) => c.status !== 'ok').length;
+
+// loggedIn: null means unknown (non claude-code agent, or the probe couldn't tell) — only
+// an explicit false should surface as "not signed in".
+export const selectAgentNotSignedIn = (s: AppStore) => s.agentAuthStatus?.loggedIn === false;
 
 type SetState = (partial: Partial<AppStore>) => void;
 
@@ -445,6 +454,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
     fetchCapabilities,
     (data) => ({ capabilities: data ?? [] }),
     () => ({ capabilities: [] }),
+  ),
+
+  agentAuthStatus: null,
+  loadAgentAuthStatus: loadSlice(
+    set,
+    fetchAgentAuthStatus,
+    (data) => ({ agentAuthStatus: data }),
+    () => ({ agentAuthStatus: null }),
   ),
 
   agentStatus: [],

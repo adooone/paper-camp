@@ -2,9 +2,36 @@ import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { AGENT_LABELS, type AgentTaskState, type AgentTaskStatus } from '@/types/index';
-import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
+import { Card, CloseIcon, CopyButton, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { chalkStatusFill, chalkStatusText, deskChalk, sectionLabelStyle } from './shared';
+
+const AUTH_FIX_COMMANDS = ['claude auth login', 'claude setup-token'] as const;
+
+const AuthErrorFix = () => (
+  // biome-ignore lint/a11y/useKeyWithClickEvents: purely stops the copy click from bubbling to the card's onClick (which navigates to /tasks); nothing here is itself interactive.
+  <div
+    onClick={(e) => e.stopPropagation()}
+    style={{ display: 'flex', flexDirection: 'column', gap: space[1], marginTop: space[2] }}
+  >
+    {AUTH_FIX_COMMANDS.map((cmd) => (
+      <div
+        key={cmd}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: space[2],
+        }}
+      >
+        <code style={{ fontFamily: fontFamily.mono, fontSize: fontSize.xs, color: deskChalk }}>
+          {cmd}
+        </code>
+        <CopyButton text={cmd} surface="chalkboard" />
+      </div>
+    ))}
+  </div>
+);
 
 const MAX_VISIBLE_TASKS = 3;
 // One task card's rendered height plus card gap, reserved so the empty state
@@ -126,7 +153,7 @@ const AgentTaskCard = ({
               fillColor={statusFill[task.status]}
               textColor={statusText[task.status]}
             >
-              {task.status}
+              {task.status === 'error' && task.errorKind === 'auth' ? 'not signed in' : task.status}
             </Stamp>
             {(task.status === 'running' ||
               task.status === 'starting' ||
@@ -142,6 +169,7 @@ const AgentTaskCard = ({
             )}
           </div>
         </div>
+        {task.status === 'error' && task.errorKind === 'auth' && <AuthErrorFix />}
       </Card>
     </div>
   );

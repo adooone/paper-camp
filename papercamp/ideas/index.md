@@ -99,4 +99,5 @@
 | IDEA-95 | Roadmap items become the subject vocabulary | feat | planned | roadmap, core, plans, app |
 | IDEA-96 | Open questions as a working queue | feat | planned | app, plans, core |
 | IDEA-97 | Surface decisions where they bind | feat | planned | app, core, ui |
-| IDEA-98 | Track run order in one file | refactor | planned | core, plans, git |
+| IDEA-98 | Track run order in one file | refactor | done | core, plans, git |
+| IDEA-99 | Project stats view | — | idea |  |

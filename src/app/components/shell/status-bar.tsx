@@ -1,4 +1,8 @@
-import { selectCapabilityGapCount, useAppStore } from '@/app/stores/app-store';
+import {
+  selectAgentNotSignedIn,
+  selectCapabilityGapCount,
+  useAppStore,
+} from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import type { CheckStatus } from '@/types/index';
@@ -27,6 +31,7 @@ export const StatusBar = () => {
   const quickCommit = useAppStore((s) => s.quickCommit);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const capabilityGapCount = useAppStore(selectCapabilityGapCount);
+  const agentNotSignedIn = useAppStore(selectAgentNotSignedIn);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -82,6 +87,13 @@ export const StatusBar = () => {
           {changedFileCount > 0 ? `${changedFileCount} changed` : 'clean'}
         </span>
         {agentActive && <Spinner size="small" label={`Agent ${activeTask?.status}…`} />}
+        {agentNotSignedIn && (
+          <Tooltip content="Run `claude auth login` (or `claude setup-token`) so agent tasks can run">
+            <Stamp size="small" variant="warning">
+              Agent not signed in
+            </Stamp>
+          </Tooltip>
+        )}
         {capabilityGapCount > 0 && (
           <Tooltip content="Some features are disabled — open Setup to fix">
             {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}

@@ -63,8 +63,7 @@ const TaskLogLines = ({ id }: { id: string }) => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     setLines(null);
     setFailed(false);
-    // Auto-retry first (the dev server briefly drops requests on hot reload); only
-    // surface the manual Retry if it stays down.
+    // Auto-retry first (dev server briefly drops requests on hot reload); manual Retry only if it stays down.
     const load = (remaining: number) => {
       fetchTaskLogLines(id)
         .then((data) => {
@@ -77,8 +76,7 @@ const TaskLogLines = ({ id }: { id: string }) => {
             timer = setTimeout(() => load(remaining - 1), 700);
             return;
           }
-          // An empty result and a failed request are different states — conflating
-          // them reports a fetch error as "this task produced no output".
+          // Empty result != failed request: conflating them mislabels a fetch error as "no output".
           setFailed(true);
           setLines([]);
         });
