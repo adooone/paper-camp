@@ -115,3 +115,5 @@
 {"id":"68101312-5cdf-4eab-aaa7-e2c1c2063beb","taskKind":"draft","planTitle":"Draft plan for IDEA-98","agentId":"claude-code","startedAt":"2026-07-26T12:36:11.112Z","endedAt":"2026-07-26T12:37:38.615Z","outcome":"done"}
 {"id":"f89c686b-b404-4a22-8488-030a06598861","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-26T12:38:48.861Z","endedAt":"2026-07-26T12:38:59.510Z","outcome":"done"}
 {"id":"4139d7d4-4c8e-4ace-94a2-dd25338acbc3","taskKind":"prioritise","planTitle":"Prioritise queue","agentId":"claude-code","startedAt":"2026-07-26T12:39:22.767Z","endedAt":"2026-07-26T12:39:36.747Z","outcome":"done"}
+{"id":"3c911a5e-15aa-49d0-8916-12c3c965b22b","taskKind":"run-all","planId":"IDEA-98","planTitle":"Track run order in one file","agentId":"claude-code","startedAt":"2026-07-26T12:40:06.592Z","endedAt":"2026-07-26T13:44:46.213Z","outcome":"done"}
+{"id":"4155625b-e556-4b1d-b17e-b603da62f051","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-26T14:25:25.819Z","endedAt":"2026-07-26T14:25:34.392Z","outcome":"done"}
