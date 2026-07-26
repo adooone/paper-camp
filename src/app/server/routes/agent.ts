@@ -4,6 +4,9 @@ import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
 import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
 import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry } from '@/types/index';
+import { readDefaultAgentIds } from '../agent';
+import { resolveAgent } from '../agents';
+import { probeAgentAuthStatus } from '../capabilities';
 import { campFile, checkBranchConflictForPlan, fileExists } from '../helpers';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
@@ -92,6 +95,16 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       path: '/api/agent/status',
       handle: (_req, res) => {
         sendJson(res, 200, agent.getStatus());
+      },
+    },
+
+    {
+      method: 'GET',
+      path: '/api/agent/auth-status',
+      handle: async (_req, res) => {
+        const defaultAgents = readDefaultAgentIds(root);
+        const { id } = resolveAgent({ defaultAgents, taskKind: 'phase' });
+        sendJson(res, 200, await probeAgentAuthStatus(id, root));
       },
     },
 

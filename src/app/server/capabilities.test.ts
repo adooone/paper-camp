@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { probeCapabilities } from './capabilities';
+import { probeAgentAuthStatus, probeCapabilities } from './capabilities';
 
 const originalPath = process.env.PATH;
 const originalHome = process.env.HOME;
@@ -148,5 +148,51 @@ describe('probeCapabilities: agent adapters', () => {
       status: 'ok',
       detail: '9.9.9',
     });
+  });
+});
+
+describe('probeAgentAuthStatus', () => {
+  it('reports unknown for an agent other than claude-code', async () => {
+    const root = await initRepo();
+    const status = await probeAgentAuthStatus('opencode', root);
+    expect(status).toEqual({ loggedIn: null, authMethod: null, apiProvider: null });
+  });
+
+  it('reports unknown when the claude CLI is not on PATH', async () => {
+    const root = await initRepo();
+    process.env.PATH = '/nonexistent';
+    const status = await probeAgentAuthStatus('claude-code', root);
+    expect(status).toEqual({ loggedIn: null, authMethod: null, apiProvider: null });
+  });
+
+  it('reports unknown when `claude auth status` exits non-zero', async () => {
+    const root = await initRepo();
+    installBin('claude', 'exit 1');
+    const status = await probeAgentAuthStatus('claude-code', root);
+    expect(status).toEqual({ loggedIn: null, authMethod: null, apiProvider: null });
+  });
+
+  it('reports unknown when `claude auth status` prints unparsable output', async () => {
+    const root = await initRepo();
+    installBin('claude', "echo 'not json'");
+    const status = await probeAgentAuthStatus('claude-code', root);
+    expect(status).toEqual({ loggedIn: null, authMethod: null, apiProvider: null });
+  });
+
+  it('reports the parsed auth state when logged in', async () => {
+    const root = await initRepo();
+    installBin(
+      'claude',
+      `echo '{"loggedIn": true, "authMethod": "claude.ai", "apiProvider": "firstParty"}'`,
+    );
+    const status = await probeAgentAuthStatus('claude-code', root);
+    expect(status).toEqual({ loggedIn: true, authMethod: 'claude.ai', apiProvider: 'firstParty' });
+  });
+
+  it('reports the parsed auth state when logged out', async () => {
+    const root = await initRepo();
+    installBin('claude', `echo '{"loggedIn": false, "authMethod": null, "apiProvider": null}'`);
+    const status = await probeAgentAuthStatus('claude-code', root);
+    expect(status).toEqual({ loggedIn: false, authMethod: null, apiProvider: null });
   });
 });

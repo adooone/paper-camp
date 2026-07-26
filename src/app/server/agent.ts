@@ -57,7 +57,7 @@ export interface AgentTask {
   lines: string[];
 }
 
-function readDefaultAgentIds(root: string): DefaultAgentsMap {
+export function readDefaultAgentIds(root: string): DefaultAgentsMap {
   try {
     const raw = readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8');
     const config = JSON.parse(raw) as Record<string, unknown> & { defaultAgent?: AgentId };

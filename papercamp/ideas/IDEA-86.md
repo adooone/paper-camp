@@ -25,7 +25,7 @@ Possible follow-ups (out of scope for the first cut): a Settings field to store 
 Provenance: surfaced 2026-07-25 when a lapsed CLI login made Draft and Extend fail with an opaque error.
 
 ### Phases
-- [ ] Add the `GET /api/agent/auth-status` probe route
+- [x] Add the `GET /api/agent/auth-status` probe route
       Run `claude auth status` for the configured agent and return `{loggedIn, authMethod, apiProvider}`; reuse the `probeCapabilities` shape and degrade gracefully (missing/unrecognized CLI → an unknown state, never a 500).
 - [ ] Surface the sign-in indicator in the Status panel
       Consume the probe from the client and show an "Agent not signed in" indicator/banner before a task is attempted, so an auth failure is anticipated rather than mysterious.
