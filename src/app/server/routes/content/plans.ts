@@ -1,7 +1,7 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readEntities, readWorkEntries } from '@/core/readers';
-import { type RunOrderEntry, normalizeRunOrder } from '@/core/run-order';
+import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import {
   archiveEntityFile,
   assignEntityId,
@@ -25,6 +25,7 @@ import {
   readMaybe,
   readRunOrderFile,
   regenerateIndexes,
+  withRunOrderLock,
   writeEntityFile,
   writeRunOrderFile,
 } from '../../helpers';
@@ -217,21 +218,16 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           const moved =
             typeof updates.order === 'number' ? { id: target.id, order: updates.order } : undefined;
           const { entries: work } = await readWorkEntries(ideasDir);
-          const derived = new Map(work.map((w) => [w.id, w.status as string | undefined]));
           const nextEntries = entries.map((e) => (e.id === target.id ? updatedEntry : e));
-          const classified: RunOrderEntry[] = nextEntries
-            .filter((e) => e.kind !== 'note')
-            .map((e) => ({
-              id: e.id,
-              title: e.title,
-              created: e.created,
-              status:
-                e.id === target.id && updates.status !== undefined
-                  ? (updates.status ?? undefined)
-                  : (derived.get(e.id) ?? e.status),
-            }));
-          const list = await readRunOrderFile(root);
-          await writeRunOrderFile(root, normalizeRunOrder(list, classified, moved));
+          const classified = classifyRunOrderEntries(nextEntries, work, (id) =>
+            id === target.id && updates.status !== undefined
+              ? { value: updates.status ?? undefined }
+              : undefined,
+          );
+          await withRunOrderLock(async () => {
+            const list = await readRunOrderFile(root);
+            await writeRunOrderFile(root, normalizeRunOrder(list, classified, moved));
+          });
         }
 
         await regenerateIndexes(root);

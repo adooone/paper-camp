@@ -1,7 +1,7 @@
 import { readEntities, readWorkEntries } from '@/core/readers';
-import { type RunOrderEntry, normalizeRunOrder } from '@/core/run-order';
+import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import type { RunOrderFileEntry } from '@/core/run-order-file';
-import { campFile, readRunOrderFile, writeRunOrderFile } from './helpers';
+import { campFile, readRunOrderFile, withRunOrderLock, writeRunOrderFile } from './helpers';
 
 function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): string[] {
   const changed = new Set<string>();
@@ -25,22 +25,15 @@ export async function runRunOrderPass(root: string): Promise<string[]> {
   const ideasDir = campFile(root, 'ideas');
   const { entries } = await readEntities(ideasDir);
   const { entries: work } = await readWorkEntries(ideasDir);
-  const derived = new Map(work.map((w) => [w.id, w.status as string | undefined]));
+  const classified = classifyRunOrderEntries(entries, work);
 
-  const classified: RunOrderEntry[] = entries
-    .filter((e) => e.kind !== 'note')
-    .map((e) => ({
-      id: e.id,
-      title: e.title,
-      created: e.created,
-      status: derived.get(e.id) ?? e.status,
-    }));
+  return withRunOrderLock(async () => {
+    const list = await readRunOrderFile(root);
+    const reconciled = normalizeRunOrder(list, classified);
+    const changed = changedIds(list, reconciled);
+    if (changed.length === 0) return [];
 
-  const list = await readRunOrderFile(root);
-  const reconciled = normalizeRunOrder(list, classified);
-  const changed = changedIds(list, reconciled);
-  if (changed.length === 0) return [];
-
-  await writeRunOrderFile(root, reconciled);
-  return changed;
+    await writeRunOrderFile(root, reconciled);
+    return changed;
+  });
 }

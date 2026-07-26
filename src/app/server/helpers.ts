@@ -77,6 +77,20 @@ export async function writeRunOrderFile(root: string, list: RunOrderFileEntry[])
   await writeFile(runOrderFilePath(root), formatRunOrderFile(list), 'utf-8');
 }
 
+// Every read-normalize-write of run-order.md (plans PATCH, the activity-triggered
+// pass, applyPrioritiseVerdict) must run as one critical section, or an interleaved
+// pass can normalize against a stale read and clobber a concurrent write.
+let runOrderLock: Promise<unknown> = Promise.resolve();
+
+export function withRunOrderLock<T>(fn: () => Promise<T>): Promise<T> {
+  const result = runOrderLock.then(fn, fn);
+  runOrderLock = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
+
 export async function regenerateIndexes(root: string): Promise<void> {
   const ideasDir = campFile(root, 'ideas');
   const { entries } = await readEntitiesWithDerivedStatus(ideasDir);

@@ -8,7 +8,9 @@ export function taskRoutes({ root }: RouteContext): Route[] {
   return [
     {
       method: 'GET',
-      path: '/api/tasks/log',
+      // Not `/tasks/log?id=…`: that shape reads as a tracking beacon to ad-blocker
+      // filter lists, which killed the request with ERR_BLOCKED_BY_CLIENT.
+      path: '/api/tasks/output',
       handle: async (req, res) => {
         const id = requestUrl(req).searchParams.get('id');
         if (!id || !TASK_ID_RE.test(id)) {

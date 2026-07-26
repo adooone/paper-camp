@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { buildPrioritisePrompt } from '@/app/features/plans/prompts';
 import { readEntities, readWorkEntries } from '@/core/readers';
-import { type RunOrderEntry, normalizeRunOrder } from '@/core/run-order';
+import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import type { RunOrderFileEntry } from '@/core/run-order-file';
 import { todayDateString } from '@/core/serialize';
 import type { PlanEntry, PrioritiseVerdict } from '@/types/index';
@@ -11,6 +11,7 @@ import {
   fileExists,
   readRunOrderFile,
   regenerateIndexes,
+  withRunOrderLock,
   writeEntityFile,
   writeRunOrderFile,
 } from './helpers';
@@ -94,16 +95,7 @@ export async function applyPrioritiseVerdict(
   const ideasDir = campFile(root, 'ideas');
   const { entries } = await readEntities(ideasDir);
   const { entries: work } = await readWorkEntries(ideasDir);
-  const derived = new Map(work.map((w) => [w.id, w.status as string | undefined]));
-
-  const classified: RunOrderEntry[] = entries
-    .filter((e) => e.kind !== 'note')
-    .map((e) => ({
-      id: e.id,
-      title: e.title,
-      created: e.created,
-      status: derived.get(e.id) ?? e.status,
-    }));
+  const classified = classifyRunOrderEntries(entries, work);
   const byId = new Map(classified.map((e) => [e.id, e]));
 
   const proposed: RunOrderFileEntry[] = verdict.order.map((id) => ({
@@ -111,9 +103,13 @@ export async function applyPrioritiseVerdict(
     title: byId.get(id)?.title ?? '',
   }));
 
-  const list = await readRunOrderFile(root);
-  const reconciled = normalizeRunOrder(proposed, classified);
-  const moved = changedIds(list, reconciled).filter((id) => verdict.order.includes(id));
+  const moved = await withRunOrderLock(async () => {
+    const list = await readRunOrderFile(root);
+    const reconciled = normalizeRunOrder(proposed, classified);
+    const moved = changedIds(list, reconciled).filter((id) => verdict.order.includes(id));
+    if (moved.length > 0) await writeRunOrderFile(root, reconciled);
+    return moved;
+  });
   if (moved.length === 0) return [];
 
   const whyLines = verdict.why.split('\n').filter((line) => line.trim().length > 0);
@@ -121,8 +117,6 @@ export async function applyPrioritiseVerdict(
     const index = verdict.order.indexOf(id);
     return whyLines[index]?.trim() || 'Reprioritised by the shuffle agent.';
   };
-
-  await writeRunOrderFile(root, reconciled);
 
   const applied: string[] = [];
   for (const id of moved) {

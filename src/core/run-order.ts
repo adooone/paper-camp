@@ -16,6 +16,33 @@ export function isRunOrdered(entry: Pick<RunOrderEntry, 'status'>): boolean {
 }
 
 /**
+ * Builds the classified `RunOrderEntry[]` input to `normalizeRunOrder` from the raw
+ * corpus (`entries`) and its derived-status counterpart (`work`), applying an optional
+ * per-id status override on top (e.g. an in-flight PATCH not yet persisted to disk).
+ * Shared by every write path so classification only lives in one place.
+ */
+export function classifyRunOrderEntries(
+  entries: { id: string; title: string; created: string; status?: string; kind?: 'note' }[],
+  work: { id?: string; status?: string }[],
+  statusOverride?: (id: string) => { value: string | undefined } | undefined,
+): RunOrderEntry[] {
+  const derived = new Map(
+    work.filter((w) => w.id !== undefined).map((w) => [w.id as string, w.status]),
+  );
+  return entries
+    .filter((e) => e.kind !== 'note')
+    .map((e) => {
+      const override = statusOverride?.(e.id);
+      return {
+        id: e.id,
+        title: e.title,
+        created: e.created,
+        status: override ? override.value : (derived.get(e.id) ?? e.status),
+      };
+    });
+}
+
+/**
  * Reconciles a persisted run-order list against the live corpus: drops ids the list
  * carries that are gone from the corpus or no longer in an ordered status, appends
  * ordered entities missing from the list (entities added out of band, oldest first),
@@ -29,10 +56,15 @@ export function normalizeRunOrder(
 ): RunOrderFileEntry[] {
   const byId = new Map(entries.map((e) => [e.id, e]));
 
-  const kept = list
-    .map((item) => byId.get(item.id))
-    .filter((e): e is RunOrderEntry => e !== undefined && isRunOrdered(e));
-  const keptIds = new Set(kept.map((e) => e.id));
+  const keptIds = new Set<string>();
+  const kept: RunOrderEntry[] = [];
+  for (const item of list) {
+    if (keptIds.has(item.id)) continue;
+    const e = byId.get(item.id);
+    if (e === undefined || !isRunOrdered(e)) continue;
+    keptIds.add(e.id);
+    kept.push(e);
+  }
 
   const appended = entries
     .filter((e) => isRunOrdered(e) && !keptIds.has(e.id))
