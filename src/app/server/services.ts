@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import type { AgentId, CapabilityResult, ConnectAction } from '../../types';
+import type { AgentAuthStatus, AgentId, CapabilityResult, ConnectAction } from '../../types';
 import { AGENT_IDS, AGENT_LABELS } from '../../types';
 import { AGENTS } from './agents';
 
@@ -38,6 +38,22 @@ export interface ServiceDefinition {
   probe: (root: string) => Promise<CapabilityResult>;
   /** Null once the service probes `ok` — nothing to connect. */
   connect: (result: CapabilityResult) => ConnectAction | null;
+  authenticated: (root: string) => Promise<boolean | null>;
+}
+
+export async function claudeAuthStatus(root: string): Promise<AgentAuthStatus | null> {
+  const result = await run('claude', ['auth', 'status'], root);
+  if (result.code !== 0) return null;
+  try {
+    const parsed = JSON.parse(result.stdout) as Partial<AgentAuthStatus>;
+    return {
+      loggedIn: typeof parsed.loggedIn === 'boolean' ? parsed.loggedIn : null,
+      authMethod: typeof parsed.authMethod === 'string' ? parsed.authMethod : null,
+      apiProvider: typeof parsed.apiProvider === 'string' ? parsed.apiProvider : null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function probeGit(root: string): Promise<CapabilityResult> {
@@ -67,6 +83,10 @@ function gitConnect(result: CapabilityResult): ConnectAction | null {
       command: 'git config user.name "Your Name" && git config user.email you@example.com',
     };
   }
+  return null;
+}
+
+async function gitAuthenticated(): Promise<boolean | null> {
   return null;
 }
 
@@ -114,6 +134,13 @@ function ghConnect(result: CapabilityResult): ConnectAction | null {
   return null;
 }
 
+async function ghAuthenticated(root: string): Promise<boolean | null> {
+  const version = await run('gh', ['--version'], root);
+  if (version.code !== 0) return null;
+  const auth = await run('gh', ['auth', 'status'], root);
+  return auth.code === 0;
+}
+
 async function probeAgent(id: AgentId, root: string): Promise<CapabilityResult> {
   const { command } = AGENTS[id];
   const result = await run(command, ['--version'], root);
@@ -129,6 +156,12 @@ function agentConnect(id: AgentId, result: CapabilityResult): ConnectAction | nu
   return { kind: 'text', message: `Install the ${AGENT_LABELS[id]} CLI and add it to PATH` };
 }
 
+async function agentAuthenticated(id: AgentId, root: string): Promise<boolean | null> {
+  if (id !== 'claude-code') return null;
+  const status = await claudeAuthStatus(root);
+  return status?.loggedIn ?? null;
+}
+
 export const SERVICES: ServiceDefinition[] = [
   {
     id: 'git',
@@ -136,6 +169,7 @@ export const SERVICES: ServiceDefinition[] = [
     unlocks: 'Commits, phase logging, branch creation',
     probe: probeGit,
     connect: gitConnect,
+    authenticated: gitAuthenticated,
   },
   {
     id: 'gh',
@@ -143,6 +177,7 @@ export const SERVICES: ServiceDefinition[] = [
     unlocks: 'PR badges, review flow, fix-review',
     probe: probeGh,
     connect: ghConnect,
+    authenticated: ghAuthenticated,
   },
   ...AGENT_IDS.map((id) => ({
     id: `agent:${id}`,
@@ -150,5 +185,6 @@ export const SERVICES: ServiceDefinition[] = [
     unlocks: `Launching ${AGENT_LABELS[id]} for phase runs, drafts, and reviews`,
     probe: (root: string) => probeAgent(id, root),
     connect: (result: CapabilityResult) => agentConnect(id, result),
+    authenticated: (root: string) => agentAuthenticated(id, root),
   })),
 ];

@@ -343,6 +343,15 @@ export type ConnectAction =
   | { kind: 'link'; url: string; label: string }
   | { kind: 'text'; message: string };
 
+export interface ConnectionResult {
+  id: ServiceId;
+  label: string;
+  unlocks: string;
+  status: CapabilityStatus;
+  detail: string;
+  authenticated: boolean | null;
+}
+
 export interface MergePolicy {
   allowSquashMerge: boolean;
   allowMergeCommit: boolean;
