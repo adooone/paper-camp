@@ -5,7 +5,15 @@ import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type { AgentTaskState, IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
+import type {
+  AgentTaskState,
+  IdeaEntry,
+  LogEntry,
+  MarginNote,
+  MarginNoteAnchor,
+  PhaseItem,
+  PlanEntry,
+} from '@/types/index';
 import {
   Button,
   Card,
@@ -26,12 +34,19 @@ import {
   AuditPhasesButton,
   PhaseCopyButton,
 } from '../actions';
+import { AddMarginNoteButton, MarginNotesList } from '../components';
 import { CollapsibleText } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
-import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
+import {
+  effectiveStatus,
+  notesForAnchor,
+  phaseProgress,
+  relativeDate,
+  runningTaskForPlan,
+} from '../helpers';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -59,6 +74,8 @@ const PhasesSection = ({
   updating,
   onTogglePhase,
   onAddReviewPhases,
+  onAddNote,
+  onResolveNote,
 }: {
   plan: PlanEntry;
   auditRunning: boolean;
@@ -68,6 +85,8 @@ const PhasesSection = ({
   updating: boolean;
   onTogglePhase: (index: number) => void;
   onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
+  onAddNote: (anchor: MarginNoteAnchor, prose: string) => Promise<boolean>;
+  onResolveNote: (note: MarginNote) => Promise<boolean>;
 }) => (
   <div style={{ marginBottom: space[8] }}>
     <div
@@ -135,6 +154,11 @@ const PhasesSection = ({
           cell: (phase: PhaseItem, index: number) => (
             <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
               <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
+              <AddMarginNoteButton
+                label="Add a note on this phase"
+                onAdd={(prose) => onAddNote({ kind: 'phase', index }, prose)}
+                disabled={updating}
+              />
               {!phase.done && agentPhaseIndex === index ? (
                 <Spinner size="small" label={`Agent ${planTask?.status}…`} />
               ) : (
@@ -148,7 +172,18 @@ const PhasesSection = ({
         },
       ]}
       expandable={{
-        render: (phase: PhaseItem) => phase.description ?? null,
+        render: (phase: PhaseItem, index: number) => {
+          const openNotes = notesForAnchor(plan.notes, { kind: 'phase', index });
+          if (!phase.description && openNotes.length === 0) return null;
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: space[3] }}>
+              {phase.description}
+              {openNotes.length > 0 && (
+                <MarginNotesList notes={openNotes} onResolve={onResolveNote} />
+              )}
+            </div>
+          );
+        },
       }}
       showExpandColumn={false}
       rowClassName={(phase: PhaseItem) =>
@@ -314,6 +349,20 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     return patchByTitle(plan.title, { log: [...(plan.log ?? []), newLog] });
   };
 
+  const handleAddNote = async (anchor: MarginNoteAnchor, prose: string) => {
+    const newNote: MarginNote = { anchor, prose, state: 'open' };
+    return patchByTitle(plan.title, { notes: [...(plan.notes ?? []), newNote] });
+  };
+
+  const handleResolveNote = async (note: MarginNote) => {
+    const nextNotes = (plan.notes ?? []).map((n) =>
+      n === note ? { ...n, state: 'resolved' as const } : n,
+    );
+    return patchByTitle(plan.title, { notes: nextNotes });
+  };
+
+  const bodyNotes = notesForAnchor(plan.notes, { kind: 'body' });
+
   return (
     <div>
       <div
@@ -412,10 +461,24 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       )}
 
       {plan.body && (
-        <div style={{ marginBottom: space[4], opacity: 0.85 }}>
-          <CollapsibleText resetKey={plan.id ?? plan.title}>
-            <Markdown>{plan.body}</Markdown>
-          </CollapsibleText>
+        <div style={{ marginBottom: space[4] }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: space[2] }}>
+            <div style={{ flex: 1, opacity: 0.85 }}>
+              <CollapsibleText resetKey={plan.id ?? plan.title}>
+                <Markdown>{plan.body}</Markdown>
+              </CollapsibleText>
+            </div>
+            <AddMarginNoteButton
+              label="Add a note on this plan's body"
+              onAdd={(prose) => handleAddNote({ kind: 'body' }, prose)}
+              disabled={updating}
+            />
+          </div>
+          {bodyNotes.length > 0 && (
+            <div style={{ marginTop: space[3] }}>
+              <MarginNotesList notes={bodyNotes} onResolve={handleResolveNote} />
+            </div>
+          )}
         </div>
       )}
 
@@ -464,6 +527,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           updating={updating}
           onTogglePhase={handleTogglePhase}
           onAddReviewPhases={handleAddReviewPhases}
+          onAddNote={handleAddNote}
+          onResolveNote={handleResolveNote}
         />
       )}
 

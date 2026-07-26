@@ -27,7 +27,7 @@ Shares one primitive with [[IDEA-89]] — anchored human prose in, agent-applied
       Add a margin-note type — `anchor` (a phase index or a body section), `prose`, and an open/resolved `state` — to the shared types, and parse/serialize it as a `### Notes` body section that round-trips through `parseEntityFile`/`formatEntityFile` alongside the existing Phases/Log/Clarifications sections. Cover the round-trip in `parser.test.ts`.
 - [x] Persist notes through `PATCH /api/plans`
       Extend the entity write path so adding, editing, and resolving a note saves via the existing PATCH route next to `body`/`phases`/`log`, and add the matching client wrapper in `plans-api.ts` / the app-store slice.
-- [ ] Add the margin-note affordance in `entity-detail.tsx`
+- [x] Add the margin-note affordance in `entity-detail.tsx`
       Put an add-note control on every phase row and every body section, and render each anchor's open notes inline with a resolve action, so a reaction attaches to the specific phase or paragraph it is about rather than the flat entity-wide log.
 - [ ] Bundle open notes into a "Rework from my notes" action
       Collect the entity's open notes, compose a rework prompt quoting each note against its anchor, and launch through the existing `launchPlanRework` / `launch-rework` reconcile-preview path (`app-store.ts`) so the agent's rewrite lands in the same before/after approve/discard gate.

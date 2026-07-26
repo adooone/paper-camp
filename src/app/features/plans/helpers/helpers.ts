@@ -1,4 +1,4 @@
-import type { AgentTaskState, PlanEntry } from '@/types/index';
+import type { AgentTaskState, MarginNote, MarginNoteAnchor, PlanEntry } from '@/types/index';
 
 export const relativeDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -37,6 +37,18 @@ export const effectiveStatus = (
   if (plan.status === 'done' || plan.status === 'dropped') return plan.status;
   return runningTaskForPlan(plan.id, agentStatus) ? 'in-progress' : plan.status;
 };
+
+export const notesForAnchor = (
+  notes: MarginNote[] | undefined,
+  anchor: MarginNoteAnchor,
+): MarginNote[] =>
+  (notes ?? []).filter(
+    (note) =>
+      note.state === 'open' &&
+      (anchor.kind === 'phase'
+        ? note.anchor.kind === 'phase' && note.anchor.index === anchor.index
+        : note.anchor.kind === 'body'),
+  );
 
 export const findFocusPlan = (
   plans: PlanEntry[] | undefined,
