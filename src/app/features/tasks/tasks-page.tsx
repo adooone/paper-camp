@@ -3,7 +3,7 @@ import { fetchTaskLogLines } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { AGENT_LABELS, type TaskKind, type TaskLogEntry } from '@/types/index';
-import { Card, Stamp } from '@dendelion/paper-ui';
+import { Button, Card, Stamp } from '@dendelion/paper-ui';
 import { useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 
@@ -20,6 +20,7 @@ const TASK_KIND_LABELS: Record<TaskKind, string> = {
   prioritise: 'Prioritise queue',
   sync: 'Sync',
   reconcile: 'Reconcile',
+  rework: 'Apply notes',
   'fix-review': 'Fix review',
 };
 
@@ -53,16 +54,52 @@ const headerLabelStyle: React.CSSProperties = {
 
 const TaskLogLines = ({ id }: { id: string }) => {
   const [lines, setLines] = useState<string[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is the retry trigger (re-runs the fetch), not a value read in the body.
   useEffect(() => {
+    let cancelled = false;
     setLines(null);
+    setFailed(false);
     fetchTaskLogLines(id)
-      .then((data) => setLines(data.lines))
-      .catch(() => setLines([]));
-  }, [id]);
+      .then((data) => {
+        if (cancelled) return;
+        setLines(data.lines ?? []);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // An empty result and a failed request are different states — conflating
+        // them reports a fetch error as "this task produced no output".
+        setFailed(true);
+        setLines([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, attempt]);
+
+  const retry = (
+    <Button variant="ghost" size="small" onClick={() => setAttempt((n) => n + 1)}>
+      Retry
+    </Button>
+  );
 
   if (lines === null) return <p style={{ opacity: 0.5, margin: 0 }}>Loading…</p>;
-  if (lines.length === 0) return <p style={{ opacity: 0.5, margin: 0 }}>No output recorded.</p>;
+  if (failed)
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+        <p style={{ opacity: 0.5, margin: 0 }}>Couldn't load this task's output.</p>
+        {retry}
+      </div>
+    );
+  if (lines.length === 0)
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+        <p style={{ opacity: 0.5, margin: 0 }}>No output recorded.</p>
+        {retry}
+      </div>
+    );
   return (
     <pre
       style={{

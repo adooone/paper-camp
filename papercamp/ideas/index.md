@@ -83,5 +83,15 @@
 | IDEA-79 | First-run experience | feat | done | cli, scaffold, app |
 | IDEA-80 | Dev-server reload honesty | fix | done | dev-server, vite, api |
 | IDEA-81 | Make the roadmap look like a map | feat | done | app, ui, plans, docs |
-| IDEA-82 | Order that can never be empty | fix | review | app, server, plans, agent |
-| IDEA-83 | One release line per idea | fix | review | ci, git, docs |
+| IDEA-82 | Order that can never be empty | fix | done | app, server, plans, agent |
+| IDEA-83 | One release line per idea | fix | done | ci, git, docs |
+| IDEA-84 | Fix header background | fix | review | ui, layout, theme |
+| IDEA-85 | Apply the merge policy from Settings | feat | idea | app, settings, github, git |
+| IDEA-86 | Surface agent sign-in state in the app | — | idea |  |
+| IDEA-87 | Margin notes on plans and phases | — | idea |  |
+| IDEA-88 | Configurable title, branch, and agent | — | idea |  |
+| IDEA-89 | Review a finished plan in prose | — | idea |  |
+| IDEA-90 | Connections for every service | — | idea |  |
+| IDEA-91 | Roadmap items survive promotion | — | idea |  |
+| IDEA-92 | Timeline view and horizon lanes | — | idea |  |
+| IDEA-93 | Trace an idea from roadmap to release | — | idea |  |

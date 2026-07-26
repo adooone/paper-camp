@@ -173,7 +173,6 @@ const RootLayout = () => {
           style={{ flex: '1 1 0%', minHeight: 0, height: 'auto' }}
           background={{ texture: 'speckle', ruledType: 'grid', ruledColor: 'blue' }}
           showHeader
-          headerTexture="parchment"
           showSidebar={false}
           showPage={false}
           bleedBottom

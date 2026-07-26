@@ -55,6 +55,20 @@ header[class*="layout-module__header___"] {
 }
 
 /*
+ * paper-ui's .header always paints its own opaque background-color plus a
+ * speckle background-image and border-bottom/box-shadow seam
+ * (layout.module.scss) with no prop to clear any of it — cleared here so
+ * the page's grid-lines paper texture shows through with no separator at
+ * all. Same hashed-class reach-in pattern as the height override above.
+ */
+header[class*="layout-module__header___"] {
+  background-color: transparent;
+  background-image: none;
+  border-bottom: none;
+  box-shadow: none;
+}
+
+/*
  * The Status card's Quality/Tests/Consistency stamps are plain <button>s that
  * launch check runs on click, but paper-ui's Stamp has no interactive states of
  * its own — so this supplies the hover/pressed affordance that tells people

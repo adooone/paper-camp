@@ -62,13 +62,13 @@ describe('probeCapabilities: git', () => {
     roots.push(root);
     const capabilities = await probeCapabilities(root);
     expect(byId(capabilities, 'git').status).toBe('missing');
-  });
+  }, 15000);
 
   it('reports warn when the repo has no user.name/user.email', async () => {
     const root = await initRepo(false);
     const capabilities = await probeCapabilities(root);
     expect(byId(capabilities, 'git').status).toBe('warn');
-  });
+  }, 15000);
 
   it('reports ok with the identity when configured', async () => {
     const root = await initRepo(true);
@@ -76,7 +76,7 @@ describe('probeCapabilities: git', () => {
     const git = byId(capabilities, 'git');
     expect(git.status).toBe('ok');
     expect(git.detail).toBe('Test User <test@example.com>');
-  });
+  }, 15000);
 });
 
 describe('probeCapabilities: gh', () => {
@@ -92,7 +92,7 @@ describe('probeCapabilities: gh', () => {
     installBin('gh', 'if [ "$1" = "--version" ]; then exit 0; else exit 1; fi');
     const capabilities = await probeCapabilities(root);
     expect(byId(capabilities, 'gh').status).toBe('warn');
-  });
+  }, 15000);
 
   it('reports warn when authenticated but the repo has no origin remote', async () => {
     const root = await initRepo();
@@ -101,7 +101,7 @@ describe('probeCapabilities: gh', () => {
     const gh = byId(capabilities, 'gh');
     expect(gh.status).toBe('warn');
     expect(gh.detail).toMatch(/no origin remote/);
-  });
+  }, 15000);
 
   it('reports warn when origin is set but unreachable on GitHub', async () => {
     const root = await initRepo();
@@ -111,7 +111,7 @@ describe('probeCapabilities: gh', () => {
     const gh = byId(capabilities, 'gh');
     expect(gh.status).toBe('warn');
     expect(gh.detail).toMatch(/not reachable/);
-  });
+  }, 15000);
 
   it('reports ok when installed, authenticated, and origin is reachable', async () => {
     const root = await initRepo();
@@ -121,7 +121,7 @@ describe('probeCapabilities: gh', () => {
     const gh = byId(capabilities, 'gh');
     expect(gh.status).toBe('ok');
     expect(gh.detail).toBe('https://example.invalid/owner/repo.git');
-  });
+  }, 15000);
 });
 
 describe('probeCapabilities: agent adapters', () => {

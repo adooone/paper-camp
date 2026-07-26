@@ -14,11 +14,11 @@ interface CompletedTask {
 }
 
 // Best-effort: a log write failure must never take down the task it's recording.
-export function logTaskCompletion(
+export async function logTaskCompletion(
   root: string,
   task: CompletedTask,
   outcome: 'done' | 'error',
-): void {
+): Promise<void> {
   const entry: TaskLogEntry = {
     id: task.id,
     taskKind: task.taskKind,
@@ -29,9 +29,21 @@ export function logTaskCompletion(
     endedAt: new Date().toISOString(),
     outcome,
   };
-  appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(() => {});
+  // Output file first: appending to tasks.log is what makes the row visible, and a
+  // row whose output file does not exist yet reads as "No output recorded" — which
+  // the client then caches. Writing in this order means a visible row always has
+  // its output behind it.
   const file = taskLogFile(root, task.id);
-  mkdir(dirname(file), { recursive: true })
-    .then(() => writeFile(file, task.lines.join('\n'), 'utf-8'))
-    .catch(() => {});
+  try {
+    await mkdir(dirname(file), { recursive: true });
+    await writeFile(file, task.lines.join('\n'), 'utf-8');
+  } catch (err) {
+    console.error(`papercamp: could not write task output for ${task.id}:`, err);
+    return;
+  }
+  await appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(
+    (err) => {
+      console.error(`papercamp: could not append task ${task.id} to tasks.log:`, err);
+    },
+  );
 }

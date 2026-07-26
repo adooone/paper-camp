@@ -18,7 +18,7 @@ import {
   useToast,
 } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
+import { ApplyNotesButton, DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
   AddReviewPhasesButton,
@@ -160,10 +160,12 @@ const PhasesSection = ({
 );
 
 const CommentsSection = ({
+  plan,
   log,
   updating,
   onAdd,
 }: {
+  plan: PlanEntry;
   log: LogEntry[] | undefined;
   updating: boolean;
   onAdd: (text: string) => Promise<boolean>;
@@ -177,7 +179,17 @@ const CommentsSection = ({
 
   return (
     <div style={{ marginBottom: space[8] }}>
-      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Comments</h3>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: space[3],
+          margin: `0 0 ${space[3]}`,
+        }}
+      >
+        <h3 style={{ ...sectionHeadingStyle, margin: 0, flex: 1 }}>Comments</h3>
+        <ApplyNotesButton plan={plan} disabled={updating} />
+      </div>
       <Card size="small">
         {log && log.length > 0 && (
           <div
@@ -455,7 +467,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         />
       )}
 
-      <CommentsSection log={plan.log} updating={updating} onAdd={handleAddLogEntry} />
+      <CommentsSection plan={plan} log={plan.log} updating={updating} onAdd={handleAddLogEntry} />
     </div>
   );
 };
