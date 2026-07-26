@@ -6,11 +6,12 @@ import { createAgentHooks } from './agent-hooks';
 import { createGitManager } from './git';
 import { sendJson } from './http';
 import { buildRoutes, readRoutes } from './routes/index';
-import { createStatusManager } from './status';
+import { type StatusManagerState, createStatusManager } from './status';
 
 export interface ApiMiddleware {
   (req: IncomingMessage, res: ServerResponse, next: () => void): Promise<void>;
   agent: AgentManager;
+  getStatusState: () => StatusManagerState;
 }
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -87,10 +88,14 @@ export function isForbiddenRequest(req: {
   return false;
 }
 
-export function createApiMiddleware(root: string, agentState?: AgentManagerState): ApiMiddleware {
+export function createApiMiddleware(
+  root: string,
+  agentState?: AgentManagerState,
+  statusState?: StatusManagerState,
+): ApiMiddleware {
   const activity = createActivityManager(root);
   const git = createGitManager(root);
-  const status = createStatusManager(root);
+  const status = createStatusManager(root, statusState);
   const hooks = createAgentHooks(root, git);
   const agent = createAgentManager(
     root,
@@ -135,5 +140,6 @@ export function createApiMiddleware(root: string, agentState?: AgentManagerState
   };
 
   (handler as ApiMiddleware).agent = agent;
+  (handler as ApiMiddleware).getStatusState = status.getState;
   return handler as ApiMiddleware;
 }

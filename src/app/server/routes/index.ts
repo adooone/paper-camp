@@ -3,7 +3,7 @@ import { capabilitiesRoutes } from './capabilities';
 import { docsRoutes, ideaRoutes, planRoutes } from './content';
 import { gitRoutes } from './git';
 import { statusRoutes } from './status';
-import { configRoutes, envRoutes, iconRoutes } from './system';
+import { configRoutes, envRoutes, iconRoutes, mergePolicyRoutes } from './system';
 import { taskRoutes } from './tasks';
 import type { Route, RouteContext } from './types';
 
@@ -22,6 +22,7 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...taskRoutes(ctx),
     ...configRoutes(ctx),
     ...envRoutes(ctx),
+    ...mergePolicyRoutes(ctx),
     ...docsRoutes(ctx),
   ];
 }

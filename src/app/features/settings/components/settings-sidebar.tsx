@@ -24,6 +24,15 @@ export const SettingsSidebar = () => {
         >
           Setup
         </ListItem>
+        <ListItem
+          size="small"
+          active={section === 'merge-policy'}
+          onClick={() =>
+            navigate({ to: '/settings/$section', params: { section: 'merge-policy' } })
+          }
+        >
+          Merge Policy
+        </ListItem>
       </SidebarSection>
       <SidebarSection label="Ideas">
         <ListItem

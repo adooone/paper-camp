@@ -24,16 +24,38 @@ const BIOME_FIX_COMMAND = 'npx biome check . --write';
 
 export type StatusManager = ReturnType<typeof createStatusManager>;
 
-export function createStatusManager(root: string) {
-  const clients = new Set<ServerResponse>();
-  const snapshot: StatusSnapshot = {
-    lint: { status: 'stale', lastRun: null, output: '' },
-    format: { status: 'stale', lastRun: null, output: '' },
-    test: { status: 'stale', lastRun: null, output: '' },
-    consistency: { status: 'stale', lastRun: null, output: '' },
+export interface StatusManagerState {
+  snapshot: StatusSnapshot;
+  // The in-flight guard. Must outlive a hot reload: a fresh Set would forget the
+  // child processes a previous instance spawned, so every server-file edit would
+  // let another full lint/test stack on top of the ones still running.
+  running: Set<CheckName>;
+  queued: Set<CheckName>;
+  clients: Set<ServerResponse>;
+}
+
+export function createEmptyStatusState(): StatusManagerState {
+  return {
+    snapshot: {
+      lint: { status: 'stale', lastRun: null, output: '' },
+      format: { status: 'stale', lastRun: null, output: '' },
+      test: { status: 'stale', lastRun: null, output: '' },
+      consistency: { status: 'stale', lastRun: null, output: '' },
+    },
+    running: new Set<CheckName>(),
+    queued: new Set<CheckName>(),
+    clients: new Set<ServerResponse>(),
   };
-  const running = new Set<CheckName>();
-  const queued = new Set<CheckName>();
+}
+
+export function createStatusManager(
+  root: string,
+  state: StatusManagerState = createEmptyStatusState(),
+) {
+  // Same containers a hot-reloaded replacement receives, so a still-running check's
+  // process listeners (owned by the old closure) and the new instance's guard read
+  // and write one shared set instead of drifting apart across the swap.
+  const { snapshot, running, queued, clients } = state;
 
   // `type` lets the client route without refetching everything each tick (an agent
   // emits a line per log row); untyped events used to be dropped, making check clicks look dead.
@@ -175,6 +197,7 @@ export function createStatusManager(root: string) {
         consistency: { ...snapshot.consistency },
       };
     },
+    getState: (): StatusManagerState => state,
     runCheck,
     runChecksAndWait,
     runQualityFix,

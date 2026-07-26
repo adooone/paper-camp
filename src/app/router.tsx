@@ -219,7 +219,10 @@ const RootLayout = () => {
                 marginTop: -LAYOUT_CONTENT_PAD,
                 marginLeft: -LAYOUT_CONTENT_PAD,
                 marginRight: -LAYOUT_CONTENT_PAD,
-                paddingTop: LAYOUT_CONTENT_PAD,
+                // No top inset: the header no longer paints a background, so the page
+                // should meet it directly. Page's own 2rem padding still holds the text
+                // off the edge — re-adding it here stacked two grid cells of dead space.
+                paddingTop: 0,
                 // var() so utilities.css can widen it below the phone breakpoint,
                 // clearing the fixed .phone-bottom-nav that replaces the header nav there.
                 paddingBottom: `var(--pc-content-pad-bottom, ${LAYOUT_CONTENT_PAD}px)`,
