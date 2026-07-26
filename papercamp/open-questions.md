@@ -1,3 +1,31 @@
+## Should notes' `order` move into `run-order.md` alongside plans/ideas?
+
+**Status:** open
+**Raised:** 2026-07-26
+**Blocks:** —
+
+IDEA-98 phase 4 moved the run-order invariant (contiguous 1..N over planned/in-progress/review
+plans/ideas) off entity frontmatter and onto `papercamp/run-order.md`. `kind: note` entities
+were left out of that list — `normalizeRunOrder` keys off derived `PlanStatus`, which notes
+don't have — so the plans PATCH route (`routes/content/plans.ts`) still writes a note's
+`order` straight to its own frontmatter, unreconciled, exactly as before this phase.
+
+But notes were never a separate ordering feature: `selectWorklistRows`
+(`plan-list-selector.ts`) interleaves notes into the same worklist and sorts everything by
+one shared `order` integer space (`comparePlans`'s `key === 'order'` branch compares a note's
+`order` directly against plan/idea `order` values). Splitting the storage without splitting
+the sort means a note's position is still meaningful only in comparison to plans/ideas whose
+`order` no longer lives in the same place — the two numeric spaces can drift out of relative
+sync over time (e.g. a plan moves via `run-order.md` while a note sitting between two plans
+keeps a stale frontmatter integer).
+
+Two real options: (a) extend `run-order.md` (and `normalizeRunOrder`) to include notes,
+treating "open" as their ordered status, so the up/down worklist control fully migrates too;
+or (b) keep notes on frontmatter `order` permanently and accept they're a logically separate,
+looser-ordered sequence that happens to share one sort key client-side — in which case the
+worklist's "same numeric space" sort should probably be revisited too. Until decided, notes
+keep working exactly as before phase 4; only plan/idea ordering moved.
+
 ## Do push/sync/pull failure toasts need a one-line summary, not raw git stderr?
 
 **Status:** resolved

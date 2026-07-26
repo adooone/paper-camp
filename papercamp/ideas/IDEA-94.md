@@ -10,7 +10,7 @@ tags:
   - app
   - agents
 subject: Infrastructure
-order: 12
+order: 9
 ---
 
 Git is central to the loop but nearly invisible in the app: the only git actions live inside the Stack panel's `commit-section.tsx`, and the StatusBar shows branch and ahead-count as ambient status with a single quick-commit. Sync to main, branch switching, push and pull have no visible home at all — you either dig into the Stack or drop to a terminal, which is exactly what this tool exists to avoid.

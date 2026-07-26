@@ -155,11 +155,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       return;
     }
 
-    // Base new branches on the freshest main available: refresh origin/main
-    // (best-effort — offline is fine) and prefer it over a possibly-stale local main,
-    // so a plan branch never starts life behind the remote.
-    // Bounded and non-interactive: an unreachable or credential-blocked remote must
-    // not block this synchronous call (and the request handling it) indefinitely.
+    // Branch off the freshest main: refresh origin/main and prefer it over stale local
+    // main. Bounded + non-interactive so an unreachable remote can't hang the request.
     spawnSync('git', ['fetch', 'origin', 'main'], {
       cwd: root,
       timeout: 5000,
@@ -172,9 +169,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         ? 'origin/main'
         : 'main';
 
-    // --no-track: branching off a remote-tracking ref otherwise sets the new branch's
-    // upstream to origin/main, and git then refuses `git push` because the upstream
-    // name doesn't match the branch name.
+    // --no-track: off a remote ref, git would set upstream to origin/main, then refuse
+    // `git push` because the upstream name doesn't match the branch name.
     const result = spawnSync('git', ['checkout', '-b', branch, '--no-track', base], { cwd: root });
     if (result.status !== 0) {
       // Surface git's real error (e.g. uncommitted changes would be overwritten),
@@ -391,15 +387,15 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await runGit(['add', '-A']);
   }
 
-  // Rebuilt from the entity files by regenerateIndexes on every corpus mutation, so a
-  // local edit to it is never the source of truth — only churn from the watcher.
+  // Regenerated from the entity files on every corpus mutation, so a local edit is never
+  // the source of truth. papercamp/run-order.md must NOT join this list — it is intent
+  // (the chosen queue), not derived output, so a differing local copy must survive sync.
   const GENERATED_CORPUS_FILES = ['papercamp/ideas/index.md'];
 
-  // The corpus watcher constantly rewrites generated files and re-normalizes `order:`
-  // fields, often with the very change an incoming commit already carries. Those edits
-  // survive the stash but collide when it pops back over the merged versions — which is
-  // what silently blocked a sync. Drop the disposable ones first: content identical to
-  // origin/main loses nothing, and generated files are rebuilt from the merged entities.
+  // The watcher rewrites generated files and re-normalizes `order:`, often with the same
+  // change an incoming commit carries; those edits survive the stash but collide on pop,
+  // silently blocking sync. Drop the disposable ones: identical-to-origin/main loses
+  // nothing, generated files are rebuilt from the merged entities.
   async function dropDisposableLocalChanges(): Promise<void> {
     const tracked = (await runGitStatus()).filter((entry) => !entry.status.startsWith('?'));
     const disposable: string[] = [];
@@ -421,8 +417,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   async function runGitSync(): Promise<void> {
-    // Fetch before anything else: knowing what's incoming is what lets us recognize
-    // local edits that main already contains.
+    // Fetch first: recognizing already-in-main local edits needs to know what's incoming.
     await runGit(['fetch', '--prune']).catch(() => {});
     await dropDisposableLocalChanges().catch(() => {});
 

@@ -1,7 +1,7 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readEntities, readWorkEntries } from '@/core/readers';
-import { normalizeRunOrder } from '@/core/run-order';
+import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import {
   archiveEntityFile,
   assignEntityId,
@@ -23,8 +23,11 @@ import {
   entityFileInput,
   fileExists,
   readMaybe,
+  readRunOrderFile,
   regenerateIndexes,
+  withRunOrderLock,
   writeEntityFile,
+  writeRunOrderFile,
 } from '../../helpers';
 import { readBody, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
@@ -165,6 +168,8 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           return;
         }
 
+        // Run order for plans/ideas lives in papercamp/run-order.md, not frontmatter (IDEA-98);
+        // notes aren't part of that list, so their `order` still writes straight to frontmatter.
         const updatedEntry: EntityEntry = {
           ...target,
           ...(updates.body !== undefined && { body: updates.body }),
@@ -173,7 +178,12 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           ...(updates.log !== undefined && { log: updates.log }),
           ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
           ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
-          ...(updates.order !== undefined && { order: updates.order ?? undefined }),
+          order:
+            target.kind === 'note'
+              ? updates.order !== undefined
+                ? (updates.order ?? undefined)
+                : target.order
+              : undefined,
           updated: todayDateString(),
         };
 
@@ -197,39 +207,27 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         await writeEntityFile(targetFile, entityFileInput(updatedEntry));
 
         // Any status/order write can break the run-order invariant (contiguous
-        // 1..N over planned/in-progress/review); reflow the rest to restore it.
-        // Classification uses DERIVED status (readWorkEntries) — stored overrides
-        // lag reality (merged-PR entries stay `review`, phased ideas stay `idea`).
-        if (updates.order !== undefined || updates.status !== undefined) {
+        // 1..N over planned/in-progress/review); reflow papercamp/run-order.md to
+        // restore it. Classification uses DERIVED status (readWorkEntries) — stored
+        // overrides lag reality (merged-PR entries stay `review`, phased ideas stay
+        // `idea`). Notes have no derived PlanStatus and aren't part of the list.
+        if (
+          target.kind !== 'note' &&
+          (updates.order !== undefined || updates.status !== undefined)
+        ) {
           const moved =
             typeof updates.order === 'number' ? { id: target.id, order: updates.order } : undefined;
           const { entries: work } = await readWorkEntries(ideasDir);
-          const derived = new Map(work.map((w) => [w.id, w.status as string | undefined]));
           const nextEntries = entries.map((e) => (e.id === target.id ? updatedEntry : e));
-          // Notes have no derived PlanStatus (readWorkEntries excludes them), so they sit
-          // outside the planned/in-progress/review invariant reflow enforces — leave their
-          // order as written rather than have them read as unordered and get cleared.
-          const classified = nextEntries
-            .filter((e) => e.kind !== 'note')
-            .map((e) => ({
-              id: e.id,
-              order: e.order,
-              created: e.created,
-              status:
-                e.id === target.id && updates.status !== undefined
-                  ? (updates.status ?? undefined)
-                  : (derived.get(e.id) ?? e.status),
-            }));
-          for (const change of normalizeRunOrder(classified, moved)) {
-            const primaryFile = join(ideasDir, `${change.id}.md`);
-            const file = (await fileExists(primaryFile))
-              ? primaryFile
-              : join(ideasDir, 'archive', `${change.id}.md`);
-            if (!(await fileExists(file))) continue;
-            const changedEntry = nextEntries.find((e) => e.id === change.id);
-            if (!changedEntry) continue;
-            await writeEntityFile(file, entityFileInput({ ...changedEntry, order: change.order }));
-          }
+          const classified = classifyRunOrderEntries(nextEntries, work, (id) =>
+            id === target.id && updates.status !== undefined
+              ? { value: updates.status ?? undefined }
+              : undefined,
+          );
+          await withRunOrderLock(async () => {
+            const list = await readRunOrderFile(root);
+            await writeRunOrderFile(root, normalizeRunOrder(list, classified, moved));
+          });
         }
 
         await regenerateIndexes(root);

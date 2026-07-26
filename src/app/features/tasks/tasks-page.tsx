@@ -60,22 +60,33 @@ const TaskLogLines = ({ id }: { id: string }) => {
   // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is the retry trigger (re-runs the fetch), not a value read in the body.
   useEffect(() => {
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     setLines(null);
     setFailed(false);
-    fetchTaskLogLines(id)
-      .then((data) => {
-        if (cancelled) return;
-        setLines(data.lines ?? []);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        // An empty result and a failed request are different states — conflating
-        // them reports a fetch error as "this task produced no output".
-        setFailed(true);
-        setLines([]);
-      });
+    // Auto-retry first (the dev server briefly drops requests on hot reload); only
+    // surface the manual Retry if it stays down.
+    const load = (remaining: number) => {
+      fetchTaskLogLines(id)
+        .then((data) => {
+          if (cancelled) return;
+          setLines(data.lines ?? []);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          if (remaining > 0) {
+            timer = setTimeout(() => load(remaining - 1), 700);
+            return;
+          }
+          // An empty result and a failed request are different states — conflating
+          // them reports a fetch error as "this task produced no output".
+          setFailed(true);
+          setLines([]);
+        });
+    };
+    load(3);
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
     };
   }, [id, attempt]);
 

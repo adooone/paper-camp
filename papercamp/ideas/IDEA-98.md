@@ -2,7 +2,7 @@
 id: IDEA-98
 title: Track run order in one file
 type: refactor
-status: idea
+status: review
 created: 2026-07-26
 tags:
   - core
@@ -45,39 +45,40 @@ sharper, not softer.
 Timing favours doing it soon: only 12 entities carry `order:` today, so the migration is a
 one-time strip plus one generated list.
 
-Open questions for the plan: whether the file carries ids alone (pure input, unreadable) or
-id + title (readable, but the title is a copy that needs refreshing — acceptable, since the
-whole point is concentrating churn into one file); where it lives and what it is called;
-and whether it should be treated as precious in sync's disposable-changes check ([[IDEA-94]]) —
-it is intent, not generated output, so it must not be silently discarded the way
-`ideas/index.md` now is.
+Resolved (see decisions.md, "Run order lives in `papercamp/run-order.md`, one
+`IDEA-N — Title` line per entity"): the file is `papercamp/run-order.md`, alongside
+`decisions.md`/`open-questions.md`/`progress.md` rather than under `ideas/` or `plans/`;
+each line is `IDEA-N — Title` (id + title, not id alone) for a readable diff, accepting
+the title is a refreshed copy; and it is intent, not generated output, so a later phase
+must keep it out of sync's disposable-changes check ([[IDEA-94]]) the way `ideas/index.md`
+is silently discarded.
 
 ### Phases
-- [ ] Settle the file's shape, name, and location
+- [x] Settle the file's shape, name, and location
       Resolve the open questions: ids alone vs id + title (lean id + title for a
       readable diff, accepting the title is a refreshed copy), where the file lives
       and what it is called, and confirm it is intent — never generated output.
-- [ ] Add a run-order file module in `src/core`
+- [x] Add a run-order file module in `src/core`
       Parse and serialize the ordered list (one entity per line, first line runs
       first), sitting alongside `run-order.ts` as the single source of the sequence.
-- [ ] Reconcile the list against the live corpus in `normalizeRunOrder`
+- [x] Reconcile the list against the live corpus in `normalizeRunOrder`
       Reshape `normalizeRunOrder` (`src/core/run-order.ts`) to read the list, drop
       ids no longer in an ordered status or gone from the corpus, append entities
       added out of band, and return one list to write instead of N frontmatter changes.
-- [ ] Route every write path through the list
+- [x] Route every write path through the list
       Point the plans PATCH route (`routes/content/plans.ts`), `run-order-pass.ts`,
       and `applyPrioritiseVerdict` (`prioritise.ts`) at the list, stop writing
       `order:` to entity frontmatter, and keep `f598efd`'s serialization guarding
       the now-sharper single-file write hotspot.
-- [ ] Feed the list into reads and display
+- [x] Feed the list into reads and display
       Have `readEntities`/`readWorkEntries` resolve each entity's rank from the list
       so the worklist sort (`plan-list-selector.ts`) and the drag/order control keep
       working once `order:` leaves the frontmatter.
-- [ ] Migrate: strip `order:` and generate the initial list
+- [x] Migrate: strip `order:` and generate the initial list
       One-time pass over the ~12 entities carrying `order:` — remove the field from
       frontmatter and emit the list in the current sequence.
-- [ ] Treat the file as precious in sync's disposable-changes check
+- [x] Treat the file as precious in sync's disposable-changes check
       Ensure the deterministic sync ([[IDEA-94]], `dropDisposableLocalChanges` in
       `git.ts`) never silently discards the list the way it does `ideas/index.md`.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check .`, and `pnpm test` clean across the repo.
