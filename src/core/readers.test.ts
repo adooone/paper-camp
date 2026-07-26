@@ -126,6 +126,47 @@ describe('readEntities', () => {
     expect(fileCount).toBe(0);
   });
 
+  it('resolves order from a sibling run-order.md, overriding stale frontmatter order', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'papercamp-readers-root-'));
+    const dir = join(root, 'ideas');
+    mkdirSync(join(dir, 'archive'), { recursive: true });
+    write(dir, {
+      id: 'IDEA-1',
+      title: 'Second in the list',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-01',
+      order: 9, // stale — the list below is authoritative
+      body: 'x',
+    });
+    write(dir, {
+      id: 'IDEA-2',
+      title: 'First in the list',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-02',
+      body: 'x',
+    });
+    write(dir, {
+      id: 'IDEA-3',
+      title: 'Not in the list',
+      type: 'feat',
+      status: 'idea',
+      created: '2026-07-03',
+      body: 'x',
+    });
+    writeFileSync(
+      join(root, 'run-order.md'),
+      'IDEA-2 — First in the list\nIDEA-1 — Second in the list\n',
+    );
+
+    const { entries } = await readEntities(dir);
+    const byId = Object.fromEntries(entries.map((e) => [e.id, e.order]));
+    expect(byId['IDEA-2']).toBe(1);
+    expect(byId['IDEA-1']).toBe(2);
+    expect(byId['IDEA-3']).toBeUndefined();
+  });
+
   it('surfaces parse warnings for invalid files without dropping the rest', async () => {
     const dir = makeCorpus();
     // status open without kind: note fails the schema refine

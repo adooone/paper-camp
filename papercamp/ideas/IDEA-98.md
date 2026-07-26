@@ -70,7 +70,7 @@ is silently discarded.
       and `applyPrioritiseVerdict` (`prioritise.ts`) at the list, stop writing
       `order:` to entity frontmatter, and keep `f598efd`'s serialization guarding
       the now-sharper single-file write hotspot.
-- [ ] Feed the list into reads and display
+- [x] Feed the list into reads and display
       Have `readEntities`/`readWorkEntries` resolve each entity's rank from the list
       so the worklist sort (`plan-list-selector.ts`) and the drag/order control keep
       working once `order:` leaves the frontmatter.

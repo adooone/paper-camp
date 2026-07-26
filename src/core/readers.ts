@@ -13,6 +13,7 @@ import type {
 } from '../types/index';
 import { resolvePrsByEntity } from './git-pr/pr-lookup';
 import { parseEntityFile } from './parse/parser';
+import { parseRunOrderFile } from './run-order-file';
 import { deriveStatus, isArchivable } from './status';
 
 async function readdirMaybe(dir: string): Promise<string[]> {
@@ -31,12 +32,20 @@ async function readFileMaybe(path: string): Promise<string> {
   }
 }
 
+// papercamp/run-order.md sits alongside ideasDir's parent; rank is the 1-based
+// list position, not the (possibly stale, pre-migration) frontmatter `order`.
+async function readRunOrderRanks(ideasDir: string): Promise<Map<string, number>> {
+  const content = await readFileMaybe(join(ideasDir, '..', 'run-order.md'));
+  return new Map(parseRunOrderFile(content).map((e, i) => [e.id, i + 1]));
+}
+
 export async function readEntities(
   ideasDir: string,
 ): Promise<ParseResult<EntityEntry> & { fileCount: number }> {
   const entries: EntityEntry[] = [];
   const warnings: ParseWarning[] = [];
   let fileCount = 0;
+  const ranks = await readRunOrderRanks(ideasDir);
 
   for (const dir of [ideasDir, join(ideasDir, 'archive')]) {
     const archived = dir !== ideasDir;
@@ -53,7 +62,9 @@ export async function readEntities(
     );
     for (const result of parsed) {
       if ('entries' in result) {
-        entries.push(...result.entries.map((e) => ({ ...e, archived })));
+        entries.push(
+          ...result.entries.map((e) => ({ ...e, archived, order: ranks.get(e.id) ?? e.order })),
+        );
       }
       warnings.push(...result.warnings);
     }
