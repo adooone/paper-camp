@@ -86,16 +86,16 @@
 | IDEA-82 | Order that can never be empty | fix | done | app, server, plans, agent |
 | IDEA-83 | One release line per idea | fix | done | ci, git, docs |
 | IDEA-84 | Fix header background | fix | done | ui, layout, theme |
-| IDEA-85 | Apply the merge policy from Settings | feat | idea | app, settings, github, git |
-| IDEA-86 | Surface agent sign-in state in the app | — | idea |  |
-| IDEA-87 | Margin notes on plans and phases | — | idea |  |
-| IDEA-88 | Configurable title, branch, and agent | — | idea |  |
-| IDEA-89 | Review a finished plan in prose | — | idea |  |
-| IDEA-90 | Connections for every service | — | idea |  |
-| IDEA-91 | Roadmap items survive promotion | — | idea |  |
-| IDEA-92 | Timeline view and horizon lanes | — | idea |  |
-| IDEA-93 | Trace an idea from roadmap to release | — | idea |  |
-| IDEA-94 | Git actions in the toolbar, agent as fallback | — | idea |  |
-| IDEA-95 | Roadmap items become the subject vocabulary | — | idea |  |
-| IDEA-96 | Open questions as a working queue | — | idea |  |
-| IDEA-97 | Surface decisions where they bind | — | idea |  |
+| IDEA-85 | Apply the merge policy from Settings | feat | planned | app, settings, github, git |
+| IDEA-86 | Surface agent sign-in state in the app | feat | planned | agent, server, ui |
+| IDEA-87 | Margin notes on plans and phases | feat | planned | app, plans, ui, core |
+| IDEA-88 | Configurable title, branch, and agent | feat | planned | git, plans, app |
+| IDEA-89 | Review a finished plan in prose | feat | planned | plans, app |
+| IDEA-90 | Connections for every service | feat | planned | server, settings, github, agent |
+| IDEA-91 | Roadmap items survive promotion | feat | planned | roadmap, core, app, ui |
+| IDEA-92 | Timeline view and horizon lanes | feat | planned | app, ui, core, roadmap |
+| IDEA-93 | Trace an idea from roadmap to release | feat | planned | roadmap, core, app |
+| IDEA-94 | Git actions in the toolbar, agent as fallback | feat | planned | git, app, agents |
+| IDEA-95 | Roadmap items become the subject vocabulary | feat | planned | roadmap, core, plans, app |
+| IDEA-96 | Open questions as a working queue | feat | planned | app, plans, core |
+| IDEA-97 | Surface decisions where they bind | feat | planned | app, core, ui |

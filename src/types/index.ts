@@ -329,6 +329,18 @@ export interface CapabilityResult {
   detail: string;
 }
 
+export interface MergePolicy {
+  allowSquashMerge: boolean;
+  allowMergeCommit: boolean;
+  allowRebaseMerge: boolean;
+  squashMergeCommitTitle: string;
+  squashMergeCommitMessage: string;
+}
+
+export type MergePolicyResult =
+  | { status: 'ok'; repo: string; policy: MergePolicy }
+  | { status: 'unavailable'; reason: string };
+
 export interface GitStatusEntry {
   path: string;
   status: string;

@@ -1,10 +1,16 @@
 ---
 id: IDEA-94
 title: Git actions in the toolbar, agent as fallback
+type: feat
 status: idea
 created: 2026-07-26
 updated: 2026-07-26
+tags:
+  - git
+  - app
+  - agents
 subject: Infrastructure
+order: 13
 ---
 
 Git is central to the loop but nearly invisible in the app: the only git actions live inside the Stack panel's `commit-section.tsx`, and the StatusBar shows branch and ahead-count as ambient status with a single quick-commit. Sync to main, branch switching, push and pull have no visible home at all — you either dig into the Stack or drop to a terminal, which is exactly what this tool exists to avoid.
@@ -20,3 +26,18 @@ This follows the house split [[IDEA-67]] settled — deterministic file ops, jud
 Worth deciding in the plan: whether the agent escalation asks for confirmation before running (it can discard or rewrite working-tree state) or runs automatically and reports what it did; and whether the same escalate-on-failure shape should wrap push and pull too, or stay scoped to the branch switch first.
 
 Provenance: surfaced 2026-07-25 when Sync to main silently did nothing — the stash popped back over the merged files and aborted the whole sync, leaving main behind with no error visible in the UI. The deterministic drop-disposable-changes fix landed that day; the escalation path is what would have made it self-healing instead of silent.
+
+### Phases
+- [ ] Expose branch / push / pull as server git actions
+      Extend `src/app/server/git.ts` and its routes so switch-branch, push, and pull are callable actions returning live state (current branch, ahead/behind, dirty count), reusing the existing sync-to-main path rather than adding a parallel one.
+- [ ] Build the git action group in the top toolbar
+      Add a toolbar group with sync-to-main, branch, push/pull, and commit verbs, each carrying its live state on the control; leave the detailed commit composer in the Stack panel.
+- [ ] Keep the deterministic sync as the fast path
+      Confirm the code-first attempt (fetch, drop disposable/generated changes, stash, `merge --ff-only`, pop) runs first and unchanged, and returns a structured failure instead of throwing to the UI when it cannot resolve.
+- [ ] Package a deterministic-sync failure as an agent recovery job
+      When the fast path fails, assemble the failure, the working-tree state, and the goal ("get onto latest main without losing real work") into an agent job spec.
+- [ ] Run the recovery agent and report the outcome
+      Launch the job and surface what it did; settle whether it asks for confirmation before touching working-tree state or runs automatically and reports after.
+- [ ] Decide whether push/pull share the escalate-on-failure shape
+      Settle whether the automatic deterministic→agent escalation wraps push and pull too, or stays scoped to the branch switch for this cut.
+- [ ] Type-check and full pass

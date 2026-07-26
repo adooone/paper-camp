@@ -1,10 +1,17 @@
 ---
 id: IDEA-95
 title: Roadmap items become the subject vocabulary
+type: feat
 status: idea
 created: 2026-07-26
 updated: 2026-07-26
+tags:
+  - roadmap
+  - core
+  - plans
+  - app
 subject: Planning surface
+order: 9
 ---
 
 `subject` and `tags` currently answer overlapping questions. Tags are subsystem areas — `app` (63 uses), `plans` (28), `ui` (26), `core`, `git` — the same vocabulary the commit scopes use, so a tag says *where in the code* work lands. But the configured subjects (`Frontend`, `App UI`, `Code health`, `Workflow`, `Mobile control desk`) are mostly just coarser versions of the same thing: `Frontend`/`App UI` restate the `ui`/`app` tags, `Code health` restates `refactor`. Two fields, one axis, and the finer one is already better maintained.
@@ -40,3 +47,30 @@ parses as nothing today and is invisible in the roadmap UI. Making standing conc
 first-class subjects means teaching the parser about non-horizon sections — decide then
 whether they are a distinct kind alongside horizons (they are not time-ordered, so folding
 them into the horizon list would misrepresent them).
+
+### Phases
+- [ ] Teach the roadmap parser about the `## Standing concerns` section
+      Extend `HORIZON_HEADING_RE`/`parseRoadmap` in `src/core/roadmap.ts` to recognize the
+      non-horizon `## Standing concerns` section as a distinct kind alongside horizons (not
+      time-ordered), and add it to the `Roadmap` type so those terms are first-class subjects.
+- [ ] Derive the subject vocabulary from `ROADMAP.md`
+      Build the ordered vocabulary — horizon items grouped by horizon, plus standing concerns —
+      from the parsed roadmap so the roadmap is the single source of truth; retire
+      `config.json`'s `subjects` array and `ensureSubject` (or leave it only as a derived cache).
+- [ ] Stop minting subjects on promote
+      Change `POST /api/roadmap/promote` (`src/app/server/routes/content/ideas.ts`) to no longer
+      call `ensureSubject`; the promoted item now survives in the roadmap ([[IDEA-91]]) and is
+      already the vocabulary, so the new entity's `subject` just points at it.
+- [ ] Validate and surface entity subjects against the vocabulary
+      Flag entities whose `subject` isn't in the roadmap-derived vocabulary as orphans, keep
+      "no subject" a first-class non-awkward state, and drive the subject picker in
+      `plan-actions-column.tsx` from the vocabulary rather than the config list.
+- [ ] Point the Settings subjects surface at the roadmap
+      Replace the config-backed editor (`use-project-subjects`, Settings' `subjects` section)
+      with a read-only view sourced from the roadmap, or a link into the roadmap view where the
+      vocabulary is now edited.
+- [ ] Group and order the worklist by horizon
+      Let the worklist group or sort subjects by the horizon each resolves to (H1 near-term →
+      H3 long bets, standing concerns last), reusing the roadmap structure rather than a new concept.
+- [ ] Type-check and full pass
+      `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
