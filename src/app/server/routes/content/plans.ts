@@ -13,6 +13,7 @@ import {
   type AgentId,
   type EntityEntry,
   type LogEntry,
+  type MarginNote,
   PLAN_KINDS,
   type PhaseItem,
   type PlanStatus,
@@ -136,6 +137,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           /** `null` clears the stored override (e.g. reopening a dropped plan). */
           status?: PlanStatus | null;
           log?: LogEntry[];
+          notes?: MarginNote[];
           agent?: AgentId | null;
           subject?: string | null;
           order?: number | null;
@@ -176,6 +178,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           ...(updates.status !== undefined && { status: updates.status ?? undefined }),
           ...(updates.phases !== undefined && { phases: updates.phases }),
           ...(updates.log !== undefined && { log: updates.log }),
+          ...(updates.notes !== undefined && { notes: updates.notes }),
           ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
           ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
           order:

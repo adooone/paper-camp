@@ -59,6 +59,7 @@ export function entityFileInput(
     phases: entry.phases,
     log: entry.log,
     clarifications: entry.clarifications,
+    notes: entry.notes,
     ...overrides,
   };
 }
