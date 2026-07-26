@@ -3,7 +3,8 @@ id: IDEA-91
 title: Roadmap items survive promotion
 status: idea
 created: 2026-07-25
-updated: 2026-07-25
+updated: 2026-07-26
+subject: Planning surface
 ---
 
 Promoting a roadmap item **deletes it**. `POST /api/roadmap/promote` calls `removeRoadmapItem(...)` and rewrites `ROADMAP.md` (`src/app/server/routes/content/ideas.ts`), mirroring the suggestions-promote flow. That shape is right for a suggestion, which is disposable, and wrong for a roadmap item, which is the thing we steer by: the moment real work starts on something it vanishes from the map, and there is no way to see progress against the plan we set ourselves.

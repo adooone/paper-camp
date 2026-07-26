@@ -3,7 +3,8 @@ id: IDEA-93
 title: Trace an idea from roadmap to release
 status: idea
 created: 2026-07-25
-updated: 2026-07-25
+updated: 2026-07-26
+subject: Insight from the task log
 ---
 
 The chain from intent to shipped already exists in pieces but is not navigable: roadmap item → idea → phases → tasks → commits → PR → release line. [[IDEA-83]] built the last hop, so a release line now carries its idea id; `pr-lookup` resolves PRs by entity; `tasks.log` records every run against its plan id. Nothing joins them up, so "what was actually done, and where did it come from" is a question you answer by hand.

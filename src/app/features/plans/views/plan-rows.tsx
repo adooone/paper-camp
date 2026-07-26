@@ -1,4 +1,4 @@
-import { MergeIcon } from '@/app/components/icons';
+import { LightbulbIcon, MergeIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
@@ -32,10 +32,12 @@ export const RowMarker = ({
   order,
   done,
   running,
+  status,
 }: {
   order?: number;
   done?: boolean;
   running?: boolean;
+  status?: string;
 }) => (
   <span
     style={{
@@ -57,6 +59,15 @@ export const RowMarker = ({
           {order}
         </span>
       </Stamp>
+    ) : status === 'idea' ? (
+      // Run order only covers planned/in-progress/review, so a backlog idea has no
+      // number to show — mark it as unplanned rather than leaving the gutter blank.
+      <span
+        aria-label="Backlog — not planned yet"
+        style={{ display: 'inline-flex', color: color.textTertiary }}
+      >
+        <LightbulbIcon size={14} />
+      </span>
     ) : null}
   </span>
 );
@@ -94,6 +105,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
             <RowMarker
               order={plan.order}
               done={plan.status === 'done'}
+              status={plan.status}
               running={Boolean(runningTaskForPlan(plan.id, agentStatus))}
             />
             <div

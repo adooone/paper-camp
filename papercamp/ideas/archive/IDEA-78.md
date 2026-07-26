@@ -2,8 +2,9 @@
 id: IDEA-78
 title: Responsive polish for phone widths
 type: feat
-status: review
+status: done
 created: 2026-07-21
+updated: 2026-07-26
 tags:
   - app
   - ui

@@ -2,13 +2,14 @@
 id: IDEA-79
 title: First-run experience
 type: feat
-status: review
+status: done
 created: 2026-07-22
+updated: 2026-07-26
 tags:
   - cli
   - scaffold
   - app
-subject: Workflow
+subject: Packaging
 ---
 
 `init` produces a welcoming empty corpus: seeded example idea, empty states that teach ("No ideas yet — capture one or ask for suggestions"), and USAGE.md surfaced on first open.

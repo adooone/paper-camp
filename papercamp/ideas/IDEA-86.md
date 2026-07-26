@@ -3,6 +3,8 @@ id: IDEA-86
 title: Surface agent sign-in state in the app
 status: idea
 created: 2026-07-25
+updated: 2026-07-26
+subject: Packaging
 ---
 
 When the headless `claude` CLI the agent uses isn't authenticated, every agent task (draft, extend, run-all, fix-review, ...) fails with a generic "error" — the real cause (`Not logged in · Please run /login`) is buried in the task output. The app should make agent auth state legible and recoverable instead of silently cryptic.

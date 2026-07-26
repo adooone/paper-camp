@@ -3,7 +3,8 @@ id: IDEA-92
 title: Timeline view and horizon lanes
 status: idea
 created: 2026-07-25
-updated: 2026-07-25
+updated: 2026-07-26
+subject: Planning surface
 ---
 
 The roadmap reads as a static document rather than something you can see movement in, and it has two structural problems.

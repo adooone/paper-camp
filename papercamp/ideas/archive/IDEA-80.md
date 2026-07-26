@@ -2,13 +2,14 @@
 id: IDEA-80
 title: Dev-server reload honesty
 type: fix
-status: review
+status: done
 created: 2026-07-22
+updated: 2026-07-26
 tags:
   - dev-server
   - vite
   - api
-subject: Workflow
+subject: Infrastructure
 ---
 
 server code changes silently don't apply until restart (the globalThis API cache). Either hot-reload routes or show a visible "restart needed" signal. This footgun bit three times in one week.

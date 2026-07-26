@@ -74,3 +74,19 @@ The loop works; make it smarter and more observable.
 - **The format as the product** — document the corpus schema properly so other
   tools (editors, bots, dashboards) can read and write it. Paper Camp the app
   is one client of Paper Camp the format.
+
+## Standing concerns
+
+Not horizons: these never ship and never graduate. They are the continuous
+threads work belongs to when it serves no single bet — used as subjects so every
+entity has a home. Deliberately few; if a concern here starts looking like a bet
+with an end state, promote it to a horizon instead.
+
+- **Infrastructure** — the machinery around the work: CI, releases, the dev
+  server, git plumbing. Keeps the loop running rather than adding to it.
+- **Planning surface** — Paper Camp's own model and the surfaces over it: the
+  roadmap, subjects, decisions, open questions, entity configuration.
+- **App UI** — visual and layout work on the desk itself that no single bet owns.
+- **Code health** — refactors, de-duplication, comment discipline, and the
+  slimming passes that keep the codebase legible.
+- **Testing** — coverage, test strategy, and the confidence to change things.

@@ -2,13 +2,14 @@
 id: IDEA-83
 title: One release line per idea
 type: fix
-status: review
+status: done
 created: 2026-07-22
+updated: 2026-07-26
 tags:
   - ci
   - git
   - docs
-subject: Workflow
+subject: Infrastructure
 ---
 
 The v0.10.0 release notes list six separate "Gate the pass" entries, three "updates", and a pile of phase titles that mean nothing without their idea ("Close the absorbed idea", "Detect archivable ideas"). Root cause is structural, not cosmetic: release-please compiles every conventional commit on main, and merge-commit PRs deliver every per-phase agent commit individually. The user-meaningful unit of change is the **idea** — one PR, one line — but the changelog's unit is the phase.

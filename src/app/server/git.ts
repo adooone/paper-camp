@@ -391,7 +391,41 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await runGit(['add', '-A']);
   }
 
+  // Rebuilt from the entity files by regenerateIndexes on every corpus mutation, so a
+  // local edit to it is never the source of truth — only churn from the watcher.
+  const GENERATED_CORPUS_FILES = ['papercamp/ideas/index.md'];
+
+  // The corpus watcher constantly rewrites generated files and re-normalizes `order:`
+  // fields, often with the very change an incoming commit already carries. Those edits
+  // survive the stash but collide when it pops back over the merged versions — which is
+  // what silently blocked a sync. Drop the disposable ones first: content identical to
+  // origin/main loses nothing, and generated files are rebuilt from the merged entities.
+  async function dropDisposableLocalChanges(): Promise<void> {
+    const tracked = (await runGitStatus()).filter((entry) => !entry.status.startsWith('?'));
+    const disposable: string[] = [];
+    for (const entry of tracked) {
+      if (GENERATED_CORPUS_FILES.includes(entry.path)) {
+        disposable.push(entry.path);
+        continue;
+      }
+      try {
+        await runGit(['diff', '--quiet', 'origin/main', '--', toLiteralPathspec(entry.path)]);
+        disposable.push(entry.path);
+      } catch {
+        // Non-zero exit means it genuinely differs from main — keep it.
+      }
+    }
+    if (disposable.length > 0) {
+      await runGit(['checkout', 'HEAD', '--', ...disposable.map(toLiteralPathspec)]);
+    }
+  }
+
   async function runGitSync(): Promise<void> {
+    // Fetch before anything else: knowing what's incoming is what lets us recognize
+    // local edits that main already contains.
+    await runGit(['fetch', '--prune']).catch(() => {});
+    await dropDisposableLocalChanges().catch(() => {});
+
     const dirty = (await runGitStatus()).length > 0;
     if (dirty) {
       await runGit(['stash', 'push', '--include-untracked', '-m', 'papercamp-sync']);
@@ -399,7 +433,6 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     let syncError: unknown;
     try {
       await runGit(['checkout', 'main']);
-      await runGit(['fetch', '--prune']);
       await runGit(['merge', '--ff-only', 'origin/main']);
     } catch (err) {
       syncError = err;

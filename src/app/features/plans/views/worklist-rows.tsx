@@ -236,7 +236,7 @@ const NoteRowCard = ({
   const status = idea.status ?? 'open';
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
-      <RowMarker order={idea.order} done={status === 'done'} />
+      <RowMarker order={idea.order} done={status === 'done'} status={status} />
       <div
         role={onOpen ? 'button' : undefined}
         tabIndex={onOpen ? 0 : undefined}
@@ -309,7 +309,7 @@ const IdeaGroupRowCard = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <RowMarker order={idea.order} done={idea.status === 'done'} />
+        <RowMarker order={idea.order} done={idea.status === 'done'} status={idea.status} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <Card size="small" texture="canvas" className="plan-row-card">
             <div

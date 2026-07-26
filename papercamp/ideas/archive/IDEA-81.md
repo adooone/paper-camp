@@ -2,14 +2,15 @@
 id: IDEA-81
 title: Make the roadmap look like a map
 type: feat
-status: review
+status: done
 created: 2026-07-21
+updated: 2026-07-26
 tags:
   - app
   - ui
   - plans
   - docs
-subject: Frontend
+subject: App UI
 ---
 
 The Roadmap page reads like a printed document with buttons bolted on. Three concrete failures: the goal masthead eats half the viewport on every visit; items render as full-width paragraph walls, so seeing the whole map takes three screens of scrolling and nothing is glanceable; and the page is state-blind and workflow-detached — it shows intentions, but not which items are moving, and the only verb is Promote (adding an item or candidate still means hand-editing `ROADMAP.md`). A map you can't survey, and can't draw on, is a page you stop visiting.

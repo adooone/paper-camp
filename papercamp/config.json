@@ -8,7 +8,7 @@
     "chore": 2,
     "docs": 4,
     "refactor": 5,
-    "idea": 94
+    "idea": 98
   },
   "defaultAgents": {
     "phase": {
@@ -33,11 +33,16 @@
     }
   },
   "subjects": [
-    "Frontend",
-    "Code health",
-    "Workflow",
+    "Packaging",
+    "Review-queue hygiene",
+    "Richer review loop",
+    "Insight from the task log",
+    "Mobile control desk",
+    "Infrastructure",
+    "Planning surface",
     "App UI",
-    "Mobile control desk"
+    "Code health",
+    "Testing"
   ],
   "setupDismissed": true
 }

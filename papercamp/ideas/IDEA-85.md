@@ -4,12 +4,13 @@ title: Apply the merge policy from Settings
 type: feat
 status: idea
 created: 2026-07-25
+updated: 2026-07-26
 tags:
   - app
   - settings
   - github
   - git
-subject: Workflow
+subject: Packaging
 ---
 
 [[IDEA-83]] gave us one release line per idea, but the mechanism that actually

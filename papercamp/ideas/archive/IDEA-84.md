@@ -2,14 +2,14 @@
 id: IDEA-84
 title: Fix header background
 type: fix
-status: review
+status: done
 created: 2026-07-25
-updated: 2026-07-25
+updated: 2026-07-26
 tags:
   - ui
   - layout
   - theme
-order: 1
+subject: App UI
 ---
 
 Remove background from header in the whole application. So we have full page with grid lines background paper texture.

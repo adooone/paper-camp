@@ -3,7 +3,8 @@ id: IDEA-89
 title: Review a finished plan in prose
 status: idea
 created: 2026-07-25
-updated: 2026-07-25
+updated: 2026-07-26
+subject: Richer review loop
 ---
 
 There is no way to give feedback on a completed plan from inside the app. The one affordance is "Add /code-review findings" (`src/app/features/plans/actions/add-review-phases-button.tsx`), which requires pasting JSON for `parseReviewFindings` to consume — a machine format demanded at a human moment. In practice the review gets written in a chat session and never reaches the corpus at all.
