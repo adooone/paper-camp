@@ -7,15 +7,12 @@ import { campFile, readMaybe, taskLogFile } from './helpers';
 const RETENTION_DAYS = 3;
 const RETENTION_MS = RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
-// Rewriting tasks.log is read-modify-write, so two completions landing together could
-// otherwise drop each other's entry. Chained like assignPlanId's id minting.
+// Serialized: rewriting tasks.log is read-modify-write, so concurrent completions
+// would otherwise drop each other's entry.
 let pruneChain: Promise<unknown> = Promise.resolve();
 
-/**
- * Drops runs older than the retention window — both the tasks.log rows and the output
- * files behind them, so a visible row never outlives its log (the state that reads as
- * "No output recorded"). Best-effort: a failed prune must never fail the task.
- */
+// Drops runs past the retention window — both the tasks.log rows and their output files,
+// so a visible row never outlives its log. Best-effort: a failed prune never fails a task.
 function pruneExpiredTasks(root: string): Promise<void> {
   const run = pruneChain.then(async () => {
     const path = campFile(root, 'tasks.log');
