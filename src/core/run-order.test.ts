@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type RunOrderEntry, normalizeRunOrder, reconcileFrontmatterOrder } from './run-order';
+import { type RunOrderEntry, normalizeRunOrder, sameRunOrder } from './run-order';
 
 const entry = (overrides: Partial<RunOrderEntry>): RunOrderEntry => ({
   id: 'IDEA-1',
@@ -105,71 +105,32 @@ describe('normalizeRunOrder', () => {
   });
 });
 
-describe('reconcileFrontmatterOrder', () => {
-  it('renumbers active entries to contiguous 1..N preserving relative order', () => {
-    const entries = [
-      entry({ id: 'A', order: 4 }),
-      entry({ id: 'B', order: 7 }),
-      entry({ id: 'C', order: 9 }),
+describe('sameRunOrder', () => {
+  it('is true for identical id sequences regardless of title', () => {
+    const a = [
+      { id: 'A', title: 'A' },
+      { id: 'B', title: 'B' },
     ];
-    expect(reconcileFrontmatterOrder(entries)).toEqual([
-      { id: 'A', order: 1 },
-      { id: 'B', order: 2 },
-      { id: 'C', order: 3 },
-    ]);
+    const b = [
+      { id: 'A', title: 'A refreshed' },
+      { id: 'B', title: 'B' },
+    ];
+    expect(sameRunOrder(a, b)).toBe(true);
   });
 
-  it('appends unordered active entries after ordered ones, by created date', () => {
-    const entries = [
-      entry({ id: 'A', order: 1 }),
-      entry({ id: 'B', created: '2026-07-03' }),
-      entry({ id: 'C', created: '2026-07-02' }),
-    ];
-    expect(reconcileFrontmatterOrder(entries)).toEqual([
-      { id: 'C', order: 2 },
-      { id: 'B', order: 3 },
-    ]);
-  });
-
-  it('clears order from entries outside planned/in-progress/review', () => {
-    const entries = [
-      entry({ id: 'A', order: 1 }),
-      entry({ id: 'B', order: 2, status: 'done' }),
-      entry({ id: 'C', order: 3, status: 'idea' }),
-    ];
-    expect(reconcileFrontmatterOrder(entries)).toEqual([
-      { id: 'B', order: undefined },
-      { id: 'C', order: undefined },
-    ]);
-  });
-
-  it('moves an entry to the requested slot and reflows the rest', () => {
-    const entries = [
-      entry({ id: 'A', order: 1 }),
-      entry({ id: 'B', order: 2 }),
-      entry({ id: 'C', order: 3 }),
-    ];
-    expect(reconcileFrontmatterOrder(entries, { id: 'C', order: 1 })).toEqual([
-      { id: 'C', order: 1 },
-      { id: 'A', order: 2 },
-      { id: 'B', order: 3 },
-    ]);
-  });
-
-  it('clamps a requested slot beyond N to the end', () => {
-    const entries = [entry({ id: 'A', order: 1 }), entry({ id: 'B', order: 2 })];
-    expect(reconcileFrontmatterOrder(entries, { id: 'A', order: 99 })).toEqual([
-      { id: 'B', order: 1 },
-      { id: 'A', order: 2 },
-    ]);
-  });
-
-  it('returns no changes when the invariant already holds', () => {
-    const entries = [
-      entry({ id: 'A', order: 1 }),
-      entry({ id: 'B', order: 2, status: 'review' }),
-      entry({ id: 'C', status: 'done' }),
-    ];
-    expect(reconcileFrontmatterOrder(entries)).toEqual([]);
+  it('is false when order or membership differs', () => {
+    expect(sameRunOrder([{ id: 'A', title: 'A' }], [{ id: 'B', title: 'B' }])).toBe(false);
+    expect(
+      sameRunOrder(
+        [
+          { id: 'A', title: 'A' },
+          { id: 'B', title: 'B' },
+        ],
+        [
+          { id: 'B', title: 'B' },
+          { id: 'A', title: 'A' },
+        ],
+      ),
+    ).toBe(false);
   });
 });

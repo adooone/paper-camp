@@ -65,7 +65,7 @@ is silently discarded.
       Reshape `normalizeRunOrder` (`src/core/run-order.ts`) to read the list, drop
       ids no longer in an ordered status or gone from the corpus, append entities
       added out of band, and return one list to write instead of N frontmatter changes.
-- [ ] Route every write path through the list
+- [x] Route every write path through the list
       Point the plans PATCH route (`routes/content/plans.ts`), `run-order-pass.ts`,
       and `applyPrioritiseVerdict` (`prioritise.ts`) at the list, stop writing
       `order:` to entity frontmatter, and keep `f598efd`'s serialization guarding

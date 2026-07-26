@@ -1,15 +1,18 @@
 import { join } from 'node:path';
 import { buildPrioritisePrompt } from '@/app/features/plans/prompts';
 import { readEntities, readWorkEntries } from '@/core/readers';
-import { type RunOrderEntry, reconcileFrontmatterOrder } from '@/core/run-order';
+import { type RunOrderEntry, normalizeRunOrder } from '@/core/run-order';
+import type { RunOrderFileEntry } from '@/core/run-order-file';
 import { todayDateString } from '@/core/serialize';
 import type { PlanEntry, PrioritiseVerdict } from '@/types/index';
 import {
   campFile,
   entityFileInput,
   fileExists,
+  readRunOrderFile,
   regenerateIndexes,
   writeEntityFile,
+  writeRunOrderFile,
 } from './helpers';
 
 function validatePrioritiseVerdict(
@@ -69,22 +72,21 @@ export async function getPrioritiseVerdict(
   return verdict;
 }
 
-// Applies the verdict's target order one id at a time via reconcileFrontmatterOrder's
-// existing single-slot `moved` primitive — the same mechanism the plans PATCH
-// route uses for one drag, run N times to reach an arbitrary full permutation.
-function resolveFullOrder(entries: RunOrderEntry[], targetOrder: string[]): RunOrderEntry[] {
-  let current = entries;
-  for (const [i, id] of targetOrder.entries()) {
-    const changes = reconcileFrontmatterOrder(current, { id, order: i + 1 });
-    if (changes.length === 0) continue;
-    const changed = new Map(changes.map((c) => [c.id, c.order]));
-    current = current.map((e) => (changed.has(e.id) ? { ...e, order: changed.get(e.id) } : e));
+function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): string[] {
+  const changed = new Set<string>();
+  const len = Math.max(before.length, after.length);
+  for (let i = 0; i < len; i++) {
+    if (before[i]?.id !== after[i]?.id) {
+      if (before[i]) changed.add(before[i].id);
+      if (after[i]) changed.add(after[i].id);
+    }
   }
-  return current;
+  return [...changed];
 }
 
-/** Applies a prioritise verdict: reorders the active queue and appends the
- *  matching `why` line as a log comment to each idea whose order actually moved. */
+/** Applies a prioritise verdict: reorders papercamp/run-order.md to the agent's
+ *  target sequence and appends the matching `why` line as a log comment to each
+ *  ranked idea whose position actually moved. */
 export async function applyPrioritiseVerdict(
   root: string,
   verdict: PrioritiseVerdict,
@@ -99,49 +101,50 @@ export async function applyPrioritiseVerdict(
     .map((e) => ({
       id: e.id,
       title: e.title,
-      order: e.order,
       created: e.created,
       status: derived.get(e.id) ?? e.status,
     }));
+  const byId = new Map(classified.map((e) => [e.id, e]));
 
-  const resolved = resolveFullOrder(classified, verdict.order);
-  const originalOrder = new Map(classified.map((e) => [e.id, e.order]));
+  const proposed: RunOrderFileEntry[] = verdict.order.map((id) => ({
+    id,
+    title: byId.get(id)?.title ?? '',
+  }));
+
+  const list = await readRunOrderFile(root);
+  const reconciled = normalizeRunOrder(proposed, classified);
+  const moved = changedIds(list, reconciled).filter((id) => verdict.order.includes(id));
+  if (moved.length === 0) return [];
+
   const whyLines = verdict.why.split('\n').filter((line) => line.trim().length > 0);
   const reasonFor = (id: string) => {
     const index = verdict.order.indexOf(id);
     return whyLines[index]?.trim() || 'Reprioritised by the shuffle agent.';
   };
 
-  const moved = resolved.filter((e) => e.order !== originalOrder.get(e.id));
-  if (moved.length === 0) return [];
+  await writeRunOrderFile(root, reconciled);
 
   const applied: string[] = [];
-  for (const change of moved) {
-    const primaryFile = join(ideasDir, `${change.id}.md`);
+  for (const id of moved) {
+    const primaryFile = join(ideasDir, `${id}.md`);
     const file = (await fileExists(primaryFile))
       ? primaryFile
-      : join(ideasDir, 'archive', `${change.id}.md`);
+      : join(ideasDir, 'archive', `${id}.md`);
     if (!(await fileExists(file))) continue;
-    const entry = entries.find((e) => e.id === change.id);
+    const entry = entries.find((e) => e.id === id);
     if (!entry) continue;
-    // Only entries the agent actually ranked get a log line — normalizeRunOrder's
-    // own clearing of stale order on now-inactive entries also lands in `moved`.
-    const isAgentRanked = verdict.order.includes(change.id);
     try {
       await writeEntityFile(
         file,
         entityFileInput(entry, {
-          order: change.order,
-          log: isAgentRanked
-            ? [...(entry.log ?? []), { date: todayDateString(), text: reasonFor(change.id) }]
-            : entry.log,
+          log: [...(entry.log ?? []), { date: todayDateString(), text: reasonFor(id) }],
         }),
       );
-      applied.push(change.id);
+      applied.push(id);
     } catch (err) {
       await regenerateIndexes(root);
       throw new Error(
-        `Prioritise partially applied (${applied.length}/${moved.length} ideas updated) before failing on ${change.id}: ${(err as Error).message}`,
+        `Prioritise partially applied (${applied.length}/${moved.length} ideas updated) before failing on ${id}: ${(err as Error).message}`,
       );
     }
   }

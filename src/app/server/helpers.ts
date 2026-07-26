@@ -1,6 +1,11 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readEntitiesWithDerivedStatus } from '@/core/readers';
+import {
+  type RunOrderFileEntry,
+  formatRunOrderFile,
+  parseRunOrderFile,
+} from '@/core/run-order-file';
 import { formatEntitiesIndex, formatEntityFile } from '@/core/serialize';
 import type { BranchHygieneStatus, EntityEntry } from '@/types/index';
 
@@ -60,6 +65,16 @@ export function entityFileInput(
 
 export async function writeEntityFile(path: string, input: EntityFileInput): Promise<void> {
   await writeFile(path, `${formatEntityFile(input)}\n`, 'utf-8');
+}
+
+export const runOrderFilePath = (root: string) => campFile(root, 'run-order.md');
+
+export async function readRunOrderFile(root: string): Promise<RunOrderFileEntry[]> {
+  return parseRunOrderFile(await readMaybe(runOrderFilePath(root)));
+}
+
+export async function writeRunOrderFile(root: string, list: RunOrderFileEntry[]): Promise<void> {
+  await writeFile(runOrderFilePath(root), formatRunOrderFile(list), 'utf-8');
 }
 
 export async function regenerateIndexes(root: string): Promise<void> {

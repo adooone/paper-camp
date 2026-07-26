@@ -39,10 +39,25 @@ function write(root: string, entity: Parameters<typeof formatEntityFile>[0]): vo
   );
 }
 
-function readOrder(root: string, id: string): number | undefined {
-  const raw = readFileSync(join(root, 'papercamp', 'ideas', `${id}.md`), 'utf-8');
-  const match = raw.match(/^order: (\d+)$/m);
-  return match ? Number(match[1]) : undefined;
+function writeRunOrder(root: string, lines: string[]): void {
+  writeFileSync(
+    join(root, 'papercamp', 'run-order.md'),
+    lines.length ? `${lines.join('\n')}\n` : '',
+  );
+}
+
+function readRunOrder(root: string): string[] {
+  const raw = (() => {
+    try {
+      return readFileSync(join(root, 'papercamp', 'run-order.md'), 'utf-8');
+    } catch {
+      return '';
+    }
+  })();
+  return raw
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 function readLog(root: string, id: string): string[] {
@@ -104,7 +119,6 @@ describe('applyPrioritiseVerdict', () => {
       type: 'feat',
       status: 'planned',
       created: '2026-07-01',
-      order: 1,
     });
     write(root, {
       id: 'IDEA-2',
@@ -112,8 +126,8 @@ describe('applyPrioritiseVerdict', () => {
       type: 'feat',
       status: 'planned',
       created: '2026-07-02',
-      order: 2,
     });
+    writeRunOrder(root, ['IDEA-1 — First', 'IDEA-2 — Second']);
 
     const moved = await applyPrioritiseVerdict(root, {
       order: ['IDEA-2', 'IDEA-1'],
@@ -121,8 +135,7 @@ describe('applyPrioritiseVerdict', () => {
     });
 
     expect(moved.sort()).toEqual(['IDEA-1', 'IDEA-2']);
-    expect(readOrder(root, 'IDEA-2')).toBe(1);
-    expect(readOrder(root, 'IDEA-1')).toBe(2);
+    expect(readRunOrder(root)).toEqual(['IDEA-2 — Second', 'IDEA-1 — First']);
     expect(readLog(root, 'IDEA-2')).toEqual([expect.stringContaining('unblocks IDEA-1')]);
     expect(readLog(root, 'IDEA-1')).toEqual([expect.stringContaining('waits on IDEA-2')]);
   });
@@ -135,7 +148,6 @@ describe('applyPrioritiseVerdict', () => {
       type: 'feat',
       status: 'planned',
       created: '2026-07-01',
-      order: 1,
     });
     write(root, {
       id: 'IDEA-2',
@@ -143,8 +155,8 @@ describe('applyPrioritiseVerdict', () => {
       type: 'feat',
       status: 'planned',
       created: '2026-07-02',
-      order: 2,
     });
+    writeRunOrder(root, ['IDEA-1 — First', 'IDEA-2 — Second']);
 
     const moved = await applyPrioritiseVerdict(root, {
       order: ['IDEA-1', 'IDEA-2'],

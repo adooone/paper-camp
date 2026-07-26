@@ -8,7 +8,6 @@ export interface RunOrderEntry {
   id: string;
   title: string;
   status?: string;
-  order?: number;
   created: string;
 }
 
@@ -53,46 +52,7 @@ export function normalizeRunOrder(
   return sequence.map((e) => ({ id: e.id, title: e.title }));
 }
 
-export interface RunOrderChange {
-  id: string;
-  order: number | undefined;
-}
-
-/**
- * Bridges normalizeRunOrder into today's frontmatter-order world: until write paths
- * read/write papercamp/run-order.md directly (IDEA-98 phase 4), the "list" is derived
- * from each entry's current `order` field, reconciled, and diffed back to per-entry
- * frontmatter changes.
- */
-export function reconcileFrontmatterOrder(
-  entries: RunOrderEntry[],
-  moved?: { id: string; order: number },
-): RunOrderChange[] {
-  const list: RunOrderFileEntry[] = entries
-    .filter(isRunOrdered)
-    .sort((a, b) => {
-      const ao = a.order ?? Number.POSITIVE_INFINITY;
-      const bo = b.order ?? Number.POSITIVE_INFINITY;
-      if (ao !== bo) return ao - bo;
-      return a.created.localeCompare(b.created);
-    })
-    .map((e) => ({ id: e.id, title: e.title }));
-
-  const reconciled = normalizeRunOrder(list, entries, moved);
-
-  const changes: RunOrderChange[] = [];
-  reconciled.forEach((item, i) => {
-    const entry = byId(entries, item.id);
-    if (entry && entry.order !== i + 1) changes.push({ id: item.id, order: i + 1 });
-  });
-  for (const entry of entries) {
-    if (!isRunOrdered(entry) && entry.order !== undefined) {
-      changes.push({ id: entry.id, order: undefined });
-    }
-  }
-  return changes;
-}
-
-function byId(entries: RunOrderEntry[], id: string): RunOrderEntry | undefined {
-  return entries.find((e) => e.id === id);
+/** Two reconciled lists are equal when they carry the same ids in the same order. */
+export function sameRunOrder(a: RunOrderFileEntry[], b: RunOrderFileEntry[]): boolean {
+  return a.length === b.length && a.every((e, i) => e.id === b[i].id);
 }
