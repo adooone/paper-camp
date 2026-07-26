@@ -85,7 +85,7 @@
 | IDEA-81 | Make the roadmap look like a map | feat | done | app, ui, plans, docs |
 | IDEA-82 | Order that can never be empty | fix | done | app, server, plans, agent |
 | IDEA-83 | One release line per idea | fix | done | ci, git, docs |
-| IDEA-84 | Fix header background | fix | planned | ui, layout, theme |
+| IDEA-84 | Fix header background | fix | review | ui, layout, theme |
 | IDEA-85 | Apply the merge policy from Settings | feat | idea | app, settings, github, git |
 | IDEA-86 | Surface agent sign-in state in the app | — | idea |  |
 | IDEA-87 | Margin notes on plans and phases | — | idea |  |

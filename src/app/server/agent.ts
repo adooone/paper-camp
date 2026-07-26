@@ -250,8 +250,10 @@ export function createAgentManager(
   }
 
   function finishTask(task: AgentTask, error: boolean) {
-    setStatus(task, error ? 'error' : 'done');
-    if (error) return;
+    if (error) {
+      setStatus(task, 'error');
+      return;
+    }
     if (task.taskKind === 'fix-review') {
       task.fixReviewResult = parseFixReviewResult(task.lines, task.fixReviewThreads ?? []);
       if (task.fixReviewResult) {
@@ -279,6 +281,7 @@ export function createAgentManager(
                         : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
         pushLine(task, warning);
       }
+      setStatus(task, 'done');
       if (task.taskKind === 'audit' && task.planId && progressed === true) {
         onAuditComplete?.(task.planId, 0).catch(() => {});
       }

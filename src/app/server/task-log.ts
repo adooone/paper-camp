@@ -39,6 +39,7 @@ export async function logTaskCompletion(
     await writeFile(file, task.lines.join('\n'), 'utf-8');
   } catch (err) {
     console.error(`papercamp: could not write task output for ${task.id}:`, err);
+    return;
   }
   await appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(
     (err) => {

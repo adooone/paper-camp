@@ -158,7 +158,13 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     // Base new branches on the freshest main available: refresh origin/main
     // (best-effort — offline is fine) and prefer it over a possibly-stale local main,
     // so a plan branch never starts life behind the remote.
-    spawnSync('git', ['fetch', 'origin', 'main'], { cwd: root });
+    // Bounded and non-interactive: an unreachable or credential-blocked remote must
+    // not block this synchronous call (and the request handling it) indefinitely.
+    spawnSync('git', ['fetch', 'origin', 'main'], {
+      cwd: root,
+      timeout: 5000,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+    });
     const base =
       spawnSync('git', ['rev-parse', '--verify', '--quiet', 'refs/remotes/origin/main'], {
         cwd: root,
