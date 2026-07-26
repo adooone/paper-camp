@@ -4,7 +4,12 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { probeAgentAuthStatus, probeCapabilities, probeConnections } from './capabilities';
+import {
+  probeAgentAuthStatus,
+  probeCapabilities,
+  probeConnections,
+  runConnect,
+} from './capabilities';
 
 const originalPath = process.env.PATH;
 const originalHome = process.env.HOME;
@@ -205,6 +210,58 @@ describe('probeConnections', () => {
     const connections = await probeConnections(root);
     expect(byConnId(connections, 'agent:opencode').authenticated).toBeNull();
   });
+});
+
+describe('probeConnections: connect action', () => {
+  it('offers a runnable git init command when the directory is not a git repo', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'papercamp-cap-noropo-'));
+    roots.push(root);
+    const connections = await probeConnections(root);
+    expect(byConnId(connections, 'git').connect).toEqual({
+      kind: 'command',
+      command: 'git init',
+      runnable: true,
+    });
+  }, 15000);
+
+  it('offers gh auth login as a non-runnable command when signed out', async () => {
+    const root = await initRepo();
+    installBin('gh', 'if [ "$1" = "--version" ]; then exit 0; else exit 1; fi');
+    const connections = await probeConnections(root);
+    expect(byConnId(connections, 'gh').connect).toEqual({
+      kind: 'command',
+      command: 'gh auth login',
+    });
+  }, 15000);
+
+  it('offers no connect action once a service is ok', async () => {
+    const root = await initRepo();
+    const connections = await probeConnections(root);
+    expect(byConnId(connections, 'git').connect).toBeNull();
+  }, 15000);
+});
+
+describe('runConnect', () => {
+  it('returns null for an unknown service id', async () => {
+    const root = await initRepo();
+    expect(await runConnect('nope', root)).toBeNull();
+  });
+
+  it('runs a runnable command and reports the refreshed status', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'papercamp-cap-noropo-'));
+    roots.push(root);
+    const connection = await runConnect('git', root);
+    expect(connection?.status).not.toBe('missing');
+    expect(connection?.connect).not.toEqual(expect.objectContaining({ command: 'git init' }));
+  }, 15000);
+
+  it('leaves a non-runnable command untouched — gh stays unauthenticated', async () => {
+    const root = await initRepo();
+    installBin('gh', 'if [ "$1" = "--version" ]; then exit 0; else exit 1; fi');
+    const connection = await runConnect('gh', root);
+    expect(connection?.authenticated).toBe(false);
+    expect(connection?.connect).toEqual({ kind: 'command', command: 'gh auth login' });
+  }, 15000);
 });
 
 describe('probeAgentAuthStatus', () => {

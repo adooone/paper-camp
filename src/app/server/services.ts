@@ -76,7 +76,9 @@ async function probeGit(root: string): Promise<CapabilityResult> {
 }
 
 function gitConnect(result: CapabilityResult): ConnectAction | null {
-  if (result.status === 'missing') return { kind: 'command', command: 'git init' };
+  if (result.status === 'missing') {
+    return { kind: 'command', command: 'git init', runnable: true };
+  }
   if (result.status === 'warn') {
     return {
       kind: 'command',

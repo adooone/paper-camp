@@ -25,7 +25,7 @@ Turn capabilities into a proper Connections surface: one row per service — age
       A declarative list of services (agent CLIs including claude, GitHub, other model providers), each with an id, what it unlocks, its probe, and its connect action or command. Generalizes the ad-hoc git/gh/claude checks in `src/app/server/capabilities.ts`.
 - [x] Extend the server probes to report per-service auth state
       Beyond installed/missing, each service reports authenticated vs signed-out, building on [[IDEA-86]]'s `claude auth status` probe and adding `gh auth status` and provider checks. Expose one route returning the full connection list.
-- [ ] Add connect/sign-in actions per service on the server
+- [x] Add connect/sign-in actions per service on the server
       For each service, either run the sign-in flow or return the exact command to copy. Degrade gracefully when a CLI is absent.
 - [ ] Build the Connections surface in Settings
       Replace the Setup section's static naming with one row per service — live status, what it unlocks, and a connect button or copyable command. Reuse [[IDEA-86]]'s indicator pattern.
