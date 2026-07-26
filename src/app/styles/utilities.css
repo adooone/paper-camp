@@ -393,3 +393,9 @@ header[class*="layout-module__header___"] {
 .roadmap-item-desc {
   -webkit-line-clamp: 2;
 }
+
+/* A worklist subject header that maps to a roadmap item is clickable — a hover
+   underline signals it without a permanent link look. */
+.subject-header-link:hover {
+  text-decoration: underline;
+}
