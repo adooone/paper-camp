@@ -2,7 +2,7 @@
 id: IDEA-85
 title: Apply the merge policy from Settings
 type: feat
-status: idea
+status: review
 created: 2026-07-25
 updated: 2026-07-26
 tags:
@@ -62,6 +62,6 @@ concern from the squash-merge policy).
       first (legible, not a black box), then a single "Apply recommended policy"
       action — settling the open question toward Paper Camp's opinionated
       one-shot default rather than per-field toggles — and reports the result.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test`
       clean across the repo.
