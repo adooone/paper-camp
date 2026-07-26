@@ -21,7 +21,7 @@ Turn capabilities into a proper Connections surface: one row per service — age
 [[IDEA-86]] is the first slice of this: narrow, claude-only sign-in detection plus guidance. It lands first and this idea generalizes it to every service. Worth deferring as follow-ups: storing tokens for the agent environment, and a full in-app OAuth relay.
 
 ### Phases
-- [ ] Define the service registry and connection model
+- [x] Define the service registry and connection model
       A declarative list of services (agent CLIs including claude, GitHub, other model providers), each with an id, what it unlocks, its probe, and its connect action or command. Generalizes the ad-hoc git/gh/claude checks in `src/app/server/capabilities.ts`.
 - [ ] Extend the server probes to report per-service auth state
       Beyond installed/missing, each service reports authenticated vs signed-out, building on [[IDEA-86]]'s `claude auth status` probe and adding `gh auth status` and provider checks. Expose one route returning the full connection list.

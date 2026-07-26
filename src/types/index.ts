@@ -335,6 +335,14 @@ export interface AgentAuthStatus {
   apiProvider: string | null;
 }
 
+export type ServiceId = 'git' | 'gh' | `agent:${AgentId}`;
+
+/** What a Connections row offers once its service isn't `ok` — copy a command, follow a link, or read plain instructions. */
+export type ConnectAction =
+  | { kind: 'command'; command: string }
+  | { kind: 'link'; url: string; label: string }
+  | { kind: 'text'; message: string };
+
 export interface MergePolicy {
   allowSquashMerge: boolean;
   allowMergeCommit: boolean;
