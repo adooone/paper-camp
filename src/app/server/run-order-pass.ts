@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { readEntities, readWorkEntries } from '@/core/readers';
-import { normalizeRunOrder } from '@/core/run-order';
+import { reconcileFrontmatterOrder } from '@/core/run-order';
 import {
   campFile,
   entityFileInput,
@@ -25,12 +25,13 @@ export async function runRunOrderPass(root: string): Promise<string[]> {
     .filter((e) => e.kind !== 'note')
     .map((e) => ({
       id: e.id,
+      title: e.title,
       order: e.order,
       created: e.created,
       status: derived.get(e.id) ?? e.status,
     }));
 
-  const changes = normalizeRunOrder(classified);
+  const changes = reconcileFrontmatterOrder(classified);
   if (changes.length === 0) return [];
 
   for (const change of changes) {

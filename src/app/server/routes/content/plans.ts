@@ -1,7 +1,7 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readEntities, readWorkEntries } from '@/core/readers';
-import { normalizeRunOrder } from '@/core/run-order';
+import { reconcileFrontmatterOrder } from '@/core/run-order';
 import {
   archiveEntityFile,
   assignEntityId,
@@ -213,6 +213,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
             .filter((e) => e.kind !== 'note')
             .map((e) => ({
               id: e.id,
+              title: e.title,
               order: e.order,
               created: e.created,
               status:
@@ -220,7 +221,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
                   ? (updates.status ?? undefined)
                   : (derived.get(e.id) ?? e.status),
             }));
-          for (const change of normalizeRunOrder(classified, moved)) {
+          for (const change of reconcileFrontmatterOrder(classified, moved)) {
             const primaryFile = join(ideasDir, `${change.id}.md`);
             const file = (await fileExists(primaryFile))
               ? primaryFile

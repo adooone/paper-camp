@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { buildPrioritisePrompt } from '@/app/features/plans/prompts';
 import { readEntities, readWorkEntries } from '@/core/readers';
-import { type RunOrderEntry, normalizeRunOrder } from '@/core/run-order';
+import { type RunOrderEntry, reconcileFrontmatterOrder } from '@/core/run-order';
 import { todayDateString } from '@/core/serialize';
 import type { PlanEntry, PrioritiseVerdict } from '@/types/index';
 import {
@@ -69,13 +69,13 @@ export async function getPrioritiseVerdict(
   return verdict;
 }
 
-// Applies the verdict's target order one id at a time via normalizeRunOrder's
+// Applies the verdict's target order one id at a time via reconcileFrontmatterOrder's
 // existing single-slot `moved` primitive — the same mechanism the plans PATCH
 // route uses for one drag, run N times to reach an arbitrary full permutation.
 function resolveFullOrder(entries: RunOrderEntry[], targetOrder: string[]): RunOrderEntry[] {
   let current = entries;
   for (const [i, id] of targetOrder.entries()) {
-    const changes = normalizeRunOrder(current, { id, order: i + 1 });
+    const changes = reconcileFrontmatterOrder(current, { id, order: i + 1 });
     if (changes.length === 0) continue;
     const changed = new Map(changes.map((c) => [c.id, c.order]));
     current = current.map((e) => (changed.has(e.id) ? { ...e, order: changed.get(e.id) } : e));
@@ -98,6 +98,7 @@ export async function applyPrioritiseVerdict(
     .filter((e) => e.kind !== 'note')
     .map((e) => ({
       id: e.id,
+      title: e.title,
       order: e.order,
       created: e.created,
       status: derived.get(e.id) ?? e.status,

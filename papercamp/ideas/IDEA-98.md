@@ -61,7 +61,7 @@ is silently discarded.
 - [x] Add a run-order file module in `src/core`
       Parse and serialize the ordered list (one entity per line, first line runs
       first), sitting alongside `run-order.ts` as the single source of the sequence.
-- [ ] Reconcile the list against the live corpus in `normalizeRunOrder`
+- [x] Reconcile the list against the live corpus in `normalizeRunOrder`
       Reshape `normalizeRunOrder` (`src/core/run-order.ts`) to read the list, drop
       ids no longer in an ordered status or gone from the corpus, append entities
       added out of band, and return one list to write instead of N frontmatter changes.
