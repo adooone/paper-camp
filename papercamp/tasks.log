@@ -114,3 +114,4 @@
 {"id":"adac6766-ef33-4b3e-9129-bb130dcfc892","taskKind":"fix-review","planId":"IDEA-85","planTitle":"Apply the merge policy from Settings","agentId":"claude-code","startedAt":"2026-07-26T11:55:18.853Z","endedAt":"2026-07-26T12:04:57.994Z","outcome":"done"}
 {"id":"68101312-5cdf-4eab-aaa7-e2c1c2063beb","taskKind":"draft","planTitle":"Draft plan for IDEA-98","agentId":"claude-code","startedAt":"2026-07-26T12:36:11.112Z","endedAt":"2026-07-26T12:37:38.615Z","outcome":"done"}
 {"id":"f89c686b-b404-4a22-8488-030a06598861","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-26T12:38:48.861Z","endedAt":"2026-07-26T12:38:59.510Z","outcome":"done"}
+{"id":"4139d7d4-4c8e-4ace-94a2-dd25338acbc3","taskKind":"prioritise","planTitle":"Prioritise queue","agentId":"claude-code","startedAt":"2026-07-26T12:39:22.767Z","endedAt":"2026-07-26T12:39:36.747Z","outcome":"done"}

@@ -1,3 +1,40 @@
+## Run order lives in `papercamp/run-order.md`, one `IDEA-N — Title` line per entity
+
+**Date:** 2026-07-26
+**Status:** decided
+
+**Context:** `IDEA-98` phase 1 needed to settle the three open questions its own prose
+raised before any code changes: whether the run-order file carries ids alone or id +
+title, where it lives and what it's called, and whether it counts as intent (never
+silently discarded) versus generated output like `ideas/index.md`.
+
+**Decision:**
+- **Shape:** id + title, one entity per line, first line runs first — `IDEA-98 — Track
+  run order in one file`. The title is a cached copy of the entity's real title, not the
+  source of truth; it goes stale after a rename until the next write to the list touches
+  that line, exactly the tradeoff the idea's prose already accepted in exchange for a
+  readable diff.
+- **Location and name:** `papercamp/run-order.md`, alongside `decisions.md`,
+  `open-questions.md`, and `progress.md` — the other project-wide, single-file logs —
+  rather than under `ideas/` or `plans/`, since it indexes across the whole corpus
+  rather than belonging to one entity.
+- **Precious, not disposable:** unlike `ideas/index.md` (rebuilt by `regenerateIndexes`
+  on every corpus mutation, so a local edit is pure churn), `run-order.md` is the one
+  place the sequence is *written* — reordering means editing this file directly or via
+  the `prioritise` verdict. It must never be added to `git.ts`'s
+  `GENERATED_CORPUS_FILES` list or otherwise treated as disposable by
+  `dropDisposableLocalChanges` ([[IDEA-94]]); a later phase of this plan wires that in.
+
+**Rationale:** Id + title was the plan's own lean going in — a pure-id file is
+unreadable in a diff, and the title refresh cost is exactly the kind of small,
+contained churn the whole idea is trying to concentrate into one place instead of
+spreading over N files. Grouping the file with the other top-level corpus logs matches
+existing precedent for "one file, whole-repo scope, hand-legible" data, rather than
+inventing a new location under `ideas/`. Flagging it as precious now — before the
+migration or write-path phases land — prevents repeating the exact failure mode
+(`ideas/index.md` being silently discarded on sync) this plan is trying to avoid
+creating a second instance of.
+
 ## Squash-merge is the merge policy; PR title is the release commit
 
 **Date:** 2026-07-24

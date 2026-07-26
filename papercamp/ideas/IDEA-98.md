@@ -45,15 +45,16 @@ sharper, not softer.
 Timing favours doing it soon: only 12 entities carry `order:` today, so the migration is a
 one-time strip plus one generated list.
 
-Open questions for the plan: whether the file carries ids alone (pure input, unreadable) or
-id + title (readable, but the title is a copy that needs refreshing — acceptable, since the
-whole point is concentrating churn into one file); where it lives and what it is called;
-and whether it should be treated as precious in sync's disposable-changes check ([[IDEA-94]]) —
-it is intent, not generated output, so it must not be silently discarded the way
-`ideas/index.md` now is.
+Resolved (see decisions.md, "Run order lives in `papercamp/run-order.md`, one
+`IDEA-N — Title` line per entity"): the file is `papercamp/run-order.md`, alongside
+`decisions.md`/`open-questions.md`/`progress.md` rather than under `ideas/` or `plans/`;
+each line is `IDEA-N — Title` (id + title, not id alone) for a readable diff, accepting
+the title is a refreshed copy; and it is intent, not generated output, so a later phase
+must keep it out of sync's disposable-changes check ([[IDEA-94]]) the way `ideas/index.md`
+is silently discarded.
 
 ### Phases
-- [ ] Settle the file's shape, name, and location
+- [x] Settle the file's shape, name, and location
       Resolve the open questions: ids alone vs id + title (lean id + title for a
       readable diff, accepting the title is a refreshed copy), where the file lives
       and what it is called, and confirm it is intent — never generated output.
