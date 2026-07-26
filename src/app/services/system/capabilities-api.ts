@@ -1,4 +1,4 @@
-import type { AgentAuthStatus, CapabilityResult } from '@/types/index';
+import type { AgentAuthStatus, CapabilityResult, ConnectionResult } from '@/types/index';
 
 export const fetchCapabilities = async (): Promise<CapabilityResult[] | null> => {
   const response = await fetch('/api/capabilities');
@@ -11,4 +11,20 @@ export const fetchAgentAuthStatus = async (): Promise<AgentAuthStatus | null> =>
   const response = await fetch('/api/agent/auth-status');
   if (!response.ok) return null;
   return (await response.json()) as AgentAuthStatus;
+};
+
+export const fetchConnections = async (): Promise<ConnectionResult[] | null> => {
+  const response = await fetch('/api/connections');
+  if (!response.ok) return null;
+  const body = (await response.json()) as { connections: ConnectionResult[] };
+  return body.connections;
+};
+
+export const connectService = async (id: string): Promise<ConnectionResult | null> => {
+  const response = await fetch(`/api/connections/connect?id=${encodeURIComponent(id)}`, {
+    method: 'POST',
+  });
+  if (!response.ok) return null;
+  const body = (await response.json()) as { connection: ConnectionResult };
+  return body.connection;
 };

@@ -56,3 +56,4 @@
 {"id":"d90c3894-a3f8-494e-8603-7b74a5e90c28","taskKind":"draft","planTitle":"Draft plan for IDEA-100","agentId":"claude-code","startedAt":"2026-07-26T17:13:35.781Z","endedAt":"2026-07-26T17:14:28.680Z","outcome":"done"}
 {"id":"d90c3894-a3f8-494e-8603-7b74a5e90c28","taskKind":"draft","planTitle":"Draft plan for IDEA-100","agentId":"claude-code","startedAt":"2026-07-26T17:13:35.781Z","endedAt":"2026-07-26T17:14:28.738Z","outcome":"done"}
 {"id":"fc549ff7-24d4-40b2-b195-fd2c89949e00","taskKind":"fix-review","planId":"IDEA-86","planTitle":"Surface agent sign-in state in the app","agentId":"claude-code","startedAt":"2026-07-26T17:58:54.440Z","endedAt":"2026-07-26T18:12:41.935Z","outcome":"done"}
+{"id":"99835c89-9e57-4072-8fba-310081c5900f","taskKind":"run-all","planId":"IDEA-90","planTitle":"Connections for every service","agentId":"claude-code","startedAt":"2026-07-26T18:27:34.856Z","endedAt":"2026-07-26T19:02:46.713Z","outcome":"error"}

@@ -185,7 +185,6 @@ export function createAgentManager(
   function pushLine(task: AgentTask, text: string) {
     task.lines.push(text);
     if (task.lines.length > MAX_LINES) task.lines.shift();
-    if (isAuthError(text)) task.errorKind = 'auth';
     broadcast(text, task.id);
   }
 
@@ -201,6 +200,12 @@ export function createAgentManager(
 
   function setStatus(task: AgentTask, status: AgentTaskStatus) {
     task.status = status;
+    // Classify from the terminal output only: a genuine auth failure leaves the marker
+    // among the last lines, whereas a transient blip earlier in a long multi-phase run
+    // (that then recovered and failed the gate) must not mislabel the run as auth.
+    if (status === 'error') {
+      task.errorKind = task.lines.slice(-5).some(isAuthError) ? 'auth' : undefined;
+    }
     broadcast(`agent: ${status}`, task.id);
     if (status === 'done' || status === 'error') {
       void logTaskCompletion(root, task, status);

@@ -1,50 +1,17 @@
-import { fetchCapabilities, fetchConfig, saveConfig } from '@/app/services/system';
+import { connectService, fetchConfig, fetchConnections, saveConfig } from '@/app/services/system';
 import { fontSize, space } from '@/app/styles/tokens';
+import type { CapabilityStatus, ConnectionResult } from '@/types/index';
 import {
-  AGENT_LABELS,
-  type AgentId,
-  type CapabilityResult,
-  type CapabilityStatus,
-} from '@/types/index';
-import { Alert, Button, Card, Divider, Stamp, useToast } from '@dendelion/paper-ui';
+  Alert,
+  Button,
+  Card,
+  CodeBlock,
+  Divider,
+  Stamp,
+  Tooltip,
+  useToast,
+} from '@dendelion/paper-ui';
 import { useCallback, useEffect, useState } from 'react';
-
-interface CapabilityMeta {
-  label: string;
-  unlocks: string;
-  fix: (detail: string) => string;
-}
-
-function capabilityMeta(id: string): CapabilityMeta {
-  if (id === 'git') {
-    return {
-      label: 'Git',
-      unlocks: 'Commits, phase logging, branch creation',
-      fix: (detail) =>
-        detail.startsWith('Not inside')
-          ? 'git init'
-          : 'git config user.name "Your Name" && git config user.email you@example.com',
-    };
-  }
-  if (id === 'gh') {
-    return {
-      label: 'GitHub CLI',
-      unlocks: 'PR badges, review flow, fix-review',
-      fix: (detail) => {
-        if (detail.includes('not found')) return 'Install: https://cli.github.com';
-        if (detail.includes('no origin remote')) return 'git remote add origin <url>';
-        if (detail.includes('not reachable')) return 'gh repo view';
-        return 'gh auth login';
-      },
-    };
-  }
-  const agentId = id.slice('agent:'.length) as AgentId;
-  return {
-    label: `${AGENT_LABELS[agentId]} CLI`,
-    unlocks: `Launching ${AGENT_LABELS[agentId]} for phase runs, drafts, and reviews`,
-    fix: () => `Install the ${AGENT_LABELS[agentId]} CLI and add it to PATH`,
-  };
-}
 
 const STATUS_STAMP: Record<CapabilityStatus, { fill: string; text: string; label: string }> = {
   ok: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66', label: 'Ready' },
@@ -52,57 +19,103 @@ const STATUS_STAMP: Record<CapabilityStatus, { fill: string; text: string; label
   missing: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A', label: 'Missing' },
 };
 
-const CapabilityRow = ({
-  result,
+const ConnectActionView = ({
+  connection,
+  onConnect,
+  connecting,
+}: {
+  connection: ConnectionResult;
+  onConnect: (id: string) => void;
+  connecting: boolean;
+}) => {
+  const { connect } = connection;
+  if (!connect) return null;
+  if (connect.kind === 'command' && connect.runnable) {
+    return (
+      <Button
+        size="small"
+        variant="secondary"
+        onClick={() => onConnect(connection.id)}
+        disabled={connecting}
+      >
+        {connecting ? 'Running…' : `Run \`${connect.command}\``}
+      </Button>
+    );
+  }
+  if (connect.kind === 'command') {
+    return (
+      <div style={{ marginTop: space[2] }}>
+        <CodeBlock code={connect.command} />
+      </div>
+    );
+  }
+  if (connect.kind === 'link') {
+    return (
+      <Button size="small" variant="secondary" onClick={() => window.open(connect.url, '_blank')}>
+        {connect.label}
+      </Button>
+    );
+  }
+  return (
+    <p style={{ opacity: 0.65, fontSize: fontSize.sm, margin: `${space[2]} 0 0` }}>
+      {connect.message}
+    </p>
+  );
+};
+
+const ConnectionRow = ({
+  connection,
   isLast,
   onRecheck,
   rechecking,
+  onConnect,
+  connecting,
 }: {
-  result: CapabilityResult;
+  connection: ConnectionResult;
   isLast: boolean;
   onRecheck: (id: string) => void;
   rechecking: boolean;
+  onConnect: (id: string) => void;
+  connecting: boolean;
 }) => {
-  const meta = capabilityMeta(result.id);
-  const stamp = STATUS_STAMP[result.status];
-  const fix = result.status !== 'ok' ? meta.fix(result.detail) : null;
+  const stamp = STATUS_STAMP[connection.status];
   return (
     <>
       <div style={{ paddingBottom: space[3], paddingTop: space[3] }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
-          <span style={{ flex: 1, fontWeight: 500 }}>{meta.label}</span>
+          <span style={{ flex: 1, fontWeight: 500 }}>{connection.label}</span>
+          {connection.authenticated === false && (
+            <Tooltip content="Installed, but not signed in">
+              <Stamp size="small" variant="warning">
+                Not signed in
+              </Stamp>
+            </Tooltip>
+          )}
           <Stamp size="small" fillColor={stamp.fill} textColor={stamp.text}>
             {stamp.label}
           </Stamp>
           <Button
             size="small"
             variant="secondary"
-            onClick={() => onRecheck(result.id)}
+            onClick={() => onRecheck(connection.id)}
             disabled={rechecking}
           >
             {rechecking ? 'Checking…' : 'Recheck'}
           </Button>
         </div>
         <p style={{ opacity: 0.65, fontSize: fontSize.sm, margin: `${space[1]} 0 0` }}>
-          Unlocks: {meta.unlocks}
+          Unlocks: {connection.unlocks}
         </p>
         <p style={{ opacity: 0.5, fontSize: fontSize.sm, margin: `${space[1]} 0 0` }}>
-          {result.detail}
+          {connection.detail}
         </p>
-        {fix && (
-          <code
-            style={{
-              display: 'block',
-              marginTop: space[2],
-              padding: space[2],
-              background: 'rgba(0,0,0,0.06)',
-              borderRadius: 4,
-              fontSize: fontSize.sm,
-            }}
-          >
-            {fix}
-          </code>
-        )}
+        <div style={{ marginTop: space[2] }}>
+          <ConnectActionView
+            connection={connection}
+            onConnect={onConnect}
+            connecting={connecting}
+          />
+        </div>
       </div>
       {!isLast && <Divider />}
     </>
@@ -110,30 +123,42 @@ const CapabilityRow = ({
 };
 
 export const SetupSection = () => {
-  const [capabilities, setCapabilities] = useState<CapabilityResult[] | null>(null);
+  const [connections, setConnections] = useState<ConnectionResult[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [reloadingId, setReloadingId] = useState<string | null>(null);
+  const [connectingId, setConnectingId] = useState<string | null>(null);
   const [setupDismissed, setSetupDismissed] = useState(false);
   const { toast } = useToast();
 
-  const applyCapabilities = useCallback((result: CapabilityResult[] | null) => {
+  const applyConnections = useCallback((result: ConnectionResult[] | null) => {
     if (result === null) {
       setLoadFailed(true);
       return;
     }
     setLoadFailed(false);
-    setCapabilities(result);
+    setConnections(result);
   }, []);
 
   useEffect(() => {
-    fetchCapabilities().then(applyCapabilities);
+    fetchConnections().then(applyConnections);
     fetchConfig().then((c) => setSetupDismissed(c?.setupDismissed ?? false));
-  }, [applyCapabilities]);
+  }, [applyConnections]);
 
   const handleRecheck = async (id: string) => {
     setReloadingId(id);
-    applyCapabilities(await fetchCapabilities());
+    applyConnections(await fetchConnections());
     setReloadingId(null);
+  };
+
+  const handleConnect = async (id: string) => {
+    setConnectingId(id);
+    const updated = await connectService(id);
+    if (updated) {
+      setConnections((prev) => prev?.map((c) => (c.id === id ? updated : c)) ?? prev);
+    } else {
+      toast({ title: 'Failed to connect', variant: 'error' });
+    }
+    setConnectingId(null);
   };
 
   const handleDismissToggle = async () => {
@@ -147,37 +172,39 @@ export const SetupSection = () => {
     }
   };
 
-  const allOk = capabilities?.every((c) => c.status === 'ok') ?? true;
+  const allOk = connections?.every((c) => c.status === 'ok') ?? true;
 
   return (
     <div>
       <div style={{ marginBottom: space[6] }}>
         <h2 style={{ margin: 0 }}>Setup</h2>
       </div>
-      {capabilities === null && !loadFailed && <p>Loading…</p>}
+      {connections === null && !loadFailed && <p>Loading…</p>}
       {loadFailed && (
         <div style={{ marginBottom: space[4] }}>
-          <Alert variant="warning">Failed to load capabilities. Try refreshing.</Alert>
+          <Alert variant="warning">Failed to load connections. Try refreshing.</Alert>
         </div>
       )}
-      {capabilities && (
+      {connections && (
         <>
           {!allOk && (
             <div style={{ marginBottom: space[4] }}>
               <Alert variant="warning">
-                Some capabilities are incomplete — features that depend on them stay disabled until
-                fixed. Run the fix command in your terminal, then recheck.
+                Some connections are incomplete — features that depend on them stay disabled until
+                fixed. Run the connect command below, then recheck.
               </Alert>
             </div>
           )}
           <Card size="small">
-            {capabilities.map((c, idx) => (
-              <CapabilityRow
+            {connections.map((c, idx) => (
+              <ConnectionRow
                 key={c.id}
-                result={c}
-                isLast={idx === capabilities.length - 1}
+                connection={c}
+                isLast={idx === connections.length - 1}
                 onRecheck={handleRecheck}
                 rechecking={reloadingId === c.id}
+                onConnect={handleConnect}
+                connecting={connectingId === c.id}
               />
             ))}
           </Card>

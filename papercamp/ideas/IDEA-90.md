@@ -27,6 +27,6 @@ Turn capabilities into a proper Connections surface: one row per service — age
       Beyond installed/missing, each service reports authenticated vs signed-out, building on [[IDEA-86]]'s `claude auth status` probe and adding `gh auth status` and provider checks. Expose one route returning the full connection list.
 - [x] Add connect/sign-in actions per service on the server
       For each service, either run the sign-in flow or return the exact command to copy. Degrade gracefully when a CLI is absent.
-- [ ] Build the Connections surface in Settings
+- [x] Build the Connections surface in Settings
       Replace the Setup section's static naming with one row per service — live status, what it unlocks, and a connect button or copyable command. Reuse [[IDEA-86]]'s indicator pattern.
 - [ ] Type-check and full pass

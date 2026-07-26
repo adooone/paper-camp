@@ -430,6 +430,20 @@ describe('start (single phase)', () => {
     expect(await waitForStatus(manager, settled)).toBe('error');
     expect(currentStatus(manager)?.errorKind).toBeUndefined();
   });
+
+  it('does not tag auth when a transient login blip is followed by other output before failing', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `
+      process.stdout.write('Not logged in · Please run /login\\n');
+      for (let i = 0; i < 8; i++) process.stdout.write('working step ' + i + '\\n');
+      process.stderr.write('project checks failed\\n');
+      process.exit(1);`;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+  });
 });
 
 describe('task log', () => {
