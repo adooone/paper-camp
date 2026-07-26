@@ -329,6 +329,12 @@ export interface CapabilityResult {
   detail: string;
 }
 
+export interface AgentAuthStatus {
+  loggedIn: boolean | null;
+  authMethod: string | null;
+  apiProvider: string | null;
+}
+
 export interface MergePolicy {
   allowSquashMerge: boolean;
   allowMergeCommit: boolean;
@@ -405,6 +411,7 @@ export interface AgentTaskState {
   lines: string[];
   // fix-review only: prefills the commit form once the agent has reported.
   suggestedCommit?: { title: string; message: string };
+  errorKind?: 'auth';
 }
 
 export interface OverlapVerdict {

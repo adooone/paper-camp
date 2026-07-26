@@ -409,6 +409,27 @@ describe('start (single phase)', () => {
     const manager = createAgentManager(root);
     expect(manager.start(plan, 99)).toEqual({ ok: false, error: 'Phase not found' });
   });
+
+  it('tags a lapsed CLI login as an auth error instead of a generic one', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `process.stderr.write('Not logged in · Please run /login\\n'); process.exit(1);`;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBe('auth');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('Not logged in · Please run /login');
+  });
+
+  it('leaves errorKind unset for a generic agent failure', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(1)';
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+  });
 });
 
 describe('task log', () => {
@@ -445,8 +466,21 @@ describe('task log', () => {
     manager.start(plan, 0);
     expect(await waitForStatus(manager, settled)).toBe('error');
 
-    const raw = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8');
-    const entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
+    // The write is fire-and-forget off setStatus(), so it can land slightly after
+    // getStatus() already reports 'error' — poll instead of reading once.
+    const logPath = join(root, 'papercamp', 'tasks.log');
+    const start = Date.now();
+    let entry: { outcome?: string } = {};
+    while (Date.now() - start < 2000) {
+      try {
+        const raw = await readFile(logPath, 'utf-8');
+        entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
+        if (entry.outcome) break;
+      } catch {
+        // Ignore ENOENT while waiting for the fire-and-forget write
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
     expect(entry.outcome).toBe('error');
   });
 
