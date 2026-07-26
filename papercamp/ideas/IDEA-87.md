@@ -2,7 +2,7 @@
 id: IDEA-87
 title: Margin notes on plans and phases
 type: feat
-status: idea
+status: review
 created: 2026-07-25
 updated: 2026-07-26
 tags:
@@ -33,5 +33,5 @@ Shares one primitive with [[IDEA-89]] — anchored human prose in, agent-applied
       Collect the entity's open notes, compose a rework prompt quoting each note against its anchor, and launch through the existing `launchPlanRework` / `launch-rework` reconcile-preview path (`app-store.ts`) so the agent's rewrite lands in the same before/after approve/discard gate.
 - [x] Resolve applied notes on approve
       When a rework preview is approved, flip the notes it addressed to `resolved` so they drop out of the queue; discarding the preview leaves them open, keeping notes a work queue rather than a log.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       Run `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
