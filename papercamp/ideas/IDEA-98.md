@@ -58,7 +58,7 @@ is silently discarded.
       Resolve the open questions: ids alone vs id + title (lean id + title for a
       readable diff, accepting the title is a refreshed copy), where the file lives
       and what it is called, and confirm it is intent — never generated output.
-- [ ] Add a run-order file module in `src/core`
+- [x] Add a run-order file module in `src/core`
       Parse and serialize the ordered list (one entity per line, first line runs
       first), sitting alongside `run-order.ts` as the single source of the sequence.
 - [ ] Reconcile the list against the live corpus in `normalizeRunOrder`
