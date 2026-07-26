@@ -7,43 +7,41 @@ import { campFile, readMaybe, taskLogFile } from './helpers';
 const RETENTION_DAYS = 3;
 const RETENTION_MS = RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
-// Serialized: rewriting tasks.log is read-modify-write; concurrent completions would drop each other.
-let pruneChain: Promise<unknown> = Promise.resolve();
+// Serialized: rewriting tasks.log is read-modify-write; concurrent completions would drop each
+// other. Also covers each completion's own output-write + row-append, so a prune can never see
+// a tasks.log row without its output file (or vice versa) from a completion still in flight.
+let taskChain: Promise<unknown> = Promise.resolve();
 
 // Drops runs past the retention window — rows and their output files, so no row outlives
 // its log. Best-effort: a failed prune never fails a task.
-function pruneExpiredTasks(root: string): Promise<void> {
-  const run = pruneChain.then(async () => {
-    const path = campFile(root, 'tasks.log');
-    const raw = await readMaybe(path);
-    if (!raw) return;
-    const entries = parseTaskLog(raw);
-    const cutoff = Date.now() - RETENTION_MS;
-    const kept = entries.filter((e) => {
-      const ended = Date.parse(e.endedAt);
-      return Number.isNaN(ended) || ended >= cutoff;
-    });
-    if (kept.length === entries.length) return;
-
-    await writeFile(path, kept.map((e) => `${JSON.stringify(e)}\n`).join(''), 'utf-8');
-
-    // Sweep by what survived, so files orphaned by an earlier prune are collected too.
-    const keptIds = new Set(kept.map((e) => e.id));
-    const dir = dirname(taskLogFile(root, 'x'));
-    let files: string[];
-    try {
-      files = await readdir(dir);
-    } catch {
-      return;
-    }
-    await Promise.all(
-      files
-        .filter((f) => f.endsWith('.log') && !keptIds.has(f.slice(0, -4)))
-        .map((f) => rm(join(dir, f), { force: true }).catch(() => {})),
-    );
+async function pruneExpiredTasks(root: string): Promise<void> {
+  const path = campFile(root, 'tasks.log');
+  const raw = await readMaybe(path);
+  if (!raw) return;
+  const entries = parseTaskLog(raw);
+  const cutoff = Date.now() - RETENTION_MS;
+  const kept = entries.filter((e) => {
+    const ended = Date.parse(e.endedAt);
+    return Number.isNaN(ended) || ended >= cutoff;
   });
-  pruneChain = run.catch(() => undefined);
-  return run;
+  if (kept.length === entries.length) return;
+
+  await writeFile(path, kept.map((e) => `${JSON.stringify(e)}\n`).join(''), 'utf-8');
+
+  // Sweep by what survived, so files orphaned by an earlier prune are collected too.
+  const keptIds = new Set(kept.map((e) => e.id));
+  const dir = dirname(taskLogFile(root, 'x'));
+  let files: string[];
+  try {
+    files = await readdir(dir);
+  } catch {
+    return;
+  }
+  await Promise.all(
+    files
+      .filter((f) => f.endsWith('.log') && !keptIds.has(f.slice(0, -4)))
+      .map((f) => rm(join(dir, f), { force: true }).catch(() => {})),
+  );
 }
 
 interface CompletedTask {
@@ -57,36 +55,40 @@ interface CompletedTask {
 }
 
 // Best-effort: a log write failure must never take down the task it's recording.
-export async function logTaskCompletion(
+export function logTaskCompletion(
   root: string,
   task: CompletedTask,
   outcome: 'done' | 'error',
 ): Promise<void> {
-  const entry: TaskLogEntry = {
-    id: task.id,
-    taskKind: task.taskKind,
-    planId: task.planId,
-    planTitle: task.planTitle,
-    agentId: task.agentId,
-    startedAt: task.startedAt,
-    endedAt: new Date().toISOString(),
-    outcome,
-  };
-  // Output file before the row: a visible row with no output file reads as "No output recorded".
-  const file = taskLogFile(root, task.id);
-  try {
-    await mkdir(dirname(file), { recursive: true });
-    await writeFile(file, task.lines.join('\n'), 'utf-8');
-  } catch (err) {
-    console.error(`papercamp: could not write task output for ${task.id}:`, err);
-    return;
-  }
-  await appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(
-    (err) => {
-      console.error(`papercamp: could not append task ${task.id} to tasks.log:`, err);
-    },
-  );
-  await pruneExpiredTasks(root).catch((err) => {
-    console.error('papercamp: could not prune expired task logs:', err);
+  const run = taskChain.then(async () => {
+    const entry: TaskLogEntry = {
+      id: task.id,
+      taskKind: task.taskKind,
+      planId: task.planId,
+      planTitle: task.planTitle,
+      agentId: task.agentId,
+      startedAt: task.startedAt,
+      endedAt: new Date().toISOString(),
+      outcome,
+    };
+    // Output file before the row: a visible row with no output file reads as "No output recorded".
+    const file = taskLogFile(root, task.id);
+    try {
+      await mkdir(dirname(file), { recursive: true });
+      await writeFile(file, task.lines.join('\n'), 'utf-8');
+    } catch (err) {
+      console.error(`papercamp: could not write task output for ${task.id}:`, err);
+      return;
+    }
+    await appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(
+      (err) => {
+        console.error(`papercamp: could not append task ${task.id} to tasks.log:`, err);
+      },
+    );
+    await pruneExpiredTasks(root).catch((err) => {
+      console.error('papercamp: could not prune expired task logs:', err);
+    });
   });
+  taskChain = run.catch(() => undefined);
+  return run;
 }

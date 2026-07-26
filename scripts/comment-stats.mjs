@@ -40,7 +40,7 @@ for (const file of files) {
   if (comments > 0) perFile.push([file, comments]);
 }
 
-const ratio = (totalComments / totalLines) * 100;
+const ratio = totalLines === 0 ? 0 : (totalComments / totalLines) * 100;
 
 if (asJson) {
   perFile.sort((a, b) => b[1] - a[1]);

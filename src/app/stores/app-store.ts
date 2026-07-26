@@ -377,6 +377,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         get().loadConsistency(),
         get().loadGitStatus(),
         get().loadAgentStatus(),
+        get().loadAgentAuthStatus(),
       ]);
       // plansError is the one loader that surfaces failure; the rest swallow theirs.
       const error = get().plansError;

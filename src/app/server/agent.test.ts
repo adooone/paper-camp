@@ -466,8 +466,21 @@ describe('task log', () => {
     manager.start(plan, 0);
     expect(await waitForStatus(manager, settled)).toBe('error');
 
-    const raw = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8');
-    const entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
+    // The write is fire-and-forget off setStatus(), so it can land slightly after
+    // getStatus() already reports 'error' — poll instead of reading once.
+    const logPath = join(root, 'papercamp', 'tasks.log');
+    const start = Date.now();
+    let entry: { outcome?: string } = {};
+    while (Date.now() - start < 2000) {
+      try {
+        const raw = await readFile(logPath, 'utf-8');
+        entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
+        if (entry.outcome) break;
+      } catch {
+        // Ignore ENOENT while waiting for the fire-and-forget write
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
     expect(entry.outcome).toBe('error');
   });
 

@@ -108,70 +108,68 @@ const AgentTaskCard = ({
   };
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: the Stop IconButton nests inside, and a native <button> can't contain another button.
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={openTaskPage}
-      onKeyDown={(e) => {
-        if (e.target !== e.currentTarget) return;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          openTaskPage();
-        }
-      }}
-      style={{ cursor: 'pointer', borderRadius: 10 }}
-    >
-      <Card surface="chalkboard" size="small" className="stack-task-card">
-        <div
+    <Card surface="chalkboard" size="small" className="stack-task-card">
+      {/* biome-ignore lint/a11y/useSemanticElements: the Stop IconButton nests inside, and a native <button> can't contain another button. */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={openTaskPage}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openTaskPage();
+          }
+        }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: space[2],
+          cursor: 'pointer',
+          borderRadius: 10,
+        }}
+      >
+        <span
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: space[2],
+            fontFamily: fontFamily.serif,
+            fontWeight: 600,
+            fontSize: fontSize.sm,
+            color: deskChalk,
+            minWidth: 0, // lets this flex item shrink below content width so overflow/ellipsis can trigger
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
-          <span
-            style={{
-              fontFamily: fontFamily.serif,
-              fontWeight: 600,
-              fontSize: fontSize.sm,
-              color: deskChalk,
-              minWidth: 0, // lets this flex item shrink below content width so overflow/ellipsis can trigger
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
+          {task.planTitle}
+          {taskSubtitle(task)} · {AGENT_LABELS[task.agentId]}
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+          <Stamp
+            surface="chalkboard"
+            size="small"
+            fillColor={statusFill[task.status]}
+            textColor={statusText[task.status]}
           >
-            {task.planTitle}
-            {taskSubtitle(task)} · {AGENT_LABELS[task.agentId]}
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-            <Stamp
-              surface="chalkboard"
+            {task.status === 'error' && task.errorKind === 'auth' ? 'not signed in' : task.status}
+          </Stamp>
+          {(task.status === 'running' ||
+            task.status === 'starting' ||
+            task.status === 'stopping') && (
+            <IconButton
+              icon={<CloseIcon />}
+              variant="ghost"
               size="small"
-              fillColor={statusFill[task.status]}
-              textColor={statusText[task.status]}
-            >
-              {task.status === 'error' && task.errorKind === 'auth' ? 'not signed in' : task.status}
-            </Stamp>
-            {(task.status === 'running' ||
-              task.status === 'starting' ||
-              task.status === 'stopping') && (
-              <IconButton
-                icon={<CloseIcon />}
-                variant="ghost"
-                size="small"
-                label="Stop agent"
-                onClick={handleStop}
-                disabled={task.status === 'stopping'}
-              />
-            )}
-          </div>
+              label="Stop agent"
+              onClick={handleStop}
+              disabled={task.status === 'stopping'}
+            />
+          )}
         </div>
-        {task.status === 'error' && task.errorKind === 'auth' && <AuthErrorFix />}
-      </Card>
-    </div>
+      </div>
+      {task.status === 'error' && task.errorKind === 'auth' && <AuthErrorFix />}
+    </Card>
   );
 };
 

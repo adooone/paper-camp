@@ -101,7 +101,7 @@ ${details}Plan context: ${plan.body}
 
 Do only this phase — do not start any other phase, even if it looks quick.
 
-Comments: do NOT add any comments to the code — none. The code is the documentation. Every explanation, rationale, or "why" goes in your progress.md bullet and the commit message, never in the source. This is a hard rule. (Do not touch existing comments in code you are not otherwise changing.)
+Comments: do NOT add any comments to the code — none. The code is the documentation. Every explanation, rationale, or "why" goes in your progress.md bullet and the commit message, never in the source. This is a hard rule, with one exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap. (Do not touch existing comments in code you are not otherwise changing.)
 
 Execution environment: you are a headless automated agent running in a terminal. There is no browser, display, or GUI available to you. Verify your work only with terminal commands — type-check, lint, and tests (e.g. \`pnpm run check-types\`, \`pnpm run lint\`, \`pnpm test\`). Never attempt visual or browser-based verification: do not open the app in a browser, navigate to a dev-server URL or address, take screenshots, or run any GUI/visual check — even if this phase or the plan text describes one (e.g. "check in Chrome", a \`host:port\` address, "visual pass"). If a phase's only verification is visual, make the code change, then note in your progress.md bullet that visual confirmation is left to a human, and do not block on it.
 
@@ -610,8 +610,10 @@ export function createAgentManager(
               }
             });
           }
-          // Drain stderr — an unread pipe can fill and hang the subprocess.
-          proc.stderr?.on('data', () => {});
+          let stderr = '';
+          proc.stderr?.on('data', (d: Buffer) => {
+            stderr += d.toString();
+          });
 
           const { ok: success, timedOut } = await runProcessWithTimeout(proc, PHASE_TIMEOUT_MS);
 
@@ -646,6 +648,7 @@ export function createAgentManager(
             );
           } else {
             failed++;
+            if (stderr.trim()) pushLine(task, stderr.trim());
             pushLine(task, `[fail] ${plan.id} — agent error`);
           }
         }
@@ -730,7 +733,10 @@ export function createAgentManager(
               }
             });
           }
-          proc.stderr?.on('data', () => {});
+          let stderr = '';
+          proc.stderr?.on('data', (d: Buffer) => {
+            stderr += d.toString();
+          });
 
           const { ok: exitedOk, timedOut } = await runProcessWithTimeout(proc, PHASE_TIMEOUT_MS);
 
@@ -747,6 +753,7 @@ export function createAgentManager(
 
           if (!exitedOk) {
             failed++;
+            if (stderr.trim()) pushLine(task, stderr.trim());
             pushLine(task, `[fail] phase ${i + 1} — agent error, stopping`);
             break;
           }
