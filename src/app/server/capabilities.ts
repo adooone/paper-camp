@@ -1,100 +1,53 @@
-import { spawn } from 'node:child_process';
-import type { AgentAuthStatus, AgentId, CapabilityResult } from '../../types';
-import { AGENTS } from './agents';
-
-interface ProbeResult {
-  code: number | null;
-  stdout: string;
-  stderr: string;
-}
-
-function run(command: string, args: string[], cwd: string): Promise<ProbeResult> {
-  return new Promise((resolve) => {
-    const proc = spawn(command, args, {
-      cwd,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      timeout: 5000,
-      killSignal: 'SIGTERM',
-    });
-    let stdout = '';
-    let stderr = '';
-    proc.stdout?.on('data', (d: Buffer) => {
-      stdout += d.toString();
-    });
-    proc.stderr?.on('data', (d: Buffer) => {
-      stderr += d.toString();
-    });
-    proc.on('close', (code) => resolve({ code, stdout, stderr }));
-    // Missing binary: spawn emits 'error' instead of 'close'.
-    proc.on('error', () => resolve({ code: null, stdout: '', stderr: '' }));
-  });
-}
-
-async function probeGit(root: string): Promise<CapabilityResult> {
-  const repo = await run('git', ['rev-parse', '--is-inside-work-tree'], root);
-  if (repo.code !== 0) {
-    return { id: 'git', status: 'missing', detail: 'Not inside a git repository' };
-  }
-  const [name, email] = await Promise.all([
-    run('git', ['config', 'user.name'], root),
-    run('git', ['config', 'user.email'], root),
-  ]);
-  if (!name.stdout.trim() || !email.stdout.trim()) {
-    return {
-      id: 'git',
-      status: 'warn',
-      detail: 'Repository found, but user.name/user.email is not set',
-    };
-  }
-  return { id: 'git', status: 'ok', detail: `${name.stdout.trim()} <${email.stdout.trim()}>` };
-}
-
-async function probeGh(root: string): Promise<CapabilityResult> {
-  const version = await run('gh', ['--version'], root);
-  if (version.code !== 0) {
-    return { id: 'gh', status: 'missing', detail: 'gh CLI not found on PATH' };
-  }
-  const auth = await run('gh', ['auth', 'status'], root);
-  if (auth.code !== 0) {
-    return { id: 'gh', status: 'warn', detail: 'gh is installed but not authenticated' };
-  }
-  const origin = await run('git', ['remote', 'get-url', 'origin'], root);
-  if (origin.code !== 0) {
-    return {
-      id: 'gh',
-      status: 'warn',
-      detail: 'Authenticated, but repository has no origin remote',
-    };
-  }
-  const repoView = await run('gh', ['repo', 'view', '--json', 'nameWithOwner'], root);
-  if (repoView.code !== 0) {
-    return {
-      id: 'gh',
-      status: 'warn',
-      detail: 'Authenticated, but origin is not reachable on GitHub',
-    };
-  }
-  return { id: 'gh', status: 'ok', detail: origin.stdout.trim() };
-}
-
-async function probeAgent(id: AgentId, root: string): Promise<CapabilityResult> {
-  const { command } = AGENTS[id];
-  const result = await run(command, ['--version'], root);
-  if (result.code !== 0) {
-    return { id: `agent:${id}`, status: 'missing', detail: `${command} not found on PATH` };
-  }
-  const version = (result.stdout || result.stderr).trim().split('\n')[0];
-  return { id: `agent:${id}`, status: 'ok', detail: version || command };
-}
+import type { AgentAuthStatus, AgentId, CapabilityResult, ConnectionResult } from '../../types';
+import { SERVICES, type ServiceDefinition, claudeAuthStatus, run } from './services';
 
 export async function probeCapabilities(root: string): Promise<CapabilityResult[]> {
-  const agentIds = Object.keys(AGENTS) as AgentId[];
-  const [git, gh, ...agents] = await Promise.all([
-    probeGit(root),
-    probeGh(root),
-    ...agentIds.map((id) => probeAgent(id, root)),
+  return Promise.all(SERVICES.map((service) => service.probe(root)));
+}
+
+async function toConnectionResult(
+  service: ServiceDefinition,
+  root: string,
+  precomputed?: CapabilityResult,
+): Promise<ConnectionResult> {
+  const [result, authenticated] = await Promise.all([
+    precomputed ?? service.probe(root),
+    service.authenticated(root),
   ]);
-  return [git, gh, ...agents];
+  return {
+    id: service.id as ConnectionResult['id'],
+    label: service.label,
+    unlocks: service.unlocks,
+    status: result.status,
+    detail: result.detail,
+    authenticated,
+    connect: service.connect(result),
+  };
+}
+
+export async function probeConnections(root: string): Promise<ConnectionResult[]> {
+  return Promise.all(SERVICES.map((service) => toConnectionResult(service, root)));
+}
+
+/** Runs a service's connect action when it's safe to run non-interactively, then
+ *  re-probes; a non-runnable action (interactive login, a command with placeholders,
+ *  a link, or plain text) is left for the caller to display instead. */
+export async function runConnect(id: string, root: string): Promise<ConnectionResult | null> {
+  const service = SERVICES.find((s) => s.id === id);
+  if (!service) return null;
+  const before = await service.probe(root);
+  const action = service.connect(before);
+  if (action?.kind !== 'command' || !action.runnable) {
+    return toConnectionResult(service, root, before);
+  }
+  // `runnable` commands are checked at their definition site to be argv-safe literals
+  // (no placeholders, no shell operators), so splitting on spaces is sufficient here.
+  const [command, ...args] = action.command.split(' ');
+  const outcome = await run(command, args, root);
+  const after = await toConnectionResult(service, root);
+  return outcome.code === 0
+    ? after
+    : { ...after, detail: `${action.command} failed: ${outcome.stderr.trim() || after.detail}` };
 }
 
 const UNKNOWN_AUTH_STATUS: AgentAuthStatus = {
@@ -107,16 +60,6 @@ const UNKNOWN_AUTH_STATUS: AgentAuthStatus = {
 // report unknown rather than being probed with a command they don't have.
 export async function probeAgentAuthStatus(id: AgentId, root: string): Promise<AgentAuthStatus> {
   if (id !== 'claude-code') return UNKNOWN_AUTH_STATUS;
-  const result = await run('claude', ['auth', 'status'], root);
-  if (result.code !== 0) return UNKNOWN_AUTH_STATUS;
-  try {
-    const parsed = JSON.parse(result.stdout) as Partial<AgentAuthStatus>;
-    return {
-      loggedIn: typeof parsed.loggedIn === 'boolean' ? parsed.loggedIn : null,
-      authMethod: typeof parsed.authMethod === 'string' ? parsed.authMethod : null,
-      apiProvider: typeof parsed.apiProvider === 'string' ? parsed.apiProvider : null,
-    };
-  } catch {
-    return UNKNOWN_AUTH_STATUS;
-  }
+  const status = await claudeAuthStatus(root);
+  return status ?? UNKNOWN_AUTH_STATUS;
 }

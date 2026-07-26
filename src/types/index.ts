@@ -335,6 +335,25 @@ export interface AgentAuthStatus {
   apiProvider: string | null;
 }
 
+export type ServiceId = 'git' | 'gh' | `agent:${AgentId}`;
+
+/** What a Connections row offers once its service isn't `ok` — copy a command, follow a link, or read plain instructions. */
+export type ConnectAction =
+  /** `runnable` marks a command with no placeholders and no interactive prompts — safe for the server to execute directly instead of just displaying it. */
+  | { kind: 'command'; command: string; runnable?: boolean }
+  | { kind: 'link'; url: string; label: string }
+  | { kind: 'text'; message: string };
+
+export interface ConnectionResult {
+  id: ServiceId;
+  label: string;
+  unlocks: string;
+  status: CapabilityStatus;
+  detail: string;
+  authenticated: boolean | null;
+  connect: ConnectAction | null;
+}
+
 export interface MergePolicy {
   allowSquashMerge: boolean;
   allowMergeCommit: boolean;

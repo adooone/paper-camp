@@ -201,19 +201,24 @@ export const WorklistRows = ({
                 style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
               >
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
-                  <div style={subjectHeaderStyle}>{subject ?? 'No subject'}</div>
-                  {subject && roadmapItemNames.has(subject) && (
+                  {subject && roadmapItemNames.has(subject) ? (
                     <button
                       type="button"
+                      className="subject-header-link"
+                      title="View in roadmap"
                       onClick={() => navigate({ to: '/roadmap', search: { item: subject } })}
                       style={{
-                        ...headerButtonStyle,
-                        opacity: 0.5,
-                        textDecoration: 'underline',
+                        ...subjectHeaderStyle,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        textAlign: 'left',
                       }}
                     >
-                      Map
+                      {subject}
                     </button>
+                  ) : (
+                    <div style={subjectHeaderStyle}>{subject ?? 'No subject'}</div>
                   )}
                 </div>
                 {group.rows.map((row) => renderRow(row))}
