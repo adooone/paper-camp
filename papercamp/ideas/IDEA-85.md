@@ -11,7 +11,6 @@ tags:
   - github
   - git
 subject: Packaging
-order: 1
 ---
 
 [[IDEA-83]] gave us one release line per idea, but the mechanism that actually

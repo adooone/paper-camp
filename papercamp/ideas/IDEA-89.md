@@ -9,7 +9,7 @@ tags:
   - plans
   - app
 subject: Richer review loop
-order: 5
+order: 4
 ---
 
 There is no way to give feedback on a completed plan from inside the app. The one affordance is "Add /code-review findings" (`src/app/features/plans/actions/add-review-phases-button.tsx`), which requires pasting JSON for `parseReviewFindings` to consume — a machine format demanded at a human moment. In practice the review gets written in a chat session and never reaches the corpus at all.

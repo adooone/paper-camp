@@ -10,7 +10,7 @@ tags:
   - core
   - app
 subject: Insight from the task log
-order: 12
+order: 11
 ---
 
 The chain from intent to shipped already exists in pieces but is not navigable: roadmap item → idea → phases → tasks → commits → PR → release line. [[IDEA-83]] built the last hop, so a release line now carries its idea id; `pr-lookup` resolves PRs by entity; `tasks.log` records every run against its plan id. Nothing joins them up, so "what was actually done, and where did it come from" is a question you answer by hand.

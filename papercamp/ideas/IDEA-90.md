@@ -11,7 +11,7 @@ tags:
   - github
   - agent
 subject: Packaging
-order: 3
+order: 2
 ---
 
 `src/app/server/capabilities.ts` already probes git, `gh`, and the agent binaries into ok/warn/missing, and Settings' Setup section already names what each one unlocks. What's missing is an action layer: a probe can tell you `gh` is installed but not authenticated, and then the app can do nothing about it. Services beyond git/gh/claude have no representation at all.

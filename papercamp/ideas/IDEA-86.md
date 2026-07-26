@@ -10,7 +10,7 @@ tags:
   - server
   - ui
 subject: Packaging
-order: 2
+order: 1
 ---
 
 When the headless `claude` CLI the agent uses isn't authenticated, every agent task (draft, extend, run-all, fix-review, ...) fails with a generic "error" — the real cause (`Not logged in · Please run /login`) is buried in the task output. The app should make agent auth state legible and recoverable instead of silently cryptic.

@@ -11,7 +11,7 @@ tags:
   - core
   - roadmap
 subject: Planning surface
-order: 8
+order: 7
 ---
 
 The roadmap reads as a static document rather than something you can see movement in, and it has two structural problems.

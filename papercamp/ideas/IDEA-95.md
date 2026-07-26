@@ -11,7 +11,7 @@ tags:
   - plans
   - app
 subject: Planning surface
-order: 9
+order: 8
 ---
 
 `subject` and `tags` currently answer overlapping questions. Tags are subsystem areas — `app` (63 uses), `plans` (28), `ui` (26), `core`, `git` — the same vocabulary the commit scopes use, so a tag says *where in the code* work lands. But the configured subjects (`Frontend`, `App UI`, `Code health`, `Workflow`, `Mobile control desk`) are mostly just coarser versions of the same thing: `Frontend`/`App UI` restate the `ui`/`app` tags, `Code health` restates `refactor`. Two fields, one axis, and the finer one is already better maintained.

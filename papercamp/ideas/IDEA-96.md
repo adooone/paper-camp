@@ -10,7 +10,7 @@ tags:
   - plans
   - core
 subject: Planning surface
-order: 10
+order: 9
 ---
 
 `papercamp/open-questions.md` holds 124 lines of unresolved questions that nothing in the app shows. The backend is already complete and orphaned: `GET /api/open-questions` parses them, and `POST /api/open-questions/resolve` takes `{decision, rationale}` — it already resolves a question *into* a decision. There is simply no UI calling any of it.
