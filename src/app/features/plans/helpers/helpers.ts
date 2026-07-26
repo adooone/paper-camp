@@ -50,6 +50,9 @@ export const notesForAnchor = (
         : note.anchor.kind === 'body'),
   );
 
+export const openMarginNotes = (notes: MarginNote[] | undefined): MarginNote[] =>
+  (notes ?? []).filter((note) => note.state === 'open');
+
 export const findFocusPlan = (
   plans: PlanEntry[] | undefined,
   activePlanTitle?: string | null,

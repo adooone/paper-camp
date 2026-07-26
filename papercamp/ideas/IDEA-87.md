@@ -29,7 +29,7 @@ Shares one primitive with [[IDEA-89]] — anchored human prose in, agent-applied
       Extend the entity write path so adding, editing, and resolving a note saves via the existing PATCH route next to `body`/`phases`/`log`, and add the matching client wrapper in `plans-api.ts` / the app-store slice.
 - [x] Add the margin-note affordance in `entity-detail.tsx`
       Put an add-note control on every phase row and every body section, and render each anchor's open notes inline with a resolve action, so a reaction attaches to the specific phase or paragraph it is about rather than the flat entity-wide log.
-- [ ] Bundle open notes into a "Rework from my notes" action
+- [x] Bundle open notes into a "Rework from my notes" action
       Collect the entity's open notes, compose a rework prompt quoting each note against its anchor, and launch through the existing `launchPlanRework` / `launch-rework` reconcile-preview path (`app-store.ts`) so the agent's rewrite lands in the same before/after approve/discard gate.
 - [ ] Resolve applied notes on approve
       When a rework preview is approved, flip the notes it addressed to `resolved` so they drop out of the queue; discarding the preview leaves them open, keeping notes a work queue rather than a log.

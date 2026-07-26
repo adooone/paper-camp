@@ -26,7 +26,13 @@ import {
   useToast,
 } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { ApplyNotesButton, DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
+import {
+  ApplyNotesButton,
+  DraftPlanButton,
+  ExtendIdeaButton,
+  RefreshButton,
+  ReworkFromNotesButton,
+} from '../actions';
 import { ReconcileButton } from '../actions';
 import {
   AddReviewPhasesButton,
@@ -43,6 +49,7 @@ import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import {
   effectiveStatus,
   notesForAnchor,
+  openMarginNotes,
   phaseProgress,
   relativeDate,
   runningTaskForPlan,
@@ -395,6 +402,9 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               ? `updated ${relativeDate(plan.updated)}`
               : `created ${relativeDate(plan.created)}`}
           </span>
+          {openMarginNotes(plan.notes).length > 0 && (
+            <ReworkFromNotesButton plan={plan} disabled={updating} />
+          )}
           <RefreshButton />
         </div>
       </div>
