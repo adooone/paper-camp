@@ -204,7 +204,8 @@ export function createAgentManager(
     // among the last lines, whereas a transient blip earlier in a long multi-phase run
     // (that then recovered and failed the gate) must not mislabel the run as auth.
     if (status === 'error') {
-      task.errorKind = task.lines.slice(-5).some(isAuthError) ? 'auth' : undefined;
+      const terminalLines = task.lines.flatMap((entry) => entry.split(/\r?\n/)).slice(-5);
+      task.errorKind = terminalLines.some(isAuthError) ? 'auth' : undefined;
     }
     broadcast(`agent: ${status}`, task.id);
     if (status === 'done' || status === 'error') {

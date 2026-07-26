@@ -444,6 +444,23 @@ describe('start (single phase)', () => {
     expect(await waitForStatus(manager, settled)).toBe('error');
     expect(currentStatus(manager)?.errorKind).toBeUndefined();
   });
+
+  it('does not tag auth when the marker is buried in one buffered stderr write', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const stderrLines = [
+      'Not logged in · Please run /login',
+      ...Array.from({ length: 8 }, (_, i) => `working step ${i}`),
+      'project checks failed',
+    ];
+    agentScript.current = `
+      process.stderr.write(${JSON.stringify(stderrLines.join('\n'))} + '\\n');
+      process.exit(1);`;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+  });
 });
 
 describe('task log', () => {
@@ -466,8 +483,8 @@ describe('task log', () => {
         const raw = await readFile(logPath, 'utf-8');
         entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
         if (entry.outcome) break;
-      } catch {
-        // Ignore ENOENT while waiting for the fire-and-forget write
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
       }
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
@@ -504,8 +521,8 @@ describe('task log', () => {
         const raw = await readFile(logPath, 'utf-8');
         entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
         if (entry.outcome) break;
-      } catch {
-        // Ignore ENOENT while waiting for the fire-and-forget write
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
       }
       await new Promise((resolve) => setTimeout(resolve, 20));
     }

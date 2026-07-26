@@ -8,9 +8,10 @@ export async function probeCapabilities(root: string): Promise<CapabilityResult[
 async function toConnectionResult(
   service: ServiceDefinition,
   root: string,
+  precomputed?: CapabilityResult,
 ): Promise<ConnectionResult> {
   const [result, authenticated] = await Promise.all([
-    service.probe(root),
+    precomputed ?? service.probe(root),
     service.authenticated(root),
   ]);
   return {
@@ -36,10 +37,17 @@ export async function runConnect(id: string, root: string): Promise<ConnectionRe
   if (!service) return null;
   const before = await service.probe(root);
   const action = service.connect(before);
-  if (action?.kind === 'command' && action.runnable) {
-    await run('sh', ['-c', action.command], root);
+  if (action?.kind !== 'command' || !action.runnable) {
+    return toConnectionResult(service, root, before);
   }
-  return toConnectionResult(service, root);
+  // `runnable` commands are checked at their definition site to be argv-safe literals
+  // (no placeholders, no shell operators), so splitting on spaces is sufficient here.
+  const [command, ...args] = action.command.split(' ');
+  const outcome = await run(command, args, root);
+  const after = await toConnectionResult(service, root);
+  return outcome.code === 0
+    ? after
+    : { ...after, detail: `${action.command} failed: ${outcome.stderr.trim() || after.detail}` };
 }
 
 const UNKNOWN_AUTH_STATUS: AgentAuthStatus = {

@@ -51,7 +51,11 @@ const ConnectActionView = ({
   }
   if (connect.kind === 'link') {
     return (
-      <Button size="small" variant="secondary" onClick={() => window.open(connect.url, '_blank')}>
+      <Button
+        size="small"
+        variant="secondary"
+        onClick={() => window.open(connect.url, '_blank', 'noopener,noreferrer')}
+      >
         {connect.label}
       </Button>
     );
