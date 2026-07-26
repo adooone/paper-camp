@@ -2,7 +2,7 @@
 id: IDEA-98
 title: Track run order in one file
 type: refactor
-status: idea
+status: review
 created: 2026-07-26
 tags:
   - core
@@ -80,5 +80,5 @@ is silently discarded.
 - [x] Treat the file as precious in sync's disposable-changes check
       Ensure the deterministic sync ([[IDEA-94]], `dropDisposableLocalChanges` in
       `git.ts`) never silently discards the list the way it does `ideas/index.md`.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check .`, and `pnpm test` clean across the repo.
