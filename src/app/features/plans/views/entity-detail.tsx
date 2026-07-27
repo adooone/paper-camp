@@ -3,7 +3,7 @@ import { Markdown } from '@/app/components/markdown';
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { fontFamily, fontSize, space } from '@/app/styles/tokens';
+import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type {
   AgentTaskState,
@@ -286,6 +286,34 @@ const CommentsSection = ({
   );
 };
 
+const ReviewThread = ({ entries }: { entries: LogEntry[] }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[4] }}>
+    {entries.map((entry, i) => (
+      <div
+        key={`${entry.date}-${i}`}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: space[1] }}
+      >
+        <div
+          className="text-sm"
+          style={{
+            background: color.accentSlate,
+            color: '#fff',
+            borderRadius: space[2],
+            borderBottomRightRadius: space[1],
+            padding: `${space[2]} ${space[3]}`,
+            maxWidth: '85%',
+          }}
+        >
+          {entry.text}
+        </div>
+        <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
+          You · {entry.date}
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
 const PlanReviewSection = ({
   plan,
   review,
@@ -298,10 +326,15 @@ const PlanReviewSection = ({
   onAdd: (text: string) => Promise<boolean>;
 }) => {
   const [input, setInput] = useState('');
+  const { toast } = useToast();
+  const hasEntries = review !== undefined && review.length > 0;
 
   const handleAdd = async () => {
     if (!input.trim()) return;
-    if (await onAdd(input.trim())) setInput('');
+    if (await onAdd(input.trim())) {
+      setInput('');
+      toast({ title: 'Added to the review', variant: 'success' });
+    }
   };
 
   return (
@@ -317,8 +350,15 @@ const PlanReviewSection = ({
         <h3 style={{ ...sectionHeadingStyle, margin: 0, flex: 1 }}>Review</h3>
         <SplitReviewButton plan={plan} disabled={updating} />
       </div>
-      <Card size="small">
-        {review && review.length > 0 && <DatedEntryList entries={review} />}
+      <Card size="small" accent accentColor="slate">
+        {hasEntries ? (
+          <ReviewThread entries={review} />
+        ) : (
+          <p className="text-sm" style={{ margin: `0 0 ${space[3]}`, color: color.textSecondary }}>
+            Talk through what's wrong in your own words — then Split review turns each point into
+            rework phases here or a follow-up idea.
+          </p>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
           <Textarea
             value={input}
