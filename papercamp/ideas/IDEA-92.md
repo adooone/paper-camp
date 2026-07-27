@@ -25,7 +25,7 @@ This also settles where Horizon 4 goes. H1 is "ready for daily use", H2 "a deepe
 Depends on [[IDEA-91]]: without items surviving promotion there is no progress to visualise.
 
 ### Phases
-- [ ] Add Horizon 4 and move the tail items into it
+- [x] Add Horizon 4 and move the tail items into it
       Add a fourth horizon to `ROADMAP.md` (the format-and-ecosystem play) and move "Project genesis" and "The format as the product" out of their current horizon into it. Confirm `HORIZON_HEADING_RE` in `src/core/roadmap.ts` already parses `## Horizon 4 — …` so the new lane appears with no parser change.
 - [ ] Flip the horizon layout from columns to horizontal lanes
       Rework the roadmap view so each horizon renders as a full-width horizontal lane rather than a column, scaling to any horizon count and giving each item room for a title plus its per-item rollup (from [[IDEA-91]]), laid out along a left-to-right axis.

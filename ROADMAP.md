@@ -65,6 +65,12 @@ The loop works; make it smarter and more observable.
   A big bet: graduates as a Subject, starting with responsive-polish ideas.
   - PWA manifest + install to home screen
   - Push notifications for task/check events
+
+## Horizon 4 — Beyond Paper Camp
+
+The format-and-ecosystem play: Paper Camp's corpus outlives the app that
+authored it.
+
 - **Project genesis** — Paper Camp as the starting point for new
   applications: scan an existing repo you like, distill its stack and
   conventions (checks, CI, style docs, structure) into a reusable template,
