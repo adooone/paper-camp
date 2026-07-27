@@ -2,7 +2,13 @@ import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
 import { readEntities, readWorkEntries } from '@/core/readers';
-import { addRoadmapCandidate, addRoadmapItem, removeRoadmapItem } from '@/core/roadmap';
+import {
+  addRoadmapCandidate,
+  addRoadmapItem,
+  linkRoadmapItem,
+  parseRoadmap,
+  removeRoadmapItem,
+} from '@/core/roadmap';
 import {
   assignEntityId,
   ensureSubject,
@@ -104,9 +110,12 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
       },
     },
 
-    // Same mint-write-remove-regenerate shape as suggestions/promote, but the source
-    // line lives in ROADMAP.md and the removal match key is (horizon title, item name)
-    // rather than a suggestion's (date, title).
+    // Promotion links rather than deletes: the item always survives in ROADMAP.md so the
+    // roadmap stays a map to track rather than a queue to consume. A candidate promotion
+    // still consumes its own bullet — the candidate text was only ever a placeholder for
+    // the idea it's now become — but the parent item gains the link either way, so every
+    // minted entity is resolvable from its item for progress rollup regardless of which
+    // path minted it.
     {
       method: 'POST',
       path: '/api/roadmap/promote',
@@ -128,8 +137,12 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           sendJson(res, 404, { error: 'ROADMAP.md not found' });
           return;
         }
-        const updated = removeRoadmapItem(raw, horizonTitle, item.name, candidateName);
-        if (updated === raw) {
+        const horizon = parseRoadmap(raw).horizons.find((h) => h.title === horizonTitle);
+        const roadmapItem = horizon?.items.find((it) => it.name === item.name);
+        const matched =
+          roadmapItem &&
+          (candidateName === undefined || roadmapItem.candidates.includes(candidateName));
+        if (!matched) {
           sendJson(res, 404, { error: 'roadmap item or candidate not found' });
           return;
         }
@@ -156,6 +169,10 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
             : `${item.description}\n\nFrom the roadmap: ${horizonTitle}.`,
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
+        const withoutCandidate = candidateName
+          ? removeRoadmapItem(raw, horizonTitle, item.name, candidateName)
+          : raw;
+        const updated = linkRoadmapItem(withoutCandidate, horizonTitle, item.name, newId);
         await writeFile(roadmapPath, updated, 'utf-8');
         await regenerateIndexes(root);
         sendJson(res, 201, { ok: true, id: newId });
