@@ -23,7 +23,7 @@ Same primitive as [[IDEA-87]] (anchored prose in, structured change out), anchor
       A human-authored review input on `entity-detail.tsx`, shown for entities in `review`/`done`, sitting alongside (not replacing) the existing JSON-paste action.
 - [x] Launch a review agent that splits each point into rework or a follow-up idea
       A task kind (sibling of `fix-review`) that reads the written prose and, per point, proposes either rework phases appended to this plan or a new follow-up idea — proposing the split rather than guessing.
-- [ ] Render the proposed split for approval
+- [x] Render the proposed split for approval
       Reuse the reconcile before/after preview (`launchPlanRework`/`launchPlanReconcile` in `app-store.ts`) so the appended phases and any minted idea are approved or discarded, never applied blind.
 - [ ] Apply the approved split — append rework phases and mint follow-up ideas
       On approve, write phases through `PATCH /api/plans` and create the follow-up idea file(s), converging on the same application path as `fix-review`.

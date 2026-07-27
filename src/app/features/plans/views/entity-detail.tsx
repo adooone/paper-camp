@@ -32,6 +32,7 @@ import {
   ExtendIdeaButton,
   RefreshButton,
   ReworkFromNotesButton,
+  SplitReviewButton,
 } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
@@ -286,10 +287,12 @@ const CommentsSection = ({
 };
 
 const PlanReviewSection = ({
+  plan,
   review,
   updating,
   onAdd,
 }: {
+  plan: PlanEntry;
   review: LogEntry[] | undefined;
   updating: boolean;
   onAdd: (text: string) => Promise<boolean>;
@@ -303,7 +306,17 @@ const PlanReviewSection = ({
 
   return (
     <div style={{ marginBottom: space[8] }}>
-      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Review</h3>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: space[3],
+          margin: `0 0 ${space[3]}`,
+        }}
+      >
+        <h3 style={{ ...sectionHeadingStyle, margin: 0, flex: 1 }}>Review</h3>
+        <SplitReviewButton plan={plan} disabled={updating} />
+      </div>
       <Card size="small">
         {review && review.length > 0 && <DatedEntryList entries={review} />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
@@ -589,7 +602,12 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       )}
 
       {(plan.status === 'review' || plan.status === 'done') && (
-        <PlanReviewSection review={plan.review} updating={updating} onAdd={handleAddReview} />
+        <PlanReviewSection
+          plan={plan}
+          review={plan.review}
+          updating={updating}
+          onAdd={handleAddReview}
+        />
       )}
 
       <CommentsSection plan={plan} log={plan.log} updating={updating} onAdd={handleAddLogEntry} />
