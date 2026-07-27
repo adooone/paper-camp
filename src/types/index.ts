@@ -274,6 +274,7 @@ export interface RoadmapItem {
   name: string;
   description: string;
   candidates: string[];
+  linked: string[];
 }
 
 export interface RoadmapHorizon {
@@ -284,6 +285,32 @@ export interface RoadmapHorizon {
 export interface Roadmap {
   goal: string;
   horizons: RoadmapHorizon[];
+}
+
+export interface RoadmapLink {
+  id: string;
+  status: PlanStatus;
+}
+
+export interface RoadmapRollup {
+  total: number;
+  done: number;
+}
+
+export interface ResolvedRoadmapItem extends RoadmapItem {
+  links: RoadmapLink[];
+  rollup: RoadmapRollup;
+}
+
+export interface ResolvedRoadmapHorizon {
+  title: string;
+  items: ResolvedRoadmapItem[];
+  rollup: RoadmapRollup;
+}
+
+export interface ResolvedRoadmap {
+  goal: string;
+  horizons: ResolvedRoadmapHorizon[];
 }
 
 export interface EnvEntry {

@@ -1,3 +1,57 @@
+## Roadmap links a minted entity with a `→ IDEA-N` sub-bullet
+
+**Date:** 2026-07-27
+**Status:** decided
+
+**Context:** `IDEA-91` phase 1 needed a marker that `parseItems` in
+`src/core/roadmap.ts` can tell apart from a candidate sub-bullet. Both a
+candidate and a link live one level indented under an item's `- **name** —
+description` line, matching the same `  - ` prefix (`ITEM_CANDIDATE_RE`), so
+the two need a textual distinction, not just a structural one.
+
+**Decision:** a link sub-bullet is written as `  - → IDEA-N` — the arrow
+prefix before the entity id. A candidate bullet is free-form prose (e.g. `PWA
+manifest + install to home screen`) and never legitimately starts with `→ `,
+so a regex anchored on that prefix (checked before the general
+`ITEM_CANDIDATE_RE` match) unambiguously separates `linked` entries from
+`candidates` during parsing. `RoadmapItem.linked` holds the minted ids
+(`string[]`) in `src/types/index.ts`; the parsing/writing side (`parseItems`,
+`linkRoadmapItem`) is phase 2 of the same plan.
+
+**Rationale:** Reusing the existing `  - ` indentation keeps one item shape
+instead of inventing a second nesting level, and an arrow reads as "became"
+at a glance in a rendered `ROADMAP.md`. The alternative considered,
+`[[IDEA-N]]`, was rejected only because `→ ` is shorter and doesn't collide
+with the `[[...]]` cross-reference convention already used in `papercamp/`
+prose (ideas linking to other ideas), which would make a roadmap link visually
+indistinguishable from a prose reference.
+
+## Candidate promotion consumes the candidate bullet but still links the item
+
+**Date:** 2026-07-27
+**Status:** decided
+
+**Context:** `IDEA-91` phase 3 changed `POST /api/roadmap/promote` to link
+instead of delete. A whole-item promotion clearly keeps the item and adds a
+`→ IDEA-N` link. Ambiguous case: promoting one *candidate* under an item —
+should the candidate's own bullet stay (map shape, mirroring the item) or be
+consumed (queue shape, as before)?
+
+**Decision:** hybrid. The candidate bullet is still removed (`removeRoadmapItem`
+with `candidateName`, unchanged from before) — it was only ever placeholder
+prose for the idea it's now become, so keeping it around alongside the real
+entity would be a stale duplicate. But the *parent item* still gets a
+`→ IDEA-N` link appended (`linkRoadmapItem`), same as a whole-item promotion.
+
+**Rationale:** [[IDEA-91]]'s whole point is that every minted entity should be
+resolvable from the roadmap for progress rollup — phase 4's resolver joins an
+item's `linked` ids to entity statuses. If a candidate promotion didn't link,
+ideas minted that way would be invisible to rollup even though they came from
+the roadmap. Consuming the candidate bullet avoids showing the same idea
+twice (once as leftover prose, once as a linked entity); the item bullet
+itself never gets deleted, so it stays the anchor point regardless of which
+path minted the entity.
+
 ## Run order lives in `papercamp/run-order.md`, one `IDEA-N — Title` line per entity
 
 **Date:** 2026-07-26

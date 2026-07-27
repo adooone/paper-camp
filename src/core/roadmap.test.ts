@@ -1,5 +1,23 @@
+import type { PlanEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
-import { addRoadmapCandidate, addRoadmapItem, parseRoadmap, removeRoadmapItem } from './roadmap';
+import {
+  addRoadmapCandidate,
+  addRoadmapItem,
+  linkRoadmapItem,
+  parseRoadmap,
+  removeRoadmapItem,
+  resolveRoadmap,
+} from './roadmap';
+
+const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
+  title: 'Untitled',
+  status: 'planned',
+  created: '2026-01-01',
+  tags: [],
+  body: '',
+  phases: [],
+  ...overrides,
+});
 
 const SAMPLE = `# Roadmap
 
@@ -56,11 +74,13 @@ describe('parseRoadmap', () => {
       description:
         '`init` produces a welcoming empty corpus: seeded example idea, empty states that teach.',
       candidates: [],
+      linked: [],
     });
     expect(horizons[0].items[1]).toEqual({
       name: 'Packaging',
       description: 'one command in any repo.',
       candidates: [],
+      linked: [],
     });
   });
 
@@ -74,6 +94,25 @@ describe('parseRoadmap', () => {
         'PWA manifest + install to home screen',
         'Push notifications for task/check events',
       ],
+      linked: [],
+    });
+  });
+
+  it('collects indented `→ ` bullets under an item as linked, distinct from candidates', () => {
+    const withLink = SAMPLE.replace(
+      '  - Push notifications for task/check events\n',
+      '  - Push notifications for task/check events\n  - → IDEA-42\n',
+    );
+    const { horizons } = parseRoadmap(withLink);
+    expect(horizons[0].items[2]).toEqual({
+      name: 'Mobile control desk',
+      description: 'direct the flow from a phone.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'PWA manifest + install to home screen',
+        'Push notifications for task/check events',
+      ],
+      linked: ['IDEA-42'],
     });
   });
 
@@ -91,6 +130,7 @@ describe('parseRoadmap', () => {
         'PWA manifest + install to home screen',
         'Push notifications for task/check events',
       ],
+      linked: [],
     });
   });
 
@@ -122,6 +162,7 @@ describe('removeRoadmapItem', () => {
       name: 'Packaging',
       description: 'one command in any repo.',
       candidates: [],
+      linked: [],
     });
     expect(result).not.toContain('First-run experience');
     expect(result).not.toContain('seeded');
@@ -154,6 +195,7 @@ describe('removeRoadmapItem', () => {
         'Responsive polish for phone widths',
         'Push notifications for task/check events',
       ],
+      linked: [],
     });
     expect(result).not.toContain('PWA manifest + install to home screen');
   });
@@ -209,6 +251,7 @@ describe('addRoadmapItem', () => {
       name: 'Offline mode',
       description: 'work with no connection.',
       candidates: [],
+      linked: [],
     });
   });
 
@@ -241,6 +284,7 @@ describe('addRoadmapCandidate', () => {
         'Push notifications for task/check events',
         'Offline queueing',
       ],
+      linked: [],
     });
   });
 
@@ -256,6 +300,7 @@ describe('addRoadmapCandidate', () => {
       name: 'Packaging',
       description: 'one command in any repo.',
       candidates: ['Homebrew formula'],
+      linked: [],
     });
   });
 
@@ -269,5 +314,99 @@ describe('addRoadmapCandidate', () => {
     expect(
       addRoadmapCandidate(SAMPLE, 'Horizon 1 — Ready for daily use', 'No such item', 'x'),
     ).toBe(SAMPLE);
+  });
+});
+
+describe('linkRoadmapItem', () => {
+  it('appends a link bullet under the item, round-tripping through parseRoadmap', () => {
+    const result = linkRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Packaging',
+      'IDEA-42',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[1]).toEqual({
+      name: 'Packaging',
+      description: 'one command in any repo.',
+      candidates: [],
+      linked: ['IDEA-42'],
+    });
+  });
+
+  it('leaves existing candidates in place when adding a link', () => {
+    const result = linkRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+      'IDEA-42',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[2]).toEqual({
+      name: 'Mobile control desk',
+      description: 'direct the flow from a phone.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'PWA manifest + install to home screen',
+        'Push notifications for task/check events',
+      ],
+      linked: ['IDEA-42'],
+    });
+  });
+
+  it('is a no-op when the horizon does not exist', () => {
+    expect(linkRoadmapItem(SAMPLE, 'Horizon 9 — Nope', 'Packaging', 'IDEA-42')).toBe(SAMPLE);
+  });
+
+  it('is a no-op when the item does not exist', () => {
+    expect(
+      linkRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'No such item', 'IDEA-42'),
+    ).toBe(SAMPLE);
+  });
+});
+
+describe('resolveRoadmap', () => {
+  it('joins linked ids to entity status and rolls up per item and per horizon', () => {
+    const linked = linkRoadmapItem(
+      linkRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'Packaging', 'IDEA-1'),
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+      'IDEA-2',
+    );
+    const roadmap = parseRoadmap(linked);
+    const entities = [
+      plan({ id: 'IDEA-1', status: 'done' }),
+      plan({ id: 'IDEA-2', status: 'in-progress' }),
+    ];
+
+    const resolved = resolveRoadmap(roadmap, entities);
+
+    expect(resolved.horizons[0].items[1]).toMatchObject({
+      name: 'Packaging',
+      links: [{ id: 'IDEA-1', status: 'done' }],
+      rollup: { total: 1, done: 1 },
+    });
+    expect(resolved.horizons[0].items[2]).toMatchObject({
+      name: 'Mobile control desk',
+      links: [{ id: 'IDEA-2', status: 'in-progress' }],
+      rollup: { total: 1, done: 0 },
+    });
+    expect(resolved.horizons[0].rollup).toEqual({ total: 2, done: 1 });
+    expect(resolved.horizons[1].rollup).toEqual({ total: 0, done: 0 });
+  });
+
+  it('drops links whose entity no longer exists', () => {
+    const linked = linkRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Packaging',
+      'IDEA-404',
+    );
+    const resolved = resolveRoadmap(parseRoadmap(linked), []);
+
+    expect(resolved.horizons[0].items[1]).toMatchObject({
+      links: [],
+      rollup: { total: 0, done: 0 },
+    });
   });
 });
