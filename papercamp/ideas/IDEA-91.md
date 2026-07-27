@@ -23,7 +23,7 @@ This is roughly one route change plus one format change, and it is the precondit
 ### Phases
 - [x] Choose the link grammar and extend the roadmap model
       Decide how a minted entity id is written under an item in `ROADMAP.md` — a sub-bullet distinct from the existing candidate bullets (both are indented `  - `, so the link needs an unambiguous marker, e.g. `  - → IDEA-N` or `  - [[IDEA-N]]`) that `parseItems` can tell apart from a candidate. Add a `linked: string[]` (entity ids) field to `RoadmapItem` in `src/types/index.ts`.
-- [ ] Parse and write links in `src/core/roadmap.ts`
+- [x] Parse and write links in `src/core/roadmap.ts`
       Teach `parseRoadmap`/`parseItems` to read the link marker into `linked` while leaving `candidates` untouched, and add a `linkRoadmapItem(markdown, horizonTitle, itemName, entityId)` helper that appends the link bullet in place — mirroring `addRoadmapCandidate`'s parse-splice-write grammar so the round trip stays stable. Cover both in `src/core/roadmap.test.ts`.
 - [ ] Change `POST /api/roadmap/promote` to link instead of delete
       In `src/app/server/routes/content/ideas.ts`, replace the `removeRoadmapItem(...)` call with `linkRoadmapItem(...)`, and require its 404/no-match guard to pass before minting an id or writing the idea file — a failed link must not leave an orphaned idea absent from `ROADMAP.md`. Only once the link succeeds does the route mint the entity, write both files, and regenerate indexes. Decide and document whether a candidate promotion keeps consuming the candidate bullet (queue shape) or also survives-and-links (map shape) — the item itself must stay either way.

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { addRoadmapCandidate, addRoadmapItem, parseRoadmap, removeRoadmapItem } from './roadmap';
+import {
+  addRoadmapCandidate,
+  addRoadmapItem,
+  linkRoadmapItem,
+  parseRoadmap,
+  removeRoadmapItem,
+} from './roadmap';
 
 const SAMPLE = `# Roadmap
 
@@ -77,6 +83,24 @@ describe('parseRoadmap', () => {
         'Push notifications for task/check events',
       ],
       linked: [],
+    });
+  });
+
+  it('collects indented `→ ` bullets under an item as linked, distinct from candidates', () => {
+    const withLink = SAMPLE.replace(
+      '  - Push notifications for task/check events\n',
+      '  - Push notifications for task/check events\n  - → IDEA-42\n',
+    );
+    const { horizons } = parseRoadmap(withLink);
+    expect(horizons[0].items[2]).toEqual({
+      name: 'Mobile control desk',
+      description: 'direct the flow from a phone.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'PWA manifest + install to home screen',
+        'Push notifications for task/check events',
+      ],
+      linked: ['IDEA-42'],
     });
   });
 
@@ -277,6 +301,54 @@ describe('addRoadmapCandidate', () => {
   it('is a no-op when the item does not exist', () => {
     expect(
       addRoadmapCandidate(SAMPLE, 'Horizon 1 — Ready for daily use', 'No such item', 'x'),
+    ).toBe(SAMPLE);
+  });
+});
+
+describe('linkRoadmapItem', () => {
+  it('appends a link bullet under the item, round-tripping through parseRoadmap', () => {
+    const result = linkRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Packaging',
+      'IDEA-42',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[1]).toEqual({
+      name: 'Packaging',
+      description: 'one command in any repo.',
+      candidates: [],
+      linked: ['IDEA-42'],
+    });
+  });
+
+  it('leaves existing candidates in place when adding a link', () => {
+    const result = linkRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+      'IDEA-42',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[2]).toEqual({
+      name: 'Mobile control desk',
+      description: 'direct the flow from a phone.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'PWA manifest + install to home screen',
+        'Push notifications for task/check events',
+      ],
+      linked: ['IDEA-42'],
+    });
+  });
+
+  it('is a no-op when the horizon does not exist', () => {
+    expect(linkRoadmapItem(SAMPLE, 'Horizon 9 — Nope', 'Packaging', 'IDEA-42')).toBe(SAMPLE);
+  });
+
+  it('is a no-op when the item does not exist', () => {
+    expect(
+      linkRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'No such item', 'IDEA-42'),
     ).toBe(SAMPLE);
   });
 });

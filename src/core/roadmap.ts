@@ -4,6 +4,7 @@ const H2_RE = /^##\s+/;
 const GOAL_HEADING_RE = /^##\s+The goal\s*$/i;
 const HORIZON_HEADING_RE = /^##\s+(Horizon\s+\d+\s*[—-].*)\r?$/i;
 const ITEM_RE = /^-\s+\*\*(.+?)\*\*\s+[—-]\s+(.*)\r?$/;
+const ITEM_LINK_RE = /^\s+-\s+→\s+(.+?)\r?$/;
 const ITEM_CANDIDATE_RE = /^\s+-\s+(.+?)\r?$/;
 const ITEM_CONTINUATION_RE = /^\s+\S/;
 
@@ -18,8 +19,15 @@ function parseItems(lines: string[], start: number, end: number): RoadmapItem[] 
     }
     const descParts = [match[2].trim()];
     const candidates: string[] = [];
+    const linked: string[] = [];
     i++;
     while (i < end && !ITEM_RE.test(lines[i])) {
+      const linkMatch = lines[i].match(ITEM_LINK_RE);
+      if (linkMatch) {
+        linked.push(linkMatch[1].trim());
+        i++;
+        continue;
+      }
       const candidateMatch = lines[i].match(ITEM_CANDIDATE_RE);
       if (candidateMatch) {
         candidates.push(candidateMatch[1].trim());
@@ -30,7 +38,7 @@ function parseItems(lines: string[], start: number, end: number): RoadmapItem[] 
       descParts.push(lines[i].trim());
       i++;
     }
-    items.push({ name: match[1].trim(), description: descParts.join(' '), candidates, linked: [] });
+    items.push({ name: match[1].trim(), description: descParts.join(' '), candidates, linked });
   }
   return items;
 }
@@ -169,6 +177,42 @@ export function addRoadmapCandidate(
       }
 
       lines.splice(itemEnd, 0, `  - ${candidateName}`);
+      return lines.join('\n');
+    }
+    return markdown;
+  }
+
+  return markdown;
+}
+
+// Appends a link bullet (`  - → entityId`) under an existing item, indented to match
+// ITEM_LINK_RE. No-op if the horizon or item doesn't exist.
+export function linkRoadmapItem(
+  markdown: string,
+  horizonTitle: string,
+  itemName: string,
+  entityId: string,
+): string {
+  const lines = markdown.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const horizonMatch = lines[i].match(HORIZON_HEADING_RE);
+    if (!horizonMatch || horizonMatch[1].trim() !== horizonTitle) continue;
+
+    let end = i + 1;
+    while (end < lines.length && !H2_RE.test(lines[end])) end++;
+
+    for (let j = i + 1; j < end; j++) {
+      const itemMatch = lines[j].match(ITEM_RE);
+      if (!itemMatch || itemMatch[1].trim() !== itemName) continue;
+
+      let itemEnd = j + 1;
+      while (itemEnd < end && !ITEM_RE.test(lines[itemEnd])) {
+        if (!ITEM_CONTINUATION_RE.test(lines[itemEnd])) break;
+        itemEnd++;
+      }
+
+      lines.splice(itemEnd, 0, `  - → ${entityId}`);
       return lines.join('\n');
     }
     return markdown;
