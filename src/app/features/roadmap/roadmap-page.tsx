@@ -4,7 +4,7 @@ import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { addRoadmapCandidate, addRoadmapItem, fetchRoadmap } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
-import type { PlanEntry, Roadmap, RoadmapItem } from '@/types/index';
+import type { PlanEntry, ResolvedRoadmap, ResolvedRoadmapItem } from '@/types/index';
 import { Button, Card, Input, Stamp } from '@dendelion/paper-ui';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
@@ -224,7 +224,7 @@ const RoadmapItemRow = ({
   onViewGraduated,
   onOpenGraduated,
 }: {
-  item: RoadmapItem;
+  item: ResolvedRoadmapItem;
   graduated: PlanEntry[];
   highlighted: boolean;
   onPromote: () => void;
@@ -315,7 +315,30 @@ const RoadmapItemRow = ({
                 {item.candidates.length} candidate{item.candidates.length === 1 ? '' : 's'}
               </Stamp>
             )}
+            {item.rollup.total > 0 && (
+              <Stamp
+                size="small"
+                fillColor={STATUS_STAMP.planned.fill}
+                textColor={STATUS_STAMP.planned.text}
+              >
+                {item.rollup.done}/{item.rollup.total} done
+              </Stamp>
+            )}
           </div>
+          {item.links.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: space[1], flexWrap: 'wrap' }}>
+              {item.links.map((link) => (
+                <Stamp
+                  key={link.id}
+                  size="small"
+                  fillColor={STATUS_STAMP[link.status].fill}
+                  textColor={STATUS_STAMP[link.status].text}
+                >
+                  {link.id}
+                </Stamp>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
       {expanded && (
@@ -405,7 +428,10 @@ const GoalBanner = ({ goal }: { goal: string }) => {
 const HorizonPulse = ({
   items,
   graduatedByItem,
-}: { items: RoadmapItem[]; graduatedByItem: (item: RoadmapItem) => PlanEntry[] }) => {
+}: {
+  items: ResolvedRoadmapItem[];
+  graduatedByItem: (item: ResolvedRoadmapItem) => PlanEntry[];
+}) => {
   const graduated = items.filter((item) => graduatedByItem(item).length > 0).length;
   const charted = items.length - graduated;
   return (
@@ -416,12 +442,12 @@ const HorizonPulse = ({
 };
 
 export const RoadmapPage = () => {
-  const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
+  const [roadmap, setRoadmap] = useState<ResolvedRoadmap | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [promoting, setPromoting] = useState<{
     horizonTitle: string;
-    item: RoadmapItem;
+    item: ResolvedRoadmapItem;
     candidateName?: string;
   } | null>(null);
   const plans = useAppStore((s) => s.plans);
@@ -471,7 +497,7 @@ export const RoadmapPage = () => {
     );
   }
 
-  const graduatedByItem = (item: RoadmapItem) =>
+  const graduatedByItem = (item: ResolvedRoadmapItem) =>
     plans?.entries.filter((p) => p.subject === item.name) ?? [];
 
   const handleAddItem = async (horizonTitle: string, name: string, description: string) => {

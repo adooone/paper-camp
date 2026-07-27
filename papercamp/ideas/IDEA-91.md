@@ -29,7 +29,7 @@ This is roughly one route change plus one format change, and it is the precondit
       In `src/app/server/routes/content/ideas.ts`, replace the `removeRoadmapItem(...)` call with `linkRoadmapItem(...)`, and require its 404/no-match guard to pass before minting an id or writing the idea file — a failed link must not leave an orphaned idea absent from `ROADMAP.md`. Only once the link succeeds does the route mint the entity, write both files, and regenerate indexes. Decide and document whether a candidate promotion keeps consuming the candidate bullet (queue shape) or also survives-and-links (map shape) — the item itself must stay either way.
 - [x] Resolve items to ideas and roll up progress
       Add a core resolver that joins each item's `linked` ids to their entities' (derived) statuses and computes a per-item and per-horizon rollup, exposed through the roadmap read (`src/app/server/routes/reads.ts`). This is the data [[IDEA-92]]'s lanes and [[IDEA-93]]'s trail consume — build the model here, not the visualisation.
-- [ ] Surface links and rollup in the roadmap view
+- [x] Surface links and rollup in the roadmap view
       Show each item's linked ideas and its progress rollup in `src/app/features/roadmap/roadmap-page.tsx` — a minimal per-item indicator, leaving richer timeline/lane layout to [[IDEA-92]]. Confirm the promote modal still reads correctly now that promotion no longer removes the item.
 - [ ] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
