@@ -34,7 +34,7 @@ Same primitive as [[IDEA-87]] (anchored prose in, structured change out), anchor
 The v1 section is a structural clone of `CommentsSection`, so it reads as a duplicate and the flow is invisible: sending gives no confirmation, the split proposal appears in a detached panel, and approving lands its result off-screen (minted ideas in the Ideas list, review cleared here) so it looks like nothing happened.
 - [x] Give Review its own chat surface
       Replace the Comments-clone `PlanReviewSection` (`entity-detail.tsx`) with a distinct thread: your points render as right-aligned author messages, not the shared `DatedEntryList`, visually separated from Comments, with a bottom composer and a visible send confirmation.
-- [ ] Post the split proposal as an in-thread reply
+- [x] Post the split proposal as an in-thread reply
       Render the agent's proposed split as an agent message inside the same thread, with a pending state while `splitReview` runs, replacing the detached `ReviewSplitPreviewPanel` that seems to pop up after a refresh.
 - [ ] Apply from the thread with a visible result
       Move approve/discard into the agent's reply and post a confirmation summarising what landed (phases appended here, ideas minted) so approving is never silent; keep the same `createIdea` + `PATCH /api/plans` application path.

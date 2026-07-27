@@ -1,6 +1,6 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
-import { usePlanStatusPatch } from '@/app/features/plans/hooks';
+import { usePlanStatusPatch, useSplitReview } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
@@ -46,6 +46,7 @@ import { CollapsibleText } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
+import { ReviewSplitMessage } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import {
   effectiveStatus,
@@ -328,6 +329,7 @@ const PlanReviewSection = ({
   const [input, setInput] = useState('');
   const { toast } = useToast();
   const hasEntries = review !== undefined && review.length > 0;
+  const { launching, result, launch, approve, discard } = useSplitReview(plan);
 
   const handleAdd = async () => {
     if (!input.trim()) return;
@@ -348,7 +350,13 @@ const PlanReviewSection = ({
         }}
       >
         <h3 style={{ ...sectionHeadingStyle, margin: 0, flex: 1 }}>Review</h3>
-        <SplitReviewButton plan={plan} disabled={updating} />
+        <SplitReviewButton
+          planId={plan.id}
+          hasPoints={(plan.review ?? []).length > 0}
+          launching={launching}
+          onClick={launch}
+          disabled={updating}
+        />
       </div>
       <Card size="small" accent accentColor="slate">
         {hasEntries ? (
@@ -359,6 +367,12 @@ const PlanReviewSection = ({
             rework phases here or a follow-up idea.
           </p>
         )}
+        <ReviewSplitMessage
+          launching={launching}
+          result={result}
+          onApprove={approve}
+          onDiscard={discard}
+        />
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
           <Textarea
             value={input}
