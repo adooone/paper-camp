@@ -50,6 +50,8 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   'commit-suggest': 'commitSuggest',
   'overlap-check': 'commitSuggest',
   prioritise: 'commitSuggest',
+  // Also authors phase/idea text from prose, same bucket as rework/draft.
+  'review-split': 'planDraft',
 };
 
 export function resolveAgent(opts: {

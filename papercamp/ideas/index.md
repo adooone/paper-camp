@@ -88,10 +88,10 @@
 | IDEA-84 | Fix header background | fix | done | ui, layout, theme |
 | IDEA-85 | Apply the merge policy from Settings | feat | done | app, settings, github, git |
 | IDEA-86 | Surface agent sign-in state in the app | feat | done | agent, server, ui |
-| IDEA-87 | Margin notes on plans and phases | feat | planned | app, plans, ui, core |
+| IDEA-87 | Margin notes on plans and phases | feat | done | app, plans, ui, core |
 | IDEA-88 | Configurable title, branch, and agent | feat | planned | git, plans, app |
-| IDEA-89 | Review a finished plan in prose | feat | planned | plans, app |
-| IDEA-90 | Connections for every service | feat | planned | server, settings, github, agent |
+| IDEA-89 | Review a finished plan in prose | feat | review | plans, app |
+| IDEA-90 | Connections for every service | feat | done | server, settings, github, agent |
 | IDEA-91 | Roadmap items survive promotion | feat | planned | roadmap, core, app, ui |
 | IDEA-92 | Timeline view and horizon lanes | feat | planned | app, ui, core, roadmap |
 | IDEA-93 | Trace an idea from roadmap to release | feat | planned | roadmap, core, app |

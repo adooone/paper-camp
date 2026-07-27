@@ -334,6 +334,41 @@ Rules:
 - If a comment needs a decision only a human can make, skip it and say so in its \`why\` instead of guessing.`;
 }
 
+// Read-only (server/agent.ts's runReadOnlyPrompt/runReviewSplit) — never edits a
+// file; the app applies an approved split itself once a human accepts it.
+export function buildReviewSplitPrompt(plan: PlanEntry, points: LogEntry[]): string {
+  const phaseList = plan.phases.length
+    ? plan.phases
+        .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
+        .join('\n')
+    : '(no phases yet)';
+
+  const pointList = points.map((p, i) => `${i + 1}. ${p.text}`).join('\n');
+
+  return `You are splitting a human-written review of the finished plan "${plan.title}" (${plan.id ?? 'no id'}) into either rework on this same plan or a new follow-up idea. Do not use any tools, do not read or edit any files, and do not implement anything — base your answer only on the text given below.
+
+Plan body: ${plan.body}
+
+Current phases:
+${phaseList}
+
+Review points, written by a human against this finished plan:
+${pointList}
+
+Task: for each review point above, decide whether it is:
+- "rework" — work this same plan should still do: something incomplete, wrong, or missed within its existing scope. Propose one or more new phases that would fix it, each with a short imperative title and, if useful, a one-line description of the files or areas involved, matching the style of the existing phases.
+- "idea" — work outside this plan's scope: a related but separate piece of work that deserves its own plan later. Propose a short title and a one-paragraph body explaining what it is and why it came up during this review.
+
+A point is "rework" only if the fix belongs inside this plan's existing scope; anything that would grow the plan into new territory is "idea" instead — when genuinely unsure, prefer "idea" over silently expanding scope.
+
+Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
+{"items": [{"n": 1, "kind": "rework", "phases": [{"text": "Short phase title", "description": "optional detail"}]}, {"n": 2, "kind": "idea", "title": "Idea title", "body": "One paragraph describing the idea and why it came up"}]}
+
+Rules:
+- Every point number from 1 to ${points.length} must appear in "items" exactly once, in any order.
+- A "rework" item needs a non-empty "phases" array; an "idea" item needs a non-empty "title" and "body". Never include both on the same item.`;
+}
+
 // Scans the whole corpus rather than one idea and appends to suggestions.md, so
 // there's no entity id to check success against — didTaskProgress compares suggestBaseline (a line count) instead.
 export function buildSuggestIdeasPrompt(

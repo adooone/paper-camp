@@ -34,6 +34,7 @@ export const updatePlan = async (
     status?: PlanStatus | null;
     log?: LogEntry[];
     notes?: MarginNote[];
+    review?: LogEntry[];
     agent?: AgentId | null;
     /** `null` clears the frontmatter key, rendering the idea under "No subject". */
     subject?: string | null;

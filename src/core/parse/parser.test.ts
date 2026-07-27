@@ -518,6 +518,43 @@ Body prose.
       { anchor: { kind: 'body' }, prose: 'Already addressed in the rewrite', state: 'resolved' },
     ]);
   });
+
+  it('extracts Review entries out of the body', () => {
+    const md = `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+### Review
+- 2026-07-27: The phase 2 rollout plan is missing a rollback step
+`;
+    const { entries, warnings } = parseEntityFile(md);
+    expect(warnings).toEqual([]);
+    expect(entries[0].review).toEqual([
+      { date: '2026-07-27', text: 'The phase 2 rollout plan is missing a rollback step' },
+    ]);
+    expect(entries[0].body).toBe('Body prose.');
+  });
+
+  it('round-trips review entries through formatEntityFile', () => {
+    const written = formatEntityFile({
+      id: 'IDEA-99',
+      title: 'Tolerant heading',
+      type: 'feat',
+      created: '2026-07-13',
+      body: 'Body prose.',
+      review: [{ date: '2026-07-27', text: 'The phase 2 rollout plan is missing a rollback step' }],
+    });
+    const { entries, warnings } = parseEntityFile(written);
+    expect(warnings).toEqual([]);
+    expect(entries[0].review).toEqual([
+      { date: '2026-07-27', text: 'The phase 2 rollout plan is missing a rollback step' },
+    ]);
+  });
 });
 
 describe('parseProgress', () => {

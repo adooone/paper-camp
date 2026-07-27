@@ -64,6 +64,8 @@ import {
   triggerQualityFix,
 } from '../services/status-api';
 
+export type DetailView = 'details' | 'feedback';
+
 export type AppStore = {
   plans: ParseResult<PlanEntry> | null;
   plansLoading: boolean;
@@ -86,6 +88,11 @@ export type AppStore = {
   setSubjectFilter: (subject: string | null) => void;
   setPlanSortKey: (sortKey: PlanSortKey) => void;
   togglePlanSortDirection: () => void;
+
+  // Which detail view the open plan shows; lifted so the sidebar switcher and
+  // the content agree. Reset to 'details' when the open plan changes.
+  detailView: DetailView;
+  setDetailView: (view: DetailView) => void;
 
   suggestions: SuggestionEntry[];
   suggestionsLoading: boolean;
@@ -305,6 +312,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
         sortDirection: s.planFilters.sortDirection === 'asc' ? 'desc' : 'asc',
       },
     })),
+
+  detailView: 'details',
+  setDetailView: (view) => set({ detailView: view }),
 
   suggestions: [],
   suggestionsLoading: true,

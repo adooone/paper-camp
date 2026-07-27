@@ -14,7 +14,7 @@ interface ReconcileDiffPanelProps {
   queuePosition?: { index: number; total: number };
 }
 
-const DiffText = ({ tokens }: { tokens: DiffToken[] }) => (
+export const DiffText = ({ tokens }: { tokens: DiffToken[] }) => (
   <>
     {tokens.map((token, i) => {
       if (token.type === 'same') return <span key={`${token.type}-${i}`}>{token.text}</span>;
@@ -35,7 +35,7 @@ const DiffText = ({ tokens }: { tokens: DiffToken[] }) => (
   </>
 );
 
-const sectionHeading = (text: string) => (
+export const sectionHeading = (text: string) => (
   <h4
     style={{
       fontFamily: fontFamily.serif,

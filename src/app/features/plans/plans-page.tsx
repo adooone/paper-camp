@@ -25,6 +25,7 @@ export const PlansPage = () => {
   const ideaEntries = useAppStore((s) => s.ideaEntries);
   const suggestions = useAppStore((s) => s.suggestions);
   const loadPlans = useAppStore((s) => s.loadPlans);
+  const setDetailView = useAppStore((s) => s.setDetailView);
   const planFilters = useAppStore((s) => s.planFilters);
   const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
   const activePlanTitle = useActivePlanTitle();
@@ -37,6 +38,12 @@ export const PlansPage = () => {
   useEffect(() => {
     setSubjectFilter(subjectParam ?? null);
   }, [subjectParam, setSubjectFilter]);
+
+  // Opening a different plan/idea always lands on Details, never a stale Feedback view.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the titles are the reset trigger, not read in the body.
+  useEffect(() => {
+    setDetailView('details');
+  }, [activePlanTitle, activeIdeaTitle, setDetailView]);
 
   const handleBack = () => {
     navigate({ to: '/' });
