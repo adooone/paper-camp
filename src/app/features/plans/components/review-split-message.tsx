@@ -4,7 +4,9 @@ import type { ReviewSplitOutcome, ReviewSplitResult } from '@/types/index';
 import { Button, Spinner, Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { STATUS_STAMP } from '../constants';
-import { DiffText } from '../modals';
+// Direct file import, not the ../modals barrel: that barrel re-exports create-idea-modal,
+// which imports this component's barrel back — a cycle depcruise rejects.
+import { DiffText } from '../modals/reconcile-diff-panel';
 
 interface ReviewSplitMessageProps {
   launching: boolean;
