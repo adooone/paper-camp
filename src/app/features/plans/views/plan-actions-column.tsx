@@ -29,6 +29,8 @@ export const PlanActionsColumn = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const { subjects } = useProjectSubjects();
+  const detailView = useAppStore((s) => s.detailView);
+  const setDetailView = useAppStore((s) => s.setDetailView);
 
   const plan = activePlanTitle ? plans?.entries.find((p) => p.title === activePlanTitle) : null;
   const [orderInput, setOrderInput] = useState('');
@@ -80,6 +82,28 @@ export const PlanActionsColumn = () => {
           >
             Plan
           </h2>
+
+          {(underReview || plan.status === 'done') && (
+            <div>
+              <div style={sectionLabelStyle}>Views</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+                <ListItem
+                  size="small"
+                  active={detailView === 'details'}
+                  onClick={() => setDetailView('details')}
+                >
+                  Details
+                </ListItem>
+                <ListItem
+                  size="small"
+                  active={detailView === 'feedback'}
+                  onClick={() => setDetailView('feedback')}
+                >
+                  Feedback
+                </ListItem>
+              </div>
+            </div>
+          )}
 
           <div>
             <div style={sectionLabelStyle}>Status</div>

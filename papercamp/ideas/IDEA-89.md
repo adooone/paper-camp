@@ -40,6 +40,14 @@ The v1 section is a structural clone of `CommentsSection`, so it reads as a dupl
       Move approve/discard into the agent's reply and post a confirmation summarising what landed (phases appended here, ideas minted) so approving is never silent; keep the same `createIdea` + `PATCH /api/plans` application path.
 - [x] Type-check and full pass
 
+#### Rework — Feedback as its own view, not a stacked section (2026-07-27)
+The chat still reads as one more block stacked under Phases/Comments, so it doesn't feel separate. Lift it into a switchable view: a "Views" list in the plan sidebar (Details by default, Feedback for `review`/`done`) that swaps the detail page's content.
+- [x] Add a Views switcher to the plan sidebar
+      In `plan-actions-column.tsx`, add a "Views" section listing Details (default) and Feedback (only for `review`/`done`); selection drives a shared `detailView` store slice so the sidebar and content agree.
+- [x] Swap detail content by active view
+      In `entity-detail.tsx`, keep the title header, render the overview (branch/progress/body/phases/comments) under Details, and move `PlanReviewSection` into Feedback; reset to Details when the open plan changes.
+- [x] Type-check and full pass
+
 ### Log
 - 2026-07-27: I dont see any of my review messages. And it is not clear what is the flow after sending the review message. I sent the review and nothing changed visually in the idea view.  It just goes nowhere. Also I was trying to click refresh, and after refresh completed I saw the modal which ask me about approve of some changes - I approved it and nothing happend. No new phases or at least some messages in comments or in the review. How it is supposed to work?
 
