@@ -1,4 +1,3 @@
-IDEA-89 — Review a finished plan in prose
 IDEA-88 — Configurable title, branch, and agent
 IDEA-91 — Roadmap items survive promotion
 IDEA-92 — Timeline view and horizon lanes
