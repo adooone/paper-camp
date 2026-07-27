@@ -1,4 +1,4 @@
-import type { Roadmap, RoadmapItem } from '../types/index';
+import type { PlanEntry, ResolvedRoadmap, Roadmap, RoadmapItem } from '../types/index';
 
 const H2_RE = /^##\s+/;
 const GOAL_HEADING_RE = /^##\s+The goal\s*$/i;
@@ -219,4 +219,29 @@ export function linkRoadmapItem(
   }
 
   return markdown;
+}
+
+export function resolveRoadmap(roadmap: Roadmap, entities: PlanEntry[]): ResolvedRoadmap {
+  const statusById = new Map(entities.filter((e) => e.id).map((e) => [e.id, e.status]));
+
+  const horizons = roadmap.horizons.map((horizon) => {
+    const items = horizon.items.map((item) => {
+      const links = item.linked.flatMap((id) => {
+        const status = statusById.get(id);
+        return status ? [{ id, status }] : [];
+      });
+      const rollup = { total: links.length, done: links.filter((l) => l.status === 'done').length };
+      return { ...item, links, rollup };
+    });
+    const rollup = items.reduce(
+      (acc, item) => ({
+        total: acc.total + item.rollup.total,
+        done: acc.done + item.rollup.done,
+      }),
+      { total: 0, done: 0 },
+    );
+    return { title: horizon.title, items, rollup };
+  });
+
+  return { goal: roadmap.goal, horizons };
 }

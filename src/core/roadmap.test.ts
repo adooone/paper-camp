@@ -1,3 +1,4 @@
+import type { PlanEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
   addRoadmapCandidate,
@@ -5,7 +6,18 @@ import {
   linkRoadmapItem,
   parseRoadmap,
   removeRoadmapItem,
+  resolveRoadmap,
 } from './roadmap';
+
+const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
+  title: 'Untitled',
+  status: 'planned',
+  created: '2026-01-01',
+  tags: [],
+  body: '',
+  phases: [],
+  ...overrides,
+});
 
 const SAMPLE = `# Roadmap
 
@@ -350,5 +362,51 @@ describe('linkRoadmapItem', () => {
     expect(
       linkRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'No such item', 'IDEA-42'),
     ).toBe(SAMPLE);
+  });
+});
+
+describe('resolveRoadmap', () => {
+  it('joins linked ids to entity status and rolls up per item and per horizon', () => {
+    const linked = linkRoadmapItem(
+      linkRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'Packaging', 'IDEA-1'),
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+      'IDEA-2',
+    );
+    const roadmap = parseRoadmap(linked);
+    const entities = [
+      plan({ id: 'IDEA-1', status: 'done' }),
+      plan({ id: 'IDEA-2', status: 'in-progress' }),
+    ];
+
+    const resolved = resolveRoadmap(roadmap, entities);
+
+    expect(resolved.horizons[0].items[1]).toMatchObject({
+      name: 'Packaging',
+      links: [{ id: 'IDEA-1', status: 'done' }],
+      rollup: { total: 1, done: 1 },
+    });
+    expect(resolved.horizons[0].items[2]).toMatchObject({
+      name: 'Mobile control desk',
+      links: [{ id: 'IDEA-2', status: 'in-progress' }],
+      rollup: { total: 1, done: 0 },
+    });
+    expect(resolved.horizons[0].rollup).toEqual({ total: 2, done: 1 });
+    expect(resolved.horizons[1].rollup).toEqual({ total: 0, done: 0 });
+  });
+
+  it('drops links whose entity no longer exists', () => {
+    const linked = linkRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Packaging',
+      'IDEA-404',
+    );
+    const resolved = resolveRoadmap(parseRoadmap(linked), []);
+
+    expect(resolved.horizons[0].items[1]).toMatchObject({
+      links: [],
+      rollup: { total: 0, done: 0 },
+    });
   });
 });
