@@ -69,7 +69,10 @@ export const ReconcileDiffPanel = ({
           (phase.description ?? '') !== (beforePhase.description ?? '')),
     );
 
+  const busy = discarding || approving;
+
   const handleDiscard = async () => {
+    if (busy) return;
     setDiscarding(true);
     try {
       await onDiscard();
@@ -96,7 +99,7 @@ export const ReconcileDiffPanel = ({
           : 'Review reconcile changes'
       }
       size="large"
-      onClose={handleDiscard}
+      onClose={busy ? () => {} : handleDiscard}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
         <p className="text-sm" style={{ margin: 0, opacity: 0.7 }}>
@@ -140,20 +143,10 @@ export const ReconcileDiffPanel = ({
         )}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
-          <Button
-            variant="danger"
-            size="small"
-            onClick={handleDiscard}
-            disabled={discarding || approving}
-          >
+          <Button variant="danger" size="small" onClick={handleDiscard} disabled={busy}>
             Discard
           </Button>
-          <Button
-            variant="primary"
-            size="small"
-            onClick={handleApprove}
-            disabled={discarding || approving}
-          >
+          <Button variant="primary" size="small" onClick={handleApprove} disabled={busy}>
             Approve
           </Button>
         </div>

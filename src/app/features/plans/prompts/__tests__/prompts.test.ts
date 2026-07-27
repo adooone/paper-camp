@@ -161,6 +161,18 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).toContain('Never touch the `### Notes` section');
   });
 
+  // A note anchored to a phase description would otherwise force the agent to
+  // guess that description's current wording instead of reading it.
+  it('rework-from-notes prompt includes each phase description alongside its title', () => {
+    const planWithDescription: PlanEntry = {
+      ...plan,
+      phases: [{ done: false, text: 'Do the thing', description: 'Touches src/app/foo.ts.' }],
+    };
+    const prompt = buildReworkFromNotesPrompt(planWithDescription, []);
+    expect(prompt).toContain('1. [ ] Do the thing');
+    expect(prompt).toContain('Touches src/app/foo.ts.');
+  });
+
   it('fix-review prompt guards against an empty thread list by making no changes', () => {
     const prompt = buildFixReviewPrompt(plan, []);
     expect(prompt).toContain('no unresolved review threads were found');

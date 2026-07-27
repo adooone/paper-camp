@@ -186,7 +186,7 @@ const PhasesSection = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: space[3] }}>
               {phase.description}
               {openNotes.length > 0 && (
-                <MarginNotesList notes={openNotes} onResolve={onResolveNote} />
+                <MarginNotesList notes={openNotes} onResolve={onResolveNote} disabled={updating} />
               )}
             </div>
           );
@@ -470,27 +470,27 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         </div>
       )}
 
-      {plan.body && (
-        <div style={{ marginBottom: space[4] }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: space[2] }}>
-            <div style={{ flex: 1, opacity: 0.85 }}>
+      <div style={{ marginBottom: space[4] }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: space[2] }}>
+          <div style={{ flex: 1, opacity: 0.85 }}>
+            {plan.body && (
               <CollapsibleText resetKey={plan.id ?? plan.title}>
                 <Markdown>{plan.body}</Markdown>
               </CollapsibleText>
-            </div>
-            <AddMarginNoteButton
-              label="Add a note on this plan's body"
-              onAdd={(prose) => handleAddNote({ kind: 'body' }, prose)}
-              disabled={updating}
-            />
+            )}
           </div>
-          {bodyNotes.length > 0 && (
-            <div style={{ marginTop: space[3] }}>
-              <MarginNotesList notes={bodyNotes} onResolve={handleResolveNote} />
-            </div>
-          )}
+          <AddMarginNoteButton
+            label="Add a note on this plan's body"
+            onAdd={(prose) => handleAddNote({ kind: 'body' }, prose)}
+            disabled={updating}
+          />
         </div>
-      )}
+        {bodyNotes.length > 0 && (
+          <div style={{ marginTop: space[3] }}>
+            <MarginNotesList notes={bodyNotes} onResolve={handleResolveNote} disabled={updating} />
+          </div>
+        )}
+      </div>
 
       {plan.clarifications && plan.clarifications.length > 0 && (
         <div style={{ marginBottom: space[5] }}>

@@ -111,7 +111,10 @@ export function buildReworkFromNotesPrompt(plan: PlanEntry, notes: MarginNote[])
   const noun = hasPhases ? 'plan' : 'idea';
   const phaseList = hasPhases
     ? plan.phases
-        .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
+        .map((phase, i) => {
+          const description = phase.description ? `\n      ${phase.description}` : '';
+          return `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}${description}`;
+        })
         .join('\n')
     : '(none — this is a backlog idea with no phases yet)';
   const noteList = notes

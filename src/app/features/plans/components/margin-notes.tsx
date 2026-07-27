@@ -66,7 +66,7 @@ export const AddMarginNoteButton = ({ label, onAdd, disabled }: AddMarginNoteBut
               type="button"
               variant="primary"
               onClick={handleSubmit}
-              disabled={submitting || !input.trim()}
+              disabled={submitting || disabled || !input.trim()}
             >
               Add note
             </Button>
@@ -80,9 +80,10 @@ export const AddMarginNoteButton = ({ label, onAdd, disabled }: AddMarginNoteBut
 interface MarginNotesListProps {
   notes: MarginNote[];
   onResolve: (note: MarginNote) => Promise<boolean>;
+  disabled?: boolean;
 }
 
-export const MarginNotesList = ({ notes, onResolve }: MarginNotesListProps) => {
+export const MarginNotesList = ({ notes, onResolve, disabled }: MarginNotesListProps) => {
   const [resolving, setResolving] = useState<MarginNote | null>(null);
 
   if (notes.length === 0) return null;
@@ -118,7 +119,7 @@ export const MarginNotesList = ({ notes, onResolve }: MarginNotesListProps) => {
               variant="ghost"
               size="small"
               onClick={() => handleResolve(note)}
-              disabled={resolving === note}
+              disabled={disabled || resolving !== null}
               aria-label="Resolve note"
               icon={<CheckIcon size={16} />}
             />
