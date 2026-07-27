@@ -60,6 +60,7 @@ export function entityFileInput(
     log: entry.log,
     clarifications: entry.clarifications,
     notes: entry.notes,
+    review: entry.review,
     ...overrides,
   };
 }

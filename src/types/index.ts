@@ -58,6 +58,7 @@ export interface RawEntry {
   log?: LogEntry[];
   clarifications?: LogEntry[];
   notes?: MarginNote[];
+  review?: LogEntry[];
 }
 
 export interface ParseWarning {
@@ -128,6 +129,9 @@ export interface PlanEntry {
   log?: LogEntry[];
   clarifications?: LogEntry[];
   notes?: MarginNote[];
+  /** Prose written against the whole finished plan, distinct from the flat `log` — an
+   * agent later splits each entry into rework phases or a follow-up idea. */
+  review?: LogEntry[];
   pr?: PrInfo;
 }
 
@@ -219,6 +223,7 @@ export interface EntityEntry {
   log?: LogEntry[];
   clarifications?: LogEntry[];
   notes?: MarginNote[];
+  review?: LogEntry[];
   /** Set by readEntities from which of the two scanned dirs the file came from, not the frontmatter. */
   archived?: boolean;
 }

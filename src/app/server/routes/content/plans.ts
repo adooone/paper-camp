@@ -138,6 +138,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           status?: PlanStatus | null;
           log?: LogEntry[];
           notes?: MarginNote[];
+          review?: LogEntry[];
           agent?: AgentId | null;
           subject?: string | null;
           order?: number | null;
@@ -179,6 +180,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           ...(updates.phases !== undefined && { phases: updates.phases }),
           ...(updates.log !== undefined && { log: updates.log }),
           ...(updates.notes !== undefined && { notes: updates.notes }),
+          ...(updates.review !== undefined && { review: updates.review }),
           ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
           ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
           order:

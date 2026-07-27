@@ -9,7 +9,13 @@ import type {
   SuggestionEntry,
 } from '../../types/index';
 import { SUGGESTION_ENTRY_RE } from '../parse/parser';
-import { CLARIFICATIONS_SECTION, LOG_SECTION, NOTES_SECTION, PHASES_SECTION } from '../sections';
+import {
+  CLARIFICATIONS_SECTION,
+  LOG_SECTION,
+  NOTES_SECTION,
+  PHASES_SECTION,
+  REVIEW_SECTION,
+} from '../sections';
 
 export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -287,6 +293,7 @@ interface NewEntityFileInput {
   log?: LogEntry[];
   clarifications?: LogEntry[];
   notes?: MarginNote[];
+  review?: LogEntry[];
 }
 
 export function formatEntityFile(input: NewEntityFileInput): string {
@@ -324,6 +331,10 @@ export function formatEntityFile(input: NewEntityFileInput): string {
 
   if (input.notes && input.notes.length > 0) {
     sections.push(NOTES_SECTION.formatLines(input.notes).join('\n'));
+  }
+
+  if (input.review && input.review.length > 0) {
+    sections.push(REVIEW_SECTION.formatLines(input.review).join('\n'));
   }
 
   return sections.join('\n\n').trimEnd();

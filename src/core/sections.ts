@@ -137,4 +137,10 @@ export const NOTES_SECTION: SectionDef<MarginNote> = {
   formatLines: formatNoteLines,
 };
 
+export const REVIEW_SECTION: SectionDef<LogEntry> = {
+  headingRe: /^#{2,3}\s+Review\s*$/i,
+  parseEntries: parseDatedEntries,
+  formatLines: (entries) => formatDatedLines('### Review', entries),
+};
+
 export { SUB_HEADING_RE };

@@ -19,7 +19,7 @@ Replace the front door with prose: a review box on a plan in `review` or `done` 
 Same primitive as [[IDEA-87]] (anchored prose in, structured change out), anchored at the whole plan rather than one phase, so build it after that one. Note the existing `fix-review` task kind already converts PR review threads into fixes — this is its human-authored sibling, and the two should converge on the same application path.
 
 ### Phases
-- [ ] Add a prose review box on plans in `review` or `done`
+- [x] Add a prose review box on plans in `review` or `done`
       A human-authored review input on `entity-detail.tsx`, shown for entities in `review`/`done`, sitting alongside (not replacing) the existing JSON-paste action.
 - [ ] Launch a review agent that splits each point into rework or a follow-up idea
       A task kind (sibling of `fix-review`) that reads the written prose and, per point, proposes either rework phases appended to this plan or a new follow-up idea — proposing the split rather than guessing.

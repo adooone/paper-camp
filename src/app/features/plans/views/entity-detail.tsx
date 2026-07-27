@@ -201,6 +201,34 @@ const PhasesSection = ({
   </div>
 );
 
+const DatedEntryList = ({ entries }: { entries: LogEntry[] }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[4] }}>
+    {entries.map((entry, i) => (
+      <div
+        key={`${entry.date}-${i}`}
+        style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+      >
+        <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
+          {entry.date}
+        </span>
+        <div
+          className="text-sm"
+          style={{
+            background: 'rgba(0,0,0,0.05)',
+            borderRadius: space[2],
+            padding: `${space[2]} ${space[3]}`,
+            alignSelf: 'flex-start',
+            maxWidth: '100%',
+            opacity: 0.85,
+          }}
+        >
+          {entry.text}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 const CommentsSection = ({
   plan,
   log,
@@ -233,40 +261,7 @@ const CommentsSection = ({
         <ApplyNotesButton plan={plan} disabled={updating} />
       </div>
       <Card size="small">
-        {log && log.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: space[3],
-              marginBottom: space[4],
-            }}
-          >
-            {log.map((entry, i) => (
-              <div
-                key={`${entry.date}-${i}`}
-                style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
-              >
-                <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
-                  {entry.date}
-                </span>
-                <div
-                  className="text-sm"
-                  style={{
-                    background: 'rgba(0,0,0,0.05)',
-                    borderRadius: space[2],
-                    padding: `${space[2]} ${space[3]}`,
-                    alignSelf: 'flex-start',
-                    maxWidth: '100%',
-                    opacity: 0.85,
-                  }}
-                >
-                  {entry.text}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {log && log.length > 0 && <DatedEntryList entries={log} />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
           <Textarea
             value={logInput}
@@ -282,6 +277,51 @@ const CommentsSection = ({
               disabled={updating || !logInput.trim()}
             >
               Send
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+const PlanReviewSection = ({
+  review,
+  updating,
+  onAdd,
+}: {
+  review: LogEntry[] | undefined;
+  updating: boolean;
+  onAdd: (text: string) => Promise<boolean>;
+}) => {
+  const [input, setInput] = useState('');
+
+  const handleAdd = async () => {
+    if (!input.trim()) return;
+    if (await onAdd(input.trim())) setInput('');
+  };
+
+  return (
+    <div style={{ marginBottom: space[8] }}>
+      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Review</h3>
+      <Card size="small">
+        {review && review.length > 0 && <DatedEntryList entries={review} />}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="What's wrong with this plan, in your own words…"
+            rows={3}
+            disabled={updating}
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={handleAdd}
+              disabled={updating || !input.trim()}
+            >
+              Add review
             </Button>
           </div>
         </div>
@@ -354,6 +394,12 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     const today = new Date().toISOString().slice(0, 10);
     const newLog: LogEntry = { date: today, text: text.replace(/\n/g, ' ') };
     return patchByTitle(plan.title, { log: [...(plan.log ?? []), newLog] });
+  };
+
+  const handleAddReview = async (text: string) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const newEntry: LogEntry = { date: today, text: text.replace(/\n/g, ' ') };
+    return patchByTitle(plan.title, { review: [...(plan.review ?? []), newEntry] });
   };
 
   const handleAddNote = async (anchor: MarginNoteAnchor, prose: string) => {
@@ -540,6 +586,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           onAddNote={handleAddNote}
           onResolveNote={handleResolveNote}
         />
+      )}
+
+      {(plan.status === 'review' || plan.status === 'done') && (
+        <PlanReviewSection review={plan.review} updating={updating} onAdd={handleAddReview} />
       )}
 
       <CommentsSection plan={plan} log={plan.log} updating={updating} onAdd={handleAddLogEntry} />
