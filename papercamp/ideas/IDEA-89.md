@@ -2,7 +2,7 @@
 id: IDEA-89
 title: Review a finished plan in prose
 type: feat
-status: idea
+status: review
 created: 2026-07-25
 updated: 2026-07-26
 tags:
@@ -29,4 +29,4 @@ Same primitive as [[IDEA-87]] (anchored prose in, structured change out), anchor
       On approve, write phases through `PATCH /api/plans` and create the follow-up idea file(s), converging on the same application path as `fix-review`.
 - [x] Keep the JSON paste as a power path
       Preserve `AddReviewPhasesButton` and `parseReviewFindings` for genuine `/code-review` output.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
