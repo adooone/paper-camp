@@ -2,7 +2,7 @@
 id: IDEA-91
 title: Roadmap items survive promotion
 type: feat
-status: idea
+status: review
 created: 2026-07-25
 updated: 2026-07-26
 tags:
@@ -31,5 +31,5 @@ This is roughly one route change plus one format change, and it is the precondit
       Add a core resolver that joins each item's `linked` ids to their entities' (derived) statuses and computes a per-item and per-horizon rollup, exposed through the roadmap read (`src/app/server/routes/reads.ts`). This is the data [[IDEA-92]]'s lanes and [[IDEA-93]]'s trail consume — build the model here, not the visualisation.
 - [x] Surface links and rollup in the roadmap view
       Show each item's linked ideas and its progress rollup in `src/app/features/roadmap/roadmap-page.tsx` — a minimal per-item indicator, leaving richer timeline/lane layout to [[IDEA-92]]. Confirm the promote modal still reads correctly now that promotion no longer removes the item.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
