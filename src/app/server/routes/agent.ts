@@ -9,6 +9,7 @@ import { resolveAgent } from '../agents';
 import { probeAgentAuthStatus } from '../capabilities';
 import { campFile, checkBranchConflictForPlan, fileExists } from '../helpers';
 import { readBody, sendJson } from '../http';
+import { splitReview } from '../review-split';
 import type { Route, RouteContext } from './types';
 
 async function resolveEntityFilePath(root: string, entityId: string): Promise<string | null> {
@@ -390,6 +391,30 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           return;
         }
         sendJson(res, 202, { ok: true });
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/agent/split-review',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { planId } = JSON.parse(reqBody) as { planId?: string };
+        if (!planId) {
+          sendJson(res, 400, { error: 'planId is required' });
+          return;
+        }
+        const plan = await findPlanById(root, planId);
+        if (!plan) {
+          sendJson(res, 404, { error: 'plan not found' });
+          return;
+        }
+        try {
+          const result = await splitReview(plan, plan.review ?? [], agent.runReviewSplit);
+          sendJson(res, 200, result);
+        } catch (err) {
+          sendJson(res, 400, { error: (err as Error).message });
+        }
       },
     },
 

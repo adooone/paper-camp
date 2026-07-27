@@ -22,6 +22,7 @@ const TASK_KIND_LABELS: Record<TaskKind, string> = {
   reconcile: 'Reconcile',
   rework: 'Apply notes',
   'fix-review': 'Fix review',
+  'review-split': 'Split review',
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');

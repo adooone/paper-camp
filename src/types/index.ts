@@ -95,6 +95,30 @@ export interface FixReviewResult {
   skipped: { threadId: string; why: string }[];
 }
 
+export interface ReviewSplitPhase {
+  text: string;
+  description?: string;
+}
+
+export interface ReviewSplitFollowUp {
+  title: string;
+  body: string;
+}
+
+/** One review point's proposed classification — rework still inside this plan's
+ * existing scope, or a follow-up idea for work that would grow beyond it. */
+export interface ReviewSplitItem {
+  point: string;
+  kind: 'rework' | 'idea';
+  phases?: ReviewSplitPhase[];
+  followUp?: ReviewSplitFollowUp;
+}
+
+// Parsed from the JSON object a review-split agent's prompt requires as its final line.
+export interface ReviewSplitResult {
+  items: ReviewSplitItem[];
+}
+
 /** Live-resolved PR info for an entity's branch — see `core/pr.ts`. */
 export interface PrInfo {
   number: number;
@@ -423,7 +447,8 @@ export type TaskKind =
   | 'sync'
   | 'reconcile'
   | 'rework'
-  | 'fix-review';
+  | 'fix-review'
+  | 'review-split';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
 // unlike the in-memory task registry.
