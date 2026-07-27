@@ -329,7 +329,7 @@ const PlanReviewSection = ({
   const [input, setInput] = useState('');
   const { toast } = useToast();
   const hasEntries = review !== undefined && review.length > 0;
-  const { launching, result, launch, approve, discard } = useSplitReview(plan);
+  const { launching, result, outcome, launch, approve, discard } = useSplitReview(plan);
 
   const handleAdd = async () => {
     if (!input.trim()) return;
@@ -370,6 +370,7 @@ const PlanReviewSection = ({
         <ReviewSplitMessage
           launching={launching}
           result={result}
+          outcome={outcome}
           onApprove={approve}
           onDiscard={discard}
         />

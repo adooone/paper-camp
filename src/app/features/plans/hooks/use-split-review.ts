@@ -1,7 +1,7 @@
 import { splitReview } from '@/app/services/agent-api';
 import { createIdea } from '@/app/services/content';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type { PhaseItem, PlanEntry, ReviewSplitResult } from '@/types/index';
+import type { PhaseItem, PlanEntry, ReviewSplitOutcome, ReviewSplitResult } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { usePlanStatusPatch } from './use-plan-status-patch';
@@ -13,11 +13,13 @@ export const useSplitReview = (plan: PlanEntry) => {
   const { patch } = usePlanStatusPatch();
   const [launching, setLaunching] = useState(false);
   const [result, setResult] = useState<ReviewSplitResult | null>(null);
+  const [outcome, setOutcome] = useState<ReviewSplitOutcome | null>(null);
 
   const launch = async () => {
     const points = plan.review ?? [];
     if (!plan.id || points.length === 0) return;
     setLaunching(true);
+    setOutcome(null);
     try {
       setResult(await splitReview(plan.id));
     } catch (err) {
@@ -55,6 +57,7 @@ export const useSplitReview = (plan: PlanEntry) => {
       });
       if (!ok) return;
       setResult(null);
+      setOutcome({ phasesAdded: newPhases.length, ideaTitles: followUps.map((f) => f.title) });
     } catch (err) {
       toast({
         title: 'Could not apply the split',
@@ -66,5 +69,5 @@ export const useSplitReview = (plan: PlanEntry) => {
 
   const discard = async () => setResult(null);
 
-  return { launching, result, launch, approve, discard };
+  return { launching, result, outcome, launch, approve, discard };
 };

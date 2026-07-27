@@ -1,6 +1,6 @@
 import { diffWords } from '@/app/features/plans/helpers';
 import { fontFamily, space } from '@/app/styles/tokens';
-import type { ReviewSplitResult } from '@/types/index';
+import type { ReviewSplitOutcome, ReviewSplitResult } from '@/types/index';
 import { Button, Spinner, Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { STATUS_STAMP } from '../constants';
@@ -9,9 +9,23 @@ import { DiffText } from '../modals';
 interface ReviewSplitMessageProps {
   launching: boolean;
   result: ReviewSplitResult | null;
+  outcome: ReviewSplitOutcome | null;
   onApprove: () => Promise<void>;
   onDiscard: () => Promise<void>;
 }
+
+const summarizeOutcome = (outcome: ReviewSplitOutcome) => {
+  const parts: string[] = [];
+  if (outcome.phasesAdded > 0) {
+    parts.push(`${outcome.phasesAdded} phase${outcome.phasesAdded === 1 ? '' : 's'} appended`);
+  }
+  if (outcome.ideaTitles.length > 0) {
+    parts.push(
+      `idea${outcome.ideaTitles.length === 1 ? '' : 's'} minted: ${outcome.ideaTitles.join(', ')}`,
+    );
+  }
+  return parts.length > 0 ? `Applied — ${parts.join(' · ')}.` : 'Applied — the review is clear.';
+};
 
 const bubbleStyle = {
   background: 'rgba(0,0,0,0.05)',
@@ -31,6 +45,7 @@ const pointHeading = (text: string) => (
 export const ReviewSplitMessage = ({
   launching,
   result,
+  outcome,
   onApprove,
   onDiscard,
 }: ReviewSplitMessageProps) => {
@@ -38,7 +53,28 @@ export const ReviewSplitMessage = ({
   const [approving, setApproving] = useState(false);
   const busy = discarding || approving;
 
-  if (!launching && !result) return null;
+  if (!launching && !result && !outcome) return null;
+
+  if (!launching && !result && outcome) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: space[1],
+          marginBottom: space[3],
+        }}
+      >
+        <div className="text-sm" style={bubbleStyle}>
+          {summarizeOutcome(outcome)}
+        </div>
+        <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
+          Agent
+        </span>
+      </div>
+    );
+  }
 
   const handleDiscard = async () => {
     if (busy) return;

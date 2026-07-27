@@ -2,7 +2,7 @@
 id: IDEA-89
 title: Review a finished plan in prose
 type: feat
-status: in-progress
+status: review
 created: 2026-07-25
 updated: 2026-07-27
 tags:
@@ -36,9 +36,9 @@ The v1 section is a structural clone of `CommentsSection`, so it reads as a dupl
       Replace the Comments-clone `PlanReviewSection` (`entity-detail.tsx`) with a distinct thread: your points render as right-aligned author messages, not the shared `DatedEntryList`, visually separated from Comments, with a bottom composer and a visible send confirmation.
 - [x] Post the split proposal as an in-thread reply
       Render the agent's proposed split as an agent message inside the same thread, with a pending state while `splitReview` runs, replacing the detached `ReviewSplitPreviewPanel` that seems to pop up after a refresh.
-- [ ] Apply from the thread with a visible result
+- [x] Apply from the thread with a visible result
       Move approve/discard into the agent's reply and post a confirmation summarising what landed (phases appended here, ideas minted) so approving is never silent; keep the same `createIdea` + `PATCH /api/plans` application path.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
 
 ### Log
 - 2026-07-27: I dont see any of my review messages. And it is not clear what is the flow after sending the review message. I sent the review and nothing changed visually in the idea view.  It just goes nowhere. Also I was trying to click refresh, and after refresh completed I saw the modal which ask me about approve of some changes - I approved it and nothing happend. No new phases or at least some messages in comments or in the review. How it is supposed to work?

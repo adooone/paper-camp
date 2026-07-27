@@ -119,6 +119,12 @@ export interface ReviewSplitResult {
   items: ReviewSplitItem[];
 }
 
+/** What an approved split actually applied — shown as a confirmation so approving is never silent. */
+export interface ReviewSplitOutcome {
+  phasesAdded: number;
+  ideaTitles: string[];
+}
+
 /** Live-resolved PR info for an entity's branch — see `core/pr.ts`. */
 export interface PrInfo {
   number: number;
