@@ -56,11 +56,13 @@ describe('parseRoadmap', () => {
       description:
         '`init` produces a welcoming empty corpus: seeded example idea, empty states that teach.',
       candidates: [],
+      linked: [],
     });
     expect(horizons[0].items[1]).toEqual({
       name: 'Packaging',
       description: 'one command in any repo.',
       candidates: [],
+      linked: [],
     });
   });
 
@@ -74,6 +76,7 @@ describe('parseRoadmap', () => {
         'PWA manifest + install to home screen',
         'Push notifications for task/check events',
       ],
+      linked: [],
     });
   });
 
@@ -91,6 +94,7 @@ describe('parseRoadmap', () => {
         'PWA manifest + install to home screen',
         'Push notifications for task/check events',
       ],
+      linked: [],
     });
   });
 
@@ -122,6 +126,7 @@ describe('removeRoadmapItem', () => {
       name: 'Packaging',
       description: 'one command in any repo.',
       candidates: [],
+      linked: [],
     });
     expect(result).not.toContain('First-run experience');
     expect(result).not.toContain('seeded');
@@ -154,6 +159,7 @@ describe('removeRoadmapItem', () => {
         'Responsive polish for phone widths',
         'Push notifications for task/check events',
       ],
+      linked: [],
     });
     expect(result).not.toContain('PWA manifest + install to home screen');
   });
@@ -209,6 +215,7 @@ describe('addRoadmapItem', () => {
       name: 'Offline mode',
       description: 'work with no connection.',
       candidates: [],
+      linked: [],
     });
   });
 
@@ -241,6 +248,7 @@ describe('addRoadmapCandidate', () => {
         'Push notifications for task/check events',
         'Offline queueing',
       ],
+      linked: [],
     });
   });
 
@@ -256,6 +264,7 @@ describe('addRoadmapCandidate', () => {
       name: 'Packaging',
       description: 'one command in any repo.',
       candidates: ['Homebrew formula'],
+      linked: [],
     });
   });
 

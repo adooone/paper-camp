@@ -21,7 +21,7 @@ The roadmap is currently modelled as a queue you consume rather than a map you t
 This is roughly one route change plus one format change, and it is the precondition for every other roadmap improvement — land it before [[IDEA-92]] and [[IDEA-93]], both of which need items that persist in order to have anything to show.
 
 ### Phases
-- [ ] Choose the link grammar and extend the roadmap model
+- [x] Choose the link grammar and extend the roadmap model
       Decide how a minted entity id is written under an item in `ROADMAP.md` — a sub-bullet distinct from the existing candidate bullets (both are indented `  - `, so the link needs an unambiguous marker, e.g. `  - → IDEA-N` or `  - [[IDEA-N]]`) that `parseItems` can tell apart from a candidate. Add a `linked: string[]` (entity ids) field to `RoadmapItem` in `src/types/index.ts`.
 - [ ] Parse and write links in `src/core/roadmap.ts`
       Teach `parseRoadmap`/`parseItems` to read the link marker into `linked` while leaving `candidates` untouched, and add a `linkRoadmapItem(markdown, horizonTitle, itemName, entityId)` helper that appends the link bullet in place — mirroring `addRoadmapCandidate`'s parse-splice-write grammar so the round trip stays stable. Cover both in `src/core/roadmap.test.ts`.

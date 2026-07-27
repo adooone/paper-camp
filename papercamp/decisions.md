@@ -1,3 +1,31 @@
+## Roadmap links a minted entity with a `→ IDEA-N` sub-bullet
+
+**Date:** 2026-07-27
+**Status:** decided
+
+**Context:** `IDEA-91` phase 1 needed a marker that `parseItems` in
+`src/core/roadmap.ts` can tell apart from a candidate sub-bullet. Both a
+candidate and a link live one level indented under an item's `- **name** —
+description` line, matching the same `  - ` prefix (`ITEM_CANDIDATE_RE`), so
+the two need a textual distinction, not just a structural one.
+
+**Decision:** a link sub-bullet is written as `  - → IDEA-N` — the arrow
+prefix before the entity id. A candidate bullet is free-form prose (e.g. `PWA
+manifest + install to home screen`) and never legitimately starts with `→ `,
+so a regex anchored on that prefix (checked before the general
+`ITEM_CANDIDATE_RE` match) unambiguously separates `linked` entries from
+`candidates` during parsing. `RoadmapItem.linked` holds the minted ids
+(`string[]`) in `src/types/index.ts`; the parsing/writing side (`parseItems`,
+`linkRoadmapItem`) is phase 2 of the same plan.
+
+**Rationale:** Reusing the existing `  - ` indentation keeps one item shape
+instead of inventing a second nesting level, and an arrow reads as "became"
+at a glance in a rendered `ROADMAP.md`. The alternative considered,
+`[[IDEA-N]]`, was rejected only because `→ ` is shorter and doesn't collide
+with the `[[...]]` cross-reference convention already used in `papercamp/`
+prose (ideas linking to other ideas), which would make a roadmap link visually
+indistinguishable from a prose reference.
+
 ## Run order lives in `papercamp/run-order.md`, one `IDEA-N — Title` line per entity
 
 **Date:** 2026-07-26

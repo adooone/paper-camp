@@ -274,6 +274,7 @@ export interface RoadmapItem {
   name: string;
   description: string;
   candidates: string[];
+  linked: string[];
 }
 
 export interface RoadmapHorizon {

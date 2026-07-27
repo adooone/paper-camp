@@ -30,7 +30,7 @@ function parseItems(lines: string[], start: number, end: number): RoadmapItem[] 
       descParts.push(lines[i].trim());
       i++;
     }
-    items.push({ name: match[1].trim(), description: descParts.join(' '), candidates });
+    items.push({ name: match[1].trim(), description: descParts.join(' '), candidates, linked: [] });
   }
   return items;
 }
