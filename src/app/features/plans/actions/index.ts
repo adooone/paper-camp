@@ -10,5 +10,6 @@ export * from './phase-copy-button';
 export * from './apply-notes-button';
 export * from './reconcile-button';
 export * from './refresh-button';
+export * from './rework-from-notes-button';
 export * from './run-all-phases-button';
 export * from './worklist-actions-menu';

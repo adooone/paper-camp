@@ -7,6 +7,7 @@ import type {
   IdeaEntry,
   IdeaStatus,
   LogEntry,
+  MarginNote,
   OpenQuestionEntry,
   ParseResult,
   ParseWarning,
@@ -17,7 +18,13 @@ import type {
   SuggestionEntry,
   TaskLogEntry,
 } from '../../types/index';
-import { CLARIFICATIONS_SECTION, LOG_SECTION, PHASES_SECTION, type SectionDef } from '../sections';
+import {
+  CLARIFICATIONS_SECTION,
+  LOG_SECTION,
+  NOTES_SECTION,
+  PHASES_SECTION,
+  type SectionDef,
+} from '../sections';
 import {
   decisionFieldsSchema,
   entityFrontmatterSchema,
@@ -49,23 +56,26 @@ function extractSection<T>(body: string, section: SectionDef<T>): { body: string
   return { body: remaining, entries };
 }
 
-/** Every entry file (plan, entity, raw ## block) carries the same three optional
+/** Every entry file (plan, entity, raw ## block) carries the same four optional
  * trailing sections in the same order — extract them together so callers stop
- * re-spelling the phases/log/clarifications sequence three times. */
+ * re-spelling the phases/log/clarifications/notes sequence three times. */
 function extractStandardSections(body: string): {
   body: string;
   phases: PhaseItem[];
   log: LogEntry[];
   clarifications: LogEntry[];
+  notes: MarginNote[];
 } {
   const afterPhases = extractSection(body, PHASES_SECTION);
   const afterLog = extractSection(afterPhases.body, LOG_SECTION);
   const afterClarifications = extractSection(afterLog.body, CLARIFICATIONS_SECTION);
+  const afterNotes = extractSection(afterClarifications.body, NOTES_SECTION);
   return {
-    body: afterClarifications.body,
+    body: afterNotes.body,
     phases: afterPhases.entries,
     log: afterLog.entries,
     clarifications: afterClarifications.entries,
+    notes: afterNotes.entries,
   };
 }
 
@@ -99,9 +109,9 @@ export function parseRawEntries(markdown: string): RawEntry[] {
     while (cursor < block.length && block[cursor].trim() === '') cursor++;
 
     const rawBody = block.slice(cursor).join('\n').trim();
-    const { body, phases, log, clarifications } = extractStandardSections(rawBody);
+    const { body, phases, log, clarifications, notes } = extractStandardSections(rawBody);
 
-    entries.push({ title, fields, body, phases, log, clarifications });
+    entries.push({ title, fields, body, phases, log, clarifications, notes });
   }
 
   return entries;
@@ -140,6 +150,7 @@ export function parsePlans(markdown: string): ParseResult<PlanEntry> {
       phases: raw.phases,
       log: raw.log,
       clarifications: raw.clarifications,
+      notes: raw.notes,
     });
   }
 
@@ -260,7 +271,7 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     return { entries: [], warnings };
   }
 
-  const { body, phases, log, clarifications } = extractStandardSections(rawBody);
+  const { body, phases, log, clarifications, notes } = extractStandardSections(rawBody);
 
   if (frontmatter.kind === 'note' && phases.length > 0) {
     warnings.push({
@@ -287,6 +298,7 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     phases,
     log,
     clarifications,
+    notes,
   };
 
   return { entries: [entry], warnings };
@@ -305,7 +317,7 @@ export function parsePlanFile(content: string): ParseResult<PlanEntry> {
     return { entries: [], warnings };
   }
 
-  const { body, phases, log, clarifications } = extractStandardSections(rawBody);
+  const { body, phases, log, clarifications, notes } = extractStandardSections(rawBody);
 
   const entry: PlanEntry = {
     title: frontmatter.title,
@@ -323,6 +335,7 @@ export function parsePlanFile(content: string): ParseResult<PlanEntry> {
     phases,
     log,
     clarifications,
+    notes,
   };
 
   return { entries: [entry], warnings };

@@ -1,4 +1,3 @@
-IDEA-90 — Connections for every service
 IDEA-87 — Margin notes on plans and phases
 IDEA-89 — Review a finished plan in prose
 IDEA-88 — Configurable title, branch, and agent

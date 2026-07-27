@@ -1,6 +1,7 @@
 import type {
   AgentId,
   LogEntry,
+  MarginNote,
   ParseResult,
   PhaseItem,
   PlanEntry,
@@ -32,6 +33,7 @@ export const updatePlan = async (
     /** `null` clears the stored status override (e.g. reopening a dropped plan). */
     status?: PlanStatus | null;
     log?: LogEntry[];
+    notes?: MarginNote[];
     agent?: AgentId | null;
     /** `null` clears the frontmatter key, rendering the idea under "No subject". */
     subject?: string | null;

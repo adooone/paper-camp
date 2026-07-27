@@ -38,6 +38,18 @@ export interface PhaseItem {
   source?: 'review';
 }
 
+/** A body section anchor is `body` for now — the whole prose block is the only
+ * body section a plan/entity has until later phases break it into sub-sections. */
+export type MarginNoteAnchor = { kind: 'phase'; index: number } | { kind: 'body' };
+
+export type MarginNoteState = 'open' | 'resolved';
+
+export interface MarginNote {
+  anchor: MarginNoteAnchor;
+  prose: string;
+  state: MarginNoteState;
+}
+
 export interface RawEntry {
   title: string;
   fields: Record<string, string>;
@@ -45,6 +57,7 @@ export interface RawEntry {
   phases: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
+  notes?: MarginNote[];
 }
 
 export interface ParseWarning {
@@ -114,6 +127,7 @@ export interface PlanEntry {
   phases: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
+  notes?: MarginNote[];
   pr?: PrInfo;
 }
 
@@ -204,6 +218,7 @@ export interface EntityEntry {
   phases: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
+  notes?: MarginNote[];
   /** Set by readEntities from which of the two scanned dirs the file came from, not the frontmatter. */
   archived?: boolean;
 }

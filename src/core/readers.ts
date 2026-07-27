@@ -95,6 +95,7 @@ export function entityToPlan(e: EntityEntry, pr?: PrInfo, prLookupResolved = fal
     phases: e.phases,
     log: e.log,
     clarifications: e.clarifications,
+    notes: e.notes,
     pr,
   };
 }

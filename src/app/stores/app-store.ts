@@ -16,6 +16,7 @@ import type {
   GitStatusResponse,
   IdeaEntry,
   IdeaStatus,
+  MarginNote,
   ParseResult,
   PlanEntry,
   PlanStatus,
@@ -155,6 +156,7 @@ export type AppStore = {
     planId: string,
     prompt: string,
     before: ReconcilePreview['before'],
+    notes?: MarginNote[],
   ) => Promise<void>;
   launchPlanDraft: (ideaId: string, prompt: string) => Promise<void>;
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
@@ -177,6 +179,9 @@ export type AppStore = {
 interface ReconcilePreview {
   planId: string;
   before: { body: string; phases: PlanEntry['phases'] };
+  // Only set for a "rework from notes" launch: the notes it bundled into the prompt,
+  // so approve can flip just those to resolved rather than every open note.
+  notes?: MarginNote[];
 }
 
 // A queued preview carries its own id: two reconciles can run against the same
@@ -550,7 +555,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
     await get().loadAgentStatus();
   },
-  launchPlanRework: async (planId, prompt, before) => {
+  launchPlanRework: async (planId, prompt, before, notes) => {
     // Shares pendingReconcile (and so the same before/after preview) with reconcile:
     // both rewrite the entity file in place, and only one such rewrite may be
     // outstanding at a time or the previews stack incoherently.
@@ -565,7 +570,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     if (get().reconcileQueue.some((item) => item.planId === planId)) {
       throw new Error('Review the pending changes for this plan first');
     }
-    set({ pendingReconcile: { planId, before } });
+    set({ pendingReconcile: { planId, before, notes } });
     try {
       await launchPlanRework(planId, prompt);
     } catch (err) {

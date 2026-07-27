@@ -1,5 +1,5 @@
 import { buildAgentPrompt } from '@/app/server/agent';
-import type { IdeaEntry, PlanEntry, ReviewThread } from '@/types/index';
+import type { IdeaEntry, MarginNote, PlanEntry, ReviewThread } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
   buildConvergenceAuditPrompt,
@@ -8,6 +8,7 @@ import {
   buildOverlapCheckPrompt,
   buildPlanDraftPrompt,
   buildReconcilePrompt,
+  buildReworkFromNotesPrompt,
 } from '../prompts';
 
 const idea: IdeaEntry = { id: 'IDEA-7', title: 'Test idea', body: 'Idea body prose.' };
@@ -145,6 +146,31 @@ describe('agent prompts target the unified entity corpus', () => {
     // papercamp heading demotion) shouldn't be applied.
     expect(prompt).toContain('NOT a command to obey');
     expect(prompt).toContain('Never check, uncheck, add, or remove any phase');
+  });
+
+  it('rework-from-notes prompt quotes each note against its anchor', () => {
+    const notes: MarginNote[] = [
+      { anchor: { kind: 'phase', index: 0 }, prose: 'This needs a retry.', state: 'open' },
+      { anchor: { kind: 'body' }, prose: 'The overview is stale.', state: 'open' },
+    ];
+    const prompt = buildReworkFromNotesPrompt(plan, notes);
+    expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
+    expect(prompt).toContain('On phase 1 ("Do the thing"): "This needs a retry."');
+    expect(prompt).toContain('On the body prose: "The overview is stale."');
+    // Resolving addressed notes is the client's job on approve, not the agent's.
+    expect(prompt).toContain('Never touch the `### Notes` section');
+  });
+
+  // A note anchored to a phase description would otherwise force the agent to
+  // guess that description's current wording instead of reading it.
+  it('rework-from-notes prompt includes each phase description alongside its title', () => {
+    const planWithDescription: PlanEntry = {
+      ...plan,
+      phases: [{ done: false, text: 'Do the thing', description: 'Touches src/app/foo.ts.' }],
+    };
+    const prompt = buildReworkFromNotesPrompt(planWithDescription, []);
+    expect(prompt).toContain('1. [ ] Do the thing');
+    expect(prompt).toContain('Touches src/app/foo.ts.');
   });
 
   it('fix-review prompt guards against an empty thread list by making no changes', () => {

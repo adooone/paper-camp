@@ -7,7 +7,7 @@ import { useState } from 'react';
 interface ReconcileDiffPanelProps {
   plan: PlanEntry;
   before: { body: string; phases: PhaseItem[] };
-  onApprove: () => void;
+  onApprove: () => Promise<void>;
   onDiscard: () => Promise<void>;
   // 1-based position within a multi-entity review queue; omitted for a lone
   // single-plan reconcile where there's nothing to count against.
@@ -57,6 +57,7 @@ export const ReconcileDiffPanel = ({
   queuePosition,
 }: ReconcileDiffPanelProps) => {
   const [discarding, setDiscarding] = useState(false);
+  const [approving, setApproving] = useState(false);
 
   const bodyChanged = plan.body !== before.body;
   const changedPhases = plan.phases
@@ -68,12 +69,24 @@ export const ReconcileDiffPanel = ({
           (phase.description ?? '') !== (beforePhase.description ?? '')),
     );
 
+  const busy = discarding || approving;
+
   const handleDiscard = async () => {
+    if (busy) return;
     setDiscarding(true);
     try {
       await onDiscard();
     } finally {
       setDiscarding(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    setApproving(true);
+    try {
+      await onApprove();
+    } finally {
+      setApproving(false);
     }
   };
 
@@ -86,7 +99,7 @@ export const ReconcileDiffPanel = ({
           : 'Review reconcile changes'
       }
       size="large"
-      onClose={handleDiscard}
+      onClose={busy ? () => {} : handleDiscard}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
         <p className="text-sm" style={{ margin: 0, opacity: 0.7 }}>
@@ -130,10 +143,10 @@ export const ReconcileDiffPanel = ({
         )}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
-          <Button variant="danger" size="small" onClick={handleDiscard} disabled={discarding}>
+          <Button variant="danger" size="small" onClick={handleDiscard} disabled={busy}>
             Discard
           </Button>
-          <Button variant="primary" size="small" onClick={onApprove} disabled={discarding}>
+          <Button variant="primary" size="small" onClick={handleApprove} disabled={busy}>
             Approve
           </Button>
         </div>
