@@ -25,7 +25,7 @@ Same primitive as [[IDEA-87]] (anchored prose in, structured change out), anchor
       A task kind (sibling of `fix-review`) that reads the written prose and, per point, proposes either rework phases appended to this plan or a new follow-up idea — proposing the split rather than guessing.
 - [x] Render the proposed split for approval
       Reuse the reconcile before/after preview (`launchPlanRework`/`launchPlanReconcile` in `app-store.ts`) so the appended phases and any minted idea are approved or discarded, never applied blind.
-- [ ] Apply the approved split — append rework phases and mint follow-up ideas
+- [x] Apply the approved split — append rework phases and mint follow-up ideas
       On approve, write phases through `PATCH /api/plans` and create the follow-up idea file(s), converging on the same application path as `fix-review`.
 - [ ] Keep the JSON paste as a power path
       Preserve `AddReviewPhasesButton` and `parseReviewFindings` for genuine `/code-review` output.
