@@ -5,4 +5,5 @@ export * from './git-pr';
 export * from './scaffold';
 export * from './serialize';
 export * from './roadmap';
+export * from './trail';
 export * from '../types/index';

@@ -20,7 +20,7 @@ Make the trail first class in both directions: from a roadmap item, see the work
 Depends on [[IDEA-91]] for the roadmap end of the chain.
 
 ### Phases
-- [ ] Model the provenance trail
+- [x] Model the provenance trail
       A `src/core` resolver that assembles the full chain for an entity — idea → phases → `tasks.log` runs → commits → PR → release line — reusing `pr-lookup` and the release-line idea id [[IDEA-83]] added.
 - [ ] Resolve the trail backward from a release line or commit
       Parse the idea id already stamped on each CHANGELOG release line, and map a commit back to the entity that produced it, so a shipped change points home to its idea.

@@ -504,6 +504,21 @@ export interface TaskLogEntry {
   outcome: 'done' | 'error';
 }
 
+export interface TrailHop<T> {
+  reached: boolean;
+  data?: T;
+}
+
+export interface ProvenanceTrail {
+  id: string;
+  idea: TrailHop<{ title: string; status?: EntityStatus; type?: EntityType }>;
+  phases: TrailHop<PhaseItem[]>;
+  taskRuns: TrailHop<TaskLogEntry[]>;
+  commits: TrailHop<string[]>;
+  pr: TrailHop<PrInfo>;
+  releaseLine: TrailHop<string>;
+}
+
 export interface AgentTaskState {
   id: string;
   status: AgentTaskStatus;
