@@ -5,6 +5,7 @@ import { gitRoutes } from './git';
 import { statusRoutes } from './status';
 import { configRoutes, envRoutes, iconRoutes, mergePolicyRoutes } from './system';
 import { taskRoutes } from './tasks';
+import { trailRoutes } from './trail';
 import type { Route, RouteContext } from './types';
 
 export { readRoutes } from './reads';
@@ -24,5 +25,6 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...envRoutes(ctx),
     ...mergePolicyRoutes(ctx),
     ...docsRoutes(ctx),
+    ...trailRoutes(ctx),
   ];
 }
