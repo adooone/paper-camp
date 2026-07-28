@@ -30,7 +30,6 @@ describe('initProject Claude Code integration scaffolding', () => {
 
     const settings = JSON.parse(await readFile(join(root, '.claude', 'settings.json'), 'utf-8'));
     expect(settings.hooks.SessionStart[0].hooks[0].command).toContain('session-focus');
-    expect(settings.hooks.PostToolUse[0].hooks[0].command).toContain('post-tool-use-log');
   });
 
   it('never overwrites an existing skill file or settings.json', async () => {

@@ -8,7 +8,6 @@ import {
   parseIdeas,
   parseOpenQuestions,
   parsePlans,
-  parseProgress,
   parseSuggestions,
   parseTaskLog,
 } from './parser';
@@ -571,32 +570,6 @@ Body prose.
     expect(entries[0].review).toEqual([
       { date: '2026-07-27', text: 'The phase 2 rollout plan is missing a rollback step' },
     ]);
-  });
-});
-
-describe('parseProgress', () => {
-  it('groups bullets under date headings', () => {
-    const md = `## 2026-06-18
-- Decided on markdown over a database
-- Drafted schemas
-
-## 2026-06-17
-- Wrote the about.md technical reference
-`;
-    const entries = parseProgress(md);
-    expect(entries).toHaveLength(2);
-    expect(entries[0]).toEqual({
-      date: '2026-06-18',
-      items: ['Decided on markdown over a database', 'Drafted schemas'],
-    });
-    expect(entries[1]).toEqual({
-      date: '2026-06-17',
-      items: ['Wrote the about.md technical reference'],
-    });
-  });
-
-  it('returns an empty array for an empty file', () => {
-    expect(parseProgress('')).toEqual([]);
   });
 });
 

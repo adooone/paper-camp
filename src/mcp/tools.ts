@@ -20,7 +20,6 @@ import {
   formatDecisionEntry,
   formatEntityFile,
   formatOpenQuestions,
-  prependProgressItem,
   todayDateString,
 } from '../core/serialize';
 import { PLAN_KINDS, PLAN_STATUSES } from '../types/index';
@@ -252,23 +251,6 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         await archiveEntityFile(root, target.id);
       }
 
-      return json({ ok: true });
-    },
-  );
-
-  server.registerTool(
-    'append_progress',
-    {
-      title: 'Append progress',
-      description: "Prepend a bullet under today's heading in progress.md.",
-      inputSchema: {
-        item: z.string().describe('Progress bullet text (without the leading "- ")'),
-      },
-      outputSchema: okResultSchema.shape,
-    },
-    async ({ item }) => {
-      if (!item.trim()) throw new Error('item is required');
-      await prependProgressItem(campFile(root, 'progress.md'), item.trim());
       return json({ ok: true });
     },
   );

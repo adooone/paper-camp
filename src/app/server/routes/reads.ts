@@ -3,7 +3,6 @@ import {
   findConsistencyIssues,
   parseDecisions,
   parseOpenQuestions,
-  parseProgress,
   parseSuggestions,
   parseTaskLog,
 } from '@/core/parse';
@@ -36,12 +35,6 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/plans',
     handler: async (root) => cachedWorkEntries(root),
-  },
-  {
-    path: '/api/progress',
-    handler: async (root) => ({
-      entries: parseProgress(await readMaybe(campFile(root, 'progress.md'))),
-    }),
   },
   {
     path: '/api/decisions',
@@ -122,17 +115,11 @@ export const readRoutes: ReadRoute[] = [
     handler: async (root) => {
       const raw = await readMaybe(join(root, 'ROADMAP.md'));
       if (!raw) return null;
-      const [{ entries }, taskLogRaw, progressRaw] = await Promise.all([
+      const [{ entries }, taskLogRaw] = await Promise.all([
         cachedWorkEntries(root),
         readMaybe(campFile(root, 'tasks.log')),
-        readMaybe(campFile(root, 'progress.md')),
       ]);
-      return resolveRoadmap(
-        parseRoadmap(raw),
-        entries,
-        parseTaskLog(taskLogRaw),
-        parseProgress(progressRaw),
-      );
+      return resolveRoadmap(parseRoadmap(raw), entries, parseTaskLog(taskLogRaw));
     },
   },
   {

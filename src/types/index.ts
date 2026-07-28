@@ -259,11 +259,6 @@ export interface EntityEntry {
   archived?: boolean;
 }
 
-export interface ProgressEntry {
-  date: string;
-  items: string[];
-}
-
 // No `id`/`status`: it only becomes a real idea if a human promotes it.
 export interface SuggestionEntry {
   date: string;
@@ -316,7 +311,7 @@ export interface ResolvedRoadmap {
   events: RoadmapEvent[];
 }
 
-export type RoadmapEventKind = 'created' | 'task-run' | 'progress';
+export type RoadmapEventKind = 'created' | 'task-run';
 
 export interface RoadmapEvent {
   date: string;
@@ -394,8 +389,6 @@ export interface PaperCampConfig {
   nextId?: Partial<Record<PlanKind, number>> & { idea?: number };
   port?: number;
   defaultAgents?: DefaultAgentsMap;
-  /** Off by default. When true, the PostToolUse hook logs new-file creations to progress.md. */
-  autoLogNewFiles?: boolean;
   /** Derived from `ROADMAP.md` on every read (IDEA-95), never written to disk; an idea's
    * `subject` not present here renders as "No subject". */
   subjects?: string[];

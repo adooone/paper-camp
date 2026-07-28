@@ -482,7 +482,6 @@ const HorizonPulse = ({
 const EVENT_KIND_COLOR: Record<RoadmapEventKind, string> = {
   created: color.accentSlate,
   'task-run': color.accentAmber,
-  progress: color.accentGreen,
 };
 
 const RoadmapTimelineTrack = ({

@@ -35,7 +35,6 @@ import {
   coerceAgentConfig,
 } from '../types/index';
 import { startDevServer } from './dev-server';
-import { logNewFile } from './post-tool-use-log';
 import { buildSessionFocus } from './session-focus';
 
 function fail(message: string): void {
@@ -139,9 +138,9 @@ program
       console.log('  papercamp/ideas/          (one file per idea, plan as a section)');
       console.log('  papercamp/ideas/index.md');
       console.log('  papercamp/ideas/archive/');
-      console.log('  papercamp/progress.md, decisions.md, open-questions.md');
+      console.log('  papercamp/decisions.md, open-questions.md');
       console.log('  .claude/skills/paper-camp/SKILL.md');
-      console.log('  .claude/settings.json     (SessionStart + PostToolUse hooks)');
+      console.log('  .claude/settings.json     (SessionStart hook)');
     } catch (error) {
       if (error instanceof AlreadyInitializedError) {
         fail(error.message);
@@ -623,26 +622,6 @@ program
         },
       }),
     );
-  });
-
-program
-  .command('post-tool-use-log')
-  .description('Log a new file created by a Write tool call (used by Claude Code hooks)')
-  .action(async () => {
-    const root = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
-    const chunks: Buffer[] = [];
-    for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
-    const raw = Buffer.concat(chunks).toString('utf-8');
-    // A malformed/truncated stdin payload makes JSON.parse throw synchronously —
-    // this opt-in hook must stay a silent no-op rather than surface an unhandled
-    // rejection, matching the .catch(() => undefined) around logNewFile below.
-    let input: unknown = {};
-    try {
-      input = raw ? JSON.parse(raw) : {};
-    } catch {
-      return;
-    }
-    await logNewFile(root, input as never).catch(() => undefined);
   });
 
 program.parseAsync(process.argv);
