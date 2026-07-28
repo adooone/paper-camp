@@ -2,7 +2,7 @@
 id: IDEA-92
 title: Timeline view and horizon lanes
 type: feat
-status: idea
+status: review
 created: 2026-07-25
 updated: 2026-07-26
 tags:
@@ -37,5 +37,5 @@ Depends on [[IDEA-91]]: without items surviving promotion there is no progress t
       Render the derived event stream along the lanes' time axis — what actually happened when — so movement against each horizon is visible rather than a static structure.
 - [x] Build the Map view
       Render the Map mode over the same roadmap data.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
