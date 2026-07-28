@@ -1,10 +1,41 @@
+import { spawnSync } from 'node:child_process';
 import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clearPrCache } from './git-pr/pr-lookup';
 import { formatEntityFile } from './serialize/serializer';
-import { findReleaseLineForId, resolveEntityTrail } from './trail';
+import {
+  findReleaseLineForId,
+  resolveEntityIdForCommit,
+  resolveEntityTrail,
+  resolveIdFromCommitMessage,
+} from './trail';
+
+function git(cwd: string, ...args: string[]): string {
+  const result = spawnSync('git', args, { cwd, encoding: 'utf-8' });
+  if (result.status !== 0) {
+    throw new Error(`git ${args.join(' ')} failed: ${result.stderr}`);
+  }
+  return result.stdout.trim();
+}
+
+const gitRoots: string[] = [];
+
+function initGitRepo(): string {
+  const root = mkdtempSync(join(tmpdir(), 'papercamp-trail-git-'));
+  gitRoots.push(root);
+  git(root, 'init', '-b', 'main');
+  git(root, 'config', 'user.email', 'test@example.com');
+  git(root, 'config', 'user.name', 'Test User');
+  git(root, 'config', 'commit.gpgsign', 'false');
+  return root;
+}
+
+afterAll(() => {
+  for (const root of gitRoots) rmSync(root, { recursive: true, force: true });
+});
 
 const originalPath = process.env.PATH;
 
@@ -153,5 +184,70 @@ describe('resolveEntityTrail', () => {
       pr: { reached: false },
       releaseLine: { reached: false },
     });
+  });
+});
+
+describe('resolveIdFromCommitMessage', () => {
+  it('reads the id off a Refs: trailer', () => {
+    expect(
+      resolveIdFromCommitMessage('feat(core): Model the provenance trail\n\nRefs: IDEA-93'),
+    ).toBe('IDEA-93');
+  });
+
+  it('reads the id off a squash-merge title', () => {
+    expect(
+      resolveIdFromCommitMessage(
+        'feat(core): Roadmap items become the subject vocabulary (IDEA-95) (#78)',
+      ),
+    ).toBe('IDEA-95');
+  });
+
+  it('reads the id off a CHANGELOG release line', () => {
+    expect(
+      resolveIdFromCommitMessage(
+        '* **ci:** One release line per idea (IDEA-83) ([d7d7a51](https://github.com/o/r/commit/d7d7a51c6450b3fade9684225284e54604ba39b1))',
+      ),
+    ).toBe('IDEA-83');
+  });
+
+  it('returns null when nothing is stamped', () => {
+    expect(resolveIdFromCommitMessage('fix(app): Address IDEA-77 review comments')).toBeNull();
+    expect(resolveIdFromCommitMessage('chore(repo): updates')).toBeNull();
+  });
+});
+
+describe('resolveEntityIdForCommit', () => {
+  it('resolves the id from the commit message trailer', () => {
+    const root = initGitRepo();
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'feat(core): Do the thing', '-m', 'Refs: IDEA-1');
+    const sha = git(root, 'rev-parse', 'HEAD');
+
+    return resolveEntityIdForCommit(root, sha).then((id) => expect(id).toBe('IDEA-1'));
+  });
+
+  it('falls back to the CHANGELOG when the commit carries no id itself', () => {
+    const root = initGitRepo();
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'chore(repo): updates');
+    const sha = git(root, 'rev-parse', 'HEAD');
+    writeFileSync(
+      join(root, 'CHANGELOG.md'),
+      `# Changelog\n* **repo:** updates (IDEA-2) ([${sha.slice(0, 7)}](https://github.com/o/r/commit/${sha}))\n`,
+    );
+
+    return resolveEntityIdForCommit(root, sha).then((id) => expect(id).toBe('IDEA-2'));
+  });
+
+  it('returns null for an untraceable commit', () => {
+    const root = initGitRepo();
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'chore(repo): updates');
+    const sha = git(root, 'rev-parse', 'HEAD');
+
+    return resolveEntityIdForCommit(root, sha).then((id) => expect(id).toBeNull());
   });
 });

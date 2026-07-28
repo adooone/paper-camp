@@ -22,7 +22,7 @@ Depends on [[IDEA-91]] for the roadmap end of the chain.
 ### Phases
 - [x] Model the provenance trail
       A `src/core` resolver that assembles the full chain for an entity — idea → phases → `tasks.log` runs → commits → PR → release line — reusing `pr-lookup` and the release-line idea id [[IDEA-83]] added.
-- [ ] Resolve the trail backward from a release line or commit
+- [x] Resolve the trail backward from a release line or commit
       Parse the idea id already stamped on each CHANGELOG release line, and map a commit back to the entity that produced it, so a shipped change points home to its idea.
 - [ ] Resolve the trail forward from an entity
       Gather an entity's `tasks.log` runs, its branch commits, its PR, and its release line into the trail model, with each hop carrying its reached / not-reached state.

@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ProvenanceTrail } from '../types/index';
@@ -19,6 +20,48 @@ export function findReleaseLineForId(changelog: string, id: string): string | un
     .split('\n')
     .find((line) => line.includes(`(${id})`))
     ?.trim();
+}
+
+// A release-please release line is `* **scope:** Title (IDEA-N) ([hash](url))` — the
+// commit subject it was compiled from, plus the markdown link. Works for both a raw
+// commit subject and a release line, so it doubles as the reverse of findReleaseLineForId.
+export function resolveIdFromCommitMessage(message: string): string | null {
+  const trailer = message.match(/^Refs:\s*([A-Za-z]+-\d+)\s*$/m);
+  if (trailer) return trailer[1].toUpperCase();
+  const subjectLine = message.split('\n', 1)[0];
+  const match = subjectLine.match(/\(([A-Za-z]+-\d+)\)/);
+  return match ? match[1].toUpperCase() : null;
+}
+
+function findReleaseLineForCommit(changelog: string, sha: string): string | undefined {
+  return changelog.split('\n').find((line) => {
+    const match = line.match(/\/commit\/([0-9a-f]+)\)/i);
+    return match ? match[1].startsWith(sha) || sha.startsWith(match[1]) : false;
+  });
+}
+
+function runGit(root: string, args: string[]): Promise<string> {
+  return new Promise((resolve) => {
+    const proc = spawn('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    let stdout = '';
+    proc.stdout?.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+    proc.on('close', () => resolve(stdout));
+    proc.on('error', () => resolve(''));
+  });
+}
+
+// Prefers the commit's own message (works pre-release, off the `Refs:` trailer or a
+// squash-merge title) and falls back to the CHANGELOG release line for the same sha.
+export async function resolveEntityIdForCommit(root: string, sha: string): Promise<string | null> {
+  const message = await runGit(root, ['log', '-1', '--format=%B', sha]);
+  const idFromMessage = message ? resolveIdFromCommitMessage(message) : null;
+  if (idFromMessage) return idFromMessage;
+
+  const changelog = await readFileMaybe(join(root, 'CHANGELOG.md'));
+  const line = findReleaseLineForCommit(changelog, sha);
+  return line ? resolveIdFromCommitMessage(line) : null;
 }
 
 export async function resolveEntityTrail(root: string, id: string): Promise<ProvenanceTrail> {
