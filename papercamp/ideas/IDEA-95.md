@@ -2,7 +2,7 @@
 id: IDEA-95
 title: Roadmap items become the subject vocabulary
 type: feat
-status: idea
+status: review
 created: 2026-07-26
 updated: 2026-07-26
 tags:
@@ -75,5 +75,5 @@ them into the horizon list would misrepresent them).
 - [x] Group and order the worklist by horizon
       Let the worklist group or sort subjects by the horizon each resolves to (H1 near-term →
       H3 long bets, standing concerns last), reusing the roadmap structure rather than a new concept.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
