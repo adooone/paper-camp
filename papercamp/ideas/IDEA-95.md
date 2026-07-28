@@ -60,7 +60,7 @@ them into the horizon list would misrepresent them).
       no fallback); if a derived cache is kept for read performance, it must be read-only,
       regenerated from the parsed roadmap, with an explicit refresh strategy — never a second
       place subjects can diverge from.
-- [ ] Stop minting subjects on promote
+- [x] Stop minting subjects on promote
       Change `POST /api/roadmap/promote` (`src/app/server/routes/content/ideas.ts`) to no longer
       call `ensureSubject`; the promoted item now survives in the roadmap ([[IDEA-91]]) and is
       already the vocabulary, so the new entity's `subject` just points at it.
