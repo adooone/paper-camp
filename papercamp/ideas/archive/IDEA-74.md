@@ -10,7 +10,7 @@ tags:
   - docs
   - plans
   - ui
-subject: Workflow
+subject: Planning surface
 ---
 
 The project now has a stated goal and a horizon-structured roadmap (`ROADMAP.md`), but it renders as just another doc. The roadmap deserves to be a surface, not a page of prose: the north star always visible, horizons as groups, and — the part that makes it *part of the workflow* rather than decoration — each item one click away from becoming a real idea. The map feeds the queue.

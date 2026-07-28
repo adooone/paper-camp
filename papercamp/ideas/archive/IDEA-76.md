@@ -11,7 +11,7 @@ tags:
   - agent
   - git
   - ux
-subject: Workflow
+subject: Project genesis
 ---
 
 Installing Paper Camp into a fresh project works (`npx @dendelion/paper-camp init && … dev`), but the moment the user touches a PR feature or launches an agent, the app assumes an authenticated `gh` and a `claude`/`opencode` CLI on PATH — and fails uglily when they're missing. USAGE.md papers over this with a prerequisites sentence; the app itself should own it. This is the access half of the roadmap's "First-run experience" item (the teaching-empty-states half stays on the map).

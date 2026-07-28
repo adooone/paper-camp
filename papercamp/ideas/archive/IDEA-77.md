@@ -10,7 +10,7 @@ tags:
   - plans
   - docs
   - ui
-subject: Workflow
+subject: Planning surface
 ---
 
 The organisation ladder has a missing rung. Horizons hold items, items promote to ideas — but a big item ("Mobile control desk") is *several* ideas, and today there's nowhere to hold its decomposition short of promoting everything at once or keeping the list in your head. The "big bet graduates as a Subject" rule exists only as prose. Give the ladder its rung with the smallest possible change: **nested candidate bullets** in the roadmap grammar, on top of everything that already exists — no new entity type, no new file.
