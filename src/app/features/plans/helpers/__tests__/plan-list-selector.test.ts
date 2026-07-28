@@ -290,4 +290,17 @@ describe('groupRowsBySubject', () => {
       { subject: null, rows: [rows[1]] },
     ]);
   });
+
+  it('orders groups by validSubjects (horizon order), not first-seen order', () => {
+    const rows = [
+      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Long bet' }) },
+      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Near-term bet' }) },
+      { type: 'plan' as const, plan: plan({ title: 'C', subject: 'Standing concern' }) },
+    ];
+    expect(groupRowsBySubject(rows, ['Near-term bet', 'Long bet', 'Standing concern'])).toEqual([
+      { subject: 'Near-term bet', rows: [rows[1]] },
+      { subject: 'Long bet', rows: [rows[0]] },
+      { subject: 'Standing concern', rows: [rows[2]] },
+    ]);
+  });
 });

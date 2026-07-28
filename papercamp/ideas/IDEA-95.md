@@ -72,7 +72,7 @@ them into the horizon list would misrepresent them).
       Replace the config-backed editor (`use-project-subjects`, Settings' `subjects` section)
       with a read-only view sourced from the roadmap, or a link into the roadmap view where the
       vocabulary is now edited.
-- [ ] Group and order the worklist by horizon
+- [x] Group and order the worklist by horizon
       Let the worklist group or sort subjects by the horizon each resolves to (H1 near-term →
       H3 long bets, standing concerns last), reusing the roadmap structure rather than a new concept.
 - [ ] Type-check and full pass
