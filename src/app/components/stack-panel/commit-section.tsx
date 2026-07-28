@@ -227,44 +227,22 @@ const CommitForm = ({
     if (!commitTitle.trim() || commitInFlight) return;
     setCommitting(true);
     setCommitInFlight(true);
-    let committed = false;
     try {
-      try {
-        await commitChanges(
-          [...selectedFiles],
-          commitTitle.trim(),
-          commitMessage.trim() || undefined,
-        );
-        committed = true;
-        setCommitTitle(suggestedTitle);
-        setCommitMessage('');
-        onCommitted();
-      } catch (err) {
-        toast({
-          title: 'Commit failed',
-          description: gitErrorSummary((err as Error).message),
-          variant: 'error',
-        });
-      }
-      // Trunk-style: publish straight away so the commit can't sit unpushed and fork
-      // against an incoming squash-merge. If the remote moved first, reconcile the
-      // current branch (pull now rebases) and retry once.
-      if (committed) {
-        try {
-          await pushChanges();
-        } catch {
-          try {
-            await pullFromOrigin();
-            await pushChanges();
-          } catch (pushErr) {
-            toast({
-              title: 'Committed, but push failed',
-              description: gitErrorSummary((pushErr as Error).message),
-              variant: 'error',
-            });
-          }
-        }
-      }
+      await commitChanges(
+        [...selectedFiles],
+        commitTitle.trim(),
+        commitMessage.trim() || undefined,
+      );
+      setCommitTitle(suggestedTitle);
+      setCommitMessage('');
+      onCommitted();
+      await loadGitStatus();
+    } catch (err) {
+      toast({
+        title: 'Commit failed',
+        description: gitErrorSummary((err as Error).message),
+        variant: 'error',
+      });
       // A failed commit can leave stale "changed files" behind (e.g. nothing left to
       // commit), which would otherwise invite a doomed retry.
       await loadGitStatus();

@@ -1,6 +1,5 @@
 import type {
   PlanEntry,
-  ProgressEntry,
   ResolvedRoadmap,
   Roadmap,
   RoadmapEvent,
@@ -11,6 +10,7 @@ import type {
 const H2_RE = /^##\s+/;
 const GOAL_HEADING_RE = /^##\s+The goal\s*$/i;
 const HORIZON_HEADING_RE = /^##\s+(Horizon\s+\d+\s*[—-].*)\r?$/i;
+const STANDING_CONCERNS_HEADING_RE = /^##\s+Standing concerns\s*$/i;
 const ITEM_RE = /^-\s+\*\*(.+?)\*\*\s+[—-]\s+(.*)\r?$/;
 const ITEM_LINK_RE = /^\s+-\s+→\s+(.+?)\r?$/;
 const ITEM_CANDIDATE_RE = /^\s+-\s+(.+?)\r?$/;
@@ -51,12 +51,14 @@ function parseItems(lines: string[], start: number, end: number): RoadmapItem[] 
   return items;
 }
 
-// Tolerant of prose anywhere outside the load-bearing headings: only `## The goal` and
-// `## Horizon N — …` are ever inspected, everything else (intro, "How this file works") is skipped.
+// Tolerant of prose anywhere outside the load-bearing headings: only `## The goal`,
+// `## Horizon N — …`, and `## Standing concerns` are ever inspected, everything else
+// (intro, "How this file works") is skipped.
 export function parseRoadmap(markdown: string): Roadmap {
   const lines = markdown.split('\n');
   let goal = '';
   const horizons: Roadmap['horizons'] = [];
+  let standingConcerns: Roadmap['standingConcerns'] = [];
 
   for (let i = 0; i < lines.length; i++) {
     if (GOAL_HEADING_RE.test(lines[i])) {
@@ -76,10 +78,18 @@ export function parseRoadmap(markdown: string): Roadmap {
       while (end < lines.length && !H2_RE.test(lines[end])) end++;
       horizons.push({ title: horizonMatch[1].trim(), items: parseItems(lines, i + 1, end) });
       i = end - 1;
+      continue;
+    }
+
+    if (STANDING_CONCERNS_HEADING_RE.test(lines[i])) {
+      let end = i + 1;
+      while (end < lines.length && !H2_RE.test(lines[end])) end++;
+      standingConcerns = parseItems(lines, i + 1, end);
+      i = end - 1;
     }
   }
 
-  return { goal, horizons };
+  return { goal, horizons, standingConcerns };
 }
 
 // Splices out one item's bullet (and its wrapped continuation lines and candidates) so the
@@ -229,11 +239,20 @@ export function linkRoadmapItem(
   return markdown;
 }
 
+// The subject vocabulary: horizon items in horizon/item order (H1 near-term → H3 long
+// bets), then standing concerns last — the one ordered read of ROADMAP.md every subject
+// picker and grouping should derive from, so it's the only writable source.
+export function deriveSubjectVocabulary(roadmap: Roadmap): string[] {
+  return [
+    ...roadmap.horizons.flatMap((horizon) => horizon.items.map((item) => item.name)),
+    ...roadmap.standingConcerns.map((item) => item.name),
+  ];
+}
+
 export function resolveRoadmap(
   roadmap: Roadmap,
   entities: PlanEntry[],
   taskLog: TaskLogEntry[] = [],
-  progress: ProgressEntry[] = [],
 ): ResolvedRoadmap {
   const statusById = new Map(entities.filter((e) => e.id).map((e) => [e.id, e.status]));
 
@@ -256,20 +275,17 @@ export function resolveRoadmap(
     return { title: horizon.title, items, rollup };
   });
 
-  const events = deriveRoadmapEvents(roadmap, entities, taskLog, progress);
+  const events = deriveRoadmapEvents(roadmap, entities, taskLog);
   return { goal: roadmap.goal, horizons, events };
 }
 
-const WIKI_LINK_RE = /\[\[([A-Z]+-\d+)\]\]/g;
-
-// One chronological model over three append-only sources, each keyed back to the roadmap item
+// One chronological model over two append-only sources, each keyed back to the roadmap item
 // (via its `linked` entity ids) and the entity it happened to. `updated` is deliberately excluded —
 // see IDEA-92's Timeline phase for why a last-touched timestamp can't stand in for history.
 export function deriveRoadmapEvents(
   roadmap: Roadmap,
   entities: PlanEntry[],
   taskLog: TaskLogEntry[],
-  progress: ProgressEntry[],
 ): RoadmapEvent[] {
   const itemByEntityId = new Map<string, { horizonTitle: string; itemName: string }>();
   for (const horizon of roadmap.horizons) {
@@ -308,24 +324,6 @@ export function deriveRoadmapEvents(
       itemName: item.itemName,
       label: `${task.taskKind} run (${task.outcome})`,
     });
-  }
-
-  for (const entry of progress) {
-    for (const line of entry.items) {
-      const ids = new Set(Array.from(line.matchAll(WIKI_LINK_RE), (m) => m[1]));
-      for (const id of ids) {
-        const item = itemByEntityId.get(id);
-        if (!item) continue;
-        events.push({
-          date: entry.date,
-          kind: 'progress',
-          entityId: id,
-          horizonTitle: item.horizonTitle,
-          itemName: item.itemName,
-          label: line,
-        });
-      }
-    }
   }
 
   return events.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));

@@ -20,7 +20,7 @@ async function resolveEntityFilePath(root: string, entityId: string): Promise<st
   return null;
 }
 
-// Known renames from this project's own history (see progress.md), cheap enough to
+// Known renames from this project's own history, cheap enough to
 // fix with plain substitution before spending a model call on the rest of the drift.
 const KNOWN_RENAMES: ReadonlyArray<readonly [string, string]> = [
   ['`plans.md`', '`papercamp/ideas/`'],

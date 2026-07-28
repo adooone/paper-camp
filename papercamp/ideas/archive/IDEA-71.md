@@ -10,7 +10,7 @@ tags:
   - plans
   - ideas
   - ui
-subject: Frontend
+subject: App UI
 ---
 
 The worklist answers "what exists" but not "what do I run next" — sequencing lives only as prose inside idea bodies ("sequence after [[IDEA-68]]"), invisible in the list. Give ideas an explicit run order instead of a priority enum or a dependency graph: both of those are ceremony, and the actual need is a queue the user can see and adjust.

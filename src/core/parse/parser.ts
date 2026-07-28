@@ -13,7 +13,6 @@ import type {
   ParseWarning,
   PhaseItem,
   PlanEntry,
-  ProgressEntry,
   RawEntry,
   SuggestionEntry,
   TaskLogEntry,
@@ -395,6 +394,7 @@ export function findConsistencyIssues(
   decisions: DecisionEntry[],
   openQuestions: OpenQuestionEntry[],
   plans: PlanEntry[],
+  subjectVocabulary: string[] = [],
 ): ConsistencyIssue[] {
   const decisionTitles = new Set(decisions.map((d) => d.title));
   const issues: ConsistencyIssue[] = [];
@@ -436,36 +436,19 @@ export function findConsistencyIssues(
     }
   }
 
-  return issues;
-}
-
-const PROGRESS_HEADING_RE = /^##\s+(\d{4}-\d{2}-\d{2})\s*$/;
-const BULLET_RE = /^[-*]\s+(.*)$/;
-
-export function parseProgress(markdown: string): ProgressEntry[] {
-  const lines = markdown.split('\n');
-  const headingIndices: number[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    if (PROGRESS_HEADING_RE.test(lines[i])) {
-      headingIndices.push(i);
+  for (const plan of plans) {
+    if (plan.subject && !subjectVocabulary.includes(plan.subject)) {
+      issues.push({
+        kind: 'orphan-subject',
+        section: 'plans',
+        title: plan.title,
+        planId: plan.id,
+        message: `Subject "${plan.subject}" isn't in the roadmap vocabulary — "${plan.title}"`,
+      });
     }
   }
 
-  const entries: ProgressEntry[] = [];
-  for (let h = 0; h < headingIndices.length; h++) {
-    const start = headingIndices[h];
-    const end = h + 1 < headingIndices.length ? headingIndices[h + 1] : lines.length;
-    const date = lines[start].match(PROGRESS_HEADING_RE)![1];
-    const items = lines
-      .slice(start + 1, end)
-      .map((line) => line.match(BULLET_RE))
-      .filter((m): m is RegExpMatchArray => m !== null)
-      .map((m) => m[1].trim());
-
-    entries.push({ date, items });
-  }
-
-  return entries;
+  return issues;
 }
 
 /** tasks.log is JSON Lines — one TaskLogEntry per line. Skip lines that fail to parse rather than fail the whole read (a truncated last line from a crash shouldn't hide the rest). */

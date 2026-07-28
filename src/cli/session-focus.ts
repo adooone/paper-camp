@@ -1,7 +1,6 @@
 import { findFocusPlan } from '../app/features/plans/helpers';
 import { createGitManager } from '../app/server/git';
-import { campFile, fileExists, readMaybe } from '../app/server/helpers';
-import { parseProgress } from '../core/parse';
+import { campFile, fileExists } from '../app/server/helpers';
 import { readWorkEntries } from '../core/readers';
 import type { PlanEntry } from '../types/index';
 
@@ -29,15 +28,7 @@ export async function buildSessionFocus(root: string): Promise<string | null> {
     (branchPlanId ? entries.find((p) => p.id === branchPlanId) : undefined) ??
     findFocusPlan(entries);
 
-  const progressRaw = await readMaybe(campFile(root, 'progress.md'));
-  const recentItems = parseProgress(progressRaw)
-    .flatMap((entry) => entry.items.map((item) => `${entry.date}: ${item}`))
-    .slice(0, 3);
-
   const sections: string[] = ['## Paper Camp focus'];
   sections.push(plan ? renderPlanLine(plan) : '**Active plan:** none in progress');
-  if (recentItems.length > 0) {
-    sections.push(['**Recent progress:**', ...recentItems.map((item) => `- ${item}`)].join('\n'));
-  }
   return sections.join('\n\n');
 }

@@ -9,7 +9,7 @@ tags:
   - errors
   - ui
   - toast
-subject: Workflow
+subject: App UI
 ---
 
 every failure path reads as a one-line toast (git errors do now; agent-launch and config errors should match).

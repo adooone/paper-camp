@@ -62,11 +62,10 @@ export function configRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'projectName must not be empty' });
           return;
         }
-        if (
-          subjects !== undefined &&
-          (!Array.isArray(subjects) || subjects.some((s) => typeof s !== 'string' || !s.trim()))
-        ) {
-          sendJson(res, 400, { error: 'subjects must be an array of non-empty strings' });
+        // subjects is derived from ROADMAP.md (IDEA-95) and is never written here — a
+        // caller still sending it gets an explicit error rather than a silent no-op.
+        if (subjects !== undefined) {
+          sendJson(res, 400, { error: 'subjects is derived from ROADMAP.md and cannot be set' });
           return;
         }
         if (defaultAgent !== undefined && !AGENT_IDS.includes(defaultAgent)) {
@@ -114,7 +113,6 @@ export function configRoutes({ root }: RouteContext): Route[] {
           ...(port !== undefined && { port }),
           ...(projectName !== undefined && { projectName: projectName.trim() }),
           ...(resolvedDefaultAgents && { defaultAgents: resolvedDefaultAgents }),
-          ...(subjects !== undefined && { subjects: (subjects as string[]).map((s) => s.trim()) }),
           ...(setupDismissed !== undefined && { setupDismissed }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);

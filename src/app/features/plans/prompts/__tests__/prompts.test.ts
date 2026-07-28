@@ -90,8 +90,6 @@ describe('agent prompts target the unified entity corpus', () => {
     const prompt = buildAgentPrompt(plan, plan.phases[0], 0);
     expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
     expect(prompt).not.toContain('plans.md');
-    // progress.md is still the live append-only log — that reference must stay
-    expect(prompt).toContain('progress.md');
   });
 
   // The "Check overlap" action is read-only — it never edits a file, so its

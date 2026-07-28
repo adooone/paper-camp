@@ -161,32 +161,6 @@ export function formatOpenQuestionEntry(input: NewOpenQuestionInput): string {
   return lines.join('\n').trimEnd();
 }
 
-export function formatProgressEntry(date: string, items: string[]): string {
-  return [`## ${date}`, ...items.map((item) => `- ${item}`)].join('\n');
-}
-
-export async function prependProgressItem(progressPath: string, item: string): Promise<void> {
-  const heading = `## ${todayDateString()}`;
-  let raw = '';
-  try {
-    raw = await readFile(progressPath, 'utf-8');
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-  }
-  await mkdir(dirname(progressPath), { recursive: true });
-  if (raw.startsWith(`${heading}\n`)) {
-    await writeFile(
-      progressPath,
-      `${heading}\n- ${item}\n${raw.slice(heading.length + 1)}`,
-      'utf-8',
-    );
-  } else {
-    const trimmed = raw.trimEnd();
-    const next = trimmed ? `${heading}\n- ${item}\n\n${trimmed}\n` : `${heading}\n- ${item}\n`;
-    await writeFile(progressPath, next, 'utf-8');
-  }
-}
-
 export function formatPlans(entries: NewPlanInput[]): string {
   if (entries.length === 0) return '';
   return `${entries.map((entry) => formatPlanEntry(entry)).join('\n\n')}\n`;

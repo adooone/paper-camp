@@ -1,9 +1,10 @@
-import type { PlanEntry, ProgressEntry, TaskLogEntry } from '@/types/index';
+import type { PlanEntry, TaskLogEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
   addRoadmapCandidate,
   addRoadmapItem,
   deriveRoadmapEvents,
+  deriveSubjectVocabulary,
   linkRoadmapItem,
   parseRoadmap,
   removeRoadmapItem,
@@ -50,6 +51,13 @@ Some horizon prose.
 ## Horizon 2 — A deeper desk
 
 - **Goal & roadmap in the app** — this file rendered as a first-class surface.
+
+## Standing concerns
+
+Not horizons: these never ship and never graduate.
+
+- **Infrastructure** — the machinery around the work.
+- **Code health** — refactors and slimming passes.
 `;
 
 describe('parseRoadmap', () => {
@@ -136,7 +144,46 @@ describe('parseRoadmap', () => {
   });
 
   it('returns an empty roadmap for markdown with no matching headings', () => {
-    expect(parseRoadmap('# Just a doc\n\nNo headings here.')).toEqual({ goal: '', horizons: [] });
+    expect(parseRoadmap('# Just a doc\n\nNo headings here.')).toEqual({
+      goal: '',
+      horizons: [],
+      standingConcerns: [],
+    });
+  });
+
+  it('parses `## Standing concerns` as a distinct, non-horizon kind', () => {
+    const { standingConcerns } = parseRoadmap(SAMPLE);
+    expect(standingConcerns).toEqual([
+      {
+        name: 'Infrastructure',
+        description: 'the machinery around the work.',
+        candidates: [],
+        linked: [],
+      },
+      {
+        name: 'Code health',
+        description: 'refactors and slimming passes.',
+        candidates: [],
+        linked: [],
+      },
+    ]);
+  });
+});
+
+describe('deriveSubjectVocabulary', () => {
+  it('orders horizon items by horizon, then appends standing concerns last', () => {
+    expect(deriveSubjectVocabulary(parseRoadmap(SAMPLE))).toEqual([
+      'First-run experience',
+      'Packaging',
+      'Mobile control desk',
+      'Goal & roadmap in the app',
+      'Infrastructure',
+      'Code health',
+    ]);
+  });
+
+  it('returns an empty vocabulary for a roadmap with no items', () => {
+    expect(deriveSubjectVocabulary(parseRoadmap('# Just a doc\n\nNo headings here.'))).toEqual([]);
   });
 });
 
@@ -429,7 +476,7 @@ describe('deriveRoadmapEvents', () => {
 
   it('emits a created event for a linked entity, keyed to its horizon and item', () => {
     const entities = [plan({ id: 'IDEA-1', title: 'Packaging plan', created: '2026-01-01' })];
-    const events = deriveRoadmapEvents(roadmap, entities, [], []);
+    const events = deriveRoadmapEvents(roadmap, entities, []);
     expect(events).toEqual([
       {
         date: '2026-01-01',
@@ -447,7 +494,6 @@ describe('deriveRoadmapEvents', () => {
       roadmap,
       [],
       [task({ planId: 'IDEA-1', taskKind: 'reconcile', startedAt: '2026-01-03T00:00:00.000Z' })],
-      [],
     );
     expect(events).toEqual([
       {
@@ -461,39 +507,20 @@ describe('deriveRoadmapEvents', () => {
     ]);
   });
 
-  it('emits a progress event per wiki-linked id referenced in a dated bullet', () => {
-    const progress: ProgressEntry[] = [
-      { date: '2026-01-04', items: ['[[IDEA-1]] shipped the first phase.'] },
-    ];
-    const events = deriveRoadmapEvents(roadmap, [], [], progress);
-    expect(events).toEqual([
-      {
-        date: '2026-01-04',
-        kind: 'progress',
-        entityId: 'IDEA-1',
-        horizonTitle: 'Horizon 1 — Ready for daily use',
-        itemName: 'Packaging',
-        label: '[[IDEA-1]] shipped the first phase.',
-      },
-    ]);
-  });
-
   it('sorts the combined stream chronologically', () => {
     const entities = [plan({ id: 'IDEA-1', created: '2026-01-05' })];
     const taskLog = [task({ planId: 'IDEA-1', startedAt: '2026-01-02T00:00:00.000Z' })];
-    const progress: ProgressEntry[] = [{ date: '2026-01-10', items: ['[[IDEA-1]] done.'] }];
-    const events = deriveRoadmapEvents(roadmap, entities, taskLog, progress);
-    expect(events.map((e) => e.kind)).toEqual(['task-run', 'created', 'progress']);
+    const events = deriveRoadmapEvents(roadmap, entities, taskLog);
+    expect(events.map((e) => e.kind)).toEqual(['task-run', 'created']);
   });
 
-  it('ignores an entity, task run, or progress bullet not linked to any roadmap item', () => {
+  it('ignores an entity or task run not linked to any roadmap item', () => {
     const entities = [plan({ id: 'IDEA-999', created: '2026-01-01' })];
     const taskLog = [task({ planId: 'IDEA-999' })];
-    const progress: ProgressEntry[] = [{ date: '2026-01-04', items: ['[[IDEA-999]] noise.'] }];
-    expect(deriveRoadmapEvents(roadmap, entities, taskLog, progress)).toEqual([]);
+    expect(deriveRoadmapEvents(roadmap, entities, taskLog)).toEqual([]);
   });
 
   it('ignores a tasks.log row with no planId', () => {
-    expect(deriveRoadmapEvents(roadmap, [], [task({})], [])).toEqual([]);
+    expect(deriveRoadmapEvents(roadmap, [], [task({})])).toEqual([]);
   });
 });

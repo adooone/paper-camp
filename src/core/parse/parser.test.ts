@@ -8,7 +8,6 @@ import {
   parseIdeas,
   parseOpenQuestions,
   parsePlans,
-  parseProgress,
   parseSuggestions,
   parseTaskLog,
 } from './parser';
@@ -390,6 +389,23 @@ describe('findConsistencyIssues', () => {
     const plans = [plan({ title: 'Plan A', id: 'FEAT-2', status: 'in-progress' })];
     expect(findConsistencyIssues([], questions, plans)).toEqual([]);
   });
+
+  it('flags a plan whose subject is not in the roadmap vocabulary', () => {
+    const plans = [plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Retired subject' })];
+    expect(findConsistencyIssues([], [], plans, ['Packaging'])).toEqual([
+      expect.objectContaining({ kind: 'orphan-subject', title: 'Plan A', planId: 'FEAT-2' }),
+    ]);
+  });
+
+  it('does not flag a plan whose subject is in the roadmap vocabulary', () => {
+    const plans = [plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Packaging' })];
+    expect(findConsistencyIssues([], [], plans, ['Packaging'])).toEqual([]);
+  });
+
+  it('does not flag a plan with no subject', () => {
+    const plans = [plan({ title: 'Plan A', id: 'FEAT-2' })];
+    expect(findConsistencyIssues([], [], plans, ['Packaging'])).toEqual([]);
+  });
 });
 
 describe('parseIdeas', () => {
@@ -554,32 +570,6 @@ Body prose.
     expect(entries[0].review).toEqual([
       { date: '2026-07-27', text: 'The phase 2 rollout plan is missing a rollback step' },
     ]);
-  });
-});
-
-describe('parseProgress', () => {
-  it('groups bullets under date headings', () => {
-    const md = `## 2026-06-18
-- Decided on markdown over a database
-- Drafted schemas
-
-## 2026-06-17
-- Wrote the about.md technical reference
-`;
-    const entries = parseProgress(md);
-    expect(entries).toHaveLength(2);
-    expect(entries[0]).toEqual({
-      date: '2026-06-18',
-      items: ['Decided on markdown over a database', 'Drafted schemas'],
-    });
-    expect(entries[1]).toEqual({
-      date: '2026-06-17',
-      items: ['Wrote the about.md technical reference'],
-    });
-  });
-
-  it('returns an empty array for an empty file', () => {
-    expect(parseProgress('')).toEqual([]);
   });
 });
 

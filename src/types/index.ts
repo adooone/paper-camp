@@ -191,11 +191,12 @@ export interface OpenQuestionEntry {
 export type ConsistencyIssueKind =
   | 'dangling-resolved-by'
   | 'dangling-superseded-by'
-  | 'blocked-plan-active';
+  | 'blocked-plan-active'
+  | 'orphan-subject';
 
 export interface ConsistencyIssue {
   kind: ConsistencyIssueKind;
-  section: 'decisions' | 'open-questions';
+  section: 'decisions' | 'open-questions' | 'plans';
   title: string;
   message: string;
   planId?: string;
@@ -258,11 +259,6 @@ export interface EntityEntry {
   archived?: boolean;
 }
 
-export interface ProgressEntry {
-  date: string;
-  items: string[];
-}
-
 // No `id`/`status`: it only becomes a real idea if a human promotes it.
 export interface SuggestionEntry {
   date: string;
@@ -285,6 +281,7 @@ export interface RoadmapHorizon {
 export interface Roadmap {
   goal: string;
   horizons: RoadmapHorizon[];
+  standingConcerns: RoadmapItem[];
 }
 
 export interface RoadmapLink {
@@ -314,7 +311,7 @@ export interface ResolvedRoadmap {
   events: RoadmapEvent[];
 }
 
-export type RoadmapEventKind = 'created' | 'task-run' | 'progress';
+export type RoadmapEventKind = 'created' | 'task-run';
 
 export interface RoadmapEvent {
   date: string;
@@ -392,9 +389,8 @@ export interface PaperCampConfig {
   nextId?: Partial<Record<PlanKind, number>> & { idea?: number };
   port?: number;
   defaultAgents?: DefaultAgentsMap;
-  /** Off by default. When true, the PostToolUse hook logs new-file creations to progress.md. */
-  autoLogNewFiles?: boolean;
-  /** The managed subject list; an idea's `subject` not present here renders as "No subject". */
+  /** Derived from `ROADMAP.md` on every read (IDEA-95), never written to disk; an idea's
+   * `subject` not present here renders as "No subject". */
   subjects?: string[];
   /** Opts out of the first-run redirect to Settings > Setup while capabilities are incomplete. */
   setupDismissed?: boolean;

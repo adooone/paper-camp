@@ -11,7 +11,6 @@ import {
 } from '@/core/roadmap';
 import {
   assignEntityId,
-  ensureSubject,
   formatEntityFile,
   removeSuggestionLine,
   todayDateString,
@@ -152,10 +151,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           sendJson(res, 500, { error: 'could not assign entity ID' });
           return;
         }
-        // A candidate's slice is a "big bet graduates as a Subject" moment: default the
-        // subject to the parent item's name and mint it if config.json doesn't have it yet.
         const resolvedSubject = subject?.trim() || (candidateName ? item.name : undefined);
-        if (resolvedSubject) await ensureSubject(configPath, resolvedSubject);
         const ideasDir = campFile(root, 'ideas');
         await mkdir(ideasDir, { recursive: true });
         const entityContent = formatEntityFile({

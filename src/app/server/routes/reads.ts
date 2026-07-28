@@ -3,12 +3,11 @@ import {
   findConsistencyIssues,
   parseDecisions,
   parseOpenQuestions,
-  parseProgress,
   parseSuggestions,
   parseTaskLog,
 } from '@/core/parse';
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
-import { parseRoadmap, resolveRoadmap } from '@/core/roadmap';
+import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
 import { coerceAgentConfig } from '@/types/index';
 import { cached } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
@@ -36,12 +35,6 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/plans',
     handler: async (root) => cachedWorkEntries(root),
-  },
-  {
-    path: '/api/progress',
-    handler: async (root) => ({
-      entries: parseProgress(await readMaybe(campFile(root, 'progress.md'))),
-    }),
   },
   {
     path: '/api/decisions',
@@ -77,14 +70,21 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/consistency',
     handler: async (root) => {
-      const [decisionsRaw, openQuestionsRaw, plansResult] = await Promise.all([
+      const [decisionsRaw, openQuestionsRaw, plansResult, roadmapRaw] = await Promise.all([
         readMaybe(campFile(root, 'decisions.md')),
         readMaybe(campFile(root, 'open-questions.md')),
         cachedWorkEntries(root),
+        readMaybe(join(root, 'ROADMAP.md')),
       ]);
       const decisions = parseDecisions(decisionsRaw);
       const openQuestions = parseOpenQuestions(openQuestionsRaw);
-      return findConsistencyIssues(decisions.entries, openQuestions.entries, plansResult.entries);
+      const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
+      return findConsistencyIssues(
+        decisions.entries,
+        openQuestions.entries,
+        plansResult.entries,
+        subjectVocabulary,
+      );
     },
   },
   {
@@ -103,6 +103,10 @@ export const readRoutes: ReadRoute[] = [
           commitSuggest: coerceAgentConfig(config.defaultAgents.commitSuggest),
         };
       }
+      // subjects is regenerated from ROADMAP.md on every read rather than trusted from
+      // disk — the roadmap is the only writable source of the vocabulary (IDEA-95).
+      const roadmapRaw = await readMaybe(join(root, 'ROADMAP.md'));
+      config.subjects = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
       return config;
     },
   },
@@ -111,17 +115,11 @@ export const readRoutes: ReadRoute[] = [
     handler: async (root) => {
       const raw = await readMaybe(join(root, 'ROADMAP.md'));
       if (!raw) return null;
-      const [{ entries }, taskLogRaw, progressRaw] = await Promise.all([
+      const [{ entries }, taskLogRaw] = await Promise.all([
         cachedWorkEntries(root),
         readMaybe(campFile(root, 'tasks.log')),
-        readMaybe(campFile(root, 'progress.md')),
       ]);
-      return resolveRoadmap(
-        parseRoadmap(raw),
-        entries,
-        parseTaskLog(taskLogRaw),
-        parseProgress(progressRaw),
-      );
+      return resolveRoadmap(parseRoadmap(raw), entries, parseTaskLog(taskLogRaw));
     },
   },
   {

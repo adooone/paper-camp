@@ -216,9 +216,12 @@ const subjectOf = (row: WorklistRow): string | undefined =>
   row.type === 'plan' ? row.plan.subject : row.idea.subject;
 
 /** Groups already-sorted worklist rows by subject, keeping each row's relative
- * order; rows with no subject collect into the virtual "No subject" group, last.
- * When `validSubjects` is given, a row whose subject isn't in it (e.g. removed
- * from Settings) demotes to "No subject" without touching the idea file. */
+ * order within a group; rows with no subject collect into the virtual "No subject"
+ * group, last. When `validSubjects` is given, a row whose subject isn't in it (e.g.
+ * removed from Settings) demotes to "No subject" without touching the idea file,
+ * and groups are ordered per `validSubjects` — the roadmap's horizon order (H1 near-term
+ * → H3 long bets, standing concerns last) — rather than first-seen order; without it,
+ * groups fall back to first-seen order. */
 export const groupRowsBySubject = (
   rows: WorklistRow[],
   validSubjects?: string[],
@@ -240,7 +243,8 @@ export const groupRowsBySubject = (
     bySubject.get(subject)?.push(row);
   }
 
-  const groups: SubjectGroup[] = order.map((subject) => ({
+  const subjectOrder = validSubjects ? validSubjects.filter((s) => bySubject.has(s)) : order;
+  const groups: SubjectGroup[] = subjectOrder.map((subject) => ({
     subject,
     rows: bySubject.get(subject) ?? [],
   }));

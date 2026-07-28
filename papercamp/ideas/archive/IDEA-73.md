@@ -9,7 +9,7 @@ tags:
   - app
   - ui
   - performance
-subject: Frontend
+subject: App UI
 ---
 
 Page switches lag and don't feel smooth. Framer-motion usage is small (4 files: `router.tsx` route transitions, `stack-panel.tsx` slide, `sidebar-shell.tsx`, `refresh-button.tsx`) so this is a find-fix-simplify pass, not a rewrite. Three suspects are visible in `router.tsx` before any profiling:

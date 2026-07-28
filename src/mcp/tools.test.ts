@@ -254,20 +254,6 @@ describe('write tools', () => {
     expect(archived).toContain('status: dropped');
   });
 
-  it("append_progress prepends a bullet under today's heading", async () => {
-    const root = await makeRoot();
-    const client = await connect(root, createGitManager(root, { watch: false }));
-
-    const result = await client.callTool({
-      name: 'append_progress',
-      arguments: { item: 'Did a thing.' },
-    });
-    expect(result.isError).toBeFalsy();
-
-    const progress = await readFile(join(root, 'papercamp', 'progress.md'), 'utf-8');
-    expect(progress).toContain('- Did a thing.');
-  });
-
   it('resolve_open_question marks the question resolved and logs a decision', async () => {
     const root = await makeRoot();
     await writeFile(

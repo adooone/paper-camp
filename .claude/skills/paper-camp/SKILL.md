@@ -1,17 +1,16 @@
 ---
 name: paper-camp
-description: Work inside a project that has a papercamp/ folder — its per-file plans, ideas, decisions log, open questions, and progress log. Use this whenever the working directory contains papercamp/ (papercamp/plans/, papercamp/ideas/, papercamp/decisions.md, papercamp/open-questions.md, papercamp/progress.md), and especially before starting, continuing, or completing any plan phase, drafting an idea, logging a decision, or answering "what are we working on / what's next".
+description: Work inside a project that has a papercamp/ folder — its per-file plans, ideas, decisions log, and open questions. Use this whenever the working directory contains papercamp/ (papercamp/plans/, papercamp/ideas/, papercamp/decisions.md, papercamp/open-questions.md), and especially before starting, continuing, or completing any plan phase, drafting an idea, logging a decision, or answering "what are we working on / what's next".
 ---
 
 # Paper Camp
 
 Paper Camp is this project's planning methodology: plans, ideas, decisions, and
-open questions live as markdown files under `papercamp/`, and an append-only
-`papercamp/progress.md` is the changelog. This skill tells you how to read that
-state before acting and how to keep it honest as you work.
+open questions live as markdown files under `papercamp/`. This skill tells you
+how to read that state before acting and how to keep it honest as you work.
 
 If a `papercamp` MCP server is connected in this session, prefer its tools
-(list/get plans, update phase, append progress, etc.) over raw file access —
+(list/get plans, update phase, etc.) over raw file access —
 they enforce the same guards (id allocation, branch conflicts) that the file
 grammar below assumes. Everything in this skill still applies conceptually;
 only the mechanism changes.
@@ -31,8 +30,6 @@ Read, in this order, whatever exists:
    Don't re-litigate a logged decision without flagging it to the user first.
 5. `papercamp/open-questions.md` — unresolved questions that might block or
    redirect the work you're about to start.
-6. The last handful of entries in `papercamp/progress.md` for recent context
-   on what just happened.
 
 Skip files that don't exist yet (a fresh project may have empty logs).
 
@@ -54,11 +51,6 @@ Skip files that don't exist yet (a fresh project may have empty logs).
   checked, set status to `review` — never `done`. `done` is a human-only
   promotion after review; an agent finishing the last phase does not close
   the plan itself.
-- **Progress log**: add one bullet describing what you did under today's
-  `## YYYY-MM-DD` heading at the top of `papercamp/progress.md` (newest day
-  first; create the heading if today's isn't there yet). Be specific enough
-  that a future read of the log alone explains what changed and why, without
-  needing to re-read the diff.
 - **Decisions / open questions**: if you settle something ambiguous while
   working, log it in `papercamp/decisions.md`; if you surface a question you
   can't resolve yourself, add it to `papercamp/open-questions.md` rather than
@@ -67,7 +59,7 @@ Skip files that don't exist yet (a fresh project may have empty logs).
 ## What this skill deliberately does not do
 
 It does not maintain a separate "current focus" file — that's derived at
-session start from live plan/progress data, not hand-maintained here. It does
+session start from live plan data, not hand-maintained here. It does
 not define the file formats in full; treat the existing files under
 `papercamp/` as the grammar reference (mirror their structure exactly rather
 than inventing a new shape).

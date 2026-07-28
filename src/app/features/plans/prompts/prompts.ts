@@ -383,7 +383,7 @@ export function buildSuggestIdeasPrompt(
     ? existingSuggestions.map((s) => `- ${s.date}: ${s.title} — ${s.description}`).join('\n')
     : '(none yet)';
 
-  return `You are scanning this repository for ideas worth suggesting, to append to papercamp/suggestions.md — a lightweight holding pen, sibling to decisions.md/open-questions.md/progress.md. Edit only that one file.
+  return `You are scanning this repository for ideas worth suggesting, to append to papercamp/suggestions.md — a lightweight holding pen, sibling to decisions.md/open-questions.md. Edit only that one file.
 
 Existing ideas (do not repeat anything already covered here):
 ${ideaIndex}
