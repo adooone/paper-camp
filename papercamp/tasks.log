@@ -69,3 +69,4 @@
 {"id":"c0d7aa1a-815e-4eb4-b736-305b97578e6d","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-27T13:50:48.921Z","endedAt":"2026-07-27T13:51:03.684Z","outcome":"done"}
 {"id":"40fbca8b-b105-4886-af40-a2064f3e6f73","taskKind":"run-all","planId":"IDEA-91","planTitle":"Roadmap items survive promotion","agentId":"claude-code","startedAt":"2026-07-27T20:02:01.957Z","endedAt":"2026-07-27T20:45:43.573Z","outcome":"done"}
 {"id":"5edb16e1-f880-4993-845e-42d80caa359c","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-27T21:24:24.197Z","endedAt":"2026-07-27T21:24:30.221Z","outcome":"done"}
+{"id":"d16084d1-b340-43c2-a59e-6b0a998c9318","taskKind":"run-all","planId":"IDEA-92","planTitle":"Timeline view and horizon lanes","agentId":"claude-code","startedAt":"2026-07-28T06:16:28.735Z","endedAt":"2026-07-28T06:36:41.589Z","outcome":"error"}

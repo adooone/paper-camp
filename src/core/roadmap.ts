@@ -229,7 +229,12 @@ export function linkRoadmapItem(
   return markdown;
 }
 
-export function resolveRoadmap(roadmap: Roadmap, entities: PlanEntry[]): ResolvedRoadmap {
+export function resolveRoadmap(
+  roadmap: Roadmap,
+  entities: PlanEntry[],
+  taskLog: TaskLogEntry[] = [],
+  progress: ProgressEntry[] = [],
+): ResolvedRoadmap {
   const statusById = new Map(entities.filter((e) => e.id).map((e) => [e.id, e.status]));
 
   const horizons = roadmap.horizons.map((horizon) => {
@@ -251,7 +256,8 @@ export function resolveRoadmap(roadmap: Roadmap, entities: PlanEntry[]): Resolve
     return { title: horizon.title, items, rollup };
   });
 
-  return { goal: roadmap.goal, horizons };
+  const events = deriveRoadmapEvents(roadmap, entities, taskLog, progress);
+  return { goal: roadmap.goal, horizons, events };
 }
 
 const WIKI_LINK_RE = /\[\[([A-Z]+-\d+)\]\]/g;

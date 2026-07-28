@@ -311,6 +311,7 @@ export interface ResolvedRoadmapHorizon {
 export interface ResolvedRoadmap {
   goal: string;
   horizons: ResolvedRoadmapHorizon[];
+  events: RoadmapEvent[];
 }
 
 export type RoadmapEventKind = 'created' | 'task-run' | 'progress';

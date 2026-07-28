@@ -3,8 +3,14 @@ import { PageTitle } from '@/app/components/page-title';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { addRoadmapCandidate, addRoadmapItem, fetchRoadmap } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
-import { fontFamily, fontSize, space } from '@/app/styles/tokens';
-import type { PlanEntry, ResolvedRoadmap, ResolvedRoadmapItem } from '@/types/index';
+import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
+import type {
+  PlanEntry,
+  ResolvedRoadmap,
+  ResolvedRoadmapItem,
+  RoadmapEvent,
+  RoadmapEventKind,
+} from '@/types/index';
 import { Button, Card, Input, Stamp } from '@dendelion/paper-ui';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
@@ -473,6 +479,129 @@ const HorizonPulse = ({
   );
 };
 
+const EVENT_KIND_COLOR: Record<RoadmapEventKind, string> = {
+  created: color.accentSlate,
+  'task-run': color.accentAmber,
+  progress: color.accentGreen,
+};
+
+const RoadmapTimelineTrack = ({
+  events,
+  rangeStart,
+  rangeEnd,
+}: {
+  events: RoadmapEvent[];
+  rangeStart: number;
+  rangeEnd: number;
+}) => {
+  const span = rangeEnd - rangeStart || 1;
+  return (
+    <div className="roadmap-timeline-track">
+      {events.map((event, i) => (
+        <span
+          key={`${event.entityId}-${event.kind}-${i}`}
+          className="roadmap-timeline-dot"
+          style={{
+            left: `${((Date.parse(event.date) - rangeStart) / span) * 100}%`,
+            background: EVENT_KIND_COLOR[event.kind],
+          }}
+          title={`${event.itemName} — ${event.label} (${event.date})`}
+        />
+      ))}
+    </div>
+  );
+};
+
+const RoadmapMapItem = ({ item }: { item: ResolvedRoadmapItem }) => {
+  const percent =
+    item.rollup.total > 0 ? Math.round((item.rollup.done / item.rollup.total) * 100) : 0;
+  return (
+    <div className="roadmap-map-item">
+      <div style={{ fontWeight: 600, fontSize: fontSize.sm }}>{item.name}</div>
+      <div className="roadmap-map-progress-track">
+        <div
+          className="roadmap-map-progress-fill"
+          style={{
+            width: `${percent}%`,
+            background: item.rollup.total > 0 ? color.accentGreen : 'transparent',
+          }}
+        />
+      </div>
+      <div style={{ fontSize: fontSize['2xs'], opacity: 0.5 }}>
+        {item.rollup.total > 0 ? `${item.rollup.done}/${item.rollup.total} done` : 'not started'}
+      </div>
+    </div>
+  );
+};
+
+const RoadmapMap = ({
+  roadmap,
+  graduatedByItem,
+}: {
+  roadmap: ResolvedRoadmap;
+  graduatedByItem: (item: ResolvedRoadmapItem) => PlanEntry[];
+}) => (
+  <div className="roadmap-lanes">
+    {roadmap.horizons.map((horizon) => (
+      <div key={horizon.title} style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
+          <div style={horizonHeaderStyle}>{horizon.title}</div>
+          <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
+        </div>
+        <div className="roadmap-lane-items">
+          {horizon.items.map((item) => (
+            <div key={item.name} className="roadmap-lane-item">
+              <RoadmapMapItem item={item} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const RoadmapTimeline = ({ roadmap }: { roadmap: ResolvedRoadmap }) => {
+  if (roadmap.events.length === 0) {
+    return <p style={{ opacity: 0.5 }}>No dated events yet.</p>;
+  }
+
+  const dates = roadmap.events.map((event) => Date.parse(event.date));
+  const rangeStart = Math.min(...dates);
+  const rangeEnd = Math.max(...dates);
+
+  return (
+    <div className="roadmap-lanes">
+      {roadmap.horizons.map((horizon) => {
+        const events = roadmap.events.filter((event) => event.horizonTitle === horizon.title);
+        return (
+          <div
+            key={horizon.title}
+            style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+          >
+            <div style={horizonHeaderStyle}>{horizon.title}</div>
+            {events.length === 0 ? (
+              <div style={{ ...horizonPulseStyle, opacity: 0.4 }}>No events yet</div>
+            ) : (
+              <RoadmapTimelineTrack events={events} rangeStart={rangeStart} rangeEnd={rangeEnd} />
+            )}
+          </div>
+        );
+      })}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: fontSize['2xs'],
+          opacity: 0.5,
+        }}
+      >
+        <span>{new Date(rangeStart).toLocaleDateString()}</span>
+        <span>{new Date(rangeEnd).toLocaleDateString()}</span>
+      </div>
+    </div>
+  );
+};
+
 export const RoadmapPage = () => {
   const [roadmap, setRoadmap] = useState<ResolvedRoadmap | null>(null);
   const [loading, setLoading] = useState(true);
@@ -590,8 +719,8 @@ export const RoadmapPage = () => {
           ))}
         </div>
       )}
-      {viewMode === 'map' && <p style={{ opacity: 0.5 }}>Map view is coming soon.</p>}
-      {viewMode === 'timeline' && <p style={{ opacity: 0.5 }}>Timeline view is coming soon.</p>}
+      {viewMode === 'map' && <RoadmapMap roadmap={roadmap} graduatedByItem={graduatedByItem} />}
+      {viewMode === 'timeline' && <RoadmapTimeline roadmap={roadmap} />}
       <PromoteRoadmapItemModal
         horizonTitle={promoting?.horizonTitle ?? null}
         item={promoting?.item ?? null}
