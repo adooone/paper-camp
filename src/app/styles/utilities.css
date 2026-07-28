@@ -245,19 +245,29 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * The Roadmap's horizons are columns of a survey, not a scroll — three
- * side-by-side at lg fit the whole map on one screen; below that they stack
- * so item cards keep readable width instead of shrinking to fit a column.
+ * The Roadmap's horizons are horizontal lanes, not columns: a lane spans the
+ * full page width regardless of how many horizons exist, and its items wrap
+ * left-to-right inside it, each keeping room for a title plus its rollup.
  */
-.roadmap-horizons-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0 1.5rem;
+.roadmap-lanes {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
-@media (max-width: 1023px) {
-  .roadmap-horizons-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.5rem;
+.roadmap-lane-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+.roadmap-lane-item {
+  flex: 1 1 240px;
+  max-width: 320px;
+}
+@media (max-width: 480px) {
+  .roadmap-lane-item {
+    flex-basis: 100%;
+    max-width: none;
   }
 }
 

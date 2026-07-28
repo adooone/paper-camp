@@ -425,6 +425,38 @@ const GoalBanner = ({ goal }: { goal: string }) => {
   );
 };
 
+type RoadmapViewMode = 'tree' | 'map' | 'timeline';
+
+const VIEW_MODES: { id: RoadmapViewMode; label: string }[] = [
+  { id: 'tree', label: 'Tree' },
+  { id: 'map', label: 'Map' },
+  { id: 'timeline', label: 'Timeline' },
+];
+
+const RoadmapViewModeSwitch = ({
+  mode,
+  onChange,
+}: {
+  mode: RoadmapViewMode;
+  onChange: (mode: RoadmapViewMode) => void;
+}) => (
+  <nav aria-label="Roadmap view" style={{ display: 'flex', gap: space[1], marginBottom: space[4] }}>
+    {VIEW_MODES.map((viewMode) => (
+      <Button
+        key={viewMode.id}
+        type="button"
+        variant="ghost"
+        size="small"
+        isActive={mode === viewMode.id}
+        aria-pressed={mode === viewMode.id}
+        onClick={() => onChange(viewMode.id)}
+      >
+        {viewMode.label}
+      </Button>
+    ))}
+  </nav>
+);
+
 const HorizonPulse = ({
   items,
   graduatedByItem,
@@ -450,6 +482,7 @@ export const RoadmapPage = () => {
     item: ResolvedRoadmapItem;
     candidateName?: string;
   } | null>(null);
+  const [viewMode, setViewMode] = useState<RoadmapViewMode>('tree');
   const plans = useAppStore((s) => s.plans);
   const navigate = useNavigate();
   const { item: highlightedItem } = useSearch({ from: '/roadmap' });
@@ -513,39 +546,52 @@ export const RoadmapPage = () => {
   return (
     <div ref={containerRef}>
       <GoalBanner goal={roadmap.goal} />
-      <div className="roadmap-horizons-grid">
-        {roadmap.horizons.map((horizon) => (
-          <div
-            key={horizon.title}
-            style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
-          >
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
-              <div style={horizonHeaderStyle}>{horizon.title}</div>
-              <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
+      <RoadmapViewModeSwitch mode={viewMode} onChange={setViewMode} />
+      {viewMode === 'tree' && (
+        <div className="roadmap-lanes">
+          {roadmap.horizons.map((horizon) => (
+            <div
+              key={horizon.title}
+              style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
+                <div style={horizonHeaderStyle}>{horizon.title}</div>
+                <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
+              </div>
+              <div className="roadmap-lane-items">
+                {horizon.items.map((item) => (
+                  <div key={item.name} className="roadmap-lane-item">
+                    <RoadmapItemRow
+                      item={item}
+                      graduated={graduatedByItem(item)}
+                      highlighted={item.name === highlightedItem}
+                      onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
+                      onPromoteCandidate={(candidateName) =>
+                        setPromoting({ horizonTitle: horizon.title, item, candidateName })
+                      }
+                      onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
+                      onViewGraduated={() => navigate({ to: '/', search: { subject: item.name } })}
+                      onOpenGraduated={(title) =>
+                        navigate({
+                          to: '/plans/$planId',
+                          params: { planId: encodeURIComponent(title) },
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+                <div className="roadmap-lane-item">
+                  <AddItemForm
+                    onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
+                  />
+                </div>
+              </div>
             </div>
-            {horizon.items.map((item) => (
-              <RoadmapItemRow
-                key={item.name}
-                item={item}
-                graduated={graduatedByItem(item)}
-                highlighted={item.name === highlightedItem}
-                onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
-                onPromoteCandidate={(candidateName) =>
-                  setPromoting({ horizonTitle: horizon.title, item, candidateName })
-                }
-                onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
-                onViewGraduated={() => navigate({ to: '/', search: { subject: item.name } })}
-                onOpenGraduated={(title) =>
-                  navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(title) } })
-                }
-              />
-            ))}
-            <AddItemForm
-              onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
-            />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+      {viewMode === 'map' && <p style={{ opacity: 0.5 }}>Map view is coming soon.</p>}
+      {viewMode === 'timeline' && <p style={{ opacity: 0.5 }}>Timeline view is coming soon.</p>}
       <PromoteRoadmapItemModal
         horizonTitle={promoting?.horizonTitle ?? null}
         item={promoting?.item ?? null}
