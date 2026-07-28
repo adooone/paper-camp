@@ -28,7 +28,7 @@ Depends on [[IDEA-91]] for the roadmap end of the chain.
       Gather an entity's `tasks.log` runs, its branch commits, its PR, and its release line into the trail model, with each hop carrying its reached / not-reached state.
 - [x] Expose the trail through a server route
       A route returning the assembled trail for an entity plus the reverse lookup for a release line or commit, degrading cleanly when GitHub or a release line is absent.
-- [ ] Surface the trail on the entity detail view
+- [x] Surface the trail on the entity detail view
       A provenance panel in `entity-detail.tsx` rendering the chain as a click path — tasks, commits, PR, release line — so "what was done and where it went" is visible on the idea.
 - [ ] Extend the roadmap end with the deeper trail
       Building on [[IDEA-91]]'s item → idea rollup, let a roadmap item resolve through to the work it produced and how far it got (tasks, PR, release), not just its child ideas' statuses.
