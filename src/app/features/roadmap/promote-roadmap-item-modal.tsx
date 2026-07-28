@@ -1,5 +1,5 @@
 import { buildRoadmapPromotePrompt } from '@/app/features/plans/prompts';
-import { useProjectSubjects } from '@/app/hooks/use-project-subjects';
+import { useSubjectVocabulary } from '@/app/hooks/use-subject-vocabulary';
 import { useAppStore } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
@@ -26,7 +26,7 @@ export const PromoteRoadmapItemModal = ({
 }: PromoteRoadmapItemModalProps) => {
   const promoteRoadmapItem = useAppStore((s) => s.promoteRoadmapItem);
   const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);
-  const { subjects } = useProjectSubjects();
+  const { subjects } = useSubjectVocabulary();
   const [subject, setSubject] = useState(NO_SUBJECT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

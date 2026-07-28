@@ -2,7 +2,7 @@ import { LightbulbIcon, NoteIcon } from '@/app/components/icons';
 import type { IdeaGroupRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
 import { groupRowsBySubject } from '@/app/features/plans/helpers';
 import { useRoadmapItemNames } from '@/app/features/roadmap';
-import { useProjectSubjects } from '@/app/hooks';
+import { useSubjectVocabulary } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
@@ -91,7 +91,7 @@ export const WorklistRows = ({
   onOpenIdea,
 }: WorklistRowsProps) => {
   const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set());
-  const { subjects: validSubjects, loading: subjectsLoading } = useProjectSubjects();
+  const { subjects: validSubjects, loading: subjectsLoading } = useSubjectVocabulary();
   const roadmapItemNames = useRoadmapItemNames();
   const navigate = useNavigate();
   const gridClass = 'plan-rows-grid';

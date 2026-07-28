@@ -1,5 +1,4 @@
 export { useProjectIdentity } from './use-project-identity';
-export { useProjectSubjects } from './use-project-subjects';
 export {
   useActiveIdeaTitle,
   useActivePlanTitle,

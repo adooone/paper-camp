@@ -68,7 +68,7 @@ them into the horizon list would misrepresent them).
       Flag entities whose `subject` isn't in the roadmap-derived vocabulary as orphans, keep
       "no subject" a first-class non-awkward state, and drive the subject picker in
       `plan-actions-column.tsx` from the vocabulary rather than the config list.
-- [ ] Point the Settings subjects surface at the roadmap
+- [x] Point the Settings subjects surface at the roadmap
       Replace the config-backed editor (`use-project-subjects`, Settings' `subjects` section)
       with a read-only view sourced from the roadmap, or a link into the roadmap view where the
       vocabulary is now edited.

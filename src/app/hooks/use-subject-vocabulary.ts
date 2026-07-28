@@ -7,7 +7,7 @@ export interface SubjectVocabulary {
 }
 
 // Read-only: `subjects` is derived from ROADMAP.md server-side (IDEA-95), so there's
-// nothing here to add/rename/remove — see useProjectSubjects for the Settings editor.
+// nothing here to add/rename/remove — edit the vocabulary via the Roadmap page.
 export const useSubjectVocabulary = (): SubjectVocabulary => {
   const [subjects, setSubjects] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
