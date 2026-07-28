@@ -40,6 +40,39 @@ function findReleaseLineForCommit(changelog: string, sha: string): string | unde
   });
 }
 
+const BRANCH_ID_RE = /^[a-z]+\/([a-z]+-\d+)-/;
+
+async function resolveDefaultBranch(root: string): Promise<string> {
+  const symbolic = await runGit(root, ['symbolic-ref', 'refs/remotes/origin/HEAD']);
+  return symbolic.trim().match(/refs\/remotes\/origin\/(.+)/)?.[1] ?? 'main';
+}
+
+async function resolveBranchForId(root: string, id: string): Promise<string | undefined> {
+  const refs = await runGit(root, [
+    'for-each-ref',
+    '--format=%(refname)',
+    'refs/heads',
+    'refs/remotes',
+  ]);
+  const target = id.toLowerCase();
+  for (const ref of refs.split('\n')) {
+    const name = ref.replace(/^refs\/heads\//, '').replace(/^refs\/remotes\/[^/]+\//, '');
+    if (BRANCH_ID_RE.exec(name)?.[1] === target) return name;
+  }
+  return undefined;
+}
+
+async function resolveCommitsForEntity(root: string, id: string): Promise<string[]> {
+  const branch = await resolveBranchForId(root, id);
+  if (!branch) return [];
+  const base = await resolveDefaultBranch(root);
+  const output = await runGit(root, ['log', '--format=%s', `${base}..${branch}`]);
+  return output
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 function runGit(root: string, args: string[]): Promise<string> {
   return new Promise((resolve) => {
     const proc = spawn('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
@@ -65,11 +98,12 @@ export async function resolveEntityIdForCommit(root: string, sha: string): Promi
 }
 
 export async function resolveEntityTrail(root: string, id: string): Promise<ProvenanceTrail> {
-  const [{ entries }, prs, taskLogRaw, changelogRaw] = await Promise.all([
+  const [{ entries }, prs, taskLogRaw, changelogRaw, commits] = await Promise.all([
     readEntities(join(root, 'papercamp', 'ideas')),
     resolvePrsByEntity(root),
     readFileMaybe(join(root, 'papercamp', 'tasks.log')),
     readFileMaybe(join(root, 'CHANGELOG.md')),
+    resolveCommitsForEntity(root, id),
   ]);
 
   const entry = entries.find((e) => e.id === id);
@@ -91,7 +125,7 @@ export async function resolveEntityTrail(root: string, id: string): Promise<Prov
       : { reached: false },
     phases: entry ? { reached: entry.phases.length > 0, data: entry.phases } : { reached: false },
     taskRuns: { reached: taskRuns.length > 0, data: taskRuns },
-    commits: { reached: false },
+    commits: commits.length > 0 ? { reached: true, data: commits } : { reached: false },
     pr: pr ? { reached: true, data: pr } : { reached: false },
     releaseLine: releaseLine ? { reached: true, data: releaseLine } : { reached: false },
   };

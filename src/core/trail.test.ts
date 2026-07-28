@@ -172,6 +172,22 @@ describe('resolveEntityTrail', () => {
     expect(trail.pr.data?.number).toBe(7);
   });
 
+  it('resolves branch commits ahead of main for the entity', async () => {
+    const root = initGitRepo();
+    mkdirSync(join(root, 'papercamp', 'ideas', 'archive'), { recursive: true });
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'chore(repo): seed main');
+    git(root, 'checkout', '-b', 'feat/idea-1-some-work');
+    writeFileSync(join(root, 'b.txt'), 'b\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'feat(core): Add the thing');
+
+    const trail = await resolveEntityTrail(root, 'IDEA-1');
+
+    expect(trail.commits).toEqual({ reached: true, data: ['feat(core): Add the thing'] });
+  });
+
   it('marks every hop unreached for an unknown id', async () => {
     const root = makeRoot();
     const trail = await resolveEntityTrail(root, 'IDEA-999');
