@@ -285,6 +285,7 @@ export interface RoadmapHorizon {
 export interface Roadmap {
   goal: string;
   horizons: RoadmapHorizon[];
+  standingConcerns: RoadmapItem[];
 }
 
 export interface RoadmapLink {

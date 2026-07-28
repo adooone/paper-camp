@@ -50,6 +50,13 @@ Some horizon prose.
 ## Horizon 2 — A deeper desk
 
 - **Goal & roadmap in the app** — this file rendered as a first-class surface.
+
+## Standing concerns
+
+Not horizons: these never ship and never graduate.
+
+- **Infrastructure** — the machinery around the work.
+- **Code health** — refactors and slimming passes.
 `;
 
 describe('parseRoadmap', () => {
@@ -136,7 +143,29 @@ describe('parseRoadmap', () => {
   });
 
   it('returns an empty roadmap for markdown with no matching headings', () => {
-    expect(parseRoadmap('# Just a doc\n\nNo headings here.')).toEqual({ goal: '', horizons: [] });
+    expect(parseRoadmap('# Just a doc\n\nNo headings here.')).toEqual({
+      goal: '',
+      horizons: [],
+      standingConcerns: [],
+    });
+  });
+
+  it('parses `## Standing concerns` as a distinct, non-horizon kind', () => {
+    const { standingConcerns } = parseRoadmap(SAMPLE);
+    expect(standingConcerns).toEqual([
+      {
+        name: 'Infrastructure',
+        description: 'the machinery around the work.',
+        candidates: [],
+        linked: [],
+      },
+      {
+        name: 'Code health',
+        description: 'refactors and slimming passes.',
+        candidates: [],
+        linked: [],
+      },
+    ]);
   });
 });
 

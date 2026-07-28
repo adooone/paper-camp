@@ -11,6 +11,7 @@ import type {
 const H2_RE = /^##\s+/;
 const GOAL_HEADING_RE = /^##\s+The goal\s*$/i;
 const HORIZON_HEADING_RE = /^##\s+(Horizon\s+\d+\s*[—-].*)\r?$/i;
+const STANDING_CONCERNS_HEADING_RE = /^##\s+Standing concerns\s*$/i;
 const ITEM_RE = /^-\s+\*\*(.+?)\*\*\s+[—-]\s+(.*)\r?$/;
 const ITEM_LINK_RE = /^\s+-\s+→\s+(.+?)\r?$/;
 const ITEM_CANDIDATE_RE = /^\s+-\s+(.+?)\r?$/;
@@ -51,12 +52,14 @@ function parseItems(lines: string[], start: number, end: number): RoadmapItem[] 
   return items;
 }
 
-// Tolerant of prose anywhere outside the load-bearing headings: only `## The goal` and
-// `## Horizon N — …` are ever inspected, everything else (intro, "How this file works") is skipped.
+// Tolerant of prose anywhere outside the load-bearing headings: only `## The goal`,
+// `## Horizon N — …`, and `## Standing concerns` are ever inspected, everything else
+// (intro, "How this file works") is skipped.
 export function parseRoadmap(markdown: string): Roadmap {
   const lines = markdown.split('\n');
   let goal = '';
   const horizons: Roadmap['horizons'] = [];
+  let standingConcerns: Roadmap['standingConcerns'] = [];
 
   for (let i = 0; i < lines.length; i++) {
     if (GOAL_HEADING_RE.test(lines[i])) {
@@ -76,10 +79,18 @@ export function parseRoadmap(markdown: string): Roadmap {
       while (end < lines.length && !H2_RE.test(lines[end])) end++;
       horizons.push({ title: horizonMatch[1].trim(), items: parseItems(lines, i + 1, end) });
       i = end - 1;
+      continue;
+    }
+
+    if (STANDING_CONCERNS_HEADING_RE.test(lines[i])) {
+      let end = i + 1;
+      while (end < lines.length && !H2_RE.test(lines[end])) end++;
+      standingConcerns = parseItems(lines, i + 1, end);
+      i = end - 1;
     }
   }
 
-  return { goal, horizons };
+  return { goal, horizons, standingConcerns };
 }
 
 // Splices out one item's bullet (and its wrapped continuation lines and candidates) so the

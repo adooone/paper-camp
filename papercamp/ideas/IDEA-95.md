@@ -49,7 +49,7 @@ whether they are a distinct kind alongside horizons (they are not time-ordered, 
 them into the horizon list would misrepresent them).
 
 ### Phases
-- [ ] Teach the roadmap parser about the `## Standing concerns` section
+- [x] Teach the roadmap parser about the `## Standing concerns` section
       Extend `HORIZON_HEADING_RE`/`parseRoadmap` in `src/core/roadmap.ts` to recognize the
       non-horizon `## Standing concerns` section as a distinct kind alongside horizons (not
       time-ordered), and add it to the `Roadmap` type so those terms are first-class subjects.
