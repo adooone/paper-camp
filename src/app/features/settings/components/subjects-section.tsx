@@ -4,7 +4,7 @@ import { Button, Card, Divider } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 
 export const SubjectsSection = () => {
-  const { subjects, loading } = useSubjectVocabulary();
+  const { subjects, loading, available } = useSubjectVocabulary();
   const navigate = useNavigate();
 
   return (
@@ -17,7 +17,10 @@ export const SubjectsSection = () => {
         </p>
       </div>
       {loading && <p>Loading…</p>}
-      {!loading && (
+      {!loading && !available && (
+        <p style={{ opacity: 0.6, margin: 0 }}>Couldn't load subjects — check the server config.</p>
+      )}
+      {!loading && available && (
         <Card size="small">
           {subjects.length === 0 && (
             <p style={{ opacity: 0.45, margin: 0, paddingBottom: space[2] }}>No subjects yet.</p>

@@ -26,7 +26,7 @@ export const PromoteRoadmapItemModal = ({
 }: PromoteRoadmapItemModalProps) => {
   const promoteRoadmapItem = useAppStore((s) => s.promoteRoadmapItem);
   const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);
-  const { subjects } = useSubjectVocabulary();
+  const { subjects, available: subjectsAvailable } = useSubjectVocabulary();
   const [subject, setSubject] = useState(NO_SUBJECT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,9 +90,12 @@ export const PromoteRoadmapItemModal = ({
             size="small"
             value={subject}
             onChange={setSubject}
-            disabled={loading}
+            disabled={loading || !subjectsAvailable}
             options={[
               { value: NO_SUBJECT, label: 'No subject' },
+              ...(!subjectsAvailable && subject !== NO_SUBJECT
+                ? [{ value: subject, label: subject }]
+                : []),
               ...subjects.map((s) => ({ value: s, label: s })),
             ]}
           />

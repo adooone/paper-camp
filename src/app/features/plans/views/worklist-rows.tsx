@@ -91,7 +91,11 @@ export const WorklistRows = ({
   onOpenIdea,
 }: WorklistRowsProps) => {
   const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set());
-  const { subjects: validSubjects, loading: subjectsLoading } = useSubjectVocabulary();
+  const {
+    subjects: validSubjects,
+    loading: subjectsLoading,
+    available: subjectsAvailable,
+  } = useSubjectVocabulary();
   const roadmapItemNames = useRoadmapItemNames();
   const navigate = useNavigate();
   const gridClass = 'plan-rows-grid';
@@ -143,7 +147,10 @@ export const WorklistRows = ({
     );
   };
 
-  const groups = groupRowsBySubject(rows, subjectsLoading ? undefined : validSubjects);
+  const groups = groupRowsBySubject(
+    rows,
+    subjectsLoading || !subjectsAvailable ? undefined : validSubjects,
+  );
   const showSubjectHeaders = groups.length > 1;
 
   return (

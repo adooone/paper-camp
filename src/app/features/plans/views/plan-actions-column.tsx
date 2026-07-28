@@ -27,7 +27,7 @@ export const PlanActionsColumn = () => {
   const agentBusy = useAppStore(selectAgentBusy);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
-  const { subjects } = useSubjectVocabulary();
+  const { subjects, available: subjectsAvailable } = useSubjectVocabulary();
   const detailView = useAppStore((s) => s.detailView);
   const setDetailView = useAppStore((s) => s.setDetailView);
 
@@ -48,7 +48,10 @@ export const PlanActionsColumn = () => {
       (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
       plan.pr.unresolvedThreadCount,
   );
-  const orphanSubject = plan.subject && !subjects.includes(plan.subject) ? plan.subject : undefined;
+  const orphanSubject =
+    subjectsAvailable && plan.subject && !subjects.includes(plan.subject)
+      ? plan.subject
+      : undefined;
 
   const patch = (updates: Parameters<typeof patchByTitle>[1]) => patchByTitle(plan.title, updates);
 
@@ -124,11 +127,14 @@ export const PlanActionsColumn = () => {
               size="small"
               value={plan.subject ?? NO_SUBJECT}
               onChange={(value) => patch({ subject: value === NO_SUBJECT ? null : value })}
-              disabled={updating}
+              disabled={updating || !subjectsAvailable}
               options={[
                 { value: NO_SUBJECT, label: 'No subject' },
                 ...(orphanSubject
                   ? [{ value: orphanSubject, label: `${orphanSubject} (orphan)` }]
+                  : []),
+                ...(!subjectsAvailable && plan.subject && !orphanSubject
+                  ? [{ value: plan.subject, label: plan.subject }]
                   : []),
                 ...subjects.map((s) => ({ value: s, label: s })),
               ]}
