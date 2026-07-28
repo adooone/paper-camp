@@ -32,9 +32,9 @@ export const StatusSection = () => {
   // `consistency` is doc findings (dangling refs, blocked plans), distinct from consistencyStatus (code check).
   const hasDocIssues = consistency.length > 0;
 
-  const blockedPlanFor = useCallback(
+  const linkedPlanFor = useCallback(
     (issue: ConsistencyIssue) =>
-      issue.kind === 'blocked-plan-active' && issue.planId
+      (issue.kind === 'blocked-plan-active' || issue.kind === 'orphan-subject') && issue.planId
         ? plans?.entries.find((p) => p.id === issue.planId)
         : undefined,
     [plans?.entries],
@@ -42,15 +42,15 @@ export const StatusSection = () => {
 
   const handleFindingClick = useCallback(
     (issue: ConsistencyIssue) => {
-      const blockedPlan = blockedPlanFor(issue);
-      if (blockedPlan) {
+      const linkedPlan = linkedPlanFor(issue);
+      if (linkedPlan) {
         navigate({
           to: '/plans/$planId',
-          params: { planId: encodeURIComponent(blockedPlan.title) },
+          params: { planId: encodeURIComponent(linkedPlan.title) },
         });
       }
     },
-    [blockedPlanFor, navigate],
+    [linkedPlanFor, navigate],
   );
 
   return (
@@ -209,7 +209,7 @@ export const StatusSection = () => {
                             color: deskTextMuted,
                           }}
                         >
-                          {blockedPlanFor(issue) ? (
+                          {linkedPlanFor(issue) ? (
                             <button
                               type="button"
                               onClick={() => handleFindingClick(issue)}

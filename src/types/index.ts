@@ -191,11 +191,12 @@ export interface OpenQuestionEntry {
 export type ConsistencyIssueKind =
   | 'dangling-resolved-by'
   | 'dangling-superseded-by'
-  | 'blocked-plan-active';
+  | 'blocked-plan-active'
+  | 'orphan-subject';
 
 export interface ConsistencyIssue {
   kind: ConsistencyIssueKind;
-  section: 'decisions' | 'open-questions';
+  section: 'decisions' | 'open-questions' | 'plans';
   title: string;
   message: string;
   planId?: string;

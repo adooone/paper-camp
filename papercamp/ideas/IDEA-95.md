@@ -64,7 +64,7 @@ them into the horizon list would misrepresent them).
       Change `POST /api/roadmap/promote` (`src/app/server/routes/content/ideas.ts`) to no longer
       call `ensureSubject`; the promoted item now survives in the roadmap ([[IDEA-91]]) and is
       already the vocabulary, so the new entity's `subject` just points at it.
-- [ ] Validate and surface entity subjects against the vocabulary
+- [x] Validate and surface entity subjects against the vocabulary
       Flag entities whose `subject` isn't in the roadmap-derived vocabulary as orphans, keep
       "no subject" a first-class non-awkward state, and drive the subject picker in
       `plan-actions-column.tsx` from the vocabulary rather than the config list.

@@ -395,6 +395,7 @@ export function findConsistencyIssues(
   decisions: DecisionEntry[],
   openQuestions: OpenQuestionEntry[],
   plans: PlanEntry[],
+  subjectVocabulary: string[] = [],
 ): ConsistencyIssue[] {
   const decisionTitles = new Set(decisions.map((d) => d.title));
   const issues: ConsistencyIssue[] = [];
@@ -433,6 +434,18 @@ export function findConsistencyIssues(
           message: `Still open but blocks "${blockedPlan.title}" (${blockedPlan.id}), already ${blockedPlan.status}`,
         });
       }
+    }
+  }
+
+  for (const plan of plans) {
+    if (plan.subject && !subjectVocabulary.includes(plan.subject)) {
+      issues.push({
+        kind: 'orphan-subject',
+        section: 'plans',
+        title: plan.title,
+        planId: plan.id,
+        message: `Subject "${plan.subject}" isn't in the roadmap vocabulary — "${plan.title}"`,
+      });
     }
   }
 

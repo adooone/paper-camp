@@ -15,6 +15,7 @@ import {
   parseOpenQuestions,
 } from '../parse/parser';
 import { entityToPlan, readEntities } from '../readers';
+import { deriveSubjectVocabulary, parseRoadmap } from '../roadmap';
 import { computePlanContentHash } from '../serialize/content-hash';
 import { parsePrUrl, resolveEntityIdFromPrRef } from './pr-lookup';
 import { COMMIT_SCOPES, resolvePrimaryScope } from './scopes';
@@ -442,16 +443,20 @@ export async function syncConsistencyCommentToPr(
   if (!context?.view?.url) return 'unresolved';
   const { view, entry } = context;
 
-  const [decisionsRaw, openQuestionsRaw, { entries: entityEntries }] = await Promise.all([
-    readFile(join(root, 'papercamp', 'decisions.md'), 'utf-8').catch(() => ''),
-    readFile(join(root, 'papercamp', 'open-questions.md'), 'utf-8').catch(() => ''),
-    readEntities(join(root, 'papercamp', 'ideas')),
-  ]);
+  const [decisionsRaw, openQuestionsRaw, { entries: entityEntries }, roadmapRaw] =
+    await Promise.all([
+      readFile(join(root, 'papercamp', 'decisions.md'), 'utf-8').catch(() => ''),
+      readFile(join(root, 'papercamp', 'open-questions.md'), 'utf-8').catch(() => ''),
+      readEntities(join(root, 'papercamp', 'ideas')),
+      readFile(join(root, 'ROADMAP.md'), 'utf-8').catch(() => ''),
+    ]);
   const plans = entityEntries.filter((e) => e.kind !== 'note').map((e) => entityToPlan(e));
+  const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
   const issues = findConsistencyIssues(
     parseDecisions(decisionsRaw).entries,
     parseOpenQuestions(openQuestionsRaw).entries,
     plans,
+    subjectVocabulary,
   );
 
   const audit: AuditSummary | undefined =

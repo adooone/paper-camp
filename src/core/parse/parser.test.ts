@@ -390,6 +390,23 @@ describe('findConsistencyIssues', () => {
     const plans = [plan({ title: 'Plan A', id: 'FEAT-2', status: 'in-progress' })];
     expect(findConsistencyIssues([], questions, plans)).toEqual([]);
   });
+
+  it('flags a plan whose subject is not in the roadmap vocabulary', () => {
+    const plans = [plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Retired subject' })];
+    expect(findConsistencyIssues([], [], plans, ['Packaging'])).toEqual([
+      expect.objectContaining({ kind: 'orphan-subject', title: 'Plan A', planId: 'FEAT-2' }),
+    ]);
+  });
+
+  it('does not flag a plan whose subject is in the roadmap vocabulary', () => {
+    const plans = [plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Packaging' })];
+    expect(findConsistencyIssues([], [], plans, ['Packaging'])).toEqual([]);
+  });
+
+  it('does not flag a plan with no subject', () => {
+    const plans = [plan({ title: 'Plan A', id: 'FEAT-2' })];
+    expect(findConsistencyIssues([], [], plans, ['Packaging'])).toEqual([]);
+  });
 });
 
 describe('parseIdeas', () => {

@@ -77,14 +77,21 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/consistency',
     handler: async (root) => {
-      const [decisionsRaw, openQuestionsRaw, plansResult] = await Promise.all([
+      const [decisionsRaw, openQuestionsRaw, plansResult, roadmapRaw] = await Promise.all([
         readMaybe(campFile(root, 'decisions.md')),
         readMaybe(campFile(root, 'open-questions.md')),
         cachedWorkEntries(root),
+        readMaybe(join(root, 'ROADMAP.md')),
       ]);
       const decisions = parseDecisions(decisionsRaw);
       const openQuestions = parseOpenQuestions(openQuestionsRaw);
-      return findConsistencyIssues(decisions.entries, openQuestions.entries, plansResult.entries);
+      const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
+      return findConsistencyIssues(
+        decisions.entries,
+        openQuestions.entries,
+        plansResult.entries,
+        subjectVocabulary,
+      );
     },
   },
   {
