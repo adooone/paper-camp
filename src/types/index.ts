@@ -313,6 +313,17 @@ export interface ResolvedRoadmap {
   horizons: ResolvedRoadmapHorizon[];
 }
 
+export type RoadmapEventKind = 'created' | 'task-run' | 'progress';
+
+export interface RoadmapEvent {
+  date: string;
+  kind: RoadmapEventKind;
+  entityId: string;
+  horizonTitle: string;
+  itemName: string;
+  label: string;
+}
+
 export interface EnvEntry {
   key: string;
   value: string;

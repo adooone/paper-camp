@@ -1,4 +1,12 @@
-import type { PlanEntry, ResolvedRoadmap, Roadmap, RoadmapItem } from '../types/index';
+import type {
+  PlanEntry,
+  ProgressEntry,
+  ResolvedRoadmap,
+  Roadmap,
+  RoadmapEvent,
+  RoadmapItem,
+  TaskLogEntry,
+} from '../types/index';
 
 const H2_RE = /^##\s+/;
 const GOAL_HEADING_RE = /^##\s+The goal\s*$/i;
@@ -244,4 +252,75 @@ export function resolveRoadmap(roadmap: Roadmap, entities: PlanEntry[]): Resolve
   });
 
   return { goal: roadmap.goal, horizons };
+}
+
+const WIKI_LINK_RE = /\[\[([A-Z]+-\d+)\]\]/g;
+
+// One chronological model over three append-only sources, each keyed back to the roadmap item
+// (via its `linked` entity ids) and the entity it happened to. `updated` is deliberately excluded —
+// see IDEA-92's Timeline phase for why a last-touched timestamp can't stand in for history.
+export function deriveRoadmapEvents(
+  roadmap: Roadmap,
+  entities: PlanEntry[],
+  taskLog: TaskLogEntry[],
+  progress: ProgressEntry[],
+): RoadmapEvent[] {
+  const itemByEntityId = new Map<string, { horizonTitle: string; itemName: string }>();
+  for (const horizon of roadmap.horizons) {
+    for (const item of horizon.items) {
+      for (const id of item.linked) {
+        itemByEntityId.set(id, { horizonTitle: horizon.title, itemName: item.name });
+      }
+    }
+  }
+
+  const events: RoadmapEvent[] = [];
+
+  for (const entity of entities) {
+    if (!entity.id) continue;
+    const item = itemByEntityId.get(entity.id);
+    if (!item) continue;
+    events.push({
+      date: entity.created,
+      kind: 'created',
+      entityId: entity.id,
+      horizonTitle: item.horizonTitle,
+      itemName: item.itemName,
+      label: `${entity.title} created`,
+    });
+  }
+
+  for (const task of taskLog) {
+    if (!task.planId) continue;
+    const item = itemByEntityId.get(task.planId);
+    if (!item) continue;
+    events.push({
+      date: task.startedAt,
+      kind: 'task-run',
+      entityId: task.planId,
+      horizonTitle: item.horizonTitle,
+      itemName: item.itemName,
+      label: `${task.taskKind} run (${task.outcome})`,
+    });
+  }
+
+  for (const entry of progress) {
+    for (const line of entry.items) {
+      const ids = new Set(Array.from(line.matchAll(WIKI_LINK_RE), (m) => m[1]));
+      for (const id of ids) {
+        const item = itemByEntityId.get(id);
+        if (!item) continue;
+        events.push({
+          date: entry.date,
+          kind: 'progress',
+          entityId: id,
+          horizonTitle: item.horizonTitle,
+          itemName: item.itemName,
+          label: line,
+        });
+      }
+    }
+  }
+
+  return events.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
 }
