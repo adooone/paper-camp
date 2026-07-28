@@ -3,8 +3,14 @@ import { PageTitle } from '@/app/components/page-title';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { addRoadmapCandidate, addRoadmapItem, fetchRoadmap } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
-import { fontFamily, fontSize, space } from '@/app/styles/tokens';
-import type { PlanEntry, ResolvedRoadmap, ResolvedRoadmapItem } from '@/types/index';
+import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
+import type {
+  PlanEntry,
+  ResolvedRoadmap,
+  ResolvedRoadmapItem,
+  RoadmapEvent,
+  RoadmapEventKind,
+} from '@/types/index';
 import { Button, Card, Input, Stamp } from '@dendelion/paper-ui';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
@@ -425,6 +431,38 @@ const GoalBanner = ({ goal }: { goal: string }) => {
   );
 };
 
+type RoadmapViewMode = 'tree' | 'map' | 'timeline';
+
+const VIEW_MODES: { id: RoadmapViewMode; label: string }[] = [
+  { id: 'tree', label: 'Tree' },
+  { id: 'map', label: 'Map' },
+  { id: 'timeline', label: 'Timeline' },
+];
+
+const RoadmapViewModeSwitch = ({
+  mode,
+  onChange,
+}: {
+  mode: RoadmapViewMode;
+  onChange: (mode: RoadmapViewMode) => void;
+}) => (
+  <nav aria-label="Roadmap view" style={{ display: 'flex', gap: space[1], marginBottom: space[4] }}>
+    {VIEW_MODES.map((viewMode) => (
+      <Button
+        key={viewMode.id}
+        type="button"
+        variant="ghost"
+        size="small"
+        isActive={mode === viewMode.id}
+        aria-pressed={mode === viewMode.id}
+        onClick={() => onChange(viewMode.id)}
+      >
+        {viewMode.label}
+      </Button>
+    ))}
+  </nav>
+);
+
 const HorizonPulse = ({
   items,
   graduatedByItem,
@@ -441,6 +479,131 @@ const HorizonPulse = ({
   );
 };
 
+const EVENT_KIND_COLOR: Record<RoadmapEventKind, string> = {
+  created: color.accentSlate,
+  'task-run': color.accentAmber,
+  progress: color.accentGreen,
+};
+
+const RoadmapTimelineTrack = ({
+  events,
+  rangeStart,
+  rangeEnd,
+}: {
+  events: RoadmapEvent[];
+  rangeStart: number;
+  rangeEnd: number;
+}) => {
+  const span = rangeEnd - rangeStart || 1;
+  return (
+    <div className="roadmap-timeline-track">
+      {events.map((event, i) => (
+        <button
+          type="button"
+          key={`${event.entityId}-${event.kind}-${i}`}
+          className="roadmap-timeline-dot"
+          style={{
+            left: `${((Date.parse(event.date) - rangeStart) / span) * 100}%`,
+            background: EVENT_KIND_COLOR[event.kind],
+          }}
+          title={`${event.itemName} — ${event.label} (${event.date})`}
+          aria-label={`${event.itemName} — ${event.label} (${event.date})`}
+        />
+      ))}
+    </div>
+  );
+};
+
+const RoadmapMapItem = ({ item }: { item: ResolvedRoadmapItem }) => {
+  const percent =
+    item.rollup.total > 0 ? Math.round((item.rollup.done / item.rollup.total) * 100) : 0;
+  return (
+    <div className="roadmap-map-item">
+      <div style={{ fontWeight: 600, fontSize: fontSize.sm }}>{item.name}</div>
+      <div className="roadmap-map-progress-track">
+        <div
+          className="roadmap-map-progress-fill"
+          style={{
+            width: `${percent}%`,
+            background: item.rollup.total > 0 ? color.accentGreen : 'transparent',
+          }}
+        />
+      </div>
+      <div style={{ fontSize: fontSize['2xs'], opacity: 0.5 }}>
+        {item.rollup.total > 0 ? `${item.rollup.done}/${item.rollup.total} done` : 'not started'}
+      </div>
+    </div>
+  );
+};
+
+const RoadmapMap = ({
+  roadmap,
+  graduatedByItem,
+}: {
+  roadmap: ResolvedRoadmap;
+  graduatedByItem: (item: ResolvedRoadmapItem) => PlanEntry[];
+}) => (
+  <div className="roadmap-lanes">
+    {roadmap.horizons.map((horizon) => (
+      <div key={horizon.title} style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
+          <div style={horizonHeaderStyle}>{horizon.title}</div>
+          <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
+        </div>
+        <div className="roadmap-lane-items">
+          {horizon.items.map((item) => (
+            <div key={item.name} className="roadmap-lane-item">
+              <RoadmapMapItem item={item} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const RoadmapTimeline = ({ roadmap }: { roadmap: ResolvedRoadmap }) => {
+  if (roadmap.events.length === 0) {
+    return <p style={{ opacity: 0.5 }}>No dated events yet.</p>;
+  }
+
+  const dates = roadmap.events.map((event) => Date.parse(event.date));
+  const rangeStart = Math.min(...dates);
+  const rangeEnd = Math.max(...dates);
+
+  return (
+    <div className="roadmap-lanes">
+      {roadmap.horizons.map((horizon) => {
+        const events = roadmap.events.filter((event) => event.horizonTitle === horizon.title);
+        return (
+          <div
+            key={horizon.title}
+            style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+          >
+            <div style={horizonHeaderStyle}>{horizon.title}</div>
+            {events.length === 0 ? (
+              <div style={{ ...horizonPulseStyle, opacity: 0.4 }}>No events yet</div>
+            ) : (
+              <RoadmapTimelineTrack events={events} rangeStart={rangeStart} rangeEnd={rangeEnd} />
+            )}
+          </div>
+        );
+      })}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: fontSize['2xs'],
+          opacity: 0.5,
+        }}
+      >
+        <span>{new Date(rangeStart).toLocaleDateString()}</span>
+        <span>{new Date(rangeEnd).toLocaleDateString()}</span>
+      </div>
+    </div>
+  );
+};
+
 export const RoadmapPage = () => {
   const [roadmap, setRoadmap] = useState<ResolvedRoadmap | null>(null);
   const [loading, setLoading] = useState(true);
@@ -450,6 +613,7 @@ export const RoadmapPage = () => {
     item: ResolvedRoadmapItem;
     candidateName?: string;
   } | null>(null);
+  const [viewMode, setViewMode] = useState<RoadmapViewMode>('tree');
   const plans = useAppStore((s) => s.plans);
   const navigate = useNavigate();
   const { item: highlightedItem } = useSearch({ from: '/roadmap' });
@@ -513,39 +677,52 @@ export const RoadmapPage = () => {
   return (
     <div ref={containerRef}>
       <GoalBanner goal={roadmap.goal} />
-      <div className="roadmap-horizons-grid">
-        {roadmap.horizons.map((horizon) => (
-          <div
-            key={horizon.title}
-            style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
-          >
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
-              <div style={horizonHeaderStyle}>{horizon.title}</div>
-              <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
+      <RoadmapViewModeSwitch mode={viewMode} onChange={setViewMode} />
+      {viewMode === 'tree' && (
+        <div className="roadmap-lanes">
+          {roadmap.horizons.map((horizon) => (
+            <div
+              key={horizon.title}
+              style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
+                <div style={horizonHeaderStyle}>{horizon.title}</div>
+                <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
+              </div>
+              <div className="roadmap-lane-items">
+                {horizon.items.map((item) => (
+                  <div key={item.name} className="roadmap-lane-item">
+                    <RoadmapItemRow
+                      item={item}
+                      graduated={graduatedByItem(item)}
+                      highlighted={item.name === highlightedItem}
+                      onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
+                      onPromoteCandidate={(candidateName) =>
+                        setPromoting({ horizonTitle: horizon.title, item, candidateName })
+                      }
+                      onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
+                      onViewGraduated={() => navigate({ to: '/', search: { subject: item.name } })}
+                      onOpenGraduated={(title) =>
+                        navigate({
+                          to: '/plans/$planId',
+                          params: { planId: encodeURIComponent(title) },
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+                <div className="roadmap-lane-item">
+                  <AddItemForm
+                    onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
+                  />
+                </div>
+              </div>
             </div>
-            {horizon.items.map((item) => (
-              <RoadmapItemRow
-                key={item.name}
-                item={item}
-                graduated={graduatedByItem(item)}
-                highlighted={item.name === highlightedItem}
-                onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
-                onPromoteCandidate={(candidateName) =>
-                  setPromoting({ horizonTitle: horizon.title, item, candidateName })
-                }
-                onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
-                onViewGraduated={() => navigate({ to: '/', search: { subject: item.name } })}
-                onOpenGraduated={(title) =>
-                  navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(title) } })
-                }
-              />
-            ))}
-            <AddItemForm
-              onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
-            />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+      {viewMode === 'map' && <RoadmapMap roadmap={roadmap} graduatedByItem={graduatedByItem} />}
+      {viewMode === 'timeline' && <RoadmapTimeline roadmap={roadmap} />}
       <PromoteRoadmapItemModal
         horizonTitle={promoting?.horizonTitle ?? null}
         item={promoting?.item ?? null}

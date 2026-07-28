@@ -2,7 +2,7 @@
 id: IDEA-92
 title: Timeline view and horizon lanes
 type: feat
-status: idea
+status: review
 created: 2026-07-25
 updated: 2026-07-26
 tags:
@@ -25,17 +25,17 @@ This also settles where Horizon 4 goes. H1 is "ready for daily use", H2 "a deepe
 Depends on [[IDEA-91]]: without items surviving promotion there is no progress to visualise.
 
 ### Phases
-- [ ] Add Horizon 4 and move the tail items into it
+- [x] Add Horizon 4 and move the tail items into it
       Add a fourth horizon to `ROADMAP.md` (the format-and-ecosystem play) and move "Project genesis" and "The format as the product" out of their current horizon into it. Confirm `HORIZON_HEADING_RE` in `src/core/roadmap.ts` already parses `## Horizon 4 — …` so the new lane appears with no parser change.
-- [ ] Flip the horizon layout from columns to horizontal lanes
+- [x] Flip the horizon layout from columns to horizontal lanes
       Rework the roadmap view so each horizon renders as a full-width horizontal lane rather than a column, scaling to any horizon count and giving each item room for a title plus its per-item rollup (from [[IDEA-91]]), laid out along a left-to-right axis.
-- [ ] Add the Tree / Map / Timeline view-mode toggle
+- [x] Add the Tree / Map / Timeline view-mode toggle
       A mode switch over the same roadmap data. Tree is today's structure reframed as the default mode; Map and Timeline are the new modes the switch selects between.
-- [ ] Derive a dated event stream for the Timeline
+- [x] Derive a dated event stream for the Timeline
       Collect events from append-only sources — each entity's `created` date, `tasks.log` run timestamps, and `progress.md`'s dated entries — into one chronological model, keyed back to the roadmap item and entity each belongs to. Exclude `updated`: it's a coarse last-touched signal, not historical event data — a current `updated` timestamp can't reconstruct when or how many changes happened, so feeding it into the Timeline would present inferred metadata as actual history.
-- [ ] Build the Timeline view
+- [x] Build the Timeline view
       Render the derived event stream along the lanes' time axis — what actually happened when — so movement against each horizon is visible rather than a static structure.
-- [ ] Build the Map view
+- [x] Build the Map view
       Render the Map mode over the same roadmap data.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.

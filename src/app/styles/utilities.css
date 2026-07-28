@@ -245,20 +245,74 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * The Roadmap's horizons are columns of a survey, not a scroll — three
- * side-by-side at lg fit the whole map on one screen; below that they stack
- * so item cards keep readable width instead of shrinking to fit a column.
+ * The Roadmap's horizons are horizontal lanes, not columns: a lane spans the
+ * full page width regardless of how many horizons exist, and its items wrap
+ * left-to-right inside it, each keeping room for a title plus its rollup.
  */
-.roadmap-horizons-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0 1.5rem;
+.roadmap-lanes {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
-@media (max-width: 1023px) {
-  .roadmap-horizons-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.5rem;
+.roadmap-lane-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+.roadmap-lane-item {
+  flex: 1 1 240px;
+  max-width: 320px;
+}
+@media (max-width: 480px) {
+  .roadmap-lane-item {
+    flex-basis: 100%;
+    max-width: none;
   }
+}
+
+/*
+ * The Timeline mode plots events along a shared date axis: the track needs a
+ * positioning context so dots can sit at an absolute left percentage.
+ */
+.roadmap-timeline-track {
+  position: relative;
+  height: 2rem;
+  margin: 0 0.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+.roadmap-timeline-dot {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: none;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+/*
+ * The Map mode is a birds-eye progress overview, not the Tree's interactive
+ * detail cards: each item is just a title and a rollup progress bar so the
+ * whole roadmap's state is visible without expanding anything.
+ */
+.roadmap-map-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.625rem;
+}
+.roadmap-map-progress-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+.roadmap-map-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
 }
 
 /*

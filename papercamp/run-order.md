@@ -1,5 +1,4 @@
 IDEA-88 — Configurable title, branch, and agent
-IDEA-91 — Roadmap items survive promotion
 IDEA-92 — Timeline view and horizon lanes
 IDEA-95 — Roadmap items become the subject vocabulary
 IDEA-96 — Open questions as a working queue
