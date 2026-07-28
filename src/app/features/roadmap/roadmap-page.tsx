@@ -498,7 +498,8 @@ const RoadmapTimelineTrack = ({
   return (
     <div className="roadmap-timeline-track">
       {events.map((event, i) => (
-        <span
+        <button
+          type="button"
           key={`${event.entityId}-${event.kind}-${i}`}
           className="roadmap-timeline-dot"
           style={{
@@ -506,6 +507,7 @@ const RoadmapTimelineTrack = ({
             background: EVENT_KIND_COLOR[event.kind],
           }}
           title={`${event.itemName} — ${event.label} (${event.date})`}
+          aria-label={`${event.itemName} — ${event.label} (${event.date})`}
         />
       ))}
     </div>

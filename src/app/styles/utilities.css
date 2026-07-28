@@ -286,8 +286,11 @@ header[class*="layout-module__header___"] {
   top: 50%;
   width: 10px;
   height: 10px;
+  padding: 0;
+  border: none;
   border-radius: 9999px;
   transform: translate(-50%, -50%);
+  cursor: pointer;
 }
 
 /*
