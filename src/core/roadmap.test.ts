@@ -4,6 +4,7 @@ import {
   addRoadmapCandidate,
   addRoadmapItem,
   deriveRoadmapEvents,
+  deriveSubjectVocabulary,
   linkRoadmapItem,
   parseRoadmap,
   removeRoadmapItem,
@@ -166,6 +167,23 @@ describe('parseRoadmap', () => {
         linked: [],
       },
     ]);
+  });
+});
+
+describe('deriveSubjectVocabulary', () => {
+  it('orders horizon items by horizon, then appends standing concerns last', () => {
+    expect(deriveSubjectVocabulary(parseRoadmap(SAMPLE))).toEqual([
+      'First-run experience',
+      'Packaging',
+      'Mobile control desk',
+      'Goal & roadmap in the app',
+      'Infrastructure',
+      'Code health',
+    ]);
+  });
+
+  it('returns an empty vocabulary for a roadmap with no items', () => {
+    expect(deriveSubjectVocabulary(parseRoadmap('# Just a doc\n\nNo headings here.'))).toEqual([]);
   });
 });
 

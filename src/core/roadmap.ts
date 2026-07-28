@@ -240,6 +240,16 @@ export function linkRoadmapItem(
   return markdown;
 }
 
+// The subject vocabulary: horizon items in horizon/item order (H1 near-term → H3 long
+// bets), then standing concerns last — the one ordered read of ROADMAP.md every subject
+// picker and grouping should derive from, so it's the only writable source.
+export function deriveSubjectVocabulary(roadmap: Roadmap): string[] {
+  return [
+    ...roadmap.horizons.flatMap((horizon) => horizon.items.map((item) => item.name)),
+    ...roadmap.standingConcerns.map((item) => item.name),
+  ];
+}
+
 export function resolveRoadmap(
   roadmap: Roadmap,
   entities: PlanEntry[],

@@ -8,7 +8,7 @@ import {
   parseTaskLog,
 } from '@/core/parse';
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
-import { parseRoadmap, resolveRoadmap } from '@/core/roadmap';
+import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
 import { coerceAgentConfig } from '@/types/index';
 import { cached } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
@@ -103,6 +103,10 @@ export const readRoutes: ReadRoute[] = [
           commitSuggest: coerceAgentConfig(config.defaultAgents.commitSuggest),
         };
       }
+      // subjects is regenerated from ROADMAP.md on every read rather than trusted from
+      // disk — the roadmap is the only writable source of the vocabulary (IDEA-95).
+      const roadmapRaw = await readMaybe(join(root, 'ROADMAP.md'));
+      config.subjects = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
       return config;
     },
   },

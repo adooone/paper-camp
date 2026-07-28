@@ -395,7 +395,8 @@ export interface PaperCampConfig {
   defaultAgents?: DefaultAgentsMap;
   /** Off by default. When true, the PostToolUse hook logs new-file creations to progress.md. */
   autoLogNewFiles?: boolean;
-  /** The managed subject list; an idea's `subject` not present here renders as "No subject". */
+  /** Derived from `ROADMAP.md` on every read (IDEA-95), never written to disk; an idea's
+   * `subject` not present here renders as "No subject". */
   subjects?: string[];
   /** Opts out of the first-run redirect to Settings > Setup while capabilities are incomplete. */
   setupDismissed?: boolean;

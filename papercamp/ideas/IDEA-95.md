@@ -53,7 +53,7 @@ them into the horizon list would misrepresent them).
       Extend `HORIZON_HEADING_RE`/`parseRoadmap` in `src/core/roadmap.ts` to recognize the
       non-horizon `## Standing concerns` section as a distinct kind alongside horizons (not
       time-ordered), and add it to the `Roadmap` type so those terms are first-class subjects.
-- [ ] Derive the subject vocabulary from `ROADMAP.md`
+- [x] Derive the subject vocabulary from `ROADMAP.md`
       Build the ordered vocabulary — horizon items grouped by horizon, plus standing concerns —
       from the parsed roadmap so `ROADMAP.md` is the single writable source of truth. Retire
       `config.json`'s `subjects` array and `ensureSubject` as writable state (one-way migration,
