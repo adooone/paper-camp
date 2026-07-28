@@ -2,7 +2,7 @@
 id: IDEA-93
 title: Trace an idea from roadmap to release
 type: feat
-status: idea
+status: review
 created: 2026-07-25
 updated: 2026-07-26
 tags:
@@ -32,4 +32,4 @@ Depends on [[IDEA-91]] for the roadmap end of the chain.
       A provenance panel in `entity-detail.tsx` rendering the chain as a click path — tasks, commits, PR, release line — so "what was done and where it went" is visible on the idea.
 - [x] Extend the roadmap end with the deeper trail
       Building on [[IDEA-91]]'s item → idea rollup, let a roadmap item resolve through to the work it produced and how far it got (tasks, PR, release), not just its child ideas' statuses.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
