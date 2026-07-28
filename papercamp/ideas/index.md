@@ -103,3 +103,4 @@
 | IDEA-99 | Project stats view | — | idea |  |
 | IDEA-100 | Self-healing run-all: fix red checks, ask only when stuck | feat | planned | agent, plans |
 | IDEA-101 | In-app sign-in via OAuth relay | — | idea |  |
+| IDEA-102 | Agent resolves sync-rebase conflicts | feat | idea | git, app, agent, server |

@@ -279,6 +279,29 @@ describe('runGitSync', () => {
     );
   });
 
+  it('rebases a diverged local main onto origin instead of failing', async () => {
+    // The recurring "split": a direct-to-main commit sits locally while origin/main
+    // advances via a squash-merge. Sync must replay the local commit on top, not fail.
+    const root = await initRepo();
+    await addOrigin(root);
+    // origin/main advances by one commit that local main never saw.
+    await commitFile(root, 'remote.txt', 'from remote\n', 'remote-only change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    // local main gets its own commit — now diverged from origin/main.
+    await commitFile(root, 'local.txt', 'from local\n', 'local-only change');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(manager.getCurrentBranch()).toBe('main');
+    expect(await readFile(join(root, 'remote.txt'), 'utf-8')).toBe('from remote\n');
+    expect(await readFile(join(root, 'local.txt'), 'utf-8')).toBe('from local\n');
+    // Linear history: the local commit was replayed on top of the remote one.
+    expect(git(root, 'log', '--oneline').split('\n')[0]).toContain('local-only change');
+    expect(git(root, 'rev-list', '--count', 'main')).toBe('3');
+  });
+
   it('reports a pop conflict and keeps the changes in the stash', async () => {
     const root = await initRepo();
     await addOrigin(root);

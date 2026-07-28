@@ -1,0 +1,3 @@
+# Append-only task log: reconcile concurrent appends by keeping both sides
+# (git's built-in union driver) instead of raising a rebase/merge conflict.
+papercamp/tasks.log merge=union

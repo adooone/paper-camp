@@ -416,6 +416,25 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
+  // Trunk-style reconcile: fast-forward when the local ref is merely behind, else
+  // replay the local (direct-to-main) commits on top of the squash-merged remote so
+  // a committed-but-unpushed change never leaves the branch split. A genuine content
+  // conflict aborts the rebase cleanly and surfaces, rather than dumping markers.
+  async function reconcileOnto(ref: string): Promise<void> {
+    try {
+      await runGit(['merge', '--ff-only', ref]);
+      return;
+    } catch {}
+    try {
+      await runGit(['rebase', ref]);
+    } catch {
+      await runGit(['rebase', '--abort']).catch(() => {});
+      throw new Error(
+        `Diverged from ${ref} and auto-rebase hit a conflict — resolve it, or hand it to the agent`,
+      );
+    }
+  }
+
   async function runGitSync(): Promise<void> {
     // Fetch first: recognizing already-in-main local edits needs to know what's incoming.
     await runGit(['fetch', '--prune']).catch(() => {});
@@ -428,7 +447,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     let syncError: unknown;
     try {
       await runGit(['checkout', 'main']);
-      await runGit(['merge', '--ff-only', 'origin/main']);
+      await reconcileOnto('origin/main');
     } catch (err) {
       syncError = err;
     }
@@ -446,11 +465,12 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     if (syncError) throw syncError;
   }
 
-  // Fast-forward only, so a diverged branch fails loudly instead of merging.
+  // Reconcile the current branch: fast-forward if behind, else rebase local commits
+  // onto the remote so a diverged branch is repaired instead of failing loudly.
   async function runGitPull(): Promise<void> {
     await runGit(['fetch', '--prune']);
     const branch = getCurrentBranch();
-    await runGit(['merge', '--ff-only', `origin/${branch}`]);
+    await reconcileOnto(`origin/${branch}`);
   }
 
   return {
