@@ -115,11 +115,12 @@ export const readRoutes: ReadRoute[] = [
     handler: async (root) => {
       const raw = await readMaybe(join(root, 'ROADMAP.md'));
       if (!raw) return null;
-      const [{ entries }, taskLogRaw] = await Promise.all([
+      const [{ entries }, taskLogRaw, changelog] = await Promise.all([
         cachedWorkEntries(root),
         readMaybe(campFile(root, 'tasks.log')),
+        readMaybe(join(root, 'CHANGELOG.md')),
       ]);
-      return resolveRoadmap(parseRoadmap(raw), entries, parseTaskLog(taskLogRaw));
+      return resolveRoadmap(parseRoadmap(raw), entries, parseTaskLog(taskLogRaw), changelog);
     },
   },
   {

@@ -30,6 +30,6 @@ Depends on [[IDEA-91]] for the roadmap end of the chain.
       A route returning the assembled trail for an entity plus the reverse lookup for a release line or commit, degrading cleanly when GitHub or a release line is absent.
 - [x] Surface the trail on the entity detail view
       A provenance panel in `entity-detail.tsx` rendering the chain as a click path — tasks, commits, PR, release line — so "what was done and where it went" is visible on the idea.
-- [ ] Extend the roadmap end with the deeper trail
+- [x] Extend the roadmap end with the deeper trail
       Building on [[IDEA-91]]'s item → idea rollup, let a roadmap item resolve through to the work it produced and how far it got (tasks, PR, release), not just its child ideas' statuses.
 - [ ] Type-check and full pass

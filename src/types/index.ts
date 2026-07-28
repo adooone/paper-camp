@@ -287,6 +287,9 @@ export interface Roadmap {
 export interface RoadmapLink {
   id: string;
   status: PlanStatus;
+  taskRuns: number;
+  pr?: PrInfo;
+  released: boolean;
 }
 
 export interface RoadmapRollup {
