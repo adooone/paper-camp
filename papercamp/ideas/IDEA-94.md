@@ -37,7 +37,7 @@ Provenance: surfaced 2026-07-25 when Sync to main silently did nothing — the s
       When the fast path fails, assemble the failure, the working-tree state, and the goal ("get onto latest main without losing real work") into an agent job spec.
 - [x] Run the recovery agent and report the outcome
       Launch the job and surface what it did; settle whether it asks for confirmation before touching working-tree state or runs automatically and reports after.
-- [ ] Decide whether push/pull share the escalate-on-failure shape
+- [x] Decide whether push/pull share the escalate-on-failure shape
       Settle whether the automatic deterministic→agent escalation wraps push and pull too, or stays scoped to the branch switch for this cut.
 - [ ] Type-check and full pass
 

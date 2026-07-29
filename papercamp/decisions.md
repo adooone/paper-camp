@@ -1,3 +1,36 @@
+## Escalate-on-failure stays scoped to the branch switch, not push/pull
+
+**Date:** 2026-07-29
+**Status:** decided
+
+**Context:** `IDEA-94` phase 6 needed to settle whether the automatic
+deterministic→agent escalation built for sync-to-main (`runGitSync`'s
+`recoveryPrompt` + `agent.startGitSyncRecovery`, wired in `routes/git.ts`)
+should also wrap `git.push()` and `git.runGitPull()`, whose routes
+(`/api/git/push`, `/api/git/pull`) currently just catch and return the raw
+git error as a 400/409.
+
+**Decision:** No — this cut's escalation covers only the branch switch
+(`/api/git/sync`). `push()` and `runGitPull()` keep throwing straight to
+their routes, which surface the error as-is; no recovery-agent job is built
+for either.
+
+**Rationale:** The two operations don't share the failure shape that
+motivated the escalation. `push()`'s realistic failures are network/auth
+errors (no working-tree mess an agent could resolve with judgment) or a
+non-fast-forward rejection — and the fix for the latter is "pull first,"
+which is already a one-click action the user has, not something worth a
+second agent path to reach the same place. `runGitPull()` does share
+`reconcileOnto` with sync's core, but it already turns a diverged-with-conflict
+pull into a clean, specific thrown message ("resolve it, or hand it to the
+agent") rather than leaving the working tree stuck — and a user who wants the
+agent path for a stuck pull can already reach it by running Sync, which
+carries the same `reconcileOnto` step against `origin/main`. Building a second
+recovery-prompt/job pathway for two call sites that don't independently need
+one is scope the plan's own "for this cut" framing was flagging, not a gap to
+close now — a real gap (recurring stuck pulls, unrecoverable pushes) would be
+its own idea once it's actually observed.
+
 ## Git-sync recovery escalates automatically, no confirmation step
 
 **Date:** 2026-07-29
