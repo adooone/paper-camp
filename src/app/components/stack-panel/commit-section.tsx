@@ -25,7 +25,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MergeIcon, PullIcon, PushIcon, WandIcon } from '../icons';
 import { deskChalk, deskTextMuted, gitErrorSummary, sectionLabelStyle } from './shared';
 
-const COMMIT_TITLE_STORAGE_KEY = 'papercamp.commitTitle';
 const COMMIT_MESSAGE_STORAGE_KEY = 'papercamp.commitMessage';
 
 // Keep in sync with .commitlintrc.json's `scope-enum` (release/main are release-bot-only, excluded here).
@@ -65,15 +64,20 @@ function writeStoredCommitField(key: string, value: string): void {
 }
 
 function deriveSuggestedCommit(plan: PlanEntry | undefined): { title: string; message: string } {
-  if (!plan) return { title: '', message: '' };
+  // A finished plan (every phase done) has nothing meaningful to derive a title from —
+  // suggest nothing rather than a vague "…: updates" placeholder. The user types it, or
+  // clicks Suggest to draft one from the actual diff.
+  if (!plan || (plan.phases.length > 0 && plan.phases.every((phase) => phase.done))) {
+    return { title: '', message: '' };
+  }
   // Scope is a subsystem area, not the plan id (AGENTS.md: plan's primary tag); plan id goes in Refs: footer.
   const scope = plan.tags?.find((t) => COMMIT_SCOPES.includes(t)) ?? 'repo';
   const kind = plan.kind ?? 'feat';
-  const allDone = Boolean(plan.phases.length) && plan.phases.every((phase) => phase.done);
-  const title = allDone ? `${kind}(${scope}): updates` : `${kind}(${scope}): ${plan.title}`;
+  const title = `${kind}(${scope}): ${plan.title}`;
   const refs = plan.id ? `Refs: ${plan.id}` : '';
-  const phaseBody =
-    !allDone && plan.phases.length ? plan.phases.map((phase) => `- ${phase.text}`).join('\n') : '';
+  const phaseBody = plan.phases.length
+    ? plan.phases.map((phase) => `- ${phase.text}`).join('\n')
+    : '';
   return { title, message: [phaseBody, refs].filter(Boolean).join('\n\n') };
 }
 
@@ -175,9 +179,9 @@ const CommitForm = ({
   const setCommitInFlight = useAppStore((s) => s.setCommitInFlight);
   const { toast } = useToast();
 
-  const [commitTitle, setCommitTitle] = useState(() =>
-    readStoredCommitField(COMMIT_TITLE_STORAGE_KEY),
-  );
+  // Title is NOT seeded from localStorage — it's re-derived fresh each session from the
+  // focus plan (or left empty), so a stale title never resurrects across sessions.
+  const [commitTitle, setCommitTitle] = useState('');
   const [commitMessage, setCommitMessage] = useState(() =>
     readStoredCommitField(COMMIT_MESSAGE_STORAGE_KEY),
   );
@@ -216,10 +220,6 @@ const CommitForm = ({
   }, [suggestedMessage, commitMessage]);
 
   useEffect(() => {
-    writeStoredCommitField(COMMIT_TITLE_STORAGE_KEY, commitTitle);
-  }, [commitTitle]);
-
-  useEffect(() => {
     writeStoredCommitField(COMMIT_MESSAGE_STORAGE_KEY, commitMessage);
   }, [commitMessage]);
 
@@ -233,7 +233,9 @@ const CommitForm = ({
         commitTitle.trim(),
         commitMessage.trim() || undefined,
       );
-      setCommitTitle(suggestedTitle);
+      // Clear both to empty — never leave a stale title behind. The suggestion effect
+      // re-derives a fresh title if the focus plan still warrants one.
+      setCommitTitle('');
       setCommitMessage('');
       onCommitted();
       await loadGitStatus();
@@ -254,7 +256,6 @@ const CommitForm = ({
     commitTitle,
     commitMessage,
     selectedFiles,
-    suggestedTitle,
     loadGitStatus,
     commitInFlight,
     setCommitInFlight,

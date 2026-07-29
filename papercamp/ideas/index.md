@@ -89,7 +89,7 @@
 | IDEA-85 | Apply the merge policy from Settings | feat | done | app, settings, github, git |
 | IDEA-86 | Surface agent sign-in state in the app | feat | done | agent, server, ui |
 | IDEA-87 | Margin notes on plans and phases | feat | done | app, plans, ui, core |
-| IDEA-88 | Configurable title, branch, and agent | feat | planned | git, plans, app |
+| IDEA-88 | Configurable title, branch, and agent | feat | dropped | git, plans, app |
 | IDEA-89 | Review a finished plan in prose | feat | done | plans, app |
 | IDEA-90 | Connections for every service | feat | done | server, settings, github, agent |
 | IDEA-91 | Roadmap items survive promotion | feat | done | roadmap, core, app, ui |
