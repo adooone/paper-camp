@@ -1,7 +1,7 @@
 ---
 id: IDEA-100
 title: "Self-healing run-all: fix red checks, ask only when stuck"
-status: idea
+status: review
 created: 2026-07-26
 type: feat
 tags: [agent, plans]
@@ -37,5 +37,5 @@ Provenance: 2026-07-26, after a day where every run-all stopped on a gate the ph
       When the cap is hit or a blocker fires, write the agent's question into the entity's `### Log` in a format Apply-notes / rework ([[IDEA-87]], [[IDEA-89]]) can pick up, instead of ending with `[fail] … stopping`.
 - [x] Flip plan status when a run parks on a question
       Set a needs-input marker (e.g. back to in-progress) on the plan when a run escalates, so a parked run is visible in the worklist rather than looking merely errored.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
