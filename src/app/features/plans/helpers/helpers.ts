@@ -88,20 +88,6 @@ export const relevantDecisions = (
     .sort((a, b) => b.date.localeCompare(a.date));
 };
 
-/** Decisions matching a free-text query against title, tags, and body. */
-export const searchDecisions = (decisions: DecisionEntry[], query: string): DecisionEntry[] => {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  return decisions
-    .filter(
-      (d) =>
-        d.title.toLowerCase().includes(q) ||
-        d.body.toLowerCase().includes(q) ||
-        (d.tags ?? []).some((t) => t.toLowerCase().includes(q)),
-    )
-    .sort((a, b) => b.date.localeCompare(a.date));
-};
-
 export const findFocusPlan = (
   plans: PlanEntry[] | undefined,
   activePlanTitle?: string | null,

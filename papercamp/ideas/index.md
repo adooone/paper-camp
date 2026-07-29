@@ -105,3 +105,7 @@
 | IDEA-101 | In-app sign-in via OAuth relay | — | idea |  |
 | IDEA-102 | Agent resolves sync-rebase conflicts | feat | idea | git, app, agent, server |
 | IDEA-103 | One feedback thread on every idea, any status | feat | idea | app, plans, ui |
+| IDEA-104 | Decisions and questions live on the idea | feat | idea | app, core, plans |
+| IDEA-105 | Plain-language the confusing UI text | fix | idea | app, ui |
+| IDEA-106 | Slim agent prompts for short, direct output | feat | idea | agent, plans, app |
+| IDEA-107 | De-complicate the worst code | refactor | idea | app, core, server |

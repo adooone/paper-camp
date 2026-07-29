@@ -9,6 +9,7 @@ tags:
   - app
   - plans
   - ui
+subject: Simplicity pass
 ---
 
 Feedback on an idea is split across two surfaces that don't cohere, and the flow is buggy. `CommentsSection` (`entity-detail.tsx`) is a plain log; the `Feedback` view (`PlanReviewSection`, the chat from IDEA-89) only appears for `review`/`done` plans (`isReviewable`/`showFeedback` gate the `detailView` switcher). So while you're actually building an idea — the moment you most want to jot "this needs rework" — there's no conversation surface, only Comments.
