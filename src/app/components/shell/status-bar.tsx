@@ -5,24 +5,14 @@ import {
   useAppStore,
 } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
-import { deriveCheckStatuses } from '@/app/utils/check-status';
-import type { CheckStatus } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { CommitIcon, MergeIcon, PullIcon, PushIcon } from '../icons';
-
-const CHECK_VARIANT: Record<CheckStatus, 'success' | 'error' | 'warning' | 'neutral'> = {
-  pass: 'success',
-  fail: 'error',
-  running: 'warning',
-  stale: 'neutral',
-};
 
 const btnStyle = { fontSize: fontSize['2xs'] };
 
 // Ambient status + immediate quick actions; the Stack panel remains the full control surface.
 export const StatusBar = () => {
-  const status = useAppStore((s) => s.status);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
@@ -36,7 +26,6 @@ export const StatusBar = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const { qualityStatus, testStatus, consistencyStatus } = deriveCheckStatuses(status);
   const activeTask = agentStatus.find(
     (t) => t.status === 'running' || t.status === 'starting' || t.status === 'stopping',
   );
@@ -112,21 +101,6 @@ export const StatusBar = () => {
       <div style={{ flex: 1 }} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexShrink: 0 }}>
-        <Tooltip content="Quality (lint + format)">
-          <Stamp size="small" variant={CHECK_VARIANT[qualityStatus]}>
-            Quality
-          </Stamp>
-        </Tooltip>
-        <Tooltip content="Tests">
-          <Stamp size="small" variant={CHECK_VARIANT[testStatus]}>
-            Tests
-          </Stamp>
-        </Tooltip>
-        <Tooltip content="Codebase consistency (knip + dependency-cruiser)">
-          <Stamp size="small" variant={CHECK_VARIANT[consistencyStatus]}>
-            Consistency
-          </Stamp>
-        </Tooltip>
         <Tooltip
           content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : 'Sync to main'}
         >
