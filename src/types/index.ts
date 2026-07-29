@@ -176,6 +176,7 @@ export interface DecisionEntry {
   date: string;
   status: DecisionStatus;
   supersededBy?: string;
+  tags?: string[];
   body: string;
 }
 

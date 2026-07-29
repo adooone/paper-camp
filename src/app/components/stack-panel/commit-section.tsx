@@ -195,20 +195,28 @@ const CommitForm = ({
   }, [suggestedTitle, commitTitle]);
 
   // A fix-review's suggested commit wins over heuristics/diff suggestions (the agent
-  // knows why each change was made); keyed by content so it applies once per run.
-  const appliedAgentCommitRef = useRef<string | null>(null);
-  const suggestedCommit = agentStatus.find((t) => t.suggestedCommit)?.suggestedCommit;
+  // knows why each change was made). A completed fix-review task keeps its
+  // `suggestedCommit` in agentStatus indefinitely, so we only apply one that appears
+  // AFTER the form first loads — suggestions already present on mount are from a prior
+  // session and must not resurrect a stale title. `staleSuggestionIds === null` until
+  // the first non-empty status snapshot, which seeds it with those pre-existing ids.
+  const staleSuggestionIds = useRef<Set<string> | null>(null);
+  const appliedSuggestionId = useRef<string | null>(null);
   useEffect(() => {
-    if (!suggestedCommit) {
-      appliedAgentCommitRef.current = null;
-      return;
+    if (staleSuggestionIds.current === null) {
+      if (agentStatus.length === 0) return;
+      staleSuggestionIds.current = new Set(
+        agentStatus.filter((t) => t.suggestedCommit).map((t) => t.id),
+      );
     }
-    const key = `${suggestedCommit.title}\n${suggestedCommit.message}`;
-    if (appliedAgentCommitRef.current === key) return;
-    appliedAgentCommitRef.current = key;
-    setCommitTitle(suggestedCommit.title);
-    setCommitMessage(suggestedCommit.message);
-  }, [suggestedCommit]);
+    const task = agentStatus.find(
+      (t) => t.suggestedCommit && !staleSuggestionIds.current?.has(t.id),
+    );
+    if (!task?.suggestedCommit || appliedSuggestionId.current === task.id) return;
+    appliedSuggestionId.current = task.id;
+    setCommitTitle(task.suggestedCommit.title);
+    setCommitMessage(task.suggestedCommit.message);
+  }, [agentStatus]);
 
   useEffect(() => {
     if (suggestedMessage && !commitMessage) setCommitMessage(suggestedMessage);

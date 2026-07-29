@@ -2,7 +2,7 @@
 id: IDEA-97
 title: Surface decisions where they bind
 type: feat
-status: idea
+status: review
 created: 2026-07-26
 updated: 2026-07-26
 tags:
@@ -26,16 +26,16 @@ Pairs with [[IDEA-96]]: that idea ends with an answered question becoming a deci
 Open questions for the plan: whether superseding a decision edits it in place or appends a superseding entry with a pointer (the corpus favours append-only history); and whether decisions should become per-file entities like [[IDEA-20]] did for plans and ideas, making them linkable and taggable, against the cost of migrating 738 lines into many small files.
 
 ### Phases
-- [ ] Settle the modelling questions
+- [x] Settle the modelling questions
       Decide supersede-in-place vs append-a-superseding-entry (favour append-only history) and per-file decision entities vs the single `decisions.md`. Land the schema/parsing consequence of that choice in `src/core`.
-- [ ] Click through a consistency issue to the decision behind it
+- [x] Click through a consistency issue to the decision behind it
       Make each `ConsistencyIssue` from `/api/consistency` resolve to the decision it references and render a navigable link from the Stack panel's doc-consistency stamp.
-- [ ] Honour-or-supersede action on a decision
+- [x] Honour-or-supersede action on a decision
       From a surfaced decision, let the user either honour it or deliberately supersede it, writing the change through the append/in-place shape settled in phase 1.
-- [ ] Show decisions relevant to an entity on that entity
+- [x] Show decisions relevant to an entity on that entity
       Match decisions to an entity by tags or subject and render them in `entity-detail.tsx` so guardrails appear where work happens.
-- [ ] Add decision search for deliberate lookup
+- [x] Add decision search for deliberate lookup
       A search over the decision corpus for when you genuinely need to find one, rather than a browse page.
-- [ ] Capture a decision from where it is made
+- [x] Capture a decision from where it is made
       Promote an entity comment or clarification into a decision from the entity, reusing the existing promote shape instead of hand-editing `decisions.md`.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass

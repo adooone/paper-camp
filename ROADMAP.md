@@ -33,6 +33,15 @@ a second person.
   (see decisions.md, 2026-07-19).
 - **Review-queue hygiene** — the archive flow exists; adopt the habit loop it
   enables: nothing sits in `review` for more than a few days.
+- **Simplicity pass** — a bounded cleanup so the desk stays legible for its
+  author: remove features that aren't used, plain-language confusing titles,
+  slim agent prompts so output (plans especially) is short and direct, and
+  de-complicate the worst code. Graduates as a Subject, decomposed below.
+  - → IDEA-103
+  - → IDEA-104
+  - → IDEA-105
+  - → IDEA-106
+  - → IDEA-107
 
 ## Horizon 2 — A deeper desk
 

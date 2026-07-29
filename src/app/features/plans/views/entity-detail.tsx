@@ -1,5 +1,6 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
+import { ViewDecisionModal } from '@/app/components/view-decision-modal';
 import { usePlanStatusPatch, useSplitReview, useTrail } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
@@ -7,6 +8,7 @@ import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type {
   AgentTaskState,
+  DecisionEntry,
   IdeaEntry,
   LogEntry,
   MarginNote,
@@ -56,9 +58,10 @@ import {
   openMarginNotes,
   phaseProgress,
   relativeDate,
+  relevantDecisions,
   runningTaskForPlan,
 } from '../helpers';
-import { ResolveQuestionModal } from '../modals';
+import { PromoteDecisionModal, ResolveQuestionModal } from '../modals';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -206,6 +209,61 @@ const PhasesSection = ({
   </div>
 );
 
+const DecisionsSection = ({
+  decisions,
+  onSelect,
+}: {
+  decisions: DecisionEntry[];
+  onSelect: (decision: DecisionEntry) => void;
+}) => (
+  <div style={{ marginBottom: space[5] }}>
+    <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Decisions</h3>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[3] }}
+    >
+      {decisions.map((decision) => (
+        <Card key={decision.title} size="small" accent accentColor="slate">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: space[3],
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: space[2],
+                  marginBottom: space[1],
+                }}
+              >
+                <span className="text-sm" style={{ fontWeight: 600 }}>
+                  {decision.title}
+                </span>
+                <Stamp
+                  size="small"
+                  variant={decision.status === 'superseded' ? 'warning' : 'success'}
+                >
+                  {decision.status}
+                </Stamp>
+              </div>
+              <div className="text-sm" style={{ opacity: 0.85 }}>
+                <Markdown>{decision.body}</Markdown>
+              </div>
+            </div>
+            <Button variant="secondary" size="small" onClick={() => onSelect(decision)}>
+              View
+            </Button>
+          </div>
+        </Card>
+      ))}
+    </div>
+  </div>
+);
+
 const TrailSection = ({ planId }: { planId: string | undefined }) => {
   const trail = useTrail(planId);
   if (!trail) return null;
@@ -217,16 +275,31 @@ const TrailSection = ({ planId }: { planId: string | undefined }) => {
   );
 };
 
-const DatedEntryList = ({ entries }: { entries: LogEntry[] }) => (
+const DatedEntryList = ({
+  entries,
+  onPromote,
+}: {
+  entries: LogEntry[];
+  onPromote?: (entry: LogEntry) => void;
+}) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[4] }}>
     {entries.map((entry, i) => (
       <div
         key={`${entry.date}-${i}`}
         style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
       >
-        <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
-          {entry.date}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+          <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
+            {entry.date}
+          </span>
+          {onPromote && (
+            <Tooltip content="Promote this into a decision">
+              <Button variant="ghost" size="small" onClick={() => onPromote(entry)}>
+                Promote to decision
+              </Button>
+            </Tooltip>
+          )}
+        </div>
         <div
           className="text-sm"
           style={{
@@ -250,11 +323,13 @@ const CommentsSection = ({
   log,
   updating,
   onAdd,
+  onPromote,
 }: {
   plan: PlanEntry;
   log: LogEntry[] | undefined;
   updating: boolean;
   onAdd: (text: string) => Promise<boolean>;
+  onPromote: (entry: LogEntry) => void;
 }) => {
   const [logInput, setLogInput] = useState('');
 
@@ -277,7 +352,7 @@ const CommentsSection = ({
         <ApplyNotesButton plan={plan} disabled={updating} />
       </div>
       <Card size="small">
-        {log && log.length > 0 && <DatedEntryList entries={log} />}
+        {log && log.length > 0 && <DatedEntryList entries={log} onPromote={onPromote} />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
           <Textarea
             value={logInput}
@@ -415,6 +490,8 @@ const PlanReviewSection = ({
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const allPlans = useAppStore((s) => s.plans);
   const openQuestions = useAppStore((s) => s.openQuestions);
+  const decisions = useAppStore((s) => s.decisions);
+  const [viewingDecision, setViewingDecision] = useState<DecisionEntry | null>(null);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const { toast } = useToast();
@@ -423,6 +500,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const [resolvingQuestion, setResolvingQuestion] = useState<OpenQuestionEntry | null>(null);
   const promoteClarification = useAppStore((s) => s.promoteClarification);
   const [promotingClarification, setPromotingClarification] = useState<number | null>(null);
+  const [promotingToDecision, setPromotingToDecision] = useState<{
+    source: 'comment' | 'clarification';
+    entry: LogEntry;
+  } | null>(null);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
   const detailView = useAppStore((s) => s.detailView);
@@ -526,6 +607,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const blockingQuestions = openQuestions.filter(
     (q) => q.status === 'open' && q.blocks === plan.id,
   );
+  const planDecisions = relevantDecisions(decisions, plan);
 
   return (
     <div>
@@ -719,6 +801,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             </div>
           )}
 
+          {planDecisions.length > 0 && (
+            <DecisionsSection decisions={planDecisions} onSelect={setViewingDecision} />
+          )}
+
           {plan.clarifications && plan.clarifications.length > 0 && (
             <div style={{ marginBottom: space[5] }}>
               <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Clarifications</h3>
@@ -746,16 +832,27 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                       <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
                       {entry.text}
                     </span>
-                    <Tooltip content="Graduate this into an open question that outlives this entity">
-                      <Button
-                        variant="ghost"
-                        size="small"
-                        onClick={() => handlePromoteClarification(i)}
-                        disabled={promotingClarification !== null}
-                      >
-                        {promotingClarification === i ? 'Promoting…' : 'Promote'}
-                      </Button>
-                    </Tooltip>
+                    <div style={{ display: 'flex', gap: space[2], flexShrink: 0 }}>
+                      <Tooltip content="Graduate this into an open question that outlives this entity">
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => handlePromoteClarification(i)}
+                          disabled={promotingClarification !== null}
+                        >
+                          {promotingClarification === i ? 'Promoting…' : 'Promote'}
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content="Promote this straight into a decision">
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => setPromotingToDecision({ source: 'clarification', entry })}
+                        >
+                          Promote to decision
+                        </Button>
+                      </Tooltip>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -798,6 +895,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             log={plan.log}
             updating={updating}
             onAdd={handleAddLogEntry}
+            onPromote={(entry) => setPromotingToDecision({ source: 'comment', entry })}
           />
         </>
       )}
@@ -806,6 +904,15 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         question={resolvingQuestion}
         onClose={() => setResolvingQuestion(null)}
       />
+      <ViewDecisionModal decision={viewingDecision} onClose={() => setViewingDecision(null)} />
+      {plan.id && (
+        <PromoteDecisionModal
+          entityId={plan.id}
+          source={promotingToDecision?.source ?? 'comment'}
+          entry={promotingToDecision?.entry ?? null}
+          onClose={() => setPromotingToDecision(null)}
+        />
+      )}
     </div>
   );
 };

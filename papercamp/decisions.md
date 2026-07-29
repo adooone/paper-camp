@@ -763,7 +763,8 @@ added as its own deliberate entry later.
 ## Docs search lives in the nav island as a page-specific tool
 
 **Date:** 2026-06-19
-**Status:** superseded by "Docs search lives in the Docs page's own sidebar" (2026-07-02)
+**Status:** superseded
+**Superseded-by:** Docs search lives in the Docs page's own sidebar
 
 **Context:** The initial implementation placed the Docs page's full-text search input
 inside the page content area, at the top of the main content column. This consumed
@@ -915,3 +916,56 @@ sensibly, without touching the underlying one-task concurrency model.
 to the same `papercamp/` files — a much bigger problem than rendering a second task kind
 in the UI, and not one that's been asked for. More task *kinds* existing doesn't by
 itself create a need for more task *slots*.
+
+## Superseding a decision appends a new entry with a pointer, not an in-place edit
+
+**Date:** 2026-07-29
+**Status:** decided
+
+**Context:** `IDEA-97` phase 1 needed to settle whether superseding a decision
+should rewrite the old entry's `Decision`/`Rationale` in place or append a new
+entry and mark the old one superseded, before building the honour-or-supersede
+action in a later phase.
+
+**Decision:** Append-only. Superseding writes a new `##` entry with its own
+`Context`/`Decision`/`Rationale`, and only flips the old entry's `Status:` to
+`superseded` plus a `Superseded-by:` field pointing at the new entry's title —
+the old entry's original body is never rewritten.
+
+**Rationale:** This is already the shape `decisionFieldsSchema`, `parseDecisions`,
+and `formatDecisionEntry` implement (`src/core/parse/schemas.ts`,
+`src/core/parse/parser.ts`, `src/core/serialize/serializer.ts`) and the only
+existing superseded entry in the corpus ("Docs search lives in the nav island
+as a page-specific tool") was meant to follow — it had drifted, embedding the
+pointer as free text inside `Status:` instead of a separate `Superseded-by:`
+field, which failed `decisionFieldsSchema` and silently dropped the entry from
+parsing (and therefore from what `prompts.ts` feeds agents). Fixed as part of
+this decision. Append-only also matches the corpus's existing precedent
+(`Open questions stay one file, not per-file entities`, `IDEA-96`) of never
+rewriting settled history, and keeps the click-through built in a later phase
+simple: a superseded decision still shows what was decided and why, plus where
+to look next.
+
+## Decisions stay in the single `decisions.md`, not per-file entities
+
+**Date:** 2026-07-29
+**Status:** decided
+
+**Context:** `IDEA-97` phase 1 needed to settle whether decisions should become
+per-file entities like `IDEA-20` did for plans and ideas, making them linkable
+and taggable, against the cost of migrating decisions.md's ~29 entries into many
+small files.
+
+**Decision:** Stay a single file.
+
+**Rationale:** The corpus is 29 entries — the same order of magnitude as the 28
+that justified keeping `open-questions.md` single-file in `IDEA-96`, and far
+below the volume that motivated `IDEA-20`'s per-file migration for plans/ideas.
+The remaining phases of this plan don't need per-file linkability: the
+click-through phase resolves a `ConsistencyIssue` to a decision by title match
+against the existing corpus, exactly like `findConsistencyIssues` already does
+for `supersededBy`/`resolvedBy`; the entity-relevance phase matches by tags or
+subject, which a `Tags:` field-grammar line (as `plans.md` already has) can
+supply without a per-file move; and search works the same over one file or
+many. Converting would touch the schema, parser, serializer, and every route
+that reads `decisions.md` for a benefit none of those phases actually needs.

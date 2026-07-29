@@ -1,5 +1,6 @@
 import type {
   ConsistencyIssue,
+  DecisionEntry,
   LogEntry,
   OpenQuestionEntry,
   ParseResult,
@@ -108,6 +109,12 @@ export const fetchConsistency = async () => {
   return res.json() as Promise<ConsistencyIssue[]>;
 };
 
+export const fetchDecisions = async () => {
+  const res = await fetch('/api/decisions');
+  if (!res.ok) throw new Error(`Failed to fetch decisions: ${res.status}`);
+  return res.json() as Promise<ParseResult<DecisionEntry>>;
+};
+
 export const fetchOpenQuestions = async () => {
   const res = await fetch('/api/open-questions');
   if (!res.ok) {
@@ -115,6 +122,18 @@ export const fetchOpenQuestions = async () => {
     throw new Error(err.error);
   }
   return res.json() as Promise<ParseResult<OpenQuestionEntry>>;
+};
+
+export const supersedeDecision = async (title: string, newTitle: string, rationale: string) => {
+  const res = await fetch('/api/decisions/supersede', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, newTitle, rationale }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to supersede decision' }));
+    throw new Error(err.error);
+  }
 };
 
 export const resolveOpenQuestion = async (title: string, decision: string, rationale: string) => {
@@ -137,6 +156,24 @@ export const promoteClarification = async (entityId: string, clarification: LogE
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Failed to promote clarification' }));
+    throw new Error(err.error);
+  }
+};
+
+export const promoteToDecision = async (
+  entityId: string,
+  source: 'comment' | 'clarification',
+  entry: LogEntry,
+  title: string,
+  rationale: string,
+) => {
+  const res = await fetch('/api/decisions/promote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entityId, source, entry, title, rationale }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to promote to decision' }));
     throw new Error(err.error);
   }
 };

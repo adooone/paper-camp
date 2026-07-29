@@ -2,10 +2,11 @@ import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { summarizeQualityFailure, summarizeTestFailure } from '@/app/utils/check-summary';
-import type { CheckStatus, ConsistencyIssue } from '@/types/index';
+import type { CheckStatus, ConsistencyIssue, DecisionEntry } from '@/types/index';
 import { Card, CopyButton, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo, useState } from 'react';
+import { ViewDecisionModal } from '../view-decision-modal';
 import {
   chalkStatusFill,
   chalkStatusText,
@@ -20,8 +21,10 @@ export const StatusSection = () => {
   const fixQuality = useAppStore((s) => s.fixQuality);
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
+  const decisions = useAppStore((s) => s.decisions);
   const navigate = useNavigate();
   const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
+  const [viewingDecision, setViewingDecision] = useState<DecisionEntry | null>(null);
 
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
     () => deriveCheckStatuses(statusData),
@@ -40,6 +43,14 @@ export const StatusSection = () => {
     [plans?.entries],
   );
 
+  const linkedDecisionFor = useCallback(
+    (issue: ConsistencyIssue) =>
+      issue.kind === 'dangling-superseded-by'
+        ? decisions.find((d) => d.title === issue.title)
+        : undefined,
+    [decisions],
+  );
+
   const handleFindingClick = useCallback(
     (issue: ConsistencyIssue) => {
       const linkedPlan = linkedPlanFor(issue);
@@ -48,9 +59,12 @@ export const StatusSection = () => {
           to: '/plans/$planId',
           params: { planId: encodeURIComponent(linkedPlan.title) },
         });
+        return;
       }
+      const linkedDecision = linkedDecisionFor(issue);
+      if (linkedDecision) setViewingDecision(linkedDecision);
     },
-    [linkedPlanFor, navigate],
+    [linkedPlanFor, linkedDecisionFor, navigate],
   );
 
   return (
@@ -209,7 +223,7 @@ export const StatusSection = () => {
                             color: deskTextMuted,
                           }}
                         >
-                          {linkedPlanFor(issue) ? (
+                          {linkedPlanFor(issue) || linkedDecisionFor(issue) ? (
                             <button
                               type="button"
                               onClick={() => handleFindingClick(issue)}
@@ -334,6 +348,7 @@ export const StatusSection = () => {
           );
         })()}
       </Card>
+      <ViewDecisionModal decision={viewingDecision} onClose={() => setViewingDecision(null)} />
     </div>
   );
 };

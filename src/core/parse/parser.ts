@@ -180,6 +180,12 @@ export function parseDecisions(markdown: string): ParseResult<DecisionEntry> {
       date: fields.date,
       status: fields.status,
       supersededBy: fields['superseded-by'],
+      tags: fields.tags
+        ? fields.tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : undefined,
       body: raw.body,
     });
   }

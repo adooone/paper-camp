@@ -12,6 +12,7 @@ import type {
   CapabilityResult,
   CheckName,
   ConsistencyIssue,
+  DecisionEntry,
   GitStatusEntry,
   GitStatusResponse,
   IdeaEntry,
@@ -48,6 +49,7 @@ import {
   dismissSuggestion as dismissSuggestionApi,
   fetchArchivableIdeas,
   fetchConsistency,
+  fetchDecisions,
   fetchIdeas,
   fetchOpenQuestions,
   fetchPlans,
@@ -58,7 +60,9 @@ import {
   promoteClarification as promoteClarificationApi,
   promoteRoadmapItem as promoteRoadmapItemApi,
   promoteSuggestion as promoteSuggestionApi,
+  promoteToDecision as promoteToDecisionApi,
   resolveOpenQuestion as resolveOpenQuestionApi,
+  supersedeDecision as supersedeDecisionApi,
 } from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
 import type { StatusState } from '../services/status-api';
@@ -144,10 +148,21 @@ export type AppStore = {
   consistency: ConsistencyIssue[];
   loadConsistency: () => Promise<void>;
 
+  decisions: DecisionEntry[];
+  loadDecisions: () => Promise<void>;
+  supersedeDecision: (title: string, newTitle: string, rationale: string) => Promise<void>;
+
   openQuestions: OpenQuestionEntry[];
   loadOpenQuestions: () => Promise<void>;
   resolveOpenQuestion: (title: string, decision: string, rationale: string) => Promise<void>;
   promoteClarification: (entityId: string, clarification: LogEntry) => Promise<void>;
+  promoteToDecision: (
+    entityId: string,
+    source: 'comment' | 'clarification',
+    entry: LogEntry,
+    title: string,
+    rationale: string,
+  ) => Promise<void>;
 
   gitStatus: GitStatusEntry[] | null;
   gitBranch: string | null;
@@ -407,6 +422,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         get().loadSuggestions(),
         get().loadStatus(),
         get().loadConsistency(),
+        get().loadDecisions(),
         get().loadOpenQuestions(),
         get().loadGitStatus(),
         get().loadAgentStatus(),
@@ -466,6 +482,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
   consistency: [],
   loadConsistency: loadSlice(set, fetchConsistency, (data) => ({ consistency: data })),
 
+  decisions: [],
+  loadDecisions: loadSlice(
+    set,
+    fetchDecisions,
+    (data) => ({ decisions: data.entries }),
+    () => ({ decisions: [] }),
+  ),
+  supersedeDecision: async (title, newTitle, rationale) => {
+    await supersedeDecisionApi(title, newTitle, rationale);
+    await Promise.all([get().loadDecisions(), get().loadConsistency()]);
+  },
+
   openQuestions: [],
   loadOpenQuestions: loadSlice(
     set,
@@ -480,6 +508,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
   promoteClarification: async (entityId, clarification) => {
     await promoteClarificationApi(entityId, clarification);
     await Promise.all([get().loadOpenQuestions(), get().loadPlans()]);
+  },
+  promoteToDecision: async (entityId, source, entry, title, rationale) => {
+    await promoteToDecisionApi(entityId, source, entry, title, rationale);
+    await Promise.all([get().loadDecisions(), get().loadPlans()]);
   },
 
   gitStatus: null,
