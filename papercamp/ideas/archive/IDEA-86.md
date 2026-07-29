@@ -2,9 +2,9 @@
 id: IDEA-86
 title: Surface agent sign-in state in the app
 type: feat
-status: review
+status: done
 created: 2026-07-25
-updated: 2026-07-26
+updated: 2026-07-29
 tags:
   - agent
   - server

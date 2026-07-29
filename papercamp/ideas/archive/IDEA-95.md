@@ -2,9 +2,9 @@
 id: IDEA-95
 title: Roadmap items become the subject vocabulary
 type: feat
-status: review
+status: done
 created: 2026-07-26
-updated: 2026-07-26
+updated: 2026-07-29
 tags:
   - roadmap
   - core

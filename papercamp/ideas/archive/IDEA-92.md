@@ -2,9 +2,9 @@
 id: IDEA-92
 title: Timeline view and horizon lanes
 type: feat
-status: review
+status: done
 created: 2026-07-25
-updated: 2026-07-26
+updated: 2026-07-29
 tags:
   - app
   - ui

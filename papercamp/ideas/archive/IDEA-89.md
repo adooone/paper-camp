@@ -2,9 +2,9 @@
 id: IDEA-89
 title: Review a finished plan in prose
 type: feat
-status: review
+status: done
 created: 2026-07-25
-updated: 2026-07-27
+updated: 2026-07-29
 tags:
   - plans
   - app
@@ -29,9 +29,6 @@ Same primitive as [[IDEA-87]] (anchored prose in, structured change out), anchor
 - [x] Keep the JSON paste as a power path
       Preserve `AddReviewPhasesButton` and `parseReviewFindings` for genuine `/code-review` output.
 - [x] Type-check and full pass
-
-#### Rework — make Review a chat, not a Comments twin (2026-07-27)
-The v1 section is a structural clone of `CommentsSection`, so it reads as a duplicate and the flow is invisible: sending gives no confirmation, the split proposal appears in a detached panel, and approving lands its result off-screen (minted ideas in the Ideas list, review cleared here) so it looks like nothing happened.
 - [x] Give Review its own chat surface
       Replace the Comments-clone `PlanReviewSection` (`entity-detail.tsx`) with a distinct thread: your points render as right-aligned author messages, not the shared `DatedEntryList`, visually separated from Comments, with a bottom composer and a visible send confirmation.
 - [x] Post the split proposal as an in-thread reply
@@ -39,9 +36,6 @@ The v1 section is a structural clone of `CommentsSection`, so it reads as a dupl
 - [x] Apply from the thread with a visible result
       Move approve/discard into the agent's reply and post a confirmation summarising what landed (phases appended here, ideas minted) so approving is never silent; keep the same `createIdea` + `PATCH /api/plans` application path.
 - [x] Type-check and full pass
-
-#### Rework — Feedback as its own view, not a stacked section (2026-07-27)
-The chat still reads as one more block stacked under Phases/Comments, so it doesn't feel separate. Lift it into a switchable view: a "Views" list in the plan sidebar (Details by default, Feedback for `review`/`done`) that swaps the detail page's content.
 - [x] Add a Views switcher to the plan sidebar
       In `plan-actions-column.tsx`, add a "Views" section listing Details (default) and Feedback (only for `review`/`done`); selection drives a shared `detailView` store slice so the sidebar and content agree.
 - [x] Swap detail content by active view

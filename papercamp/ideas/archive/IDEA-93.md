@@ -2,9 +2,9 @@
 id: IDEA-93
 title: Trace an idea from roadmap to release
 type: feat
-status: review
+status: done
 created: 2026-07-25
-updated: 2026-07-26
+updated: 2026-07-29
 tags:
   - roadmap
   - core

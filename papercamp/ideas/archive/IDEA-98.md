@@ -2,8 +2,9 @@
 id: IDEA-98
 title: Track run order in one file
 type: refactor
-status: review
+status: done
 created: 2026-07-26
+updated: 2026-07-29
 tags:
   - core
   - plans

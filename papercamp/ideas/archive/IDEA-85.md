@@ -2,9 +2,9 @@
 id: IDEA-85
 title: Apply the merge policy from Settings
 type: feat
-status: review
+status: done
 created: 2026-07-25
-updated: 2026-07-26
+updated: 2026-07-29
 tags:
   - app
   - settings
