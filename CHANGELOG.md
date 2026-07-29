@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0](https://github.com/adooone/paper-camp/compare/v0.11.0...v0.12.0) (2026-07-29)
+
+
+### Features
+
+* **agent:** Self-healing run-all: fix red checks, ask only when stuck (IDEA-100) ([#83](https://github.com/adooone/paper-camp/issues/83)) ([f9fb50b](https://github.com/adooone/paper-camp/commit/f9fb50b80bbde69f1782f6e247d553bc0d922249))
+* **agent:** Surface agent sign-in state in the app (IDEA-86) ([#72](https://github.com/adooone/paper-camp/issues/72)) ([d6dcc82](https://github.com/adooone/paper-camp/commit/d6dcc82444b2f64043db9e5fae4ee804f35bed48))
+* **app:** Apply the merge policy from Settings (IDEA-85) ([#70](https://github.com/adooone/paper-camp/issues/70)) ([a15d9ab](https://github.com/adooone/paper-camp/commit/a15d9abd19df32108b11b8f926f4cf8c61279a76))
+* **app:** Git actions in the toolbar, agent as fallback (IDEA-94) ([#80](https://github.com/adooone/paper-camp/issues/80)) ([9a66269](https://github.com/adooone/paper-camp/commit/9a6626962f8e4c7e4ca3c8cb160059f878a8c626))
+* **app:** Margin notes on plans and phases (IDEA-87) ([#74](https://github.com/adooone/paper-camp/issues/74)) ([76f3ce4](https://github.com/adooone/paper-camp/commit/76f3ce409f8b0d0ead33c2bd25268f6a487cb88e))
+* **app:** Open questions as a working queue (IDEA-96) ([#81](https://github.com/adooone/paper-camp/issues/81)) ([2d73800](https://github.com/adooone/paper-camp/commit/2d73800eb15ebcb1b0a8dd9899783171426349a8))
+* **app:** Surface decisions where they bind (IDEA-97) ([#82](https://github.com/adooone/paper-camp/issues/82)) ([091a467](https://github.com/adooone/paper-camp/commit/091a4674531efc9fe409d40c20aa7a32103b9b68))
+* **app:** Timeline view and horizon lanes (IDEA-92) ([#77](https://github.com/adooone/paper-camp/issues/77)) ([42c30ba](https://github.com/adooone/paper-camp/commit/42c30ba8ddf0e8fc63228e5da6747e35eead98b7))
+* **core:** Roadmap items become the subject vocabulary (IDEA-95) ([#78](https://github.com/adooone/paper-camp/issues/78)) ([6c9817c](https://github.com/adooone/paper-camp/commit/6c9817c1ae4049a2eb3925c442210cead99014cd))
+* **core:** Roadmap items survive promotion (IDEA-91) ([#76](https://github.com/adooone/paper-camp/issues/76)) ([5ce2074](https://github.com/adooone/paper-camp/commit/5ce2074ed20d950e7b831fc9bad304b7207a0ee5))
+* **core:** Trace an idea from roadmap to release (IDEA-93) ([#79](https://github.com/adooone/paper-camp/issues/79)) ([ad0714d](https://github.com/adooone/paper-camp/commit/ad0714db09148025627d1137461f58b34bdad7e9))
+* **plans:** Review a finished plan in prose (IDEA-89) ([#75](https://github.com/adooone/paper-camp/issues/75)) ([c7cba8b](https://github.com/adooone/paper-camp/commit/c7cba8bb5cc8b79cde24202ac52f2137c54ab071))
+* **plans:** updates ([1ba4384](https://github.com/adooone/paper-camp/commit/1ba43844f604da767c1ae799503c2e31754e7c45))
+* **server:** Connections for every service (IDEA-90) ([#73](https://github.com/adooone/paper-camp/issues/73)) ([783b7c6](https://github.com/adooone/paper-camp/commit/783b7c68492149b6501b0d0b76a2d946614fb03c))
+
+
+### Bug Fixes
+
+* **app:** Distinguish unavailable subject vocabulary from empty ([e775086](https://github.com/adooone/paper-camp/commit/e7750860c35d041d44eb074faa52a083a3b65d88))
+* **ui:** Fix header background (IDEA-84) ([#68](https://github.com/adooone/paper-camp/issues/68)) ([649dcdd](https://github.com/adooone/paper-camp/commit/649dcdddfb5e411be2f2bb41cf01426f4accabd8))
+
 ## [0.11.0](https://github.com/adooone/paper-camp/compare/v0.10.0...v0.11.0) (2026-07-25)
 
 
