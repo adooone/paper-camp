@@ -11,6 +11,7 @@ import type {
   GitSyncResult,
   PlanEntry,
 } from '../../types';
+import { buildGitSyncRecoveryPrompt } from './git-sync-recovery';
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 
@@ -488,20 +489,34 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       } catch {}
     }
     if (stashPending && !syncError) {
+      const stage = 'stash-pop' as const;
+      const message =
+        'Synced to main, but restoring your changes hit a conflict — resolve the markers in the working tree; the originals are still in `git stash`';
       return {
         ok: false,
-        stage: 'stash-pop',
-        message:
-          'Synced to main, but restoring your changes hit a conflict — resolve the markers in the working tree; the originals are still in `git stash`',
+        stage,
+        message,
         stashPending: true,
+        recoveryPrompt: buildGitSyncRecoveryPrompt(
+          { stage, message, stashPending: true },
+          getCurrentBranch(),
+          await runGitStatus(),
+        ),
       };
     }
     if (syncError) {
+      const stage = 'reconcile' as const;
+      const message = (syncError as Error).message;
       return {
         ok: false,
-        stage: 'reconcile',
-        message: (syncError as Error).message,
+        stage,
+        message,
         stashPending,
+        recoveryPrompt: buildGitSyncRecoveryPrompt(
+          { stage, message, stashPending },
+          getCurrentBranch(),
+          await runGitStatus(),
+        ),
       };
     }
     return { ok: true };

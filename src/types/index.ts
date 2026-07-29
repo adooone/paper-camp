@@ -487,6 +487,10 @@ export interface GitSyncFailure {
   stage: 'reconcile' | 'stash-pop';
   message: string;
   stashPending: boolean;
+  // Prompt for the agent recovery job (see git-sync-recovery.ts) — the deterministic
+  // path's failure, the working-tree state, and the goal, packaged for a future
+  // launch rather than thrown at the user.
+  recoveryPrompt: string;
 }
 
 export type GitSyncResult = { ok: true } | GitSyncFailure;
