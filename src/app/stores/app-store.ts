@@ -60,6 +60,7 @@ import {
   promoteClarification as promoteClarificationApi,
   promoteRoadmapItem as promoteRoadmapItemApi,
   promoteSuggestion as promoteSuggestionApi,
+  promoteToDecision as promoteToDecisionApi,
   resolveOpenQuestion as resolveOpenQuestionApi,
   supersedeDecision as supersedeDecisionApi,
 } from '../services/content';
@@ -155,6 +156,13 @@ export type AppStore = {
   loadOpenQuestions: () => Promise<void>;
   resolveOpenQuestion: (title: string, decision: string, rationale: string) => Promise<void>;
   promoteClarification: (entityId: string, clarification: LogEntry) => Promise<void>;
+  promoteToDecision: (
+    entityId: string,
+    source: 'comment' | 'clarification',
+    entry: LogEntry,
+    title: string,
+    rationale: string,
+  ) => Promise<void>;
 
   gitStatus: GitStatusEntry[] | null;
   gitBranch: string | null;
@@ -500,6 +508,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
   promoteClarification: async (entityId, clarification) => {
     await promoteClarificationApi(entityId, clarification);
     await Promise.all([get().loadOpenQuestions(), get().loadPlans()]);
+  },
+  promoteToDecision: async (entityId, source, entry, title, rationale) => {
+    await promoteToDecisionApi(entityId, source, entry, title, rationale);
+    await Promise.all([get().loadDecisions(), get().loadPlans()]);
   },
 
   gitStatus: null,

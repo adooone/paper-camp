@@ -159,3 +159,21 @@ export const promoteClarification = async (entityId: string, clarification: LogE
     throw new Error(err.error);
   }
 };
+
+export const promoteToDecision = async (
+  entityId: string,
+  source: 'comment' | 'clarification',
+  entry: LogEntry,
+  title: string,
+  rationale: string,
+) => {
+  const res = await fetch('/api/decisions/promote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entityId, source, entry, title, rationale }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to promote to decision' }));
+    throw new Error(err.error);
+  }
+};

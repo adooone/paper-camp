@@ -36,6 +36,6 @@ Open questions for the plan: whether superseding a decision edits it in place or
       Match decisions to an entity by tags or subject and render them in `entity-detail.tsx` so guardrails appear where work happens.
 - [x] Add decision search for deliberate lookup
       A search over the decision corpus for when you genuinely need to find one, rather than a browse page.
-- [ ] Capture a decision from where it is made
+- [x] Capture a decision from where it is made
       Promote an entity comment or clarification into a decision from the entity, reusing the existing promote shape instead of hand-editing `decisions.md`.
 - [ ] Type-check and full pass

@@ -61,7 +61,7 @@ import {
   relevantDecisions,
   runningTaskForPlan,
 } from '../helpers';
-import { ResolveQuestionModal } from '../modals';
+import { PromoteDecisionModal, ResolveQuestionModal } from '../modals';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -275,16 +275,31 @@ const TrailSection = ({ planId }: { planId: string | undefined }) => {
   );
 };
 
-const DatedEntryList = ({ entries }: { entries: LogEntry[] }) => (
+const DatedEntryList = ({
+  entries,
+  onPromote,
+}: {
+  entries: LogEntry[];
+  onPromote?: (entry: LogEntry) => void;
+}) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[4] }}>
     {entries.map((entry, i) => (
       <div
         key={`${entry.date}-${i}`}
         style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
       >
-        <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
-          {entry.date}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+          <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
+            {entry.date}
+          </span>
+          {onPromote && (
+            <Tooltip content="Promote this into a decision">
+              <Button variant="ghost" size="small" onClick={() => onPromote(entry)}>
+                Promote to decision
+              </Button>
+            </Tooltip>
+          )}
+        </div>
         <div
           className="text-sm"
           style={{
@@ -308,11 +323,13 @@ const CommentsSection = ({
   log,
   updating,
   onAdd,
+  onPromote,
 }: {
   plan: PlanEntry;
   log: LogEntry[] | undefined;
   updating: boolean;
   onAdd: (text: string) => Promise<boolean>;
+  onPromote: (entry: LogEntry) => void;
 }) => {
   const [logInput, setLogInput] = useState('');
 
@@ -335,7 +352,7 @@ const CommentsSection = ({
         <ApplyNotesButton plan={plan} disabled={updating} />
       </div>
       <Card size="small">
-        {log && log.length > 0 && <DatedEntryList entries={log} />}
+        {log && log.length > 0 && <DatedEntryList entries={log} onPromote={onPromote} />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
           <Textarea
             value={logInput}
@@ -483,6 +500,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const [resolvingQuestion, setResolvingQuestion] = useState<OpenQuestionEntry | null>(null);
   const promoteClarification = useAppStore((s) => s.promoteClarification);
   const [promotingClarification, setPromotingClarification] = useState<number | null>(null);
+  const [promotingToDecision, setPromotingToDecision] = useState<{
+    source: 'comment' | 'clarification';
+    entry: LogEntry;
+  } | null>(null);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
   const detailView = useAppStore((s) => s.detailView);
@@ -811,16 +832,27 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                       <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
                       {entry.text}
                     </span>
-                    <Tooltip content="Graduate this into an open question that outlives this entity">
-                      <Button
-                        variant="ghost"
-                        size="small"
-                        onClick={() => handlePromoteClarification(i)}
-                        disabled={promotingClarification !== null}
-                      >
-                        {promotingClarification === i ? 'Promoting…' : 'Promote'}
-                      </Button>
-                    </Tooltip>
+                    <div style={{ display: 'flex', gap: space[2], flexShrink: 0 }}>
+                      <Tooltip content="Graduate this into an open question that outlives this entity">
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => handlePromoteClarification(i)}
+                          disabled={promotingClarification !== null}
+                        >
+                          {promotingClarification === i ? 'Promoting…' : 'Promote'}
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content="Promote this straight into a decision">
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => setPromotingToDecision({ source: 'clarification', entry })}
+                        >
+                          Promote to decision
+                        </Button>
+                      </Tooltip>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -863,6 +895,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             log={plan.log}
             updating={updating}
             onAdd={handleAddLogEntry}
+            onPromote={(entry) => setPromotingToDecision({ source: 'comment', entry })}
           />
         </>
       )}
@@ -872,6 +905,14 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         onClose={() => setResolvingQuestion(null)}
       />
       <ViewDecisionModal decision={viewingDecision} onClose={() => setViewingDecision(null)} />
+      {plan.id && (
+        <PromoteDecisionModal
+          entityId={plan.id}
+          source={promotingToDecision?.source ?? 'comment'}
+          entry={promotingToDecision?.entry ?? null}
+          onClose={() => setPromotingToDecision(null)}
+        />
+      )}
     </div>
   );
 };

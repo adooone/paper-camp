@@ -195,5 +195,71 @@ export function docsRoutes({ root }: RouteContext): Route[] {
         sendJson(res, 201, { ok: true });
       },
     },
+
+    // Promotes a comment or clarification straight into decisions.md, reusing
+    // the same entity-lookup-then-append shape as clarification promotion.
+    {
+      method: 'POST',
+      path: '/api/decisions/promote',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { entityId, source, entry, title, rationale } = JSON.parse(reqBody) as {
+          entityId?: string;
+          source?: 'comment' | 'clarification';
+          entry?: LogEntry;
+          title?: string;
+          rationale?: string;
+        };
+        if (!entityId?.trim() || !source || !entry?.text?.trim() || !title?.trim()) {
+          sendJson(res, 400, { error: 'entityId, source, entry, and title are required' });
+          return;
+        }
+        if (source !== 'comment' && source !== 'clarification') {
+          sendJson(res, 400, { error: 'source must be "comment" or "clarification"' });
+          return;
+        }
+
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const target = entries.find((e) => e.id === entityId);
+        if (!target) {
+          sendJson(res, 404, { error: `entity "${entityId}" not found` });
+          return;
+        }
+        const primaryFile = join(ideasDir, `${target.id}.md`);
+        const targetFile = (await fileExists(primaryFile))
+          ? primaryFile
+          : join(ideasDir, 'archive', `${target.id}.md`);
+        if (!(await fileExists(targetFile))) {
+          sendJson(res, 404, { error: 'entity file not found' });
+          return;
+        }
+
+        const field = source === 'comment' ? 'log' : 'clarifications';
+        const list = target[field] ?? [];
+        const matchIndex = list.findIndex((e) => e.date === entry.date && e.text === entry.text);
+        if (matchIndex === -1) {
+          sendJson(res, 404, { error: `${source} not found` });
+          return;
+        }
+        const remaining = list.filter((_, i) => i !== matchIndex);
+
+        const decisionBlock = formatDecisionEntry({
+          title: title.trim(),
+          date: todayDateString(),
+          status: 'decided',
+          tags: target.subject ? [...target.tags, target.subject] : target.tags,
+          body: rationale?.trim() || entry.text,
+        });
+        await appendBlock(campFile(root, 'decisions.md'), decisionBlock);
+
+        await writeEntityFile(
+          targetFile,
+          entityFileInput(target, { [field]: remaining, updated: todayDateString() }),
+        );
+
+        sendJson(res, 201, { ok: true });
+      },
+    },
   ];
 }
