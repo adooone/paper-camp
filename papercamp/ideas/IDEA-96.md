@@ -2,7 +2,7 @@
 id: IDEA-96
 title: Open questions as a working queue
 type: feat
-status: idea
+status: review
 created: 2026-07-26
 updated: 2026-07-26
 tags:
@@ -38,5 +38,5 @@ Settled: open questions stay a single file. The corpus is 7 entries total, only 
       Reuse the promote shape the app already runs for suggestions→ideas and roadmap→ideas so resolving a question writes it into `decisions.md`, keeping promotion one-way (clarification → open question → decision).
 - [x] Add the clarification → open-question promotion step
       Let a question that outlives one entity's `### Clarifications` graduate into `open-questions.md`, completing the three-tier chain in one direction.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
