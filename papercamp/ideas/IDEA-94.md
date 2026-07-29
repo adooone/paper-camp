@@ -14,7 +14,7 @@ subject: Infrastructure
 
 Git is central to the loop but nearly invisible in the app: the only git actions live inside the Stack panel's `commit-section.tsx`, and the StatusBar shows branch and ahead-count as ambient status with a single quick-commit. Sync to main, branch switching, push and pull have no visible home at all — you either dig into the Stack or drop to a terminal, which is exactly what this tool exists to avoid.
 
-**Surface the actions.** Give git a proper action group in the top toolbar: sync to main, branch, push/pull, commit — visible where the work happens, with live state (current branch, ahead/behind, dirty count) attached to the control rather than buried. The Stack panel keeps the detailed commit composer; the toolbar carries the everyday verbs.
+**Surface the actions.** Give git a proper action group in the top toolbar: sync to main, push/pull, commit — visible where the work happens, with live state (current branch, ahead/behind, dirty count) attached to the control rather than buried. The Stack panel keeps the detailed commit composer; the toolbar carries the everyday verbs.
 
 **Deterministic first, agent as fallback — never stuck.** Switching to main must always succeed or explain itself. Attempt it in code first, exactly as today: fetch, drop disposable local changes (content already identical to `origin/main`, and generated files like `papercamp/ideas/index.md` that `regenerateIndexes` rebuilds), stash the rest, `merge --ff-only` (falling back to `rebase` when diverged), pop. That path is fast, predictable, and covers the common case.
 
@@ -27,10 +27,10 @@ Worth deciding in the plan: whether the agent escalation asks for confirmation b
 Provenance: surfaced 2026-07-25 when Sync to main silently did nothing — the stash popped back over the merged files and aborted the whole sync, leaving main behind with no error visible in the UI. The deterministic drop-disposable-changes fix landed that day; the escalation path is what would have made it self-healing instead of silent.
 
 ### Phases
-- [ ] Expose branch / push / pull as server git actions
-      Extend `src/app/server/git.ts` and its routes so switch-branch, push, and pull are callable actions returning live state (current branch, ahead/behind, dirty count), reusing the existing sync-to-main path rather than adding a parallel one.
+- [x] Expose push / pull as server git actions
+      Extend `src/app/server/git.ts` and its routes so push and pull are callable actions returning live state (current branch, ahead/behind, dirty count), reusing the existing sync-to-main path rather than adding a parallel one.
 - [ ] Build the git action group in the top toolbar
-      Add a toolbar group with sync-to-main, branch, push/pull, and commit verbs, each carrying its live state on the control; leave the detailed commit composer in the Stack panel.
+      Add a toolbar group with sync-to-main, push/pull, and commit verbs, each carrying its live state on the control; leave the detailed commit composer in the Stack panel.
 - [ ] Keep the deterministic sync as the fast path
       Confirm the code-first attempt (fetch, drop disposable/generated changes, stash, `merge --ff-only` falling back to `rebase` when diverged, pop) runs first and unchanged, and returns a structured failure instead of throwing to the UI when it cannot resolve.
 - [ ] Package a deterministic-sync failure as an agent recovery job

@@ -4,7 +4,7 @@ import { lstat, readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { branchName, resolvePrsByEntity } from '@/core/git-pr';
-import type { BranchHygieneStatus, GitStatusEntry, PlanEntry } from '../../types';
+import type { BranchHygieneStatus, GitLiveState, GitStatusEntry, PlanEntry } from '../../types';
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 
@@ -231,6 +231,29 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     } catch {
       return 0;
     }
+  }
+
+  // No upstream: fall back to commits reachable from origin/main but not HEAD, so a
+  // fresh branch still reports how far behind it is.
+  async function getBehindCount(): Promise<number> {
+    try {
+      const args = (await hasUpstream())
+        ? ['rev-list', '--count', 'HEAD..@{u}']
+        : ['rev-list', '--count', `HEAD..${await mainRef()}`];
+      const output = await runGit(args);
+      return Number.parseInt(output.trim(), 10) || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  async function getLiveState(): Promise<GitLiveState> {
+    const [entries, ahead, behind] = await Promise.all([
+      runGitStatus(),
+      getAheadCount(),
+      getBehindCount(),
+    ]);
+    return { branch: getCurrentBranch(), ahead, behind, dirtyCount: entries.length };
   }
 
   async function push(): Promise<void> {
@@ -484,6 +507,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     ensureBranch,
     getFeatureBranchPlanId,
     getAheadCount,
+    getLiveState,
     push,
     isMergedIntoMain,
     getBranchHygieneStatus,

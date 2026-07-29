@@ -104,3 +104,4 @@
 | IDEA-100 | Self-healing run-all: fix red checks, ask only when stuck | feat | planned | agent, plans |
 | IDEA-101 | In-app sign-in via OAuth relay | — | idea |  |
 | IDEA-102 | Agent resolves sync-rebase conflicts | feat | idea | git, app, agent, server |
+| IDEA-103 | One feedback thread on every idea, any status | feat | idea | app, plans, ui |

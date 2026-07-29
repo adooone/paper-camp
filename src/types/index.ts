@@ -475,6 +475,13 @@ export type BranchHygieneStatus =
   | 'dirty'
   | 'fine';
 
+export interface GitLiveState {
+  branch: string;
+  ahead: number;
+  behind: number;
+  dirtyCount: number;
+}
+
 export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error';
 
 export type TaskKind =

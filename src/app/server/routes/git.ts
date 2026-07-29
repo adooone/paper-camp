@@ -51,7 +51,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         try {
           await git.push();
-          sendJson(res, 200, { ok: true });
+          sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
         }
@@ -87,7 +87,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         try {
           await git.runGitSync();
-          sendJson(res, 200, { ok: true });
+          sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
         }
@@ -102,7 +102,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         try {
           await git.runGitPull();
-          sendJson(res, 200, { ok: true });
+          sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
         }
