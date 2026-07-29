@@ -110,6 +110,10 @@ export const fetchConsistency = async () => {
 
 export const fetchOpenQuestions = async () => {
   const res = await fetch('/api/open-questions');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to load open questions' }));
+    throw new Error(err.error);
+  }
   return res.json() as Promise<ParseResult<OpenQuestionEntry>>;
 };
 

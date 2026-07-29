@@ -110,13 +110,15 @@ export function docsRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 404, { error: 'entity file not found' });
           return;
         }
-        const remaining = (target.clarifications ?? []).filter(
-          (c) => !(c.date === clarification.date && c.text === clarification.text),
+        const clarifications = target.clarifications ?? [];
+        const matchIndex = clarifications.findIndex(
+          (c) => c.date === clarification.date && c.text === clarification.text,
         );
-        if (remaining.length === (target.clarifications ?? []).length) {
+        if (matchIndex === -1) {
           sendJson(res, 404, { error: 'clarification not found' });
           return;
         }
+        const remaining = clarifications.filter((_, i) => i !== matchIndex);
 
         const questionBlock = formatOpenQuestionEntry({
           title: clarification.text,
