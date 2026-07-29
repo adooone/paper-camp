@@ -26,7 +26,7 @@ Pairs with [[IDEA-96]]: that idea ends with an answered question becoming a deci
 Open questions for the plan: whether superseding a decision edits it in place or appends a superseding entry with a pointer (the corpus favours append-only history); and whether decisions should become per-file entities like [[IDEA-20]] did for plans and ideas, making them linkable and taggable, against the cost of migrating 738 lines into many small files.
 
 ### Phases
-- [ ] Settle the modelling questions
+- [x] Settle the modelling questions
       Decide supersede-in-place vs append-a-superseding-entry (favour append-only history) and per-file decision entities vs the single `decisions.md`. Land the schema/parsing consequence of that choice in `src/core`.
 - [ ] Click through a consistency issue to the decision behind it
       Make each `ConsistencyIssue` from `/api/consistency` resolve to the decision it references and render a navigable link from the Stack panel's doc-consistency stamp.
