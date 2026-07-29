@@ -2,7 +2,7 @@
 id: IDEA-94
 title: Git actions in the toolbar, agent as fallback
 type: feat
-status: idea
+status: review
 created: 2026-07-26
 updated: 2026-07-29
 tags:
@@ -39,7 +39,7 @@ Provenance: surfaced 2026-07-25 when Sync to main silently did nothing — the s
       Launch the job and surface what it did; settle whether it asks for confirmation before touching working-tree state or runs automatically and reports after.
 - [x] Decide whether push/pull share the escalate-on-failure shape
       Settle whether the automatic deterministic→agent escalation wraps push and pull too, or stays scoped to the branch switch for this cut.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
 
 ### Log
 - 2026-07-29: I think changes in branch would be hard to maintain, I would keep our current approach for now, so please remove branch edits from this idea and plan.
