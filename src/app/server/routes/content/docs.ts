@@ -127,6 +127,7 @@ export function docsRoutes({ root }: RouteContext): Route[] {
           title: newTitle.trim(),
           date: todayDateString(),
           status: 'decided',
+          tags: target.tags,
           body: rationale?.trim() ?? '',
         });
 

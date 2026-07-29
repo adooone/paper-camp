@@ -6,6 +6,7 @@ import type { CheckStatus, ConsistencyIssue, DecisionEntry } from '@/types/index
 import { Card, CopyButton, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo, useState } from 'react';
+import { ViewDecisionModal } from '../view-decision-modal';
 import {
   chalkStatusFill,
   chalkStatusText,
@@ -13,7 +14,6 @@ import {
   deskTextMuted,
   sectionLabelStyle,
 } from './shared';
-import { ViewDecisionModal } from './view-decision-modal';
 
 export const StatusSection = () => {
   const statusData = useAppStore((s) => s.status);

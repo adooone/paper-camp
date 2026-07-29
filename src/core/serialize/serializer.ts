@@ -127,12 +127,14 @@ interface NewDecisionInput {
   date: string;
   status: string;
   supersededBy?: string;
+  tags?: string[];
   body?: string;
 }
 
 export function formatDecisionEntry(input: NewDecisionInput): string {
   const lines = [`## ${input.title}`, '', `**Date:** ${input.date}`, `**Status:** ${input.status}`];
   if (input.supersededBy) lines.push(`**Superseded-by:** ${input.supersededBy}`);
+  if (input.tags && input.tags.length > 0) lines.push(`**Tags:** ${input.tags.join(', ')}`);
   lines.push('');
   if (input.body) lines.push(input.body);
   return lines.join('\n').trimEnd();

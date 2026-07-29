@@ -32,9 +32,9 @@ Open questions for the plan: whether superseding a decision edits it in place or
       Make each `ConsistencyIssue` from `/api/consistency` resolve to the decision it references and render a navigable link from the Stack panel's doc-consistency stamp.
 - [x] Honour-or-supersede action on a decision
       From a surfaced decision, let the user either honour it or deliberately supersede it, writing the change through the append/in-place shape settled in phase 1.
-- [ ] Show decisions relevant to an entity on that entity
+- [x] Show decisions relevant to an entity on that entity
       Match decisions to an entity by tags or subject and render them in `entity-detail.tsx` so guardrails appear where work happens.
-- [ ] Add decision search for deliberate lookup
+- [x] Add decision search for deliberate lookup
       A search over the decision corpus for when you genuinely need to find one, rather than a browse page.
 - [ ] Capture a decision from where it is made
       Promote an entity comment or clarification into a decision from the entity, reusing the existing promote shape instead of hand-editing `decisions.md`.

@@ -29,6 +29,7 @@ export const decisionFieldsSchema = z.object({
   date: dateString,
   status: z.enum(['decided', 'superseded']),
   'superseded-by': z.string().optional(),
+  tags: z.string().optional(),
 });
 
 export const openQuestionFieldsSchema = z.object({

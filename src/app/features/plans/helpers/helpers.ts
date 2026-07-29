@@ -1,4 +1,10 @@
-import type { AgentTaskState, MarginNote, MarginNoteAnchor, PlanEntry } from '@/types/index';
+import type {
+  AgentTaskState,
+  DecisionEntry,
+  MarginNote,
+  MarginNoteAnchor,
+  PlanEntry,
+} from '@/types/index';
 
 export const relativeDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -68,6 +74,33 @@ export const resolveAppliedNotes = (
       ? { ...note, state: 'resolved' as const }
       : note,
   );
+
+/** Decisions whose tags overlap the plan's tags or subject — its logged guardrails. */
+export const relevantDecisions = (
+  decisions: DecisionEntry[],
+  plan: Pick<PlanEntry, 'tags' | 'subject'>,
+): DecisionEntry[] => {
+  const planTags = new Set(plan.tags);
+  if (plan.subject) planTags.add(plan.subject);
+  if (planTags.size === 0) return [];
+  return decisions
+    .filter((d) => (d.tags ?? []).some((t) => planTags.has(t)))
+    .sort((a, b) => b.date.localeCompare(a.date));
+};
+
+/** Decisions matching a free-text query against title, tags, and body. */
+export const searchDecisions = (decisions: DecisionEntry[], query: string): DecisionEntry[] => {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return decisions
+    .filter(
+      (d) =>
+        d.title.toLowerCase().includes(q) ||
+        d.body.toLowerCase().includes(q) ||
+        (d.tags ?? []).some((t) => t.toLowerCase().includes(q)),
+    )
+    .sort((a, b) => b.date.localeCompare(a.date));
+};
 
 export const findFocusPlan = (
   plans: PlanEntry[] | undefined,

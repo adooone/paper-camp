@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef } from 'react';
 import { AgentSection } from './agent-section';
 import { CommitSection } from './commit-section';
+import { DecisionSearchSection } from './decision-search-section';
 import {
   CHALKBOARD_TEXTURE,
   chalkStatusText,
@@ -274,6 +275,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           <AgentSection />
           <Divider surface="chalkboard" />
           <StatusSection />
+          <DecisionSearchSection />
           <CommitSection />
         </div>
       </motion.div>

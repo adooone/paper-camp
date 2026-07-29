@@ -1,5 +1,6 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
+import { ViewDecisionModal } from '@/app/components/view-decision-modal';
 import { usePlanStatusPatch, useSplitReview, useTrail } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
@@ -7,6 +8,7 @@ import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type {
   AgentTaskState,
+  DecisionEntry,
   IdeaEntry,
   LogEntry,
   MarginNote,
@@ -56,6 +58,7 @@ import {
   openMarginNotes,
   phaseProgress,
   relativeDate,
+  relevantDecisions,
   runningTaskForPlan,
 } from '../helpers';
 import { ResolveQuestionModal } from '../modals';
@@ -203,6 +206,61 @@ const PhasesSection = ({
       }
       className="phase-table-phone"
     />
+  </div>
+);
+
+const DecisionsSection = ({
+  decisions,
+  onSelect,
+}: {
+  decisions: DecisionEntry[];
+  onSelect: (decision: DecisionEntry) => void;
+}) => (
+  <div style={{ marginBottom: space[5] }}>
+    <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Decisions</h3>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[3] }}
+    >
+      {decisions.map((decision) => (
+        <Card key={decision.title} size="small" accent accentColor="slate">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: space[3],
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: space[2],
+                  marginBottom: space[1],
+                }}
+              >
+                <span className="text-sm" style={{ fontWeight: 600 }}>
+                  {decision.title}
+                </span>
+                <Stamp
+                  size="small"
+                  variant={decision.status === 'superseded' ? 'warning' : 'success'}
+                >
+                  {decision.status}
+                </Stamp>
+              </div>
+              <div className="text-sm" style={{ opacity: 0.85 }}>
+                <Markdown>{decision.body}</Markdown>
+              </div>
+            </div>
+            <Button variant="secondary" size="small" onClick={() => onSelect(decision)}>
+              View
+            </Button>
+          </div>
+        </Card>
+      ))}
+    </div>
   </div>
 );
 
@@ -415,6 +473,8 @@ const PlanReviewSection = ({
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const allPlans = useAppStore((s) => s.plans);
   const openQuestions = useAppStore((s) => s.openQuestions);
+  const decisions = useAppStore((s) => s.decisions);
+  const [viewingDecision, setViewingDecision] = useState<DecisionEntry | null>(null);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const { toast } = useToast();
@@ -526,6 +586,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const blockingQuestions = openQuestions.filter(
     (q) => q.status === 'open' && q.blocks === plan.id,
   );
+  const planDecisions = relevantDecisions(decisions, plan);
 
   return (
     <div>
@@ -719,6 +780,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             </div>
           )}
 
+          {planDecisions.length > 0 && (
+            <DecisionsSection decisions={planDecisions} onSelect={setViewingDecision} />
+          )}
+
           {plan.clarifications && plan.clarifications.length > 0 && (
             <div style={{ marginBottom: space[5] }}>
               <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Clarifications</h3>
@@ -806,6 +871,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         question={resolvingQuestion}
         onClose={() => setResolvingQuestion(null)}
       />
+      <ViewDecisionModal decision={viewingDecision} onClose={() => setViewingDecision(null)} />
     </div>
   );
 };
