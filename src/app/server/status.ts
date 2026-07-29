@@ -169,9 +169,12 @@ export function createStatusManager(
         // consistency (knip/depcruise) is a manual/dashboard check, not part of this gate.
         const names: CheckName[] = ['lint', 'format', 'test'];
         const passed = new Map<CheckName, boolean>();
+        const finished = new Set<CheckName>();
         let pending = names.length;
 
         function onDone(name: CheckName, ok: boolean) {
+          if (finished.has(name)) return;
+          finished.add(name);
           passed.set(name, ok);
           pending--;
           if (pending === 0) resolve(names.filter((n) => passed.get(n) !== true));

@@ -108,11 +108,20 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
 
 type Result = { ok: true } | { ok: false; error: string };
 
-export function buildAgentPrompt(plan: PlanEntry, phase: PhaseItem, phaseIndex: number): string {
+export function buildAgentPrompt(
+  plan: PlanEntry,
+  phase: PhaseItem,
+  phaseIndex: number,
+  toleratedRed: CheckName[] = [],
+): string {
   const details = phase.description ? `Phase details:\n${phase.description}\n\n` : '';
+  const toleratedNote =
+    toleratedRed.length > 0
+      ? `The following check(s) are already red before this phase and are pre-existing or known-flaky: ${toleratedRed.join(', ')}. Do not try to fix them — leave them exactly as they are.\n\n`
+      : '';
   return `You are executing exactly one phase of the plan "${plan.title}" (${plan.id ?? 'no id'}): phase ${phaseIndex + 1}, "${phase.text}". The plan is a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md.
 
-${details}Plan context: ${plan.body}
+${toleratedNote}${details}Plan context: ${plan.body}
 
 Do only this phase — do not start any other phase, even if it looks quick.
 
@@ -859,7 +868,7 @@ export function createAgentManager(
           task.phaseIndex = i;
           pushLine(task, `[phase ${i + 1}/${total}] ${phase.text}`);
 
-          const prompt = buildAgentPrompt(plan, phase, i);
+          const prompt = buildAgentPrompt(plan, phase, i, [...toleratedRed]);
           const proc = spawn(adapter.command, adapter.buildArgs(prompt, { model, effort }), {
             cwd: root,
             stdio: ['ignore', 'pipe', 'pipe'],
@@ -886,6 +895,7 @@ export function createAgentManager(
           const { ok: exitedOk, timedOut } = await runProcessWithTimeout(proc, PHASE_TIMEOUT_MS);
 
           if (isSuperseded(task)) return;
+          if (isStopping(task)) break;
 
           if (task.blocker) {
             failed++;
@@ -930,6 +940,7 @@ export function createAgentManager(
             pushLine(task, `[verify] phase ${i + 1} — running lint/format/test`);
             let failing = await runProjectChecks();
             if (isSuperseded(task)) return;
+            if (isStopping(task)) break;
             let introduced = failing.filter((c) => !toleratedRed.has(c));
             let checksOk = introduced.length === 0;
 
@@ -976,6 +987,8 @@ export function createAgentManager(
             }
             task.fixAttempt = undefined;
             task.fixAttemptCap = undefined;
+
+            if (isStopping(task)) break;
 
             if (fixBlocker) {
               failed++;
