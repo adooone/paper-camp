@@ -120,11 +120,22 @@ export function docsRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 409, { error: `decision "${trimmed}" is already ${target.status}` });
           return;
         }
+        // Titles become `##` headings and are the key for lookups/Superseded-by pointers:
+        // a newline corrupts the record, a duplicate makes supersession ambiguous.
+        const nextTitle = newTitle.trim();
+        if (/[\r\n]/.test(nextTitle)) {
+          sendJson(res, 400, { error: 'newTitle must be a single line' });
+          return;
+        }
+        if (parsed.entries.some((d) => d.title === nextTitle)) {
+          sendJson(res, 409, { error: `decision "${nextTitle}" already exists` });
+          return;
+        }
 
         target.status = 'superseded';
-        target.supersededBy = newTitle.trim();
+        target.supersededBy = nextTitle;
         parsed.entries.push({
-          title: newTitle.trim(),
+          title: nextTitle,
           date: todayDateString(),
           status: 'decided',
           tags: target.tags,
@@ -244,8 +255,24 @@ export function docsRoutes({ root }: RouteContext): Route[] {
         }
         const remaining = list.filter((_, i) => i !== matchIndex);
 
+        // Titles key the decision record (a `##` heading); reject a newline that would
+        // corrupt it and a duplicate that would make later lookups/supersession ambiguous.
+        const decisionTitle = title.trim();
+        if (/[\r\n]/.test(decisionTitle)) {
+          sendJson(res, 400, { error: 'title must be a single line' });
+          return;
+        }
+        const decisionsRaw = await readMaybe(campFile(root, 'decisions.md'));
+        if (
+          decisionsRaw &&
+          parseDecisions(decisionsRaw).entries.some((d) => d.title === decisionTitle)
+        ) {
+          sendJson(res, 409, { error: `decision "${decisionTitle}" already exists` });
+          return;
+        }
+
         const decisionBlock = formatDecisionEntry({
-          title: title.trim(),
+          title: decisionTitle,
           date: todayDateString(),
           status: 'decided',
           tags: target.subject ? [...target.tags, target.subject] : target.tags,

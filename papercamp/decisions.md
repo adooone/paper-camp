@@ -927,7 +927,7 @@ should rewrite the old entry's `Decision`/`Rationale` in place or append a new
 entry and mark the old one superseded, before building the honour-or-supersede
 action in a later phase.
 
-**Decision:** Append-only. Superseding writes a new `## ` entry with its own
+**Decision:** Append-only. Superseding writes a new `##` entry with its own
 `Context`/`Decision`/`Rationale`, and only flips the old entry's `Status:` to
 `superseded` plus a `Superseded-by:` field pointing at the new entry's title —
 the old entry's original body is never rewritten.
