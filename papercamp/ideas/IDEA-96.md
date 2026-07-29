@@ -32,7 +32,7 @@ Settled: open questions stay a single file. The corpus is 7 entries total, only 
       Add a blocking count to the worklist / Status surface driven by `GET /api/open-questions`, so questions show up where work lives rather than in a docs section.
 - [x] Surface each question against the entity it blocks
       Render an open question alongside the entity it targets in `entity-detail.tsx`, next to the existing `### Clarifications` rendering, instead of a standalone browse list.
-- [ ] Wire the resolve action to the existing endpoint
+- [x] Wire the resolve action to the existing endpoint
       Call `POST /api/open-questions/resolve` with `{decision, rationale}` from the entity surface — mostly wiring, since the endpoint already resolves a question into a decision.
 - [ ] Promote an answered question into a decision
       Reuse the promote shape the app already runs for suggestions→ideas and roadmap→ideas so resolving a question writes it into `decisions.md`, keeping promotion one-way (clarification → open question → decision).

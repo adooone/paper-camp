@@ -111,3 +111,15 @@ export const fetchOpenQuestions = async () => {
   const res = await fetch('/api/open-questions');
   return res.json() as Promise<ParseResult<OpenQuestionEntry>>;
 };
+
+export const resolveOpenQuestion = async (title: string, decision: string, rationale: string) => {
+  const res = await fetch(`/api/open-questions/resolve?title=${encodeURIComponent(title)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ decision, rationale }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to resolve question' }));
+    throw new Error(err.error);
+  }
+};

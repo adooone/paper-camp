@@ -11,6 +11,7 @@ import type {
   LogEntry,
   MarginNote,
   MarginNoteAnchor,
+  OpenQuestionEntry,
   PhaseItem,
   PlanEntry,
 } from '@/types/index';
@@ -57,6 +58,7 @@ import {
   relativeDate,
   runningTaskForPlan,
 } from '../helpers';
+import { ResolveQuestionModal } from '../modals';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -418,6 +420,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const [branching, setBranching] = useState(false);
+  const [resolvingQuestion, setResolvingQuestion] = useState<OpenQuestionEntry | null>(null);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
   const detailView = useAppStore((s) => s.detailView);
@@ -662,11 +665,32 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               >
                 {blockingQuestions.map((question) => (
                   <Card key={question.title} size="small" accent accentColor="amber">
-                    <div className="text-sm" style={{ fontWeight: 600, marginBottom: space[1] }}>
-                      {question.title}
-                    </div>
-                    <div className="text-sm" style={{ opacity: 0.85 }}>
-                      <Markdown>{question.body}</Markdown>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: space[3],
+                      }}
+                    >
+                      <div>
+                        <div
+                          className="text-sm"
+                          style={{ fontWeight: 600, marginBottom: space[1] }}
+                        >
+                          {question.title}
+                        </div>
+                        <div className="text-sm" style={{ opacity: 0.85 }}>
+                          <Markdown>{question.body}</Markdown>
+                        </div>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={() => setResolvingQuestion(question)}
+                      >
+                        Resolve
+                      </Button>
                     </div>
                   </Card>
                 ))}
@@ -738,6 +762,11 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           />
         </>
       )}
+
+      <ResolveQuestionModal
+        question={resolvingQuestion}
+        onClose={() => setResolvingQuestion(null)}
+      />
     </div>
   );
 };

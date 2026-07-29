@@ -56,6 +56,7 @@ import {
   prioritiseQueue,
   promoteRoadmapItem as promoteRoadmapItemApi,
   promoteSuggestion as promoteSuggestionApi,
+  resolveOpenQuestion as resolveOpenQuestionApi,
 } from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
 import type { StatusState } from '../services/status-api';
@@ -143,6 +144,7 @@ export type AppStore = {
 
   openQuestions: OpenQuestionEntry[];
   loadOpenQuestions: () => Promise<void>;
+  resolveOpenQuestion: (title: string, decision: string, rationale: string) => Promise<void>;
 
   gitStatus: GitStatusEntry[] | null;
   gitBranch: string | null;
@@ -468,6 +470,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     (data) => ({ openQuestions: data.entries }),
     () => ({ openQuestions: [] }),
   ),
+  resolveOpenQuestion: async (title, decision, rationale) => {
+    await resolveOpenQuestionApi(title, decision, rationale);
+    await get().loadOpenQuestions();
+  },
 
   gitStatus: null,
   gitBranch: null,
