@@ -166,6 +166,11 @@ export function formatPlans(entries: NewPlanInput[]): string {
   return `${entries.map((entry) => formatPlanEntry(entry)).join('\n\n')}\n`;
 }
 
+export function formatDecisions(entries: NewDecisionInput[]): string {
+  if (entries.length === 0) return '';
+  return `${entries.map((entry) => formatDecisionEntry(entry)).join('\n\n')}\n`;
+}
+
 export function formatOpenQuestions(entries: NewOpenQuestionInput[]): string {
   if (entries.length === 0) return '';
   return `${entries.map((entry) => formatOpenQuestionEntry(entry)).join('\n\n')}\n`;

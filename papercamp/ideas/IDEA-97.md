@@ -28,9 +28,9 @@ Open questions for the plan: whether superseding a decision edits it in place or
 ### Phases
 - [x] Settle the modelling questions
       Decide supersede-in-place vs append-a-superseding-entry (favour append-only history) and per-file decision entities vs the single `decisions.md`. Land the schema/parsing consequence of that choice in `src/core`.
-- [ ] Click through a consistency issue to the decision behind it
+- [x] Click through a consistency issue to the decision behind it
       Make each `ConsistencyIssue` from `/api/consistency` resolve to the decision it references and render a navigable link from the Stack panel's doc-consistency stamp.
-- [ ] Honour-or-supersede action on a decision
+- [x] Honour-or-supersede action on a decision
       From a surfaced decision, let the user either honour it or deliberately supersede it, writing the change through the append/in-place shape settled in phase 1.
 - [ ] Show decisions relevant to an entity on that entity
       Match decisions to an entity by tags or subject and render them in `entity-detail.tsx` so guardrails appear where work happens.

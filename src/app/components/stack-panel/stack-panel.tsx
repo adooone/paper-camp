@@ -31,6 +31,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   const loadStatus = useAppStore((s) => s.loadStatus);
   const consistency = useAppStore((s) => s.consistency);
   const loadConsistency = useAppStore((s) => s.loadConsistency);
+  const loadDecisions = useAppStore((s) => s.loadDecisions);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
@@ -41,6 +42,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     loadPlans,
     loadStatus,
     loadConsistency,
+    loadDecisions,
     loadGitStatus,
     loadAgentStatus,
     loadSuggestions,
@@ -51,6 +53,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       loadPlans,
       loadStatus,
       loadConsistency,
+      loadDecisions,
       loadGitStatus,
       loadAgentStatus,
       loadSuggestions,
@@ -61,6 +64,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   useEffect(() => {
     refreshRef.current.loadStatus();
     refreshRef.current.loadConsistency();
+    refreshRef.current.loadDecisions();
     refreshRef.current.loadGitStatus();
     refreshRef.current.loadAgentStatus();
     refreshRef.current.loadArchivableIdeas();
@@ -102,6 +106,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           refreshRef.current.loadSuggestions();
           refreshRef.current.loadStatus();
           refreshRef.current.loadConsistency();
+          refreshRef.current.loadDecisions();
           refreshRef.current.loadGitStatus();
           refreshRef.current.loadAgentStatus();
           refreshRef.current.loadArchivableIdeas();

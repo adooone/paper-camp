@@ -12,6 +12,7 @@ import type {
   CapabilityResult,
   CheckName,
   ConsistencyIssue,
+  DecisionEntry,
   GitStatusEntry,
   GitStatusResponse,
   IdeaEntry,
@@ -48,6 +49,7 @@ import {
   dismissSuggestion as dismissSuggestionApi,
   fetchArchivableIdeas,
   fetchConsistency,
+  fetchDecisions,
   fetchIdeas,
   fetchOpenQuestions,
   fetchPlans,
@@ -59,6 +61,7 @@ import {
   promoteRoadmapItem as promoteRoadmapItemApi,
   promoteSuggestion as promoteSuggestionApi,
   resolveOpenQuestion as resolveOpenQuestionApi,
+  supersedeDecision as supersedeDecisionApi,
 } from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
 import type { StatusState } from '../services/status-api';
@@ -143,6 +146,10 @@ export type AppStore = {
 
   consistency: ConsistencyIssue[];
   loadConsistency: () => Promise<void>;
+
+  decisions: DecisionEntry[];
+  loadDecisions: () => Promise<void>;
+  supersedeDecision: (title: string, newTitle: string, rationale: string) => Promise<void>;
 
   openQuestions: OpenQuestionEntry[];
   loadOpenQuestions: () => Promise<void>;
@@ -407,6 +414,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         get().loadSuggestions(),
         get().loadStatus(),
         get().loadConsistency(),
+        get().loadDecisions(),
         get().loadOpenQuestions(),
         get().loadGitStatus(),
         get().loadAgentStatus(),
@@ -465,6 +473,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   consistency: [],
   loadConsistency: loadSlice(set, fetchConsistency, (data) => ({ consistency: data })),
+
+  decisions: [],
+  loadDecisions: loadSlice(
+    set,
+    fetchDecisions,
+    (data) => ({ decisions: data.entries }),
+    () => ({ decisions: [] }),
+  ),
+  supersedeDecision: async (title, newTitle, rationale) => {
+    await supersedeDecisionApi(title, newTitle, rationale);
+    await Promise.all([get().loadDecisions(), get().loadConsistency()]);
+  },
 
   openQuestions: [],
   loadOpenQuestions: loadSlice(

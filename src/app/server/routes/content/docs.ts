@@ -1,10 +1,11 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { parseOpenQuestions } from '@/core/parse';
+import { parseDecisions, parseOpenQuestions } from '@/core/parse';
 import { readEntities } from '@/core/readers';
 import {
   appendBlock,
   formatDecisionEntry,
+  formatDecisions,
   formatOpenQuestionEntry,
   formatOpenQuestions,
   todayDateString,
@@ -74,6 +75,63 @@ export function docsRoutes({ root }: RouteContext): Route[] {
         target.resolvedBy = decision.trim();
         const updated = formatOpenQuestions(parsed.entries);
         await writeFile(questionsPath, `${updated}\n`, 'utf-8');
+
+        sendJson(res, 200, { ok: true });
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/decisions/supersede',
+      handle: async (req, res) => {
+        const body = await readBody(req);
+        const { title, newTitle, rationale } = JSON.parse(body) as {
+          title?: string;
+          newTitle?: string;
+          rationale?: string;
+        };
+        if (!title?.trim() || !newTitle?.trim()) {
+          sendJson(res, 400, { error: 'title and newTitle are required' });
+          return;
+        }
+
+        const decisionsPath = campFile(root, 'decisions.md');
+        const raw = await readMaybe(decisionsPath);
+        if (!raw) {
+          sendJson(res, 404, { error: 'decisions.md not found' });
+          return;
+        }
+        const parsed = parseDecisions(raw);
+        if (parsed.warnings.length > 0) {
+          sendJson(res, 409, {
+            error:
+              'decisions.md has parse warnings — resolve them before updating to avoid data loss',
+            warnings: parsed.warnings.map((w) => `${w.title}: ${w.message}`),
+          });
+          return;
+        }
+        const trimmed = title.trim();
+        const target = parsed.entries.find((d) => d.title === trimmed);
+        if (!target) {
+          sendJson(res, 404, { error: `decision "${trimmed}" not found` });
+          return;
+        }
+        if (target.status !== 'decided') {
+          sendJson(res, 409, { error: `decision "${trimmed}" is already ${target.status}` });
+          return;
+        }
+
+        target.status = 'superseded';
+        target.supersededBy = newTitle.trim();
+        parsed.entries.push({
+          title: newTitle.trim(),
+          date: todayDateString(),
+          status: 'decided',
+          body: rationale?.trim() ?? '',
+        });
+
+        const updated = formatDecisions(parsed.entries);
+        await writeFile(decisionsPath, `${updated}\n`, 'utf-8');
 
         sendJson(res, 200, { ok: true });
       },
