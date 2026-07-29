@@ -1,11 +1,6 @@
 import { findFocusPlan } from '@/app/features/plans/helpers';
-import {
-  commitChanges,
-  pullFromOrigin,
-  pushChanges,
-  suggestCommitMessage,
-  syncToMain,
-} from '@/app/services/git-api';
+import { useBranchSync } from '@/app/hooks/use-branch-sync';
+import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { BranchHygieneStatus, GitStatusEntry, PlanEntry } from '@/types/index';
@@ -326,63 +321,8 @@ const CommitForm = ({
   );
 };
 
-// Shared by push/sync/pull below: run an action, flag it busy meanwhile, and
-// toast a one-line summary if it throws — the only thing the three differ on.
-function useTrackedAction(failTitle: string) {
-  const { toast } = useToast();
-  const [running, setRunning] = useState(false);
-  const run = useCallback(
-    async (action: () => Promise<void>) => {
-      setRunning(true);
-      try {
-        await action();
-      } catch (err) {
-        toast({
-          title: failTitle,
-          description: gitErrorSummary((err as Error).message),
-          variant: 'error',
-        });
-      } finally {
-        setRunning(false);
-      }
-    },
-    [toast, failTitle],
-  );
-  return [running, run] as const;
-}
-
-function useBranchSync() {
-  const loadGitStatus = useAppStore((s) => s.loadGitStatus);
-  const loadPlans = useAppStore((s) => s.loadPlans);
-  const loadIdeas = useAppStore((s) => s.loadIdeas);
-  // Sync/pull can bring upstream commits, so refresh plans/ideas too — git-status alone would leave them stale.
-  const refreshAfterUpstream = () => Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
-
-  const [pushing, runPush] = useTrackedAction('Push failed');
-  const [syncing, runSync] = useTrackedAction('Sync failed');
-  const [pulling, runPull] = useTrackedAction('Pull failed');
-
-  const handlePush = () =>
-    runPush(async () => {
-      await pushChanges();
-      await loadGitStatus();
-    });
-  const handleSync = () =>
-    runSync(async () => {
-      await syncToMain();
-      await refreshAfterUpstream();
-    });
-  const handlePull = () =>
-    runPull(async () => {
-      await pullFromOrigin();
-      await refreshAfterUpstream();
-    });
-
-  return { pushing, syncing, pulling, handlePush, handleSync, handlePull };
-}
-
 const StaleMergedSyncButton = () => {
-  const { syncing, handleSync } = useBranchSync();
+  const { syncing, gitActionBusy, handleSync } = useBranchSync();
   return (
     // stale-merged: committing here would strand work off main, so dirty
     // sync (stash → main → ff) replaces the commit controls.
@@ -391,7 +331,7 @@ const StaleMergedSyncButton = () => {
       size="small"
       fullWidth
       icon={<MergeIcon size={14} />}
-      disabled={syncing}
+      disabled={gitActionBusy}
       onClick={handleSync}
     >
       {syncing ? 'Syncing…' : 'Branch merged — sync to main'}
@@ -403,7 +343,8 @@ const NoChangesActions = ({
   gitAhead,
   gitBranchHygiene,
 }: { gitAhead: number; gitBranchHygiene: BranchHygieneStatus | null }) => {
-  const { pushing, syncing, pulling, handlePush, handleSync, handlePull } = useBranchSync();
+  const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
+    useBranchSync();
 
   if (gitAhead > 0) {
     return (
@@ -415,7 +356,7 @@ const NoChangesActions = ({
           surface="chalkboard"
           size="small"
           icon={<PushIcon size={14} />}
-          disabled={pushing}
+          disabled={gitActionBusy}
           onClick={handlePush}
         >
           {pushing ? 'Pushing…' : `Push ${gitAhead} commit${gitAhead === 1 ? '' : 's'}`}
@@ -436,7 +377,7 @@ const NoChangesActions = ({
             surface="chalkboard"
             size="small"
             icon={<MergeIcon size={14} />}
-            disabled={syncing || gitBranchHygiene === 'clean-on-main'}
+            disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
             onClick={handleSync}
           >
             {syncing ? 'Syncing…' : 'Sync to main'}
@@ -447,7 +388,7 @@ const NoChangesActions = ({
           surface="chalkboard"
           size="small"
           icon={<PullIcon size={14} />}
-          disabled={pulling}
+          disabled={gitActionBusy}
           onClick={handlePull}
         >
           {pulling ? 'Pulling…' : 'Pull'}

@@ -4,7 +4,14 @@ import { lstat, readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { branchName, resolvePrsByEntity } from '@/core/git-pr';
-import type { BranchHygieneStatus, GitStatusEntry, PlanEntry } from '../../types';
+import type {
+  BranchHygieneStatus,
+  GitLiveState,
+  GitStatusEntry,
+  GitSyncResult,
+  PlanEntry,
+} from '../../types';
+import { buildGitSyncRecoveryPrompt } from './git-sync-recovery';
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 
@@ -233,6 +240,29 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
+  // No upstream: fall back to commits reachable from origin/main but not HEAD, so a
+  // fresh branch still reports how far behind it is.
+  async function getBehindCount(): Promise<number> {
+    try {
+      const args = (await hasUpstream())
+        ? ['rev-list', '--count', 'HEAD..@{u}']
+        : ['rev-list', '--count', `HEAD..${await mainRef()}`];
+      const output = await runGit(args);
+      return Number.parseInt(output.trim(), 10) || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  async function getLiveState(): Promise<GitLiveState> {
+    const [entries, ahead, behind] = await Promise.all([
+      runGitStatus(),
+      getAheadCount(),
+      getBehindCount(),
+    ]);
+    return { branch: getCurrentBranch(), ahead, behind, dirtyCount: entries.length };
+  }
+
   async function push(): Promise<void> {
     if (await hasUpstream()) {
       await runGit(['push']);
@@ -435,7 +465,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
-  async function runGitSync(): Promise<void> {
+  async function runGitSync(): Promise<GitSyncResult> {
     // Fetch first: recognizing already-in-main local edits needs to know what's incoming.
     await runGit(['fetch', '--prune']).catch(() => {});
     await dropDisposableLocalChanges().catch(() => {});
@@ -451,18 +481,45 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     } catch (err) {
       syncError = err;
     }
+    let stashPending = dirty;
     if (dirty) {
       try {
         await runGit(['stash', 'pop', '--index']);
-      } catch {
-        if (!syncError) {
-          throw new Error(
-            'Synced to main, but restoring your changes hit a conflict — resolve the markers in the working tree; the originals are still in `git stash`',
-          );
-        }
-      }
+        stashPending = false;
+      } catch {}
     }
-    if (syncError) throw syncError;
+    if (stashPending && !syncError) {
+      const stage = 'stash-pop' as const;
+      const message =
+        'Synced to main, but restoring your changes hit a conflict — resolve the markers in the working tree; the originals are still in `git stash`';
+      return {
+        ok: false,
+        stage,
+        message,
+        stashPending: true,
+        recoveryPrompt: buildGitSyncRecoveryPrompt(
+          { stage, message, stashPending: true },
+          getCurrentBranch(),
+          await runGitStatus(),
+        ),
+      };
+    }
+    if (syncError) {
+      const stage = 'reconcile' as const;
+      const message = (syncError as Error).message;
+      return {
+        ok: false,
+        stage,
+        message,
+        stashPending,
+        recoveryPrompt: buildGitSyncRecoveryPrompt(
+          { stage, message, stashPending },
+          getCurrentBranch(),
+          await runGitStatus(),
+        ),
+      };
+    }
+    return { ok: true };
   }
 
   // Reconcile the current branch: fast-forward if behind, else rebase local commits
@@ -484,6 +541,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     ensureBranch,
     getFeatureBranchPlanId,
     getAheadCount,
+    getLiveState,
     push,
     isMergedIntoMain,
     getBranchHygieneStatus,

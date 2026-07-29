@@ -1,3 +1,64 @@
+## Escalate-on-failure stays scoped to the branch switch, not push/pull
+
+**Date:** 2026-07-29
+**Status:** decided
+
+**Context:** `IDEA-94` phase 6 needed to settle whether the automatic
+deterministic→agent escalation built for sync-to-main (`runGitSync`'s
+`recoveryPrompt` + `agent.startGitSyncRecovery`, wired in `routes/git.ts`)
+should also wrap `git.push()` and `git.runGitPull()`, whose routes
+(`/api/git/push`, `/api/git/pull`) currently just catch and return the raw
+git error as a 400/409.
+
+**Decision:** No — this cut's escalation covers only the branch switch
+(`/api/git/sync`). `push()` and `runGitPull()` keep throwing straight to
+their routes, which surface the error as-is; no recovery-agent job is built
+for either.
+
+**Rationale:** The two operations don't share the failure shape that
+motivated the escalation. `push()`'s realistic failures are network/auth
+errors (no working-tree mess an agent could resolve with judgment) or a
+non-fast-forward rejection — and the fix for the latter is "pull first,"
+which is already a one-click action the user has, not something worth a
+second agent path to reach the same place. `runGitPull()` does share
+`reconcileOnto` with sync's core, but it already turns a diverged-with-conflict
+pull into a clean, specific thrown message ("resolve it, or hand it to the
+agent") rather than leaving the working tree stuck — and a user who wants the
+agent path for a stuck pull can already reach it by running Sync, which
+carries the same `reconcileOnto` step against `origin/main`. Building a second
+recovery-prompt/job pathway for two call sites that don't independently need
+one is scope the plan's own "for this cut" framing was flagging, not a gap to
+close now — a real gap (recurring stuck pulls, unrecoverable pushes) would be
+its own idea once it's actually observed.
+
+## Git-sync recovery escalates automatically, no confirmation step
+
+**Date:** 2026-07-29
+**Status:** decided
+
+**Context:** `IDEA-94` phase 5 needed to settle whether launching the
+deterministic sync's recovery agent (built in phase 4 as
+`buildGitSyncRecoveryPrompt`) asks the user to confirm first, since the agent
+can discard or rewrite working-tree state (pop a stash, resolve a rebase
+conflict, drop disposable local changes).
+
+**Decision:** `/api/git/sync` launches the recovery agent itself the moment
+the deterministic path fails (`agent.startGitSyncRecovery` in
+`src/app/server/agent.ts`, wired from `routes/git.ts`) — no confirmation
+dialog. The route responds `202` with `recovering: true`; the toolbar shows a
+"Sync needs help" toast and the Stack panel's Agent section streams the
+recovery task like any other.
+
+**Rationale:** The plan's own framing is "never stuck" — the whole point of
+the escalation is that the user's outcome is "I am on latest main," not "here
+is a confirmation dialog to get through before that happens." A confirmation
+step reintroduces exactly the stuck state the fallback exists to avoid,
+and the recovery prompt already constrains the agent (no force-push, no
+`reset --hard`, no dropping a stash without confirming it's safe to lose) —
+the safety net is in the prompt, not a modal. This mirrors every other
+exclusive agent task (`phase`, `run-all`, `fix-review`) already running
+automatically once launched.
+
 ## Roadmap links a minted entity with a `→ IDEA-N` sub-bullet
 
 **Date:** 2026-07-27

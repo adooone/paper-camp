@@ -316,7 +316,9 @@ describe('runGitSync', () => {
     await writeFile(join(root, 'README.md'), 'local edit\n');
     const manager = gitManager(root);
 
-    await expect(manager.runGitSync()).rejects.toThrow(/git stash/);
+    const result = await manager.runGitSync();
+    expect(result).toMatchObject({ ok: false, stage: 'stash-pop', stashPending: true });
+    expect((result as { message: string }).message).toMatch(/git stash/);
     expect(manager.getCurrentBranch()).toBe('main');
     expect(git(root, 'stash', 'list')).toContain('papercamp-sync');
   });

@@ -1,43 +1,32 @@
+import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import {
   selectAgentNotSignedIn,
   selectCapabilityGapCount,
   useAppStore,
 } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
-import { deriveCheckStatuses } from '@/app/utils/check-status';
-import type { CheckStatus } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { CommitIcon, RunIcon, WandIcon } from '../icons';
-
-const CHECK_VARIANT: Record<CheckStatus, 'success' | 'error' | 'warning' | 'neutral'> = {
-  pass: 'success',
-  fail: 'error',
-  running: 'warning',
-  stale: 'neutral',
-};
+import { CommitIcon, MergeIcon, PullIcon, PushIcon } from '../icons';
 
 const btnStyle = { fontSize: fontSize['2xs'] };
 
 // Ambient status + immediate quick actions; the Stack panel remains the full control surface.
 export const StatusBar = () => {
-  const status = useAppStore((s) => s.status);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
-  const runCheck = useAppStore((s) => s.runCheck);
-  const fixQuality = useAppStore((s) => s.fixQuality);
+  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
   const quickCommit = useAppStore((s) => s.quickCommit);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const capabilityGapCount = useAppStore(selectCapabilityGapCount);
   const agentNotSignedIn = useAppStore(selectAgentNotSignedIn);
+  const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
+    useBranchSync();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const { qualityStatus, testStatus, consistencyStatus } = deriveCheckStatuses(status);
-  const anyChecksRunning =
-    qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
   const activeTask = agentStatus.find(
     (t) => t.status === 'running' || t.status === 'starting' || t.status === 'stopping',
   );
@@ -113,20 +102,43 @@ export const StatusBar = () => {
       <div style={{ flex: 1 }} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexShrink: 0 }}>
-        <Tooltip content="Quality (lint + format)">
-          <Stamp size="small" variant={CHECK_VARIANT[qualityStatus]}>
-            Quality
-          </Stamp>
+        <Tooltip
+          content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : 'Sync to main'}
+        >
+          <Button
+            variant="ghost"
+            size="small"
+            icon={<MergeIcon />}
+            style={btnStyle}
+            disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
+            onClick={handleSync}
+          >
+            {syncing ? 'Syncing…' : 'Sync to main'}
+          </Button>
         </Tooltip>
-        <Tooltip content="Tests">
-          <Stamp size="small" variant={CHECK_VARIANT[testStatus]}>
-            Tests
-          </Stamp>
+        <Tooltip content="Push commits to origin">
+          <Button
+            variant="ghost"
+            size="small"
+            icon={<PushIcon />}
+            style={btnStyle}
+            disabled={gitActionBusy || gitAhead === 0}
+            onClick={handlePush}
+          >
+            {pushing ? 'Pushing…' : gitAhead > 0 ? `Push (${gitAhead})` : 'Push'}
+          </Button>
         </Tooltip>
-        <Tooltip content="Codebase consistency (knip + dependency-cruiser)">
-          <Stamp size="small" variant={CHECK_VARIANT[consistencyStatus]}>
-            Consistency
-          </Stamp>
+        <Tooltip content="Fast-forward the current branch from origin">
+          <Button
+            variant="ghost"
+            size="small"
+            icon={<PullIcon />}
+            style={btnStyle}
+            disabled={gitActionBusy}
+            onClick={handlePull}
+          >
+            {pulling ? 'Pulling…' : 'Pull'}
+          </Button>
         </Tooltip>
         <Tooltip content="Commit all changes with an auto-suggested message">
           <Button
@@ -144,26 +156,6 @@ export const StatusBar = () => {
                 : 'Commit'}
           </Button>
         </Tooltip>
-        <Button
-          variant="ghost"
-          size="small"
-          icon={<RunIcon />}
-          style={btnStyle}
-          disabled={anyChecksRunning}
-          onClick={() => runCheck('test')}
-        >
-          Run tests
-        </Button>
-        <Button
-          variant="ghost"
-          size="small"
-          icon={<WandIcon />}
-          style={btnStyle}
-          disabled={anyChecksRunning || qualityStatus !== 'fail'}
-          onClick={fixQuality}
-        >
-          Fix quality
-        </Button>
       </div>
     </div>
   );
