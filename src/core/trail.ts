@@ -42,6 +42,10 @@ function findReleaseLineForCommit(changelog: string, sha: string): string | unde
 
 const BRANCH_ID_RE = /^[a-z]+\/([a-z]+-\d+)-/;
 
+// Git treats a leading dash as an option (e.g. `--output=...`), so reject anything
+// that isn't a plain hex commit hash before it ever reaches `runGit`.
+export const COMMIT_SHA_RE = /^[0-9a-f]{4,40}$/i;
+
 async function resolveDefaultBranch(root: string): Promise<string> {
   const symbolic = await runGit(root, ['symbolic-ref', 'refs/remotes/origin/HEAD']);
   return symbolic.trim().match(/refs\/remotes\/origin\/(.+)/)?.[1] ?? 'main';
@@ -88,6 +92,8 @@ function runGit(root: string, args: string[]): Promise<string> {
 // Prefers the commit's own message (works pre-release, off the `Refs:` trailer or a
 // squash-merge title) and falls back to the CHANGELOG release line for the same sha.
 export async function resolveEntityIdForCommit(root: string, sha: string): Promise<string | null> {
+  if (!COMMIT_SHA_RE.test(sha)) return null;
+
   const message = await runGit(root, ['log', '-1', '--format=%B', sha]);
   const idFromMessage = message ? resolveIdFromCommitMessage(message) : null;
   if (idFromMessage) return idFromMessage;
@@ -124,7 +130,7 @@ export async function resolveEntityTrail(root: string, id: string): Promise<Prov
         }
       : { reached: false },
     phases: entry ? { reached: entry.phases.length > 0, data: entry.phases } : { reached: false },
-    taskRuns: { reached: taskRuns.length > 0, data: taskRuns },
+    taskRuns: taskRuns.length > 0 ? { reached: true, data: taskRuns } : { reached: false },
     commits: commits.length > 0 ? { reached: true, data: commits } : { reached: false },
     pr: pr ? { reached: true, data: pr } : { reached: false },
     releaseLine: releaseLine ? { reached: true, data: releaseLine } : { reached: false },

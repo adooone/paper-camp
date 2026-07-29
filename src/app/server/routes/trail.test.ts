@@ -111,6 +111,17 @@ describe('GET /api/trail/reverse', () => {
     expect(json()).toEqual({ id: 'IDEA-93' });
   });
 
+  it('rejects an option-like sha before it reaches git', async () => {
+    const root = initGitRepo();
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/trail/reverse').handle(
+      fakeReq(`/api/trail/reverse?sha=${encodeURIComponent('--output=/tmp/owned')}`),
+      res,
+    );
+    expect(status()).toBe(400);
+    expect(json()).toEqual({ error: 'sha must be a commit hash' });
+  });
+
   it('returns a null id when nothing is traceable', async () => {
     const root = initGitRepo();
     writeFileSync(join(root, 'a.txt'), 'a\n');

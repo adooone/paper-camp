@@ -1,4 +1,5 @@
 import {
+  COMMIT_SHA_RE,
   resolveEntityIdForCommit,
   resolveEntityTrail,
   resolveIdFromCommitMessage,
@@ -30,6 +31,10 @@ export function trailRoutes({ root }: RouteContext): Route[] {
         const line = params.get('line');
         if (!sha && !line) {
           sendJson(res, 400, { error: 'sha or line is required' });
+          return;
+        }
+        if (sha && !COMMIT_SHA_RE.test(sha)) {
+          sendJson(res, 400, { error: 'sha must be a commit hash' });
           return;
         }
         const id = sha

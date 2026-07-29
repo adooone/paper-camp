@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -195,7 +195,7 @@ describe('resolveEntityTrail', () => {
       id: 'IDEA-999',
       idea: { reached: false },
       phases: { reached: false },
-      taskRuns: { reached: false, data: [] },
+      taskRuns: { reached: false },
       commits: { reached: false },
       pr: { reached: false },
       releaseLine: { reached: false },
@@ -265,5 +265,18 @@ describe('resolveEntityIdForCommit', () => {
     const sha = git(root, 'rev-parse', 'HEAD');
 
     return resolveEntityIdForCommit(root, sha).then((id) => expect(id).toBeNull());
+  });
+
+  it('rejects an option-like sha instead of forwarding it to git', () => {
+    const root = initGitRepo();
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'chore(repo): updates');
+    const poc = join(root, 'owned');
+
+    return resolveEntityIdForCommit(root, `--output=${poc}`).then((id) => {
+      expect(id).toBeNull();
+      expect(existsSync(poc)).toBe(false);
+    });
   });
 });
