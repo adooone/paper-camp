@@ -54,12 +54,17 @@ interface CompletedTask {
   lines: string[];
 }
 
+// Read-only helper runs (commit-message suggestion, capture-time overlap check) produce no
+// lasting artifact — recording them would just dirty the tracked tasks.log on every use.
+const UNLOGGED_TASK_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check']);
+
 // Best-effort: a log write failure must never take down the task it's recording.
 export function logTaskCompletion(
   root: string,
   task: CompletedTask,
   outcome: 'done' | 'error',
 ): Promise<void> {
+  if (UNLOGGED_TASK_KINDS.has(task.taskKind)) return Promise.resolve();
   const run = taskChain.then(async () => {
     const entry: TaskLogEntry = {
       id: task.id,
