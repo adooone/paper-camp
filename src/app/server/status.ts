@@ -161,8 +161,10 @@ export function createStatusManager(
 
   // Bypasses the queue for a result reflecting the live tree; runs the auto-fixer
   // first so pre-existing formatting nits can't hard-fail an autonomous run-all phase — only real lint/test failures do.
-  function runChecksAndWait(): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
+  // Resolves with the names of checks still red, so callers can tell which
+  // checks a change actually broke apart from checks that were already red.
+  function runChecksAndWait(): Promise<CheckName[]> {
+    return new Promise<CheckName[]>((resolve) => {
       const runChecks = () => {
         // consistency (knip/depcruise) is a manual/dashboard check, not part of this gate.
         const names: CheckName[] = ['lint', 'format', 'test'];
@@ -172,7 +174,7 @@ export function createStatusManager(
         function onDone(name: CheckName, ok: boolean) {
           passed.set(name, ok);
           pending--;
-          if (pending === 0) resolve(names.every((n) => passed.get(n) === true));
+          if (pending === 0) resolve(names.filter((n) => passed.get(n) !== true));
         }
 
         for (const name of names) {

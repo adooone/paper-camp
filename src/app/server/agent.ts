@@ -13,6 +13,7 @@ import {
   type AgentId,
   type AgentTaskState,
   type AgentTaskStatus,
+  type CheckName,
   DEFAULT_AGENTS,
   type DefaultAgentsMap,
   type FixReviewResult,
@@ -35,9 +36,19 @@ const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
 const FIX_ATTEMPT_CAP = 2;
 const AUTH_ERROR_MARKER = 'Not logged in · Please run /login';
+const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
 
 function isAuthError(text: string): boolean {
   return text.includes(AUTH_ERROR_MARKER);
+}
+
+// Lets the phase or fix-pass agent short-circuit straight to escalation when
+// it hits a genuine ambiguity or product choice, instead of guessing or
+// spinning through the fix-attempt cap.
+function extractBlocker(text: string): string | undefined {
+  const idx = text.indexOf(NEEDS_DECISION_MARKER);
+  if (idx === -1) return undefined;
+  return text.slice(idx + NEEDS_DECISION_MARKER.length).trim() || undefined;
 }
 
 export interface AgentTask {
@@ -49,6 +60,7 @@ export interface AgentTask {
   phaseIndex?: number;
   fixAttempt?: number;
   fixAttemptCap?: number;
+  blocker?: string;
   planBaseline?: { phases: number; log: number };
   ideaId?: string;
   ideaLogBaseline?: number;
@@ -110,18 +122,30 @@ Execution environment: you are a headless automated agent running in a terminal.
 
 Leave the build green before you finish. The verification that gates this phase runs lint, format, type-check, and tests over the WHOLE project — not just the files you edited. Run \`pnpm run check-types\` and \`npx biome check . --write\` and make the entire repo pass. If a lint, format, or type error appears anywhere — including in a file you did not modify and did not introduce — fix it. "It's unrelated to my phase" / "it's pre-existing" is never a reason to leave a red check: a broken check blocks this phase regardless of who caused it. Keeping the whole project's checks green is part of completing your phase, not a separate phase — so this does not conflict with "do only this phase." Keep such incidental fixes minimal and correct.
 
+If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop without finishing the phase.
+
 When the work is done:
 1. In the plan file's \`### Phases\` list, change this phase's checkbox from \`- [ ]\` to \`- [x]\`. Do not change any other line.
 2. If every phase in the list is now checked, set the plan's \`status:\` frontmatter field to \`review\` — never \`done\`; per this repo's AGENTS.md a human promotes plans to done.`;
 }
 
-export function buildFixPassPrompt(plan: PlanEntry, phaseIndex: number): string {
+export function buildFixPassPrompt(
+  plan: PlanEntry,
+  phaseIndex: number,
+  introducedChecks: CheckName[],
+): string {
   const phase = plan.phases[phaseIndex];
-  return `The project's lint/format/type-check/test checks are failing after phase ${phaseIndex + 1}, "${phase?.text ?? plan.title}", of the plan "${plan.title}" (${plan.id ?? 'no id'}).
+  const scope =
+    introducedChecks.length > 0
+      ? `The check(s) this phase broke: ${introducedChecks.join(', ')}. Only fix those — other checks that were already red before this phase started are pre-existing or known-flaky and are not your concern.`
+      : "The project's lint/format/type-check/test checks are failing.";
+  return `${scope} This is after phase ${phaseIndex + 1}, "${phase?.text ?? plan.title}", of the plan "${plan.title}" (${plan.id ?? 'no id'}).
 
 Only make the failing checks pass — change nothing else: no new features, no refactors, no unrelated cleanup, no edits outside what the failures require, and do not touch the plan file.
 
-Run \`pnpm run check-types\`, \`npx biome check . --write\`, and \`pnpm test\` to see what's red, fix exactly that, then stop.`;
+Run \`pnpm run check-types\`, \`npx biome check . --write\`, and \`pnpm test\` to see what's red, fix exactly that, then stop.
+
+If the failure requires a decision you can't make on your own — not just a fix you haven't found yet — output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop.`;
 }
 
 function createEmptyAgentState(): AgentManagerState {
@@ -715,12 +739,13 @@ export function createAgentManager(
     effort: string | undefined,
     attempt: number,
     attemptCap: number,
+    introducedChecks: CheckName[],
   ): Promise<{ ok: boolean; timedOut: boolean }> {
     pushLine(
       task,
       `[fix] phase ${phaseIndex + 1} — fix attempt ${attempt}/${attemptCap} for failing checks`,
     );
-    const prompt = buildFixPassPrompt(plan, phaseIndex);
+    const prompt = buildFixPassPrompt(plan, phaseIndex, introducedChecks);
     const proc = spawn(adapter.command, adapter.buildArgs(prompt, { model, effort }), {
       cwd: root,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -734,6 +759,8 @@ export function createAgentManager(
         const parsed = adapter.parseLine(line);
         if (parsed?.text && parsed.text !== 'Agent is working…') {
           pushLine(task, `  ${parsed.text}`);
+          const blocker = extractBlocker(parsed.text);
+          if (blocker) task.blocker = blocker;
         }
       });
     }
@@ -749,7 +776,10 @@ export function createAgentManager(
     });
   }
 
-  function startRunAllPhases(plan: PlanEntry, runProjectChecks?: () => Promise<boolean>): Result {
+  function startRunAllPhases(
+    plan: PlanEntry,
+    runProjectChecks?: () => Promise<CheckName[]>,
+  ): Result {
     const blocked = admit('run-all', plan.id);
     if (blocked) return blocked;
     const unchecked = plan.phases
@@ -785,6 +815,16 @@ export function createAgentManager(
         const total = plan.phases.length;
         let completed = 0;
         let failed = 0;
+        // Checks already red before a phase ran — pre-existing or known-flaky
+        // breakage this run didn't cause, so the fix loop never owns it.
+        let toleratedRed = new Set<CheckName>(runProjectChecks ? await runProjectChecks() : []);
+        if (isSuperseded(task)) return;
+        if (toleratedRed.size > 0) {
+          pushLine(
+            task,
+            `[verify] tolerating pre-existing red check(s): ${[...toleratedRed].join(', ')}`,
+          );
+        }
 
         for (const { phase, i } of unchecked) {
           if (isSuperseded(task) || task.status === 'stopping') break;
@@ -807,6 +847,8 @@ export function createAgentManager(
               const parsed = adapter.parseLine(line);
               if (parsed?.text && parsed.text !== 'Agent is working…') {
                 pushLine(task, `  ${parsed.text}`);
+                const blocker = extractBlocker(parsed.text);
+                if (blocker) task.blocker = blocker;
               }
             });
           }
@@ -818,6 +860,13 @@ export function createAgentManager(
           const { ok: exitedOk, timedOut } = await runProcessWithTimeout(proc, PHASE_TIMEOUT_MS);
 
           if (isSuperseded(task)) return;
+
+          if (task.blocker) {
+            failed++;
+            pushLine(task, `[blocked] phase ${i + 1} — agent needs a decision: ${task.blocker}`);
+            task.blocker = undefined;
+            break;
+          }
 
           if (timedOut) {
             failed++;
@@ -849,10 +898,13 @@ export function createAgentManager(
 
           if (runProjectChecks) {
             pushLine(task, `[verify] phase ${i + 1} — running lint/format/test`);
-            let checksOk = await runProjectChecks();
+            let failing = await runProjectChecks();
             if (isSuperseded(task)) return;
+            let introduced = failing.filter((c) => !toleratedRed.has(c));
+            let checksOk = introduced.length === 0;
 
             let fixAttempt = 0;
+            let fixBlocker: string | undefined;
             while (!checksOk && fixAttempt < FIX_ATTEMPT_CAP) {
               if (isSuperseded(task) || isStopping(task)) break;
               fixAttempt++;
@@ -868,8 +920,14 @@ export function createAgentManager(
                 effort,
                 fixAttempt,
                 FIX_ATTEMPT_CAP,
+                introduced,
               );
               if (isSuperseded(task)) return;
+              if (task.blocker) {
+                fixBlocker = task.blocker;
+                task.blocker = undefined;
+                break;
+              }
               if (fixTimedOut) {
                 pushLine(
                   task,
@@ -881,11 +939,19 @@ export function createAgentManager(
                 task,
                 `[verify] phase ${i + 1} — re-running lint/format/test (attempt ${fixAttempt}/${FIX_ATTEMPT_CAP})`,
               );
-              checksOk = await runProjectChecks();
+              failing = await runProjectChecks();
               if (isSuperseded(task)) return;
+              introduced = failing.filter((c) => !toleratedRed.has(c));
+              checksOk = introduced.length === 0;
             }
             task.fixAttempt = undefined;
             task.fixAttemptCap = undefined;
+
+            if (fixBlocker) {
+              failed++;
+              pushLine(task, `[blocked] phase ${i + 1} — agent needs a decision: ${fixBlocker}`);
+              break;
+            }
 
             if (!checksOk) {
               failed++;
@@ -895,6 +961,10 @@ export function createAgentManager(
               );
               break;
             }
+
+            // Carry forward whatever's still red (pre-existing/flaky) so the
+            // next phase isn't blamed for breakage this run never introduced.
+            toleratedRed = new Set(failing);
           }
 
           completed++;
@@ -1179,7 +1249,7 @@ export interface AgentManager {
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchReconcile: () => Result;
-  startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<boolean>) => Result;
+  startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<CheckName[]>) => Result;
   startSuggest: (prompt: string) => Promise<Result>;
   startGitSyncRecovery: (prompt: string) => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;

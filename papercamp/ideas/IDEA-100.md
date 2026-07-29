@@ -29,9 +29,9 @@ Provenance: 2026-07-26, after a day where every run-all stopped on a gate the ph
       A distinct, short-prompt agent kind ("only make the failing checks pass, change nothing else") that the run-all loop in `src/app/server/agent.ts` spawns when `runProjectChecks()` returns red, keeping it scoped against creep rather than reusing the phase agent.
 - [x] Loop gate → fix → re-gate with an attempt cap
       Replace the stop-on-red branch (~line 770) with a bounded loop: run the fix pass, re-run the gate, repeat up to N attempts (start with 2) before escalating; carry the cap and attempt count in the task state so the log narrates each try.
-- [ ] Tolerate pre-existing and flaky red the phase didn't cause
+- [x] Tolerate pre-existing and flaky red the phase didn't cause
       Distinguish checks the phase broke from failures already red before the phase (unrelated or known-flaky), so the fix loop only owns what the run introduced — reuse how the gate already tolerates known flakes rather than endlessly fixing unrelated breakage.
-- [ ] Let the agent declare a blocker mid-phase
+- [x] Let the agent declare a blocker mid-phase
       A structured "I need a decision" signal the fix pass or phase agent can emit to short-circuit straight to escalation, so "stuck" is not only the attempt cap but also an explicit ambiguity/product-choice blocker.
 - [ ] Escalate to a comment instead of a terminal error
       When the cap is hit or a blocker fires, write the agent's question into the entity's `### Log` in a format Apply-notes / rework ([[IDEA-87]], [[IDEA-89]]) can pick up, instead of ending with `[fail] … stopping`.

@@ -150,7 +150,7 @@ describe('startRunAllPhases', () => {
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const commits: number[] = [];
     const onRunComplete = vi.fn(async () => {});
-    const runProjectChecks = vi.fn(async () => true);
+    const runProjectChecks = vi.fn(async () => []);
     const manager = createAgentManager(
       root,
       undefined,
@@ -165,7 +165,8 @@ describe('startRunAllPhases', () => {
 
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(commits).toEqual([0, 1]);
-    expect(runProjectChecks).toHaveBeenCalledTimes(2);
+    // Baseline call before phase 1, then one gate check per phase.
+    expect(runProjectChecks).toHaveBeenCalledTimes(3);
     expect(onRunComplete).toHaveBeenCalledOnce();
 
     const after = parseEntityFile(
@@ -234,7 +235,13 @@ describe('startRunAllPhases', () => {
     const onRunComplete = vi.fn(async () => {});
     const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
 
-    manager.startRunAllPhases(plan, async () => false);
+    let calls = 0;
+    manager.startRunAllPhases(plan, async () => {
+      calls++;
+      // Baseline (call 1) is clean; every gate check after that is red, so the
+      // fix loop exhausts its cap instead of being tolerated as pre-existing.
+      return calls === 1 ? [] : ['test'];
+    });
     expect(await waitForStatus(manager, settled)).toBe('error');
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
     expect(lines).toContain('fix attempt 1/2');
@@ -254,13 +261,77 @@ describe('startRunAllPhases', () => {
     let calls = 0;
     manager.startRunAllPhases(plan, async () => {
       calls++;
-      // Red after phase 1's first gate, green on the retry after the fix pass; green thereafter.
-      return calls !== 1;
+      // Baseline (call 1) is clean. Red on phase 1's first gate (call 2), green
+      // on the retry after the fix pass; green thereafter.
+      return calls === 2 ? ['test'] : [];
     });
     expect(await waitForStatus(manager, settled)).toBe('done');
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
     expect(lines).toContain('fix attempt 1/2');
     expect(lines).not.toContain('fix attempt 2/2');
+    expect(onPhaseCommit).toHaveBeenCalledTimes(2);
+    expect(onRunComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it('short-circuits to escalation when the phase agent declares a blocker mid-phase', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
+    const onPhaseCommit = vi.fn(async () => {});
+    const onRunComplete = vi.fn(async () => {});
+    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain(
+      '[blocked] phase 1 — agent needs a decision: which auth flow should this use?',
+    );
+    expect(onPhaseCommit).not.toHaveBeenCalled();
+    expect(onRunComplete).not.toHaveBeenCalled();
+  });
+
+  it('short-circuits to escalation when the fix pass declares a blocker, without exhausting the cap', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.buildArgs = (prompt) =>
+      prompt.includes('Only make the failing checks pass')
+        ? ['-e', "console.log('NEEDS-DECISION: which auth flow should the fix use?')"]
+        : ['-e', FLIP_NEXT_CHECKBOX];
+    const onPhaseCommit = vi.fn(async () => {});
+    const onRunComplete = vi.fn(async () => {});
+    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+
+    let calls = 0;
+    manager.startRunAllPhases(plan, async () => {
+      calls++;
+      // Baseline (call 1) is clean; the gate after phase 1 is red, so the fix
+      // pass runs and immediately declares a blocker instead of retrying.
+      return calls === 1 ? [] : ['test'];
+    });
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain('fix attempt 1/2');
+    expect(lines).not.toContain('fix attempt 2/2');
+    expect(lines).toContain(
+      '[blocked] phase 1 — agent needs a decision: which auth flow should the fix use?',
+    );
+    expect(onPhaseCommit).not.toHaveBeenCalled();
+    expect(onRunComplete).not.toHaveBeenCalled();
+  });
+
+  it('tolerates a check that was already red before the run instead of fixing or failing on it', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const onPhaseCommit = vi.fn(async () => {});
+    const onRunComplete = vi.fn(async () => {});
+    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+
+    // 'test' is red from the baseline call onward, every call — a pre-existing
+    // failure this run never introduced, so it must never trigger a fix pass.
+    manager.startRunAllPhases(plan, async () => ['test']);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain('tolerating pre-existing red check(s): test');
+    expect(lines).not.toContain('[fix]');
     expect(onPhaseCommit).toHaveBeenCalledTimes(2);
     expect(onRunComplete).toHaveBeenCalledTimes(1);
   });
