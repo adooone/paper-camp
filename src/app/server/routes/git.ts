@@ -88,10 +88,15 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
         try {
           const result = await git.runGitSync();
           if (!result.ok) {
-            sendJson(res, 409, {
+            // Automatic escalation: hand the failure straight to a recovery agent
+            // rather than surfacing a git error for the user to resolve by hand.
+            const recovery = agent.startGitSyncRecovery(result.recoveryPrompt);
+            sendJson(res, 202, {
               error: result.message,
               stage: result.stage,
               stashPending: result.stashPending,
+              recovering: recovery.ok,
+              recoveryError: recovery.ok ? undefined : recovery.error,
             });
             return;
           }

@@ -42,9 +42,20 @@ export const suggestCommitMessage = async (
   return response.json();
 };
 
-export const syncToMain = async (): Promise<void> => {
+export type SyncResult =
+  | { ok: true }
+  // The deterministic path failed and a recovery agent was launched (or, if
+  // `recovering` is false, failed to launch) instead of throwing at the caller.
+  | { ok: false; recovering: boolean; message: string };
+
+export const syncToMain = async (): Promise<SyncResult> => {
   const response = await fetch('/api/git/sync', { method: 'POST' });
+  if (response.status === 202) {
+    const data = await response.json();
+    return { ok: false, recovering: data.recovering, message: data.error };
+  }
   await throwIfNotOk(response, 'Sync failed');
+  return { ok: true };
 };
 
 // Fast-forward the current branch from origin in place (no branch switch).

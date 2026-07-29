@@ -35,7 +35,7 @@ Provenance: surfaced 2026-07-25 when Sync to main silently did nothing — the s
       Confirm the code-first attempt (fetch, drop disposable/generated changes, stash, `merge --ff-only` falling back to `rebase` when diverged, pop) runs first and unchanged, and returns a structured failure instead of throwing to the UI when it cannot resolve.
 - [x] Package a deterministic-sync failure as an agent recovery job
       When the fast path fails, assemble the failure, the working-tree state, and the goal ("get onto latest main without losing real work") into an agent job spec.
-- [ ] Run the recovery agent and report the outcome
+- [x] Run the recovery agent and report the outcome
       Launch the job and surface what it did; settle whether it asks for confirmation before touching working-tree state or runs automatically and reports after.
 - [ ] Decide whether push/pull share the escalate-on-failure shape
       Settle whether the automatic deterministic→agent escalation wraps push and pull too, or stays scoped to the branch switch for this cut.

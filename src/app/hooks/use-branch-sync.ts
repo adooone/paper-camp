@@ -33,6 +33,7 @@ export function useBranchSync() {
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
+  const { toast } = useToast();
   // Sync/pull can bring upstream commits, so refresh plans/ideas too — git-status alone would leave them stale.
   const refreshAfterUpstream = () => Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
 
@@ -47,7 +48,19 @@ export function useBranchSync() {
     });
   const handleSync = () =>
     runSync(async () => {
-      await syncToMain();
+      const result = await syncToMain();
+      // A deterministic failure that handed off to a recovery agent isn't a sync
+      // failure yet — the agent still runs and reports through the Stack panel.
+      if (!result.ok && result.recovering) {
+        toast({
+          title: 'Sync needs help',
+          description: 'Handed off to a recovery agent — see Stack for progress',
+          variant: 'warning',
+        });
+        await loadGitStatus();
+        return;
+      }
+      if (!result.ok) throw new Error(result.message);
       await refreshAfterUpstream();
     });
   const handlePull = () =>

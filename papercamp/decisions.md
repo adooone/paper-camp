@@ -1,3 +1,31 @@
+## Git-sync recovery escalates automatically, no confirmation step
+
+**Date:** 2026-07-29
+**Status:** decided
+
+**Context:** `IDEA-94` phase 5 needed to settle whether launching the
+deterministic sync's recovery agent (built in phase 4 as
+`buildGitSyncRecoveryPrompt`) asks the user to confirm first, since the agent
+can discard or rewrite working-tree state (pop a stash, resolve a rebase
+conflict, drop disposable local changes).
+
+**Decision:** `/api/git/sync` launches the recovery agent itself the moment
+the deterministic path fails (`agent.startGitSyncRecovery` in
+`src/app/server/agent.ts`, wired from `routes/git.ts`) — no confirmation
+dialog. The route responds `202` with `recovering: true`; the toolbar shows a
+"Sync needs help" toast and the Stack panel's Agent section streams the
+recovery task like any other.
+
+**Rationale:** The plan's own framing is "never stuck" — the whole point of
+the escalation is that the user's outcome is "I am on latest main," not "here
+is a confirmation dialog to get through before that happens." A confirmation
+step reintroduces exactly the stuck state the fallback exists to avoid,
+and the recovery prompt already constrains the agent (no force-push, no
+`reset --hard`, no dropping a stash without confirming it's safe to lose) —
+the safety net is in the prompt, not a modal. This mirrors every other
+exclusive agent task (`phase`, `run-all`, `fix-review`) already running
+automatically once launched.
+
 ## Roadmap links a minted entity with a `→ IDEA-N` sub-bullet
 
 **Date:** 2026-07-27

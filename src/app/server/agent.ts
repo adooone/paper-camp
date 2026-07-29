@@ -524,6 +524,12 @@ export function createAgentManager(
     return launch({ planTitle: 'Suggest ideas' }, prompt, { taskKind: 'suggest', suggestBaseline });
   }
 
+  // Automatic escalation from runGitSync's deterministic failure — no confirmation
+  // step, since a blocked sync is exactly the "stuck" outcome this exists to avoid.
+  function startGitSyncRecovery(prompt: string): Result {
+    return launch({ planTitle: 'Recover sync to main' }, prompt, { taskKind: 'sync' });
+  }
+
   async function findBatchPlanFile(plansDir: string, id: string): Promise<string | null> {
     const direct = join(plansDir, `${id}.md`);
     try {
@@ -1002,6 +1008,7 @@ export function createAgentManager(
     startBatchReconcile,
     startRunAllPhases,
     startSuggest,
+    startGitSyncRecovery,
     runCommitSuggest,
     runOverlapCheck,
     runPrioritise,
@@ -1071,6 +1078,7 @@ export interface AgentManager {
   startBatchReconcile: () => Result;
   startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<boolean>) => Result;
   startSuggest: (prompt: string) => Promise<Result>;
+  startGitSyncRecovery: (prompt: string) => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
   runPrioritise: (prompt: string) => Promise<string>;
