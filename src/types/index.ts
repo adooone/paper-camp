@@ -550,6 +550,8 @@ export interface AgentTaskState {
   planTitle: string;
   planId?: string;
   phaseIndex?: number;
+  fixAttempt?: number;
+  fixAttemptCap?: number;
   ideaId?: string;
   agentId: AgentId;
   lines: string[];
