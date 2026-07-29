@@ -57,3 +57,4 @@
 {"id":"69fb4f62-21e7-4000-a5e9-36de0eaab72f","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-29T17:35:49.162Z","endedAt":"2026-07-29T17:35:57.952Z","outcome":"done"}
 {"id":"5316c117-eff5-4217-8b0e-2f2d711efab5","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-29T17:37:42.404Z","endedAt":"2026-07-29T17:37:53.159Z","outcome":"done"}
 {"id":"cbe4e791-bda3-408a-8b4a-400c222f9d9f","taskKind":"commit-suggest","planTitle":"Suggest commit message","agentId":"claude-code","startedAt":"2026-07-29T17:43:49.118Z","endedAt":"2026-07-29T17:43:57.436Z","outcome":"done"}
+{"id":"6b0a5895-8a79-48d1-8679-487e28491dca","taskKind":"run-all","planId":"IDEA-100","planTitle":"Self-healing run-all: fix red checks, ask only when stuck","agentId":"claude-code","startedAt":"2026-07-29T18:04:29.588Z","endedAt":"2026-07-29T18:10:55.395Z","outcome":"error"}

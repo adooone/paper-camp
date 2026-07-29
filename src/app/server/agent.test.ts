@@ -227,7 +227,7 @@ describe('startRunAllPhases', () => {
     expect(onPhaseCommit).not.toHaveBeenCalled();
   });
 
-  it('stops without committing when project checks fail', async () => {
+  it('runs fix attempts up to the cap and stops without committing when checks stay red', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const onPhaseCommit = vi.fn(async () => {});
@@ -236,9 +236,33 @@ describe('startRunAllPhases', () => {
 
     manager.startRunAllPhases(plan, async () => false);
     expect(await waitForStatus(manager, settled)).toBe('error');
-    expect(currentStatus(manager)?.lines.join('\n')).toContain('project checks failed');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain('fix attempt 1/2');
+    expect(lines).toContain('fix attempt 2/2');
+    expect(lines).toContain('project checks still failing after 2 fix attempt(s), stopping');
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
+  });
+
+  it('continues to the next phase when a fix attempt makes checks green', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const onPhaseCommit = vi.fn(async () => {});
+    const onRunComplete = vi.fn(async () => {});
+    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+
+    let calls = 0;
+    manager.startRunAllPhases(plan, async () => {
+      calls++;
+      // Red after phase 1's first gate, green on the retry after the fix pass; green thereafter.
+      return calls !== 1;
+    });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain('fix attempt 1/2');
+    expect(lines).not.toContain('fix attempt 2/2');
+    expect(onPhaseCommit).toHaveBeenCalledTimes(2);
+    expect(onRunComplete).toHaveBeenCalledTimes(1);
   });
 
   it('rejects a run when every phase is already checked', async () => {

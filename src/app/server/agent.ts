@@ -33,6 +33,7 @@ import { logTaskCompletion } from './task-log';
 
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
+const FIX_ATTEMPT_CAP = 2;
 const AUTH_ERROR_MARKER = 'Not logged in · Please run /login';
 
 function isAuthError(text: string): boolean {
@@ -46,6 +47,8 @@ export interface AgentTask {
   planId?: string;
   startedAt: string;
   phaseIndex?: number;
+  fixAttempt?: number;
+  fixAttemptCap?: number;
   planBaseline?: { phases: number; log: number };
   ideaId?: string;
   ideaLogBaseline?: number;
@@ -112,6 +115,15 @@ When the work is done:
 2. If every phase in the list is now checked, set the plan's \`status:\` frontmatter field to \`review\` — never \`done\`; per this repo's AGENTS.md a human promotes plans to done.`;
 }
 
+export function buildFixPassPrompt(plan: PlanEntry, phaseIndex: number): string {
+  const phase = plan.phases[phaseIndex];
+  return `The project's lint/format/type-check/test checks are failing after phase ${phaseIndex + 1}, "${phase?.text ?? plan.title}", of the plan "${plan.title}" (${plan.id ?? 'no id'}).
+
+Only make the failing checks pass — change nothing else: no new features, no refactors, no unrelated cleanup, no edits outside what the failures require, and do not touch the plan file.
+
+Run \`pnpm run check-types\`, \`npx biome check . --write\`, and \`pnpm test\` to see what's red, fix exactly that, then stop.`;
+}
+
 function createEmptyAgentState(): AgentManagerState {
   return {
     tasks: new Map(),
@@ -144,6 +156,10 @@ export function createAgentManager(
 
   function isSuperseded(task: AgentTask): boolean {
     return state.lastLaunchedId !== task.id;
+  }
+
+  function isStopping(task: AgentTask): boolean {
+    return task.status === 'stopping';
   }
 
   function registerTask(task: AgentTask): void {
@@ -688,6 +704,51 @@ export function createAgentManager(
     return { ok: true };
   }
 
+  // Spawned in place of the phase agent when the post-phase gate goes red — a
+  // distinct short prompt scoped to fixing checks, not the phase agent rerun.
+  function runFixPass(
+    task: AgentTask,
+    plan: PlanEntry,
+    phaseIndex: number,
+    adapter: AgentAdapter,
+    model: string | undefined,
+    effort: string | undefined,
+    attempt: number,
+    attemptCap: number,
+  ): Promise<{ ok: boolean; timedOut: boolean }> {
+    pushLine(
+      task,
+      `[fix] phase ${phaseIndex + 1} — fix attempt ${attempt}/${attemptCap} for failing checks`,
+    );
+    const prompt = buildFixPassPrompt(plan, phaseIndex);
+    const proc = spawn(adapter.command, adapter.buildArgs(prompt, { model, effort }), {
+      cwd: root,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    task.proc = proc;
+
+    if (proc.stdout) {
+      const rl = createInterface({ input: proc.stdout });
+      rl.on('line', (line) => {
+        if (isSuperseded(task)) return;
+        const parsed = adapter.parseLine(line);
+        if (parsed?.text && parsed.text !== 'Agent is working…') {
+          pushLine(task, `  ${parsed.text}`);
+        }
+      });
+    }
+
+    let stderr = '';
+    proc.stderr?.on('data', (d: Buffer) => {
+      stderr += d.toString();
+    });
+
+    return runProcessWithTimeout(proc, PHASE_TIMEOUT_MS).then((result) => {
+      if (!result.ok && !result.timedOut && stderr.trim()) pushLine(task, stderr.trim());
+      return result;
+    });
+  }
+
   function startRunAllPhases(plan: PlanEntry, runProjectChecks?: () => Promise<boolean>): Result {
     const blocked = admit('run-all', plan.id);
     if (blocked) return blocked;
@@ -788,11 +849,50 @@ export function createAgentManager(
 
           if (runProjectChecks) {
             pushLine(task, `[verify] phase ${i + 1} — running lint/format/test`);
-            const checksOk = await runProjectChecks();
+            let checksOk = await runProjectChecks();
             if (isSuperseded(task)) return;
+
+            let fixAttempt = 0;
+            while (!checksOk && fixAttempt < FIX_ATTEMPT_CAP) {
+              if (isSuperseded(task) || isStopping(task)) break;
+              fixAttempt++;
+              task.fixAttempt = fixAttempt;
+              task.fixAttemptCap = FIX_ATTEMPT_CAP;
+
+              const { timedOut: fixTimedOut } = await runFixPass(
+                task,
+                plan,
+                i,
+                adapter,
+                model,
+                effort,
+                fixAttempt,
+                FIX_ATTEMPT_CAP,
+              );
+              if (isSuperseded(task)) return;
+              if (fixTimedOut) {
+                pushLine(
+                  task,
+                  `[fix] phase ${i + 1} — fix attempt ${fixAttempt}/${FIX_ATTEMPT_CAP} timed out`,
+                );
+              }
+
+              pushLine(
+                task,
+                `[verify] phase ${i + 1} — re-running lint/format/test (attempt ${fixAttempt}/${FIX_ATTEMPT_CAP})`,
+              );
+              checksOk = await runProjectChecks();
+              if (isSuperseded(task)) return;
+            }
+            task.fixAttempt = undefined;
+            task.fixAttemptCap = undefined;
+
             if (!checksOk) {
               failed++;
-              pushLine(task, `[fail] phase ${i + 1} — project checks failed, stopping`);
+              pushLine(
+                task,
+                `[fail] phase ${i + 1} — project checks still failing after ${fixAttempt} fix attempt(s), stopping`,
+              );
               break;
             }
           }
@@ -975,6 +1075,9 @@ export function createAgentManager(
       planTitle: task.planTitle,
       planId: task.planId,
       phaseIndex: task.phaseIndex,
+      ...(task.fixAttempt !== undefined
+        ? { fixAttempt: task.fixAttempt, fixAttemptCap: task.fixAttemptCap }
+        : {}),
       ideaId: task.ideaId,
       agentId: task.agentId,
       lines: [...task.lines],

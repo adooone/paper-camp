@@ -25,9 +25,9 @@ Open questions for the plan:
 Provenance: 2026-07-26, after a day where every run-all stopped on a gate the phase agent's own checks had already passed — the orchestrator's stop-on-red was the failure, not the work.
 
 ### Phases
-- [ ] Add a fix-pass agent invocation
+- [x] Add a fix-pass agent invocation
       A distinct, short-prompt agent kind ("only make the failing checks pass, change nothing else") that the run-all loop in `src/app/server/agent.ts` spawns when `runProjectChecks()` returns red, keeping it scoped against creep rather than reusing the phase agent.
-- [ ] Loop gate → fix → re-gate with an attempt cap
+- [x] Loop gate → fix → re-gate with an attempt cap
       Replace the stop-on-red branch (~line 770) with a bounded loop: run the fix pass, re-run the gate, repeat up to N attempts (start with 2) before escalating; carry the cap and attempt count in the task state so the log narrates each try.
 - [ ] Tolerate pre-existing and flaky red the phase didn't cause
       Distinguish checks the phase broke from failures already red before the phase (unrelated or known-flaky), so the fix loop only owns what the run introduced — reuse how the gate already tolerates known flakes rather than endlessly fixing unrelated breakage.
