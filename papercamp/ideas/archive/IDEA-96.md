@@ -2,9 +2,9 @@
 id: IDEA-96
 title: Open questions as a working queue
 type: feat
-status: review
+status: done
 created: 2026-07-26
-updated: 2026-07-26
+updated: 2026-07-29
 tags:
   - app
   - plans

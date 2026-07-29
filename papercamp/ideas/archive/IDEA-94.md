@@ -2,7 +2,7 @@
 id: IDEA-94
 title: Git actions in the toolbar, agent as fallback
 type: feat
-status: review
+status: done
 created: 2026-07-26
 updated: 2026-07-29
 tags:

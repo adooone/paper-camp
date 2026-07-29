@@ -1,10 +1,14 @@
 ---
 id: IDEA-100
 title: "Self-healing run-all: fix red checks, ask only when stuck"
-status: review
-created: 2026-07-26
 type: feat
-tags: [agent, plans]
+status: done
+created: 2026-07-26
+updated: 2026-07-29
+tags:
+  - agent
+  - plans
+order: 1
 ---
 
 Run-all is fail-closed today. The per-phase agent is told to keep the whole project green, but the orchestrator re-runs the gate (lint/format/test) after the phase and, if anything is still red, stops the entire run — `[fail] phase N — project checks failed, stopping`. A single lingering red check (a flaky test, a check the phase agent couldn't fully resolve) throws away the run and leaves it to a human. That is the wrong default: the point of run-all is to carry a plan to done without babysitting.

@@ -95,13 +95,13 @@
 | IDEA-91 | Roadmap items survive promotion | feat | done | roadmap, core, app, ui |
 | IDEA-92 | Timeline view and horizon lanes | feat | done | app, ui, core, roadmap |
 | IDEA-93 | Trace an idea from roadmap to release | feat | done | roadmap, core, app |
-| IDEA-94 | Git actions in the toolbar, agent as fallback | feat | review | git, app, agents |
+| IDEA-94 | Git actions in the toolbar, agent as fallback | feat | done | git, app, agents |
 | IDEA-95 | Roadmap items become the subject vocabulary | feat | done | roadmap, core, plans, app |
-| IDEA-96 | Open questions as a working queue | feat | planned | app, plans, core |
-| IDEA-97 | Surface decisions where they bind | feat | planned | app, core, ui |
+| IDEA-96 | Open questions as a working queue | feat | done | app, plans, core |
+| IDEA-97 | Surface decisions where they bind | feat | done | app, core, ui |
 | IDEA-98 | Track run order in one file | refactor | done | core, plans, git |
 | IDEA-99 | Project stats view | — | idea |  |
-| IDEA-100 | Self-healing run-all: fix red checks, ask only when stuck | feat | planned | agent, plans |
+| IDEA-100 | Self-healing run-all: fix red checks, ask only when stuck | feat | done | agent, plans |
 | IDEA-101 | In-app sign-in via OAuth relay | — | idea |  |
 | IDEA-102 | Agent resolves sync-rebase conflicts | feat | idea | git, app, agent, server |
 | IDEA-103 | One feedback thread on every idea, any status | feat | idea | app, plans, ui |

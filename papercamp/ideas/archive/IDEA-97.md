@@ -2,9 +2,9 @@
 id: IDEA-97
 title: Surface decisions where they bind
 type: feat
-status: review
+status: done
 created: 2026-07-26
-updated: 2026-07-26
+updated: 2026-07-29
 tags:
   - app
   - core
