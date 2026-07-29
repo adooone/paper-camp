@@ -35,7 +35,7 @@ Provenance: 2026-07-26, after a day where every run-all stopped on a gate the ph
       A structured "I need a decision" signal the fix pass or phase agent can emit to short-circuit straight to escalation, so "stuck" is not only the attempt cap but also an explicit ambiguity/product-choice blocker.
 - [x] Escalate to a comment instead of a terminal error
       When the cap is hit or a blocker fires, write the agent's question into the entity's `### Log` in a format Apply-notes / rework ([[IDEA-87]], [[IDEA-89]]) can pick up, instead of ending with `[fail] … stopping`.
-- [ ] Flip plan status when a run parks on a question
+- [x] Flip plan status when a run parks on a question
       Set a needs-input marker (e.g. back to in-progress) on the plan when a run escalates, so a parked run is visible in the worklist rather than looking merely errored.
 - [ ] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.

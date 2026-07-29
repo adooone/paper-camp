@@ -189,6 +189,8 @@ export function createAgentManager(
   // Writes a run-all escalation into the plan's `### Log` (Comments) so a human
   // sees the agent's question in the same place they'd leave one, and Apply-notes
   // / rework can pick the thread back up instead of the run dying with no trace.
+  // Also flips the plan back to in-progress so a parked run surfaces in the
+  // worklist as needing input rather than looking merely errored.
   async function escalateToLog(planId: string | undefined, message: string): Promise<void> {
     if (!planId) return;
     const ideasDir = campFile(root, 'ideas');
@@ -200,10 +202,12 @@ export function createAgentManager(
       ? primaryFile
       : join(ideasDir, 'archive', `${planId}.md`);
     if (!(await fileExists(file))) return;
+    const needsInput = entry.status !== 'done' && entry.status !== 'dropped';
     await writeEntityFile(
       file,
       entityFileInput(entry, {
         log: [...(entry.log ?? []), { date: todayDateString(), text: message }],
+        ...(needsInput ? { status: 'in-progress' } : {}),
       }),
     );
   }
