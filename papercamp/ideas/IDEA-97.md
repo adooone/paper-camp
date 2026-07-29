@@ -2,7 +2,7 @@
 id: IDEA-97
 title: Surface decisions where they bind
 type: feat
-status: idea
+status: review
 created: 2026-07-26
 updated: 2026-07-26
 tags:
@@ -38,4 +38,4 @@ Open questions for the plan: whether superseding a decision edits it in place or
       A search over the decision corpus for when you genuinely need to find one, rather than a browse page.
 - [x] Capture a decision from where it is made
       Promote an entity comment or clarification into a decision from the entity, reusing the existing promote shape instead of hand-editing `decisions.md`.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
