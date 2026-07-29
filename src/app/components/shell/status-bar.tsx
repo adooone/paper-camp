@@ -22,7 +22,8 @@ export const StatusBar = () => {
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const capabilityGapCount = useAppStore(selectCapabilityGapCount);
   const agentNotSignedIn = useAppStore(selectAgentNotSignedIn);
-  const { pushing, syncing, pulling, handlePush, handleSync, handlePull } = useBranchSync();
+  const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
+    useBranchSync();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -109,7 +110,7 @@ export const StatusBar = () => {
             size="small"
             icon={<MergeIcon />}
             style={btnStyle}
-            disabled={syncing || gitBranchHygiene === 'clean-on-main'}
+            disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
             onClick={handleSync}
           >
             {syncing ? 'Syncing…' : 'Sync to main'}
@@ -121,7 +122,7 @@ export const StatusBar = () => {
             size="small"
             icon={<PushIcon />}
             style={btnStyle}
-            disabled={pushing || gitAhead === 0}
+            disabled={gitActionBusy || gitAhead === 0}
             onClick={handlePush}
           >
             {pushing ? 'Pushing…' : gitAhead > 0 ? `Push (${gitAhead})` : 'Push'}
@@ -133,7 +134,7 @@ export const StatusBar = () => {
             size="small"
             icon={<PullIcon />}
             style={btnStyle}
-            disabled={pulling}
+            disabled={gitActionBusy}
             onClick={handlePull}
           >
             {pulling ? 'Pulling…' : 'Pull'}

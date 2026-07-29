@@ -8,8 +8,17 @@ export function buildGitSyncRecoveryPrompt(
   branch: string,
   status: GitStatusEntry[],
 ): string {
+  const STATUS_EXCERPT_LIMIT = 50;
   const statusList = status.length
-    ? status.map((entry) => `${entry.status} ${entry.path}`).join('\n')
+    ? status
+        .slice(0, STATUS_EXCERPT_LIMIT)
+        .map((entry) => `${entry.status} ${entry.path}`)
+        .concat(
+          status.length > STATUS_EXCERPT_LIMIT
+            ? [`… and ${status.length - STATUS_EXCERPT_LIMIT} more (${status.length} total)`]
+            : [],
+        )
+        .join('\n')
     : '(clean)';
 
   return `The deterministic sync-to-main path failed and needs your judgment to finish it. Goal: get this repo onto the latest origin/main without losing any real work — uncommitted changes, stashed changes, or commits that only exist locally.

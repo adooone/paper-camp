@@ -132,6 +132,10 @@ export type AppStore = {
   commitInFlight: boolean;
   setCommitInFlight: (inFlight: boolean) => void;
 
+  // Shared across every useBranchSync() mount so push/sync/pull can't run concurrently.
+  activeGitAction: 'push' | 'sync' | 'pull' | null;
+  setActiveGitAction: (action: 'push' | 'sync' | 'pull' | null) => void;
+
   consistency: ConsistencyIssue[];
   loadConsistency: () => Promise<void>;
 
@@ -414,6 +418,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   commitInFlight: false,
   setCommitInFlight: (inFlight) => set({ commitInFlight: inFlight }),
+
+  activeGitAction: null,
+  setActiveGitAction: (action) => set({ activeGitAction: action }),
   quickCommit: async () => {
     const { gitStatus, loadGitStatus, commitInFlight } = get();
     if (commitInFlight) {

@@ -322,7 +322,7 @@ const CommitForm = ({
 };
 
 const StaleMergedSyncButton = () => {
-  const { syncing, handleSync } = useBranchSync();
+  const { syncing, gitActionBusy, handleSync } = useBranchSync();
   return (
     // stale-merged: committing here would strand work off main, so dirty
     // sync (stash → main → ff) replaces the commit controls.
@@ -331,7 +331,7 @@ const StaleMergedSyncButton = () => {
       size="small"
       fullWidth
       icon={<MergeIcon size={14} />}
-      disabled={syncing}
+      disabled={gitActionBusy}
       onClick={handleSync}
     >
       {syncing ? 'Syncing…' : 'Branch merged — sync to main'}
@@ -343,7 +343,8 @@ const NoChangesActions = ({
   gitAhead,
   gitBranchHygiene,
 }: { gitAhead: number; gitBranchHygiene: BranchHygieneStatus | null }) => {
-  const { pushing, syncing, pulling, handlePush, handleSync, handlePull } = useBranchSync();
+  const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
+    useBranchSync();
 
   if (gitAhead > 0) {
     return (
@@ -355,7 +356,7 @@ const NoChangesActions = ({
           surface="chalkboard"
           size="small"
           icon={<PushIcon size={14} />}
-          disabled={pushing}
+          disabled={gitActionBusy}
           onClick={handlePush}
         >
           {pushing ? 'Pushing…' : `Push ${gitAhead} commit${gitAhead === 1 ? '' : 's'}`}
@@ -376,7 +377,7 @@ const NoChangesActions = ({
             surface="chalkboard"
             size="small"
             icon={<MergeIcon size={14} />}
-            disabled={syncing || gitBranchHygiene === 'clean-on-main'}
+            disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
             onClick={handleSync}
           >
             {syncing ? 'Syncing…' : 'Sync to main'}
@@ -387,7 +388,7 @@ const NoChangesActions = ({
           surface="chalkboard"
           size="small"
           icon={<PullIcon size={14} />}
-          disabled={pulling}
+          disabled={gitActionBusy}
           onClick={handlePull}
         >
           {pulling ? 'Pulling…' : 'Pull'}

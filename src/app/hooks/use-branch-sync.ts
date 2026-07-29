@@ -2,16 +2,21 @@ import { pullFromOrigin, pushChanges, syncToMain } from '@/app/services/git-api'
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { useToast } from '@dendelion/paper-ui';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
-// Shared by push/sync/pull: run an action, flag it busy meanwhile, and
-// toast a one-line summary if it throws — the only thing the three differ on.
-function useTrackedAction(failTitle: string) {
+type GitAction = 'push' | 'sync' | 'pull';
+
+// Shared by push/sync/pull: run an action against the store-wide lock so no two
+// can run at once across any useBranchSync() mount, and toast a one-line
+// summary if it throws — the only thing the three differ on.
+function useTrackedAction(kind: GitAction, failTitle: string) {
   const { toast } = useToast();
-  const [running, setRunning] = useState(false);
+  const activeGitAction = useAppStore((s) => s.activeGitAction);
+  const setActiveGitAction = useAppStore((s) => s.setActiveGitAction);
   const run = useCallback(
     async (action: () => Promise<void>) => {
-      setRunning(true);
+      if (useAppStore.getState().activeGitAction) return;
+      setActiveGitAction(kind);
       try {
         await action();
       } catch (err) {
@@ -21,25 +26,26 @@ function useTrackedAction(failTitle: string) {
           variant: 'error',
         });
       } finally {
-        setRunning(false);
+        setActiveGitAction(null);
       }
     },
-    [toast, failTitle],
+    [toast, failTitle, kind, setActiveGitAction],
   );
-  return [running, run] as const;
+  return [activeGitAction === kind, run] as const;
 }
 
 export function useBranchSync() {
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
+  const gitActionBusy = useAppStore((s) => s.activeGitAction !== null);
   const { toast } = useToast();
   // Sync/pull can bring upstream commits, so refresh plans/ideas too — git-status alone would leave them stale.
   const refreshAfterUpstream = () => Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
 
-  const [pushing, runPush] = useTrackedAction('Push failed');
-  const [syncing, runSync] = useTrackedAction('Sync failed');
-  const [pulling, runPull] = useTrackedAction('Pull failed');
+  const [pushing, runPush] = useTrackedAction('push', 'Push failed');
+  const [syncing, runSync] = useTrackedAction('sync', 'Sync failed');
+  const [pulling, runPull] = useTrackedAction('pull', 'Pull failed');
 
   const handlePush = () =>
     runPush(async () => {
@@ -69,5 +75,5 @@ export function useBranchSync() {
       await refreshAfterUpstream();
     });
 
-  return { pushing, syncing, pulling, handlePush, handleSync, handlePull };
+  return { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull };
 }
