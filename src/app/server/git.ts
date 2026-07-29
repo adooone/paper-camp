@@ -4,7 +4,13 @@ import { lstat, readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { branchName, resolvePrsByEntity } from '@/core/git-pr';
-import type { BranchHygieneStatus, GitLiveState, GitStatusEntry, PlanEntry } from '../../types';
+import type {
+  BranchHygieneStatus,
+  GitLiveState,
+  GitStatusEntry,
+  GitSyncResult,
+  PlanEntry,
+} from '../../types';
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 
@@ -458,7 +464,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
-  async function runGitSync(): Promise<void> {
+  async function runGitSync(): Promise<GitSyncResult> {
     // Fetch first: recognizing already-in-main local edits needs to know what's incoming.
     await runGit(['fetch', '--prune']).catch(() => {});
     await dropDisposableLocalChanges().catch(() => {});
@@ -474,18 +480,31 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     } catch (err) {
       syncError = err;
     }
+    let stashPending = dirty;
     if (dirty) {
       try {
         await runGit(['stash', 'pop', '--index']);
-      } catch {
-        if (!syncError) {
-          throw new Error(
-            'Synced to main, but restoring your changes hit a conflict — resolve the markers in the working tree; the originals are still in `git stash`',
-          );
-        }
-      }
+        stashPending = false;
+      } catch {}
     }
-    if (syncError) throw syncError;
+    if (stashPending && !syncError) {
+      return {
+        ok: false,
+        stage: 'stash-pop',
+        message:
+          'Synced to main, but restoring your changes hit a conflict — resolve the markers in the working tree; the originals are still in `git stash`',
+        stashPending: true,
+      };
+    }
+    if (syncError) {
+      return {
+        ok: false,
+        stage: 'reconcile',
+        message: (syncError as Error).message,
+        stashPending,
+      };
+    }
+    return { ok: true };
   }
 
   // Reconcile the current branch: fast-forward if behind, else rebase local commits

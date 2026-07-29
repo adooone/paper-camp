@@ -86,7 +86,15 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       path: '/api/git/sync',
       handle: async (_req, res) => {
         try {
-          await git.runGitSync();
+          const result = await git.runGitSync();
+          if (!result.ok) {
+            sendJson(res, 409, {
+              error: result.message,
+              stage: result.stage,
+              stashPending: result.stashPending,
+            });
+            return;
+          }
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });

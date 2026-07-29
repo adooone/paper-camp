@@ -482,6 +482,15 @@ export interface GitLiveState {
   dirtyCount: number;
 }
 
+export interface GitSyncFailure {
+  ok: false;
+  stage: 'reconcile' | 'stash-pop';
+  message: string;
+  stashPending: boolean;
+}
+
+export type GitSyncResult = { ok: true } | GitSyncFailure;
+
 export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error';
 
 export type TaskKind =
