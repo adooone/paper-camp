@@ -1,3 +1,4 @@
+import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import {
   selectAgentNotSignedIn,
   selectCapabilityGapCount,
@@ -8,7 +9,7 @@ import { deriveCheckStatuses } from '@/app/utils/check-status';
 import type { CheckStatus } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { CommitIcon, RunIcon, WandIcon } from '../icons';
+import { CommitIcon, MergeIcon, PullIcon, PushIcon } from '../icons';
 
 const CHECK_VARIANT: Record<CheckStatus, 'success' | 'error' | 'warning' | 'neutral'> = {
   pass: 'success',
@@ -26,18 +27,16 @@ export const StatusBar = () => {
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
-  const runCheck = useAppStore((s) => s.runCheck);
-  const fixQuality = useAppStore((s) => s.fixQuality);
+  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
   const quickCommit = useAppStore((s) => s.quickCommit);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const capabilityGapCount = useAppStore(selectCapabilityGapCount);
   const agentNotSignedIn = useAppStore(selectAgentNotSignedIn);
+  const { pushing, syncing, pulling, handlePush, handleSync, handlePull } = useBranchSync();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const { qualityStatus, testStatus, consistencyStatus } = deriveCheckStatuses(status);
-  const anyChecksRunning =
-    qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
   const activeTask = agentStatus.find(
     (t) => t.status === 'running' || t.status === 'starting' || t.status === 'stopping',
   );
@@ -128,6 +127,44 @@ export const StatusBar = () => {
             Consistency
           </Stamp>
         </Tooltip>
+        <Tooltip
+          content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : 'Sync to main'}
+        >
+          <Button
+            variant="ghost"
+            size="small"
+            icon={<MergeIcon />}
+            style={btnStyle}
+            disabled={syncing || gitBranchHygiene === 'clean-on-main'}
+            onClick={handleSync}
+          >
+            {syncing ? 'Syncing…' : 'Sync to main'}
+          </Button>
+        </Tooltip>
+        <Tooltip content="Push commits to origin">
+          <Button
+            variant="ghost"
+            size="small"
+            icon={<PushIcon />}
+            style={btnStyle}
+            disabled={pushing || gitAhead === 0}
+            onClick={handlePush}
+          >
+            {pushing ? 'Pushing…' : gitAhead > 0 ? `Push (${gitAhead})` : 'Push'}
+          </Button>
+        </Tooltip>
+        <Tooltip content="Fast-forward the current branch from origin">
+          <Button
+            variant="ghost"
+            size="small"
+            icon={<PullIcon />}
+            style={btnStyle}
+            disabled={pulling}
+            onClick={handlePull}
+          >
+            {pulling ? 'Pulling…' : 'Pull'}
+          </Button>
+        </Tooltip>
         <Tooltip content="Commit all changes with an auto-suggested message">
           <Button
             variant="ghost"
@@ -144,26 +181,6 @@ export const StatusBar = () => {
                 : 'Commit'}
           </Button>
         </Tooltip>
-        <Button
-          variant="ghost"
-          size="small"
-          icon={<RunIcon />}
-          style={btnStyle}
-          disabled={anyChecksRunning}
-          onClick={() => runCheck('test')}
-        >
-          Run tests
-        </Button>
-        <Button
-          variant="ghost"
-          size="small"
-          icon={<WandIcon />}
-          style={btnStyle}
-          disabled={anyChecksRunning || qualityStatus !== 'fail'}
-          onClick={fixQuality}
-        >
-          Fix quality
-        </Button>
       </div>
     </div>
   );

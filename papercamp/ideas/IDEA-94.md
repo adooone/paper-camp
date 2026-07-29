@@ -29,7 +29,7 @@ Provenance: surfaced 2026-07-25 when Sync to main silently did nothing — the s
 ### Phases
 - [x] Expose push / pull as server git actions
       Extend `src/app/server/git.ts` and its routes so push and pull are callable actions returning live state (current branch, ahead/behind, dirty count), reusing the existing sync-to-main path rather than adding a parallel one.
-- [ ] Build the git action group in the top toolbar
+- [x] Build the git action group in the top toolbar
       Add a toolbar group with sync-to-main, push/pull, and commit verbs, each carrying its live state on the control; leave the detailed commit composer in the Stack panel.
 - [ ] Keep the deterministic sync as the fast path
       Confirm the code-first attempt (fetch, drop disposable/generated changes, stash, `merge --ff-only` falling back to `rebase` when diverged, pop) runs first and unchanged, and returns a structured failure instead of throwing to the UI when it cannot resolve.
