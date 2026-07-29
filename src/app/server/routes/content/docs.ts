@@ -1,12 +1,16 @@
 import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { parseOpenQuestions } from '@/core/parse';
+import { readEntities } from '@/core/readers';
 import {
   appendBlock,
   formatDecisionEntry,
+  formatOpenQuestionEntry,
   formatOpenQuestions,
   todayDateString,
 } from '@/core/serialize';
-import { campFile, readMaybe } from '../../helpers';
+import type { LogEntry } from '@/types/index';
+import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from '../../helpers';
 import { readBody, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
@@ -72,6 +76,64 @@ export function docsRoutes({ root }: RouteContext): Route[] {
         await writeFile(questionsPath, `${updated}\n`, 'utf-8');
 
         sendJson(res, 200, { ok: true });
+      },
+    },
+
+    // Graduates a clarification that outlives its entity into open-questions.md,
+    // the middle tier of the clarification → open question → decision chain.
+    {
+      method: 'POST',
+      path: '/api/clarifications/promote',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { entityId, clarification } = JSON.parse(reqBody) as {
+          entityId?: string;
+          clarification?: LogEntry;
+        };
+        if (!entityId?.trim() || !clarification?.text?.trim()) {
+          sendJson(res, 400, { error: 'entityId and clarification are required' });
+          return;
+        }
+
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const target = entries.find((e) => e.id === entityId);
+        if (!target) {
+          sendJson(res, 404, { error: `entity "${entityId}" not found` });
+          return;
+        }
+        const primaryFile = join(ideasDir, `${target.id}.md`);
+        const targetFile = (await fileExists(primaryFile))
+          ? primaryFile
+          : join(ideasDir, 'archive', `${target.id}.md`);
+        if (!(await fileExists(targetFile))) {
+          sendJson(res, 404, { error: 'entity file not found' });
+          return;
+        }
+        const clarifications = target.clarifications ?? [];
+        const matchIndex = clarifications.findIndex(
+          (c) => c.date === clarification.date && c.text === clarification.text,
+        );
+        if (matchIndex === -1) {
+          sendJson(res, 404, { error: 'clarification not found' });
+          return;
+        }
+        const remaining = clarifications.filter((_, i) => i !== matchIndex);
+
+        const questionBlock = formatOpenQuestionEntry({
+          title: clarification.text,
+          raised: todayDateString(),
+          status: 'open',
+          blocks: target.id,
+        });
+        await appendBlock(campFile(root, 'open-questions.md'), questionBlock);
+
+        await writeEntityFile(
+          targetFile,
+          entityFileInput(target, { clarifications: remaining, updated: todayDateString() }),
+        );
+
+        sendJson(res, 201, { ok: true });
       },
     },
   ];

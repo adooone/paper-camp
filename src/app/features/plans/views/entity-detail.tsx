@@ -11,6 +11,7 @@ import type {
   LogEntry,
   MarginNote,
   MarginNoteAnchor,
+  OpenQuestionEntry,
   PhaseItem,
   PlanEntry,
 } from '@/types/index';
@@ -57,6 +58,7 @@ import {
   relativeDate,
   runningTaskForPlan,
 } from '../helpers';
+import { ResolveQuestionModal } from '../modals';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -412,11 +414,15 @@ const PlanReviewSection = ({
 
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const allPlans = useAppStore((s) => s.plans);
+  const openQuestions = useAppStore((s) => s.openQuestions);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const [branching, setBranching] = useState(false);
+  const [resolvingQuestion, setResolvingQuestion] = useState<OpenQuestionEntry | null>(null);
+  const promoteClarification = useAppStore((s) => s.promoteClarification);
+  const [promotingClarification, setPromotingClarification] = useState<number | null>(null);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
   const detailView = useAppStore((s) => s.detailView);
@@ -490,6 +496,25 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     return patchByTitle(plan.title, { notes: [...(plan.notes ?? []), newNote] });
   };
 
+  const handlePromoteClarification = async (index: number) => {
+    if (!plan.id) return;
+    const entry = plan.clarifications?.[index];
+    if (!entry) return;
+    setPromotingClarification(index);
+    try {
+      await promoteClarification(plan.id, entry);
+      toast({ title: 'Promoted to an open question', variant: 'success' });
+    } catch (err) {
+      toast({
+        title: 'Promote failed',
+        description: oneLineErrorSummary((err as Error).message),
+        variant: 'error',
+      });
+    } finally {
+      setPromotingClarification(null);
+    }
+  };
+
   const handleResolveNote = async (note: MarginNote) => {
     const nextNotes = (plan.notes ?? []).map((n) =>
       n === note ? { ...n, state: 'resolved' as const } : n,
@@ -498,6 +523,9 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   };
 
   const bodyNotes = notesForAnchor(plan.notes, { kind: 'body' });
+  const blockingQuestions = openQuestions.filter(
+    (q) => q.status === 'open' && q.blocks === plan.id,
+  );
 
   return (
     <div>
@@ -645,6 +673,52 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             )}
           </div>
 
+          {blockingQuestions.length > 0 && (
+            <div style={{ marginBottom: space[5] }}>
+              <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Open questions</h3>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: space[3],
+                  marginBottom: space[3],
+                }}
+              >
+                {blockingQuestions.map((question) => (
+                  <Card key={question.title} size="small" accent accentColor="amber">
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: space[3],
+                      }}
+                    >
+                      <div>
+                        <div
+                          className="text-sm"
+                          style={{ fontWeight: 600, marginBottom: space[1] }}
+                        >
+                          {question.title}
+                        </div>
+                        <div className="text-sm" style={{ opacity: 0.85 }}>
+                          <Markdown>{question.body}</Markdown>
+                        </div>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={() => setResolvingQuestion(question)}
+                      >
+                        Resolve
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           {plan.clarifications && plan.clarifications.length > 0 && (
             <div style={{ marginBottom: space[5] }}>
               <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Clarifications</h3>
@@ -660,10 +734,28 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                   <div
                     key={`clar-${entry.date}-${i}`}
                     className="text-sm"
-                    style={{ opacity: 0.75 }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: space[3],
+                      opacity: 0.75,
+                    }}
                   >
-                    <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
-                    {entry.text}
+                    <span>
+                      <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
+                      {entry.text}
+                    </span>
+                    <Tooltip content="Graduate this into an open question that outlives this entity">
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        onClick={() => handlePromoteClarification(i)}
+                        disabled={promotingClarification !== null}
+                      >
+                        {promotingClarification === i ? 'Promoting…' : 'Promote'}
+                      </Button>
+                    </Tooltip>
                   </div>
                 ))}
               </div>
@@ -709,6 +801,11 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           />
         </>
       )}
+
+      <ResolveQuestionModal
+        question={resolvingQuestion}
+        onClose={() => setResolvingQuestion(null)}
+      />
     </div>
   );
 };

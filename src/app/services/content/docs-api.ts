@@ -1,5 +1,8 @@
 import type {
   ConsistencyIssue,
+  LogEntry,
+  OpenQuestionEntry,
+  ParseResult,
   ResolvedRoadmap,
   RoadmapItem,
   SuggestionEntry,
@@ -103,4 +106,37 @@ export const addRoadmapCandidate = async (horizonTitle: string, itemName: string
 export const fetchConsistency = async () => {
   const res = await fetch('/api/consistency');
   return res.json() as Promise<ConsistencyIssue[]>;
+};
+
+export const fetchOpenQuestions = async () => {
+  const res = await fetch('/api/open-questions');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to load open questions' }));
+    throw new Error(err.error);
+  }
+  return res.json() as Promise<ParseResult<OpenQuestionEntry>>;
+};
+
+export const resolveOpenQuestion = async (title: string, decision: string, rationale: string) => {
+  const res = await fetch(`/api/open-questions/resolve?title=${encodeURIComponent(title)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ decision, rationale }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to resolve question' }));
+    throw new Error(err.error);
+  }
+};
+
+export const promoteClarification = async (entityId: string, clarification: LogEntry) => {
+  const res = await fetch('/api/clarifications/promote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entityId, clarification }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to promote clarification' }));
+    throw new Error(err.error);
+  }
 };
