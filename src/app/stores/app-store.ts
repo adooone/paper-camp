@@ -17,6 +17,7 @@ import type {
   IdeaEntry,
   IdeaStatus,
   MarginNote,
+  OpenQuestionEntry,
   ParseResult,
   PlanEntry,
   PlanStatus,
@@ -47,6 +48,7 @@ import {
   fetchArchivableIdeas,
   fetchConsistency,
   fetchIdeas,
+  fetchOpenQuestions,
   fetchPlans,
   fetchRepoDocs,
   fetchSuggestions,
@@ -139,6 +141,9 @@ export type AppStore = {
   consistency: ConsistencyIssue[];
   loadConsistency: () => Promise<void>;
 
+  openQuestions: OpenQuestionEntry[];
+  loadOpenQuestions: () => Promise<void>;
+
   gitStatus: GitStatusEntry[] | null;
   gitBranch: string | null;
   gitAhead: number;
@@ -219,6 +224,9 @@ export const selectGhOk = (s: AppStore) => {
 
 export const selectCapabilityGapCount = (s: AppStore) =>
   s.capabilities.filter((c) => c.status !== 'ok').length;
+
+export const selectOpenQuestionCount = (s: AppStore) =>
+  s.openQuestions.filter((q) => q.status === 'open').length;
 
 // loggedIn: null means unknown (non claude-code agent, or the probe couldn't tell) — only
 // an explicit false should surface as "not signed in".
@@ -394,6 +402,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         get().loadSuggestions(),
         get().loadStatus(),
         get().loadConsistency(),
+        get().loadOpenQuestions(),
         get().loadGitStatus(),
         get().loadAgentStatus(),
         get().loadAgentAuthStatus(),
@@ -451,6 +460,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   consistency: [],
   loadConsistency: loadSlice(set, fetchConsistency, (data) => ({ consistency: data })),
+
+  openQuestions: [],
+  loadOpenQuestions: loadSlice(
+    set,
+    fetchOpenQuestions,
+    (data) => ({ openQuestions: data.entries }),
+    () => ({ openQuestions: [] }),
+  ),
 
   gitStatus: null,
   gitBranch: null,

@@ -1,5 +1,7 @@
 import type {
   ConsistencyIssue,
+  OpenQuestionEntry,
+  ParseResult,
   ResolvedRoadmap,
   RoadmapItem,
   SuggestionEntry,
@@ -103,4 +105,9 @@ export const addRoadmapCandidate = async (horizonTitle: string, itemName: string
 export const fetchConsistency = async () => {
   const res = await fetch('/api/consistency');
   return res.json() as Promise<ConsistencyIssue[]>;
+};
+
+export const fetchOpenQuestions = async () => {
+  const res = await fetch('/api/open-questions');
+  return res.json() as Promise<ParseResult<OpenQuestionEntry>>;
 };

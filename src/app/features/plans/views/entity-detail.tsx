@@ -412,6 +412,7 @@ const PlanReviewSection = ({
 
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const allPlans = useAppStore((s) => s.plans);
+  const openQuestions = useAppStore((s) => s.openQuestions);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const { toast } = useToast();
@@ -498,6 +499,9 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   };
 
   const bodyNotes = notesForAnchor(plan.notes, { kind: 'body' });
+  const blockingQuestions = openQuestions.filter(
+    (q) => q.status === 'open' && q.blocks === plan.id,
+  );
 
   return (
     <div>
@@ -644,6 +648,31 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               </div>
             )}
           </div>
+
+          {blockingQuestions.length > 0 && (
+            <div style={{ marginBottom: space[5] }}>
+              <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Open questions</h3>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: space[3],
+                  marginBottom: space[3],
+                }}
+              >
+                {blockingQuestions.map((question) => (
+                  <Card key={question.title} size="small" accent accentColor="amber">
+                    <div className="text-sm" style={{ fontWeight: 600, marginBottom: space[1] }}>
+                      {question.title}
+                    </div>
+                    <div className="text-sm" style={{ opacity: 0.85 }}>
+                      <Markdown>{question.body}</Markdown>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
 
           {plan.clarifications && plan.clarifications.length > 0 && (
             <div style={{ marginBottom: space[5] }}>

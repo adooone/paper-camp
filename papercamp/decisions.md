@@ -1,3 +1,30 @@
+## Open questions stay one file, not per-file entities
+
+**Date:** 2026-07-29
+**Status:** decided
+
+**Context:** `IDEA-96` phase 1 needed to settle whether `papercamp/open-questions.md`
+should become per-file entities the way plans/ideas did in `IDEA-20`, which would
+make questions linkable and taggable like the rest of the corpus, or stay a single
+file given how few there are.
+
+**Decision:** Stay a single file. Every later phase in `IDEA-96` (count, entity
+surfacing, resolve wiring, promotion) builds on the existing single-file shape.
+
+**Rationale:** The corpus is tiny — 7 entries total, only 3 currently open — far
+below the volume (dozens of plans/ideas) that justified `IDEA-20`'s per-file
+migration. `decisions.md` is a directly analogous append-only log structure with
+28 entries and 890 lines, and it has never needed to go per-file. The `Blocks`
+field already gives free-text linkability to a plan/idea ID, and
+`findConsistencyIssues` (`parser.ts`) already cross-references it against real
+plan IDs — per-file `[[ID]]` links wouldn't meaningfully improve on that for a
+field that already round-trips correctly. Nothing in the plan's remaining phases
+needs tag filtering on questions. Against that, converting would touch the
+schema, parser, serializer, and both API routes (~190 lines), including rewriting
+`POST /api/open-questions/resolve` — the very endpoint `IDEA-96` calls "already
+complete" and wants to reuse cheaply. The cost isn't justified by a benefit the
+plan doesn't need.
+
 ## Escalate-on-failure stays scoped to the branch switch, not push/pull
 
 **Date:** 2026-07-29
