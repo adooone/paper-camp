@@ -6,6 +6,7 @@ import type {
   RoadmapItem,
   TaskLogEntry,
 } from '../types/index';
+import { findReleaseLineForId } from './trail';
 
 const H2_RE = /^##\s+/;
 const GOAL_HEADING_RE = /^##\s+The goal\s*$/i;
@@ -253,14 +254,29 @@ export function resolveRoadmap(
   roadmap: Roadmap,
   entities: PlanEntry[],
   taskLog: TaskLogEntry[] = [],
+  changelog = '',
 ): ResolvedRoadmap {
-  const statusById = new Map(entities.filter((e) => e.id).map((e) => [e.id, e.status]));
+  const entityById = new Map(entities.filter((e) => e.id).map((e) => [e.id as string, e]));
+  const taskRunsById = new Map<string, number>();
+  for (const task of taskLog) {
+    if (!task.planId) continue;
+    taskRunsById.set(task.planId, (taskRunsById.get(task.planId) ?? 0) + 1);
+  }
 
   const horizons = roadmap.horizons.map((horizon) => {
     const items = horizon.items.map((item) => {
       const links = item.linked.flatMap((id) => {
-        const status = statusById.get(id);
-        return status ? [{ id, status }] : [];
+        const entity = entityById.get(id);
+        if (!entity?.status) return [];
+        return [
+          {
+            id,
+            status: entity.status,
+            taskRuns: taskRunsById.get(id) ?? 0,
+            pr: entity.pr,
+            released: findReleaseLineForId(changelog, id) !== undefined,
+          },
+        ];
       });
       const rollup = { total: links.length, done: links.filter((l) => l.status === 'done').length };
       return { ...item, links, rollup };

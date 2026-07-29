@@ -1,0 +1,92 @@
+import { space } from '@/app/styles/tokens';
+import type { ProvenanceTrail } from '@/types/index';
+import { Stamp, Tooltip } from '@dendelion/paper-ui';
+import { PrBadge } from './pr-badge';
+
+const REACHED_STAMP = { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' };
+const UNREACHED_STAMP = { fill: 'rgba(0, 0, 0, 0.05)', text: 'rgba(0, 0, 0, 0.35)' };
+
+const TrailNode = ({
+  reached,
+  label,
+  tooltip,
+  href,
+}: {
+  reached: boolean;
+  label: string;
+  tooltip?: string;
+  href?: string;
+}) => {
+  const stamp = (
+    <Stamp
+      size="small"
+      fillColor={reached ? REACHED_STAMP.fill : UNREACHED_STAMP.fill}
+      textColor={reached ? REACHED_STAMP.text : UNREACHED_STAMP.text}
+    >
+      {label}
+    </Stamp>
+  );
+  const linked = href ? (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      style={{ textDecoration: 'none', display: 'inline-flex' }}
+    >
+      {stamp}
+    </a>
+  ) : (
+    stamp
+  );
+  return tooltip ? <Tooltip content={tooltip}>{linked}</Tooltip> : linked;
+};
+
+const TrailArrow = () => (
+  <span style={{ opacity: 0.3 }} aria-hidden="true">
+    →
+  </span>
+);
+
+const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
+
+// Release lines are release-please's `* **scope:** Title (IDEA-N) ([hash](url))` — pull the
+// commit hash and link back out of the trailing markdown link.
+function parseReleaseCommit(line: string): { hash: string; url: string } | undefined {
+  const match = line.match(/\(\[([0-9a-f]+)\]\((\S+)\)\)\s*$/);
+  return match ? { hash: match[1], url: match[2] } : undefined;
+}
+
+interface ProvenanceTrailPanelProps {
+  trail: ProvenanceTrail;
+}
+
+export const ProvenanceTrailPanel = ({ trail }: ProvenanceTrailPanelProps) => {
+  const { taskRuns, commits, pr, releaseLine } = trail;
+  const releaseCommit = releaseLine.data ? parseReleaseCommit(releaseLine.data) : undefined;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
+      <TrailNode
+        reached={taskRuns.reached}
+        label={taskRuns.data ? plural(taskRuns.data.length, 'task run') : 'Tasks'}
+        tooltip={taskRuns.data?.map((run) => run.taskKind).join(', ')}
+      />
+      <TrailArrow />
+      <TrailNode
+        reached={commits.reached}
+        label={commits.data ? plural(commits.data.length, 'commit') : 'Commits'}
+        tooltip={commits.data?.join('\n')}
+      />
+      <TrailArrow />
+      {pr.data ? <PrBadge pr={pr.data} /> : <TrailNode reached={false} label="PR" />}
+      <TrailArrow />
+      <TrailNode
+        reached={releaseLine.reached}
+        label={releaseCommit ? `Released ${releaseCommit.hash}` : 'Release'}
+        tooltip={releaseLine.data}
+        href={releaseCommit?.url}
+      />
+    </div>
+  );
+};

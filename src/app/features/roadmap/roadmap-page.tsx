@@ -1,5 +1,6 @@
 import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
+import { PrBadge } from '@/app/features/plans/components/pr-badge';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { addRoadmapCandidate, addRoadmapItem, fetchRoadmap } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
@@ -10,8 +11,9 @@ import type {
   ResolvedRoadmapItem,
   RoadmapEvent,
   RoadmapEventKind,
+  RoadmapLink,
 } from '@/types/index';
-import { Button, Card, Input, Stamp } from '@dendelion/paper-ui';
+import { Button, Card, Input, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { PromoteRoadmapItemModal } from './promote-roadmap-item-modal';
@@ -187,6 +189,23 @@ const AddItemForm = ({
   );
 };
 
+const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
+
+const RoadmapLinkTrail = ({ link }: { link: RoadmapLink }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
+    <Tooltip content={`${plural(link.taskRuns, 'task run')}${link.released ? ' · released' : ''}`}>
+      <Stamp
+        size="small"
+        fillColor={STATUS_STAMP[link.status].fill}
+        textColor={STATUS_STAMP[link.status].text}
+      >
+        {link.id}
+      </Stamp>
+    </Tooltip>
+    {link.pr && <PrBadge pr={link.pr} />}
+  </div>
+);
+
 const GraduatedRow = ({ plan, onOpen }: { plan: PlanEntry; onOpen: () => void }) => (
   <Card size="small" texture="kraft" className="plan-row-card">
     <button
@@ -334,14 +353,7 @@ const RoadmapItemRow = ({
           {item.links.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: space[1], flexWrap: 'wrap' }}>
               {item.links.map((link) => (
-                <Stamp
-                  key={link.id}
-                  size="small"
-                  fillColor={STATUS_STAMP[link.status].fill}
-                  textColor={STATUS_STAMP[link.status].text}
-                >
-                  {link.id}
-                </Stamp>
+                <RoadmapLinkTrail key={link.id} link={link} />
               ))}
             </div>
           )}

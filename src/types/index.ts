@@ -287,6 +287,9 @@ export interface Roadmap {
 export interface RoadmapLink {
   id: string;
   status: PlanStatus;
+  taskRuns: number;
+  pr?: PrInfo;
+  released: boolean;
 }
 
 export interface RoadmapRollup {
@@ -502,6 +505,21 @@ export interface TaskLogEntry {
   startedAt: string;
   endedAt: string;
   outcome: 'done' | 'error';
+}
+
+export interface TrailHop<T> {
+  reached: boolean;
+  data?: T;
+}
+
+export interface ProvenanceTrail {
+  id: string;
+  idea: TrailHop<{ title: string; status?: EntityStatus; type?: EntityType }>;
+  phases: TrailHop<PhaseItem[]>;
+  taskRuns: TrailHop<TaskLogEntry[]>;
+  commits: TrailHop<string[]>;
+  pr: TrailHop<PrInfo>;
+  releaseLine: TrailHop<string>;
 }
 
 export interface AgentTaskState {

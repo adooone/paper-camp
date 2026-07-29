@@ -2,7 +2,7 @@
 id: IDEA-93
 title: Trace an idea from roadmap to release
 type: feat
-status: idea
+status: review
 created: 2026-07-25
 updated: 2026-07-26
 tags:
@@ -20,16 +20,16 @@ Make the trail first class in both directions: from a roadmap item, see the work
 Depends on [[IDEA-91]] for the roadmap end of the chain.
 
 ### Phases
-- [ ] Model the provenance trail
+- [x] Model the provenance trail
       A `src/core` resolver that assembles the full chain for an entity — idea → phases → `tasks.log` runs → commits → PR → release line — reusing `pr-lookup` and the release-line idea id [[IDEA-83]] added.
-- [ ] Resolve the trail backward from a release line or commit
+- [x] Resolve the trail backward from a release line or commit
       Parse the idea id already stamped on each CHANGELOG release line, and map a commit back to the entity that produced it, so a shipped change points home to its idea.
-- [ ] Resolve the trail forward from an entity
+- [x] Resolve the trail forward from an entity
       Gather an entity's `tasks.log` runs, its branch commits, its PR, and its release line into the trail model, with each hop carrying its reached / not-reached state.
-- [ ] Expose the trail through a server route
+- [x] Expose the trail through a server route
       A route returning the assembled trail for an entity plus the reverse lookup for a release line or commit, degrading cleanly when GitHub or a release line is absent.
-- [ ] Surface the trail on the entity detail view
+- [x] Surface the trail on the entity detail view
       A provenance panel in `entity-detail.tsx` rendering the chain as a click path — tasks, commits, PR, release line — so "what was done and where it went" is visible on the idea.
-- [ ] Extend the roadmap end with the deeper trail
+- [x] Extend the roadmap end with the deeper trail
       Building on [[IDEA-91]]'s item → idea rollup, let a roadmap item resolve through to the work it produced and how far it got (tasks, PR, release), not just its child ideas' statuses.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass

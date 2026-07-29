@@ -1,6 +1,6 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
-import { usePlanStatusPatch, useSplitReview } from '@/app/features/plans/hooks';
+import { usePlanStatusPatch, useSplitReview, useTrail } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
@@ -46,6 +46,7 @@ import { CollapsibleText } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
+import { ProvenanceTrailPanel } from '../components';
 import { ReviewSplitMessage } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import {
@@ -202,6 +203,17 @@ const PhasesSection = ({
     />
   </div>
 );
+
+const TrailSection = ({ planId }: { planId: string | undefined }) => {
+  const trail = useTrail(planId);
+  if (!trail) return null;
+  return (
+    <div style={{ marginBottom: space[8] }}>
+      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Provenance</h3>
+      <ProvenanceTrailPanel trail={trail} />
+    </div>
+  );
+};
 
 const DatedEntryList = ({ entries }: { entries: LogEntry[] }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[4] }}>
@@ -686,6 +698,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               onResolveNote={handleResolveNote}
             />
           )}
+
+          <TrailSection planId={plan.id} />
 
           <CommentsSection
             plan={plan}
