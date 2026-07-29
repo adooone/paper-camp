@@ -421,6 +421,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const [branching, setBranching] = useState(false);
   const [resolvingQuestion, setResolvingQuestion] = useState<OpenQuestionEntry | null>(null);
+  const promoteClarification = useAppStore((s) => s.promoteClarification);
+  const [promotingClarification, setPromotingClarification] = useState<number | null>(null);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
   const detailView = useAppStore((s) => s.detailView);
@@ -492,6 +494,25 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const handleAddNote = async (anchor: MarginNoteAnchor, prose: string) => {
     const newNote: MarginNote = { anchor, prose, state: 'open' };
     return patchByTitle(plan.title, { notes: [...(plan.notes ?? []), newNote] });
+  };
+
+  const handlePromoteClarification = async (index: number) => {
+    if (!plan.id) return;
+    const entry = plan.clarifications?.[index];
+    if (!entry) return;
+    setPromotingClarification(index);
+    try {
+      await promoteClarification(plan.id, entry);
+      toast({ title: 'Promoted to an open question', variant: 'success' });
+    } catch (err) {
+      toast({
+        title: 'Promote failed',
+        description: oneLineErrorSummary((err as Error).message),
+        variant: 'error',
+      });
+    } finally {
+      setPromotingClarification(null);
+    }
   };
 
   const handleResolveNote = async (note: MarginNote) => {
@@ -713,10 +734,28 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                   <div
                     key={`clar-${entry.date}-${i}`}
                     className="text-sm"
-                    style={{ opacity: 0.75 }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: space[3],
+                      opacity: 0.75,
+                    }}
                   >
-                    <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
-                    {entry.text}
+                    <span>
+                      <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
+                      {entry.text}
+                    </span>
+                    <Tooltip content="Graduate this into an open question that outlives this entity">
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        onClick={() => handlePromoteClarification(i)}
+                        disabled={promotingClarification !== null}
+                      >
+                        {promotingClarification === i ? 'Promoting…' : 'Promote'}
+                      </Button>
+                    </Tooltip>
                   </div>
                 ))}
               </div>

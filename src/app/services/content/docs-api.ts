@@ -1,5 +1,6 @@
 import type {
   ConsistencyIssue,
+  LogEntry,
   OpenQuestionEntry,
   ParseResult,
   ResolvedRoadmap,
@@ -120,6 +121,18 @@ export const resolveOpenQuestion = async (title: string, decision: string, ratio
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Failed to resolve question' }));
+    throw new Error(err.error);
+  }
+};
+
+export const promoteClarification = async (entityId: string, clarification: LogEntry) => {
+  const res = await fetch('/api/clarifications/promote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entityId, clarification }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to promote clarification' }));
     throw new Error(err.error);
   }
 };

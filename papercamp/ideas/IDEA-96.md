@@ -36,7 +36,7 @@ Settled: open questions stay a single file. The corpus is 7 entries total, only 
       Call `POST /api/open-questions/resolve` with `{decision, rationale}` from the entity surface — mostly wiring, since the endpoint already resolves a question into a decision.
 - [x] Promote an answered question into a decision
       Reuse the promote shape the app already runs for suggestions→ideas and roadmap→ideas so resolving a question writes it into `decisions.md`, keeping promotion one-way (clarification → open question → decision).
-- [ ] Add the clarification → open-question promotion step
+- [x] Add the clarification → open-question promotion step
       Let a question that outlives one entity's `### Clarifications` graduate into `open-questions.md`, completing the three-tier chain in one direction.
 - [ ] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.

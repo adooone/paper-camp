@@ -16,6 +16,7 @@ import type {
   GitStatusResponse,
   IdeaEntry,
   IdeaStatus,
+  LogEntry,
   MarginNote,
   OpenQuestionEntry,
   ParseResult,
@@ -54,6 +55,7 @@ import {
   fetchSuggestions,
   fetchTaskLog,
   prioritiseQueue,
+  promoteClarification as promoteClarificationApi,
   promoteRoadmapItem as promoteRoadmapItemApi,
   promoteSuggestion as promoteSuggestionApi,
   resolveOpenQuestion as resolveOpenQuestionApi,
@@ -145,6 +147,7 @@ export type AppStore = {
   openQuestions: OpenQuestionEntry[];
   loadOpenQuestions: () => Promise<void>;
   resolveOpenQuestion: (title: string, decision: string, rationale: string) => Promise<void>;
+  promoteClarification: (entityId: string, clarification: LogEntry) => Promise<void>;
 
   gitStatus: GitStatusEntry[] | null;
   gitBranch: string | null;
@@ -473,6 +476,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
   resolveOpenQuestion: async (title, decision, rationale) => {
     await resolveOpenQuestionApi(title, decision, rationale);
     await get().loadOpenQuestions();
+  },
+  promoteClarification: async (entityId, clarification) => {
+    await promoteClarificationApi(entityId, clarification);
+    await Promise.all([get().loadOpenQuestions(), get().loadPlans()]);
   },
 
   gitStatus: null,
