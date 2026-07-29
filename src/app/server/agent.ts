@@ -8,7 +8,7 @@ import { createInterface } from 'node:readline';
 import { buildReconcilePrompt } from '@/app/features/plans/prompts';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
-import { computePlanContentHash } from '@/core/serialize';
+import { computePlanContentHash, todayDateString } from '@/core/serialize';
 import {
   type AgentId,
   type AgentTaskState,
@@ -29,7 +29,7 @@ import {
 import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
-import { campFile, readMaybe } from './helpers';
+import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 import { logTaskCompletion } from './task-log';
 
 const MAX_LINES = 50;
@@ -184,6 +184,28 @@ export function createAgentManager(
 
   function isStopping(task: AgentTask): boolean {
     return task.status === 'stopping';
+  }
+
+  // Writes a run-all escalation into the plan's `### Log` (Comments) so a human
+  // sees the agent's question in the same place they'd leave one, and Apply-notes
+  // / rework can pick the thread back up instead of the run dying with no trace.
+  async function escalateToLog(planId: string | undefined, message: string): Promise<void> {
+    if (!planId) return;
+    const ideasDir = campFile(root, 'ideas');
+    const { entries } = await readEntities(ideasDir);
+    const entry = entries.find((e) => e.id === planId && e.kind !== 'note');
+    if (!entry) return;
+    const primaryFile = join(ideasDir, `${planId}.md`);
+    const file = (await fileExists(primaryFile))
+      ? primaryFile
+      : join(ideasDir, 'archive', `${planId}.md`);
+    if (!(await fileExists(file))) return;
+    await writeEntityFile(
+      file,
+      entityFileInput(entry, {
+        log: [...(entry.log ?? []), { date: todayDateString(), text: message }],
+      }),
+    );
   }
 
   function registerTask(task: AgentTask): void {
@@ -864,6 +886,10 @@ export function createAgentManager(
           if (task.blocker) {
             failed++;
             pushLine(task, `[blocked] phase ${i + 1} — agent needs a decision: ${task.blocker}`);
+            await escalateToLog(
+              plan.id,
+              `Run-all parked on phase ${i + 1} ("${phase.text}") — the agent needs a decision: ${task.blocker}`,
+            );
             task.blocker = undefined;
             break;
           }
@@ -950,6 +976,10 @@ export function createAgentManager(
             if (fixBlocker) {
               failed++;
               pushLine(task, `[blocked] phase ${i + 1} — agent needs a decision: ${fixBlocker}`);
+              await escalateToLog(
+                plan.id,
+                `Run-all parked on phase ${i + 1} ("${phase.text}") — the fix pass needs a decision: ${fixBlocker}`,
+              );
               break;
             }
 
@@ -957,7 +987,11 @@ export function createAgentManager(
               failed++;
               pushLine(
                 task,
-                `[fail] phase ${i + 1} — project checks still failing after ${fixAttempt} fix attempt(s), stopping`,
+                `[blocked] phase ${i + 1} — project checks still failing after ${fixAttempt} fix attempt(s)`,
+              );
+              await escalateToLog(
+                plan.id,
+                `Run-all parked on phase ${i + 1} ("${phase.text}") — project checks (${introduced.join(', ')}) are still failing after ${fixAttempt} fix attempt(s). Reply here with guidance to unblock and resume.`,
               );
               break;
             }

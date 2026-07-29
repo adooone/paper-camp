@@ -246,9 +246,14 @@ describe('startRunAllPhases', () => {
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
     expect(lines).toContain('fix attempt 1/2');
     expect(lines).toContain('fix attempt 2/2');
-    expect(lines).toContain('project checks still failing after 2 fix attempt(s), stopping');
+    expect(lines).toContain(
+      '[blocked] phase 1 — project checks still failing after 2 fix attempt(s)',
+    );
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
+    const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(planFile).toContain('### Log');
+    expect(planFile).toContain('project checks (test) are still failing after 2 fix attempt(s)');
   });
 
   it('continues to the next phase when a fix attempt makes checks green', async () => {
@@ -288,6 +293,9 @@ describe('startRunAllPhases', () => {
     );
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
+    const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(planFile).toContain('### Log');
+    expect(planFile).toContain('the agent needs a decision: which auth flow should this use?');
   });
 
   it('short-circuits to escalation when the fix pass declares a blocker, without exhausting the cap', async () => {
@@ -316,6 +324,11 @@ describe('startRunAllPhases', () => {
     );
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
+    const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(planFile).toContain('### Log');
+    expect(planFile).toContain(
+      'the fix pass needs a decision: which auth flow should the fix use?',
+    );
   });
 
   it('tolerates a check that was already red before the run instead of fixing or failing on it', async () => {
