@@ -29,7 +29,7 @@ Many titles and labels don't say plainly what they are. Text-only pass, no behav
       "Tree / Map" → "Outline / Board", "Add candidate…" → "Add option…".
 - [x] Rename the "Ideas" nav entry to "Plans"
       The main plans view only — leave entity ids and routes untouched.
-- [ ] Rename "Provenance" → "History" and the "Views" toggle → "Show"
+- [x] Rename "Provenance" → "History" and the "Views" toggle → "Show"
 - [ ] Fix the agent action label and status/toast strings
       "Add /code-review findings" → "Add code-review findings", toast "Kept the reconciled version" → "Kept the merged version", "Splitting the review…" → "Separating review feedback…".
 - [ ] Reword the create-idea note option

@@ -269,7 +269,7 @@ const TrailSection = ({ planId }: { planId: string | undefined }) => {
   if (!trail) return null;
   return (
     <div style={{ marginBottom: space[8] }}>
-      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Provenance</h3>
+      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>History</h3>
       <ProvenanceTrailPanel trail={trail} />
     </div>
   );

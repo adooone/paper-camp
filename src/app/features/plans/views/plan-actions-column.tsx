@@ -88,7 +88,7 @@ export const PlanActionsColumn = () => {
 
           {(underReview || plan.status === 'done') && (
             <div>
-              <div style={sectionLabelStyle}>Views</div>
+              <div style={sectionLabelStyle}>Show</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
                 <ListItem
                   size="small"
