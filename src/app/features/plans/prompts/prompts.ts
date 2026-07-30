@@ -42,6 +42,8 @@ ${logList}
 Clarifications (answered scope/design questions):
 ${clarificationsList}
 
+${BREVITY_CONTRACT}
+
 Task:
 1. Read the plan above, then inspect the relevant code in this repo.
 2. Identify work that is clearly required to fulfil this plan but is covered by no existing phase. The Log entries are the best source — they often record bugs or gaps that were never turned into phases.
@@ -80,6 +82,8 @@ ${phaseList}
 
 The author's notes — this is the work to act on:
 ${noteList}
+
+${BREVITY_CONTRACT}
 
 Task: make the ${noun} reflect these notes, so that acting on the ${noun} afterwards delivers what the author asked for.
 
@@ -134,6 +138,8 @@ ${phaseList}
 
 The author's margin notes — this is the work to act on, each quoted against what it is about:
 ${noteList}
+
+${BREVITY_CONTRACT}
 
 Task: make the ${noun} reflect these notes, so that acting on the ${noun} afterwards delivers what the author asked for.
 
@@ -195,6 +201,8 @@ ${idea.body}
 Prior Log entries:
 ${logList}
 
+${BREVITY_CONTRACT}
+
 Task:
 1. Explore this codebase and find what is relevant to the idea: the files it would touch, existing helpers or patterns it should build on, and constraints visible in the code.
 2. Write up what you found as a single dated entry — name specific files and symbols, describe a workable approach, and include the architectural context you found. Keep the idea's original intent — sharpen it, do not redirect it.
@@ -214,6 +222,8 @@ export function buildSuggestionPromotePrompt(idea: IdeaEntry): string {
 
 This idea was just promoted from an AI-generated one-liner suggestion — its current body is only that one-liner, with no deeper context yet:
 ${idea.body}
+
+${BREVITY_CONTRACT}
 
 Task:
 1. Explore this codebase and find what is relevant to the idea: the files it would touch, existing helpers or patterns it should build on, and constraints visible in the code.
@@ -235,6 +245,8 @@ export function buildRoadmapPromotePrompt(idea: IdeaEntry, horizonTitle: string)
 
 This idea was just promoted from a roadmap item under "${horizonTitle}" in ROADMAP.md — its current body is only that item's one-line description plus a provenance note, with no deeper context yet:
 ${idea.body}
+
+${BREVITY_CONTRACT}
 
 Task:
 1. Explore this codebase and find what is relevant to the idea: the files it would touch, existing helpers or patterns it should build on, and constraints visible in the code.
@@ -281,6 +293,8 @@ The file already has YAML frontmatter (id, title, status, created, …) and the 
 - [ ] Short phase title
       Optional description of the phase, indented with 6 spaces.
 \`\`\`
+
+${BREVITY_CONTRACT}
 
 Hard rules:
 - Never change the \`id\`, \`title\`, \`status\`, or \`created\` fields — \`status\` stays exactly \`idea\`; a human promotes it after reviewing your draft.
