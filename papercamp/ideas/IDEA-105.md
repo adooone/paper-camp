@@ -2,7 +2,7 @@
 id: IDEA-105
 title: Plain-language the confusing UI text
 type: fix
-status: idea
+status: review
 created: 2026-07-29
 updated: 2026-07-29
 tags:
@@ -34,5 +34,5 @@ Many titles and labels don't say plainly what they are. Text-only pass, no behav
       "Add /code-review findings" → "Add code-review findings", toast "Kept the reconciled version" → "Kept the merged version", "Splitting the review…" → "Separating review feedback…".
 - [x] Reword the create-idea note option
       "Note — never needs a plan" → "Just a note (no plan needed)".
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       Confirm nothing keys off the changed display strings; behaviour unchanged.
