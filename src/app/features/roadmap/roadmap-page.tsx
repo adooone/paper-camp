@@ -97,7 +97,7 @@ const AddCandidateForm = ({ onAdd }: { onAdd: (name: string) => Promise<void> })
         onKeyDown={(e) => {
           if (e.key === 'Enter') handleAdd();
         }}
-        placeholder="Add candidate…"
+        placeholder="Add option…"
         disabled={saving}
         style={{ flex: 1 }}
       />
@@ -440,8 +440,8 @@ const GoalBanner = ({ goal }: { goal: string }) => {
 type RoadmapViewMode = 'tree' | 'map' | 'timeline';
 
 const VIEW_MODES: { id: RoadmapViewMode; label: string }[] = [
-  { id: 'tree', label: 'Tree' },
-  { id: 'map', label: 'Map' },
+  { id: 'tree', label: 'Outline' },
+  { id: 'map', label: 'Board' },
   { id: 'timeline', label: 'Timeline' },
 ];
 

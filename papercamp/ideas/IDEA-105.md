@@ -25,7 +25,7 @@ Many titles and labels don't say plainly what they are. Text-only pass, no behav
 (The "graduate into an open question" / "promote into a decision" / Clarifications labels are handled by [[IDEA-104]].)
 
 ### Phases
-- [ ] Relabel the Roadmap tabs and add-item control
+- [x] Relabel the Roadmap tabs and add-item control
       "Tree / Map" → "Outline / Board", "Add candidate…" → "Add option…".
 - [ ] Rename the "Ideas" nav entry to "Plans"
       The main plans view only — leave entity ids and routes untouched.
