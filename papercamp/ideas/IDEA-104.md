@@ -2,7 +2,7 @@
 id: IDEA-104
 title: Decisions and questions live on the idea
 type: feat
-status: idea
+status: review
 created: 2026-07-29
 updated: 2026-07-29
 tags:
@@ -19,14 +19,14 @@ Fold both onto the entity: a decision or question about a feature is a lightweig
 Also clears the confusing entity UI this created: "Graduate this into an open question that outlives this entity", the Clarifications-vs-Open-questions split, "Promote straight into a decision". Supersedes the browse/search half of [[IDEA-96]] and [[IDEA-97]].
 
 ### Phases
-- [ ] Model decisions and questions as notes on the idea entity
+- [x] Model decisions and questions as notes on the idea entity
       Reuse the existing notes/clarifications machinery so a decision or question is a lightweight note bound to its idea, shown and closed there.
-- [ ] Migrate existing `decisions.md`/`open-questions.md` content onto their ideas
+- [x] Migrate existing `decisions.md`/`open-questions.md` content onto their ideas
       Fold each entry onto the idea it bounds; drop cross-cutting rules that already live in `AGENTS.md`/`docs/CODE_STYLE.md`.
-- [ ] Retire the global files, decision search, and consistency checks
+- [x] Retire the global files, decision search, and consistency checks
       Remove `decisions.md`/`open-questions.md`, the decision search, and the `blocked-plan-active`/`dangling-*` consistency checks that relied on them.
-- [ ] Remove the separate capture modals
+- [x] Remove the separate capture modals
       Delete the standalone decision/question capture modals now that notes carry them inline.
-- [ ] Simplify the entity UI
+- [x] Simplify the entity UI
       Drop "Graduate this into an open question", the Clarifications-vs-Open-questions split, and "Promote straight into a decision".
-- [ ] Type-check and full pass
+- [x] Type-check and full pass

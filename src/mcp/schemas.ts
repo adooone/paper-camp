@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { AGENT_IDS, PLAN_KINDS, PLAN_STATUSES } from '../types/index';
 
-// Mirrors the PlanEntry/OpenQuestionEntry/DecisionEntry/ParseWarning shapes the
-// dashboard API (src/app/server/routes/reads.ts) returns, so MCP clients see the same data.
+// Mirrors the PlanEntry/ParseWarning shapes the dashboard API
+// (src/app/server/routes/reads.ts) returns, so MCP clients see the same data.
 
 const logEntrySchema = z.object({
   date: z.string(),
@@ -32,23 +32,6 @@ export const planEntrySchema = z.object({
   phases: z.array(phaseItemSchema),
   log: z.array(logEntrySchema).optional(),
   clarifications: z.array(logEntrySchema).optional(),
-});
-
-export const openQuestionEntrySchema = z.object({
-  title: z.string(),
-  status: z.enum(['open', 'resolved']),
-  raised: z.string(),
-  resolvedBy: z.string().optional(),
-  blocks: z.string().optional(),
-  body: z.string(),
-});
-
-export const decisionEntrySchema = z.object({
-  title: z.string(),
-  date: z.string(),
-  status: z.enum(['decided', 'superseded']),
-  supersededBy: z.string().optional(),
-  body: z.string(),
 });
 
 export const parseWarningSchema = z.object({

@@ -22,7 +22,7 @@ async function exists(path: string): Promise<boolean> {
   }
 }
 
-const MONOLITHIC_FILES = ['decisions.md', 'open-questions.md', 'suggestions.md'];
+const MONOLITHIC_FILES = ['suggestions.md'];
 
 export interface InitOptions {
   projectName: string;

@@ -1,11 +1,5 @@
 import { join } from 'node:path';
-import {
-  findConsistencyIssues,
-  parseDecisions,
-  parseOpenQuestions,
-  parseSuggestions,
-  parseTaskLog,
-} from '@/core/parse';
+import { findConsistencyIssues, parseSuggestions, parseTaskLog } from '@/core/parse';
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
 import { coerceAgentConfig } from '@/types/index';
@@ -37,15 +31,6 @@ export const readRoutes: ReadRoute[] = [
     handler: async (root) => cachedWorkEntries(root),
   },
   {
-    path: '/api/decisions',
-    handler: async (root) => parseDecisions(await readMaybe(campFile(root, 'decisions.md'))),
-  },
-  {
-    path: '/api/open-questions',
-    handler: async (root) =>
-      parseOpenQuestions(await readMaybe(campFile(root, 'open-questions.md'))),
-  },
-  {
     path: '/api/suggestions',
     handler: async (root) => ({
       entries: parseSuggestions(await readMaybe(campFile(root, 'suggestions.md'))),
@@ -70,21 +55,12 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/consistency',
     handler: async (root) => {
-      const [decisionsRaw, openQuestionsRaw, plansResult, roadmapRaw] = await Promise.all([
-        readMaybe(campFile(root, 'decisions.md')),
-        readMaybe(campFile(root, 'open-questions.md')),
+      const [plansResult, roadmapRaw] = await Promise.all([
         cachedWorkEntries(root),
         readMaybe(join(root, 'ROADMAP.md')),
       ]);
-      const decisions = parseDecisions(decisionsRaw);
-      const openQuestions = parseOpenQuestions(openQuestionsRaw);
       const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
-      return findConsistencyIssues(
-        decisions.entries,
-        openQuestions.entries,
-        plansResult.entries,
-        subjectVocabulary,
-      );
+      return findConsistencyIssues(plansResult.entries, subjectVocabulary);
     },
   },
   {

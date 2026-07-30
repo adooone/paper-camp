@@ -1,10 +1,16 @@
-import type { LogEntry, MarginNote, MarginNoteAnchor, PhaseItem } from '../types/index';
+import type {
+  LogEntry,
+  MarginNote,
+  MarginNoteAnchor,
+  MarginNoteKind,
+  PhaseItem,
+} from '../types/index';
 
 const SUB_HEADING_RE = /^#{2,3}\s+/;
 const CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.*)$/;
 const PHASE_SOURCE_RE = /^\[review\]\s+(.*)$/;
 const DATED_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
-const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(.*)$/;
+const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(?:\[(decision|question)\]\s+)?(.*)$/;
 
 function parsePhaseEntries(lines: string[], start: number, end: number): PhaseItem[] {
   const phases: PhaseItem[] = [];
@@ -82,10 +88,12 @@ function parseNoteEntries(lines: string[], start: number, end: number): MarginNo
     const anchor: MarginNoteAnchor = anchorMatch[1]
       ? { kind: 'phase', index: Number(anchorMatch[1]) }
       : { kind: 'body' };
+    const kind = anchorMatch[2] as MarginNoteKind | undefined;
     notes.push({
       anchor,
-      prose: anchorMatch[2].trim(),
+      prose: anchorMatch[3].trim(),
       state: match[1].toLowerCase() === 'x' ? 'resolved' : 'open',
+      ...(kind ? { kind } : {}),
     });
   }
   return notes;
@@ -94,8 +102,9 @@ function parseNoteEntries(lines: string[], start: number, end: number): MarginNo
 function formatNoteLines(notes: MarginNote[]): string[] {
   const lines = ['### Notes'];
   for (const note of notes) {
+    const kindTag = note.kind && note.kind !== 'note' ? `[${note.kind}] ` : '';
     lines.push(
-      `- [${note.state === 'resolved' ? 'x' : ' '}] ${formatAnchor(note.anchor)} ${note.prose}`,
+      `- [${note.state === 'resolved' ? 'x' : ' '}] ${formatAnchor(note.anchor)} ${kindTag}${note.prose}`,
     );
   }
   return lines;

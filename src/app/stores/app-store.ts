@@ -12,14 +12,11 @@ import type {
   CapabilityResult,
   CheckName,
   ConsistencyIssue,
-  DecisionEntry,
   GitStatusEntry,
   GitStatusResponse,
   IdeaEntry,
   IdeaStatus,
-  LogEntry,
   MarginNote,
-  OpenQuestionEntry,
   ParseResult,
   PlanEntry,
   PlanStatus,
@@ -49,20 +46,14 @@ import {
   dismissSuggestion as dismissSuggestionApi,
   fetchArchivableIdeas,
   fetchConsistency,
-  fetchDecisions,
   fetchIdeas,
-  fetchOpenQuestions,
   fetchPlans,
   fetchRepoDocs,
   fetchSuggestions,
   fetchTaskLog,
   prioritiseQueue,
-  promoteClarification as promoteClarificationApi,
   promoteRoadmapItem as promoteRoadmapItemApi,
   promoteSuggestion as promoteSuggestionApi,
-  promoteToDecision as promoteToDecisionApi,
-  resolveOpenQuestion as resolveOpenQuestionApi,
-  supersedeDecision as supersedeDecisionApi,
 } from '../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../services/git-api';
 import type { StatusState } from '../services/status-api';
@@ -148,22 +139,6 @@ export type AppStore = {
   consistency: ConsistencyIssue[];
   loadConsistency: () => Promise<void>;
 
-  decisions: DecisionEntry[];
-  loadDecisions: () => Promise<void>;
-  supersedeDecision: (title: string, newTitle: string, rationale: string) => Promise<void>;
-
-  openQuestions: OpenQuestionEntry[];
-  loadOpenQuestions: () => Promise<void>;
-  resolveOpenQuestion: (title: string, decision: string, rationale: string) => Promise<void>;
-  promoteClarification: (entityId: string, clarification: LogEntry) => Promise<void>;
-  promoteToDecision: (
-    entityId: string,
-    source: 'comment' | 'clarification',
-    entry: LogEntry,
-    title: string,
-    rationale: string,
-  ) => Promise<void>;
-
   gitStatus: GitStatusEntry[] | null;
   gitBranch: string | null;
   gitAhead: number;
@@ -244,9 +219,6 @@ export const selectGhOk = (s: AppStore) => {
 
 export const selectCapabilityGapCount = (s: AppStore) =>
   s.capabilities.filter((c) => c.status !== 'ok').length;
-
-export const selectOpenQuestionCount = (s: AppStore) =>
-  s.openQuestions.filter((q) => q.status === 'open').length;
 
 // loggedIn: null means unknown (non claude-code agent, or the probe couldn't tell) — only
 // an explicit false should surface as "not signed in".
@@ -422,8 +394,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
         get().loadSuggestions(),
         get().loadStatus(),
         get().loadConsistency(),
-        get().loadDecisions(),
-        get().loadOpenQuestions(),
         get().loadGitStatus(),
         get().loadAgentStatus(),
         get().loadAgentAuthStatus(),
@@ -481,38 +451,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   consistency: [],
   loadConsistency: loadSlice(set, fetchConsistency, (data) => ({ consistency: data })),
-
-  decisions: [],
-  loadDecisions: loadSlice(
-    set,
-    fetchDecisions,
-    (data) => ({ decisions: data.entries }),
-    () => ({ decisions: [] }),
-  ),
-  supersedeDecision: async (title, newTitle, rationale) => {
-    await supersedeDecisionApi(title, newTitle, rationale);
-    await Promise.all([get().loadDecisions(), get().loadConsistency()]);
-  },
-
-  openQuestions: [],
-  loadOpenQuestions: loadSlice(
-    set,
-    fetchOpenQuestions,
-    (data) => ({ openQuestions: data.entries }),
-    () => ({ openQuestions: [] }),
-  ),
-  resolveOpenQuestion: async (title, decision, rationale) => {
-    await resolveOpenQuestionApi(title, decision, rationale);
-    await get().loadOpenQuestions();
-  },
-  promoteClarification: async (entityId, clarification) => {
-    await promoteClarificationApi(entityId, clarification);
-    await Promise.all([get().loadOpenQuestions(), get().loadPlans()]);
-  },
-  promoteToDecision: async (entityId, source, entry, title, rationale) => {
-    await promoteToDecisionApi(entityId, source, entry, title, rationale);
-    await Promise.all([get().loadDecisions(), get().loadPlans()]);
-  },
 
   gitStatus: null,
   gitBranch: null,

@@ -281,7 +281,7 @@ The file already has YAML frontmatter (id, title, status, created, …) and the 
 \`\`\`
 
 Hard rules:
-- Never change the \`id\`, \`title\`, \`status\`, or \`created\` fields — \`status\` stays exactly \`idea\`; a human promotes it after reviewing your draft (per papercamp/decisions.md, "Plan-drafting agent writes directly, same as phase execution").
+- Never change the \`id\`, \`title\`, \`status\`, or \`created\` fields — \`status\` stays exactly \`idea\`; a human promotes it after reviewing your draft.
 - Never rewrite or delete the existing prose body or \`### Log\` entries — the idea's history stays intact.
 - Phases: actionable steps a future agent or human could pick up one at a time — match the granularity of the phases in the entities shown below, not one giant phase.
 
@@ -383,7 +383,7 @@ export function buildSuggestIdeasPrompt(
     ? existingSuggestions.map((s) => `- ${s.date}: ${s.title} — ${s.description}`).join('\n')
     : '(none yet)';
 
-  return `You are scanning this repository for ideas worth suggesting, to append to papercamp/suggestions.md — a lightweight holding pen, sibling to decisions.md/open-questions.md. Edit only that one file.
+  return `You are scanning this repository for ideas worth suggesting, to append to papercamp/suggestions.md — a lightweight holding pen. Edit only that one file.
 
 Existing ideas (do not repeat anything already covered here):
 ${ideaIndex}

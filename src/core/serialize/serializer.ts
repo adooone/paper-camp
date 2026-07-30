@@ -122,74 +122,9 @@ export function formatPlanEntry(input: NewPlanInput): string {
   return lines.join('\n').trimEnd();
 }
 
-interface NewDecisionInput {
-  title: string;
-  date: string;
-  status: string;
-  supersededBy?: string;
-  tags?: string[];
-  body?: string;
-}
-
-export function formatDecisionEntry(input: NewDecisionInput): string {
-  const lines = [`## ${input.title}`, '', `**Date:** ${input.date}`, `**Status:** ${input.status}`];
-  if (input.supersededBy) lines.push(`**Superseded-by:** ${input.supersededBy}`);
-  if (input.tags && input.tags.length > 0) lines.push(`**Tags:** ${input.tags.join(', ')}`);
-  lines.push('');
-  if (input.body) lines.push(input.body);
-  return lines.join('\n').trimEnd();
-}
-
-interface NewOpenQuestionInput {
-  title: string;
-  raised: string;
-  status: string;
-  resolvedBy?: string;
-  blocks?: string;
-  body?: string;
-}
-
-export function formatOpenQuestionEntry(input: NewOpenQuestionInput): string {
-  const lines = [
-    `## ${input.title}`,
-    '',
-    `**Status:** ${input.status}`,
-    `**Raised:** ${input.raised}`,
-  ];
-  if (input.resolvedBy) lines.push(`**Resolved-by:** ${input.resolvedBy}`);
-  if (input.blocks) lines.push(`**Blocks:** ${input.blocks}`);
-  lines.push('');
-  if (input.body) lines.push(input.body);
-  return lines.join('\n').trimEnd();
-}
-
 export function formatPlans(entries: NewPlanInput[]): string {
   if (entries.length === 0) return '';
   return `${entries.map((entry) => formatPlanEntry(entry)).join('\n\n')}\n`;
-}
-
-export function formatDecisions(entries: NewDecisionInput[]): string {
-  if (entries.length === 0) return '';
-  return `${entries.map((entry) => formatDecisionEntry(entry)).join('\n\n')}\n`;
-}
-
-export function formatOpenQuestions(entries: NewOpenQuestionInput[]): string {
-  if (entries.length === 0) return '';
-  return `${entries.map((entry) => formatOpenQuestionEntry(entry)).join('\n\n')}\n`;
-}
-
-export async function appendBlock(filePath: string, block: string): Promise<void> {
-  await mkdir(dirname(filePath), { recursive: true });
-  let existing = '';
-  try {
-    existing = await readFile(filePath, 'utf-8');
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-  }
-
-  const trimmed = existing.trimEnd();
-  const next = trimmed.length > 0 ? `${trimmed}\n\n${block}\n` : `${block}\n`;
-  await writeFile(filePath, next, 'utf-8');
 }
 
 export function serializeFrontmatter(data: Record<string, unknown>): string {

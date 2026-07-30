@@ -1,6 +1,5 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
-import { ViewDecisionModal } from '@/app/components/view-decision-modal';
 import { usePlanStatusPatch, useSplitReview, useTrail } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
@@ -8,12 +7,11 @@ import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type {
   AgentTaskState,
-  DecisionEntry,
   IdeaEntry,
   LogEntry,
   MarginNote,
   MarginNoteAnchor,
-  OpenQuestionEntry,
+  MarginNoteKind,
   PhaseItem,
   PlanEntry,
 } from '@/types/index';
@@ -58,10 +56,8 @@ import {
   openMarginNotes,
   phaseProgress,
   relativeDate,
-  relevantDecisions,
   runningTaskForPlan,
 } from '../helpers';
-import { PromoteDecisionModal, ResolveQuestionModal } from '../modals';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -100,7 +96,7 @@ const PhasesSection = ({
   updating: boolean;
   onTogglePhase: (index: number) => void;
   onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
-  onAddNote: (anchor: MarginNoteAnchor, prose: string) => Promise<boolean>;
+  onAddNote: (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => Promise<boolean>;
   onResolveNote: (note: MarginNote) => Promise<boolean>;
 }) => (
   <div style={{ marginBottom: space[8] }}>
@@ -171,7 +167,7 @@ const PhasesSection = ({
               <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
               <AddMarginNoteButton
                 label="Add a note on this phase"
-                onAdd={(prose) => onAddNote({ kind: 'phase', index }, prose)}
+                onAdd={(prose, kind) => onAddNote({ kind: 'phase', index }, prose, kind)}
                 disabled={updating}
               />
               {!phase.done && agentPhaseIndex === index ? (
@@ -209,61 +205,6 @@ const PhasesSection = ({
   </div>
 );
 
-const DecisionsSection = ({
-  decisions,
-  onSelect,
-}: {
-  decisions: DecisionEntry[];
-  onSelect: (decision: DecisionEntry) => void;
-}) => (
-  <div style={{ marginBottom: space[5] }}>
-    <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Decisions</h3>
-    <div
-      style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[3] }}
-    >
-      {decisions.map((decision) => (
-        <Card key={decision.title} size="small" accent accentColor="slate" texture="kraft">
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: space[3],
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: space[2],
-                  marginBottom: space[1],
-                }}
-              >
-                <span className="text-sm" style={{ fontWeight: 600 }}>
-                  {decision.title}
-                </span>
-                <Stamp
-                  size="small"
-                  variant={decision.status === 'superseded' ? 'warning' : 'success'}
-                >
-                  {decision.status}
-                </Stamp>
-              </div>
-              <div className="text-sm" style={{ opacity: 0.85 }}>
-                <Markdown>{decision.body}</Markdown>
-              </div>
-            </div>
-            <Button size="small" onClick={() => onSelect(decision)}>
-              View
-            </Button>
-          </div>
-        </Card>
-      ))}
-    </div>
-  </div>
-);
-
 const TrailSection = ({ planId }: { planId: string | undefined }) => {
   const trail = useTrail(planId);
   if (!trail) return null;
@@ -289,13 +230,7 @@ function buildThread(log: LogEntry[] | undefined, review: LogEntry[] | undefined
   return [...comments, ...reviewPoints].sort((a, b) => a.date.localeCompare(b.date));
 }
 
-const FeedbackThread = ({
-  items,
-  onPromote,
-}: {
-  items: ThreadItem[];
-  onPromote: (entry: LogEntry) => void;
-}) => (
+const FeedbackThread = ({ items }: { items: ThreadItem[] }) => (
   <>
     {items.map((item, i) => (
       <div
@@ -326,17 +261,6 @@ const FeedbackThread = ({
               review
             </Stamp>
           )}
-          {item.kind === 'comment' && (
-            <Tooltip content="Promote this into a decision">
-              <Button
-                variant="ghost"
-                size="small"
-                onClick={() => onPromote({ date: item.date, text: item.text })}
-              >
-                Promote to decision
-              </Button>
-            </Tooltip>
-          )}
         </div>
       </div>
     ))}
@@ -348,13 +272,11 @@ const PlanReviewSection = ({
   updating,
   onAddComment,
   onAddReview,
-  onPromote,
 }: {
   plan: PlanEntry;
   updating: boolean;
   onAddComment: (text: string) => Promise<boolean>;
   onAddReview: (text: string) => Promise<boolean>;
-  onPromote: (entry: LogEntry) => void;
 }) => {
   const [input, setInput] = useState('');
   const { toast } = useToast();
@@ -404,7 +326,7 @@ const PlanReviewSection = ({
           }}
         >
           {thread.length > 0 ? (
-            <FeedbackThread items={thread} onPromote={onPromote} />
+            <FeedbackThread items={thread} />
           ) : (
             <p className="text-sm" style={{ margin: 0, color: color.textSecondary }}>
               Jot a comment as you work, or talk through what's wrong — then Split review turns
@@ -443,21 +365,11 @@ const PlanReviewSection = ({
 
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const allPlans = useAppStore((s) => s.plans);
-  const openQuestions = useAppStore((s) => s.openQuestions);
-  const decisions = useAppStore((s) => s.decisions);
-  const [viewingDecision, setViewingDecision] = useState<DecisionEntry | null>(null);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const [branching, setBranching] = useState(false);
-  const [resolvingQuestion, setResolvingQuestion] = useState<OpenQuestionEntry | null>(null);
-  const promoteClarification = useAppStore((s) => s.promoteClarification);
-  const [promotingClarification, setPromotingClarification] = useState<number | null>(null);
-  const [promotingToDecision, setPromotingToDecision] = useState<{
-    source: 'comment' | 'clarification';
-    entry: LogEntry;
-  } | null>(null);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
   const detailView = useAppStore((s) => s.detailView);
@@ -525,28 +437,9 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     return patchByTitle(plan.title, { review: [...(plan.review ?? []), newEntry] });
   };
 
-  const handleAddNote = async (anchor: MarginNoteAnchor, prose: string) => {
-    const newNote: MarginNote = { anchor, prose, state: 'open' };
+  const handleAddNote = async (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => {
+    const newNote: MarginNote = { anchor, prose, state: 'open', ...(kind ? { kind } : {}) };
     return patchByTitle(plan.title, { notes: [...(plan.notes ?? []), newNote] });
-  };
-
-  const handlePromoteClarification = async (index: number) => {
-    if (!plan.id) return;
-    const entry = plan.clarifications?.[index];
-    if (!entry) return;
-    setPromotingClarification(index);
-    try {
-      await promoteClarification(plan.id, entry);
-      toast({ title: 'Promoted to an open question', variant: 'success' });
-    } catch (err) {
-      toast({
-        title: 'Promote failed',
-        description: oneLineErrorSummary((err as Error).message),
-        variant: 'error',
-      });
-    } finally {
-      setPromotingClarification(null);
-    }
   };
 
   const handleResolveNote = async (note: MarginNote) => {
@@ -557,10 +450,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   };
 
   const bodyNotes = notesForAnchor(plan.notes, { kind: 'body' });
-  const blockingQuestions = openQuestions.filter(
-    (q) => q.status === 'open' && q.blocks === plan.id,
-  );
-  const planDecisions = relevantDecisions(decisions, plan);
 
   return (
     <div>
@@ -607,7 +496,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           updating={updating}
           onAddComment={handleAddLogEntry}
           onAddReview={handleAddReview}
-          onPromote={(entry) => setPromotingToDecision({ source: 'comment', entry })}
         />
       ) : (
         <>
@@ -689,7 +577,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               </div>
               <AddMarginNoteButton
                 label="Add a note on this plan's body"
-                onAdd={(prose) => handleAddNote({ kind: 'body' }, prose)}
+                onAdd={(prose, kind) => handleAddNote({ kind: 'body' }, prose, kind)}
                 disabled={updating}
               />
             </div>
@@ -703,58 +591,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               </div>
             )}
           </div>
-
-          {blockingQuestions.length > 0 && (
-            <div style={{ marginBottom: space[5] }}>
-              <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Open questions</h3>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: space[3],
-                  marginBottom: space[3],
-                }}
-              >
-                {blockingQuestions.map((question) => (
-                  <Card
-                    key={question.title}
-                    size="small"
-                    accent
-                    accentColor="amber"
-                    texture="kraft"
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        justifyContent: 'space-between',
-                        gap: space[3],
-                      }}
-                    >
-                      <div>
-                        <div
-                          className="text-sm"
-                          style={{ fontWeight: 600, marginBottom: space[1] }}
-                        >
-                          {question.title}
-                        </div>
-                        <div className="text-sm" style={{ opacity: 0.85 }}>
-                          <Markdown>{question.body}</Markdown>
-                        </div>
-                      </div>
-                      <Button size="small" onClick={() => setResolvingQuestion(question)}>
-                        Resolve
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {planDecisions.length > 0 && (
-            <DecisionsSection decisions={planDecisions} onSelect={setViewingDecision} />
-          )}
 
           {plan.clarifications && plan.clarifications.length > 0 && (
             <div style={{ marginBottom: space[5] }}>
@@ -783,27 +619,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                       <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
                       {entry.text}
                     </span>
-                    <div style={{ display: 'flex', gap: space[2], flexShrink: 0 }}>
-                      <Tooltip content="Graduate this into an open question that outlives this entity">
-                        <Button
-                          variant="ghost"
-                          size="small"
-                          onClick={() => handlePromoteClarification(i)}
-                          disabled={promotingClarification !== null}
-                        >
-                          {promotingClarification === i ? 'Promoting…' : 'Promote'}
-                        </Button>
-                      </Tooltip>
-                      <Tooltip content="Promote this straight into a decision">
-                        <Button
-                          variant="ghost"
-                          size="small"
-                          onClick={() => setPromotingToDecision({ source: 'clarification', entry })}
-                        >
-                          Promote to decision
-                        </Button>
-                      </Tooltip>
-                    </div>
                   </div>
                 ))}
               </div>
@@ -841,20 +656,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
           <TrailSection planId={plan.id} />
         </>
-      )}
-
-      <ResolveQuestionModal
-        question={resolvingQuestion}
-        onClose={() => setResolvingQuestion(null)}
-      />
-      <ViewDecisionModal decision={viewingDecision} onClose={() => setViewingDecision(null)} />
-      {plan.id && (
-        <PromoteDecisionModal
-          entityId={plan.id}
-          source={promotingToDecision?.source ?? 'comment'}
-          entry={promotingToDecision?.entry ?? null}
-          onClose={() => setPromotingToDecision(null)}
-        />
       )}
     </div>
   );

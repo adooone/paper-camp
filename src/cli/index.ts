@@ -138,7 +138,6 @@ program
       console.log('  papercamp/ideas/          (one file per idea, plan as a section)');
       console.log('  papercamp/ideas/index.md');
       console.log('  papercamp/ideas/archive/');
-      console.log('  papercamp/decisions.md, open-questions.md');
       console.log('  .claude/skills/paper-camp/SKILL.md');
       console.log('  .claude/settings.json     (SessionStart hook)');
     } catch (error) {

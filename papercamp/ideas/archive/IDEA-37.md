@@ -53,3 +53,6 @@ Fable's bug-finding is its differentiated strength. Aim it at the code that keep
 > Read `papercamp/about.md` and the actual codebase it documents. The doc is internally contradictory after the per-file plan/idea storage migration ([[IDEA-20]]): parts describe the old monolithic `plans.md`/`ideas.md`, parts the new per-file layout. Rewrite it so every section matches how the system actually works now — file layout, CLI commands, parser/serializer paths, and the storage model. Change only what's inaccurate; keep the doc's structure and voice. Note anything you found ambiguous in the code rather than guessing.
 
 **Touchpoints:** no code changes to enable this — it's a usage pattern. Relies on the existing `model: 'fable'` option (`src/types/index.ts`, `AGENT_OPTIONS`). Tasks 5 and 6 have run (see their notes); tasks 1–4 remain, with task 1 re-scoped now that the original targets have suites. Task 2 is the Fable-run version of [[IDEA-26]] — its narrower mechanical half shipped as FEAT-28's reconcile pass, so what's left here is the broader judgment pass FEAT-28 deliberately excludes. If we want these to be repeatable rather than one-off, that reconcile prompt is the natural thing to land as the `'reconcile'` TaskKind [[IDEA-26]] proposed.
+
+### Notes
+- [x] [body] [decision] Planless ideas close via explicit frontmatter status

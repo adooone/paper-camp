@@ -47,3 +47,8 @@ Open questions for the planning pass: **PR resolution + auth** — resolve the P
       Sweep the ~55 existing entities: clear stored `status:` values that now derive cleanly, keep only the ones that must stay as overrides. Decide whether `archive/` survives — moving a done file there is itself a commit, so either drop the move or derive "archived-ness" too — and update the logged decisions the derivation revises.
 - [x] Type-check and full pass
       `tsc` and `biome` clean, tests updated for the derived-status paths and the offline fallback.
+
+### Notes
+- [x] [body] [decision] Status derives from the PR (matched by id), not from local branches
+- [x] [body] [decision] `archive/` stops moving on `done`; migration keeps `status:` only where it can't derive
+- [x] [body] [decision] Status is derived from git and PR, not stored

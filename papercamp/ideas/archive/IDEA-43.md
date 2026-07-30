@@ -168,3 +168,9 @@ selector/renderer machinery transfers to it with the parent swapped.
 ### Log
 - 2026-07-05: Extended with the single-file approach — one file per idea with the plan as a section, full legacy migration with simplified bodies and multi-plan splits, topics as the follow-up grouping entity. Supersedes this idea's own idea→plans tree model once it lands.
 - 2026-07-05: ID convention decided — lifetime `IDEA-N` for every entity; nothing blocks drafting the migration plan.
+
+### Notes
+- [x] [body] [decision] Branch management is manual
+- [x] [body] [decision] Ideas and plans merge into one worklist; ideas carry no tracked status
+- [ ] [body] [question] Does the scaffolded Claude Code skill need an entity-migration pass?
+- [x] [body] [question] Should ideas and plans share one lifetime id space, or keep separate IDEA-N/`<KIND>-N` ids?

@@ -1,13 +1,14 @@
 ---
 name: paper-camp
-description: Work inside a project that has a papercamp/ folder — its per-file plans, ideas, decisions log, and open questions. Use this whenever the working directory contains papercamp/ (papercamp/plans/, papercamp/ideas/, papercamp/decisions.md, papercamp/open-questions.md), and especially before starting, continuing, or completing any plan phase, drafting an idea, logging a decision, or answering "what are we working on / what's next".
+description: Work inside a project that has a papercamp/ folder — its per-file plans and ideas, with decisions and open questions logged as notes on the idea they bind. Use this whenever the working directory contains papercamp/ (papercamp/plans/, papercamp/ideas/), and especially before starting, continuing, or completing any plan phase, drafting an idea, logging a decision, or answering "what are we working on / what's next".
 ---
 
 # Paper Camp
 
-Paper Camp is this project's planning methodology: plans, ideas, decisions, and
-open questions live as markdown files under `papercamp/`. This skill tells you
-how to read that state before acting and how to keep it honest as you work.
+Paper Camp is this project's planning methodology: plans and ideas live as
+markdown files under `papercamp/`, with decisions and open questions logged as
+notes bound to the idea they concern. This skill tells you how to read that
+state before acting and how to keep it honest as you work.
 
 If a `papercamp` MCP server is connected in this session, prefer its tools
 (list/get plans, update phase, etc.) over raw file access —
@@ -26,10 +27,10 @@ Read, in this order, whatever exists:
    list of `- [ ]`/`- [x]` checkboxes with an indented description under each.
 3. `papercamp/ideas/index.md` and any linked idea file — plans often trace
    back to an `idea:` field; the idea explains *why*, the plan explains *what*.
-4. `papercamp/decisions.md` — settled calls that constrain your approach.
-   Don't re-litigate a logged decision without flagging it to the user first.
-5. `papercamp/open-questions.md` — unresolved questions that might block or
-   redirect the work you're about to start.
+   Its notes carry any decision or open question bound to it — settled calls
+   you shouldn't re-litigate without flagging it to the user first, and
+   unresolved questions that might block or redirect the work you're about
+   to start.
 
 Skip files that don't exist yet (a fresh project may have empty logs).
 
@@ -52,9 +53,9 @@ Skip files that don't exist yet (a fresh project may have empty logs).
   promotion after review; an agent finishing the last phase does not close
   the plan itself.
 - **Decisions / open questions**: if you settle something ambiguous while
-  working, log it in `papercamp/decisions.md`; if you surface a question you
-  can't resolve yourself, add it to `papercamp/open-questions.md` rather than
-  guessing silently.
+  working, log it as a decision note on the idea it bounds; if you surface a
+  question you can't resolve yourself, add it as a question note on that idea
+  rather than guessing silently.
 
 ## What this skill deliberately does not do
 

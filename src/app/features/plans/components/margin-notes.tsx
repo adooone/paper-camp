@@ -1,37 +1,53 @@
 import { space } from '@/app/styles/tokens';
-import type { MarginNote } from '@/types/index';
+import type { MarginNote, MarginNoteKind } from '@/types/index';
 import {
   Button,
   CheckIcon,
   IconButton,
   LightbulbIcon,
   Modal,
+  Select,
+  Stamp,
   Textarea,
   Tooltip,
 } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
+const NOTE_KIND_OPTIONS = [
+  { value: 'note', label: 'Note' },
+  { value: 'decision', label: 'Decision' },
+  { value: 'question', label: 'Question' },
+];
+
+const NOTE_KIND_LABEL: Record<MarginNoteKind, string> = {
+  note: 'Note',
+  decision: 'Decision',
+  question: 'Question',
+};
+
 interface AddMarginNoteButtonProps {
   label: string;
-  onAdd: (prose: string) => Promise<boolean>;
+  onAdd: (prose: string, kind: MarginNoteKind) => Promise<boolean>;
   disabled?: boolean;
 }
 
 export const AddMarginNoteButton = ({ label, onAdd, disabled }: AddMarginNoteButtonProps) => {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [kind, setKind] = useState<MarginNoteKind>('note');
   const [submitting, setSubmitting] = useState(false);
 
   const handleClose = () => {
     setOpen(false);
     setInput('');
+    setKind('note');
   };
 
   const handleSubmit = async () => {
     if (!input.trim()) return;
     setSubmitting(true);
     try {
-      if (await onAdd(input.trim())) handleClose();
+      if (await onAdd(input.trim(), kind)) handleClose();
     } finally {
       setSubmitting(false);
     }
@@ -51,6 +67,13 @@ export const AddMarginNoteButton = ({ label, onAdd, disabled }: AddMarginNoteBut
       </Tooltip>
       <Modal open={open} onClose={handleClose} title={label} size="small">
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
+          <Select
+            label="Type"
+            options={NOTE_KIND_OPTIONS}
+            value={kind}
+            onChange={(value) => setKind(value as MarginNoteKind)}
+            disabled={submitting}
+          />
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -111,7 +134,15 @@ export const MarginNotesList = ({ notes, onResolve, disabled }: MarginNotesListP
             padding: `${space[2]} ${space[3]}`,
           }}
         >
-          <span className="text-sm" style={{ flex: 1, opacity: 0.85 }}>
+          <span
+            className="text-sm"
+            style={{ flex: 1, display: 'flex', alignItems: 'center', gap: space[2], opacity: 0.85 }}
+          >
+            {note.kind && note.kind !== 'note' && (
+              <Stamp size="small" variant={note.kind === 'decision' ? 'info' : 'warning'}>
+                {NOTE_KIND_LABEL[note.kind]}
+              </Stamp>
+            )}
             {note.prose}
           </span>
           <Tooltip content="Resolve note">

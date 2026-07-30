@@ -38,3 +38,6 @@ The responsive layout redesign: global navigation moved into the Layout header (
       Add overflow: hidden and text-overflow: ellipsis (with a matching min-width: 0 on its flex container) to project-identity-header.tsx so long project names truncate with an ellipsis instead of being hard-clipped mid-word by the sidebar edge. Let sidebar plan items in plan-nav-item.tsx wrap to two lines or ellipsize with a title tooltip, so items stay identifiable next to their mini progress bars at narrow widths.
 - [x] Visual verification pass across viewport widths
       Re-run the same Chrome visual check that surfaced these issues (deimos:3333) at ~1600px, ~1024px, and ~834px widths, plus the Stack panel with 10+ changed files and an active agent run, the collapsed rail during a run and with failing checks, and the board view at each width, to confirm no regressions from the earlier findings.
+
+### Notes
+- [x] [body] [decision] Docs search lives in the Docs page's own sidebar

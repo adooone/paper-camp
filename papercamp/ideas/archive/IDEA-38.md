@@ -31,3 +31,6 @@ Densified the plans worklist: row-cards (kraft header over one-line canvas rows)
       Fold `plan-detail.tsx`'s five stacked metadata rows (status select, date+tags, clarify button, progress, agent select) into a single header line plus one meta line before the content starts.
 - [x] Type-check and visual pass
       Run `tsc --noEmit`, `biome check . --write`, and the test suite; then a browser pass over the dense plans table, ideas rows, paginated closed section, sidebar replacement, and compressed plan detail at laptop and narrow widths.
+
+### Notes
+- [x] [body] [decision] Dense lists are row cards, not paper-ui Table

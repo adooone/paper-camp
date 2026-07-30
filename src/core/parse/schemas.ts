@@ -12,8 +12,8 @@ export const agentConfigSchema = z.preprocess(
 
 export const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
 
-// Field-based schemas: the monolithic `plans.md`/`decisions.md`/`open-questions.md`
-// format, `## Heading` entries with `**Field:** value` lines below each heading.
+// Field-based schema: the monolithic `plans.md` format, `## Heading` entries
+// with `**Field:** value` lines below each heading.
 export const planFieldsSchema = z.object({
   status: z.enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped']),
   kind: z.enum(['feat', 'fix', 'chore', 'docs', 'refactor']).optional(),
@@ -23,20 +23,6 @@ export const planFieldsSchema = z.object({
   created: dateString,
   updated: dateString.optional(),
   tags: z.string().optional(),
-});
-
-export const decisionFieldsSchema = z.object({
-  date: dateString,
-  status: z.enum(['decided', 'superseded']),
-  'superseded-by': z.string().optional(),
-  tags: z.string().optional(),
-});
-
-export const openQuestionFieldsSchema = z.object({
-  status: z.enum(['open', 'resolved']),
-  raised: dateString,
-  'resolved-by': z.string().optional(),
-  blocks: z.string().optional(),
 });
 
 // YAML frontmatter schemas: the per-file plan/idea format, `---`-delimited YAML
@@ -169,8 +155,6 @@ export const paperCampConfigSchema = z.object({
 });
 
 export type PlanFields = z.infer<typeof planFieldsSchema>;
-export type DecisionFields = z.infer<typeof decisionFieldsSchema>;
-export type OpenQuestionFields = z.infer<typeof openQuestionFieldsSchema>;
 export type PlanFrontmatter = z.infer<typeof planFrontmatterSchema>;
 export type IdeaFrontmatter = z.infer<typeof ideaFrontmatterSchema>;
 export type EntityFrontmatter = z.infer<typeof entityFrontmatterSchema>;

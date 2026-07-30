@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { DecisionEntry, OpenQuestionEntry, PlanEntry } from '../../types/index';
+import type { PlanEntry } from '../../types/index';
 import { formatEntityFile } from '../serialize/serializer';
 import {
   findConsistencyIssues,
-  parseDecisions,
   parseEntityFile,
   parseIdeas,
-  parseOpenQuestions,
   parsePlans,
   parseSuggestions,
   parseTaskLog,
@@ -252,94 +250,7 @@ Body.
   });
 });
 
-describe('parseDecisions', () => {
-  it('parses a decided entry', () => {
-    const md = `## Markdown, not a database
-
-**Date:** 2026-06-18
-**Status:** decided
-
-**Context:** AI assistants need zero-setup access.
-**Decision:** Use markdown with per-entry fields.
-`;
-    const { entries, warnings } = parseDecisions(md);
-    expect(warnings).toEqual([]);
-    expect(entries).toHaveLength(1);
-    expect(entries[0].status).toBe('decided');
-    expect(entries[0].date).toBe('2026-06-18');
-    expect(entries[0].supersededBy).toBeUndefined();
-  });
-
-  it('captures superseded-by when present', () => {
-    const md = `## Old approach
-
-**Date:** 2026-01-01
-**Status:** superseded
-**Superseded-by:** New approach
-
-Body.
-`;
-    const { entries } = parseDecisions(md);
-    expect(entries[0].supersededBy).toBe('New approach');
-  });
-});
-
-describe('parseOpenQuestions', () => {
-  it('parses an open question', () => {
-    const md = `## Should dev bundle a server?
-
-**Status:** open
-**Raised:** 2026-06-18
-
-Needs a decision before the dashboard ships.
-`;
-    const { entries, warnings } = parseOpenQuestions(md);
-    expect(warnings).toEqual([]);
-    expect(entries[0]).toMatchObject({ status: 'open', raised: '2026-06-18' });
-  });
-
-  it('captures resolved-by when resolved', () => {
-    const md = `## Storage format?
-
-**Status:** resolved
-**Raised:** 2026-06-01
-**Resolved-by:** Markdown, not a database
-
-Body.
-`;
-    const { entries } = parseOpenQuestions(md);
-    expect(entries[0].resolvedBy).toBe('Markdown, not a database');
-  });
-
-  it('captures blocks when set', () => {
-    const md = `## Should dev bundle a server?
-
-**Status:** open
-**Raised:** 2026-06-18
-**Blocks:** FEAT-2
-
-Needs a decision before the dashboard ships.
-`;
-    const { entries } = parseOpenQuestions(md);
-    expect(entries[0].blocks).toBe('FEAT-2');
-  });
-});
-
 describe('findConsistencyIssues', () => {
-  const decision = (overrides: Partial<DecisionEntry>): DecisionEntry => ({
-    title: 'Some decision',
-    date: '2026-06-01',
-    status: 'decided',
-    body: '',
-    ...overrides,
-  });
-  const question = (overrides: Partial<OpenQuestionEntry>): OpenQuestionEntry => ({
-    title: 'Some question',
-    status: 'open',
-    raised: '2026-06-01',
-    body: '',
-    ...overrides,
-  });
   const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
     title: 'Some plan',
     status: 'planned',
@@ -350,61 +261,25 @@ describe('findConsistencyIssues', () => {
     ...overrides,
   });
 
-  it('returns no issues when references all resolve', () => {
-    const decisions = [decision({ title: 'New approach' })];
-    const questions = [question({ title: 'Q1', status: 'resolved', resolvedBy: 'New approach' })];
-    expect(findConsistencyIssues(decisions, questions, [])).toEqual([]);
-  });
-
-  it('flags a dangling superseded-by', () => {
-    const decisions = [decision({ title: 'Old approach', supersededBy: 'Nonexistent' })];
-    expect(findConsistencyIssues(decisions, [], [])).toEqual([
-      expect.objectContaining({ kind: 'dangling-superseded-by', title: 'Old approach' }),
-    ]);
-  });
-
-  it('flags a dangling resolved-by', () => {
-    const questions = [question({ title: 'Q1', status: 'resolved', resolvedBy: 'Nonexistent' })];
-    expect(findConsistencyIssues([], questions, [])).toEqual([
-      expect.objectContaining({ kind: 'dangling-resolved-by', title: 'Q1' }),
-    ]);
-  });
-
-  it('flags an open question blocking an in-progress or review plan', () => {
-    const questions = [question({ title: 'Q1', blocks: 'FEAT-2' })];
-    const plans = [plan({ title: 'Plan A', id: 'FEAT-2', status: 'in-progress' })];
-    expect(findConsistencyIssues([], questions, plans)).toEqual([
-      expect.objectContaining({ kind: 'blocked-plan-active', title: 'Q1', planId: 'FEAT-2' }),
-    ]);
-  });
-
-  it('does not flag a blocked plan that is still planned', () => {
-    const questions = [question({ title: 'Q1', blocks: 'FEAT-2' })];
-    const plans = [plan({ title: 'Plan A', id: 'FEAT-2', status: 'planned' })];
-    expect(findConsistencyIssues([], questions, plans)).toEqual([]);
-  });
-
-  it('does not flag a blocking question that has already been resolved', () => {
-    const questions = [question({ title: 'Q1', status: 'resolved', blocks: 'FEAT-2' })];
-    const plans = [plan({ title: 'Plan A', id: 'FEAT-2', status: 'in-progress' })];
-    expect(findConsistencyIssues([], questions, plans)).toEqual([]);
+  it('returns no issues when there are no orphan subjects', () => {
+    expect(findConsistencyIssues([])).toEqual([]);
   });
 
   it('flags a plan whose subject is not in the roadmap vocabulary', () => {
     const plans = [plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Retired subject' })];
-    expect(findConsistencyIssues([], [], plans, ['Packaging'])).toEqual([
+    expect(findConsistencyIssues(plans, ['Packaging'])).toEqual([
       expect.objectContaining({ kind: 'orphan-subject', title: 'Plan A', planId: 'FEAT-2' }),
     ]);
   });
 
   it('does not flag a plan whose subject is in the roadmap vocabulary', () => {
     const plans = [plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Packaging' })];
-    expect(findConsistencyIssues([], [], plans, ['Packaging'])).toEqual([]);
+    expect(findConsistencyIssues(plans, ['Packaging'])).toEqual([]);
   });
 
   it('does not flag a plan with no subject', () => {
     const plans = [plan({ title: 'Plan A', id: 'FEAT-2' })];
-    expect(findConsistencyIssues([], [], plans, ['Packaging'])).toEqual([]);
+    expect(findConsistencyIssues(plans, ['Packaging'])).toEqual([]);
   });
 });
 
@@ -505,6 +380,66 @@ Body prose.
       { anchor: { kind: 'body' }, prose: 'Already addressed in the rewrite', state: 'resolved' },
     ]);
     expect(entries[0].body).toBe('Body prose.');
+  });
+
+  it('extracts a decision/question kind tag on Notes entries', () => {
+    const md = `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+### Notes
+- [ ] [body] [decision] Ship the v2 API without a compat shim
+- [ ] [phase:1] [question] Does this need a migration?
+`;
+    const { entries, warnings } = parseEntityFile(md);
+    expect(warnings).toEqual([]);
+    expect(entries[0].notes).toEqual([
+      {
+        anchor: { kind: 'body' },
+        prose: 'Ship the v2 API without a compat shim',
+        state: 'open',
+        kind: 'decision',
+      },
+      {
+        anchor: { kind: 'phase', index: 1 },
+        prose: 'Does this need a migration?',
+        state: 'open',
+        kind: 'question',
+      },
+    ]);
+  });
+
+  it('round-trips a decision note kind through formatEntityFile', () => {
+    const written = formatEntityFile({
+      id: 'IDEA-99',
+      title: 'Tolerant heading',
+      type: 'feat',
+      created: '2026-07-13',
+      body: 'Body prose.',
+      notes: [
+        {
+          anchor: { kind: 'body' },
+          prose: 'Ship the v2 API without a compat shim',
+          state: 'open',
+          kind: 'decision',
+        },
+      ],
+    });
+    const { entries, warnings } = parseEntityFile(written);
+    expect(warnings).toEqual([]);
+    expect(entries[0].notes).toEqual([
+      {
+        anchor: { kind: 'body' },
+        prose: 'Ship the v2 API without a compat shim',
+        state: 'open',
+        kind: 'decision',
+      },
+    ]);
   });
 
   it('round-trips notes through formatEntityFile', () => {

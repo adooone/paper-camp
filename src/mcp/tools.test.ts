@@ -105,36 +105,6 @@ describe('read tools', () => {
     const missing = await client.callTool({ name: 'get_plan', arguments: { id: 'IDEA-99' } });
     expect(missing.structuredContent).toEqual({ entry: null });
   });
-
-  it('list_open_questions returns parsed entries', async () => {
-    const root = await makeRoot();
-    await writeFile(
-      join(root, 'papercamp', 'open-questions.md'),
-      '## Should we ship X?\n\n**Status:** open\n**Raised:** 2026-07-01\n\nBody.\n',
-    );
-    const client = await connect(root, createGitManager(root, { watch: false }));
-
-    const result = await client.callTool({ name: 'list_open_questions', arguments: {} });
-    expect(result.structuredContent).toMatchObject({
-      entries: [expect.objectContaining({ title: 'Should we ship X?', status: 'open' })],
-      warnings: [],
-    });
-  });
-
-  it('list_decisions returns parsed entries', async () => {
-    const root = await makeRoot();
-    await writeFile(
-      join(root, 'papercamp', 'decisions.md'),
-      '## Use MCP\n\n**Date:** 2026-07-01\n**Status:** decided\n\nBody.\n',
-    );
-    const client = await connect(root, createGitManager(root, { watch: false }));
-
-    const result = await client.callTool({ name: 'list_decisions', arguments: {} });
-    expect(result.structuredContent).toMatchObject({
-      entries: [expect.objectContaining({ title: 'Use MCP', status: 'decided' })],
-      warnings: [],
-    });
-  });
 });
 
 describe('write tools', () => {
@@ -252,33 +222,6 @@ describe('write tools', () => {
       'utf-8',
     );
     expect(archived).toContain('status: dropped');
-  });
-
-  it('resolve_open_question marks the question resolved and logs a decision', async () => {
-    const root = await makeRoot();
-    await writeFile(
-      join(root, 'papercamp', 'open-questions.md'),
-      '## Should we ship X?\n\n**Status:** open\n**Raised:** 2026-07-01\n\nBody.\n',
-    );
-    const client = await connect(root, createGitManager(root, { watch: false }));
-
-    const result = await client.callTool({
-      name: 'resolve_open_question',
-      arguments: {
-        title: 'Should we ship X?',
-        decision: 'Ship X',
-        rationale: 'Because reasons.',
-      },
-    });
-    expect(result.isError).toBeFalsy();
-
-    const questions = await readFile(join(root, 'papercamp', 'open-questions.md'), 'utf-8');
-    expect(questions).toContain('**Status:** resolved');
-    expect(questions).toContain('**Resolved-by:** Ship X');
-
-    const decisions = await readFile(join(root, 'papercamp', 'decisions.md'), 'utf-8');
-    expect(decisions).toContain('## Ship X');
-    expect(decisions).toContain('Because reasons.');
   });
 });
 
