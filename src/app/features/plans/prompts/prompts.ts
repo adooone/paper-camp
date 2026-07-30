@@ -263,16 +263,7 @@ Append only — never rewrite or delete the idea's existing body or prior Log li
 export function buildPlanDraftPrompt(idea: IdeaEntry, otherPlans: PlanEntry[]): string {
   const openPlans = otherPlans.filter((p) => p.status !== 'done');
   const plansContext = openPlans.length
-    ? openPlans
-        .map((p) => {
-          const phaseList = p.phases
-            .map((ph) => `  - [${ph.done ? 'x' : ' '}] ${ph.text}`)
-            .join('\n');
-          return `### ${p.id ?? 'no id'}: ${p.title} (status: ${p.status}${p.idea ? `, idea: ${p.idea}` : ''})
-${p.body}
-${phaseList || '  (no phases yet)'}`;
-        })
-        .join('\n\n')
+    ? openPlans.map((p) => `${p.id ?? 'no id'}: ${p.title} (${p.phases.length} phases)`).join('\n')
     : '(no other open plans exist yet)';
 
   return `You are drafting a plan for the idea ${idea.id ?? 'no id'} ("${idea.title}"), stored as a single file at papercamp/ideas/${idea.id ?? '<ID>'}.md. The idea and its plan are ONE file: you draft the plan by editing that existing file in place — never create a new file.
@@ -299,9 +290,9 @@ ${BREVITY_CONTRACT}
 Hard rules:
 - Never change the \`id\`, \`title\`, \`status\`, or \`created\` fields — \`status\` stays exactly \`idea\`; a human promotes it after reviewing your draft.
 - Never rewrite or delete the existing prose body or \`### Log\` entries — the idea's history stays intact.
-- Phases: actionable steps a future agent or human could pick up one at a time — match the granularity of the phases in the entities shown below, not one giant phase.
+- Phases: actionable steps a future agent or human could pick up one at a time, not one giant phase.
 
-## Every other open (non-done) entity, for scope context
+## Every other open (non-done) plan, for scope context
 
 ${plansContext}
 

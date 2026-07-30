@@ -21,7 +21,7 @@ Add one shared brevity contract to the writer prompts (`prompts.ts`: draft, exte
       One reusable constant in `prompts.ts`: 3–7 phases, one-line imperative titles, ≤1-sentence descriptions only when non-obvious, no restating the idea, no summarising the work.
 - [x] Apply the contract to the writer prompts
       Wire it into draft, extend, rework, and audit builders.
-- [ ] Trim `buildPlanDraftPrompt`'s scope dump to `ID: Title (N phases)`
+- [x] Trim `buildPlanDraftPrompt`'s scope dump to `ID: Title (N phases)`
       Drop the per-plan body + phase-checkbox injection.
 - [ ] Fold the extend/suggestion/roadmap-promote prompts into one
       One shared builder behind `buildIdeaExtendPrompt`/`buildSuggestionPromotePrompt`/`buildRoadmapPromotePrompt`.
