@@ -252,7 +252,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
           rows={4}
         />
         <Switch
-          label="Note — never needs a plan"
+          label="Just a note (no plan needed)"
           checked={isNote}
           onChange={(e) => setIsNote(e.target.checked)}
           disabled={loading}

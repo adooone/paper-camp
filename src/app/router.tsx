@@ -42,7 +42,7 @@ const RoadmapPage = lazy(() =>
 );
 
 const navItems = [
-  { id: 'plans', label: 'Ideas', path: '/' },
+  { id: 'plans', label: 'Plans', path: '/' },
   { id: 'roadmap', label: 'Roadmap', path: '/roadmap' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'tasks', label: 'Tasks', path: '/tasks' },

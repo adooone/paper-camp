@@ -20,3 +20,19 @@ A legibility pass over the worst duplication and over-abstraction (from the audi
 - `core/serialize/serializer.ts` — 4 near-identical `format*` builders; one section-appender over a shared field list.
 - `core/roadmap.ts` — 4 mutators re-scan for the item; one `locateItem()` with thin splices on top.
 - Extract components from `status-section.tsx` (270-line render) and the inline blocks in `entity-detail.tsx`; generic parse loop in `parser.ts`; `spawnJson` helper in `pr-lookup.ts`.
+
+### Phases
+- [ ] Extract a `planActionRoute` factory in `server/routes/agent.ts`
+      Fold the repeated parse→validate→404→409→202 across the ~10 handlers into one factory.
+- [ ] Split `stores/app-store.ts` into per-domain slices with a launch helper
+      Break up the 700-line store and collapse the ~9 identical launch thunks.
+- [ ] Share a `runPhaseProcess()` and table-drive `finishTask` in `server/agent.ts`
+      Merge the `startBatchReconcile`/`startRunAllPhases` twins; replace the 8-branch ternary with a lookup table.
+- [ ] Collapse the `format*` builders in `core/serialize/serializer.ts`
+      One section-appender over a shared field list in place of the 4 near-identical builders.
+- [ ] Add `locateItem()` to `core/roadmap.ts`
+      Replace the 4 mutators' repeated scans with one locator and thin splices.
+- [ ] Extract UI components and the smaller helpers
+      Split `status-section.tsx` and the inline blocks in `entity-detail.tsx`; add the generic parse loop in `parser.ts` and the `spawnJson` helper in `pr-lookup.ts`.
+- [ ] Type-check and full pass
+      Confirm no behaviour change and all tests stay green.

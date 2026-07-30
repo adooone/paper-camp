@@ -20,3 +20,15 @@ Make CSS custom properties the one source:
 - **paper-camp**: delete the `color` export from `tokens.ts`, and replace all ~47 inline `#hex`/`rgba()` literals with Tailwind color classes (or `[…:var(--pui-color-…)]` arbitrary values). No hand-typed color literal remains in the app.
 
 Result: one place to define or retheme any color, no duplicate-hex drift. Foundation for [[IDEA-112]] — do this first so the color classes/vars exist before the Tailwind migration.
+
+### Phases
+- [ ] Declare the full `--pui-color-*` palette in paper-ui's `globals.scss`
+      Include named alpha variants (`--pui-color-accent-green-25`, `-30`) so the header green has a real name.
+- [ ] Point paper-ui's scss tokens and Tailwind preset at the vars
+      `$color-*: var(--pui-color-*)` and `colors['*'] = 'var(--pui-color-*)'`, extending the `--pui-btn-primary` seam.
+- [ ] Bump paper-ui, publish, and update paper-camp's dependency
+- [ ] Inventory the ~47 inline `#hex`/`rgba()` literals in paper-camp TSX
+      Map each to the matching token/class or alpha variant before touching code.
+- [ ] Replace every inline literal with a Tailwind class or `[…:var(--pui-color-…)]`
+- [ ] Delete the `color` export from `src/app/styles/tokens.ts`
+- [ ] Type-check and full pass

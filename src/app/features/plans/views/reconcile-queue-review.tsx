@@ -43,7 +43,7 @@ export const ReconcileQueueReview = () => {
     removeFromReconcileQueue(head.previewId);
     reviewedCount.current += 1;
     toast({
-      title: 'Kept the reconciled version',
+      title: 'Kept the merged version',
       description: `"${plan.title}" keeps the agent's rewrite.`,
     });
   };
