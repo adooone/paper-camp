@@ -183,7 +183,7 @@ const PhasesSection = ({
               )}
             </div>
           ),
-          width: 5,
+          width: 7,
         },
       ]}
       expandable={{
@@ -222,7 +222,7 @@ const DecisionsSection = ({
       style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[3] }}
     >
       {decisions.map((decision) => (
-        <Card key={decision.title} size="small" accent accentColor="slate">
+        <Card key={decision.title} size="small" accent accentColor="slate" texture="kraft">
           <div
             style={{
               display: 'flex',
@@ -254,7 +254,7 @@ const DecisionsSection = ({
                 <Markdown>{decision.body}</Markdown>
               </div>
             </div>
-            <Button variant="secondary" size="small" onClick={() => onSelect(decision)}>
+            <Button size="small" onClick={() => onSelect(decision)}>
               View
             </Button>
           </div>
@@ -351,7 +351,7 @@ const CommentsSection = ({
         <h3 style={{ ...sectionHeadingStyle, margin: 0, flex: 1 }}>Comments</h3>
         <ApplyNotesButton plan={plan} disabled={updating} />
       </div>
-      <Card size="small">
+      <Card size="small" texture="kraft">
         {log && log.length > 0 && <DatedEntryList entries={log} onPromote={onPromote} />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
           <Textarea
@@ -361,12 +361,7 @@ const CommentsSection = ({
             rows={2}
           />
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={handleAdd}
-              disabled={updating || !logInput.trim()}
-            >
+            <Button size="small" onClick={handleAdd} disabled={updating || !logInput.trim()}>
               Send
             </Button>
           </div>
@@ -447,7 +442,7 @@ const PlanReviewSection = ({
           disabled={updating}
         />
       </div>
-      <Card size="small" accent accentColor="slate">
+      <Card size="small" accent accentColor="slate" texture="kraft">
         {hasEntries ? (
           <ReviewThread entries={review} />
         ) : (
@@ -472,12 +467,7 @@ const PlanReviewSection = ({
             disabled={updating}
           />
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={handleAdd}
-              disabled={updating || !input.trim()}
-            >
+            <Button size="small" onClick={handleAdd} disabled={updating || !input.trim()}>
               Add review
             </Button>
           </div>
@@ -668,7 +658,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               }}
             >
               {showBranchRow && !onOwnBranch && (
-                <Card size="small" accent accentColor="amber">
+                <Card size="small" accent accentColor="amber" texture="kraft">
                   <div
                     style={{
                       display: 'flex',
@@ -685,12 +675,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                       <Tooltip
                         content={`Creates ${(plan.kind ?? 'feat').toLowerCase()}/${plan.id.toLowerCase()}-… from main, or switches to it if it already exists`}
                       >
-                        <Button
-                          variant="secondary"
-                          size="small"
-                          onClick={handleCreateBranch}
-                          disabled={branching}
-                        >
+                        <Button size="small" onClick={handleCreateBranch} disabled={branching}>
                           {branching ? 'Switching…' : 'Create branch'}
                         </Button>
                       </Tooltip>
@@ -767,7 +752,13 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                 }}
               >
                 {blockingQuestions.map((question) => (
-                  <Card key={question.title} size="small" accent accentColor="amber">
+                  <Card
+                    key={question.title}
+                    size="small"
+                    accent
+                    accentColor="amber"
+                    texture="kraft"
+                  >
                     <div
                       style={{
                         display: 'flex',
@@ -787,11 +778,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
                           <Markdown>{question.body}</Markdown>
                         </div>
                       </div>
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={() => setResolvingQuestion(question)}
-                      >
+                      <Button size="small" onClick={() => setResolvingQuestion(question)}>
                         Resolve
                       </Button>
                     </div>

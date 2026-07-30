@@ -112,7 +112,7 @@ export const MergePolicySection = () => {
               {upToDate ? 'Matches recommended policy' : 'Differs from recommended policy'}
             </Stamp>
           </div>
-          <Card size="small">
+          <Card size="small" texture="kraft">
             {POLICY_ROWS.map((row, idx) => (
               <PolicyRow
                 key={row.key}

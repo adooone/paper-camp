@@ -7,6 +7,11 @@
  */
 :root {
   --paper-font-default: "Cormorant Garamond", Georgia, serif;
+  /* Brand primary = the exact green of the active nav item in the header
+     (paper-ui's $ghost-active-strong / -hover: accent green at 25%/30%). */
+  --pui-btn-primary: rgba(143, 185, 150, 0.25);
+  --pui-btn-primary-hover: rgba(143, 185, 150, 0.3);
+  --pui-btn-primary-active: rgba(143, 185, 150, 0.3);
 }
 
 /*

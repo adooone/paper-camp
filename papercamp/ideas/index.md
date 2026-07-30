@@ -112,3 +112,5 @@
 | IDEA-108 | Surface a diverged main with a one-click agent fix | feat | idea | git, app, agent |
 | IDEA-109 | Compact Deliver section, more room for the agent stack | feat | idea | app, ui, stack |
 | IDEA-110 | In-app code review with diffs | feat | idea | app, git, ui |
+| IDEA-111 | Single-source color tokens via CSS variables | refactor | idea | app, ui, refactor |
+| IDEA-112 | Move all styling to Tailwind | refactor | idea | app, ui, refactor |

@@ -21,7 +21,7 @@ export const SubjectsSection = () => {
         <p style={{ opacity: 0.6, margin: 0 }}>Couldn't load subjects — check the server config.</p>
       )}
       {!loading && available && (
-        <Card size="small">
+        <Card size="small" texture="kraft">
           {subjects.length === 0 && (
             <p style={{ opacity: 0.45, margin: 0, paddingBottom: space[2] }}>No subjects yet.</p>
           )}
@@ -33,7 +33,7 @@ export const SubjectsSection = () => {
           ))}
           {subjects.length > 0 && <Divider />}
           <div style={{ paddingTop: space[3] }}>
-            <Button variant="secondary" size="small" onClick={() => navigate({ to: '/roadmap' })}>
+            <Button size="small" onClick={() => navigate({ to: '/roadmap' })}>
               Go to Roadmap
             </Button>
           </div>

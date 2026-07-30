@@ -175,13 +175,7 @@ const AddItemForm = ({
         >
           Cancel
         </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          size="small"
-          onClick={handleAdd}
-          disabled={saving || !name.trim()}
-        >
+        <Button type="button" size="small" onClick={handleAdd} disabled={saving || !name.trim()}>
           Add
         </Button>
       </div>

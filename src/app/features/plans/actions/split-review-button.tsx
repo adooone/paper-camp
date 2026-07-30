@@ -29,7 +29,6 @@ export const SplitReviewButton = ({
   return (
     <Tooltip content={hint}>
       <Button
-        variant="secondary"
         size="small"
         onClick={onClick}
         disabled={disabled || launching || !planId || !hasAgent || !hasPoints}

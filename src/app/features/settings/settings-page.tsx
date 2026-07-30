@@ -266,7 +266,7 @@ const GeneralSection = () => {
         </Alert>
       )}
       {config && (
-        <Card size="small">
+        <Card size="small" texture="kraft">
           <div
             style={{
               display: 'flex',
@@ -322,12 +322,7 @@ const GeneralSection = () => {
                 onChange={handleFile}
                 style={{ display: 'none' }}
               />
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-              >
+              <Button size="small" onClick={() => fileRef.current?.click()} disabled={uploading}>
                 {uploading ? 'Uploading…' : 'Choose File'}
               </Button>
               {identityLoading && (

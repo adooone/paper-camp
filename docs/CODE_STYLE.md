@@ -46,6 +46,35 @@ canonical usage. The `board` prop itself lives in the paper-ui repo
 (`~/dev/paper-ui/src/components/table/table.tsx`) — see "Working with the
 paper-ui sibling repo" in `AGENTS.md` before touching it.
 
+### Content cards use `texture="kraft"`
+
+A default `Card` renders on the `paper` surface (`$color-bg-surface`), which is
+within ~1% of the page background — so cards on a page blend in and look flat.
+Give content cards `texture="kraft"` so they read as raised kraft panels against
+the page. Set it via the prop, never a CSS override. Accent cards keep their
+`accent`/`accentColor` — the kraft base sits under the accent glow. Stack-panel
+cards are the exception: they stay `surface="chalkboard"`.
+
+```tsx
+<Card size="small" texture="kraft">…</Card>
+<Card size="small" accent accentColor="amber" texture="kraft">…</Card>
+```
+
+### Primary buttons are green by default
+
+The default `Button` (`variant="primary"`) is the app's accent green — paper-camp
+themes paper-ui's brand primary through the `--pui-btn-primary` CSS vars in
+`utilities.css` `:root`, which the button's fills read (see
+`~/dev/paper-ui/src/components/button/button.module.scss`). So a primary/affirmative
+action is just `<Button>` — no per-button styling. Use `variant="secondary"` (pale)
+or `variant="ghost"` (borderless) for lesser or cancel-style actions; `variant="danger"`
+for destructive ones. Never hand-color a button's fill.
+
+```tsx
+<Button onClick={…}>Create branch</Button>          {/* green, the default */}
+<Button variant="secondary" onClick={…}>Cancel</Button>
+```
+
 ## 2. Design tokens, not literals
 
 paper-ui owns the design tokens. Do not hand-type font stacks, spacing values,

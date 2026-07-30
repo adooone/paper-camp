@@ -56,7 +56,6 @@ export const ApplyNotesButton = ({ plan, disabled }: ApplyNotesButtonProps) => {
   return (
     <Tooltip content={hint}>
       <Button
-        variant="secondary"
         size="small"
         onClick={handleClick}
         disabled={disabled || launching || !plan.id || !hasAgent || notes.length === 0}

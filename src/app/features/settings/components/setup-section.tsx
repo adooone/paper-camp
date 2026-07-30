@@ -32,12 +32,7 @@ const ConnectActionView = ({
   if (!connect) return null;
   if (connect.kind === 'command' && connect.runnable) {
     return (
-      <Button
-        size="small"
-        variant="secondary"
-        onClick={() => onConnect(connection.id)}
-        disabled={connecting}
-      >
+      <Button size="small" onClick={() => onConnect(connection.id)} disabled={connecting}>
         {connecting ? 'Running…' : `Run \`${connect.command}\``}
       </Button>
     );
@@ -53,7 +48,6 @@ const ConnectActionView = ({
     return (
       <Button
         size="small"
-        variant="secondary"
         onClick={() => window.open(connect.url, '_blank', 'noopener,noreferrer')}
       >
         {connect.label}
@@ -98,12 +92,7 @@ const ConnectionRow = ({
           <Stamp size="small" fillColor={stamp.fill} textColor={stamp.text}>
             {stamp.label}
           </Stamp>
-          <Button
-            size="small"
-            variant="secondary"
-            onClick={() => onRecheck(connection.id)}
-            disabled={rechecking}
-          >
+          <Button size="small" onClick={() => onRecheck(connection.id)} disabled={rechecking}>
             {rechecking ? 'Checking…' : 'Recheck'}
           </Button>
         </div>
@@ -199,7 +188,7 @@ export const SetupSection = () => {
               </Alert>
             </div>
           )}
-          <Card size="small">
+          <Card size="small" texture="kraft">
             {connections.map((c, idx) => (
               <ConnectionRow
                 key={c.id}
@@ -213,7 +202,7 @@ export const SetupSection = () => {
             ))}
           </Card>
           <div style={{ marginTop: space[4] }}>
-            <Button variant="secondary" size="small" onClick={handleDismissToggle}>
+            <Button size="small" onClick={handleDismissToggle}>
               {setupDismissed ? 'Show Setup on open again' : "Don't show Setup on open"}
             </Button>
           </div>
