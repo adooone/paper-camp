@@ -27,7 +27,7 @@ Many titles and labels don't say plainly what they are. Text-only pass, no behav
 ### Phases
 - [x] Relabel the Roadmap tabs and add-item control
       "Tree / Map" → "Outline / Board", "Add candidate…" → "Add option…".
-- [ ] Rename the "Ideas" nav entry to "Plans"
+- [x] Rename the "Ideas" nav entry to "Plans"
       The main plans view only — leave entity ids and routes untouched.
 - [ ] Rename "Provenance" → "History" and the "Views" toggle → "Show"
 - [ ] Fix the agent action label and status/toast strings

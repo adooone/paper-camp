@@ -82,7 +82,7 @@ export const PlansPage = () => {
   if (plansError) {
     return (
       <div>
-        <PageTitle>Ideas</PageTitle>
+        <PageTitle>Plans</PageTitle>
         <Card size="small" accent accentColor="rose">
           <p style={{ margin: 0, fontWeight: 600 }}>Couldn't load plans.md</p>
           <p style={{ margin: 0, opacity: 0.75 }}>{plansError}</p>
@@ -116,7 +116,7 @@ export const PlansPage = () => {
           <div style={{ marginBottom: space[4] }}>
             <Breadcrumb
               items={[
-                { id: 'plans', label: 'Ideas', onClick: handleBack },
+                { id: 'plans', label: 'Plans', onClick: handleBack },
                 { id: 'plan', label: activePlan.title },
               ]}
             />
@@ -128,7 +128,7 @@ export const PlansPage = () => {
           <div style={{ marginBottom: space[4] }}>
             <Breadcrumb
               items={[
-                { id: 'plans', label: 'Ideas', onClick: handleBack },
+                { id: 'plans', label: 'Plans', onClick: handleBack },
                 { id: 'idea', label: activeIdea.title },
               ]}
             />
