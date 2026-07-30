@@ -2,7 +2,7 @@
 id: IDEA-107
 title: De-complicate the worst code
 type: refactor
-status: idea
+status: review
 created: 2026-07-29
 updated: 2026-07-29
 tags:
@@ -34,5 +34,5 @@ A legibility pass over the worst duplication and over-abstraction (from the audi
       Replace the 4 mutators' repeated scans with one locator and thin splices.
 - [x] Extract UI components and the smaller helpers
       Split `status-section.tsx` and the inline blocks in `entity-detail.tsx`; add the generic parse loop in `parser.ts` and the `spawnJson` helper in `pr-lookup.ts`.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
       Confirm no behaviour change and all tests stay green.
