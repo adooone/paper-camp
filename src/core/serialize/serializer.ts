@@ -15,7 +15,19 @@ import {
   NOTES_SECTION,
   PHASES_SECTION,
   REVIEW_SECTION,
+  type SectionDef,
 } from '../sections';
+
+interface SectionField {
+  entries: any[] | undefined;
+  section: SectionDef<any>;
+}
+
+function appendSections(sections: string[], fields: SectionField[]): void {
+  for (const { entries, section } of fields) {
+    if (entries && entries.length > 0) sections.push(section.formatLines(entries).join('\n'));
+  }
+}
 
 export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -97,29 +109,24 @@ interface NewPlanInput {
 }
 
 export function formatPlanEntry(input: NewPlanInput): string {
-  const lines = [`## ${input.title}`, '', `**Status:** ${input.status}`];
-  if (input.kind) lines.push(`**Kind:** ${input.kind}`);
-  if (input.id) lines.push(`**Id:** ${input.id}`);
-  if (input.idea) lines.push(`**Idea:** ${input.idea}`);
-  if (input.agent) lines.push(`**Agent:** ${input.agent}`);
-  lines.push(`**Created:** ${input.created}`);
-  if (input.updated) lines.push(`**Updated:** ${input.updated}`);
-  if (input.tags && input.tags.length > 0) lines.push(`**Tags:** ${input.tags.join(', ')}`);
-  lines.push('');
-  if (input.body) lines.push(input.body, '');
-  if (input.clarifications && input.clarifications.length > 0) {
-    lines.push(...CLARIFICATIONS_SECTION.formatLines(input.clarifications), '');
-  }
-  if (input.phases && input.phases.length > 0) {
-    lines.push(...PHASES_SECTION.formatLines(input.phases));
-  }
-  if (input.log && input.log.length > 0) {
-    lines.push('', ...LOG_SECTION.formatLines(input.log));
-  }
-  if (input.notes && input.notes.length > 0) {
-    lines.push('', ...NOTES_SECTION.formatLines(input.notes));
-  }
-  return lines.join('\n').trimEnd();
+  const header = [`## ${input.title}`, '', `**Status:** ${input.status}`];
+  if (input.kind) header.push(`**Kind:** ${input.kind}`);
+  if (input.id) header.push(`**Id:** ${input.id}`);
+  if (input.idea) header.push(`**Idea:** ${input.idea}`);
+  if (input.agent) header.push(`**Agent:** ${input.agent}`);
+  header.push(`**Created:** ${input.created}`);
+  if (input.updated) header.push(`**Updated:** ${input.updated}`);
+  if (input.tags && input.tags.length > 0) header.push(`**Tags:** ${input.tags.join(', ')}`);
+
+  const sections: string[] = [header.join('\n')];
+  if (input.body) sections.push(input.body);
+  appendSections(sections, [
+    { entries: input.clarifications, section: CLARIFICATIONS_SECTION },
+    { entries: input.phases, section: PHASES_SECTION },
+    { entries: input.log, section: LOG_SECTION },
+    { entries: input.notes, section: NOTES_SECTION },
+  ]);
+  return sections.join('\n\n').trimEnd();
 }
 
 export function formatPlans(entries: NewPlanInput[]): string {
@@ -167,25 +174,13 @@ export function formatPlanFile(input: NewPlanFileInput): string {
   if (input.tags && input.tags.length > 0) frontmatter.tags = input.tags;
 
   const sections: string[] = [serializeFrontmatter(frontmatter)];
-
   if (input.body) sections.push(input.body);
-
-  if (input.clarifications && input.clarifications.length > 0) {
-    sections.push(CLARIFICATIONS_SECTION.formatLines(input.clarifications).join('\n'));
-  }
-
-  if (input.phases && input.phases.length > 0) {
-    sections.push(PHASES_SECTION.formatLines(input.phases).join('\n'));
-  }
-
-  if (input.log && input.log.length > 0) {
-    sections.push(LOG_SECTION.formatLines(input.log).join('\n'));
-  }
-
-  if (input.notes && input.notes.length > 0) {
-    sections.push(NOTES_SECTION.formatLines(input.notes).join('\n'));
-  }
-
+  appendSections(sections, [
+    { entries: input.clarifications, section: CLARIFICATIONS_SECTION },
+    { entries: input.phases, section: PHASES_SECTION },
+    { entries: input.log, section: LOG_SECTION },
+    { entries: input.notes, section: NOTES_SECTION },
+  ]);
   return sections.join('\n\n').trimEnd();
 }
 
@@ -230,29 +225,14 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   if (input.order !== undefined) frontmatter.order = input.order;
 
   const sections: string[] = [serializeFrontmatter(frontmatter)];
-
   if (input.body) sections.push(input.body);
-
-  if (input.clarifications && input.clarifications.length > 0) {
-    sections.push(CLARIFICATIONS_SECTION.formatLines(input.clarifications).join('\n'));
-  }
-
-  if (input.phases && input.phases.length > 0) {
-    sections.push(PHASES_SECTION.formatLines(input.phases).join('\n'));
-  }
-
-  if (input.log && input.log.length > 0) {
-    sections.push(LOG_SECTION.formatLines(input.log).join('\n'));
-  }
-
-  if (input.notes && input.notes.length > 0) {
-    sections.push(NOTES_SECTION.formatLines(input.notes).join('\n'));
-  }
-
-  if (input.review && input.review.length > 0) {
-    sections.push(REVIEW_SECTION.formatLines(input.review).join('\n'));
-  }
-
+  appendSections(sections, [
+    { entries: input.clarifications, section: CLARIFICATIONS_SECTION },
+    { entries: input.phases, section: PHASES_SECTION },
+    { entries: input.log, section: LOG_SECTION },
+    { entries: input.notes, section: NOTES_SECTION },
+    { entries: input.review, section: REVIEW_SECTION },
+  ]);
   return sections.join('\n\n').trimEnd();
 }
 
@@ -297,15 +277,11 @@ export function formatIdeaFile(input: NewIdeaFileInput): string {
   if (input.kind) frontmatter.kind = input.kind;
   if (input.status) frontmatter.status = input.status;
 
-  const parts: string[] = [serializeFrontmatter(frontmatter)];
+  const sections: string[] = [serializeFrontmatter(frontmatter)];
   const heading = `## ${input.id}: ${input.title}`;
-  parts.push(input.body ? `${heading}\n\n${input.body}` : heading);
-
-  if (input.log && input.log.length > 0) {
-    parts.push(LOG_SECTION.formatLines(input.log).join('\n'));
-  }
-
-  return parts.join('\n\n').trimEnd();
+  sections.push(input.body ? `${heading}\n\n${input.body}` : heading);
+  appendSections(sections, [{ entries: input.log, section: LOG_SECTION }]);
+  return sections.join('\n\n').trimEnd();
 }
 
 export async function archiveEntityFile(root: string, entityId: string): Promise<boolean> {
