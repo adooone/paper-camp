@@ -15,8 +15,6 @@ import {
   deskLight,
   deskText,
 } from './shared';
-import { StatusSection } from './status-section';
-
 interface StackPanelProps {
   open: boolean;
   onToggle: () => void;
@@ -273,7 +271,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         >
           <AgentSection />
           <Divider surface="chalkboard" />
-          <StatusSection />
           <CommitSection />
         </div>
       </motion.div>
