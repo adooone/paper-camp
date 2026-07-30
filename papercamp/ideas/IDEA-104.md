@@ -2,7 +2,7 @@
 id: IDEA-104
 title: Decisions and questions live on the idea
 type: feat
-status: idea
+status: review
 created: 2026-07-29
 updated: 2026-07-29
 tags:
@@ -29,4 +29,4 @@ Also clears the confusing entity UI this created: "Graduate this into an open qu
       Delete the standalone decision/question capture modals now that notes carry them inline.
 - [x] Simplify the entity UI
       Drop "Graduate this into an open question", the Clarifications-vs-Open-questions split, and "Promote straight into a decision".
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
