@@ -17,7 +17,7 @@ Agents — plan-drafting worst — produce walls of text you skim past and then 
 Add one shared brevity contract to the writer prompts (`prompts.ts`: draft, extend, rework, audit): 3–7 phases, one-line imperative titles, ≤1-sentence descriptions only when non-obvious, no restating the idea, no summarising what it did. Trim `buildPlanDraftPrompt`'s input dump — it currently injects every open plan's full body + phases — down to `ID: Title (N phases)`. Factor the three near-identical extend/suggestion/roadmap-promote prompts into one. Compress the over-instruction paragraphs in `buildAgentPrompt` (`agent.ts`) and `buildFixReviewPrompt` to a line or two each.
 
 ### Phases
-- [ ] Add a shared brevity contract snippet
+- [x] Add a shared brevity contract snippet
       One reusable constant in `prompts.ts`: 3–7 phases, one-line imperative titles, ≤1-sentence descriptions only when non-obvious, no restating the idea, no summarising the work.
 - [ ] Apply the contract to the writer prompts
       Wire it into draft, extend, rework, and audit builders.

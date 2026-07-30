@@ -12,6 +12,8 @@ import type { SimilarityCandidate } from '../helpers';
 // These prompts run headless (`claude -p` / `opencode run`), so they must never ask
 // questions or wait for input; each "done" condition is checked mechanically by agent.ts's didTaskProgress.
 
+export const BREVITY_CONTRACT = `Keep phases short: 3-7 phases, each a one-line imperative title. Add a description only when the phase isn't self-explanatory, and keep it to one sentence. Never restate the idea's body and never summarise the work you did.`;
+
 export function buildConvergenceAuditPrompt(plan: PlanEntry): string {
   const phaseList = plan.phases
     .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
