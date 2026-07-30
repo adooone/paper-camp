@@ -275,125 +275,67 @@ const TrailSection = ({ planId }: { planId: string | undefined }) => {
   );
 };
 
-const DatedEntryList = ({
-  entries,
+interface ThreadItem {
+  date: string;
+  text: string;
+  kind: 'comment' | 'review';
+}
+
+/** Comments and review points are separate fields (they feed different agent
+ * flows — Apply notes vs Split review) but read as one merged, date-ordered thread. */
+function buildThread(log: LogEntry[] | undefined, review: LogEntry[] | undefined): ThreadItem[] {
+  const comments: ThreadItem[] = (log ?? []).map((e) => ({ ...e, kind: 'comment' }));
+  const reviewPoints: ThreadItem[] = (review ?? []).map((e) => ({ ...e, kind: 'review' }));
+  return [...comments, ...reviewPoints].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+const FeedbackThread = ({
+  items,
   onPromote,
 }: {
-  entries: LogEntry[];
-  onPromote?: (entry: LogEntry) => void;
+  items: ThreadItem[];
+  onPromote: (entry: LogEntry) => void;
 }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[4] }}>
-    {entries.map((entry, i) => (
+    {items.map((item, i) => (
       <div
-        key={`${entry.date}-${i}`}
-        style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-          <span className="text-sm" style={{ fontWeight: 600, opacity: 0.5 }}>
-            {entry.date}
-          </span>
-          {onPromote && (
-            <Tooltip content="Promote this into a decision">
-              <Button variant="ghost" size="small" onClick={() => onPromote(entry)}>
-                Promote to decision
-              </Button>
-            </Tooltip>
-          )}
-        </div>
-        <div
-          className="text-sm"
-          style={{
-            background: 'rgba(0,0,0,0.05)',
-            borderRadius: space[2],
-            padding: `${space[2]} ${space[3]}`,
-            alignSelf: 'flex-start',
-            maxWidth: '100%',
-            opacity: 0.85,
-          }}
-        >
-          {entry.text}
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
-const CommentsSection = ({
-  plan,
-  log,
-  updating,
-  onAdd,
-  onPromote,
-}: {
-  plan: PlanEntry;
-  log: LogEntry[] | undefined;
-  updating: boolean;
-  onAdd: (text: string) => Promise<boolean>;
-  onPromote: (entry: LogEntry) => void;
-}) => {
-  const [logInput, setLogInput] = useState('');
-
-  const handleAdd = async () => {
-    if (!logInput.trim()) return;
-    if (await onAdd(logInput.trim())) setLogInput('');
-  };
-
-  return (
-    <div style={{ marginBottom: space[8] }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: space[3],
-          margin: `0 0 ${space[3]}`,
-        }}
-      >
-        <h3 style={{ ...sectionHeadingStyle, margin: 0, flex: 1 }}>Comments</h3>
-        <ApplyNotesButton plan={plan} disabled={updating} />
-      </div>
-      <Card size="small" texture="kraft">
-        {log && log.length > 0 && <DatedEntryList entries={log} onPromote={onPromote} />}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
-          <Textarea
-            value={logInput}
-            onChange={(e) => setLogInput(e.target.value)}
-            placeholder="Add a comment…"
-            rows={2}
-          />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button size="small" onClick={handleAdd} disabled={updating || !logInput.trim()}>
-              Send
-            </Button>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-};
-
-const ReviewThread = ({ entries }: { entries: LogEntry[] }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[4] }}>
-    {entries.map((entry, i) => (
-      <div
-        key={`${entry.date}-${i}`}
+        key={`${item.date}-${i}`}
         style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: space[1] }}
       >
         <div
           className="text-sm"
           style={{
-            background: color.accentSlate,
-            color: '#fff',
+            background: item.kind === 'review' ? color.accentSlate : 'rgba(0,0,0,0.08)',
+            color: item.kind === 'review' ? '#fff' : undefined,
             borderRadius: space[2],
             borderBottomRightRadius: space[1],
             padding: `${space[2]} ${space[3]}`,
             maxWidth: '85%',
           }}
         >
-          {entry.text}
+          {item.text}
         </div>
-        <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
-          You · {entry.date}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+          <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
+            {item.date}
+          </span>
+          {item.kind === 'review' && (
+            <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
+              review
+            </Stamp>
+          )}
+          {item.kind === 'comment' && (
+            <Tooltip content="Promote this into a decision">
+              <Button
+                variant="ghost"
+                size="small"
+                onClick={() => onPromote({ date: item.date, text: item.text })}
+              >
+                Promote to decision
+              </Button>
+            </Tooltip>
+          )}
+        </div>
       </div>
     ))}
   </div>
@@ -401,23 +343,30 @@ const ReviewThread = ({ entries }: { entries: LogEntry[] }) => (
 
 const PlanReviewSection = ({
   plan,
-  review,
   updating,
-  onAdd,
+  onAddComment,
+  onAddReview,
+  onPromote,
 }: {
   plan: PlanEntry;
-  review: LogEntry[] | undefined;
   updating: boolean;
-  onAdd: (text: string) => Promise<boolean>;
+  onAddComment: (text: string) => Promise<boolean>;
+  onAddReview: (text: string) => Promise<boolean>;
+  onPromote: (entry: LogEntry) => void;
 }) => {
   const [input, setInput] = useState('');
   const { toast } = useToast();
-  const hasEntries = review !== undefined && review.length > 0;
+  const thread = buildThread(plan.log, plan.review);
   const { launching, result, outcome, launch, approve, discard } = useSplitReview(plan);
 
-  const handleAdd = async () => {
+  const handleAddComment = async () => {
     if (!input.trim()) return;
-    if (await onAdd(input.trim())) {
+    if (await onAddComment(input.trim())) setInput('');
+  };
+
+  const handleAddReview = async () => {
+    if (!input.trim()) return;
+    if (await onAddReview(input.trim())) {
       setInput('');
       toast({ title: 'Added to the review', variant: 'success' });
     }
@@ -433,7 +382,8 @@ const PlanReviewSection = ({
           margin: `0 0 ${space[3]}`,
         }}
       >
-        <h3 style={{ ...sectionHeadingStyle, margin: 0, flex: 1 }}>Review</h3>
+        <h3 style={{ ...sectionHeadingStyle, margin: 0, flex: 1 }}>Feedback</h3>
+        <ApplyNotesButton plan={plan} disabled={updating} />
         <SplitReviewButton
           planId={plan.id}
           hasPoints={(plan.review ?? []).length > 0}
@@ -443,12 +393,12 @@ const PlanReviewSection = ({
         />
       </div>
       <Card size="small" accent accentColor="slate" texture="kraft">
-        {hasEntries ? (
-          <ReviewThread entries={review} />
+        {thread.length > 0 ? (
+          <FeedbackThread items={thread} onPromote={onPromote} />
         ) : (
           <p className="text-sm" style={{ margin: `0 0 ${space[3]}`, color: color.textSecondary }}>
-            Talk through what's wrong in your own words — then Split review turns each point into
-            rework phases here or a follow-up idea.
+            Jot a comment as you work, or talk through what's wrong — then Split review turns review
+            points into rework phases here or a follow-up idea.
           </p>
         )}
         <ReviewSplitMessage
@@ -462,12 +412,15 @@ const PlanReviewSection = ({
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="What's wrong with this plan, in your own words…"
+            placeholder="Add a comment, or what's wrong with this plan…"
             rows={3}
             disabled={updating}
           />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button size="small" onClick={handleAdd} disabled={updating || !input.trim()}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+            <Button size="small" onClick={handleAddComment} disabled={updating || !input.trim()}>
+              Add comment
+            </Button>
+            <Button size="small" onClick={handleAddReview} disabled={updating || !input.trim()}>
               Add review
             </Button>
           </div>
@@ -640,9 +593,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       {showFeedback ? (
         <PlanReviewSection
           plan={plan}
-          review={plan.review}
           updating={updating}
-          onAdd={handleAddReview}
+          onAddComment={handleAddLogEntry}
+          onAddReview={handleAddReview}
+          onPromote={(entry) => setPromotingToDecision({ source: 'comment', entry })}
         />
       ) : (
         <>
@@ -875,14 +829,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           )}
 
           <TrailSection planId={plan.id} />
-
-          <CommentsSection
-            plan={plan}
-            log={plan.log}
-            updating={updating}
-            onAdd={handleAddLogEntry}
-            onPromote={(entry) => setPromotingToDecision({ source: 'comment', entry })}
-          />
         </>
       )}
 
