@@ -23,7 +23,7 @@ Builds directly on the Feedback view and `detailView` slice from [[IDEA-89]]'s r
 ### Phases
 - [x] Expose the Feedback view for every status
       Drop the `isReviewable`/`showFeedback` gate on the `detailView` switcher so the thread is reachable while an idea is `idea`/`planned`/`in-progress`, not just `review`/`done`.
-- [ ] Read and write the thread from one source
+- [x] Read and write the thread from one source
       Point the Feedback view at the same store slice and route it posts to, so a posted message survives refresh — resolving the IDEA-89 persistence bug at its root.
 - [ ] Fold `CommentsSection` into the single thread
       Merge the plain comment log into the Feedback thread (comments, review points, and split proposals as one conversation) and retire the separate `CommentsSection` from `entity-detail.tsx`, or rename it as that thread.
