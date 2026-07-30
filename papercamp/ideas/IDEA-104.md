@@ -25,7 +25,7 @@ Also clears the confusing entity UI this created: "Graduate this into an open qu
       Fold each entry onto the idea it bounds; drop cross-cutting rules that already live in `AGENTS.md`/`docs/CODE_STYLE.md`.
 - [x] Retire the global files, decision search, and consistency checks
       Remove `decisions.md`/`open-questions.md`, the decision search, and the `blocked-plan-active`/`dangling-*` consistency checks that relied on them.
-- [ ] Remove the separate capture modals
+- [x] Remove the separate capture modals
       Delete the standalone decision/question capture modals now that notes carry them inline.
 - [ ] Simplify the entity UI
       Drop "Graduate this into an open question", the Clarifications-vs-Open-questions split, and "Promote straight into a decision".
