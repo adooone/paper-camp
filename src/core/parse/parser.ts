@@ -2,13 +2,11 @@ import { parse as parseYaml } from 'yaml';
 import type { z } from 'zod';
 import type {
   ConsistencyIssue,
-  DecisionEntry,
   EntityEntry,
   IdeaEntry,
   IdeaStatus,
   LogEntry,
   MarginNote,
-  OpenQuestionEntry,
   ParseResult,
   ParseWarning,
   PhaseItem,
@@ -26,10 +24,8 @@ import {
   type SectionDef,
 } from '../sections';
 import {
-  decisionFieldsSchema,
   entityFrontmatterSchema,
   ideaFrontmatterSchema,
-  openQuestionFieldsSchema,
   planFieldsSchema,
   planFrontmatterSchema,
 } from './schemas';
@@ -155,65 +151,6 @@ export function parsePlans(markdown: string): ParseResult<PlanEntry> {
       clarifications: raw.clarifications,
       notes: raw.notes,
       review: raw.review,
-    });
-  }
-
-  return { entries, warnings };
-}
-
-export function parseDecisions(markdown: string): ParseResult<DecisionEntry> {
-  const entries: DecisionEntry[] = [];
-  const warnings: ParseResult<DecisionEntry>['warnings'] = [];
-
-  for (const raw of parseRawEntries(markdown)) {
-    const result = decisionFieldsSchema.safeParse(raw.fields);
-    if (!result.success) {
-      warnings.push({
-        title: raw.title,
-        message: result.error.issues.map((i) => i.message).join('; '),
-      });
-      continue;
-    }
-    const fields = result.data;
-    entries.push({
-      title: raw.title,
-      date: fields.date,
-      status: fields.status,
-      supersededBy: fields['superseded-by'],
-      tags: fields.tags
-        ? fields.tags
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean)
-        : undefined,
-      body: raw.body,
-    });
-  }
-
-  return { entries, warnings };
-}
-
-export function parseOpenQuestions(markdown: string): ParseResult<OpenQuestionEntry> {
-  const entries: OpenQuestionEntry[] = [];
-  const warnings: ParseResult<OpenQuestionEntry>['warnings'] = [];
-
-  for (const raw of parseRawEntries(markdown)) {
-    const result = openQuestionFieldsSchema.safeParse(raw.fields);
-    if (!result.success) {
-      warnings.push({
-        title: raw.title,
-        message: result.error.issues.map((i) => i.message).join('; '),
-      });
-      continue;
-    }
-    const fields = result.data;
-    entries.push({
-      title: raw.title,
-      status: fields.status,
-      raised: fields.raised,
-      resolvedBy: fields['resolved-by'],
-      blocks: fields.blocks,
-      body: raw.body,
     });
   }
 
@@ -397,50 +334,10 @@ export function parseIdeas(markdown: string): IdeaEntry[] {
 }
 
 export function findConsistencyIssues(
-  decisions: DecisionEntry[],
-  openQuestions: OpenQuestionEntry[],
   plans: PlanEntry[],
   subjectVocabulary: string[] = [],
 ): ConsistencyIssue[] {
-  const decisionTitles = new Set(decisions.map((d) => d.title));
   const issues: ConsistencyIssue[] = [];
-
-  for (const decision of decisions) {
-    if (decision.supersededBy && !decisionTitles.has(decision.supersededBy)) {
-      issues.push({
-        kind: 'dangling-superseded-by',
-        section: 'decisions',
-        title: decision.title,
-        message: `Superseded-by "${decision.supersededBy}" doesn't match any decision`,
-      });
-    }
-  }
-
-  for (const question of openQuestions) {
-    if (question.resolvedBy && !decisionTitles.has(question.resolvedBy)) {
-      issues.push({
-        kind: 'dangling-resolved-by',
-        section: 'open-questions',
-        title: question.title,
-        message: `Resolved-by "${question.resolvedBy}" doesn't match any decision`,
-      });
-    }
-    if (question.status === 'open' && question.blocks) {
-      const blockedPlan = plans.find((p) => p.id === question.blocks);
-      if (
-        blockedPlan &&
-        (blockedPlan.status === 'in-progress' || blockedPlan.status === 'review')
-      ) {
-        issues.push({
-          kind: 'blocked-plan-active',
-          section: 'open-questions',
-          title: question.title,
-          planId: blockedPlan.id,
-          message: `Still open but blocks "${blockedPlan.title}" (${blockedPlan.id}), already ${blockedPlan.status}`,
-        });
-      }
-    }
-  }
 
   for (const plan of plans) {
     if (plan.subject && !subjectVocabulary.includes(plan.subject)) {

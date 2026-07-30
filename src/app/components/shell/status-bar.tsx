@@ -2,7 +2,6 @@ import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import {
   selectAgentNotSignedIn,
   selectCapabilityGapCount,
-  selectOpenQuestionCount,
   useAppStore,
 } from '@/app/stores/app-store';
 import { color, fontSize, space } from '@/app/styles/tokens';
@@ -22,7 +21,6 @@ export const StatusBar = () => {
   const quickCommit = useAppStore((s) => s.quickCommit);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const capabilityGapCount = useAppStore(selectCapabilityGapCount);
-  const openQuestionCount = useAppStore(selectOpenQuestionCount);
   const agentNotSignedIn = useAppStore(selectAgentNotSignedIn);
   const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
     useBranchSync();
@@ -82,13 +80,6 @@ export const StatusBar = () => {
           <Tooltip content="Run `claude auth login` (or `claude setup-token`) so agent tasks can run">
             <Stamp size="small" variant="warning">
               Agent not signed in
-            </Stamp>
-          </Tooltip>
-        )}
-        {openQuestionCount > 0 && (
-          <Tooltip content="Unresolved questions in papercamp/open-questions.md">
-            <Stamp size="small" variant="warning">
-              Open questions ({openQuestionCount})
             </Stamp>
           </Tooltip>
         )}

@@ -5,13 +5,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { summarizeQualityFailure, summarizeTestFailure } from '@/app/utils/check-summary';
-import type {
-  BranchHygieneStatus,
-  CheckStatus,
-  ConsistencyIssue,
-  DecisionEntry,
-  PlanEntry,
-} from '@/types/index';
+import type { BranchHygieneStatus, CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
 import {
   Alert,
   Button,
@@ -26,7 +20,6 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MergeIcon, PullIcon, PushIcon, WandIcon } from '../icons';
-import { ViewDecisionModal } from '../view-decision-modal';
 import {
   chalkStatusFill,
   chalkStatusText,
@@ -75,10 +68,8 @@ const StatusStamps = () => {
   const fixQuality = useAppStore((s) => s.fixQuality);
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
-  const decisions = useAppStore((s) => s.decisions);
   const navigate = useNavigate();
   const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
-  const [viewingDecision, setViewingDecision] = useState<DecisionEntry | null>(null);
 
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
     () => deriveCheckStatuses(statusData),
@@ -86,23 +77,15 @@ const StatusStamps = () => {
   );
   const anyChecksRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
-  // `consistency` is doc findings (dangling refs, blocked plans), distinct from consistencyStatus (code check).
+  // `consistency` is doc findings (orphan subjects), distinct from consistencyStatus (code check).
   const hasDocIssues = consistency.length > 0;
 
   const linkedPlanFor = useCallback(
     (issue: ConsistencyIssue) =>
-      (issue.kind === 'blocked-plan-active' || issue.kind === 'orphan-subject') && issue.planId
+      issue.kind === 'orphan-subject' && issue.planId
         ? plans?.entries.find((p) => p.id === issue.planId)
         : undefined,
     [plans?.entries],
-  );
-
-  const linkedDecisionFor = useCallback(
-    (issue: ConsistencyIssue) =>
-      issue.kind === 'dangling-superseded-by'
-        ? decisions.find((d) => d.title === issue.title)
-        : undefined,
-    [decisions],
   );
 
   const handleFindingClick = useCallback(
@@ -113,12 +96,9 @@ const StatusStamps = () => {
           to: '/plans/$planId',
           params: { planId: encodeURIComponent(linkedPlan.title) },
         });
-        return;
       }
-      const linkedDecision = linkedDecisionFor(issue);
-      if (linkedDecision) setViewingDecision(linkedDecision);
     },
-    [linkedPlanFor, linkedDecisionFor, navigate],
+    [linkedPlanFor, navigate],
   );
 
   const statusFill: Record<CheckStatus, string> = {
@@ -206,9 +186,7 @@ const StatusStamps = () => {
         })}
         <div>
           <Tooltip
-            content={
-              hasIssues ? 'Show plan/decision doc findings' : 'No plan/decision doc findings'
-            }
+            content={hasIssues ? 'Show plan doc findings' : 'No plan doc findings'}
             surface="chalkboard"
           >
             <button
@@ -257,7 +235,7 @@ const StatusStamps = () => {
                     color: deskTextMuted,
                   }}
                 >
-                  {linkedPlanFor(issue) || linkedDecisionFor(issue) ? (
+                  {linkedPlanFor(issue) ? (
                     <button
                       type="button"
                       onClick={() => handleFindingClick(issue)}
@@ -341,9 +319,7 @@ const StatusStamps = () => {
           );
         } else if (hasDocIssues) {
           primaryLine = (
-            <span style={{ color: deskTextMuted }}>
-              Plan/decision doc issues — see the Docs stamp.
-            </span>
+            <span style={{ color: deskTextMuted }}>Plan doc issues — see the Docs stamp.</span>
           );
         } else if (
           qualityStatus === 'pass' &&
@@ -374,7 +350,6 @@ const StatusStamps = () => {
           </div>
         );
       })()}
-      <ViewDecisionModal decision={viewingDecision} onClose={() => setViewingDecision(null)} />
     </div>
   );
 };

@@ -882,15 +882,15 @@ describe('renderConsistencyComment', () => {
   it('lists each issue by kind, section, and message', () => {
     const body = renderConsistencyComment([
       {
-        kind: 'blocked-plan-active',
-        section: 'open-questions',
-        title: 'Storage format?',
+        kind: 'orphan-subject',
+        section: 'plans',
+        title: 'Some plan',
         planId: 'IDEA-9',
-        message: 'Still open but blocks "Some plan" (IDEA-9), already in-progress',
+        message: 'Subject "Retired subject" isn\'t in the roadmap vocabulary — "Some plan"',
       },
     ]);
     expect(body).toContain(
-      '- **blocked-plan-active** (open-questions): Still open but blocks "Some plan" (IDEA-9), already in-progress',
+      '- **orphan-subject** (plans): Subject "Retired subject" isn\'t in the roadmap vocabulary — "Some plan"',
     );
   });
 
@@ -996,9 +996,9 @@ describe('syncConsistencyCommentToPr', () => {
   it('PATCHes the existing sticky comment via its REST id when its content differs', async () => {
     const staleBody = renderConsistencyComment([
       {
-        kind: 'dangling-superseded-by',
-        section: 'decisions',
-        title: 'Old decision',
+        kind: 'orphan-subject',
+        section: 'plans',
+        title: 'Old plan',
         message: 'stale',
       },
     ]);
@@ -1016,24 +1016,24 @@ describe('syncConsistencyCommentToPr', () => {
     expect(() => readFileSync(createdFile, 'utf-8')).toThrow();
   });
 
-  it('surfaces a blocked-plan-active issue found across the checked-out branch state', async () => {
+  it('surfaces an orphan-subject issue found across the checked-out branch state', async () => {
     const { root, createdFile } = withGhForConsistency({
       body: '**Plan:** `IDEA-9`',
       headRefName: 'feat/idea-9-x',
       url: 'https://github.com/o/r/pull/42',
       comments: [],
     });
-    writeEntityFile(root, 'IDEA-9', { status: 'in-progress', phases: '- [ ] Phase one\n' });
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
     writeFileSync(
-      join(root, 'papercamp', 'open-questions.md'),
-      '## Should we block?\n\n**Status:** open\n**Raised:** 2026-07-01\n**Blocks:** IDEA-9\n\nBody.\n',
+      join(root, 'papercamp', 'ideas', 'IDEA-9.md'),
+      '---\nid: IDEA-9\ntitle: Some plan\ntype: feat\nsubject: Retired subject\ntags:\n  - ci\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [x] Phase one\n',
     );
 
     const result = await syncConsistencyCommentToPr(root, '42');
     expect(result).toBe('created');
     const posted = readFileSync(createdFile, 'utf-8');
-    expect(posted).toContain('blocked-plan-active');
-    expect(posted).toContain('IDEA-9');
+    expect(posted).toContain('orphan-subject');
+    expect(posted).toContain('Some plan');
   });
 
   it('reports the convergence audit as stale when the plan changed since it was recorded', async () => {

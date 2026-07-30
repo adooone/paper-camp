@@ -8,12 +8,7 @@ import {
   PLAN_KINDS,
   type PhaseItem,
 } from '../../types/index';
-import {
-  findConsistencyIssues,
-  parseDecisions,
-  parseEntityFile,
-  parseOpenQuestions,
-} from '../parse/parser';
+import { findConsistencyIssues, parseEntityFile } from '../parse/parser';
 import { entityToPlan, readEntities } from '../readers';
 import { deriveSubjectVocabulary, parseRoadmap } from '../roadmap';
 import { computePlanContentHash } from '../serialize/content-hash';
@@ -443,21 +438,13 @@ export async function syncConsistencyCommentToPr(
   if (!context?.view?.url) return 'unresolved';
   const { view, entry } = context;
 
-  const [decisionsRaw, openQuestionsRaw, { entries: entityEntries }, roadmapRaw] =
-    await Promise.all([
-      readFile(join(root, 'papercamp', 'decisions.md'), 'utf-8').catch(() => ''),
-      readFile(join(root, 'papercamp', 'open-questions.md'), 'utf-8').catch(() => ''),
-      readEntities(join(root, 'papercamp', 'ideas')),
-      readFile(join(root, 'ROADMAP.md'), 'utf-8').catch(() => ''),
-    ]);
+  const [{ entries: entityEntries }, roadmapRaw] = await Promise.all([
+    readEntities(join(root, 'papercamp', 'ideas')),
+    readFile(join(root, 'ROADMAP.md'), 'utf-8').catch(() => ''),
+  ]);
   const plans = entityEntries.filter((e) => e.kind !== 'note').map((e) => entityToPlan(e));
   const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
-  const issues = findConsistencyIssues(
-    parseDecisions(decisionsRaw).entries,
-    parseOpenQuestions(openQuestionsRaw).entries,
-    plans,
-    subjectVocabulary,
-  );
+  const issues = findConsistencyIssues(plans, subjectVocabulary);
 
   const audit: AuditSummary | undefined =
     entry.audited && entry.auditedHash

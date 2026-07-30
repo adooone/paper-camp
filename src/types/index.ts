@@ -27,10 +27,6 @@ export const AGENT_LABELS: Record<AgentId, string> = {
   opencode: 'OpenCode',
 };
 
-export type DecisionStatus = 'decided' | 'superseded';
-
-export type QuestionStatus = 'open' | 'resolved';
-
 export interface PhaseItem {
   done: boolean;
   text: string;
@@ -174,33 +170,11 @@ export interface ArchivableIdea {
   pr: PrInfo;
 }
 
-export interface DecisionEntry {
-  title: string;
-  date: string;
-  status: DecisionStatus;
-  supersededBy?: string;
-  tags?: string[];
-  body: string;
-}
-
-export interface OpenQuestionEntry {
-  title: string;
-  status: QuestionStatus;
-  raised: string;
-  resolvedBy?: string;
-  blocks?: string;
-  body: string;
-}
-
-export type ConsistencyIssueKind =
-  | 'dangling-resolved-by'
-  | 'dangling-superseded-by'
-  | 'blocked-plan-active'
-  | 'orphan-subject';
+export type ConsistencyIssueKind = 'orphan-subject';
 
 export interface ConsistencyIssue {
   kind: ConsistencyIssueKind;
-  section: 'decisions' | 'open-questions' | 'plans';
+  section: 'plans';
   title: string;
   message: string;
   planId?: string;

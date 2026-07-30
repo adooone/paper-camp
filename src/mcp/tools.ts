@@ -11,26 +11,16 @@ import {
   regenerateIndexes,
   writeEntityFile,
 } from '../app/server/helpers';
-import { parseDecisions, parseEntityFile, parseOpenQuestions } from '../core/parse';
+import { parseEntityFile } from '../core/parse';
 import { entityToPlan, readEntities, readWorkEntries } from '../core/readers';
 import {
-  appendBlock,
   archiveEntityFile,
   assignEntityId,
-  formatDecisionEntry,
   formatEntityFile,
-  formatOpenQuestions,
   todayDateString,
 } from '../core/serialize';
 import { PLAN_KINDS, PLAN_STATUSES } from '../types/index';
-import {
-  decisionEntrySchema,
-  idResultSchema,
-  okResultSchema,
-  openQuestionEntrySchema,
-  parseWarningSchema,
-  planEntrySchema,
-} from './schemas';
+import { idResultSchema, okResultSchema, parseWarningSchema, planEntrySchema } from './schemas';
 
 function json(data: Record<string, unknown>) {
   return {
@@ -79,38 +69,6 @@ export function registerReadTools(server: McpServer, root: string): void {
       const { entries } = await fetchWorkEntries(root);
       const entry = entries.find((p) => p.id === id) ?? null;
       return json({ entry });
-    },
-  );
-
-  server.registerTool(
-    'list_open_questions',
-    {
-      title: 'List open questions',
-      description: 'List all open questions with their status, with parse warnings.',
-      outputSchema: {
-        entries: z.array(openQuestionEntrySchema),
-        warnings: z.array(parseWarningSchema),
-      },
-    },
-    async () => {
-      const result = parseOpenQuestions(await readMaybe(campFile(root, 'open-questions.md')));
-      return json({ ...result });
-    },
-  );
-
-  server.registerTool(
-    'list_decisions',
-    {
-      title: 'List decisions',
-      description: 'List all logged decisions, with parse warnings.',
-      outputSchema: {
-        entries: z.array(decisionEntrySchema),
-        warnings: z.array(parseWarningSchema),
-      },
-    },
-    async () => {
-      const result = parseDecisions(await readMaybe(campFile(root, 'decisions.md')));
-      return json({ ...result });
     },
   );
 }
@@ -250,56 +208,6 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       if (status === 'dropped') {
         await archiveEntityFile(root, target.id);
       }
-
-      return json({ ok: true });
-    },
-  );
-
-  server.registerTool(
-    'resolve_open_question',
-    {
-      title: 'Resolve open question',
-      description: 'Resolve an open question, logging the resolution as a new decision.',
-      inputSchema: {
-        title: z.string().describe('Open question title'),
-        decision: z.string().describe('The decision that resolves it'),
-        rationale: z.string().optional().describe('Rationale to log alongside the decision'),
-      },
-      outputSchema: okResultSchema.shape,
-    },
-    async ({ title, decision, rationale }) => {
-      if (!decision.trim()) throw new Error('decision is required');
-
-      const questionsPath = campFile(root, 'open-questions.md');
-      const raw = await readMaybe(questionsPath);
-      if (!raw) throw new Error('open-questions.md not found');
-      const parsed = parseOpenQuestions(raw);
-      if (parsed.warnings.length > 0) {
-        throw new Error(
-          `open-questions.md has parse warnings — resolve them before updating to avoid data loss: ${parsed.warnings
-            .map((w) => `${w.title}: ${w.message}`)
-            .join('; ')}`,
-        );
-      }
-      const trimmed = title.trim();
-      const target = parsed.entries.find((q) => q.title === trimmed);
-      if (!target) throw new Error(`open question "${trimmed}" not found`);
-      if (target.status !== 'open') {
-        throw new Error(`open question "${trimmed}" is already ${target.status}`);
-      }
-
-      const decisionBlock = formatDecisionEntry({
-        title: decision.trim(),
-        date: todayDateString(),
-        status: 'decided',
-        body: rationale?.trim(),
-      });
-      await appendBlock(campFile(root, 'decisions.md'), decisionBlock);
-
-      target.status = 'resolved';
-      target.resolvedBy = decision.trim();
-      const updated = formatOpenQuestions(parsed.entries);
-      await writeFile(questionsPath, `${updated}\n`, 'utf-8');
 
       return json({ ok: true });
     },
