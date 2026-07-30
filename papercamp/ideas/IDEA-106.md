@@ -25,7 +25,7 @@ Add one shared brevity contract to the writer prompts (`prompts.ts`: draft, exte
       Drop the per-plan body + phase-checkbox injection.
 - [x] Fold the extend/suggestion/roadmap-promote prompts into one
       One shared builder behind `buildIdeaExtendPrompt`/`buildSuggestionPromotePrompt`/`buildRoadmapPromotePrompt`.
-- [ ] Compress `buildAgentPrompt` and `buildFixReviewPrompt` over-instruction
+- [x] Compress `buildAgentPrompt` and `buildFixReviewPrompt` over-instruction
       Cut each over-instruction paragraph down to a line or two.
 - [ ] Update prompt tests and full pass
       Adjust `prompts.test.ts`/`agent.test.ts` expectations, then type-check and run the suite.
