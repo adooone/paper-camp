@@ -41,7 +41,7 @@ export const AddReviewPhasesButton = ({ onAdd, disabled }: AddReviewPhasesButton
 
   return (
     <>
-      <Tooltip content="Add /code-review findings as phases">
+      <Tooltip content="Add code-review findings as phases">
         <IconButton
           variant="ghost"
           size="small"
@@ -51,7 +51,7 @@ export const AddReviewPhasesButton = ({ onAdd, disabled }: AddReviewPhasesButton
           icon={<PlusIcon size={16} />}
         />
       </Tooltip>
-      <Modal open={open} onClose={handleClose} title="Add /code-review findings" size="small">
+      <Modal open={open} onClose={handleClose} title="Add code-review findings" size="small">
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
           <p className="text-sm" style={{ margin: 0, opacity: 0.7 }}>
             Paste the JSON findings from a <code>/code-review</code> run. Each finding becomes a

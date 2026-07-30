@@ -59,3 +59,4 @@
 {"id":"ffd6e7e7-0c98-4f9a-a6d7-2d7d934a2a22","taskKind":"draft","planTitle":"Draft plan for IDEA-99","agentId":"claude-code","startedAt":"2026-07-30T14:10:24.462Z","endedAt":"2026-07-30T14:11:13.685Z","outcome":"done"}
 {"id":"75fe6ce1-7751-4a54-9f48-3309a404e2a6","taskKind":"draft","planTitle":"Draft plan for IDEA-102","agentId":"claude-code","startedAt":"2026-07-30T14:36:33.299Z","endedAt":"2026-07-30T14:36:56.273Z","outcome":"done"}
 {"id":"53b5d51a-76ad-4d76-b7c5-87d9c10374e1","taskKind":"prioritise","planTitle":"Prioritise queue","agentId":"claude-code","startedAt":"2026-07-30T14:36:57.639Z","endedAt":"2026-07-30T14:37:12.073Z","outcome":"done"}
+{"id":"fb6731ab-29da-4cea-90d6-0c764f998773","taskKind":"run-all","planId":"IDEA-105","planTitle":"Plain-language the confusing UI text","agentId":"claude-code","startedAt":"2026-07-30T14:41:51.671Z","endedAt":"2026-07-30T14:59:01.183Z","outcome":"error"}

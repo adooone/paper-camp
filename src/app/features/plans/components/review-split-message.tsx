@@ -109,7 +109,7 @@ export const ReviewSplitMessage = ({
     >
       <div className="text-sm" style={bubbleStyle}>
         {!result ? (
-          <Spinner size="small" label="Splitting the review…" />
+          <Spinner size="small" label="Separating review feedback…" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
             <p style={{ margin: 0, opacity: 0.7 }}>
