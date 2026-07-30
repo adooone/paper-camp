@@ -2,6 +2,7 @@ import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { EntityEntry } from '../types/index';
 import { clearPrCache } from './git-pr/pr';
 import {
   entityToIdea,
@@ -207,6 +208,16 @@ describe('entity views', () => {
     expect(work && entityToPlan(work).id).toBe('IDEA-3');
     expect(work && entityToPlan(work).kind).toBe('fix');
     expect(note && entityToIdea(note).title).toBe('A note');
+  });
+
+  it('entityToPlan preserves the review thread', async () => {
+    const { entries } = await readEntities(makeCorpus());
+    const work = entries.find((e) => e.id === 'IDEA-3');
+    expect(work).toBeDefined();
+    const withReview = { ...work, review: [{ date: '2026-07-30', text: 'Needs rework' }] };
+    expect(entityToPlan(withReview as EntityEntry).review).toEqual([
+      { date: '2026-07-30', text: 'Needs rework' },
+    ]);
   });
 });
 
