@@ -507,6 +507,66 @@ Body prose.
     expect(entries[0].body).toBe('Body prose.');
   });
 
+  it('extracts a decision/question kind tag on Notes entries', () => {
+    const md = `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+### Notes
+- [ ] [body] [decision] Ship the v2 API without a compat shim
+- [ ] [phase:1] [question] Does this need a migration?
+`;
+    const { entries, warnings } = parseEntityFile(md);
+    expect(warnings).toEqual([]);
+    expect(entries[0].notes).toEqual([
+      {
+        anchor: { kind: 'body' },
+        prose: 'Ship the v2 API without a compat shim',
+        state: 'open',
+        kind: 'decision',
+      },
+      {
+        anchor: { kind: 'phase', index: 1 },
+        prose: 'Does this need a migration?',
+        state: 'open',
+        kind: 'question',
+      },
+    ]);
+  });
+
+  it('round-trips a decision note kind through formatEntityFile', () => {
+    const written = formatEntityFile({
+      id: 'IDEA-99',
+      title: 'Tolerant heading',
+      type: 'feat',
+      created: '2026-07-13',
+      body: 'Body prose.',
+      notes: [
+        {
+          anchor: { kind: 'body' },
+          prose: 'Ship the v2 API without a compat shim',
+          state: 'open',
+          kind: 'decision',
+        },
+      ],
+    });
+    const { entries, warnings } = parseEntityFile(written);
+    expect(warnings).toEqual([]);
+    expect(entries[0].notes).toEqual([
+      {
+        anchor: { kind: 'body' },
+        prose: 'Ship the v2 API without a compat shim',
+        state: 'open',
+        kind: 'decision',
+      },
+    ]);
+  });
+
   it('round-trips notes through formatEntityFile', () => {
     const written = formatEntityFile({
       id: 'IDEA-99',

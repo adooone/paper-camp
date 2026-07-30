@@ -19,7 +19,7 @@ Fold both onto the entity: a decision or question about a feature is a lightweig
 Also clears the confusing entity UI this created: "Graduate this into an open question that outlives this entity", the Clarifications-vs-Open-questions split, "Promote straight into a decision". Supersedes the browse/search half of [[IDEA-96]] and [[IDEA-97]].
 
 ### Phases
-- [ ] Model decisions and questions as notes on the idea entity
+- [x] Model decisions and questions as notes on the idea entity
       Reuse the existing notes/clarifications machinery so a decision or question is a lightweight note bound to its idea, shown and closed there.
 - [ ] Migrate existing `decisions.md`/`open-questions.md` content onto their ideas
       Fold each entry onto the idea it bounds; drop cross-cutting rules that already live in `AGENTS.md`/`docs/CODE_STYLE.md`.

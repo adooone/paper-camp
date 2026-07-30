@@ -13,6 +13,7 @@ import type {
   LogEntry,
   MarginNote,
   MarginNoteAnchor,
+  MarginNoteKind,
   OpenQuestionEntry,
   PhaseItem,
   PlanEntry,
@@ -100,7 +101,7 @@ const PhasesSection = ({
   updating: boolean;
   onTogglePhase: (index: number) => void;
   onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
-  onAddNote: (anchor: MarginNoteAnchor, prose: string) => Promise<boolean>;
+  onAddNote: (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => Promise<boolean>;
   onResolveNote: (note: MarginNote) => Promise<boolean>;
 }) => (
   <div style={{ marginBottom: space[8] }}>
@@ -171,7 +172,7 @@ const PhasesSection = ({
               <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
               <AddMarginNoteButton
                 label="Add a note on this phase"
-                onAdd={(prose) => onAddNote({ kind: 'phase', index }, prose)}
+                onAdd={(prose, kind) => onAddNote({ kind: 'phase', index }, prose, kind)}
                 disabled={updating}
               />
               {!phase.done && agentPhaseIndex === index ? (
@@ -525,8 +526,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     return patchByTitle(plan.title, { review: [...(plan.review ?? []), newEntry] });
   };
 
-  const handleAddNote = async (anchor: MarginNoteAnchor, prose: string) => {
-    const newNote: MarginNote = { anchor, prose, state: 'open' };
+  const handleAddNote = async (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => {
+    const newNote: MarginNote = { anchor, prose, state: 'open', ...(kind ? { kind } : {}) };
     return patchByTitle(plan.title, { notes: [...(plan.notes ?? []), newNote] });
   };
 
@@ -689,7 +690,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               </div>
               <AddMarginNoteButton
                 label="Add a note on this plan's body"
-                onAdd={(prose) => handleAddNote({ kind: 'body' }, prose)}
+                onAdd={(prose, kind) => handleAddNote({ kind: 'body' }, prose, kind)}
                 disabled={updating}
               />
             </div>

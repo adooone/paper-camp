@@ -1,4 +1,3 @@
-IDEA-103 — One feedback thread on every idea, any status
 IDEA-104 — Decisions and questions live on the idea
 IDEA-106 — Slim agent prompts for short, direct output
 IDEA-107 — De-complicate the worst code

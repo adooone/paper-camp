@@ -44,10 +44,13 @@ export type MarginNoteAnchor = { kind: 'phase'; index: number } | { kind: 'body'
 
 export type MarginNoteState = 'open' | 'resolved';
 
+export type MarginNoteKind = 'note' | 'decision' | 'question';
+
 export interface MarginNote {
   anchor: MarginNoteAnchor;
   prose: string;
   state: MarginNoteState;
+  kind?: MarginNoteKind;
 }
 
 export interface RawEntry {
