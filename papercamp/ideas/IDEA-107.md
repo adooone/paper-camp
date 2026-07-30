@@ -32,7 +32,7 @@ A legibility pass over the worst duplication and over-abstraction (from the audi
       One section-appender over a shared field list in place of the 4 near-identical builders.
 - [x] Add `locateItem()` to `core/roadmap.ts`
       Replace the 4 mutators' repeated scans with one locator and thin splices.
-- [ ] Extract UI components and the smaller helpers
+- [x] Extract UI components and the smaller helpers
       Split `status-section.tsx` and the inline blocks in `entity-detail.tsx`; add the generic parse loop in `parser.ts` and the `spawnJson` helper in `pr-lookup.ts`.
 - [ ] Type-check and full pass
       Confirm no behaviour change and all tests stay green.

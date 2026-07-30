@@ -52,30 +52,40 @@ function extractSection<T>(body: string, section: SectionDef<T>): { body: string
   return { body: remaining, entries };
 }
 
-/** Every entry file (plan, entity, raw ## block) carries the same five optional
- * trailing sections in the same order — extract them together so callers stop
- * re-spelling the phases/log/clarifications/notes/review sequence three times. */
-function extractStandardSections(body: string): {
-  body: string;
+interface StandardSections {
   phases: PhaseItem[];
   log: LogEntry[];
   clarifications: LogEntry[];
   notes: MarginNote[];
   review: LogEntry[];
-} {
-  const afterPhases = extractSection(body, PHASES_SECTION);
-  const afterLog = extractSection(afterPhases.body, LOG_SECTION);
-  const afterClarifications = extractSection(afterLog.body, CLARIFICATIONS_SECTION);
-  const afterNotes = extractSection(afterClarifications.body, NOTES_SECTION);
-  const afterReview = extractSection(afterNotes.body, REVIEW_SECTION);
-  return {
-    body: afterReview.body,
-    phases: afterPhases.entries,
-    log: afterLog.entries,
-    clarifications: afterClarifications.entries,
-    notes: afterNotes.entries,
-    review: afterReview.entries,
+}
+
+const STANDARD_SECTION_DEFS: Record<keyof StandardSections, SectionDef<unknown>> = {
+  phases: PHASES_SECTION as SectionDef<unknown>,
+  log: LOG_SECTION as SectionDef<unknown>,
+  clarifications: CLARIFICATIONS_SECTION as SectionDef<unknown>,
+  notes: NOTES_SECTION as SectionDef<unknown>,
+  review: REVIEW_SECTION as SectionDef<unknown>,
+};
+
+/** Every entry file (plan, entity, raw ## block) carries the same five optional
+ * trailing sections in the same order — extract them together so callers stop
+ * re-spelling the phases/log/clarifications/notes/review sequence three times. */
+function extractStandardSections(body: string): { body: string } & StandardSections {
+  const result: Record<keyof StandardSections, unknown[]> = {
+    phases: [],
+    log: [],
+    clarifications: [],
+    notes: [],
+    review: [],
   };
+  let remaining = body;
+  for (const key of Object.keys(STANDARD_SECTION_DEFS) as (keyof StandardSections)[]) {
+    const extracted = extractSection(remaining, STANDARD_SECTION_DEFS[key]);
+    remaining = extracted.body;
+    result[key] = extracted.entries;
+  }
+  return { body: remaining, ...(result as unknown as StandardSections) };
 }
 
 export function parseRawEntries(markdown: string): RawEntry[] {
