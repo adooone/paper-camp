@@ -109,3 +109,6 @@
 | IDEA-105 | Plain-language the confusing UI text | fix | idea | app, ui |
 | IDEA-106 | Slim agent prompts for short, direct output | feat | idea | agent, plans, app |
 | IDEA-107 | De-complicate the worst code | refactor | idea | app, core, server |
+| IDEA-108 | Surface a diverged main with a one-click agent fix | feat | idea | git, app, agent |
+| IDEA-109 | Compact Deliver section, more room for the agent stack | feat | idea | app, ui, stack |
+| IDEA-110 | In-app code review with diffs | feat | idea | app, git, ui |
