@@ -2,7 +2,7 @@
 id: IDEA-109
 title: Compact Deliver section, more room for the agent stack
 type: feat
-status: idea
+status: review
 created: 2026-07-30
 updated: 2026-07-30
 tags:
@@ -30,4 +30,4 @@ Result: a small, fixed-height card, so the freed vertical space goes to the **Ag
       Remove the unused message textarea; keep the title input and the commit action wired as-is.
 - [x] Give the freed space to the agent stack
       In `agent-section.tsx`, raise the 3-item render cap so more agent-stack items show, and ensure the compact fixed-height Deliver card lets that space flow to the stack.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
