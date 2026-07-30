@@ -83,3 +83,7 @@ is silently discarded.
       `git.ts`) never silently discards the list the way it does `ideas/index.md`.
 - [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check .`, and `pnpm test` clean across the repo.
+
+### Notes
+- [x] [body] [decision] Run order lives in `papercamp/run-order.md`, one `IDEA-N — Title` line per entity
+- [ ] [body] [question] Should notes' `order` move into `run-order.md` alongside plans/ideas?

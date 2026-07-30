@@ -35,3 +35,6 @@ The app has grown surfaces nobody visits. Minimise to the features actually used
       `runGit` includes stdout in the rejection when stderr is empty (so "nothing to commit" survives); commit/push/sync/pull failures surface as toasts with a one-line summary instead of raw multi-line git output in inline Alerts; a failed commit also refreshes git status so stale "changed files" don't invite a doomed retry.
 - [x] Gate the pass
       `tsc --noEmit`, `biome check`, full tests; click through Docs, Settings, and Tasks to confirm the kept surfaces still work and nothing dangles; force a commit and push failure and confirm both read as one-line toasts.
+
+### Notes
+- [x] [body] [question] Do push/sync/pull failure toasts need a one-line summary, not raw git stderr?

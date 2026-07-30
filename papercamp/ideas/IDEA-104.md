@@ -21,7 +21,7 @@ Also clears the confusing entity UI this created: "Graduate this into an open qu
 ### Phases
 - [x] Model decisions and questions as notes on the idea entity
       Reuse the existing notes/clarifications machinery so a decision or question is a lightweight note bound to its idea, shown and closed there.
-- [ ] Migrate existing `decisions.md`/`open-questions.md` content onto their ideas
+- [x] Migrate existing `decisions.md`/`open-questions.md` content onto their ideas
       Fold each entry onto the idea it bounds; drop cross-cutting rules that already live in `AGENTS.md`/`docs/CODE_STYLE.md`.
 - [ ] Retire the global files, decision search, and consistency checks
       Remove `decisions.md`/`open-questions.md`, the decision search, and the `blocked-plan-active`/`dangling-*` consistency checks that relied on them.

@@ -44,3 +44,7 @@ Provenance: surfaced 2026-07-25 when Sync to main silently did nothing — the s
 ### Log
 - 2026-07-29: I think changes in branch would be hard to maintain, I would keep our current approach for now, so please remove branch edits from this idea and plan.
 - 2026-07-29: Also to clean up the space in the toolbar we need to remove current 3 actions in right side - commit, run tests, fix quality as we already have this in the Stack panel
+
+### Notes
+- [x] [body] [decision] Escalate-on-failure stays scoped to the branch switch, not push/pull
+- [x] [body] [decision] Git-sync recovery escalates automatically, no confirmation step

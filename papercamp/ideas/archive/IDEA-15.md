@@ -44,3 +44,6 @@ The "Draft plan" agent: reads an idea and writes a real phased plan entry with t
 
 ### Log
 - 2026-06-27: No visible feedback when draft button is clicked. No agent logs in stack and nothing working. After clicking draft button I dont see plan was created. Or where should I find it?
+
+### Notes
+- [x] [body] [decision] Plan-drafting agent writes plans.md directly, same as phase execution

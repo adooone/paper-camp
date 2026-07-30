@@ -40,3 +40,6 @@ Settled: open questions stay a single file. The corpus is 7 entries total, only 
       Let a question that outlives one entity's `### Clarifications` graduate into `open-questions.md`, completing the three-tier chain in one direction.
 - [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
+
+### Notes
+- [x] [body] [decision] Open questions stay one file, not per-file entities

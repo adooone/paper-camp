@@ -67,3 +67,6 @@ dependency is left since the [[IDEA-32]] bump landed `Breadcrumb`.
 - [x] Type-check and visual pass
       `tsc --noEmit`, `biome check`, tests, and a browser pass over deep links,
       refresh, back-button behavior, and the merged Plans tabs.
+
+### Notes
+- [x] [body] [decision] The plans worklist is one filterable list — no Board/Review/Closed tabs
