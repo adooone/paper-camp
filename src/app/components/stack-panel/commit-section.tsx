@@ -214,6 +214,9 @@ const StatusStamps = () => {
             <button
               type="button"
               className={hasIssues ? 'stack-check-btn' : undefined}
+              disabled={!hasIssues}
+              aria-expanded={hasIssues ? docIssuesExpanded : undefined}
+              aria-controls="stack-doc-findings"
               onClick={() => {
                 if (hasIssues) setDocIssuesExpanded((prev) => !prev);
               }}
@@ -237,6 +240,7 @@ const StatusStamps = () => {
           </Tooltip>
           {docIssuesExpanded && hasIssues && (
             <div
+              id="stack-doc-findings"
               style={{
                 marginTop: space[2],
                 display: 'flex',

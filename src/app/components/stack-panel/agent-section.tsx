@@ -196,7 +196,8 @@ export const AgentSection = () => {
           flexDirection: 'column',
           justifyContent: visibleTasks.length > 0 ? 'flex-start' : 'center',
           gap: space[2],
-          minHeight: taskStackMinHeight,
+          minHeight: 0,
+          flexBasis: taskStackMinHeight,
           overflowY: 'auto',
         }}
       >
