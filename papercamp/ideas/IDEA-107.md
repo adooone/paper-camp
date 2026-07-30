@@ -24,7 +24,7 @@ A legibility pass over the worst duplication and over-abstraction (from the audi
 ### Phases
 - [x] Extract a `planActionRoute` factory in `server/routes/agent.ts`
       Fold the repeated parse→validate→404→409→202 across the ~10 handlers into one factory.
-- [ ] Split `stores/app-store.ts` into per-domain slices with a launch helper
+- [x] Split `stores/app-store.ts` into per-domain slices with a launch helper
       Break up the 700-line store and collapse the ~9 identical launch thunks.
 - [ ] Share a `runPhaseProcess()` and table-drive `finishTask` in `server/agent.ts`
       Merge the `startBatchReconcile`/`startRunAllPhases` twins; replace the 8-branch ternary with a lookup table.
