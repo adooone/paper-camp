@@ -30,7 +30,7 @@ A legibility pass over the worst duplication and over-abstraction (from the audi
       Merge the `startBatchReconcile`/`startRunAllPhases` twins; replace the 8-branch ternary with a lookup table.
 - [x] Collapse the `format*` builders in `core/serialize/serializer.ts`
       One section-appender over a shared field list in place of the 4 near-identical builders.
-- [ ] Add `locateItem()` to `core/roadmap.ts`
+- [x] Add `locateItem()` to `core/roadmap.ts`
       Replace the 4 mutators' repeated scans with one locator and thin splices.
 - [ ] Extract UI components and the smaller helpers
       Split `status-section.tsx` and the inline blocks in `entity-detail.tsx`; add the generic parse loop in `parser.ts` and the `spawnJson` helper in `pr-lookup.ts`.

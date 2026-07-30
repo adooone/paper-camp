@@ -93,6 +93,46 @@ export function parseRoadmap(markdown: string): Roadmap {
   return { goal, horizons, standingConcerns };
 }
 
+function locateHorizon(
+  lines: string[],
+  horizonTitle: string,
+): { start: number; end: number } | undefined {
+  for (let i = 0; i < lines.length; i++) {
+    const horizonMatch = lines[i].match(HORIZON_HEADING_RE);
+    if (!horizonMatch || horizonMatch[1].trim() !== horizonTitle) continue;
+
+    let end = i + 1;
+    while (end < lines.length && !H2_RE.test(lines[end])) end++;
+    return { start: i + 1, end };
+  }
+  return undefined;
+}
+
+// Finds one item's bullet line range (start inclusive, end exclusive of its wrapped
+// continuation lines and candidates) within a horizon, so the 4 mutators below can splice
+// off this one scan instead of each re-walking the heading and bullet structure themselves.
+function locateItem(
+  lines: string[],
+  horizonTitle: string,
+  itemName: string,
+): { start: number; end: number } | undefined {
+  const horizon = locateHorizon(lines, horizonTitle);
+  if (!horizon) return undefined;
+
+  for (let j = horizon.start; j < horizon.end; j++) {
+    const itemMatch = lines[j].match(ITEM_RE);
+    if (!itemMatch || itemMatch[1].trim() !== itemName) continue;
+
+    let itemEnd = j + 1;
+    while (itemEnd < horizon.end && !ITEM_RE.test(lines[itemEnd])) {
+      if (!ITEM_CONTINUATION_RE.test(lines[itemEnd])) break;
+      itemEnd++;
+    }
+    return { start: j, end: itemEnd };
+  }
+  return undefined;
+}
+
 // Splices out one item's bullet (and its wrapped continuation lines and candidates) so the
 // round trip through parseRoadmap sees one fewer item and nothing else changes — used to
 // promote an item into an idea while keeping the roadmap the honest map of what hasn't started.
@@ -104,41 +144,21 @@ export function removeRoadmapItem(
   candidateName?: string,
 ): string {
   const lines = markdown.split('\n');
+  const item = locateItem(lines, horizonTitle, itemName);
+  if (!item) return markdown;
 
-  for (let i = 0; i < lines.length; i++) {
-    const horizonMatch = lines[i].match(HORIZON_HEADING_RE);
-    if (!horizonMatch || horizonMatch[1].trim() !== horizonTitle) continue;
-
-    let end = i + 1;
-    while (end < lines.length && !H2_RE.test(lines[end])) end++;
-
-    for (let j = i + 1; j < end; j++) {
-      const itemMatch = lines[j].match(ITEM_RE);
-      if (!itemMatch || itemMatch[1].trim() !== itemName) continue;
-
-      let itemEnd = j + 1;
-      while (itemEnd < end && !ITEM_RE.test(lines[itemEnd])) {
-        if (!ITEM_CONTINUATION_RE.test(lines[itemEnd])) break;
-        itemEnd++;
-      }
-
-      if (candidateName === undefined) {
-        lines.splice(j, itemEnd - j);
-        return lines.join('\n');
-      }
-
-      for (let k = j + 1; k < itemEnd; k++) {
-        const candidateMatch = lines[k].match(ITEM_CANDIDATE_RE);
-        if (candidateMatch && candidateMatch[1].trim() === candidateName) {
-          lines.splice(k, 1);
-          return lines.join('\n');
-        }
-      }
-      return markdown;
-    }
-    return markdown;
+  if (candidateName === undefined) {
+    lines.splice(item.start, item.end - item.start);
+    return lines.join('\n');
   }
 
+  for (let k = item.start + 1; k < item.end; k++) {
+    const candidateMatch = lines[k].match(ITEM_CANDIDATE_RE);
+    if (candidateMatch && candidateMatch[1].trim() === candidateName) {
+      lines.splice(k, 1);
+      return lines.join('\n');
+    }
+  }
   return markdown;
 }
 
@@ -152,20 +172,13 @@ export function addRoadmapItem(
   description: string,
 ): string {
   const lines = markdown.split('\n');
+  const horizon = locateHorizon(lines, horizonTitle);
+  if (!horizon) return markdown;
 
-  for (let i = 0; i < lines.length; i++) {
-    const horizonMatch = lines[i].match(HORIZON_HEADING_RE);
-    if (!horizonMatch || horizonMatch[1].trim() !== horizonTitle) continue;
-
-    let end = i + 1;
-    while (end < lines.length && !H2_RE.test(lines[end])) end++;
-
-    while (end > i + 1 && lines[end - 1].trim() === '') end--;
-    lines.splice(end, 0, `- **${name}** — ${description}`);
-    return lines.join('\n');
-  }
-
-  return markdown;
+  let end = horizon.end;
+  while (end > horizon.start && lines[end - 1].trim() === '') end--;
+  lines.splice(end, 0, `- **${name}** — ${description}`);
+  return lines.join('\n');
 }
 
 // Appends a new candidate bullet under an existing item, indented to match ITEM_CANDIDATE_RE.
@@ -177,31 +190,11 @@ export function addRoadmapCandidate(
   candidateName: string,
 ): string {
   const lines = markdown.split('\n');
+  const item = locateItem(lines, horizonTitle, itemName);
+  if (!item) return markdown;
 
-  for (let i = 0; i < lines.length; i++) {
-    const horizonMatch = lines[i].match(HORIZON_HEADING_RE);
-    if (!horizonMatch || horizonMatch[1].trim() !== horizonTitle) continue;
-
-    let end = i + 1;
-    while (end < lines.length && !H2_RE.test(lines[end])) end++;
-
-    for (let j = i + 1; j < end; j++) {
-      const itemMatch = lines[j].match(ITEM_RE);
-      if (!itemMatch || itemMatch[1].trim() !== itemName) continue;
-
-      let itemEnd = j + 1;
-      while (itemEnd < end && !ITEM_RE.test(lines[itemEnd])) {
-        if (!ITEM_CONTINUATION_RE.test(lines[itemEnd])) break;
-        itemEnd++;
-      }
-
-      lines.splice(itemEnd, 0, `  - ${candidateName}`);
-      return lines.join('\n');
-    }
-    return markdown;
-  }
-
-  return markdown;
+  lines.splice(item.end, 0, `  - ${candidateName}`);
+  return lines.join('\n');
 }
 
 // Appends a link bullet (`  - → entityId`) under an existing item, indented to match
@@ -213,31 +206,11 @@ export function linkRoadmapItem(
   entityId: string,
 ): string {
   const lines = markdown.split('\n');
+  const item = locateItem(lines, horizonTitle, itemName);
+  if (!item) return markdown;
 
-  for (let i = 0; i < lines.length; i++) {
-    const horizonMatch = lines[i].match(HORIZON_HEADING_RE);
-    if (!horizonMatch || horizonMatch[1].trim() !== horizonTitle) continue;
-
-    let end = i + 1;
-    while (end < lines.length && !H2_RE.test(lines[end])) end++;
-
-    for (let j = i + 1; j < end; j++) {
-      const itemMatch = lines[j].match(ITEM_RE);
-      if (!itemMatch || itemMatch[1].trim() !== itemName) continue;
-
-      let itemEnd = j + 1;
-      while (itemEnd < end && !ITEM_RE.test(lines[itemEnd])) {
-        if (!ITEM_CONTINUATION_RE.test(lines[itemEnd])) break;
-        itemEnd++;
-      }
-
-      lines.splice(itemEnd, 0, `  - → ${entityId}`);
-      return lines.join('\n');
-    }
-    return markdown;
-  }
-
-  return markdown;
+  lines.splice(item.end, 0, `  - → ${entityId}`);
+  return lines.join('\n');
 }
 
 // The subject vocabulary: horizon items in horizon/item order (H1 near-term → H3 long
