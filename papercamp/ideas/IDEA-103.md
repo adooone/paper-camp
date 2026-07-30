@@ -29,6 +29,6 @@ Builds directly on the Feedback view and `detailView` slice from [[IDEA-89]]'s r
       Merge the plain comment log into the Feedback thread (comments, review points, and split proposals as one conversation) and retire the separate `CommentsSection` from `entity-detail.tsx`, or rename it as that thread.
 - [x] Collapse the split/preview modals into one in-thread proposal
       Replace the stack of duplicate panels/modals with a single proposal message rendered in the thread, approved or declined inline — no modal carrying the same information twice.
-- [ ] Make thread messages short and scannable
+- [x] Make thread messages short and scannable
       Render each entry compact instead of a wall of text, so review points and proposals are easy to read and act on.
 - [ ] Type-check and full pass

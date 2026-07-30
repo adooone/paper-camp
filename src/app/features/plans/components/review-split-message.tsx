@@ -7,6 +7,7 @@ import { STATUS_STAMP } from '../constants';
 // Direct file import, not the ../modals barrel: that barrel re-exports create-idea-modal,
 // which imports this component's barrel back — a cycle depcruise rejects.
 import { DiffText } from '../modals/reconcile-diff-panel';
+import { CollapsibleText } from './collapsible-text';
 
 interface ReviewSplitMessageProps {
   launching: boolean;
@@ -39,9 +40,9 @@ const bubbleStyle = {
 };
 
 const pointHeading = (text: string) => (
-  <p className="text-sm" style={{ margin: `0 0 ${space[2]}`, opacity: 0.7, fontStyle: 'italic' }}>
-    "{text}"
-  </p>
+  <div className="text-sm" style={{ margin: `0 0 ${space[2]}`, opacity: 0.7, fontStyle: 'italic' }}>
+    <CollapsibleText collapsedLines={2}>"{text}"</CollapsibleText>
+  </div>
 );
 
 export const ReviewSplitMessage = ({
@@ -142,7 +143,9 @@ export const ReviewSplitMessage = ({
                         <DiffText tokens={diffWords('', phase.text)} />
                         {phase.description && (
                           <div style={{ opacity: 0.85, marginTop: space[1] }}>
-                            <DiffText tokens={diffWords('', phase.description)} />
+                            <CollapsibleText collapsedLines={3}>
+                              <DiffText tokens={diffWords('', phase.description)} />
+                            </CollapsibleText>
                           </div>
                         )}
                       </div>
@@ -157,9 +160,11 @@ export const ReviewSplitMessage = ({
                     >
                       <DiffText tokens={diffWords('', item.followUp.title)} />
                     </p>
-                    <p className="text-sm" style={{ margin: `${space[1]} 0 0`, lineHeight: 1.5 }}>
-                      <DiffText tokens={diffWords('', item.followUp.body)} />
-                    </p>
+                    <div className="text-sm" style={{ margin: `${space[1]} 0 0`, lineHeight: 1.5 }}>
+                      <CollapsibleText collapsedLines={3}>
+                        <DiffText tokens={diffWords('', item.followUp.body)} />
+                      </CollapsibleText>
+                    </div>
                   </div>
                 )}
               </div>

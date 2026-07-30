@@ -313,7 +313,9 @@ const FeedbackThread = ({
             maxWidth: '85%',
           }}
         >
-          {item.text}
+          <CollapsibleText collapsedLines={3} resetKey={`${item.date}-${i}`}>
+            {item.text}
+          </CollapsibleText>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
           <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
