@@ -89,7 +89,53 @@ async function findIdeaById(root: string, ideaId: string): Promise<IdeaEntry | u
   return entity ? toIdeaEntry(entity) : undefined;
 }
 
+type ActionResult = { ok: true } | { ok: false; error: string; status?: number };
+
 export function agentRoutes({ root, git, status, agent }: RouteContext): Route[] {
+  async function resolvePlan(
+    planId: string,
+  ): Promise<{ ok: true; plan: PlanEntry } | { ok: false; error: string; status: number }> {
+    const plan = await findPlanById(root, planId);
+    if (!plan) return { ok: false, status: 404, error: 'plan not found' };
+    const conflict = await checkBranchConflictForPlan(root, git, plan.id);
+    if (conflict) return { ok: false, status: 409, error: conflict };
+    return { ok: true, plan };
+  }
+
+  async function resolveIdea(
+    ideaId: string,
+  ): Promise<{ ok: true; idea: IdeaEntry } | { ok: false; error: string; status: number }> {
+    const idea = await findIdeaById(root, ideaId);
+    if (!idea) return { ok: false, status: 404, error: 'idea not found' };
+    return { ok: true, idea };
+  }
+
+  function planActionRoute<TBody>(
+    path: string,
+    parse: (raw: string) => TBody | null,
+    invalidError: string,
+    run: (body: TBody) => Promise<ActionResult> | ActionResult,
+  ): Route {
+    return {
+      method: 'POST',
+      path,
+      handle: async (req, res) => {
+        const raw = await readBody(req);
+        const body = parse(raw);
+        if (body === null) {
+          sendJson(res, 400, { error: invalidError });
+          return;
+        }
+        const result = await run(body);
+        if (!result.ok) {
+          sendJson(res, result.status ?? 409, { error: result.error });
+          return;
+        }
+        sendJson(res, 202, { ok: true });
+      },
+    };
+  }
+
   return [
     {
       method: 'GET',
@@ -109,290 +155,164 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    {
-      method: 'POST',
-      path: '/api/agent/launch',
-      handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId, phaseIndex } = JSON.parse(reqBody) as {
-          planId?: string;
-          phaseIndex?: number;
-        };
-        if (!planId || typeof phaseIndex !== 'number') {
-          sendJson(res, 400, { error: 'planId and phaseIndex are required' });
-          return;
-        }
-        const plan = await findPlanById(root, planId);
-        if (!plan) {
-          sendJson(res, 404, { error: 'plan not found' });
-          return;
-        }
-        const conflict = await checkBranchConflictForPlan(root, git, plan.id);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
-        const result = agent.start(plan, phaseIndex);
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
+    planActionRoute(
+      '/api/agent/launch',
+      (raw) => {
+        const { planId, phaseIndex } = JSON.parse(raw) as { planId?: string; phaseIndex?: number };
+        if (!planId || typeof phaseIndex !== 'number') return null;
+        return { planId, phaseIndex };
       },
-    },
-
-    {
-      method: 'POST',
-      path: '/api/agent/launch-audit',
-      handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId, prompt } = JSON.parse(reqBody) as { planId?: string; prompt?: string };
-        if (!planId || !prompt) {
-          sendJson(res, 400, { error: 'planId and prompt are required' });
-          return;
-        }
-        const plan = await findPlanById(root, planId);
-        if (!plan) {
-          sendJson(res, 404, { error: 'plan not found' });
-          return;
-        }
-        const conflict = await checkBranchConflictForPlan(root, git, plan.id);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
-        const result = agent.startForPlan(plan, prompt);
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
+      'planId and phaseIndex are required',
+      async ({ planId, phaseIndex }) => {
+        const resolved = await resolvePlan(planId);
+        if (!resolved.ok) return resolved;
+        return agent.start(resolved.plan, phaseIndex);
       },
-    },
+    ),
 
-    {
-      method: 'POST',
-      path: '/api/agent/launch-rework',
-      handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId, prompt } = JSON.parse(reqBody) as { planId?: string; prompt?: string };
-        if (!planId || !prompt) {
-          sendJson(res, 400, { error: 'planId and prompt are required' });
-          return;
-        }
-        const plan = await findPlanById(root, planId);
-        if (!plan) {
-          sendJson(res, 404, { error: 'plan not found' });
-          return;
-        }
-        const conflict = await checkBranchConflictForPlan(root, git, plan.id);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
-        const result = agent.startForPlan(plan, prompt, 'rework');
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
+    planActionRoute(
+      '/api/agent/launch-audit',
+      (raw) => {
+        const { planId, prompt } = JSON.parse(raw) as { planId?: string; prompt?: string };
+        if (!planId || !prompt) return null;
+        return { planId, prompt };
       },
-    },
+      'planId and prompt are required',
+      async ({ planId, prompt }) => {
+        const resolved = await resolvePlan(planId);
+        if (!resolved.ok) return resolved;
+        return agent.startForPlan(resolved.plan, prompt);
+      },
+    ),
 
-    {
-      method: 'POST',
-      path: '/api/agent/launch-reconcile',
-      handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId, prompt } = JSON.parse(reqBody) as { planId?: string; prompt?: string };
-        if (!planId || !prompt) {
-          sendJson(res, 400, { error: 'planId and prompt are required' });
-          return;
-        }
-        const plan = await findPlanById(root, planId);
-        if (!plan) {
-          sendJson(res, 404, { error: 'plan not found' });
-          return;
-        }
-        const conflict = await checkBranchConflictForPlan(root, git, plan.id);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
+    planActionRoute(
+      '/api/agent/launch-rework',
+      (raw) => {
+        const { planId, prompt } = JSON.parse(raw) as { planId?: string; prompt?: string };
+        if (!planId || !prompt) return null;
+        return { planId, prompt };
+      },
+      'planId and prompt are required',
+      async ({ planId, prompt }) => {
+        const resolved = await resolvePlan(planId);
+        if (!resolved.ok) return resolved;
+        return agent.startForPlan(resolved.plan, prompt, 'rework');
+      },
+    ),
+
+    planActionRoute(
+      '/api/agent/launch-reconcile',
+      (raw) => {
+        const { planId, prompt } = JSON.parse(raw) as { planId?: string; prompt?: string };
+        if (!planId || !prompt) return null;
+        return { planId, prompt };
+      },
+      'planId and prompt are required',
+      async ({ planId, prompt }) => {
+        const resolved = await resolvePlan(planId);
+        if (!resolved.ok) return resolved;
         const filePath = await resolveEntityFilePath(root, planId);
         if (filePath) {
           const raw = await readFile(filePath, 'utf-8');
           const { content, changed } = applyKnownRenames(raw);
           if (changed) await writeFile(filePath, content, 'utf-8');
         }
-        const result = agent.startForPlan(plan, prompt, 'reconcile');
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
+        return agent.startForPlan(resolved.plan, prompt, 'reconcile');
       },
-    },
+    ),
 
-    {
-      method: 'POST',
-      path: '/api/agent/launch-draft',
-      handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { ideaId, prompt } = JSON.parse(reqBody) as { ideaId?: string; prompt?: string };
-        if (!ideaId || !prompt) {
-          sendJson(res, 400, { error: 'ideaId and prompt are required' });
-          return;
-        }
-        const idea = await findIdeaById(root, ideaId);
-        if (!idea) {
-          sendJson(res, 404, { error: 'idea not found' });
-          return;
-        }
-        // No branch-conflict guard: drafting only edits the idea's markdown, not code.
-        const result = agent.startForIdea(idea, prompt);
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
+    // No branch-conflict guard: drafting only edits the idea's markdown, not code.
+    planActionRoute(
+      '/api/agent/launch-draft',
+      (raw) => {
+        const { ideaId, prompt } = JSON.parse(raw) as { ideaId?: string; prompt?: string };
+        if (!ideaId || !prompt) return null;
+        return { ideaId, prompt };
       },
-    },
-
-    {
-      method: 'POST',
-      path: '/api/agent/launch-extend',
-      handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { ideaId, prompt } = JSON.parse(reqBody) as { ideaId?: string; prompt?: string };
-        if (!ideaId || !prompt) {
-          sendJson(res, 400, { error: 'ideaId and prompt are required' });
-          return;
-        }
-        const idea = await findIdeaById(root, ideaId);
-        if (!idea) {
-          sendJson(res, 404, { error: 'idea not found' });
-          return;
-        }
-        // No branch-conflict guard: extending only edits the idea's prose/log, not code.
-        const result = agent.startForIdeaExtend(idea, prompt);
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
+      'ideaId and prompt are required',
+      async ({ ideaId, prompt }) => {
+        const resolved = await resolveIdea(ideaId);
+        if (!resolved.ok) return resolved;
+        return agent.startForIdea(resolved.idea, prompt);
       },
-    },
+    ),
 
-    {
-      method: 'POST',
-      path: '/api/agent/launch-suggest',
-      handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { prompt } = JSON.parse(reqBody) as { prompt?: string };
-        if (!prompt) {
-          sendJson(res, 400, { error: 'prompt is required' });
-          return;
-        }
-        // No branch-conflict guard: this only appends lines to suggestions.md, not code.
-        const result = await agent.startSuggest(prompt);
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
+    // No branch-conflict guard: extending only edits the idea's prose/log, not code.
+    planActionRoute(
+      '/api/agent/launch-extend',
+      (raw) => {
+        const { ideaId, prompt } = JSON.parse(raw) as { ideaId?: string; prompt?: string };
+        if (!ideaId || !prompt) return null;
+        return { ideaId, prompt };
       },
-    },
+      'ideaId and prompt are required',
+      async ({ ideaId, prompt }) => {
+        const resolved = await resolveIdea(ideaId);
+        if (!resolved.ok) return resolved;
+        return agent.startForIdeaExtend(resolved.idea, prompt);
+      },
+    ),
 
-    {
-      method: 'POST',
-      path: '/api/agent/launch-reconcile-all',
-      handle: async (_req, res) => {
+    // No branch-conflict guard: this only appends lines to suggestions.md, not code.
+    planActionRoute(
+      '/api/agent/launch-suggest',
+      (raw) => {
+        const { prompt } = JSON.parse(raw) as { prompt?: string };
+        return prompt ? { prompt } : null;
+      },
+      'prompt is required',
+      ({ prompt }) => agent.startSuggest(prompt),
+    ),
+
+    planActionRoute(
+      '/api/agent/launch-reconcile-all',
+      () => ({}),
+      '',
+      async () => {
         const conflict = await checkBranchConflictForPlan(root, git);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
-        const result = agent.startBatchReconcile();
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
+        if (conflict) return { ok: false, error: conflict };
+        return agent.startBatchReconcile();
       },
-    },
+    ),
 
-    {
-      method: 'POST',
-      path: '/api/agent/launch-run-all',
-      handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId } = JSON.parse(reqBody) as { planId?: string };
-        if (!planId) {
-          sendJson(res, 400, { error: 'planId is required' });
-          return;
-        }
-        const plan = await findPlanById(root, planId);
-        if (!plan) {
-          sendJson(res, 404, { error: 'plan not found' });
-          return;
-        }
-        const conflict = await checkBranchConflictForPlan(root, git, plan.id);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
-        const result = agent.startRunAllPhases(plan, () => status.runChecksAndWait());
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
+    planActionRoute(
+      '/api/agent/launch-run-all',
+      (raw) => {
+        const { planId } = JSON.parse(raw) as { planId?: string };
+        return planId ? { planId } : null;
       },
-    },
+      'planId is required',
+      async ({ planId }) => {
+        const resolved = await resolvePlan(planId);
+        if (!resolved.ok) return resolved;
+        return agent.startRunAllPhases(resolved.plan, () => status.runChecksAndWait());
+      },
+    ),
 
-    {
-      method: 'POST',
-      path: '/api/agent/launch-fix-review',
-      handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId } = JSON.parse(reqBody) as { planId?: string };
-        if (!planId) {
-          sendJson(res, 400, { error: 'planId is required' });
-          return;
-        }
-        const plan = await findPlanById(root, planId);
-        if (!plan) {
-          sendJson(res, 404, { error: 'plan not found' });
-          return;
-        }
-        const conflict = await checkBranchConflictForPlan(root, git, plan.id);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
+    planActionRoute(
+      '/api/agent/launch-fix-review',
+      (raw) => {
+        const { planId } = JSON.parse(raw) as { planId?: string };
+        return planId ? { planId } : null;
+      },
+      'planId is required',
+      async ({ planId }) => {
+        const resolved = await resolvePlan(planId);
+        if (!resolved.ok) return resolved;
+        const { plan } = resolved;
         const prs = await resolvePrsByEntity(root);
         const pr = prs?.get(planId);
-        if (!pr) {
-          sendJson(res, 404, { error: 'No PR found for this plan' });
-          return;
-        }
+        if (!pr) return { ok: false, status: 404, error: 'No PR found for this plan' };
         const threads = await fetchUnresolvedThreads(root, pr.url);
         if (threads.length === 0) {
-          sendJson(res, 409, { error: 'No unresolved review threads to fix' });
-          return;
+          return { ok: false, error: 'No unresolved review threads to fix' };
         }
         const prompt = buildFixReviewPrompt(plan, threads);
         // Same `threads` array the prompt numbered, so the agent's 1-based verdicts
         // map back to the right thread ids.
-        const result = agent.startFixReview(plan, prompt, threads);
-        if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
-          return;
-        }
-        sendJson(res, 202, { ok: true });
+        return agent.startFixReview(plan, prompt, threads);
       },
-    },
+    ),
 
     {
       method: 'POST',

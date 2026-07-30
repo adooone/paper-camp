@@ -22,7 +22,7 @@ A legibility pass over the worst duplication and over-abstraction (from the audi
 - Extract components from `status-section.tsx` (270-line render) and the inline blocks in `entity-detail.tsx`; generic parse loop in `parser.ts`; `spawnJson` helper in `pr-lookup.ts`.
 
 ### Phases
-- [ ] Extract a `planActionRoute` factory in `server/routes/agent.ts`
+- [x] Extract a `planActionRoute` factory in `server/routes/agent.ts`
       Fold the repeated parse→validate→404→409→202 across the ~10 handlers into one factory.
 - [ ] Split `stores/app-store.ts` into per-domain slices with a launch helper
       Break up the 700-line store and collapse the ~9 identical launch thunks.
