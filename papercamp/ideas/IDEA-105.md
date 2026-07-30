@@ -32,7 +32,7 @@ Many titles and labels don't say plainly what they are. Text-only pass, no behav
 - [x] Rename "Provenance" → "History" and the "Views" toggle → "Show"
 - [x] Fix the agent action label and status/toast strings
       "Add /code-review findings" → "Add code-review findings", toast "Kept the reconciled version" → "Kept the merged version", "Splitting the review…" → "Separating review feedback…".
-- [ ] Reword the create-idea note option
+- [x] Reword the create-idea note option
       "Note — never needs a plan" → "Just a note (no plan needed)".
 - [ ] Type-check and full pass
       Confirm nothing keys off the changed display strings; behaviour unchanged.
