@@ -296,7 +296,7 @@ const FeedbackThread = ({
   items: ThreadItem[];
   onPromote: (entry: LogEntry) => void;
 }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: space[3], marginBottom: space[4] }}>
+  <>
     {items.map((item, i) => (
       <div
         key={`${item.date}-${i}`}
@@ -338,7 +338,7 @@ const FeedbackThread = ({
         </div>
       </div>
     ))}
-  </div>
+  </>
 );
 
 const PlanReviewSection = ({
@@ -393,21 +393,30 @@ const PlanReviewSection = ({
         />
       </div>
       <Card size="small" accent accentColor="slate" texture="kraft">
-        {thread.length > 0 ? (
-          <FeedbackThread items={thread} onPromote={onPromote} />
-        ) : (
-          <p className="text-sm" style={{ margin: `0 0 ${space[3]}`, color: color.textSecondary }}>
-            Jot a comment as you work, or talk through what's wrong — then Split review turns review
-            points into rework phases here or a follow-up idea.
-          </p>
-        )}
-        <ReviewSplitMessage
-          launching={launching}
-          result={result}
-          outcome={outcome}
-          onApprove={approve}
-          onDiscard={discard}
-        />
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: space[3],
+            marginBottom: space[4],
+          }}
+        >
+          {thread.length > 0 ? (
+            <FeedbackThread items={thread} onPromote={onPromote} />
+          ) : (
+            <p className="text-sm" style={{ margin: 0, color: color.textSecondary }}>
+              Jot a comment as you work, or talk through what's wrong — then Split review turns
+              review points into rework phases here or a follow-up idea.
+            </p>
+          )}
+          <ReviewSplitMessage
+            launching={launching}
+            result={result}
+            outcome={outcome}
+            onApprove={approve}
+            onDiscard={discard}
+          />
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
           <Textarea
             value={input}

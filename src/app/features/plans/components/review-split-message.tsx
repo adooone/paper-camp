@@ -65,7 +65,6 @@ export const ReviewSplitMessage = ({
           flexDirection: 'column',
           alignItems: 'flex-start',
           gap: space[1],
-          marginBottom: space[3],
         }}
       >
         <div className="text-sm" style={bubbleStyle}>
@@ -99,13 +98,7 @@ export const ReviewSplitMessage = ({
 
   return (
     <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: space[1],
-        marginBottom: space[3],
-      }}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: space[1] }}
     >
       <div className="text-sm" style={bubbleStyle}>
         {!result ? (
