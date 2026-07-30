@@ -26,7 +26,7 @@ Result: a small, fixed-height card, so the freed vertical space goes to the **Ag
       In `commit-section.tsx`, retitle the section "Deliver" and move the Quality/Tests/Consistency/Docs stamps from `status-section.tsx` to the top of the card; retire the standalone Status card in `stack-panel.tsx`.
 - [x] Replace the file list with an "N files changed" count
       Drop the per-file list; render just the changed-file count. Link it to the future diffs view ([[IDEA-110]]) when present, otherwise show the count as plain text.
-- [ ] Drop the commit message body, keep the title input
+- [x] Drop the commit message body, keep the title input
       Remove the unused message textarea; keep the title input and the commit action wired as-is.
 - [ ] Give the freed space to the agent stack
       In `agent-section.tsx`, raise the 3-item render cap so more agent-stack items show, and ensure the compact fixed-height Deliver card lets that space flow to the stack.

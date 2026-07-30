@@ -20,7 +20,6 @@ import {
   IconButton,
   Input,
   Stamp,
-  Textarea,
   Tooltip,
   useToast,
 } from '@dendelion/paper-ui';
@@ -36,8 +35,6 @@ import {
   gitErrorSummary,
   sectionLabelStyle,
 } from './shared';
-
-const COMMIT_MESSAGE_STORAGE_KEY = 'papercamp.commitMessage';
 
 // Keep in sync with .commitlintrc.json's `scope-enum` (release/main are release-bot-only, excluded here).
 const COMMIT_SCOPES = [
@@ -58,39 +55,18 @@ const COMMIT_SCOPES = [
   'repo',
 ];
 
-function readStoredCommitField(key: string): string {
-  try {
-    return localStorage.getItem(key) ?? '';
-  } catch {
-    return '';
-  }
-}
-
-function writeStoredCommitField(key: string, value: string): void {
-  try {
-    if (value) localStorage.setItem(key, value);
-    else localStorage.removeItem(key);
-  } catch {
-    // localStorage unavailable (e.g. private browsing) — fall back to in-memory only
-  }
-}
-
-function deriveSuggestedCommit(plan: PlanEntry | undefined): { title: string; message: string } {
+function deriveSuggestedCommit(plan: PlanEntry | undefined): { title: string } {
   // A finished plan (every phase done) has nothing meaningful to derive a title from —
   // suggest nothing rather than a vague "…: updates" placeholder. The user types it, or
   // clicks Suggest to draft one from the actual diff.
   if (!plan || (plan.phases.length > 0 && plan.phases.every((phase) => phase.done))) {
-    return { title: '', message: '' };
+    return { title: '' };
   }
   // Scope is a subsystem area, not the plan id (AGENTS.md: plan's primary tag); plan id goes in Refs: footer.
   const scope = plan.tags?.find((t) => COMMIT_SCOPES.includes(t)) ?? 'repo';
   const kind = plan.kind ?? 'feat';
   const title = `${kind}(${scope}): ${plan.title}`;
-  const refs = plan.id ? `Refs: ${plan.id}` : '';
-  const phaseBody = plan.phases.length
-    ? plan.phases.map((phase) => `- ${phase.text}`).join('\n')
-    : '';
-  return { title, message: [phaseBody, refs].filter(Boolean).join('\n\n') };
+  return { title };
 }
 
 const StatusStamps = () => {
@@ -424,18 +400,12 @@ const CommitForm = ({ files }: { files: string[] }) => {
   // Title is NOT seeded from localStorage — it's re-derived fresh each session from the
   // focus plan (or left empty), so a stale title never resurrects across sessions.
   const [commitTitle, setCommitTitle] = useState('');
-  const [commitMessage, setCommitMessage] = useState(() =>
-    readStoredCommitField(COMMIT_MESSAGE_STORAGE_KEY),
-  );
   const [committing, setCommitting] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
 
   const activePlan = useMemo(() => findFocusPlan(plans?.entries), [plans?.entries]);
-  const { title: suggestedTitle, message: suggestedMessage } = useMemo(
-    () => deriveSuggestedCommit(activePlan),
-    [activePlan],
-  );
+  const { title: suggestedTitle } = useMemo(() => deriveSuggestedCommit(activePlan), [activePlan]);
 
   useEffect(() => {
     if (suggestedTitle && !commitTitle) setCommitTitle(suggestedTitle);
@@ -462,27 +432,17 @@ const CommitForm = ({ files }: { files: string[] }) => {
     if (!task?.suggestedCommit || appliedSuggestionId.current === task.id) return;
     appliedSuggestionId.current = task.id;
     setCommitTitle(task.suggestedCommit.title);
-    setCommitMessage(task.suggestedCommit.message);
   }, [agentStatus]);
-
-  useEffect(() => {
-    if (suggestedMessage && !commitMessage) setCommitMessage(suggestedMessage);
-  }, [suggestedMessage, commitMessage]);
-
-  useEffect(() => {
-    writeStoredCommitField(COMMIT_MESSAGE_STORAGE_KEY, commitMessage);
-  }, [commitMessage]);
 
   const handleCommit = useCallback(async () => {
     if (!commitTitle.trim() || commitInFlight) return;
     setCommitting(true);
     setCommitInFlight(true);
     try {
-      await commitChanges(files, commitTitle.trim(), commitMessage.trim() || undefined);
-      // Clear both to empty — never leave a stale title behind. The suggestion effect
+      await commitChanges(files, commitTitle.trim());
+      // Clear to empty — never leave a stale title behind. The suggestion effect
       // re-derives a fresh title if the focus plan still warrants one.
       setCommitTitle('');
-      setCommitMessage('');
       await loadGitStatus();
     } catch (err) {
       toast({
@@ -497,7 +457,7 @@ const CommitForm = ({ files }: { files: string[] }) => {
       setCommitting(false);
       setCommitInFlight(false);
     }
-  }, [commitTitle, commitMessage, files, loadGitStatus, commitInFlight, setCommitInFlight, toast]);
+  }, [commitTitle, files, loadGitStatus, commitInFlight, setCommitInFlight, toast]);
 
   const handleSuggestFromChanges = useCallback(async () => {
     if (files.length === 0) return;
@@ -506,7 +466,6 @@ const CommitForm = ({ files }: { files: string[] }) => {
     try {
       const result = await suggestCommitMessage(files);
       setCommitTitle(result.title);
-      setCommitMessage(result.message);
     } catch (err) {
       setSuggestError((err as Error).message);
     } finally {
@@ -541,14 +500,6 @@ const CommitForm = ({ files }: { files: string[] }) => {
           wobble={suggesting ? 1 : 0}
         />
       </div>
-      <Textarea
-        surface="chalkboard"
-        size="small"
-        placeholder="Commit message (optional)"
-        value={commitMessage}
-        onChange={(e) => setCommitMessage(e.currentTarget.value)}
-        rows={2}
-      />
       <Button
         surface="chalkboard"
         size="small"
