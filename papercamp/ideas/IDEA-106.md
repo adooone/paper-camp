@@ -2,7 +2,7 @@
 id: IDEA-106
 title: Slim agent prompts for short, direct output
 type: feat
-status: idea
+status: review
 created: 2026-07-29
 updated: 2026-07-29
 tags:
@@ -27,5 +27,5 @@ Add one shared brevity contract to the writer prompts (`prompts.ts`: draft, exte
       One shared builder behind `buildIdeaExtendPrompt`/`buildSuggestionPromotePrompt`/`buildRoadmapPromotePrompt`.
 - [x] Compress `buildAgentPrompt` and `buildFixReviewPrompt` over-instruction
       Cut each over-instruction paragraph down to a line or two.
-- [ ] Update prompt tests and full pass
+- [x] Update prompt tests and full pass
       Adjust `prompts.test.ts`/`agent.test.ts` expectations, then type-check and run the suite.
