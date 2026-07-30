@@ -15,26 +15,6 @@
 }
 
 /*
- * paper-ui's Card is a plain block div (borderLayer > textureLayer), so it never
- * grows to fill a flex parent on its own. Reaching into its two nested divs from
- * outside lets the Stack panel's Agent/Status/Commit cards stretch to fill the
- * full height of their section instead of just hugging their content.
- */
-.stack-card-fill {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.stack-card-fill > div {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-/*
  * paper-ui's Layout header is `justify-content: space-between` with a left slot
  * that only takes a string `title` — all arbitrary content goes into the
  * right-aligned `headerActions` div. Letting that slot grow to fill the row is
@@ -146,8 +126,8 @@ header[class*="layout-module__header___"] {
 
 /*
  * Card's own smallest padding (.75rem 1rem on its textureLayer) is still sized
- * for content cards; rows need a tighter, single-line fit. Same reach-into-the-
- * nested-div pattern as .stack-card-fill above.
+ * for content cards; rows need a tighter, single-line fit. Reaches into the
+ * nested textureLayer div from outside, since Card exposes no padding prop.
  */
 .plan-row-card [class*="textureLayer"] {
   padding: 0.375rem 0.875rem;
