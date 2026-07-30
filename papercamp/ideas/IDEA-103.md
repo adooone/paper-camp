@@ -2,7 +2,7 @@
 id: IDEA-103
 title: One feedback thread on every idea, any status
 type: feat
-status: idea
+status: review
 created: 2026-07-28
 updated: 2026-07-28
 tags:
@@ -31,4 +31,4 @@ Builds directly on the Feedback view and `detailView` slice from [[IDEA-89]]'s r
       Replace the stack of duplicate panels/modals with a single proposal message rendered in the thread, approved or declined inline — no modal carrying the same information twice.
 - [x] Make thread messages short and scannable
       Render each entry compact instead of a wall of text, so review points and proposals are easy to read and act on.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
