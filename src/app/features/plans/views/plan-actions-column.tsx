@@ -86,27 +86,25 @@ export const PlanActionsColumn = () => {
             Plan
           </h2>
 
-          {(underReview || plan.status === 'done') && (
-            <div>
-              <div style={sectionLabelStyle}>Show</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
-                <ListItem
-                  size="small"
-                  active={detailView === 'details'}
-                  onClick={() => setDetailView('details')}
-                >
-                  Details
-                </ListItem>
-                <ListItem
-                  size="small"
-                  active={detailView === 'feedback'}
-                  onClick={() => setDetailView('feedback')}
-                >
-                  Feedback
-                </ListItem>
-              </div>
+          <div>
+            <div style={sectionLabelStyle}>Show</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+              <ListItem
+                size="small"
+                active={detailView === 'details'}
+                onClick={() => setDetailView('details')}
+              >
+                Details
+              </ListItem>
+              <ListItem
+                size="small"
+                active={detailView === 'feedback'}
+                onClick={() => setDetailView('feedback')}
+              >
+                Feedback
+              </ListItem>
             </div>
-          )}
+          </div>
 
           <div>
             <div style={sectionLabelStyle}>Status</div>

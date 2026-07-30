@@ -21,7 +21,7 @@ Fold it into one thing. Make the **Feedback view the single conversation** about
 Builds directly on the Feedback view and `detailView` slice from [[IDEA-89]]'s rework. Note the earlier IDEA-89 bug report (messages not appearing after refresh, an approval modal that did nothing) is the same class of problem — this idea is where that gets resolved properly, as one simple thread.
 
 ### Phases
-- [ ] Expose the Feedback view for every status
+- [x] Expose the Feedback view for every status
       Drop the `isReviewable`/`showFeedback` gate on the `detailView` switcher so the thread is reachable while an idea is `idea`/`planned`/`in-progress`, not just `review`/`done`.
 - [ ] Read and write the thread from one source
       Point the Feedback view at the same store slice and route it posts to, so a posted message survives refresh — resolving the IDEA-89 persistence bug at its root.

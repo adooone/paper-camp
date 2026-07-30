@@ -502,8 +502,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const auditRunning = planTask?.taskKind === 'audit';
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
-  const isReviewable = plan.status === 'review' || plan.status === 'done';
-  const showFeedback = detailView === 'feedback' && isReviewable;
+  const showFeedback = detailView === 'feedback';
   const ideaView: IdeaEntry = {
     id: plan.id ?? null,
     title: plan.title,
