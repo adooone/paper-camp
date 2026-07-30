@@ -600,8 +600,7 @@ export const CommitSection = () => {
   return (
     <div
       style={{
-        flex: '1 1 auto',
-        minHeight: 0,
+        flex: '0 0 auto',
         display: 'flex',
         flexDirection: 'column',
         padding: space[6],
@@ -615,7 +614,7 @@ export const CommitSection = () => {
           </Stamp>
         )}
       </div>
-      <Card surface="chalkboard" size="small" className="stack-card-fill">
+      <Card surface="chalkboard" size="small">
         <StatusStamps />
         {gitStatus && gitStatus.length > 0 ? (
           <>

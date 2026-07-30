@@ -33,7 +33,7 @@ const AuthErrorFix = () => (
   </div>
 );
 
-const MAX_VISIBLE_TASKS = 3;
+const MAX_VISIBLE_TASKS = 8;
 // One task card's rendered height plus card gap, reserved so the empty state
 // doesn't shrink the panel when tasks finish and clear.
 const TASK_CARD_HEIGHT = '2.75rem';
@@ -181,7 +181,8 @@ export const AgentSection = () => {
   return (
     <div
       style={{
-        flex: '0 0 auto',
+        flex: '1 1 auto',
+        minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
         padding: space[6],
@@ -190,11 +191,13 @@ export const AgentSection = () => {
       <div style={sectionLabelStyle}>Agent</div>
       <div
         style={{
+          flex: '1 1 auto',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: visibleTasks.length > 0 ? 'flex-start' : 'center',
           gap: space[2],
           minHeight: taskStackMinHeight,
+          overflowY: 'auto',
         }}
       >
         {visibleTasks.length > 0 ? (

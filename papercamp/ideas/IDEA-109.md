@@ -28,6 +28,6 @@ Result: a small, fixed-height card, so the freed vertical space goes to the **Ag
       Drop the per-file list; render just the changed-file count. Link it to the future diffs view ([[IDEA-110]]) when present, otherwise show the count as plain text.
 - [x] Drop the commit message body, keep the title input
       Remove the unused message textarea; keep the title input and the commit action wired as-is.
-- [ ] Give the freed space to the agent stack
+- [x] Give the freed space to the agent stack
       In `agent-section.tsx`, raise the 3-item render cap so more agent-stack items show, and ensure the compact fixed-height Deliver card lets that space flow to the stack.
 - [ ] Type-check and full pass
