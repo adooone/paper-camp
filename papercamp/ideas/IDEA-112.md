@@ -22,3 +22,14 @@ The rules:
 - `utilities.css` keeps only what utilities genuinely can't do: pseudo-elements, `[class*="…"]` overrides of paper-ui module classes, and media queries not expressible as Tailwind responsive variants.
 
 Depends on [[IDEA-111]]: the CSS-var color classes must exist first, so the migration writes `text-accent-green` / `bg-canvas-300`, not fresh literals.
+
+### Phases
+- [ ] Inventory the ~471 static inline `style={{}}` objects and map each value to a preset class
+      Note the one genuinely runtime-dynamic property that stays inline; flag values with no matching class.
+- [ ] Extend `tailwind.config.ts` for the flagged values the preset doesn't cover
+- [ ] Migrate the static inline styles to Tailwind utility classes, subsystem by subsystem
+      Write `text-accent-green` / `bg-canvas-300` against the [[IDEA-111]] color classes, never fresh literals.
+- [ ] Delete the `space`, `fontSize`, `radius`, `fontFamily`, and `layout` exports from `src/app/styles/tokens.ts`
+      Retire `tokens.ts` entirely once `color` is gone too.
+- [ ] Trim `utilities.css` to only pseudo-elements, `[class*="…"]` module overrides, and non-variant media queries
+- [ ] Type-check and full pass

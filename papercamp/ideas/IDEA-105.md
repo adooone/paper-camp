@@ -23,3 +23,16 @@ Many titles and labels don't say plainly what they are. Text-only pass, no behav
 - create-idea "Note — never needs a plan" → "Just a note (no plan needed)"
 
 (The "graduate into an open question" / "promote into a decision" / Clarifications labels are handled by [[IDEA-104]].)
+
+### Phases
+- [ ] Relabel the Roadmap tabs and add-item control
+      "Tree / Map" → "Outline / Board", "Add candidate…" → "Add option…".
+- [ ] Rename the "Ideas" nav entry to "Plans"
+      The main plans view only — leave entity ids and routes untouched.
+- [ ] Rename "Provenance" → "History" and the "Views" toggle → "Show"
+- [ ] Fix the agent action label and status/toast strings
+      "Add /code-review findings" → "Add code-review findings", toast "Kept the reconciled version" → "Kept the merged version", "Splitting the review…" → "Separating review feedback…".
+- [ ] Reword the create-idea note option
+      "Note — never needs a plan" → "Just a note (no plan needed)".
+- [ ] Type-check and full pass
+      Confirm nothing keys off the changed display strings; behaviour unchanged.

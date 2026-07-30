@@ -19,3 +19,16 @@ Worse, the current behaviour is broken in practice: posting a couple of messages
 Fold it into one thing. Make the **Feedback view the single conversation** about an idea's adjustments and fixes — comments, review points, and the agent's split proposals all live in one chat thread — and expose it for **every status**, not just `review`/`done` (drop the `isReviewable` restriction on the view switcher). Retire the separate `CommentsSection`, or make it the same thread under a clearer name. Fix the mechanics along the way: a posted message must appear after refresh (the thread reads from the same source it writes to), no duplicate modals (one proposal in-thread, not a stack of panels), and short, scannable messages instead of a huge block.
 
 Builds directly on the Feedback view and `detailView` slice from [[IDEA-89]]'s rework. Note the earlier IDEA-89 bug report (messages not appearing after refresh, an approval modal that did nothing) is the same class of problem — this idea is where that gets resolved properly, as one simple thread.
+
+### Phases
+- [ ] Expose the Feedback view for every status
+      Drop the `isReviewable`/`showFeedback` gate on the `detailView` switcher so the thread is reachable while an idea is `idea`/`planned`/`in-progress`, not just `review`/`done`.
+- [ ] Read and write the thread from one source
+      Point the Feedback view at the same store slice and route it posts to, so a posted message survives refresh — resolving the IDEA-89 persistence bug at its root.
+- [ ] Fold `CommentsSection` into the single thread
+      Merge the plain comment log into the Feedback thread (comments, review points, and split proposals as one conversation) and retire the separate `CommentsSection` from `entity-detail.tsx`, or rename it as that thread.
+- [ ] Collapse the split/preview modals into one in-thread proposal
+      Replace the stack of duplicate panels/modals with a single proposal message rendered in the thread, approved or declined inline — no modal carrying the same information twice.
+- [ ] Make thread messages short and scannable
+      Render each entry compact instead of a wall of text, so review points and proposals are easy to read and act on.
+- [ ] Type-check and full pass
