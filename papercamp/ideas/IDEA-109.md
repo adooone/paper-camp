@@ -24,7 +24,7 @@ Result: a small, fixed-height card, so the freed vertical space goes to the **Ag
 ### Phases
 - [x] Rename Commit to Deliver and fold in the check stamps
       In `commit-section.tsx`, retitle the section "Deliver" and move the Quality/Tests/Consistency/Docs stamps from `status-section.tsx` to the top of the card; retire the standalone Status card in `stack-panel.tsx`.
-- [ ] Replace the file list with an "N files changed" count
+- [x] Replace the file list with an "N files changed" count
       Drop the per-file list; render just the changed-file count. Link it to the future diffs view ([[IDEA-110]]) when present, otherwise show the count as plain text.
 - [ ] Drop the commit message body, keep the title input
       Remove the unused message textarea; keep the title input and the commit action wired as-is.

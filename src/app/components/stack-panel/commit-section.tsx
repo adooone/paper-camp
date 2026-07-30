@@ -10,11 +10,9 @@ import type {
   CheckStatus,
   ConsistencyIssue,
   DecisionEntry,
-  GitStatusEntry,
   PlanEntry,
 } from '@/types/index';
 import {
-  Accordion,
   Alert,
   Button,
   Card,
@@ -93,37 +91,6 @@ function deriveSuggestedCommit(plan: PlanEntry | undefined): { title: string; me
     ? plan.phases.map((phase) => `- ${phase.text}`).join('\n')
     : '';
   return { title, message: [phaseBody, refs].filter(Boolean).join('\n\n') };
-}
-
-function useSelectedFiles(gitStatus: GitStatusEntry[] | null) {
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
-  const knownPathsRef = useRef<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (!gitStatus) return;
-    // Snapshot ref before setState: mutating it inside the updater is unsafe under
-    // StrictMode's double-invoke, which would empty the file list on the second pass.
-    const known = knownPathsRef.current;
-    knownPathsRef.current = new Set(gitStatus.map((e) => e.path));
-    setSelectedFiles((prev) => {
-      const next = new Set<string>();
-      for (const entry of gitStatus) {
-        if (!known.has(entry.path) || prev.has(entry.path)) next.add(entry.path);
-      }
-      return next;
-    });
-  }, [gitStatus]);
-
-  const onToggleFile = useCallback((path: string) => {
-    setSelectedFiles((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  }, []);
-
-  return { selectedFiles, onToggleFile };
 }
 
 const StatusStamps = () => {
@@ -432,66 +399,21 @@ const StatusStamps = () => {
   );
 };
 
-const CommitFileList = ({
-  gitStatus,
-  expanded,
-  onToggleExpanded,
-  selectedFiles,
-  onToggleFile,
-}: {
-  gitStatus: GitStatusEntry[];
-  expanded: boolean;
-  onToggleExpanded: () => void;
-  selectedFiles: Set<string>;
-  onToggleFile: (path: string) => void;
-}) => (
-  <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
-    <Accordion
-      title={`${gitStatus.length} file${gitStatus.length === 1 ? '' : 's'} changed`}
-      expanded={expanded}
-      onToggle={onToggleExpanded}
-    >
-      <div
-        style={{ display: 'flex', flexDirection: 'column', gap: space[2], paddingTop: space[2] }}
-      >
-        {gitStatus.map((entry) => (
-          <label
-            key={entry.path}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: space[2],
-              fontFamily: fontFamily.mono,
-              fontSize: fontSize['2xs'],
-              color: deskChalk,
-              cursor: 'pointer',
-            }}
-          >
-            {/* Raw checkbox: paper-ui's Checkbox has one label slot (can't fit this
-                multi-color mono layout) and its blob/sketch chrome would clash here. */}
-            <input
-              type="checkbox"
-              checked={selectedFiles.has(entry.path)}
-              onChange={() => onToggleFile(entry.path)}
-              style={{ accentColor: deskChalk }}
-            />
-            <span style={{ color: entry.staged ? deskChalk : deskTextMuted, minWidth: 24 }}>
-              {entry.status}
-            </span>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {entry.path}
-            </span>
-          </label>
-        ))}
-      </div>
-    </Accordion>
-  </div>
+const ChangedFilesCount = ({ count }: { count: number }) => (
+  <p
+    style={{
+      margin: 0,
+      textAlign: 'center',
+      fontFamily: fontFamily.mono,
+      fontSize: fontSize.xs,
+      color: deskTextMuted,
+    }}
+  >
+    {count} file{count === 1 ? '' : 's'} changed
+  </p>
 );
 
-const CommitForm = ({
-  selectedFiles,
-  onCommitted,
-}: { selectedFiles: Set<string>; onCommitted: () => void }) => {
+const CommitForm = ({ files }: { files: string[] }) => {
   const plans = useAppStore((s) => s.plans);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
@@ -556,16 +478,11 @@ const CommitForm = ({
     setCommitting(true);
     setCommitInFlight(true);
     try {
-      await commitChanges(
-        [...selectedFiles],
-        commitTitle.trim(),
-        commitMessage.trim() || undefined,
-      );
+      await commitChanges(files, commitTitle.trim(), commitMessage.trim() || undefined);
       // Clear both to empty — never leave a stale title behind. The suggestion effect
       // re-derives a fresh title if the focus plan still warrants one.
       setCommitTitle('');
       setCommitMessage('');
-      onCommitted();
       await loadGitStatus();
     } catch (err) {
       toast({
@@ -580,23 +497,14 @@ const CommitForm = ({
       setCommitting(false);
       setCommitInFlight(false);
     }
-  }, [
-    commitTitle,
-    commitMessage,
-    selectedFiles,
-    loadGitStatus,
-    commitInFlight,
-    setCommitInFlight,
-    onCommitted,
-    toast,
-  ]);
+  }, [commitTitle, commitMessage, files, loadGitStatus, commitInFlight, setCommitInFlight, toast]);
 
   const handleSuggestFromChanges = useCallback(async () => {
-    if (selectedFiles.size === 0) return;
+    if (files.length === 0) return;
     setSuggesting(true);
     setSuggestError(null);
     try {
-      const result = await suggestCommitMessage([...selectedFiles]);
+      const result = await suggestCommitMessage(files);
       setCommitTitle(result.title);
       setCommitMessage(result.message);
     } catch (err) {
@@ -604,7 +512,7 @@ const CommitForm = ({
     } finally {
       setSuggesting(false);
     }
-  }, [selectedFiles]);
+  }, [files]);
 
   return (
     <>
@@ -628,7 +536,7 @@ const CommitForm = ({
           surface="chalkboard"
           size="small"
           label="Suggest title and message from the diff"
-          disabled={selectedFiles.size === 0 || suggesting}
+          disabled={files.length === 0 || suggesting}
           onClick={handleSuggestFromChanges}
           wobble={suggesting ? 1 : 0}
         />
@@ -645,7 +553,7 @@ const CommitForm = ({
         surface="chalkboard"
         size="small"
         fullWidth
-        disabled={selectedFiles.size === 0 || !commitTitle.trim() || committing || commitInFlight}
+        disabled={files.length === 0 || !commitTitle.trim() || committing || commitInFlight}
         onClick={handleCommit}
       >
         {committing || commitInFlight ? 'Committing…' : 'Commit'}
@@ -736,8 +644,7 @@ export const CommitSection = () => {
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
   const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
-  const { selectedFiles, onToggleFile } = useSelectedFiles(gitStatus);
-  const [commitExpanded, setCommitExpanded] = useState(false);
+  const files = useMemo(() => gitStatus?.map((entry) => entry.path) ?? [], [gitStatus]);
 
   return (
     <div
@@ -761,13 +668,7 @@ export const CommitSection = () => {
         <StatusStamps />
         {gitStatus && gitStatus.length > 0 ? (
           <>
-            <CommitFileList
-              gitStatus={gitStatus}
-              expanded={commitExpanded}
-              onToggleExpanded={() => setCommitExpanded(!commitExpanded)}
-              selectedFiles={selectedFiles}
-              onToggleFile={onToggleFile}
-            />
+            <ChangedFilesCount count={gitStatus.length} />
             <div
               style={{
                 flexShrink: 0,
@@ -780,10 +681,7 @@ export const CommitSection = () => {
               {gitBranchHygiene === 'stale-merged' ? (
                 <StaleMergedSyncButton />
               ) : (
-                <CommitForm
-                  selectedFiles={selectedFiles}
-                  onCommitted={() => setCommitExpanded(false)}
-                />
+                <CommitForm files={files} />
               )}
             </div>
           </>
