@@ -23,7 +23,7 @@ Add one shared brevity contract to the writer prompts (`prompts.ts`: draft, exte
       Wire it into draft, extend, rework, and audit builders.
 - [x] Trim `buildPlanDraftPrompt`'s scope dump to `ID: Title (N phases)`
       Drop the per-plan body + phase-checkbox injection.
-- [ ] Fold the extend/suggestion/roadmap-promote prompts into one
+- [x] Fold the extend/suggestion/roadmap-promote prompts into one
       One shared builder behind `buildIdeaExtendPrompt`/`buildSuggestionPromotePrompt`/`buildRoadmapPromotePrompt`.
 - [ ] Compress `buildAgentPrompt` and `buildFixReviewPrompt` over-instruction
       Cut each over-instruction paragraph down to a line or two.
