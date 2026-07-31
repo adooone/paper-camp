@@ -375,13 +375,16 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
               });
               await writeFile(join(ideasDir, `${newId}.md`), `${followUpContent}\n`, 'utf-8');
               replyText = `${replyText} (spun off as ${newId})`;
+            } else {
+              replyText = `${replyText} (could not spin off a follow-up idea — no id was assigned)`;
             }
           }
 
           // A feedback edit that adds an undone Fix to an already-finished plan is new
           // work: reopen it so it re-enters the run-order queue and run-all implements it —
           // otherwise the edit lands on a closed plan and nothing ever runs (or shows).
-          const reopen = overrides.fixes?.some((p) => !p.done) ?? false;
+          const priorFixCount = entity.fixes?.length ?? 0;
+          const reopen = (overrides.fixes ?? []).slice(priorFixCount).some((p) => !p.done);
           if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
 
           const replyMessage: ThreadMessage = {

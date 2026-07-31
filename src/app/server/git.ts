@@ -428,7 +428,12 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   async function revert(sha: string): Promise<void> {
-    await runGit(['revert', sha, '--no-edit']);
+    try {
+      await runGit(['revert', sha, '--no-edit']);
+    } catch (err) {
+      await runGit(['revert', '--abort']).catch(() => {});
+      throw err;
+    }
   }
 
   // Regenerated from the entity files on every corpus mutation, so a local edit is never

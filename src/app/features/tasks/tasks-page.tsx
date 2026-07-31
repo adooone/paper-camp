@@ -176,7 +176,7 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
               <ChevronRightIcon />
             </span>
             <span style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden' }}>
-              {TASK_KIND_LABELS[entry.taskKind]}
+              {TASK_KIND_LABELS[entry.taskKind] ?? entry.taskKind}
             </span>
             <span
               style={{

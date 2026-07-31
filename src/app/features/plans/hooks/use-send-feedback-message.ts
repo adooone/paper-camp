@@ -3,7 +3,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // Posting a feedback message runs a one-shot agent before the reply lands in the
 // thread, so this can't reuse usePlanStatusPatch's plain PATCH-and-reload shape.
@@ -15,6 +15,13 @@ export const useSendFeedbackMessage = (plan: PlanEntry) => {
   // Only the reply this hook instance just received carries an Undo — reloading
   // the page loses it, which is fine for a one-tap "just sent" correction.
   const [undo, setUndo] = useState<{ commitSha: string } | null>(null);
+
+  // EntityDetail isn't remounted per plan, so a stale undo from the previous
+  // plan would otherwise send this plan's id with that plan's commit sha.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: plan.id is the reset trigger, not read in the body.
+  useEffect(() => {
+    setUndo(null);
+  }, [plan.id]);
 
   const send = async (text: string): Promise<boolean> => {
     if (!plan.id) return false;

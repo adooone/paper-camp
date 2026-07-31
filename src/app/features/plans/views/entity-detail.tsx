@@ -489,7 +489,8 @@ const FeedbackSection = ({
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Message this idea…"
+            aria-label="Feedback message"
+            placeholder="Write a message…"
             rows={3}
             disabled={updating}
           />
@@ -501,7 +502,9 @@ const FeedbackSection = ({
               gap: space[3],
             }}
           >
-            {updating && <Spinner size="small" label="Agent replying…" />}
+            <span style={{ visibility: updating ? 'visible' : 'hidden' }}>
+              <Spinner size="small" label="Agent replying…" />
+            </span>
             <Button size="small" onClick={handleSend} disabled={updating || !input.trim()}>
               Send
             </Button>

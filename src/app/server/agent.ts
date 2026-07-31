@@ -521,7 +521,12 @@ export function createAgentManager(
     'draft',
     'extend',
   ]);
-  const READONLY_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check', 'prioritise']);
+  const READONLY_KINDS = new Set<TaskKind>([
+    'commit-suggest',
+    'overlap-check',
+    'prioritise',
+    'feedback',
+  ]);
 
   function writeSetFor(taskKind: TaskKind, entityId?: string): WriteSet {
     if (READONLY_KINDS.has(taskKind)) return { scope: 'none' };
