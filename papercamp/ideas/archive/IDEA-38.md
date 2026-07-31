@@ -32,5 +32,5 @@ Densified the plans worklist: row-cards (kraft header over one-line canvas rows)
 - [x] Type-check and visual pass
       Run `tsc --noEmit`, `biome check . --write`, and the test suite; then a browser pass over the dense plans table, ideas rows, paginated closed section, sidebar replacement, and compressed plan detail at laptop and narrow widths.
 
-### Notes
-- [x] [body] [decision] Dense lists are row cards, not paper-ui Table
+### Thread
+- [x] [decision] Dense lists are row cards, not paper-ui Table

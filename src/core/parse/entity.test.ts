@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { assignEntityId, formatEntityFile } from '../serialize/serializer';
+import { clarificationsFromThread, logFromThread } from '../thread';
 import { parseEntityFile } from './parser';
 
 describe('parseEntityFile', () => {
@@ -43,8 +44,10 @@ Rationale prose.
     expect(e.phases).toHaveLength(2);
     expect(e.phases[0].done).toBe(true);
     expect(e.phases[0].description).toBe('With a description line.');
-    expect(e.log).toEqual([{ date: '2026-07-05', text: 'drafted' }]);
-    expect(e.clarifications).toEqual([{ date: '2026-07-05', text: 'scope confirmed' }]);
+    expect(logFromThread(e.thread)).toEqual([{ date: '2026-07-05', text: 'drafted' }]);
+    expect(clarificationsFromThread(e.thread)).toEqual([
+      { date: '2026-07-05', text: 'scope confirmed' },
+    ]);
   });
 
   it('parses a subject key when present', () => {
@@ -203,8 +206,10 @@ describe('formatEntityFile round-trip', () => {
         { text: 'First phase', done: true, description: 'Details.' },
         { text: 'Review-found phase', done: false, source: 'review' as const },
       ],
-      log: [{ date: '2026-07-05', text: 'drafted' }],
-      clarifications: [{ date: '2026-07-05', text: 'scope confirmed' }],
+      thread: [
+        { kind: 'clarification' as const, date: '2026-07-05', text: 'scope confirmed' },
+        { kind: 'log' as const, date: '2026-07-05', text: 'drafted' },
+      ],
     };
     const serialized = formatEntityFile(input);
     const { entries, warnings } = parseEntityFile(serialized);
@@ -219,8 +224,10 @@ describe('formatEntityFile round-trip', () => {
     expect(e.body).toBe(input.body);
     expect(e.phases).toHaveLength(2);
     expect(e.phases[1].source).toBe('review');
-    expect(e.log).toEqual(input.log);
-    expect(e.clarifications).toEqual(input.clarifications);
+    expect(logFromThread(e.thread)).toEqual([{ date: '2026-07-05', text: 'drafted' }]);
+    expect(clarificationsFromThread(e.thread)).toEqual([
+      { date: '2026-07-05', text: 'scope confirmed' },
+    ]);
   });
 
   it('writes no body heading and omits absent optionals', () => {

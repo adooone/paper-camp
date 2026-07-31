@@ -62,9 +62,12 @@ function readRunOrder(root: string): string[] {
 
 function readLog(root: string, id: string): string[] {
   const raw = readFileSync(join(root, 'papercamp', 'ideas', `${id}.md`), 'utf-8');
-  const match = raw.match(/### Log\n([\s\S]*?)(\n###|$)/);
+  const match = raw.match(/### Thread\n([\s\S]*?)(\n###|$)/);
   if (!match) return [];
-  return match[1].trim().split('\n').filter(Boolean);
+  return match[1]
+    .trim()
+    .split('\n')
+    .filter((line) => line.includes('[log]'));
 }
 
 const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({

@@ -8,6 +8,7 @@ import {
   formatEntityFile,
   todayDateString,
 } from '@/core/serialize';
+import { replaceThreadKinds } from '@/core/thread';
 import {
   AGENT_IDS,
   type AgentId,
@@ -173,14 +174,37 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
 
         // Run order for plans/ideas lives in papercamp/run-order.md, not frontmatter (IDEA-98);
         // notes aren't part of that list, so their `order` still writes straight to frontmatter.
+        // log/notes/review are legacy shapes callers still send in full-replacement form —
+        // fold each back into its slice of the entity's single thread.
+        let thread = target.thread;
+        if (updates.log !== undefined) {
+          thread = replaceThreadKinds(
+            thread,
+            ['log'],
+            updates.log.map((e) => ({ kind: 'log' as const, date: e.date, text: e.text })),
+          );
+        }
+        if (updates.review !== undefined) {
+          thread = replaceThreadKinds(
+            thread,
+            ['review'],
+            updates.review.map((e) => ({ kind: 'review' as const, date: e.date, text: e.text })),
+          );
+        }
+        if (updates.notes !== undefined) {
+          thread = replaceThreadKinds(
+            thread,
+            ['note', 'decision', 'question'],
+            updates.notes.map((n) => ({ kind: n.kind ?? 'note', text: n.prose, state: n.state })),
+          );
+        }
+
         const updatedEntry: EntityEntry = {
           ...target,
           ...(updates.body !== undefined && { body: updates.body }),
           ...(updates.status !== undefined && { status: updates.status ?? undefined }),
           ...(updates.phases !== undefined && { phases: updates.phases }),
-          ...(updates.log !== undefined && { log: updates.log }),
-          ...(updates.notes !== undefined && { notes: updates.notes }),
-          ...(updates.review !== undefined && { review: updates.review }),
+          ...(thread !== target.thread && { thread }),
           ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
           ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
           order:

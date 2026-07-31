@@ -214,7 +214,13 @@ describe('entity views', () => {
     const { entries } = await readEntities(makeCorpus());
     const work = entries.find((e) => e.id === 'IDEA-3');
     expect(work).toBeDefined();
-    const withReview = { ...work, review: [{ date: '2026-07-30', text: 'Needs rework' }] };
+    const withReview = {
+      ...work,
+      thread: [
+        ...(work?.thread ?? []),
+        { kind: 'review' as const, date: '2026-07-30', text: 'Needs rework' },
+      ],
+    };
     expect(entityToPlan(withReview as EntityEntry).review).toEqual([
       { date: '2026-07-30', text: 'Needs rework' },
     ]);

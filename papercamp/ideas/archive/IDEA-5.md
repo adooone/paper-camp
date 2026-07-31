@@ -26,5 +26,5 @@ Repo health status in the Stack panel — lint, format, and tests as live check 
 - [x] Build Status section in Stack panel
       Three chalkboard `Stamp` pills (Lint/Format/Tests) above "Active"; a `fail` pill expands a chalkboard `CodeBlock` inline with the raw error output
 
-### Log
-- 2026-06-24: Verified live: stale→fail/running/pass transitions all work, failing pills expand a CodeBlock with raw biome output, auto lint/format fires on a src/ file change (and caught two real pre-existing issues in router.tsx and parser.ts), manual Run tests streams to pass. Approved and closed.
+### Thread
+- [x] 2026-06-24 [log] Verified live: stale→fail/running/pass transitions all work, failing pills expand a CodeBlock with raw biome output, auto lint/format fires on a src/ file change (and caught two real pre-existing issues in router.tsx and parser.ts), manual Run tests streams to pass. Approved and closed.

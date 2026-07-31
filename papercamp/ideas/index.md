@@ -114,3 +114,4 @@
 | IDEA-110 | In-app code review with diffs | feat | idea | app, git, ui |
 | IDEA-111 | Single-source color tokens via CSS variables | refactor | idea | app, ui, refactor |
 | IDEA-112 | Move all styling to Tailwind | refactor | idea | app, ui, refactor |
+| IDEA-113 | Feedback as a single chat thread | feat | idea | app, ui, agent, plans |

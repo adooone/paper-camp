@@ -49,6 +49,26 @@ export interface MarginNote {
   kind?: MarginNoteKind;
 }
 
+/** What a thread message originally was, before log/review/notes/clarifications folded
+ * into one ordered thread on the entity — 'note'/'decision'/'question' carry `state`,
+ * the rest are plain historical records. */
+export type ThreadMessageKind =
+  | 'log'
+  | 'clarification'
+  | 'review'
+  | 'note'
+  | 'decision'
+  | 'question';
+
+export interface ThreadMessage {
+  kind: ThreadMessageKind;
+  /** Absent for messages ported from the old Notes section, which never carried a date. */
+  date?: string;
+  text: string;
+  /** Only meaningful for note/decision/question kinds. */
+  state?: MarginNoteState;
+}
+
 export interface RawEntry {
   title: string;
   fields: Record<string, string>;
@@ -229,10 +249,9 @@ export interface EntityEntry {
   order?: number;
   body: string;
   phases: PhaseItem[];
-  log?: LogEntry[];
-  clarifications?: LogEntry[];
-  notes?: MarginNote[];
-  review?: LogEntry[];
+  /** The entity's single ordered feedback thread — folds what used to be separate
+   * log/clarifications/notes/review sections. */
+  thread?: ThreadMessage[];
   /** Set by readEntities from which of the two scanned dirs the file came from, not the frontmatter. */
   archived?: boolean;
 }

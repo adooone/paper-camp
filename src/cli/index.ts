@@ -25,6 +25,7 @@ import {
   formatEntityFile,
   todayDateString,
 } from '../core/serialize';
+import { threadFromLegacy } from '../core/thread';
 import { startMcpServer } from '../mcp/server';
 import {
   type AgentRunOptions,
@@ -82,8 +83,7 @@ async function stampCliAuditDate(planFile: string, planId: string): Promise<void
     tags: entry.tags,
     body: entry.body,
     phases: entry.phases,
-    log: entry.log,
-    clarifications: entry.clarifications,
+    thread: entry.thread,
   };
   await writeFile(planFile, `${formatEntityFile(writeInput)}\n`, 'utf-8');
 }
@@ -267,8 +267,13 @@ program
     }
     const configPath = resolve(root, 'papercamp', 'config.json');
 
-    const mergedLog = (idea: { log?: LogEntry[] } | undefined, plan: { log?: LogEntry[] }) =>
-      [...(idea?.log ?? []), ...(plan.log ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+    const mergedThread = (idea: { log?: LogEntry[] } | undefined, plan: PlanEntry) =>
+      threadFromLegacy(
+        [...(idea?.log ?? []), ...(plan.log ?? [])],
+        plan.clarifications,
+        plan.notes,
+        plan.review,
+      );
 
     let written = 0;
     const writeEntity = async (input: Parameters<typeof formatEntityFile>[0]) => {
@@ -290,7 +295,7 @@ program
           status: idea.kind === 'note' ? (idea.status ?? 'open') : 'idea',
           created: todayDateString(),
           body: stripHeading(idea.body),
-          log: idea.log,
+          thread: threadFromLegacy(idea.log),
         });
         continue;
       }
@@ -311,8 +316,7 @@ program
           tags: plan.tags,
           body: [stripHeading(idea.body), plan.body].filter(Boolean).join('\n\n'),
           phases: plan.phases,
-          log: mergedLog(i === 0 ? idea : undefined, plan),
-          clarifications: plan.clarifications,
+          thread: mergedThread(i === 0 ? idea : undefined, plan),
         });
       }
     }
@@ -339,8 +343,7 @@ program
         tags: plan.tags,
         body: plan.body,
         phases: plan.phases,
-        log: plan.log,
-        clarifications: plan.clarifications,
+        thread: threadFromLegacy(plan.log, plan.clarifications, plan.notes, plan.review),
       });
     }
 

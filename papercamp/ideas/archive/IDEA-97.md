@@ -40,6 +40,6 @@ Open questions for the plan: whether superseding a decision edits it in place or
       Promote an entity comment or clarification into a decision from the entity, reusing the existing promote shape instead of hand-editing `decisions.md`.
 - [x] Type-check and full pass
 
-### Notes
-- [x] [body] [decision] Superseding a decision appends a new entry with a pointer, not an in-place edit
-- [x] [body] [decision] Decisions stay in the single `decisions.md`, not per-file entities
+### Thread
+- [x] [decision] Superseding a decision appends a new entry with a pointer, not an in-place edit
+- [x] [decision] Decisions stay in the single `decisions.md`, not per-file entities

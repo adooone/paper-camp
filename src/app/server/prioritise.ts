@@ -131,7 +131,10 @@ export async function applyPrioritiseVerdict(
       await writeEntityFile(
         file,
         entityFileInput(entry, {
-          log: [...(entry.log ?? []), { date: todayDateString(), text: reasonFor(id) }],
+          thread: [
+            ...(entry.thread ?? []),
+            { kind: 'log', date: todayDateString(), text: reasonFor(id) },
+          ],
         }),
       );
       applied.push(id);

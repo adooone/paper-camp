@@ -28,5 +28,5 @@ Extended Settings into a config workspace: auto-discovered config files, structu
       The General card's project name becomes an editable Input, saved through
       POST /api/config
 
-### Notes
-- [ ] [body] [question] Should paper-ui add a file-input component?
+### Thread
+- [ ] [question] Should paper-ui add a file-input component?

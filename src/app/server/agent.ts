@@ -9,6 +9,7 @@ import { buildReconcilePrompt } from '@/app/features/plans/prompts';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
 import { computePlanContentHash, todayDateString } from '@/core/serialize';
+import { logFromThread } from '@/core/thread';
 import {
   type AgentId,
   type AgentTaskState,
@@ -239,7 +240,7 @@ export function createAgentManager(
     await writeEntityFile(
       file,
       entityFileInput(entry, {
-        log: [...(entry.log ?? []), { date: todayDateString(), text: message }],
+        thread: [...(entry.thread ?? []), { kind: 'log', date: todayDateString(), text: message }],
         ...(needsInput ? { status: 'in-progress' } : {}),
       }),
     );
@@ -319,7 +320,7 @@ export function createAgentManager(
         const idea = entries.find((e) => e.id === task.ideaId);
         if (!idea) return null;
         if (task.ideaLogBaseline === undefined) return null;
-        return (idea.log?.length ?? 0) > task.ideaLogBaseline;
+        return logFromThread(idea.thread).length > task.ideaLogBaseline;
       }
       if (task.taskKind === 'fix-review') {
         return task.fixReviewResult !== undefined;
@@ -353,7 +354,7 @@ export function createAgentManager(
       if (!task.planBaseline) return null;
       return (
         plan.phases.length > task.planBaseline.phases ||
-        (plan.log?.length ?? 0) > task.planBaseline.log
+        logFromThread(plan.thread).length > task.planBaseline.log
       );
     } catch {
       return null;

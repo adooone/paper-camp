@@ -36,5 +36,5 @@ The app has grown surfaces nobody visits. Minimise to the features actually used
 - [x] Gate the pass
       `tsc --noEmit`, `biome check`, full tests; click through Docs, Settings, and Tasks to confirm the kept surfaces still work and nothing dangles; force a commit and push failure and confirm both read as one-line toasts.
 
-### Notes
-- [x] [body] [question] Do push/sync/pull failure toasts need a one-line summary, not raw git stderr?
+### Thread
+- [x] [question] Do push/sync/pull failure toasts need a one-line summary, not raw git stderr?

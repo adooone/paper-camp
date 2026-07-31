@@ -252,7 +252,7 @@ describe('startRunAllPhases', () => {
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
-    expect(planFile).toContain('### Log');
+    expect(planFile).toContain('### Thread');
     expect(planFile).toContain('project checks (test) are still failing after 2 fix attempt(s)');
   });
 
@@ -294,7 +294,7 @@ describe('startRunAllPhases', () => {
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
-    expect(planFile).toContain('### Log');
+    expect(planFile).toContain('### Thread');
     expect(planFile).toContain('the agent needs a decision: which auth flow should this use?');
   });
 
@@ -325,7 +325,7 @@ describe('startRunAllPhases', () => {
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
-    expect(planFile).toContain('### Log');
+    expect(planFile).toContain('### Thread');
     expect(planFile).toContain(
       'the fix pass needs a decision: which auth flow should the fix use?',
     );

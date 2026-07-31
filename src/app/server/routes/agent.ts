@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
 import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
+import { logFromThread } from '@/core/thread';
 import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry } from '@/types/index';
 import { readDefaultAgentIds } from '../agent';
 import { resolveAgent } from '../agents';
@@ -79,7 +80,7 @@ function toIdeaEntry(e: EntityEntry): IdeaEntry {
     body: e.body,
     kind: e.kind,
     status: e.kind === 'note' ? (e.status as IdeaStatus) : undefined,
-    log: e.log,
+    log: logFromThread(e.thread),
   };
 }
 
