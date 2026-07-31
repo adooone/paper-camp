@@ -2,9 +2,9 @@
 id: IDEA-110
 title: In-app code review with diffs
 type: feat
-status: review
+status: in-progress
 created: 2026-07-30
-updated: 2026-07-30
+updated: 2026-07-31
 tags:
   - app
   - git
@@ -33,8 +33,12 @@ This view is read-only — for reading changes before you deliver. No annotating
       Route the "N files changed" link into the view and provide a return path.
 - [x] Type-check and full pass
 
+### Fixes
+- [ ] Move the file list to a sidebar with always-visible diffs
+      Replace the per-file collapse with a persistent file-list sidebar; render diff content always-visible in the main pane, with sidebar entries scrolling to their file's changes.
+
 ### Thread
 - [x] 2026-07-31 [log] Run-all parked on phase 5 ("Annotate a hunk and hand it to an agent (stretch)") — the agent needs a decision: This phase asks to annotate a hunk and dispatch it to an agent via `fix-review`/`review-split`, but neither mechanism fits the diff view's actual context. `fix-review` operates on GitHub PR review threads for a specific plan's already-open PR; `review-split` (the `AddReviewPhasesButton` → `parseReviewFindings` flow) adds findings as phases on a specific plan. The `/diff` route (built in earlier phases) is a global working-tree view with no plan association at all — it's reached from the Deliver card's "N files changed" link before a PR even exists. Every agent-launch mechanism in this codebase (`launchFixReview`, `launchAgent`, `launchPlanAudit`, etc.) requires a `planId`.
-
-To implement this stretch phase I need a decision on: (1) should annotating a hunk require picking a plan first (e.g. a plan selector in the diff view), and (2) should the note become a new phase on that plan for later dispatch (reusing `review-split`'s phase-adding shape), or trigger an immediate one-off agent edit against the working tree (a new mechanism, since none of the existing `launch*` calls fit a PR-less, phase-less single-hunk fix)? I don't want to invent this product decision on my own.
 - [x] 2026-07-31 [log] Decision — the diff view is read-only, for viewing changes only. Dropped the "annotate a hunk and hand it to an agent" stretch phase; no note-taking or agent dispatch from this view. The scope is the viewer (phases 1–4) plus the type-check pass.
+- [x] 2026-07-31 [log] I want to make the diff view always visible content, and files list can be put into sidebar, to scroll into related code
+- [x] 2026-07-31 [log] [agent] Makes sense — a persistent file-list sidebar with the diff always rendered in the main pane reads much better than collapsing per file, and it lets you jump to related code as you scroll. Added it as a new phase since the viewer's already built; it'll track as a Fix on top of the finished layout. (reopened this idea to re-run)
