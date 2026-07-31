@@ -37,7 +37,7 @@ Findings that surface after this plan is built don't rewrite its finished phases
 - [x] Remove the old flows — Apply, Split, comment/review split, margin-note pins, and Rework-from-notes
 - [x] Rebuild the feedback message rendering on Paper UI Card components
       Render each thread message with the Paper UI Card component and drop the custom message bubbles, so the whole view is built from Paper UI primitives.
-- [ ] Add a `### Fixes` section to the idea grammar
+- [x] Add a `### Fixes` section to the idea grammar
       Parse and serialize a checkbox list after `### Phases` in the core parser, serializer, sections, and entity types — same grammar as phases, no history lost on round-trip.
 - [ ] Land post-build feedback edits in Fixes, and reopen the plan
       When a feedback-chat edit adds work to an already-implemented plan, append it to Fixes (not Phases) and set status back to in-progress.

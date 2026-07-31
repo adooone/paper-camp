@@ -253,6 +253,9 @@ export interface EntityEntry {
   order?: number;
   body: string;
   phases: PhaseItem[];
+  /** Post-build findings, same checkbox grammar as `phases` — appended below Phases
+   * rather than rewriting the plan's already-finished phase history. */
+  fixes?: PhaseItem[];
   /** The entity's single ordered feedback thread — folds what used to be separate
    * log/clarifications/notes/review sections. */
   thread?: ThreadMessage[];

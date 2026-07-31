@@ -17,6 +17,7 @@ import type {
 } from '../../types/index';
 import {
   CLARIFICATIONS_SECTION,
+  FIXES_SECTION,
   LOG_SECTION,
   NOTES_SECTION,
   PHASES_SECTION,
@@ -240,7 +241,8 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     notes,
     review,
   } = extractStandardSections(rawBody);
-  const { body, entries: threadEntries } = extractSection(bodyAfterLegacy, THREAD_SECTION);
+  const { body: bodyAfterFixes, entries: fixes } = extractSection(bodyAfterLegacy, FIXES_SECTION);
+  const { body, entries: threadEntries } = extractSection(bodyAfterFixes, THREAD_SECTION);
   const thread = [...threadEntries, ...threadFromLegacy(log, clarifications, notes, review)];
 
   if (frontmatter.kind === 'note' && phases.length > 0) {
@@ -266,6 +268,7 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     order: frontmatter.order,
     body,
     phases,
+    ...(fixes.length > 0 && { fixes }),
     ...(thread.length > 0 && { thread }),
   };
 

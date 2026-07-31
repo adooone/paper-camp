@@ -63,8 +63,8 @@ function parseDatedEntries(lines: string[], start: number, end: number): LogEntr
   return entries;
 }
 
-function formatPhaseLines(phases: PhaseItem[]): string[] {
-  const lines = ['### Phases'];
+function formatPhaseLines(heading: string, phases: PhaseItem[]): string[] {
+  const lines = [heading];
   for (const phase of phases) {
     const text = phase.source === 'review' ? `[review] ${phase.text}` : phase.text;
     lines.push(`- [${phase.done ? 'x' : ' '}] ${text}`);
@@ -130,7 +130,15 @@ export interface SectionDef<T> {
 export const PHASES_SECTION: SectionDef<PhaseItem> = {
   headingRe: /^#{2,3}\s+Phases\s*$/i,
   parseEntries: parsePhaseEntries,
-  formatLines: formatPhaseLines,
+  formatLines: (phases) => formatPhaseLines('### Phases', phases),
+};
+
+/** Same grammar as Phases — a checkbox list — but for post-build findings that
+ * append below Phases without rewriting the plan's finished phase history. */
+export const FIXES_SECTION: SectionDef<PhaseItem> = {
+  headingRe: /^#{2,3}\s+Fixes\s*$/i,
+  parseEntries: parsePhaseEntries,
+  formatLines: (fixes) => formatPhaseLines('### Fixes', fixes),
 };
 
 export const LOG_SECTION: SectionDef<LogEntry> = {

@@ -57,6 +57,7 @@ export function entityFileInput(
     order: entry.order,
     body: entry.body,
     phases: entry.phases,
+    fixes: entry.fixes,
     thread: entry.thread,
     ...overrides,
   };

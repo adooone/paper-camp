@@ -524,6 +524,68 @@ Body prose.
       { date: '2026-07-27', text: 'The phase 2 rollout plan is missing a rollback step' },
     ]);
   });
+
+  it('extracts Fixes entries out of the body, separate from Phases', () => {
+    const md = `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+### Phases
+- [x] first
+
+### Fixes
+- [ ] Docs check regressed after the first phase
+      Found during review, not part of the original build.
+- [x] Undo button didn't revert body edits
+`;
+    const { entries, warnings } = parseEntityFile(md);
+    expect(warnings).toEqual([]);
+    expect(entries[0].phases).toEqual([{ done: true, text: 'first' }]);
+    expect(entries[0].fixes).toEqual([
+      {
+        done: false,
+        text: 'Docs check regressed after the first phase',
+        description: 'Found during review, not part of the original build.',
+      },
+      { done: true, text: "Undo button didn't revert body edits" },
+    ]);
+  });
+
+  it('round-trips fixes through formatEntityFile', () => {
+    const written = formatEntityFile({
+      id: 'IDEA-99',
+      title: 'Tolerant heading',
+      type: 'feat',
+      created: '2026-07-13',
+      body: 'Body prose.',
+      phases: [{ text: 'first', done: true }],
+      fixes: [{ text: 'Docs check regressed', done: false, description: 'Found during review.' }],
+    });
+    const { entries, warnings } = parseEntityFile(written);
+    expect(warnings).toEqual([]);
+    expect(entries[0].fixes).toEqual([
+      { text: 'Docs check regressed', done: false, description: 'Found during review.' },
+    ]);
+  });
+
+  it('omits the Fixes section when no fixes are present', () => {
+    const written = formatEntityFile({
+      id: 'IDEA-99',
+      title: 'Tolerant heading',
+      type: 'feat',
+      created: '2026-07-13',
+      body: 'Body prose.',
+      phases: [{ text: 'first', done: true }],
+    });
+    expect(written).not.toContain('### Fixes');
+    const { entries } = parseEntityFile(written);
+    expect(entries[0].fixes).toBeUndefined();
+  });
 });
 
 describe('parseTaskLog', () => {

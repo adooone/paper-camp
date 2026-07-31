@@ -12,6 +12,7 @@ import type {
 import { SUGGESTION_ENTRY_RE } from '../parse/parser';
 import {
   CLARIFICATIONS_SECTION,
+  FIXES_SECTION,
   LOG_SECTION,
   NOTES_SECTION,
   PHASES_SECTION,
@@ -203,6 +204,7 @@ interface NewEntityFileInput {
   order?: number;
   body?: string;
   phases?: PhaseItem[];
+  fixes?: PhaseItem[];
   thread?: ThreadMessage[];
 }
 
@@ -227,6 +229,7 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   if (input.body) sections.push(input.body);
   appendSections(sections, [
     { entries: input.phases, section: PHASES_SECTION },
+    { entries: input.fixes, section: FIXES_SECTION },
     { entries: input.thread, section: THREAD_SECTION },
   ]);
   return sections.join('\n\n').trimEnd();
