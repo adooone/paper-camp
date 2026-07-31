@@ -27,6 +27,7 @@ The Feedback view on an idea becomes one chat thread with a single message box a
 - [x] Fold log, review, notes, and clarifications into one thread on the idea entity
       Migrate existing entries into the single ordered thread so no history is lost.
 - [x] Rebuild the Feedback view as a chat thread with one message box and one send
+      Build the view entirely from Paper UI library components — render each message with the Card component, not custom message UI.
 - [x] Run a one-shot agent on send with the full thread, idea, and plan as context, and post its reply into the thread
 - [x] Have the agent classify and act in the same run — answer its own question, edit the plan or body, record with no edit, or spin off a follow-up idea
 - [x] Persist answers to the agent's questions onto the idea as clarifications/decisions
@@ -36,3 +37,5 @@ The Feedback view on an idea becomes one chat thread with a single message box a
 ### Thread
 - [x] 2026-07-31 [log] fix docs check
 - [x] 2026-07-31 [log] [agent] This idea is only about turning Feedback into a single chat thread, so a failing docs check isn't something I can fix from here — it's outside this idea's scope. If you want it tracked, tell me which check is failing (and where) and I'll spin it off as its own idea; otherwise this note is now recorded in the thread.
+- [x] 2026-07-31 [log] chat messages should use cards components to render. Not custom ones. All the UI should be constructed from the Paper UI library components.
+- [x] 2026-07-31 [log] [agent] Good constraint — I've reworded the chat-view phase to require Paper UI Card components for message rendering and to build the whole view from Paper UI library primitives rather than custom UI. This is git-tracked; the Undo on this reply reverts the edit.
