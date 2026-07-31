@@ -27,7 +27,7 @@ The Feedback view on an idea becomes one chat thread with a single message box a
       Migrate existing entries into the single ordered thread so no history is lost.
 - [x] Rebuild the Feedback view as a chat thread with one message box and one send
 - [x] Run a one-shot agent on send with the full thread, idea, and plan as context, and post its reply into the thread
-- [ ] Have the agent classify and act in the same run — answer its own question, edit the plan or body, record with no edit, or spin off a follow-up idea
+- [x] Have the agent classify and act in the same run — answer its own question, edit the plan or body, record with no edit, or spin off a follow-up idea
 - [ ] Persist answers to the agent's questions onto the idea as clarifications/decisions
 - [ ] Carry a one-tap Undo on each agent reply that reverts that run's git-tracked edits
 - [ ] Remove the old flows — Apply, Split, comment/review split, margin-note pins, and Rework-from-notes

@@ -3,13 +3,13 @@ import { join } from 'node:path';
 import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
 import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
-import { todayDateString } from '@/core/serialize';
+import { assignEntityId, formatEntityFile, todayDateString } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
 import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry, ThreadMessage } from '@/types/index';
 import { readDefaultAgentIds } from '../agent';
 import { resolveAgent } from '../agents';
 import { probeAgentAuthStatus } from '../capabilities';
-import { replyToFeedback } from '../feedback-reply';
+import { applyFeedbackEdit, replyToFeedback } from '../feedback-reply';
 import {
   campFile,
   checkBranchConflictForPlan,
@@ -389,17 +389,35 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         let thread = threadWithUser;
         try {
           const plan = entityToPlan({ ...entity, thread: threadWithUser });
-          const reply = await replyToFeedback(plan, agent.runFeedbackReply);
+          const result = await replyToFeedback(plan, agent.runFeedbackReply);
+          const overrides = result.edit ? applyFeedbackEdit(entity.phases, result.edit) : {};
+
+          let replyText = result.reply;
+          if (result.spinOff) {
+            const newId = await assignEntityId(join(root, 'papercamp', 'config.json'));
+            if (newId) {
+              const followUpContent = formatEntityFile({
+                id: newId,
+                title: result.spinOff.title,
+                status: 'idea',
+                created: todayDateString(),
+                body: result.spinOff.body,
+              });
+              await writeFile(join(ideasDir, `${newId}.md`), `${followUpContent}\n`, 'utf-8');
+              replyText = `${replyText} (spun off as ${newId})`;
+            }
+          }
+
           const replyMessage: ThreadMessage = {
             kind: 'log',
             date: todayDateString(),
-            text: reply,
+            text: replyText,
             from: 'agent',
           };
           thread = [...threadWithUser, replyMessage];
           await writeEntityFile(
             targetFile,
-            entityFileInput(entity, { thread, updated: todayDateString() }),
+            entityFileInput(entity, { thread, updated: todayDateString(), ...overrides }),
           );
         } catch (err) {
           error = (err as Error).message;

@@ -126,6 +126,33 @@ export interface ReviewSplitFollowUp {
   body: string;
 }
 
+export interface FeedbackPhaseEdit {
+  op: 'add' | 'reword';
+  /** 1-based position in the plan's current phase list; required for "reword", ignored for "add". */
+  index?: number;
+  text: string;
+  description?: string;
+}
+
+export interface FeedbackEdit {
+  phases?: FeedbackPhaseEdit[];
+  /** The complete replacement body, when the message corrects body prose. */
+  body?: string;
+}
+
+export interface FeedbackFollowUp {
+  title: string;
+  body: string;
+}
+
+// Parsed from the JSON object a feedback-reply agent's prompt requires as its
+// final line — reply is always present, edit/spinOff are mutually exclusive.
+export interface FeedbackReplyResult {
+  reply: string;
+  edit?: FeedbackEdit;
+  spinOff?: FeedbackFollowUp;
+}
+
 /** One review point's proposed classification — rework still inside this plan's
  * existing scope, or a follow-up idea for work that would grow beyond it. */
 export interface ReviewSplitItem {

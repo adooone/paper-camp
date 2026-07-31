@@ -365,8 +365,10 @@ Rules:
 - A "rework" item needs a non-empty "phases" array; an "idea" item needs a non-empty "title" and "body". Never include both on the same item.`;
 }
 
-// Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply) — replies into
-// the thread, never edits the idea/plan file itself (that starts in a later phase).
+// Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply) — never uses
+// tools or edits a file itself; it proposes an edit/follow-up as JSON and
+// feedback-reply.ts's applyFeedbackEdit + the route apply it deterministically,
+// the same "propose, app applies" split as buildReviewSplitPrompt.
 export function buildFeedbackReplyPrompt(plan: PlanEntry): string {
   const phaseList = plan.phases.length
     ? plan.phases
@@ -380,7 +382,7 @@ export function buildFeedbackReplyPrompt(plan: PlanEntry): string {
         .join('\n')
     : '(empty thread)';
 
-  return `You are the agent behind the Feedback thread on the idea "${plan.title}" (${plan.id ?? 'no id'}), stored at papercamp/ideas/${plan.id ?? '<ID>'}.md. Do not use any tools, do not read or edit any files, and do not implement anything — base your reply only on the context given below.
+  return `You are the agent behind the Feedback thread on the idea "${plan.title}" (${plan.id ?? 'no id'}), stored at papercamp/ideas/${plan.id ?? '<ID>'}.md. Do not use any tools, do not read or edit any files, and do not implement anything — base your answer only on the context given below.
 
 Idea/plan body:
 ${plan.body}
@@ -391,7 +393,22 @@ ${phaseList}
 Feedback thread so far, oldest first:
 ${threadList}
 
-Task: write a short, direct reply to the most recent user message, continuing the conversation naturally as if you remember everything above. Answer questions, react to comments, or ask a clarifying question of your own when you need one. Respond with ONLY the reply text — no JSON, no code fences, no "Agent:" prefix, no meta-commentary about what you're doing.`;
+Task: classify the most recent user message and act on it in the same response:
+- It answers an open question you asked earlier in this thread, or is a plain question/comment with nothing to change — just reply.
+- It asks for a change this idea/plan should make: add a new phase, reword an existing phase's title or description, or correct body prose that's now wrong — reply AND include an "edit".
+- It's a stray thought or review remark with nothing actionable — just reply, acknowledging it; the message itself is already recorded in the thread, so no edit is needed.
+- It describes work out of scope for this idea/plan entirely — reply AND include a "spinOff" for a new, separate idea. Never combine "edit" and "spinOff" on the same message.
+
+When unsure whether a message asks for a change, treat it as a plain reply rather than guessing an edit.
+
+Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
+{"reply": "short reply text, continuing the conversation naturally", "edit": {"phases": [{"op": "add", "text": "Short phase title", "description": "optional detail"}, {"op": "reword", "index": 2, "text": "New phase title", "description": "optional detail"}], "body": "the ENTIRE corrected body text, only when body prose needs a correction"}, "spinOff": {"title": "Idea title", "body": "One paragraph describing the idea and why it came up"}}
+
+Rules:
+- "reply" is always required and is the only thing shown when nothing needs to change — omit "edit" and "spinOff" entirely in that case.
+- "edit.phases" entries: "add" appends a new phase at the end; "reword" replaces the title/description of the existing phase at the given 1-based "index" (matching the numbered list above) — never invent an index outside that range.
+- "edit.body", when present, must be the complete replacement body, not a fragment — reproduce every part that isn't changing, word for word.
+- Only include "edit" when the message clearly asks for a change; only include "spinOff" when the message is genuinely out of scope for this idea/plan, not merely a new detail within it.`;
 }
 
 // Scans the whole corpus rather than one idea and appends to suggestions.md, so
