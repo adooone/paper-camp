@@ -1,5 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
 import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
@@ -387,6 +387,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
         let error: string | undefined;
         let thread = threadWithUser;
+        let undo: { commitSha: string } | undefined;
         try {
           const plan = entityToPlan({ ...entity, thread: threadWithUser });
           const result = await replyToFeedback(plan, agent.runFeedbackReply);
@@ -428,12 +429,72 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             targetFile,
             entityFileInput(entity, { thread, updated: todayDateString(), ...overrides }),
           );
+
+          // Only a plan edit needs an Undo — commit it on its own so a revert can't
+          // also sweep in unrelated dirty files elsewhere in the working tree.
+          if (overrides.phases || overrides.body) {
+            const relFile = relative(root, targetFile);
+            await git.commit(
+              [relFile],
+              `${entity.type ?? 'feat'}(ideas): apply feedback edit to ${entity.id}`,
+              `Refs: ${entity.id}`,
+              { noVerify: true },
+            );
+            undo = { commitSha: await git.getHeadSha() };
+          }
         } catch (err) {
           error = (err as Error).message;
         }
 
         await regenerateIndexes(root);
-        sendJson(res, 200, { ok: true, ...(error ? { error } : {}) });
+        sendJson(res, 200, { ok: true, ...(error ? { error } : {}), ...(undo ? { undo } : {}) });
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/agent/feedback-undo',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { planId, commitSha } = JSON.parse(reqBody) as {
+          planId?: string;
+          commitSha?: string;
+        };
+        if (!planId || !commitSha) {
+          sendJson(res, 400, { error: 'planId and commitSha are required' });
+          return;
+        }
+
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
+        if (!entity) {
+          sendJson(res, 404, { error: 'plan not found' });
+          return;
+        }
+        const primaryFile = join(ideasDir, `${entity.id}.md`);
+        const targetFile = (await fileExists(primaryFile))
+          ? primaryFile
+          : join(ideasDir, 'archive', `${entity.id}.md`);
+        const relFile = relative(root, targetFile);
+
+        // The commit must still be the file's tip — a later edit landing on top would
+        // make a blind revert clobber that newer change instead of just this one.
+        const lastCommit = await git.getLastCommitFor(relFile);
+        if (lastCommit !== commitSha) {
+          sendJson(res, 409, { error: 'This edit can no longer be undone' });
+          return;
+        }
+
+        try {
+          await git.revert(commitSha);
+        } catch (err) {
+          sendJson(res, 400, { error: (err as Error).message });
+          return;
+        }
+
+        await regenerateIndexes(root);
+        sendJson(res, 200, { ok: true });
       },
     },
 

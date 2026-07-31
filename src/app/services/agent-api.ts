@@ -120,7 +120,7 @@ export const splitReview = async (planId: string): Promise<ReviewSplitResult> =>
 export const postFeedbackMessage = async (
   planId: string,
   text: string,
-): Promise<{ error?: string }> => {
+): Promise<{ error?: string; undo?: { commitSha: string } }> => {
   const response = await fetch('/api/agent/feedback-message', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -128,6 +128,20 @@ export const postFeedbackMessage = async (
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Failed to send message');
+  return data as { error?: string; undo?: { commitSha: string } };
+};
+
+export const undoFeedbackEdit = async (
+  planId: string,
+  commitSha: string,
+): Promise<{ error?: string }> => {
+  const response = await fetch('/api/agent/feedback-undo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId, commitSha }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Failed to undo edit');
   return data as { error?: string };
 };
 

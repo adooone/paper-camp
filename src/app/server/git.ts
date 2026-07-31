@@ -417,6 +417,20 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await runGit(['add', '-A']);
   }
 
+  async function getHeadSha(): Promise<string> {
+    return (await runGit(['rev-parse', 'HEAD'])).trim();
+  }
+
+  async function getLastCommitFor(file: string): Promise<string> {
+    return runGit(['log', '-1', '--format=%H', '--', toLiteralPathspec(file)])
+      .then((output) => output.trim())
+      .catch(() => '');
+  }
+
+  async function revert(sha: string): Promise<void> {
+    await runGit(['revert', sha, '--no-edit']);
+  }
+
   // Regenerated from the entity files on every corpus mutation, so a local edit is never
   // the source of truth. papercamp/run-order.md must NOT join this list — it is intent
   // (the chosen queue), not derived output, so a differing local copy must survive sync.
@@ -537,6 +551,9 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     getCurrentBranch,
     commit,
     stageAll,
+    getHeadSha,
+    getLastCommitFor,
+    revert,
     diff,
     ensureBranch,
     getFeatureBranchPlanId,

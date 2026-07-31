@@ -363,11 +363,22 @@ const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
   clarification: 'clarification',
 };
 
-const FeedbackThread = ({ messages }: { messages: ThreadMessage[] }) => (
+const FeedbackThread = ({
+  messages,
+  undo,
+  undoing,
+  onUndo,
+}: {
+  messages: ThreadMessage[];
+  undo: { commitSha: string } | null;
+  undoing: boolean;
+  onUndo: () => void;
+}) => (
   <>
     {messages.map((message, i) => {
       const label = THREAD_KIND_LABEL[message.kind];
       const fromAgent = message.from === 'agent';
+      const isLast = i === messages.length - 1;
       return (
         <div
           key={`${message.kind}-${message.date ?? ''}-${i}`}
@@ -407,6 +418,13 @@ const FeedbackThread = ({ messages }: { messages: ThreadMessage[] }) => (
                 agent
               </Stamp>
             )}
+            {fromAgent && isLast && undo && (
+              <Tooltip content="Revert this run's plan edit">
+                <Button size="small" variant="ghost" onClick={onUndo} disabled={undoing}>
+                  {undoing ? 'Undoing…' : 'Undo'}
+                </Button>
+              </Tooltip>
+            )}
             {message.date && (
               <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
                 {message.date}
@@ -428,10 +446,16 @@ const FeedbackSection = ({
   plan,
   updating,
   onSend,
+  undo,
+  undoing,
+  onUndo,
 }: {
   plan: PlanEntry;
   updating: boolean;
   onSend: (text: string) => Promise<boolean>;
+  undo: { commitSha: string } | null;
+  undoing: boolean;
+  onUndo: () => void;
 }) => {
   const [input, setInput] = useState('');
   const thread = plan.thread ?? [];
@@ -454,7 +478,7 @@ const FeedbackSection = ({
           }}
         >
           {thread.length > 0 ? (
-            <FeedbackThread messages={thread} />
+            <FeedbackThread messages={thread} undo={undo} undoing={undoing} onUndo={onUndo} />
           ) : (
             <p className="text-sm" style={{ margin: 0, color: color.textSecondary }}>
               Jot a comment, ask a question, or say what's wrong with this plan.
@@ -548,7 +572,13 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
   };
 
-  const { sending, send: sendFeedbackMessage } = useSendFeedbackMessage(plan);
+  const {
+    sending,
+    send: sendFeedbackMessage,
+    undo: feedbackUndo,
+    undoing: undoingFeedback,
+    undoEdit,
+  } = useSendFeedbackMessage(plan);
 
   const handleAddNote = async (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => {
     const newNote: MarginNote = { anchor, prose, state: 'open', ...(kind ? { kind } : {}) };
@@ -604,7 +634,14 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       </div>
 
       {showFeedback ? (
-        <FeedbackSection plan={plan} updating={sending} onSend={sendFeedbackMessage} />
+        <FeedbackSection
+          plan={plan}
+          updating={sending}
+          onSend={sendFeedbackMessage}
+          undo={feedbackUndo}
+          undoing={undoingFeedback}
+          onUndo={undoEdit}
+        />
       ) : (
         <>
           <BranchRow
