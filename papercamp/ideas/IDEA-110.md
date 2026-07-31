@@ -28,7 +28,7 @@ Stretch, converging with the existing review paths: annotate a hunk with a note 
       Path + change-count header, collapsible body, added/removed line styling.
 - [x] Handle large, binary, and renamed files
       Collapse or stub oversized/binary diffs; show rename headers instead of a full re-add.
-- [ ] Wire navigation from the Deliver card and back
+- [x] Wire navigation from the Deliver card and back
       Route the "N files changed" link into the view and provide a return path.
 - [ ] Annotate a hunk and hand it to an agent (stretch)
       Attach a note to a hunk and dispatch it through `fix-review`/`review-split`.
