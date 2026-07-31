@@ -117,6 +117,20 @@ export const splitReview = async (planId: string): Promise<ReviewSplitResult> =>
   return data as ReviewSplitResult;
 };
 
+export const postFeedbackMessage = async (
+  planId: string,
+  text: string,
+): Promise<{ error?: string }> => {
+  const response = await fetch('/api/agent/feedback-message', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId, text }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Failed to send message');
+  return data as { error?: string };
+};
+
 export const stopAgent = async (taskId?: string): Promise<void> => {
   const response = await fetch('/api/agent/stop', {
     method: 'POST',

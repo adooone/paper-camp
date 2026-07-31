@@ -1,6 +1,6 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
-import { usePlanStatusPatch, useTrail } from '@/app/features/plans/hooks';
+import { usePlanStatusPatch, useSendFeedbackMessage, useTrail } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
@@ -366,23 +366,29 @@ const FeedbackThread = ({ messages }: { messages: ThreadMessage[] }) => (
   <>
     {messages.map((message, i) => {
       const label = THREAD_KIND_LABEL[message.kind];
+      const fromAgent = message.from === 'agent';
       return (
         <div
           key={`${message.kind}-${message.date ?? ''}-${i}`}
           style={{
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'flex-end',
+            alignItems: fromAgent ? 'flex-start' : 'flex-end',
             gap: space[1],
           }}
         >
           <div
             className="text-sm"
             style={{
-              background: label ? color.accentSlate : 'rgba(0,0,0,0.08)',
-              color: label ? '#fff' : undefined,
+              background: fromAgent
+                ? color.textSecondary
+                : label
+                  ? color.accentSlate
+                  : 'rgba(0,0,0,0.08)',
+              color: fromAgent || label ? '#fff' : undefined,
               borderRadius: space[2],
-              borderBottomRightRadius: space[1],
+              borderBottomLeftRadius: fromAgent ? space[1] : space[2],
+              borderBottomRightRadius: fromAgent ? space[2] : space[1],
               padding: `${space[2]} ${space[3]}`,
               maxWidth: '85%',
             }}
@@ -395,6 +401,11 @@ const FeedbackThread = ({ messages }: { messages: ThreadMessage[] }) => (
             </CollapsibleText>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+            {fromAgent && (
+              <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
+                agent
+              </Stamp>
+            )}
             {message.date && (
               <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
                 {message.date}
@@ -457,7 +468,15 @@ const FeedbackSection = ({
             rows={3}
             disabled={updating}
           />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: space[3],
+            }}
+          >
+            {updating && <Spinner size="small" label="Agent replying…" />}
             <Button size="small" onClick={handleSend} disabled={updating || !input.trim()}>
               Send
             </Button>
@@ -528,11 +547,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
   };
 
-  const handleSendMessage = async (text: string) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const newMessage: ThreadMessage = { kind: 'log', date: today, text: text.replace(/\n/g, ' ') };
-    return patchByTitle(plan.title, { thread: [...(plan.thread ?? []), newMessage] });
-  };
+  const { sending, send: sendFeedbackMessage } = useSendFeedbackMessage(plan);
 
   const handleAddNote = async (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => {
     const newNote: MarginNote = { anchor, prose, state: 'open', ...(kind ? { kind } : {}) };
@@ -588,7 +603,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       </div>
 
       {showFeedback ? (
-        <FeedbackSection plan={plan} updating={updating} onSend={handleSendMessage} />
+        <FeedbackSection plan={plan} updating={sending} onSend={sendFeedbackMessage} />
       ) : (
         <>
           <BranchRow

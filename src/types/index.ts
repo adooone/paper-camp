@@ -67,6 +67,8 @@ export interface ThreadMessage {
   text: string;
   /** Only meaningful for note/decision/question kinds. */
   state?: MarginNoteState;
+  /** Absent means 'user' — no thread message predates this field being agent-authored. */
+  from?: 'user' | 'agent';
 }
 
 export interface RawEntry {
@@ -511,7 +513,8 @@ export type TaskKind =
   | 'reconcile'
   | 'rework'
   | 'fix-review'
-  | 'review-split';
+  | 'review-split'
+  | 'feedback';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
 // unlike the in-memory task registry.

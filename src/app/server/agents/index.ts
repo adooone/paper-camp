@@ -52,6 +52,8 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   prioritise: 'commitSuggest',
   // Also authors phase/idea text from prose, same bucket as rework/draft.
   'review-split': 'planDraft',
+  // Replies conversationally from prose context, same authoring bucket as review-split.
+  feedback: 'planDraft',
 };
 
 export function resolveAgent(opts: {

@@ -14,7 +14,7 @@ const PHASE_SOURCE_RE = /^\[review\]\s+(.*)$/;
 const DATED_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
 const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(?:\[(decision|question)\]\s+)?(.*)$/;
 const THREAD_LINE_RE =
-  /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question)\]\s+(.*)$/;
+  /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question)\]\s+(\[agent\]\s+)?(.*)$/;
 const NOTE_STATE_KINDS: ThreadMessageKind[] = ['note', 'decision', 'question'];
 
 function parsePhaseEntries(lines: string[], start: number, end: number): PhaseItem[] {
@@ -163,8 +163,9 @@ function parseThreadEntries(lines: string[], start: number, end: number): Thread
     const match = lines[i].match(THREAD_LINE_RE);
     if (!match) continue;
     const kind = match[3] as ThreadMessageKind;
-    const message: ThreadMessage = { kind, text: match[4].trim() };
+    const message: ThreadMessage = { kind, text: match[5].trim() };
     if (match[2]) message.date = match[2];
+    if (match[4]) message.from = 'agent';
     if (NOTE_STATE_KINDS.includes(kind)) {
       message.state = match[1].toLowerCase() === 'x' ? 'resolved' : 'open';
     }
@@ -178,7 +179,8 @@ function formatThreadLines(messages: ThreadMessage[]): string[] {
   for (const m of messages) {
     const checked = m.state ? m.state === 'resolved' : true;
     const date = m.date ? `${m.date} ` : '';
-    lines.push(`- [${checked ? 'x' : ' '}] ${date}[${m.kind}] ${m.text}`);
+    const author = m.from === 'agent' ? '[agent] ' : '';
+    lines.push(`- [${checked ? 'x' : ' '}] ${date}[${m.kind}] ${author}${m.text}`);
   }
   return lines;
 }

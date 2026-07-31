@@ -365,6 +365,35 @@ Rules:
 - A "rework" item needs a non-empty "phases" array; an "idea" item needs a non-empty "title" and "body". Never include both on the same item.`;
 }
 
+// Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply) — replies into
+// the thread, never edits the idea/plan file itself (that starts in a later phase).
+export function buildFeedbackReplyPrompt(plan: PlanEntry): string {
+  const phaseList = plan.phases.length
+    ? plan.phases
+        .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
+        .join('\n')
+    : '(no phases yet)';
+
+  const threadList = (plan.thread ?? []).length
+    ? (plan.thread as NonNullable<PlanEntry['thread']>)
+        .map((m) => `${m.from === 'agent' ? 'Agent' : 'User'}: ${m.text}`)
+        .join('\n')
+    : '(empty thread)';
+
+  return `You are the agent behind the Feedback thread on the idea "${plan.title}" (${plan.id ?? 'no id'}), stored at papercamp/ideas/${plan.id ?? '<ID>'}.md. Do not use any tools, do not read or edit any files, and do not implement anything — base your reply only on the context given below.
+
+Idea/plan body:
+${plan.body}
+
+Current phases:
+${phaseList}
+
+Feedback thread so far, oldest first:
+${threadList}
+
+Task: write a short, direct reply to the most recent user message, continuing the conversation naturally as if you remember everything above. Answer questions, react to comments, or ask a clarifying question of your own when you need one. Respond with ONLY the reply text — no JSON, no code fences, no "Agent:" prefix, no meta-commentary about what you're doing.`;
+}
+
 // Scans the whole corpus rather than one idea and appends to suggestions.md, so
 // there's no entity id to check success against — didTaskProgress compares suggestBaseline (a line count) instead.
 export function buildSuggestIdeasPrompt(

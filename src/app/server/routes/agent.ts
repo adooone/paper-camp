@@ -3,12 +3,21 @@ import { join } from 'node:path';
 import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
 import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
+import { todayDateString } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
-import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry } from '@/types/index';
+import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry, ThreadMessage } from '@/types/index';
 import { readDefaultAgentIds } from '../agent';
 import { resolveAgent } from '../agents';
 import { probeAgentAuthStatus } from '../capabilities';
-import { campFile, checkBranchConflictForPlan, fileExists } from '../helpers';
+import { replyToFeedback } from '../feedback-reply';
+import {
+  campFile,
+  checkBranchConflictForPlan,
+  entityFileInput,
+  fileExists,
+  regenerateIndexes,
+  writeEntityFile,
+} from '../helpers';
 import { readBody, sendJson } from '../http';
 import { splitReview } from '../review-split';
 import type { Route, RouteContext } from './types';
@@ -336,6 +345,68 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         } catch (err) {
           sendJson(res, 400, { error: (err as Error).message });
         }
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/agent/feedback-message',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { planId, text } = JSON.parse(reqBody) as { planId?: string; text?: string };
+        if (!planId || !text?.trim()) {
+          sendJson(res, 400, { error: 'planId and text are required' });
+          return;
+        }
+
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
+        if (!entity) {
+          sendJson(res, 404, { error: 'plan not found' });
+          return;
+        }
+        const primaryFile = join(ideasDir, `${entity.id}.md`);
+        const targetFile = (await fileExists(primaryFile))
+          ? primaryFile
+          : join(ideasDir, 'archive', `${entity.id}.md`);
+
+        const userMessage: ThreadMessage = {
+          kind: 'log',
+          date: todayDateString(),
+          text: text.trim(),
+        };
+        const threadWithUser = [...(entity.thread ?? []), userMessage];
+
+        // Written before the agent runs so the user's message survives a slow or
+        // failed run — the reply below is a second, best-effort append on top.
+        await writeEntityFile(
+          targetFile,
+          entityFileInput(entity, { thread: threadWithUser, updated: todayDateString() }),
+        );
+
+        let error: string | undefined;
+        let thread = threadWithUser;
+        try {
+          const plan = entityToPlan({ ...entity, thread: threadWithUser });
+          const reply = await replyToFeedback(plan, agent.runFeedbackReply);
+          const replyMessage: ThreadMessage = {
+            kind: 'log',
+            date: todayDateString(),
+            text: reply,
+            from: 'agent',
+          };
+          thread = [...threadWithUser, replyMessage];
+          await writeEntityFile(
+            targetFile,
+            entityFileInput(entity, { thread, updated: todayDateString() }),
+          );
+        } catch (err) {
+          error = (err as Error).message;
+        }
+
+        await regenerateIndexes(root);
+        sendJson(res, 200, { ok: true, ...(error ? { error } : {}) });
       },
     },
 
