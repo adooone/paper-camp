@@ -1,4 +1,4 @@
-import type { GitStatusResponse } from '@/types/index';
+import type { FileDiffEntry, GitStatusResponse } from '@/types/index';
 
 async function throwIfNotOk(response: Response, fallbackError: string): Promise<void> {
   if (response.ok) return;
@@ -10,6 +10,13 @@ export const fetchGitStatus = async (): Promise<GitStatusResponse> => {
   const response = await fetch('/api/git/status');
   await throwIfNotOk(response, 'Failed to load git status');
   return response.json();
+};
+
+export const fetchFileDiffs = async (): Promise<FileDiffEntry[]> => {
+  const response = await fetch('/api/git/diff');
+  await throwIfNotOk(response, 'Failed to load diff');
+  const data = await response.json();
+  return data.files;
 };
 
 export const commitChanges = async (

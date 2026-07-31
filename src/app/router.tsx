@@ -40,6 +40,9 @@ const TasksPage = lazy(() =>
 const RoadmapPage = lazy(() =>
   import('@/app/features/roadmap/index').then((m) => ({ default: m.RoadmapPage })),
 );
+const DiffPage = lazy(() =>
+  import('@/app/features/diff/index').then((m) => ({ default: m.DiffPage })),
+);
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
@@ -387,6 +390,12 @@ const roadmapRoute = createRoute({
   }),
 });
 
+const diffRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/diff',
+  component: DiffPage,
+});
+
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/tasks',
@@ -406,6 +415,7 @@ const routeTree = rootRoute.addChildren([
   settingsSectionRoute,
   tasksRoute,
   roadmapRoute,
+  diffRoute,
 ]);
 
 export const router = createRouter({ routeTree });
