@@ -100,18 +100,18 @@
 | IDEA-96 | Open questions as a working queue | feat | done | app, plans, core |
 | IDEA-97 | Surface decisions where they bind | feat | done | app, core, ui |
 | IDEA-98 | Track run order in one file | refactor | done | core, plans, git |
-| IDEA-99 | Project stats view | — | idea |  |
+| IDEA-99 | Project stats view | feat | planned | stats, metrics, server, ui |
 | IDEA-100 | Self-healing run-all: fix red checks, ask only when stuck | feat | done | agent, plans |
-| IDEA-101 | In-app sign-in via OAuth relay | — | idea |  |
-| IDEA-102 | Agent resolves sync-rebase conflicts | feat | idea | git, app, agent, server |
-| IDEA-103 | One feedback thread on every idea, any status | feat | idea | app, plans, ui |
-| IDEA-104 | Decisions and questions live on the idea | feat | idea | app, core, plans |
-| IDEA-105 | Plain-language the confusing UI text | fix | idea | app, ui |
-| IDEA-106 | Slim agent prompts for short, direct output | feat | idea | agent, plans, app |
-| IDEA-107 | De-complicate the worst code | refactor | idea | app, core, server |
-| IDEA-108 | Surface a diverged main with a one-click agent fix | feat | idea | git, app, agent |
-| IDEA-109 | Compact Deliver section, more room for the agent stack | feat | idea | app, ui, stack |
-| IDEA-110 | In-app code review with diffs | feat | idea | app, git, ui |
-| IDEA-111 | Single-source color tokens via CSS variables | refactor | idea | app, ui, refactor |
-| IDEA-112 | Move all styling to Tailwind | refactor | idea | app, ui, refactor |
-| IDEA-113 | Feedback as a single chat thread | feat | idea | app, ui, agent, plans |
+| IDEA-101 | In-app sign-in via OAuth relay | feat | planned | app, server, agent |
+| IDEA-102 | Agent resolves sync-rebase conflicts | feat | planned | git, app, agent, server |
+| IDEA-103 | One feedback thread on every idea, any status | feat | done | app, plans, ui |
+| IDEA-104 | Decisions and questions live on the idea | feat | done | app, core, plans |
+| IDEA-105 | Plain-language the confusing UI text | fix | done | app, ui |
+| IDEA-106 | Slim agent prompts for short, direct output | feat | done | agent, plans, app |
+| IDEA-107 | De-complicate the worst code | refactor | done | app, core, server |
+| IDEA-108 | Surface a diverged main with a one-click agent fix | feat | planned | git, app, agent |
+| IDEA-109 | Compact Deliver section, more room for the agent stack | feat | done | app, ui, stack |
+| IDEA-110 | In-app code review with diffs | feat | planned | app, git, ui |
+| IDEA-111 | Adopt paper-ui color tokens, drop local literals | refactor | dropped | app, ui, refactor |
+| IDEA-112 | Move all styling to Tailwind | refactor | planned | app, ui, refactor |
+| IDEA-113 | Feedback as a single chat thread | feat | planned | app, ui, agent, plans |

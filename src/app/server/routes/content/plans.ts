@@ -14,7 +14,6 @@ import {
   type AgentId,
   type EntityEntry,
   type LogEntry,
-  type MarginNote,
   PLAN_KINDS,
   type PhaseItem,
   type PlanStatus,
@@ -139,8 +138,6 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           /** `null` clears the stored override (e.g. reopening a dropped plan). */
           status?: PlanStatus | null;
           log?: LogEntry[];
-          notes?: MarginNote[];
-          review?: LogEntry[];
           thread?: ThreadMessage[];
           agent?: AgentId | null;
           subject?: string | null;
@@ -176,8 +173,8 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
 
         // Run order for plans/ideas lives in papercamp/run-order.md, not frontmatter (IDEA-98);
         // notes aren't part of that list, so their `order` still writes straight to frontmatter.
-        // log/notes/review are legacy shapes callers still send in full-replacement form —
-        // fold each back into its slice of the entity's single thread.
+        // log is a legacy shape callers still send in full-replacement form — fold it back
+        // into its slice of the entity's single thread.
         let thread = target.thread;
         if (updates.thread !== undefined) {
           thread = updates.thread;
@@ -187,20 +184,6 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
             thread,
             ['log'],
             updates.log.map((e) => ({ kind: 'log' as const, date: e.date, text: e.text })),
-          );
-        }
-        if (updates.review !== undefined) {
-          thread = replaceThreadKinds(
-            thread,
-            ['review'],
-            updates.review.map((e) => ({ kind: 'review' as const, date: e.date, text: e.text })),
-          );
-        }
-        if (updates.notes !== undefined) {
-          thread = replaceThreadKinds(
-            thread,
-            ['note', 'decision', 'question'],
-            updates.notes.map((n) => ({ kind: n.kind ?? 'note', text: n.prose, state: n.state })),
           );
         }
 

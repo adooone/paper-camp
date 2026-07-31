@@ -19,7 +19,6 @@ import {
   writeEntityFile,
 } from '../helpers';
 import { readBody, sendJson } from '../http';
-import { splitReview } from '../review-split';
 import type { Route, RouteContext } from './types';
 
 async function resolveEntityFilePath(root: string, entityId: string): Promise<string | null> {
@@ -196,21 +195,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
     ),
 
     planActionRoute(
-      '/api/agent/launch-rework',
-      (raw) => {
-        const { planId, prompt } = JSON.parse(raw) as { planId?: string; prompt?: string };
-        if (!planId || !prompt) return null;
-        return { planId, prompt };
-      },
-      'planId and prompt are required',
-      async ({ planId, prompt }) => {
-        const resolved = await resolvePlan(planId);
-        if (!resolved.ok) return resolved;
-        return agent.startForPlan(resolved.plan, prompt, 'rework');
-      },
-    ),
-
-    planActionRoute(
       '/api/agent/launch-reconcile',
       (raw) => {
         const { planId, prompt } = JSON.parse(raw) as { planId?: string; prompt?: string };
@@ -323,30 +307,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         return agent.startFixReview(plan, prompt, threads);
       },
     ),
-
-    {
-      method: 'POST',
-      path: '/api/agent/split-review',
-      handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId } = JSON.parse(reqBody) as { planId?: string };
-        if (!planId) {
-          sendJson(res, 400, { error: 'planId is required' });
-          return;
-        }
-        const plan = await findPlanById(root, planId);
-        if (!plan) {
-          sendJson(res, 404, { error: 'plan not found' });
-          return;
-        }
-        try {
-          const result = await splitReview(plan, plan.review ?? [], agent.runReviewSplit);
-          sendJson(res, 200, result);
-        } catch (err) {
-          sendJson(res, 400, { error: (err as Error).message });
-        }
-      },
-    },
 
     {
       method: 'POST',

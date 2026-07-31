@@ -1,4 +1,4 @@
-import type { AgentTaskState, MarginNote, MarginNoteAnchor, PlanEntry } from '@/types/index';
+import type { AgentTaskState, PlanEntry } from '@/types/index';
 
 export const relativeDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -37,37 +37,6 @@ export const effectiveStatus = (
   if (plan.status === 'done' || plan.status === 'dropped') return plan.status;
   return runningTaskForPlan(plan.id, agentStatus) ? 'in-progress' : plan.status;
 };
-
-export const notesForAnchor = (
-  notes: MarginNote[] | undefined,
-  anchor: MarginNoteAnchor,
-): MarginNote[] =>
-  (notes ?? []).filter(
-    (note) =>
-      note.state === 'open' &&
-      (anchor.kind === 'phase'
-        ? note.anchor.kind === 'phase' && note.anchor.index === anchor.index
-        : note.anchor.kind === 'body'),
-  );
-
-export const openMarginNotes = (notes: MarginNote[] | undefined): MarginNote[] =>
-  (notes ?? []).filter((note) => note.state === 'open');
-
-const sameAnchor = (a: MarginNoteAnchor, b: MarginNoteAnchor): boolean =>
-  a.kind === 'phase' && b.kind === 'phase' ? a.index === b.index : a.kind === b.kind;
-
-// Matches by (anchor, prose) rather than identity: a bundled note's array reference
-// won't survive the reload between launching a rework and approving its preview.
-export const resolveAppliedNotes = (
-  notes: MarginNote[] | undefined,
-  applied: MarginNote[],
-): MarginNote[] =>
-  (notes ?? []).map((note) =>
-    note.state === 'open' &&
-    applied.some((a) => sameAnchor(a.anchor, note.anchor) && a.prose === note.prose)
-      ? { ...note, state: 'resolved' as const }
-      : note,
-  );
 
 export const findFocusPlan = (
   plans: PlanEntry[] | undefined,

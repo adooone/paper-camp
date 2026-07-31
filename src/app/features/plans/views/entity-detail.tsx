@@ -9,9 +9,6 @@ import type {
   AgentTaskState,
   IdeaEntry,
   LogEntry,
-  MarginNote,
-  MarginNoteAnchor,
-  MarginNoteKind,
   PhaseItem,
   PlanEntry,
   ThreadMessage,
@@ -29,12 +26,7 @@ import {
   useToast,
 } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import {
-  DraftPlanButton,
-  ExtendIdeaButton,
-  RefreshButton,
-  ReworkFromNotesButton,
-} from '../actions';
+import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
   AddReviewPhasesButton,
@@ -42,21 +34,13 @@ import {
   AuditPhasesButton,
   PhaseCopyButton,
 } from '../actions';
-import { AddMarginNoteButton, MarginNotesList } from '../components';
 import { CollapsibleText } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
-import {
-  effectiveStatus,
-  notesForAnchor,
-  openMarginNotes,
-  phaseProgress,
-  relativeDate,
-  runningTaskForPlan,
-} from '../helpers';
+import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -84,8 +68,6 @@ const PhasesSection = ({
   updating,
   onTogglePhase,
   onAddReviewPhases,
-  onAddNote,
-  onResolveNote,
 }: {
   plan: PlanEntry;
   auditRunning: boolean;
@@ -95,8 +77,6 @@ const PhasesSection = ({
   updating: boolean;
   onTogglePhase: (index: number) => void;
   onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
-  onAddNote: (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => Promise<boolean>;
-  onResolveNote: (note: MarginNote) => Promise<boolean>;
 }) => (
   <div style={{ marginBottom: space[8] }}>
     <div
@@ -164,11 +144,6 @@ const PhasesSection = ({
           cell: (phase: PhaseItem, index: number) => (
             <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
               <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
-              <AddMarginNoteButton
-                label="Add a note on this phase"
-                onAdd={(prose, kind) => onAddNote({ kind: 'phase', index }, prose, kind)}
-                disabled={updating}
-              />
               {!phase.done && agentPhaseIndex === index ? (
                 <Spinner size="small" label={`Agent ${planTask?.status}…`} />
               ) : (
@@ -182,18 +157,7 @@ const PhasesSection = ({
         },
       ]}
       expandable={{
-        render: (phase: PhaseItem, index: number) => {
-          const openNotes = notesForAnchor(plan.notes, { kind: 'phase', index });
-          if (!phase.description && openNotes.length === 0) return null;
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: space[3] }}>
-              {phase.description}
-              {openNotes.length > 0 && (
-                <MarginNotesList notes={openNotes} onResolve={onResolveNote} disabled={updating} />
-              )}
-            </div>
-          );
-        },
+        render: (phase: PhaseItem) => phase.description || null,
       }}
       showExpandColumn={false}
       rowClassName={(phase: PhaseItem) =>
@@ -277,39 +241,15 @@ const PlanProgressBar = ({
   </div>
 );
 
-const PlanBodySection = ({
-  plan,
-  bodyNotes,
-  updating,
-  onAddNote,
-  onResolveNote,
-}: {
-  plan: PlanEntry;
-  bodyNotes: MarginNote[];
-  updating: boolean;
-  onAddNote: (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => Promise<boolean>;
-  onResolveNote: (note: MarginNote) => Promise<boolean>;
-}) => (
+const PlanBodySection = ({ plan }: { plan: PlanEntry }) => (
   <div style={{ marginBottom: space[4] }}>
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: space[2] }}>
-      <div style={{ flex: 1, opacity: 0.85 }}>
-        {plan.body && (
-          <CollapsibleText resetKey={plan.id ?? plan.title}>
-            <Markdown>{plan.body}</Markdown>
-          </CollapsibleText>
-        )}
-      </div>
-      <AddMarginNoteButton
-        label="Add a note on this plan's body"
-        onAdd={(prose, kind) => onAddNote({ kind: 'body' }, prose, kind)}
-        disabled={updating}
-      />
+    <div style={{ opacity: 0.85 }}>
+      {plan.body && (
+        <CollapsibleText resetKey={plan.id ?? plan.title}>
+          <Markdown>{plan.body}</Markdown>
+        </CollapsibleText>
+      )}
     </div>
-    {bodyNotes.length > 0 && (
-      <div style={{ marginTop: space[3] }}>
-        <MarginNotesList notes={bodyNotes} onResolve={onResolveNote} disabled={updating} />
-      </div>
-    )}
   </div>
 );
 
@@ -580,20 +520,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     undoEdit,
   } = useSendFeedbackMessage(plan);
 
-  const handleAddNote = async (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => {
-    const newNote: MarginNote = { anchor, prose, state: 'open', ...(kind ? { kind } : {}) };
-    return patchByTitle(plan.title, { notes: [...(plan.notes ?? []), newNote] });
-  };
-
-  const handleResolveNote = async (note: MarginNote) => {
-    const nextNotes = (plan.notes ?? []).map((n) =>
-      n === note ? { ...n, state: 'resolved' as const } : n,
-    );
-    return patchByTitle(plan.title, { notes: nextNotes });
-  };
-
-  const bodyNotes = notesForAnchor(plan.notes, { kind: 'body' });
-
   return (
     <div>
       <div
@@ -626,9 +552,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               ? `updated ${relativeDate(plan.updated)}`
               : `created ${relativeDate(plan.created)}`}
           </span>
-          {openMarginNotes(plan.notes).length > 0 && (
-            <ReworkFromNotesButton plan={plan} disabled={updating} />
-          )}
           <RefreshButton />
         </div>
       </div>
@@ -659,13 +582,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             />
           )}
 
-          <PlanBodySection
-            plan={plan}
-            bodyNotes={bodyNotes}
-            updating={updating}
-            onAddNote={handleAddNote}
-            onResolveNote={handleResolveNote}
-          />
+          <PlanBodySection plan={plan} />
 
           <ClarificationsSection clarifications={plan.clarifications ?? []} />
 
@@ -693,8 +610,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               updating={updating}
               onTogglePhase={handleTogglePhase}
               onAddReviewPhases={handleAddReviewPhases}
-              onAddNote={handleAddNote}
-              onResolveNote={handleResolveNote}
             />
           )}
 

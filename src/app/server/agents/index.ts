@@ -42,17 +42,13 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   sync: 'phase',
   reconcile: 'phase',
   'fix-review': 'phase',
-  // Rework writes new phases from prose notes — the same authoring job as drafting.
-  rework: 'planDraft',
   draft: 'planDraft',
   extend: 'ideaExtend',
   suggest: 'ideaExtend',
   'commit-suggest': 'commitSuggest',
   'overlap-check': 'commitSuggest',
   prioritise: 'commitSuggest',
-  // Also authors phase/idea text from prose, same bucket as rework/draft.
-  'review-split': 'planDraft',
-  // Replies conversationally from prose context, same authoring bucket as review-split.
+  // Replies conversationally from prose context, same authoring bucket as draft.
   feedback: 'planDraft',
 };
 

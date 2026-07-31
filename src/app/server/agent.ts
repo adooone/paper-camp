@@ -161,8 +161,6 @@ If the failure requires a decision you can't make on your own — not just a fix
 const NO_PROGRESS_WARNING_BY_KIND: Partial<Record<TaskKind, (task: AgentTask) => string>> = {
   extend: (task) =>
     `Warning: agent finished but the idea body for ${task.ideaId} did not change — verify manually`,
-  rework: () =>
-    'Warning: agent finished but your notes produced no change to the body or phases — verify manually',
   reconcile: () =>
     'Warning: agent finished but the plan body and phase text did not change — verify manually',
   suggest: () => 'Agent finished without appending any suggestions — nothing new found',
@@ -220,9 +218,9 @@ export function createAgentManager(
     return task.status === 'stopping';
   }
 
-  // Writes a run-all escalation into the plan's `### Log` (Comments) so a human
-  // sees the agent's question in the same place they'd leave one, and Apply-notes
-  // / rework can pick the thread back up instead of the run dying with no trace.
+  // Writes a run-all escalation into the plan's thread so a human sees the agent's
+  // question in the same place they'd leave one, and the Feedback chat can pick it
+  // back up instead of the run dying with no trace.
   // Also flips the plan back to in-progress so a parked run surfaces in the
   // worklist as needing input rather than looking merely errored.
   async function escalateToLog(planId: string | undefined, message: string): Promise<void> {
@@ -325,7 +323,7 @@ export function createAgentManager(
       if (task.taskKind === 'fix-review') {
         return task.fixReviewResult !== undefined;
       }
-      if (task.taskKind === 'reconcile' || task.taskKind === 'rework') {
+      if (task.taskKind === 'reconcile') {
         const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
         const plan = entries.find((e) => e.id === task.planId && e.kind !== 'note');
         if (!plan || task.reconcileBaseline === undefined) return null;
@@ -482,17 +480,11 @@ export function createAgentManager(
   const ENTITY_WRITER_KINDS = new Set<TaskKind>([
     'audit',
     'reconcile',
-    'rework',
     'batch-reconcile',
     'draft',
     'extend',
   ]);
-  const READONLY_KINDS = new Set<TaskKind>([
-    'commit-suggest',
-    'overlap-check',
-    'prioritise',
-    'review-split',
-  ]);
+  const READONLY_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check', 'prioritise']);
 
   function writeSetFor(taskKind: TaskKind, entityId?: string): WriteSet {
     if (READONLY_KINDS.has(taskKind)) return { scope: 'none' };
@@ -592,13 +584,11 @@ export function createAgentManager(
   function startForPlan(
     plan: PlanEntry,
     prompt: string,
-    taskKind: 'audit' | 'reconcile' | 'rework' = 'audit',
+    taskKind: 'audit' | 'reconcile' = 'audit',
   ): Result {
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
       taskKind,
-      // Rework rewrites body/phases in place like reconcile, so it needs the same
-      // baseline snapshot to drive the before/after preview.
-      ...(taskKind === 'reconcile' || taskKind === 'rework'
+      ...(taskKind === 'reconcile'
         ? {
             reconcileBaseline: JSON.stringify({
               body: plan.body,
@@ -1060,7 +1050,7 @@ export function createAgentManager(
 
   function runReadOnlyPrompt(
     prompt: string,
-    taskKind: 'commit-suggest' | 'overlap-check' | 'prioritise' | 'review-split' | 'feedback',
+    taskKind: 'commit-suggest' | 'overlap-check' | 'prioritise' | 'feedback',
     planTitle: string,
   ): Promise<string> {
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
@@ -1168,10 +1158,6 @@ export function createAgentManager(
     return runReadOnlyPrompt(prompt, 'prioritise', 'Prioritise queue');
   }
 
-  function runReviewSplit(prompt: string): Promise<string> {
-    return runReadOnlyPrompt(prompt, 'review-split', 'Split review');
-  }
-
   function runFeedbackReply(prompt: string, planTitle: string): Promise<string> {
     return runReadOnlyPrompt(prompt, 'feedback', planTitle);
   }
@@ -1234,7 +1220,6 @@ export function createAgentManager(
     runCommitSuggest,
     runOverlapCheck,
     runPrioritise,
-    runReviewSplit,
     runFeedbackReply,
     stop,
     getStatus,
@@ -1288,11 +1273,7 @@ export interface AgentManagerState {
 
 export interface AgentManager {
   start: (plan: PlanEntry, phaseIndex: number) => Result;
-  startForPlan: (
-    plan: PlanEntry,
-    prompt: string,
-    taskKind?: 'audit' | 'reconcile' | 'rework',
-  ) => Result;
+  startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
   startFixReview: (plan: PlanEntry, prompt: string, threads: ReviewThread[]) => Result;
   getFixReviewResult: () => FixReviewResult | null;
   consumeFixReviewResult: () => void;
@@ -1305,7 +1286,6 @@ export interface AgentManager {
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
   runPrioritise: (prompt: string) => Promise<string>;
-  runReviewSplit: (prompt: string) => Promise<string>;
   runFeedbackReply: (prompt: string, planTitle: string) => Promise<string>;
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];

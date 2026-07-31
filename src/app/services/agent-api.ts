@@ -1,4 +1,4 @@
-import type { AgentTaskState, ReconcileQueueItem, ReviewSplitResult } from '@/types/index';
+import type { AgentTaskState, ReconcileQueueItem } from '@/types/index';
 
 const handleAgentResponse = async (
   response: Response,
@@ -31,15 +31,6 @@ export const launchAgent = async (planId: string, phaseIndex: number): Promise<v
 
 export const launchPlanAudit = async (planId: string, prompt: string): Promise<void> => {
   const response = await fetch('/api/agent/launch-audit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ planId, prompt }),
-  });
-  await handleAgentResponse(response);
-};
-
-export const launchPlanRework = async (planId: string, prompt: string): Promise<void> => {
-  const response = await fetch('/api/agent/launch-rework', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, prompt }),
@@ -104,17 +95,6 @@ export const launchFixReview = async (planId: string): Promise<void> => {
     body: JSON.stringify({ planId }),
   });
   await handleAgentResponse(response);
-};
-
-export const splitReview = async (planId: string): Promise<ReviewSplitResult> => {
-  const response = await fetch('/api/agent/split-review', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ planId }),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error ?? 'Failed to split review');
-  return data as ReviewSplitResult;
 };
 
 export const postFeedbackMessage = async (

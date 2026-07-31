@@ -20,9 +20,7 @@ const TASK_KIND_LABELS: Record<TaskKind, string> = {
   prioritise: 'Prioritise queue',
   sync: 'Sync',
   reconcile: 'Reconcile',
-  rework: 'Apply notes',
   'fix-review': 'Fix review',
-  'review-split': 'Split review',
   feedback: 'Feedback reply',
 };
 

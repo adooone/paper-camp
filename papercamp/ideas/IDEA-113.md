@@ -2,7 +2,7 @@
 id: IDEA-113
 title: Feedback as a single chat thread
 type: feat
-status: idea
+status: review
 created: 2026-07-31
 updated: 2026-07-31
 tags:
@@ -11,6 +11,7 @@ tags:
   - agent
   - plans
 subject: Conversational feedback
+order: 7
 ---
 
 The Feedback view on an idea becomes one chat thread with a single message box and a single send. Posting a message is the only action — there is no Apply, no Split, and no pre-sorting by the author. Every message goes to the agent, which decides what it is and acts on it. This closes the answer gap [[IDEA-104]] left: questions already live on the idea, but nothing let you answer one.
@@ -30,4 +31,8 @@ The Feedback view on an idea becomes one chat thread with a single message box a
 - [x] Have the agent classify and act in the same run — answer its own question, edit the plan or body, record with no edit, or spin off a follow-up idea
 - [x] Persist answers to the agent's questions onto the idea as clarifications/decisions
 - [x] Carry a one-tap Undo on each agent reply that reverts that run's git-tracked edits
-- [ ] Remove the old flows — Apply, Split, comment/review split, margin-note pins, and Rework-from-notes
+- [x] Remove the old flows — Apply, Split, comment/review split, margin-note pins, and Rework-from-notes
+
+### Thread
+- [x] 2026-07-31 [log] fix docs check
+- [x] 2026-07-31 [log] [agent] This idea is only about turning Feedback into a single chat thread, so a failing docs check isn't something I can fix from here — it's outside this idea's scope. If you want it tracked, tell me which check is failing (and where) and I'll spin it off as its own idea; otherwise this note is now recorded in the thread.

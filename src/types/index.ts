@@ -116,16 +116,6 @@ export interface FixReviewResult {
   skipped: { threadId: string; why: string }[];
 }
 
-export interface ReviewSplitPhase {
-  text: string;
-  description?: string;
-}
-
-export interface ReviewSplitFollowUp {
-  title: string;
-  body: string;
-}
-
 export interface FeedbackPhaseEdit {
   op: 'add' | 'reword';
   /** 1-based position in the plan's current phase list; required for "reword", ignored for "add". */
@@ -154,26 +144,6 @@ export interface FeedbackReplyResult {
   /** True when the user's message answers an open question the agent asked
    * earlier in this thread — the route persists that message as a clarification. */
   answersQuestion?: boolean;
-}
-
-/** One review point's proposed classification — rework still inside this plan's
- * existing scope, or a follow-up idea for work that would grow beyond it. */
-export interface ReviewSplitItem {
-  point: string;
-  kind: 'rework' | 'idea';
-  phases?: ReviewSplitPhase[];
-  followUp?: ReviewSplitFollowUp;
-}
-
-// Parsed from the JSON object a review-split agent's prompt requires as its final line.
-export interface ReviewSplitResult {
-  items: ReviewSplitItem[];
-}
-
-/** What an approved split actually applied — shown as a confirmation so approving is never silent. */
-export interface ReviewSplitOutcome {
-  phasesAdded: number;
-  ideaTitles: string[];
 }
 
 /** Live-resolved PR info for an entity's branch — see `core/pr.ts`. */
@@ -541,9 +511,7 @@ export type TaskKind =
   | 'prioritise'
   | 'sync'
   | 'reconcile'
-  | 'rework'
   | 'fix-review'
-  | 'review-split'
   | 'feedback';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
