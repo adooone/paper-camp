@@ -99,6 +99,7 @@ export function entityToPlan(e: EntityEntry, pr?: PrInfo, prLookupResolved = fal
     order: e.order,
     body: e.body,
     phases: e.phases,
+    fixes: e.fixes,
     log: logFromThread(e.thread),
     clarifications: clarificationsFromThread(e.thread),
     notes: notesFromThread(e.thread),

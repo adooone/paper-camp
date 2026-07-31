@@ -177,6 +177,8 @@ export interface PlanEntry {
   order?: number;
   body: string;
   phases: PhaseItem[];
+  /** Post-build findings, same checkbox grammar as `phases` — see EntityEntry.fixes. */
+  fixes?: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
   notes?: MarginNote[];

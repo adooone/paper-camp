@@ -1,4 +1,4 @@
-import type { AgentTaskState, PlanEntry } from '@/types/index';
+import type { AgentTaskState, PhaseItem, PlanEntry } from '@/types/index';
 
 export const relativeDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -12,13 +12,17 @@ export const relativeDate = (dateStr: string): string => {
   return `${Math.floor(days / 365)}y ago`;
 };
 
-export const phaseProgress = (plan: PlanEntry) => {
-  if (plan.phases.length === 0) return null;
-  const done = plan.phases.filter((p) => p.done).length;
-  return { done, total: plan.phases.length, pct: Math.round((done / plan.phases.length) * 100) };
+const itemProgress = (items: PhaseItem[]) => {
+  if (items.length === 0) return null;
+  const done = items.filter((p) => p.done).length;
+  return { done, total: items.length, pct: Math.round((done / items.length) * 100) };
 };
 
+export const phaseProgress = (plan: PlanEntry) => itemProgress(plan.phases);
+
 export const phasePercentage = (plan: PlanEntry): number | null => phaseProgress(plan)?.pct ?? null;
+
+export const fixProgress = (plan: PlanEntry) => itemProgress(plan.fixes ?? []);
 
 export const runningTaskForPlan = (
   planId: string | undefined,

@@ -40,7 +40,13 @@ import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
-import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
+import {
+  effectiveStatus,
+  fixProgress,
+  phaseProgress,
+  relativeDate,
+  runningTaskForPlan,
+} from '../helpers';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -167,6 +173,67 @@ const PhasesSection = ({
     />
   </div>
 );
+
+const FixesSection = ({
+  plan,
+  updating,
+  onToggleFix,
+}: {
+  plan: PlanEntry;
+  updating: boolean;
+  onToggleFix: (index: number) => void;
+}) => {
+  const fixes = plan.fixes ?? [];
+  const progress = fixProgress(plan);
+  return (
+    <div style={{ marginBottom: space[8] }}>
+      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Fixes</h3>
+      <Card size="small" accent accentColor="rose" texture="canvas">
+        {progress && (
+          <div style={{ marginBottom: space[3] }}>
+            <PlanProgressBar progress={progress} color={STATUS_STAMP.review.text} />
+          </div>
+        )}
+        <Table
+          data={fixes}
+          columns={[
+            {
+              key: 'checkbox',
+              header: 'Status',
+              cell: (fix: PhaseItem, index: number) => (
+                <Checkbox
+                  checked={fix.done}
+                  onChange={() => onToggleFix(index)}
+                  disabled={updating}
+                />
+              ),
+              width: 2,
+            },
+            {
+              key: 'title',
+              header: 'Title',
+              cell: (fix: PhaseItem) => (
+                <span
+                  style={{
+                    textDecoration: fix.done ? 'line-through' : 'none',
+                    opacity: fix.done ? 0.45 : 1,
+                  }}
+                >
+                  {fix.text}
+                </span>
+              ),
+            },
+          ]}
+          expandable={{
+            render: (fix: PhaseItem) => fix.description || null,
+          }}
+          showExpandColumn={false}
+          className="phase-table-phone"
+        />
+      </Card>
+    </div>
+  );
+};
 
 const BranchRow = ({
   plan,
@@ -460,6 +527,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const auditRunning = planTask?.taskKind === 'audit';
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
+  const hasFixes = (plan.fixes ?? []).length > 0;
   const showFeedback = detailView === 'feedback';
   const ideaView: IdeaEntry = {
     id: plan.id ?? null,
@@ -503,6 +571,18 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
   const handleAddReviewPhases = async (newPhases: PhaseItem[]) => {
     await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
+  };
+
+  const handleToggleFix = async (index: number) => {
+    const nextFixes: PhaseItem[] = (plan.fixes ?? []).map((fix, i) =>
+      i === index ? { ...fix, done: !fix.done } : fix,
+    );
+    const allChecked = nextFixes.every((f) => f.done);
+    if (allChecked && plan.status === 'in-progress') {
+      await patchByTitle(plan.title, { fixes: nextFixes, status: 'review' });
+    } else {
+      await patchByTitle(plan.title, { fixes: nextFixes });
+    }
   };
 
   const {
@@ -604,6 +684,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               onTogglePhase={handleTogglePhase}
               onAddReviewPhases={handleAddReviewPhases}
             />
+          )}
+
+          {hasFixes && (
+            <FixesSection plan={plan} updating={updating} onToggleFix={handleToggleFix} />
           )}
 
           <TrailSection planId={plan.id} />
