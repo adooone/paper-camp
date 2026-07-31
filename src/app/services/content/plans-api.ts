@@ -6,6 +6,7 @@ import type {
   PhaseItem,
   PlanEntry,
   PlanStatus,
+  ThreadMessage,
 } from '@/types/index';
 
 export const fetchPlans = async (): Promise<ParseResult<PlanEntry>> => {
@@ -35,6 +36,7 @@ export const updatePlan = async (
     log?: LogEntry[];
     notes?: MarginNote[];
     review?: LogEntry[];
+    thread?: ThreadMessage[];
     agent?: AgentId | null;
     /** `null` clears the frontmatter key, rendering the idea under "No subject". */
     subject?: string | null;

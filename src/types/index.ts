@@ -181,6 +181,8 @@ export interface PlanEntry {
   /** Prose written against the whole finished plan, distinct from the flat `log` — an
    * agent later splits each entry into rework phases or a follow-up idea. */
   review?: LogEntry[];
+  /** The entity's single ordered feedback thread — see EntityEntry.thread. */
+  thread?: ThreadMessage[];
   pr?: PrInfo;
 }
 

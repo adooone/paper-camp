@@ -1,6 +1,6 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
-import { usePlanStatusPatch, useSplitReview, useTrail } from '@/app/features/plans/hooks';
+import { usePlanStatusPatch, useTrail } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
@@ -14,6 +14,8 @@ import type {
   MarginNoteKind,
   PhaseItem,
   PlanEntry,
+  ThreadMessage,
+  ThreadMessageKind,
 } from '@/types/index';
 import {
   Button,
@@ -28,12 +30,10 @@ import {
 } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import {
-  ApplyNotesButton,
   DraftPlanButton,
   ExtendIdeaButton,
   RefreshButton,
   ReworkFromNotesButton,
-  SplitReviewButton,
 } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
@@ -48,7 +48,6 @@ import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
-import { ReviewSplitMessage } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import {
   effectiveStatus,
@@ -356,106 +355,83 @@ const TrailSection = ({ planId }: { planId: string | undefined }) => {
   );
 };
 
-interface ThreadItem {
-  date: string;
-  text: string;
-  kind: 'comment' | 'review';
-}
+const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
+  review: 'review',
+  note: 'note',
+  decision: 'decision',
+  question: 'question',
+};
 
-/** Comments and review points are separate fields (they feed different agent
- * flows — Apply notes vs Split review) but read as one merged, date-ordered thread. */
-function buildThread(log: LogEntry[] | undefined, review: LogEntry[] | undefined): ThreadItem[] {
-  const comments: ThreadItem[] = (log ?? []).map((e) => ({ ...e, kind: 'comment' }));
-  const reviewPoints: ThreadItem[] = (review ?? []).map((e) => ({ ...e, kind: 'review' }));
-  return [...comments, ...reviewPoints].sort((a, b) => a.date.localeCompare(b.date));
-}
-
-const FeedbackThread = ({ items }: { items: ThreadItem[] }) => (
+const FeedbackThread = ({ messages }: { messages: ThreadMessage[] }) => (
   <>
-    {items.map((item, i) => (
-      <div
-        key={`${item.date}-${i}`}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: space[1] }}
-      >
+    {messages.map((message, i) => {
+      const label = THREAD_KIND_LABEL[message.kind];
+      return (
         <div
-          className="text-sm"
+          key={`${message.kind}-${message.date ?? ''}-${i}`}
           style={{
-            background: item.kind === 'review' ? color.accentSlate : 'rgba(0,0,0,0.08)',
-            color: item.kind === 'review' ? '#fff' : undefined,
-            borderRadius: space[2],
-            borderBottomRightRadius: space[1],
-            padding: `${space[2]} ${space[3]}`,
-            maxWidth: '85%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: space[1],
           }}
         >
-          <CollapsibleText collapsedLines={3} resetKey={`${item.date}-${i}`}>
-            {item.text}
-          </CollapsibleText>
+          <div
+            className="text-sm"
+            style={{
+              background: label ? color.accentSlate : 'rgba(0,0,0,0.08)',
+              color: label ? '#fff' : undefined,
+              borderRadius: space[2],
+              borderBottomRightRadius: space[1],
+              padding: `${space[2]} ${space[3]}`,
+              maxWidth: '85%',
+            }}
+          >
+            <CollapsibleText
+              collapsedLines={3}
+              resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
+            >
+              {message.text}
+            </CollapsibleText>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+            {message.date && (
+              <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
+                {message.date}
+              </span>
+            )}
+            {label && (
+              <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
+                {label}
+              </Stamp>
+            )}
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-          <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
-            {item.date}
-          </span>
-          {item.kind === 'review' && (
-            <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
-              review
-            </Stamp>
-          )}
-        </div>
-      </div>
-    ))}
+      );
+    })}
   </>
 );
 
-const PlanReviewSection = ({
+const FeedbackSection = ({
   plan,
   updating,
-  onAddComment,
-  onAddReview,
+  onSend,
 }: {
   plan: PlanEntry;
   updating: boolean;
-  onAddComment: (text: string) => Promise<boolean>;
-  onAddReview: (text: string) => Promise<boolean>;
+  onSend: (text: string) => Promise<boolean>;
 }) => {
   const [input, setInput] = useState('');
-  const { toast } = useToast();
-  const thread = buildThread(plan.log, plan.review);
-  const { launching, result, outcome, launch, approve, discard } = useSplitReview(plan);
+  const thread = plan.thread ?? [];
 
-  const handleAddComment = async () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    if (await onAddComment(input.trim())) setInput('');
-  };
-
-  const handleAddReview = async () => {
-    if (!input.trim()) return;
-    if (await onAddReview(input.trim())) {
-      setInput('');
-      toast({ title: 'Added to the review', variant: 'success' });
-    }
+    if (await onSend(input.trim())) setInput('');
   };
 
   return (
     <div style={{ marginBottom: space[8] }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: space[3],
-          margin: `0 0 ${space[3]}`,
-        }}
-      >
-        <h3 style={{ ...sectionHeadingStyle, margin: 0, flex: 1 }}>Feedback</h3>
-        <ApplyNotesButton plan={plan} disabled={updating} />
-        <SplitReviewButton
-          planId={plan.id}
-          hasPoints={(plan.review ?? []).length > 0}
-          launching={launching}
-          onClick={launch}
-          disabled={updating}
-        />
-      </div>
+      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Feedback</h3>
       <Card size="small" accent accentColor="slate" texture="kraft">
         <div
           style={{
@@ -466,35 +442,24 @@ const PlanReviewSection = ({
           }}
         >
           {thread.length > 0 ? (
-            <FeedbackThread items={thread} />
+            <FeedbackThread messages={thread} />
           ) : (
             <p className="text-sm" style={{ margin: 0, color: color.textSecondary }}>
-              Jot a comment as you work, or talk through what's wrong — then Split review turns
-              review points into rework phases here or a follow-up idea.
+              Jot a comment, ask a question, or say what's wrong with this plan.
             </p>
           )}
-          <ReviewSplitMessage
-            launching={launching}
-            result={result}
-            outcome={outcome}
-            onApprove={approve}
-            onDiscard={discard}
-          />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Add a comment, or what's wrong with this plan…"
+            placeholder="Message this idea…"
             rows={3}
             disabled={updating}
           />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
-            <Button size="small" onClick={handleAddComment} disabled={updating || !input.trim()}>
-              Add comment
-            </Button>
-            <Button size="small" onClick={handleAddReview} disabled={updating || !input.trim()}>
-              Add review
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button size="small" onClick={handleSend} disabled={updating || !input.trim()}>
+              Send
             </Button>
           </div>
         </div>
@@ -563,16 +528,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
   };
 
-  const handleAddLogEntry = async (text: string) => {
+  const handleSendMessage = async (text: string) => {
     const today = new Date().toISOString().slice(0, 10);
-    const newLog: LogEntry = { date: today, text: text.replace(/\n/g, ' ') };
-    return patchByTitle(plan.title, { log: [...(plan.log ?? []), newLog] });
-  };
-
-  const handleAddReview = async (text: string) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const newEntry: LogEntry = { date: today, text: text.replace(/\n/g, ' ') };
-    return patchByTitle(plan.title, { review: [...(plan.review ?? []), newEntry] });
+    const newMessage: ThreadMessage = { kind: 'log', date: today, text: text.replace(/\n/g, ' ') };
+    return patchByTitle(plan.title, { thread: [...(plan.thread ?? []), newMessage] });
   };
 
   const handleAddNote = async (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => {
@@ -629,12 +588,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       </div>
 
       {showFeedback ? (
-        <PlanReviewSection
-          plan={plan}
-          updating={updating}
-          onAddComment={handleAddLogEntry}
-          onAddReview={handleAddReview}
-        />
+        <FeedbackSection plan={plan} updating={updating} onSend={handleSendMessage} />
       ) : (
         <>
           <BranchRow

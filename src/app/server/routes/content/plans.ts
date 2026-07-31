@@ -18,6 +18,7 @@ import {
   PLAN_KINDS,
   type PhaseItem,
   type PlanStatus,
+  type ThreadMessage,
 } from '@/types/index';
 import {
   campFile,
@@ -140,6 +141,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           log?: LogEntry[];
           notes?: MarginNote[];
           review?: LogEntry[];
+          thread?: ThreadMessage[];
           agent?: AgentId | null;
           subject?: string | null;
           order?: number | null;
@@ -177,6 +179,9 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         // log/notes/review are legacy shapes callers still send in full-replacement form —
         // fold each back into its slice of the entity's single thread.
         let thread = target.thread;
+        if (updates.thread !== undefined) {
+          thread = updates.thread;
+        }
         if (updates.log !== undefined) {
           thread = replaceThreadKinds(
             thread,

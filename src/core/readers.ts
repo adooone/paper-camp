@@ -103,6 +103,7 @@ export function entityToPlan(e: EntityEntry, pr?: PrInfo, prLookupResolved = fal
     clarifications: clarificationsFromThread(e.thread),
     notes: notesFromThread(e.thread),
     review: reviewFromThread(e.thread),
+    thread: e.thread,
     pr,
   };
 }
