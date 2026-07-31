@@ -329,28 +329,21 @@ const FeedbackThread = ({
             gap: space[1],
           }}
         >
-          <div
-            className="text-sm"
-            style={{
-              background: fromAgent
-                ? color.textSecondary
-                : label
-                  ? color.accentSlate
-                  : 'rgba(0,0,0,0.08)',
-              color: fromAgent || label ? '#fff' : undefined,
-              borderRadius: space[2],
-              borderBottomLeftRadius: fromAgent ? space[1] : space[2],
-              borderBottomRightRadius: fromAgent ? space[2] : space[1],
-              padding: `${space[2]} ${space[3]}`,
-              maxWidth: '85%',
-            }}
-          >
-            <CollapsibleText
-              collapsedLines={3}
-              resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
+          <div style={{ maxWidth: '85%' }}>
+            <Card
+              size="small"
+              surface={fromAgent ? 'chalkboard' : 'paper'}
+              texture={fromAgent ? undefined : label ? 'canvas' : 'parchment'}
+              accent={!fromAgent}
+              accentColor={label ? 'rose' : 'blue'}
             >
-              {message.text}
-            </CollapsibleText>
+              <CollapsibleText
+                collapsedLines={3}
+                resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
+              >
+                {message.text}
+              </CollapsibleText>
+            </Card>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
             {fromAgent && (

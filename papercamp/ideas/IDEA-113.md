@@ -2,7 +2,7 @@
 id: IDEA-113
 title: Feedback as a single chat thread
 type: feat
-status: review
+status: in-progress
 created: 2026-07-31
 updated: 2026-07-31
 tags:
@@ -23,6 +23,8 @@ The Feedback view on an idea becomes one chat thread with a single message box a
 - Answers to the agent's questions are persisted onto the idea entity (as a clarification/decision), so the next run and any other agent see them. The thread is the interface; the idea file stays the source of truth.
 - Removes the Apply notes and Split review buttons, the Add comment vs Add review split, and the anchored margin-note pins with their Rework-from-notes flow. The idea's `log`, `review`, `notes`, and `clarifications` fold into one thread on the entity.
 
+Findings that surface after this plan is built don't rewrite its finished phases — they append to a separate `### Fixes` group below Phases. An open Fix reopens the idea so run-all works through Fixes just like phases, keeping post-build follow-ups distinct from the original build.
+
 ### Phases
 - [x] Fold log, review, notes, and clarifications into one thread on the idea entity
       Migrate existing entries into the single ordered thread so no history is lost.
@@ -33,6 +35,16 @@ The Feedback view on an idea becomes one chat thread with a single message box a
 - [x] Persist answers to the agent's questions onto the idea as clarifications/decisions
 - [x] Carry a one-tap Undo on each agent reply that reverts that run's git-tracked edits
 - [x] Remove the old flows — Apply, Split, comment/review split, margin-note pins, and Rework-from-notes
+- [x] Rebuild the feedback message rendering on Paper UI Card components
+      Render each thread message with the Paper UI Card component and drop the custom message bubbles, so the whole view is built from Paper UI primitives.
+- [ ] Add a `### Fixes` section to the idea grammar
+      Parse and serialize a checkbox list after `### Phases` in the core parser, serializer, sections, and entity types — same grammar as phases, no history lost on round-trip.
+- [ ] Land post-build feedback edits in Fixes, and reopen the plan
+      When a feedback-chat edit adds work to an already-implemented plan, append it to Fixes (not Phases) and set status back to in-progress.
+- [ ] Run-all works open Fixes after the phases
+      Once the phases are done, run-all implements each open Fix with a per-fix commit, then returns the plan to review when none remain.
+- [ ] Render a separate "Fixes" container below Phases in the entity detail
+      Group Fixes in their own labelled container under the Phases list, with its own progress, visually distinct from the original build.
 
 ### Thread
 - [x] 2026-07-31 [log] fix docs check

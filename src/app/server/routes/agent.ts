@@ -378,6 +378,15 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             }
           }
 
+          // A feedback edit that adds an undone phase to an already-finished plan is new
+          // work: reopen it so it re-enters the run-order queue and run-all implements it —
+          // otherwise the edit lands on a closed plan and nothing ever runs (or shows).
+          const reopen =
+            (overrides.phases?.some((p) => !p.done) ?? false) &&
+            entity.kind !== 'note' &&
+            (entity.status === 'review' || entity.status === 'done');
+          if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
+
           const replyMessage: ThreadMessage = {
             kind: 'log',
             date: todayDateString(),
@@ -387,7 +396,12 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           thread = [...answeredThread, replyMessage];
           await writeEntityFile(
             targetFile,
-            entityFileInput(entity, { thread, updated: todayDateString(), ...overrides }),
+            entityFileInput(entity, {
+              thread,
+              updated: todayDateString(),
+              ...overrides,
+              ...(reopen ? { status: 'in-progress' } : {}),
+            }),
           );
 
           // Only a plan edit needs an Undo — commit it on its own so a revert can't
