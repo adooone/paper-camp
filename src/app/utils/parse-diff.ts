@@ -18,6 +18,9 @@ export function parsePatch(patch: string): DiffHunk[] {
   const lines = (patch.endsWith('\n') ? patch.slice(0, -1) : patch).split('\n');
 
   if (!lines.some((line) => line.startsWith('@@ '))) {
+    // A real diff with no hunks (pure rename, mode-only change) is just the preamble —
+    // nothing to render as changed lines, unlike raw untracked content below.
+    if (lines.some((line) => line.startsWith('diff --git '))) return [];
     return [{ header: '', lines: lines.map((text) => ({ type: 'add', text })) }];
   }
 

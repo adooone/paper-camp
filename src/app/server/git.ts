@@ -484,14 +484,29 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         '--',
         ...literalPathspecs,
       ]).catch(() => '');
-      const [addRaw = '0', delRaw = '0'] = (
-        numstatOutput.split('\n').find((l) => l.trim()) ?? ''
-      ).split('\t');
-      const binary = addRaw === '-' || delRaw === '-';
+      // A rename below git's similarity threshold reports as two numstat lines (old
+      // path deleted, new path added) rather than one — sum both, not just the first.
+      const numstatLines = numstatOutput.split('\n').filter((l) => l.trim());
+      const binary = numstatLines.some((l) => l.split('\t')[0] === '-');
+      let additions = 0;
+      let deletions = 0;
+      if (!binary) {
+        for (const line of numstatLines) {
+          const [addRaw = '0', delRaw = '0'] = line.split('\t');
+          additions += Number.parseInt(addRaw, 10) || 0;
+          deletions += Number.parseInt(delRaw, 10) || 0;
+        }
+      }
 
-      const patchOutput = binary
+      let patchOutput = binary
         ? ''
         : await runGit(['diff', 'HEAD', '--', ...literalPathspecs]).catch(() => '');
+      // Below git's rename-similarity threshold, the "diff" is a full delete of the old
+      // path plus a full add of the new one — a full re-add. We already know from status
+      // that it's a rename, so drop the dump in favor of the compact header the UI shows.
+      if (entry.renameSource && !patchOutput.includes('rename from ')) {
+        patchOutput = '';
+      }
       const patch =
         patchOutput.length > maxCharsPerFile
           ? `${patchOutput.slice(0, maxCharsPerFile)}\n... (truncated)`
@@ -502,8 +517,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         renameSource: entry.renameSource,
         staged: entry.staged,
         binary,
-        additions: binary ? 0 : Number.parseInt(addRaw, 10) || 0,
-        deletions: binary ? 0 : Number.parseInt(delRaw, 10) || 0,
+        additions,
+        deletions,
         patch,
       });
     }

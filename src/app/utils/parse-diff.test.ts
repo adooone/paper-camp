@@ -48,6 +48,16 @@ describe('parsePatch', () => {
     expect(hunks[1].header).toBe('@@ -10,1 +10,1 @@');
   });
 
+  it('returns no hunks for a pure-rename diff with no content change', () => {
+    const patch = [
+      'diff --git a/old.txt b/new.txt',
+      'similarity index 100%',
+      'rename from old.txt',
+      'rename to new.txt',
+    ].join('\n');
+    expect(parsePatch(patch)).toEqual([]);
+  });
+
   it('treats raw content with no @@ marker as one all-added hunk', () => {
     const patch = 'line one\nline two';
     expect(parsePatch(patch)).toEqual([

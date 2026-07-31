@@ -62,6 +62,15 @@ const DiffBody = ({ entry }: { entry: FileDiffEntry }) => {
   }
   const hunks = parsePatch(entry.patch);
   if (hunks.length === 0) {
+    if (entry.renameSource) {
+      return (
+        <p style={{ margin: 0, opacity: 0.6 }}>
+          {entry.additions === 0 && entry.deletions === 0
+            ? 'Renamed, no content changes.'
+            : 'Renamed with unrelated content — diff omitted.'}
+        </p>
+      );
+    }
     return <p style={{ margin: 0, opacity: 0.6 }}>No changes to preview.</p>;
   }
   return (

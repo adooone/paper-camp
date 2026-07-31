@@ -697,6 +697,26 @@ describe('getWorkingDiff', () => {
       renameSource: 'old-name.txt',
       staged: true,
     });
+    expect(entry.patch).toContain('rename from old-name.txt');
+  });
+
+  it('collapses a rename with unrelated content instead of a full re-add', async () => {
+    // Below git's rename-similarity threshold, `git diff` reports the old path as a
+    // full deletion and the new path as a full addition rather than a single rename —
+    // getWorkingDiff should still sum both counts and stub the patch, not dump both.
+    const root = await initRepo();
+    await commitFile(root, 'old-name.txt', 'aaaa\nbbbb\ncccc\ndddd\n', 'add file');
+    git(root, 'mv', 'old-name.txt', 'new-name.txt');
+    await writeFile(join(root, 'new-name.txt'), 'zzzz\nyyyy\nxxxx\nwwww\n');
+    const manager = gitManager(root);
+    const [entry] = await manager.getWorkingDiff();
+    expect(entry).toMatchObject({
+      path: 'new-name.txt',
+      renameSource: 'old-name.txt',
+      additions: 4,
+      deletions: 4,
+      patch: '',
+    });
   });
 
   it('marks a binary file as such with zero counts', async () => {
