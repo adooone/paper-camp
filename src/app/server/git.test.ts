@@ -633,3 +633,110 @@ describe('diff', () => {
     expect(output.length).toBeLessThan(200);
   });
 });
+
+describe('getWorkingDiff', () => {
+  it('returns an empty list for a clean working tree', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    expect(await manager.getWorkingDiff()).toEqual([]);
+  });
+
+  it('reports add/remove counts for a tracked modification', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'README.md'), 'changed\n');
+    const manager = gitManager(root);
+    const [entry] = await manager.getWorkingDiff();
+    expect(entry).toMatchObject({
+      path: 'README.md',
+      staged: false,
+      binary: false,
+      additions: 1,
+      deletions: 1,
+    });
+    expect(entry.patch).toContain('-hello');
+    expect(entry.patch).toContain('+changed');
+  });
+
+  it('reports an untracked file as all additions', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'brand-new.txt'), 'one\ntwo\n');
+    const manager = gitManager(root);
+    const [entry] = await manager.getWorkingDiff();
+    expect(entry).toMatchObject({
+      path: 'brand-new.txt',
+      staged: false,
+      binary: false,
+      additions: 3,
+      deletions: 0,
+    });
+    expect(entry.patch).toContain('one\ntwo\n');
+  });
+
+  it('combines staged and unstaged changes into one entry', async () => {
+    const root = await initRepo();
+    await commitFile(root, 'file.txt', 'v1\n', 'add file');
+    await writeFile(join(root, 'file.txt'), 'v2\n');
+    git(root, 'add', '--', 'file.txt');
+    await writeFile(join(root, 'file.txt'), 'v3\n');
+    const manager = gitManager(root);
+    const [entry] = await manager.getWorkingDiff();
+    expect(entry.path).toBe('file.txt');
+    expect(entry.staged).toBe(true);
+    expect(entry.patch).toContain('-v1');
+    expect(entry.patch).toContain('+v3');
+  });
+
+  it('carries the rename source and includes it in the patch', async () => {
+    const root = await initRepo();
+    await commitFile(root, 'old-name.txt', 'content\n', 'add file');
+    git(root, 'mv', 'old-name.txt', 'new-name.txt');
+    const manager = gitManager(root);
+    const [entry] = await manager.getWorkingDiff();
+    expect(entry).toMatchObject({
+      path: 'new-name.txt',
+      renameSource: 'old-name.txt',
+      staged: true,
+    });
+  });
+
+  it('marks a binary file as such with zero counts', async () => {
+    const root = await initRepo();
+    await commitFile(root, 'data.bin', 'v1', 'add binary');
+    // Real binary content: bytes git won't treat as text.
+    await writeFile(join(root, 'data.bin'), Buffer.from([0, 1, 2, 255, 0, 254]));
+    const manager = gitManager(root);
+    const [entry] = await manager.getWorkingDiff();
+    expect(entry).toMatchObject({
+      path: 'data.bin',
+      binary: true,
+      additions: 0,
+      deletions: 0,
+      patch: '',
+    });
+  });
+
+  it('omits untracked symlink content instead of following the target', async () => {
+    const root = await initRepo();
+    await symlink('/etc/hostname', join(root, 'sneaky-link'));
+    const manager = gitManager(root);
+    const [entry] = await manager.getWorkingDiff();
+    expect(entry).toMatchObject({ path: 'sneaky-link', binary: true, patch: '' });
+  });
+
+  it('stubs an untracked file larger than the size cap', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'big.txt'), 'x'.repeat(500));
+    const manager = gitManager(root);
+    const [entry] = await manager.getWorkingDiff(200);
+    expect(entry.patch).toBe('(file too large to preview)');
+  });
+
+  it('truncates a tracked patch past the size cap', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'README.md'), `${'y'.repeat(500)}\n`);
+    const manager = gitManager(root);
+    const [entry] = await manager.getWorkingDiff(100);
+    expect(entry.patch).toContain('... (truncated)');
+    expect(entry.patch.length).toBeLessThan(200);
+  });
+});

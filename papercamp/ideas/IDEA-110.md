@@ -22,7 +22,7 @@ What it needs:
 Stretch, converging with the existing review paths: annotate a hunk with a note and hand it to an agent to fix (reuse `fix-review`/`review-split`), so review findings become changes without leaving the view. Scope the first cut to read-only diffs; layer the agent actions after.
 
 ### Phases
-- [ ] Expose a working-tree diff route grouped by file
+- [x] Expose a working-tree diff route grouped by file
       Serve the `git.ts` `diff` helper over a route returning staged + unstaged changes per file, with path and add/remove counts.
 - [ ] Build the per-file collapsible diff renderer
       Path + change-count header, collapsible body, added/removed line styling.

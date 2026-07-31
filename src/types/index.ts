@@ -474,6 +474,16 @@ export interface GitStatusResponse {
   branchHygiene: BranchHygieneStatus;
 }
 
+export interface FileDiffEntry {
+  path: string;
+  renameSource?: string;
+  staged: boolean;
+  binary: boolean;
+  additions: number;
+  deletions: number;
+  patch: string;
+}
+
 export type BranchHygieneStatus =
   | 'clean-on-main'
   | 'stale-merged'
