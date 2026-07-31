@@ -85,6 +85,45 @@ export function parsePrUrl(url: string): { owner: string; repo: string; number: 
 
 const GH_API_TIMEOUT_MS = 15_000;
 
+/** Spawns `gh <args>`, collects stdout, and parses it as JSON. Resolves
+ * `undefined` on any spawn/timeout/non-zero-exit/parse failure — never throws. */
+function spawnJson<T>(root: string, args: string[]): Promise<T | undefined> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+    let settled = false;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn();
+    };
+    const timer = setTimeout(() => {
+      proc.kill();
+      settle(() => resolve(undefined));
+    }, GH_API_TIMEOUT_MS);
+    let stdout = '';
+    proc.stdout?.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+    // Drain stderr — an unread pipe can fill and hang the subprocess.
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => {
+      settle(() => {
+        if (code !== 0) {
+          resolve(undefined);
+          return;
+        }
+        try {
+          resolve(JSON.parse(stdout) as T);
+        } catch {
+          resolve(undefined);
+        }
+      });
+    });
+    proc.on('error', () => settle(() => resolve(undefined)));
+  });
+}
+
 /** Resolves `undefined` on any spawn/exit/parse failure — never throws. */
 function runGhApiGraphql<T>(
   root: string,
@@ -118,42 +157,7 @@ function runGhApiGraphqlVars<T>(
 }
 
 function runGhApiGraphqlArgs<T>(root: string, args: string[]): Promise<T | undefined> {
-  return new Promise((resolve) => {
-    const proc = spawn('gh', ['api', 'graphql', ...args], {
-      cwd: root,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    let settled = false;
-    const settle = (fn: () => void) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      fn();
-    };
-    const timer = setTimeout(() => {
-      proc.kill();
-      settle(() => resolve(undefined));
-    }, GH_API_TIMEOUT_MS);
-    let stdout = '';
-    proc.stdout?.on('data', (d: Buffer) => {
-      stdout += d.toString();
-    });
-    proc.stderr?.on('data', () => {});
-    proc.on('close', (code) => {
-      settle(() => {
-        if (code !== 0) {
-          resolve(undefined);
-          return;
-        }
-        try {
-          resolve(JSON.parse(stdout) as T);
-        } catch {
-          resolve(undefined);
-        }
-      });
-    });
-    proc.on('error', () => settle(() => resolve(undefined)));
-  });
+  return spawnJson<T>(root, ['api', 'graphql', ...args]);
 }
 
 /** `gh pr list` has no field for review-thread resolution or activity timing. */
@@ -268,67 +272,34 @@ async function enrichWithReviewSignal(root: string, byId: Map<string, PrInfo>): 
   });
 }
 
-function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> {
-  return new Promise((resolve) => {
-    const proc = spawn(
-      'gh',
-      [
-        'pr',
-        'list',
-        '--state',
-        'all',
-        '--limit',
-        '2000',
-        '--json',
-        'number,url,state,isDraft,headRefName,body,reviewDecision',
-      ],
-      { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] },
-    );
-    let settled = false;
-    const settle = (fn: () => void) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      fn();
-    };
-    const timer = setTimeout(() => {
-      proc.kill();
-      settle(() => resolve(undefined));
-    }, GH_API_TIMEOUT_MS);
-    let stdout = '';
-    proc.stdout?.on('data', (d: Buffer) => {
-      stdout += d.toString();
-    });
-    // Drain stderr — an unread pipe can fill and hang the subprocess.
-    proc.stderr?.on('data', () => {});
-    proc.on('close', (code) => {
-      settle(() => {
-        // Non-zero means "can't resolve" (no gh, offline, unauthenticated), not "no
-        // PRs" — caller must fall back rather than treat this as a confirmed empty set.
-        if (code !== 0) {
-          resolve(undefined);
-          return;
-        }
-        try {
-          const rows = JSON.parse(stdout) as GhPrRow[];
-          const byId = new Map<string, PrInfo>();
-          for (const row of rows) {
-            const id = resolveEntityIdFromPrRef(row.body, row.headRefName);
-            if (!id) continue;
-            const info = toPrInfo(row);
-            const existing = byId.get(id);
-            if (!existing || STATE_RANK[info.state] > STATE_RANK[existing.state]) {
-              byId.set(id, info);
-            }
-          }
-          enrichWithReviewSignal(root, byId).then(() => resolve(byId));
-        } catch {
-          resolve(undefined);
-        }
-      });
-    });
-    proc.on('error', () => settle(() => resolve(undefined)));
-  });
+// Non-zero exit (or a spawn/parse failure) means "can't resolve" (no gh, offline,
+// unauthenticated), not "no PRs" — caller must fall back rather than treat this as a
+// confirmed empty set, so `spawnJson`'s `undefined` propagates as-is.
+async function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> {
+  const rows = await spawnJson<GhPrRow[]>(root, [
+    'pr',
+    'list',
+    '--state',
+    'all',
+    '--limit',
+    '2000',
+    '--json',
+    'number,url,state,isDraft,headRefName,body,reviewDecision',
+  ]);
+  if (!rows) return undefined;
+
+  const byId = new Map<string, PrInfo>();
+  for (const row of rows) {
+    const id = resolveEntityIdFromPrRef(row.body, row.headRefName);
+    if (!id) continue;
+    const info = toPrInfo(row);
+    const existing = byId.get(id);
+    if (!existing || STATE_RANK[info.state] > STATE_RANK[existing.state]) {
+      byId.set(id, info);
+    }
+  }
+  await enrichWithReviewSignal(root, byId);
+  return byId;
 }
 
 /** `undefined` means the lookup couldn't resolve at all; callers fall back to stored status. */

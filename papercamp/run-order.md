@@ -1,4 +1,3 @@
-IDEA-106 — Slim agent prompts for short, direct output
 IDEA-107 — De-complicate the worst code
 IDEA-111 — Single-source color tokens via CSS variables
 IDEA-112 — Move all styling to Tailwind

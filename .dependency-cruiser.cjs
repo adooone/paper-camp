@@ -8,9 +8,13 @@ module.exports = {
     {
       name: 'no-circular',
       severity: 'error',
-      comment: 'Circular dependencies make modules hard to test and reason about.',
+      comment:
+        'Circular dependencies make modules hard to test and reason about. Cycles that ' +
+        'close only through a type-only import are ignored: types are erased at compile ' +
+        'time, so they cause none of the init-order/testability problems this guards ' +
+        'against (e.g. the zustand sliced-store <-> slice-helpers type back-edge).',
       from: {},
-      to: { circular: true },
+      to: { circular: true, viaOnly: { dependencyTypesNot: ['type-only'] } },
     },
     {
       name: 'no-unresolvable',

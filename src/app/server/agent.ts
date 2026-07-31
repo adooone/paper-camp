@@ -157,6 +157,30 @@ Run \`pnpm run check-types\`, \`npx biome check . --write\`, and \`pnpm test\` t
 If the failure requires a decision you can't make on your own — not just a fix you haven't found yet — output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop.`;
 }
 
+const NO_PROGRESS_WARNING_BY_KIND: Partial<Record<TaskKind, (task: AgentTask) => string>> = {
+  extend: (task) =>
+    `Warning: agent finished but the idea body for ${task.ideaId} did not change — verify manually`,
+  rework: () =>
+    'Warning: agent finished but your notes produced no change to the body or phases — verify manually',
+  reconcile: () =>
+    'Warning: agent finished but the plan body and phase text did not change — verify manually',
+  suggest: () => 'Agent finished without appending any suggestions — nothing new found',
+  'fix-review': () =>
+    'Warning: agent finished without reporting which comments it addressed — verify manually',
+};
+
+function noProgressWarning(task: AgentTask): string {
+  const forKind = NO_PROGRESS_WARNING_BY_KIND[task.taskKind];
+  if (forKind) return forKind(task);
+  if (task.ideaId !== undefined) {
+    return `Warning: agent finished but ${task.ideaId} gained no Phases section — verify manually`;
+  }
+  if (task.phaseIndex !== undefined) {
+    return 'Warning: agent finished but did not check off this phase in the plan file — verify manually';
+  }
+  return 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
+}
+
 function createEmptyAgentState(): AgentManagerState {
   return {
     tasks: new Map(),
@@ -350,23 +374,7 @@ export function createAgentManager(
     }
     didTaskProgress(task).then((progressed) => {
       if (progressed === false) {
-        const warning =
-          task.taskKind === 'extend'
-            ? `Warning: agent finished but the idea body for ${task.ideaId} did not change — verify manually`
-            : task.taskKind === 'rework'
-              ? 'Warning: agent finished but your notes produced no change to the body or phases — verify manually'
-              : task.taskKind === 'reconcile'
-                ? 'Warning: agent finished but the plan body and phase text did not change — verify manually'
-                : task.taskKind === 'suggest'
-                  ? 'Agent finished without appending any suggestions — nothing new found'
-                  : task.taskKind === 'fix-review'
-                    ? 'Warning: agent finished without reporting which comments it addressed — verify manually'
-                    : task.ideaId !== undefined
-                      ? `Warning: agent finished but ${task.ideaId} gained no Phases section — verify manually`
-                      : task.phaseIndex !== undefined
-                        ? 'Warning: agent finished but did not check off this phase in the plan file — verify manually'
-                        : 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
-        pushLine(task, warning);
+        pushLine(task, noProgressWarning(task));
       }
       setStatus(task, 'done');
       if (task.taskKind === 'audit' && task.planId && progressed === true) {
@@ -421,6 +429,44 @@ export function createAgentManager(
       cwd: root,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
+  }
+
+  // Shared by batch-reconcile's per-entity loop, the fix pass, and run-all's
+  // per-phase loop: spawn one agent process against `task.proc`, stream its
+  // parsed lines, and resolve with the same { ok, timedOut, stderr } shape
+  // each caller already made its own pass/fail decisions from.
+  function runPhaseProcess(
+    task: AgentTask,
+    adapter: AgentAdapter,
+    prompt: string,
+    model: string | undefined,
+    effort: string | undefined,
+    opts: { guardSuperseded?: boolean; trackBlocker?: boolean } = {},
+  ): Promise<{ ok: boolean; timedOut: boolean; stderr: string }> {
+    const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
+    task.proc = proc;
+
+    if (proc.stdout) {
+      const rl = createInterface({ input: proc.stdout });
+      rl.on('line', (line) => {
+        if (opts.guardSuperseded && isSuperseded(task)) return;
+        const parsed = adapter.parseLine(line);
+        if (parsed?.text && parsed.text !== 'Agent is working…') {
+          pushLine(task, `  ${parsed.text}`);
+          if (opts.trackBlocker) {
+            const blocker = extractBlocker(parsed.text);
+            if (blocker) task.blocker = blocker;
+          }
+        }
+      });
+    }
+
+    let stderr = '';
+    proc.stderr?.on('data', (d: Buffer) => {
+      stderr += d.toString();
+    });
+
+    return runProcessWithTimeout(proc, PHASE_TIMEOUT_MS).then((result) => ({ ...result, stderr }));
   }
 
   // 'worktree' collides with everything (one git tree); 'entities' only collides
@@ -686,27 +732,11 @@ export function createAgentManager(
             effort,
           } = resolveAgent({ agentId: plan.agent, defaultAgents, taskKind: 'reconcile' });
           const prompt = buildReconcilePrompt(plan);
-          const proc = spawn(entAdapter.command, entAdapter.buildArgs(prompt, { model, effort }), {
-            cwd: root,
-            stdio: ['ignore', 'pipe', 'pipe'],
-          });
-          task.proc = proc;
-
-          if (proc.stdout) {
-            const rl = createInterface({ input: proc.stdout });
-            rl.on('line', (line) => {
-              const parsed = entAdapter.parseLine(line);
-              if (parsed?.text && parsed.text !== 'Agent is working…') {
-                pushLine(task, `  ${parsed.text}`);
-              }
-            });
-          }
-          let stderr = '';
-          proc.stderr?.on('data', (d: Buffer) => {
-            stderr += d.toString();
-          });
-
-          const { ok: success, timedOut } = await runProcessWithTimeout(proc, PHASE_TIMEOUT_MS);
+          const {
+            ok: success,
+            timedOut,
+            stderr,
+          } = await runPhaseProcess(task, entAdapter, prompt, model, effort);
 
           if (timedOut) {
             failed++;
@@ -781,33 +811,12 @@ export function createAgentManager(
       `[fix] phase ${phaseIndex + 1} — fix attempt ${attempt}/${attemptCap} for failing checks`,
     );
     const prompt = buildFixPassPrompt(plan, phaseIndex, introducedChecks);
-    const proc = spawn(adapter.command, adapter.buildArgs(prompt, { model, effort }), {
-      cwd: root,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    task.proc = proc;
-
-    if (proc.stdout) {
-      const rl = createInterface({ input: proc.stdout });
-      rl.on('line', (line) => {
-        if (isSuperseded(task)) return;
-        const parsed = adapter.parseLine(line);
-        if (parsed?.text && parsed.text !== 'Agent is working…') {
-          pushLine(task, `  ${parsed.text}`);
-          const blocker = extractBlocker(parsed.text);
-          if (blocker) task.blocker = blocker;
-        }
-      });
-    }
-
-    let stderr = '';
-    proc.stderr?.on('data', (d: Buffer) => {
-      stderr += d.toString();
-    });
-
-    return runProcessWithTimeout(proc, PHASE_TIMEOUT_MS).then((result) => {
-      if (!result.ok && !result.timedOut && stderr.trim()) pushLine(task, stderr.trim());
-      return result;
+    return runPhaseProcess(task, adapter, prompt, model, effort, {
+      guardSuperseded: true,
+      trackBlocker: true,
+    }).then(({ ok, timedOut, stderr }) => {
+      if (!ok && !timedOut && stderr.trim()) pushLine(task, stderr.trim());
+      return { ok, timedOut };
     });
   }
 
@@ -869,30 +878,14 @@ export function createAgentManager(
           pushLine(task, `[phase ${i + 1}/${total}] ${phase.text}`);
 
           const prompt = buildAgentPrompt(plan, phase, i, [...toleratedRed]);
-          const proc = spawn(adapter.command, adapter.buildArgs(prompt, { model, effort }), {
-            cwd: root,
-            stdio: ['ignore', 'pipe', 'pipe'],
+          const {
+            ok: exitedOk,
+            timedOut,
+            stderr,
+          } = await runPhaseProcess(task, adapter, prompt, model, effort, {
+            guardSuperseded: true,
+            trackBlocker: true,
           });
-          task.proc = proc;
-
-          if (proc.stdout) {
-            const rl = createInterface({ input: proc.stdout });
-            rl.on('line', (line) => {
-              if (isSuperseded(task)) return;
-              const parsed = adapter.parseLine(line);
-              if (parsed?.text && parsed.text !== 'Agent is working…') {
-                pushLine(task, `  ${parsed.text}`);
-                const blocker = extractBlocker(parsed.text);
-                if (blocker) task.blocker = blocker;
-              }
-            });
-          }
-          let stderr = '';
-          proc.stderr?.on('data', (d: Buffer) => {
-            stderr += d.toString();
-          });
-
-          const { ok: exitedOk, timedOut } = await runProcessWithTimeout(proc, PHASE_TIMEOUT_MS);
 
           if (isSuperseded(task)) return;
           if (isStopping(task)) break;

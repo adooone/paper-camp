@@ -205,6 +205,146 @@ const PhasesSection = ({
   </div>
 );
 
+const BranchRow = ({
+  plan,
+  gitBranch,
+  onOwnBranch,
+  branching,
+  onCreateBranch,
+}: {
+  plan: PlanEntry;
+  gitBranch: string | null;
+  onOwnBranch: boolean;
+  branching: boolean;
+  onCreateBranch: () => void;
+}) => {
+  const showBranchRow =
+    plan.status === 'planned' || plan.status === 'in-progress' || plan.status === 'review';
+  if (!showBranchRow && !plan.pr) return null;
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: space[3],
+        flexWrap: 'wrap',
+        marginBottom: space[4],
+      }}
+    >
+      {showBranchRow && !onOwnBranch && (
+        <Card size="small" accent accentColor="amber" texture="kraft">
+          <div style={{ display: 'flex', alignItems: 'center', gap: space[3], flexWrap: 'wrap' }}>
+            <span className="text-sm">
+              Working branch: <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
+            </span>
+            {plan.id && (
+              <Tooltip
+                content={`Creates ${(plan.kind ?? 'feat').toLowerCase()}/${plan.id.toLowerCase()}-… from main, or switches to it if it already exists`}
+              >
+                <Button size="small" onClick={onCreateBranch} disabled={branching}>
+                  {branching ? 'Switching…' : 'Create branch'}
+                </Button>
+              </Tooltip>
+            )}
+          </div>
+        </Card>
+      )}
+      {showBranchRow && onOwnBranch && (
+        <span className="text-sm" style={{ opacity: 0.45 }}>
+          Working branch: <code>{gitBranch}</code>
+        </span>
+      )}
+      {plan.pr && <PrBadge pr={plan.pr} />}
+      {plan.pr && <ReviewSignalBadge pr={plan.pr} />}
+    </div>
+  );
+};
+
+const PlanProgressBar = ({
+  progress,
+  color: barColor,
+}: {
+  progress: { pct: number; done: number; total: number };
+  color: string;
+}) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: space[3], marginBottom: space[4] }}>
+    <div style={{ flex: 1 }}>
+      <ProgressBar pct={progress.pct} color={barColor} />
+    </div>
+    <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
+      {progress.done}/{progress.total}
+    </span>
+  </div>
+);
+
+const PlanBodySection = ({
+  plan,
+  bodyNotes,
+  updating,
+  onAddNote,
+  onResolveNote,
+}: {
+  plan: PlanEntry;
+  bodyNotes: MarginNote[];
+  updating: boolean;
+  onAddNote: (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => Promise<boolean>;
+  onResolveNote: (note: MarginNote) => Promise<boolean>;
+}) => (
+  <div style={{ marginBottom: space[4] }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: space[2] }}>
+      <div style={{ flex: 1, opacity: 0.85 }}>
+        {plan.body && (
+          <CollapsibleText resetKey={plan.id ?? plan.title}>
+            <Markdown>{plan.body}</Markdown>
+          </CollapsibleText>
+        )}
+      </div>
+      <AddMarginNoteButton
+        label="Add a note on this plan's body"
+        onAdd={(prose, kind) => onAddNote({ kind: 'body' }, prose, kind)}
+        disabled={updating}
+      />
+    </div>
+    {bodyNotes.length > 0 && (
+      <div style={{ marginTop: space[3] }}>
+        <MarginNotesList notes={bodyNotes} onResolve={onResolveNote} disabled={updating} />
+      </div>
+    )}
+  </div>
+);
+
+const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] }) => {
+  if (clarifications.length === 0) return null;
+  return (
+    <div style={{ marginBottom: space[5] }}>
+      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Clarifications</h3>
+      <div
+        style={{ display: 'flex', flexDirection: 'column', gap: space[2], marginBottom: space[3] }}
+      >
+        {clarifications.map((entry, i) => (
+          <div
+            key={`clar-${entry.date}-${i}`}
+            className="text-sm"
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: space[3],
+              opacity: 0.75,
+            }}
+          >
+            <span>
+              <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
+              {entry.text}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const TrailSection = ({ planId }: { planId: string | undefined }) => {
   const trail = useTrail(planId);
   if (!trail) return null;
@@ -388,8 +528,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
   // The app never switches branches on its own; this just offers the plan's branch as one click.
   const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
-  const showBranchRow =
-    plan.status === 'planned' || plan.status === 'in-progress' || plan.status === 'review';
 
   const handleCreateBranch = async () => {
     if (!plan.id) return;
@@ -499,131 +637,30 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         />
       ) : (
         <>
-          {(showBranchRow || plan.pr) && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: space[3],
-                flexWrap: 'wrap',
-                marginBottom: space[4],
-              }}
-            >
-              {showBranchRow && !onOwnBranch && (
-                <Card size="small" accent accentColor="amber" texture="kraft">
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: space[3],
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <span className="text-sm">
-                      Working branch: <code>{gitBranch ?? 'unknown'}</code> — not this plan's
-                      branch.
-                    </span>
-                    {plan.id && (
-                      <Tooltip
-                        content={`Creates ${(plan.kind ?? 'feat').toLowerCase()}/${plan.id.toLowerCase()}-… from main, or switches to it if it already exists`}
-                      >
-                        <Button size="small" onClick={handleCreateBranch} disabled={branching}>
-                          {branching ? 'Switching…' : 'Create branch'}
-                        </Button>
-                      </Tooltip>
-                    )}
-                  </div>
-                </Card>
-              )}
-              {showBranchRow && onOwnBranch && (
-                <span className="text-sm" style={{ opacity: 0.45 }}>
-                  Working branch: <code>{gitBranch}</code>
-                </span>
-              )}
-              {plan.pr && <PrBadge pr={plan.pr} />}
-              {plan.pr && <ReviewSignalBadge pr={plan.pr} />}
-            </div>
-          )}
+          <BranchRow
+            plan={plan}
+            gitBranch={gitBranch}
+            onOwnBranch={onOwnBranch}
+            branching={branching}
+            onCreateBranch={handleCreateBranch}
+          />
 
           {progress !== null && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: space[3],
-                marginBottom: space[4],
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <ProgressBar
-                  pct={progress.pct}
-                  color={STATUS_COLOR[effectiveStatus(plan, agentStatus)]}
-                />
-              </div>
-              <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
-                {progress.done}/{progress.total}
-              </span>
-            </div>
+            <PlanProgressBar
+              progress={progress}
+              color={STATUS_COLOR[effectiveStatus(plan, agentStatus)]}
+            />
           )}
 
-          <div style={{ marginBottom: space[4] }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: space[2] }}>
-              <div style={{ flex: 1, opacity: 0.85 }}>
-                {plan.body && (
-                  <CollapsibleText resetKey={plan.id ?? plan.title}>
-                    <Markdown>{plan.body}</Markdown>
-                  </CollapsibleText>
-                )}
-              </div>
-              <AddMarginNoteButton
-                label="Add a note on this plan's body"
-                onAdd={(prose, kind) => handleAddNote({ kind: 'body' }, prose, kind)}
-                disabled={updating}
-              />
-            </div>
-            {bodyNotes.length > 0 && (
-              <div style={{ marginTop: space[3] }}>
-                <MarginNotesList
-                  notes={bodyNotes}
-                  onResolve={handleResolveNote}
-                  disabled={updating}
-                />
-              </div>
-            )}
-          </div>
+          <PlanBodySection
+            plan={plan}
+            bodyNotes={bodyNotes}
+            updating={updating}
+            onAddNote={handleAddNote}
+            onResolveNote={handleResolveNote}
+          />
 
-          {plan.clarifications && plan.clarifications.length > 0 && (
-            <div style={{ marginBottom: space[5] }}>
-              <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Clarifications</h3>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: space[2],
-                  marginBottom: space[3],
-                }}
-              >
-                {plan.clarifications.map((entry, i) => (
-                  <div
-                    key={`clar-${entry.date}-${i}`}
-                    className="text-sm"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                      gap: space[3],
-                      opacity: 0.75,
-                    }}
-                  >
-                    <span>
-                      <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
-                      {entry.text}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <ClarificationsSection clarifications={plan.clarifications ?? []} />
 
           {!hasPhases && (
             <div
