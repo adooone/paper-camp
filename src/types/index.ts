@@ -151,6 +151,9 @@ export interface FeedbackReplyResult {
   reply: string;
   edit?: FeedbackEdit;
   spinOff?: FeedbackFollowUp;
+  /** True when the user's message answers an open question the agent asked
+   * earlier in this thread — the route persists that message as a clarification. */
+  answersQuestion?: boolean;
 }
 
 /** One review point's proposed classification — rework still inside this plan's

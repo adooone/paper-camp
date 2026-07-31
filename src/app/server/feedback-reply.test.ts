@@ -83,6 +83,23 @@ describe('replyToFeedback', () => {
     const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
     expect(result).toEqual({ reply: 'Got it.' });
   });
+
+  it('carries answersQuestion through when the agent flags it', async () => {
+    const runPrompt = async () =>
+      JSON.stringify({ reply: 'Right, scope is just the export flow.', answersQuestion: true });
+    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
+    expect(result).toEqual({
+      reply: 'Right, scope is just the export flow.',
+      answersQuestion: true,
+    });
+  });
+
+  it('omits answersQuestion when the agent sends false', async () => {
+    const runPrompt = async () =>
+      JSON.stringify({ reply: 'Just noting that.', answersQuestion: false });
+    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
+    expect(result).toEqual({ reply: 'Just noting that.' });
+  });
 });
 
 describe('applyFeedbackEdit', () => {

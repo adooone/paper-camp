@@ -360,6 +360,7 @@ const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
   note: 'note',
   decision: 'decision',
   question: 'question',
+  clarification: 'clarification',
 };
 
 const FeedbackThread = ({ messages }: { messages: ThreadMessage[] }) => (

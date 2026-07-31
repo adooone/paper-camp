@@ -392,6 +392,15 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           const result = await replyToFeedback(plan, agent.runFeedbackReply);
           const overrides = result.edit ? applyFeedbackEdit(entity.phases, result.edit) : {};
 
+          // The agent flags when this message answers a question it asked earlier —
+          // reclassify it from a plain log line to a clarification so it's visible
+          // to future runs (readers.ts's clarificationsFromThread) and other agents.
+          const answeredThread = result.answersQuestion
+            ? threadWithUser.map((m, i) =>
+                i === threadWithUser.length - 1 ? { ...m, kind: 'clarification' as const } : m,
+              )
+            : threadWithUser;
+
           let replyText = result.reply;
           if (result.spinOff) {
             const newId = await assignEntityId(join(root, 'papercamp', 'config.json'));
@@ -414,7 +423,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             text: replyText,
             from: 'agent',
           };
-          thread = [...threadWithUser, replyMessage];
+          thread = [...answeredThread, replyMessage];
           await writeEntityFile(
             targetFile,
             entityFileInput(entity, { thread, updated: todayDateString(), ...overrides }),

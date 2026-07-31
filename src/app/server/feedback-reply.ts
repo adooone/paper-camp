@@ -60,6 +60,7 @@ export async function replyToFeedback(
 
   const data = JSON.parse(match[0]) as {
     reply?: string;
+    answersQuestion?: boolean;
     edit?: {
       phases?: { op?: string; index?: number; text?: string; description?: string }[];
       body?: string;
@@ -76,7 +77,12 @@ export async function replyToFeedback(
       ? { title: data.spinOff.title.trim(), body: data.spinOff.body.trim() }
       : undefined;
 
-  return { reply, ...(edit ? { edit } : {}), ...(spinOff && !edit ? { spinOff } : {}) };
+  return {
+    reply,
+    ...(data.answersQuestion ? { answersQuestion: true } : {}),
+    ...(edit ? { edit } : {}),
+    ...(spinOff && !edit ? { spinOff } : {}),
+  };
 }
 
 // Applies a proposed edit's phase ops onto the entity's current phase list —

@@ -394,18 +394,20 @@ Feedback thread so far, oldest first:
 ${threadList}
 
 Task: classify the most recent user message and act on it in the same response:
-- It answers an open question you asked earlier in this thread, or is a plain question/comment with nothing to change — just reply.
+- It answers an open question you asked earlier in this thread — reply AND set "answersQuestion" to true, so the answer is kept as a clarification on this idea.
+- It's a plain question/comment with nothing to change — just reply.
 - It asks for a change this idea/plan should make: add a new phase, reword an existing phase's title or description, or correct body prose that's now wrong — reply AND include an "edit".
 - It's a stray thought or review remark with nothing actionable — just reply, acknowledging it; the message itself is already recorded in the thread, so no edit is needed.
 - It describes work out of scope for this idea/plan entirely — reply AND include a "spinOff" for a new, separate idea. Never combine "edit" and "spinOff" on the same message.
 
-When unsure whether a message asks for a change, treat it as a plain reply rather than guessing an edit.
+When unsure whether a message asks for a change, treat it as a plain reply rather than guessing an edit. When unsure whether a message answers an earlier question, omit "answersQuestion" rather than guessing.
 
 Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
-{"reply": "short reply text, continuing the conversation naturally", "edit": {"phases": [{"op": "add", "text": "Short phase title", "description": "optional detail"}, {"op": "reword", "index": 2, "text": "New phase title", "description": "optional detail"}], "body": "the ENTIRE corrected body text, only when body prose needs a correction"}, "spinOff": {"title": "Idea title", "body": "One paragraph describing the idea and why it came up"}}
+{"reply": "short reply text, continuing the conversation naturally", "answersQuestion": true, "edit": {"phases": [{"op": "add", "text": "Short phase title", "description": "optional detail"}, {"op": "reword", "index": 2, "text": "New phase title", "description": "optional detail"}], "body": "the ENTIRE corrected body text, only when body prose needs a correction"}, "spinOff": {"title": "Idea title", "body": "One paragraph describing the idea and why it came up"}}
 
 Rules:
 - "reply" is always required and is the only thing shown when nothing needs to change — omit "edit" and "spinOff" entirely in that case.
+- "answersQuestion" is a boolean, only ever true; omit it entirely rather than sending false.
 - "edit.phases" entries: "add" appends a new phase at the end; "reword" replaces the title/description of the existing phase at the given 1-based "index" (matching the numbered list above) — never invent an index outside that range.
 - "edit.body", when present, must be the complete replacement body, not a fragment — reproduce every part that isn't changing, word for word.
 - Only include "edit" when the message clearly asks for a change; only include "spinOff" when the message is genuinely out of scope for this idea/plan, not merely a new detail within it.`;
