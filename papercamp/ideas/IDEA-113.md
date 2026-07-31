@@ -39,7 +39,7 @@ Findings that surface after this plan is built don't rewrite its finished phases
       Render each thread message with the Paper UI Card component and drop the custom message bubbles, so the whole view is built from Paper UI primitives.
 - [x] Add a `### Fixes` section to the idea grammar
       Parse and serialize a checkbox list after `### Phases` in the core parser, serializer, sections, and entity types — same grammar as phases, no history lost on round-trip.
-- [ ] Land post-build feedback edits in Fixes, and reopen the plan
+- [x] Land post-build feedback edits in Fixes, and reopen the plan
       When a feedback-chat edit adds work to an already-implemented plan, append it to Fixes (not Phases) and set status back to in-progress.
 - [ ] Run-all works open Fixes after the phases
       Once the phases are done, run-all implements each open Fix with a per-fix commit, then returns the plan to review when none remain.

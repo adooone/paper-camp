@@ -1,5 +1,6 @@
 import { buildFeedbackReplyPrompt } from '@/app/features/plans/prompts';
 import type {
+  EntityStatus,
   FeedbackEdit,
   FeedbackPhaseEdit,
   FeedbackReplyResult,
@@ -85,31 +86,38 @@ export async function replyToFeedback(
   };
 }
 
-// Applies a proposed edit's phase ops onto the entity's current phase list —
+// Applies a proposed edit's phase ops onto the entity's current phase/fix lists —
 // deterministic in the app, never as freeform file edits by the agent, so the
-// entity file's grammar (frontmatter, Phases, Thread) can never be corrupted.
+// entity file's grammar (frontmatter, Phases, Fixes, Thread) can never be corrupted.
 export function applyFeedbackEdit(
-  phases: PhaseItem[],
+  entity: { phases: PhaseItem[]; fixes?: PhaseItem[]; status?: EntityStatus },
   edit: FeedbackEdit,
-): { phases?: PhaseItem[]; body?: string } {
-  const overrides: { phases?: PhaseItem[]; body?: string } = {};
+): { phases?: PhaseItem[]; fixes?: PhaseItem[]; body?: string } {
+  const overrides: { phases?: PhaseItem[]; fixes?: PhaseItem[]; body?: string } = {};
   if (edit.phases?.length) {
-    const next = [...phases];
+    // A plan already landed in review/done has its Phases history finished — new
+    // work an edit adds belongs in Fixes instead, so it never rewrites that history.
+    const implemented = entity.status === 'review' || entity.status === 'done';
+    const phases = [...entity.phases];
+    const fixes = [...(entity.fixes ?? [])];
     for (const phaseEdit of edit.phases) {
       if (phaseEdit.op === 'add') {
-        next.push({ done: false, text: phaseEdit.text, description: phaseEdit.description });
+        const item = { done: false, text: phaseEdit.text, description: phaseEdit.description };
+        if (implemented) fixes.push(item);
+        else phases.push(item);
       } else if (typeof phaseEdit.index === 'number') {
         const i = phaseEdit.index - 1;
-        if (next[i]) {
-          next[i] = {
-            ...next[i],
+        if (phases[i]) {
+          phases[i] = {
+            ...phases[i],
             text: phaseEdit.text,
-            description: phaseEdit.description ?? next[i].description,
+            description: phaseEdit.description ?? phases[i].description,
           };
         }
       }
     }
-    overrides.phases = next;
+    overrides.phases = phases;
+    if (implemented) overrides.fixes = fixes;
   }
   if (edit.body) overrides.body = edit.body;
   return overrides;

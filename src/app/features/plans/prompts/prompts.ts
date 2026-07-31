@@ -264,7 +264,7 @@ Rules:
 - "reply" is always required and is the only thing shown when nothing needs to change — omit "edit" and "spinOff" entirely in that case.
 - "answersQuestion" is a boolean, only ever true; omit it entirely rather than sending false.
 - "edit.phases" entries: "add" appends a new phase at the end; "reword" replaces the title/description of the existing phase at the given 1-based "index" (matching the numbered list above) — never invent an index outside that range.
-- When every phase above is already checked ([x]) and the message asks for new or still-missing work, use "add" for a new phase — never "reword" a finished phase to smuggle in new work, since a completed phase never re-runs. Adding a phase to a finished idea reopens it so the work is actually carried out.
+- When every phase above is already checked ([x]) and the message asks for new or still-missing work, use "add" for a new phase — never "reword" a finished phase to smuggle in new work, since a completed phase never re-runs. Adding a phase to a finished idea reopens it, and the app tracks the new work separately as a Fix rather than rewriting the finished Phases history.
 - "edit.body", when present, must be the complete replacement body, not a fragment — reproduce every part that isn't changing, word for word.
 - Only include "edit" when the message clearly asks for a change. Include "spinOff" when a fix request doesn't fit this idea's plan; otherwise fold it in as an "edit". A fix request must always become one or the other — never a bare reply that declines it.`;
 }

@@ -108,15 +108,20 @@ describe('applyFeedbackEdit', () => {
     { done: false, text: 'Second phase', description: 'old detail' },
   ];
 
-  it('appends an added phase', () => {
-    const result = applyFeedbackEdit(phases, { phases: [{ op: 'add', text: 'Third phase' }] });
+  it('appends an added phase when the plan is still in progress', () => {
+    const result = applyFeedbackEdit(
+      { phases, status: 'in-progress' },
+      { phases: [{ op: 'add', text: 'Third phase' }] },
+    );
     expect(result.phases).toEqual([...phases, { done: false, text: 'Third phase' }]);
+    expect(result.fixes).toBeUndefined();
   });
 
   it('rewords an existing phase by its 1-based index, keeping its done state', () => {
-    const result = applyFeedbackEdit(phases, {
-      phases: [{ op: 'reword', index: 2, text: 'Second phase, revised' }],
-    });
+    const result = applyFeedbackEdit(
+      { phases, status: 'in-progress' },
+      { phases: [{ op: 'reword', index: 2, text: 'Second phase, revised' }] },
+    );
     expect(result.phases).toEqual([
       phases[0],
       { done: false, text: 'Second phase, revised', description: 'old detail' },
@@ -124,14 +129,41 @@ describe('applyFeedbackEdit', () => {
   });
 
   it('ignores a reword whose index is out of range', () => {
-    const result = applyFeedbackEdit(phases, {
-      phases: [{ op: 'reword', index: 9, text: 'Nowhere' }],
-    });
+    const result = applyFeedbackEdit(
+      { phases, status: 'in-progress' },
+      { phases: [{ op: 'reword', index: 9, text: 'Nowhere' }] },
+    );
     expect(result.phases).toEqual(phases);
   });
 
   it('carries a body replacement through', () => {
-    const result = applyFeedbackEdit(phases, { body: 'Corrected body text.' });
+    const result = applyFeedbackEdit(
+      { phases, status: 'in-progress' },
+      { body: 'Corrected body text.' },
+    );
     expect(result).toEqual({ body: 'Corrected body text.' });
+  });
+
+  it('routes an added phase into fixes when the plan is already in review', () => {
+    const donePhases: PhaseItem[] = [{ done: true, text: 'First phase' }];
+    const result = applyFeedbackEdit(
+      { phases: donePhases, status: 'review' },
+      { phases: [{ op: 'add', text: 'A late fix' }] },
+    );
+    expect(result.phases).toEqual(donePhases);
+    expect(result.fixes).toEqual([{ done: false, text: 'A late fix', description: undefined }]);
+  });
+
+  it('routes an added phase into fixes when the plan is already done, appending existing fixes', () => {
+    const donePhases: PhaseItem[] = [{ done: true, text: 'First phase' }];
+    const existingFixes: PhaseItem[] = [{ done: true, text: 'Earlier fix' }];
+    const result = applyFeedbackEdit(
+      { phases: donePhases, fixes: existingFixes, status: 'done' },
+      { phases: [{ op: 'add', text: 'Another fix' }] },
+    );
+    expect(result.fixes).toEqual([
+      ...existingFixes,
+      { done: false, text: 'Another fix', description: undefined },
+    ]);
   });
 });

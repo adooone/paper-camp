@@ -351,7 +351,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         try {
           const plan = entityToPlan({ ...entity, thread: threadWithUser });
           const result = await replyToFeedback(plan, agent.runFeedbackReply);
-          const overrides = result.edit ? applyFeedbackEdit(entity.phases, result.edit) : {};
+          const overrides = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
 
           // The agent flags when this message answers a question it asked earlier —
           // reclassify it from a plain log line to a clarification so it's visible
@@ -378,13 +378,10 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             }
           }
 
-          // A feedback edit that adds an undone phase to an already-finished plan is new
+          // A feedback edit that adds an undone Fix to an already-finished plan is new
           // work: reopen it so it re-enters the run-order queue and run-all implements it —
           // otherwise the edit lands on a closed plan and nothing ever runs (or shows).
-          const reopen =
-            (overrides.phases?.some((p) => !p.done) ?? false) &&
-            entity.kind !== 'note' &&
-            (entity.status === 'review' || entity.status === 'done');
+          const reopen = overrides.fixes?.some((p) => !p.done) ?? false;
           if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
 
           const replyMessage: ThreadMessage = {
@@ -406,7 +403,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
           // Only a plan edit needs an Undo — commit it on its own so a revert can't
           // also sweep in unrelated dirty files elsewhere in the working tree.
-          if (overrides.phases || overrides.body) {
+          if (overrides.phases || overrides.fixes || overrides.body) {
             const relFile = relative(root, targetFile);
             await git.commit(
               [relFile],
