@@ -34,8 +34,14 @@ This view is read-only — for reading changes before you deliver. No annotating
 - [x] Type-check and full pass
 
 ### Fixes
-- [ ] Move the file list to a sidebar with always-visible diffs
+- [x] Move the file list to a sidebar with always-visible diffs
       Replace the per-file collapse with a persistent file-list sidebar; render diff content always-visible in the main pane, with sidebar entries scrolling to their file's changes.
+- [x] Render Fixes with the same row layout as Phases, not a nested Card
+      Reuse the phase-row rendering for Fix items and remove the Card-inside-a-Card; keep the group distinct with a different paper texture background instead.
+- [x] Use one shared progress bar at the top for phases and fixes together
+      Remove the separate Fixes progress bar; the single top bar counts phases and open fixes as one.
+- [x] Give open Fixes a way to run from the UI
+      Surface a run action on the Fixes group so an open Fix can be executed like phases — there is currently no button to run one.
 
 ### Thread
 - [x] 2026-07-31 [log] Run-all parked on phase 5 ("Annotate a hunk and hand it to an agent (stretch)") — the agent needs a decision: This phase asks to annotate a hunk and dispatch it to an agent via `fix-review`/`review-split`, but neither mechanism fits the diff view's actual context. `fix-review` operates on GitHub PR review threads for a specific plan's already-open PR; `review-split` (the `AddReviewPhasesButton` → `parseReviewFindings` flow) adds findings as phases on a specific plan. The `/diff` route (built in earlier phases) is a global working-tree view with no plan association at all — it's reached from the Deliver card's "N files changed" link before a PR even exists. Every agent-launch mechanism in this codebase (`launchFixReview`, `launchAgent`, `launchPlanAudit`, etc.) requires a `planId`.

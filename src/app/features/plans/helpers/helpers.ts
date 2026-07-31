@@ -22,7 +22,9 @@ export const phaseProgress = (plan: PlanEntry) => itemProgress(plan.phases);
 
 export const phasePercentage = (plan: PlanEntry): number | null => phaseProgress(plan)?.pct ?? null;
 
-export const fixProgress = (plan: PlanEntry) => itemProgress(plan.fixes ?? []);
+// One bar for the whole plan: phases and fixes counted together.
+export const combinedProgress = (plan: PlanEntry) =>
+  itemProgress([...plan.phases, ...(plan.fixes ?? [])]);
 
 export const runningTaskForPlan = (
   planId: string | undefined,

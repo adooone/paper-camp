@@ -114,4 +114,4 @@
 | IDEA-110 | In-app code review with diffs | feat | planned | app, git, ui |
 | IDEA-111 | Adopt paper-ui color tokens, drop local literals | refactor | dropped | app, ui, refactor |
 | IDEA-112 | Move all styling to Tailwind | refactor | planned | app, ui, refactor |
-| IDEA-113 | Feedback as a single chat thread | feat | planned | app, ui, agent, plans |
+| IDEA-113 | Feedback as a single chat thread | feat | done | app, ui, agent, plans |

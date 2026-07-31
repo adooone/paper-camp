@@ -40,13 +40,7 @@ import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
-import {
-  effectiveStatus,
-  fixProgress,
-  phaseProgress,
-  relativeDate,
-  runningTaskForPlan,
-} from '../helpers';
+import { combinedProgress, effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -184,53 +178,71 @@ const FixesSection = ({
   onToggleFix: (index: number) => void;
 }) => {
   const fixes = plan.fixes ?? [];
-  const progress = fixProgress(plan);
+  const launchRunAll = useAppStore((s) => s.launchRunAll);
+  const agentBusy = useAppStore(selectAgentBusy);
+  const hasOpenFix = fixes.some((fix) => !fix.done);
   return (
     <div style={{ marginBottom: space[8] }}>
-      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Fixes</h3>
-      <Card size="small" accent accentColor="rose" texture="canvas">
-        {progress && (
-          <div style={{ marginBottom: space[3] }}>
-            <PlanProgressBar progress={progress} color={STATUS_STAMP.review.text} />
-          </div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: space[3],
+          marginBottom: space[3],
+          flexWrap: 'wrap',
+        }}
+      >
+        <h3 style={{ ...sectionHeadingStyle, margin: 0 }}>Fixes</h3>
+        {plan.id && hasOpenFix && (
+          <Tooltip content="Run the open fixes with an agent">
+            <Button
+              size="small"
+              onClick={() => plan.id && launchRunAll(plan.id)}
+              disabled={agentBusy}
+            >
+              {agentBusy ? 'Running…' : 'Run fixes'}
+            </Button>
+          </Tooltip>
         )}
-        <Table
-          data={fixes}
-          columns={[
-            {
-              key: 'checkbox',
-              header: 'Status',
-              cell: (fix: PhaseItem, index: number) => (
-                <Checkbox
-                  checked={fix.done}
-                  onChange={() => onToggleFix(index)}
-                  disabled={updating}
-                />
-              ),
-              width: 2,
-            },
-            {
-              key: 'title',
-              header: 'Title',
-              cell: (fix: PhaseItem) => (
-                <span
-                  style={{
-                    textDecoration: fix.done ? 'line-through' : 'none',
-                    opacity: fix.done ? 0.45 : 1,
-                  }}
-                >
-                  {fix.text}
-                </span>
-              ),
-            },
-          ]}
-          expandable={{
-            render: (fix: PhaseItem) => fix.description || null,
-          }}
-          showExpandColumn={false}
-          className="phase-table-phone"
-        />
-      </Card>
+      </div>
+      <Table
+        data={fixes}
+        texture="kraft"
+        columns={[
+          {
+            key: 'checkbox',
+            header: 'Status',
+            cell: (fix: PhaseItem, index: number) => (
+              <Checkbox
+                checked={fix.done}
+                onChange={() => onToggleFix(index)}
+                disabled={updating}
+              />
+            ),
+            width: 2,
+          },
+          {
+            key: 'title',
+            header: 'Title',
+            cell: (fix: PhaseItem) => (
+              <span
+                style={{
+                  textDecoration: fix.done ? 'line-through' : 'none',
+                  opacity: fix.done ? 0.45 : 1,
+                }}
+              >
+                {fix.text}
+              </span>
+            ),
+          },
+        ]}
+        expandable={{
+          render: (fix: PhaseItem) => fix.description || null,
+        }}
+        showExpandColumn={false}
+        className="phase-table-phone"
+      />
     </div>
   );
 };
@@ -528,7 +540,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const planTask = runningTaskForPlan(plan.id, agentStatus);
   const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
   const auditRunning = planTask?.taskKind === 'audit';
-  const progress = phaseProgress(plan);
+  const progress = combinedProgress(plan);
   const hasPhases = plan.phases.length > 0;
   const hasFixes = (plan.fixes ?? []).length > 0;
   const showFeedback = detailView === 'feedback';

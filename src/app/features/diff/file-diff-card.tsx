@@ -1,8 +1,7 @@
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { type DiffLineType, parsePatch } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
-import { Accordion, Stamp } from '@dendelion/paper-ui';
-import { useState } from 'react';
+import { Card, Stamp } from '@dendelion/paper-ui';
 
 const LINE_STYLE: Record<DiffLineType, React.CSSProperties> = {
   add: { background: 'rgba(143, 185, 150, 0.18)', color: color.accentGreenDark },
@@ -104,15 +103,19 @@ const DiffBody = ({ entry }: { entry: FileDiffEntry }) => {
   );
 };
 
-export const FileDiffCard = ({ entry }: { entry: FileDiffEntry }) => {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <Accordion
-      title={<CardTitle entry={entry} />}
-      expanded={expanded}
-      onToggle={() => setExpanded((v) => !v)}
-    >
+export const FileDiffSection = ({
+  entry,
+  sectionRef,
+}: {
+  entry: FileDiffEntry;
+  sectionRef: (el: HTMLDivElement | null) => void;
+}) => (
+  <div ref={sectionRef} style={{ scrollMarginTop: space[4] }}>
+    <Card>
+      <div style={{ marginBottom: space[3] }}>
+        <CardTitle entry={entry} />
+      </div>
       <DiffBody entry={entry} />
-    </Accordion>
-  );
-};
+    </Card>
+  </div>
+);
