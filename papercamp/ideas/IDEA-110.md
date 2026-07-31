@@ -2,7 +2,7 @@
 id: IDEA-110
 title: In-app code review with diffs
 type: feat
-status: in-progress
+status: review
 created: 2026-07-30
 updated: 2026-07-31
 tags:
