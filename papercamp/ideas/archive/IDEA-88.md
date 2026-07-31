@@ -32,5 +32,5 @@ Deliberately split from [[IDEA-87]] because this one touches git and can strand 
 - [ ] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean, with coverage for the override path through `ensureBranch`.
 
-### Log
-- 2026-07-29: I think changes in branch would be hard to maintain, I would keep our current approach for now, so please remove branch override edits from this idea and plan.
+### Thread
+- [x] 2026-07-29 [log] I think changes in branch would be hard to maintain, I would keep our current approach for now, so please remove branch override edits from this idea and plan.

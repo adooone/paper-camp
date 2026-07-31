@@ -1,12 +1,4 @@
-import type {
-  IdeaEntry,
-  LogEntry,
-  MarginNote,
-  MarginNoteAnchor,
-  PlanEntry,
-  ReviewThread,
-  SuggestionEntry,
-} from '@/types/index';
+import type { IdeaEntry, PlanEntry, ReviewThread, SuggestionEntry } from '@/types/index';
 import type { SimilarityCandidate } from '../helpers';
 
 // These prompts run headless (`claude -p` / `opencode run`), so they must never ask
@@ -54,107 +46,6 @@ Rules:
 - Never modify, reorder, check, uncheck, or delete any existing line, even if it looks stale, wrong, or redundant.
 - Never touch the YAML frontmatter.
 - Append only: new unchecked phases at the end of the list, plus the single Log line.`;
-}
-
-/**
- * Turns the human comments on an entity into actual changes. The inverse of
- * reconcile: reconcile may never touch phases, status, or the Log and only fixes
- * prose that drifted from the code; this one exists to act on what the Log says.
- */
-export function buildReworkPrompt(plan: PlanEntry, notes: LogEntry[]): string {
-  const hasPhases = plan.phases.length > 0;
-  const noun = hasPhases ? 'plan' : 'idea';
-  const phaseList = hasPhases
-    ? plan.phases
-        .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
-        .join('\n')
-    : '(none — this is a backlog idea with no phases yet)';
-  const noteList = notes.map((n) => `- ${n.date}: ${n.text}`).join('\n');
-
-  return `You are reworking the ${noun} "${plan.title}" (${plan.id ?? 'no id'}) from its author's notes, stored as a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md — if it is not there, it is archived at papercamp/ideas/archive/${plan.id ?? '<ID>'}.md. Edit only that file.
-
-Current status: ${plan.status}
-
-${hasPhases ? 'Plan' : 'Idea'} body: ${plan.body}
-
-Current phases:
-${phaseList}
-
-The author's notes — this is the work to act on:
-${noteList}
-
-${BREVITY_CONTRACT}
-
-Task: make the ${noun} reflect these notes, so that acting on the ${noun} afterwards delivers what the author asked for.
-
-1. Read each note and decide what it means for this ${noun}: new work to do, a correction to the body prose, or a statement that something believed finished is not.
-2. Add a phase for each piece of new work the notes describe — imperative title line, then an indented description naming the files or areas involved, matching the style of the existing phases.
-3. Reword body prose only where a note contradicts it.
-4. If the notes mean work remains on a ${noun} marked \`review\` or \`done\`, set \`status\` back to \`in-progress\` so it re-enters the queue. Leave the status alone otherwise.
-5. Append one line to the Log recording what you changed, dated today, so these notes are not applied twice.
-
-Hard guardrails, never violate these:
-- Never delete or un-check an already-completed phase — finished history stays, new work becomes new phases.
-- Never remove or reword the author's own note lines in the Log.
-- Never change anything the notes do not ask about: id, title, created, idea, tags, and unrelated prose stay byte-identical.
-- Never touch a different file, and never implement the work itself — you are editing the ${noun}, not the codebase.
-- If a note is purely a remark with nothing to act on, leave the ${noun} unchanged and say so in your Log line.`;
-}
-
-function marginNoteAnchorLabel(plan: PlanEntry, anchor: MarginNoteAnchor): string {
-  if (anchor.kind === 'body') return 'the body prose';
-  const phase = plan.phases[anchor.index];
-  return phase ? `phase ${anchor.index + 1} ("${phase.text}")` : `phase ${anchor.index + 1}`;
-}
-
-/**
- * Turns anchored margin notes into actual changes — the counterpart to reconcile
- * (which never reads notes and only fixes drift). Unlike buildReworkPrompt, each
- * note here quotes the specific phase or body prose it is about, not a flat log.
- */
-export function buildReworkFromNotesPrompt(plan: PlanEntry, notes: MarginNote[]): string {
-  const hasPhases = plan.phases.length > 0;
-  const noun = hasPhases ? 'plan' : 'idea';
-  const phaseList = hasPhases
-    ? plan.phases
-        .map((phase, i) => {
-          const description = phase.description ? `\n      ${phase.description}` : '';
-          return `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}${description}`;
-        })
-        .join('\n')
-    : '(none — this is a backlog idea with no phases yet)';
-  const noteList = notes
-    .map((n) => `- On ${marginNoteAnchorLabel(plan, n.anchor)}: "${n.prose}"`)
-    .join('\n');
-
-  return `You are reworking the ${noun} "${plan.title}" (${plan.id ?? 'no id'}) from margin notes anchored to specific phases or the body prose, stored as a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md — if it is not there, it is archived at papercamp/ideas/archive/${plan.id ?? '<ID>'}.md. Edit only that file.
-
-Current status: ${plan.status}
-
-${hasPhases ? 'Plan' : 'Idea'} body: ${plan.body}
-
-Current phases:
-${phaseList}
-
-The author's margin notes — this is the work to act on, each quoted against what it is about:
-${noteList}
-
-${BREVITY_CONTRACT}
-
-Task: make the ${noun} reflect these notes, so that acting on the ${noun} afterwards delivers what the author asked for.
-
-1. Read each note together with what it is anchored to, and decide what it means: new work to do, a correction to that phase or the body prose, or a statement that something believed finished is not.
-2. A note anchored to a phase is about that phase specifically — reword its title or description, or add a new phase near it, rather than editing unrelated parts of the ${noun}.
-3. A note anchored to the body prose is about the ${noun}'s overall description — reword only the part of the body it contradicts.
-4. Add a phase for each piece of new work a note describes — imperative title line, then an indented description naming the files or areas involved, matching the style of the existing phases.
-5. If the notes mean work remains on a ${noun} marked \`review\` or \`done\`, set \`status\` back to \`in-progress\` so it re-enters the queue. Leave the status alone otherwise.
-
-Hard guardrails, never violate these:
-- Never delete or un-check an already-completed phase — finished history stays, new work becomes new phases.
-- Never touch the \`### Notes\` section at all — the app resolves the notes a rework addresses once its result is approved, not you.
-- Never change anything the notes do not ask about: id, title, created, idea, tags, and unrelated prose stay byte-identical.
-- Never touch a different file, and never implement the work itself — you are editing the ${noun}, not the codebase.
-- If a note is purely a remark with nothing to act on, leave the ${noun} unchanged.`;
 }
 
 export function buildReconcilePrompt(plan: PlanEntry): string {
@@ -330,39 +221,52 @@ Rules:
 - If a comment needs a decision only a human can make, skip it and say so in its \`why\` instead of guessing.`;
 }
 
-// Read-only (server/agent.ts's runReadOnlyPrompt/runReviewSplit) — never edits a
-// file; the app applies an approved split itself once a human accepts it.
-export function buildReviewSplitPrompt(plan: PlanEntry, points: LogEntry[]): string {
+// Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply) — never uses
+// tools or edits a file itself; it proposes an edit/follow-up as JSON and
+// feedback-reply.ts's applyFeedbackEdit + the route apply it deterministically.
+export function buildFeedbackReplyPrompt(plan: PlanEntry): string {
   const phaseList = plan.phases.length
     ? plan.phases
         .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
         .join('\n')
     : '(no phases yet)';
 
-  const pointList = points.map((p, i) => `${i + 1}. ${p.text}`).join('\n');
+  const threadList = (plan.thread ?? []).length
+    ? (plan.thread as NonNullable<PlanEntry['thread']>)
+        .map((m) => `${m.from === 'agent' ? 'Agent' : 'User'}: ${m.text}`)
+        .join('\n')
+    : '(empty thread)';
 
-  return `You are splitting a human-written review of the finished plan "${plan.title}" (${plan.id ?? 'no id'}) into either rework on this same plan or a new follow-up idea. Do not use any tools, do not read or edit any files, and do not implement anything — base your answer only on the text given below.
+  return `You are the agent behind the Feedback thread on the idea "${plan.title}" (${plan.id ?? 'no id'}), stored at papercamp/ideas/${plan.id ?? '<ID>'}.md. Do not use any tools, do not read or edit any files, and do not implement anything — base your answer only on the context given below.
 
-Plan body: ${plan.body}
+Idea/plan body:
+${plan.body}
 
 Current phases:
 ${phaseList}
 
-Review points, written by a human against this finished plan:
-${pointList}
+Feedback thread so far, oldest first:
+${threadList}
 
-Task: for each review point above, decide whether it is:
-- "rework" — work this same plan should still do: something incomplete, wrong, or missed within its existing scope. Propose one or more new phases that would fix it, each with a short imperative title and, if useful, a one-line description of the files or areas involved, matching the style of the existing phases.
-- "idea" — work outside this plan's scope: a related but separate piece of work that deserves its own plan later. Propose a short title and a one-paragraph body explaining what it is and why it came up during this review.
+Task: classify the most recent user message and act on it in the same response:
+- It answers an open question you asked earlier in this thread — reply AND set "answersQuestion" to true, so the answer is kept as a clarification on this idea.
+- It's a plain question/comment with nothing to change — just reply.
+- It asks for a change this idea/plan should make: add a new phase, reword an existing phase's title or description, or correct body prose that's now wrong — reply AND include an "edit".
+- It's a stray thought or review remark with nothing actionable — just reply, acknowledging it; the message itself is already recorded in the thread, so no edit is needed.
+- It asks to fix or change something that doesn't fit this idea's plan (a failing check, a bug elsewhere, unrelated work) — CAPTURE it as real work, never decline it. Reply AND include a "spinOff" for a new idea that will carry out the fix, and phrase the reply as having queued it (e.g. "Queued that as its own idea to fix — <what>"). Never combine "edit" and "spinOff" on the same message.
 
-A point is "rework" only if the fix belongs inside this plan's existing scope; anything that would grow the plan into new territory is "idea" instead — when genuinely unsure, prefer "idea" over silently expanding scope.
+A request to fix something is never "out of scope" and is never refused: if it fits this idea's plan it becomes an "edit", otherwise it becomes a "spinOff" — either way the reply says what you did with it, never "that's not something I can fix" or "outside this idea's scope". When unsure whether a message asks for a change, treat it as a plain reply rather than guessing an edit. When unsure whether a message answers an earlier question, omit "answersQuestion" rather than guessing.
 
 Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
-{"items": [{"n": 1, "kind": "rework", "phases": [{"text": "Short phase title", "description": "optional detail"}]}, {"n": 2, "kind": "idea", "title": "Idea title", "body": "One paragraph describing the idea and why it came up"}]}
+{"reply": "short reply text, continuing the conversation naturally", "answersQuestion": true, "edit": {"phases": [{"op": "add", "text": "Short phase title", "description": "optional detail"}, {"op": "reword", "index": 2, "text": "New phase title", "description": "optional detail"}], "body": "the ENTIRE corrected body text, only when body prose needs a correction"}, "spinOff": {"title": "Idea title", "body": "One paragraph describing the idea and why it came up"}}
 
 Rules:
-- Every point number from 1 to ${points.length} must appear in "items" exactly once, in any order.
-- A "rework" item needs a non-empty "phases" array; an "idea" item needs a non-empty "title" and "body". Never include both on the same item.`;
+- "reply" is always required and is the only thing shown when nothing needs to change — omit "edit" and "spinOff" entirely in that case.
+- "answersQuestion" is a boolean, only ever true; omit it entirely rather than sending false.
+- "edit.phases" entries: "add" appends a new phase at the end; "reword" replaces the title/description of the existing phase at the given 1-based "index" (matching the numbered list above) — never invent an index outside that range.
+- When every phase above is already checked ([x]) and the message asks for new or still-missing work, use "add" for a new phase — never "reword" a finished phase to smuggle in new work, since a completed phase never re-runs. Adding a phase to a finished idea reopens it, and the app tracks the new work separately as a Fix rather than rewriting the finished Phases history.
+- "edit.body", when present, must be the complete replacement body, not a fragment — reproduce every part that isn't changing, word for word.
+- Only include "edit" when the message clearly asks for a change. Include "spinOff" when a fix request doesn't fit this idea's plan; otherwise fold it in as an "edit". A fix request must always become one or the other — never a bare reply that declines it.`;
 }
 
 // Scans the whole corpus rather than one idea and appends to suggestions.md, so

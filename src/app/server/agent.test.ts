@@ -252,7 +252,7 @@ describe('startRunAllPhases', () => {
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
-    expect(planFile).toContain('### Log');
+    expect(planFile).toContain('### Thread');
     expect(planFile).toContain('project checks (test) are still failing after 2 fix attempt(s)');
   });
 
@@ -294,7 +294,7 @@ describe('startRunAllPhases', () => {
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
-    expect(planFile).toContain('### Log');
+    expect(planFile).toContain('### Thread');
     expect(planFile).toContain('the agent needs a decision: which auth flow should this use?');
   });
 
@@ -325,7 +325,7 @@ describe('startRunAllPhases', () => {
     expect(onPhaseCommit).not.toHaveBeenCalled();
     expect(onRunComplete).not.toHaveBeenCalled();
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
-    expect(planFile).toContain('### Log');
+    expect(planFile).toContain('### Thread');
     expect(planFile).toContain(
       'the fix pass needs a decision: which auth flow should the fix use?',
     );
@@ -387,6 +387,96 @@ describe('startRunAllPhases', () => {
     expect(manager.stop()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(onRunComplete).not.toHaveBeenCalled();
+  });
+
+  describe('Fixes', () => {
+    const PLAN_PHASES_DONE_TWO_FIXES = `---
+id: IDEA-1
+title: Test plan
+type: feat
+status: in-progress
+created: 2026-07-01
+---
+Plan body.
+
+### Phases
+- [x] First phase
+
+### Fixes
+- [ ] First fix
+- [ ] Second fix
+`;
+
+    it('runs open Fixes after the phases are done, committing after each, then completes the run', async () => {
+      const { root, plan } = await makeRoot(PLAN_PHASES_DONE_TWO_FIXES);
+      agentScript.current = FLIP_NEXT_CHECKBOX;
+      const commits: string[] = [];
+      const onRunComplete = vi.fn(async () => {});
+      const manager = createAgentManager(
+        root,
+        undefined,
+        async (_plan, item) => {
+          commits.push(item.text);
+        },
+        onRunComplete,
+      );
+
+      expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+      expect(await waitForStatus(manager, settled)).toBe('done');
+      expect(commits).toEqual(['First fix', 'Second fix']);
+      expect(onRunComplete).toHaveBeenCalledOnce();
+
+      const after = parseEntityFile(
+        await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
+      );
+      expect(after.entries[0].fixes?.every((fix) => fix.done)).toBe(true);
+    });
+
+    it('does not start the Fixes pass when a phase in the same run fails', async () => {
+      const planMd = PLAN_PHASES_DONE_TWO_FIXES.replace('- [x] First phase', '- [ ] First phase');
+      const { root, plan } = await makeRoot(planMd);
+      agentScript.current = 'process.exit(3)'; // phase agent errors
+      const onPhaseCommit = vi.fn(async () => {});
+      const onRunComplete = vi.fn(async () => {});
+      const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+
+      manager.startRunAllPhases(plan);
+      expect(await waitForStatus(manager, settled)).toBe('error');
+      expect(onPhaseCommit).not.toHaveBeenCalled();
+      expect(onRunComplete).not.toHaveBeenCalled();
+
+      const after = parseEntityFile(
+        await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
+      );
+      expect(after.entries[0].fixes?.every((fix) => !fix.done)).toBe(true);
+    });
+
+    it('starts a run for open Fixes alone when every phase is already checked', async () => {
+      const { root, plan } = await makeRoot(
+        PLAN_PHASES_DONE_TWO_FIXES.replace(/- \[ \]/g, '- [x]').replace(
+          '- [x] First fix',
+          '- [ ] First fix',
+        ),
+      );
+      agentScript.current = FLIP_NEXT_CHECKBOX;
+      const onRunComplete = vi.fn(async () => {});
+      const manager = createAgentManager(root, undefined, undefined, onRunComplete);
+
+      expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+      expect(await waitForStatus(manager, settled)).toBe('done');
+      expect(onRunComplete).toHaveBeenCalledOnce();
+    });
+
+    it('rejects a run when every phase and every fix are already checked', async () => {
+      const { root, plan } = await makeRoot(
+        PLAN_PHASES_DONE_TWO_FIXES.replace(/- \[ \]/g, '- [x]'),
+      );
+      const manager = createAgentManager(root);
+      expect(manager.startRunAllPhases(plan)).toEqual({
+        ok: false,
+        error: 'No unchecked phases to run',
+      });
+    });
   });
 });
 

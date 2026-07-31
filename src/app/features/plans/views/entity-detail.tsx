@@ -1,6 +1,6 @@
 import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
-import { usePlanStatusPatch, useSplitReview, useTrail } from '@/app/features/plans/hooks';
+import { usePlanStatusPatch, useSendFeedbackMessage, useTrail } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
@@ -9,11 +9,10 @@ import type {
   AgentTaskState,
   IdeaEntry,
   LogEntry,
-  MarginNote,
-  MarginNoteAnchor,
-  MarginNoteKind,
   PhaseItem,
   PlanEntry,
+  ThreadMessage,
+  ThreadMessageKind,
 } from '@/types/index';
 import {
   Button,
@@ -27,14 +26,7 @@ import {
   useToast,
 } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import {
-  ApplyNotesButton,
-  DraftPlanButton,
-  ExtendIdeaButton,
-  RefreshButton,
-  ReworkFromNotesButton,
-  SplitReviewButton,
-} from '../actions';
+import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
   AddReviewPhasesButton,
@@ -42,18 +34,15 @@ import {
   AuditPhasesButton,
   PhaseCopyButton,
 } from '../actions';
-import { AddMarginNoteButton, MarginNotesList } from '../components';
 import { CollapsibleText } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
-import { ReviewSplitMessage } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import {
   effectiveStatus,
-  notesForAnchor,
-  openMarginNotes,
+  fixProgress,
   phaseProgress,
   relativeDate,
   runningTaskForPlan,
@@ -85,8 +74,6 @@ const PhasesSection = ({
   updating,
   onTogglePhase,
   onAddReviewPhases,
-  onAddNote,
-  onResolveNote,
 }: {
   plan: PlanEntry;
   auditRunning: boolean;
@@ -96,8 +83,6 @@ const PhasesSection = ({
   updating: boolean;
   onTogglePhase: (index: number) => void;
   onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
-  onAddNote: (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => Promise<boolean>;
-  onResolveNote: (note: MarginNote) => Promise<boolean>;
 }) => (
   <div style={{ marginBottom: space[8] }}>
     <div
@@ -165,11 +150,6 @@ const PhasesSection = ({
           cell: (phase: PhaseItem, index: number) => (
             <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
               <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
-              <AddMarginNoteButton
-                label="Add a note on this phase"
-                onAdd={(prose, kind) => onAddNote({ kind: 'phase', index }, prose, kind)}
-                disabled={updating}
-              />
               {!phase.done && agentPhaseIndex === index ? (
                 <Spinner size="small" label={`Agent ${planTask?.status}…`} />
               ) : (
@@ -183,18 +163,7 @@ const PhasesSection = ({
         },
       ]}
       expandable={{
-        render: (phase: PhaseItem, index: number) => {
-          const openNotes = notesForAnchor(plan.notes, { kind: 'phase', index });
-          if (!phase.description && openNotes.length === 0) return null;
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: space[3] }}>
-              {phase.description}
-              {openNotes.length > 0 && (
-                <MarginNotesList notes={openNotes} onResolve={onResolveNote} disabled={updating} />
-              )}
-            </div>
-          );
-        },
+        render: (phase: PhaseItem) => phase.description || null,
       }}
       showExpandColumn={false}
       rowClassName={(phase: PhaseItem) =>
@@ -204,6 +173,67 @@ const PhasesSection = ({
     />
   </div>
 );
+
+const FixesSection = ({
+  plan,
+  updating,
+  onToggleFix,
+}: {
+  plan: PlanEntry;
+  updating: boolean;
+  onToggleFix: (index: number) => void;
+}) => {
+  const fixes = plan.fixes ?? [];
+  const progress = fixProgress(plan);
+  return (
+    <div style={{ marginBottom: space[8] }}>
+      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Fixes</h3>
+      <Card size="small" accent accentColor="rose" texture="canvas">
+        {progress && (
+          <div style={{ marginBottom: space[3] }}>
+            <PlanProgressBar progress={progress} color={STATUS_STAMP.review.text} />
+          </div>
+        )}
+        <Table
+          data={fixes}
+          columns={[
+            {
+              key: 'checkbox',
+              header: 'Status',
+              cell: (fix: PhaseItem, index: number) => (
+                <Checkbox
+                  checked={fix.done}
+                  onChange={() => onToggleFix(index)}
+                  disabled={updating}
+                />
+              ),
+              width: 2,
+            },
+            {
+              key: 'title',
+              header: 'Title',
+              cell: (fix: PhaseItem) => (
+                <span
+                  style={{
+                    textDecoration: fix.done ? 'line-through' : 'none',
+                    opacity: fix.done ? 0.45 : 1,
+                  }}
+                >
+                  {fix.text}
+                </span>
+              ),
+            },
+          ]}
+          expandable={{
+            render: (fix: PhaseItem) => fix.description || null,
+          }}
+          showExpandColumn={false}
+          className="phase-table-phone"
+        />
+      </Card>
+    </div>
+  );
+};
 
 const BranchRow = ({
   plan,
@@ -278,39 +308,15 @@ const PlanProgressBar = ({
   </div>
 );
 
-const PlanBodySection = ({
-  plan,
-  bodyNotes,
-  updating,
-  onAddNote,
-  onResolveNote,
-}: {
-  plan: PlanEntry;
-  bodyNotes: MarginNote[];
-  updating: boolean;
-  onAddNote: (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => Promise<boolean>;
-  onResolveNote: (note: MarginNote) => Promise<boolean>;
-}) => (
+const PlanBodySection = ({ plan }: { plan: PlanEntry }) => (
   <div style={{ marginBottom: space[4] }}>
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: space[2] }}>
-      <div style={{ flex: 1, opacity: 0.85 }}>
-        {plan.body && (
-          <CollapsibleText resetKey={plan.id ?? plan.title}>
-            <Markdown>{plan.body}</Markdown>
-          </CollapsibleText>
-        )}
-      </div>
-      <AddMarginNoteButton
-        label="Add a note on this plan's body"
-        onAdd={(prose, kind) => onAddNote({ kind: 'body' }, prose, kind)}
-        disabled={updating}
-      />
+    <div style={{ opacity: 0.85 }}>
+      {plan.body && (
+        <CollapsibleText resetKey={plan.id ?? plan.title}>
+          <Markdown>{plan.body}</Markdown>
+        </CollapsibleText>
+      )}
     </div>
-    {bodyNotes.length > 0 && (
-      <div style={{ marginTop: space[3] }}>
-        <MarginNotesList notes={bodyNotes} onResolve={onResolveNote} disabled={updating} />
-      </div>
-    )}
   </div>
 );
 
@@ -356,106 +362,112 @@ const TrailSection = ({ planId }: { planId: string | undefined }) => {
   );
 };
 
-interface ThreadItem {
-  date: string;
-  text: string;
-  kind: 'comment' | 'review';
-}
+const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
+  review: 'review',
+  note: 'note',
+  decision: 'decision',
+  question: 'question',
+  clarification: 'clarification',
+};
 
-/** Comments and review points are separate fields (they feed different agent
- * flows — Apply notes vs Split review) but read as one merged, date-ordered thread. */
-function buildThread(log: LogEntry[] | undefined, review: LogEntry[] | undefined): ThreadItem[] {
-  const comments: ThreadItem[] = (log ?? []).map((e) => ({ ...e, kind: 'comment' }));
-  const reviewPoints: ThreadItem[] = (review ?? []).map((e) => ({ ...e, kind: 'review' }));
-  return [...comments, ...reviewPoints].sort((a, b) => a.date.localeCompare(b.date));
-}
-
-const FeedbackThread = ({ items }: { items: ThreadItem[] }) => (
+const FeedbackThread = ({
+  messages,
+  undo,
+  undoing,
+  onUndo,
+}: {
+  messages: ThreadMessage[];
+  undo: { commitSha: string } | null;
+  undoing: boolean;
+  onUndo: () => void;
+}) => (
   <>
-    {items.map((item, i) => (
-      <div
-        key={`${item.date}-${i}`}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: space[1] }}
-      >
+    {messages.map((message, i) => {
+      const label = THREAD_KIND_LABEL[message.kind];
+      const fromAgent = message.from === 'agent';
+      const isLast = i === messages.length - 1;
+      return (
         <div
-          className="text-sm"
+          key={`${message.kind}-${message.date ?? ''}-${i}`}
           style={{
-            background: item.kind === 'review' ? color.accentSlate : 'rgba(0,0,0,0.08)',
-            color: item.kind === 'review' ? '#fff' : undefined,
-            borderRadius: space[2],
-            borderBottomRightRadius: space[1],
-            padding: `${space[2]} ${space[3]}`,
-            maxWidth: '85%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: fromAgent ? 'flex-start' : 'flex-end',
+            gap: space[1],
           }}
         >
-          <CollapsibleText collapsedLines={3} resetKey={`${item.date}-${i}`}>
-            {item.text}
-          </CollapsibleText>
+          <div style={{ maxWidth: '85%' }}>
+            <Card
+              size="small"
+              surface={fromAgent ? 'chalkboard' : 'paper'}
+              texture={fromAgent ? undefined : label ? 'canvas' : 'parchment'}
+              accent={!fromAgent}
+              accentColor={label ? 'rose' : 'blue'}
+            >
+              <CollapsibleText
+                collapsedLines={3}
+                resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
+              >
+                {message.text}
+              </CollapsibleText>
+            </Card>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+            {fromAgent && (
+              <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
+                agent
+              </Stamp>
+            )}
+            {fromAgent && isLast && undo && (
+              <Tooltip content="Revert this run's plan edit">
+                <Button size="small" variant="ghost" onClick={onUndo} disabled={undoing}>
+                  {undoing ? 'Undoing…' : 'Undo'}
+                </Button>
+              </Tooltip>
+            )}
+            {message.date && (
+              <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
+                {message.date}
+              </span>
+            )}
+            {label && (
+              <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
+                {label}
+              </Stamp>
+            )}
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-          <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
-            {item.date}
-          </span>
-          {item.kind === 'review' && (
-            <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
-              review
-            </Stamp>
-          )}
-        </div>
-      </div>
-    ))}
+      );
+    })}
   </>
 );
 
-const PlanReviewSection = ({
+const FeedbackSection = ({
   plan,
   updating,
-  onAddComment,
-  onAddReview,
+  onSend,
+  undo,
+  undoing,
+  onUndo,
 }: {
   plan: PlanEntry;
   updating: boolean;
-  onAddComment: (text: string) => Promise<boolean>;
-  onAddReview: (text: string) => Promise<boolean>;
+  onSend: (text: string) => Promise<boolean>;
+  undo: { commitSha: string } | null;
+  undoing: boolean;
+  onUndo: () => void;
 }) => {
   const [input, setInput] = useState('');
-  const { toast } = useToast();
-  const thread = buildThread(plan.log, plan.review);
-  const { launching, result, outcome, launch, approve, discard } = useSplitReview(plan);
+  const thread = plan.thread ?? [];
 
-  const handleAddComment = async () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    if (await onAddComment(input.trim())) setInput('');
-  };
-
-  const handleAddReview = async () => {
-    if (!input.trim()) return;
-    if (await onAddReview(input.trim())) {
-      setInput('');
-      toast({ title: 'Added to the review', variant: 'success' });
-    }
+    if (await onSend(input.trim())) setInput('');
   };
 
   return (
     <div style={{ marginBottom: space[8] }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: space[3],
-          margin: `0 0 ${space[3]}`,
-        }}
-      >
-        <h3 style={{ ...sectionHeadingStyle, margin: 0, flex: 1 }}>Feedback</h3>
-        <ApplyNotesButton plan={plan} disabled={updating} />
-        <SplitReviewButton
-          planId={plan.id}
-          hasPoints={(plan.review ?? []).length > 0}
-          launching={launching}
-          onClick={launch}
-          disabled={updating}
-        />
-      </div>
+      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Feedback</h3>
       <Card size="small" accent accentColor="slate" texture="kraft">
         <div
           style={{
@@ -466,35 +478,35 @@ const PlanReviewSection = ({
           }}
         >
           {thread.length > 0 ? (
-            <FeedbackThread items={thread} />
+            <FeedbackThread messages={thread} undo={undo} undoing={undoing} onUndo={onUndo} />
           ) : (
             <p className="text-sm" style={{ margin: 0, color: color.textSecondary }}>
-              Jot a comment as you work, or talk through what's wrong — then Split review turns
-              review points into rework phases here or a follow-up idea.
+              Jot a comment, ask a question, or say what's wrong with this plan.
             </p>
           )}
-          <ReviewSplitMessage
-            launching={launching}
-            result={result}
-            outcome={outcome}
-            onApprove={approve}
-            onDiscard={discard}
-          />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Add a comment, or what's wrong with this plan…"
+            aria-label="Feedback message"
+            placeholder="Write a message…"
             rows={3}
             disabled={updating}
           />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
-            <Button size="small" onClick={handleAddComment} disabled={updating || !input.trim()}>
-              Add comment
-            </Button>
-            <Button size="small" onClick={handleAddReview} disabled={updating || !input.trim()}>
-              Add review
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: space[3],
+            }}
+          >
+            <span style={{ visibility: updating ? 'visible' : 'hidden' }}>
+              <Spinner size="small" label="Agent replying…" />
+            </span>
+            <Button size="small" onClick={handleSend} disabled={updating || !input.trim()}>
+              Send
             </Button>
           </div>
         </div>
@@ -518,6 +530,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const auditRunning = planTask?.taskKind === 'audit';
   const progress = phaseProgress(plan);
   const hasPhases = plan.phases.length > 0;
+  const hasFixes = (plan.fixes ?? []).length > 0;
   const showFeedback = detailView === 'feedback';
   const ideaView: IdeaEntry = {
     id: plan.id ?? null,
@@ -563,31 +576,25 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
   };
 
-  const handleAddLogEntry = async (text: string) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const newLog: LogEntry = { date: today, text: text.replace(/\n/g, ' ') };
-    return patchByTitle(plan.title, { log: [...(plan.log ?? []), newLog] });
-  };
-
-  const handleAddReview = async (text: string) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const newEntry: LogEntry = { date: today, text: text.replace(/\n/g, ' ') };
-    return patchByTitle(plan.title, { review: [...(plan.review ?? []), newEntry] });
-  };
-
-  const handleAddNote = async (anchor: MarginNoteAnchor, prose: string, kind?: MarginNoteKind) => {
-    const newNote: MarginNote = { anchor, prose, state: 'open', ...(kind ? { kind } : {}) };
-    return patchByTitle(plan.title, { notes: [...(plan.notes ?? []), newNote] });
-  };
-
-  const handleResolveNote = async (note: MarginNote) => {
-    const nextNotes = (plan.notes ?? []).map((n) =>
-      n === note ? { ...n, state: 'resolved' as const } : n,
+  const handleToggleFix = async (index: number) => {
+    const nextFixes: PhaseItem[] = (plan.fixes ?? []).map((fix, i) =>
+      i === index ? { ...fix, done: !fix.done } : fix,
     );
-    return patchByTitle(plan.title, { notes: nextNotes });
+    const allChecked = nextFixes.every((f) => f.done);
+    if (allChecked && plan.status === 'in-progress') {
+      await patchByTitle(plan.title, { fixes: nextFixes, status: 'review' });
+    } else {
+      await patchByTitle(plan.title, { fixes: nextFixes });
+    }
   };
 
-  const bodyNotes = notesForAnchor(plan.notes, { kind: 'body' });
+  const {
+    sending,
+    send: sendFeedbackMessage,
+    undo: feedbackUndo,
+    undoing: undoingFeedback,
+    undoEdit,
+  } = useSendFeedbackMessage(plan);
 
   return (
     <div>
@@ -621,19 +628,18 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               ? `updated ${relativeDate(plan.updated)}`
               : `created ${relativeDate(plan.created)}`}
           </span>
-          {openMarginNotes(plan.notes).length > 0 && (
-            <ReworkFromNotesButton plan={plan} disabled={updating} />
-          )}
           <RefreshButton />
         </div>
       </div>
 
       {showFeedback ? (
-        <PlanReviewSection
+        <FeedbackSection
           plan={plan}
-          updating={updating}
-          onAddComment={handleAddLogEntry}
-          onAddReview={handleAddReview}
+          updating={sending}
+          onSend={sendFeedbackMessage}
+          undo={feedbackUndo}
+          undoing={undoingFeedback}
+          onUndo={undoEdit}
         />
       ) : (
         <>
@@ -652,13 +658,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             />
           )}
 
-          <PlanBodySection
-            plan={plan}
-            bodyNotes={bodyNotes}
-            updating={updating}
-            onAddNote={handleAddNote}
-            onResolveNote={handleResolveNote}
-          />
+          <PlanBodySection plan={plan} />
 
           <ClarificationsSection clarifications={plan.clarifications ?? []} />
 
@@ -686,9 +686,11 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               updating={updating}
               onTogglePhase={handleTogglePhase}
               onAddReviewPhases={handleAddReviewPhases}
-              onAddNote={handleAddNote}
-              onResolveNote={handleResolveNote}
             />
+          )}
+
+          {hasFixes && (
+            <FixesSection plan={plan} updating={updating} onToggleFix={handleToggleFix} />
           )}
 
           <TrailSection planId={plan.id} />

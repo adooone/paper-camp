@@ -31,7 +31,7 @@ The batch freshness audit: sweep every review/done plan through the convergence 
 - [x] Add `POST /api/agent/launch-audit-all` API route and `batch-audit` task kind
       The dashboard "Audit all" button (Phase 5) must call a server endpoint — the CLI loop runs in-process, but the browser goes through HTTP. Add the route to trigger the batch sweep server-side, and add `'batch-audit'` to the `TaskKind` union so the status indicator and stop button correctly reflect a sweep in progress.
 
-### Log
-- 2026-07-01: missing server-side API route for dashboard batch sweep; added phase for `POST /api/agent/launch-audit-all` and `batch-audit` task kind
-- 2026-07-01: phase 4 done — track `AuditResult[]` across the loop, count phases before/after each audit, print structured summary (audited/skipped/failed counts + per-plan gap-phase tally)
-- 2026-07-01: phases 5 and 7 done together — `AuditAllButton` in plans-page.tsx header, `startBatchAudit` in AgentManager (sequential spawn loop with skip logic), `POST /api/agent/launch-audit-all` route, `batch-audit` TaskKind, Stack panel label; `TASK_KIND_TO_DEFAULT_KEY` updated in agents/index.ts
+### Thread
+- [x] 2026-07-01 [log] missing server-side API route for dashboard batch sweep; added phase for `POST /api/agent/launch-audit-all` and `batch-audit` task kind
+- [x] 2026-07-01 [log] phase 4 done — track `AuditResult[]` across the loop, count phases before/after each audit, print structured summary (audited/skipped/failed counts + per-plan gap-phase tally)
+- [x] 2026-07-01 [log] phases 5 and 7 done together — `AuditAllButton` in plans-page.tsx header, `startBatchAudit` in AgentManager (sequential spawn loop with skip logic), `POST /api/agent/launch-audit-all` route, `batch-audit` TaskKind, Stack panel label; `TASK_KIND_TO_DEFAULT_KEY` updated in agents/index.ts

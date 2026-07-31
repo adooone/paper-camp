@@ -1,5 +1,5 @@
 import { fetchAgentAuthStatus } from '@/app/services/system';
-import type { AgentAuthStatus, AgentTaskState, MarginNote, PlanEntry } from '@/types/index';
+import type { AgentAuthStatus, AgentTaskState, PlanEntry } from '@/types/index';
 import {
   fetchAgentStatus,
   fetchReconcileQueue,
@@ -10,7 +10,6 @@ import {
   launchPlanAudit as launchPlanAuditApi,
   launchPlanDraft as launchPlanDraftApi,
   launchPlanReconcile as launchPlanReconcileApi,
-  launchPlanRework as launchPlanReworkApi,
   launchRunAll as launchRunAllApi,
   launchSuggestIdeas as launchSuggestIdeasApi,
   stopAgent as stopAgentApi,
@@ -21,9 +20,6 @@ import { loadSlice, withAgentPoll } from './slice-helpers';
 export interface ReconcilePreview {
   planId: string;
   before: { body: string; phases: PlanEntry['phases'] };
-  // Only set for a "rework from notes" launch: the notes it bundled into the prompt,
-  // so approve can flip just those to resolved rather than every open note.
-  notes?: MarginNote[];
 }
 
 // A queued preview carries its own id: two reconciles can run against the same
@@ -48,12 +44,6 @@ export type AgentSlice = {
     planId: string,
     prompt: string,
     before: ReconcilePreview['before'],
-  ) => Promise<void>;
-  launchPlanRework: (
-    planId: string,
-    prompt: string,
-    before: ReconcilePreview['before'],
-    notes?: MarginNote[],
   ) => Promise<void>;
   launchPlanDraft: (ideaId: string, prompt: string) => Promise<void>;
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
@@ -89,14 +79,8 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
         set({ agentStatus: data });
 
         const pending = get().pendingReconcile;
-        // rework rewrites the entity in place exactly like reconcile, so it lands in
-        // the same before/after preview queue.
         const reconcileTask = pending
-          ? data.find(
-              (t) =>
-                (t.taskKind === 'reconcile' || t.taskKind === 'rework') &&
-                t.planId === pending.planId,
-            )
+          ? data.find((t) => t.taskKind === 'reconcile' && t.planId === pending.planId)
           : undefined;
         if (pending && reconcileTask) {
           if (reconcileTask.status === 'done') {
@@ -155,30 +139,6 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
       set({ pendingReconcile: { planId, before } });
       try {
         await launchPlanReconcileApi(planId, prompt);
-      } catch (err) {
-        set({ pendingReconcile: null });
-        throw err;
-      }
-      await get().loadAgentStatus();
-    },
-    launchPlanRework: async (planId, prompt, before, notes) => {
-      // Shares pendingReconcile (and so the same before/after preview) with reconcile:
-      // both rewrite the entity file in place, and only one such rewrite may be
-      // outstanding at a time or the previews stack incoherently.
-      const existing = get().pendingReconcile;
-      if (existing) {
-        throw new Error(
-          existing.planId === planId
-            ? 'A rewrite is already in progress for this plan'
-            : 'A rewrite is already in progress for another plan',
-        );
-      }
-      if (get().reconcileQueue.some((item) => item.planId === planId)) {
-        throw new Error('Review the pending changes for this plan first');
-      }
-      set({ pendingReconcile: { planId, before, notes } });
-      try {
-        await launchPlanReworkApi(planId, prompt);
       } catch (err) {
         set({ pendingReconcile: null });
         throw err;

@@ -7,15 +7,18 @@ import type {
   MarginNote,
   PhaseItem,
   SuggestionEntry,
+  ThreadMessage,
 } from '../../types/index';
 import { SUGGESTION_ENTRY_RE } from '../parse/parser';
 import {
   CLARIFICATIONS_SECTION,
+  FIXES_SECTION,
   LOG_SECTION,
   NOTES_SECTION,
   PHASES_SECTION,
   REVIEW_SECTION,
   type SectionDef,
+  THREAD_SECTION,
 } from '../sections';
 
 interface SectionField {
@@ -201,10 +204,8 @@ interface NewEntityFileInput {
   order?: number;
   body?: string;
   phases?: PhaseItem[];
-  log?: LogEntry[];
-  clarifications?: LogEntry[];
-  notes?: MarginNote[];
-  review?: LogEntry[];
+  fixes?: PhaseItem[];
+  thread?: ThreadMessage[];
 }
 
 export function formatEntityFile(input: NewEntityFileInput): string {
@@ -227,11 +228,9 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   const sections: string[] = [serializeFrontmatter(frontmatter)];
   if (input.body) sections.push(input.body);
   appendSections(sections, [
-    { entries: input.clarifications, section: CLARIFICATIONS_SECTION },
     { entries: input.phases, section: PHASES_SECTION },
-    { entries: input.log, section: LOG_SECTION },
-    { entries: input.notes, section: NOTES_SECTION },
-    { entries: input.review, section: REVIEW_SECTION },
+    { entries: input.fixes, section: FIXES_SECTION },
+    { entries: input.thread, section: THREAD_SECTION },
   ]);
   return sections.join('\n\n').trimEnd();
 }

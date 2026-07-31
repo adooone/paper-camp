@@ -34,6 +34,6 @@ This is roughly one route change plus one format change, and it is the precondit
 - [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
 
-### Notes
-- [x] [body] [decision] Roadmap links a minted entity with a `→ IDEA-N` sub-bullet
-- [x] [body] [decision] Candidate promotion consumes the candidate bullet but still links the item
+### Thread
+- [x] [decision] Roadmap links a minted entity with a `→ IDEA-N` sub-bullet
+- [x] [decision] Candidate promotion consumes the candidate bullet but still links the item

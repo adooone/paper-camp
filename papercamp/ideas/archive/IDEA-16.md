@@ -50,5 +50,5 @@ UX fixes for the Ideas/Stack flow: done ideas leaving the sidebar, an in-app pat
       4 most recently done, and render a 5th row as a "[N more ideas]" link (not a card)
       that navigates to a new, separate done-ideas list view showing the full set.
 
-### Notes
-- [x] [body] [decision] One agent task runs at a time, regardless of task kind
+### Thread
+- [x] [decision] One agent task runs at a time, regardless of task kind

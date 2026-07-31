@@ -9,6 +9,7 @@ import { buildReconcilePrompt } from '@/app/features/plans/prompts';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
 import { computePlanContentHash, todayDateString } from '@/core/serialize';
+import { logFromThread } from '@/core/thread';
 import {
   type AgentId,
   type AgentTaskState,
@@ -58,6 +59,10 @@ export interface AgentTask {
   planId?: string;
   startedAt: string;
   phaseIndex?: number;
+  /** Set while run-all's post-phase Fixes loop is on this item; checked ahead of
+   * `phaseIndex` in didTaskProgress since a stale phaseIndex can linger from the
+   * phase loop that ran before it. */
+  fixIndex?: number;
   fixAttempt?: number;
   fixAttemptCap?: number;
   blocker?: string;
@@ -140,15 +145,15 @@ When the work is done:
 
 export function buildFixPassPrompt(
   plan: PlanEntry,
-  phaseIndex: number,
+  label: string,
+  itemText: string,
   introducedChecks: CheckName[],
 ): string {
-  const phase = plan.phases[phaseIndex];
   const scope =
     introducedChecks.length > 0
-      ? `The check(s) this phase broke: ${introducedChecks.join(', ')}. Only fix those — other checks that were already red before this phase started are pre-existing or known-flaky and are not your concern.`
+      ? `The check(s) this ${label.startsWith('fix') ? 'fix' : 'phase'} broke: ${introducedChecks.join(', ')}. Only fix those — other checks that were already red before it started are pre-existing or known-flaky and are not your concern.`
       : "The project's lint/format/type-check/test checks are failing.";
-  return `${scope} This is after phase ${phaseIndex + 1}, "${phase?.text ?? plan.title}", of the plan "${plan.title}" (${plan.id ?? 'no id'}).
+  return `${scope} This is after ${label}, "${itemText}", of the plan "${plan.title}" (${plan.id ?? 'no id'}).
 
 Only make the failing checks pass — change nothing else: no new features, no refactors, no unrelated cleanup, no edits outside what the failures require, and do not touch the plan file.
 
@@ -157,11 +162,39 @@ Run \`pnpm run check-types\`, \`npx biome check . --write\`, and \`pnpm test\` t
 If the failure requires a decision you can't make on your own — not just a fix you haven't found yet — output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop.`;
 }
 
+// Implements one post-build Fix — a finding logged after the plan's phases already
+// shipped, so it lives in its own `### Fixes` list rather than rewriting phase history.
+export function buildFixItemPrompt(
+  plan: PlanEntry,
+  fix: PhaseItem,
+  fixIndex: number,
+  toleratedRed: CheckName[] = [],
+): string {
+  const details = fix.description ? `Fix details:\n${fix.description}\n\n` : '';
+  const toleratedNote =
+    toleratedRed.length > 0
+      ? `The following check(s) are already red before this fix and are pre-existing or known-flaky: ${toleratedRed.join(', ')}. Do not try to fix them — leave them exactly as they are.\n\n`
+      : '';
+  return `You are implementing exactly one post-build Fix on the plan "${plan.title}" (${plan.id ?? 'no id'}): fix ${fixIndex + 1}, "${fix.text}". The plan is a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md.
+
+${toleratedNote}${details}Plan context: ${plan.body}
+
+Do only this fix — do not start any other fix or phase, even if it looks quick.
+
+Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
+
+You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, \`pnpm run lint\`, \`pnpm test\`) — never open the app, navigate to a URL, or take screenshots, even if the fix describes a visual check; note in the commit message that it's left to a human instead.
+
+Leave the whole repo green before you finish, not just the files you edited: run \`pnpm run check-types\` and \`npx biome check . --write\` and fix anything red, including pre-existing failures elsewhere — that's part of completing this fix, not a separate one. Keep such fixes minimal and correct.
+
+If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop without finishing the fix.
+
+When the work is done, in the plan file's \`### Fixes\` list, change this fix's checkbox from \`- [ ]\` to \`- [x]\`. Do not change any other line.`;
+}
+
 const NO_PROGRESS_WARNING_BY_KIND: Partial<Record<TaskKind, (task: AgentTask) => string>> = {
   extend: (task) =>
     `Warning: agent finished but the idea body for ${task.ideaId} did not change — verify manually`,
-  rework: () =>
-    'Warning: agent finished but your notes produced no change to the body or phases — verify manually',
   reconcile: () =>
     'Warning: agent finished but the plan body and phase text did not change — verify manually',
   suggest: () => 'Agent finished without appending any suggestions — nothing new found',
@@ -219,9 +252,9 @@ export function createAgentManager(
     return task.status === 'stopping';
   }
 
-  // Writes a run-all escalation into the plan's `### Log` (Comments) so a human
-  // sees the agent's question in the same place they'd leave one, and Apply-notes
-  // / rework can pick the thread back up instead of the run dying with no trace.
+  // Writes a run-all escalation into the plan's thread so a human sees the agent's
+  // question in the same place they'd leave one, and the Feedback chat can pick it
+  // back up instead of the run dying with no trace.
   // Also flips the plan back to in-progress so a parked run surfaces in the
   // worklist as needing input rather than looking merely errored.
   async function escalateToLog(planId: string | undefined, message: string): Promise<void> {
@@ -239,7 +272,7 @@ export function createAgentManager(
     await writeEntityFile(
       file,
       entityFileInput(entry, {
-        log: [...(entry.log ?? []), { date: todayDateString(), text: message }],
+        thread: [...(entry.thread ?? []), { kind: 'log', date: todayDateString(), text: message }],
         ...(needsInput ? { status: 'in-progress' } : {}),
       }),
     );
@@ -319,12 +352,12 @@ export function createAgentManager(
         const idea = entries.find((e) => e.id === task.ideaId);
         if (!idea) return null;
         if (task.ideaLogBaseline === undefined) return null;
-        return (idea.log?.length ?? 0) > task.ideaLogBaseline;
+        return logFromThread(idea.thread).length > task.ideaLogBaseline;
       }
       if (task.taskKind === 'fix-review') {
         return task.fixReviewResult !== undefined;
       }
-      if (task.taskKind === 'reconcile' || task.taskKind === 'rework') {
+      if (task.taskKind === 'reconcile') {
         const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
         const plan = entries.find((e) => e.id === task.planId && e.kind !== 'note');
         if (!plan || task.reconcileBaseline === undefined) return null;
@@ -347,13 +380,16 @@ export function createAgentManager(
         entries.find((e) => e.id === task.planId && e.kind !== 'note') ??
         entries.find((e) => e.title === task.planTitle && e.kind !== 'note');
       if (!plan) return null;
+      if (task.fixIndex !== undefined) {
+        return plan.fixes?.[task.fixIndex]?.done ?? null;
+      }
       if (task.phaseIndex !== undefined) {
         return plan.phases[task.phaseIndex]?.done ?? null;
       }
       if (!task.planBaseline) return null;
       return (
         plan.phases.length > task.planBaseline.phases ||
-        (plan.log?.length ?? 0) > task.planBaseline.log
+        logFromThread(plan.thread).length > task.planBaseline.log
       );
     } catch {
       return null;
@@ -481,7 +517,6 @@ export function createAgentManager(
   const ENTITY_WRITER_KINDS = new Set<TaskKind>([
     'audit',
     'reconcile',
-    'rework',
     'batch-reconcile',
     'draft',
     'extend',
@@ -490,7 +525,7 @@ export function createAgentManager(
     'commit-suggest',
     'overlap-check',
     'prioritise',
-    'review-split',
+    'feedback',
   ]);
 
   function writeSetFor(taskKind: TaskKind, entityId?: string): WriteSet {
@@ -591,13 +626,11 @@ export function createAgentManager(
   function startForPlan(
     plan: PlanEntry,
     prompt: string,
-    taskKind: 'audit' | 'reconcile' | 'rework' = 'audit',
+    taskKind: 'audit' | 'reconcile' = 'audit',
   ): Result {
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
       taskKind,
-      // Rework rewrites body/phases in place like reconcile, so it needs the same
-      // baseline snapshot to drive the before/after preview.
-      ...(taskKind === 'reconcile' || taskKind === 'rework'
+      ...(taskKind === 'reconcile'
         ? {
             reconcileBaseline: JSON.stringify({
               body: plan.body,
@@ -798,7 +831,8 @@ export function createAgentManager(
   function runFixPass(
     task: AgentTask,
     plan: PlanEntry,
-    phaseIndex: number,
+    label: string,
+    itemText: string,
     adapter: AgentAdapter,
     model: string | undefined,
     effort: string | undefined,
@@ -806,11 +840,8 @@ export function createAgentManager(
     attemptCap: number,
     introducedChecks: CheckName[],
   ): Promise<{ ok: boolean; timedOut: boolean }> {
-    pushLine(
-      task,
-      `[fix] phase ${phaseIndex + 1} — fix attempt ${attempt}/${attemptCap} for failing checks`,
-    );
-    const prompt = buildFixPassPrompt(plan, phaseIndex, introducedChecks);
+    pushLine(task, `[fix] ${label} — fix attempt ${attempt}/${attemptCap} for failing checks`);
+    const prompt = buildFixPassPrompt(plan, label, itemText, introducedChecks);
     return runPhaseProcess(task, adapter, prompt, model, effort, {
       guardSuperseded: true,
       trackBlocker: true,
@@ -820,6 +851,192 @@ export function createAgentManager(
     });
   }
 
+  type QueueKind = 'phase' | 'fix';
+
+  // Drives run-all's per-item loop — shared by the phases pass and the post-phase
+  // Fixes pass, which differ only in which list/checkbox section they target.
+  async function runQueue(
+    task: AgentTask,
+    plan: PlanEntry,
+    kind: QueueKind,
+    items: { item: PhaseItem; i: number }[],
+    total: number,
+    adapter: AgentAdapter,
+    model: string | undefined,
+    effort: string | undefined,
+    runProjectChecks: (() => Promise<CheckName[]>) | undefined,
+    initialToleratedRed: Set<CheckName>,
+  ): Promise<{
+    completed: number;
+    failed: number;
+    toleratedRed: Set<CheckName>;
+    exit: 'superseded' | 'stopping' | 'ran';
+  }> {
+    let completed = 0;
+    let failed = 0;
+    let toleratedRed = initialToleratedRed;
+
+    for (const { item, i } of items) {
+      if (isSuperseded(task) || task.status === 'stopping') break;
+
+      // Set phaseIndex/fixIndex so didTaskProgress can verify the right checkbox.
+      if (kind === 'phase') task.phaseIndex = i;
+      else task.fixIndex = i;
+      pushLine(task, `[${kind} ${i + 1}/${total}] ${item.text}`);
+
+      const prompt =
+        kind === 'phase'
+          ? buildAgentPrompt(plan, item, i, [...toleratedRed])
+          : buildFixItemPrompt(plan, item, i, [...toleratedRed]);
+      const {
+        ok: exitedOk,
+        timedOut,
+        stderr,
+      } = await runPhaseProcess(task, adapter, prompt, model, effort, {
+        guardSuperseded: true,
+        trackBlocker: true,
+      });
+
+      if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+      if (isStopping(task)) break;
+
+      if (task.blocker) {
+        failed++;
+        pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${task.blocker}`);
+        await escalateToLog(
+          plan.id,
+          `Run-all parked on ${kind} ${i + 1} ("${item.text}") — the agent needs a decision: ${task.blocker}`,
+        );
+        task.blocker = undefined;
+        break;
+      }
+
+      if (timedOut) {
+        failed++;
+        pushLine(
+          task,
+          `[timeout] ${kind} ${i + 1} — no progress for ${PHASE_TIMEOUT_MS / 60000}min, stopping`,
+        );
+        break;
+      }
+
+      if (!exitedOk) {
+        failed++;
+        if (stderr.trim()) pushLine(task, stderr.trim());
+        pushLine(task, `[fail] ${kind} ${i + 1} — agent error, stopping`);
+        break;
+      }
+
+      const progressed = await didTaskProgress(task);
+      if (!progressed) {
+        failed++;
+        pushLine(
+          task,
+          progressed === null
+            ? `[fail] ${kind} ${i + 1} — could not read plan after run, stopping`
+            : `[fail] ${kind} ${i + 1} — ${kind} checkbox did not flip, stopping`,
+        );
+        break;
+      }
+
+      if (runProjectChecks) {
+        pushLine(task, `[verify] ${kind} ${i + 1} — running lint/format/test`);
+        let failing = await runProjectChecks();
+        if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+        if (isStopping(task)) break;
+        let introduced = failing.filter((c) => !toleratedRed.has(c));
+        let checksOk = introduced.length === 0;
+
+        let fixAttempt = 0;
+        let fixBlocker: string | undefined;
+        while (!checksOk && fixAttempt < FIX_ATTEMPT_CAP) {
+          if (isSuperseded(task) || isStopping(task)) break;
+          fixAttempt++;
+          task.fixAttempt = fixAttempt;
+          task.fixAttemptCap = FIX_ATTEMPT_CAP;
+
+          const { timedOut: fixTimedOut } = await runFixPass(
+            task,
+            plan,
+            `${kind} ${i + 1}`,
+            item.text,
+            adapter,
+            model,
+            effort,
+            fixAttempt,
+            FIX_ATTEMPT_CAP,
+            introduced,
+          );
+          if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+          if (task.blocker) {
+            fixBlocker = task.blocker;
+            task.blocker = undefined;
+            break;
+          }
+          if (fixTimedOut) {
+            pushLine(
+              task,
+              `[fix] ${kind} ${i + 1} — fix attempt ${fixAttempt}/${FIX_ATTEMPT_CAP} timed out`,
+            );
+          }
+
+          pushLine(
+            task,
+            `[verify] ${kind} ${i + 1} — re-running lint/format/test (attempt ${fixAttempt}/${FIX_ATTEMPT_CAP})`,
+          );
+          failing = await runProjectChecks();
+          if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+          introduced = failing.filter((c) => !toleratedRed.has(c));
+          checksOk = introduced.length === 0;
+        }
+        task.fixAttempt = undefined;
+        task.fixAttemptCap = undefined;
+
+        if (isStopping(task)) break;
+
+        if (fixBlocker) {
+          failed++;
+          pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${fixBlocker}`);
+          await escalateToLog(
+            plan.id,
+            `Run-all parked on ${kind} ${i + 1} ("${item.text}") — the fix pass needs a decision: ${fixBlocker}`,
+          );
+          break;
+        }
+
+        if (!checksOk) {
+          failed++;
+          pushLine(
+            task,
+            `[blocked] ${kind} ${i + 1} — project checks still failing after ${fixAttempt} fix attempt(s)`,
+          );
+          await escalateToLog(
+            plan.id,
+            `Run-all parked on ${kind} ${i + 1} ("${item.text}") — project checks (${introduced.join(', ')}) are still failing after ${fixAttempt} fix attempt(s). Reply here with guidance to unblock and resume.`,
+          );
+          break;
+        }
+
+        // Carry forward whatever's still red (pre-existing/flaky) so the
+        // next item isn't blamed for breakage this run never introduced.
+        toleratedRed = new Set(failing);
+      }
+
+      completed++;
+      if (onPhaseCommit) {
+        pushLine(task, `[commit] ${kind} ${i + 1} — ${item.text}`);
+        await onPhaseCommit(plan, item, i);
+      }
+    }
+
+    return {
+      completed,
+      failed,
+      toleratedRed,
+      exit: task.status === 'stopping' ? 'stopping' : 'ran',
+    };
+  }
+
   function startRunAllPhases(
     plan: PlanEntry,
     runProjectChecks?: () => Promise<CheckName[]>,
@@ -827,10 +1044,13 @@ export function createAgentManager(
     const blocked = admit('run-all', plan.id);
     if (blocked) return blocked;
     const unchecked = plan.phases
-      .map((phase, i) => ({ phase, i }))
-      .filter(({ phase }) => !phase.done);
+      .map((phase, i) => ({ item: phase, i }))
+      .filter(({ item }) => !item.done);
+    const uncheckedFixes = (plan.fixes ?? [])
+      .map((fix, i) => ({ item: fix, i }))
+      .filter(({ item }) => !item.done);
 
-    if (unchecked.length === 0) {
+    if (unchecked.length === 0 && uncheckedFixes.length === 0) {
       return { ok: false, error: 'No unchecked phases to run' };
     }
 
@@ -856,10 +1076,7 @@ export function createAgentManager(
 
     (async () => {
       try {
-        const total = plan.phases.length;
-        let completed = 0;
-        let failed = 0;
-        // Checks already red before a phase ran — pre-existing or known-flaky
+        // Checks already red before this run — pre-existing or known-flaky
         // breakage this run didn't cause, so the fix loop never owns it.
         let toleratedRed = new Set<CheckName>(runProjectChecks ? await runProjectChecks() : []);
         if (isSuperseded(task)) return;
@@ -870,166 +1087,70 @@ export function createAgentManager(
           );
         }
 
-        for (const { phase, i } of unchecked) {
-          if (isSuperseded(task) || task.status === 'stopping') break;
+        const phaseResult = await runQueue(
+          task,
+          plan,
+          'phase',
+          unchecked,
+          plan.phases.length,
+          adapter,
+          model,
+          effort,
+          runProjectChecks,
+          toleratedRed,
+        );
+        toleratedRed = phaseResult.toleratedRed;
 
-          // Set phaseIndex so didTaskProgress can verify the right checkbox.
-          task.phaseIndex = i;
-          pushLine(task, `[phase ${i + 1}/${total}] ${phase.text}`);
-
-          const prompt = buildAgentPrompt(plan, phase, i, [...toleratedRed]);
-          const {
-            ok: exitedOk,
-            timedOut,
-            stderr,
-          } = await runPhaseProcess(task, adapter, prompt, model, effort, {
-            guardSuperseded: true,
-            trackBlocker: true,
-          });
-
-          if (isSuperseded(task)) return;
-          if (isStopping(task)) break;
-
-          if (task.blocker) {
-            failed++;
-            pushLine(task, `[blocked] phase ${i + 1} — agent needs a decision: ${task.blocker}`);
-            await escalateToLog(
-              plan.id,
-              `Run-all parked on phase ${i + 1} ("${phase.text}") — the agent needs a decision: ${task.blocker}`,
-            );
-            task.blocker = undefined;
-            break;
-          }
-
-          if (timedOut) {
-            failed++;
-            pushLine(
-              task,
-              `[timeout] phase ${i + 1} — no progress for ${PHASE_TIMEOUT_MS / 60000}min, stopping`,
-            );
-            break;
-          }
-
-          if (!exitedOk) {
-            failed++;
-            if (stderr.trim()) pushLine(task, stderr.trim());
-            pushLine(task, `[fail] phase ${i + 1} — agent error, stopping`);
-            break;
-          }
-
-          const progressed = await didTaskProgress(task);
-          if (!progressed) {
-            failed++;
-            pushLine(
-              task,
-              progressed === null
-                ? `[fail] phase ${i + 1} — could not read plan after run, stopping`
-                : `[fail] phase ${i + 1} — phase checkbox did not flip, stopping`,
-            );
-            break;
-          }
-
-          if (runProjectChecks) {
-            pushLine(task, `[verify] phase ${i + 1} — running lint/format/test`);
-            let failing = await runProjectChecks();
-            if (isSuperseded(task)) return;
-            if (isStopping(task)) break;
-            let introduced = failing.filter((c) => !toleratedRed.has(c));
-            let checksOk = introduced.length === 0;
-
-            let fixAttempt = 0;
-            let fixBlocker: string | undefined;
-            while (!checksOk && fixAttempt < FIX_ATTEMPT_CAP) {
-              if (isSuperseded(task) || isStopping(task)) break;
-              fixAttempt++;
-              task.fixAttempt = fixAttempt;
-              task.fixAttemptCap = FIX_ATTEMPT_CAP;
-
-              const { timedOut: fixTimedOut } = await runFixPass(
-                task,
-                plan,
-                i,
-                adapter,
-                model,
-                effort,
-                fixAttempt,
-                FIX_ATTEMPT_CAP,
-                introduced,
-              );
-              if (isSuperseded(task)) return;
-              if (task.blocker) {
-                fixBlocker = task.blocker;
-                task.blocker = undefined;
-                break;
-              }
-              if (fixTimedOut) {
-                pushLine(
-                  task,
-                  `[fix] phase ${i + 1} — fix attempt ${fixAttempt}/${FIX_ATTEMPT_CAP} timed out`,
-                );
-              }
-
-              pushLine(
-                task,
-                `[verify] phase ${i + 1} — re-running lint/format/test (attempt ${fixAttempt}/${FIX_ATTEMPT_CAP})`,
-              );
-              failing = await runProjectChecks();
-              if (isSuperseded(task)) return;
-              introduced = failing.filter((c) => !toleratedRed.has(c));
-              checksOk = introduced.length === 0;
-            }
-            task.fixAttempt = undefined;
-            task.fixAttemptCap = undefined;
-
-            if (isStopping(task)) break;
-
-            if (fixBlocker) {
-              failed++;
-              pushLine(task, `[blocked] phase ${i + 1} — agent needs a decision: ${fixBlocker}`);
-              await escalateToLog(
-                plan.id,
-                `Run-all parked on phase ${i + 1} ("${phase.text}") — the fix pass needs a decision: ${fixBlocker}`,
-              );
-              break;
-            }
-
-            if (!checksOk) {
-              failed++;
-              pushLine(
-                task,
-                `[blocked] phase ${i + 1} — project checks still failing after ${fixAttempt} fix attempt(s)`,
-              );
-              await escalateToLog(
-                plan.id,
-                `Run-all parked on phase ${i + 1} ("${phase.text}") — project checks (${introduced.join(', ')}) are still failing after ${fixAttempt} fix attempt(s). Reply here with guidance to unblock and resume.`,
-              );
-              break;
-            }
-
-            // Carry forward whatever's still red (pre-existing/flaky) so the
-            // next phase isn't blamed for breakage this run never introduced.
-            toleratedRed = new Set(failing);
-          }
-
-          completed++;
-          if (onPhaseCommit) {
-            pushLine(task, `[commit] phase ${i + 1} — ${phase.text}`);
-            await onPhaseCommit(plan, phase, i);
-          }
-        }
-
-        if (isSuperseded(task)) return;
-
-        if (task.status === 'stopping') {
+        if (phaseResult.exit === 'superseded') return;
+        if (phaseResult.exit === 'stopping') {
           setStatus(task, 'done');
           return;
         }
 
+        // Fixes only start once every phase has landed clean — a plan mid-build
+        // never jumps ahead to post-build follow-ups.
+        let fixResult: Awaited<ReturnType<typeof runQueue>> = {
+          completed: 0,
+          failed: 0,
+          toleratedRed,
+          exit: 'ran',
+        };
+        if (phaseResult.failed === 0 && uncheckedFixes.length > 0) {
+          fixResult = await runQueue(
+            task,
+            plan,
+            'fix',
+            uncheckedFixes,
+            (plan.fixes ?? []).length,
+            adapter,
+            model,
+            effort,
+            runProjectChecks,
+            toleratedRed,
+          );
+
+          if (fixResult.exit === 'superseded') return;
+          if (fixResult.exit === 'stopping') {
+            setStatus(task, 'done');
+            return;
+          }
+        }
+
+        const failed = phaseResult.failed + fixResult.failed;
+        const summary = [
+          unchecked.length > 0 || uncheckedFixes.length === 0
+            ? `${phaseResult.completed} phase(s)`
+            : undefined,
+          uncheckedFixes.length > 0 ? `${fixResult.completed} fix(es)` : undefined,
+        ]
+          .filter(Boolean)
+          .join(' and ');
+
         if (failed > 0) {
-          pushLine(task, `Run stopped after ${completed} phase(s) completed, 1 failed`);
+          pushLine(task, `Run stopped after ${summary} completed, 1 failed`);
           setStatus(task, 'error');
         } else {
-          pushLine(task, `All ${completed} phase(s) completed`);
+          pushLine(task, `All ${summary} completed`);
           if (onRunComplete) {
             try {
               pushLine(task, '[review] setting plan status to review');
@@ -1059,7 +1180,7 @@ export function createAgentManager(
 
   function runReadOnlyPrompt(
     prompt: string,
-    taskKind: 'commit-suggest' | 'overlap-check' | 'prioritise' | 'review-split',
+    taskKind: 'commit-suggest' | 'overlap-check' | 'prioritise' | 'feedback',
     planTitle: string,
   ): Promise<string> {
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
@@ -1167,8 +1288,8 @@ export function createAgentManager(
     return runReadOnlyPrompt(prompt, 'prioritise', 'Prioritise queue');
   }
 
-  function runReviewSplit(prompt: string): Promise<string> {
-    return runReadOnlyPrompt(prompt, 'review-split', 'Split review');
+  function runFeedbackReply(prompt: string, planTitle: string): Promise<string> {
+    return runReadOnlyPrompt(prompt, 'feedback', planTitle);
   }
 
   function stop(taskId?: string): Result {
@@ -1229,7 +1350,7 @@ export function createAgentManager(
     runCommitSuggest,
     runOverlapCheck,
     runPrioritise,
-    runReviewSplit,
+    runFeedbackReply,
     stop,
     getStatus,
     getReconcileQueue,
@@ -1282,11 +1403,7 @@ export interface AgentManagerState {
 
 export interface AgentManager {
   start: (plan: PlanEntry, phaseIndex: number) => Result;
-  startForPlan: (
-    plan: PlanEntry,
-    prompt: string,
-    taskKind?: 'audit' | 'reconcile' | 'rework',
-  ) => Result;
+  startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
   startFixReview: (plan: PlanEntry, prompt: string, threads: ReviewThread[]) => Result;
   getFixReviewResult: () => FixReviewResult | null;
   consumeFixReviewResult: () => void;
@@ -1299,7 +1416,7 @@ export interface AgentManager {
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
   runPrioritise: (prompt: string) => Promise<string>;
-  runReviewSplit: (prompt: string) => Promise<string>;
+  runFeedbackReply: (prompt: string, planTitle: string) => Promise<string>;
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
   getReconcileQueue: () => ReconcileQueueItem[] | null;

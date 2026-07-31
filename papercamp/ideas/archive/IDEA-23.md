@@ -29,5 +29,5 @@ Per-task agent model and reasoning-effort settings, threaded from config.json th
 - [x] Apply model/effort to commit-suggest spawn
       In `agent.ts`, `resolveAgent` for `commit-suggest` (around line 486) discards `model` and `effort`. The custom args on the next line are hardcoded without using `adapter.buildArgs`, so `--model`/`--effort` (claude-code) or `-m`/`--variant` (opencode) are never appended even when the user has configured them for the `commitSuggest` task type. Destructure `model` and `effort` from the `resolveAgent` return value and append the appropriate flags to the hardcoded args when set.
 
-### Log
-- 2026-07-01: Audit found commit-suggest spawn ignores model/effort — added phase to thread them into the hardcoded args.
+### Thread
+- [x] 2026-07-01 [log] Audit found commit-suggest spawn ignores model/effort — added phase to thread them into the hardcoded args.

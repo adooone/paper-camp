@@ -1,15 +1,24 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
 import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
-import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry } from '@/types/index';
+import { assignEntityId, formatEntityFile, todayDateString } from '@/core/serialize';
+import { logFromThread } from '@/core/thread';
+import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry, ThreadMessage } from '@/types/index';
 import { readDefaultAgentIds } from '../agent';
 import { resolveAgent } from '../agents';
 import { probeAgentAuthStatus } from '../capabilities';
-import { campFile, checkBranchConflictForPlan, fileExists } from '../helpers';
+import { applyFeedbackEdit, replyToFeedback } from '../feedback-reply';
+import {
+  campFile,
+  checkBranchConflictForPlan,
+  entityFileInput,
+  fileExists,
+  regenerateIndexes,
+  writeEntityFile,
+} from '../helpers';
 import { readBody, sendJson } from '../http';
-import { splitReview } from '../review-split';
 import type { Route, RouteContext } from './types';
 
 async function resolveEntityFilePath(root: string, entityId: string): Promise<string | null> {
@@ -79,7 +88,7 @@ function toIdeaEntry(e: EntityEntry): IdeaEntry {
     body: e.body,
     kind: e.kind,
     status: e.kind === 'note' ? (e.status as IdeaStatus) : undefined,
-    log: e.log,
+    log: logFromThread(e.thread),
   };
 }
 
@@ -182,21 +191,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         const resolved = await resolvePlan(planId);
         if (!resolved.ok) return resolved;
         return agent.startForPlan(resolved.plan, prompt);
-      },
-    ),
-
-    planActionRoute(
-      '/api/agent/launch-rework',
-      (raw) => {
-        const { planId, prompt } = JSON.parse(raw) as { planId?: string; prompt?: string };
-        if (!planId || !prompt) return null;
-        return { planId, prompt };
-      },
-      'planId and prompt are required',
-      async ({ planId, prompt }) => {
-        const resolved = await resolvePlan(planId);
-        if (!resolved.ok) return resolved;
-        return agent.startForPlan(resolved.plan, prompt, 'rework');
       },
     ),
 
@@ -316,25 +310,165 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
     {
       method: 'POST',
-      path: '/api/agent/split-review',
+      path: '/api/agent/feedback-message',
       handle: async (req, res) => {
         const reqBody = await readBody(req);
-        const { planId } = JSON.parse(reqBody) as { planId?: string };
-        if (!planId) {
-          sendJson(res, 400, { error: 'planId is required' });
+        const { planId, text } = JSON.parse(reqBody) as { planId?: string; text?: string };
+        if (!planId || !text?.trim()) {
+          sendJson(res, 400, { error: 'planId and text are required' });
           return;
         }
-        const plan = await findPlanById(root, planId);
-        if (!plan) {
+
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
+        if (!entity) {
           sendJson(res, 404, { error: 'plan not found' });
           return;
         }
+        const primaryFile = join(ideasDir, `${entity.id}.md`);
+        const targetFile = (await fileExists(primaryFile))
+          ? primaryFile
+          : join(ideasDir, 'archive', `${entity.id}.md`);
+
+        const userMessage: ThreadMessage = {
+          kind: 'log',
+          date: todayDateString(),
+          text: text.trim(),
+        };
+        const threadWithUser = [...(entity.thread ?? []), userMessage];
+
+        // Written before the agent runs so the user's message survives a slow or
+        // failed run — the reply below is a second, best-effort append on top.
+        await writeEntityFile(
+          targetFile,
+          entityFileInput(entity, { thread: threadWithUser, updated: todayDateString() }),
+        );
+
+        let error: string | undefined;
+        let thread = threadWithUser;
+        let undo: { commitSha: string } | undefined;
         try {
-          const result = await splitReview(plan, plan.review ?? [], agent.runReviewSplit);
-          sendJson(res, 200, result);
+          const plan = entityToPlan({ ...entity, thread: threadWithUser });
+          const result = await replyToFeedback(plan, agent.runFeedbackReply);
+          const overrides = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
+
+          // The agent flags when this message answers a question it asked earlier —
+          // reclassify it from a plain log line to a clarification so it's visible
+          // to future runs (readers.ts's clarificationsFromThread) and other agents.
+          const answeredThread = result.answersQuestion
+            ? threadWithUser.map((m, i) =>
+                i === threadWithUser.length - 1 ? { ...m, kind: 'clarification' as const } : m,
+              )
+            : threadWithUser;
+
+          let replyText = result.reply;
+          if (result.spinOff) {
+            const newId = await assignEntityId(join(root, 'papercamp', 'config.json'));
+            if (newId) {
+              const followUpContent = formatEntityFile({
+                id: newId,
+                title: result.spinOff.title,
+                status: 'idea',
+                created: todayDateString(),
+                body: result.spinOff.body,
+              });
+              await writeFile(join(ideasDir, `${newId}.md`), `${followUpContent}\n`, 'utf-8');
+              replyText = `${replyText} (spun off as ${newId})`;
+            } else {
+              replyText = `${replyText} (could not spin off a follow-up idea — no id was assigned)`;
+            }
+          }
+
+          // A feedback edit that adds an undone Fix to an already-finished plan is new
+          // work: reopen it so it re-enters the run-order queue and run-all implements it —
+          // otherwise the edit lands on a closed plan and nothing ever runs (or shows).
+          const priorFixCount = entity.fixes?.length ?? 0;
+          const reopen = (overrides.fixes ?? []).slice(priorFixCount).some((p) => !p.done);
+          if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
+
+          const replyMessage: ThreadMessage = {
+            kind: 'log',
+            date: todayDateString(),
+            text: replyText,
+            from: 'agent',
+          };
+          thread = [...answeredThread, replyMessage];
+          await writeEntityFile(
+            targetFile,
+            entityFileInput(entity, {
+              thread,
+              updated: todayDateString(),
+              ...overrides,
+              ...(reopen ? { status: 'in-progress' } : {}),
+            }),
+          );
+
+          // Only a plan edit needs an Undo — commit it on its own so a revert can't
+          // also sweep in unrelated dirty files elsewhere in the working tree.
+          if (overrides.phases || overrides.fixes || overrides.body) {
+            const relFile = relative(root, targetFile);
+            await git.commit(
+              [relFile],
+              `${entity.type ?? 'feat'}(ideas): apply feedback edit to ${entity.id}`,
+              `Refs: ${entity.id}`,
+              { noVerify: true },
+            );
+            undo = { commitSha: await git.getHeadSha() };
+          }
+        } catch (err) {
+          error = (err as Error).message;
+        }
+
+        await regenerateIndexes(root);
+        sendJson(res, 200, { ok: true, ...(error ? { error } : {}), ...(undo ? { undo } : {}) });
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/agent/feedback-undo',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { planId, commitSha } = JSON.parse(reqBody) as {
+          planId?: string;
+          commitSha?: string;
+        };
+        if (!planId || !commitSha) {
+          sendJson(res, 400, { error: 'planId and commitSha are required' });
+          return;
+        }
+
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
+        if (!entity) {
+          sendJson(res, 404, { error: 'plan not found' });
+          return;
+        }
+        const primaryFile = join(ideasDir, `${entity.id}.md`);
+        const targetFile = (await fileExists(primaryFile))
+          ? primaryFile
+          : join(ideasDir, 'archive', `${entity.id}.md`);
+        const relFile = relative(root, targetFile);
+
+        // The commit must still be the file's tip — a later edit landing on top would
+        // make a blind revert clobber that newer change instead of just this one.
+        const lastCommit = await git.getLastCommitFor(relFile);
+        if (lastCommit !== commitSha) {
+          sendJson(res, 409, { error: 'This edit can no longer be undone' });
+          return;
+        }
+
+        try {
+          await git.revert(commitSha);
         } catch (err) {
           sendJson(res, 400, { error: (err as Error).message });
+          return;
         }
+
+        await regenerateIndexes(root);
+        sendJson(res, 200, { ok: true });
       },
     },
 

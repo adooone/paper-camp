@@ -49,6 +49,28 @@ export interface MarginNote {
   kind?: MarginNoteKind;
 }
 
+/** What a thread message originally was, before log/review/notes/clarifications folded
+ * into one ordered thread on the entity — 'note'/'decision'/'question' carry `state`,
+ * the rest are plain historical records. */
+export type ThreadMessageKind =
+  | 'log'
+  | 'clarification'
+  | 'review'
+  | 'note'
+  | 'decision'
+  | 'question';
+
+export interface ThreadMessage {
+  kind: ThreadMessageKind;
+  /** Absent for messages ported from the old Notes section, which never carried a date. */
+  date?: string;
+  text: string;
+  /** Only meaningful for note/decision/question kinds. */
+  state?: MarginNoteState;
+  /** Absent means 'user' — no thread message predates this field being agent-authored. */
+  from?: 'user' | 'agent';
+}
+
 export interface RawEntry {
   title: string;
   fields: Record<string, string>;
@@ -94,34 +116,34 @@ export interface FixReviewResult {
   skipped: { threadId: string; why: string }[];
 }
 
-export interface ReviewSplitPhase {
+export interface FeedbackPhaseEdit {
+  op: 'add' | 'reword';
+  /** 1-based position in the plan's current phase list; required for "reword", ignored for "add". */
+  index?: number;
   text: string;
   description?: string;
 }
 
-export interface ReviewSplitFollowUp {
+export interface FeedbackEdit {
+  phases?: FeedbackPhaseEdit[];
+  /** The complete replacement body, when the message corrects body prose. */
+  body?: string;
+}
+
+export interface FeedbackFollowUp {
   title: string;
   body: string;
 }
 
-/** One review point's proposed classification — rework still inside this plan's
- * existing scope, or a follow-up idea for work that would grow beyond it. */
-export interface ReviewSplitItem {
-  point: string;
-  kind: 'rework' | 'idea';
-  phases?: ReviewSplitPhase[];
-  followUp?: ReviewSplitFollowUp;
-}
-
-// Parsed from the JSON object a review-split agent's prompt requires as its final line.
-export interface ReviewSplitResult {
-  items: ReviewSplitItem[];
-}
-
-/** What an approved split actually applied — shown as a confirmation so approving is never silent. */
-export interface ReviewSplitOutcome {
-  phasesAdded: number;
-  ideaTitles: string[];
+// Parsed from the JSON object a feedback-reply agent's prompt requires as its
+// final line — reply is always present, edit/spinOff are mutually exclusive.
+export interface FeedbackReplyResult {
+  reply: string;
+  edit?: FeedbackEdit;
+  spinOff?: FeedbackFollowUp;
+  /** True when the user's message answers an open question the agent asked
+   * earlier in this thread — the route persists that message as a clarification. */
+  answersQuestion?: boolean;
 }
 
 /** Live-resolved PR info for an entity's branch — see `core/pr.ts`. */
@@ -155,12 +177,16 @@ export interface PlanEntry {
   order?: number;
   body: string;
   phases: PhaseItem[];
+  /** Post-build findings, same checkbox grammar as `phases` — see EntityEntry.fixes. */
+  fixes?: PhaseItem[];
   log?: LogEntry[];
   clarifications?: LogEntry[];
   notes?: MarginNote[];
   /** Prose written against the whole finished plan, distinct from the flat `log` — an
    * agent later splits each entry into rework phases or a follow-up idea. */
   review?: LogEntry[];
+  /** The entity's single ordered feedback thread — see EntityEntry.thread. */
+  thread?: ThreadMessage[];
   pr?: PrInfo;
 }
 
@@ -229,10 +255,12 @@ export interface EntityEntry {
   order?: number;
   body: string;
   phases: PhaseItem[];
-  log?: LogEntry[];
-  clarifications?: LogEntry[];
-  notes?: MarginNote[];
-  review?: LogEntry[];
+  /** Post-build findings, same checkbox grammar as `phases` — appended below Phases
+   * rather than rewriting the plan's already-finished phase history. */
+  fixes?: PhaseItem[];
+  /** The entity's single ordered feedback thread — folds what used to be separate
+   * log/clarifications/notes/review sections. */
+  thread?: ThreadMessage[];
   /** Set by readEntities from which of the two scanned dirs the file came from, not the frontmatter. */
   archived?: boolean;
 }
@@ -488,9 +516,8 @@ export type TaskKind =
   | 'prioritise'
   | 'sync'
   | 'reconcile'
-  | 'rework'
   | 'fix-review'
-  | 'review-split';
+  | 'feedback';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
 // unlike the in-memory task registry.

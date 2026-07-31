@@ -15,6 +15,12 @@ import { resolvePrsByEntity } from './git-pr/pr-lookup';
 import { parseEntityFile } from './parse/parser';
 import { parseRunOrderFile } from './run-order-file';
 import { deriveStatus, isArchivable } from './status';
+import {
+  clarificationsFromThread,
+  logFromThread,
+  notesFromThread,
+  reviewFromThread,
+} from './thread';
 
 async function readdirMaybe(dir: string): Promise<string[]> {
   try {
@@ -93,10 +99,12 @@ export function entityToPlan(e: EntityEntry, pr?: PrInfo, prLookupResolved = fal
     order: e.order,
     body: e.body,
     phases: e.phases,
-    log: e.log,
-    clarifications: e.clarifications,
-    notes: e.notes,
-    review: e.review,
+    fixes: e.fixes,
+    log: logFromThread(e.thread),
+    clarifications: clarificationsFromThread(e.thread),
+    notes: notesFromThread(e.thread),
+    review: reviewFromThread(e.thread),
+    thread: e.thread,
     pr,
   };
 }
@@ -111,7 +119,7 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
     subject: e.subject,
     order: e.order,
     created: e.created,
-    log: e.log,
+    log: logFromThread(e.thread),
   };
 }
 

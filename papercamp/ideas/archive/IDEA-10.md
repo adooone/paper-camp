@@ -44,11 +44,11 @@ The plan clarification pass, borrowed from spec-kit's /clarify: taxonomy-scanned
       The button currently reads "Clarify before starting", which is unclear — rename
       to "Copy Clarifications Prompt" so its purpose is obvious at a glance
 
-### Log
-- 2026-06-27: Clarify before starting button should be moved above the plan description (not in the table header). And also the promt is huge we should compact the prompt and make the instructures for clarifications more general. In prompt we can only provide where to look for clarification instructuins
-- 2026-06-27: Audit appended two missing phases: button placement fix (move above plan description body) and prompt compaction (shrink to taxonomy+format only)
-- 2026-06-27: We should have a clear button name - currently it is not understandable what is this button about. I think it is better to rename it to - Copy Clarifications Prompt
-- 2026-06-27: icon and text are not on the same row in this Clarification button
-- 2026-06-27: If you in audit check latest 2 logs about button, and add phases to fix it!!! And remove this log if you got it!
-- 2026-06-27: Audit appended missing rename phase (button label still says "Clarify before starting" per log #3); icon/text layout per log #4 is already correct
-- 2026-06-27: but what about icon position? I dont see phase to fix icon position in this button
+### Thread
+- [x] 2026-06-27 [log] Clarify before starting button should be moved above the plan description (not in the table header). And also the promt is huge we should compact the prompt and make the instructures for clarifications more general. In prompt we can only provide where to look for clarification instructuins
+- [x] 2026-06-27 [log] Audit appended two missing phases: button placement fix (move above plan description body) and prompt compaction (shrink to taxonomy+format only)
+- [x] 2026-06-27 [log] We should have a clear button name - currently it is not understandable what is this button about. I think it is better to rename it to - Copy Clarifications Prompt
+- [x] 2026-06-27 [log] icon and text are not on the same row in this Clarification button
+- [x] 2026-06-27 [log] If you in audit check latest 2 logs about button, and add phases to fix it!!! And remove this log if you got it!
+- [x] 2026-06-27 [log] Audit appended missing rename phase (button label still says "Clarify before starting" per log #3); icon/text layout per log #4 is already correct
+- [x] 2026-06-27 [log] but what about icon position? I dont see phase to fix icon position in this button

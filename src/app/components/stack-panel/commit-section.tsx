@@ -166,7 +166,7 @@ const StatusStamps = () => {
         {checkButton({
           label: 'Quality',
           status: qualityStatus,
-          title: 'Run lint and format checks',
+          title: 'Code style & formatting (Biome lint + format). Click to run.',
           onClick: () => {
             runCheck('lint');
             runCheck('format');
@@ -175,18 +175,22 @@ const StatusStamps = () => {
         {checkButton({
           label: 'Tests',
           status: testStatus,
-          title: 'Run tests',
+          title: 'Unit tests (Vitest). Click to run.',
           onClick: () => runCheck('test'),
         })}
         {checkButton({
           label: 'Consistency',
           status: consistencyStatus,
-          title: 'Run codebase consistency (knip + dependency-cruiser)',
+          title: 'Dead code & architecture (Knip + dependency-cruiser). Click to run.',
           onClick: () => runCheck('consistency'),
         })}
         <div>
           <Tooltip
-            content={hasIssues ? 'Show plan doc findings' : 'No plan doc findings'}
+            content={
+              hasIssues
+                ? 'Plan/idea doc findings — orphan subjects & stale references. Click to show.'
+                : 'Plan/idea docs — no findings (orphan subjects, stale references).'
+            }
             surface="chalkboard"
           >
             <button

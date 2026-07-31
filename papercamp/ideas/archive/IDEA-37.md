@@ -54,5 +54,5 @@ Fable's bug-finding is its differentiated strength. Aim it at the code that keep
 
 **Touchpoints:** no code changes to enable this — it's a usage pattern. Relies on the existing `model: 'fable'` option (`src/types/index.ts`, `AGENT_OPTIONS`). Tasks 5 and 6 have run (see their notes); tasks 1–4 remain, with task 1 re-scoped now that the original targets have suites. Task 2 is the Fable-run version of [[IDEA-26]] — its narrower mechanical half shipped as FEAT-28's reconcile pass, so what's left here is the broader judgment pass FEAT-28 deliberately excludes. If we want these to be repeatable rather than one-off, that reconcile prompt is the natural thing to land as the `'reconcile'` TaskKind [[IDEA-26]] proposed.
 
-### Notes
-- [x] [body] [decision] Planless ideas close via explicit frontmatter status
+### Thread
+- [x] [decision] Planless ideas close via explicit frontmatter status

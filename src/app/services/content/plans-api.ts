@@ -1,11 +1,11 @@
 import type {
   AgentId,
   LogEntry,
-  MarginNote,
   ParseResult,
   PhaseItem,
   PlanEntry,
   PlanStatus,
+  ThreadMessage,
 } from '@/types/index';
 
 export const fetchPlans = async (): Promise<ParseResult<PlanEntry>> => {
@@ -30,11 +30,11 @@ export const updatePlan = async (
   updates: {
     body?: string;
     phases?: PhaseItem[];
+    fixes?: PhaseItem[];
     /** `null` clears the stored status override (e.g. reopening a dropped plan). */
     status?: PlanStatus | null;
     log?: LogEntry[];
-    notes?: MarginNote[];
-    review?: LogEntry[];
+    thread?: ThreadMessage[];
     agent?: AgentId | null;
     /** `null` clears the frontmatter key, rendering the idea under "No subject". */
     subject?: string | null;

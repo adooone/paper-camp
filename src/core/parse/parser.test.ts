@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PlanEntry } from '../../types/index';
 import { formatEntityFile } from '../serialize/serializer';
+import { notesFromThread, reviewFromThread } from '../thread';
 import {
   findConsistencyIssues,
   parseEntityFile,
@@ -371,13 +372,19 @@ Body prose.
 `;
     const { entries, warnings } = parseEntityFile(md);
     expect(warnings).toEqual([]);
-    expect(entries[0].notes).toEqual([
+    expect(notesFromThread(entries[0].thread)).toEqual([
       {
-        anchor: { kind: 'phase', index: 1 },
-        prose: 'Reconsider the retry backoff here',
+        anchor: { kind: 'body' },
+        prose: '[phase 1] Reconsider the retry backoff here',
         state: 'open',
+        kind: 'note',
       },
-      { anchor: { kind: 'body' }, prose: 'Already addressed in the rewrite', state: 'resolved' },
+      {
+        anchor: { kind: 'body' },
+        prose: 'Already addressed in the rewrite',
+        state: 'resolved',
+        kind: 'note',
+      },
     ]);
     expect(entries[0].body).toBe('Body prose.');
   });
@@ -398,7 +405,7 @@ Body prose.
 `;
     const { entries, warnings } = parseEntityFile(md);
     expect(warnings).toEqual([]);
-    expect(entries[0].notes).toEqual([
+    expect(notesFromThread(entries[0].thread)).toEqual([
       {
         anchor: { kind: 'body' },
         prose: 'Ship the v2 API without a compat shim',
@@ -406,8 +413,8 @@ Body prose.
         kind: 'decision',
       },
       {
-        anchor: { kind: 'phase', index: 1 },
-        prose: 'Does this need a migration?',
+        anchor: { kind: 'body' },
+        prose: '[phase 1] Does this need a migration?',
         state: 'open',
         kind: 'question',
       },
@@ -421,18 +428,17 @@ Body prose.
       type: 'feat',
       created: '2026-07-13',
       body: 'Body prose.',
-      notes: [
+      thread: [
         {
-          anchor: { kind: 'body' },
-          prose: 'Ship the v2 API without a compat shim',
-          state: 'open',
           kind: 'decision',
+          text: 'Ship the v2 API without a compat shim',
+          state: 'open',
         },
       ],
     });
     const { entries, warnings } = parseEntityFile(written);
     expect(warnings).toEqual([]);
-    expect(entries[0].notes).toEqual([
+    expect(notesFromThread(entries[0].thread)).toEqual([
       {
         anchor: { kind: 'body' },
         prose: 'Ship the v2 API without a compat shim',
@@ -449,24 +455,30 @@ Body prose.
       type: 'feat',
       created: '2026-07-13',
       body: 'Body prose.',
-      notes: [
+      thread: [
         {
-          anchor: { kind: 'phase', index: 1 },
-          prose: 'Reconsider the retry backoff here',
+          kind: 'note',
+          text: 'Reconsider the retry backoff here',
           state: 'open',
         },
-        { anchor: { kind: 'body' }, prose: 'Already addressed in the rewrite', state: 'resolved' },
+        { kind: 'note', text: 'Already addressed in the rewrite', state: 'resolved' },
       ],
     });
     const { entries, warnings } = parseEntityFile(written);
     expect(warnings).toEqual([]);
-    expect(entries[0].notes).toEqual([
+    expect(notesFromThread(entries[0].thread)).toEqual([
       {
-        anchor: { kind: 'phase', index: 1 },
+        anchor: { kind: 'body' },
         prose: 'Reconsider the retry backoff here',
         state: 'open',
+        kind: 'note',
       },
-      { anchor: { kind: 'body' }, prose: 'Already addressed in the rewrite', state: 'resolved' },
+      {
+        anchor: { kind: 'body' },
+        prose: 'Already addressed in the rewrite',
+        state: 'resolved',
+        kind: 'note',
+      },
     ]);
   });
 
@@ -485,7 +497,7 @@ Body prose.
 `;
     const { entries, warnings } = parseEntityFile(md);
     expect(warnings).toEqual([]);
-    expect(entries[0].review).toEqual([
+    expect(reviewFromThread(entries[0].thread)).toEqual([
       { date: '2026-07-27', text: 'The phase 2 rollout plan is missing a rollback step' },
     ]);
     expect(entries[0].body).toBe('Body prose.');
@@ -498,13 +510,81 @@ Body prose.
       type: 'feat',
       created: '2026-07-13',
       body: 'Body prose.',
-      review: [{ date: '2026-07-27', text: 'The phase 2 rollout plan is missing a rollback step' }],
+      thread: [
+        {
+          kind: 'review',
+          date: '2026-07-27',
+          text: 'The phase 2 rollout plan is missing a rollback step',
+        },
+      ],
     });
     const { entries, warnings } = parseEntityFile(written);
     expect(warnings).toEqual([]);
-    expect(entries[0].review).toEqual([
+    expect(reviewFromThread(entries[0].thread)).toEqual([
       { date: '2026-07-27', text: 'The phase 2 rollout plan is missing a rollback step' },
     ]);
+  });
+
+  it('extracts Fixes entries out of the body, separate from Phases', () => {
+    const md = `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+### Phases
+- [x] first
+
+### Fixes
+- [ ] Docs check regressed after the first phase
+      Found during review, not part of the original build.
+- [x] Undo button didn't revert body edits
+`;
+    const { entries, warnings } = parseEntityFile(md);
+    expect(warnings).toEqual([]);
+    expect(entries[0].phases).toEqual([{ done: true, text: 'first' }]);
+    expect(entries[0].fixes).toEqual([
+      {
+        done: false,
+        text: 'Docs check regressed after the first phase',
+        description: 'Found during review, not part of the original build.',
+      },
+      { done: true, text: "Undo button didn't revert body edits" },
+    ]);
+  });
+
+  it('round-trips fixes through formatEntityFile', () => {
+    const written = formatEntityFile({
+      id: 'IDEA-99',
+      title: 'Tolerant heading',
+      type: 'feat',
+      created: '2026-07-13',
+      body: 'Body prose.',
+      phases: [{ text: 'first', done: true }],
+      fixes: [{ text: 'Docs check regressed', done: false, description: 'Found during review.' }],
+    });
+    const { entries, warnings } = parseEntityFile(written);
+    expect(warnings).toEqual([]);
+    expect(entries[0].fixes).toEqual([
+      { text: 'Docs check regressed', done: false, description: 'Found during review.' },
+    ]);
+  });
+
+  it('omits the Fixes section when no fixes are present', () => {
+    const written = formatEntityFile({
+      id: 'IDEA-99',
+      title: 'Tolerant heading',
+      type: 'feat',
+      created: '2026-07-13',
+      body: 'Body prose.',
+      phases: [{ text: 'first', done: true }],
+    });
+    expect(written).not.toContain('### Fixes');
+    const { entries } = parseEntityFile(written);
+    expect(entries[0].fixes).toBeUndefined();
   });
 });
 

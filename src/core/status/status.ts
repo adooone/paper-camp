@@ -4,6 +4,7 @@ export interface StatusDerivationInput {
   kind?: 'note';
   status?: EntityStatus;
   phases: PhaseItem[];
+  fixes?: PhaseItem[];
 }
 
 export interface ArchivabilityInput extends StatusDerivationInput {
@@ -11,7 +12,9 @@ export interface ArchivabilityInput extends StatusDerivationInput {
 }
 
 function allChecked(entity: StatusDerivationInput): boolean {
-  return entity.phases.length > 0 && entity.phases.every((p) => p.done);
+  const phasesDone = entity.phases.length > 0 && entity.phases.every((p) => p.done);
+  const fixesDone = (entity.fixes ?? []).every((f) => f.done);
+  return phasesDone && fixesDone;
 }
 
 // Keys off the PR (matched by id), not a local branch: canonical across clones

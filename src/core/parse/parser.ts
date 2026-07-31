@@ -17,12 +17,15 @@ import type {
 } from '../../types/index';
 import {
   CLARIFICATIONS_SECTION,
+  FIXES_SECTION,
   LOG_SECTION,
   NOTES_SECTION,
   PHASES_SECTION,
   REVIEW_SECTION,
   type SectionDef,
+  THREAD_SECTION,
 } from '../sections';
+import { threadFromLegacy } from '../thread';
 import {
   entityFrontmatterSchema,
   ideaFrontmatterSchema,
@@ -228,7 +231,19 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     return { entries: [], warnings };
   }
 
-  const { body, phases, log, clarifications, notes, review } = extractStandardSections(rawBody);
+  // Standard sections cover any straggler file not yet migrated to `### Thread`;
+  // folding both in means no history is lost mid-migration.
+  const {
+    body: bodyAfterLegacy,
+    phases,
+    log,
+    clarifications,
+    notes,
+    review,
+  } = extractStandardSections(rawBody);
+  const { body: bodyAfterFixes, entries: fixes } = extractSection(bodyAfterLegacy, FIXES_SECTION);
+  const { body, entries: threadEntries } = extractSection(bodyAfterFixes, THREAD_SECTION);
+  const thread = [...threadEntries, ...threadFromLegacy(log, clarifications, notes, review)];
 
   if (frontmatter.kind === 'note' && phases.length > 0) {
     warnings.push({
@@ -253,10 +268,8 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     order: frontmatter.order,
     body,
     phases,
-    log,
-    clarifications,
-    notes,
-    review,
+    ...(fixes.length > 0 && { fixes }),
+    ...(thread.length > 0 && { thread }),
   };
 
   return { entries: [entry], warnings };

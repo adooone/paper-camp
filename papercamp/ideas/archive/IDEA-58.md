@@ -36,5 +36,5 @@ Pairs with [[IDEA-59]] (the comment-trimming pass), which is cleanest to run rig
 - [x] Sweep `src/app` for style-guide conformance
       Replace token literals with `styles/tokens.ts` values, swap raw HTML for the paper-ui component where one exists, and fix (or explicitly document) import paths that reach deeper than the guide allows.
 
-### Notes
-- [x] [body] [decision] Quality-status "stale" requires both lint and format stale, not either
+### Thread
+- [x] [decision] Quality-status "stale" requires both lint and format stale, not either

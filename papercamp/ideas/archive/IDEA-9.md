@@ -26,6 +26,6 @@ Added the review status checkpoint between in-progress and done, surfaced as a S
 - [x] Add per-plan Log
       A new `### Log` sub-section parsed like `### Phases`; dated bullets appended via a `Textarea` + "Add entry" button through a `PATCH /api/plans` extension, rendered in `plan-detail.tsx` below phases
 
-### Log
-- 2026-06-21: Implemented the persistent ID counter in `.paper-camp/config.json`.
-- 2026-06-22: Review — counter logic looks solid; one missing migration note, fixed.
+### Thread
+- [x] 2026-06-21 [log] Implemented the persistent ID counter in `.paper-camp/config.json`.
+- [x] 2026-06-22 [log] Review — counter logic looks solid; one missing migration note, fixed.

@@ -28,6 +28,6 @@ Remove background from header in the whole application. So we have full page wit
 - [x] Trim the `@dendelion` scope from the app title
       The header project name comes from `ProjectIdentityHeader` (`src/app/components/shell/project-identity-header.tsx`), fed by `useProjectIdentity`/`fetchPackageName` (`src/app/hooks/use-project-identity.ts`), and currently renders the full scoped package name `@dendelion/…`. Strip the `@scope/` prefix so only the bare project name shows in the title.
 
-### Log
-- 2026-07-25: There should be no separators. We should have just header on top of the page. Without borders and shadows and any other separators. Just logo and buttons. Also we should trim this @dendelion section from the app title
-- 2026-07-25: Applied author notes — added phases to remove all header separators (borders/shadows, superseding the earlier "separation" work) and to trim the `@dendelion` scope from the app title; set status back to in-progress.
+### Thread
+- [x] 2026-07-25 [log] There should be no separators. We should have just header on top of the page. Without borders and shadows and any other separators. Just logo and buttons. Also we should trim this @dendelion section from the app title
+- [x] 2026-07-25 [log] Applied author notes — added phases to remove all header separators (borders/shadows, superseding the earlier "separation" work) and to trim the `@dendelion` scope from the app title; set status back to in-progress.

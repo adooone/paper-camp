@@ -26,6 +26,18 @@ describe('deriveStatus', () => {
     expect(deriveStatus({ phases: [phase(true)] }, pr('draft'), true)).toBe('review');
   });
 
+  it('is in-progress when a PR is open and every phase is checked but a fix is open', () => {
+    expect(
+      deriveStatus({ phases: [phase(true)], fixes: [phase(true), phase(false)] }, pr('open'), true),
+    ).toBe('in-progress');
+  });
+
+  it('is review when a PR is open, every phase is checked, and every fix is checked', () => {
+    expect(deriveStatus({ phases: [phase(true)], fixes: [phase(true)] }, pr('open'), true)).toBe(
+      'review',
+    );
+  });
+
   it('is done when the PR is merged, even overriding a stale stored value', () => {
     expect(
       deriveStatus({ phases: [phase(false)], status: 'in-progress' }, pr('merged'), true),

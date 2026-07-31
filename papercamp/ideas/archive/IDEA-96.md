@@ -41,5 +41,5 @@ Settled: open questions stay a single file. The corpus is 7 entries total, only 
 - [x] Type-check and full pass
       `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` clean across the repo.
 
-### Notes
-- [x] [body] [decision] Open questions stay one file, not per-file entities
+### Thread
+- [x] [decision] Open questions stay one file, not per-file entities

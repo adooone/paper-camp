@@ -1,4 +1,4 @@
-import type { AgentTaskState, ReconcileQueueItem, ReviewSplitResult } from '@/types/index';
+import type { AgentTaskState, ReconcileQueueItem } from '@/types/index';
 
 const handleAgentResponse = async (
   response: Response,
@@ -31,15 +31,6 @@ export const launchAgent = async (planId: string, phaseIndex: number): Promise<v
 
 export const launchPlanAudit = async (planId: string, prompt: string): Promise<void> => {
   const response = await fetch('/api/agent/launch-audit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ planId, prompt }),
-  });
-  await handleAgentResponse(response);
-};
-
-export const launchPlanRework = async (planId: string, prompt: string): Promise<void> => {
-  const response = await fetch('/api/agent/launch-rework', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, prompt }),
@@ -106,15 +97,32 @@ export const launchFixReview = async (planId: string): Promise<void> => {
   await handleAgentResponse(response);
 };
 
-export const splitReview = async (planId: string): Promise<ReviewSplitResult> => {
-  const response = await fetch('/api/agent/split-review', {
+export const postFeedbackMessage = async (
+  planId: string,
+  text: string,
+): Promise<{ error?: string; undo?: { commitSha: string } }> => {
+  const response = await fetch('/api/agent/feedback-message', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ planId }),
+    body: JSON.stringify({ planId, text }),
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error ?? 'Failed to split review');
-  return data as ReviewSplitResult;
+  if (!response.ok) throw new Error(data.error ?? 'Failed to send message');
+  return data as { error?: string; undo?: { commitSha: string } };
+};
+
+export const undoFeedbackEdit = async (
+  planId: string,
+  commitSha: string,
+): Promise<{ error?: string }> => {
+  const response = await fetch('/api/agent/feedback-undo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId, commitSha }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Failed to undo edit');
+  return data as { error?: string };
 };
 
 export const stopAgent = async (taskId?: string): Promise<void> => {

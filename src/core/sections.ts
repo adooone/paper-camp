@@ -4,6 +4,8 @@ import type {
   MarginNoteAnchor,
   MarginNoteKind,
   PhaseItem,
+  ThreadMessage,
+  ThreadMessageKind,
 } from '../types/index';
 
 const SUB_HEADING_RE = /^#{2,3}\s+/;
@@ -11,6 +13,9 @@ const CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.*)$/;
 const PHASE_SOURCE_RE = /^\[review\]\s+(.*)$/;
 const DATED_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
 const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(?:\[(decision|question)\]\s+)?(.*)$/;
+const THREAD_LINE_RE =
+  /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question)\]\s+(\[agent\]\s+)?(.*)$/;
+const NOTE_STATE_KINDS: ThreadMessageKind[] = ['note', 'decision', 'question'];
 
 function parsePhaseEntries(lines: string[], start: number, end: number): PhaseItem[] {
   const phases: PhaseItem[] = [];
@@ -58,8 +63,8 @@ function parseDatedEntries(lines: string[], start: number, end: number): LogEntr
   return entries;
 }
 
-function formatPhaseLines(phases: PhaseItem[]): string[] {
-  const lines = ['### Phases'];
+function formatPhaseLines(heading: string, phases: PhaseItem[]): string[] {
+  const lines = [heading];
   for (const phase of phases) {
     const text = phase.source === 'review' ? `[review] ${phase.text}` : phase.text;
     lines.push(`- [${phase.done ? 'x' : ' '}] ${text}`);
@@ -125,7 +130,15 @@ export interface SectionDef<T> {
 export const PHASES_SECTION: SectionDef<PhaseItem> = {
   headingRe: /^#{2,3}\s+Phases\s*$/i,
   parseEntries: parsePhaseEntries,
-  formatLines: formatPhaseLines,
+  formatLines: (phases) => formatPhaseLines('### Phases', phases),
+};
+
+/** Same grammar as Phases — a checkbox list — but for post-build findings that
+ * append below Phases without rewriting the plan's finished phase history. */
+export const FIXES_SECTION: SectionDef<PhaseItem> = {
+  headingRe: /^#{2,3}\s+Fixes\s*$/i,
+  parseEntries: parsePhaseEntries,
+  formatLines: (fixes) => formatPhaseLines('### Fixes', fixes),
 };
 
 export const LOG_SECTION: SectionDef<LogEntry> = {
@@ -150,6 +163,40 @@ export const REVIEW_SECTION: SectionDef<LogEntry> = {
   headingRe: /^#{2,3}\s+Review\s*$/i,
   parseEntries: parseDatedEntries,
   formatLines: (entries) => formatDatedLines('### Review', entries),
+};
+
+function parseThreadEntries(lines: string[], start: number, end: number): ThreadMessage[] {
+  const messages: ThreadMessage[] = [];
+  for (let i = start; i < end; i++) {
+    const match = lines[i].match(THREAD_LINE_RE);
+    if (!match) continue;
+    const kind = match[3] as ThreadMessageKind;
+    const message: ThreadMessage = { kind, text: match[5].trim() };
+    if (match[2]) message.date = match[2];
+    if (match[4]) message.from = 'agent';
+    if (NOTE_STATE_KINDS.includes(kind)) {
+      message.state = match[1].toLowerCase() === 'x' ? 'resolved' : 'open';
+    }
+    messages.push(message);
+  }
+  return messages;
+}
+
+function formatThreadLines(messages: ThreadMessage[]): string[] {
+  const lines = ['### Thread'];
+  for (const m of messages) {
+    const checked = m.state ? m.state === 'resolved' : true;
+    const date = m.date ? `${m.date} ` : '';
+    const author = m.from === 'agent' ? '[agent] ' : '';
+    lines.push(`- [${checked ? 'x' : ' '}] ${date}[${m.kind}] ${author}${m.text}`);
+  }
+  return lines;
+}
+
+export const THREAD_SECTION: SectionDef<ThreadMessage> = {
+  headingRe: /^#{2,3}\s+Thread\s*$/i,
+  parseEntries: parseThreadEntries,
+  formatLines: formatThreadLines,
 };
 
 export { SUB_HEADING_RE };

@@ -8,15 +8,16 @@ import {
   formatEntityFile,
   todayDateString,
 } from '@/core/serialize';
+import { replaceThreadKinds } from '@/core/thread';
 import {
   AGENT_IDS,
   type AgentId,
   type EntityEntry,
   type LogEntry,
-  type MarginNote,
   PLAN_KINDS,
   type PhaseItem,
   type PlanStatus,
+  type ThreadMessage,
 } from '@/types/index';
 import {
   campFile,
@@ -134,11 +135,11 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         const updates = JSON.parse(reqBody) as {
           body?: string;
           phases?: PhaseItem[];
+          fixes?: PhaseItem[];
           /** `null` clears the stored override (e.g. reopening a dropped plan). */
           status?: PlanStatus | null;
           log?: LogEntry[];
-          notes?: MarginNote[];
-          review?: LogEntry[];
+          thread?: ThreadMessage[];
           agent?: AgentId | null;
           subject?: string | null;
           order?: number | null;
@@ -173,14 +174,27 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
 
         // Run order for plans/ideas lives in papercamp/run-order.md, not frontmatter (IDEA-98);
         // notes aren't part of that list, so their `order` still writes straight to frontmatter.
+        // log is a legacy shape callers still send in full-replacement form — fold it back
+        // into its slice of the entity's single thread.
+        let thread = target.thread;
+        if (updates.thread !== undefined) {
+          thread = updates.thread;
+        }
+        if (updates.log !== undefined) {
+          thread = replaceThreadKinds(
+            thread,
+            ['log'],
+            updates.log.map((e) => ({ kind: 'log' as const, date: e.date, text: e.text })),
+          );
+        }
+
         const updatedEntry: EntityEntry = {
           ...target,
           ...(updates.body !== undefined && { body: updates.body }),
           ...(updates.status !== undefined && { status: updates.status ?? undefined }),
           ...(updates.phases !== undefined && { phases: updates.phases }),
-          ...(updates.log !== undefined && { log: updates.log }),
-          ...(updates.notes !== undefined && { notes: updates.notes }),
-          ...(updates.review !== undefined && { review: updates.review }),
+          ...(updates.fixes !== undefined && { fixes: updates.fixes }),
+          ...(thread !== target.thread && { thread }),
           ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
           ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
           order:

@@ -42,8 +42,6 @@ Same primitive as [[IDEA-87]] (anchored prose in, structured change out), anchor
       In `entity-detail.tsx`, keep the title header, render the overview (branch/progress/body/phases/comments) under Details, and move `PlanReviewSection` into Feedback; reset to Details when the open plan changes.
 - [x] Type-check and full pass
 
-### Log
-- 2026-07-27: I dont see any of my review messages. And it is not clear what is the flow after sending the review message. I sent the review and nothing changed visually in the idea view.  It just goes nowhere. Also I was trying to click refresh, and after refresh completed I saw the modal which ask me about approve of some changes - I approved it and nothing happend. No new phases or at least some messages in comments or in the review. How it is supposed to work?
-
-### Review
-- 2026-07-27: I dont like this section is looking the same as comments section. I would rather do it as a separate view, and make it look like a chat where I can put my thoughts, and it will run agent with my review in this chat.
+### Thread
+- [x] 2026-07-27 [log] I dont see any of my review messages. And it is not clear what is the flow after sending the review message. I sent the review and nothing changed visually in the idea view.  It just goes nowhere. Also I was trying to click refresh, and after refresh completed I saw the modal which ask me about approve of some changes - I approved it and nothing happend. No new phases or at least some messages in comments or in the review. How it is supposed to work?
+- [x] 2026-07-27 [review] I dont like this section is looking the same as comments section. I would rather do it as a separate view, and make it look like a chat where I can put my thoughts, and it will run agent with my review in this chat.
