@@ -374,8 +374,8 @@ const FeedbackThread = ({
           <div style={{ maxWidth: '85%' }}>
             <Card
               size="small"
-              surface={fromAgent ? 'chalkboard' : 'paper'}
-              texture={fromAgent ? undefined : label ? 'canvas' : 'parchment'}
+              surface="paper"
+              texture={fromAgent ? 'kraft' : label ? 'canvas' : 'parchment'}
               accent={!fromAgent}
               accentColor={label ? 'rose' : 'blue'}
             >
