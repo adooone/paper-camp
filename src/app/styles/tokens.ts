@@ -77,6 +77,8 @@ export const color = {
   deskTextMuted: '#a8b5a0',
   deskBorder: 'rgba(200, 210, 195, 0.15)',
   deskChalk: '#d4e8cb',
+  diffAddedBg: 'rgba(143, 185, 150, 0.18)',
+  diffRemovedBg: 'rgba(201, 139, 139, 0.18)',
 } as const;
 
 // paper-ui's Layout header is 48px by default; we override it to 64px (two 32px
@@ -87,6 +89,7 @@ export const layout = {
   // 224 = 7 × 32, a multiple of the Layout's 32px background grid cell so the
   // sidebar (and the plans Filters card that fills it) sits flush on the grid.
   sidebarWidth: 224,
+  diffSidebarWidth: 288,
   stackPanelWidth: 480,
   headerHeight,
   contentGap: space[6],

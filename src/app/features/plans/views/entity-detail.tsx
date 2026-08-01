@@ -40,13 +40,7 @@ import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
-import {
-  effectiveStatus,
-  fixProgress,
-  phaseProgress,
-  relativeDate,
-  runningTaskForPlan,
-} from '../helpers';
+import { combinedProgress, effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -65,6 +59,10 @@ const sectionHeadingStyle = {
   opacity: 0.65,
 };
 
+// Phases and post-build fixes share one table; fixes are appended and tinted
+// (`.fix-row`) so they read as part of the same list, distinct only by colour.
+type WorkRow = { kind: 'phase' | 'fix'; item: PhaseItem; index: number };
+
 const PhasesSection = ({
   plan,
   auditRunning,
@@ -73,6 +71,7 @@ const PhasesSection = ({
   planTask,
   updating,
   onTogglePhase,
+  onToggleFix,
   onAddReviewPhases,
 }: {
   plan: PlanEntry;
@@ -82,155 +81,131 @@ const PhasesSection = ({
   planTask: AgentTaskState | undefined;
   updating: boolean;
   onTogglePhase: (index: number) => void;
-  onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
-}) => (
-  <div style={{ marginBottom: space[8] }}>
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: space[3],
-        marginBottom: space[3],
-        flexWrap: 'wrap',
-      }}
-    >
-      <h3 style={{ ...sectionHeadingStyle, margin: 0 }}>Phases</h3>
-      <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
-        {auditRunning && <Spinner size="small" label="Audit running…" />}
-        {(plan.status === 'review' || plan.status === 'done') && <AuditPhasesButton plan={plan} />}
-        {plan.status !== 'done' && <ReconcileButton plan={plan} />}
-        <AddReviewPhasesButton onAdd={onAddReviewPhases} disabled={updating} />
-      </div>
-    </div>
-    <Table
-      data={plan.phases}
-      columns={[
-        {
-          key: 'checkbox',
-          header: 'Status',
-          cell: (phase: PhaseItem, index: number) => (
-            <Checkbox
-              checked={phase.done}
-              onChange={() => onTogglePhase(index)}
-              disabled={updating}
-            />
-          ),
-          width: 2,
-        },
-        {
-          key: 'title',
-          header: 'Title',
-          cell: (phase: PhaseItem) => (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: space[2],
-                textDecoration: phase.done ? 'line-through' : 'none',
-                opacity: phase.done ? 0.45 : 1,
-              }}
-            >
-              {phase.text}
-              {phase.source === 'review' && (
-                <Stamp
-                  size="small"
-                  fillColor={STATUS_STAMP.review.fill}
-                  textColor={STATUS_STAMP.review.text}
-                >
-                  review
-                </Stamp>
-              )}
-            </span>
-          ),
-        },
-        {
-          key: 'actions',
-          header: 'Actions',
-          cell: (phase: PhaseItem, index: number) => (
-            <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
-              <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={index} />
-              {!phase.done && agentPhaseIndex === index ? (
-                <Spinner size="small" label={`Agent ${planTask?.status}…`} />
-              ) : (
-                !phase.done && (
-                  <AgentStartButton planId={plan.id} phaseIndex={index} disabled={agentBusy} />
-                )
-              )}
-            </div>
-          ),
-          width: 7,
-        },
-      ]}
-      expandable={{
-        render: (phase: PhaseItem) => phase.description || null,
-      }}
-      showExpandColumn={false}
-      rowClassName={(phase: PhaseItem) =>
-        phase.source === 'review' ? 'phase-row-review' : undefined
-      }
-      className="phase-table-phone"
-    />
-  </div>
-);
-
-const FixesSection = ({
-  plan,
-  updating,
-  onToggleFix,
-}: {
-  plan: PlanEntry;
-  updating: boolean;
   onToggleFix: (index: number) => void;
+  onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
 }) => {
+  const launchRunAll = useAppStore((s) => s.launchRunAll);
   const fixes = plan.fixes ?? [];
-  const progress = fixProgress(plan);
+  const hasOpenFix = fixes.some((fix) => !fix.done);
+  const rows: WorkRow[] = [
+    ...plan.phases.map((item, index) => ({ kind: 'phase' as const, item, index })),
+    ...fixes.map((item, index) => ({ kind: 'fix' as const, item, index })),
+  ];
   return (
     <div style={{ marginBottom: space[8] }}>
-      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Fixes</h3>
-      <Card size="small" accent accentColor="rose" texture="canvas">
-        {progress && (
-          <div style={{ marginBottom: space[3] }}>
-            <PlanProgressBar progress={progress} color={STATUS_STAMP.review.text} />
-          </div>
-        )}
-        <Table
-          data={fixes}
-          columns={[
-            {
-              key: 'checkbox',
-              header: 'Status',
-              cell: (fix: PhaseItem, index: number) => (
-                <Checkbox
-                  checked={fix.done}
-                  onChange={() => onToggleFix(index)}
-                  disabled={updating}
-                />
-              ),
-              width: 2,
-            },
-            {
-              key: 'title',
-              header: 'Title',
-              cell: (fix: PhaseItem) => (
-                <span
-                  style={{
-                    textDecoration: fix.done ? 'line-through' : 'none',
-                    opacity: fix.done ? 0.45 : 1,
-                  }}
-                >
-                  {fix.text}
-                </span>
-              ),
-            },
-          ]}
-          expandable={{
-            render: (fix: PhaseItem) => fix.description || null,
-          }}
-          showExpandColumn={false}
-          className="phase-table-phone"
-        />
-      </Card>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: space[3],
+          marginBottom: space[3],
+          flexWrap: 'wrap',
+        }}
+      >
+        <h3 style={{ ...sectionHeadingStyle, margin: 0 }}>Phases</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
+          {auditRunning && <Spinner size="small" label="Audit running…" />}
+          {(plan.status === 'review' || plan.status === 'done') && (
+            <AuditPhasesButton plan={plan} />
+          )}
+          {plan.status !== 'done' && <ReconcileButton plan={plan} />}
+          <AddReviewPhasesButton onAdd={onAddReviewPhases} disabled={updating} />
+          {plan.id && hasOpenFix && (
+            <Tooltip content="Run the open fixes with an agent">
+              <Button
+                size="small"
+                onClick={() => plan.id && launchRunAll(plan.id)}
+                disabled={agentBusy}
+              >
+                {agentBusy ? 'Running…' : 'Run fixes'}
+              </Button>
+            </Tooltip>
+          )}
+        </div>
+      </div>
+      <Table
+        data={rows}
+        columns={[
+          {
+            key: 'checkbox',
+            header: 'Status',
+            cell: (row: WorkRow) => (
+              <Checkbox
+                checked={row.item.done}
+                onChange={() =>
+                  row.kind === 'phase' ? onTogglePhase(row.index) : onToggleFix(row.index)
+                }
+                disabled={updating}
+              />
+            ),
+            width: 2,
+          },
+          {
+            key: 'title',
+            header: 'Title',
+            cell: (row: WorkRow) => (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: space[2],
+                  textDecoration: row.item.done ? 'line-through' : 'none',
+                  opacity: row.item.done ? 0.45 : 1,
+                }}
+              >
+                {row.item.text}
+                {row.kind === 'phase' && row.item.source === 'review' && (
+                  <Stamp
+                    size="small"
+                    fillColor={STATUS_STAMP.review.fill}
+                    textColor={STATUS_STAMP.review.text}
+                  >
+                    review
+                  </Stamp>
+                )}
+                {row.kind === 'fix' && (
+                  <Stamp size="small" variant="warning">
+                    fix
+                  </Stamp>
+                )}
+              </span>
+            ),
+          },
+          {
+            key: 'actions',
+            header: 'Actions',
+            align: 'end',
+            cell: (row: WorkRow) =>
+              row.kind === 'phase' ? (
+                <div style={{ display: 'inline-flex', gap: space[2], alignItems: 'center' }}>
+                  <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={row.index} />
+                  {!row.item.done && agentPhaseIndex === row.index ? (
+                    <Spinner size="small" label={`Agent ${planTask?.status}…`} />
+                  ) : (
+                    !row.item.done && (
+                      <AgentStartButton
+                        planId={plan.id}
+                        phaseIndex={row.index}
+                        disabled={agentBusy}
+                      />
+                    )
+                  )}
+                </div>
+              ) : null,
+            width: 7,
+          },
+        ]}
+        expandable={{
+          render: (row: WorkRow) => row.item.description || null,
+        }}
+        showExpandColumn={false}
+        rowTexture={(row: WorkRow) => (row.kind === 'fix' ? 'kraft' : undefined)}
+        rowClassName={(row: WorkRow) =>
+          row.kind === 'phase' && row.item.source === 'review' ? 'phase-row-review' : undefined
+        }
+        className="phase-table-phone"
+      />
     </div>
   );
 };
@@ -399,8 +374,8 @@ const FeedbackThread = ({
           <div style={{ maxWidth: '85%' }}>
             <Card
               size="small"
-              surface={fromAgent ? 'chalkboard' : 'paper'}
-              texture={fromAgent ? undefined : label ? 'canvas' : 'parchment'}
+              surface="paper"
+              texture={fromAgent ? 'kraft' : label ? 'canvas' : 'parchment'}
               accent={!fromAgent}
               accentColor={label ? 'rose' : 'blue'}
             >
@@ -528,9 +503,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const planTask = runningTaskForPlan(plan.id, agentStatus);
   const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
   const auditRunning = planTask?.taskKind === 'audit';
-  const progress = phaseProgress(plan);
+  const progress = combinedProgress(plan);
   const hasPhases = plan.phases.length > 0;
-  const hasFixes = (plan.fixes ?? []).length > 0;
   const showFeedback = detailView === 'feedback';
   const ideaView: IdeaEntry = {
     id: plan.id ?? null,
@@ -685,12 +659,9 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               planTask={planTask}
               updating={updating}
               onTogglePhase={handleTogglePhase}
+              onToggleFix={handleToggleFix}
               onAddReviewPhases={handleAddReviewPhases}
             />
-          )}
-
-          {hasFixes && (
-            <FixesSection plan={plan} updating={updating} onToggleFix={handleToggleFix} />
           )}
 
           <TrailSection planId={plan.id} />

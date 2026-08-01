@@ -358,19 +358,34 @@ const StatusStamps = () => {
   );
 };
 
-const ChangedFilesCount = ({ count }: { count: number }) => (
-  <p
-    style={{
-      margin: 0,
-      textAlign: 'center',
-      fontFamily: fontFamily.mono,
-      fontSize: fontSize.xs,
-      color: deskTextMuted,
-    }}
-  >
-    {count} file{count === 1 ? '' : 's'} changed
-  </p>
-);
+interface ChangedFilesCountProps {
+  count: number;
+}
+
+const ChangedFilesCount = ({ count }: ChangedFilesCountProps) => {
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      onClick={() => navigate({ to: '/diff' })}
+      style={{
+        display: 'block',
+        margin: '0 auto',
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        textAlign: 'center',
+        fontFamily: fontFamily.mono,
+        fontSize: fontSize.xs,
+        color: deskTextMuted,
+        textDecoration: 'underline',
+        cursor: 'pointer',
+      }}
+    >
+      {count} file{count === 1 ? '' : 's'} changed
+    </button>
+  );
+};
 
 const CommitForm = ({ files }: { files: string[] }) => {
   const plans = useAppStore((s) => s.plans);

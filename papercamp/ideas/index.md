@@ -111,7 +111,7 @@
 | IDEA-107 | De-complicate the worst code | refactor | done | app, core, server |
 | IDEA-108 | Surface a diverged main with a one-click agent fix | feat | planned | git, app, agent |
 | IDEA-109 | Compact Deliver section, more room for the agent stack | feat | done | app, ui, stack |
-| IDEA-110 | In-app code review with diffs | feat | planned | app, git, ui |
+| IDEA-110 | In-app code review with diffs | feat | review | app, git, ui |
 | IDEA-111 | Adopt paper-ui color tokens, drop local literals | refactor | dropped | app, ui, refactor |
 | IDEA-112 | Move all styling to Tailwind | refactor | planned | app, ui, refactor |
-| IDEA-113 | Feedback as a single chat thread | feat | planned | app, ui, agent, plans |
+| IDEA-113 | Feedback as a single chat thread | feat | review | app, ui, agent, plans |

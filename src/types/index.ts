@@ -130,17 +130,12 @@ export interface FeedbackEdit {
   body?: string;
 }
 
-export interface FeedbackFollowUp {
-  title: string;
-  body: string;
-}
-
 // Parsed from the JSON object a feedback-reply agent's prompt requires as its
-// final line — reply is always present, edit/spinOff are mutually exclusive.
+// final line. The chat never creates ideas — a request is either a reply or an
+// edit on the current plan.
 export interface FeedbackReplyResult {
   reply: string;
   edit?: FeedbackEdit;
-  spinOff?: FeedbackFollowUp;
   /** True when the user's message answers an open question the agent asked
    * earlier in this thread — the route persists that message as a clarification. */
   answersQuestion?: boolean;
@@ -472,6 +467,19 @@ export interface GitStatusResponse {
   entries: GitStatusEntry[];
   ahead: number;
   branchHygiene: BranchHygieneStatus;
+}
+
+export interface FileDiffEntry {
+  path: string;
+  renameSource?: string;
+  staged: boolean;
+  binary: boolean;
+  additions: number;
+  deletions: number;
+  // 'diff' is a unified patch (tracked files); 'raw' is untracked file content, not a
+  // patch; 'too-large' means `patch` is empty and the file was skipped.
+  contentKind: 'diff' | 'raw' | 'too-large';
+  patch: string;
 }
 
 export type BranchHygieneStatus =

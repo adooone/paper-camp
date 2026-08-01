@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { branchName, resolvePrsByEntity } from '@/core/git-pr';
 import type {
   BranchHygieneStatus,
+  FileDiffEntry,
   GitLiveState,
   GitStatusEntry,
   GitSyncResult,
@@ -413,6 +414,123 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       : combined;
   }
 
+  // Diffs against HEAD, so a partially-staged file's index and worktree changes
+  // combine into one patch — same behavior as `diff`, just split per file with stats.
+  async function getWorkingDiff(maxCharsPerFile = 20000): Promise<FileDiffEntry[]> {
+    const statusEntries = await runGitStatus();
+    const results: FileDiffEntry[] = [];
+
+    for (const entry of statusEntries) {
+      if (entry.status === '??') {
+        const filePath = join(root, entry.path);
+        // lstat, not stat: following a symlink could leak content from outside the repo.
+        const stats = await lstat(filePath).catch(() => null);
+        if (!stats || stats.isSymbolicLink()) {
+          results.push({
+            path: entry.path,
+            staged: false,
+            binary: true,
+            additions: 0,
+            deletions: 0,
+            contentKind: 'raw',
+            patch: '',
+          });
+          continue;
+        }
+        if (stats.size > maxCharsPerFile) {
+          results.push({
+            path: entry.path,
+            staged: false,
+            binary: false,
+            additions: 0,
+            deletions: 0,
+            contentKind: 'too-large',
+            patch: '',
+          });
+          continue;
+        }
+        const content = await readFile(filePath, 'utf-8').catch(() => null);
+        if (content === null) {
+          results.push({
+            path: entry.path,
+            staged: false,
+            binary: true,
+            additions: 0,
+            deletions: 0,
+            contentKind: 'raw',
+            patch: '',
+          });
+          continue;
+        }
+        results.push({
+          path: entry.path,
+          staged: false,
+          binary: false,
+          additions: content === '' ? 0 : content.split('\n').length,
+          deletions: 0,
+          contentKind: 'raw',
+          patch:
+            content.length > maxCharsPerFile
+              ? `${content.slice(0, maxCharsPerFile)}\n... (truncated)`
+              : content,
+        });
+        continue;
+      }
+
+      // A staged rename spans two paths; scoping the diff to the new path alone
+      // would miss the old path's staged deletion.
+      const pathspecs = entry.renameSource ? [entry.path, entry.renameSource] : [entry.path];
+      const literalPathspecs = pathspecs.map(toLiteralPathspec);
+      const numstatOutput = await runGit([
+        'diff',
+        'HEAD',
+        '--numstat',
+        '--',
+        ...literalPathspecs,
+      ]).catch(() => '');
+      // A rename below git's similarity threshold reports as two numstat lines (old
+      // path deleted, new path added) rather than one — sum both, not just the first.
+      const numstatLines = numstatOutput.split('\n').filter((l) => l.trim());
+      const binary = numstatLines.some((l) => l.split('\t')[0] === '-');
+      let additions = 0;
+      let deletions = 0;
+      if (!binary) {
+        for (const line of numstatLines) {
+          const [addRaw = '0', delRaw = '0'] = line.split('\t');
+          additions += Number.parseInt(addRaw, 10) || 0;
+          deletions += Number.parseInt(delRaw, 10) || 0;
+        }
+      }
+
+      let patchOutput = binary
+        ? ''
+        : await runGit(['diff', 'HEAD', '--', ...literalPathspecs]).catch(() => '');
+      // Below git's rename-similarity threshold, the "diff" is a full delete of the old
+      // path plus a full add of the new one — a full re-add. We already know from status
+      // that it's a rename, so drop the dump in favor of the compact header the UI shows.
+      if (entry.renameSource && !patchOutput.includes('rename from ')) {
+        patchOutput = '';
+      }
+      const patch =
+        patchOutput.length > maxCharsPerFile
+          ? `${patchOutput.slice(0, maxCharsPerFile)}\n... (truncated)`
+          : patchOutput;
+
+      results.push({
+        path: entry.path,
+        renameSource: entry.renameSource,
+        staged: entry.staged,
+        binary,
+        additions,
+        deletions,
+        contentKind: 'diff',
+        patch,
+      });
+    }
+
+    return results;
+  }
+
   async function stageAll(): Promise<void> {
     await runGit(['add', '-A']);
   }
@@ -560,6 +678,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     getLastCommitFor,
     revert,
     diff,
+    getWorkingDiff,
     ensureBranch,
     getFeatureBranchPlanId,
     getAheadCount,

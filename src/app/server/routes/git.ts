@@ -123,6 +123,15 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
     },
 
     {
+      method: 'GET',
+      path: '/api/git/diff',
+      handle: async (_req, res) => {
+        const files = await git.getWorkingDiff();
+        sendJson(res, 200, { files });
+      },
+    },
+
+    {
       method: 'POST',
       path: '/api/git/suggest-commit-message',
       handle: async (req, res) => {

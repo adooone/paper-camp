@@ -55,27 +55,15 @@ describe('replyToFeedback', () => {
     expect(result).toEqual({ reply: 'Reworded.' });
   });
 
-  it('never combines edit and spinOff — edit wins if the agent sends both', async () => {
+  it('ignores any spinOff the agent emits — this chat never creates ideas', async () => {
     const runPrompt = async () =>
       JSON.stringify({
-        reply: 'That is out of scope here.',
-        edit: { body: 'irrelevant' },
+        reply: 'Added that here.',
+        edit: { body: 'reworked' },
         spinOff: { title: 'Follow-up idea', body: 'A separate piece of work.' },
       });
     const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
-    expect(result.edit).toEqual({ body: 'irrelevant' });
-    expect(result.spinOff).toBeUndefined();
-  });
-
-  it('carries a spinOff through when sent alone', async () => {
-    const runPrompt = async () =>
-      JSON.stringify({
-        reply: 'That is out of scope here.',
-        spinOff: { title: 'Follow-up idea', body: 'A separate piece of work.' },
-      });
-    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
-    expect(result.spinOff).toEqual({ title: 'Follow-up idea', body: 'A separate piece of work.' });
-    expect(result.edit).toBeUndefined();
+    expect(result).toEqual({ reply: 'Added that here.', edit: { body: 'reworked' } });
   });
 
   it('accepts a reply wrapped in a markdown code fence', async () => {
