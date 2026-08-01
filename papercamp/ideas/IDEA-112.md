@@ -24,7 +24,7 @@ The rules:
 Depends on [[IDEA-111]]: the CSS-var color classes must exist first, so the migration writes `text-accent-green` / `bg-canvas-300`, not fresh literals.
 
 ### Phases
-- [ ] Inventory the ~471 static inline `style={{}}` objects and map each value to a preset class
+- [x] Inventory the ~471 static inline `style={{}}` objects and map each value to a preset class
       Note the one genuinely runtime-dynamic property that stays inline; flag values with no matching class.
 - [ ] Extend `tailwind.config.ts` for the flagged values the preset doesn't cover
 - [ ] Migrate the static inline styles to Tailwind utility classes, subsystem by subsystem
