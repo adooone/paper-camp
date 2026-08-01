@@ -10,19 +10,11 @@ export interface DiffHunk {
   lines: DiffLine[];
 }
 
-// Untracked files store raw content instead of a unified diff (see git.ts
-// getWorkingDiff) — synthesize a single all-added hunk so the renderer only
-// has one shape to draw.
+// Parses a unified diff (git.ts getWorkingDiff, contentKind: 'diff'). A real diff
+// with no hunks (pure rename, mode-only change) is just the preamble, so it yields [].
 export function parsePatch(patch: string): DiffHunk[] {
   if (!patch) return [];
   const lines = (patch.endsWith('\n') ? patch.slice(0, -1) : patch).split('\n');
-
-  if (!lines.some((line) => line.startsWith('@@ '))) {
-    // A real diff with no hunks (pure rename, mode-only change) is just the preamble —
-    // nothing to render as changed lines, unlike raw untracked content below.
-    if (lines.some((line) => line.startsWith('diff --git '))) return [];
-    return [{ header: '', lines: lines.map((text) => ({ type: 'add', text })) }];
-  }
 
   const hunks: DiffHunk[] = [];
   let current: DiffHunk | null = null;
@@ -38,4 +30,12 @@ export function parsePatch(patch: string): DiffHunk[] {
     else current.lines.push({ type: 'context', text: line.startsWith(' ') ? line.slice(1) : line });
   }
   return hunks;
+}
+
+// Untracked files store raw content, not a diff (git.ts getWorkingDiff, contentKind:
+// 'raw') — synthesize a single all-added hunk so the renderer only has one shape to draw.
+export function rawContentHunks(content: string): DiffHunk[] {
+  if (!content) return [];
+  const lines = (content.endsWith('\n') ? content.slice(0, -1) : content).split('\n');
+  return [{ header: '', lines: lines.map((text) => ({ type: 'add', text })) }];
 }

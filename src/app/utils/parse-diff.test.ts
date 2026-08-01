@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parsePatch } from './parse-diff';
+import { parsePatch, rawContentHunks } from './parse-diff';
 
 describe('parsePatch', () => {
   it('returns no hunks for an empty patch', () => {
@@ -58,13 +58,25 @@ describe('parsePatch', () => {
     expect(parsePatch(patch)).toEqual([]);
   });
 
-  it('treats raw content with no @@ marker as one all-added hunk', () => {
+  it('returns no hunks for a patch with no @@ marker', () => {
     const patch = 'line one\nline two';
-    expect(parsePatch(patch)).toEqual([
+    expect(parsePatch(patch)).toEqual([]);
+  });
+});
+
+describe('rawContentHunks', () => {
+  it('returns no hunks for empty content', () => {
+    expect(rawContentHunks('')).toEqual([]);
+  });
+
+  it('treats every line as added, even one that looks like a diff hunk header', () => {
+    const content = 'line one\n@@ -1,1 +1,1 @@\nline two';
+    expect(rawContentHunks(content)).toEqual([
       {
         header: '',
         lines: [
           { type: 'add', text: 'line one' },
+          { type: 'add', text: '@@ -1,1 +1,1 @@' },
           { type: 'add', text: 'line two' },
         ],
       },

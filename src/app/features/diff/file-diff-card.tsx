@@ -1,17 +1,22 @@
 import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
-import { type DiffLineType, parsePatch } from '@/app/utils/parse-diff';
+import { type DiffLineType, parsePatch, rawContentHunks } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
 
 const LINE_STYLE: Record<DiffLineType, React.CSSProperties> = {
-  add: { background: 'rgba(143, 185, 150, 0.18)', color: color.accentGreenDark },
-  remove: { background: 'rgba(201, 139, 139, 0.18)', color: color.accentRoseDark },
+  add: { background: color.diffAddedBg, color: color.accentGreenDark },
+  remove: { background: color.diffRemovedBg, color: color.accentRoseDark },
   context: {},
 };
 
 const LINE_PREFIX: Record<DiffLineType, string> = { add: '+', remove: '-', context: ' ' };
 
-const CountBadge = ({ additions, deletions }: { additions: number; deletions: number }) => (
+interface CountBadgeProps {
+  additions: number;
+  deletions: number;
+}
+
+const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
   <span
     style={{
       display: 'inline-flex',
@@ -26,7 +31,11 @@ const CountBadge = ({ additions, deletions }: { additions: number; deletions: nu
   </span>
 );
 
-const CardTitle = ({ entry }: { entry: FileDiffEntry }) => (
+interface CardTitleProps {
+  entry: FileDiffEntry;
+}
+
+const CardTitle = ({ entry }: CardTitleProps) => (
   <div
     style={{
       display: 'flex',
@@ -55,11 +64,19 @@ const CardTitle = ({ entry }: { entry: FileDiffEntry }) => (
   </div>
 );
 
-const DiffBody = ({ entry }: { entry: FileDiffEntry }) => {
+interface DiffBodyProps {
+  entry: FileDiffEntry;
+}
+
+const DiffBody = ({ entry }: DiffBodyProps) => {
   if (entry.binary) {
     return <p style={{ margin: 0, opacity: 0.6 }}>Binary file not shown.</p>;
   }
-  const hunks = parsePatch(entry.patch);
+  if (entry.contentKind === 'too-large') {
+    return <p style={{ margin: 0, opacity: 0.6 }}>File too large to preview.</p>;
+  }
+  const hunks =
+    entry.contentKind === 'raw' ? rawContentHunks(entry.patch) : parsePatch(entry.patch);
   if (hunks.length === 0) {
     if (entry.renameSource) {
       return (
@@ -88,13 +105,23 @@ const DiffBody = ({ entry }: { entry: FileDiffEntry }) => {
               {hunk.header}
             </div>
           )}
-          {/* Raw <pre>/<div> lines: paper-ui's CodeBlock has no per-line add/remove styling. */}
-          <pre style={{ margin: 0, fontFamily: fontFamily.mono, fontSize: fontSize['2xs'] }}>
+          {/* paper-ui's CodeBlock has no per-line add/remove styling. */}
+          <pre
+            style={{
+              margin: 0,
+              overflowX: 'auto',
+              fontFamily: fontFamily.mono,
+              fontSize: fontSize['2xs'],
+            }}
+          >
             {hunk.lines.map((line, j) => (
-              <div key={`${line.type}-${j}`} style={LINE_STYLE[line.type]}>
+              <span
+                key={`${line.type}-${j}`}
+                style={{ display: 'block', ...LINE_STYLE[line.type] }}
+              >
                 {LINE_PREFIX[line.type]}
                 {line.text}
-              </div>
+              </span>
             ))}
           </pre>
         </div>
@@ -103,13 +130,12 @@ const DiffBody = ({ entry }: { entry: FileDiffEntry }) => {
   );
 };
 
-export const FileDiffSection = ({
-  entry,
-  sectionRef,
-}: {
+interface FileDiffSectionProps {
   entry: FileDiffEntry;
   sectionRef: (el: HTMLDivElement | null) => void;
-}) => (
+}
+
+export const FileDiffSection = ({ entry, sectionRef }: FileDiffSectionProps) => (
   <div ref={sectionRef} style={{ scrollMarginTop: space[4] }}>
     <Card>
       <div style={{ marginBottom: space[3] }}>

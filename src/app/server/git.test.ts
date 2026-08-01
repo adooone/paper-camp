@@ -748,7 +748,7 @@ describe('getWorkingDiff', () => {
     await writeFile(join(root, 'big.txt'), 'x'.repeat(500));
     const manager = gitManager(root);
     const [entry] = await manager.getWorkingDiff(200);
-    expect(entry.patch).toBe('(file too large to preview)');
+    expect(entry).toMatchObject({ contentKind: 'too-large', patch: '' });
   });
 
   it('truncates a tracked patch past the size cap', async () => {

@@ -1,8 +1,13 @@
-import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
+import { color, fontFamily, fontSize, layout, space } from '@/app/styles/tokens';
 import type { FileDiffEntry } from '@/types/index';
 import { ListItem, Stamp } from '@dendelion/paper-ui';
 
-const CountBadge = ({ additions, deletions }: { additions: number; deletions: number }) => (
+interface CountBadgeProps {
+  additions: number;
+  deletions: number;
+}
+
+const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
   <span
     style={{
       display: 'inline-flex',
@@ -16,13 +21,12 @@ const CountBadge = ({ additions, deletions }: { additions: number; deletions: nu
   </span>
 );
 
-export const FileListSidebar = ({
-  files,
-  onSelect,
-}: {
+interface FileListSidebarProps {
   files: FileDiffEntry[];
   onSelect: (path: string) => void;
-}) => (
+}
+
+export const FileListSidebar = ({ files, onSelect }: FileListSidebarProps) => (
   <div
     style={{
       position: 'sticky',
@@ -30,9 +34,9 @@ export const FileListSidebar = ({
       display: 'flex',
       flexDirection: 'column',
       gap: space[1],
-      width: '18rem',
+      width: layout.diffSidebarWidth,
       flexShrink: 0,
-      maxHeight: 'calc(100vh - 4rem)',
+      maxHeight: `calc(100vh - ${layout.headerHeight})`,
       overflowY: 'auto',
     }}
   >

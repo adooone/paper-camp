@@ -1,5 +1,5 @@
 import { fetchFileDiffs } from '@/app/services/git-api';
-import { space } from '@/app/styles/tokens';
+import { layout, space } from '@/app/styles/tokens';
 import type { FileDiffEntry } from '@/types/index';
 import { Breadcrumb } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -30,11 +30,15 @@ export const DiffPage = () => {
     </div>
   );
 
+  const contentStyle = { minHeight: `calc(100vh - ${layout.headerHeight})` };
+
   if (loadFailed) {
     return (
       <div>
         {breadcrumb}
-        <p style={{ opacity: 0.5 }}>Couldn't load the working-tree diff.</p>
+        <div style={contentStyle}>
+          <p style={{ opacity: 0.5 }}>Couldn't load the working-tree diff.</p>
+        </div>
       </div>
     );
   }
@@ -43,7 +47,9 @@ export const DiffPage = () => {
     return (
       <div>
         {breadcrumb}
-        <p style={{ opacity: 0.5 }}>Loading…</p>
+        <div style={contentStyle}>
+          <p style={{ opacity: 0.5 }}>Loading…</p>
+        </div>
       </div>
     );
   }
@@ -56,9 +62,11 @@ export const DiffPage = () => {
     <div>
       {breadcrumb}
       {files.length === 0 ? (
-        <p style={{ opacity: 0.5 }}>No changed files.</p>
+        <div style={contentStyle}>
+          <p style={{ opacity: 0.5 }}>No changed files.</p>
+        </div>
       ) : (
-        <div style={{ display: 'flex', gap: space[6], alignItems: 'flex-start' }}>
+        <div style={{ ...contentStyle, display: 'flex', gap: space[6], alignItems: 'flex-start' }}>
           <FileListSidebar files={files} onSelect={scrollToFile} />
           <div
             style={{

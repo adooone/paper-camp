@@ -432,6 +432,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
             binary: true,
             additions: 0,
             deletions: 0,
+            contentKind: 'raw',
             patch: '',
           });
           continue;
@@ -443,7 +444,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
             binary: false,
             additions: 0,
             deletions: 0,
-            patch: '(file too large to preview)',
+            contentKind: 'too-large',
+            patch: '',
           });
           continue;
         }
@@ -455,6 +457,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
             binary: true,
             additions: 0,
             deletions: 0,
+            contentKind: 'raw',
             patch: '',
           });
           continue;
@@ -465,6 +468,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
           binary: false,
           additions: content === '' ? 0 : content.split('\n').length,
           deletions: 0,
+          contentKind: 'raw',
           patch:
             content.length > maxCharsPerFile
               ? `${content.slice(0, maxCharsPerFile)}\n... (truncated)`
@@ -519,6 +523,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         binary,
         additions,
         deletions,
+        contentKind: 'diff',
         patch,
       });
     }

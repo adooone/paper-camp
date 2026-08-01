@@ -358,7 +358,11 @@ const StatusStamps = () => {
   );
 };
 
-const ChangedFilesCount = ({ count }: { count: number }) => {
+interface ChangedFilesCountProps {
+  count: number;
+}
+
+const ChangedFilesCount = ({ count }: ChangedFilesCountProps) => {
   const navigate = useNavigate();
   return (
     <button

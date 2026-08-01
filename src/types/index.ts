@@ -476,6 +476,9 @@ export interface FileDiffEntry {
   binary: boolean;
   additions: number;
   deletions: number;
+  // 'diff' is a unified patch (tracked files); 'raw' is untracked file content, not a
+  // patch; 'too-large' means `patch` is empty and the file was skipped.
+  contentKind: 'diff' | 'raw' | 'too-large';
   patch: string;
 }
 
