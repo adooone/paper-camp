@@ -42,7 +42,8 @@ function toEdit(raw: {
 // One-shot, read-only agent call, not the long-running phase/task system in
 // agent.ts: runs independently of the task registry, so it's never blocked by
 // (and never blocks) a running phase/reconcile/etc. Never edits a file itself —
-// the route applies the edit/spinOff this returns, via applyFeedbackEdit below.
+// the route applies the edit this returns, via applyFeedbackEdit below. This chat
+// never creates new ideas — a request always becomes an edit on the current plan.
 export async function replyToFeedback(
   plan: PlanEntry,
   runPrompt: (prompt: string, planTitle: string) => Promise<string>,
@@ -66,23 +67,17 @@ export async function replyToFeedback(
       phases?: { op?: string; index?: number; text?: string; description?: string }[];
       body?: string;
     };
-    spinOff?: { title?: string; body?: string };
   };
 
   const reply = data.reply?.trim();
   if (!reply) throw new Error('Agent did not return a reply');
 
   const edit = data.edit ? toEdit(data.edit) : undefined;
-  const spinOff =
-    data.spinOff?.title?.trim() && data.spinOff?.body?.trim()
-      ? { title: data.spinOff.title.trim(), body: data.spinOff.body.trim() }
-      : undefined;
 
   return {
     reply,
     ...(data.answersQuestion ? { answersQuestion: true } : {}),
     ...(edit ? { edit } : {}),
-    ...(spinOff && !edit ? { spinOff } : {}),
   };
 }
 

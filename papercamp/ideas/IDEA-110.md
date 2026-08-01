@@ -4,7 +4,7 @@ title: In-app code review with diffs
 type: feat
 status: review
 created: 2026-07-30
-updated: 2026-07-31
+updated: 2026-08-01
 tags:
   - app
   - git
@@ -48,3 +48,5 @@ This view is read-only — for reading changes before you deliver. No annotating
 - [x] 2026-07-31 [log] Decision — the diff view is read-only, for viewing changes only. Dropped the "annotate a hunk and hand it to an agent" stretch phase; no note-taking or agent dispatch from this view. The scope is the viewer (phases 1–4) plus the type-check pass.
 - [x] 2026-07-31 [log] I want to make the diff view always visible content, and files list can be put into sidebar, to scroll into related code
 - [x] 2026-07-31 [log] [agent] Makes sense — a persistent file-list sidebar with the diff always rendered in the main pane reads much better than collapsing per file, and it lets you jump to related code as you scroll. Added it as a new phase since the viewer's already built; it'll track as a Fix on top of the finished layout. (reopened this idea to re-run)
+- [x] 2026-08-01 [log] I want background of the messages from agent in feedback chat to change from chalkboard green to shaded darken kraft texture
+- [x] 2026-08-01 [log] [agent] Queued that as its own idea to fix — the agent-message background in the Feedback chat is a general chat-UI styling concern, not part of the read-only diff viewer, so it doesn't belong on IDEA-110. Note: the shaded darkened kraft texture has to come from a `--pui-*` token; if there isn't one already, it'll need to be exposed in paper-ui first. (spun off as IDEA-114)

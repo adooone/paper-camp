@@ -3,7 +3,7 @@ import { join, relative } from 'node:path';
 import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
 import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
-import { assignEntityId, formatEntityFile, todayDateString } from '@/core/serialize';
+import { todayDateString } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
 import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry, ThreadMessage } from '@/types/index';
 import { readDefaultAgentIds } from '../agent';
@@ -363,22 +363,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             : threadWithUser;
 
           let replyText = result.reply;
-          if (result.spinOff) {
-            const newId = await assignEntityId(join(root, 'papercamp', 'config.json'));
-            if (newId) {
-              const followUpContent = formatEntityFile({
-                id: newId,
-                title: result.spinOff.title,
-                status: 'idea',
-                created: todayDateString(),
-                body: result.spinOff.body,
-              });
-              await writeFile(join(ideasDir, `${newId}.md`), `${followUpContent}\n`, 'utf-8');
-              replyText = `${replyText} (spun off as ${newId})`;
-            } else {
-              replyText = `${replyText} (could not spin off a follow-up idea — no id was assigned)`;
-            }
-          }
 
           // A feedback edit that adds an undone Fix to an already-finished plan is new
           // work: reopen it so it re-enters the run-order queue and run-all implements it —

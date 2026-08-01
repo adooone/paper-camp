@@ -253,20 +253,20 @@ Task: classify the most recent user message and act on it in the same response:
 - It's a plain question/comment with nothing to change — just reply.
 - It asks for a change this idea/plan should make: add a new phase, reword an existing phase's title or description, or correct body prose that's now wrong — reply AND include an "edit".
 - It's a stray thought or review remark with nothing actionable — just reply, acknowledging it; the message itself is already recorded in the thread, so no edit is needed.
-- It asks to fix or change something that doesn't fit this idea's plan (a failing check, a bug elsewhere, unrelated work) — CAPTURE it as real work, never decline it. Reply AND include a "spinOff" for a new idea that will carry out the fix, and phrase the reply as having queued it (e.g. "Queued that as its own idea to fix — <what>"). Never combine "edit" and "spinOff" on the same message.
+- It asks to fix or change something, even about a different area (a failing check, a bug elsewhere, unrelated styling) — CAPTURE it as an "edit" that adds a phase for the fix on THIS idea. Do NOT create a new idea for it: the user wants small fixes tracked and done here, not rerouted. Reply saying you added it here (e.g. "Added that as a fix here — <what>").
 
-A request to fix something is never "out of scope" and is never refused: if it fits this idea's plan it becomes an "edit", otherwise it becomes a "spinOff" — either way the reply says what you did with it, never "that's not something I can fix" or "outside this idea's scope". When unsure whether a message asks for a change, treat it as a plain reply rather than guessing an edit. When unsure whether a message answers an earlier question, omit "answersQuestion" rather than guessing.
+A request to fix something is never "out of scope" and never refused — it always becomes an "edit" (a phase on THIS idea) so run-all carries it out here. You NEVER create a new idea from this chat: the user chatting inside an idea means they want the change in THIS idea; if they wanted a separate idea they would create one elsewhere. If you merely have a thought, suggestion, or concern, put it in "reply" as a message and take no other action. When unsure whether a message asks for a change, treat it as a plain reply rather than guessing an edit. When unsure whether a message answers an earlier question, omit "answersQuestion" rather than guessing.
 
 Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
-{"reply": "short reply text, continuing the conversation naturally", "answersQuestion": true, "edit": {"phases": [{"op": "add", "text": "Short phase title", "description": "optional detail"}, {"op": "reword", "index": 2, "text": "New phase title", "description": "optional detail"}], "body": "the ENTIRE corrected body text, only when body prose needs a correction"}, "spinOff": {"title": "Idea title", "body": "One paragraph describing the idea and why it came up"}}
+{"reply": "short reply text, continuing the conversation naturally", "answersQuestion": true, "edit": {"phases": [{"op": "add", "text": "Short phase title", "description": "optional detail"}, {"op": "reword", "index": 2, "text": "New phase title", "description": "optional detail"}], "body": "the ENTIRE corrected body text, only when body prose needs a correction"}}
 
 Rules:
-- "reply" is always required and is the only thing shown when nothing needs to change — omit "edit" and "spinOff" entirely in that case.
+- "reply" is always required and is the only thing shown when nothing needs to change — omit "edit" entirely in that case.
 - "answersQuestion" is a boolean, only ever true; omit it entirely rather than sending false.
 - "edit.phases" entries: "add" appends a new phase at the end; "reword" replaces the title/description of the existing phase at the given 1-based "index" (matching the numbered list above) — never invent an index outside that range.
 - When every phase above is already checked ([x]) and the message asks for new or still-missing work, use "add" for a new phase — never "reword" a finished phase to smuggle in new work, since a completed phase never re-runs. Adding a phase to a finished idea reopens it, and the app tracks the new work separately as a Fix rather than rewriting the finished Phases history.
 - "edit.body", when present, must be the complete replacement body, not a fragment — reproduce every part that isn't changing, word for word.
-- Only include "edit" when the message clearly asks for a change. Include "spinOff" when a fix request doesn't fit this idea's plan; otherwise fold it in as an "edit". A fix request must always become one or the other — never a bare reply that declines it.`;
+- Only include "edit" when the message clearly asks for a change; a fix request always becomes an "edit" (a phase on this idea), never anything else. Never create a new idea, and never decline a fix request with a bare reply.`;
 }
 
 // Scans the whole corpus rather than one idea and appends to suggestions.md, so
