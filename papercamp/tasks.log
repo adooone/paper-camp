@@ -31,3 +31,4 @@
 {"id":"ff971e3f-24ba-4da9-b4ac-cdfb45b5d882","taskKind":"feedback","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T17:41:58.940Z","endedAt":"2026-08-02T17:42:14.153Z","outcome":"done"}
 {"id":"9d67b806-adc5-4874-8de8-659e369a85b5","taskKind":"feedback","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T17:43:29.682Z","endedAt":"2026-08-02T17:43:44.029Z","outcome":"done"}
 {"id":"df95611f-65a8-49af-9693-eb77f8f60b32","taskKind":"feedback","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T17:44:00.762Z","endedAt":"2026-08-02T17:44:13.640Z","outcome":"done"}
+{"id":"6478f3a2-40dc-4bc3-87a4-d31f991f7c37","taskKind":"run-all","planId":"IDEA-99","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T17:44:34.342Z","endedAt":"2026-08-02T18:05:45.271Z","outcome":"done"}
