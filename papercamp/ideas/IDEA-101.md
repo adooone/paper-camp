@@ -39,7 +39,7 @@ Placement (decided 2026-07-26 — auth is a global precondition, not a per-task 
 - **Not in the Stack agent card.** Today [[IDEA-86]] renders the "not signed in" state plus the copy-command remediation *inside a failed agent-task card*. That is the wrong home: it binds a global state to one task (the source of the false-auth bug fixed 2026-07-26, where a transient login blip mislabeled a gate failure as "signed out"), and it only appears *after* a run has already failed. **Change to make here:** pull the remediation out of the agent card (`agent-section.tsx` `AuthErrorFix` / the `errorKind === 'auth'` branch) — a failed task should at most read "stopped — agent signed out" as a reason with a link to the Connections sign-in, never host the sign-in commands or button itself.
 
 ### Phases
-- [ ] Spawn `claude auth login` in a PTY and parse the authorize URL
+- [x] Spawn `claude auth login` in a PTY and parse the authorize URL
       Add node-pty on the server; run the login interactively, extract the URL line defensively, with cancel/timeout and one-login-at-a-time lifecycle.
 - [ ] Add the login-relay routes and store state
       Start/status/cancel endpoints under `/api/agent`; carry relay state (pending authorize URL, phase) into the agent store slice.
