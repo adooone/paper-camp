@@ -1357,7 +1357,6 @@ export function createAgentManager(
 
     const resumed: string[] = [];
     for (const task of parked) {
-      task.errorKind = undefined;
       const planId = task.planId as string;
       const plan = await findPlanById(planId);
       if (!plan) continue;
@@ -1367,7 +1366,10 @@ export function createAgentManager(
           : task.phaseIndex !== undefined
             ? start(plan, task.phaseIndex)
             : { ok: false as const, error: 'Missing phase index' };
-      if (result.ok) resumed.push(planId);
+      if (result.ok) {
+        task.errorKind = undefined;
+        resumed.push(planId);
+      }
     }
     return { resumed };
   }

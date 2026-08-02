@@ -171,7 +171,11 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       handle: (_req, res) => {
         const handle = startClaudeLoginRelay(root, {
           onLoginConfirmed: () => {
-            void agent.resumeAuthParkedTasks(() => status.runChecksAndWait());
+            agent
+              .resumeAuthParkedTasks(() => status.runChecksAndWait())
+              .catch((err) => {
+                console.error('Failed to resume auth-parked tasks after sign-in', err);
+              });
           },
         });
         sendJson(res, 200, handle.getState());

@@ -736,6 +736,37 @@ describe('resumeAuthParkedTasks', () => {
     expect(resumed).toEqual([]);
     expect(currentStatus(manager)?.status).toBe('error');
   });
+
+  it('keeps a second parked task eligible for retry when the write-set gate blocks its relaunch', async () => {
+    const { root, plan: plan1 } = await makeRoot(PLAN_TWO_PHASES);
+    const plan2Md = PLAN_TWO_PHASES.replace('IDEA-1', 'IDEA-2').replace('Test plan', 'Second plan');
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), plan2Md);
+    const plan2 = entityToPlan(parseEntityFile(plan2Md).entries[0]);
+
+    agentScript.current = `process.stderr.write('Not logged in · Please run /login\\n'); process.exit(1);`;
+    const manager = createAgentManager(root);
+
+    manager.start(plan1, 0);
+    await waitForStatus(manager, settled);
+    manager.startRunAllPhases(plan2);
+    await waitForStatus(manager, settled);
+
+    const byPlan = (planId: string | undefined) =>
+      manager.getStatus().find((t) => t.planId === planId);
+    expect(byPlan(plan1.id)?.errorKind).toBe('auth');
+    expect(byPlan(plan2.id)?.errorKind).toBe('auth');
+
+    // Both plans use the exclusive 'worktree' write-set scope, so relaunching the
+    // first blocks the second's relaunch within the same resumeAuthParkedTasks pass.
+    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
+    const { resumed } = await manager.resumeAuthParkedTasks();
+    expect(resumed).toEqual([plan1.id]);
+    // The blocked task must stay 'auth'-tagged so a later pass can still pick it up.
+    expect(byPlan(plan2.id)?.errorKind).toBe('auth');
+    expect(byPlan(plan2.id)?.status).toBe('error');
+
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  });
 });
 
 describe('task log', () => {

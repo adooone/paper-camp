@@ -174,13 +174,22 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
 
     loginRelay: null,
     startLoginRelay: async () => {
-      const state = await startLoginRelayApi();
-      set({ loginRelay: state });
+      try {
+        const state = await startLoginRelayApi();
+        set({ loginRelay: state });
+      } catch (err) {
+        set({
+          loginRelay: { phase: 'error', authorizeUrl: null, error: (err as Error).message },
+        });
+      }
     },
     loadLoginRelayStatus: loadSlice(set, fetchLoginRelayStatus, (data) => ({ loginRelay: data })),
     cancelLoginRelay: async () => {
-      await cancelLoginRelayApi();
-      set({ loginRelay: null });
+      try {
+        await cancelLoginRelayApi();
+      } finally {
+        set({ loginRelay: null });
+      }
     },
 
     pendingReconcile: null,
