@@ -337,6 +337,7 @@ const FeedbackThread = ({
               texture={fromAgent ? 'kraft' : label ? 'canvas' : 'parchment'}
               accent={!fromAgent}
               accentColor={label ? 'rose' : 'blue'}
+              className={fromAgent ? '!bg-canvas-400' : undefined}
             >
               <CollapsibleText
                 collapsedLines={3}
