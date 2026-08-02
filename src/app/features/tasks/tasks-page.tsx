@@ -149,6 +149,7 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
       <div
         role="button"
         tabIndex={0}
+        aria-expanded={expanded}
         onClick={toggle}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -156,11 +157,11 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
             toggle();
           }
         }}
-        className="cursor-pointer rounded-[10px]"
+        className="group cursor-pointer rounded-[10px]"
       >
         <Card size="small" texture="canvas" className="plan-row-card">
           <div className={TASK_ROWS_GRID_CLASS}>
-            <span className="group inline-flex items-center opacity-50" aria-expanded={expanded}>
+            <span className="inline-flex items-center opacity-50">
               <ChevronRightIcon className="transition-transform duration-150 ease-out group-aria-expanded:rotate-90" />
             </span>
             <span className="font-semibold whitespace-nowrap overflow-hidden">

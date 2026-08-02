@@ -29,7 +29,7 @@ export const DiffPage = () => {
     </div>
   );
 
-  const contentClass = 'min-h-[calc(100vh-64px)]';
+  const contentClass = 'min-h-page';
 
   if (loadFailed) {
     return (

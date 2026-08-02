@@ -19,7 +19,7 @@ interface FileListSidebarProps {
 }
 
 export const FileListSidebar = ({ files, onSelect }: FileListSidebarProps) => (
-  <div className="sticky top-4 flex w-[288px] shrink-0 flex-col gap-1 max-h-[calc(100vh-64px)] overflow-y-auto">
+  <div className="sticky top-4 flex w-[288px] shrink-0 flex-col gap-1 max-h-page overflow-y-auto">
     {files.map((entry) => (
       <ListItem
         key={entry.path}

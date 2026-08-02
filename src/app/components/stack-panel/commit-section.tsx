@@ -118,7 +118,7 @@ const StatusStamps = () => {
           chrome-less wrapper rather than a component with its own button surface. */}
       <button
         type="button"
-        className={`inline-flex bg-none border-none p-0 enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] ${anyRunning ? 'cursor-not-allowed' : 'cursor-pointer'} ${anyRunning && opts.status !== 'running' ? 'opacity-50' : 'opacity-100'}`}
+        className={`inline-flex bg-none bg-transparent border-none p-0 enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] ${anyRunning ? 'cursor-not-allowed' : 'cursor-pointer'} ${anyRunning && opts.status !== 'running' ? 'opacity-50' : 'opacity-100'}`}
         onClick={() => {
           if (!anyRunning) opts.onClick();
         }}
@@ -172,7 +172,7 @@ const StatusStamps = () => {
           >
             <button
               type="button"
-              className={`inline-flex bg-none border-none p-0 ${hasIssues ? 'enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] cursor-pointer' : 'cursor-default'}`}
+              className={`inline-flex bg-none bg-transparent border-none p-0 ${hasIssues ? 'enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] cursor-pointer' : 'cursor-default'}`}
               disabled={!hasIssues}
               aria-expanded={hasIssues ? docIssuesExpanded : undefined}
               aria-controls="stack-doc-findings"
@@ -201,7 +201,7 @@ const StatusStamps = () => {
                     <button
                       type="button"
                       onClick={() => handleFindingClick(issue)}
-                      className="bg-none border-none p-0 text-desk-chalk underline cursor-pointer [font:inherit] text-left"
+                      className="bg-none bg-transparent border-none p-0 text-desk-chalk underline cursor-pointer [font:inherit] text-left"
                     >
                       {issue.message}
                     </button>
@@ -235,7 +235,7 @@ const StatusStamps = () => {
             <button
               type="button"
               onClick={fixQuality}
-              className="bg-none border-none p-0 text-desk-chalk underline cursor-pointer [font:inherit]"
+              className="bg-none bg-transparent border-none p-0 text-desk-chalk underline cursor-pointer [font:inherit]"
             >
               Suggested fix: run biome --write
             </button>
@@ -298,7 +298,7 @@ const ChangedFilesCount = ({ count }: ChangedFilesCountProps) => {
     <button
       type="button"
       onClick={() => navigate({ to: '/diff' })}
-      className="block mx-auto bg-none border-none p-0 text-center font-mono text-xs text-desk-text-muted underline cursor-pointer"
+      className="block mx-auto bg-none bg-transparent border-none p-0 text-center font-mono text-xs text-desk-text-muted underline cursor-pointer"
     >
       {count} file{count === 1 ? '' : 's'} changed
     </button>

@@ -48,7 +48,8 @@ export const PlanFilterColumn = () => {
   const visibleTags = tagsExpanded ? sortedTags : sortedTags.slice(0, VISIBLE_TAG_COUNT);
   const hiddenCount = sortedTags.length - visibleTags.length;
 
-  const linkClass = 'bg-none border-none p-0 cursor-pointer opacity-70 underline text-2xs';
+  const linkClass =
+    'bg-none bg-transparent border-none p-0 cursor-pointer opacity-70 underline text-2xs';
 
   return (
     // Pull up by the SidebarShell's top padding to line up with the Page.

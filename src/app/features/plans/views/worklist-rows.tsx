@@ -33,7 +33,7 @@ const PLAN_ROWS_GRID_CLASS =
 const subjectHeaderClass =
   'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
 
-const headerButtonClass = `${headerLabelClass} bg-none border-none p-0 cursor-pointer [font:inherit] text-inherit text-left`;
+const headerButtonClass = `${headerLabelClass} bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left`;
 
 const SORT_COLUMNS: { key: PlanSortKey; label: string }[] = [
   { key: 'id', label: 'Id' },
@@ -44,7 +44,7 @@ const SORT_COLUMNS: { key: PlanSortKey; label: string }[] = [
 ];
 
 const titleButtonClass =
-  'flex items-center gap-2 min-w-0 bg-none border-none p-0 cursor-pointer text-left [font:inherit] text-inherit font-semibold';
+  'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit font-semibold';
 
 const titleTextClass = 'overflow-hidden text-ellipsis whitespace-nowrap';
 
@@ -177,7 +177,7 @@ export const WorklistRows = ({
                   {subject && roadmapItemNames.has(subject) ? (
                     <button
                       type="button"
-                      className={`${subjectHeaderClass} bg-none border-none cursor-pointer text-left hover:underline`}
+                      className={`${subjectHeaderClass} bg-none bg-transparent border-none cursor-pointer text-left hover:underline`}
                       title="View in roadmap"
                       onClick={() => navigate({ to: '/roadmap', search: { item: subject } })}
                     >
@@ -317,7 +317,7 @@ const IdeaGroupRowCard = ({
             <button
               type="button"
               onClick={onToggleExpanded}
-              className="self-start bg-none border-none py-1 px-0 opacity-60 cursor-pointer underline text-xs [font:inherit]"
+              className="self-start bg-none bg-transparent border-none py-1 px-0 opacity-60 cursor-pointer underline text-xs [font:inherit]"
             >
               {expanded ? 'Show less' : `+${done.length} done`}
             </button>

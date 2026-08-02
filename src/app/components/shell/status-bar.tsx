@@ -73,7 +73,7 @@ export const StatusBar = () => {
             <button
               type="button"
               onClick={() => navigate({ to: '/settings/$section', params: { section: 'setup' } })}
-              className="bg-none border-none p-0 cursor-pointer"
+              className="bg-none bg-transparent border-none p-0 cursor-pointer"
             >
               <Stamp size="small" variant="warning">
                 Setup ({capabilityGapCount})

@@ -11,27 +11,28 @@ import { describe, expect, it } from 'vitest';
 // colour/size computed from data at render time. Add it here with a one-line reason.
 const DYNAMIC_STYLE_ALLOWLIST = new Set([
   'features/roadmap/roadmap-page.tsx', // lane offsets/heights computed from timeline data
-  'components/stack-panel/stack-panel.tsx', // framer-motion owns `transform`, forcing the chalkboard background onto the same style object
+  'components/stack-panel/stack-panel.tsx', // framer-motion owns `transform`
   'features/plans/views/plan-filter-column.tsx', // status-dot colour from STATUS_STAMP
   'router.tsx', // paper-ui's Layout has no className prop, only style
+  'components/shell/status-bar.tsx', // paper-ui's getTextureStyles() has no className form
 ]);
 
 const APP_DIR = dirname(fileURLToPath(import.meta.url));
 
-function tsxFiles(dir: string): string[] {
+function jsxFiles(dir: string): string[] {
   const out: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...tsxFiles(full));
-    else if (entry.name.endsWith('.tsx')) out.push(full);
+    if (entry.isDirectory()) out.push(...jsxFiles(full));
+    else if (entry.name.endsWith('.tsx') || entry.name.endsWith('.jsx')) out.push(full);
   }
   return out;
 }
 
 describe('no inline styles (IDEA-112)', () => {
-  it('src/app uses Tailwind classes, not inline style={{}} (except allowlisted dynamic files)', () => {
-    const offenders = tsxFiles(APP_DIR)
-      .filter((f) => /style=\{\{/.test(readFileSync(f, 'utf8')))
+  it('src/app uses Tailwind classes, not inline style={...} (except allowlisted dynamic files)', () => {
+    const offenders = jsxFiles(APP_DIR)
+      .filter((f) => /\bstyle\s*=/.test(readFileSync(f, 'utf8')))
       .map((f) => relative(APP_DIR, f))
       .filter((rel) => !DYNAMIC_STYLE_ALLOWLIST.has(rel))
       .sort();

@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef } from 'react';
 import { AgentSection } from './agent-section';
 import { CommitSection } from './commit-section';
-import { CHALKBOARD_TEXTURE, deskBg, deskLight } from './shared';
+
 interface StackPanelProps {
   open: boolean;
   onToggle: () => void;
@@ -132,14 +132,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
             // var() so utilities.css can nudge it toward one-handed thumb reach below the
             // phone breakpoint; transform stays inline since framer-motion owns that CSS
             // property for the x animation and would clobber a class-based translateY.
-            className="fixed right-0 top-[var(--pc-stack-toggle-top,50%)] z-[300] rounded-l-md shadow-[-2px_0_8px_rgba(0,0,0,0.15)]"
-            style={{
-              transform: 'translateY(-50%)',
-              background: deskBg,
-              backgroundImage: `${CHALKBOARD_TEXTURE}, linear-gradient(135deg, ${deskLight} 0%, ${deskBg} 60%)`,
-              backgroundRepeat: 'repeat, no-repeat',
-              backgroundSize: '200px 200px, auto',
-            }}
+            className="fixed right-0 top-[var(--pc-stack-toggle-top,50%)] z-[300] rounded-l-md shadow-[-2px_0_8px_rgba(0,0,0,0.15)] bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]"
+            style={{ transform: 'translateY(-50%)' }}
           >
             <IconButton
               icon={
@@ -183,13 +177,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         }}
         // Below the phone breakpoint the fixed 480px would overflow the viewport itself.
         // Above the Layout header (z-200) — the panel owns the full right edge.
-        className="fixed inset-y-0 right-0 z-[300] flex w-[min(480px,100vw)] flex-col overflow-hidden border-l-4 border-paper-950/[12%] text-desk-text"
-        style={{
-          backgroundColor: deskBg,
-          backgroundImage: `${CHALKBOARD_TEXTURE}, linear-gradient(135deg, ${deskLight} 0%, ${deskBg} 60%)`,
-          backgroundRepeat: 'repeat, no-repeat',
-          backgroundSize: '200px 200px, auto',
-        }}
+        className="fixed inset-y-0 right-0 z-[300] flex w-[min(480px,100vw)] flex-col overflow-hidden border-l-4 border-paper-950/[12%] text-desk-text bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]"
       >
         <div className="flex h-20 shrink-0 items-center justify-between px-6">
           <span className="font-display-luminari text-base font-bold text-desk-chalk">Stack</span>

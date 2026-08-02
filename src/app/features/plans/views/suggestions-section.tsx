@@ -23,7 +23,7 @@ export const SuggestionsSection = ({ suggestions, onOpen, onDismiss }: Suggestio
                 <button
                   type="button"
                   onClick={() => onOpen(suggestion)}
-                  className="flex-1 min-w-0 flex items-center gap-2 bg-none border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
+                  className="flex-1 min-w-0 flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
                 >
                   <LightbulbIcon />
                   <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">

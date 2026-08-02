@@ -46,7 +46,7 @@ export const CollapsibleText = ({
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          className="self-start bg-none border-none py-1 px-0 [font:inherit] text-xs opacity-60 cursor-pointer underline"
+          className="self-start bg-none bg-transparent border-none py-1 px-0 [font:inherit] text-xs opacity-60 cursor-pointer underline"
         >
           {expanded ? 'Show less' : 'Show more'}
         </button>
