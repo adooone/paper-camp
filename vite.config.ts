@@ -14,6 +14,13 @@ export default defineConfig(({ command }) => {
           '@types': resolve(__dirname, './src/types'),
         },
       },
+      test: {
+        coverage: {
+          provider: 'v8',
+          reporter: ['text', 'json-summary'],
+          reportsDirectory: 'coverage',
+        },
+      },
     };
   }
 

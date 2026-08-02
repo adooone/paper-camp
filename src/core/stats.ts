@@ -43,6 +43,15 @@ function runCommentStats(root: string): CommentStats {
   return { commentLines, sourceLines, ratio };
 }
 
+async function readTestCoveragePct(root: string): Promise<number | null> {
+  const raw = await readFile(join(root, 'coverage', 'coverage-summary.json'), 'utf-8').catch(
+    () => null,
+  );
+  if (!raw) return null;
+  const { total } = JSON.parse(raw);
+  return total?.lines?.pct ?? null;
+}
+
 export function countEntitiesByStatus(
   entities: EntityEntry[],
 ): Partial<Record<EntityStatus, number>> {
@@ -94,8 +103,9 @@ export function tasksPerWeek(entries: TaskLogEntry[]): TasksPerWeek[] {
 
 export async function computeProjectStats(root: string): Promise<ProjectStats> {
   const ideasDir = join(root, 'papercamp', 'ideas');
-  const [testLines, { entries }, taskLogRaw] = await Promise.all([
+  const [testLines, testCoveragePct, { entries }, taskLogRaw] = await Promise.all([
     countTestLines(root),
+    readTestCoveragePct(root),
     readEntitiesWithDerivedStatus(ideasDir),
     readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8').catch(() => ''),
   ]);
@@ -104,6 +114,7 @@ export async function computeProjectStats(root: string): Promise<ProjectStats> {
     generatedAt: new Date().toISOString(),
     comments: runCommentStats(root),
     testLines,
+    testCoveragePct,
     entitiesByStatus: countEntitiesByStatus(entries),
     openQuestions,
     decisions,
