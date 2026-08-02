@@ -203,6 +203,10 @@ export interface ConsistencyIssue {
   planId?: string;
 }
 
+export interface ProjectStats {
+  generatedAt: string;
+}
+
 export type IdeaKind = 'idea' | 'note';
 
 export type IdeaStatus = 'open' | 'done' | 'dropped';

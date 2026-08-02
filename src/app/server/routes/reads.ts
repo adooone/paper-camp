@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { findConsistencyIssues, parseSuggestions, parseTaskLog } from '@/core/parse';
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
-import { coerceAgentConfig } from '@/types/index';
+import { type ProjectStats, coerceAgentConfig } from '@/types/index';
 import { cached } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
 import { listConfigFiles } from './system';
@@ -62,6 +62,10 @@ export const readRoutes: ReadRoute[] = [
       const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
       return findConsistencyIssues(plansResult.entries, subjectVocabulary);
     },
+  },
+  {
+    path: '/api/stats',
+    handler: async (): Promise<ProjectStats> => ({ generatedAt: new Date().toISOString() }),
   },
   {
     path: '/api/config',
