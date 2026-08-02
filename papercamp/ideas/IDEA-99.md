@@ -2,7 +2,7 @@
 id: IDEA-99
 title: Project stats view
 type: feat
-status: in-progress
+status: review
 created: 2026-07-26
 updated: 2026-08-02
 tags:
@@ -40,7 +40,7 @@ Provenance: 2026-07-26, after removing the comment-ratio budget as a build gate 
       Watch-only surface on the Planning subject; every metric is informational and never gates.
 - [x] Append log for trends — dropped (skipped)
       Removed at the user's request: the live on-demand snapshot is sufficient; no evidence a stored series adds value. Not to be built here.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
 
 ### Thread
 - [x] 2026-08-02 [log] [agent] Run-all parked on phase 5 ("Add a lightweight append log for trend-over-time (stretch)") — the agent needs a decision: Phase 5 is explicitly conditional — "Only if a stored series proves more useful than the live snapshot" — and the stats view (phase 4) was only just built with no time elapsed to observe whether the live snapshot is actually insufficient. There's no usage evidence yet that a stored append log would add value over the on-demand snapshot. Do you want me to build the append log now anyway, or should this phase stay unchecked/skipped until the live snapshot has actually been used and found lacking?
