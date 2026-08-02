@@ -29,7 +29,7 @@ Depends on [[IDEA-111]]: the CSS-var color classes must exist first, so the migr
 - [x] Extend `tailwind.config.ts` for the flagged values the preset doesn't cover
 - [x] Migrate the static inline styles to Tailwind utility classes, subsystem by subsystem
       Write `text-accent-green` / `bg-canvas-300` against the [[IDEA-111]] color classes, never fresh literals.
-- [ ] Delete the `space`, `fontSize`, `radius`, `fontFamily`, and `layout` exports from `src/app/styles/tokens.ts`
+- [x] Delete the `space`, `fontSize`, `radius`, `fontFamily`, and `layout` exports from `src/app/styles/tokens.ts`
       Retire `tokens.ts` entirely once `color` is gone too.
 - [ ] Trim `utilities.css` to only pseudo-elements, `[class*="…"]` module overrides, and non-variant media queries
 - [ ] Type-check and full pass
