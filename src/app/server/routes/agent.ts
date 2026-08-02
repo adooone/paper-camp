@@ -169,7 +169,11 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       method: 'POST',
       path: '/api/agent/login-relay/start',
       handle: (_req, res) => {
-        const handle = startClaudeLoginRelay(root);
+        const handle = startClaudeLoginRelay(root, {
+          onLoginConfirmed: () => {
+            void agent.resumeAuthParkedTasks(() => status.runChecksAndWait());
+          },
+        });
         sendJson(res, 200, handle.getState());
       },
     },

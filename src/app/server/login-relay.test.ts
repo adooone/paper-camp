@@ -2,7 +2,7 @@ import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type LoginRelayHandle, getCurrentLoginRelay, startClaudeLoginRelay } from './login-relay';
 
 const originalPath = process.env.PATH;
@@ -97,6 +97,42 @@ describe('startClaudeLoginRelay', () => {
     expect(getCurrentLoginRelay()).toBe(first);
     first.cancel();
     await waitFor(first, (s) => s.phase === 'cancelled');
+  });
+
+  it('polls `claude auth status` after exit and fires onLoginConfirmed once it reports loggedIn', async () => {
+    installClaude(
+      `if [ "$1" = "auth" ] && [ "$2" = "login" ]; then
+         echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 0.1; exit 0
+       elif [ "$1" = "auth" ] && [ "$2" = "status" ]; then
+         echo '{"loggedIn": true, "authMethod": "oauth", "apiProvider": null}'; exit 0
+       fi`,
+    );
+    const onLoginConfirmed = vi.fn();
+    const handle = startClaudeLoginRelay(process.cwd(), {
+      authStatusPollMs: 20,
+      onLoginConfirmed,
+    });
+    await waitFor(handle, (s) => s.phase === 'success');
+    await vi.waitFor(() => expect(onLoginConfirmed).toHaveBeenCalledOnce());
+  });
+
+  it('gives up polling after the timeout without calling onLoginConfirmed', async () => {
+    installClaude(
+      `if [ "$1" = "auth" ] && [ "$2" = "login" ]; then
+         echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 0.1; exit 0
+       elif [ "$1" = "auth" ] && [ "$2" = "status" ]; then
+         echo '{"loggedIn": false, "authMethod": null, "apiProvider": null}'; exit 0
+       fi`,
+    );
+    const onLoginConfirmed = vi.fn();
+    const handle = startClaudeLoginRelay(process.cwd(), {
+      authStatusPollMs: 20,
+      authStatusPollTimeoutMs: 60,
+      onLoginConfirmed,
+    });
+    await waitFor(handle, (s) => s.phase === 'success');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(onLoginConfirmed).not.toHaveBeenCalled();
   });
 
   it('starts a fresh relay once the previous one finished', async () => {

@@ -681,6 +681,63 @@ describe('start (single phase)', () => {
   });
 });
 
+describe('resumeAuthParkedTasks', () => {
+  it('re-launches a single phase that parked on an auth error and clears errorKind', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `process.stderr.write('Not logged in · Please run /login\\n'); process.exit(1);`;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBe('auth');
+
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const { resumed } = await manager.resumeAuthParkedTasks();
+    expect(resumed).toEqual(['IDEA-1']);
+
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+    const after = parseEntityFile(
+      await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
+    );
+    expect(after.entries[0].phases[0].done).toBe(true);
+  });
+
+  it('re-launches a run-all that parked on an auth error', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `process.stderr.write('Not logged in · Please run /login\\n'); process.exit(1);`;
+    const onRunComplete = vi.fn(async () => {});
+    const manager = createAgentManager(root, undefined, undefined, onRunComplete);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBe('auth');
+
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const { resumed } = await manager.resumeAuthParkedTasks();
+    expect(resumed).toEqual(['IDEA-1']);
+
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const after = parseEntityFile(
+      await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
+    );
+    expect(after.entries[0].phases.every((phase) => phase.done)).toBe(true);
+  });
+
+  it('leaves a non-auth failure untouched', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(1)';
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    const { resumed } = await manager.resumeAuthParkedTasks();
+    expect(resumed).toEqual([]);
+    expect(currentStatus(manager)?.status).toBe('error');
+  });
+});
+
 describe('task log', () => {
   it('appends a done entry with kind, plan, agent, and start/end to papercamp/tasks.log', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);

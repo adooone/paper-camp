@@ -3,7 +3,8 @@ import { rm } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import type { CheckName } from '@/types/index';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { agentRoutes } from './agent';
 import type { RouteContext } from './types';
 
@@ -24,8 +25,10 @@ afterEach(async () => {
   await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
 
-function route(path: string) {
-  const found = agentRoutes({ root: process.cwd() } as RouteContext).find((r) => r.path === path);
+function route(path: string, ctx: Partial<RouteContext> = {}) {
+  const found = agentRoutes({ root: process.cwd(), ...ctx } as RouteContext).find(
+    (r) => r.path === path,
+  );
   if (!found) throw new Error(`no route registered for ${path}`);
   return found;
 }
@@ -83,6 +86,32 @@ describe('POST /api/agent/login-relay/start', () => {
 
     const cancel = fakeRes();
     await route('/api/agent/login-relay/cancel').handle(fakeReq(), cancel.res);
+  });
+});
+
+describe('POST /api/agent/login-relay/start resuming parked runs', () => {
+  it('resumes auth-parked tasks once `claude auth status` confirms loggedIn', async () => {
+    installClaude(
+      `if [ "$1" = "auth" ] && [ "$2" = "login" ]; then
+         echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 0.1; exit 0
+       elif [ "$1" = "auth" ] && [ "$2" = "status" ]; then
+         echo '{"loggedIn": true, "authMethod": "oauth", "apiProvider": null}'; exit 0
+       fi`,
+    );
+    const runChecksAndWait = vi.fn(async () => [] as CheckName[]);
+    const resumeAuthParkedTasks = vi.fn(async (_runProjectChecks?: () => Promise<CheckName[]>) => ({
+      resumed: [] as string[],
+    }));
+    const { res } = fakeRes();
+    await route('/api/agent/login-relay/start', {
+      agent: { resumeAuthParkedTasks } as unknown as RouteContext['agent'],
+      status: { runChecksAndWait } as unknown as RouteContext['status'],
+    }).handle(fakeReq(), res);
+
+    await waitFor(async () => resumeAuthParkedTasks.mock.calls.length > 0);
+    const runProjectChecks = resumeAuthParkedTasks.mock.calls[0][0] as () => Promise<unknown>;
+    await runProjectChecks();
+    expect(runChecksAndWait).toHaveBeenCalledOnce();
   });
 });
 

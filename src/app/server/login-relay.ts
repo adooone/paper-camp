@@ -1,9 +1,12 @@
 import * as pty from 'node-pty';
 import type { LoginRelayPhase, LoginRelayState } from '../../types';
+import { claudeAuthStatus } from './services';
 
 const URL_TIMEOUT_MS = 20_000;
 const SESSION_TIMEOUT_MS = 5 * 60_000;
 const KILL_GRACE_MS = 2000;
+const AUTH_STATUS_POLL_MS = 2000;
+const AUTH_STATUS_POLL_TIMEOUT_MS = 30_000;
 
 const ESC = String.fromCharCode(27);
 const ANSI_ESCAPE_RE = new RegExp(
@@ -46,6 +49,30 @@ let current: LoginRelayHandle | null = null;
 export interface LoginRelayOptions {
   urlTimeoutMs?: number;
   sessionTimeoutMs?: number;
+  authStatusPollMs?: number;
+  authStatusPollTimeoutMs?: number;
+  /** Fires once `claude auth status` confirms `loggedIn: true` after the CLI exits —
+   * the caller's cue to clear the signed-out state and resume whatever run parked on it. */
+  onLoginConfirmed?: () => void;
+}
+
+// The CLI exiting 0 already implies success, but its own auth state can lag the
+// exit by a beat, so confirm against the same probe that flagged "signed out" in
+// the first place rather than trusting the exit code alone.
+function pollAuthStatus(root: string, opts: LoginRelayOptions): void {
+  if (!opts.onLoginConfirmed) return;
+  const pollMs = opts.authStatusPollMs ?? AUTH_STATUS_POLL_MS;
+  const deadline = Date.now() + (opts.authStatusPollTimeoutMs ?? AUTH_STATUS_POLL_TIMEOUT_MS);
+  const tick = async () => {
+    const status = await claudeAuthStatus(root);
+    if (status?.loggedIn) {
+      opts.onLoginConfirmed?.();
+      return;
+    }
+    if (Date.now() >= deadline) return;
+    setTimeout(tick, pollMs);
+  };
+  void tick();
 }
 
 export function startClaudeLoginRelay(
@@ -96,6 +123,7 @@ export function startClaudeLoginRelay(
     if (isDone(state.phase)) return;
     if (exitCode === 0 && state.phase === 'awaiting-authorization') {
       state.phase = 'success';
+      pollAuthStatus(root, opts);
     } else {
       state.phase = 'error';
       state.error = state.error ?? 'claude auth login exited before signing in';
