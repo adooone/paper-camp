@@ -1,10 +1,16 @@
 ---
 id: IDEA-99
 title: Project stats view
-status: idea
-created: 2026-07-26
 type: feat
-tags: [stats, metrics, server, ui]
+status: in-progress
+created: 2026-07-26
+updated: 2026-08-02
+tags:
+  - stats
+  - metrics
+  - server
+  - ui
+order: 1
 ---
 
 We collect signals about the codebase but expose none of them, and the one gate built on such a signal — the comment-ratio budget — was removed for failing builds unpredictably (a whole-repo ratio no phase could fix). The information is still worth having; it just belongs as something you *watch*, not something that *blocks*.
@@ -32,6 +38,11 @@ Provenance: 2026-07-26, after removing the comment-ratio budget as a build gate 
       Emit coverage and read back the percentage.
 - [x] Build the read-only stats view under its own nav entry
       Watch-only surface on the Planning subject; every metric is informational and never gates.
-- [ ] Add a lightweight append log for trend-over-time (stretch)
-      Only if a stored series proves more useful than the live snapshot.
+- [ ] Append log for trends — dropped (skipped)
+      Removed at the user's request: the live on-demand snapshot is sufficient; no evidence a stored series adds value. Not to be built here.
 - [ ] Type-check and full pass
+
+### Thread
+- [x] 2026-08-02 [log] [agent] Run-all parked on phase 5 ("Add a lightweight append log for trend-over-time (stretch)") — the agent needs a decision: Phase 5 is explicitly conditional — "Only if a stored series proves more useful than the live snapshot" — and the stats view (phase 4) was only just built with no time elapsed to observe whether the live snapshot is actually insufficient. There's no usage evidence yet that a stored append log would add value over the on-demand snapshot. Do you want me to build the append log now anyway, or should this phase stay unchecked/skipped until the live snapshot has actually been used and found lacking?
+- [x] 2026-08-02 [clarification] remove this phase and skip it
+- [x] 2026-08-02 [log] [agent] Got it — dropping the append-log phase and marking it skipped. The live on-demand snapshot stands on its own; if trend-over-time ever proves worth it, that's a fresh idea, not a parked stretch phase here. That leaves only the final type-check/full pass.
