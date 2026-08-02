@@ -2,9 +2,9 @@
 id: IDEA-112
 title: Move all styling to Tailwind
 type: refactor
-status: review
+status: done
 created: 2026-07-30
-updated: 2026-07-30
+updated: 2026-08-02
 tags:
   - app
   - ui
