@@ -47,7 +47,7 @@ Placement (decided 2026-07-26 — auth is a global precondition, not a per-task 
       Poll until `loggedIn: true`, clear the signed-out state, and resume the parked/failed run per [[IDEA-100]] instead of leaving it failed.
 - [x] Add the "Sign in" action to Settings → Connections
       Put the button on the agent's Connections row (next to git/gh) as the primary home — click opens the authorize URL in a browser tab.
-- [ ] Make the StatusBar signed-out indicator clickable
+- [x] Make the StatusBar signed-out indicator clickable
       The always-visible "Agent not signed in" warning ([[IDEA-86]]) jumps to the Connections row or launches the flow directly.
 - [ ] Pull the auth remediation out of the Stack agent card
       Remove `AuthErrorFix` / the `errorKind === 'auth'` branch from `agent-section.tsx`; a failed task reads "stopped — agent signed out" with a link only.
