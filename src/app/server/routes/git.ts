@@ -134,6 +134,32 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       },
     },
 
+    // "Fix git issues" — rebase the current branch onto its diverged remote;
+    // escalates to the recovery agent on conflict, same as /sync.
+    {
+      method: 'POST',
+      path: '/api/git/fix-divergence',
+      handle: async (_req, res) => {
+        try {
+          const result = await git.fixDivergence();
+          if (!result.ok) {
+            const recovery = agent.startGitSyncRecovery(result.recoveryPrompt);
+            sendJson(res, 202, {
+              error: result.message,
+              stage: result.stage,
+              stashPending: result.stashPending,
+              recovering: recovery.ok,
+              recoveryError: recovery.ok ? undefined : recovery.error,
+            });
+            return;
+          }
+          sendJson(res, 200, { ok: true, state: await git.getLiveState() });
+        } catch (error) {
+          sendJson(res, 409, { error: (error as Error).message });
+        }
+      },
+    },
+
     {
       method: 'GET',
       path: '/api/git/diff',

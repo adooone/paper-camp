@@ -31,8 +31,8 @@ export type StatusSlice = {
   setCommitInFlight: (inFlight: boolean) => void;
 
   // Shared across every useBranchSync() mount so push/sync/pull can't run concurrently.
-  activeGitAction: 'push' | 'sync' | 'pull' | null;
-  setActiveGitAction: (action: 'push' | 'sync' | 'pull' | null) => void;
+  activeGitAction: 'push' | 'sync' | 'pull' | 'fix-divergence' | null;
+  setActiveGitAction: (action: 'push' | 'sync' | 'pull' | 'fix-divergence' | null) => void;
 
   consistency: ConsistencyIssue[];
   loadConsistency: () => Promise<void>;

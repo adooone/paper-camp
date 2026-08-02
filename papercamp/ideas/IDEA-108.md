@@ -29,6 +29,6 @@ The reconcile machinery exists; this idea is the missing detection + surfacing +
       Thread the new field through `git-api.ts` and the `gitAhead`/`gitBranchHygiene` neighbours in `app-store.ts`'s git slice.
 - [x] Surface the split line in the Stack Commit section
       Render a short "main has diverged from origin (N local, N remote)" line next to the git state, matching the existing failing-check pattern.
-- [ ] Add the "Fix git issues" reconcile trigger
+- [x] Add the "Fix git issues" reconcile trigger
       Wire the surfaced line's action to the existing rebase-then-agent recovery job (`launch-reconcile` / [[IDEA-94]]), mirroring the "Suggested fix: run biome --write" affordance.
 - [ ] Type-check and full pass

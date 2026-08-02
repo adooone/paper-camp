@@ -66,6 +66,7 @@ const StatusStamps = () => {
   const gitDiverged = useAppStore((s) => s.gitDiverged);
   const navigate = useNavigate();
   const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
+  const { fixingDivergence, gitActionBusy, handleFixDivergence } = useBranchSync();
 
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
     () => deriveCheckStatuses(statusData),
@@ -231,6 +232,16 @@ const StatusStamps = () => {
             <span className="text-desk-text-muted">
               {gitBranch} has diverged from origin ({gitAhead} local, {gitBehind} remote)
             </span>
+          );
+          secondaryLine = (
+            <button
+              type="button"
+              onClick={handleFixDivergence}
+              disabled={gitActionBusy}
+              className="bg-none bg-transparent border-none p-0 text-desk-chalk underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 [font:inherit]"
+            >
+              {fixingDivergence ? 'Fixing…' : 'Suggested fix: Fix git issues'}
+            </button>
           );
         } else if (qualityStatus === 'fail') {
           primaryLine = (

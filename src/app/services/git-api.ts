@@ -71,6 +71,18 @@ export const pullFromOrigin = async (): Promise<void> => {
   await throwIfNotOk(response, 'Pull failed');
 };
 
+// Rebase the current branch onto its diverged remote; on conflict the server
+// hands off to a recovery agent instead of throwing (see SyncResult).
+export const fixGitDivergence = async (): Promise<SyncResult> => {
+  const response = await fetch('/api/git/fix-divergence', { method: 'POST' });
+  if (response.status === 202) {
+    const data = await response.json();
+    return { ok: false, recovering: data.recovering, message: data.error };
+  }
+  await throwIfNotOk(response, 'Fix failed');
+  return { ok: true };
+};
+
 export const createPlanBranch = async (planId: string): Promise<string> => {
   const response = await fetch('/api/git/branch', {
     method: 'POST',
