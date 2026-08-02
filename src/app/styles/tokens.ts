@@ -1,12 +1,5 @@
 // Mirror of paper-ui's _tokens.scss values — keep in sync with that upstream source.
 
-export const transition = {
-  fast: '150ms ease-out',
-  base: '200ms ease-out',
-  slow: '300ms ease-out',
-  panel: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-} as const;
-
 export const color = {
   textPrimary: '#1A1917',
   // Slightly darker than textPrimary; used specifically for long-form prose

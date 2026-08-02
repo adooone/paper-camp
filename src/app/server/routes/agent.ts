@@ -3,7 +3,7 @@ import { join, relative } from 'node:path';
 import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
 import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
-import { todayDateString } from '@/core/serialize';
+import { agentThreadMessage, todayDateString } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
 import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry, ThreadMessage } from '@/types/index';
 import { readDefaultAgentIds } from '../agent';
@@ -371,13 +371,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           const reopen = (overrides.fixes ?? []).slice(priorFixCount).some((p) => !p.done);
           if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
 
-          const replyMessage: ThreadMessage = {
-            kind: 'log',
-            date: todayDateString(),
-            text: replyText,
-            from: 'agent',
-          };
-          thread = [...answeredThread, replyMessage];
+          thread = [...answeredThread, agentThreadMessage(replyText)];
           await writeEntityFile(
             targetFile,
             entityFileInput(entity, {
