@@ -84,13 +84,30 @@ export function startClaudeLoginRelay(
   const state: LoginRelayState = { phase: 'starting', authorizeUrl: null };
   let buffer = '';
 
-  const proc = pty.spawn('claude', ['auth', 'login'], {
-    name: 'xterm-color',
-    cols: 300,
-    rows: 40,
-    cwd: root,
-    env: process.env as Record<string, string>,
-  });
+  // A no-PTY sandbox or a missing `claude` binary makes pty.spawn throw synchronously
+  // (rather than emit an async 'error' like child_process.spawn) — surface that as the
+  // same 'error' phase so the client falls back to the copy-command guide.
+  let proc: pty.IPty;
+  try {
+    proc = pty.spawn('claude', ['auth', 'login'], {
+      name: 'xterm-color',
+      cols: 300,
+      rows: 40,
+      cwd: root,
+      env: process.env as Record<string, string>,
+    });
+  } catch (err) {
+    const handle: LoginRelayHandle = {
+      getState: () => ({
+        phase: 'error',
+        authorizeUrl: null,
+        error: `The sign-in relay isn't available in this environment: ${(err as Error).message}`,
+      }),
+      cancel: () => {},
+    };
+    current = handle;
+    return handle;
+  }
 
   const urlTimeout = setTimeout(() => {
     if (state.phase !== 'starting') return;

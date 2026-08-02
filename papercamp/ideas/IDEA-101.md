@@ -51,6 +51,6 @@ Placement (decided 2026-07-26 — auth is a global precondition, not a per-task 
       The always-visible "Agent not signed in" warning ([[IDEA-86]]) jumps to the Connections row or launches the flow directly.
 - [x] Pull the auth remediation out of the Stack agent card
       Remove `AuthErrorFix` / the `errorKind === 'auth'` branch from `agent-section.tsx`; a failed task reads "stopped — agent signed out" with a link only.
-- [ ] Keep the copy-command guide as the graceful fallback
+- [x] Keep the copy-command guide as the graceful fallback
       Fall back to the paste-a-command remediation when the relay can't run (no PTY, offline, unsupported CLI); keep the `ANTHROPIC_API_KEY` path as an explicit alternative, not the default.
 - [ ] Type-check and full pass

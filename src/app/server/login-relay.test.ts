@@ -2,6 +2,7 @@ import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import * as pty from 'node-pty';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type LoginRelayHandle, getCurrentLoginRelay, startClaudeLoginRelay } from './login-relay';
 
@@ -133,6 +134,19 @@ describe('startClaudeLoginRelay', () => {
     await waitFor(handle, (s) => s.phase === 'success');
     await new Promise((resolve) => setTimeout(resolve, 200));
     expect(onLoginConfirmed).not.toHaveBeenCalled();
+  });
+
+  it('falls back to an error phase when the environment has no PTY to spawn into', async () => {
+    const spawnSpy = vi.spyOn(pty, 'spawn').mockImplementation(() => {
+      throw new Error('ENOENT, ptmx not found');
+    });
+    const handle = startClaudeLoginRelay(process.cwd());
+    expect(handle.getState().phase).toBe('error');
+    expect(handle.getState().authorizeUrl).toBeNull();
+    expect(handle.getState().error).toMatch(/isn't available in this environment/i);
+    handle.cancel();
+    expect(handle.getState().phase).toBe('error');
+    spawnSpy.mockRestore();
   });
 
   it('starts a fresh relay once the previous one finished', async () => {
