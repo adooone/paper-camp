@@ -30,7 +30,7 @@ Provenance: 2026-07-26, after removing the comment-ratio budget as a build gate 
       Reuse `scripts/comment-stats.mjs --json`; add source vs test lines, entities by status, open-questions/decisions counts, and tasks run per week.
 - [x] Surface test coverage from vitest
       Emit coverage and read back the percentage.
-- [ ] Build the read-only stats view under its own nav entry
+- [x] Build the read-only stats view under its own nav entry
       Watch-only surface on the Planning subject; every metric is informational and never gates.
 - [ ] Add a lightweight append log for trend-over-time (stretch)
       Only if a stored series proves more useful than the live snapshot.

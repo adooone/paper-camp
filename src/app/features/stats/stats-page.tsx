@@ -1,0 +1,139 @@
+import { PageTitle } from '@/app/components/page-title';
+import { STATUS_LABEL } from '@/app/features/plans/constants';
+import { fetchStats } from '@/app/services/content';
+import { color } from '@/app/styles/tokens';
+import { type EntityStatus, PLAN_STATUSES, type ProjectStats } from '@/types/index';
+import { Card, Progress } from '@dendelion/paper-ui';
+import { useEffect, useState } from 'react';
+
+const ENTITY_STATUS_ORDER: EntityStatus[] = ['open', ...PLAN_STATUSES];
+
+const ENTITY_STATUS_LABEL: Record<EntityStatus, string> = { ...STATUS_LABEL, open: 'Open' };
+
+const pct = (value: number) => `${Math.round(value * 100)}%`;
+
+const StatCard = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="flex-[1_1_260px] max-w-[360px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none">
+    <Card size="small" texture="kraft" className="h-full">
+      <div className="flex flex-col gap-3">
+        <span className="font-handwritten text-xs font-semibold opacity-[0.55]">{title}</span>
+        {children}
+      </div>
+    </Card>
+  </div>
+);
+
+const StatRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  <div className="flex items-center justify-between gap-2">
+    <span className="opacity-70">{label}</span>
+    <span className="font-semibold">{value}</span>
+  </div>
+);
+
+const CommentRatioCard = ({ comments }: { comments: ProjectStats['comments'] }) => (
+  <StatCard title="Comment ratio">
+    <Progress value={comments.ratio * 100} color={color.accentSlate} />
+    <StatRow label="Ratio" value={pct(comments.ratio)} />
+    <StatRow label="Comment lines" value={comments.commentLines} />
+    <StatRow label="Source lines" value={comments.sourceLines} />
+  </StatCard>
+);
+
+const TestCoverageCard = ({ testCoveragePct }: { testCoveragePct: number | null }) => (
+  <StatCard title="Test coverage">
+    {testCoveragePct === null ? (
+      <p className="opacity-50 m-0">Run `pnpm test` to generate a coverage report.</p>
+    ) : (
+      <>
+        <Progress value={testCoveragePct} color={color.accentGreen} />
+        <StatRow label="Line coverage" value={`${Math.round(testCoveragePct)}%`} />
+      </>
+    )}
+  </StatCard>
+);
+
+const CodebaseSizeCard = ({
+  sourceLines,
+  testLines,
+}: { sourceLines: number; testLines: number }) => (
+  <StatCard title="Codebase size">
+    <StatRow label="Source lines" value={sourceLines} />
+    <StatRow label="Test lines" value={testLines} />
+  </StatCard>
+);
+
+const EntitiesByStatusCard = ({
+  entitiesByStatus,
+}: { entitiesByStatus: ProjectStats['entitiesByStatus'] }) => (
+  <StatCard title="Entities by status">
+    {ENTITY_STATUS_ORDER.filter((status) => entitiesByStatus[status]).map((status) => (
+      <StatRow key={status} label={ENTITY_STATUS_LABEL[status]} value={entitiesByStatus[status]} />
+    ))}
+    {Object.keys(entitiesByStatus).length === 0 && (
+      <p className="opacity-50 m-0">No entities yet.</p>
+    )}
+  </StatCard>
+);
+
+const NotesCard = ({ openQuestions, decisions }: { openQuestions: number; decisions: number }) => (
+  <StatCard title="Notes">
+    <StatRow label="Open questions" value={openQuestions} />
+    <StatRow label="Decisions" value={decisions} />
+  </StatCard>
+);
+
+const TasksPerWeekCard = ({ tasksPerWeek }: { tasksPerWeek: ProjectStats['tasksPerWeek'] }) => {
+  const max = Math.max(1, ...tasksPerWeek.map((w) => w.count));
+  return (
+    <StatCard title="Tasks per week">
+      {tasksPerWeek.length === 0 && <p className="opacity-50 m-0">No tasks run yet.</p>}
+      {tasksPerWeek.map((week) => (
+        <div key={week.week} className="flex flex-col gap-1">
+          <StatRow label={week.week} value={week.count} />
+          <Progress value={week.count} max={max} color={color.accentAmber} height={4} />
+        </div>
+      ))}
+    </StatCard>
+  );
+};
+
+export const StatsPage = () => {
+  const [stats, setStats] = useState<ProjectStats | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  useEffect(() => {
+    fetchStats()
+      .then(setStats)
+      .catch(() => setLoadFailed(true));
+  }, []);
+
+  return (
+    <div>
+      <PageTitle>Stats</PageTitle>
+      <p className="opacity-50 mb-6">
+        A read-only look at project health — every number here is informational, none of them gate
+        anything.
+      </p>
+      {loadFailed && <p className="opacity-50">Couldn't load stats.</p>}
+      {!loadFailed && !stats && <p className="opacity-50">Loading…</p>}
+      {stats && (
+        <>
+          <div className="flex flex-wrap items-start gap-2.5">
+            <CommentRatioCard comments={stats.comments} />
+            <TestCoverageCard testCoveragePct={stats.testCoveragePct} />
+            <CodebaseSizeCard
+              sourceLines={stats.comments.sourceLines}
+              testLines={stats.testLines}
+            />
+            <EntitiesByStatusCard entitiesByStatus={stats.entitiesByStatus} />
+            <NotesCard openQuestions={stats.openQuestions} decisions={stats.decisions} />
+            <TasksPerWeekCard tasksPerWeek={stats.tasksPerWeek} />
+          </div>
+          <p className="opacity-[0.4] text-2xs mt-6">
+            Generated {new Date(stats.generatedAt).toLocaleString()}
+          </p>
+        </>
+      )}
+    </div>
+  );
+};
