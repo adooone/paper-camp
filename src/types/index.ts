@@ -203,6 +203,30 @@ export interface ConsistencyIssue {
   planId?: string;
 }
 
+export interface CommentStats {
+  commentLines: number;
+  sourceLines: number;
+  ratio: number;
+}
+
+export interface TasksPerWeek {
+  /** ISO week, e.g. "2026-W05". */
+  week: string;
+  count: number;
+}
+
+export interface ProjectStats {
+  generatedAt: string;
+  comments: CommentStats;
+  testLines: number;
+  /** Null when no coverage report has been emitted yet (run `pnpm test`). */
+  testCoveragePct: number | null;
+  entitiesByStatus: Partial<Record<EntityStatus, number>>;
+  openQuestions: number;
+  decisions: number;
+  tasksPerWeek: TasksPerWeek[];
+}
+
 export type IdeaKind = 'idea' | 'note';
 
 export type IdeaStatus = 'open' | 'done' | 'dropped';
