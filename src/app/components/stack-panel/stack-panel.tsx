@@ -1,20 +1,11 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { fontFamily, fontSize, layout, space } from '@/app/styles/tokens';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { Divider, IconButton, Spinner } from '@dendelion/paper-ui';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef } from 'react';
 import { AgentSection } from './agent-section';
 import { CommitSection } from './commit-section';
-import {
-  CHALKBOARD_TEXTURE,
-  chalkStatusText,
-  deskBg,
-  deskBorder,
-  deskChalk,
-  deskLight,
-  deskText,
-} from './shared';
+import { CHALKBOARD_TEXTURE, deskBg, deskLight } from './shared';
 interface StackPanelProps {
   open: boolean;
   onToggle: () => void;
@@ -138,20 +129,16 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
             animate={{ opacity: 1, x: 0 }}
             exit={shouldReduceMotion ? undefined : { opacity: 0, x: 20 }}
             transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+            // var() so utilities.css can nudge it toward one-handed thumb reach below the
+            // phone breakpoint; transform stays inline since framer-motion owns that CSS
+            // property for the x animation and would clobber a class-based translateY.
+            className="fixed right-0 top-[var(--pc-stack-toggle-top,50%)] z-[300] rounded-l-md shadow-[-2px_0_8px_rgba(0,0,0,0.15)]"
             style={{
-              position: 'fixed',
-              right: 0,
-              // var() so utilities.css can nudge it toward one-handed thumb reach
-              // below the phone breakpoint, without disturbing framer-motion's x animation.
-              top: 'var(--pc-stack-toggle-top, 50%)',
               transform: 'translateY(-50%)',
-              zIndex: 300, // above the Layout header's z-200
-              borderRadius: '6px 0 0 6px',
               background: deskBg,
               backgroundImage: `${CHALKBOARD_TEXTURE}, linear-gradient(135deg, ${deskLight} 0%, ${deskBg} 60%)`,
               backgroundRepeat: 'repeat, no-repeat',
               backgroundSize: '200px 200px, auto',
-              boxShadow: '-2px 0 8px rgba(0,0,0,0.15)',
             }}
           >
             <IconButton
@@ -161,16 +148,10 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
                 ) : anyChecksFailing ? (
                   <span
                     aria-hidden="true"
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: chalkStatusText.fail,
-                      boxShadow: '0 0 6px rgba(214, 160, 160, 0.9)',
-                    }}
+                    className="h-2 w-2 rounded-full bg-chalk-fail-text shadow-[0_0_6px_rgba(214,160,160,0.9)]"
                   />
                 ) : (
-                  <span style={{ fontSize: fontSize['2xs'] }}>S</span>
+                  <span className="text-2xs">S</span>
                 )
               }
               surface="chalkboard"
@@ -183,16 +164,13 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
                     : 'Open stack panel'
               }
               onClick={onToggle}
-              style={{
-                width: 28,
-                height: 64,
-                borderRadius: '6px 0 0 6px',
-                boxShadow: agentActive
-                  ? 'inset 0 0 0 1px rgba(214, 196, 160, 0.6)'
+              className={`w-7 h-[64px] rounded-l-md ${
+                agentActive
+                  ? 'shadow-[inset_0_0_0_1px_rgba(214,196,160,0.6)]'
                   : anyChecksFailing
-                    ? 'inset 0 0 0 1px rgba(214, 160, 160, 0.6)'
-                    : undefined,
-              }}
+                    ? 'shadow-[inset_0_0_0_1px_rgba(214,160,160,0.6)]'
+                    : ''
+              }`}
             />
           </motion.div>
         )}
@@ -203,67 +181,31 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           duration: shouldReduceMotion ? 0 : 0.3,
           ease: [0.4, 0, 0.2, 1],
         }}
+        // Below the phone breakpoint the fixed 480px would overflow the viewport itself.
+        // Above the Layout header (z-200) — the panel owns the full right edge.
+        className="fixed inset-y-0 right-0 z-[300] flex w-[min(480px,100vw)] flex-col overflow-hidden border-l-4 border-paper-950/[12%] text-desk-text"
         style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          // Below the phone breakpoint the fixed 480px would overflow the viewport itself.
-          width: `min(${layout.stackPanelWidth}px, 100vw)`,
-          borderLeft: '4px solid rgba(61, 53, 43, 0.12)',
           backgroundColor: deskBg,
           backgroundImage: `${CHALKBOARD_TEXTURE}, linear-gradient(135deg, ${deskLight} 0%, ${deskBg} 60%)`,
           backgroundRepeat: 'repeat, no-repeat',
           backgroundSize: '200px 200px, auto',
-          color: deskText,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          // Above the Layout header (z-200) — the panel owns the full right edge.
-          zIndex: 300,
         }}
       >
-        <div
-          style={{
-            height: 80,
-            padding: `0 ${space[6]}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexShrink: 0,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: fontFamily.serif,
-              fontSize: fontSize.base,
-              fontWeight: 700,
-              color: deskChalk,
-            }}
-          >
-            Stack
-          </span>
+        <div className="flex h-20 shrink-0 items-center justify-between px-6">
+          <span className="font-display-luminari text-base font-bold text-desk-chalk">Stack</span>
           {!pinned && (
             <IconButton
-              icon={<span style={{ fontSize: fontSize.sm, lineHeight: 1 }}>&times;</span>}
+              icon={<span className="text-sm leading-none">&times;</span>}
               surface="chalkboard"
               size="small"
               label="Close stack panel"
               onClick={onToggle}
-              style={{ width: 28, height: 28, border: `1px solid ${deskBorder}` }}
+              className="h-7 w-7 border border-desk-border"
             />
           )}
         </div>
         <Divider surface="chalkboard" />
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            fontFamily: fontFamily.body,
-          }}
-        >
+        <div className="flex min-h-0 flex-1 flex-col">
           <AgentSection />
           <Divider surface="chalkboard" />
           <CommitSection />

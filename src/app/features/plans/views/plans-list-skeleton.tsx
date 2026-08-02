@@ -1,4 +1,3 @@
-import { space } from '@/app/styles/tokens';
 import { Card, Skeleton } from '@dendelion/paper-ui';
 
 // Stable keys + varied title widths so the placeholder rows read as a real,
@@ -15,7 +14,7 @@ const ROWS = [
 // Mirrors PlanRows' layout on the shared .plan-rows-grid template so nothing jumps
 // when /api/plans resolves (status derives from a `gh` PR lookup, so a cold read can take a moment).
 export const PlansListSkeleton = () => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }} aria-hidden="true">
+  <div className="flex flex-col gap-1" aria-hidden="true">
     <Card size="small" texture="kraft" className="plan-row-card">
       <div className="plan-rows-grid">
         <Skeleton variant="text" width={36} />

@@ -1,4 +1,3 @@
-import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { useEffect, useState } from 'react';
 
 // Vite's HMR websocket, not the app's own SSE stream — it must still reach the
@@ -24,14 +23,7 @@ export const ServerReloadBanner = () => {
   return (
     <div
       role="alert"
-      style={{
-        background: color.accentRoseDark,
-        color: color.deskText,
-        padding: `${space[2]} ${space[4]}`,
-        fontSize: fontSize['2xs'],
-        fontFamily: fontFamily.mono,
-        flexShrink: 0,
-      }}
+      className="bg-watercolor-rose-dark text-desk-text py-2 px-4 text-2xs font-mono shrink-0"
     >
       Server failed to reload — restart `pnpm dev` to pick up the change. {message}
     </div>

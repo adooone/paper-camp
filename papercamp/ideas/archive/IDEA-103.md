@@ -2,9 +2,9 @@
 id: IDEA-103
 title: One feedback thread on every idea, any status
 type: feat
-status: review
+status: done
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-08-02
 tags:
   - app
   - plans

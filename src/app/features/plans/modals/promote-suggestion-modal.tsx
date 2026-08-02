@@ -1,6 +1,5 @@
 import { buildSuggestionPromotePrompt } from '@/app/features/plans/prompts';
 import { useAppStore } from '@/app/stores/app-store';
-import { color, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { SuggestionEntry } from '@/types/index';
 import { Button, Modal, useToast } from '@dendelion/paper-ui';
@@ -62,12 +61,10 @@ export const PromoteSuggestionModal = ({ suggestion, onClose }: PromoteSuggestio
       title={suggestion?.title ?? ''}
       size="small"
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
-        <p style={{ margin: 0, opacity: 0.8 }}>{suggestion?.description}</p>
-        {error && (
-          <p style={{ margin: 0, color: color.accentRoseDark, fontSize: fontSize.sm }}>{error}</p>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+      <div className="flex flex-col gap-4">
+        <p className="m-0 opacity-80">{suggestion?.description}</p>
+        {error && <p className="m-0 text-watercolor-rose-dark text-sm">{error}</p>}
+        <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             Cancel
           </Button>

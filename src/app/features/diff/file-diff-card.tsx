@@ -1,12 +1,11 @@
-import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { type DiffLineType, parsePatch, rawContentHunks } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
 
-const LINE_STYLE: Record<DiffLineType, React.CSSProperties> = {
-  add: { background: color.diffAddedBg, color: color.accentGreenDark },
-  remove: { background: color.diffRemovedBg, color: color.accentRoseDark },
-  context: {},
+const LINE_CLASS: Record<DiffLineType, string> = {
+  add: 'bg-watercolor-green/[18%] text-watercolor-green-dark',
+  remove: 'bg-watercolor-rose/[18%] text-watercolor-rose-dark',
+  context: '',
 };
 
 const LINE_PREFIX: Record<DiffLineType, string> = { add: '+', remove: '-', context: ' ' };
@@ -17,17 +16,9 @@ interface CountBadgeProps {
 }
 
 const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
-  <span
-    style={{
-      display: 'inline-flex',
-      gap: space[2],
-      fontFamily: fontFamily.mono,
-      fontSize: fontSize['2xs'],
-      flexShrink: 0,
-    }}
-  >
-    <span style={{ color: color.accentGreenDark }}>+{additions}</span>
-    <span style={{ color: color.accentRoseDark }}>-{deletions}</span>
+  <span className="inline-flex shrink-0 gap-2 font-mono text-2xs">
+    <span className="text-watercolor-green-dark">+{additions}</span>
+    <span className="text-watercolor-rose-dark">-{deletions}</span>
   </span>
 );
 
@@ -36,28 +27,11 @@ interface CardTitleProps {
 }
 
 const CardTitle = ({ entry }: CardTitleProps) => (
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: space[3],
-      width: '100%',
-      minWidth: 0,
-    }}
-  >
-    <span
-      style={{
-        fontFamily: fontFamily.mono,
-        fontSize: fontSize.xs,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}
-    >
+  <div className="flex w-full min-w-0 items-center justify-between gap-3">
+    <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs">
       {entry.renameSource ? `${entry.renameSource} → ${entry.path}` : entry.path}
     </span>
-    <span style={{ display: 'flex', alignItems: 'center', gap: space[2], flexShrink: 0 }}>
+    <span className="flex shrink-0 items-center gap-2">
       {entry.staged && <Stamp size="small">staged</Stamp>}
       {!entry.binary && <CountBadge additions={entry.additions} deletions={entry.deletions} />}
     </span>
@@ -70,55 +44,34 @@ interface DiffBodyProps {
 
 const DiffBody = ({ entry }: DiffBodyProps) => {
   if (entry.binary) {
-    return <p style={{ margin: 0, opacity: 0.6 }}>Binary file not shown.</p>;
+    return <p className="m-0 opacity-60">Binary file not shown.</p>;
   }
   if (entry.contentKind === 'too-large') {
-    return <p style={{ margin: 0, opacity: 0.6 }}>File too large to preview.</p>;
+    return <p className="m-0 opacity-60">File too large to preview.</p>;
   }
   const hunks =
     entry.contentKind === 'raw' ? rawContentHunks(entry.patch) : parsePatch(entry.patch);
   if (hunks.length === 0) {
     if (entry.renameSource) {
       return (
-        <p style={{ margin: 0, opacity: 0.6 }}>
+        <p className="m-0 opacity-60">
           {entry.additions === 0 && entry.deletions === 0
             ? 'Renamed, no content changes.'
             : 'Renamed with unrelated content — diff omitted.'}
         </p>
       );
     }
-    return <p style={{ margin: 0, opacity: 0.6 }}>No changes to preview.</p>;
+    return <p className="m-0 opacity-60">No changes to preview.</p>;
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: space[3] }}>
+    <div className="flex flex-col gap-3">
       {hunks.map((hunk, i) => (
         <div key={`${hunk.header}-${i}`}>
-          {hunk.header && (
-            <div
-              style={{
-                fontFamily: fontFamily.mono,
-                fontSize: fontSize['2xs'],
-                opacity: 0.5,
-                marginBottom: space[1],
-              }}
-            >
-              {hunk.header}
-            </div>
-          )}
+          {hunk.header && <div className="mb-1 font-mono text-2xs opacity-50">{hunk.header}</div>}
           {/* paper-ui's CodeBlock has no per-line add/remove styling. */}
-          <pre
-            style={{
-              margin: 0,
-              overflowX: 'auto',
-              fontFamily: fontFamily.mono,
-              fontSize: fontSize['2xs'],
-            }}
-          >
+          <pre className="m-0 overflow-x-auto font-mono text-2xs">
             {hunk.lines.map((line, j) => (
-              <span
-                key={`${line.type}-${j}`}
-                style={{ display: 'block', ...LINE_STYLE[line.type] }}
-              >
+              <span key={`${line.type}-${j}`} className={`block ${LINE_CLASS[line.type]}`}>
                 {LINE_PREFIX[line.type]}
                 {line.text}
               </span>
@@ -136,9 +89,9 @@ interface FileDiffSectionProps {
 }
 
 export const FileDiffSection = ({ entry, sectionRef }: FileDiffSectionProps) => (
-  <div ref={sectionRef} style={{ scrollMarginTop: space[4] }}>
+  <div ref={sectionRef} className="scroll-mt-4">
     <Card>
-      <div style={{ marginBottom: space[3] }}>
+      <div className="mb-3">
         <CardTitle entry={entry} />
       </div>
       <DiffBody entry={entry} />

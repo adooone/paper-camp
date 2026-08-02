@@ -192,3 +192,48 @@ the desk/diff/overlay colors straight to this repo's `tailwind.config.ts`
 - `diffAddedBg`/`diffRemovedBg` (0.18 alpha) vs. the near-duplicate raw
   `rgba(143,185,150,0.3)` / `rgba(201,139,139,0.3)` literals — reconcile to
   one alpha value or keep both as distinct tokens?
+
+## Phase 2 resolution
+
+Checking each flagged literal's RGB against `paperPreset` byte-for-byte (ignoring
+alpha) found several "no match" calls above were wrong — they're exact matches to
+an existing preset color at a non-default opacity, expressible with Tailwind's
+arbitrary-opacity modifier (`bg-watercolor-green/[18%]`) with **no config
+extension**:
+
+- `diffAddedBg`/`diffRemovedBg` (0.18) and their 0.3-alpha near-duplicates →
+  `watercolor-green`/`watercolor-rose` at different opacity modifiers. Resolves
+  the "reconcile alphas?" flag too — both alphas stay, on the same base color,
+  no duplication.
+- The `rgba(0,0,0,*)` black-overlay tint family → Tailwind's built-in `black`
+  at arbitrary opacity (`bg-black/[8%]`, etc.).
+- `rgba(26,25,23,0.4)` (sidebar-shell backdrop) → exactly `ink-900` (`#1A1917`).
+- `rgba(61,53,43,0.12)` (stack-panel border) → exactly `paper-950` (`#3D352B`).
+
+`color.textProse` (`#1C1B18`) is 2 RGB units off `ink-900` (`#1A1917`) —
+imperceptible, and per this repo's simplification bias, folded into `ink-900`
+rather than kept as a one-off token. No config entry added.
+
+Genuinely new — added to `tailwind.config.ts` `theme.extend.colors`:
+
+- `desk.{bg,light,text,text-muted,border,chalk}` — the homepage/stack-panel
+  chalkboard palette, no preset match.
+- `chalk.{pass,pass-text,fail,fail-text,running,running-text}` — lifted from
+  `stack-panel/shared.ts`'s local `chalkStatusFill`/`chalkStatusText` consts;
+  `chalk.fail-text` (`#d6a0a0`) and `chalk.running-text` (`#d6c4a0`) are the
+  same values as the `rgba(214,160,160,*)` / `rgba(214,196,160,*)` glow
+  literals in `stack-panel.tsx` — same family, not a separate one-off.
+- `state.{success,danger}` (`#6A9B72` / `#A06060`) — the copy-button
+  success/failure colors, reused for the `planned`/`dropped` plan-status
+  colors in `constants.ts`.
+
+`fontSize` (9-step scale) and `borderRadius.{20,28}` added as scoped by the
+original inventory above, verbatim.
+
+Not touched here — out of scope per the original inventory ("worth a
+follow-up, out of scope here"): the `STATUS_STAMP`/`IDEA_STATUS_STAMP`/
+`PR_STATE_STAMP`/`REVIEW_DECISION_STAMP` enum maps in
+`features/plans/constants.ts`. Some of their colors match preset watercolor
+tones exactly; others (a purple, a mauve) don't and would need new config
+colors — deferred to whoever picks up that follow-up, since it may replace
+these with paper-ui's `Stamp` component instead of adding more one-off colors.

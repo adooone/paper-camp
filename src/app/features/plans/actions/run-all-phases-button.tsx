@@ -1,5 +1,4 @@
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
-import { color } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { ListItem, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -37,10 +36,10 @@ export const RunAllPhasesButton = ({ plan, disabled }: RunAllPhasesButtonProps) 
     <Tooltip content={hint}>
       <ListItem
         size="small"
-        icon={<span style={{ color: color.textSecondary }}>▶</span>}
+        icon={<span className="text-ink-500">▶</span>}
         onClick={handleClick}
         disabled={isDisabled}
-        style={isDisabled ? { opacity: 0.5 } : undefined}
+        className={isDisabled ? 'opacity-50' : undefined}
       >
         {launching ? 'Starting…' : 'Run all phases'}
       </ListItem>

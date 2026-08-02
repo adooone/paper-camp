@@ -1,7 +1,7 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useActiveSettingsSection, useProjectIdentity } from '@/app/hooks';
 import { fetchConfig, saveConfig, uploadIcon } from '@/app/services/system';
-import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
+import { color } from '@/app/styles/tokens';
 import {
   AGENT_IDS,
   AGENT_LABELS,
@@ -41,32 +41,11 @@ const MODEL_COLUMN_WIDTH = 160;
 const EFFORT_COLUMN_WIDTH = 110;
 
 const AgentTaskRowHeader = () => (
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: space[3],
-      paddingBottom: space[1],
-    }}
-  >
-    <span style={{ width: TASK_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}>
-      Task
-    </span>
-    <span
-      style={{ width: AGENT_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}
-    >
-      Agent
-    </span>
-    <span
-      style={{ width: MODEL_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}
-    >
-      Model
-    </span>
-    <span
-      style={{ width: EFFORT_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.45 }}
-    >
-      Effort
-    </span>
+  <div className="flex items-center gap-3 pb-1">
+    <span className="w-[110px] shrink-0 text-sm opacity-[0.45]">Task</span>
+    <span className="w-[140px] shrink-0 text-sm opacity-[0.45]">Agent</span>
+    <span className="w-[160px] shrink-0 text-sm opacity-[0.45]">Model</span>
+    <span className="w-[110px] shrink-0 text-sm opacity-[0.45]">Effort</span>
   </div>
 );
 
@@ -111,18 +90,8 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave }: AgentTaskRowProp
 
   return (
     <>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: space[3],
-          paddingBottom: space[2],
-          paddingTop: space[2],
-        }}
-      >
-        <span
-          style={{ width: TASK_COLUMN_WIDTH, flexShrink: 0, fontSize: fontSize.sm, opacity: 0.65 }}
-        >
+      <div className="flex items-center gap-3 pb-2 pt-2">
+        <span className="w-[110px] shrink-0 text-sm opacity-[0.65]">
           {TASK_TYPE_LABELS[taskKey]}
         </span>
         <Select
@@ -146,7 +115,7 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave }: AgentTaskRowProp
         ) : modelOpts === null ? (
           <Input
             size="small"
-            style={{ width: MODEL_COLUMN_WIDTH }}
+            className="w-[160px]"
             value={localModel}
             placeholder="Default model"
             onChange={(e) => setLocalModel(e.target.value)}
@@ -155,7 +124,7 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave }: AgentTaskRowProp
         ) : null}
         {/* Reserve the effort slot even when the agent has no effort options, so
             switching agents doesn't change the control count and shift the row. */}
-        <div style={{ visibility: Array.isArray(effortOpts) ? 'visible' : 'hidden' }}>
+        <div className={Array.isArray(effortOpts) ? 'visible' : 'invisible'}>
           <Select
             size="small"
             width={EFFORT_COLUMN_WIDTH}
@@ -256,8 +225,8 @@ const GeneralSection = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: space[6] }}>
-        <h2 style={{ margin: 0 }}>Project Info</h2>
+      <div className="mb-6">
+        <h2 className="m-0">Project Info</h2>
       </div>
       {config === undefined && <p>Loading…</p>}
       {config === null && (
@@ -267,14 +236,7 @@ const GeneralSection = () => {
       )}
       {config && (
         <Card size="small" texture="kraft">
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              gap: space[3],
-              paddingBottom: space[3],
-            }}
-          >
+          <div className="flex items-end gap-3 pb-3">
             <Input
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
@@ -291,26 +253,12 @@ const GeneralSection = () => {
           </div>
           <Divider />
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: space[3],
-              paddingBottom: space[3],
-              paddingTop: space[3],
-            }}
-          >
+          <div className="flex items-center gap-3 pb-3 pt-3">
             {iconDataUri && (
               <img
                 src={iconDataUri}
                 alt="Project icon"
-                style={{
-                  width: 40,
-                  height: 40,
-                  objectFit: 'contain',
-                  flexShrink: 0,
-                  borderRadius: 4,
-                }}
+                className="w-10 h-10 object-contain shrink-0 rounded"
               />
             )}
             <div>
@@ -320,34 +268,20 @@ const GeneralSection = () => {
                 type="file"
                 accept=".svg,.png,.jpg,.jpeg,.gif,.webp"
                 onChange={handleFile}
-                style={{ display: 'none' }}
+                className="hidden"
               />
               <Button size="small" onClick={() => fileRef.current?.click()} disabled={uploading}>
                 {uploading ? 'Uploading…' : 'Choose File'}
               </Button>
-              {identityLoading && (
-                <p className="text-sm" style={{ opacity: 0.5, margin: `${space[1]} 0 0` }}>
-                  Loading…
-                </p>
-              )}
+              {identityLoading && <p className="text-sm opacity-50 mt-1 mx-0 mb-0">Loading…</p>}
               {!identityLoading && !iconDataUri && !uploading && (
-                <p className="text-sm" style={{ opacity: 0.45, margin: `${space[1]} 0 0` }}>
-                  No icon set.
-                </p>
+                <p className="text-sm opacity-[0.45] mt-1 mx-0 mb-0">No icon set.</p>
               )}
             </div>
           </div>
           <Divider />
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              gap: space[3],
-              paddingBottom: space[3],
-              paddingTop: space[3],
-            }}
-          >
+          <div className="flex items-end gap-3 pb-3 pt-3">
             <Input
               type="number"
               value={portInput}
@@ -372,7 +306,7 @@ const GeneralSection = () => {
         </Card>
       )}
 
-      <p style={{ opacity: 0.45, fontSize: fontSize.sm, marginTop: space[4] }}>
+      <p className="opacity-[0.45] text-sm mt-4">
         <strong>Initialized:</strong>{' '}
         {config ? new Date(config.initializedAt).toLocaleString() : '—'}
       </p>

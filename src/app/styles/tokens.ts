@@ -34,13 +34,6 @@ export const fontSize = {
   '3xl': '3.5rem',
 } as const;
 
-export const lineHeight = {
-  tight: 1.2,
-  snug: 1.35,
-  normal: 1.5,
-  relaxed: 1.7,
-} as const;
-
 export const radius = {
   sm: '8px',
   md: '12px',

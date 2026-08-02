@@ -1,7 +1,6 @@
-import { detailHeadingStyle } from '@/app/components/detail-heading-style';
+import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import { useAppStore } from '@/app/stores/app-store';
-import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 
 export const RepoDocDetail = () => {
   const repoDocs = useAppStore((s) => s.repoDocs);
@@ -14,32 +13,14 @@ export const RepoDocDetail = () => {
 
   return (
     <div>
-      <h2 style={{ ...detailHeadingStyle, margin: `0 0 ${space[4]}` }}>{file.name}</h2>
+      <h2 className={`${detailHeadingClassName} m-0 mb-4`}>{file.name}</h2>
 
       {isMarkdown ? (
-        <div
-          style={{
-            fontFamily: fontFamily.body,
-            fontSize: fontSize.base,
-            lineHeight: lineHeight.relaxed,
-            color: color.textProse,
-          }}
-        >
+        <div className="text-base leading-[1.7] text-ink-900">
           <Markdown>{file.content}</Markdown>
         </div>
       ) : (
-        <pre
-          style={{
-            fontFamily: fontFamily.mono,
-            fontSize: fontSize.xs,
-            background: 'rgba(0,0,0,0.04)',
-            borderRadius: 6,
-            padding: space[4],
-            overflowX: 'auto',
-            lineHeight: lineHeight.normal,
-            whiteSpace: 'pre-wrap',
-          }}
-        >
+        <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-black/[4%] p-4 font-mono text-xs leading-normal">
           {file.content}
         </pre>
       )}

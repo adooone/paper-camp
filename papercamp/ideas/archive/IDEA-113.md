@@ -2,9 +2,9 @@
 id: IDEA-113
 title: Feedback as a single chat thread
 type: feat
-status: review
+status: done
 created: 2026-07-31
-updated: 2026-07-31
+updated: 2026-08-02
 tags:
   - app
   - ui

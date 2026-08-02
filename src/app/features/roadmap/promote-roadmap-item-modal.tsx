@@ -1,7 +1,6 @@
 import { buildRoadmapPromotePrompt } from '@/app/features/plans/prompts';
 import { useSubjectVocabulary } from '@/app/hooks/use-subject-vocabulary';
 import { useAppStore } from '@/app/stores/app-store';
-import { color, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { RoadmapItem } from '@/types/index';
 import { Button, Modal, Select, useToast } from '@dendelion/paper-ui';
@@ -83,8 +82,8 @@ export const PromoteRoadmapItemModal = ({
       title={candidateName ?? item?.name ?? ''}
       size="small"
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
-        {!candidateName && <p style={{ margin: 0, opacity: 0.8 }}>{item?.description}</p>}
+      <div className="flex flex-col gap-4">
+        {!candidateName && <p className="m-0 opacity-80">{item?.description}</p>}
         <div>
           <Select
             size="small"
@@ -100,10 +99,8 @@ export const PromoteRoadmapItemModal = ({
             ]}
           />
         </div>
-        {error && (
-          <p style={{ margin: 0, color: color.accentRoseDark, fontSize: fontSize.sm }}>{error}</p>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+        {error && <p className="m-0 text-watercolor-rose-dark text-sm">{error}</p>}
+        <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             Cancel
           </Button>

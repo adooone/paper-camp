@@ -4,12 +4,9 @@ import {
   selectCapabilityGapCount,
   useAppStore,
 } from '@/app/stores/app-store';
-import { color, fontSize, space } from '@/app/styles/tokens';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { CommitIcon, MergeIcon, PullIcon, PushIcon } from '../icons';
-
-const btnStyle = { fontSize: fontSize['2xs'] };
 
 // Ambient status + immediate quick actions; the Stack panel remains the full control surface.
 export const StatusBar = () => {
@@ -50,29 +47,16 @@ export const StatusBar = () => {
 
   return (
     <div
-      style={{
-        ...getTextureStyles('kraft'),
-        display: 'flex',
-        alignItems: 'center',
-        gap: space[3],
-        height: '32px',
-        padding: `0 ${space[4]}`,
-        borderBottom: '1px solid rgba(0,0,0,0.08)',
-        fontSize: fontSize['2xs'],
-        flexShrink: 0,
-        boxSizing: 'border-box',
-        overflowX: 'auto',
-        overflowY: 'hidden',
-        whiteSpace: 'nowrap',
-      }}
+      style={getTextureStyles('kraft')}
+      className="flex items-center gap-3 h-8 px-4 border-b border-black/[8%] text-2xs flex-shrink-0 box-border overflow-x-auto overflow-y-hidden whitespace-nowrap"
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: space[3], flexShrink: 0 }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
-          <span style={{ opacity: 0.5 }}>⌥</span>
-          <code style={{ color: color.textPrimary }}>{gitBranch ?? 'no branch'}</code>
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <span className="flex items-center gap-1">
+          <span className="opacity-50">⌥</span>
+          <code className="text-ink-900">{gitBranch ?? 'no branch'}</code>
         </span>
-        {gitAhead > 0 && <span style={{ opacity: 0.6 }}>↑{gitAhead}</span>}
-        <span style={{ opacity: 0.6 }}>
+        {gitAhead > 0 && <span className="opacity-60">↑{gitAhead}</span>}
+        <span className="opacity-60">
           {changedFileCount > 0 ? `${changedFileCount} changed` : 'clean'}
         </span>
         {agentActive && <Spinner size="small" label={`Agent ${activeTask?.status}…`} />}
@@ -89,7 +73,7 @@ export const StatusBar = () => {
             <button
               type="button"
               onClick={() => navigate({ to: '/settings/$section', params: { section: 'setup' } })}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              className="bg-none border-none p-0 cursor-pointer"
             >
               <Stamp size="small" variant="warning">
                 Setup ({capabilityGapCount})
@@ -99,9 +83,9 @@ export const StatusBar = () => {
         )}
       </div>
 
-      <div style={{ flex: 1 }} />
+      <div className="flex-1" />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexShrink: 0 }}>
+      <div className="flex items-center gap-2 flex-shrink-0">
         <Tooltip
           content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : 'Sync to main'}
         >
@@ -109,7 +93,7 @@ export const StatusBar = () => {
             variant="ghost"
             size="small"
             icon={<MergeIcon />}
-            style={btnStyle}
+            className="text-2xs"
             disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
             onClick={handleSync}
           >
@@ -121,7 +105,7 @@ export const StatusBar = () => {
             variant="ghost"
             size="small"
             icon={<PushIcon />}
-            style={btnStyle}
+            className="text-2xs"
             disabled={gitActionBusy || gitAhead === 0}
             onClick={handlePush}
           >
@@ -133,7 +117,7 @@ export const StatusBar = () => {
             variant="ghost"
             size="small"
             icon={<PullIcon />}
-            style={btnStyle}
+            className="text-2xs"
             disabled={gitActionBusy}
             onClick={handlePull}
           >
@@ -145,7 +129,7 @@ export const StatusBar = () => {
             variant="ghost"
             size="small"
             icon={<CommitIcon />}
-            style={btnStyle}
+            className="text-2xs"
             disabled={commitInFlight || changedFileCount === 0}
             onClick={handleQuickCommit}
           >

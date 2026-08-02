@@ -2,7 +2,6 @@ import { findFocusPlan } from '@/app/features/plans/helpers';
 import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
-import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { summarizeQualityFailure, summarizeTestFailure } from '@/app/utils/check-summary';
 import type { BranchHygieneStatus, CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
@@ -20,14 +19,7 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MergeIcon, PullIcon, PushIcon, WandIcon } from '../icons';
-import {
-  chalkStatusFill,
-  chalkStatusText,
-  deskChalk,
-  deskTextMuted,
-  gitErrorSummary,
-  sectionLabelStyle,
-} from './shared';
+import { chalkStatusFill, chalkStatusText, gitErrorSummary, sectionLabelClassName } from './shared';
 
 // Keep in sync with .commitlintrc.json's `scope-enum` (release/main are release-bot-only, excluded here).
 const COMMIT_SCOPES = [
@@ -126,19 +118,11 @@ const StatusStamps = () => {
           chrome-less wrapper rather than a component with its own button surface. */}
       <button
         type="button"
-        className="stack-check-btn"
+        className={`stack-check-btn inline-flex bg-none border-none p-0 ${anyRunning ? 'cursor-not-allowed' : 'cursor-pointer'} ${anyRunning && opts.status !== 'running' ? 'opacity-50' : 'opacity-100'}`}
         onClick={() => {
           if (!anyRunning) opts.onClick();
         }}
         disabled={anyRunning}
-        style={{
-          cursor: anyRunning ? 'not-allowed' : 'pointer',
-          opacity: anyRunning && opts.status !== 'running' ? 0.5 : 1,
-          display: 'inline-flex',
-          background: 'none',
-          border: 'none',
-          padding: 0,
-        }}
       >
         <Stamp
           surface="chalkboard"
@@ -147,22 +131,15 @@ const StatusStamps = () => {
           textColor={statusText[opts.status]}
         >
           {opts.label}
-          <span style={{ visibility: opts.status === 'running' ? 'visible' : 'hidden' }}>…</span>
+          <span className={opts.status === 'running' ? 'visible' : 'invisible'}>…</span>
         </Stamp>
       </button>
     </Tooltip>
   );
 
   return (
-    <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', gap: space[3] }}>
-      <div
-        style={{
-          display: 'flex',
-          gap: space[2],
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}
-      >
+    <div className="flex-none flex flex-col gap-3">
+      <div className="flex gap-2 flex-wrap justify-center">
         {checkButton({
           label: 'Quality',
           status: qualityStatus,
@@ -195,19 +172,12 @@ const StatusStamps = () => {
           >
             <button
               type="button"
-              className={hasIssues ? 'stack-check-btn' : undefined}
+              className={`inline-flex bg-none border-none p-0 ${hasIssues ? 'stack-check-btn cursor-pointer' : 'cursor-default'}`}
               disabled={!hasIssues}
               aria-expanded={hasIssues ? docIssuesExpanded : undefined}
               aria-controls="stack-doc-findings"
               onClick={() => {
                 if (hasIssues) setDocIssuesExpanded((prev) => !prev);
-              }}
-              style={{
-                cursor: hasIssues ? 'pointer' : 'default',
-                display: 'inline-flex',
-                background: 'none',
-                border: 'none',
-                padding: 0,
               }}
             >
               <Stamp
@@ -221,43 +191,22 @@ const StatusStamps = () => {
             </button>
           </Tooltip>
           {docIssuesExpanded && hasIssues && (
-            <div
-              id="stack-doc-findings"
-              style={{
-                marginTop: space[2],
-                display: 'flex',
-                flexDirection: 'column',
-                gap: space[2],
-              }}
-            >
+            <div id="stack-doc-findings" className="mt-2 flex flex-col gap-2">
               {consistency.map((issue, i) => (
                 <div
                   key={`${issue.kind}-${issue.title}-${i}`}
-                  style={{
-                    fontFamily: fontFamily.mono,
-                    fontSize: fontSize['2xs'],
-                    color: deskTextMuted,
-                  }}
+                  className="font-mono text-2xs text-desk-text-muted"
                 >
                   {linkedPlanFor(issue) ? (
                     <button
                       type="button"
                       onClick={() => handleFindingClick(issue)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                        color: deskChalk,
-                        textDecoration: 'underline',
-                        cursor: 'pointer',
-                        font: 'inherit',
-                        textAlign: 'left',
-                      }}
+                      className="bg-none border-none p-0 text-desk-chalk underline cursor-pointer [font:inherit] text-left"
                     >
                       {issue.message}
                     </button>
                   ) : (
-                    <span style={{ textAlign: 'left' }}>{issue.message}</span>
+                    <span className="text-left">{issue.message}</span>
                   )}
                 </div>
               ))}
@@ -272,10 +221,10 @@ const StatusStamps = () => {
         let primaryLine: React.ReactNode;
         let secondaryLine: React.ReactNode = null;
         if (anyRunning) {
-          primaryLine = <span style={{ color: deskTextMuted }}>Running checks…</span>;
+          primaryLine = <span className="text-desk-text-muted">Running checks…</span>;
         } else if (qualityStatus === 'fail') {
           primaryLine = (
-            <span style={{ color: deskTextMuted }}>
+            <span className="text-desk-text-muted">
               {summarizeQualityFailure(
                 statusData?.lint?.output ?? '',
                 statusData?.format?.output ?? '',
@@ -286,71 +235,52 @@ const StatusStamps = () => {
             <button
               type="button"
               onClick={fixQuality}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                color: deskChalk,
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                font: 'inherit',
-              }}
+              className="bg-none border-none p-0 text-desk-chalk underline cursor-pointer [font:inherit]"
             >
               Suggested fix: run biome --write
             </button>
           );
         } else if (testStatus === 'fail') {
           primaryLine = (
-            <span style={{ color: deskTextMuted }}>
+            <span className="text-desk-text-muted">
               {summarizeTestFailure(statusData?.test?.output ?? '')}
             </span>
           );
           secondaryLine = (
-            <span style={{ color: deskChalk }}>
+            <span className="text-desk-chalk">
               Suggested fix: <CopyButton text={testFixPrompt} surface="chalkboard" />
             </span>
           );
         } else if (consistencyStatus === 'fail') {
           primaryLine = (
-            <span style={{ color: deskTextMuted }}>
+            <span className="text-desk-text-muted">
               Codebase consistency failed (knip / dependency-cruiser).
             </span>
           );
           secondaryLine = (
-            <span style={{ color: deskTextMuted, opacity: 0.8 }}>
+            <span className="text-desk-text-muted opacity-80">
               Run pnpm run consistency for details.
             </span>
           );
         } else if (hasDocIssues) {
           primaryLine = (
-            <span style={{ color: deskTextMuted }}>Plan doc issues — see the Docs stamp.</span>
+            <span className="text-desk-text-muted">Plan doc issues — see the Docs stamp.</span>
           );
         } else if (
           qualityStatus === 'pass' &&
           testStatus === 'pass' &&
           consistencyStatus === 'pass'
         ) {
-          primaryLine = <span style={{ color: chalkStatusText.pass }}>All checks passing.</span>;
+          primaryLine = <span className="text-chalk-pass-text">All checks passing.</span>;
         } else {
           primaryLine = (
-            <span style={{ color: deskTextMuted, opacity: 0.6 }}>Checks haven't run yet.</span>
+            <span className="text-desk-text-muted opacity-60">Checks haven't run yet.</span>
           );
         }
         return (
-          <div
-            style={{
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: space[1],
-              fontFamily: fontFamily.handwritten,
-              fontSize: fontSize.sm,
-            }}
-          >
+          <div className="text-center flex flex-col gap-1 font-handwritten text-sm">
             {primaryLine}
-            <span style={{ visibility: secondaryLine ? 'visible' : 'hidden' }}>
-              {secondaryLine ?? ' '}
-            </span>
+            <span className={secondaryLine ? 'visible' : 'invisible'}>{secondaryLine ?? ' '}</span>
           </div>
         );
       })()}
@@ -368,19 +298,7 @@ const ChangedFilesCount = ({ count }: ChangedFilesCountProps) => {
     <button
       type="button"
       onClick={() => navigate({ to: '/diff' })}
-      style={{
-        display: 'block',
-        margin: '0 auto',
-        background: 'none',
-        border: 'none',
-        padding: 0,
-        textAlign: 'center',
-        fontFamily: fontFamily.mono,
-        fontSize: fontSize.xs,
-        color: deskTextMuted,
-        textDecoration: 'underline',
-        cursor: 'pointer',
-      }}
+      className="block mx-auto bg-none border-none p-0 text-center font-mono text-xs text-desk-text-muted underline cursor-pointer"
     >
       {count} file{count === 1 ? '' : 's'} changed
     </button>
@@ -478,8 +396,8 @@ const CommitForm = ({ files }: { files: string[] }) => {
           {suggestError}
         </Alert>
       )}
-      <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
-        <div style={{ flex: 1 }}>
+      <div className="flex gap-2 items-center">
+        <div className="flex-1">
           <Input
             surface="chalkboard"
             size="small"
@@ -539,7 +457,7 @@ const NoChangesActions = ({
   if (gitAhead > 0) {
     return (
       <>
-        <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>
+        <p className="opacity-50 text-xs m-0">
           All changes committed — {gitAhead} commit{gitAhead === 1 ? '' : 's'} ready to push.
         </p>
         <Button
@@ -557,8 +475,8 @@ const NoChangesActions = ({
 
   return (
     <>
-      <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0 }}>No changed files.</p>
-      <div style={{ display: 'flex', gap: space[2], alignItems: 'center' }}>
+      <p className="opacity-50 text-xs m-0">No changed files.</p>
+      <div className="flex gap-2 items-center">
         <Tooltip
           content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined}
           surface="chalkboard"
@@ -596,15 +514,8 @@ export const CommitSection = () => {
   const files = useMemo(() => gitStatus?.map((entry) => entry.path) ?? [], [gitStatus]);
 
   return (
-    <div
-      style={{
-        flex: '0 0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: space[6],
-      }}
-    >
-      <div style={{ ...sectionLabelStyle, display: 'flex', alignItems: 'center', gap: space[2] }}>
+    <div className="flex-none flex flex-col p-6">
+      <div className={`${sectionLabelClassName} flex items-center gap-2`}>
         Deliver
         {gitBranch && (
           <Stamp surface="chalkboard" size="small">
@@ -617,15 +528,7 @@ export const CommitSection = () => {
         {gitStatus && gitStatus.length > 0 ? (
           <>
             <ChangedFilesCount count={gitStatus.length} />
-            <div
-              style={{
-                flexShrink: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: space[3],
-                marginTop: space[3],
-              }}
-            >
+            <div className="flex-shrink-0 flex flex-col gap-3 mt-3">
               {gitBranchHygiene === 'stale-merged' ? (
                 <StaleMergedSyncButton />
               ) : (
@@ -634,17 +537,7 @@ export const CommitSection = () => {
             </div>
           </>
         ) : (
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: space[3],
-            }}
-          >
+          <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-3">
             <NoChangesActions gitAhead={gitAhead} gitBranchHygiene={gitBranchHygiene} />
           </div>
         )}

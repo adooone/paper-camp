@@ -1,5 +1,4 @@
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
-import { color } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { IconButton, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -42,14 +41,13 @@ export const AgentStartButton = ({ planId, phaseIndex, disabled }: AgentStartBut
   return (
     <IconButton
       // Raw glyph: paper-ui has no play/run icon.
-      icon={<span style={{ fontSize: 12, lineHeight: 1 }}>▶</span>}
+      icon={<span className="text-xs leading-none">▶</span>}
       variant="ghost"
       size="small"
       label={label}
       onClick={handleStart}
       disabled={disabled || launching || !planId || !hasAgent}
-      className="transition-opacity"
-      style={{ color: color.textSecondary }}
+      className="transition-opacity text-ink-500"
     />
   );
 };

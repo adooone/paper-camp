@@ -1,7 +1,6 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useResolvedDocSection } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { space } from '@/app/styles/tokens';
 import { Breadcrumb } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { DocsSearch } from './components/docs-search';
@@ -26,7 +25,7 @@ export const DocsPage = () => {
   if (activeDocSection === 'repo-docs' && activeDocTitle) {
     return (
       <div>
-        <div style={{ marginBottom: space[4] }}>
+        <div className="mb-4">
           <Breadcrumb
             items={[
               { id: 'docs', label: 'Docs', onClick: handleBackToDocs },
@@ -42,7 +41,7 @@ export const DocsPage = () => {
   return (
     <div>
       <PageTitle>Docs</PageTitle>
-      <p style={{ opacity: 0.5 }}>
+      <p className="opacity-50">
         Pick a doc from the sidebar — start with a repo doc if you're new here.
       </p>
     </div>

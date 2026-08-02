@@ -1,4 +1,3 @@
-import { color } from '@/app/styles/tokens';
 import { copyToClipboard } from '@/app/utils/clipboard';
 import { CheckIcon, CloseIcon, CopyIcon, IconButton } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -41,11 +40,13 @@ export const PhaseCopyButton = ({ planTitle, planId, phaseIndex }: PhaseCopyButt
             : 'Copy phase prompt'
       }
       onClick={handleCopy}
-      className="transition-opacity"
-      style={{
-        color:
-          status === 'copied' ? '#6A9B72' : status === 'failed' ? '#A06060' : color.textSecondary,
-      }}
+      className={`transition-opacity ${
+        status === 'copied'
+          ? 'text-state-success'
+          : status === 'failed'
+            ? 'text-state-danger'
+            : 'text-ink-500'
+      }`}
     />
   );
 };

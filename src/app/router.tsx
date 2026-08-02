@@ -8,7 +8,7 @@ import {
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
-import { Button, IconButton, Layout, Page, ToastProvider, layoutConfig } from '@dendelion/paper-ui';
+import { Button, IconButton, Layout, Page, ToastProvider } from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -86,9 +86,6 @@ function writeStoredStackOpen(value: boolean): void {
 
 // Keep in sync with the min-[1440px]:pr-[480px] wrapper (Tailwind needs a literal).
 const LARGE_SCREEN_QUERY = '(min-width: 1440px)';
-
-// Mirrors paper-ui `.content`'s padding, which the strip and scroller bleed back out of.
-const LAYOUT_CONTENT_PAD = 32;
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() =>
@@ -219,31 +216,18 @@ const RootLayout = () => {
             {/* Bled out of `.content`'s padding: the scrollbar renders at this box's
                 edge, and content should pass under the header/strip, not stop short. */}
             <div
-              className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto"
-              style={{
-                marginTop: -LAYOUT_CONTENT_PAD,
-                marginLeft: -LAYOUT_CONTENT_PAD,
-                marginRight: -LAYOUT_CONTENT_PAD,
-                // No top inset: the header no longer paints a background, so the page
-                // should meet it directly. Page's own 2rem padding still holds the text
-                // off the edge — re-adding it here stacked two grid cells of dead space.
-                paddingTop: 0,
-                // var() so utilities.css can widen it below the phone breakpoint,
-                // clearing the fixed .phone-bottom-nav that replaces the header nav there.
-                paddingBottom: `var(--pc-content-pad-bottom, ${LAYOUT_CONTENT_PAD}px)`,
-                paddingLeft: LAYOUT_CONTENT_PAD,
-                paddingRight: LAYOUT_CONTENT_PAD,
-              }}
+              // No top inset: the header no longer paints a background, so the page
+              // should meet it directly. Page's own 2rem padding still holds the text
+              // off the edge — re-adding it here stacked two grid cells of dead space.
+              // paddingBottom uses var() so utilities.css can widen it below the phone
+              // breakpoint, clearing the fixed .phone-bottom-nav that replaces the header
+              // nav there. 32px mirrors paper-ui `.content`'s padding, which the strip
+              // and scroller bleed back out of.
+              className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto -mt-8 -ml-8 -mr-8 pt-0 pl-8 pr-8 pb-[var(--pc-content-pad-bottom,32px)]"
             >
               {/* --pc-sidebar-h: the sticky sidebar can't size off this group (it's as
                   tall as the page). lg only — below that it's a full-height drawer. */}
-              <div
-                className="flex min-w-0 justify-center lg:[--pc-sidebar-h:calc(100vh-160px)]"
-                style={{
-                  gap: layoutConfig.contentGap,
-                  width: '100%',
-                }}
-              >
+              <div className="flex min-w-0 justify-center lg:[--pc-sidebar-h:calc(100vh-160px)] gap-6 w-full">
                 {hasSidebar && (
                   <SidebarShell
                     routeKey={sidebarAreaKey}
@@ -269,25 +253,20 @@ const RootLayout = () => {
                   </SidebarShell>
                 )}
                 <div
-                  className="flex flex-col min-w-0"
-                  style={{ flex: isLarge ? '1 1 0%' : '0 1 800px' }}
+                  className={`flex flex-col min-w-0 ${isLarge ? 'flex-[1_1_0%]' : 'flex-[0_1_800px]'}`}
                 >
                   <motion.div
                     key={pathname}
                     {...crossfadeVariants(shouldReduceMotion)}
                     transition={crossfadeTransition(shouldReduceMotion)}
-                    style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}
+                    className="flex flex-col flex-1 min-w-0"
                   >
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
                     <Page
                       texture={{ texture: 'parchment' }}
                       outline
-                      style={{
-                        minHeight: 'calc(100vh - 160px)',
-                        width: '100%',
-                        ...(isLarge ? { maxWidth: 'none' } : {}),
-                      }}
+                      className={`min-h-[calc(100vh-160px)] w-full ${isLarge ? 'max-w-none' : ''}`}
                     >
                       <Suspense fallback={null}>
                         <Outlet />

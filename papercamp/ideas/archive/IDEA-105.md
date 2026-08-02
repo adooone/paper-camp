@@ -2,9 +2,9 @@
 id: IDEA-105
 title: Plain-language the confusing UI text
 type: fix
-status: review
+status: done
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-08-02
 tags:
   - app
   - ui

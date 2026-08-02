@@ -1,5 +1,4 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { fontFamily, space } from '@/app/styles/tokens';
 import { Button } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 
@@ -50,15 +49,15 @@ export const DocsSearch = ({ query }: DocsSearchProps) => {
   };
 
   if (results.length === 0) {
-    return <p style={{ opacity: 0.5 }}>No results found for "{query}".</p>;
+    return <p className="opacity-50">No results found for "{query}".</p>;
   }
 
   return (
     <div>
-      <p className="text-sm" style={{ opacity: 0.5, marginBottom: space[3] }}>
+      <p className="mb-3 text-sm opacity-50">
         {results.length} result{results.length === 1 ? '' : 's'} for "{query}"
       </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+      <div className="flex flex-col gap-1">
         {results.map((m) => (
           <Button
             key={m.title}
@@ -66,23 +65,13 @@ export const DocsSearch = ({ query }: DocsSearchProps) => {
             size="small"
             fullWidth
             onClick={() => handleSelect(m.title)}
-            style={{ justifyContent: 'flex-start', padding: `${space[2]} ${space[3]}` }}
+            className="justify-start px-3 py-2"
           >
-            <span style={{ textAlign: 'left' }}>
-              <span
-                style={{
-                  fontFamily: fontFamily.serif,
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  display: 'block',
-                  marginBottom: '0.2rem',
-                }}
-              >
+            <span className="text-left">
+              <span className="mb-[0.2rem] block font-display-luminari text-[0.95rem] font-semibold">
                 {m.title}
               </span>
-              <span className="text-sm" style={{ opacity: 0.6 }}>
-                {m.snippet}
-              </span>
+              <span className="text-sm opacity-60">{m.snippet}</span>
             </span>
           </Button>
         ))}

@@ -2,9 +2,9 @@
 id: IDEA-110
 title: In-app code review with diffs
 type: feat
-status: review
+status: done
 created: 2026-07-30
-updated: 2026-08-01
+updated: 2026-08-02
 tags:
   - app
   - git

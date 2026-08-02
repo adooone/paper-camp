@@ -1,5 +1,4 @@
 import type { WorklistRow } from '@/app/features/plans/helpers';
-import { space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { useEffect, useRef } from 'react';
 import { WorklistRows } from './worklist-rows';
@@ -39,7 +38,7 @@ export const ListView = ({
         />
       ) : (
         // PlansPage only handles the "no plans at all" case; this covers filters matching none.
-        <p style={{ opacity: 0.5, padding: `${space[6]} 0`, textAlign: 'center' }}>
+        <p className="opacity-50 py-6 px-0 text-center">
           Nothing matches these filters — clear one, or check back once something moves into this
           status.
         </p>

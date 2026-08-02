@@ -2,9 +2,9 @@
 id: IDEA-106
 title: Slim agent prompts for short, direct output
 type: feat
-status: review
+status: done
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-08-02
 tags:
   - agent
   - plans

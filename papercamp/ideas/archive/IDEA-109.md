@@ -2,9 +2,9 @@
 id: IDEA-109
 title: Compact Deliver section, more room for the agent stack
 type: feat
-status: review
+status: done
 created: 2026-07-30
-updated: 2026-07-30
+updated: 2026-08-02
 tags:
   - app
   - ui

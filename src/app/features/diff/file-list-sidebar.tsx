@@ -1,4 +1,3 @@
-import { color, fontFamily, fontSize, layout, space } from '@/app/styles/tokens';
 import type { FileDiffEntry } from '@/types/index';
 import { ListItem, Stamp } from '@dendelion/paper-ui';
 
@@ -8,16 +7,9 @@ interface CountBadgeProps {
 }
 
 const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
-  <span
-    style={{
-      display: 'inline-flex',
-      gap: space[2],
-      fontFamily: fontFamily.mono,
-      fontSize: fontSize['2xs'],
-    }}
-  >
-    <span style={{ color: color.accentGreenDark }}>+{additions}</span>
-    <span style={{ color: color.accentRoseDark }}>-{deletions}</span>
+  <span className="inline-flex gap-2 font-mono text-2xs">
+    <span className="text-watercolor-green-dark">+{additions}</span>
+    <span className="text-watercolor-rose-dark">-{deletions}</span>
   </span>
 );
 
@@ -27,26 +19,14 @@ interface FileListSidebarProps {
 }
 
 export const FileListSidebar = ({ files, onSelect }: FileListSidebarProps) => (
-  <div
-    style={{
-      position: 'sticky',
-      top: space[4],
-      display: 'flex',
-      flexDirection: 'column',
-      gap: space[1],
-      width: layout.diffSidebarWidth,
-      flexShrink: 0,
-      maxHeight: `calc(100vh - ${layout.headerHeight})`,
-      overflowY: 'auto',
-    }}
-  >
+  <div className="sticky top-4 flex w-[288px] shrink-0 flex-col gap-1 max-h-[calc(100vh-64px)] overflow-y-auto">
     {files.map((entry) => (
       <ListItem
         key={entry.path}
         size="small"
         onClick={() => onSelect(entry.path)}
         action={
-          <span style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+          <span className="flex items-center gap-2">
             {entry.staged && <Stamp size="small">staged</Stamp>}
             {!entry.binary && (
               <CountBadge additions={entry.additions} deletions={entry.deletions} />
@@ -54,16 +34,7 @@ export const FileListSidebar = ({ files, onSelect }: FileListSidebarProps) => (
           </span>
         }
       >
-        <span
-          style={{
-            fontFamily: fontFamily.mono,
-            fontSize: fontSize['2xs'],
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            display: 'block',
-          }}
-        >
+        <span className="block overflow-hidden text-ellipsis whitespace-nowrap font-mono text-2xs">
           {entry.path}
         </span>
       </ListItem>

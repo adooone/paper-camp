@@ -1,6 +1,5 @@
 import { LightbulbIcon, MergeIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
-import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Card, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
@@ -17,13 +16,7 @@ interface PlanRowsProps {
   showHeader?: boolean;
 }
 
-const headerLabelStyle: React.CSSProperties = {
-  fontSize: fontSize.sm,
-  fontWeight: 600,
-  opacity: 0.6,
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-};
+const headerLabelClass = 'text-sm font-semibold opacity-60 whitespace-nowrap overflow-hidden';
 
 export const ROW_MARKER_WIDTH = 36;
 
@@ -39,33 +32,21 @@ export const RowMarker = ({
   running?: boolean;
   status?: string;
 }) => (
-  <span
-    style={{
-      flex: `0 0 ${ROW_MARKER_WIDTH}px`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}
-  >
+  <span className="flex-[0_0_36px] flex items-center justify-center">
     {running ? (
       <Spinner size="small" label="Agent running" />
     ) : done ? (
-      <span aria-label="Done" style={{ color: color.accentGreenDark, fontSize: fontSize.sm }}>
+      <span aria-label="Done" className="text-watercolor-green-dark text-sm">
         ✓
       </span>
     ) : order !== undefined ? (
       <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
-        <span style={{ fontFamily: fontFamily.handwritten, fontSize: fontSize.xs, lineHeight: 1 }}>
-          {order}
-        </span>
+        <span className="font-handwritten text-xs leading-none">{order}</span>
       </Stamp>
     ) : status === 'idea' ? (
       // Run order only covers planned/in-progress/review, so a backlog idea has no
       // number to show — mark it as unplanned rather than leaving the gutter blank.
-      <span
-        aria-label="Backlog — not planned yet"
-        style={{ display: 'inline-flex', color: color.textTertiary }}
-      >
+      <span aria-label="Backlog — not planned yet" className="inline-flex text-ink-300">
         <LightbulbIcon size={14} />
       </span>
     ) : null}
@@ -78,20 +59,18 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
   const gridClass = 'plan-rows-grid';
   const agentStatus = useAppStore((s) => s.agentStatus);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+    <div className="flex flex-col gap-1">
       {showHeader && (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span style={{ flex: `0 0 ${ROW_MARKER_WIDTH}px` }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="flex items-center">
+          <span className="flex-[0_0_36px]" />
+          <div className="flex-1 min-w-0">
             <Card size="small" texture="kraft" className="plan-row-card">
               <div className={gridClass}>
-                <span style={headerLabelStyle}>Id</span>
-                <span style={headerLabelStyle}>Title</span>
-                <span className="plan-rows-cell-updated" style={headerLabelStyle}>
-                  Updated
-                </span>
-                <span style={headerLabelStyle}>Progress</span>
-                <span style={headerLabelStyle}>Status</span>
+                <span className={headerLabelClass}>Id</span>
+                <span className={headerLabelClass}>Title</span>
+                <span className={`plan-rows-cell-updated ${headerLabelClass}`}>Updated</span>
+                <span className={headerLabelClass}>Progress</span>
+                <span className={headerLabelClass}>Status</span>
               </div>
             </Card>
           </div>
@@ -101,7 +80,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
         const progress = phaseProgress(plan);
         const status = effectiveStatus(plan, agentStatus);
         return (
-          <div key={plan.title} style={{ display: 'flex', alignItems: 'center' }}>
+          <div key={plan.title} className="flex items-center">
             <RowMarker
               order={plan.order}
               done={plan.status === 'done'}
@@ -122,48 +101,30 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
                     }
                   : undefined
               }
-              className={plan.title === activePlanTitle ? 'plan-row-highlighted' : undefined}
-              style={{
-                cursor: onOpen ? 'pointer' : undefined,
-                borderRadius: 10,
-                flex: 1,
-                minWidth: 0,
-              }}
+              className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${plan.title === activePlanTitle ? 'plan-row-highlighted' : ''}`}
             >
               <Card size="small" texture="canvas" className="plan-row-card">
                 <div className={gridClass}>
                   <PlanIdStamp id={plan.id} />
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
+                  <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
                     {plan.title}
                   </span>
-                  <span
-                    className="plan-rows-cell-updated text-sm"
-                    style={{ opacity: 0.45, whiteSpace: 'nowrap' }}
-                  >
+                  <span className="plan-rows-cell-updated text-sm opacity-[0.45] whitespace-nowrap">
                     {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
                   </span>
                   {progress ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="flex items-center gap-1">
+                      <div className="flex-1 min-w-0">
                         <ProgressBar pct={progress.pct} color={STATUS_COLOR[status]} />
                       </div>
-                      <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
+                      <span className="text-sm opacity-50 shrink-0">
                         {progress.done}/{progress.total}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-sm" style={{ opacity: 0.3 }}>
-                      —
-                    </span>
+                    <span className="text-sm opacity-30">—</span>
                   )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
+                  <div className="flex items-center gap-1">
                     <Stamp
                       size="small"
                       fillColor={STATUS_STAMP[status].fill}
@@ -173,7 +134,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
                     </Stamp>
                     {plan.pr?.state === 'merged' && (
                       <Tooltip content={`Merged in #${plan.pr.number}`}>
-                        <span style={{ display: 'inline-flex', color: PR_STATE_STAMP.merged.text }}>
+                        <span className="inline-flex text-[#7B5E9E]">
                           <MergeIcon size={14} />
                         </span>
                       </Tooltip>

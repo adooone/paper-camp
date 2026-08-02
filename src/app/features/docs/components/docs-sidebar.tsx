@@ -1,6 +1,5 @@
 import { useResolvedDocSection } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { space } from '@/app/styles/tokens';
 import { Input, ListItem } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
@@ -10,17 +9,7 @@ const simplecaseLabel = (name: string) =>
   name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 
 const EmptyState = ({ children }: { children: React.ReactNode }) => (
-  <span
-    className="text-sm"
-    style={{
-      display: 'block',
-      padding: `${space[1]} ${space[3]}`,
-      opacity: 0.35,
-      fontStyle: 'italic',
-    }}
-  >
-    {children}
-  </span>
+  <span className="block px-3 py-1 text-sm italic opacity-[0.35]">{children}</span>
 );
 
 export const DocsSidebar = () => {
@@ -40,7 +29,7 @@ export const DocsSidebar = () => {
 
   return (
     <>
-      <div style={{ marginBottom: space[4] }}>
+      <div className="mb-4">
         <Input
           size="small"
           aria-label="Search docs"

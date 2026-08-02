@@ -30,7 +30,7 @@ export const RefreshButton = () => {
   return (
     <IconButton
       icon={
-        <span style={{ display: 'inline-flex' }} className={refreshing ? 'pc-spin' : undefined}>
+        <span className={`inline-flex${refreshing ? ' pc-spin' : ''}`}>
           <RefreshIcon size={16} />
         </span>
       }

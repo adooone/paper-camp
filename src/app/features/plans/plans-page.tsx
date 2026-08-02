@@ -1,7 +1,6 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useActiveIdeaTitle, useActivePlanTitle } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { space } from '@/app/styles/tokens';
 import type { SuggestionEntry } from '@/types/index';
 import { Breadcrumb, Card, useToast } from '@dendelion/paper-ui';
 import { useNavigate, useSearch } from '@tanstack/react-router';
@@ -84,8 +83,8 @@ export const PlansPage = () => {
       <div>
         <PageTitle>Plans</PageTitle>
         <Card size="small" accent accentColor="rose">
-          <p style={{ margin: 0, fontWeight: 600 }}>Couldn't load plans.md</p>
-          <p style={{ margin: 0, opacity: 0.75 }}>{plansError}</p>
+          <p className="m-0 font-semibold">Couldn't load plans.md</p>
+          <p className="m-0 opacity-75">{plansError}</p>
         </Card>
       </div>
     );
@@ -113,7 +112,7 @@ export const PlansPage = () => {
       <ReconcileQueueReview />
       {activePlan ? (
         <div>
-          <div style={{ marginBottom: space[4] }}>
+          <div className="mb-4">
             <Breadcrumb
               items={[
                 { id: 'plans', label: 'Plans', onClick: handleBack },
@@ -125,7 +124,7 @@ export const PlansPage = () => {
         </div>
       ) : activeIdea ? (
         <div>
-          <div style={{ marginBottom: space[4] }}>
+          <div className="mb-4">
             <Breadcrumb
               items={[
                 { id: 'plans', label: 'Plans', onClick: handleBack },
@@ -141,8 +140,8 @@ export const PlansPage = () => {
 
           {plans.warnings.length > 0 && (
             <Card size="small" accent accentColor="amber">
-              <p style={{ margin: 0, fontWeight: 600 }}>Some entries couldn't be parsed</p>
-              <ul style={{ margin: 0, paddingLeft: space[5] }}>
+              <p className="m-0 font-semibold">Some entries couldn't be parsed</p>
+              <ul className="m-0 pl-5">
                 {plans.warnings.map((w) => (
                   <li key={w.title}>
                     {w.title}: {w.message}
@@ -153,7 +152,7 @@ export const PlansPage = () => {
           )}
 
           {plans.entries.length === 0 ? (
-            <p style={{ opacity: 0.5 }}>
+            <p className="opacity-50">
               No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}
               <strong>Suggest ideas</strong> to have an agent propose some.
             </p>

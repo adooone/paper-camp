@@ -1,6 +1,4 @@
-import { detailHeadingStyle } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
-import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import type { IdeaEntry } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
 import { ExtendIdeaButton } from '../actions';
@@ -13,24 +11,8 @@ interface NoteDetailProps {
 
 export const NoteDetail = ({ idea }: NoteDetailProps) => {
   return (
-    <div
-      style={{
-        fontFamily: fontFamily.body,
-        fontSize: fontSize.base,
-        lineHeight: lineHeight.relaxed,
-        color: color.textProse,
-      }}
-    >
-      <h2
-        style={{
-          ...detailHeadingStyle,
-          margin: `0 0 ${space[4]}`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: space[3],
-          flexWrap: 'wrap',
-        }}
-      >
+    <div className="text-base leading-[1.7] text-ink-900">
+      <h2 className="font-display-luminari font-semibold text-[1.75rem] leading-tight mt-0 mr-0 mb-4 ml-0 flex items-center gap-3 flex-wrap">
         <PlanIdStamp id={idea.id ?? undefined} />
         {idea.title}
         {idea.status && (
@@ -51,7 +33,7 @@ export const NoteDetail = ({ idea }: NoteDetailProps) => {
           .replace(/^\s*-{3,}\s*(\n|$)/, '')
           .trim()}
       </Markdown>
-      <div style={{ marginTop: space[6] }}>
+      <div className="mt-6">
         <ExtendIdeaButton idea={idea} />
       </div>
     </div>
