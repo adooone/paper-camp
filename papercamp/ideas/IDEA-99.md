@@ -26,7 +26,7 @@ Provenance: 2026-07-26, after removing the comment-ratio budget as a build gate 
 ### Phases
 - [x] Add an on-demand `/api/stats` route
       Compute metrics server-side, mirroring how `/api/consistency` derives its numbers; return a point-in-time snapshot, no stored history to start.
-- [ ] Compute the comment ratio and cheap codebase counts
+- [x] Compute the comment ratio and cheap codebase counts
       Reuse `scripts/comment-stats.mjs --json`; add source vs test lines, entities by status, open-questions/decisions counts, and tasks run per week.
 - [ ] Surface test coverage from vitest
       Emit coverage and read back the percentage.

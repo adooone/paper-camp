@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { findConsistencyIssues, parseSuggestions, parseTaskLog } from '@/core/parse';
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
+import { computeProjectStats } from '@/core/stats';
 import { type ProjectStats, coerceAgentConfig } from '@/types/index';
 import { cached } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
@@ -65,7 +66,7 @@ export const readRoutes: ReadRoute[] = [
   },
   {
     path: '/api/stats',
-    handler: async (): Promise<ProjectStats> => ({ generatedAt: new Date().toISOString() }),
+    handler: async (root): Promise<ProjectStats> => computeProjectStats(root),
   },
   {
     path: '/api/config',
