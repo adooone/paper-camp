@@ -41,7 +41,7 @@ Placement (decided 2026-07-26 — auth is a global precondition, not a per-task 
 ### Phases
 - [x] Spawn `claude auth login` in a PTY and parse the authorize URL
       Add node-pty on the server; run the login interactively, extract the URL line defensively, with cancel/timeout and one-login-at-a-time lifecycle.
-- [ ] Add the login-relay routes and store state
+- [x] Add the login-relay routes and store state
       Start/status/cancel endpoints under `/api/agent`; carry relay state (pending authorize URL, phase) into the agent store slice.
 - [ ] Poll `claude auth status` and resume parked runs
       Poll until `loggedIn: true`, clear the signed-out state, and resume the parked/failed run per [[IDEA-100]] instead of leaving it failed.

@@ -1,4 +1,5 @@
 import * as pty from 'node-pty';
+import type { LoginRelayPhase, LoginRelayState } from '../../types';
 
 const URL_TIMEOUT_MS = 20_000;
 const SESSION_TIMEOUT_MS = 5 * 60_000;
@@ -11,18 +12,7 @@ const ANSI_ESCAPE_RE = new RegExp(
 );
 const URL_RE = /https?:\/\/\S+/;
 
-export type LoginRelayPhase =
-  | 'starting'
-  | 'awaiting-authorization'
-  | 'success'
-  | 'error'
-  | 'cancelled';
-
-export interface LoginRelayState {
-  phase: LoginRelayPhase;
-  authorizeUrl: string | null;
-  error?: string;
-}
+export type { LoginRelayPhase, LoginRelayState };
 
 export interface LoginRelayHandle {
   getState: () => LoginRelayState;

@@ -1,7 +1,9 @@
 import { fetchAgentAuthStatus } from '@/app/services/system';
-import type { AgentAuthStatus, AgentTaskState, PlanEntry } from '@/types/index';
+import type { AgentAuthStatus, AgentTaskState, LoginRelayState, PlanEntry } from '@/types/index';
 import {
+  cancelLoginRelay as cancelLoginRelayApi,
   fetchAgentStatus,
+  fetchLoginRelayStatus,
   fetchReconcileQueue,
   launchAgent as launchAgentApi,
   launchBatchReconcile as launchBatchReconcileApi,
@@ -12,6 +14,7 @@ import {
   launchPlanReconcile as launchPlanReconcileApi,
   launchRunAll as launchRunAllApi,
   launchSuggestIdeas as launchSuggestIdeasApi,
+  startLoginRelay as startLoginRelayApi,
   stopAgent as stopAgentApi,
 } from '../../services/agent-api';
 import type { GetState, SetState } from './slice-helpers';
@@ -52,6 +55,12 @@ export type AgentSlice = {
   launchRunAll: (planId: string) => Promise<void>;
   launchFixReview: (planId: string) => Promise<void>;
   stopAgent: (taskId?: string) => Promise<void>;
+
+  // null when no relay has been started this session, or once it's cancelled/consumed.
+  loginRelay: LoginRelayState | null;
+  startLoginRelay: () => Promise<void>;
+  loadLoginRelayStatus: () => Promise<void>;
+  cancelLoginRelay: () => Promise<void>;
 
   // At store level (not the button) so loadAgentStatus still handles completion if the
   // user navigates away mid-run.
@@ -161,6 +170,17 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
       } finally {
         await get().loadAgentStatus();
       }
+    },
+
+    loginRelay: null,
+    startLoginRelay: async () => {
+      const state = await startLoginRelayApi();
+      set({ loginRelay: state });
+    },
+    loadLoginRelayStatus: loadSlice(set, fetchLoginRelayStatus, (data) => ({ loginRelay: data })),
+    cancelLoginRelay: async () => {
+      await cancelLoginRelayApi();
+      set({ loginRelay: null });
     },
 
     pendingReconcile: null,

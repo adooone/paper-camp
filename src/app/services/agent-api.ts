@@ -1,4 +1,4 @@
-import type { AgentTaskState, ReconcileQueueItem } from '@/types/index';
+import type { AgentTaskState, LoginRelayState, ReconcileQueueItem } from '@/types/index';
 
 const handleAgentResponse = async (
   response: Response,
@@ -132,4 +132,18 @@ export const stopAgent = async (taskId?: string): Promise<void> => {
     body: JSON.stringify({ taskId }),
   });
   await handleAgentResponse(response, 'Stop failed');
+};
+
+export const startLoginRelay = async (): Promise<LoginRelayState> => {
+  const response = await fetch('/api/agent/login-relay/start', { method: 'POST' });
+  return response.json();
+};
+
+export const fetchLoginRelayStatus = async (): Promise<LoginRelayState | null> => {
+  const response = await fetch('/api/agent/login-relay/status');
+  return response.json();
+};
+
+export const cancelLoginRelay = async (): Promise<void> => {
+  await fetch('/api/agent/login-relay/cancel', { method: 'POST' });
 };
