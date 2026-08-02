@@ -291,7 +291,10 @@ const RootLayout = () => {
       />
       {/* Header's nav row (max-[480px]:hidden above) has nowhere to wrap below the
           phone breakpoint — this fixed bottom bar replaces it, reachable one-handed. */}
-      <nav aria-label="Main navigation" className="phone-bottom-nav">
+      <nav
+        aria-label="Main navigation"
+        className="hidden max-[480px]:flex max-[480px]:fixed max-[480px]:left-0 max-[480px]:right-0 max-[480px]:bottom-0 max-[480px]:z-[250] max-[480px]:items-stretch max-[480px]:justify-around max-[480px]:gap-1 max-[480px]:py-2 max-[480px]:px-2 max-[480px]:[padding-bottom:calc(0.5rem+env(safe-area-inset-bottom))] max-[480px]:bg-[var(--pui-bg-base,#fff)] max-[480px]:border-t max-[480px]:border-black/10 max-[480px]:shadow-[0_-2px_8px_rgba(0,0,0,0.08)]"
+      >
         {hasSidebar && (
           <IconButton
             variant="ghost"
@@ -299,6 +302,7 @@ const RootLayout = () => {
             label="Open sidebar"
             onClick={() => setMobileSidebarOpen(true)}
             icon={<SidebarToggleIcon />}
+            className="min-h-11"
           />
         )}
         {navItems.map((item) => (
@@ -309,6 +313,7 @@ const RootLayout = () => {
             isActive={item.id === activeId}
             onClick={() => navigate({ to: item.path })}
             aria-current={item.id === activeId ? 'page' : undefined}
+            className="min-h-11"
           >
             {item.label}
           </Button>

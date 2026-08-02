@@ -53,10 +53,13 @@ export const RowMarker = ({
   </span>
 );
 
-// Built from Cards, not paper-ui's Table, sharing the .plan-rows-grid column
-// template (utilities.css) so the header and rows line up.
+// Built from Cards, not paper-ui's Table, sharing the plan rows grid column
+// template so the header and rows line up.
+const PLAN_ROWS_GRID_CLASS =
+  'grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
+
 export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: PlanRowsProps) => {
-  const gridClass = 'plan-rows-grid';
+  const gridClass = PLAN_ROWS_GRID_CLASS;
   const agentStatus = useAppStore((s) => s.agentStatus);
   return (
     <div className="flex flex-col gap-1">
@@ -68,7 +71,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
               <div className={gridClass}>
                 <span className={headerLabelClass}>Id</span>
                 <span className={headerLabelClass}>Title</span>
-                <span className={`plan-rows-cell-updated ${headerLabelClass}`}>Updated</span>
+                <span className={`max-lg:hidden ${headerLabelClass}`}>Updated</span>
                 <span className={headerLabelClass}>Progress</span>
                 <span className={headerLabelClass}>Status</span>
               </div>
@@ -101,7 +104,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
                     }
                   : undefined
               }
-              className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${plan.title === activePlanTitle ? 'plan-row-highlighted' : ''}`}
+              className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${plan.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
             >
               <Card size="small" texture="canvas" className="plan-row-card">
                 <div className={gridClass}>
@@ -109,7 +112,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
                   <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
                     {plan.title}
                   </span>
-                  <span className="plan-rows-cell-updated text-sm opacity-[0.45] whitespace-nowrap">
+                  <span className="max-lg:hidden text-sm opacity-[0.45] whitespace-nowrap">
                     {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
                   </span>
                   {progress ? (

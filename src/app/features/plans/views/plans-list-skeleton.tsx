@@ -11,16 +11,16 @@ const ROWS = [
   { key: 'f', title: '58%' },
 ];
 
-// Mirrors PlanRows' layout on the shared .plan-rows-grid template so nothing jumps
+// Mirrors PlanRows' layout on the shared plan rows grid template so nothing jumps
 // when /api/plans resolves (status derives from a `gh` PR lookup, so a cold read can take a moment).
 export const PlansListSkeleton = () => (
   <div className="flex flex-col gap-1" aria-hidden="true">
     <Card size="small" texture="kraft" className="plan-row-card">
-      <div className="plan-rows-grid">
+      <div className="grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1">
         <Skeleton variant="text" width={36} />
         <Skeleton variant="text" width={28} />
         <Skeleton variant="text" width={44} />
-        <span className="plan-rows-cell-updated">
+        <span className="max-lg:hidden">
           <Skeleton variant="text" width={56} />
         </span>
         <Skeleton variant="text" width={64} />
@@ -29,11 +29,11 @@ export const PlansListSkeleton = () => (
     </Card>
     {ROWS.map((r) => (
       <Card key={r.key} size="small" className="plan-row-card">
-        <div className="plan-rows-grid">
+        <div className="grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1">
           <Skeleton variant="text" width={16} />
           <Skeleton variant="rect" width={44} height={18} />
           <Skeleton variant="text" width={r.title} />
-          <span className="plan-rows-cell-updated">
+          <span className="max-lg:hidden">
             <Skeleton variant="text" width={52} />
           </span>
           <Skeleton variant="rect" width={80} height={8} />

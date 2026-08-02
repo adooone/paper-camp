@@ -230,7 +230,9 @@ const RoadmapItemRow = ({
   const { shipped, queued } = graduationCounts(graduated);
 
   return (
-    <div className={`flex flex-col gap-1 ${highlighted ? 'roadmap-item-highlighted' : ''}`}>
+    <div
+      className={`flex flex-col gap-1 ${highlighted ? 'roadmap-item-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
+    >
       <Card size="small" texture="canvas" className="plan-row-card">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -249,7 +251,7 @@ const RoadmapItemRow = ({
               Promote to idea
             </Button>
           </div>
-          <span className={`text-sm opacity-70 ${expanded ? '' : 'roadmap-item-desc'}`}>
+          <span className={`text-sm opacity-70 ${expanded ? '' : 'line-clamp-2'}`}>
             {item.description}
           </span>
           <div className="flex items-center gap-1">
@@ -331,7 +333,7 @@ const GoalBanner = ({ goal }: { goal: string }) => {
     <div className="mb-6 pb-4 border-b border-black/[8%]">
       <span className="font-handwritten text-xs font-semibold opacity-[0.55]">The goal</span>
       <div className="font-display-luminari text-lg leading-[1.4] mt-2">
-        <div className={expanded ? undefined : 'roadmap-goal-line-clamp'}>
+        <div className={expanded ? undefined : 'line-clamp-1'}>
           <Markdown>{firstParagraph}</Markdown>
         </div>
         {expanded && hasMore && <Markdown>{restParagraphs.join('\n\n')}</Markdown>}
@@ -413,12 +415,12 @@ const RoadmapTimelineTrack = ({
 }) => {
   const span = rangeEnd - rangeStart || 1;
   return (
-    <div className="roadmap-timeline-track">
+    <div className="relative h-8 mx-1 border-b border-black/10">
       {events.map((event, i) => (
         <button
           type="button"
           key={`${event.entityId}-${event.kind}-${i}`}
-          className={`roadmap-timeline-dot ${EVENT_KIND_COLOR[event.kind]}`}
+          className={`absolute top-1/2 w-2.5 h-2.5 p-0 border-none rounded-full -translate-x-1/2 -translate-y-1/2 cursor-pointer ${EVENT_KIND_COLOR[event.kind]}`}
           style={{
             left: `${((Date.parse(event.date) - rangeStart) / span) * 100}%`,
           }}
@@ -434,11 +436,11 @@ const RoadmapMapItem = ({ item }: { item: ResolvedRoadmapItem }) => {
   const percent =
     item.rollup.total > 0 ? Math.round((item.rollup.done / item.rollup.total) * 100) : 0;
   return (
-    <div className="roadmap-map-item">
+    <div className="flex flex-col gap-1 py-2 px-2.5">
       <div className="font-semibold text-sm">{item.name}</div>
-      <div className="roadmap-map-progress-track">
+      <div className="h-1.5 rounded-full bg-black/[0.08] overflow-hidden">
         <div
-          className={`roadmap-map-progress-fill ${item.rollup.total > 0 ? 'bg-watercolor-green' : 'bg-transparent'}`}
+          className={`h-full rounded-full ${item.rollup.total > 0 ? 'bg-watercolor-green' : 'bg-transparent'}`}
           style={{
             width: `${percent}%`,
           }}
@@ -458,16 +460,19 @@ const RoadmapMap = ({
   roadmap: ResolvedRoadmap;
   graduatedByItem: (item: ResolvedRoadmapItem) => PlanEntry[];
 }) => (
-  <div className="roadmap-lanes">
+  <div className="flex flex-col gap-6">
     {roadmap.horizons.map((horizon) => (
       <div key={horizon.title} className="flex flex-col gap-1">
         <div className="flex items-baseline gap-2">
           <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
           <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
         </div>
-        <div className="roadmap-lane-items">
+        <div className="flex flex-wrap items-start gap-2.5">
           {horizon.items.map((item) => (
-            <div key={item.name} className="roadmap-lane-item">
+            <div
+              key={item.name}
+              className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none"
+            >
               <RoadmapMapItem item={item} />
             </div>
           ))}
@@ -487,7 +492,7 @@ const RoadmapTimeline = ({ roadmap }: { roadmap: ResolvedRoadmap }) => {
   const rangeEnd = Math.max(...dates);
 
   return (
-    <div className="roadmap-lanes">
+    <div className="flex flex-col gap-6">
       {roadmap.horizons.map((horizon) => {
         const events = roadmap.events.filter((event) => event.horizonTitle === horizon.title);
         return (
@@ -584,16 +589,19 @@ export const RoadmapPage = () => {
       <GoalBanner goal={roadmap.goal} />
       <RoadmapViewModeSwitch mode={viewMode} onChange={setViewMode} />
       {viewMode === 'tree' && (
-        <div className="roadmap-lanes">
+        <div className="flex flex-col gap-6">
           {roadmap.horizons.map((horizon) => (
             <div key={horizon.title} className="flex flex-col gap-1">
               <div className="flex items-baseline gap-2">
                 <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
                 <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
               </div>
-              <div className="roadmap-lane-items">
+              <div className="flex flex-wrap items-start gap-2.5">
                 {horizon.items.map((item) => (
-                  <div key={item.name} className="roadmap-lane-item">
+                  <div
+                    key={item.name}
+                    className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none"
+                  >
                     <RoadmapItemRow
                       item={item}
                       graduated={graduatedByItem(item)}
@@ -613,7 +621,7 @@ export const RoadmapPage = () => {
                     />
                   </div>
                 ))}
-                <div className="roadmap-lane-item">
+                <div className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none">
                   <AddItemForm
                     onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
                   />

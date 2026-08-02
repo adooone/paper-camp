@@ -181,7 +181,9 @@ const PhasesSection = ({
         showExpandColumn={false}
         rowTexture={(row: WorkRow) => (row.kind === 'fix' ? 'kraft' : undefined)}
         rowClassName={(row: WorkRow) =>
-          row.kind === 'phase' && row.item.source === 'review' ? 'phase-row-review' : undefined
+          row.kind === 'phase' && row.item.source === 'review'
+            ? 'bg-[rgba(155,122,181,0.08)]'
+            : undefined
         }
         className="phase-table-phone"
       />

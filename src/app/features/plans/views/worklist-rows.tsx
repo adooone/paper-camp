@@ -27,6 +27,9 @@ interface WorklistRowsProps {
 
 const headerLabelClass = 'text-sm font-semibold opacity-60 whitespace-nowrap overflow-hidden';
 
+const PLAN_ROWS_GRID_CLASS =
+  'grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
+
 const subjectHeaderClass =
   'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
 
@@ -60,7 +63,7 @@ export const WorklistRows = ({
   } = useSubjectVocabulary();
   const roadmapItemNames = useRoadmapItemNames();
   const navigate = useNavigate();
-  const gridClass = 'plan-rows-grid';
+  const gridClass = PLAN_ROWS_GRID_CLASS;
   const sortKey = useAppStore((s) => s.planFilters.sortKey);
   const sortDirection = useAppStore((s) => s.planFilters.sortDirection);
   const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);
@@ -145,7 +148,7 @@ export const WorklistRows = ({
                     // biome-ignore lint/a11y/useSemanticElements: this grid row is CSS-grid, not a <table>; a real <th> would need a <tr>/<table> ancestor.
                     key={key}
                     role="columnheader"
-                    className={key === 'updated' ? 'plan-rows-cell-updated' : undefined}
+                    className={key === 'updated' ? 'max-lg:hidden' : undefined}
                     aria-sort={
                       active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined
                     }
@@ -174,7 +177,7 @@ export const WorklistRows = ({
                   {subject && roadmapItemNames.has(subject) ? (
                     <button
                       type="button"
-                      className={`subject-header-link ${subjectHeaderClass} bg-none border-none cursor-pointer text-left`}
+                      className={`${subjectHeaderClass} bg-none border-none cursor-pointer text-left hover:underline`}
                       title="View in roadmap"
                       onClick={() => navigate({ to: '/roadmap', search: { item: subject } })}
                     >
@@ -222,13 +225,13 @@ const NoteRowCard = ({
         className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0`}
       >
         <Card size="small" texture="canvas" className="plan-row-card">
-          <div className={'plan-rows-grid'}>
+          <div className={PLAN_ROWS_GRID_CLASS}>
             {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
             <span className={`${titleButtonClass} [cursor:inherit]`}>
               <NoteIcon />
               <span className={titleTextClass}>{idea.title}</span>
             </span>
-            <span className="plan-rows-cell-updated text-sm opacity-[0.45]">—</span>
+            <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
             <span className="text-sm opacity-30">—</span>
             <Stamp
               size="small"
@@ -276,7 +279,7 @@ const IdeaGroupRowCard = ({
         <RowMarker order={idea.order} done={idea.status === 'done'} status={idea.status} />
         <div className="flex-1 min-w-0">
           <Card size="small" texture="canvas" className="plan-row-card">
-            <div className="idea-group-row-grid grid grid-cols-[76px_minmax(0,1fr)_84px_1fr] gap-2 items-center">
+            <div className="grid grid-cols-[76px_minmax(0,1fr)_84px_1fr] gap-2 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1">
               {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
               {/* Raw <button>: a chromeless click target wrapping icon + title text,
               not a paper-ui Button. */}
@@ -288,7 +291,7 @@ const IdeaGroupRowCard = ({
                 <LightbulbIcon />
                 <span className={titleTextClass}>{idea.title}</span>
               </button>
-              <span className="plan-rows-cell-updated text-sm opacity-[0.45]">—</span>
+              <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
               <div className="flex items-center justify-end gap-2">
                 <span className={`text-sm ${children.length > 0 ? 'opacity-60' : 'opacity-30'}`}>
                   {children.length > 0 ? `${done.length}/${children.length} plans done` : '—'}

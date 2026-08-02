@@ -30,7 +30,9 @@ export const RefreshButton = () => {
   return (
     <IconButton
       icon={
-        <span className={`inline-flex${refreshing ? ' pc-spin' : ''}`}>
+        <span
+          className={`inline-flex${refreshing ? ' animate-pc-spin motion-reduce:animate-none' : ''}`}
+        >
           <RefreshIcon size={16} />
         </span>
       }

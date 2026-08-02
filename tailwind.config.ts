@@ -25,6 +25,14 @@ const config: Config = {
         '20': '20px',
         '28': '28px',
       },
+      keyframes: {
+        'pc-spin': {
+          to: { transform: 'rotate(360deg)' },
+        },
+      },
+      animation: {
+        'pc-spin': 'pc-spin 0.8s linear infinite',
+      },
       colors: {
         desk: {
           bg: '#1e3a2d',

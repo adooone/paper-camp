@@ -118,7 +118,7 @@ const StatusStamps = () => {
           chrome-less wrapper rather than a component with its own button surface. */}
       <button
         type="button"
-        className={`stack-check-btn inline-flex bg-none border-none p-0 ${anyRunning ? 'cursor-not-allowed' : 'cursor-pointer'} ${anyRunning && opts.status !== 'running' ? 'opacity-50' : 'opacity-100'}`}
+        className={`inline-flex bg-none border-none p-0 enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] ${anyRunning ? 'cursor-not-allowed' : 'cursor-pointer'} ${anyRunning && opts.status !== 'running' ? 'opacity-50' : 'opacity-100'}`}
         onClick={() => {
           if (!anyRunning) opts.onClick();
         }}
@@ -172,7 +172,7 @@ const StatusStamps = () => {
           >
             <button
               type="button"
-              className={`inline-flex bg-none border-none p-0 ${hasIssues ? 'stack-check-btn cursor-pointer' : 'cursor-default'}`}
+              className={`inline-flex bg-none border-none p-0 ${hasIssues ? 'enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] cursor-pointer' : 'cursor-default'}`}
               disabled={!hasIssues}
               aria-expanded={hasIssues ? docIssuesExpanded : undefined}
               aria-controls="stack-doc-findings"

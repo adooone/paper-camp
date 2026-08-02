@@ -133,7 +133,7 @@ export async function applyPrioritiseVerdict(
         entityFileInput(entry, {
           thread: [
             ...(entry.thread ?? []),
-            { kind: 'log', date: todayDateString(), text: reasonFor(id) },
+            { kind: 'log', date: todayDateString(), text: reasonFor(id), from: 'agent' },
           ],
         }),
       );

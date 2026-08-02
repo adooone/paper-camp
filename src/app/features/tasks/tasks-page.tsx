@@ -46,6 +46,9 @@ const formatTime = (iso: string) => {
 
 const headerLabelClassName = 'text-sm font-semibold whitespace-nowrap overflow-hidden';
 
+const TASK_ROWS_GRID_CLASS =
+  'grid grid-cols-[20px_116px_minmax(0,1fr)_88px_150px_72px] gap-2.5 items-center max-lg:grid-cols-[20px_116px_minmax(0,1fr)_88px_72px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
+
 const TaskLogLines = ({ id }: { id: string }) => {
   const [lines, setLines] = useState<string[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -110,7 +113,7 @@ const TaskLogLines = ({ id }: { id: string }) => {
   );
 };
 
-const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
+const ChevronRightIcon = ({ size = 14, className }: { size?: number; className?: string }) => (
   <svg
     width={size}
     height={size}
@@ -121,6 +124,7 @@ const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"
+    className={className}
   >
     <polyline points="9 18 15 12 9 6" />
   </svg>
@@ -137,7 +141,7 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
     <div
       className={
         highlighted
-          ? 'task-row-highlighted flex flex-col gap-1 rounded-[10px]'
+          ? 'task-row-highlighted flex flex-col gap-1 rounded-[10px] outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]'
           : 'flex flex-col gap-1 rounded-[10px]'
       }
     >
@@ -155,12 +159,9 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
         className="cursor-pointer rounded-[10px]"
       >
         <Card size="small" texture="canvas" className="plan-row-card">
-          <div className="task-rows-grid">
-            <span
-              className="task-rows-chevron inline-flex items-center opacity-50"
-              aria-expanded={expanded}
-            >
-              <ChevronRightIcon />
+          <div className={TASK_ROWS_GRID_CLASS}>
+            <span className="group inline-flex items-center opacity-50" aria-expanded={expanded}>
+              <ChevronRightIcon className="transition-transform duration-150 ease-out group-aria-expanded:rotate-90" />
             </span>
             <span className="font-semibold whitespace-nowrap overflow-hidden">
               {TASK_KIND_LABELS[entry.taskKind] ?? entry.taskKind}
@@ -171,7 +172,7 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
             <span className="text-sm opacity-50 whitespace-nowrap">
               {AGENT_LABELS[entry.agentId]}
             </span>
-            <span className="task-rows-cell-time font-mono text-xs opacity-[0.55] whitespace-nowrap">
+            <span className="max-lg:hidden font-mono text-xs opacity-[0.55] whitespace-nowrap">
               {formatTime(entry.startedAt)}–{formatTime(entry.endedAt)}
             </span>
             <div className="flex items-center">
@@ -236,12 +237,12 @@ export const TasksPage = () => {
       {!taskLogLoading && sorted.length > 0 && (
         <div className="flex flex-col gap-1">
           <Card size="small" texture="kraft" className="plan-row-card">
-            <div className="task-rows-grid">
+            <div className={TASK_ROWS_GRID_CLASS}>
               <span />
               <span className={`${headerLabelClassName} opacity-60`}>Task</span>
               <span className={`${headerLabelClassName} opacity-60`}>Plan</span>
               <span className={`${headerLabelClassName} opacity-60`}>Agent</span>
-              <span className={`task-rows-cell-time ${headerLabelClassName} opacity-60`}>Time</span>
+              <span className={`max-lg:hidden ${headerLabelClassName} opacity-60`}>Time</span>
               <span className={`${headerLabelClassName} opacity-60`}>Outcome</span>
             </div>
           </Card>
