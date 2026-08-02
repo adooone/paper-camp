@@ -60,6 +60,10 @@ const StatusStamps = () => {
   const fixQuality = useAppStore((s) => s.fixQuality);
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
+  const gitBranch = useAppStore((s) => s.gitBranch);
+  const gitAhead = useAppStore((s) => s.gitAhead);
+  const gitBehind = useAppStore((s) => s.gitBehind);
+  const gitDiverged = useAppStore((s) => s.gitDiverged);
   const navigate = useNavigate();
   const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
 
@@ -222,6 +226,12 @@ const StatusStamps = () => {
         let secondaryLine: React.ReactNode = null;
         if (anyRunning) {
           primaryLine = <span className="text-desk-text-muted">Running checks…</span>;
+        } else if (gitDiverged) {
+          primaryLine = (
+            <span className="text-desk-text-muted">
+              {gitBranch} has diverged from origin ({gitAhead} local, {gitBehind} remote)
+            </span>
+          );
         } else if (qualityStatus === 'fail') {
           primaryLine = (
             <span className="text-desk-text-muted">
