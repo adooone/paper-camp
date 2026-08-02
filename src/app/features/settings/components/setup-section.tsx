@@ -1,5 +1,4 @@
 import { connectService, fetchConfig, fetchConnections, saveConfig } from '@/app/services/system';
-import { fontSize, space } from '@/app/styles/tokens';
 import type { CapabilityStatus, ConnectionResult } from '@/types/index';
 import {
   Alert,
@@ -39,7 +38,7 @@ const ConnectActionView = ({
   }
   if (connect.kind === 'command') {
     return (
-      <div style={{ marginTop: space[2] }}>
+      <div className="mt-2">
         <CodeBlock code={connect.command} />
       </div>
     );
@@ -54,11 +53,7 @@ const ConnectActionView = ({
       </Button>
     );
   }
-  return (
-    <p style={{ opacity: 0.65, fontSize: fontSize.sm, margin: `${space[2]} 0 0` }}>
-      {connect.message}
-    </p>
-  );
+  return <p className="opacity-[0.65] text-sm mt-2 mx-0 mb-0">{connect.message}</p>;
 };
 
 const ConnectionRow = ({
@@ -79,9 +74,9 @@ const ConnectionRow = ({
   const stamp = STATUS_STAMP[connection.status];
   return (
     <>
-      <div style={{ paddingBottom: space[3], paddingTop: space[3] }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
-          <span style={{ flex: 1, fontWeight: 500 }}>{connection.label}</span>
+      <div className="pb-3 pt-3">
+        <div className="flex items-center gap-3">
+          <span className="flex-1 font-medium">{connection.label}</span>
           {connection.authenticated === false && (
             <Tooltip content="Installed, but not signed in">
               <Stamp size="small" variant="warning">
@@ -96,13 +91,9 @@ const ConnectionRow = ({
             {rechecking ? 'Checking…' : 'Recheck'}
           </Button>
         </div>
-        <p style={{ opacity: 0.65, fontSize: fontSize.sm, margin: `${space[1]} 0 0` }}>
-          Unlocks: {connection.unlocks}
-        </p>
-        <p style={{ opacity: 0.5, fontSize: fontSize.sm, margin: `${space[1]} 0 0` }}>
-          {connection.detail}
-        </p>
-        <div style={{ marginTop: space[2] }}>
+        <p className="opacity-[0.65] text-sm mt-1 mx-0 mb-0">Unlocks: {connection.unlocks}</p>
+        <p className="opacity-50 text-sm mt-1 mx-0 mb-0">{connection.detail}</p>
+        <div className="mt-2">
           <ConnectActionView
             connection={connection}
             onConnect={onConnect}
@@ -169,19 +160,19 @@ export const SetupSection = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: space[6] }}>
-        <h2 style={{ margin: 0 }}>Setup</h2>
+      <div className="mb-6">
+        <h2 className="m-0">Setup</h2>
       </div>
       {connections === null && !loadFailed && <p>Loading…</p>}
       {loadFailed && (
-        <div style={{ marginBottom: space[4] }}>
+        <div className="mb-4">
           <Alert variant="warning">Failed to load connections. Try refreshing.</Alert>
         </div>
       )}
       {connections && (
         <>
           {!allOk && (
-            <div style={{ marginBottom: space[4] }}>
+            <div className="mb-4">
               <Alert variant="warning">
                 Some connections are incomplete — features that depend on them stay disabled until
                 fixed. Run the connect command below, then recheck.
@@ -201,7 +192,7 @@ export const SetupSection = () => {
               />
             ))}
           </Card>
-          <div style={{ marginTop: space[4] }}>
+          <div className="mt-4">
             <Button size="small" onClick={handleDismissToggle}>
               {setupDismissed ? 'Show Setup on open again' : "Don't show Setup on open"}
             </Button>

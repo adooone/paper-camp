@@ -8,7 +8,7 @@ import { createInterface } from 'node:readline';
 import { buildReconcilePrompt } from '@/app/features/plans/prompts';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
-import { computePlanContentHash, todayDateString } from '@/core/serialize';
+import { agentThreadMessage, computePlanContentHash } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
 import {
   type AgentId,
@@ -272,7 +272,7 @@ export function createAgentManager(
     await writeEntityFile(
       file,
       entityFileInput(entry, {
-        thread: [...(entry.thread ?? []), { kind: 'log', date: todayDateString(), text: message }],
+        thread: [...(entry.thread ?? []), agentThreadMessage(message)],
         ...(needsInput ? { status: 'in-progress' } : {}),
       }),
     );

@@ -1,5 +1,4 @@
 import { applyMergePolicy, fetchMergePolicy } from '@/app/services/system';
-import { space } from '@/app/styles/tokens';
 import type { MergePolicy, MergePolicyResult } from '@/types/index';
 import { Alert, Button, Card, Divider, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
@@ -39,20 +38,12 @@ const PolicyRow = ({ label, current, recommended, isLast }: PolicyRowProps) => {
   const matches = current === recommended;
   return (
     <>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: space[3],
-          paddingBottom: space[2],
-          paddingTop: space[2],
-        }}
-      >
-        <span style={{ flex: 1 }}>{label}</span>
-        <span style={{ opacity: matches ? 0.65 : 1, fontWeight: matches ? 400 : 600 }}>
+      <div className="flex items-center gap-3 pb-2 pt-2">
+        <span className="flex-1">{label}</span>
+        <span className={matches ? 'opacity-[0.65] font-normal' : 'font-semibold'}>
           {formatValue(current)}
         </span>
-        {!matches && <span style={{ opacity: 0.45 }}>→ {formatValue(recommended)}</span>}
+        {!matches && <span className="opacity-[0.45]">→ {formatValue(recommended)}</span>}
       </div>
       {!isLast && <Divider />}
     </>
@@ -88,9 +79,9 @@ export const MergePolicySection = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: space[6] }}>
-        <h2 style={{ margin: 0 }}>Merge Policy</h2>
-        <p style={{ opacity: 0.5, marginTop: space[1] }}>
+      <div className="mb-6">
+        <h2 className="m-0">Merge Policy</h2>
+        <p className="opacity-50 mt-1">
           Paper Camp's canonical policy: squash-only merges, with the commit title and body taken
           from the PR.
         </p>
@@ -100,10 +91,8 @@ export const MergePolicySection = () => {
       {result?.status === 'unavailable' && <Alert variant="warning">{result.reason}</Alert>}
       {result?.status === 'ok' && (
         <>
-          <div
-            style={{ display: 'flex', alignItems: 'center', gap: space[3], marginBottom: space[3] }}
-          >
-            <span style={{ fontWeight: 500 }}>{result.repo}</span>
+          <div className="flex items-center gap-3 mb-3">
+            <span className="font-medium">{result.repo}</span>
             <Stamp
               size="small"
               fillColor={upToDate ? 'rgba(143, 185, 150, 0.25)' : 'rgba(212, 163, 115, 0.25)'}
@@ -123,7 +112,7 @@ export const MergePolicySection = () => {
               />
             ))}
           </Card>
-          <div style={{ marginTop: space[4] }}>
+          <div className="mt-4">
             <Button size="small" onClick={handleApply} disabled={applying || upToDate}>
               {applying ? 'Applying…' : 'Apply recommended policy'}
             </Button>

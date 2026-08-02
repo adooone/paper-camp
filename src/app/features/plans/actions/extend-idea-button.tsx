@@ -1,6 +1,5 @@
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
-import { color } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry } from '@/types/index';
 import { Button, Tooltip, useToast } from '@dendelion/paper-ui';
@@ -70,7 +69,7 @@ export const ExtendIdeaButton = ({ idea, compact }: ExtendIdeaButtonProps) => {
         size="small"
         onClick={handleClick}
         disabled={state === 'loading' || !ideaId || !hasAgent}
-        style={{ color: state === 'error' ? color.accentRoseDark : undefined }}
+        className={state === 'error' ? 'text-watercolor-rose-dark' : undefined}
       >
         {label}
       </Button>

@@ -1,7 +1,7 @@
 import { PageTitle } from '@/app/components/page-title';
 import { fetchTaskLogLines } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
-import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
+import { color } from '@/app/styles/tokens';
 import { AGENT_LABELS, type TaskKind, type TaskLogEntry } from '@/types/index';
 import { Button, Card, Stamp } from '@dendelion/paper-ui';
 import { useSearch } from '@tanstack/react-router';
@@ -44,13 +44,10 @@ const formatTime = (iso: string) => {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
-const headerLabelStyle: React.CSSProperties = {
-  fontSize: fontSize.sm,
-  fontWeight: 600,
-  opacity: 0.6,
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-};
+const headerLabelClassName = 'text-sm font-semibold whitespace-nowrap overflow-hidden';
+
+const TASK_ROWS_GRID_CLASS =
+  'grid grid-cols-[20px_116px_minmax(0,1fr)_88px_150px_72px] gap-2.5 items-center max-lg:grid-cols-[20px_116px_minmax(0,1fr)_88px_72px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
 const TaskLogLines = ({ id }: { id: string }) => {
   const [lines, setLines] = useState<string[] | null>(null);
@@ -94,38 +91,29 @@ const TaskLogLines = ({ id }: { id: string }) => {
     </Button>
   );
 
-  if (lines === null) return <p style={{ opacity: 0.5, margin: 0 }}>Loading…</p>;
+  if (lines === null) return <p className="opacity-50 m-0">Loading…</p>;
   if (failed)
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-        <p style={{ opacity: 0.5, margin: 0 }}>Couldn't load this task's output.</p>
+      <div className="flex items-center gap-2">
+        <p className="opacity-50 m-0">Couldn't load this task's output.</p>
         {retry}
       </div>
     );
   if (lines.length === 0)
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
-        <p style={{ opacity: 0.5, margin: 0 }}>No output recorded.</p>
+      <div className="flex items-center gap-2">
+        <p className="opacity-50 m-0">No output recorded.</p>
         {retry}
       </div>
     );
   return (
-    <pre
-      style={{
-        fontFamily: fontFamily.mono,
-        fontSize: fontSize.xs,
-        margin: 0,
-        maxHeight: 320,
-        overflowY: 'auto',
-        whiteSpace: 'pre-wrap',
-      }}
-    >
+    <pre className="font-mono text-xs m-0 max-h-[320px] overflow-y-auto whitespace-pre-wrap">
       {lines.join('\n')}
     </pre>
   );
 };
 
-const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
+const ChevronRightIcon = ({ size = 14, className }: { size?: number; className?: string }) => (
   <svg
     width={size}
     height={size}
@@ -136,6 +124,7 @@ const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"
+    className={className}
   >
     <polyline points="9 18 15 12 9 6" />
   </svg>
@@ -150,13 +139,17 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
 
   return (
     <div
-      className={highlighted ? 'task-row-highlighted' : undefined}
-      style={{ display: 'flex', flexDirection: 'column', gap: space[1], borderRadius: 10 }}
+      className={
+        highlighted
+          ? 'task-row-highlighted flex flex-col gap-1 rounded-[10px] outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]'
+          : 'flex flex-col gap-1 rounded-[10px]'
+      }
     >
       {/* biome-ignore lint/a11y/useSemanticElements: the clickable row wraps a Card whose block layout a native <button> would break; keyboard toggling is wired on the div. */}
       <div
         role="button"
         tabIndex={0}
+        aria-expanded={expanded}
         onClick={toggle}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -164,45 +157,26 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
             toggle();
           }
         }}
-        style={{ cursor: 'pointer', borderRadius: 10 }}
+        className="group cursor-pointer rounded-[10px]"
       >
         <Card size="small" texture="canvas" className="plan-row-card">
-          <div className="task-rows-grid">
-            <span
-              className="task-rows-chevron"
-              aria-expanded={expanded}
-              style={{ display: 'inline-flex', alignItems: 'center', opacity: 0.5 }}
-            >
-              <ChevronRightIcon />
+          <div className={TASK_ROWS_GRID_CLASS}>
+            <span className="inline-flex items-center opacity-50">
+              <ChevronRightIcon className="transition-transform duration-150 ease-out group-aria-expanded:rotate-90" />
             </span>
-            <span style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+            <span className="font-semibold whitespace-nowrap overflow-hidden">
               {TASK_KIND_LABELS[entry.taskKind] ?? entry.taskKind}
             </span>
-            <span
-              style={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                opacity: 0.7,
-              }}
-            >
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap opacity-70">
               {entry.planTitle}
             </span>
-            <span className="text-sm" style={{ opacity: 0.5, whiteSpace: 'nowrap' }}>
+            <span className="text-sm opacity-50 whitespace-nowrap">
               {AGENT_LABELS[entry.agentId]}
             </span>
-            <span
-              className="task-rows-cell-time"
-              style={{
-                fontFamily: fontFamily.mono,
-                fontSize: fontSize.xs,
-                opacity: 0.55,
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <span className="max-lg:hidden font-mono text-xs opacity-[0.55] whitespace-nowrap">
               {formatTime(entry.startedAt)}–{formatTime(entry.endedAt)}
             </span>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="flex items-center">
               <Stamp
                 size="small"
                 fillColor={
@@ -257,31 +231,26 @@ export const TasksPage = () => {
   return (
     <div ref={containerRef}>
       <PageTitle>Tasks</PageTitle>
-      {taskLogLoading && <p style={{ opacity: 0.5 }}>Loading…</p>}
+      {taskLogLoading && <p className="opacity-50">Loading…</p>}
       {!taskLogLoading && sorted.length === 0 && (
-        <p style={{ opacity: 0.5 }}>No tasks have run yet.</p>
+        <p className="opacity-50">No tasks have run yet.</p>
       )}
       {!taskLogLoading && sorted.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+        <div className="flex flex-col gap-1">
           <Card size="small" texture="kraft" className="plan-row-card">
-            <div className="task-rows-grid">
+            <div className={TASK_ROWS_GRID_CLASS}>
               <span />
-              <span style={headerLabelStyle}>Task</span>
-              <span style={headerLabelStyle}>Plan</span>
-              <span style={headerLabelStyle}>Agent</span>
-              <span className="task-rows-cell-time" style={headerLabelStyle}>
-                Time
-              </span>
-              <span style={headerLabelStyle}>Outcome</span>
+              <span className={`${headerLabelClassName} opacity-60`}>Task</span>
+              <span className={`${headerLabelClassName} opacity-60`}>Plan</span>
+              <span className={`${headerLabelClassName} opacity-60`}>Agent</span>
+              <span className={`max-lg:hidden ${headerLabelClassName} opacity-60`}>Time</span>
+              <span className={`${headerLabelClassName} opacity-60`}>Outcome</span>
             </div>
           </Card>
           {groups.map((group) => (
-            <div
-              key={group.key}
-              style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
-            >
+            <div key={group.key} className="flex flex-col gap-1">
               <Card size="small" texture="kraft" className="plan-row-card">
-                <span style={{ ...headerLabelStyle, opacity: 0.75 }}>
+                <span className={`${headerLabelClassName} opacity-75`}>
                   {formatDayHeader(group.entries[0].endedAt)}
                 </span>
               </Card>

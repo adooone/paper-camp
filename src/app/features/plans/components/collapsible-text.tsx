@@ -1,4 +1,3 @@
-import { fontSize, space } from '@/app/styles/tokens';
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 
 interface CollapsibleTextProps {
@@ -37,19 +36,7 @@ export const CollapsibleText = ({
 
   return (
     <div>
-      <div
-        ref={ref}
-        style={
-          expanded
-            ? undefined
-            : {
-                display: '-webkit-box',
-                WebkitLineClamp: collapsedLines,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-              }
-        }
-      >
+      <div ref={ref} className={expanded ? undefined : `line-clamp-[${collapsedLines}]`}>
         {children}
       </div>
       {/* Raw <button>: paper-ui's Button has no bare text-link variant. Conditionally
@@ -59,17 +46,7 @@ export const CollapsibleText = ({
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          style={{
-            alignSelf: 'flex-start',
-            background: 'none',
-            border: 'none',
-            padding: `${space[1]} 0`,
-            font: 'inherit',
-            fontSize: fontSize.xs,
-            opacity: 0.6,
-            cursor: 'pointer',
-            textDecoration: 'underline',
-          }}
+          className="self-start bg-none bg-transparent border-none py-1 px-0 [font:inherit] text-xs opacity-60 cursor-pointer underline"
         >
           {expanded ? 'Show less' : 'Show more'}
         </button>

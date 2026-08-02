@@ -4,7 +4,6 @@ import { groupRowsBySubject } from '@/app/features/plans/helpers';
 import { useRoadmapItemNames } from '@/app/features/roadmap';
 import { useSubjectVocabulary } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -26,33 +25,15 @@ interface WorklistRowsProps {
   onOpenIdea?: (title: string) => void;
 }
 
-const headerLabelStyle: React.CSSProperties = {
-  fontSize: fontSize.sm,
-  fontWeight: 600,
-  opacity: 0.6,
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-};
+const headerLabelClass = 'text-sm font-semibold opacity-60 whitespace-nowrap overflow-hidden';
 
-const subjectHeaderStyle: React.CSSProperties = {
-  fontFamily: fontFamily.handwritten,
-  fontSize: fontSize.xs,
-  fontWeight: 600,
-  opacity: 0.55,
-  lineHeight: 1,
-  padding: `${space[2]} ${space[1]} 0`,
-};
+const PLAN_ROWS_GRID_CLASS =
+  'grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
-const headerButtonStyle: React.CSSProperties = {
-  ...headerLabelStyle,
-  background: 'none',
-  border: 'none',
-  padding: 0,
-  cursor: 'pointer',
-  font: 'inherit',
-  color: 'inherit',
-  textAlign: 'left',
-};
+const subjectHeaderClass =
+  'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
+
+const headerButtonClass = `${headerLabelClass} bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left`;
 
 const SORT_COLUMNS: { key: PlanSortKey; label: string }[] = [
   { key: 'id', label: 'Id' },
@@ -62,26 +43,10 @@ const SORT_COLUMNS: { key: PlanSortKey; label: string }[] = [
   { key: 'status', label: 'Status' },
 ];
 
-const titleButtonStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: space[2],
-  minWidth: 0,
-  background: 'none',
-  border: 'none',
-  padding: 0,
-  cursor: 'pointer',
-  textAlign: 'left',
-  font: 'inherit',
-  color: 'inherit',
-  fontWeight: 600,
-};
+const titleButtonClass =
+  'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit font-semibold';
 
-const titleTextStyle: React.CSSProperties = {
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
+const titleTextClass = 'overflow-hidden text-ellipsis whitespace-nowrap';
 
 export const WorklistRows = ({
   rows,
@@ -98,7 +63,7 @@ export const WorklistRows = ({
   } = useSubjectVocabulary();
   const roadmapItemNames = useRoadmapItemNames();
   const navigate = useNavigate();
-  const gridClass = 'plan-rows-grid';
+  const gridClass = PLAN_ROWS_GRID_CLASS;
   const sortKey = useAppStore((s) => s.planFilters.sortKey);
   const sortDirection = useAppStore((s) => s.planFilters.sortDirection);
   const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);
@@ -154,26 +119,26 @@ export const WorklistRows = ({
   const showSubjectHeaders = groups.length > 1;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center">
         {/* biome-ignore lint/a11y/useSemanticElements: this gutter sits outside the row grid, not inside a <table>; a real <th> would need a <tr>/<table> ancestor. */}
         <span
           role="columnheader"
-          style={{ flex: `0 0 ${ROW_MARKER_WIDTH}px`, display: 'flex', justifyContent: 'center' }}
+          className="flex-[0_0_36px] flex justify-center"
           aria-sort={
             sortKey === 'order' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined
           }
         >
           <button
             type="button"
-            style={headerButtonStyle}
+            className={headerButtonClass}
             aria-label="Sort by run order"
             onClick={() => handleSort('order')}
           >
             #{sortKey === 'order' && (sortDirection === 'asc' ? '▲' : '▼')}
           </button>
         </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="flex-1 min-w-0">
           <Card size="small" texture="kraft" className="plan-row-card">
             <div className={gridClass}>
               {SORT_COLUMNS.map(({ key, label }) => {
@@ -183,12 +148,16 @@ export const WorklistRows = ({
                     // biome-ignore lint/a11y/useSemanticElements: this grid row is CSS-grid, not a <table>; a real <th> would need a <tr>/<table> ancestor.
                     key={key}
                     role="columnheader"
-                    className={key === 'updated' ? 'plan-rows-cell-updated' : undefined}
+                    className={key === 'updated' ? 'max-lg:hidden' : undefined}
                     aria-sort={
                       active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined
                     }
                   >
-                    <button type="button" style={headerButtonStyle} onClick={() => handleSort(key)}>
+                    <button
+                      type="button"
+                      className={headerButtonClass}
+                      onClick={() => handleSort(key)}
+                    >
                       {label}
                       {active && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
                     </button>
@@ -203,29 +172,19 @@ export const WorklistRows = ({
         ? groups.map((group) => {
             const subject = group.subject;
             return (
-              <div
-                key={subject ?? '__no-subject__'}
-                style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
-              >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
+              <div key={subject ?? '__no-subject__'} className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-2">
                   {subject && roadmapItemNames.has(subject) ? (
                     <button
                       type="button"
-                      className="subject-header-link"
+                      className={`${subjectHeaderClass} bg-none bg-transparent border-none cursor-pointer text-left hover:underline`}
                       title="View in roadmap"
                       onClick={() => navigate({ to: '/roadmap', search: { item: subject } })}
-                      style={{
-                        ...subjectHeaderStyle,
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                      }}
                     >
                       {subject}
                     </button>
                   ) : (
-                    <div style={subjectHeaderStyle}>{subject ?? 'No subject'}</div>
+                    <div className={subjectHeaderClass}>{subject ?? 'No subject'}</div>
                   )}
                 </div>
                 {group.rows.map((row) => renderRow(row))}
@@ -247,7 +206,7 @@ const NoteRowCard = ({
   const idea = row.idea;
   const status = idea.status ?? 'open';
   return (
-    <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div className="flex items-center">
       <RowMarker order={idea.order} done={status === 'done'} status={status} />
       <div
         role={onOpen ? 'button' : undefined}
@@ -263,21 +222,17 @@ const NoteRowCard = ({
               }
             : undefined
         }
-        style={{ cursor: onOpen ? 'pointer' : undefined, borderRadius: 10, flex: 1, minWidth: 0 }}
+        className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0`}
       >
         <Card size="small" texture="canvas" className="plan-row-card">
-          <div className={'plan-rows-grid'}>
+          <div className={PLAN_ROWS_GRID_CLASS}>
             {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
-            <span style={{ ...titleButtonStyle, cursor: 'inherit' }}>
+            <span className={`${titleButtonClass} [cursor:inherit]`}>
               <NoteIcon />
-              <span style={titleTextStyle}>{idea.title}</span>
+              <span className={titleTextClass}>{idea.title}</span>
             </span>
-            <span className="plan-rows-cell-updated text-sm" style={{ opacity: 0.45 }}>
-              —
-            </span>
-            <span className="text-sm" style={{ opacity: 0.3 }}>
-              —
-            </span>
+            <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
+            <span className="text-sm opacity-30">—</span>
             <Stamp
               size="small"
               fillColor={IDEA_STATUS_STAMP[status].fill}
@@ -319,43 +274,26 @@ const IdeaGroupRowCard = ({
   const visibleChildren = shouldCollapseDone && !expanded ? notDone : children;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center">
         <RowMarker order={idea.order} done={idea.status === 'done'} status={idea.status} />
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="flex-1 min-w-0">
           <Card size="small" texture="canvas" className="plan-row-card">
-            <div
-              className="idea-group-row-grid"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '76px minmax(0, 1fr) 84px 1fr',
-                gap: space[2],
-                alignItems: 'center',
-              }}
-            >
+            <div className="grid grid-cols-[76px_minmax(0,1fr)_84px_1fr] gap-2 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1">
               {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
               {/* Raw <button>: a chromeless click target wrapping icon + title text,
               not a paper-ui Button. */}
               <button
                 type="button"
                 onClick={() => onOpenIdea?.(idea.title)}
-                style={titleButtonStyle}
+                className={titleButtonClass}
               >
                 <LightbulbIcon />
-                <span style={titleTextStyle}>{idea.title}</span>
+                <span className={titleTextClass}>{idea.title}</span>
               </button>
-              <span className="plan-rows-cell-updated text-sm" style={{ opacity: 0.45 }}>
-                —
-              </span>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                  gap: space[2],
-                }}
-              >
-                <span className="text-sm" style={{ opacity: children.length > 0 ? 0.6 : 0.3 }}>
+              <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
+              <div className="flex items-center justify-end gap-2">
+                <span className={`text-sm ${children.length > 0 ? 'opacity-60' : 'opacity-30'}`}>
                   {children.length > 0 ? `${done.length}/${children.length} plans done` : '—'}
                 </span>
                 <ExtendIdeaButton idea={idea} compact />
@@ -366,16 +304,7 @@ const IdeaGroupRowCard = ({
         </div>
       </div>
       {children.length > 0 && (
-        <div
-          style={{
-            marginLeft: space[5],
-            paddingLeft: space[3],
-            borderLeft: '2px solid rgba(0,0,0,0.08)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: space[1],
-          }}
-        >
+        <div className="ml-5 pl-3 border-l-2 border-black/[8%] flex flex-col gap-1">
           <PlanRows
             plans={visibleChildren}
             activePlanTitle={activePlanTitle}
@@ -388,17 +317,7 @@ const IdeaGroupRowCard = ({
             <button
               type="button"
               onClick={onToggleExpanded}
-              style={{
-                alignSelf: 'flex-start',
-                background: 'none',
-                border: 'none',
-                padding: `${space[1]} 0`,
-                opacity: 0.6,
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                fontSize: fontSize.xs,
-                font: 'inherit',
-              }}
+              className="self-start bg-none bg-transparent border-none py-1 px-0 opacity-60 cursor-pointer underline text-xs [font:inherit]"
             >
               {expanded ? 'Show less' : `+${done.length} done`}
             </button>

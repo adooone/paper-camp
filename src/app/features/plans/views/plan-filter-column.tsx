@@ -1,7 +1,6 @@
 import { selectPlanRows } from '@/app/features/plans/helpers';
 import { useActivePlanTitle } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type { PlanStatus } from '@/types/index';
 import { Card, Input } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -22,14 +21,7 @@ const STATUS_CHIP_ORDER: PlanStatus[] = [
 /** "Backlog" (not STATUS_LABEL's "Idea") for idea-status plans — this list's own term. */
 const STATUS_CHIP_LABEL: Record<PlanStatus, string> = { ...STATUS_LABEL, idea: 'Backlog' };
 
-const sectionLabelStyle: React.CSSProperties = {
-  fontSize: fontSize['2xs'],
-  fontWeight: 600,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: color.textTertiary,
-  margin: `0 0 ${space[2]}`,
-};
+const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300 mb-2';
 
 export const PlanFilterColumn = () => {
   const plans = useAppStore((s) => s.plans);
@@ -56,31 +48,15 @@ export const PlanFilterColumn = () => {
   const visibleTags = tagsExpanded ? sortedTags : sortedTags.slice(0, VISIBLE_TAG_COUNT);
   const hiddenCount = sortedTags.length - visibleTags.length;
 
-  const linkStyle: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    padding: 0,
-    cursor: 'pointer',
-    opacity: 0.7,
-    textDecoration: 'underline',
-    fontSize: fontSize['2xs'],
-  };
+  const linkClass =
+    'bg-none bg-transparent border-none p-0 cursor-pointer opacity-70 underline text-2xs';
 
   return (
     // Pull up by the SidebarShell's top padding to line up with the Page.
-    <div style={{ marginTop: `calc(-1 * ${space[5]})` }}>
+    <div className="-mt-5">
       <Card surface="paper" texture="speckle" size="small">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
-          <h2
-            style={{
-              margin: 0,
-              fontFamily: fontFamily.serif,
-              fontSize: fontSize.base,
-              color: color.textPrimary,
-            }}
-          >
-            Filters
-          </h2>
+        <div className="flex flex-col gap-5">
+          <h2 className="m-0 font-display-luminari text-base text-ink-900">Filters</h2>
 
           <Input
             type="search"
@@ -92,20 +68,15 @@ export const PlanFilterColumn = () => {
           />
 
           {filters.subject !== null && (
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: space[2] }}
-              data-testid="subject-filter-chip"
-            >
-              <span style={{ fontSize: fontSize['2xs'], opacity: 0.7 }}>
-                Subject: {filters.subject}
-              </span>
+            <div className="flex items-center gap-2" data-testid="subject-filter-chip">
+              <span className="text-2xs opacity-70">Subject: {filters.subject}</span>
               <button
                 type="button"
                 onClick={() => {
                   setSubjectFilter(null);
                   navigate({ to: '/', search: {} });
                 }}
-                style={linkStyle}
+                className={linkClass}
               >
                 Clear
               </button>
@@ -113,8 +84,8 @@ export const PlanFilterColumn = () => {
           )}
 
           <div>
-            <div style={sectionLabelStyle}>Status</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+            <div className={sectionLabelClass}>Status</div>
+            <div className="flex flex-col gap-1">
               {STATUS_CHIP_ORDER.map((status) => {
                 const isActive = activeStatuses.has(status);
                 return (
@@ -124,35 +95,16 @@ export const PlanFilterColumn = () => {
                     type="button"
                     onClick={() => togglePlanStatus(status)}
                     aria-pressed={isActive}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: space[2],
-                      width: '100%',
-                      padding: `${space[1]} ${space[2]}`,
-                      borderRadius: 6,
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      background: isActive ? 'rgba(0,0,0,0.05)' : 'transparent',
-                      opacity: isActive ? 1 : 0.5,
-                    }}
+                    className={`flex items-center gap-2 w-full px-2 py-1 rounded-md border-none cursor-pointer text-left ${
+                      isActive ? 'bg-black/[5%] opacity-100' : 'bg-transparent opacity-50'
+                    }`}
                   >
                     <span
-                      style={{
-                        width: 9,
-                        height: 9,
-                        borderRadius: '50%',
-                        flexShrink: 0,
-                        background: STATUS_STAMP[status].text,
-                      }}
+                      className="w-[9px] h-[9px] rounded-full shrink-0"
+                      style={{ background: STATUS_STAMP[status].text }}
                     />
-                    <span style={{ flex: 1, fontSize: fontSize.xs, color: color.textPrimary }}>
-                      {STATUS_CHIP_LABEL[status]}
-                    </span>
-                    <span style={{ fontSize: fontSize['2xs'], color: color.textSecondary }}>
-                      {statusCounts[status]}
-                    </span>
+                    <span className="flex-1 text-xs text-ink-900">{STATUS_CHIP_LABEL[status]}</span>
+                    <span className="text-2xs text-ink-500">{statusCounts[status]}</span>
                   </button>
                 );
               })}
@@ -160,11 +112,9 @@ export const PlanFilterColumn = () => {
           </div>
 
           <div>
-            <div style={sectionLabelStyle}>Tags</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: space[1], alignItems: 'center' }}>
-              {sortedTags.length === 0 && (
-                <span style={{ opacity: 0.5, fontSize: fontSize['2xs'] }}>No tags</span>
-              )}
+            <div className={sectionLabelClass}>Tags</div>
+            <div className="flex flex-wrap gap-1 items-center">
+              {sortedTags.length === 0 && <span className="opacity-50 text-2xs">No tags</span>}
               {visibleTags.map((tag) => {
                 const isActive = activeTags.has(tag);
                 return (
@@ -174,15 +124,9 @@ export const PlanFilterColumn = () => {
                     type="button"
                     onClick={() => togglePlanTag(tag)}
                     aria-pressed={isActive}
-                    style={{
-                      fontSize: fontSize['2xs'],
-                      padding: `2px ${space[2]}`,
-                      borderRadius: 6,
-                      border: '0.5px solid rgba(0,0,0,0.12)',
-                      cursor: 'pointer',
-                      background: isActive ? 'rgba(0,0,0,0.08)' : 'transparent',
-                      opacity: isActive ? 1 : 0.55,
-                    }}
+                    className={`text-2xs px-2 py-[2px] rounded-md border-[0.5px] border-black/[12%] cursor-pointer ${
+                      isActive ? 'bg-black/[8%] opacity-100' : 'bg-transparent opacity-55'
+                    }`}
                   >
                     {tag} {tagCounts[tag] ?? 0}
                   </button>
@@ -190,12 +134,12 @@ export const PlanFilterColumn = () => {
               })}
               {/* Raw <button>: needs a muted opacity/font-size LinkButton's fixed amber style can't give. */}
               {hiddenCount > 0 && (
-                <button type="button" onClick={() => setTagsExpanded(true)} style={linkStyle}>
+                <button type="button" onClick={() => setTagsExpanded(true)} className={linkClass}>
                   +{hiddenCount} more
                 </button>
               )}
               {tagsExpanded && sortedTags.length > VISIBLE_TAG_COUNT && (
-                <button type="button" onClick={() => setTagsExpanded(false)} style={linkStyle}>
+                <button type="button" onClick={() => setTagsExpanded(false)} className={linkClass}>
                   Show less
                 </button>
               )}

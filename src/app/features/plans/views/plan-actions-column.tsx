@@ -1,7 +1,6 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlanTitle, useSubjectVocabulary } from '@/app/hooks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { AGENT_IDS, AGENT_LABELS, type AgentId } from '@/types/index';
 import { Card, Input, ListItem, Select, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
@@ -12,14 +11,7 @@ import { effectiveStatus } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
 
-const sectionLabelStyle: React.CSSProperties = {
-  fontFamily: fontFamily.handwritten,
-  fontSize: fontSize.xs,
-  fontWeight: 600,
-  lineHeight: 1,
-  color: color.textTertiary,
-  margin: `0 0 ${space[2]}`,
-};
+const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none text-ink-300 mb-2';
 
 export const PlanActionsColumn = () => {
   const plans = useAppStore((s) => s.plans);
@@ -72,23 +64,14 @@ export const PlanActionsColumn = () => {
 
   return (
     // Pull up by the SidebarShell's top padding to line up with the Page.
-    <div style={{ marginTop: `calc(-1 * ${space[5]})` }}>
+    <div className="-mt-5">
       <Card surface="paper" texture="speckle" size="small">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
-          <h2
-            style={{
-              margin: 0,
-              fontFamily: fontFamily.serif,
-              fontSize: fontSize.base,
-              color: color.textPrimary,
-            }}
-          >
-            Plan
-          </h2>
+        <div className="flex flex-col gap-5">
+          <h2 className="m-0 font-display-luminari text-base text-ink-900">Plan</h2>
 
           <div>
-            <div style={sectionLabelStyle}>Show</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+            <div className={sectionLabelClass}>Show</div>
+            <div className="flex flex-col gap-1">
               <ListItem
                 size="small"
                 active={detailView === 'details'}
@@ -107,7 +90,7 @@ export const PlanActionsColumn = () => {
           </div>
 
           <div>
-            <div style={sectionLabelStyle}>Status</div>
+            <div className={sectionLabelClass}>Status</div>
             {/* Read-only: the dropped/reopen override lives in Actions below since
                 abandonment leaves no branch or PR to derive status from. */}
             <Stamp
@@ -120,7 +103,7 @@ export const PlanActionsColumn = () => {
           </div>
 
           <div>
-            <div style={sectionLabelStyle}>Subject</div>
+            <div className={sectionLabelClass}>Subject</div>
             <Select
               size="small"
               value={plan.subject ?? NO_SUBJECT}
@@ -141,7 +124,7 @@ export const PlanActionsColumn = () => {
 
           {hasRunOrder && (
             <div>
-              <div style={sectionLabelStyle}>Order</div>
+              <div className={sectionLabelClass}>Order</div>
               <Input
                 type="number"
                 size="small"
@@ -156,7 +139,7 @@ export const PlanActionsColumn = () => {
           )}
 
           <div>
-            <div style={sectionLabelStyle}>Agent</div>
+            <div className={sectionLabelClass}>Agent</div>
             <Select
               size="small"
               value={plan.agent ?? ''}
@@ -171,10 +154,8 @@ export const PlanActionsColumn = () => {
 
           {plan.tags.length > 0 && (
             <div>
-              <div style={sectionLabelStyle}>Tags</div>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: space[1], flexWrap: 'wrap' }}
-              >
+              <div className={sectionLabelClass}>Tags</div>
+              <div className="flex items-center gap-1 flex-wrap">
                 {plan.tags.map((tag) => (
                   <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
                     {tag}
@@ -185,8 +166,8 @@ export const PlanActionsColumn = () => {
           )}
 
           <div>
-            <div style={sectionLabelStyle}>Actions</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+            <div className={sectionLabelClass}>Actions</div>
+            <div className="flex flex-col gap-1">
               {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
               {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
 
@@ -196,10 +177,10 @@ export const PlanActionsColumn = () => {
                 <ListItem
                   size="small"
                   // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
-                  icon={<span style={{ color: color.accentGreenDark }}>✓</span>}
+                  icon={<span className="text-watercolor-green-dark">✓</span>}
                   onClick={() => patch({ status: 'done' })}
                   disabled={updating}
-                  style={updating ? { opacity: 0.5 } : undefined}
+                  className={updating ? 'opacity-50' : undefined}
                 >
                   Approve &amp; close
                 </ListItem>
@@ -208,13 +189,15 @@ export const PlanActionsColumn = () => {
               <ListItem
                 size="small"
                 icon={
-                  <span style={{ color: dropped ? color.accentGreenDark : color.accentRoseDark }}>
+                  <span
+                    className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
+                  >
                     {dropped ? '↺' : '⊘'}
                   </span>
                 }
                 onClick={() => patch({ status: dropped ? null : 'dropped' })}
                 disabled={updating}
-                style={updating ? { opacity: 0.5 } : undefined}
+                className={updating ? 'opacity-50' : undefined}
               >
                 {dropped ? 'Reopen plan' : 'Mark dropped'}
               </ListItem>

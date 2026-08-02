@@ -1,5 +1,4 @@
 import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
-import { color } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { ListItem, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -44,10 +43,10 @@ export const FixReviewButton = ({ plan, disabled }: FixReviewButtonProps) => {
         size="small"
         // paper-ui has no flag icon (only CloseIcon, LightbulbIcon, CheckIcon, CopyIcon,
         // PlusIcon, FolderIcon) — raw span is a deliberate fallback, not an oversight.
-        icon={<span style={{ color: color.accentAmberDark }}>⚑</span>}
+        icon={<span className="text-watercolor-amber-dark">⚑</span>}
         onClick={handleClick}
         disabled={isDisabled}
-        style={isDisabled ? { opacity: 0.5 } : undefined}
+        className={isDisabled ? 'opacity-50' : undefined}
       >
         {launching ? 'Starting…' : 'Fix review comments'}
       </ListItem>

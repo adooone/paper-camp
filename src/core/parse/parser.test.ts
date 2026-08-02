@@ -282,6 +282,13 @@ describe('findConsistencyIssues', () => {
     const plans = [plan({ title: 'Plan A', id: 'FEAT-2' })];
     expect(findConsistencyIssues(plans, ['Packaging'])).toEqual([]);
   });
+
+  it('does not flag an archived plan even when its subject was pruned from the roadmap', () => {
+    const plans = [
+      plan({ title: 'Shipped', id: 'FEAT-9', subject: 'Retired subject', archived: true }),
+    ];
+    expect(findConsistencyIssues(plans, ['Packaging'])).toEqual([]);
+  });
 });
 
 describe('parseIdeas', () => {

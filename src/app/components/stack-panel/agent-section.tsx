@@ -1,32 +1,18 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { AGENT_LABELS, type AgentTaskState, type AgentTaskStatus } from '@/types/index';
 import { Card, CloseIcon, CopyButton, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { chalkStatusFill, chalkStatusText, deskChalk, sectionLabelStyle } from './shared';
+import { chalkStatusFill, chalkStatusText, sectionLabelClassName } from './shared';
 
 const AUTH_FIX_COMMANDS = ['claude auth login', 'claude setup-token'] as const;
 
 const AuthErrorFix = () => (
   // biome-ignore lint/a11y/useKeyWithClickEvents: purely stops the copy click from bubbling to the card's onClick (which navigates to /tasks); nothing here is itself interactive.
-  <div
-    onClick={(e) => e.stopPropagation()}
-    style={{ display: 'flex', flexDirection: 'column', gap: space[1], marginTop: space[2] }}
-  >
+  <div onClick={(e) => e.stopPropagation()} className="mt-2 flex flex-col gap-1">
     {AUTH_FIX_COMMANDS.map((cmd) => (
-      <div
-        key={cmd}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: space[2],
-        }}
-      >
-        <code style={{ fontFamily: fontFamily.mono, fontSize: fontSize.xs, color: deskChalk }}>
-          {cmd}
-        </code>
+      <div key={cmd} className="flex items-center justify-between gap-2">
+        <code className="font-mono text-xs text-desk-chalk">{cmd}</code>
         <CopyButton text={cmd} surface="chalkboard" />
       </div>
     ))}
@@ -34,10 +20,9 @@ const AuthErrorFix = () => (
 );
 
 const MAX_VISIBLE_TASKS = 8;
-// One task card's rendered height plus card gap, reserved so the empty state
-// doesn't shrink the panel when tasks finish and clear.
-const TASK_CARD_HEIGHT = '2.75rem';
-const taskStackMinHeight = `calc(${MAX_VISIBLE_TASKS} * ${TASK_CARD_HEIGHT} + ${MAX_VISIBLE_TASKS - 1} * ${space[2]})`;
+// 25.5rem = MAX_VISIBLE_TASKS * 2.75rem card height + (MAX_VISIBLE_TASKS - 1) * 0.5rem gap,
+// reserved so the empty state doesn't shrink the panel when tasks finish and clear.
+const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[25.5rem]';
 
 const taskSubtitle = (task: AgentTaskState): string => {
   switch (task.taskKind) {
@@ -121,31 +106,13 @@ const AgentTaskCard = ({
             openTaskPage();
           }
         }}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: space[2],
-          cursor: 'pointer',
-          borderRadius: 10,
-        }}
+        className="flex cursor-pointer items-center justify-between gap-2 rounded-[10px]"
       >
-        <span
-          style={{
-            fontFamily: fontFamily.serif,
-            fontWeight: 600,
-            fontSize: fontSize.sm,
-            color: deskChalk,
-            minWidth: 0, // lets this flex item shrink below content width so overflow/ellipsis can trigger
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm font-semibold text-desk-chalk">
           {task.planTitle}
           {taskSubtitle(task)} · {AGENT_LABELS[task.agentId]}
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+        <div className="flex items-center gap-2">
           <Stamp
             surface="chalkboard"
             size="small"
@@ -179,27 +146,12 @@ export const AgentSection = () => {
   const visibleTasks = agentStatus.slice(0, MAX_VISIBLE_TASKS);
 
   return (
-    <div
-      style={{
-        flex: '1 1 auto',
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        padding: space[6],
-      }}
-    >
-      <div style={sectionLabelStyle}>Agent</div>
+    <div className="flex min-h-0 flex-auto flex-col p-6">
+      <div className={sectionLabelClassName}>Agent</div>
       <div
-        style={{
-          flex: '1 1 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: visibleTasks.length > 0 ? 'flex-start' : 'center',
-          gap: space[2],
-          minHeight: 0,
-          flexBasis: taskStackMinHeight,
-          overflowY: 'auto',
-        }}
+        className={`flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto ${TASK_STACK_MIN_HEIGHT_CLASS} ${
+          visibleTasks.length > 0 ? 'justify-start' : 'justify-center'
+        }`}
       >
         {visibleTasks.length > 0 ? (
           visibleTasks.map((task) => (
@@ -207,9 +159,7 @@ export const AgentSection = () => {
           ))
         ) : (
           <Card surface="chalkboard" size="small">
-            <p style={{ opacity: 0.5, fontSize: fontSize.xs, margin: 0, textAlign: 'center' }}>
-              No agent running.
-            </p>
+            <p className="m-0 text-center text-xs opacity-50">No agent running.</p>
           </Card>
         )}
       </div>

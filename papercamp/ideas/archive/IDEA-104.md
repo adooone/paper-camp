@@ -2,9 +2,9 @@
 id: IDEA-104
 title: Decisions and questions live on the idea
 type: feat
-status: review
+status: done
 created: 2026-07-29
-updated: 2026-07-29
+updated: 2026-08-02
 tags:
   - app
   - core

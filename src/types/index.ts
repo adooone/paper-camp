@@ -182,6 +182,8 @@ export interface PlanEntry {
   review?: LogEntry[];
   /** The entity's single ordered feedback thread — see EntityEntry.thread. */
   thread?: ThreadMessage[];
+  /** Set by readEntities from which dir the file came from — see EntityEntry.archived. */
+  archived?: boolean;
   pr?: PrInfo;
 }
 

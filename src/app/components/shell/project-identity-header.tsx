@@ -1,5 +1,4 @@
 import { useProjectIdentity } from '@/app/hooks';
-import { fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { FolderIcon, Icon } from '@dendelion/paper-ui';
 
 interface ProjectIdentityHeaderProps {
@@ -8,30 +7,22 @@ interface ProjectIdentityHeaderProps {
 
 export const ProjectIdentityHeader = ({ size = 'md' }: ProjectIdentityHeaderProps) => {
   const { projectName, iconDataUri, loading } = useProjectIdentity();
-  const iconSize = size === 'sm' ? 18 : 20;
-  const textSize = size === 'sm' ? fontSize.sm : fontSize.md;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: space[3], minWidth: 0 }}>
+    <div className="flex items-center gap-3 min-w-0">
       {iconDataUri ? (
         <img
           src={iconDataUri}
           alt=""
-          style={{ width: iconSize, height: iconSize, objectFit: 'contain', flexShrink: 0 }}
+          className={`object-contain shrink-0 ${size === 'sm' ? 'w-[18px] h-[18px]' : 'w-[20px] h-[20px]'}`}
         />
       ) : (
         <Icon icon={<FolderIcon />} size="small" />
       )}
       <span
-        style={{
-          fontFamily: fontFamily.serif,
-          fontWeight: 600,
-          fontSize: textSize,
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          minWidth: 0,
-        }}
+        className={`font-display-luminari font-semibold whitespace-nowrap overflow-hidden text-ellipsis min-w-0 ${
+          size === 'sm' ? 'text-sm' : 'text-md'
+        }`}
       >
         {loading ? 'Loading…' : (projectName ?? 'Paper Camp')}
       </span>

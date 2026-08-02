@@ -1,5 +1,4 @@
 import { fetchFileDiffs } from '@/app/services/git-api';
-import { layout, space } from '@/app/styles/tokens';
 import type { FileDiffEntry } from '@/types/index';
 import { Breadcrumb } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -20,7 +19,7 @@ export const DiffPage = () => {
   }, []);
 
   const breadcrumb = (
-    <div style={{ marginBottom: space[4] }}>
+    <div className="mb-4">
       <Breadcrumb
         items={[
           { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
@@ -30,14 +29,14 @@ export const DiffPage = () => {
     </div>
   );
 
-  const contentStyle = { minHeight: `calc(100vh - ${layout.headerHeight})` };
+  const contentClass = 'min-h-page';
 
   if (loadFailed) {
     return (
       <div>
         {breadcrumb}
-        <div style={contentStyle}>
-          <p style={{ opacity: 0.5 }}>Couldn't load the working-tree diff.</p>
+        <div className={contentClass}>
+          <p className="opacity-50">Couldn't load the working-tree diff.</p>
         </div>
       </div>
     );
@@ -47,8 +46,8 @@ export const DiffPage = () => {
     return (
       <div>
         {breadcrumb}
-        <div style={contentStyle}>
-          <p style={{ opacity: 0.5 }}>Loading…</p>
+        <div className={contentClass}>
+          <p className="opacity-50">Loading…</p>
         </div>
       </div>
     );
@@ -62,21 +61,13 @@ export const DiffPage = () => {
     <div>
       {breadcrumb}
       {files.length === 0 ? (
-        <div style={contentStyle}>
-          <p style={{ opacity: 0.5 }}>No changed files.</p>
+        <div className={contentClass}>
+          <p className="opacity-50">No changed files.</p>
         </div>
       ) : (
-        <div style={{ ...contentStyle, display: 'flex', gap: space[6], alignItems: 'flex-start' }}>
+        <div className={`flex items-start gap-6 ${contentClass}`}>
           <FileListSidebar files={files} onSelect={scrollToFile} />
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: space[6],
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
+          <div className="flex min-w-0 flex-1 flex-col gap-6">
             {files.map((entry) => (
               <FileDiffSection
                 key={entry.path}

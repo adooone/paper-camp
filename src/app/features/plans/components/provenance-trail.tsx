@@ -1,4 +1,3 @@
-import { space } from '@/app/styles/tokens';
 import type { ProvenanceTrail } from '@/types/index';
 import { Stamp, Tooltip } from '@dendelion/paper-ui';
 import { PrBadge } from './pr-badge';
@@ -32,7 +31,7 @@ const TrailNode = ({
       target="_blank"
       rel="noreferrer"
       onClick={(e) => e.stopPropagation()}
-      style={{ textDecoration: 'none', display: 'inline-flex' }}
+      className="no-underline inline-flex"
     >
       {stamp}
     </a>
@@ -43,7 +42,7 @@ const TrailNode = ({
 };
 
 const TrailArrow = () => (
-  <span style={{ opacity: 0.3 }} aria-hidden="true">
+  <span className="opacity-30" aria-hidden="true">
     →
   </span>
 );
@@ -66,7 +65,7 @@ export const ProvenanceTrailPanel = ({ trail }: ProvenanceTrailPanelProps) => {
   const releaseCommit = releaseLine.data ? parseReleaseCommit(releaseLine.data) : undefined;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
+    <div className="flex items-center gap-2 flex-wrap">
       <TrailNode
         reached={taskRuns.reached}
         label={taskRuns.data ? plural(taskRuns.data.length, 'task run') : 'Tasks'}

@@ -1,5 +1,4 @@
 import { crossfadeTransition, crossfadeVariants } from '@/app/styles/motion';
-import { layout, space } from '@/app/styles/tokens';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 
@@ -43,8 +42,7 @@ export const SidebarShell = ({
       {mobileOpen && (
         <button
           type="button"
-          className="lg:hidden fixed inset-0 z-[290] cursor-default border-none p-0"
-          style={{ background: 'rgba(26, 25, 23, 0.4)', backdropFilter: 'blur(4px)' }}
+          className="lg:hidden fixed inset-0 z-[290] cursor-default border-none p-0 bg-ink-900/[40%] backdrop-blur-sm"
           onClick={onMobileClose}
           aria-label="Close sidebar"
           tabIndex={-1}
@@ -53,28 +51,22 @@ export const SidebarShell = ({
       <aside
         ref={asideRef}
         // Dialog semantics only as a mobile drawer — at lg+ it's an in-flow sidebar.
+        // `100%` alone would make the sticky sidebar page-height and scroll away;
+        // --pc-sidebar-h caps it to the gap between the fixed chrome. `100%` stays
+        // the fallback for the mobile drawer, which wants full height.
         role={mobileOpen ? 'dialog' : undefined}
         aria-modal={mobileOpen || undefined}
         aria-label="Sidebar navigation"
         tabIndex={-1}
-        className={`fixed inset-y-0 left-0 z-[300] transition-transform duration-300 ease-out lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 flex flex-col overflow-hidden transition-transform duration-300 ease-out lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:translate-x-0 h-[var(--pc-sidebar-h,100%)] ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        } ${
+          mobileOpen
+            ? 'bg-[var(--pui-bg-base)] shadow-[2px_0_12px_rgba(0,0,0,0.15)]'
+            : 'bg-transparent'
         }`}
-        style={{
-          width: layout.sidebarWidth,
-          flexShrink: 0,
-          // `100%` alone would make the sticky sidebar page-height and scroll away;
-          // --pc-sidebar-h caps it to the gap between the fixed chrome. `100%` stays
-          // the fallback for the mobile drawer, which wants full height.
-          height: 'var(--pc-sidebar-h, 100%)',
-          display: 'flex',
-          flexDirection: 'column',
-          background: mobileOpen ? 'var(--pui-bg-base)' : 'transparent',
-          boxShadow: mobileOpen ? '2px 0 12px rgba(0,0,0,0.15)' : undefined,
-          overflow: 'hidden',
-        }}
       >
-        <div style={{ flex: 1, overflowY: 'auto', paddingTop: space[5], position: 'relative' }}>
+        <div className="flex-1 overflow-y-auto pt-5 relative">
           <motion.div
             key={routeKey}
             {...crossfadeVariants(shouldReduceMotion, { x: -8 })}

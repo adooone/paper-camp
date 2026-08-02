@@ -1,28 +1,9 @@
-import { color, fontFamily, space } from '@/app/styles/tokens';
 import { AddToBacklogButton, NewIdeaButton, RefreshButton, WorklistActionsMenu } from '../actions';
 
 export const PlansHeader = () => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: space[3],
-        marginBottom: space[6],
-        flexWrap: 'wrap',
-      }}
-    >
-      <h1
-        className="text-4xl"
-        style={{
-          flex: 1,
-          fontFamily: fontFamily.serif,
-          fontWeight: 600,
-          color: color.textPrimary,
-          margin: 0,
-          lineHeight: 1.1,
-        }}
-      >
+    <div className="flex items-center gap-3 mb-6 flex-wrap">
+      <h1 className="text-4xl flex-1 font-display-luminari font-semibold text-ink-900 m-0 leading-[1.1]">
         Plans
       </h1>
 

@@ -1,4 +1,3 @@
-import { space } from '@/app/styles/tokens';
 import type { PrInfo } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
 import { REVIEW_DECISION_LABEL, REVIEW_DECISION_STAMP, STATUS_STAMP } from '../constants';
@@ -14,7 +13,7 @@ export const ReviewSignalBadge = ({ pr }: ReviewSignalBadgeProps) => {
   if (!reviewDecision && !unresolvedThreadCount) return null;
 
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: space[2] }}>
+    <span className="inline-flex items-center gap-2">
       {reviewDecision && (
         <Stamp
           size="small"

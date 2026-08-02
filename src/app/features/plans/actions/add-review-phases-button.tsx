@@ -1,5 +1,4 @@
 import { parseReviewFindings } from '@/app/features/plans/helpers';
-import { space } from '@/app/styles/tokens';
 import type { PhaseItem } from '@/types/index';
 import { Alert, Button, IconButton, Modal, PlusIcon, Textarea, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -52,8 +51,8 @@ export const AddReviewPhasesButton = ({ onAdd, disabled }: AddReviewPhasesButton
         />
       </Tooltip>
       <Modal open={open} onClose={handleClose} title="Add code-review findings" size="small">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
-          <p className="text-sm" style={{ margin: 0, opacity: 0.7 }}>
+        <div className="flex flex-col gap-4">
+          <p className="text-sm m-0 opacity-70">
             Paste the JSON findings from a <code>/code-review</code> run. Each finding becomes a
             new, unchecked phase on this plan.
           </p>
@@ -65,7 +64,7 @@ export const AddReviewPhasesButton = ({ onAdd, disabled }: AddReviewPhasesButton
             disabled={submitting}
           />
           {error && <Alert variant="warning">Could not add phases — {error}</Alert>}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+          <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={handleClose} disabled={submitting}>
               Cancel
             </Button>

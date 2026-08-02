@@ -1,5 +1,4 @@
 import { LightbulbIcon } from '@/app/components/icons';
-import { space } from '@/app/styles/tokens';
 import type { SuggestionEntry } from '@/types/index';
 import { Card, IconButton } from '@dendelion/paper-ui';
 
@@ -13,43 +12,21 @@ export const SuggestionsSection = ({ suggestions, onOpen, onDismiss }: Suggestio
   if (suggestions.length === 0) return null;
 
   return (
-    <div style={{ marginTop: space[5] }}>
-      <h2 className="text-sm" style={{ margin: `0 0 ${space[2]}`, opacity: 0.6 }}>
-        Suggested from AI
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+    <div className="mt-5">
+      <h2 className="text-sm mb-2 opacity-60">Suggested from AI</h2>
+      <div className="flex flex-col gap-1">
         {suggestions.map((suggestion) => (
-          <div key={`${suggestion.date}-${suggestion.title}`} style={{ borderRadius: 10 }}>
+          <div key={`${suggestion.date}-${suggestion.title}`} className="rounded-[10px]">
             <Card size="small" texture="canvas" className="plan-row-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+              <div className="flex items-center gap-2">
                 {/* Raw <button>, not paper-ui's Button — matches worklist-rows.tsx's titleButtonStyle. */}
                 <button
                   type="button"
                   onClick={() => onOpen(suggestion)}
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: space[2],
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    font: 'inherit',
-                    color: 'inherit',
-                  }}
+                  className="flex-1 min-w-0 flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
                 >
                   <LightbulbIcon />
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
+                  <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
                     {suggestion.title}
                   </span>
                 </button>
@@ -58,7 +35,7 @@ export const SuggestionsSection = ({ suggestions, onOpen, onDismiss }: Suggestio
                   variant="ghost"
                   size="small"
                   label="Dismiss"
-                  style={{ width: 28, height: 28 }}
+                  className="w-[28px] h-[28px]"
                   onClick={() => onDismiss(suggestion)}
                 />
               </div>

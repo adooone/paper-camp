@@ -2,7 +2,7 @@
 id: IDEA-112
 title: Move all styling to Tailwind
 type: refactor
-status: idea
+status: review
 created: 2026-07-30
 updated: 2026-07-30
 tags:
@@ -24,12 +24,18 @@ The rules:
 Depends on [[IDEA-111]]: the CSS-var color classes must exist first, so the migration writes `text-accent-green` / `bg-canvas-300`, not fresh literals.
 
 ### Phases
-- [ ] Inventory the ~471 static inline `style={{}}` objects and map each value to a preset class
+- [x] Inventory the ~471 static inline `style={{}}` objects and map each value to a preset class
       Note the one genuinely runtime-dynamic property that stays inline; flag values with no matching class.
-- [ ] Extend `tailwind.config.ts` for the flagged values the preset doesn't cover
-- [ ] Migrate the static inline styles to Tailwind utility classes, subsystem by subsystem
+- [x] Extend `tailwind.config.ts` for the flagged values the preset doesn't cover
+- [x] Migrate the static inline styles to Tailwind utility classes, subsystem by subsystem
       Write `text-accent-green` / `bg-canvas-300` against the [[IDEA-111]] color classes, never fresh literals.
-- [ ] Delete the `space`, `fontSize`, `radius`, `fontFamily`, and `layout` exports from `src/app/styles/tokens.ts`
+- [x] Delete the `space`, `fontSize`, `radius`, `fontFamily`, and `layout` exports from `src/app/styles/tokens.ts`
       Retire `tokens.ts` entirely once `color` is gone too.
-- [ ] Trim `utilities.css` to only pseudo-elements, `[class*="…"]` module overrides, and non-variant media queries
-- [ ] Type-check and full pass
+- [x] Trim `utilities.css` to only pseudo-elements, `[class*="…"]` module overrides, and non-variant media queries
+- [x] Type-check and full pass
+
+### Thread
+- [x] 2026-08-01 [log] [agent] Decision — checked every flagged inventory literal's RGB against `paperPreset` byte-for-byte; several "no preset match" calls in the phase-1 inventory were exact matches to an existing color at a non-default opacity, expressible with Tailwind's arbitrary-opacity modifier (`bg-watercolor-green/[18%]`, `bg-black/[8%]`) with no config extension: `diffAddedBg`/`diffRemovedBg` and their 0.3-alpha near-duplicates (→ `watercolor-green`/`watercolor-rose`), the `rgba(0,0,0,*)` black-overlay family (→ `black`), `rgba(26,25,23,0.4)` (→ `ink-900`), `rgba(61,53,43,0.12)` (→ `paper-950`). This also resolves the "reconcile the diff alphas?" flag — both alphas stay, applied to the same base color.
+- [x] 2026-08-01 [log] [agent] Decision — `color.textProse` (`#1C1B18`) is 2 RGB units off `ink-900` (`#1A1917`), imperceptible; folded into `ink-900` rather than kept as a distinct token, per this repo's simplification bias. No config entry added for it.
+- [x] 2026-08-01 [log] [agent] Added `desk.*`, `chalk.*` (lifted from `stack-panel/shared.ts`'s local `chalkStatusFill`/`chalkStatusText` — its `fail`/`running` text colors are the same values as the `stack-panel.tsx` glow-shadow literals, same family), `state.{success,danger}`, `fontSize` (9-step scale), and `borderRadius.{20,28}` to `tailwind.config.ts`. Left the `STATUS_STAMP`/`IDEA_STATUS_STAMP`/`PR_STATE_STAMP`/`REVIEW_DECISION_STAMP` enum maps in `features/plans/constants.ts` untouched — the phase-1 inventory already scoped that as a separate follow-up (possible replacement with paper-ui's `Stamp` component rather than more one-off colors), out of scope here. Full reasoning in `docs/tailwind-migration-inventory.md`'s "Phase 2 resolution" section.
+- [x] 2026-08-02 [log] [agent] Type-check, biome, and vitest were already green across the repo; the one gap `knip` caught was `tokens.ts`'s `transition` export left orphaned by the phase-3 migration (its consumers moved to Tailwind `transition-*` classes) — deleted it, leaving only `color` pending [[IDEA-111]]. Left the remaining `knip` unused-export findings alone (`LinkButton`, `RunIcon`, etc.) — confirmed pre-existing on `main`, unrelated to this migration. Verified the inline-style guard's four survivors are legitimate: `roadmap-page.tsx` and `plan-filter-column.tsx` are genuinely data-driven; `stack-panel.tsx` bundles a static background into the same object as the framer-motion-owned `transform`; `router.tsx` is forced by paper-ui's `Layout` having no `className` prop. All phases now checked — set status to `review` for a human to promote to `done`.

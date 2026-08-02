@@ -36,6 +36,16 @@ export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Every agent-authored thread message must carry `from: 'agent'` or it renders as the
+// user's own message in the feedback chat. Build them through here so the field can't be
+// forgotten at a call site.
+export function agentThreadMessage(
+  text: string,
+  kind: ThreadMessage['kind'] = 'log',
+): ThreadMessage {
+  return { kind, date: todayDateString(), text, from: 'agent' };
+}
+
 let idAssignmentChain: Promise<unknown> = Promise.resolve();
 
 // Highest N already used by an existing `<PREFIX>-N.md` entity file on disk, across

@@ -1,5 +1,4 @@
 import { type DiffToken, diffWords } from '@/app/features/plans/helpers';
-import { color, fontFamily, fontSize, lineHeight, space } from '@/app/styles/tokens';
 import type { PhaseItem, PlanEntry } from '@/types/index';
 import { Button, Modal } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -22,11 +21,11 @@ export const DiffText = ({ tokens }: { tokens: DiffToken[] }) => (
       return (
         <span
           key={`${token.type}-${i}`}
-          style={{
-            backgroundColor: isAdded ? 'rgba(143, 185, 150, 0.3)' : 'rgba(201, 139, 139, 0.3)',
-            textDecoration: isAdded ? 'none' : 'line-through',
-            color: isAdded ? color.accentGreenDark : color.accentRoseDark,
-          }}
+          className={
+            isAdded
+              ? 'bg-watercolor-green/[30%] text-watercolor-green-dark no-underline'
+              : 'bg-watercolor-rose/[30%] text-watercolor-rose-dark line-through'
+          }
         >
           {token.text}
         </span>
@@ -36,17 +35,7 @@ export const DiffText = ({ tokens }: { tokens: DiffToken[] }) => (
 );
 
 export const sectionHeading = (text: string) => (
-  <h4
-    style={{
-      fontFamily: fontFamily.serif,
-      fontSize: fontSize.xs,
-      fontWeight: 600,
-      margin: `0 0 ${space[2]}`,
-      opacity: 0.65,
-    }}
-  >
-    {text}
-  </h4>
+  <h4 className="font-display-luminari text-xs font-semibold mb-2 opacity-[0.65]">{text}</h4>
 );
 
 export const ReconcileDiffPanel = ({
@@ -101,22 +90,20 @@ export const ReconcileDiffPanel = ({
       size="large"
       onClose={busy ? () => {} : handleDiscard}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: space[5] }}>
-        <p className="text-sm" style={{ margin: 0, opacity: 0.7 }}>
+      <div className="flex flex-col gap-5">
+        <p className="text-sm m-0 opacity-70">
           The reconcile agent proposed the rewrite below for "{plan.title}". Approve to keep it, or
           discard to revert to the prior wording.
         </p>
 
         {!bodyChanged && changedPhases.length === 0 && (
-          <p className="text-sm" style={{ margin: 0, opacity: 0.6 }}>
-            No wording changed.
-          </p>
+          <p className="text-sm m-0 opacity-60">No wording changed.</p>
         )}
 
         {bodyChanged && (
           <div>
             {sectionHeading('Body')}
-            <p className="text-base" style={{ margin: 0, lineHeight: lineHeight.normal }}>
+            <p className="text-base m-0 leading-normal">
               <DiffText tokens={diffWords(before.body, plan.body)} />
             </p>
           </div>
@@ -125,12 +112,12 @@ export const ReconcileDiffPanel = ({
         {changedPhases.length > 0 && (
           <div>
             {sectionHeading('Phases')}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: space[3] }}>
+            <div className="flex flex-col gap-3">
               {changedPhases.map(({ phase, before: beforePhase, index }) => (
-                <div key={index} className="text-sm" style={{ lineHeight: lineHeight.normal }}>
+                <div key={index} className="text-sm leading-normal">
                   <DiffText tokens={diffWords(beforePhase.text, phase.text)} />
                   {(phase.description || beforePhase.description) && (
-                    <div style={{ opacity: 0.85, marginTop: space[1] }}>
+                    <div className="opacity-[0.85] mt-1">
                       <DiffText
                         tokens={diffWords(beforePhase.description ?? '', phase.description ?? '')}
                       />
@@ -142,7 +129,7 @@ export const ReconcileDiffPanel = ({
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+        <div className="flex justify-end gap-2">
           <Button variant="danger" size="small" onClick={handleDiscard} disabled={busy}>
             Discard
           </Button>

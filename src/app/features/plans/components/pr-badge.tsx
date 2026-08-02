@@ -1,5 +1,4 @@
 import { GithubIcon } from '@/app/components/icons';
-import { space } from '@/app/styles/tokens';
 import type { PrInfo } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
 import { PR_STATE_LABEL, PR_STATE_STAMP } from '../constants';
@@ -14,14 +13,14 @@ export const PrBadge = ({ pr }: PrBadgeProps) => (
     target="_blank"
     rel="noreferrer"
     onClick={(e) => e.stopPropagation()}
-    style={{ textDecoration: 'none', display: 'inline-flex' }}
+    className="no-underline inline-flex"
   >
     <Stamp
       size="small"
       fillColor={PR_STATE_STAMP[pr.state].fill}
       textColor={PR_STATE_STAMP[pr.state].text}
     >
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: space[1] }}>
+      <span className="inline-flex items-center gap-1">
         <GithubIcon />#{pr.number} {PR_STATE_LABEL[pr.state]}
       </span>
     </Stamp>

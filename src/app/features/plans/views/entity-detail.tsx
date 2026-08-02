@@ -1,9 +1,8 @@
-import { detailHeadingStyle } from '@/app/components/detail-heading-style';
+import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import { usePlanStatusPatch, useSendFeedbackMessage, useTrail } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type {
   AgentTaskState,
@@ -52,12 +51,7 @@ function branchEntityId(branch: string | null): string | null {
   return match ? match[1].toUpperCase() : null;
 }
 
-const sectionHeadingStyle = {
-  fontFamily: fontFamily.serif,
-  fontSize: fontSize.sm,
-  fontWeight: 600,
-  opacity: 0.65,
-};
+const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
 
 // Phases and post-build fixes share one table; fixes are appended and tinted
 // (`.fix-row`) so they read as part of the same list, distinct only by colour.
@@ -92,19 +86,10 @@ const PhasesSection = ({
     ...fixes.map((item, index) => ({ kind: 'fix' as const, item, index })),
   ];
   return (
-    <div style={{ marginBottom: space[8] }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: space[3],
-          marginBottom: space[3],
-          flexWrap: 'wrap',
-        }}
-      >
-        <h3 style={{ ...sectionHeadingStyle, margin: 0 }}>Phases</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
+    <div className="mb-8">
+      <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+        <h3 className={`${sectionHeadingClass} m-0`}>Phases</h3>
+        <div className="flex items-center gap-2 flex-wrap">
           {auditRunning && <Spinner size="small" label="Audit running…" />}
           {(plan.status === 'review' || plan.status === 'done') && (
             <AuditPhasesButton plan={plan} />
@@ -146,13 +131,7 @@ const PhasesSection = ({
             header: 'Title',
             cell: (row: WorkRow) => (
               <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: space[2],
-                  textDecoration: row.item.done ? 'line-through' : 'none',
-                  opacity: row.item.done ? 0.45 : 1,
-                }}
+                className={`inline-flex items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
               >
                 {row.item.text}
                 {row.kind === 'phase' && row.item.source === 'review' && (
@@ -178,7 +157,7 @@ const PhasesSection = ({
             align: 'end',
             cell: (row: WorkRow) =>
               row.kind === 'phase' ? (
-                <div style={{ display: 'inline-flex', gap: space[2], alignItems: 'center' }}>
+                <div className="inline-flex gap-2 items-center">
                   <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={row.index} />
                   {!row.item.done && agentPhaseIndex === row.index ? (
                     <Spinner size="small" label={`Agent ${planTask?.status}…`} />
@@ -202,7 +181,9 @@ const PhasesSection = ({
         showExpandColumn={false}
         rowTexture={(row: WorkRow) => (row.kind === 'fix' ? 'kraft' : undefined)}
         rowClassName={(row: WorkRow) =>
-          row.kind === 'phase' && row.item.source === 'review' ? 'phase-row-review' : undefined
+          row.kind === 'phase' && row.item.source === 'review'
+            ? 'bg-[rgba(155,122,181,0.08)]'
+            : undefined
         }
         className="phase-table-phone"
       />
@@ -228,18 +209,10 @@ const BranchRow = ({
   if (!showBranchRow && !plan.pr) return null;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: space[3],
-        flexWrap: 'wrap',
-        marginBottom: space[4],
-      }}
-    >
+    <div className="flex items-center gap-3 flex-wrap mb-4">
       {showBranchRow && !onOwnBranch && (
         <Card size="small" accent accentColor="amber" texture="kraft">
-          <div style={{ display: 'flex', alignItems: 'center', gap: space[3], flexWrap: 'wrap' }}>
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="text-sm">
               Working branch: <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
             </span>
@@ -256,7 +229,7 @@ const BranchRow = ({
         </Card>
       )}
       {showBranchRow && onOwnBranch && (
-        <span className="text-sm" style={{ opacity: 0.45 }}>
+        <span className="text-sm opacity-[0.45]">
           Working branch: <code>{gitBranch}</code>
         </span>
       )}
@@ -273,19 +246,19 @@ const PlanProgressBar = ({
   progress: { pct: number; done: number; total: number };
   color: string;
 }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: space[3], marginBottom: space[4] }}>
-    <div style={{ flex: 1 }}>
+  <div className="flex items-center gap-3 mb-4">
+    <div className="flex-1">
       <ProgressBar pct={progress.pct} color={barColor} />
     </div>
-    <span className="text-sm" style={{ opacity: 0.5, flexShrink: 0 }}>
+    <span className="text-sm opacity-50 flex-shrink-0">
       {progress.done}/{progress.total}
     </span>
   </div>
 );
 
 const PlanBodySection = ({ plan }: { plan: PlanEntry }) => (
-  <div style={{ marginBottom: space[4] }}>
-    <div style={{ opacity: 0.85 }}>
+  <div className="mb-4">
+    <div className="opacity-[0.85]">
       {plan.body && (
         <CollapsibleText resetKey={plan.id ?? plan.title}>
           <Markdown>{plan.body}</Markdown>
@@ -298,25 +271,16 @@ const PlanBodySection = ({ plan }: { plan: PlanEntry }) => (
 const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] }) => {
   if (clarifications.length === 0) return null;
   return (
-    <div style={{ marginBottom: space[5] }}>
-      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Clarifications</h3>
-      <div
-        style={{ display: 'flex', flexDirection: 'column', gap: space[2], marginBottom: space[3] }}
-      >
+    <div className="mb-5">
+      <h3 className={`${sectionHeadingClass} mb-3`}>Clarifications</h3>
+      <div className="flex flex-col gap-2 mb-3">
         {clarifications.map((entry, i) => (
           <div
             key={`clar-${entry.date}-${i}`}
-            className="text-sm"
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: space[3],
-              opacity: 0.75,
-            }}
+            className="text-sm flex items-start justify-between gap-3 opacity-75"
           >
             <span>
-              <span style={{ fontWeight: 600, marginRight: space[2] }}>{entry.date}</span>
+              <span className="font-semibold mr-2">{entry.date}</span>
               {entry.text}
             </span>
           </div>
@@ -330,8 +294,8 @@ const TrailSection = ({ planId }: { planId: string | undefined }) => {
   const trail = useTrail(planId);
   if (!trail) return null;
   return (
-    <div style={{ marginBottom: space[8] }}>
-      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>History</h3>
+    <div className="mb-8">
+      <h3 className={`${sectionHeadingClass} mb-3`}>History</h3>
       <ProvenanceTrailPanel trail={trail} />
     </div>
   );
@@ -364,18 +328,14 @@ const FeedbackThread = ({
       return (
         <div
           key={`${message.kind}-${message.date ?? ''}-${i}`}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: fromAgent ? 'flex-start' : 'flex-end',
-            gap: space[1],
-          }}
+          className={`flex flex-col gap-1 ${fromAgent ? 'items-start' : 'items-end'}`}
         >
-          <div style={{ maxWidth: '85%' }}>
+          <div className="max-w-[85%]">
             <Card
               size="small"
               surface="paper"
               texture={fromAgent ? 'kraft' : label ? 'canvas' : 'parchment'}
+              shade={fromAgent}
               accent={!fromAgent}
               accentColor={label ? 'rose' : 'blue'}
             >
@@ -387,7 +347,7 @@ const FeedbackThread = ({
               </CollapsibleText>
             </Card>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+          <div className="flex items-center gap-2">
             {fromAgent && (
               <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
                 agent
@@ -401,9 +361,7 @@ const FeedbackThread = ({
               </Tooltip>
             )}
             {message.date && (
-              <span className="text-sm" style={{ fontWeight: 600, opacity: 0.45 }}>
-                {message.date}
-              </span>
+              <span className="text-sm font-semibold opacity-[0.45]">{message.date}</span>
             )}
             {label && (
               <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
@@ -441,26 +399,19 @@ const FeedbackSection = ({
   };
 
   return (
-    <div style={{ marginBottom: space[8] }}>
-      <h3 style={{ ...sectionHeadingStyle, margin: `0 0 ${space[3]}` }}>Feedback</h3>
+    <div className="mb-8">
+      <h3 className={`${sectionHeadingClass} mb-3`}>Feedback</h3>
       <Card size="small" accent accentColor="slate" texture="kraft">
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: space[3],
-            marginBottom: space[4],
-          }}
-        >
+        <div className="flex flex-col gap-3 mb-4">
           {thread.length > 0 ? (
             <FeedbackThread messages={thread} undo={undo} undoing={undoing} onUndo={onUndo} />
           ) : (
-            <p className="text-sm" style={{ margin: 0, color: color.textSecondary }}>
+            <p className="text-sm m-0 text-ink-500">
               Jot a comment, ask a question, or say what's wrong with this plan.
             </p>
           )}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+        <div className="flex flex-col gap-2">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -469,15 +420,8 @@ const FeedbackSection = ({
             rows={3}
             disabled={updating}
           />
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              gap: space[3],
-            }}
-          >
-            <span style={{ visibility: updating ? 'visible' : 'hidden' }}>
+          <div className="flex justify-end items-center gap-3">
+            <span className={updating ? 'visible' : 'invisible'}>
               <Spinner size="small" label="Agent replying…" />
             </span>
             <Button size="small" onClick={handleSend} disabled={updating || !input.trim()}>
@@ -572,32 +516,13 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: space[3],
-          margin: `0 0 ${space[3]}`,
-          flexWrap: 'wrap',
-        }}
-      >
-        <h2
-          style={{
-            ...detailHeadingStyle,
-            margin: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: space[3],
-            minWidth: 0,
-            flexWrap: 'wrap',
-          }}
-        >
+      <div className="flex items-baseline justify-between gap-3 mb-3 flex-wrap">
+        <h2 className={`${detailHeadingClassName} m-0 flex items-center gap-3 min-w-0 flex-wrap`}>
           <PlanIdStamp id={plan.id} />
           {plan.title}
         </h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: space[2], flexShrink: 0 }}>
-          <span className="text-sm" style={{ opacity: 0.45, whiteSpace: 'nowrap' }}>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-sm opacity-[0.45] whitespace-nowrap">
             {plan.updated
               ? `updated ${relativeDate(plan.updated)}`
               : `created ${relativeDate(plan.created)}`}
@@ -637,14 +562,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           <ClarificationsSection clarifications={plan.clarifications ?? []} />
 
           {!hasPhases && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: space[3],
-                marginBottom: space[8],
-              }}
-            >
+            <div className="flex items-center gap-3 mb-8">
               <DraftPlanButton idea={ideaView} otherPlans={otherPlans} />
               <ExtendIdeaButton idea={ideaView} />
             </div>

@@ -2,7 +2,6 @@ import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useSimilarIdeas } from '@/app/hooks';
 import { checkIdeaOverlap } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
-import { color, fontSize, space } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
 import { Button, Card, Input, Modal, Switch, Textarea } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -125,10 +124,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
 
   return (
     <Modal open={open} onClose={onClose} title="New idea" size="small">
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: 'flex', flexDirection: 'column', gap: space[4] }}
-      >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
           label="Title"
           value={title}
@@ -139,10 +135,8 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
           required
         />
         {similarIdeas.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
-            <span style={{ fontSize: fontSize.sm, opacity: 0.6, fontWeight: 600 }}>
-              Similar ideas
-            </span>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm opacity-60 font-semibold">Similar ideas</span>
             {similarIdeas.map(({ candidate }) => {
               const ideaView: IdeaEntry = {
                 id: candidate.id ?? null,
@@ -153,22 +147,14 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
               const otherPlans = planEntries.filter((p) => p.id !== candidate.id);
               return (
                 <Card key={candidate.id ?? candidate.title} size="small" texture="canvas">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
-                    <div
-                      style={{ display: 'flex', alignItems: 'center', gap: space[2], minWidth: 0 }}
-                    >
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <PlanIdStamp id={candidate.id} />
-                      <span
-                        style={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
+                      <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                         {candidate.title}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+                    <div className="flex justify-end gap-2">
                       <Button
                         type="button"
                         variant="ghost"
@@ -197,7 +183,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
             })}
           </div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+        <div className="flex flex-col gap-2">
           <div>
             <Button
               type="button"
@@ -209,26 +195,20 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
               {checkingOverlap ? 'Checking overlap…' : 'Check overlap'}
             </Button>
           </div>
-          {overlapError && (
-            <p style={{ margin: 0, color: color.accentRoseDark, fontSize: fontSize.sm }}>
-              {overlapError}
-            </p>
-          )}
+          {overlapError && <p className="m-0 text-watercolor-rose-dark text-sm">{overlapError}</p>}
           {overlapVerdict && (
             <Card size="small" texture="canvas">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
-                <span style={{ fontWeight: 600 }}>
+              <div className="flex flex-col gap-2">
+                <span className="font-semibold">
                   {overlapVerdict.verdict === 'new'
                     ? 'Looks genuinely new'
                     : overlapVerdict.verdict === 'extend'
                       ? `Extends ${overlapVerdict.targetId ?? 'an existing idea'}`
                       : `Belongs inside ${overlapVerdict.targetId ?? 'an existing idea'}`}
                 </span>
-                <span style={{ fontSize: fontSize.sm, opacity: 0.8 }}>
-                  {overlapVerdict.reasoning}
-                </span>
+                <span className="text-sm opacity-80">{overlapVerdict.reasoning}</span>
                 {overlapVerdict.targetId && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div className="flex justify-end">
                     <Button
                       type="button"
                       variant="ghost"
@@ -257,10 +237,8 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
           onChange={(e) => setIsNote(e.target.checked)}
           disabled={loading}
         />
-        {error && (
-          <p style={{ margin: 0, color: color.accentRoseDark, fontSize: fontSize.sm }}>{error}</p>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+        {error && <p className="m-0 text-watercolor-rose-dark text-sm">{error}</p>}
+        <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
             Cancel
           </Button>

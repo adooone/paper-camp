@@ -30,10 +30,9 @@ header > div[class*="headerActions"] {
 /*
  * paper-ui's Layout header is a fixed 48px with no prop or CSS variable to size it.
  * Override it to 64px (two 32px background-grid cells) so the header sits flush on
- * the grid. Keep in sync with layout.headerHeight in tokens.ts. The attribute
- * selector matches the hashed CSS-module class by its stable name part; the
- * `header` tag and the `___` guard keep it off the headerActions/Title/Subtitle
- * divs, whose classes share the "header" prefix but not "header___".
+ * the grid. The attribute selector matches the hashed CSS-module class by its stable
+ * name part; the `header` tag and the `___` guard keep it off the headerActions/Title/
+ * Subtitle divs, whose classes share the "header" prefix but not "header___".
  */
 header[class*="layout-module__header___"] {
   height: 64px;
@@ -54,170 +53,12 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * The Status card's Quality/Tests/Consistency stamps are plain <button>s that
- * launch check runs on click, but paper-ui's Stamp has no interactive states of
- * its own — so this supplies the hover/pressed affordance that tells people
- * they're clickable, not just status labels.
- */
-.stack-check-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.15);
-}
-.stack-check-btn:active:not(:disabled) {
-  transform: translateY(0);
-  filter: brightness(0.95);
-}
-
-/*
- * Review-found phases get a faint violet wash matching the "review" plan-status
- * color elsewhere — table cells have no background of their own, so this paints
- * through them per the CSS table background-painting order.
- */
-.phase-row-review {
-  background-color: rgba(155, 122, 181, 0.08);
-}
-
-/*
- * Returning from a plan's detail view to the list scrolls the row for that plan
- * back into view (see list-view.tsx); this outline is what makes it findable
- * once scrolled to, the same way the old PlanCard's highlight ring did.
- */
-.plan-row-highlighted {
-  outline: 2px solid rgba(200, 154, 90, 0.5);
-  outline-offset: -2px;
-}
-
-/*
- * A Stack Agent card's click-through lands here with ?taskId=; same highlight
- * ring as .plan-row-highlighted so the linked row is findable once scrolled to.
- */
-.task-row-highlighted {
-  outline: 2px solid rgba(200, 154, 90, 0.5);
-  outline-offset: -2px;
-}
-
-/*
- * A worklist subject header's map link lands here with ?item=; same highlight
- * ring as .plan-row-highlighted so the linked item is findable once scrolled to.
- */
-.roadmap-item-highlighted {
-  outline: 2px solid rgba(200, 154, 90, 0.5);
-  outline-offset: -2px;
-}
-
-/*
- * The dense plans list (plan-rows.tsx) is a table-shaped stack of Cards, not
- * paper-ui's Table: a kraft header card over one-line paper row cards. The
- * shared grid template is what keeps the header and every row's columns
- * aligned; below the sidebar-collapse breakpoint the updated column disappears
- * (cells carry the plan-rows-cell-updated class).
- */
-.plan-rows-grid {
-  display: grid;
-  /* The header card and every row card are each their own grid, so auto/max-content
-     tracks would resolve per card and drift out of alignment. Every column except
-     the flexible title is therefore a fixed width — that's what keeps the header
-     labels sitting exactly over the row cells. Title owns the rest; Page caps
-     content around ~750px, so the fixed columns stay lean. */
-  grid-template-columns: 76px minmax(0, 1fr) 84px 96px 112px;
-  gap: 0.625rem;
-  align-items: center;
-}
-
-/*
  * Card's own smallest padding (.75rem 1rem on its textureLayer) is still sized
  * for content cards; rows need a tighter, single-line fit. Reaches into the
  * nested textureLayer div from outside, since Card exposes no padding prop.
  */
 .plan-row-card [class*="textureLayer"] {
   padding: 0.375rem 0.875rem;
-}
-
-@media (max-width: 1023px) {
-  .plan-rows-grid {
-    grid-template-columns: 76px minmax(0, 1fr) 96px 112px;
-  }
-  .plan-rows-cell-updated {
-    display: none;
-  }
-}
-
-/*
- * Even with the updated column dropped, the remaining fixed columns (id,
- * progress, status) crush the flexible title at phone width — stack every
- * cell full-width instead.
- */
-@media (max-width: 480px) {
-  .plan-rows-grid {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
-  }
-  .idea-group-row-grid {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
-  }
-}
-
-/*
- * The dense ideas list (idea-rows.tsx) mirrors .plan-rows-grid: same fixed-width
- * non-title columns for the same per-card alignment reason, but swaps progress
- * for a trailing action column (draft-plan button, or the linked-plans toggle).
- */
-.idea-rows-grid {
-  display: grid;
-  grid-template-columns: 76px minmax(0, 1fr) 112px 140px;
-  gap: 0.625rem;
-  align-items: center;
-}
-
-/*
- * The tasks log (tasks-page.tsx) mirrors .plan-rows-grid too, with a leading
- * chevron column — clicking a row unfolds its persisted output underneath.
- * Below the sidebar-collapse breakpoint the timestamp column disappears
- * (cells carry the task-rows-cell-time class).
- */
-.task-rows-grid {
-  display: grid;
-  grid-template-columns: 20px 116px minmax(0, 1fr) 88px 150px 72px;
-  gap: 0.625rem;
-  align-items: center;
-}
-
-.task-rows-chevron svg {
-  transition: transform 150ms ease-out;
-}
-.task-rows-chevron[aria-expanded="true"] svg {
-  transform: rotate(90deg);
-}
-
-@keyframes pc-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-.pc-spin {
-  animation: pc-spin 0.8s linear infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .pc-spin {
-    animation: none;
-  }
-}
-
-@media (max-width: 1023px) {
-  .task-rows-grid {
-    grid-template-columns: 20px 116px minmax(0, 1fr) 88px 72px;
-  }
-  .task-rows-cell-time {
-    display: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .task-rows-grid {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
-  }
 }
 
 /*
@@ -227,77 +68,6 @@ header[class*="layout-module__header___"] {
  */
 .stack-task-card [class*="textureLayer"] {
   padding: 0.5rem 0.875rem;
-}
-
-/*
- * The Roadmap's horizons are horizontal lanes, not columns: a lane spans the
- * full page width regardless of how many horizons exist, and its items wrap
- * left-to-right inside it, each keeping room for a title plus its rollup.
- */
-.roadmap-lanes {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-.roadmap-lane-items {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.625rem;
-}
-.roadmap-lane-item {
-  flex: 1 1 240px;
-  max-width: 320px;
-}
-@media (max-width: 480px) {
-  .roadmap-lane-item {
-    flex-basis: 100%;
-    max-width: none;
-  }
-}
-
-/*
- * The Timeline mode plots events along a shared date axis: the track needs a
- * positioning context so dots can sit at an absolute left percentage.
- */
-.roadmap-timeline-track {
-  position: relative;
-  height: 2rem;
-  margin: 0 0.25rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-.roadmap-timeline-dot {
-  position: absolute;
-  top: 50%;
-  width: 10px;
-  height: 10px;
-  padding: 0;
-  border: none;
-  border-radius: 9999px;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-}
-
-/*
- * The Map mode is a birds-eye progress overview, not the Tree's interactive
- * detail cards: each item is just a title and a rollup progress bar so the
- * whole roadmap's state is visible without expanding anything.
- */
-.roadmap-map-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.5rem 0.625rem;
-}
-.roadmap-map-progress-track {
-  height: 6px;
-  border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-}
-.roadmap-map-progress-fill {
-  height: 100%;
-  border-radius: 9999px;
 }
 
 /*
@@ -360,6 +130,7 @@ header[class*="layout-module__header___"] {
  * The dense row cards (.plan-row-card, shared by Plans/Ideas/Tasks/Roadmap/
  * worklist rows) are sized for desktop pointer precision; widen their tap area
  * at phone width so a thumb doesn't need to land on a single-line-tall target.
+ * Same reach-into-the-nested-div pattern as the base .plan-row-card rule above.
  */
 @media (max-width: 480px) {
   .plan-row-card [class*="textureLayer"] {
@@ -370,46 +141,27 @@ header[class*="layout-module__header___"] {
 
 /*
  * Below the phone breakpoint the header's nav row (router.tsx) has no room to
- * wrap or collapse (phase 1's audit flagged it as overflowing there) — hidden
- * in favor of this fixed bottom bar, reachable one-handed near the thumb
- * instead of packed into a non-wrapping top row.
+ * wrap or collapse — it hides in favor of router.tsx's fixed bottom nav bar
+ * instead (its own Tailwind `max-[480px]:fixed` classes). --pc-content-pad-bottom
+ * is a global value the page's scroller reads via var(), so it can't be set from
+ * a per-element Tailwind class; widened at phone width to clear that fixed bar.
  */
-.phone-bottom-nav {
-  display: none;
-}
 :root {
   --pc-content-pad-bottom: 32px;
 }
 @media (max-width: 480px) {
   :root {
-    /* clears the fixed 64px bar (utilities.css .phone-bottom-nav) plus its own padding/safe-area */
+    /* clears the fixed 64px bottom bar (router.tsx) plus its own padding/safe-area */
     --pc-content-pad-bottom: 96px;
-  }
-  .phone-bottom-nav {
-    display: flex;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 250;
-    align-items: stretch;
-    justify-content: space-around;
-    gap: 0.25rem;
-    padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
-    background: var(--pui-bg-base, #fff);
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
-  }
-  .phone-bottom-nav button {
-    min-height: 44px;
   }
 }
 
 /*
  * The Stack panel's closed-state reopen tab (stack-panel.tsx) defaults to
- * vertical-center via `top: 50%`; nudge it down toward one-handed thumb reach
- * at phone width without disturbing the translateY(-50%) framer-motion combines
- * its x animation with. Sits above .phone-bottom-nav (64px + safe-area tall).
+ * vertical-center via `top: 50%`; nudged down toward one-handed thumb reach at
+ * phone width. Stays a global CSS variable (not a per-element class) because
+ * framer-motion owns the element's `transform` property for its x animation
+ * and would clobber a class-based translateY.
  */
 :root {
   --pc-stack-toggle-top: 50%;
@@ -418,23 +170,4 @@ header[class*="layout-module__header___"] {
   :root {
     --pc-stack-toggle-top: 70%;
   }
-}
-
-.roadmap-goal-line-clamp,
-.roadmap-item-desc {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.roadmap-goal-line-clamp {
-  -webkit-line-clamp: 1;
-}
-.roadmap-item-desc {
-  -webkit-line-clamp: 2;
-}
-
-/* A worklist subject header that maps to a roadmap item is clickable — a hover
-   underline signals it without a permanent link look. */
-.subject-header-link:hover {
-  text-decoration: underline;
 }

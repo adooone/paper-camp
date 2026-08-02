@@ -3,7 +3,7 @@ import { buildPrioritisePrompt } from '@/app/features/plans/prompts';
 import { readEntities, readWorkEntries } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import type { RunOrderFileEntry } from '@/core/run-order-file';
-import { todayDateString } from '@/core/serialize';
+import { agentThreadMessage } from '@/core/serialize';
 import type { PlanEntry, PrioritiseVerdict } from '@/types/index';
 import {
   campFile,
@@ -131,10 +131,7 @@ export async function applyPrioritiseVerdict(
       await writeEntityFile(
         file,
         entityFileInput(entry, {
-          thread: [
-            ...(entry.thread ?? []),
-            { kind: 'log', date: todayDateString(), text: reasonFor(id) },
-          ],
+          thread: [...(entry.thread ?? []), agentThreadMessage(reasonFor(id))],
         }),
       );
       applied.push(id);

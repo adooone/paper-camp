@@ -4,7 +4,6 @@ import { PrBadge } from '@/app/features/plans/components/pr-badge';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { addRoadmapCandidate, addRoadmapItem, fetchRoadmap } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
-import { color, fontFamily, fontSize, space } from '@/app/styles/tokens';
 import type {
   PlanEntry,
   ResolvedRoadmap,
@@ -23,22 +22,10 @@ const graduationCounts = (graduated: PlanEntry[]) => ({
   queued: graduated.filter((p) => p.status !== 'done' && p.status !== 'dropped').length,
 });
 
-const horizonHeaderStyle: React.CSSProperties = {
-  fontFamily: fontFamily.handwritten,
-  fontSize: fontSize.md,
-  fontWeight: 600,
-  opacity: 0.7,
-  lineHeight: 1,
-  padding: `${space[2]} ${space[1]} 0`,
-};
+const HORIZON_HEADER_CLASSES =
+  'font-handwritten text-md font-semibold opacity-70 leading-none pt-2 px-1 pb-0';
 
-const horizonPulseStyle: React.CSSProperties = {
-  fontFamily: fontFamily.body,
-  fontSize: fontSize['2xs'],
-  fontWeight: 400,
-  opacity: 0.5,
-  padding: `0 ${space[1]}`,
-};
+const HORIZON_PULSE_CLASSES = 'text-2xs font-normal px-1 py-0 opacity-50';
 
 const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
   <svg
@@ -64,8 +51,8 @@ const CandidateRow = ({
   onPromote: () => void;
 }) => (
   <Card size="small" texture="kraft" className="plan-row-card">
-    <div style={{ display: 'flex', alignItems: 'center', gap: space[3] }}>
-      <span style={{ flex: 1 }}>{name}</span>
+    <div className="flex items-center gap-3">
+      <span className="flex-1">{name}</span>
       <Button type="button" variant="ghost" size="small" onClick={onPromote}>
         Promote to idea
       </Button>
@@ -89,7 +76,7 @@ const AddCandidateForm = ({ onAdd }: { onAdd: (name: string) => Promise<void> })
   };
 
   return (
-    <div style={{ display: 'flex', gap: space[2] }}>
+    <div className="flex gap-2">
       <Input
         size="small"
         value={name}
@@ -99,7 +86,7 @@ const AddCandidateForm = ({ onAdd }: { onAdd: (name: string) => Promise<void> })
         }}
         placeholder="Add option…"
         disabled={saving}
-        style={{ flex: 1 }}
+        className="flex-1"
       />
       <Button
         type="button"
@@ -146,7 +133,7 @@ const AddItemForm = ({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: space[2] }}>
+    <div className="flex flex-col gap-2">
       <Input
         size="small"
         value={name}
@@ -165,7 +152,7 @@ const AddItemForm = ({
         placeholder="Description…"
         disabled={saving}
       />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: space[2] }}>
+      <div className="flex justify-end gap-2">
         <Button
           type="button"
           variant="ghost"
@@ -186,7 +173,7 @@ const AddItemForm = ({
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 const RoadmapLinkTrail = ({ link }: { link: RoadmapLink }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
+  <div className="flex items-center gap-1">
     <Tooltip content={`${plural(link.taskRuns, 'task run')}${link.released ? ' · released' : ''}`}>
       <Stamp
         size="small"
@@ -205,23 +192,9 @@ const GraduatedRow = ({ plan, onOpen }: { plan: PlanEntry; onOpen: () => void })
     <button
       type="button"
       onClick={onOpen}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: space[3],
-        width: '100%',
-        background: 'none',
-        border: 'none',
-        padding: 0,
-        cursor: 'pointer',
-        font: 'inherit',
-        color: 'inherit',
-        textAlign: 'left',
-      }}
+      className="flex items-center gap-3 w-full bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left"
     >
-      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {plan.title}
-      </span>
+      <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{plan.title}</span>
       <Stamp
         size="small"
         fillColor={STATUS_STAMP[plan.status].fill}
@@ -258,56 +231,35 @@ const RoadmapItemRow = ({
 
   return (
     <div
-      className={highlighted ? 'roadmap-item-highlighted' : undefined}
-      style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
+      className={`flex flex-col gap-1 ${highlighted ? 'roadmap-item-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
     >
       <Card size="small" texture="canvas" className="plan-row-card">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
             {/* Raw <button>: icon-only toggle, paper-ui Button doesn't offer this compact chrome. */}
             <button
               type="button"
               aria-expanded={expanded}
               aria-label={expanded ? 'Collapse item' : 'Expand item'}
               onClick={() => setExpanded((v) => !v)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                opacity: 0.5,
-                padding: 0,
-                transform: expanded ? 'rotate(90deg)' : undefined,
-              }}
+              className={`inline-flex items-center bg-transparent border-none cursor-pointer opacity-50 p-0 ${expanded ? 'rotate-90' : ''}`}
             >
               <ChevronRightIcon />
             </button>
-            <span style={{ fontWeight: 600, flex: 1 }}>{item.name}</span>
+            <span className="font-semibold flex-1">{item.name}</span>
             <Button type="button" variant="ghost" size="small" onClick={onPromote}>
               Promote to idea
             </Button>
           </div>
-          <span
-            className={expanded ? undefined : 'roadmap-item-desc'}
-            style={{ fontSize: fontSize.sm, opacity: 0.7 }}
-          >
+          <span className={`text-sm opacity-70 ${expanded ? '' : 'line-clamp-2'}`}>
             {item.description}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: space[1] }}>
+          <div className="flex items-center gap-1">
             {(queued > 0 || shipped > 0) && (
               <button
                 type="button"
                 onClick={onViewGraduated}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: space[1],
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                }}
+                className="flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer"
               >
                 {queued > 0 && (
                   <Stamp
@@ -345,7 +297,7 @@ const RoadmapItemRow = ({
             )}
           </div>
           {item.links.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: space[1], flexWrap: 'wrap' }}>
+            <div className="flex items-center gap-1 flex-wrap">
               {item.links.map((link) => (
                 <RoadmapLinkTrail key={link.id} link={link} />
               ))}
@@ -354,14 +306,7 @@ const RoadmapItemRow = ({
         </div>
       </Card>
       {expanded && (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: space[1],
-            paddingLeft: space[6],
-          }}
-        >
+        <div className="flex flex-col gap-1 pl-6">
           {item.candidates.map((candidateName) => (
             <CandidateRow
               key={candidateName}
@@ -385,32 +330,10 @@ const GoalBanner = ({ goal }: { goal: string }) => {
   const hasMore = restParagraphs.length > 0;
 
   return (
-    <div
-      style={{
-        marginBottom: space[6],
-        paddingBottom: space[4],
-        borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-      }}
-    >
-      <span
-        style={{
-          fontFamily: fontFamily.handwritten,
-          fontSize: fontSize.xs,
-          fontWeight: 600,
-          opacity: 0.55,
-        }}
-      >
-        The goal
-      </span>
-      <div
-        style={{
-          fontFamily: fontFamily.serif,
-          fontSize: fontSize.lg,
-          lineHeight: 1.4,
-          marginTop: space[2],
-        }}
-      >
-        <div className={expanded ? undefined : 'roadmap-goal-line-clamp'}>
+    <div className="mb-6 pb-4 border-b border-black/[8%]">
+      <span className="font-handwritten text-xs font-semibold opacity-[0.55]">The goal</span>
+      <div className="font-display-luminari text-lg leading-[1.4] mt-2">
+        <div className={expanded ? undefined : 'line-clamp-1'}>
           <Markdown>{firstParagraph}</Markdown>
         </div>
         {expanded && hasMore && <Markdown>{restParagraphs.join('\n\n')}</Markdown>}
@@ -419,16 +342,7 @@ const GoalBanner = ({ goal }: { goal: string }) => {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            marginTop: space[2],
-            cursor: 'pointer',
-            fontSize: fontSize['2xs'],
-            opacity: 0.65,
-            textDecoration: 'underline',
-          }}
+          className="bg-transparent border-none p-0 mt-2 cursor-pointer text-2xs opacity-[0.65] underline"
         >
           {expanded ? 'Show less' : 'Show more'}
         </button>
@@ -452,7 +366,7 @@ const RoadmapViewModeSwitch = ({
   mode: RoadmapViewMode;
   onChange: (mode: RoadmapViewMode) => void;
 }) => (
-  <nav aria-label="Roadmap view" style={{ display: 'flex', gap: space[1], marginBottom: space[4] }}>
+  <nav aria-label="Roadmap view" className="flex gap-1 mb-4">
     {VIEW_MODES.map((viewMode) => (
       <Button
         key={viewMode.id}
@@ -479,15 +393,15 @@ const HorizonPulse = ({
   const graduated = items.filter((item) => graduatedByItem(item).length > 0).length;
   const charted = items.length - graduated;
   return (
-    <div style={horizonPulseStyle}>
+    <div className={HORIZON_PULSE_CLASSES}>
       {graduated} graduated · {charted} charted
     </div>
   );
 };
 
 const EVENT_KIND_COLOR: Record<RoadmapEventKind, string> = {
-  created: color.accentSlate,
-  'task-run': color.accentAmber,
+  created: 'bg-watercolor-slate',
+  'task-run': 'bg-watercolor-amber',
 };
 
 const RoadmapTimelineTrack = ({
@@ -501,15 +415,14 @@ const RoadmapTimelineTrack = ({
 }) => {
   const span = rangeEnd - rangeStart || 1;
   return (
-    <div className="roadmap-timeline-track">
+    <div className="relative h-8 mx-1 border-b border-black/10">
       {events.map((event, i) => (
         <button
           type="button"
           key={`${event.entityId}-${event.kind}-${i}`}
-          className="roadmap-timeline-dot"
+          className={`absolute top-1/2 w-2.5 h-2.5 p-0 border-none rounded-full -translate-x-1/2 -translate-y-1/2 cursor-pointer ${EVENT_KIND_COLOR[event.kind]}`}
           style={{
             left: `${((Date.parse(event.date) - rangeStart) / span) * 100}%`,
-            background: EVENT_KIND_COLOR[event.kind],
           }}
           title={`${event.itemName} — ${event.label} (${event.date})`}
           aria-label={`${event.itemName} — ${event.label} (${event.date})`}
@@ -523,18 +436,17 @@ const RoadmapMapItem = ({ item }: { item: ResolvedRoadmapItem }) => {
   const percent =
     item.rollup.total > 0 ? Math.round((item.rollup.done / item.rollup.total) * 100) : 0;
   return (
-    <div className="roadmap-map-item">
-      <div style={{ fontWeight: 600, fontSize: fontSize.sm }}>{item.name}</div>
-      <div className="roadmap-map-progress-track">
+    <div className="flex flex-col gap-1 py-2 px-2.5">
+      <div className="font-semibold text-sm">{item.name}</div>
+      <div className="h-1.5 rounded-full bg-black/[0.08] overflow-hidden">
         <div
-          className="roadmap-map-progress-fill"
+          className={`h-full rounded-full ${item.rollup.total > 0 ? 'bg-watercolor-green' : 'bg-transparent'}`}
           style={{
             width: `${percent}%`,
-            background: item.rollup.total > 0 ? color.accentGreen : 'transparent',
           }}
         />
       </div>
-      <div style={{ fontSize: fontSize['2xs'], opacity: 0.5 }}>
+      <div className="text-2xs opacity-50">
         {item.rollup.total > 0 ? `${item.rollup.done}/${item.rollup.total} done` : 'not started'}
       </div>
     </div>
@@ -548,16 +460,19 @@ const RoadmapMap = ({
   roadmap: ResolvedRoadmap;
   graduatedByItem: (item: ResolvedRoadmapItem) => PlanEntry[];
 }) => (
-  <div className="roadmap-lanes">
+  <div className="flex flex-col gap-6">
     {roadmap.horizons.map((horizon) => (
-      <div key={horizon.title} style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
-          <div style={horizonHeaderStyle}>{horizon.title}</div>
+      <div key={horizon.title} className="flex flex-col gap-1">
+        <div className="flex items-baseline gap-2">
+          <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
           <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
         </div>
-        <div className="roadmap-lane-items">
+        <div className="flex flex-wrap items-start gap-2.5">
           {horizon.items.map((item) => (
-            <div key={item.name} className="roadmap-lane-item">
+            <div
+              key={item.name}
+              className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none"
+            >
               <RoadmapMapItem item={item} />
             </div>
           ))}
@@ -569,7 +484,7 @@ const RoadmapMap = ({
 
 const RoadmapTimeline = ({ roadmap }: { roadmap: ResolvedRoadmap }) => {
   if (roadmap.events.length === 0) {
-    return <p style={{ opacity: 0.5 }}>No dated events yet.</p>;
+    return <p className="opacity-50">No dated events yet.</p>;
   }
 
   const dates = roadmap.events.map((event) => Date.parse(event.date));
@@ -577,31 +492,21 @@ const RoadmapTimeline = ({ roadmap }: { roadmap: ResolvedRoadmap }) => {
   const rangeEnd = Math.max(...dates);
 
   return (
-    <div className="roadmap-lanes">
+    <div className="flex flex-col gap-6">
       {roadmap.horizons.map((horizon) => {
         const events = roadmap.events.filter((event) => event.horizonTitle === horizon.title);
         return (
-          <div
-            key={horizon.title}
-            style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
-          >
-            <div style={horizonHeaderStyle}>{horizon.title}</div>
+          <div key={horizon.title} className="flex flex-col gap-1">
+            <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
             {events.length === 0 ? (
-              <div style={{ ...horizonPulseStyle, opacity: 0.4 }}>No events yet</div>
+              <div className="text-2xs font-normal px-1 py-0 opacity-40">No events yet</div>
             ) : (
               <RoadmapTimelineTrack events={events} rangeStart={rangeStart} rangeEnd={rangeEnd} />
             )}
           </div>
         );
       })}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          fontSize: fontSize['2xs'],
-          opacity: 0.5,
-        }}
-      >
+      <div className="flex justify-between text-2xs opacity-50">
         <span>{new Date(rangeStart).toLocaleDateString()}</span>
         <span>{new Date(rangeEnd).toLocaleDateString()}</span>
       </div>
@@ -641,7 +546,7 @@ export const RoadmapPage = () => {
     return (
       <div>
         <PageTitle>Roadmap</PageTitle>
-        <p style={{ opacity: 0.5 }}>Loading…</p>
+        <p className="opacity-50">Loading…</p>
       </div>
     );
   }
@@ -650,7 +555,7 @@ export const RoadmapPage = () => {
     return (
       <div>
         <PageTitle>Roadmap</PageTitle>
-        <p style={{ opacity: 0.5 }}>
+        <p className="opacity-50">
           Couldn't load the roadmap — the server may need a restart to pick up new routes.
         </p>
       </div>
@@ -661,7 +566,7 @@ export const RoadmapPage = () => {
     return (
       <div>
         <PageTitle>Roadmap</PageTitle>
-        <p style={{ opacity: 0.5 }}>No `ROADMAP.md` found at the project root.</p>
+        <p className="opacity-50">No `ROADMAP.md` found at the project root.</p>
       </div>
     );
   }
@@ -684,19 +589,19 @@ export const RoadmapPage = () => {
       <GoalBanner goal={roadmap.goal} />
       <RoadmapViewModeSwitch mode={viewMode} onChange={setViewMode} />
       {viewMode === 'tree' && (
-        <div className="roadmap-lanes">
+        <div className="flex flex-col gap-6">
           {roadmap.horizons.map((horizon) => (
-            <div
-              key={horizon.title}
-              style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}
-            >
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: space[2] }}>
-                <div style={horizonHeaderStyle}>{horizon.title}</div>
+            <div key={horizon.title} className="flex flex-col gap-1">
+              <div className="flex items-baseline gap-2">
+                <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
                 <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
               </div>
-              <div className="roadmap-lane-items">
+              <div className="flex flex-wrap items-start gap-2.5">
                 {horizon.items.map((item) => (
-                  <div key={item.name} className="roadmap-lane-item">
+                  <div
+                    key={item.name}
+                    className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none"
+                  >
                     <RoadmapItemRow
                       item={item}
                       graduated={graduatedByItem(item)}
@@ -716,7 +621,7 @@ export const RoadmapPage = () => {
                     />
                   </div>
                 ))}
-                <div className="roadmap-lane-item">
+                <div className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none">
                   <AddItemForm
                     onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
                   />

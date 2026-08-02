@@ -1,5 +1,4 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { space } from '@/app/styles/tokens';
 import type { ArchivableIdea } from '@/types/index';
 import { Button, Card, IconButton, useToast } from '@dendelion/paper-ui';
 import { useCallback, useState } from 'react';
@@ -47,19 +46,9 @@ export const ArchiveSection = () => {
   if (archivableIdeas.length === 0) return null;
 
   return (
-    <div style={{ marginTop: space[5] }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: space[2],
-          margin: `0 0 ${space[2]}`,
-        }}
-      >
-        <h2 className="text-sm" style={{ margin: 0, opacity: 0.6 }}>
-          Ready to archive ({archivableIdeas.length})
-        </h2>
+    <div className="mt-5">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <h2 className="text-sm m-0 opacity-60">Ready to archive ({archivableIdeas.length})</h2>
         <Button
           variant="ghost"
           size="small"
@@ -69,22 +58,13 @@ export const ArchiveSection = () => {
           {archivingAll ? 'Archiving…' : 'Archive all'}
         </Button>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: space[1] }}>
+      <div className="flex flex-col gap-1">
         {archivableIdeas.map((idea) => (
-          <div key={idea.id} style={{ borderRadius: 10 }}>
+          <div key={idea.id} className="rounded-[10px]">
             <Card size="small" texture="canvas" className="plan-row-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: space[2] }}>
+              <div className="flex items-center gap-2">
                 <PlanIdStamp id={idea.id} />
-                <span
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    fontWeight: 600,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
+                <span className="flex-1 min-w-0 font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
                   {idea.title}
                 </span>
                 <IconButton
@@ -94,7 +74,7 @@ export const ArchiveSection = () => {
                   label={`Archive ${idea.title}`}
                   disabled={archivingId === idea.id || archivingAll}
                   onClick={() => handleArchiveOne(idea)}
-                  style={{ width: 28, height: 28 }}
+                  className="w-[28px] h-[28px]"
                 />
               </div>
             </Card>

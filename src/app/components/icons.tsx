@@ -158,7 +158,7 @@ export const LightbulbIcon = ({ size = 14 }: IconProps) => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    style={{ opacity: 0.55, flexShrink: 0 }}
+    className="opacity-[0.55] shrink-0"
   >
     <title>Idea</title>
     <path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-3.5 10.9c.53.4.9 1.03.9 1.72V15h5.2v-.38c0-.69.37-1.32.9-1.72A6 6 0 0 0 12 2Z" />
@@ -175,7 +175,7 @@ export const NoteIcon = ({ size = 14 }: IconProps) => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    style={{ opacity: 0.55, flexShrink: 0 }}
+    className="opacity-[0.55] shrink-0"
   >
     <title>Note</title>
     <path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" />
