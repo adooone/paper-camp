@@ -505,6 +505,8 @@ export interface GitStatusResponse {
   branch: string;
   entries: GitStatusEntry[];
   ahead: number;
+  behind: number;
+  diverged: boolean;
   branchHygiene: BranchHygieneStatus;
 }
 

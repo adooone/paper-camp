@@ -682,6 +682,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     ensureBranch,
     getFeatureBranchPlanId,
     getAheadCount,
+    getBehindCount,
     getLiveState,
     push,
     isMergedIntoMain,

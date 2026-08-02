@@ -13,10 +13,22 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         const branch = git.getCurrentBranch();
         // getStatus and getBranchHygieneStatus both run `git status`, which races on
-        // .git/index.lock if run concurrently; getAheadCount's `git rev-list` doesn't.
-        const [entries, ahead] = await Promise.all([git.getStatus(), git.getAheadCount()]);
+        // .git/index.lock if run concurrently; getAheadCount/getBehindCount's `git
+        // rev-list` doesn't.
+        const [entries, ahead, behind] = await Promise.all([
+          git.getStatus(),
+          git.getAheadCount(),
+          git.getBehindCount(),
+        ]);
         const branchHygiene = await git.getBranchHygieneStatus();
-        sendJson(res, 200, { branch, entries, ahead, branchHygiene });
+        sendJson(res, 200, {
+          branch,
+          entries,
+          ahead,
+          behind,
+          diverged: ahead > 0 && behind > 0,
+          branchHygiene,
+        });
       },
     },
 

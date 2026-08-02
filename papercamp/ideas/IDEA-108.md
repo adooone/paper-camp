@@ -23,7 +23,7 @@ Don't auto-reconcile behind the user's back. Instead, make it a visible, one-cli
 The reconcile machinery exists; this idea is the missing detection + surfacing + trigger so a split is caught early and fixed in one click, not left to rot.
 
 ### Phases
-- [ ] Compute divergence on the server
+- [x] Compute divergence on the server
       Extend `git.ts`'s status to report behind count alongside ahead, and derive a `diverged` flag (both ahead of and behind the remote); expose it through `GET /api/git/status`.
 - [ ] Carry `diverged` (ahead/behind) into the git store slice
       Thread the new field through `git-api.ts` and the `gitAhead`/`gitBranchHygiene` neighbours in `app-store.ts`'s git slice.
