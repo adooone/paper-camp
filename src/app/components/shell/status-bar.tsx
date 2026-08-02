@@ -61,10 +61,16 @@ export const StatusBar = () => {
         </span>
         {agentActive && <Spinner size="small" label={`Agent ${activeTask?.status}…`} />}
         {agentNotSignedIn && (
-          <Tooltip content="Run `claude auth login` (or `claude setup-token`) so agent tasks can run">
-            <Stamp size="small" variant="warning">
-              Agent not signed in
-            </Stamp>
+          <Tooltip content="Sign in from Settings → Connections so agent tasks can run">
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/settings/$section', params: { section: 'setup' } })}
+              className="bg-none bg-transparent border-none p-0 cursor-pointer"
+            >
+              <Stamp size="small" variant="warning">
+                Agent not signed in
+              </Stamp>
+            </button>
           </Tooltip>
         )}
         {capabilityGapCount > 0 && (

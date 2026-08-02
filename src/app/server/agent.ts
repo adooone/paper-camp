@@ -609,6 +609,12 @@ export function createAgentManager(
     return { ok: true };
   }
 
+  async function findPlanById(planId: string): Promise<PlanEntry | undefined> {
+    const { entries } = await readEntities(campFile(root, 'ideas'));
+    const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
+    return entity ? entityToPlan(entity) : undefined;
+  }
+
   function start(plan: PlanEntry, phaseIndex: number): Result {
     const blocked = admit('phase', plan.id);
     if (blocked) return blocked;
@@ -1335,6 +1341,39 @@ export function createAgentManager(
     state.pendingFixReviewResult = null;
   }
 
+  // The login relay's confirmation cue (IDEA-101): a run-all or single-phase task that
+  // parked with errorKind 'auth' re-launches for the same plan instead of staying failed —
+  // the checkbox it never flipped is exactly what `start`/`startRunAllPhases` pick up next.
+  async function resumeAuthParkedTasks(
+    runProjectChecks?: () => Promise<CheckName[]>,
+  ): Promise<{ resumed: string[] }> {
+    const parked = [...tasks.values()].filter(
+      (task) =>
+        task.status === 'error' &&
+        task.errorKind === 'auth' &&
+        task.planId &&
+        (task.taskKind === 'run-all' || task.taskKind === 'phase'),
+    );
+
+    const resumed: string[] = [];
+    for (const task of parked) {
+      const planId = task.planId as string;
+      const plan = await findPlanById(planId);
+      if (!plan) continue;
+      const result =
+        task.taskKind === 'run-all'
+          ? startRunAllPhases(plan, runProjectChecks)
+          : task.phaseIndex !== undefined
+            ? start(plan, task.phaseIndex)
+            : { ok: false as const, error: 'Missing phase index' };
+      if (result.ok) {
+        task.errorKind = undefined;
+        resumed.push(planId);
+      }
+    }
+    return { resumed };
+  }
+
   return {
     start,
     startForPlan,
@@ -1345,6 +1384,7 @@ export function createAgentManager(
     startForIdeaExtend,
     startBatchReconcile,
     startRunAllPhases,
+    resumeAuthParkedTasks,
     startSuggest,
     startGitSyncRecovery,
     runCommitSuggest,
@@ -1411,6 +1451,9 @@ export interface AgentManager {
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchReconcile: () => Result;
   startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<CheckName[]>) => Result;
+  resumeAuthParkedTasks: (
+    runProjectChecks?: () => Promise<CheckName[]>,
+  ) => Promise<{ resumed: string[] }>;
   startSuggest: (prompt: string) => Promise<Result>;
   startGitSyncRecovery: (prompt: string) => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;

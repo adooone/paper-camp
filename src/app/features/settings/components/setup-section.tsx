@@ -1,4 +1,5 @@
 import { connectService, fetchConfig, fetchConnections, saveConfig } from '@/app/services/system';
+import { useAppStore } from '@/app/stores/app-store';
 import type { CapabilityStatus, ConnectionResult } from '@/types/index';
 import {
   Alert,
@@ -10,7 +11,99 @@ import {
   Tooltip,
   useToast,
 } from '@dendelion/paper-ui';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+const RELAY_POLL_MS = 2000;
+
+// Only claude-code exposes `auth login`/`auth status` (see agentAuthenticated in server/services.ts).
+const RELAY_CONNECTION_ID: ConnectionResult['id'] = 'agent:claude-code';
+
+// Same two commands the relay drives interactively — shown as copy-paste fallback
+// when the relay itself can't run (no PTY, offline, unsupported CLI version).
+const AUTH_FIX_COMMANDS = ['claude auth login', 'claude setup-token'] as const;
+
+const RelayFallbackGuide = () => (
+  <div className="mt-2 flex flex-col gap-2">
+    <p className="opacity-[0.65] text-sm m-0">
+      The in-app relay couldn't complete. Run one of these in a terminal instead:
+    </p>
+    {AUTH_FIX_COMMANDS.map((cmd) => (
+      <CodeBlock key={cmd} code={cmd} />
+    ))}
+    <p className="opacity-50 text-sm m-0">
+      {/* paper-ui has no inline-code component, only the block-level CodeBlock */}
+      Alternatively, set <code>ANTHROPIC_API_KEY</code> in the server's environment — that bills as
+      API usage rather than your Max subscription, so treat it as a fallback, not the default.
+    </p>
+  </div>
+);
+
+const SignInAction = ({ onSignedIn }: { onSignedIn: () => void }) => {
+  const loginRelay = useAppStore((s) => s.loginRelay);
+  const startLoginRelay = useAppStore((s) => s.startLoginRelay);
+  const loadLoginRelayStatus = useAppStore((s) => s.loadLoginRelayStatus);
+  const cancelLoginRelay = useAppStore((s) => s.cancelLoginRelay);
+  const { toast } = useToast();
+  const openedUrlRef = useRef<string | null>(null);
+  const phase = loginRelay?.phase;
+
+  useEffect(() => {
+    if (phase !== 'starting' && phase !== 'awaiting-authorization') return;
+    const id = window.setInterval(() => loadLoginRelayStatus(), RELAY_POLL_MS);
+    return () => window.clearInterval(id);
+  }, [phase, loadLoginRelayStatus]);
+
+  useEffect(() => {
+    const url = loginRelay?.authorizeUrl;
+    if (phase !== 'awaiting-authorization' || !url || openedUrlRef.current === url) return;
+    openedUrlRef.current = url;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, [phase, loginRelay?.authorizeUrl]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on phase transitions only — toast/onSignedIn aren't stable across renders, and including them would refire on every relay poll
+  useEffect(() => {
+    if (phase === 'success') {
+      toast({ title: 'Signed in', variant: 'success' });
+      onSignedIn();
+    } else if (phase === 'error') {
+      toast({ title: 'Sign-in failed', description: loginRelay?.error, variant: 'error' });
+    }
+  }, [phase]);
+
+  if (phase === 'starting') {
+    return (
+      <Button size="small" disabled>
+        Starting…
+      </Button>
+    );
+  }
+  if (phase === 'awaiting-authorization') {
+    return (
+      <div className="flex items-center gap-2">
+        <Button
+          size="small"
+          onClick={() =>
+            loginRelay?.authorizeUrl &&
+            window.open(loginRelay.authorizeUrl, '_blank', 'noopener,noreferrer')
+          }
+        >
+          Reopen sign-in tab
+        </Button>
+        <Button size="small" onClick={() => cancelLoginRelay()}>
+          Cancel
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <Button size="small" onClick={() => startLoginRelay()}>
+        Sign in
+      </Button>
+      {phase === 'error' && <RelayFallbackGuide />}
+    </div>
+  );
+};
 
 const STATUS_STAMP: Record<CapabilityStatus, { fill: string; text: string; label: string }> = {
   ok: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66', label: 'Ready' },
@@ -94,11 +187,15 @@ const ConnectionRow = ({
         <p className="opacity-[0.65] text-sm mt-1 mx-0 mb-0">Unlocks: {connection.unlocks}</p>
         <p className="opacity-50 text-sm mt-1 mx-0 mb-0">{connection.detail}</p>
         <div className="mt-2">
-          <ConnectActionView
-            connection={connection}
-            onConnect={onConnect}
-            connecting={connecting}
-          />
+          {connection.id === RELAY_CONNECTION_ID && connection.authenticated === false ? (
+            <SignInAction onSignedIn={() => onRecheck(connection.id)} />
+          ) : (
+            <ConnectActionView
+              connection={connection}
+              onConnect={onConnect}
+              connecting={connecting}
+            />
+          )}
         </div>
       </div>
       {!isLast && <Divider />}

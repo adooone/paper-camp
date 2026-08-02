@@ -426,6 +426,19 @@ export interface AgentAuthStatus {
   apiProvider: string | null;
 }
 
+export type LoginRelayPhase =
+  | 'starting'
+  | 'awaiting-authorization'
+  | 'success'
+  | 'error'
+  | 'cancelled';
+
+export interface LoginRelayState {
+  phase: LoginRelayPhase;
+  authorizeUrl: string | null;
+  error?: string;
+}
+
 export type ServiceId = 'git' | 'gh' | `agent:${AgentId}`;
 
 /** What a Connections row offers once its service isn't `ok` — copy a command, follow a link, or read plain instructions. */

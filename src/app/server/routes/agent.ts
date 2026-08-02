@@ -19,6 +19,7 @@ import {
   writeEntityFile,
 } from '../helpers';
 import { readBody, sendJson } from '../http';
+import { getCurrentLoginRelay, startClaudeLoginRelay } from '../login-relay';
 import type { Route, RouteContext } from './types';
 
 async function resolveEntityFilePath(root: string, entityId: string): Promise<string | null> {
@@ -161,6 +162,41 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         const defaultAgents = readDefaultAgentIds(root);
         const { id } = resolveAgent({ defaultAgents, taskKind: 'phase' });
         sendJson(res, 200, await probeAgentAuthStatus(id, root));
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/agent/login-relay/start',
+      handle: (_req, res) => {
+        const handle = startClaudeLoginRelay(root, {
+          onLoginConfirmed: () => {
+            agent
+              .resumeAuthParkedTasks(() => status.runChecksAndWait())
+              .catch((err) => {
+                console.error('Failed to resume auth-parked tasks after sign-in', err);
+              });
+          },
+        });
+        sendJson(res, 200, handle.getState());
+      },
+    },
+
+    {
+      method: 'GET',
+      path: '/api/agent/login-relay/status',
+      handle: (_req, res) => {
+        const handle = getCurrentLoginRelay();
+        sendJson(res, 200, handle ? handle.getState() : null);
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/agent/login-relay/cancel',
+      handle: (_req, res) => {
+        getCurrentLoginRelay()?.cancel();
+        sendJson(res, 202, { ok: true });
       },
     },
 
