@@ -1,4 +1,3 @@
-{"id":"d4b19af7-ff5a-4ed9-b341-f7bed65d49e7","taskKind":"run-all","planId":"IDEA-104","planTitle":"Decisions and questions live on the idea","agentId":"claude-code","startedAt":"2026-07-30T17:39:32.222Z","endedAt":"2026-07-30T18:56:18.357Z","outcome":"done"}
 {"id":"98960694-b4bc-491d-8f2f-ce6a41b9dbaa","taskKind":"run-all","planId":"IDEA-106","planTitle":"Slim agent prompts for short, direct output","agentId":"claude-code","startedAt":"2026-07-30T20:49:12.361Z","endedAt":"2026-07-30T21:23:45.674Z","outcome":"done"}
 {"id":"5654f552-24ab-4030-9192-ff27f3749483","taskKind":"run-all","planId":"IDEA-107","planTitle":"De-complicate the worst code","agentId":"claude-code","startedAt":"2026-07-30T22:00:12.460Z","endedAt":"2026-07-30T22:48:55.910Z","outcome":"done"}
 {"id":"8689197d-7183-483f-90e6-8ff7ebf79951","taskKind":"run-all","planId":"IDEA-111","planTitle":"Single-source color tokens via CSS variables","agentId":"claude-code","startedAt":"2026-07-31T08:43:15.530Z","endedAt":"2026-07-31T08:54:21.695Z","outcome":"error"}
@@ -32,3 +31,4 @@
 {"id":"9d67b806-adc5-4874-8de8-659e369a85b5","taskKind":"feedback","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T17:43:29.682Z","endedAt":"2026-08-02T17:43:44.029Z","outcome":"done"}
 {"id":"df95611f-65a8-49af-9693-eb77f8f60b32","taskKind":"feedback","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T17:44:00.762Z","endedAt":"2026-08-02T17:44:13.640Z","outcome":"done"}
 {"id":"6478f3a2-40dc-4bc3-87a4-d31f991f7c37","taskKind":"run-all","planId":"IDEA-99","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T17:44:34.342Z","endedAt":"2026-08-02T18:05:45.271Z","outcome":"done"}
+{"id":"7ebd0544-4973-4a53-b89a-2857e3b0abd7","taskKind":"fix-review","planId":"IDEA-99","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T19:35:32.414Z","endedAt":"2026-08-02T19:39:18.686Z","outcome":"done"}

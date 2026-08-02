@@ -1,5 +1,5 @@
-import { spawnSync } from 'node:child_process';
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { lstat, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
   CommentStats,
@@ -17,7 +17,10 @@ async function walk(dir: string): Promise<string[]> {
   const files: string[] = [];
   for (const name of names) {
     const path = join(dir, name);
-    files.push(...((await stat(path)).isDirectory() ? await walk(path) : [path]));
+    const info = await lstat(path).catch(() => null);
+    if (!info) continue;
+    if (info.isDirectory()) files.push(...(await walk(path)));
+    else if (info.isFile()) files.push(path);
   }
   return files;
 }
@@ -31,16 +34,33 @@ async function countTestLines(root: string): Promise<number> {
   return total;
 }
 
+const COMMENT_STATS_TIMEOUT_MS = 10_000;
+const ZERO_COMMENT_STATS: CommentStats = { commentLines: 0, sourceLines: 0, ratio: 0 };
+
 // comment-stats.mjs already walks src/ excluding *.test.ts(x); shelling out to it
 // keeps this route and the standalone script reporting the same number.
-function runCommentStats(root: string): CommentStats {
-  const result = spawnSync('node', [join(root, 'scripts', 'comment-stats.mjs'), '--json'], {
-    cwd: root,
-    encoding: 'utf-8',
+function runCommentStats(root: string): Promise<CommentStats> {
+  return new Promise((resolve) => {
+    const proc = spawn(process.execPath, [join(root, 'scripts', 'comment-stats.mjs'), '--json'], {
+      cwd: root,
+      timeout: COMMENT_STATS_TIMEOUT_MS,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    let stdout = '';
+    proc.stdout?.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+    proc.on('close', (code) => {
+      if (code !== 0 || !stdout) return resolve(ZERO_COMMENT_STATS);
+      try {
+        const { commentLines, sourceLines, ratio } = JSON.parse(stdout);
+        resolve({ commentLines, sourceLines, ratio });
+      } catch {
+        resolve(ZERO_COMMENT_STATS);
+      }
+    });
+    proc.on('error', () => resolve(ZERO_COMMENT_STATS));
   });
-  if (result.status !== 0 || !result.stdout) return { commentLines: 0, sourceLines: 0, ratio: 0 };
-  const { commentLines, sourceLines, ratio } = JSON.parse(result.stdout);
-  return { commentLines, sourceLines, ratio };
 }
 
 async function readTestCoveragePct(root: string): Promise<number | null> {
@@ -48,8 +68,12 @@ async function readTestCoveragePct(root: string): Promise<number | null> {
     () => null,
   );
   if (!raw) return null;
-  const { total } = JSON.parse(raw);
-  return total?.lines?.pct ?? null;
+  try {
+    const { total } = JSON.parse(raw);
+    return total?.lines?.pct ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function countEntitiesByStatus(
@@ -103,7 +127,8 @@ export function tasksPerWeek(entries: TaskLogEntry[]): TasksPerWeek[] {
 
 export async function computeProjectStats(root: string): Promise<ProjectStats> {
   const ideasDir = join(root, 'papercamp', 'ideas');
-  const [testLines, testCoveragePct, { entries }, taskLogRaw] = await Promise.all([
+  const [comments, testLines, testCoveragePct, { entries }, taskLogRaw] = await Promise.all([
+    runCommentStats(root),
     countTestLines(root),
     readTestCoveragePct(root),
     readEntitiesWithDerivedStatus(ideasDir),
@@ -112,7 +137,7 @@ export async function computeProjectStats(root: string): Promise<ProjectStats> {
   const { openQuestions, decisions } = countThreadNotes(entries);
   return {
     generatedAt: new Date().toISOString(),
-    comments: runCommentStats(root),
+    comments,
     testLines,
     testCoveragePct,
     entitiesByStatus: countEntitiesByStatus(entries),
