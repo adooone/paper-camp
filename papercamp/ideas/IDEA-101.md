@@ -2,7 +2,7 @@
 id: IDEA-101
 title: In-app sign-in via OAuth relay
 type: feat
-status: idea
+status: review
 created: 2026-07-26
 updated: 2026-07-26
 tags:
@@ -53,4 +53,4 @@ Placement (decided 2026-07-26 — auth is a global precondition, not a per-task 
       Remove `AuthErrorFix` / the `errorKind === 'auth'` branch from `agent-section.tsx`; a failed task reads "stopped — agent signed out" with a link only.
 - [x] Keep the copy-command guide as the graceful fallback
       Fall back to the paste-a-command remediation when the relay can't run (no PTY, offline, unsupported CLI); keep the `ANTHROPIC_API_KEY` path as an explicit alternative, not the default.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
