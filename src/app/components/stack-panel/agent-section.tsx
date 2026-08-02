@@ -1,23 +1,9 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { AGENT_LABELS, type AgentTaskState, type AgentTaskStatus } from '@/types/index';
-import { Card, CloseIcon, CopyButton, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
+import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { chalkStatusFill, chalkStatusText, sectionLabelClassName } from './shared';
-
-const AUTH_FIX_COMMANDS = ['claude auth login', 'claude setup-token'] as const;
-
-const AuthErrorFix = () => (
-  // biome-ignore lint/a11y/useKeyWithClickEvents: purely stops the copy click from bubbling to the card's onClick (which navigates to /tasks); nothing here is itself interactive.
-  <div onClick={(e) => e.stopPropagation()} className="mt-2 flex flex-col gap-1">
-    {AUTH_FIX_COMMANDS.map((cmd) => (
-      <div key={cmd} className="flex items-center justify-between gap-2">
-        <code className="font-mono text-xs text-desk-chalk">{cmd}</code>
-        <CopyButton text={cmd} surface="chalkboard" />
-      </div>
-    ))}
-  </div>
-);
 
 const MAX_VISIBLE_TASKS = 8;
 // 25.5rem = MAX_VISIBLE_TASKS * 2.75rem card height + (MAX_VISIBLE_TASKS - 1) * 0.5rem gap,
@@ -113,14 +99,35 @@ const AgentTaskCard = ({
           {taskSubtitle(task)} · {AGENT_LABELS[task.agentId]}
         </span>
         <div className="flex items-center gap-2">
-          <Stamp
-            surface="chalkboard"
-            size="small"
-            fillColor={statusFill[task.status]}
-            textColor={statusText[task.status]}
-          >
-            {task.status === 'error' && task.errorKind === 'auth' ? 'not signed in' : task.status}
-          </Stamp>
+          {task.status === 'error' && task.errorKind === 'auth' ? (
+            // paper-ui has no clickable Stamp variant, so a raw button wraps it (see docs/CODE_STYLE.md §1)
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate({ to: '/settings/$section', params: { section: 'setup' } });
+              }}
+              className="bg-none bg-transparent border-none p-0 cursor-pointer"
+            >
+              <Stamp
+                surface="chalkboard"
+                size="small"
+                fillColor={statusFill.error}
+                textColor={statusText.error}
+              >
+                stopped — agent signed out
+              </Stamp>
+            </button>
+          ) : (
+            <Stamp
+              surface="chalkboard"
+              size="small"
+              fillColor={statusFill[task.status]}
+              textColor={statusText[task.status]}
+            >
+              {task.status}
+            </Stamp>
+          )}
           {(task.status === 'running' ||
             task.status === 'starting' ||
             task.status === 'stopping') && (
@@ -135,7 +142,6 @@ const AgentTaskCard = ({
           )}
         </div>
       </div>
-      {task.status === 'error' && task.errorKind === 'auth' && <AuthErrorFix />}
     </Card>
   );
 };

@@ -49,7 +49,7 @@ Placement (decided 2026-07-26 — auth is a global precondition, not a per-task 
       Put the button on the agent's Connections row (next to git/gh) as the primary home — click opens the authorize URL in a browser tab.
 - [x] Make the StatusBar signed-out indicator clickable
       The always-visible "Agent not signed in" warning ([[IDEA-86]]) jumps to the Connections row or launches the flow directly.
-- [ ] Pull the auth remediation out of the Stack agent card
+- [x] Pull the auth remediation out of the Stack agent card
       Remove `AuthErrorFix` / the `errorKind === 'auth'` branch from `agent-section.tsx`; a failed task reads "stopped — agent signed out" with a link only.
 - [ ] Keep the copy-command guide as the graceful fallback
       Fall back to the paste-a-command remediation when the relay can't run (no PTY, offline, unsupported CLI); keep the `ANTHROPIC_API_KEY` path as an explicit alternative, not the default.
