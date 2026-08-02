@@ -2,7 +2,7 @@
 id: IDEA-99
 title: Project stats view
 type: feat
-status: review
+status: done
 created: 2026-07-26
 updated: 2026-08-02
 tags:

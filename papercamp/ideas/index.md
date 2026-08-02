@@ -100,7 +100,7 @@
 | IDEA-96 | Open questions as a working queue | feat | done | app, plans, core |
 | IDEA-97 | Surface decisions where they bind | feat | done | app, core, ui |
 | IDEA-98 | Track run order in one file | refactor | done | core, plans, git |
-| IDEA-99 | Project stats view | feat | planned | stats, metrics, server, ui |
+| IDEA-99 | Project stats view | feat | done | stats, metrics, server, ui |
 | IDEA-100 | Self-healing run-all: fix red checks, ask only when stuck | feat | done | agent, plans |
 | IDEA-101 | In-app sign-in via OAuth relay | feat | done | app, server, agent |
 | IDEA-102 | Agent resolves sync-rebase conflicts | feat | planned | git, app, agent, server |
