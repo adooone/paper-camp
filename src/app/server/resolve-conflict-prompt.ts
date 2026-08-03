@@ -14,9 +14,12 @@ export function buildResolveConflictPrompt(
   const filesBlock = (failure.conflictedFiles ?? [])
     .map((path) => {
       const content = contentByPath.get(path);
-      return content
-        ? `### ${path}\n\`\`\`\n${content}\n\`\`\``
-        : `### ${path}\n(content unavailable)`;
+      if (!content) return `### ${path}\n(content unavailable)`;
+      // A four-backtick fence survives the three-backtick fences that papercamp
+      // markdown files themselves carry — a shorter fence would let file content
+      // close it early and blur the line between data and instructions.
+      const truncated = content.endsWith('... (truncated)');
+      return `### ${path}${truncated ? ' (truncated)' : ''}\n\`\`\`\`\n${content}\n\`\`\`\``;
     })
     .join('\n\n');
 
@@ -32,7 +35,7 @@ Domain judgement to apply while resolving markers:
 - For anything else, keep both real changes' intent where possible; if genuinely irreconcilable, leave it unresolved and explain the tradeoff instead of guessing.
 
 Task:
-1. Run \`git rebase ${ref}\` yourself — it will hit the same conflict.
+1. Run \`git rebase '${ref}'\` yourself — it will hit the same conflict.
 2. Resolve the markers in each conflicted file above, applying the judgement above.
 3. \`git add\` the resolved files.
 4. \`git rebase --continue\`. If a later commit in the same rebase hits another conflict, keep resolving it the same way until the rebase finishes.

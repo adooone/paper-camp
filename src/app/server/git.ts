@@ -621,10 +621,16 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     } catch {}
     try {
       await runGit(['rebase', ref]);
-    } catch {
+    } catch (err) {
       const conflictedFiles = (await runGitStatus())
         .filter((entry) => CONFLICT_STATUSES.has(entry.status))
         .map((entry) => entry.path);
+      // A rebase can fail with no unmerged path (unstaged changes, bad ref, hook
+      // rejection) — that's not a content conflict, so keep git's own error.
+      if (conflictedFiles.length === 0) {
+        await runGit(['rebase', '--abort']).catch(() => {});
+        throw err;
+      }
       // Captured before the abort below restores the pre-rebase content — this is
       // the resolve-conflict agent's only look at what the markers actually said.
       const conflictedContent = await Promise.all(

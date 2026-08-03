@@ -98,7 +98,11 @@ export const resolveConflict = async (prompt: string): Promise<{ ok: boolean; er
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt }),
   });
-  return response.json();
+  try {
+    return await response.json();
+  } catch {
+    return { ok: false, error: `Unexpected response (status ${response.status})` };
+  }
 };
 
 export const createPlanBranch = async (planId: string): Promise<string> => {

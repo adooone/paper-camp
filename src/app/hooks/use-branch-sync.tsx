@@ -80,13 +80,17 @@ export function useBranchSync() {
               <Button
                 size="small"
                 onClick={async () => {
-                  dismiss(toastId);
-                  const launch = await resolveConflict(conflictPrompt);
+                  const launch = await resolveConflict(conflictPrompt).catch((err) => ({
+                    ok: false as const,
+                    error: oneLineErrorSummary((err as Error).message),
+                  }));
+                  // Keep the conflict toast on failure so the prompt stays reachable for a retry.
+                  if (launch.ok) dismiss(toastId);
                   toast({
                     title: launch.ok ? 'Resolving conflict' : 'Could not start the agent',
                     description: launch.ok
                       ? 'Handed off to the agent — see Stack for progress'
-                      : launch.error,
+                      : (launch.error ?? 'The agent did not start.'),
                     variant: launch.ok ? 'warning' : 'error',
                   });
                 }}
