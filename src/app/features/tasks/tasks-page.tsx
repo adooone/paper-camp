@@ -21,6 +21,7 @@ const TASK_KIND_LABELS: Record<TaskKind, string> = {
   sync: 'Sync',
   reconcile: 'Reconcile',
   'fix-review': 'Fix review',
+  'resolve-conflict': 'Resolve conflict',
   feedback: 'Feedback reply',
 };
 

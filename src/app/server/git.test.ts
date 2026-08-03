@@ -344,7 +344,7 @@ describe('fixDivergence', () => {
     expect(git(root, 'log', '--oneline').split('\n')[0]).toContain('local-only change');
   });
 
-  it('reports a reconcile conflict with a recovery prompt instead of throwing', async () => {
+  it('reports a conflicted rebase with the conflicted files and a recovery prompt instead of throwing', async () => {
     const root = await initRepo();
     await addOrigin(root);
     await commitFile(root, 'README.md', 'upstream\n', 'upstream change');
@@ -355,11 +355,31 @@ describe('fixDivergence', () => {
 
     const result = await manager.fixDivergence();
 
-    expect(result).toMatchObject({ ok: false, stage: 'reconcile', stashPending: false });
+    expect(result).toMatchObject({
+      ok: false,
+      stage: 'conflicted',
+      stashPending: false,
+      conflictedFiles: ['README.md'],
+      conflictRef: '@{u}',
+    });
     expect((result as { message: string }).message).toMatch(/conflict/);
     expect((result as { recoveryPrompt: string }).recoveryPrompt).toContain('main');
+    expect((result as { recoveryPrompt: string }).recoveryPrompt).toContain('README.md');
     // The aborted rebase must not leave the repo mid-conflict.
     expect(git(root, 'log', '--oneline', '-1')).toContain('local change');
+
+    // conflictedContent captures the markers before the abort restores the file,
+    // and conflictPrompt (fed to the resolve-conflict agent) tells it to reproduce
+    // the rebase and land it rather than trusting a working tree that's since reset.
+    const conflictedContent = (result as { conflictedContent: { path: string; content: string }[] })
+      .conflictedContent;
+    expect(conflictedContent).toEqual([
+      { path: 'README.md', content: expect.stringContaining('<<<<<<<') },
+    ]);
+    const conflictPrompt = (result as { conflictPrompt: string }).conflictPrompt;
+    expect(conflictPrompt).toContain('README.md');
+    expect(conflictPrompt).toContain('<<<<<<<');
+    expect(conflictPrompt).toContain('git rebase --continue');
   });
 
   it('reconciles an unpushed feature branch against origin/main, not a nonexistent upstream', async () => {

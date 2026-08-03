@@ -1,9 +1,36 @@
 import { findFocusPlan } from '@/app/features/plans/helpers';
 import { entityToPlan, readEntities, readWorkEntries } from '@/core/readers';
+import type { GitSyncFailure } from '@/types/index';
+import type { AgentManager } from '../agent';
 import { suggestCommitMessage } from '../commit-suggest';
 import { campFile } from '../helpers';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
+
+// A genuine content conflict needs domain judgement, so it's never auto-escalated —
+// the client offers a one-click "ask the agent to resolve" instead (see
+// /api/git/resolve-conflict) so a bad auto-merge never lands unseen. Any other
+// reconcile failure (fetch, checkout, ...) still gets the automatic recovery agent.
+function syncFailurePayload(result: GitSyncFailure, agent: AgentManager) {
+  if (result.stage === 'conflicted') {
+    return {
+      error: result.message,
+      stage: result.stage,
+      stashPending: result.stashPending,
+      recovering: false,
+      conflictedFiles: result.conflictedFiles,
+      conflictPrompt: result.conflictPrompt,
+    };
+  }
+  const recovery = agent.startGitSyncRecovery(result.recoveryPrompt);
+  return {
+    error: result.message,
+    stage: result.stage,
+    stashPending: result.stashPending,
+    recovering: recovery.ok,
+    recoveryError: recovery.ok ? undefined : recovery.error,
+  };
+}
 
 export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
   return [
@@ -100,21 +127,34 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
         try {
           const result = await git.runGitSync();
           if (!result.ok) {
-            // Automatic escalation: hand the failure straight to a recovery agent
-            // rather than surfacing a git error for the user to resolve by hand.
-            const recovery = agent.startGitSyncRecovery(result.recoveryPrompt);
-            sendJson(res, 202, {
-              error: result.message,
-              stage: result.stage,
-              stashPending: result.stashPending,
-              recovering: recovery.ok,
-              recoveryError: recovery.ok ? undefined : recovery.error,
-            });
+            sendJson(res, 202, syncFailurePayload(result, agent));
             return;
           }
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
+        }
+      },
+    },
+
+    // One-click "ask the agent to resolve" from the sync-failed toast — never
+    // launched automatically, only on explicit human confirmation of the prompt
+    // /sync or /fix-divergence returned for stage: 'conflicted'.
+    {
+      method: 'POST',
+      path: '/api/git/resolve-conflict',
+      handle: async (req, res) => {
+        try {
+          const body = await readBody(req);
+          const { prompt } = JSON.parse(body) as { prompt?: string };
+          if (!prompt) {
+            sendJson(res, 400, { error: 'prompt is required' });
+            return;
+          }
+          const result = agent.startResolveConflict(prompt);
+          sendJson(res, result.ok ? 200 : 409, result);
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
         }
       },
     },
@@ -143,14 +183,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
         try {
           const result = await git.fixDivergence();
           if (!result.ok) {
-            const recovery = agent.startGitSyncRecovery(result.recoveryPrompt);
-            sendJson(res, 202, {
-              error: result.message,
-              stage: result.stage,
-              stashPending: result.stashPending,
-              recovering: recovery.ok,
-              recoveryError: recovery.ok ? undefined : recovery.error,
-            });
+            sendJson(res, 202, syncFailurePayload(result, agent));
             return;
           }
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });

@@ -590,6 +590,28 @@ describe('startGitSyncRecovery', () => {
   });
 });
 
+describe('startResolveConflict', () => {
+  it('launches a resolve-conflict-kind task carrying the prompt, and blocks a second launch while it runs', async () => {
+    const { root } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
+    const manager = createAgentManager(root);
+
+    expect(manager.startResolveConflict('resolve the rebase conflict')).toEqual({ ok: true });
+    expect(currentStatus(manager)).toMatchObject({
+      taskKind: 'resolve-conflict',
+      status: 'running',
+    });
+
+    // Exclusive kind: a second resolve-conflict launch must not run concurrently.
+    expect(manager.startResolveConflict('resolve another conflict')).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+
+    await waitForStatus(manager, settled);
+  });
+});
+
 describe('start (single phase)', () => {
   it('finishes cleanly when the agent checks off the phase', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);

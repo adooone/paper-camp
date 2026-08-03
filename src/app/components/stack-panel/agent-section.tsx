@@ -32,6 +32,8 @@ const taskSubtitle = (task: AgentTaskState): string => {
       return ' — checking overlap';
     case 'sync':
       return ' — syncing to main';
+    case 'resolve-conflict':
+      return ' — resolving conflict';
     case 'run-all':
       return ' — run all phases';
     default:

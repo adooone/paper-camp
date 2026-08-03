@@ -513,7 +513,13 @@ export function createAgentManager(
     | { scope: 'entities'; ids: 'all' | string[] }
     | { scope: 'worktree' };
 
-  const EXCLUSIVE_KINDS = new Set<TaskKind>(['phase', 'run-all', 'fix-review', 'sync']);
+  const EXCLUSIVE_KINDS = new Set<TaskKind>([
+    'phase',
+    'run-all',
+    'fix-review',
+    'sync',
+    'resolve-conflict',
+  ]);
   const ENTITY_WRITER_KINDS = new Set<TaskKind>([
     'audit',
     'reconcile',
@@ -688,6 +694,15 @@ export function createAgentManager(
   // step, since a blocked sync is exactly the "stuck" outcome this exists to avoid.
   function startGitSyncRecovery(prompt: string): Result {
     return launch({ planTitle: 'Recover sync to main' }, prompt, { taskKind: 'sync' });
+  }
+
+  // One-click "ask the agent to resolve" against a paused rebase, launched only on
+  // explicit human confirmation from the sync-failed toast — unlike startGitSyncRecovery's
+  // automatic escalation, a content conflict never gets auto-merged unseen.
+  function startResolveConflict(prompt: string): Result {
+    return launch({ planTitle: 'Resolve rebase conflict' }, prompt, {
+      taskKind: 'resolve-conflict',
+    });
   }
 
   async function findBatchPlanFile(plansDir: string, id: string): Promise<string | null> {
@@ -1387,6 +1402,7 @@ export function createAgentManager(
     resumeAuthParkedTasks,
     startSuggest,
     startGitSyncRecovery,
+    startResolveConflict,
     runCommitSuggest,
     runOverlapCheck,
     runPrioritise,
@@ -1456,6 +1472,7 @@ export interface AgentManager {
   ) => Promise<{ resumed: string[] }>;
   startSuggest: (prompt: string) => Promise<Result>;
   startGitSyncRecovery: (prompt: string) => Result;
+  startResolveConflict: (prompt: string) => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
   runPrioritise: (prompt: string) => Promise<string>;
