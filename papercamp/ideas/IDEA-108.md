@@ -2,7 +2,7 @@
 id: IDEA-108
 title: Surface a diverged main with a one-click agent fix
 type: feat
-status: idea
+status: review
 created: 2026-07-30
 updated: 2026-07-30
 tags:
@@ -31,4 +31,4 @@ The reconcile machinery exists; this idea is the missing detection + surfacing +
       Render a short "main has diverged from origin (N local, N remote)" line next to the git state, matching the existing failing-check pattern.
 - [x] Add the "Fix git issues" reconcile trigger
       Wire the surfaced line's action to the existing rebase-then-agent recovery job (`launch-reconcile` / [[IDEA-94]]), mirroring the "Suggested fix: run biome --write" affordance.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass
