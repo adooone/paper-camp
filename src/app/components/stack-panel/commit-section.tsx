@@ -60,8 +60,13 @@ const StatusStamps = () => {
   const fixQuality = useAppStore((s) => s.fixQuality);
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
+  const gitBranch = useAppStore((s) => s.gitBranch);
+  const gitAhead = useAppStore((s) => s.gitAhead);
+  const gitBehind = useAppStore((s) => s.gitBehind);
+  const gitDiverged = useAppStore((s) => s.gitDiverged);
   const navigate = useNavigate();
   const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
+  const { fixingDivergence, gitActionBusy, handleFixDivergence } = useBranchSync();
 
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
     () => deriveCheckStatuses(statusData),
@@ -222,6 +227,24 @@ const StatusStamps = () => {
         let secondaryLine: React.ReactNode = null;
         if (anyRunning) {
           primaryLine = <span className="text-desk-text-muted">Running checks…</span>;
+        } else if (gitDiverged) {
+          primaryLine = (
+            <span className="text-desk-text-muted">
+              {gitBranch} has diverged from origin ({gitAhead} local, {gitBehind} remote)
+            </span>
+          );
+          secondaryLine = (
+            // Raw <button>: Button has no inline-underlined link style; matches the
+            // identical pattern already used for the doc-findings/quality-fix links below.
+            <button
+              type="button"
+              onClick={handleFixDivergence}
+              disabled={gitActionBusy}
+              className="bg-none bg-transparent border-none p-0 text-desk-chalk underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 [font:inherit]"
+            >
+              {fixingDivergence ? 'Fixing…' : 'Suggested fix: Fix git issues'}
+            </button>
+          );
         } else if (qualityStatus === 'fail') {
           primaryLine = (
             <span className="text-desk-text-muted">

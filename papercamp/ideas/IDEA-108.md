@@ -2,7 +2,7 @@
 id: IDEA-108
 title: Surface a diverged main with a one-click agent fix
 type: feat
-status: idea
+status: review
 created: 2026-07-30
 updated: 2026-07-30
 tags:
@@ -23,12 +23,12 @@ Don't auto-reconcile behind the user's back. Instead, make it a visible, one-cli
 The reconcile machinery exists; this idea is the missing detection + surfacing + trigger so a split is caught early and fixed in one click, not left to rot.
 
 ### Phases
-- [ ] Compute divergence on the server
+- [x] Compute divergence on the server
       Extend `git.ts`'s status to report behind count alongside ahead, and derive a `diverged` flag (both ahead of and behind the remote); expose it through `GET /api/git/status`.
-- [ ] Carry `diverged` (ahead/behind) into the git store slice
+- [x] Carry `diverged` (ahead/behind) into the git store slice
       Thread the new field through `git-api.ts` and the `gitAhead`/`gitBranchHygiene` neighbours in `app-store.ts`'s git slice.
-- [ ] Surface the split line in the Stack Commit section
+- [x] Surface the split line in the Stack Commit section
       Render a short "main has diverged from origin (N local, N remote)" line next to the git state, matching the existing failing-check pattern.
-- [ ] Add the "Fix git issues" reconcile trigger
+- [x] Add the "Fix git issues" reconcile trigger
       Wire the surfaced line's action to the existing rebase-then-agent recovery job (`launch-reconcile` / [[IDEA-94]]), mirroring the "Suggested fix: run biome --write" affordance.
-- [ ] Type-check and full pass
+- [x] Type-check and full pass

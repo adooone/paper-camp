@@ -31,8 +31,8 @@ export type StatusSlice = {
   setCommitInFlight: (inFlight: boolean) => void;
 
   // Shared across every useBranchSync() mount so push/sync/pull can't run concurrently.
-  activeGitAction: 'push' | 'sync' | 'pull' | null;
-  setActiveGitAction: (action: 'push' | 'sync' | 'pull' | null) => void;
+  activeGitAction: 'push' | 'sync' | 'pull' | 'fix-divergence' | null;
+  setActiveGitAction: (action: 'push' | 'sync' | 'pull' | 'fix-divergence' | null) => void;
 
   consistency: ConsistencyIssue[];
   loadConsistency: () => Promise<void>;
@@ -40,6 +40,8 @@ export type StatusSlice = {
   gitStatus: GitStatusEntry[] | null;
   gitBranch: string | null;
   gitAhead: number;
+  gitBehind: number;
+  gitDiverged: boolean;
   gitBranchHygiene: BranchHygieneStatus | null;
   // Resolves false on failure (state left stale) so callers like quickCommit can tell.
   loadGitStatus: () => Promise<boolean>;
@@ -126,14 +128,18 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
     gitStatus: null,
     gitBranch: null,
     gitAhead: 0,
+    gitBehind: 0,
+    gitDiverged: false,
     gitBranchHygiene: null,
     loadGitStatus: async () => {
       try {
-        const { branch, entries, ahead, branchHygiene } = await fetchGitStatus();
+        const { branch, entries, ahead, behind, diverged, branchHygiene } = await fetchGitStatus();
         set({
           gitStatus: entries,
           gitBranch: branch,
           gitAhead: ahead,
+          gitBehind: behind,
+          gitDiverged: diverged,
           gitBranchHygiene: branchHygiene,
         });
         return true;

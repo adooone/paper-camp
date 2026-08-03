@@ -324,6 +324,64 @@ describe('runGitSync', () => {
   });
 });
 
+describe('fixDivergence', () => {
+  it('rebases a diverged branch onto its remote instead of failing', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    // origin/main advances by one commit the local branch never saw.
+    await commitFile(root, 'remote.txt', 'from remote\n', 'remote-only change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    // local main gets its own commit — now diverged from origin/main.
+    await commitFile(root, 'local.txt', 'from local\n', 'local-only change');
+    const manager = gitManager(root);
+
+    const result = await manager.fixDivergence();
+
+    expect(result).toEqual({ ok: true });
+    expect(await readFile(join(root, 'remote.txt'), 'utf-8')).toBe('from remote\n');
+    expect(await readFile(join(root, 'local.txt'), 'utf-8')).toBe('from local\n');
+    expect(git(root, 'log', '--oneline').split('\n')[0]).toContain('local-only change');
+  });
+
+  it('reports a reconcile conflict with a recovery prompt instead of throwing', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    await commitFile(root, 'README.md', 'upstream\n', 'upstream change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    await commitFile(root, 'README.md', 'local change\n', 'local change');
+    const manager = gitManager(root);
+
+    const result = await manager.fixDivergence();
+
+    expect(result).toMatchObject({ ok: false, stage: 'reconcile', stashPending: false });
+    expect((result as { message: string }).message).toMatch(/conflict/);
+    expect((result as { recoveryPrompt: string }).recoveryPrompt).toContain('main');
+    // The aborted rebase must not leave the repo mid-conflict.
+    expect(git(root, 'log', '--oneline', '-1')).toContain('local change');
+  });
+
+  it('reconciles an unpushed feature branch against origin/main, not a nonexistent upstream', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-9-unpushed');
+    await commitFile(root, 'feature.txt', 'feature work\n', 'feature commit');
+    // origin/main advances while the branch, never pushed, has no origin/<branch>.
+    git(root, 'checkout', 'main');
+    await commitFile(root, 'remote.txt', 'from remote\n', 'remote-only change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'checkout', 'feat/feat-9-unpushed');
+    const manager = gitManager(root);
+
+    const result = await manager.fixDivergence();
+
+    expect(result).toEqual({ ok: true });
+    expect(await readFile(join(root, 'remote.txt'), 'utf-8')).toBe('from remote\n');
+    expect(await readFile(join(root, 'feature.txt'), 'utf-8')).toBe('feature work\n');
+  });
+});
+
 describe('getAheadCount', () => {
   it('counts commits past the upstream when one is configured', async () => {
     const root = await initRepo();

@@ -13,10 +13,22 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         const branch = git.getCurrentBranch();
         // getStatus and getBranchHygieneStatus both run `git status`, which races on
-        // .git/index.lock if run concurrently; getAheadCount's `git rev-list` doesn't.
-        const [entries, ahead] = await Promise.all([git.getStatus(), git.getAheadCount()]);
+        // .git/index.lock if run concurrently; getAheadCount/getBehindCount's `git
+        // rev-list` doesn't.
+        const [entries, ahead, behind] = await Promise.all([
+          git.getStatus(),
+          git.getAheadCount(),
+          git.getBehindCount(),
+        ]);
         const branchHygiene = await git.getBranchHygieneStatus();
-        sendJson(res, 200, { branch, entries, ahead, branchHygiene });
+        sendJson(res, 200, {
+          branch,
+          entries,
+          ahead,
+          behind,
+          diverged: ahead > 0 && behind > 0,
+          branchHygiene,
+        });
       },
     },
 
@@ -115,6 +127,32 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         try {
           await git.runGitPull();
+          sendJson(res, 200, { ok: true, state: await git.getLiveState() });
+        } catch (error) {
+          sendJson(res, 409, { error: (error as Error).message });
+        }
+      },
+    },
+
+    // "Fix git issues" — rebase the current branch onto its diverged remote;
+    // escalates to the recovery agent on conflict, same as /sync.
+    {
+      method: 'POST',
+      path: '/api/git/fix-divergence',
+      handle: async (_req, res) => {
+        try {
+          const result = await git.fixDivergence();
+          if (!result.ok) {
+            const recovery = agent.startGitSyncRecovery(result.recoveryPrompt);
+            sendJson(res, 202, {
+              error: result.message,
+              stage: result.stage,
+              stashPending: result.stashPending,
+              recovering: recovery.ok,
+              recoveryError: recovery.ok ? undefined : recovery.error,
+            });
+            return;
+          }
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });

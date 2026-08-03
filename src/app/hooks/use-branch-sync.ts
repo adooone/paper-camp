@@ -1,10 +1,10 @@
-import { pullFromOrigin, pushChanges, syncToMain } from '@/app/services/git-api';
+import { fixGitDivergence, pullFromOrigin, pushChanges, syncToMain } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { useToast } from '@dendelion/paper-ui';
 import { useCallback } from 'react';
 
-type GitAction = 'push' | 'sync' | 'pull';
+type GitAction = 'push' | 'sync' | 'pull' | 'fix-divergence';
 
 // Shared by push/sync/pull: run an action against the store-wide lock so no two
 // can run at once across any useBranchSync() mount, and toast a one-line
@@ -46,6 +46,7 @@ export function useBranchSync() {
   const [pushing, runPush] = useTrackedAction('push', 'Push failed');
   const [syncing, runSync] = useTrackedAction('sync', 'Sync failed');
   const [pulling, runPull] = useTrackedAction('pull', 'Pull failed');
+  const [fixingDivergence, runFixDivergence] = useTrackedAction('fix-divergence', 'Fix failed');
 
   const handlePush = () =>
     runPush(async () => {
@@ -74,6 +75,33 @@ export function useBranchSync() {
       await pullFromOrigin();
       await refreshAfterUpstream();
     });
+  const handleFixDivergence = () =>
+    runFixDivergence(async () => {
+      const result = await fixGitDivergence();
+      // Same handoff as sync: a conflict isn't a failure yet, the recovery
+      // agent runs it and reports through the Stack panel.
+      if (!result.ok && result.recovering) {
+        toast({
+          title: 'Fix needs help',
+          description: 'Handed off to a recovery agent — see Stack for progress',
+          variant: 'warning',
+        });
+        await loadGitStatus();
+        return;
+      }
+      if (!result.ok) throw new Error(result.message);
+      await refreshAfterUpstream();
+    });
 
-  return { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull };
+  return {
+    pushing,
+    syncing,
+    pulling,
+    fixingDivergence,
+    gitActionBusy,
+    handlePush,
+    handleSync,
+    handlePull,
+    handleFixDivergence,
+  };
 }

@@ -667,6 +667,33 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await reconcileOnto(`origin/${branch}`);
   }
 
+  // Same rebase-then-report path as runGitPull, but returns a GitSyncResult
+  // (with a recovery prompt on failure) instead of throwing, so the caller can
+  // hand a conflict to the recovery agent the way runGitSync already does.
+  async function fixDivergence(): Promise<GitSyncResult> {
+    await runGit(['fetch', '--prune']).catch(() => {});
+    const branch = getCurrentBranch();
+    try {
+      const ref = (await hasUpstream()) ? '@{u}' : await mainRef();
+      await reconcileOnto(ref);
+      return { ok: true };
+    } catch (err) {
+      const stage = 'reconcile' as const;
+      const message = (err as Error).message;
+      return {
+        ok: false,
+        stage,
+        message,
+        stashPending: false,
+        recoveryPrompt: buildGitSyncRecoveryPrompt(
+          { stage, message, stashPending: false },
+          branch,
+          await runGitStatus(),
+        ),
+      };
+    }
+  }
+
   return {
     async getStatus(): Promise<GitStatusEntry[]> {
       return runGitStatus();
@@ -682,12 +709,14 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     ensureBranch,
     getFeatureBranchPlanId,
     getAheadCount,
+    getBehindCount,
     getLiveState,
     push,
     isMergedIntoMain,
     getBranchHygieneStatus,
     runGitSync,
     runGitPull,
+    fixDivergence,
     subscribe(res: ServerResponse) {
       clients.add(res);
       res.on('close', () => clients.delete(res));

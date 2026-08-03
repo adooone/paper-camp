@@ -1,1287 +1,215 @@
-{
-  "total": {
-    "lines": { "total": 16614, "covered": 5646, "skipped": 0, "pct": 33.98 },
-    "statements": { "total": 16614, "covered": 5646, "skipped": 0, "pct": 33.98 },
-    "functions": { "total": 589, "covered": 358, "skipped": 0, "pct": 60.78 },
-    "branches": { "total": 2133, "covered": 1726, "skipped": 0, "pct": 80.91 },
-    "branchesTrue": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/postcss.config.js": {
-    "lines": { "total": 6, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 6, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/tailwind.config.ts": {
-    "lines": { "total": 70, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 70, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/vite.app.config.ts": {
-    "lines": { "total": 130, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 130, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/scripts/comment-stats.mjs": {
-    "lines": { "total": 57, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 57, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/main.tsx": {
-    "lines": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/router.tsx": {
-    "lines": { "total": 329, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 329, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/detail-heading-style.ts": {
-    "lines": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/icons.tsx": {
-    "lines": { "total": 147, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 147, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/index.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/link-button.tsx": {
-    "lines": { "total": 8, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 8, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/markdown.tsx": {
-    "lines": { "total": 31, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 31, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/page-title.tsx": {
-    "lines": { "total": 7, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 7, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/idea/add-idea-modal.tsx": {
-    "lines": { "total": 229, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 229, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/shell/project-identity-header.tsx": {
-    "lines": { "total": 20, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 20, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/shell/server-reload-banner.tsx": {
-    "lines": { "total": 24, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 24, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/shell/sidebar-shell.tsx": {
-    "lines": { "total": 57, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 57, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/shell/status-bar.tsx": {
-    "lines": { "total": 123, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 123, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/stack-panel/agent-section.tsx": {
-    "lines": { "total": 143, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 143, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/stack-panel/commit-section.tsx": {
-    "lines": { "total": 421, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 421, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/stack-panel/index.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/stack-panel/shared.ts": {
-    "lines": { "total": 14, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 14, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/components/stack-panel/stack-panel.tsx": {
-    "lines": { "total": 159, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 159, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/diff/diff-page.tsx": {
-    "lines": { "total": 66, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 66, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/diff/file-diff-card.tsx": {
-    "lines": { "total": 68, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 68, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/diff/file-list-sidebar.tsx": {
-    "lines": { "total": 25, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 25, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/diff/index.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/docs/docs-page.tsx": {
-    "lines": { "total": 34, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 34, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/docs/index.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/docs/components/docs-search.tsx": {
-    "lines": { "total": 60, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 60, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/docs/components/docs-sidebar.tsx": {
-    "lines": { "total": 49, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 49, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/docs/components/repo-doc-detail.tsx": {
-    "lines": { "total": 19, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 19, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/constants.ts": {
-    "lines": { "total": 56, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 56, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/index.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/plans-page.tsx": {
-    "lines": { "total": 134, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 134, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/add-review-phases-button.tsx": {
-    "lines": { "total": 68, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 68, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/add-to-backlog-button.tsx": {
-    "lines": { "total": 40, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 40, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/agent-start-button.tsx": {
-    "lines": { "total": 38, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 38, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/audit-phases-button.tsx": {
-    "lines": { "total": 32, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 32, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/draft-plan-button.tsx": {
-    "lines": { "total": 50, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 50, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/extend-idea-button.tsx": {
-    "lines": { "total": 56, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 56, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/fix-review-button.tsx": {
-    "lines": { "total": 37, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 37, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/index.ts": {
-    "lines": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/new-idea-button.tsx": {
-    "lines": { "total": 21, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 21, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/phase-copy-button.tsx": {
-    "lines": { "total": 36, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 36, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/reconcile-button.tsx": {
-    "lines": { "total": 35, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 35, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/refresh-button.tsx": {
-    "lines": { "total": 36, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 36, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/run-all-phases-button.tsx": {
-    "lines": { "total": 34, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 34, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/actions/worklist-actions-menu.tsx": {
-    "lines": { "total": 95, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 95, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/components/collapsible-text.tsx": {
-    "lines": { "total": 35, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 35, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/components/index.ts": {
-    "lines": { "total": 7, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 7, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/components/plan-id-stamp.tsx": {
-    "lines": { "total": 8, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 8, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/components/pr-badge.tsx": {
-    "lines": { "total": 17, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 17, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/components/progress-bar.tsx": {
-    "lines": { "total": 4, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 4, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/components/provenance-trail.tsx": {
-    "lines": { "total": 64, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 64, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/components/review-signal-badge.tsx": {
-    "lines": { "total": 23, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 23, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/components/sidebar-section.tsx": {
-    "lines": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/helpers/diff.ts": {
-    "lines": { "total": 49, "covered": 49, "skipped": 0, "pct": 100 },
-    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "statements": { "total": 49, "covered": 49, "skipped": 0, "pct": 100 },
-    "branches": { "total": 20, "covered": 20, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/helpers/helpers.ts": {
-    "lines": { "total": 44, "covered": 19, "skipped": 0, "pct": 43.18 },
-    "functions": { "total": 8, "covered": 2, "skipped": 0, "pct": 25 },
-    "statements": { "total": 44, "covered": 19, "skipped": 0, "pct": 43.18 },
-    "branches": { "total": 11, "covered": 11, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/helpers/idea-similarity.ts": {
-    "lines": { "total": 73, "covered": 73, "skipped": 0, "pct": 100 },
-    "functions": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
-    "statements": { "total": 73, "covered": 73, "skipped": 0, "pct": 100 },
-    "branches": { "total": 14, "covered": 13, "skipped": 0, "pct": 92.85 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/helpers/index.ts": {
-    "lines": { "total": 5, "covered": 5, "skipped": 0, "pct": 100 },
-    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "statements": { "total": 5, "covered": 5, "skipped": 0, "pct": 100 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/helpers/plan-list-selector.ts": {
-    "lines": { "total": 260, "covered": 251, "skipped": 0, "pct": 96.53 },
-    "functions": { "total": 15, "covered": 14, "skipped": 0, "pct": 93.33 },
-    "statements": { "total": 260, "covered": 251, "skipped": 0, "pct": 96.53 },
-    "branches": { "total": 119, "covered": 106, "skipped": 0, "pct": 89.07 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/helpers/review-findings.ts": {
-    "lines": { "total": 42, "covered": 42, "skipped": 0, "pct": 100 },
-    "functions": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
-    "statements": { "total": 42, "covered": 42, "skipped": 0, "pct": 100 },
-    "branches": { "total": 29, "covered": 28, "skipped": 0, "pct": 96.55 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/hooks/index.ts": {
-    "lines": { "total": 3, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 3, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/hooks/use-plan-status-patch.ts": {
-    "lines": { "total": 28, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 28, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/hooks/use-send-feedback-message.ts": {
-    "lines": { "total": 60, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 60, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/hooks/use-trail.ts": {
-    "lines": { "total": 18, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 18, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/modals/create-idea-modal.tsx": {
-    "lines": { "total": 214, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 214, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/modals/index.ts": {
-    "lines": { "total": 3, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 3, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/modals/promote-suggestion-modal.tsx": {
-    "lines": { "total": 57, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 57, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/modals/reconcile-diff-panel.tsx": {
-    "lines": { "total": 103, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 103, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/prompts/index.ts": {
-    "lines": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "statements": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/prompts/prompts.ts": {
-    "lines": { "total": 156, "covered": 125, "skipped": 0, "pct": 80.12 },
-    "functions": { "total": 12, "covered": 9, "skipped": 0, "pct": 75 },
-    "statements": { "total": 156, "covered": 125, "skipped": 0, "pct": 80.12 },
-    "branches": { "total": 69, "covered": 33, "skipped": 0, "pct": 47.82 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/archive-section.tsx": {
-    "lines": { "total": 74, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 74, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/entity-detail.tsx": {
-    "lines": { "total": 435, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 435, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/index.ts": {
-    "lines": { "total": 12, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 12, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/list-view.tsx": {
-    "lines": { "total": 28, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 28, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/note-detail.tsx": {
-    "lines": { "total": 26, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 26, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/plan-actions-column.tsx": {
-    "lines": { "total": 165, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 165, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/plan-filter-column.tsx": {
-    "lines": { "total": 116, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 116, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/plan-rows.tsx": {
-    "lines": { "total": 112, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 112, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/plans-header.tsx": {
-    "lines": { "total": 12, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 12, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/plans-list-skeleton.tsx": {
-    "lines": { "total": 48, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 48, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/reconcile-queue-review.tsx": {
-    "lines": { "total": 48, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 48, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/suggestions-section.tsx": {
-    "lines": { "total": 35, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 35, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/plans/views/worklist-rows.tsx": {
-    "lines": { "total": 249, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 249, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/roadmap/index.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/roadmap/promote-roadmap-item-modal.tsx": {
-    "lines": { "total": 88, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 88, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/roadmap/roadmap-page.tsx": {
-    "lines": { "total": 506, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 506, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/roadmap/use-roadmap-item-names.ts": {
-    "lines": { "total": 17, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 17, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/settings/index.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/settings/settings-page.tsx": {
-    "lines": { "total": 268, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 268, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/settings/components/merge-policy-section.tsx": {
-    "lines": { "total": 98, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 98, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/settings/components/settings-sidebar.tsx": {
-    "lines": { "total": 37, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 37, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/settings/components/setup-section.tsx": {
-    "lines": { "total": 229, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 229, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/settings/components/subjects-section.tsx": {
-    "lines": { "total": 31, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 31, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/stats/index.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/stats/stats-page.tsx": {
-    "lines": { "total": 104, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 104, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/tasks/index.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/features/tasks/tasks-page.tsx": {
-    "lines": { "total": 218, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 218, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/hooks/index.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/hooks/use-action-feedback.ts": {
-    "lines": { "total": 38, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 38, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/hooks/use-branch-sync.ts": {
-    "lines": { "total": 62, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 62, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/hooks/use-project-identity.ts": {
-    "lines": { "total": 29, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 29, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/hooks/use-route-selection.ts": {
-    "lines": { "total": 29, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 29, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/hooks/use-similar-ideas.ts": {
-    "lines": { "total": 19, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 19, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/hooks/use-subject-vocabulary.ts": {
-    "lines": { "total": 20, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 20, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/activity.ts": {
-    "lines": { "total": 67, "covered": 2, "skipped": 0, "pct": 2.98 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 67, "covered": 2, "skipped": 0, "pct": 2.98 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/agent-hooks.ts": {
-    "lines": { "total": 59, "covered": 2, "skipped": 0, "pct": 3.38 },
-    "functions": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 59, "covered": 2, "skipped": 0, "pct": 3.38 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/agent-process.ts": {
-    "lines": { "total": 26, "covered": 24, "skipped": 0, "pct": 92.3 },
-    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "statements": { "total": 26, "covered": 24, "skipped": 0, "pct": 92.3 },
-    "branches": { "total": 8, "covered": 7, "skipped": 0, "pct": 87.5 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/agent.ts": {
-    "lines": { "total": 1137, "covered": 935, "skipped": 0, "pct": 82.23 },
-    "functions": { "total": 64, "covered": 53, "skipped": 0, "pct": 82.81 },
-    "statements": { "total": 1137, "covered": 935, "skipped": 0, "pct": 82.23 },
-    "branches": { "total": 328, "covered": 234, "skipped": 0, "pct": 71.34 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/api.ts": {
-    "lines": { "total": 107, "covered": 59, "skipped": 0, "pct": 55.14 },
-    "functions": { "total": 4, "covered": 3, "skipped": 0, "pct": 75 },
-    "statements": { "total": 107, "covered": 59, "skipped": 0, "pct": 55.14 },
-    "branches": { "total": 40, "covered": 35, "skipped": 0, "pct": 87.5 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/capabilities.ts": {
-    "lines": { "total": 51, "covered": 50, "skipped": 0, "pct": 98.03 },
-    "functions": { "total": 5, "covered": 5, "skipped": 0, "pct": 100 },
-    "statements": { "total": 51, "covered": 50, "skipped": 0, "pct": 98.03 },
-    "branches": { "total": 17, "covered": 16, "skipped": 0, "pct": 94.11 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/commit-suggest.ts": {
-    "lines": { "total": 37, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 37, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/corpus-cache.ts": {
-    "lines": { "total": 16, "covered": 16, "skipped": 0, "pct": 100 },
-    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "statements": { "total": 16, "covered": 16, "skipped": 0, "pct": 100 },
-    "branches": { "total": 5, "covered": 5, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/feedback-reply.ts": {
-    "lines": { "total": 78, "covered": 71, "skipped": 0, "pct": 91.02 },
-    "functions": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
-    "statements": { "total": 78, "covered": 71, "skipped": 0, "pct": 91.02 },
-    "branches": { "total": 44, "covered": 40, "skipped": 0, "pct": 90.9 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/fix-review-settle.ts": {
-    "lines": { "total": 64, "covered": 62, "skipped": 0, "pct": 96.87 },
-    "functions": { "total": 5, "covered": 5, "skipped": 0, "pct": 100 },
-    "statements": { "total": 64, "covered": 62, "skipped": 0, "pct": 96.87 },
-    "branches": { "total": 24, "covered": 17, "skipped": 0, "pct": 70.83 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/git-sync-recovery.ts": {
-    "lines": { "total": 27, "covered": 24, "skipped": 0, "pct": 88.88 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 27, "covered": 24, "skipped": 0, "pct": 88.88 },
-    "branches": { "total": 5, "covered": 2, "skipped": 0, "pct": 40 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/git.ts": {
-    "lines": { "total": 559, "covered": 431, "skipped": 0, "pct": 77.1 },
-    "functions": { "total": 33, "covered": 22, "skipped": 0, "pct": 66.66 },
-    "statements": { "total": 559, "covered": 431, "skipped": 0, "pct": 77.1 },
-    "branches": { "total": 175, "covered": 151, "skipped": 0, "pct": 86.28 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/helpers.ts": {
-    "lines": { "total": 87, "covered": 80, "skipped": 0, "pct": 91.95 },
-    "functions": { "total": 12, "covered": 12, "skipped": 0, "pct": 100 },
-    "statements": { "total": 87, "covered": 80, "skipped": 0, "pct": 91.95 },
-    "branches": { "total": 26, "covered": 22, "skipped": 0, "pct": 84.61 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/http.ts": {
-    "lines": { "total": 18, "covered": 8, "skipped": 0, "pct": 44.44 },
-    "functions": { "total": 3, "covered": 2, "skipped": 0, "pct": 66.66 },
-    "statements": { "total": 18, "covered": 8, "skipped": 0, "pct": 44.44 },
-    "branches": { "total": 3, "covered": 2, "skipped": 0, "pct": 66.66 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/login-relay.ts": {
-    "lines": { "total": 126, "covered": 125, "skipped": 0, "pct": 99.2 },
-    "functions": { "total": 12, "covered": 12, "skipped": 0, "pct": 100 },
-    "statements": { "total": 126, "covered": 125, "skipped": 0, "pct": 99.2 },
-    "branches": { "total": 51, "covered": 49, "skipped": 0, "pct": 96.07 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/merge-policy.ts": {
-    "lines": { "total": 107, "covered": 101, "skipped": 0, "pct": 94.39 },
-    "functions": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
-    "statements": { "total": 107, "covered": 101, "skipped": 0, "pct": 94.39 },
-    "branches": { "total": 16, "covered": 13, "skipped": 0, "pct": 81.25 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/overlap-check.ts": {
-    "lines": { "total": 29, "covered": 2, "skipped": 0, "pct": 6.89 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 29, "covered": 2, "skipped": 0, "pct": 6.89 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/prioritise.ts": {
-    "lines": { "total": 110, "covered": 100, "skipped": 0, "pct": 90.9 },
-    "functions": { "total": 5, "covered": 5, "skipped": 0, "pct": 100 },
-    "statements": { "total": 110, "covered": 100, "skipped": 0, "pct": 90.9 },
-    "branches": { "total": 44, "covered": 30, "skipped": 0, "pct": 68.18 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/run-order-pass.ts": {
-    "lines": { "total": 26, "covered": 26, "skipped": 0, "pct": 100 },
-    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "statements": { "total": 26, "covered": 26, "skipped": 0, "pct": 100 },
-    "branches": { "total": 8, "covered": 7, "skipped": 0, "pct": 87.5 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/services.ts": {
-    "lines": { "total": 160, "covered": 156, "skipped": 0, "pct": 97.5 },
-    "functions": { "total": 14, "covered": 14, "skipped": 0, "pct": 100 },
-    "statements": { "total": 160, "covered": 156, "skipped": 0, "pct": 97.5 },
-    "branches": { "total": 62, "covered": 57, "skipped": 0, "pct": 91.93 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/status.ts": {
-    "lines": { "total": 165, "covered": 10, "skipped": 0, "pct": 6.06 },
-    "functions": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 165, "covered": 10, "skipped": 0, "pct": 6.06 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/task-log.ts": {
-    "lines": { "total": 68, "covered": 60, "skipped": 0, "pct": 88.23 },
-    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "statements": { "total": 68, "covered": 60, "skipped": 0, "pct": 88.23 },
-    "branches": { "total": 15, "covered": 12, "skipped": 0, "pct": 80 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/agents/claude-code.ts": {
-    "lines": { "total": 71, "covered": 2, "skipped": 0, "pct": 2.81 },
-    "functions": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 71, "covered": 2, "skipped": 0, "pct": 2.81 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/agents/index.ts": {
-    "lines": { "total": 48, "covered": 33, "skipped": 0, "pct": 68.75 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 48, "covered": 33, "skipped": 0, "pct": 68.75 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/agents/opencode.ts": {
-    "lines": { "total": 53, "covered": 13, "skipped": 0, "pct": 24.52 },
-    "functions": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 53, "covered": 13, "skipped": 0, "pct": 24.52 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/agent.ts": {
-    "lines": { "total": 421, "covered": 144, "skipped": 0, "pct": 34.2 },
-    "functions": { "total": 28, "covered": 6, "skipped": 0, "pct": 21.42 },
-    "statements": { "total": 421, "covered": 144, "skipped": 0, "pct": 34.2 },
-    "branches": { "total": 9, "covered": 9, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/capabilities.ts": {
-    "lines": { "total": 36, "covered": 2, "skipped": 0, "pct": 5.55 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 36, "covered": 2, "skipped": 0, "pct": 5.55 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/git.ts": {
-    "lines": { "total": 137, "covered": 2, "skipped": 0, "pct": 1.45 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 137, "covered": 2, "skipped": 0, "pct": 1.45 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/index.ts": {
-    "lines": { "total": 17, "covered": 2, "skipped": 0, "pct": 11.76 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 17, "covered": 2, "skipped": 0, "pct": 11.76 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/reads.ts": {
-    "lines": { "total": 107, "covered": 52, "skipped": 0, "pct": 48.59 },
-    "functions": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 107, "covered": 52, "skipped": 0, "pct": 48.59 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/status.ts": {
-    "lines": { "total": 57, "covered": 2, "skipped": 0, "pct": 3.5 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 57, "covered": 2, "skipped": 0, "pct": 3.5 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/tasks.ts": {
-    "lines": { "total": 19, "covered": 3, "skipped": 0, "pct": 15.78 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 19, "covered": 3, "skipped": 0, "pct": 15.78 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/trail.ts": {
-    "lines": { "total": 38, "covered": 38, "skipped": 0, "pct": 100 },
-    "functions": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
-    "statements": { "total": 38, "covered": 38, "skipped": 0, "pct": 100 },
-    "branches": { "total": 12, "covered": 12, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/types.ts": {
-    "lines": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/content/ideas.ts": {
-    "lines": { "total": 263, "covered": 2, "skipped": 0, "pct": 0.76 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 263, "covered": 2, "skipped": 0, "pct": 0.76 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/content/index.ts": {
-    "lines": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "statements": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/content/plans.ts": {
-    "lines": { "total": 176, "covered": 2, "skipped": 0, "pct": 1.13 },
-    "functions": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 176, "covered": 2, "skipped": 0, "pct": 1.13 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/system/config.ts": {
-    "lines": { "total": 120, "covered": 11, "skipped": 0, "pct": 9.16 },
-    "functions": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 120, "covered": 11, "skipped": 0, "pct": 9.16 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/system/env.ts": {
-    "lines": { "total": 58, "covered": 2, "skipped": 0, "pct": 3.44 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 58, "covered": 2, "skipped": 0, "pct": 3.44 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/system/icon.ts": {
-    "lines": { "total": 60, "covered": 10, "skipped": 0, "pct": 16.66 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 60, "covered": 10, "skipped": 0, "pct": 16.66 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/system/index.ts": {
-    "lines": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
-    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "statements": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/server/routes/system/merge-policy.ts": {
-    "lines": { "total": 19, "covered": 2, "skipped": 0, "pct": 10.52 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 19, "covered": 2, "skipped": 0, "pct": 10.52 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/agent-api.ts": {
-    "lines": { "total": 130, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 130, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/git-api.ts": {
-    "lines": { "total": 66, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 66, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/status-api.ts": {
-    "lines": { "total": 16, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 16, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/trail-api.ts": {
-    "lines": { "total": 5, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 5, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/content/docs-api.ts": {
-    "lines": { "total": 88, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 88, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/content/ideas-api.ts": {
-    "lines": { "total": 48, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 48, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/content/index.ts": {
-    "lines": { "total": 4, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 4, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/content/plans-api.ts": {
-    "lines": { "total": 26, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 26, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/content/stats-api.ts": {
-    "lines": { "total": 5, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 5, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/system/capabilities-api.ts": {
-    "lines": { "total": 33, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 33, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/system/config-api.ts": {
-    "lines": { "total": 24, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 24, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/system/icon-api.ts": {
-    "lines": { "total": 26, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 26, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/system/index.ts": {
-    "lines": { "total": 5, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 5, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/system/merge-policy-api.ts": {
-    "lines": { "total": 18, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 18, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/services/system/package-api.ts": {
-    "lines": { "total": 9, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 9, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/stores/app-store.ts": {
-    "lines": { "total": 22, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 22, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/stores/slices/agent-slice.ts": {
-    "lines": { "total": 119, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 119, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/stores/slices/docs-slice.ts": {
-    "lines": { "total": 27, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 27, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/stores/slices/ideas-slice.ts": {
-    "lines": { "total": 23, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 23, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/stores/slices/plans-slice.ts": {
-    "lines": { "total": 55, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 55, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/stores/slices/slice-helpers.ts": {
-    "lines": { "total": 26, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 26, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/stores/slices/status-slice.ts": {
-    "lines": { "total": 97, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 97, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/stores/slices/suggestions-slice.ts": {
-    "lines": { "total": 33, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 33, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/stores/slices/task-log-slice.ts": {
-    "lines": { "total": 14, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 14, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/styles/motion.ts": {
-    "lines": { "total": 14, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 14, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/styles/tokens.ts": {
-    "lines": { "total": 22, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 22, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/utils/check-status.ts": {
-    "lines": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/utils/check-summary.ts": {
-    "lines": { "total": 14, "covered": 14, "skipped": 0, "pct": 100 },
-    "functions": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
-    "statements": { "total": 14, "covered": 14, "skipped": 0, "pct": 100 },
-    "branches": { "total": 13, "covered": 13, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/app/utils/clipboard.ts": {
-    "lines": { "total": 23, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 23, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/app/utils/error-summary.ts": {
-    "lines": { "total": 10, "covered": 10, "skipped": 0, "pct": 100 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 10, "covered": 10, "skipped": 0, "pct": 100 },
-    "branches": { "total": 7, "covered": 6, "skipped": 0, "pct": 85.71 }
-  },
-  "/home/croco/dev/paper-camp/src/app/utils/parse-diff.ts": {
-    "lines": { "total": 23, "covered": 23, "skipped": 0, "pct": 100 },
-    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "statements": { "total": 23, "covered": 23, "skipped": 0, "pct": 100 },
-    "branches": { "total": 21, "covered": 19, "skipped": 0, "pct": 90.47 }
-  },
-  "/home/croco/dev/paper-camp/src/cli/dev-server.ts": {
-    "lines": { "total": 64, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 64, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/cli/index.ts": {
-    "lines": { "total": 531, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 531, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/cli/session-focus.ts": {
-    "lines": { "total": 24, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 24, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/core/env.ts": {
-    "lines": { "total": 49, "covered": 3, "skipped": 0, "pct": 6.12 },
-    "functions": { "total": 5, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 49, "covered": 3, "skipped": 0, "pct": 6.12 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/index.ts": {
-    "lines": { "total": 9, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 9, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/core/readers.ts": {
-    "lines": { "total": 127, "covered": 125, "skipped": 0, "pct": 98.42 },
-    "functions": { "total": 11, "covered": 11, "skipped": 0, "pct": 100 },
-    "statements": { "total": 127, "covered": 125, "skipped": 0, "pct": 98.42 },
-    "branches": { "total": 32, "covered": 31, "skipped": 0, "pct": 96.87 }
-  },
-  "/home/croco/dev/paper-camp/src/core/roadmap.ts": {
-    "lines": { "total": 258, "covered": 258, "skipped": 0, "pct": 100 },
-    "functions": { "total": 12, "covered": 12, "skipped": 0, "pct": 100 },
-    "statements": { "total": 258, "covered": 258, "skipped": 0, "pct": 100 },
-    "branches": { "total": 99, "covered": 97, "skipped": 0, "pct": 97.97 }
-  },
-  "/home/croco/dev/paper-camp/src/core/run-order-file.ts": {
-    "lines": { "total": 19, "covered": 19, "skipped": 0, "pct": 100 },
-    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "statements": { "total": 19, "covered": 19, "skipped": 0, "pct": 100 },
-    "branches": { "total": 10, "covered": 10, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/run-order.ts": {
-    "lines": { "total": 56, "covered": 56, "skipped": 0, "pct": 100 },
-    "functions": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
-    "statements": { "total": 56, "covered": 56, "skipped": 0, "pct": 100 },
-    "branches": { "total": 25, "covered": 20, "skipped": 0, "pct": 80 }
-  },
-  "/home/croco/dev/paper-camp/src/core/sections.ts": {
-    "lines": { "total": 160, "covered": 145, "skipped": 0, "pct": 90.62 },
-    "functions": { "total": 14, "covered": 11, "skipped": 0, "pct": 78.57 },
-    "statements": { "total": 160, "covered": 145, "skipped": 0, "pct": 90.62 },
-    "branches": { "total": 61, "covered": 57, "skipped": 0, "pct": 93.44 }
-  },
-  "/home/croco/dev/paper-camp/src/core/stats.ts": {
-    "lines": { "total": 95, "covered": 41, "skipped": 0, "pct": 43.15 },
-    "functions": { "total": 9, "covered": 4, "skipped": 0, "pct": 44.44 },
-    "statements": { "total": 95, "covered": 41, "skipped": 0, "pct": 43.15 },
-    "branches": { "total": 19, "covered": 18, "skipped": 0, "pct": 94.73 }
-  },
-  "/home/croco/dev/paper-camp/src/core/thread.ts": {
-    "lines": { "total": 50, "covered": 44, "skipped": 0, "pct": 88 },
-    "functions": { "total": 7, "covered": 6, "skipped": 0, "pct": 85.71 },
-    "statements": { "total": 50, "covered": 44, "skipped": 0, "pct": 88 },
-    "branches": { "total": 22, "covered": 20, "skipped": 0, "pct": 90.9 }
-  },
-  "/home/croco/dev/paper-camp/src/core/trail.ts": {
-    "lines": { "total": 108, "covered": 108, "skipped": 0, "pct": 100 },
-    "functions": { "total": 10, "covered": 10, "skipped": 0, "pct": 100 },
-    "statements": { "total": 108, "covered": 108, "skipped": 0, "pct": 100 },
-    "branches": { "total": 54, "covered": 51, "skipped": 0, "pct": 94.44 }
-  },
-  "/home/croco/dev/paper-camp/src/core/git-pr/branch.ts": {
-    "lines": { "total": 13, "covered": 13, "skipped": 0, "pct": 100 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 13, "covered": 13, "skipped": 0, "pct": 100 },
-    "branches": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/git-pr/index.ts": {
-    "lines": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
-    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "statements": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/git-pr/pr-lookup.ts": {
-    "lines": { "total": 204, "covered": 202, "skipped": 0, "pct": 99.01 },
-    "functions": { "total": 16, "covered": 16, "skipped": 0, "pct": 100 },
-    "statements": { "total": 204, "covered": 202, "skipped": 0, "pct": 99.01 },
-    "branches": { "total": 91, "covered": 88, "skipped": 0, "pct": 96.7 }
-  },
-  "/home/croco/dev/paper-camp/src/core/git-pr/pr.ts": {
-    "lines": { "total": 354, "covered": 347, "skipped": 0, "pct": 98.02 },
-    "functions": { "total": 24, "covered": 24, "skipped": 0, "pct": 100 },
-    "statements": { "total": 354, "covered": 347, "skipped": 0, "pct": 98.02 },
-    "branches": { "total": 140, "covered": 123, "skipped": 0, "pct": 87.85 }
-  },
-  "/home/croco/dev/paper-camp/src/core/git-pr/scopes.ts": {
-    "lines": { "total": 23, "covered": 23, "skipped": 0, "pct": 100 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 23, "covered": 23, "skipped": 0, "pct": 100 },
-    "branches": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/parse/frontmatter-schemas.ts": {
-    "lines": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/core/parse/index.ts": {
-    "lines": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "statements": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/parse/parser.ts": {
-    "lines": { "total": 308, "covered": 308, "skipped": 0, "pct": 100 },
-    "functions": { "total": 12, "covered": 12, "skipped": 0, "pct": 100 },
-    "statements": { "total": 308, "covered": 308, "skipped": 0, "pct": 100 },
-    "branches": { "total": 85, "covered": 83, "skipped": 0, "pct": 97.64 }
-  },
-  "/home/croco/dev/paper-camp/src/core/parse/schemas.ts": {
-    "lines": { "total": 138, "covered": 138, "skipped": 0, "pct": 100 },
-    "functions": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
-    "statements": { "total": 138, "covered": 138, "skipped": 0, "pct": 100 },
-    "branches": { "total": 7, "covered": 7, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/scaffold/index.ts": {
-    "lines": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/core/scaffold/scaffold.ts": {
-    "lines": { "total": 75, "covered": 70, "skipped": 0, "pct": 93.33 },
-    "functions": { "total": 4, "covered": 3, "skipped": 0, "pct": 75 },
-    "statements": { "total": 75, "covered": 70, "skipped": 0, "pct": 93.33 },
-    "branches": { "total": 9, "covered": 7, "skipped": 0, "pct": 77.77 }
-  },
-  "/home/croco/dev/paper-camp/src/core/scaffold/templates.ts": {
-    "lines": { "total": 16, "covered": 16, "skipped": 0, "pct": 100 },
-    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "statements": { "total": 16, "covered": 16, "skipped": 0, "pct": 100 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/serialize/content-hash.ts": {
-    "lines": { "total": 13, "covered": 13, "skipped": 0, "pct": 100 },
-    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "statements": { "total": 13, "covered": 13, "skipped": 0, "pct": 100 },
-    "branches": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/serialize/index.ts": {
-    "lines": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "statements": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/serialize/serializer.ts": {
-    "lines": { "total": 214, "covered": 167, "skipped": 0, "pct": 78.03 },
-    "functions": { "total": 16, "covered": 13, "skipped": 0, "pct": 81.25 },
-    "statements": { "total": 214, "covered": 167, "skipped": 0, "pct": 78.03 },
-    "branches": { "total": 64, "covered": 49, "skipped": 0, "pct": 76.56 }
-  },
-  "/home/croco/dev/paper-camp/src/core/status/index.ts": {
-    "lines": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "statements": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/core/status/status.ts": {
-    "lines": { "total": 28, "covered": 28, "skipped": 0, "pct": 100 },
-    "functions": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
-    "statements": { "total": 28, "covered": 28, "skipped": 0, "pct": 100 },
-    "branches": { "total": 36, "covered": 36, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/mcp/schemas.ts": {
-    "lines": { "total": 39, "covered": 39, "skipped": 0, "pct": 100 },
-    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
-    "statements": { "total": 39, "covered": 39, "skipped": 0, "pct": 100 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  },
-  "/home/croco/dev/paper-camp/src/mcp/server.ts": {
-    "lines": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 13, "covered": 0, "skipped": 0, "pct": 0 },
-    "branches": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 }
-  },
-  "/home/croco/dev/paper-camp/src/mcp/tools.ts": {
-    "lines": { "total": 165, "covered": 161, "skipped": 0, "pct": 97.57 },
-    "functions": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
-    "statements": { "total": 165, "covered": 161, "skipped": 0, "pct": 97.57 },
-    "branches": { "total": 40, "covered": 33, "skipped": 0, "pct": 82.5 }
-  },
-  "/home/croco/dev/paper-camp/src/types/index.ts": {
-    "lines": { "total": 40, "covered": 30, "skipped": 0, "pct": 75 },
-    "functions": { "total": 1, "covered": 0, "skipped": 0, "pct": 0 },
-    "statements": { "total": 40, "covered": 30, "skipped": 0, "pct": 75 },
-    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
-  }
+{"total": {"lines":{"total":16753,"covered":5679,"skipped":0,"pct":33.89},"statements":{"total":16753,"covered":5679,"skipped":0,"pct":33.89},"functions":{"total":590,"covered":359,"skipped":0,"pct":60.84},"branches":{"total":2138,"covered":1734,"skipped":0,"pct":81.1},"branchesTrue":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/postcss.config.js": {"lines":{"total":6,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":6,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/tailwind.config.ts": {"lines":{"total":70,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":70,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/vite.app.config.ts": {"lines":{"total":130,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":130,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/scripts/comment-stats.mjs": {"lines":{"total":57,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":57,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/main.tsx": {"lines":{"total":13,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":13,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/router.tsx": {"lines":{"total":329,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":329,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/detail-heading-style.ts": {"lines":{"total":2,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":2,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/icons.tsx": {"lines":{"total":147,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":147,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/index.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/link-button.tsx": {"lines":{"total":8,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":8,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/markdown.tsx": {"lines":{"total":31,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":31,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/page-title.tsx": {"lines":{"total":7,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":7,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/idea/add-idea-modal.tsx": {"lines":{"total":229,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":229,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/shell/project-identity-header.tsx": {"lines":{"total":20,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":20,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/shell/server-reload-banner.tsx": {"lines":{"total":24,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":24,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/shell/sidebar-shell.tsx": {"lines":{"total":57,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":57,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/shell/status-bar.tsx": {"lines":{"total":123,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":123,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/stack-panel/agent-section.tsx": {"lines":{"total":143,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":143,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/stack-panel/commit-section.tsx": {"lines":{"total":439,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":439,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/stack-panel/index.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/stack-panel/shared.ts": {"lines":{"total":14,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":14,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/components/stack-panel/stack-panel.tsx": {"lines":{"total":159,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":159,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/diff/diff-page.tsx": {"lines":{"total":66,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":66,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/diff/file-diff-card.tsx": {"lines":{"total":68,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":68,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/diff/file-list-sidebar.tsx": {"lines":{"total":25,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":25,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/diff/index.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/docs/docs-page.tsx": {"lines":{"total":34,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":34,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/docs/index.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/docs/components/docs-search.tsx": {"lines":{"total":60,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":60,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/docs/components/docs-sidebar.tsx": {"lines":{"total":49,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":49,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/docs/components/repo-doc-detail.tsx": {"lines":{"total":19,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":19,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/constants.ts": {"lines":{"total":56,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":56,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/index.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/plans-page.tsx": {"lines":{"total":134,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":134,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/add-review-phases-button.tsx": {"lines":{"total":68,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":68,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/add-to-backlog-button.tsx": {"lines":{"total":40,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":40,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/agent-start-button.tsx": {"lines":{"total":38,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":38,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/audit-phases-button.tsx": {"lines":{"total":32,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":32,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/draft-plan-button.tsx": {"lines":{"total":50,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":50,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/extend-idea-button.tsx": {"lines":{"total":56,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":56,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/fix-review-button.tsx": {"lines":{"total":37,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":37,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/index.ts": {"lines":{"total":13,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":13,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/new-idea-button.tsx": {"lines":{"total":21,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":21,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/phase-copy-button.tsx": {"lines":{"total":36,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":36,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/reconcile-button.tsx": {"lines":{"total":35,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":35,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/refresh-button.tsx": {"lines":{"total":36,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":36,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/run-all-phases-button.tsx": {"lines":{"total":34,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":34,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/actions/worklist-actions-menu.tsx": {"lines":{"total":95,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":95,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/components/collapsible-text.tsx": {"lines":{"total":35,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":35,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/components/index.ts": {"lines":{"total":7,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":7,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/components/plan-id-stamp.tsx": {"lines":{"total":8,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":8,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/components/pr-badge.tsx": {"lines":{"total":17,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":17,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/components/progress-bar.tsx": {"lines":{"total":4,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":4,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/components/provenance-trail.tsx": {"lines":{"total":64,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":64,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/components/review-signal-badge.tsx": {"lines":{"total":23,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":23,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/components/sidebar-section.tsx": {"lines":{"total":13,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":13,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/helpers/diff.ts": {"lines":{"total":49,"covered":49,"skipped":0,"pct":100},"functions":{"total":2,"covered":2,"skipped":0,"pct":100},"statements":{"total":49,"covered":49,"skipped":0,"pct":100},"branches":{"total":20,"covered":20,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/helpers/helpers.ts": {"lines":{"total":44,"covered":19,"skipped":0,"pct":43.18},"functions":{"total":8,"covered":2,"skipped":0,"pct":25},"statements":{"total":44,"covered":19,"skipped":0,"pct":43.18},"branches":{"total":11,"covered":11,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/helpers/idea-similarity.ts": {"lines":{"total":73,"covered":73,"skipped":0,"pct":100},"functions":{"total":3,"covered":3,"skipped":0,"pct":100},"statements":{"total":73,"covered":73,"skipped":0,"pct":100},"branches":{"total":14,"covered":13,"skipped":0,"pct":92.85}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/helpers/index.ts": {"lines":{"total":5,"covered":5,"skipped":0,"pct":100},"functions":{"total":0,"covered":0,"skipped":0,"pct":100},"statements":{"total":5,"covered":5,"skipped":0,"pct":100},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/helpers/plan-list-selector.ts": {"lines":{"total":260,"covered":251,"skipped":0,"pct":96.53},"functions":{"total":15,"covered":14,"skipped":0,"pct":93.33},"statements":{"total":260,"covered":251,"skipped":0,"pct":96.53},"branches":{"total":119,"covered":106,"skipped":0,"pct":89.07}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/helpers/review-findings.ts": {"lines":{"total":42,"covered":42,"skipped":0,"pct":100},"functions":{"total":3,"covered":3,"skipped":0,"pct":100},"statements":{"total":42,"covered":42,"skipped":0,"pct":100},"branches":{"total":29,"covered":28,"skipped":0,"pct":96.55}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/hooks/index.ts": {"lines":{"total":3,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":3,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/hooks/use-plan-status-patch.ts": {"lines":{"total":28,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":28,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/hooks/use-send-feedback-message.ts": {"lines":{"total":60,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":60,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/hooks/use-trail.ts": {"lines":{"total":18,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":18,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/modals/create-idea-modal.tsx": {"lines":{"total":214,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":214,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/modals/index.ts": {"lines":{"total":3,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":3,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/modals/promote-suggestion-modal.tsx": {"lines":{"total":57,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":57,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/modals/reconcile-diff-panel.tsx": {"lines":{"total":103,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":103,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/prompts/index.ts": {"lines":{"total":1,"covered":1,"skipped":0,"pct":100},"functions":{"total":0,"covered":0,"skipped":0,"pct":100},"statements":{"total":1,"covered":1,"skipped":0,"pct":100},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/prompts/prompts.ts": {"lines":{"total":156,"covered":125,"skipped":0,"pct":80.12},"functions":{"total":12,"covered":9,"skipped":0,"pct":75},"statements":{"total":156,"covered":125,"skipped":0,"pct":80.12},"branches":{"total":69,"covered":33,"skipped":0,"pct":47.82}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/archive-section.tsx": {"lines":{"total":74,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":74,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/entity-detail.tsx": {"lines":{"total":435,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":435,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/index.ts": {"lines":{"total":12,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":12,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/list-view.tsx": {"lines":{"total":28,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":28,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/note-detail.tsx": {"lines":{"total":26,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":26,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/plan-actions-column.tsx": {"lines":{"total":165,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":165,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/plan-filter-column.tsx": {"lines":{"total":116,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":116,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/plan-rows.tsx": {"lines":{"total":112,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":112,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/plans-header.tsx": {"lines":{"total":12,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":12,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/plans-list-skeleton.tsx": {"lines":{"total":48,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":48,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/reconcile-queue-review.tsx": {"lines":{"total":48,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":48,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/suggestions-section.tsx": {"lines":{"total":35,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":35,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/plans/views/worklist-rows.tsx": {"lines":{"total":249,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":249,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/roadmap/index.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/roadmap/promote-roadmap-item-modal.tsx": {"lines":{"total":88,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":88,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/roadmap/roadmap-page.tsx": {"lines":{"total":506,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":506,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/roadmap/use-roadmap-item-names.ts": {"lines":{"total":17,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":17,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/settings/index.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/settings/settings-page.tsx": {"lines":{"total":268,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":268,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/settings/components/merge-policy-section.tsx": {"lines":{"total":98,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":98,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/settings/components/settings-sidebar.tsx": {"lines":{"total":37,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":37,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/settings/components/setup-section.tsx": {"lines":{"total":229,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":229,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/settings/components/subjects-section.tsx": {"lines":{"total":31,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":31,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/stats/index.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/stats/stats-page.tsx": {"lines":{"total":104,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":104,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/tasks/index.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/features/tasks/tasks-page.tsx": {"lines":{"total":218,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":218,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/hooks/index.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/hooks/use-action-feedback.ts": {"lines":{"total":38,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":38,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/hooks/use-branch-sync.ts": {"lines":{"total":88,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":88,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/hooks/use-project-identity.ts": {"lines":{"total":29,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":29,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/hooks/use-route-selection.ts": {"lines":{"total":29,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":29,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/hooks/use-similar-ideas.ts": {"lines":{"total":19,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":19,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/hooks/use-subject-vocabulary.ts": {"lines":{"total":20,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":20,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/server/activity.ts": {"lines":{"total":67,"covered":2,"skipped":0,"pct":2.98},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":67,"covered":2,"skipped":0,"pct":2.98},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/agent-hooks.ts": {"lines":{"total":59,"covered":2,"skipped":0,"pct":3.38},"functions":{"total":2,"covered":0,"skipped":0,"pct":0},"statements":{"total":59,"covered":2,"skipped":0,"pct":3.38},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/agent-process.ts": {"lines":{"total":26,"covered":24,"skipped":0,"pct":92.3},"functions":{"total":2,"covered":2,"skipped":0,"pct":100},"statements":{"total":26,"covered":24,"skipped":0,"pct":92.3},"branches":{"total":8,"covered":7,"skipped":0,"pct":87.5}}
+,"/home/croco/dev/paper-camp/src/app/server/agent.ts": {"lines":{"total":1137,"covered":935,"skipped":0,"pct":82.23},"functions":{"total":64,"covered":53,"skipped":0,"pct":82.81},"statements":{"total":1137,"covered":935,"skipped":0,"pct":82.23},"branches":{"total":328,"covered":234,"skipped":0,"pct":71.34}}
+,"/home/croco/dev/paper-camp/src/app/server/api.ts": {"lines":{"total":107,"covered":59,"skipped":0,"pct":55.14},"functions":{"total":4,"covered":3,"skipped":0,"pct":75},"statements":{"total":107,"covered":59,"skipped":0,"pct":55.14},"branches":{"total":40,"covered":35,"skipped":0,"pct":87.5}}
+,"/home/croco/dev/paper-camp/src/app/server/capabilities.ts": {"lines":{"total":51,"covered":50,"skipped":0,"pct":98.03},"functions":{"total":5,"covered":5,"skipped":0,"pct":100},"statements":{"total":51,"covered":50,"skipped":0,"pct":98.03},"branches":{"total":17,"covered":16,"skipped":0,"pct":94.11}}
+,"/home/croco/dev/paper-camp/src/app/server/commit-suggest.ts": {"lines":{"total":37,"covered":0,"skipped":0,"pct":0},"functions":{"total":2,"covered":0,"skipped":0,"pct":0},"statements":{"total":37,"covered":0,"skipped":0,"pct":0},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/corpus-cache.ts": {"lines":{"total":16,"covered":16,"skipped":0,"pct":100},"functions":{"total":2,"covered":2,"skipped":0,"pct":100},"statements":{"total":16,"covered":16,"skipped":0,"pct":100},"branches":{"total":5,"covered":5,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/feedback-reply.ts": {"lines":{"total":78,"covered":71,"skipped":0,"pct":91.02},"functions":{"total":4,"covered":4,"skipped":0,"pct":100},"statements":{"total":78,"covered":71,"skipped":0,"pct":91.02},"branches":{"total":44,"covered":40,"skipped":0,"pct":90.9}}
+,"/home/croco/dev/paper-camp/src/app/server/fix-review-settle.ts": {"lines":{"total":64,"covered":62,"skipped":0,"pct":96.87},"functions":{"total":5,"covered":5,"skipped":0,"pct":100},"statements":{"total":64,"covered":62,"skipped":0,"pct":96.87},"branches":{"total":24,"covered":17,"skipped":0,"pct":70.83}}
+,"/home/croco/dev/paper-camp/src/app/server/git-sync-recovery.ts": {"lines":{"total":27,"covered":26,"skipped":0,"pct":96.29},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":27,"covered":26,"skipped":0,"pct":96.29},"branches":{"total":7,"covered":6,"skipped":0,"pct":85.71}}
+,"/home/croco/dev/paper-camp/src/app/server/git.ts": {"lines":{"total":583,"covered":460,"skipped":0,"pct":78.9},"functions":{"total":34,"covered":23,"skipped":0,"pct":67.64},"statements":{"total":583,"covered":460,"skipped":0,"pct":78.9},"branches":{"total":178,"covered":155,"skipped":0,"pct":87.07}}
+,"/home/croco/dev/paper-camp/src/app/server/helpers.ts": {"lines":{"total":87,"covered":80,"skipped":0,"pct":91.95},"functions":{"total":12,"covered":12,"skipped":0,"pct":100},"statements":{"total":87,"covered":80,"skipped":0,"pct":91.95},"branches":{"total":26,"covered":22,"skipped":0,"pct":84.61}}
+,"/home/croco/dev/paper-camp/src/app/server/http.ts": {"lines":{"total":18,"covered":8,"skipped":0,"pct":44.44},"functions":{"total":3,"covered":2,"skipped":0,"pct":66.66},"statements":{"total":18,"covered":8,"skipped":0,"pct":44.44},"branches":{"total":3,"covered":2,"skipped":0,"pct":66.66}}
+,"/home/croco/dev/paper-camp/src/app/server/login-relay.ts": {"lines":{"total":126,"covered":125,"skipped":0,"pct":99.2},"functions":{"total":12,"covered":12,"skipped":0,"pct":100},"statements":{"total":126,"covered":125,"skipped":0,"pct":99.2},"branches":{"total":51,"covered":49,"skipped":0,"pct":96.07}}
+,"/home/croco/dev/paper-camp/src/app/server/merge-policy.ts": {"lines":{"total":107,"covered":101,"skipped":0,"pct":94.39},"functions":{"total":4,"covered":4,"skipped":0,"pct":100},"statements":{"total":107,"covered":101,"skipped":0,"pct":94.39},"branches":{"total":16,"covered":13,"skipped":0,"pct":81.25}}
+,"/home/croco/dev/paper-camp/src/app/server/overlap-check.ts": {"lines":{"total":29,"covered":2,"skipped":0,"pct":6.89},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":29,"covered":2,"skipped":0,"pct":6.89},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/prioritise.ts": {"lines":{"total":110,"covered":100,"skipped":0,"pct":90.9},"functions":{"total":5,"covered":5,"skipped":0,"pct":100},"statements":{"total":110,"covered":100,"skipped":0,"pct":90.9},"branches":{"total":44,"covered":30,"skipped":0,"pct":68.18}}
+,"/home/croco/dev/paper-camp/src/app/server/run-order-pass.ts": {"lines":{"total":26,"covered":26,"skipped":0,"pct":100},"functions":{"total":2,"covered":2,"skipped":0,"pct":100},"statements":{"total":26,"covered":26,"skipped":0,"pct":100},"branches":{"total":8,"covered":7,"skipped":0,"pct":87.5}}
+,"/home/croco/dev/paper-camp/src/app/server/services.ts": {"lines":{"total":160,"covered":156,"skipped":0,"pct":97.5},"functions":{"total":14,"covered":14,"skipped":0,"pct":100},"statements":{"total":160,"covered":156,"skipped":0,"pct":97.5},"branches":{"total":62,"covered":57,"skipped":0,"pct":91.93}}
+,"/home/croco/dev/paper-camp/src/app/server/status.ts": {"lines":{"total":165,"covered":10,"skipped":0,"pct":6.06},"functions":{"total":2,"covered":0,"skipped":0,"pct":0},"statements":{"total":165,"covered":10,"skipped":0,"pct":6.06},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/task-log.ts": {"lines":{"total":68,"covered":60,"skipped":0,"pct":88.23},"functions":{"total":2,"covered":2,"skipped":0,"pct":100},"statements":{"total":68,"covered":60,"skipped":0,"pct":88.23},"branches":{"total":15,"covered":12,"skipped":0,"pct":80}}
+,"/home/croco/dev/paper-camp/src/app/server/agents/claude-code.ts": {"lines":{"total":71,"covered":2,"skipped":0,"pct":2.81},"functions":{"total":2,"covered":0,"skipped":0,"pct":0},"statements":{"total":71,"covered":2,"skipped":0,"pct":2.81},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/agents/index.ts": {"lines":{"total":48,"covered":33,"skipped":0,"pct":68.75},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":48,"covered":33,"skipped":0,"pct":68.75},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/agents/opencode.ts": {"lines":{"total":53,"covered":13,"skipped":0,"pct":24.52},"functions":{"total":2,"covered":0,"skipped":0,"pct":0},"statements":{"total":53,"covered":13,"skipped":0,"pct":24.52},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/agent.ts": {"lines":{"total":421,"covered":144,"skipped":0,"pct":34.2},"functions":{"total":28,"covered":6,"skipped":0,"pct":21.42},"statements":{"total":421,"covered":144,"skipped":0,"pct":34.2},"branches":{"total":9,"covered":9,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/capabilities.ts": {"lines":{"total":36,"covered":2,"skipped":0,"pct":5.55},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":36,"covered":2,"skipped":0,"pct":5.55},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/git.ts": {"lines":{"total":171,"covered":2,"skipped":0,"pct":1.16},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":171,"covered":2,"skipped":0,"pct":1.16},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/index.ts": {"lines":{"total":17,"covered":2,"skipped":0,"pct":11.76},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":17,"covered":2,"skipped":0,"pct":11.76},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/reads.ts": {"lines":{"total":107,"covered":52,"skipped":0,"pct":48.59},"functions":{"total":13,"covered":0,"skipped":0,"pct":0},"statements":{"total":107,"covered":52,"skipped":0,"pct":48.59},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/status.ts": {"lines":{"total":57,"covered":2,"skipped":0,"pct":3.5},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":57,"covered":2,"skipped":0,"pct":3.5},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/tasks.ts": {"lines":{"total":19,"covered":3,"skipped":0,"pct":15.78},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":19,"covered":3,"skipped":0,"pct":15.78},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/trail.ts": {"lines":{"total":38,"covered":38,"skipped":0,"pct":100},"functions":{"total":3,"covered":3,"skipped":0,"pct":100},"statements":{"total":38,"covered":38,"skipped":0,"pct":100},"branches":{"total":12,"covered":12,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/types.ts": {"lines":{"total":0,"covered":0,"skipped":0,"pct":100},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":0,"covered":0,"skipped":0,"pct":100},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/content/ideas.ts": {"lines":{"total":263,"covered":2,"skipped":0,"pct":0.76},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":263,"covered":2,"skipped":0,"pct":0.76},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/content/index.ts": {"lines":{"total":2,"covered":2,"skipped":0,"pct":100},"functions":{"total":0,"covered":0,"skipped":0,"pct":100},"statements":{"total":2,"covered":2,"skipped":0,"pct":100},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/content/plans.ts": {"lines":{"total":176,"covered":2,"skipped":0,"pct":1.13},"functions":{"total":2,"covered":0,"skipped":0,"pct":0},"statements":{"total":176,"covered":2,"skipped":0,"pct":1.13},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/system/config.ts": {"lines":{"total":120,"covered":11,"skipped":0,"pct":9.16},"functions":{"total":2,"covered":0,"skipped":0,"pct":0},"statements":{"total":120,"covered":11,"skipped":0,"pct":9.16},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/system/env.ts": {"lines":{"total":58,"covered":2,"skipped":0,"pct":3.44},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":58,"covered":2,"skipped":0,"pct":3.44},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/system/icon.ts": {"lines":{"total":60,"covered":10,"skipped":0,"pct":16.66},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":60,"covered":10,"skipped":0,"pct":16.66},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/system/index.ts": {"lines":{"total":4,"covered":4,"skipped":0,"pct":100},"functions":{"total":0,"covered":0,"skipped":0,"pct":100},"statements":{"total":4,"covered":4,"skipped":0,"pct":100},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/server/routes/system/merge-policy.ts": {"lines":{"total":19,"covered":2,"skipped":0,"pct":10.52},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":19,"covered":2,"skipped":0,"pct":10.52},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/agent-api.ts": {"lines":{"total":130,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":130,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/git-api.ts": {"lines":{"total":75,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":75,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/status-api.ts": {"lines":{"total":16,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":16,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/trail-api.ts": {"lines":{"total":5,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":5,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/content/docs-api.ts": {"lines":{"total":88,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":88,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/content/ideas-api.ts": {"lines":{"total":48,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":48,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/content/index.ts": {"lines":{"total":4,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":4,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/services/content/plans-api.ts": {"lines":{"total":26,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":26,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/content/stats-api.ts": {"lines":{"total":5,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":5,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/system/capabilities-api.ts": {"lines":{"total":33,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":33,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/system/config-api.ts": {"lines":{"total":24,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":24,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/system/icon-api.ts": {"lines":{"total":26,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":26,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/services/system/index.ts": {"lines":{"total":5,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":5,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/services/system/merge-policy-api.ts": {"lines":{"total":18,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":18,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/services/system/package-api.ts": {"lines":{"total":9,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":9,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/stores/app-store.ts": {"lines":{"total":22,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":22,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/stores/slices/agent-slice.ts": {"lines":{"total":119,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":119,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/stores/slices/docs-slice.ts": {"lines":{"total":27,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":27,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/stores/slices/ideas-slice.ts": {"lines":{"total":23,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":23,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/stores/slices/plans-slice.ts": {"lines":{"total":55,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":55,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/stores/slices/slice-helpers.ts": {"lines":{"total":26,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":26,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/stores/slices/status-slice.ts": {"lines":{"total":101,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":101,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/stores/slices/suggestions-slice.ts": {"lines":{"total":33,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":33,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/stores/slices/task-log-slice.ts": {"lines":{"total":14,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":14,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/styles/motion.ts": {"lines":{"total":14,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":14,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/styles/tokens.ts": {"lines":{"total":22,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":22,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/utils/check-status.ts": {"lines":{"total":13,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":13,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":1,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/utils/check-summary.ts": {"lines":{"total":14,"covered":14,"skipped":0,"pct":100},"functions":{"total":3,"covered":3,"skipped":0,"pct":100},"statements":{"total":14,"covered":14,"skipped":0,"pct":100},"branches":{"total":13,"covered":13,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/app/utils/clipboard.ts": {"lines":{"total":23,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":23,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/app/utils/error-summary.ts": {"lines":{"total":10,"covered":10,"skipped":0,"pct":100},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":10,"covered":10,"skipped":0,"pct":100},"branches":{"total":7,"covered":6,"skipped":0,"pct":85.71}}
+,"/home/croco/dev/paper-camp/src/app/utils/parse-diff.ts": {"lines":{"total":23,"covered":23,"skipped":0,"pct":100},"functions":{"total":2,"covered":2,"skipped":0,"pct":100},"statements":{"total":23,"covered":23,"skipped":0,"pct":100},"branches":{"total":21,"covered":19,"skipped":0,"pct":90.47}}
+,"/home/croco/dev/paper-camp/src/cli/dev-server.ts": {"lines":{"total":64,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":64,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/cli/index.ts": {"lines":{"total":531,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":531,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/cli/session-focus.ts": {"lines":{"total":24,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":24,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/core/env.ts": {"lines":{"total":49,"covered":3,"skipped":0,"pct":6.12},"functions":{"total":5,"covered":0,"skipped":0,"pct":0},"statements":{"total":49,"covered":3,"skipped":0,"pct":6.12},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/index.ts": {"lines":{"total":9,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":9,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/core/readers.ts": {"lines":{"total":127,"covered":125,"skipped":0,"pct":98.42},"functions":{"total":11,"covered":11,"skipped":0,"pct":100},"statements":{"total":127,"covered":125,"skipped":0,"pct":98.42},"branches":{"total":32,"covered":31,"skipped":0,"pct":96.87}}
+,"/home/croco/dev/paper-camp/src/core/roadmap.ts": {"lines":{"total":258,"covered":258,"skipped":0,"pct":100},"functions":{"total":12,"covered":12,"skipped":0,"pct":100},"statements":{"total":258,"covered":258,"skipped":0,"pct":100},"branches":{"total":99,"covered":97,"skipped":0,"pct":97.97}}
+,"/home/croco/dev/paper-camp/src/core/run-order-file.ts": {"lines":{"total":19,"covered":19,"skipped":0,"pct":100},"functions":{"total":2,"covered":2,"skipped":0,"pct":100},"statements":{"total":19,"covered":19,"skipped":0,"pct":100},"branches":{"total":10,"covered":10,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/run-order.ts": {"lines":{"total":56,"covered":56,"skipped":0,"pct":100},"functions":{"total":4,"covered":4,"skipped":0,"pct":100},"statements":{"total":56,"covered":56,"skipped":0,"pct":100},"branches":{"total":25,"covered":20,"skipped":0,"pct":80}}
+,"/home/croco/dev/paper-camp/src/core/sections.ts": {"lines":{"total":160,"covered":145,"skipped":0,"pct":90.62},"functions":{"total":14,"covered":11,"skipped":0,"pct":78.57},"statements":{"total":160,"covered":145,"skipped":0,"pct":90.62},"branches":{"total":61,"covered":57,"skipped":0,"pct":93.44}}
+,"/home/croco/dev/paper-camp/src/core/stats.ts": {"lines":{"total":119,"covered":43,"skipped":0,"pct":36.13},"functions":{"total":9,"covered":4,"skipped":0,"pct":44.44},"statements":{"total":119,"covered":43,"skipped":0,"pct":36.13},"branches":{"total":19,"covered":18,"skipped":0,"pct":94.73}}
+,"/home/croco/dev/paper-camp/src/core/thread.ts": {"lines":{"total":50,"covered":44,"skipped":0,"pct":88},"functions":{"total":7,"covered":6,"skipped":0,"pct":85.71},"statements":{"total":50,"covered":44,"skipped":0,"pct":88},"branches":{"total":22,"covered":20,"skipped":0,"pct":90.9}}
+,"/home/croco/dev/paper-camp/src/core/trail.ts": {"lines":{"total":108,"covered":108,"skipped":0,"pct":100},"functions":{"total":10,"covered":10,"skipped":0,"pct":100},"statements":{"total":108,"covered":108,"skipped":0,"pct":100},"branches":{"total":54,"covered":51,"skipped":0,"pct":94.44}}
+,"/home/croco/dev/paper-camp/src/core/git-pr/branch.ts": {"lines":{"total":13,"covered":13,"skipped":0,"pct":100},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":13,"covered":13,"skipped":0,"pct":100},"branches":{"total":4,"covered":4,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/git-pr/index.ts": {"lines":{"total":3,"covered":3,"skipped":0,"pct":100},"functions":{"total":0,"covered":0,"skipped":0,"pct":100},"statements":{"total":3,"covered":3,"skipped":0,"pct":100},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/git-pr/pr-lookup.ts": {"lines":{"total":204,"covered":202,"skipped":0,"pct":99.01},"functions":{"total":16,"covered":16,"skipped":0,"pct":100},"statements":{"total":204,"covered":202,"skipped":0,"pct":99.01},"branches":{"total":91,"covered":88,"skipped":0,"pct":96.7}}
+,"/home/croco/dev/paper-camp/src/core/git-pr/pr.ts": {"lines":{"total":354,"covered":347,"skipped":0,"pct":98.02},"functions":{"total":24,"covered":24,"skipped":0,"pct":100},"statements":{"total":354,"covered":347,"skipped":0,"pct":98.02},"branches":{"total":140,"covered":123,"skipped":0,"pct":87.85}}
+,"/home/croco/dev/paper-camp/src/core/git-pr/scopes.ts": {"lines":{"total":23,"covered":23,"skipped":0,"pct":100},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":23,"covered":23,"skipped":0,"pct":100},"branches":{"total":3,"covered":3,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/parse/frontmatter-schemas.ts": {"lines":{"total":1,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":1,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/core/parse/index.ts": {"lines":{"total":2,"covered":2,"skipped":0,"pct":100},"functions":{"total":0,"covered":0,"skipped":0,"pct":100},"statements":{"total":2,"covered":2,"skipped":0,"pct":100},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/parse/parser.ts": {"lines":{"total":308,"covered":308,"skipped":0,"pct":100},"functions":{"total":12,"covered":12,"skipped":0,"pct":100},"statements":{"total":308,"covered":308,"skipped":0,"pct":100},"branches":{"total":85,"covered":83,"skipped":0,"pct":97.64}}
+,"/home/croco/dev/paper-camp/src/core/parse/schemas.ts": {"lines":{"total":138,"covered":138,"skipped":0,"pct":100},"functions":{"total":3,"covered":3,"skipped":0,"pct":100},"statements":{"total":138,"covered":138,"skipped":0,"pct":100},"branches":{"total":7,"covered":7,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/scaffold/index.ts": {"lines":{"total":2,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":2,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/core/scaffold/scaffold.ts": {"lines":{"total":75,"covered":70,"skipped":0,"pct":93.33},"functions":{"total":4,"covered":3,"skipped":0,"pct":75},"statements":{"total":75,"covered":70,"skipped":0,"pct":93.33},"branches":{"total":9,"covered":7,"skipped":0,"pct":77.77}}
+,"/home/croco/dev/paper-camp/src/core/scaffold/templates.ts": {"lines":{"total":16,"covered":16,"skipped":0,"pct":100},"functions":{"total":0,"covered":0,"skipped":0,"pct":100},"statements":{"total":16,"covered":16,"skipped":0,"pct":100},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/serialize/content-hash.ts": {"lines":{"total":13,"covered":13,"skipped":0,"pct":100},"functions":{"total":1,"covered":1,"skipped":0,"pct":100},"statements":{"total":13,"covered":13,"skipped":0,"pct":100},"branches":{"total":3,"covered":3,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/serialize/index.ts": {"lines":{"total":2,"covered":2,"skipped":0,"pct":100},"functions":{"total":0,"covered":0,"skipped":0,"pct":100},"statements":{"total":2,"covered":2,"skipped":0,"pct":100},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/serialize/serializer.ts": {"lines":{"total":214,"covered":167,"skipped":0,"pct":78.03},"functions":{"total":16,"covered":13,"skipped":0,"pct":81.25},"statements":{"total":214,"covered":167,"skipped":0,"pct":78.03},"branches":{"total":64,"covered":49,"skipped":0,"pct":76.56}}
+,"/home/croco/dev/paper-camp/src/core/status/index.ts": {"lines":{"total":1,"covered":1,"skipped":0,"pct":100},"functions":{"total":0,"covered":0,"skipped":0,"pct":100},"statements":{"total":1,"covered":1,"skipped":0,"pct":100},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/core/status/status.ts": {"lines":{"total":28,"covered":28,"skipped":0,"pct":100},"functions":{"total":3,"covered":3,"skipped":0,"pct":100},"statements":{"total":28,"covered":28,"skipped":0,"pct":100},"branches":{"total":36,"covered":36,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/mcp/schemas.ts": {"lines":{"total":39,"covered":39,"skipped":0,"pct":100},"functions":{"total":0,"covered":0,"skipped":0,"pct":100},"statements":{"total":39,"covered":39,"skipped":0,"pct":100},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
+,"/home/croco/dev/paper-camp/src/mcp/server.ts": {"lines":{"total":13,"covered":0,"skipped":0,"pct":0},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":13,"covered":0,"skipped":0,"pct":0},"branches":{"total":1,"covered":0,"skipped":0,"pct":0}}
+,"/home/croco/dev/paper-camp/src/mcp/tools.ts": {"lines":{"total":165,"covered":161,"skipped":0,"pct":97.57},"functions":{"total":6,"covered":6,"skipped":0,"pct":100},"statements":{"total":165,"covered":161,"skipped":0,"pct":97.57},"branches":{"total":40,"covered":33,"skipped":0,"pct":82.5}}
+,"/home/croco/dev/paper-camp/src/types/index.ts": {"lines":{"total":40,"covered":30,"skipped":0,"pct":75},"functions":{"total":1,"covered":0,"skipped":0,"pct":0},"statements":{"total":40,"covered":30,"skipped":0,"pct":75},"branches":{"total":0,"covered":0,"skipped":0,"pct":100}}
 }
