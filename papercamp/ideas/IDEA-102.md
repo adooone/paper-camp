@@ -21,7 +21,7 @@ Follow-up to the trunk-style sync work (rebase reconcile + auto-push after commi
 ### Phases
 - [x] Surface the conflict from `reconcileOnto`
       On a rebase abort, capture the conflicted file list and expose a "conflicted" sync-failure state to the store instead of a bare error.
-- [ ] Add a `resolve-conflict` agent task kind
+- [x] Add a `resolve-conflict` agent task kind
       A sibling to `reconcile`/`fix-review` in `src/app/server/agent.ts` that runs against the paused rebase.
 - [ ] Prompt the agent to resolve, stage, and continue
       Feed the conflicted files and their markers; instruct the domain judgement (drop finished items from `run-order.md`, union the logs), then `git add` and `git rebase --continue`; abort cleanly on failure.

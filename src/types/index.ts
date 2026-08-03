@@ -569,6 +569,7 @@ export type TaskKind =
   | 'sync'
   | 'reconcile'
   | 'fix-review'
+  | 'resolve-conflict'
   | 'feedback';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,

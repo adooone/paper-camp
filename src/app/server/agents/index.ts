@@ -42,6 +42,7 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   sync: 'phase',
   reconcile: 'phase',
   'fix-review': 'phase',
+  'resolve-conflict': 'phase',
   draft: 'planDraft',
   extend: 'ideaExtend',
   suggest: 'ideaExtend',
