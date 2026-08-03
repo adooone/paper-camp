@@ -53,13 +53,18 @@ export type SyncResult =
   | { ok: true }
   // The deterministic path failed and a recovery agent was launched (or, if
   // `recovering` is false, failed to launch) instead of throwing at the caller.
-  | { ok: false; recovering: boolean; message: string };
+  | { ok: false; recovering: boolean; message: string }
+  // A genuine content conflict — never auto-escalated. `conflictPrompt` is fed
+  // to resolveConflict() only on explicit "ask the agent to resolve" confirmation.
+  | { ok: false; recovering: false; conflictPrompt: string; message: string };
 
 export const syncToMain = async (): Promise<SyncResult> => {
   const response = await fetch('/api/git/sync', { method: 'POST' });
   if (response.status === 202) {
     const data = await response.json();
-    return { ok: false, recovering: data.recovering, message: data.error };
+    return data.conflictPrompt
+      ? { ok: false, recovering: false, conflictPrompt: data.conflictPrompt, message: data.error }
+      : { ok: false, recovering: data.recovering, message: data.error };
   }
   await throwIfNotOk(response, 'Sync failed');
   return { ok: true };
@@ -77,10 +82,23 @@ export const fixGitDivergence = async (): Promise<SyncResult> => {
   const response = await fetch('/api/git/fix-divergence', { method: 'POST' });
   if (response.status === 202) {
     const data = await response.json();
-    return { ok: false, recovering: data.recovering, message: data.error };
+    return data.conflictPrompt
+      ? { ok: false, recovering: false, conflictPrompt: data.conflictPrompt, message: data.error }
+      : { ok: false, recovering: data.recovering, message: data.error };
   }
   await throwIfNotOk(response, 'Fix failed');
   return { ok: true };
+};
+
+// Launches the resolve-conflict agent against a paused-then-aborted rebase — only
+// called on explicit "ask the agent to resolve" confirmation from the sync-failed toast.
+export const resolveConflict = async (prompt: string): Promise<{ ok: boolean; error?: string }> => {
+  const response = await fetch('/api/git/resolve-conflict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  return response.json();
 };
 
 export const createPlanBranch = async (planId: string): Promise<string> => {
