@@ -344,7 +344,7 @@ describe('fixDivergence', () => {
     expect(git(root, 'log', '--oneline').split('\n')[0]).toContain('local-only change');
   });
 
-  it('reports a reconcile conflict with a recovery prompt instead of throwing', async () => {
+  it('reports a conflicted rebase with the conflicted files and a recovery prompt instead of throwing', async () => {
     const root = await initRepo();
     await addOrigin(root);
     await commitFile(root, 'README.md', 'upstream\n', 'upstream change');
@@ -355,9 +355,15 @@ describe('fixDivergence', () => {
 
     const result = await manager.fixDivergence();
 
-    expect(result).toMatchObject({ ok: false, stage: 'reconcile', stashPending: false });
+    expect(result).toMatchObject({
+      ok: false,
+      stage: 'conflicted',
+      stashPending: false,
+      conflictedFiles: ['README.md'],
+    });
     expect((result as { message: string }).message).toMatch(/conflict/);
     expect((result as { recoveryPrompt: string }).recoveryPrompt).toContain('main');
+    expect((result as { recoveryPrompt: string }).recoveryPrompt).toContain('README.md');
     // The aborted rebase must not leave the repo mid-conflict.
     expect(git(root, 'log', '--oneline', '-1')).toContain('local change');
   });

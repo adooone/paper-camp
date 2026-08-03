@@ -4,7 +4,7 @@ import type { GitStatusEntry, GitSyncFailure } from '@/types/index';
 // needs to finish the job with judgment, since the fast path (git.ts's runGitSync)
 // gives up rather than guessing at a stash conflict or diverged rebase.
 export function buildGitSyncRecoveryPrompt(
-  failure: Pick<GitSyncFailure, 'stage' | 'message' | 'stashPending'>,
+  failure: Pick<GitSyncFailure, 'stage' | 'message' | 'stashPending' | 'conflictedFiles'>,
   branch: string,
   status: GitStatusEntry[],
 ): string {
@@ -25,6 +25,11 @@ export function buildGitSyncRecoveryPrompt(
 
 Where it failed: the "${failure.stage}" step of the fetch / drop-disposable-changes / stash / merge-or-rebase / pop sequence.
 Git's error: ${failure.message}
+${
+  failure.conflictedFiles?.length
+    ? `Files left with unresolved conflict markers: ${failure.conflictedFiles.join(', ')}`
+    : ''
+}
 
 Current branch: ${branch}
 ${

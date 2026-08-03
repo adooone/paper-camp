@@ -16,6 +16,22 @@ import { buildGitSyncRecoveryPrompt } from './git-sync-recovery';
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 
+// Unmerged porcelain status codes — a rebase (or merge) conflict, as opposed to a plain edit.
+const CONFLICT_STATUSES = new Set(['UU', 'AA', 'DD', 'AU', 'UA', 'DU', 'UD']);
+
+// Thrown by reconcileOnto so callers can tell a genuine content conflict — one that needs
+// domain judgement to resolve — apart from any other reconcile failure (fetch, checkout, ...).
+export class RebaseConflictError extends Error {
+  conflictedFiles: string[];
+
+  constructor(ref: string, conflictedFiles: string[]) {
+    super(
+      `Diverged from ${ref} and auto-rebase hit a conflict — resolve it, or hand it to the agent`,
+    );
+    this.conflictedFiles = conflictedFiles;
+  }
+}
+
 // Git expands pathspec magic (e.g. `:/`) even after `--`; force literal so a
 // caller-selected path can't silently widen to unrelated files.
 const toLiteralPathspec = (file: string) => `:(literal)${file}`;
@@ -595,11 +611,22 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     try {
       await runGit(['rebase', ref]);
     } catch {
+      const conflictedFiles = (await runGitStatus())
+        .filter((entry) => CONFLICT_STATUSES.has(entry.status))
+        .map((entry) => entry.path);
       await runGit(['rebase', '--abort']).catch(() => {});
-      throw new Error(
-        `Diverged from ${ref} and auto-rebase hit a conflict — resolve it, or hand it to the agent`,
-      );
+      throw new RebaseConflictError(ref, conflictedFiles);
     }
+  }
+
+  // Tells a genuine rebase conflict (needs domain judgement to resolve) apart from
+  // any other reconcile failure (fetch, checkout, ...), which just gets a bare message.
+  function reconcileFailureFields(
+    err: unknown,
+  ): { stage: 'conflicted'; conflictedFiles: string[] } | { stage: 'reconcile' } {
+    return err instanceof RebaseConflictError
+      ? { stage: 'conflicted', conflictedFiles: err.conflictedFiles }
+      : { stage: 'reconcile' };
   }
 
   async function runGitSync(): Promise<GitSyncResult> {
@@ -642,15 +669,15 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       };
     }
     if (syncError) {
-      const stage = 'reconcile' as const;
       const message = (syncError as Error).message;
+      const failureFields = reconcileFailureFields(syncError);
       return {
         ok: false,
-        stage,
         message,
         stashPending,
+        ...failureFields,
         recoveryPrompt: buildGitSyncRecoveryPrompt(
-          { stage, message, stashPending },
+          { ...failureFields, message, stashPending },
           getCurrentBranch(),
           await runGitStatus(),
         ),
@@ -678,15 +705,15 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       await reconcileOnto(ref);
       return { ok: true };
     } catch (err) {
-      const stage = 'reconcile' as const;
       const message = (err as Error).message;
+      const failureFields = reconcileFailureFields(err);
       return {
         ok: false,
-        stage,
         message,
         stashPending: false,
+        ...failureFields,
         recoveryPrompt: buildGitSyncRecoveryPrompt(
-          { stage, message, stashPending: false },
+          { ...failureFields, message, stashPending: false },
           branch,
           await runGitStatus(),
         ),

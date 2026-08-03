@@ -19,7 +19,7 @@ Close that last gap: when `reconcileOnto` aborts on a conflict, offer to hand it
 Follow-up to the trunk-style sync work (rebase reconcile + auto-push after commit): the workflow commits on `main` directly and wants divergence repaired automatically, with the agent as the fallback when it can't be done mechanically.
 
 ### Phases
-- [ ] Surface the conflict from `reconcileOnto`
+- [x] Surface the conflict from `reconcileOnto`
       On a rebase abort, capture the conflicted file list and expose a "conflicted" sync-failure state to the store instead of a bare error.
 - [ ] Add a `resolve-conflict` agent task kind
       A sibling to `reconcile`/`fix-review` in `src/app/server/agent.ts` that runs against the paused rebase.

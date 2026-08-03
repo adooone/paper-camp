@@ -539,9 +539,12 @@ export interface GitLiveState {
 
 export interface GitSyncFailure {
   ok: false;
-  stage: 'reconcile' | 'stash-pop';
+  stage: 'reconcile' | 'stash-pop' | 'conflicted';
   message: string;
   stashPending: boolean;
+  // Only set when stage is 'conflicted': the files a rebase left with unresolved
+  // markers, for a one-click "ask the agent to resolve" rather than a bare error.
+  conflictedFiles?: string[];
   // Prompt for the agent recovery job (see git-sync-recovery.ts) — the deterministic
   // path's failure, the working-tree state, and the goal, packaged for a future
   // launch rather than thrown at the user.
