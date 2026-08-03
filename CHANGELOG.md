@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.13.0](https://github.com/adooone/paper-camp/compare/v0.12.0...v0.13.0) (2026-08-03)
+
+
+### Features
+
+* **agent:** Slim agent prompts for short, direct output (IDEA-106) ([#89](https://github.com/adooone/paper-camp/issues/89)) ([0a71b6c](https://github.com/adooone/paper-camp/commit/0a71b6c8ca55d70eeca48f46a5fa985ed8b93f93))
+* **app:** Agent resolves sync-rebase conflicts (IDEA-102) ([#97](https://github.com/adooone/paper-camp/issues/97)) ([c56de6a](https://github.com/adooone/paper-camp/commit/c56de6a223c5cc6b3251f850805d3d86b56d3b09))
+* **app:** Compact Deliver section, more room for the agent stack (IDEA-109) ([#84](https://github.com/adooone/paper-camp/issues/84)) ([2ab8942](https://github.com/adooone/paper-camp/commit/2ab89426783dda699c4d649712cd46a2f92a59c0))
+* **app:** Decisions and questions live on the idea (IDEA-104) ([#88](https://github.com/adooone/paper-camp/issues/88)) ([8bb257f](https://github.com/adooone/paper-camp/commit/8bb257f57b496fba461453fcf0eea9e4b660d803))
+* **app:** Feedback as a single chat thread (IDEA-113) ([#91](https://github.com/adooone/paper-camp/issues/91)) ([7e999cb](https://github.com/adooone/paper-camp/commit/7e999cb62fb189014dc782c4c523f56306f6bf61))
+* **app:** In-app code review with diffs (IDEA-110) ([#92](https://github.com/adooone/paper-camp/issues/92)) ([dddd6b8](https://github.com/adooone/paper-camp/commit/dddd6b808bbf123bb2665029969578970c1f717d))
+* **app:** In-app sign-in via OAuth relay (IDEA-101) ([#94](https://github.com/adooone/paper-camp/issues/94)) ([335be5b](https://github.com/adooone/paper-camp/commit/335be5be64975a1d91d43a3f35a4f7e262327f48))
+* **app:** One feedback thread on every idea, any status (IDEA-103) ([#87](https://github.com/adooone/paper-camp/issues/87)) ([f8a6e2a](https://github.com/adooone/paper-camp/commit/f8a6e2a4a39f11d9b8f6849069210e1f62b46f8a))
+* **app:** Surface a diverged main with a one-click agent fix (IDEA-108) ([#96](https://github.com/adooone/paper-camp/issues/96)) ([61a084f](https://github.com/adooone/paper-camp/commit/61a084f935be8890a0efca223b3b998c1fd54ffc))
+* **server:** Project stats view (IDEA-99) ([#95](https://github.com/adooone/paper-camp/issues/95)) ([c94642f](https://github.com/adooone/paper-camp/commit/c94642f5a06f1a3b572828935c6475d11ee71fa4))
+
+
+### Bug Fixes
+
+* **app:** Plain-language the confusing UI text (IDEA-105) ([#86](https://github.com/adooone/paper-camp/issues/86)) ([78cd5da](https://github.com/adooone/paper-camp/commit/78cd5da6430bd3d45d11cc1d82e03c2006924f70))
+
 ## [0.12.0](https://github.com/adooone/paper-camp/compare/v0.11.0...v0.12.0) (2026-07-29)
 
 
