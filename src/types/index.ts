@@ -545,10 +545,19 @@ export interface GitSyncFailure {
   // Only set when stage is 'conflicted': the files a rebase left with unresolved
   // markers, for a one-click "ask the agent to resolve" rather than a bare error.
   conflictedFiles?: string[];
+  // Only set when stage is 'conflicted': the ref the rebase targeted, and each
+  // conflicted file's last-seen content (with markers) before the rebase was
+  // aborted for safety — the resolve-conflict agent's raw material.
+  conflictRef?: string;
+  conflictedContent?: { path: string; content: string }[];
   // Prompt for the agent recovery job (see git-sync-recovery.ts) — the deterministic
   // path's failure, the working-tree state, and the goal, packaged for a future
   // launch rather than thrown at the user.
   recoveryPrompt: string;
+  // Only set when stage is 'conflicted': a prompt scoped to landing this one rebase
+  // (see resolve-conflict-prompt.ts) — launched only on explicit "ask the agent to
+  // resolve" confirmation from the sync-failed toast, never automatically.
+  conflictPrompt?: string;
 }
 
 export type GitSyncResult = { ok: true } | GitSyncFailure;

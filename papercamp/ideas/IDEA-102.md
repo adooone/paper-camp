@@ -23,7 +23,7 @@ Follow-up to the trunk-style sync work (rebase reconcile + auto-push after commi
       On a rebase abort, capture the conflicted file list and expose a "conflicted" sync-failure state to the store instead of a bare error.
 - [x] Add a `resolve-conflict` agent task kind
       A sibling to `reconcile`/`fix-review` in `src/app/server/agent.ts` that runs against the paused rebase.
-- [ ] Prompt the agent to resolve, stage, and continue
+- [x] Prompt the agent to resolve, stage, and continue
       Feed the conflicted files and their markers; instruct the domain judgement (drop finished items from `run-order.md`, union the logs), then `git add` and `git rebase --continue`; abort cleanly on failure.
 - [ ] Wire the one-click "Ask the agent to resolve" on the sync-failed toast
       Trigger the task from the toast, not automatically, and reflect its progress/result so a bad merge never lands unseen.

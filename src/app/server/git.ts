@@ -13,6 +13,7 @@ import type {
   PlanEntry,
 } from '../../types';
 import { buildGitSyncRecoveryPrompt } from './git-sync-recovery';
+import { buildResolveConflictPrompt } from './resolve-conflict-prompt';
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 
@@ -22,13 +23,21 @@ const CONFLICT_STATUSES = new Set(['UU', 'AA', 'DD', 'AU', 'UA', 'DU', 'UD']);
 // Thrown by reconcileOnto so callers can tell a genuine content conflict — one that needs
 // domain judgement to resolve — apart from any other reconcile failure (fetch, checkout, ...).
 export class RebaseConflictError extends Error {
+  ref: string;
   conflictedFiles: string[];
+  conflictedContent: { path: string; content: string }[];
 
-  constructor(ref: string, conflictedFiles: string[]) {
+  constructor(
+    ref: string,
+    conflictedFiles: string[],
+    conflictedContent: { path: string; content: string }[],
+  ) {
     super(
       `Diverged from ${ref} and auto-rebase hit a conflict — resolve it, or hand it to the agent`,
     );
+    this.ref = ref;
     this.conflictedFiles = conflictedFiles;
+    this.conflictedContent = conflictedContent;
   }
 }
 
@@ -603,6 +612,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   // replay the local (direct-to-main) commits on top of the squash-merged remote so
   // a committed-but-unpushed change never leaves the branch split. A genuine content
   // conflict aborts the rebase cleanly and surfaces, rather than dumping markers.
+  const MAX_CONFLICT_CONTENT_CHARS = 20000;
+
   async function reconcileOnto(ref: string): Promise<void> {
     try {
       await runGit(['merge', '--ff-only', ref]);
@@ -614,18 +625,42 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       const conflictedFiles = (await runGitStatus())
         .filter((entry) => CONFLICT_STATUSES.has(entry.status))
         .map((entry) => entry.path);
+      // Captured before the abort below restores the pre-rebase content — this is
+      // the resolve-conflict agent's only look at what the markers actually said.
+      const conflictedContent = await Promise.all(
+        conflictedFiles.map(async (path) => {
+          const content = await readFile(join(root, path), 'utf-8').catch(() => '');
+          return {
+            path,
+            content:
+              content.length > MAX_CONFLICT_CONTENT_CHARS
+                ? `${content.slice(0, MAX_CONFLICT_CONTENT_CHARS)}\n... (truncated)`
+                : content,
+          };
+        }),
+      );
       await runGit(['rebase', '--abort']).catch(() => {});
-      throw new RebaseConflictError(ref, conflictedFiles);
+      throw new RebaseConflictError(ref, conflictedFiles, conflictedContent);
     }
   }
 
   // Tells a genuine rebase conflict (needs domain judgement to resolve) apart from
   // any other reconcile failure (fetch, checkout, ...), which just gets a bare message.
-  function reconcileFailureFields(
-    err: unknown,
-  ): { stage: 'conflicted'; conflictedFiles: string[] } | { stage: 'reconcile' } {
+  function reconcileFailureFields(err: unknown):
+    | {
+        stage: 'conflicted';
+        conflictedFiles: string[];
+        conflictRef: string;
+        conflictedContent: { path: string; content: string }[];
+      }
+    | { stage: 'reconcile' } {
     return err instanceof RebaseConflictError
-      ? { stage: 'conflicted', conflictedFiles: err.conflictedFiles }
+      ? {
+          stage: 'conflicted',
+          conflictedFiles: err.conflictedFiles,
+          conflictRef: err.ref,
+          conflictedContent: err.conflictedContent,
+        }
       : { stage: 'reconcile' };
   }
 
@@ -671,6 +706,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     if (syncError) {
       const message = (syncError as Error).message;
       const failureFields = reconcileFailureFields(syncError);
+      const branch = getCurrentBranch();
       return {
         ok: false,
         message,
@@ -678,9 +714,12 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         ...failureFields,
         recoveryPrompt: buildGitSyncRecoveryPrompt(
           { ...failureFields, message, stashPending },
-          getCurrentBranch(),
+          branch,
           await runGitStatus(),
         ),
+        ...(failureFields.stage === 'conflicted'
+          ? { conflictPrompt: buildResolveConflictPrompt(failureFields, branch) }
+          : {}),
       };
     }
     return { ok: true };
@@ -717,6 +756,9 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
           branch,
           await runGitStatus(),
         ),
+        ...(failureFields.stage === 'conflicted'
+          ? { conflictPrompt: buildResolveConflictPrompt(failureFields, branch) }
+          : {}),
       };
     }
   }
