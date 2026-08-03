@@ -234,6 +234,8 @@ const StatusStamps = () => {
             </span>
           );
           secondaryLine = (
+            // Raw <button>: Button has no inline-underlined link style; matches the
+            // identical pattern already used for the doc-findings/quality-fix links below.
             <button
               type="button"
               onClick={handleFixDivergence}

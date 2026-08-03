@@ -361,6 +361,25 @@ describe('fixDivergence', () => {
     // The aborted rebase must not leave the repo mid-conflict.
     expect(git(root, 'log', '--oneline', '-1')).toContain('local change');
   });
+
+  it('reconciles an unpushed feature branch against origin/main, not a nonexistent upstream', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-9-unpushed');
+    await commitFile(root, 'feature.txt', 'feature work\n', 'feature commit');
+    // origin/main advances while the branch, never pushed, has no origin/<branch>.
+    git(root, 'checkout', 'main');
+    await commitFile(root, 'remote.txt', 'from remote\n', 'remote-only change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'checkout', 'feat/feat-9-unpushed');
+    const manager = gitManager(root);
+
+    const result = await manager.fixDivergence();
+
+    expect(result).toEqual({ ok: true });
+    expect(await readFile(join(root, 'remote.txt'), 'utf-8')).toBe('from remote\n');
+    expect(await readFile(join(root, 'feature.txt'), 'utf-8')).toBe('feature work\n');
+  });
 });
 
 describe('getAheadCount', () => {

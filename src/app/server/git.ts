@@ -674,7 +674,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await runGit(['fetch', '--prune']).catch(() => {});
     const branch = getCurrentBranch();
     try {
-      await reconcileOnto(`origin/${branch}`);
+      const ref = (await hasUpstream()) ? '@{u}' : await mainRef();
+      await reconcileOnto(ref);
       return { ok: true };
     } catch (err) {
       const stage = 'reconcile' as const;
