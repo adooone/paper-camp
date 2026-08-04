@@ -25,7 +25,7 @@ Related: the post-phase gate's check commands are hardcoded to this repo's stack
       Enumerate run-all/phase/fix-review/sync/resolve-conflict as the kinds that can supersede one another.
 - [x] Track `lastExclusiveLaunchedId` on registration
       Set it only when an exclusive kind starts; leave it untouched for read-only helpers.
-- [ ] Gate `isSuperseded` on the exclusive id
+- [x] Gate `isSuperseded` on the exclusive id
       Compare against `lastExclusiveLaunchedId` so board helpers can no longer evict a running build.
 - [ ] Add a loud, honest `superseded` outcome
       Push a `[superseded] …` line and finalize legitimate supersession with outcome `superseded`, never `error`.

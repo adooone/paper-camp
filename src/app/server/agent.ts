@@ -246,7 +246,7 @@ export function createAgentManager(
   }
 
   function isSuperseded(task: AgentTask): boolean {
-    return state.lastLaunchedId !== task.id;
+    return state.lastExclusiveLaunchedId !== task.id;
   }
 
   function isStopping(task: AgentTask): boolean {
