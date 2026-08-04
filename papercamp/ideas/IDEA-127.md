@@ -16,7 +16,7 @@ Fix implemented in the working tree (src/cli/index.ts): precedence is explicit `
 ### Phases
 - [x] Land the port precedence in `dev`
       Resolve as explicit `-p` flag > `config.port` > 3333 (already in the working tree).
-- [ ] Cover port precedence with a test
+- [x] Cover port precedence with a test
 - [ ] Add a "restart required" hint by the Settings port field
       Running server never re-reads its port, so a changed setting needs a manual restart.
 - [ ] Verify bare `dev` honours `config.port` in a fresh consumer repo
