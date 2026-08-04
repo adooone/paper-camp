@@ -21,7 +21,7 @@ Fix shape:
 Related: the post-phase gate's check commands are hardcoded to this repo's stack (`npx vitest run`, `pnpm run consistency`) — in consumer repos they're permanently red and only survive via baseline tolerance. Per-project check config belongs to the run-&-monitor manifest ([[IDEA-119]]).
 
 ### Phases
-- [ ] Define the exclusive task-kind set
+- [x] Define the exclusive task-kind set
       Enumerate run-all/phase/fix-review/sync/resolve-conflict as the kinds that can supersede one another.
 - [ ] Track `lastExclusiveLaunchedId` on registration
       Set it only when an exclusive kind starts; leave it untouched for read-only helpers.
