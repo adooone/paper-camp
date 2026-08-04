@@ -502,7 +502,10 @@ export function createAgentManager(
       rl.on('line', (line) => {
         if (opts.guardSuperseded && isSuperseded(task)) return;
         const parsed = adapter.parseLine(line);
-        if (parsed?.reason) task.errorReason = parsed.reason;
+        if (parsed?.reason) {
+          task.errorReason = parsed.reason;
+          if (opts.trackBlocker) task.blocker = parsed.reason;
+        }
         if (parsed?.text && parsed.text !== 'Agent is working…') {
           pushLine(task, `  ${parsed.text}`);
           if (opts.trackBlocker) {

@@ -327,19 +327,29 @@ describe('startRunAllPhases', () => {
     expect(planFile).toContain('the agent needs a decision: which auth flow should this use?');
   });
 
-  it('carries a permission-denial reason into the run-all failure line', async () => {
+  it('parks on a permission-denial reason instead of auto-failing the run', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = `
 console.log('PERMISSION-DENIED: read outside workspace: /home/user/dev/paper-ui/select.tsx')
 process.exit(1)
 `;
-    const manager = createAgentManager(root);
+    const onPhaseCommit = vi.fn(async () => {});
+    const onRunComplete = vi.fn(async () => {});
+    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
     expect(lines).toContain(
-      '[fail] phase 1 — read outside workspace: /home/user/dev/paper-ui/select.tsx, stopping',
+      '[blocked] phase 1 — agent needs a decision: read outside workspace: /home/user/dev/paper-ui/select.tsx',
+    );
+    expect(lines).not.toContain('[fail]');
+    expect(onPhaseCommit).not.toHaveBeenCalled();
+    expect(onRunComplete).not.toHaveBeenCalled();
+    const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(planFile).toContain('### Thread');
+    expect(planFile).toContain(
+      'the agent needs a decision: read outside workspace: /home/user/dev/paper-ui/select.tsx',
     );
   });
 
