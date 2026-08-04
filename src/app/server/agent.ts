@@ -219,6 +219,7 @@ function createEmptyAgentState(): AgentManagerState {
     tasks: new Map(),
     clients: new Set(),
     lastLaunchedId: undefined,
+    lastExclusiveLaunchedId: undefined,
     pendingFixReviewResult: null,
   };
 }
@@ -245,7 +246,7 @@ export function createAgentManager(
   }
 
   function isSuperseded(task: AgentTask): boolean {
-    return state.lastLaunchedId !== task.id;
+    return state.lastExclusiveLaunchedId !== task.id;
   }
 
   function isStopping(task: AgentTask): boolean {
@@ -281,6 +282,7 @@ export function createAgentManager(
   function registerTask(task: AgentTask): void {
     tasks.set(task.id, task);
     state.lastLaunchedId = task.id;
+    if (EXCLUSIVE_KINDS.has(task.taskKind)) state.lastExclusiveLaunchedId = task.id;
   }
 
   function newTask(
@@ -339,10 +341,17 @@ export function createAgentManager(
       task.errorKind = terminalLines.some(isAuthError) ? 'auth' : undefined;
     }
     broadcast(`agent: ${status}`, task.id);
-    if (status === 'done' || status === 'error') {
+    if (status === 'done' || status === 'error' || status === 'superseded') {
       void logTaskCompletion(root, task, status);
       pruneCompletedTasks();
     }
+  }
+
+  // Finalizes a task preempted by a newer exclusive-kind launch: loud and honest,
+  // never silently swallowed and never mislabeled as an `error`.
+  function finalizeSuperseded(task: AgentTask): void {
+    pushLine(task, '[superseded] preempted by a newer run for this plan');
+    setStatus(task, 'superseded');
   }
 
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
@@ -420,7 +429,7 @@ export function createAgentManager(
   }
 
   function isTaskDone(task: AgentTask): boolean {
-    return task.status === 'done' || task.status === 'error';
+    return task.status === 'done' || task.status === 'error' || task.status === 'superseded';
   }
 
   function attachReader(task: AgentTask) {
@@ -1054,7 +1063,7 @@ export function createAgentManager(
       completed,
       failed,
       toleratedRed,
-      exit: task.status === 'stopping' ? 'stopping' : 'ran',
+      exit: isSuperseded(task) ? 'superseded' : task.status === 'stopping' ? 'stopping' : 'ran',
     };
   }
 
@@ -1100,7 +1109,10 @@ export function createAgentManager(
         // Checks already red before this run — pre-existing or known-flaky
         // breakage this run didn't cause, so the fix loop never owns it.
         let toleratedRed = new Set<CheckName>(runProjectChecks ? await runProjectChecks() : []);
-        if (isSuperseded(task)) return;
+        if (isSuperseded(task)) {
+          finalizeSuperseded(task);
+          return;
+        }
         if (toleratedRed.size > 0) {
           pushLine(
             task,
@@ -1122,7 +1134,10 @@ export function createAgentManager(
         );
         toleratedRed = phaseResult.toleratedRed;
 
-        if (phaseResult.exit === 'superseded') return;
+        if (phaseResult.exit === 'superseded') {
+          finalizeSuperseded(task);
+          return;
+        }
         if (phaseResult.exit === 'stopping') {
           setStatus(task, 'done');
           return;
@@ -1150,7 +1165,10 @@ export function createAgentManager(
             toleratedRed,
           );
 
-          if (fixResult.exit === 'superseded') return;
+          if (fixResult.exit === 'superseded') {
+            finalizeSuperseded(task);
+            return;
+          }
           if (fixResult.exit === 'stopping') {
             setStatus(task, 'done');
             return;
@@ -1186,7 +1204,9 @@ export function createAgentManager(
           setStatus(task, 'done');
         }
       } catch (err) {
-        if (!isSuperseded(task)) {
+        if (isSuperseded(task)) {
+          if (!isTaskDone(task)) finalizeSuperseded(task);
+        } else {
           pushLine(task, `Run all phases failed: ${(err as Error).message}`);
           setStatus(task, 'error');
         }
@@ -1451,6 +1471,7 @@ export function createAgentManager(
 export interface AgentManagerState {
   tasks: Map<string, AgentTask>;
   lastLaunchedId: string | undefined;
+  lastExclusiveLaunchedId: string | undefined;
   // Outlives task replacement: a human can launch another run before pushing,
   // and the verdict must still be there to settle threads once the fix is pushed.
   pendingFixReviewResult: FixReviewResult | null;

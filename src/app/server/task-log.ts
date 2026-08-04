@@ -62,7 +62,7 @@ const UNLOGGED_TASK_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check'
 export function logTaskCompletion(
   root: string,
   task: CompletedTask,
-  outcome: 'done' | 'error',
+  outcome: 'done' | 'error' | 'superseded',
 ): Promise<void> {
   if (UNLOGGED_TASK_KINDS.has(task.taskKind)) return Promise.resolve();
   const run = taskChain.then(async () => {

@@ -2,7 +2,7 @@
 id: IDEA-115
 title: npm package is broken on Linux — bundled node-pty can't load
 type: fix
-status: review
+status: done
 created: 2026-08-04
 updated: 2026-08-04
 tags:

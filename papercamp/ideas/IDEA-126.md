@@ -2,7 +2,7 @@
 id: IDEA-126
 title: Read-only helper tasks silently supersede a running run-all
 type: fix
-status: idea
+status: review
 created: 2026-08-04
 tags:
   - agents
@@ -21,13 +21,13 @@ Fix shape:
 Related: the post-phase gate's check commands are hardcoded to this repo's stack (`npx vitest run`, `pnpm run consistency`) — in consumer repos they're permanently red and only survive via baseline tolerance. Per-project check config belongs to the run-&-monitor manifest ([[IDEA-119]]).
 
 ### Phases
-- [ ] Define the exclusive task-kind set
+- [x] Define the exclusive task-kind set
       Enumerate run-all/phase/fix-review/sync/resolve-conflict as the kinds that can supersede one another.
-- [ ] Track `lastExclusiveLaunchedId` on registration
+- [x] Track `lastExclusiveLaunchedId` on registration
       Set it only when an exclusive kind starts; leave it untouched for read-only helpers.
-- [ ] Gate `isSuperseded` on the exclusive id
+- [x] Gate `isSuperseded` on the exclusive id
       Compare against `lastExclusiveLaunchedId` so board helpers can no longer evict a running build.
-- [ ] Add a loud, honest `superseded` outcome
+- [x] Add a loud, honest `superseded` outcome
       Push a `[superseded] …` line and finalize legitimate supersession with outcome `superseded`, never `error`.
-- [ ] Verify with a run-all under board pressure
+- [x] Verify with a run-all under board pressure
       Launch Suggest/Feedback helpers mid-run and confirm the run-all completes and never silently bails.

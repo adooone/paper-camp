@@ -71,6 +71,7 @@ const AgentTaskCard = ({
     stopping: chalkStatusFill.running,
     done: chalkStatusFill.pass,
     error: chalkStatusFill.fail,
+    superseded: chalkStatusFill.running,
   };
   const statusText: Record<AgentTaskStatus, string> = {
     starting: chalkStatusText.running,
@@ -78,6 +79,7 @@ const AgentTaskCard = ({
     stopping: chalkStatusText.running,
     done: chalkStatusText.pass,
     error: chalkStatusText.fail,
+    superseded: chalkStatusText.running,
   };
 
   return (
