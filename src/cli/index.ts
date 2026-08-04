@@ -158,8 +158,6 @@ program
   )
   .action(async (opts: { port?: string }) => {
     const root = process.cwd();
-    // Precedence: explicit flag > the port the Settings page writes to
-    // papercamp/config.json > 3333.
     let configPort: number | undefined;
     if (!opts.port) {
       const raw = await readFile(resolve(root, 'papercamp', 'config.json'), 'utf-8').catch(

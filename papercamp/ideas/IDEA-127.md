@@ -14,7 +14,7 @@ The Settings page writes `port` into `papercamp/config.json`, but the `dev` comm
 Fix implemented in the working tree (src/cli/index.ts): precedence is explicit `-p` flag > `config.port` > 3333. Verified against a consumer repo: config `port: 3041`, bare `dev` serves on 3041.
 
 ### Phases
-- [ ] Land the port precedence in `dev`
+- [x] Land the port precedence in `dev`
       Resolve as explicit `-p` flag > `config.port` > 3333 (already in the working tree).
 - [ ] Cover port precedence with a test
 - [ ] Add a "restart required" hint by the Settings port field
