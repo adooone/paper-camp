@@ -27,7 +27,7 @@ Related: the post-phase gate's check commands are hardcoded to this repo's stack
       Set it only when an exclusive kind starts; leave it untouched for read-only helpers.
 - [x] Gate `isSuperseded` on the exclusive id
       Compare against `lastExclusiveLaunchedId` so board helpers can no longer evict a running build.
-- [ ] Add a loud, honest `superseded` outcome
+- [x] Add a loud, honest `superseded` outcome
       Push a `[superseded] …` line and finalize legitimate supersession with outcome `superseded`, never `error`.
 - [ ] Verify with a run-all under board pressure
       Launch Suggest/Feedback helpers mid-run and confirm the run-all completes and never silently bails.

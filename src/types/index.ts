@@ -562,7 +562,7 @@ export interface GitSyncFailure {
 
 export type GitSyncResult = { ok: true } | GitSyncFailure;
 
-export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error';
+export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error' | 'superseded';
 
 export type TaskKind =
   | 'phase'
@@ -591,7 +591,7 @@ export interface TaskLogEntry {
   agentId: AgentId;
   startedAt: string;
   endedAt: string;
-  outcome: 'done' | 'error';
+  outcome: 'done' | 'error' | 'superseded';
 }
 
 export interface TrailHop<T> {

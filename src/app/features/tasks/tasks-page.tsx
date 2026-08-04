@@ -183,9 +183,17 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
                 fillColor={
                   entry.outcome === 'done'
                     ? 'rgba(143, 185, 150, 0.25)'
-                    : 'rgba(201, 139, 139, 0.25)'
+                    : entry.outcome === 'superseded'
+                      ? 'rgba(212, 163, 115, 0.25)'
+                      : 'rgba(201, 139, 139, 0.25)'
                 }
-                textColor={entry.outcome === 'done' ? color.accentGreenDark : color.accentRoseDark}
+                textColor={
+                  entry.outcome === 'done'
+                    ? color.accentGreenDark
+                    : entry.outcome === 'superseded'
+                      ? color.accentAmberDark
+                      : color.accentRoseDark
+                }
               >
                 {entry.outcome}
               </Stamp>
