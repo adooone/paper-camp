@@ -102,7 +102,14 @@ export async function startClaudeLoginRelay(
 
   // Loaded lazily so requiring this module (pulled in by every `dev` route) doesn't
   // touch node-pty's native binding — only actually starting a login relay does.
-  const pty = await import('node-pty');
+  let pty: typeof import('node-pty');
+  try {
+    pty = await import('node-pty');
+  } catch (err) {
+    state.phase = 'error';
+    state.error = `The sign-in relay isn't available in this environment: ${(err as Error).message}`;
+    return handle;
+  }
 
   if (cancelledBeforeSpawn) return handle;
 

@@ -149,6 +149,19 @@ describe('startClaudeLoginRelay', () => {
     spawnSpy.mockRestore();
   });
 
+  it('reports an error and releases the handle when loading node-pty fails', async () => {
+    vi.resetModules();
+    vi.doMock('node-pty', () => {
+      throw new Error('Cannot find module');
+    });
+    const { startClaudeLoginRelay: startWithBrokenPty } = await import('./login-relay');
+    const handle = await startWithBrokenPty(process.cwd());
+    expect(handle.getState().phase).toBe('error');
+    expect(handle.getState().error).toMatch(/isn't available in this environment/i);
+    vi.doUnmock('node-pty');
+    vi.resetModules();
+  });
+
   it('starts a fresh relay once the previous one finished', async () => {
     installClaude("echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 5");
     const first = await startClaudeLoginRelay(process.cwd());
