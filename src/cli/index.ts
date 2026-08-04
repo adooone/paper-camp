@@ -35,6 +35,7 @@ import {
   type PlanEntry,
   coerceAgentConfig,
 } from '../types/index';
+import { readConfigPort, resolveDevPort } from './dev-port';
 import { startDevServer } from './dev-server';
 import { buildSessionFocus } from './session-focus';
 
@@ -158,23 +159,8 @@ program
   )
   .action(async (opts: { port?: string }) => {
     const root = process.cwd();
-    // Precedence: explicit flag > the port the Settings page writes to
-    // papercamp/config.json > 3333.
-    let configPort: number | undefined;
-    if (!opts.port) {
-      const raw = await readFile(resolve(root, 'papercamp', 'config.json'), 'utf-8').catch(
-        () => null,
-      );
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw) as { port?: unknown };
-          if (typeof parsed.port === 'number' && Number.isFinite(parsed.port)) {
-            configPort = parsed.port;
-          }
-        } catch {}
-      }
-    }
-    const port = opts.port ? Number(opts.port) : (configPort ?? 3333);
+    const configPort = opts.port ? undefined : await readConfigPort(root);
+    const port = resolveDevPort(opts.port, configPort);
     try {
       await startDevServer({ root, port });
       console.log(`Paper Camp dashboard running at http://localhost:${port}`);
