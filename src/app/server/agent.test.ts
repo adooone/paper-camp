@@ -126,6 +126,27 @@ async function waitForStatus(
 
 const settled = (status: string) => status === 'done' || status === 'error';
 
+// Like waitForStatus, but polls a specific task by id — needed once more than
+// one task is registered, since getStatus()[0] is only the most recent one.
+async function waitForTaskStatus(
+  manager: Manager,
+  id: string,
+  done: (status: string) => boolean,
+  timeoutMs = 10_000,
+): Promise<string> {
+  const start = Date.now();
+  for (;;) {
+    const task = manager.getStatus().find((t) => t.id === id);
+    if (task && done(task.status)) return task.status;
+    if (Date.now() - start > timeoutMs) {
+      throw new Error(
+        `timed out waiting for ${id}; last status: ${task?.status}, lines: ${task?.lines.join(' | ')}`,
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+}
+
 describe('buildAgentPrompt', () => {
   const plan = entityToPlan(parseEntityFile(PLAN_TWO_PHASES).entries[0]);
 
@@ -387,6 +408,48 @@ describe('startRunAllPhases', () => {
     expect(manager.stop()).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(onRunComplete).not.toHaveBeenCalled();
+  });
+
+  it('completes untouched when read-only board helpers launch mid-run (IDEA-126)', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    // A slow-flipping phase agent, so the run-all is still mid-checkpoint when
+    // the read-only helpers below register their tasks.
+    agentScript.current = `${FLIP_NEXT_CHECKBOX}\nsetTimeout(() => process.exit(0), 150);`;
+    const commits: number[] = [];
+    const onRunComplete = vi.fn(async () => {});
+    const manager = createAgentManager(
+      root,
+      undefined,
+      async (_plan, _phase, phaseIndex) => {
+        commits.push(phaseIndex);
+      },
+      onRunComplete,
+    );
+
+    expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+    const runAllId = manager.getStatus().find((t) => t.taskKind === 'run-all')?.id;
+    expect(runAllId).toBeDefined();
+
+    // Board pressure: an operator watching the run also fires the read-only
+    // helpers behind Suggest/Feedback. None of these carry an exclusive
+    // write-set, so they must never preempt the run-all's checkpoints.
+    const boardPressure = Promise.allSettled([
+      manager.runCommitSuggest('prompt'),
+      manager.runFeedbackReply('prompt', 'Feedback'),
+    ]);
+
+    const finalStatus = await waitForTaskStatus(
+      manager,
+      runAllId as string,
+      (s) => s === 'done' || s === 'error' || s === 'superseded',
+    );
+    expect(finalStatus).toBe('done');
+    expect(commits).toEqual([0, 1]);
+    expect(onRunComplete).toHaveBeenCalledOnce();
+    const runAllTask = manager.getStatus().find((t) => t.id === runAllId);
+    expect(runAllTask?.lines.join('\n')).not.toContain('[superseded]');
+
+    await boardPressure;
   });
 
   describe('Fixes', () => {

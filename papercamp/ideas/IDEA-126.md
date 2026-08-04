@@ -2,7 +2,7 @@
 id: IDEA-126
 title: Read-only helper tasks silently supersede a running run-all
 type: fix
-status: idea
+status: review
 created: 2026-08-04
 tags:
   - agents
@@ -29,5 +29,5 @@ Related: the post-phase gate's check commands are hardcoded to this repo's stack
       Compare against `lastExclusiveLaunchedId` so board helpers can no longer evict a running build.
 - [x] Add a loud, honest `superseded` outcome
       Push a `[superseded] …` line and finalize legitimate supersession with outcome `superseded`, never `error`.
-- [ ] Verify with a run-all under board pressure
+- [x] Verify with a run-all under board pressure
       Launch Suggest/Feedback helpers mid-run and confirm the run-all completes and never silently bails.
