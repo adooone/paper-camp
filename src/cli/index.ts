@@ -152,10 +152,29 @@ program
 program
   .command('dev')
   .description('Start the local dashboard')
-  .option('-p, --port <number>', 'port to listen on', '3333')
-  .action(async (opts: { port: string }) => {
-    const port = Number(opts.port);
+  .option(
+    '-p, --port <number>',
+    'port to listen on (default: papercamp/config.json port, else 3333)',
+  )
+  .action(async (opts: { port?: string }) => {
     const root = process.cwd();
+    // Precedence: explicit flag > the port the Settings page writes to
+    // papercamp/config.json > 3333.
+    let configPort: number | undefined;
+    if (!opts.port) {
+      const raw = await readFile(resolve(root, 'papercamp', 'config.json'), 'utf-8').catch(
+        () => null,
+      );
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw) as { port?: unknown };
+          if (typeof parsed.port === 'number' && Number.isFinite(parsed.port)) {
+            configPort = parsed.port;
+          }
+        } catch {}
+      }
+    }
+    const port = opts.port ? Number(opts.port) : (configPort ?? 3333);
     try {
       await startDevServer({ root, port });
       console.log(`Paper Camp dashboard running at http://localhost:${port}`);

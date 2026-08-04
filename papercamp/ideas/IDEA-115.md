@@ -2,7 +2,7 @@
 id: IDEA-115
 title: npm package is broken on Linux — bundled node-pty can't load
 type: fix
-status: in-progress
+status: review
 created: 2026-08-04
 updated: 2026-08-04
 tags:
@@ -25,3 +25,4 @@ The top-level import chain pulls node-pty in for every command, so even `init` �
 
 ### Thread
 - [x] 2026-08-04 [log] [agent] Run-all parked on phase 4 ("Release (workaround until then: run the CLI from a source clone with bun)") — the agent needs a decision: Do you want me to open a PR from this branch (`fix/idea-115-...`) into `main` so release-please can cut the fix release, or will you handle the merge/release yourself? I won't push/merge without your confirmation.
+- [x] 2026-08-04 [log] [agent] 0.13.1 released by owner and verified in a real Linux consumer repo (func-ui, pnpm 10): install clean, `paper-camp --version` loads with no pty.node crash, `paper-camp dev` boots and serves the dashboard. Status → review. One cosmetic find while verifying: `-V/--version` reports 0.1.0 instead of the package version.

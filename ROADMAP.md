@@ -59,11 +59,21 @@ The loop works; make it smarter and more observable.
   fixable; review state as part of the idea's story.
 - **Notifications** — a phase finishing, a check failing, or a PR going green
   shouldn't require watching the Stack panel.
+  - → IDEA-118 (the pull side: a parked-decisions inbox)
+- **Run & monitor** — the dev loop on the desk: each project declares its
+  services and checks in `papercamp/config.json`; the desk starts/stops them,
+  tails logs, mirrors CI and the release train, and offers the existing
+  agent-fix loop on a failing check. Dev-loop-sized on purpose — link out to
+  real observability rather than rebuilding it.
+  - → IDEA-119
 
 ## Horizon 3 — Beyond one desk
 
 - **Multi-project** — a workspace switcher over several corpora; one desk,
-  many repos.
+  many repos. A big bet: graduates as a Subject.
+  - → IDEA-117
+  - → IDEA-118
+  - → IDEA-123
 - **Collaboration** — the corpus is already git-shareable; add presence and
   merge-friendly conventions so two people (or one person and a remote fleet)
   can share a desk without stepping on each other.
@@ -91,6 +101,9 @@ authored it.
 - **The format as the product** — document the corpus schema properly so other
   tools (editors, bots, dashboards) can read and write it. Paper Camp the app
   is one client of Paper Camp the format.
+  - → IDEA-121 (doctor: validate + migrate the format)
+  - → IDEA-122 (MCP as the guarded agent write path)
+  - → IDEA-123 (cross-corpus links in the schema)
 
 ## Standing concerns
 

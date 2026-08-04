@@ -37,7 +37,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           BRANCH: ${{ github.ref_name }}
         run: |
-          PLAN_ID=$(echo "$BRANCH" | grep -oP '[a-z]+-\d+' || true)
+          PLAN_ID=$(echo "$BRANCH" | grep -oP '[a-z]+-\d+' | head -1 || true)
           if [ -z "$PLAN_ID" ]; then
             echo "Branch '$BRANCH' does not match plan-ID pattern — skipping PR creation"
             exit 0
