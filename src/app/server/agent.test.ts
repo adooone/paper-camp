@@ -22,7 +22,15 @@ vi.mock('./agents', () => {
     command: process.execPath,
     buildArgs: (prompt: string) =>
       agentScript.buildArgs ? agentScript.buildArgs(prompt) : ['-e', agentScript.current],
-    parseLine: (line: string) => (line.trim() ? { text: line.trim() } : null),
+    parseLine: (line: string) => {
+      const text = line.trim();
+      if (!text) return null;
+      if (text.startsWith('PERMISSION-DENIED:')) {
+        const reason = text.slice('PERMISSION-DENIED:'.length).trim();
+        return { text: reason, error: true, reason };
+      }
+      return { text };
+    },
     options: {},
   };
   return {
@@ -317,6 +325,22 @@ describe('startRunAllPhases', () => {
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(planFile).toContain('### Thread');
     expect(planFile).toContain('the agent needs a decision: which auth flow should this use?');
+  });
+
+  it('carries a permission-denial reason into the run-all failure line', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `
+console.log('PERMISSION-DENIED: read outside workspace: /home/user/dev/paper-ui/select.tsx')
+process.exit(1)
+`;
+    const manager = createAgentManager(root);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain(
+      '[fail] phase 1 — read outside workspace: /home/user/dev/paper-ui/select.tsx, stopping',
+    );
   });
 
   it('short-circuits to escalation when the fix pass declares a blocker, without exhausting the cap', async () => {
@@ -918,6 +942,33 @@ describe('task log', () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
     expect(entry.outcome).toBe('error');
+  });
+
+  it('carries a permission-denial reason onto the error entry instead of a bare outcome', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `
+console.log('PERMISSION-DENIED: read outside workspace: /home/user/dev/paper-ui/select.tsx')
+process.exit(1)
+`;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    const logPath = join(root, 'papercamp', 'tasks.log');
+    const start = Date.now();
+    let entry: { outcome?: string; reason?: string } = {};
+    while (Date.now() - start < 2000) {
+      try {
+        const raw = await readFile(logPath, 'utf-8');
+        entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
+        if (entry.outcome) break;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(entry.reason).toBe('read outside workspace: /home/user/dev/paper-ui/select.tsx');
   });
 
   it('persists the finished task’s output lines to a per-task file', async () => {

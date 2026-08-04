@@ -592,6 +592,7 @@ export interface TaskLogEntry {
   startedAt: string;
   endedAt: string;
   outcome: 'done' | 'error' | 'superseded';
+  reason?: string;
 }
 
 export interface TrailHop<T> {

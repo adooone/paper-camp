@@ -50,6 +50,40 @@ const completed = (id: string) => ({
   lines: ['line one'],
 });
 
+describe('logTaskCompletion reason', () => {
+  it('carries the failing cause onto the entry instead of a bare outcome', async () => {
+    const root = makeRoot();
+    const id = 'eeeeeeee-0000-0000-0000-000000000006';
+    await logTaskCompletion(
+      root,
+      { ...completed(id), errorReason: 'read outside workspace: /home/user/dev/paper-ui' },
+      'error',
+    );
+
+    const raw = readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const logged = raw
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => JSON.parse(l))
+      .find((e) => e.id === id);
+    expect(logged.reason).toBe('read outside workspace: /home/user/dev/paper-ui');
+  });
+
+  it('omits the reason field when the task carries no error cause', async () => {
+    const root = makeRoot();
+    const id = 'ffffffff-0000-0000-0000-000000000007';
+    await logTaskCompletion(root, completed(id), 'done');
+
+    const raw = readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const logged = raw
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => JSON.parse(l))
+      .find((e) => e.id === id);
+    expect(logged.reason).toBeUndefined();
+  });
+});
+
 describe('logTaskCompletion retention', () => {
   it('drops runs older than the retention window and keeps recent ones', async () => {
     const root = makeRoot();

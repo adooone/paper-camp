@@ -81,6 +81,7 @@ export interface AgentTask {
   proc: ChildProcess;
   lines: string[];
   errorKind?: 'auth';
+  errorReason?: string;
 }
 
 export function readDefaultAgentIds(root: string): DefaultAgentsMap {
@@ -439,6 +440,7 @@ export function createAgentManager(
       if (isTaskDone(task) || !line.trim()) return;
       const parsed = task.adapter.parseLine(line);
       if (!parsed) return;
+      if (parsed.reason) task.errorReason = parsed.reason;
       pushLine(task, parsed.text);
       if (parsed.done) {
         finishTask(task, Boolean(parsed.error));
@@ -488,6 +490,10 @@ export function createAgentManager(
     effort: string | undefined,
     opts: { guardSuperseded?: boolean; trackBlocker?: boolean } = {},
   ): Promise<{ ok: boolean; timedOut: boolean; stderr: string }> {
+    // Cleared per attempt: this task object is reused across a queue's items and a
+    // fix pass's retries, so a stale reason from an earlier, ultimately-successful
+    // attempt must never be attributed to a later, unrelated failure.
+    task.errorReason = undefined;
     const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
     task.proc = proc;
 
@@ -496,6 +502,7 @@ export function createAgentManager(
       rl.on('line', (line) => {
         if (opts.guardSuperseded && isSuperseded(task)) return;
         const parsed = adapter.parseLine(line);
+        if (parsed?.reason) task.errorReason = parsed.reason;
         if (parsed?.text && parsed.text !== 'Agent is working…') {
           pushLine(task, `  ${parsed.text}`);
           if (opts.trackBlocker) {
@@ -833,7 +840,12 @@ export function createAgentManager(
           } else {
             failed++;
             if (stderr.trim()) pushLine(task, stderr.trim());
-            pushLine(task, `[fail] ${plan.id} — agent error`);
+            pushLine(
+              task,
+              task.errorReason
+                ? `[fail] ${plan.id} — ${task.errorReason}`
+                : `[fail] ${plan.id} — agent error`,
+            );
           }
         }
 
@@ -953,7 +965,12 @@ export function createAgentManager(
       if (!exitedOk) {
         failed++;
         if (stderr.trim()) pushLine(task, stderr.trim());
-        pushLine(task, `[fail] ${kind} ${i + 1} — agent error, stopping`);
+        pushLine(
+          task,
+          task.errorReason
+            ? `[fail] ${kind} ${i + 1} — ${task.errorReason}, stopping`
+            : `[fail] ${kind} ${i + 1} — agent error, stopping`,
+        );
         break;
       }
 

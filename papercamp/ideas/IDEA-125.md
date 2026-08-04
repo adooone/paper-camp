@@ -21,7 +21,7 @@ Workaround meanwhile: pre-grant sibling-repo read access in the agent's permissi
 ### Phases
 - [x] Capture the permission-ask cause from the agent harness
       Detect the `external_directory` (and sibling permission) event and extract a human string like "read outside workspace: <path>".
-- [ ] Record the cause in tasks.log and task detail
+- [x] Record the cause in tasks.log and task detail
       Carry the failing reason on the entry instead of a bare `error`, and surface it in the task detail view.
 - [ ] Intercept the ask instead of auto-denying
       Stop the headless runner from instantly replying with a denial when a permission ask arrives mid-run.
