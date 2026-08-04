@@ -168,8 +168,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
     {
       method: 'POST',
       path: '/api/agent/login-relay/start',
-      handle: (_req, res) => {
-        const handle = startClaudeLoginRelay(root, {
+      handle: async (_req, res) => {
+        const handle = await startClaudeLoginRelay(root, {
           onLoginConfirmed: () => {
             agent
               .resumeAuthParkedTasks(() => status.runChecksAndWait())

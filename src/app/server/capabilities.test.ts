@@ -1,9 +1,4 @@
-import { spawnSync } from 'node:child_process';
-import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   probeAgentAuthStatus,
   probeCapabilities,
@@ -11,35 +6,62 @@ import {
   runConnect,
 } from './capabilities';
 
-const originalPath = process.env.PATH;
-const originalHome = process.env.HOME;
-const roots: string[] = [];
+// Every service probes through `run` (src/app/server/run.ts). Mocking that single
+// choke point keeps these tests to in-memory dispatch — no real subprocesses, no
+// temp git repos, no PATH shims. A per-command handler stands in for a fake binary;
+// `git` is stateful so the `git init` connect flow can flip an empty dir into a repo.
+type RunResult = { code: number | null; stdout: string; stderr: string };
 
-/** Prepends a fake executable named `name` running `script` onto PATH. */
-function installBin(name: string, script: string): void {
-  const dir = mkdtempSync(join(tmpdir(), `papercamp-cap-bin-${name}-`));
-  writeFileSync(join(dir, name), `#!/bin/sh\n${script}\n`);
-  chmodSync(join(dir, name), 0o755);
-  process.env.PATH = `${dir}:${process.env.PATH}`;
-}
+const mock = vi.hoisted(() => {
+  const ok = (stdout = ''): RunResult => ({ code: 0, stdout, stderr: '' });
+  const fail = (stderr = ''): RunResult => ({ code: 1, stdout: '', stderr });
+  const notInstalled: RunResult = { code: null, stdout: '', stderr: '' };
+  const bins = new Map<string, (args: string[]) => RunResult>();
+  const git = { inRepo: true, name: 'Test User', email: 'test@example.com', origin: '' };
 
-function git(cwd: string, ...args: string[]): void {
-  const result = spawnSync('git', args, { cwd, encoding: 'utf-8' });
-  if (result.status !== 0) {
-    throw new Error(`git ${args.join(' ')} failed: ${result.stderr}`);
+  function dispatch(command: string, args: string[]): RunResult {
+    if (command === 'git') {
+      const sub = args.join(' ');
+      if (sub === 'rev-parse --is-inside-work-tree') return git.inRepo ? ok('true') : fail();
+      if (sub === 'config user.name') return ok(git.name);
+      if (sub === 'config user.email') return ok(git.email);
+      if (sub === 'remote get-url origin') return git.origin ? ok(git.origin) : fail();
+      if (sub === 'init') {
+        git.inRepo = true;
+        return ok();
+      }
+      return fail();
+    }
+    return bins.get(command)?.(args) ?? notInstalled;
   }
-}
 
-async function initRepo(withIdentity = true): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'papercamp-cap-repo-'));
-  roots.push(root);
-  git(root, 'init', '-b', 'main');
-  if (withIdentity) {
-    git(root, 'config', 'user.email', 'test@example.com');
-    git(root, 'config', 'user.name', 'Test User');
-  }
-  return root;
-}
+  return {
+    ok,
+    fail,
+    git,
+    dispatch,
+    bin: (name: string, handler: (args: string[]) => RunResult) => bins.set(name, handler),
+    reset: () => {
+      bins.clear();
+      Object.assign(git, {
+        inRepo: true,
+        name: 'Test User',
+        email: 'test@example.com',
+        origin: '',
+      });
+    },
+  };
+});
+
+vi.mock('./run', () => ({
+  run: (command: string, args: string[]) => Promise.resolve(mock.dispatch(command, args)),
+}));
+
+const ROOT = '/repo';
+
+beforeEach(() => {
+  mock.reset();
+});
 
 function byId(capabilities: Awaited<ReturnType<typeof probeCapabilities>>, id: string) {
   const found = capabilities.find((c) => c.id === id);
@@ -47,102 +69,70 @@ function byId(capabilities: Awaited<ReturnType<typeof probeCapabilities>>, id: s
   return found;
 }
 
-// git config falls back to a machine-wide/global config, so identity tests point
-// HOME at an empty dir to isolate them from whatever is set on the test machine.
-beforeEach(async () => {
-  const home = await mkdtemp(join(tmpdir(), 'papercamp-cap-home-'));
-  roots.push(home);
-  process.env.HOME = home;
-});
-
-afterEach(async () => {
-  process.env.PATH = originalPath;
-  process.env.HOME = originalHome;
-  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
-});
-
 describe('probeCapabilities: git', () => {
   it('reports missing when the directory is not a git repository', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'papercamp-cap-noropo-'));
-    roots.push(root);
-    const capabilities = await probeCapabilities(root);
-    expect(byId(capabilities, 'git').status).toBe('missing');
-  }, 15000);
+    mock.git.inRepo = false;
+    expect(byId(await probeCapabilities(ROOT), 'git').status).toBe('missing');
+  });
 
   it('reports warn when the repo has no user.name/user.email', async () => {
-    const root = await initRepo(false);
-    const capabilities = await probeCapabilities(root);
-    expect(byId(capabilities, 'git').status).toBe('warn');
-  }, 15000);
+    mock.git.name = '';
+    mock.git.email = '';
+    expect(byId(await probeCapabilities(ROOT), 'git').status).toBe('warn');
+  });
 
   it('reports ok with the identity when configured', async () => {
-    const root = await initRepo(true);
-    const capabilities = await probeCapabilities(root);
-    const git = byId(capabilities, 'git');
+    const git = byId(await probeCapabilities(ROOT), 'git');
     expect(git.status).toBe('ok');
     expect(git.detail).toBe('Test User <test@example.com>');
-  }, 15000);
+  });
 });
 
 describe('probeCapabilities: gh', () => {
   it('reports missing when gh is not on PATH', async () => {
-    const root = await initRepo();
-    process.env.PATH = '/nonexistent';
-    const capabilities = await probeCapabilities(root);
-    expect(byId(capabilities, 'gh').status).toBe('missing');
+    expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('missing');
   });
 
   it('reports warn when gh is installed but not authenticated', async () => {
-    const root = await initRepo();
-    installBin('gh', 'if [ "$1" = "--version" ]; then exit 0; else exit 1; fi');
-    const capabilities = await probeCapabilities(root);
-    expect(byId(capabilities, 'gh').status).toBe('warn');
-  }, 15000);
+    mock.bin('gh', (args) => (args[0] === '--version' ? mock.ok() : mock.fail()));
+    expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('warn');
+  });
 
   it('reports warn when authenticated but the repo has no origin remote', async () => {
-    const root = await initRepo();
-    installBin('gh', 'if [ "$1" = "repo" ]; then exit 1; else exit 0; fi');
-    const capabilities = await probeCapabilities(root);
-    const gh = byId(capabilities, 'gh');
+    mock.bin('gh', () => mock.ok());
+    const gh = byId(await probeCapabilities(ROOT), 'gh');
     expect(gh.status).toBe('warn');
     expect(gh.detail).toMatch(/no origin remote/);
-  }, 15000);
+  });
 
   it('reports warn when origin is set but unreachable on GitHub', async () => {
-    const root = await initRepo();
-    git(root, 'remote', 'add', 'origin', 'https://example.invalid/owner/repo.git');
-    installBin('gh', 'if [ "$1" = "repo" ]; then exit 1; else exit 0; fi');
-    const capabilities = await probeCapabilities(root);
-    const gh = byId(capabilities, 'gh');
+    mock.git.origin = 'https://example.invalid/owner/repo.git';
+    mock.bin('gh', (args) => (args[0] === 'repo' ? mock.fail() : mock.ok()));
+    const gh = byId(await probeCapabilities(ROOT), 'gh');
     expect(gh.status).toBe('warn');
     expect(gh.detail).toMatch(/not reachable/);
-  }, 15000);
+  });
 
   it('reports ok when installed, authenticated, and origin is reachable', async () => {
-    const root = await initRepo();
-    git(root, 'remote', 'add', 'origin', 'https://example.invalid/owner/repo.git');
-    installBin('gh', 'exit 0');
-    const capabilities = await probeCapabilities(root);
-    const gh = byId(capabilities, 'gh');
+    mock.git.origin = 'https://example.invalid/owner/repo.git';
+    mock.bin('gh', () => mock.ok());
+    const gh = byId(await probeCapabilities(ROOT), 'gh');
     expect(gh.status).toBe('ok');
     expect(gh.detail).toBe('https://example.invalid/owner/repo.git');
-  }, 15000);
+  });
 });
 
 describe('probeCapabilities: agent adapters', () => {
   it('reports missing when an agent CLI is not on PATH', async () => {
-    const root = await initRepo();
-    process.env.PATH = '/nonexistent';
-    const capabilities = await probeCapabilities(root);
+    const capabilities = await probeCapabilities(ROOT);
     expect(byId(capabilities, 'agent:claude-code').status).toBe('missing');
     expect(byId(capabilities, 'agent:opencode').status).toBe('missing');
   });
 
   it('reports ok with the reported version when an agent CLI is present', async () => {
-    const root = await initRepo();
-    installBin('claude', "echo '1.2.3 (Claude Code)'");
-    installBin('opencode', "echo '9.9.9'");
-    const capabilities = await probeCapabilities(root);
+    mock.bin('claude', () => mock.ok('1.2.3 (Claude Code)'));
+    mock.bin('opencode', () => mock.ok('9.9.9'));
+    const capabilities = await probeCapabilities(ROOT);
     expect(byId(capabilities, 'agent:claude-code')).toEqual({
       id: 'agent:claude-code',
       status: 'ok',
@@ -164,148 +154,139 @@ function byConnId(connections: Awaited<ReturnType<typeof probeConnections>>, id:
 
 describe('probeConnections', () => {
   it('reports git as never authenticated, regardless of status', async () => {
-    const root = await initRepo(false);
-    const connections = await probeConnections(root);
-    const git = byConnId(connections, 'git');
+    mock.git.name = '';
+    mock.git.email = '';
+    const git = byConnId(await probeConnections(ROOT), 'git');
     expect(git.status).toBe('warn');
     expect(git.authenticated).toBeNull();
     expect(git.label).toBe('Git');
-  }, 15000);
+  });
 
   it('reports gh as unauthenticated null when not installed', async () => {
-    const root = await initRepo();
-    process.env.PATH = '/nonexistent';
-    const connections = await probeConnections(root);
-    expect(byConnId(connections, 'gh').authenticated).toBeNull();
+    expect(byConnId(await probeConnections(ROOT), 'gh').authenticated).toBeNull();
   });
 
   it('reports gh as authenticated false when installed but signed out', async () => {
-    const root = await initRepo();
-    installBin('gh', 'if [ "$1" = "--version" ]; then exit 0; else exit 1; fi');
-    const connections = await probeConnections(root);
-    expect(byConnId(connections, 'gh').authenticated).toBe(false);
+    mock.bin('gh', (args) => (args[0] === '--version' ? mock.ok() : mock.fail()));
+    expect(byConnId(await probeConnections(ROOT), 'gh').authenticated).toBe(false);
   });
 
   it('reports gh as authenticated true when signed in', async () => {
-    const root = await initRepo();
-    git(root, 'remote', 'add', 'origin', 'https://example.invalid/owner/repo.git');
-    installBin('gh', 'exit 0');
-    const connections = await probeConnections(root);
-    expect(byConnId(connections, 'gh').authenticated).toBe(true);
-  }, 15000);
+    mock.git.origin = 'https://example.invalid/owner/repo.git';
+    mock.bin('gh', () => mock.ok());
+    expect(byConnId(await probeConnections(ROOT), 'gh').authenticated).toBe(true);
+  });
 
   it('reports claude-code as authenticated using the claude auth status probe', async () => {
-    const root = await initRepo();
-    installBin(
-      'claude',
-      `echo '{"loggedIn": true, "authMethod": "claude.ai", "apiProvider": "firstParty"}'`,
+    mock.bin('claude', () =>
+      mock.ok('{"loggedIn": true, "authMethod": "claude.ai", "apiProvider": "firstParty"}'),
     );
-    const connections = await probeConnections(root);
-    expect(byConnId(connections, 'agent:claude-code').authenticated).toBe(true);
+    expect(byConnId(await probeConnections(ROOT), 'agent:claude-code').authenticated).toBe(true);
   });
 
   it('reports opencode as unauthenticated null — it has no auth status probe', async () => {
-    const root = await initRepo();
-    installBin('opencode', "echo '9.9.9'");
-    const connections = await probeConnections(root);
-    expect(byConnId(connections, 'agent:opencode').authenticated).toBeNull();
+    mock.bin('opencode', () => mock.ok('9.9.9'));
+    expect(byConnId(await probeConnections(ROOT), 'agent:opencode').authenticated).toBeNull();
   });
 });
 
 describe('probeConnections: connect action', () => {
   it('offers a runnable git init command when the directory is not a git repo', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'papercamp-cap-noropo-'));
-    roots.push(root);
-    const connections = await probeConnections(root);
-    expect(byConnId(connections, 'git').connect).toEqual({
+    mock.git.inRepo = false;
+    expect(byConnId(await probeConnections(ROOT), 'git').connect).toEqual({
       kind: 'command',
       command: 'git init',
       runnable: true,
     });
-  }, 15000);
+  });
 
   it('offers gh auth login as a non-runnable command when signed out', async () => {
-    const root = await initRepo();
-    installBin('gh', 'if [ "$1" = "--version" ]; then exit 0; else exit 1; fi');
-    const connections = await probeConnections(root);
-    expect(byConnId(connections, 'gh').connect).toEqual({
+    mock.bin('gh', (args) => (args[0] === '--version' ? mock.ok() : mock.fail()));
+    expect(byConnId(await probeConnections(ROOT), 'gh').connect).toEqual({
       kind: 'command',
       command: 'gh auth login',
     });
-  }, 15000);
+  });
 
   it('offers no connect action once a service is ok', async () => {
-    const root = await initRepo();
-    const connections = await probeConnections(root);
-    expect(byConnId(connections, 'git').connect).toBeNull();
-  }, 15000);
+    expect(byConnId(await probeConnections(ROOT), 'git').connect).toBeNull();
+  });
 });
 
 describe('runConnect', () => {
   it('returns null for an unknown service id', async () => {
-    const root = await initRepo();
-    expect(await runConnect('nope', root)).toBeNull();
+    expect(await runConnect('nope', ROOT)).toBeNull();
   });
 
   it('runs a runnable command and reports the refreshed status', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'papercamp-cap-noropo-'));
-    roots.push(root);
-    const connection = await runConnect('git', root);
+    mock.git.inRepo = false;
+    const connection = await runConnect('git', ROOT);
     expect(connection?.status).not.toBe('missing');
     expect(connection?.connect).not.toEqual(expect.objectContaining({ command: 'git init' }));
-  }, 15000);
+  });
 
   it('leaves a non-runnable command untouched — gh stays unauthenticated', async () => {
-    const root = await initRepo();
-    installBin('gh', 'if [ "$1" = "--version" ]; then exit 0; else exit 1; fi');
-    const connection = await runConnect('gh', root);
+    mock.bin('gh', (args) => (args[0] === '--version' ? mock.ok() : mock.fail()));
+    const connection = await runConnect('gh', ROOT);
     expect(connection?.authenticated).toBe(false);
     expect(connection?.connect).toEqual({ kind: 'command', command: 'gh auth login' });
-  }, 15000);
+  });
 });
 
 describe('probeAgentAuthStatus', () => {
   it('reports unknown for an agent other than claude-code', async () => {
-    const root = await initRepo();
-    const status = await probeAgentAuthStatus('opencode', root);
-    expect(status).toEqual({ loggedIn: null, authMethod: null, apiProvider: null });
+    expect(await probeAgentAuthStatus('opencode', ROOT)).toEqual({
+      loggedIn: null,
+      authMethod: null,
+      apiProvider: null,
+    });
   });
 
   it('reports unknown when the claude CLI is not on PATH', async () => {
-    const root = await initRepo();
-    process.env.PATH = '/nonexistent';
-    const status = await probeAgentAuthStatus('claude-code', root);
-    expect(status).toEqual({ loggedIn: null, authMethod: null, apiProvider: null });
+    expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
+      loggedIn: null,
+      authMethod: null,
+      apiProvider: null,
+    });
   });
 
   it('reports unknown when `claude auth status` exits non-zero', async () => {
-    const root = await initRepo();
-    installBin('claude', 'exit 1');
-    const status = await probeAgentAuthStatus('claude-code', root);
-    expect(status).toEqual({ loggedIn: null, authMethod: null, apiProvider: null });
+    mock.bin('claude', () => mock.fail());
+    expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
+      loggedIn: null,
+      authMethod: null,
+      apiProvider: null,
+    });
   });
 
   it('reports unknown when `claude auth status` prints unparsable output', async () => {
-    const root = await initRepo();
-    installBin('claude', "echo 'not json'");
-    const status = await probeAgentAuthStatus('claude-code', root);
-    expect(status).toEqual({ loggedIn: null, authMethod: null, apiProvider: null });
+    mock.bin('claude', () => mock.ok('not json'));
+    expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
+      loggedIn: null,
+      authMethod: null,
+      apiProvider: null,
+    });
   });
 
   it('reports the parsed auth state when logged in', async () => {
-    const root = await initRepo();
-    installBin(
-      'claude',
-      `echo '{"loggedIn": true, "authMethod": "claude.ai", "apiProvider": "firstParty"}'`,
+    mock.bin('claude', () =>
+      mock.ok('{"loggedIn": true, "authMethod": "claude.ai", "apiProvider": "firstParty"}'),
     );
-    const status = await probeAgentAuthStatus('claude-code', root);
-    expect(status).toEqual({ loggedIn: true, authMethod: 'claude.ai', apiProvider: 'firstParty' });
+    expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
+      loggedIn: true,
+      authMethod: 'claude.ai',
+      apiProvider: 'firstParty',
+    });
   });
 
   it('reports the parsed auth state when logged out', async () => {
-    const root = await initRepo();
-    installBin('claude', `echo '{"loggedIn": false, "authMethod": null, "apiProvider": null}'`);
-    const status = await probeAgentAuthStatus('claude-code', root);
-    expect(status).toEqual({ loggedIn: false, authMethod: null, apiProvider: null });
+    mock.bin('claude', () =>
+      mock.ok('{"loggedIn": false, "authMethod": null, "apiProvider": null}'),
+    );
+    expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
+      loggedIn: false,
+      authMethod: null,
+      apiProvider: null,
+    });
   });
 });

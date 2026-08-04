@@ -43,7 +43,7 @@ export default defineConfig(({ command }) => {
       rollupOptions: {
         external: (id) =>
           id.startsWith('node:') ||
-          ['react', 'react-dom', 'commander', 'zustand', 'zod', 'fs', 'path', 'url', 'http'].includes(id),
+          ['react', 'react-dom', 'commander', 'zustand', 'zod', 'node-pty', 'fs', 'path', 'url', 'http'].includes(id),
         output: {
           entryFileNames: '[name]/index.js',
           chunkFileNames: 'chunks/[name].[hash].js',

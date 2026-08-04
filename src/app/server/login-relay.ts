@@ -1,4 +1,4 @@
-import * as pty from 'node-pty';
+import type * as Pty from 'node-pty';
 import type { LoginRelayPhase, LoginRelayState } from '../../types';
 import { claudeAuthStatus } from './services';
 
@@ -31,7 +31,7 @@ function extractAuthorizeUrl(buffer: string): string | null {
   return match ? match[0] : null;
 }
 
-function killWithEscalation(proc: pty.IPty): void {
+function killWithEscalation(proc: Pty.IPty): void {
   let exited = false;
   proc.onExit(() => {
     exited = true;
@@ -75,19 +75,47 @@ function pollAuthStatus(root: string, opts: LoginRelayOptions): void {
   void tick();
 }
 
-export function startClaudeLoginRelay(
+export async function startClaudeLoginRelay(
   root: string,
   opts: LoginRelayOptions = {},
-): LoginRelayHandle {
+): Promise<LoginRelayHandle> {
   if (current && !isDone(current.getState().phase)) return current;
 
   const state: LoginRelayState = { phase: 'starting', authorizeUrl: null };
   let buffer = '';
+  let proc: Pty.IPty | undefined;
+  let cancelledBeforeSpawn = false;
+
+  // Reserved synchronously (before the `await import` below yields) so a second call
+  // racing in during module load still sees `current` and returns this same handle
+  // instead of spawning a competing `claude auth login`.
+  const handle: LoginRelayHandle = {
+    getState: () => ({ ...state }),
+    cancel: () => {
+      if (isDone(state.phase)) return;
+      state.phase = 'cancelled';
+      if (proc) killWithEscalation(proc);
+      else cancelledBeforeSpawn = true;
+    },
+  };
+  current = handle;
+
+  // Loaded lazily so requiring this module (pulled in by every `dev` route) doesn't
+  // touch node-pty's native binding — only actually starting a login relay does.
+  let pty: typeof import('node-pty');
+  try {
+    pty = await import('node-pty');
+  } catch (err) {
+    state.phase = 'error';
+    state.error = `The sign-in relay isn't available in this environment: ${(err as Error).message}`;
+    return handle;
+  }
+
+  if (cancelledBeforeSpawn) return handle;
 
   // A no-PTY sandbox or a missing `claude` binary makes pty.spawn throw synchronously
   // (rather than emit an async 'error' like child_process.spawn) — surface that as the
   // same 'error' phase so the client falls back to the copy-command guide.
-  let proc: pty.IPty;
   try {
     proc = pty.spawn('claude', ['auth', 'login'], {
       name: 'xterm-color',
@@ -97,15 +125,8 @@ export function startClaudeLoginRelay(
       env: process.env as Record<string, string>,
     });
   } catch (err) {
-    const handle: LoginRelayHandle = {
-      getState: () => ({
-        phase: 'error',
-        authorizeUrl: null,
-        error: `The sign-in relay isn't available in this environment: ${(err as Error).message}`,
-      }),
-      cancel: () => {},
-    };
-    current = handle;
+    state.phase = 'error';
+    state.error = `The sign-in relay isn't available in this environment: ${(err as Error).message}`;
     return handle;
   }
 
@@ -113,14 +134,14 @@ export function startClaudeLoginRelay(
     if (state.phase !== 'starting') return;
     state.phase = 'error';
     state.error = 'Timed out waiting for the sign-in link from `claude auth login`';
-    killWithEscalation(proc);
+    if (proc) killWithEscalation(proc);
   }, opts.urlTimeoutMs ?? URL_TIMEOUT_MS);
 
   const sessionTimeout = setTimeout(() => {
     if (isDone(state.phase)) return;
     state.phase = 'error';
     state.error = 'Sign-in was not completed in time';
-    killWithEscalation(proc);
+    if (proc) killWithEscalation(proc);
   }, opts.sessionTimeoutMs ?? SESSION_TIMEOUT_MS);
 
   proc.onData((chunk) => {
@@ -147,17 +168,14 @@ export function startClaudeLoginRelay(
     }
   });
 
-  const handle: LoginRelayHandle = {
-    getState: () => ({ ...state }),
-    cancel: () => {
-      if (isDone(state.phase)) return;
-      clearTimeout(urlTimeout);
-      clearTimeout(sessionTimeout);
-      state.phase = 'cancelled';
-      killWithEscalation(proc);
-    },
+  handle.cancel = () => {
+    if (isDone(state.phase)) return;
+    clearTimeout(urlTimeout);
+    clearTimeout(sessionTimeout);
+    state.phase = 'cancelled';
+    if (proc) killWithEscalation(proc);
   };
-  current = handle;
+
   return handle;
 }
 

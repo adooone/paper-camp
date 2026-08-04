@@ -2,8 +2,9 @@
 id: IDEA-115
 title: npm package is broken on Linux — bundled node-pty can't load
 type: fix
-status: planned
+status: in-progress
 created: 2026-08-04
+updated: 2026-08-04
 tags:
   - cli
   - packaging
@@ -17,7 +18,10 @@ tags:
 The top-level import chain pulls node-pty in for every command, so even `init` — which needs no terminal — dies.
 
 ### Phases
-- [ ] Externalize node-pty from the CLI bundle (real runtime dependency, not inlined)
-- [ ] Lazy-import node-pty only where terminal features run, so init/dev never crash on it
-- [ ] Verify `npx @dendelion/paper-camp init && dev` in a fresh Linux consumer repo
-- [ ] Release (workaround until then: run the CLI from a source clone with bun)
+- [x] Externalize node-pty from the CLI bundle (real runtime dependency, not inlined)
+- [x] Lazy-import node-pty only where terminal features run, so init/dev never crash on it
+- [x] Verify `npx @dendelion/paper-camp init && dev` in a fresh Linux consumer repo
+- [x] Release (workaround until then: run the CLI from a source clone with bun)
+
+### Thread
+- [x] 2026-08-04 [log] [agent] Run-all parked on phase 4 ("Release (workaround until then: run the CLI from a source clone with bun)") — the agent needs a decision: Do you want me to open a PR from this branch (`fix/idea-115-...`) into `main` so release-please can cut the fix release, or will you handle the merge/release yourself? I won't push/merge without your confirmation.
