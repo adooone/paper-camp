@@ -219,6 +219,7 @@ function createEmptyAgentState(): AgentManagerState {
     tasks: new Map(),
     clients: new Set(),
     lastLaunchedId: undefined,
+    lastExclusiveLaunchedId: undefined,
     pendingFixReviewResult: null,
   };
 }
@@ -281,6 +282,7 @@ export function createAgentManager(
   function registerTask(task: AgentTask): void {
     tasks.set(task.id, task);
     state.lastLaunchedId = task.id;
+    if (EXCLUSIVE_KINDS.has(task.taskKind)) state.lastExclusiveLaunchedId = task.id;
   }
 
   function newTask(
@@ -1451,6 +1453,7 @@ export function createAgentManager(
 export interface AgentManagerState {
   tasks: Map<string, AgentTask>;
   lastLaunchedId: string | undefined;
+  lastExclusiveLaunchedId: string | undefined;
   // Outlives task replacement: a human can launch another run before pushing,
   // and the verdict must still be there to settle threads once the fix is pushed.
   pendingFixReviewResult: FixReviewResult | null;
