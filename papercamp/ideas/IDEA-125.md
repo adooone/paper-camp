@@ -19,7 +19,7 @@ Two layers to fix:
 Workaround meanwhile: pre-grant sibling-repo read access in the agent's permission config per project.
 
 ### Phases
-- [ ] Capture the permission-ask cause from the agent harness
+- [x] Capture the permission-ask cause from the agent harness
       Detect the `external_directory` (and sibling permission) event and extract a human string like "read outside workspace: <path>".
 - [ ] Record the cause in tasks.log and task detail
       Carry the failing reason on the entry instead of a bare `error`, and surface it in the task detail view.
