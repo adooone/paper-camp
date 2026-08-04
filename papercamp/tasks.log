@@ -23,3 +23,4 @@
 {"id":"66aa5739-9fb4-4748-804d-deb6a7b46b21","taskKind":"draft","planTitle":"Draft plan for IDEA-116","agentId":"claude-code","startedAt":"2026-08-04T19:32:21.562Z","endedAt":"2026-08-04T19:33:10.424Z","outcome":"done"}
 {"id":"f4f66cd5-e5ac-4cb5-b824-650553276da4","taskKind":"draft","planTitle":"Draft plan for IDEA-124","agentId":"claude-code","startedAt":"2026-08-04T19:34:03.996Z","endedAt":"2026-08-04T19:34:28.052Z","outcome":"done"}
 {"id":"f8d54871-6456-4029-a5da-03688337519c","taskKind":"prioritise","planTitle":"Prioritise queue","agentId":"claude-code","startedAt":"2026-08-04T19:34:34.440Z","endedAt":"2026-08-04T19:34:44.698Z","outcome":"done"}
+{"id":"bf8baa36-8047-422d-b081-3666e199c6d7","taskKind":"run-all","planId":"IDEA-126","planTitle":"Read-only helper tasks silently supersede a running run-all","agentId":"claude-code","startedAt":"2026-08-04T19:35:15.851Z","endedAt":"2026-08-04T20:05:54.209Z","outcome":"done"}
