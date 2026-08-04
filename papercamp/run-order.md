@@ -1,1 +1,1 @@
-IDEA-102 — Agent resolves sync-rebase conflicts
+IDEA-115 — npm package is broken on Linux — bundled node-pty can't load

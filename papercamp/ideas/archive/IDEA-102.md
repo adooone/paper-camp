@@ -2,9 +2,9 @@
 id: IDEA-102
 title: Agent resolves sync-rebase conflicts
 type: feat
-status: review
+status: done
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-08-04
 tags:
   - git
   - app

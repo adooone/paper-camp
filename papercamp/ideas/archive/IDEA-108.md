@@ -2,9 +2,9 @@
 id: IDEA-108
 title: Surface a diverged main with a one-click agent fix
 type: feat
-status: review
+status: done
 created: 2026-07-30
-updated: 2026-07-30
+updated: 2026-08-04
 tags:
   - git
   - app
