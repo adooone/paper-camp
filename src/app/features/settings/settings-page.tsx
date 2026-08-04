@@ -185,7 +185,11 @@ const GeneralSection = () => {
     const { ok, error } = await saveConfig({ port });
     if (ok) {
       setConfig((prev) => (prev ? { ...prev, port } : prev));
-      toast({ title: 'Saved', variant: 'success' });
+      toast({
+        title: 'Saved',
+        description: 'Restart `paper-camp dev` to apply the new port.',
+        variant: 'success',
+      });
     } else {
       toast({ title: 'Failed to save', description: error, variant: 'error' });
     }
@@ -288,7 +292,7 @@ const GeneralSection = () => {
               onChange={(e) => setPortInput(e.target.value)}
               onBlur={handleSavePort}
               label="Port"
-              helperText="Default for `paper-camp dev`. Does not affect the running server."
+              helperText="Default for `paper-camp dev`. Restart the server to apply a change."
             />
           </div>
           <Divider />
