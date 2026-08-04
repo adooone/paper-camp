@@ -44,7 +44,7 @@ describe('startClaudeLoginRelay', () => {
     installClaude(
       "echo 'Opening browser to sign in...'; echo 'If the browser did not open, visit: https://claude.com/cai/oauth/authorize?code=true&state=abc'; sleep 5",
     );
-    const handle = startClaudeLoginRelay(process.cwd());
+    const handle = await startClaudeLoginRelay(process.cwd());
     await waitFor(handle, (s) => s.phase === 'awaiting-authorization');
     expect(handle.getState().authorizeUrl).toBe(
       'https://claude.com/cai/oauth/authorize?code=true&state=abc',
@@ -57,34 +57,34 @@ describe('startClaudeLoginRelay', () => {
     installClaude(
       "echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 0.1; exit 0",
     );
-    const handle = startClaudeLoginRelay(process.cwd());
+    const handle = await startClaudeLoginRelay(process.cwd());
     await waitFor(handle, (s) => s.phase === 'success');
   });
 
   it('reports error when the CLI exits non-zero before printing a URL', async () => {
     installClaude("echo 'not logged in' >&2; exit 1");
-    const handle = startClaudeLoginRelay(process.cwd());
+    const handle = await startClaudeLoginRelay(process.cwd());
     await waitFor(handle, (s) => s.phase === 'error');
     expect(handle.getState().authorizeUrl).toBeNull();
   });
 
   it('times out waiting for the URL and kills the process', async () => {
     installClaude('sleep 5');
-    const handle = startClaudeLoginRelay(process.cwd(), { urlTimeoutMs: 100 });
+    const handle = await startClaudeLoginRelay(process.cwd(), { urlTimeoutMs: 100 });
     await waitFor(handle, (s) => s.phase === 'error');
     expect(handle.getState().error).toMatch(/timed out/i);
   });
 
   it('times out an authorization that is never completed', async () => {
     installClaude("echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 5");
-    const handle = startClaudeLoginRelay(process.cwd(), { sessionTimeoutMs: 200 });
+    const handle = await startClaudeLoginRelay(process.cwd(), { sessionTimeoutMs: 200 });
     await waitFor(handle, (s) => s.phase === 'error');
     expect(handle.getState().error).toMatch(/not completed in time/i);
   });
 
   it('cancel() kills a pending login and marks it cancelled', async () => {
     installClaude("echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 5");
-    const handle = startClaudeLoginRelay(process.cwd());
+    const handle = await startClaudeLoginRelay(process.cwd());
     await waitFor(handle, (s) => s.phase === 'awaiting-authorization');
     handle.cancel();
     expect(handle.getState().phase).toBe('cancelled');
@@ -92,8 +92,8 @@ describe('startClaudeLoginRelay', () => {
 
   it('returns the same handle for a second call while one is still pending', async () => {
     installClaude("echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 5");
-    const first = startClaudeLoginRelay(process.cwd());
-    const second = startClaudeLoginRelay(process.cwd());
+    const first = await startClaudeLoginRelay(process.cwd());
+    const second = await startClaudeLoginRelay(process.cwd());
     expect(second).toBe(first);
     expect(getCurrentLoginRelay()).toBe(first);
     first.cancel();
@@ -109,7 +109,7 @@ describe('startClaudeLoginRelay', () => {
        fi`,
     );
     const onLoginConfirmed = vi.fn();
-    const handle = startClaudeLoginRelay(process.cwd(), {
+    const handle = await startClaudeLoginRelay(process.cwd(), {
       authStatusPollMs: 20,
       onLoginConfirmed,
     });
@@ -126,7 +126,7 @@ describe('startClaudeLoginRelay', () => {
        fi`,
     );
     const onLoginConfirmed = vi.fn();
-    const handle = startClaudeLoginRelay(process.cwd(), {
+    const handle = await startClaudeLoginRelay(process.cwd(), {
       authStatusPollMs: 20,
       authStatusPollTimeoutMs: 60,
       onLoginConfirmed,
@@ -140,7 +140,7 @@ describe('startClaudeLoginRelay', () => {
     const spawnSpy = vi.spyOn(pty, 'spawn').mockImplementation(() => {
       throw new Error('ENOENT, ptmx not found');
     });
-    const handle = startClaudeLoginRelay(process.cwd());
+    const handle = await startClaudeLoginRelay(process.cwd());
     expect(handle.getState().phase).toBe('error');
     expect(handle.getState().authorizeUrl).toBeNull();
     expect(handle.getState().error).toMatch(/isn't available in this environment/i);
@@ -151,12 +151,12 @@ describe('startClaudeLoginRelay', () => {
 
   it('starts a fresh relay once the previous one finished', async () => {
     installClaude("echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 5");
-    const first = startClaudeLoginRelay(process.cwd());
+    const first = await startClaudeLoginRelay(process.cwd());
     await waitFor(first, (s) => s.phase === 'awaiting-authorization');
     first.cancel();
     await waitFor(first, (s) => s.phase === 'cancelled');
 
-    const second = startClaudeLoginRelay(process.cwd());
+    const second = await startClaudeLoginRelay(process.cwd());
     expect(second).not.toBe(first);
     second.cancel();
     await waitFor(second, (s) => s.phase === 'cancelled');
