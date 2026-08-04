@@ -17,7 +17,7 @@ tags:
 The top-level import chain pulls node-pty in for every command, so even `init` — which needs no terminal — dies.
 
 ### Phases
-- [ ] Externalize node-pty from the CLI bundle (real runtime dependency, not inlined)
+- [x] Externalize node-pty from the CLI bundle (real runtime dependency, not inlined)
 - [ ] Lazy-import node-pty only where terminal features run, so init/dev never crash on it
 - [ ] Verify `npx @dendelion/paper-camp init && dev` in a fresh Linux consumer repo
 - [ ] Release (workaround until then: run the CLI from a source clone with bun)
