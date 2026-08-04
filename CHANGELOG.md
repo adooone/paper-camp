@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.13.1](https://github.com/adooone/paper-camp/compare/v0.13.0...v0.13.1) (2026-08-04)
+
+
+### Bug Fixes
+
+* **cli:** npm package is broken on Linux — bundled node-pty can't load (IDEA-115) ([#98](https://github.com/adooone/paper-camp/issues/98)) ([78ff376](https://github.com/adooone/paper-camp/commit/78ff37645b666eab85ab48836e2d8d2bdf28aeaf))
+
 ## [0.13.0](https://github.com/adooone/paper-camp/compare/v0.12.0...v0.13.0) (2026-08-03)
 
 
