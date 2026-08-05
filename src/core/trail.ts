@@ -7,7 +7,7 @@ import { parseTaskLog } from './parse/parser';
 import { readEntities } from './readers';
 import { deriveStatus } from './status';
 
-async function readFileMaybe(path: string): Promise<string> {
+export async function readFileMaybe(path: string): Promise<string> {
   try {
     return await readFile(path, 'utf-8');
   } catch {

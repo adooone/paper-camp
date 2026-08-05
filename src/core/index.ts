@@ -4,6 +4,7 @@ export * from './parse';
 export * from './git-pr';
 export * from './scaffold';
 export * from './serialize';
+export * from './release-notes';
 export * from './roadmap';
 export * from './trail';
 export * from '../types/index';

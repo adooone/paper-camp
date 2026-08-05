@@ -18,6 +18,7 @@ import {
 } from '../core/git-pr';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parse';
 import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
+import { formatReleaseNotesMarkdown, resolveReleaseNotes } from '../core/release-notes';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import { computePlanContentHash } from '../core/serialize';
 import {
@@ -563,6 +564,22 @@ program
       stamped++;
     }
     console.log(`Stamped ${stamped} of ${ideas.size} idea(s) with released: ${version}`);
+  });
+
+program
+  .command('release-notes <version>')
+  .description(
+    'Print release notes for <version> grouped by idea instead of by raw commit — one row per ' +
+      'idea (its title, not the commit subject), sectioned the same as the CHANGELOG',
+  )
+  .action(async (version: string) => {
+    const root = process.cwd();
+    const sections = await resolveReleaseNotes(root, version);
+    if (!sections) {
+      fail(`No release range for "${version}" found in CHANGELOG.md`);
+      return;
+    }
+    console.log(formatReleaseNotesMarkdown(version, sections));
   });
 
 program
