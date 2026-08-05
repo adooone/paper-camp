@@ -1,4 +1,3 @@
-{"id":"0e6b9dca-af75-4cbc-8f39-de10849e8e95","taskKind":"run-all","planId":"IDEA-99","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T16:30:21.314Z","endedAt":"2026-08-02T17:07:25.228Z","outcome":"error"}
 {"id":"ff971e3f-24ba-4da9-b4ac-cdfb45b5d882","taskKind":"feedback","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T17:41:58.940Z","endedAt":"2026-08-02T17:42:14.153Z","outcome":"done"}
 {"id":"9d67b806-adc5-4874-8de8-659e369a85b5","taskKind":"feedback","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T17:43:29.682Z","endedAt":"2026-08-02T17:43:44.029Z","outcome":"done"}
 {"id":"df95611f-65a8-49af-9693-eb77f8f60b32","taskKind":"feedback","planTitle":"Project stats view","agentId":"claude-code","startedAt":"2026-08-02T17:44:00.762Z","endedAt":"2026-08-02T17:44:13.640Z","outcome":"done"}
@@ -40,3 +39,4 @@
 {"id":"aacb2a5b-5214-437d-b03b-ddac299a5546","taskKind":"draft","planTitle":"Draft plan for IDEA-131","agentId":"claude-code","startedAt":"2026-08-05T16:19:56.780Z","endedAt":"2026-08-05T16:20:37.495Z","outcome":"done"}
 {"id":"aacb2a5b-5214-437d-b03b-ddac299a5546","taskKind":"draft","planTitle":"Draft plan for IDEA-131","agentId":"claude-code","startedAt":"2026-08-05T16:19:56.780Z","endedAt":"2026-08-05T16:20:37.575Z","outcome":"done"}
 {"id":"baba2079-f069-4888-b013-b5f5683b497b","taskKind":"run-all","planId":"IDEA-131","planTitle":"Faster agent runs and chat replies","agentId":"claude-code","startedAt":"2026-08-05T16:25:00.076Z","endedAt":"2026-08-05T16:56:17.118Z","outcome":"done"}
+{"id":"022dadde-1d07-4346-993e-ab55529b67a7","taskKind":"fix-review","planId":"IDEA-131","planTitle":"Faster agent runs and chat replies","agentId":"claude-code","startedAt":"2026-08-05T17:26:44.047Z","endedAt":"2026-08-05T17:30:56.483Z","outcome":"done"}

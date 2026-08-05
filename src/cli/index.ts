@@ -405,7 +405,9 @@ program
           planDraft: coerceAgentConfig(rawAgents.planDraft),
           ideaExtend: coerceAgentConfig(rawAgents.ideaExtend),
           commitSuggest: coerceAgentConfig(rawAgents.commitSuggest),
-          feedback: coerceAgentConfig(rawAgents.feedback),
+          feedback: rawAgents.feedback
+            ? coerceAgentConfig(rawAgents.feedback)
+            : DEFAULT_AGENTS.feedback,
         }
       : DEFAULT_AGENTS;
     const { adapter, model, effort } = resolveAgent({ defaultAgents, taskKind: 'audit' });
