@@ -28,7 +28,7 @@ export default defineConfig(({ command }) => {
     plugins: [
       dts({
         insertTypesEntry: true,
-        include: ['src/core/**/*', 'src/types/**/*'],
+        include: ['src/core/**/*', 'src/types/**/*', 'src/vite/**/*'],
       }),
     ],
     build: {
@@ -37,13 +37,14 @@ export default defineConfig(({ command }) => {
           core: resolve(__dirname, 'src/core/index.ts'),
           types: resolve(__dirname, 'src/types/index.ts'),
           cli: resolve(__dirname, 'src/cli/index.ts'),
+          vite: resolve(__dirname, 'src/vite/index.ts'),
         },
         formats: ['es'],
       },
       rollupOptions: {
         external: (id) =>
           id.startsWith('node:') ||
-          ['react', 'react-dom', 'commander', 'zustand', 'zod', 'node-pty', 'fs', 'path', 'url', 'http'].includes(id),
+          ['react', 'react-dom', 'commander', 'zustand', 'zod', 'node-pty', 'fs', 'path', 'url', 'http', 'vite'].includes(id),
         output: {
           entryFileNames: '[name]/index.js',
           chunkFileNames: 'chunks/[name].[hash].js',

@@ -43,7 +43,7 @@ Segments, left → right:
 Per-project trimming via `integration.toolbar.segments` allowlist in config.json. Delivery phases: **v1 is read-only + links** (Focus, Desk, glance badges — no writes, no agent controls), v2 Scout ([[IDEA-130]]), v3 Runs/Ship.
 
 ### Phases
-- [ ] Scaffold the `@dendelion/paper-camp/vite` plugin
+- [x] Scaffold the `@dendelion/paper-camp/vite` plugin
       Dev-only plugin that injects the toolbar and proxies `/__camp` to the paper-camp server on `config.port`.
 - [ ] Mount the extracted StatusBar as a shadow-DOM web component
       Framework-agnostic bar docked to the bottom edge, collapsing to a pill when idle; segments expand into panels above it.
