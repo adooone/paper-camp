@@ -1,24 +1,29 @@
-import { StatusBarCore } from '@/app/components/shell/status-bar-core';
+import { useCheckStatusClient } from '@/app/hooks/use-check-status-client';
 import { useFocusClient } from '@/app/hooks/use-focus-client';
+import { useRunsClient } from '@/app/hooks/use-runs-client';
 import { useStatusClient } from '@/app/hooks/use-status-client';
 import { fetchConfig } from '@/app/services/system';
 import type { ToolbarSegmentId } from '@/types/index';
 import { useEffect, useState } from 'react';
 import { FocusPanel } from './focus-panel';
+import { RunsPanel } from './runs-panel';
+import { ShipPanel } from './ship-panel';
 import { ToolbarLink } from './toolbar-link';
 import { type ToolbarSegment, ToolbarShell } from './toolbar-shell';
 import { useToolbarShell } from './use-toolbar-shell';
 
 const CAMP_ROUTE = '/__camp';
 
-// v1 ships read-only + links only; 'ship' (write actions) and the unbuilt
-// 'scout'/'runs' join the default set as their phases land (v2/v3).
-const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['focus', 'desk'];
+// v1/v2/v3 have all landed — Focus, Desk, Ship, Runs. 'scout' stays out until
+// IDEA-130 lands.
+const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['focus', 'runs', 'ship', 'desk'];
 
 const openDesk = () => window.open(CAMP_ROUTE, '_blank', 'noopener,noreferrer');
 
 export const Toolbar = () => {
   const status = useStatusClient();
+  const checkStatus = useCheckStatusClient();
+  const runs = useRunsClient();
   const focusPlan = useFocusClient();
   const shell = useToolbarShell();
   const [allowedSegments, setAllowedSegments] = useState<ToolbarSegmentId[]>(DEFAULT_SEGMENTS);
@@ -47,6 +52,15 @@ export const Toolbar = () => {
     ? `${focusPlan.id ?? focusPlan.title} · ${focusPlan.phases.filter((p) => p.done).length}/${focusPlan.phases.length}`
     : 'no active plan';
 
+  const nextPhaseIndex = focusPlan?.phases.findIndex((phase) => !phase.done) ?? -1;
+  const canRunNextPhase = Boolean(focusPlan?.id) && nextPhaseIndex >= 0;
+
+  const runsGlance = runs.activeTask ? `${runs.activeTask.taskKind}…` : 'runs';
+
+  const onRunNextPhase = () => {
+    if (focusPlan?.id && nextPhaseIndex >= 0) runs.onRunNextPhase(focusPlan.id, nextPhaseIndex);
+  };
+
   const allSegments: ToolbarSegment[] = [
     {
       id: 'focus',
@@ -54,9 +68,24 @@ export const Toolbar = () => {
       panel: focusPlan ? <FocusPanel plan={focusPlan} onOpenIdea={openIdea} /> : undefined,
     },
     {
+      id: 'runs',
+      glance: runsGlance,
+      panel: (
+        <RunsPanel
+          activeTask={runs.activeTask}
+          recentTasks={runs.recentTasks}
+          stopping={runs.stopping}
+          launching={runs.launching}
+          canRunNextPhase={canRunNextPhase}
+          onStop={runs.onStop}
+          onRunNextPhase={onRunNextPhase}
+        />
+      ),
+    },
+    {
       id: 'ship',
       glance: shipGlance,
-      panel: <StatusBarCore {...status} onOpenSetup={openDesk} />,
+      panel: <ShipPanel {...status} {...checkStatus} onOpenSetup={openDesk} />,
     },
     {
       id: 'desk',

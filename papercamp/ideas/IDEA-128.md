@@ -54,7 +54,7 @@ Per-project trimming via `integration.toolbar.segments` allowlist in config.json
       Read-only only: session focus, open-desk link, and badge counts with no writes or agent controls.
 - [x] Defer the Scout segment to IDEA-130
       Skip mounting Scout in the toolbar for now; relocate the Scout segment spec (thread-verbatim chat, questions inbox, parked-questions badge, context injection) into IDEA-130 and leave only a placeholder/segment id here until Scout's own plan lands.
-- [ ] Add v3 segments — Runs and Ship
+- [x] Add v3 segments — Runs and Ship
       Live agent indicator with stop, run-next-phase, plus branch/check stamps and quick commit.
 - [ ] Enforce the dev-only production guard
       Keep the toolbar off production URLs by default; link to remote/hosted mode instead of embedding.
