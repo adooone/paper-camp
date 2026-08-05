@@ -22,15 +22,33 @@ export function findReleaseLineForId(changelog: string, id: string): string | un
     ?.trim();
 }
 
+const MERGE_COMMIT_BRANCH_RE = /^Merge pull request #\d+ from \S+\/([a-z]+-\d+)-/i;
+
 // A release-please release line is `* **scope:** Title (IDEA-N) ([hash](url))` — the
 // commit subject it was compiled from, plus the markdown link. Works for both a raw
 // commit subject and a release line, so it doubles as the reverse of findReleaseLineForId.
+// Pre-squash history also has to fall back to the source branch named in a merge
+// commit's own subject, since those predate the `(IDEA-N)` squash-title convention.
 export function resolveIdFromCommitMessage(message: string): string | null {
   const trailer = message.match(/^Refs:\s*([A-Za-z]+-\d+)\s*$/m);
   if (trailer) return trailer[1].toUpperCase();
   const subjectLine = message.split('\n', 1)[0];
-  const match = subjectLine.match(/\(([A-Za-z]+-\d+)\)/);
-  return match ? match[1].toUpperCase() : null;
+  const bySubject = subjectLine.match(/\(([A-Za-z]+-\d+)\)/);
+  if (bySubject) return bySubject[1].toUpperCase();
+  const byMergeBranch = subjectLine.match(MERGE_COMMIT_BRANCH_RE);
+  return byMergeBranch ? byMergeBranch[1].toUpperCase() : null;
+}
+
+const CHANGELOG_RELEASE_HEADER_RE = /^## \[.+?\]\(.*\/compare\/(.+?)\.\.\.(.+?)\)/;
+
+// Each release-please header links its own commit range (`compare/vPREV...vNEW`); reading
+// it back out is how a release's shipped-commit range becomes known at all.
+export function resolveReleaseRanges(changelog: string): { version: string; range: string }[] {
+  return changelog
+    .split('\n')
+    .map((line) => CHANGELOG_RELEASE_HEADER_RE.exec(line))
+    .filter((match): match is RegExpExecArray => match !== null)
+    .map((match) => ({ version: match[2], range: `${match[1]}..${match[2]}` }));
 }
 
 function findReleaseLineForCommit(changelog: string, sha: string): string | undefined {
@@ -101,6 +119,30 @@ export async function resolveEntityIdForCommit(root: string, sha: string): Promi
   const changelog = await readFileMaybe(join(root, 'CHANGELOG.md'));
   const line = findReleaseLineForCommit(changelog, sha);
   return line ? resolveIdFromCommitMessage(line) : null;
+}
+
+// Joins a release's commit range (e.g. `v0.13.0..v0.13.1`, from `resolveReleaseRanges`)
+// to the ideas it shipped, keyed by id with every contributing sha for an audit trail.
+export async function resolveIdeasForRelease(
+  root: string,
+  range: string,
+): Promise<Map<string, string[]>> {
+  const output = await runGit(root, ['log', '--format=%H', '--reverse', range]);
+  const shas = output
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const ids = await Promise.all(shas.map((sha) => resolveEntityIdForCommit(root, sha)));
+
+  const byIdea = new Map<string, string[]>();
+  shas.forEach((sha, i) => {
+    const id = ids[i];
+    if (!id) return;
+    const existing = byIdea.get(id);
+    if (existing) existing.push(sha);
+    else byIdea.set(id, [sha]);
+  });
+  return byIdea;
 }
 
 export async function resolveEntityTrail(root: string, id: string): Promise<ProvenanceTrail> {

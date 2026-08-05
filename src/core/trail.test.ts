@@ -11,6 +11,8 @@ import {
   resolveEntityIdForCommit,
   resolveEntityTrail,
   resolveIdFromCommitMessage,
+  resolveIdeasForRelease,
+  resolveReleaseRanges,
 } from './trail';
 
 function git(cwd: string, ...args: string[]): string {
@@ -226,9 +228,96 @@ describe('resolveIdFromCommitMessage', () => {
     ).toBe('IDEA-83');
   });
 
+  it("reads the id off a pre-squash merge commit's source branch", () => {
+    expect(
+      resolveIdFromCommitMessage(
+        'Merge pull request #67 from adooone/fix/idea-83-one-release-line-per-idea',
+      ),
+    ).toBe('IDEA-83');
+  });
+
   it('returns null when nothing is stamped', () => {
     expect(resolveIdFromCommitMessage('fix(app): Address IDEA-77 review comments')).toBeNull();
     expect(resolveIdFromCommitMessage('chore(repo): updates')).toBeNull();
+    expect(
+      resolveIdFromCommitMessage('Merge pull request #62 from adooone/release-please--branches'),
+    ).toBeNull();
+  });
+});
+
+describe('resolveReleaseRanges', () => {
+  it('reads the compare range off every release header', () => {
+    const changelog = [
+      '# Changelog',
+      '',
+      '## [0.14.0](https://github.com/adooone/paper-camp/compare/v0.13.2...v0.14.0) (2026-08-05)',
+      '',
+      '### Features',
+      '',
+      '## [0.13.2](https://github.com/adooone/paper-camp/compare/v0.13.1...v0.13.2) (2026-08-05)',
+    ].join('\n');
+
+    expect(resolveReleaseRanges(changelog)).toEqual([
+      { version: 'v0.14.0', range: 'v0.13.2..v0.14.0' },
+      { version: 'v0.13.2', range: 'v0.13.1..v0.13.2' },
+    ]);
+  });
+
+  it('returns an empty array when there are no release headers', () => {
+    expect(resolveReleaseRanges('# Changelog\n\nNothing yet.')).toEqual([]);
+  });
+});
+
+describe('resolveIdeasForRelease', () => {
+  it('joins every commit in the range to the idea it served', async () => {
+    const root = initGitRepo();
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'chore(repo): seed main');
+    git(root, 'tag', 'v0.1.0');
+
+    writeFileSync(join(root, 'b.txt'), 'b\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'feat(core): Do the thing (IDEA-1) (#1)');
+
+    writeFileSync(join(root, 'c.txt'), 'c\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'fix(core): Address it (IDEA-1) (#2)');
+
+    writeFileSync(join(root, 'd.txt'), 'd\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'fix(app): Fix other thing', '-m', 'Refs: IDEA-2');
+    git(root, 'tag', 'v0.2.0');
+
+    const shaOne = git(root, 'log', '--format=%H', '--grep', 'Do the thing');
+    const shaTwo = git(root, 'log', '--format=%H', '--grep', 'Address it');
+    const shaThree = git(root, 'log', '--format=%H', '--grep', 'Fix other thing');
+
+    const ideas = await resolveIdeasForRelease(root, 'v0.1.0..v0.2.0');
+
+    expect(ideas).toEqual(
+      new Map([
+        ['IDEA-1', [shaOne, shaTwo]],
+        ['IDEA-2', [shaThree]],
+      ]),
+    );
+  });
+
+  it('skips commits that carry no idea id', async () => {
+    const root = initGitRepo();
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'chore(repo): seed main');
+    git(root, 'tag', 'v0.1.0');
+
+    writeFileSync(join(root, 'b.txt'), 'b\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'chore(repo): bump lockfile');
+    git(root, 'tag', 'v0.2.0');
+
+    const ideas = await resolveIdeasForRelease(root, 'v0.1.0..v0.2.0');
+
+    expect(ideas).toEqual(new Map());
   });
 });
 
