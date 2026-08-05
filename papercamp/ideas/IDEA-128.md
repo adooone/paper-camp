@@ -36,12 +36,12 @@ Write-safety rule: the toolbar gets only the safe verbs — capture, reply, quic
 Segments, left → right:
 
 1. **Focus** — active idea + current phase (the existing session-focus data). Panel: read-only phases + open-idea link.
-2. **Scout** — the conversational agent, extracted to its own idea: [[IDEA-130]] (Paper Scout — thread-verbatim chat, questions inbox folded in, capture as a chat capability, distillation). The toolbar mounts Scout; its glance state is the project-wide parked-questions badge, top-level on the bar.
+2. **Scout** — deferred to its own idea: [[IDEA-130]] (Paper Scout — thread-verbatim chat, questions inbox folded in, capture as a chat capability, distillation). Not mounted here; see "Defer the Scout segment to IDEA-130" below.
 3. **Runs** — live agent indicator (kind + plan), recent task outcomes, one-click stop.
 4. **Ship** — the StatusBar heritage: branch, ahead/dirty, check stamps, quick commit.
 5. **Desk** — open the full desk; every panel also deep-links to its full view.
 
-Per-project trimming via `integration.toolbar.segments` allowlist in config.json. Delivery phases: **v1 is read-only + links** (Focus, Desk, glance badges — no writes, no agent controls), v2 Scout ([[IDEA-130]]), v3 Runs/Ship.
+Per-project trimming via `integration.toolbar.segments` allowlist in config.json. Delivery phases: **v1 is read-only + links** (Focus, Desk, glance badges — no writes, no agent controls), v2 deferred to IDEA-130, v3 Runs/Ship.
 
 ### Phases
 - [x] Scaffold the `@dendelion/paper-camp/vite` plugin

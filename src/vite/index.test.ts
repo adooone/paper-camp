@@ -98,6 +98,21 @@ describe('paperCamp', () => {
     expect(html).not.toContain('toolbar.js');
   });
 
+  it('mounts the proxy and injects the script at a configured integration.route', async () => {
+    const root = await makeRoot({ port: 4242, integration: { route: '/__toolbar' } });
+    const use = vi.fn();
+    const plugin = paperCamp();
+    await (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)({
+      config: { root },
+      middlewares: { use },
+    });
+
+    expect(use).toHaveBeenCalledWith('/__toolbar', expect.any(Function));
+    const transform = plugin.transformIndexHtml as (html: string) => string;
+    const html = transform('<html><body><div id="root"></div></body></html>');
+    expect(html).toContain('<script type="module" src="/__toolbar/toolbar.js"></script></body>');
+  });
+
   it('stays enabled in production mode when integration.toolbar.allowProduction is true', async () => {
     const root = await makeRoot({
       port: 4242,

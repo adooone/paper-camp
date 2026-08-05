@@ -12,13 +12,11 @@ import { ToolbarLink } from './toolbar-link';
 import { type ToolbarSegment, ToolbarShell } from './toolbar-shell';
 import { useToolbarShell } from './use-toolbar-shell';
 
-const CAMP_ROUTE = '/__camp';
+const DEFAULT_ROUTE = '/__camp';
 
 // v1/v2/v3 have all landed — Focus, Desk, Ship, Runs. 'scout' stays out until
 // IDEA-130 lands.
 const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['focus', 'runs', 'ship', 'desk'];
-
-const openDesk = () => window.open(CAMP_ROUTE, '_blank', 'noopener,noreferrer');
 
 export const Toolbar = () => {
   const status = useStatusClient();
@@ -27,13 +25,18 @@ export const Toolbar = () => {
   const focusPlan = useFocusClient();
   const shell = useToolbarShell();
   const [allowedSegments, setAllowedSegments] = useState<ToolbarSegmentId[]>(DEFAULT_SEGMENTS);
+  const [route, setRoute] = useState(DEFAULT_ROUTE);
 
   useEffect(() => {
     fetchConfig().then((config) => {
       const configured = config?.integration?.toolbar?.segments;
       if (configured) setAllowedSegments(configured);
+      const configuredRoute = config?.integration?.route;
+      if (configuredRoute) setRoute(configuredRoute);
     });
   }, []);
+
+  const openDesk = () => window.open(route, '_blank', 'noopener,noreferrer');
 
   const shipGlance = status.gitBranch
     ? `${status.gitBranch}${status.changedFileCount > 0 ? ` (${status.changedFileCount})` : ''}`
@@ -42,7 +45,7 @@ export const Toolbar = () => {
   const openIdea = () => {
     if (!focusPlan) return;
     window.open(
-      `${CAMP_ROUTE}/plans/${encodeURIComponent(focusPlan.title)}`,
+      `${route}/plans/${encodeURIComponent(focusPlan.title)}`,
       '_blank',
       'noopener,noreferrer',
     );

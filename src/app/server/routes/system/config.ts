@@ -14,6 +14,9 @@ import { readMaybe } from '../../helpers';
 import { readBody, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 /** Repo config files the dashboard may list and read — nothing outside this set. */
 const CONFIG_ALLOWLIST = [
   'biome.json',
@@ -94,6 +97,14 @@ export function configRoutes({ root }: RouteContext): Route[] {
               return;
             }
           }
+        }
+        if (integration !== undefined && !isPlainObject(integration)) {
+          sendJson(res, 400, { error: 'integration must be an object' });
+          return;
+        }
+        if (integration?.toolbar !== undefined && !isPlainObject(integration.toolbar)) {
+          sendJson(res, 400, { error: 'integration.toolbar must be an object' });
+          return;
         }
         if (
           integration?.toolbar?.enabled !== undefined &&

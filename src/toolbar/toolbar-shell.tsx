@@ -121,6 +121,7 @@ export const ToolbarShell = ({
               style={segment.id === activePanelId ? activeSegmentButtonStyle : segmentButtonStyle}
               onClick={() => onSelectSegment(segment.id)}
               disabled={!segment.panel}
+              aria-expanded={segment.panel ? segment.id === activePanelId : undefined}
             >
               {segment.glance}
             </button>

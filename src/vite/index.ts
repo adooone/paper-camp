@@ -12,6 +12,7 @@ export interface PaperCampToolbarOptions {
 export function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
   let resolvedPort = options.port;
   let enabled = true;
+  let route = CAMP_ROUTE;
 
   return {
     name: 'paper-camp-toolbar',
@@ -22,9 +23,10 @@ export function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
       const isProduction = server.config.mode === 'production';
       enabled =
         (integration?.enabled ?? true) && (!isProduction || integration?.allowProduction === true);
+      route = integration?.route ?? CAMP_ROUTE;
       if (!enabled) return;
       const port = resolvedPort;
-      server.middlewares.use(CAMP_ROUTE, (req: IncomingMessage, res: ServerResponse) => {
+      server.middlewares.use(route, (req: IncomingMessage, res: ServerResponse) => {
         proxyToCampServer(req, res, { port });
       });
     },
@@ -32,7 +34,7 @@ export function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
       if (!enabled) return html;
       return html.replace(
         '</body>',
-        `<script type="module" src="${CAMP_ROUTE}/toolbar.js"></script></body>`,
+        `<script type="module" src="${route}/toolbar.js"></script></body>`,
       );
     },
   };

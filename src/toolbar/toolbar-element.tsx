@@ -10,7 +10,8 @@ export class PaperCampToolbarElement extends HTMLElement {
   #root: Root | null = null;
 
   connectedCallback(): void {
-    const shadow = this.attachShadow({ mode: 'open' });
+    const shadow = this.shadowRoot ?? this.attachShadow({ mode: 'open' });
+    shadow.replaceChildren();
     const style = document.createElement('style');
     style.textContent = paperUiCss;
     shadow.appendChild(style);

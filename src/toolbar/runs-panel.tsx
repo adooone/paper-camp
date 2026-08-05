@@ -1,5 +1,5 @@
-import { AGENT_LABELS, type AgentTaskState } from '@/types/index';
-import { Button, Stamp } from '@dendelion/paper-ui';
+import { AGENT_LABELS, type AgentTaskState, type AgentTaskStatus } from '@/types/index';
+import { Button, Stamp, type StampVariant } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
 
 const titleStyle: CSSProperties = { fontWeight: 600, marginBottom: '0.5rem' };
@@ -12,7 +12,10 @@ const rowStyle: CSSProperties = {
 const listStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem' };
 const mutedStyle: CSSProperties = { opacity: 0.6, fontSize: '0.75rem' };
 
-const OUTCOME_VARIANT = { done: 'success', error: 'error' } as const;
+const OUTCOME_VARIANT: Partial<Record<AgentTaskStatus, StampVariant>> = {
+  done: 'success',
+  error: 'error',
+};
 
 const taskLabel = (task: AgentTaskState) =>
   `${task.taskKind}${task.phaseIndex !== undefined ? ` · phase ${task.phaseIndex + 1}` : ''} — ${task.planTitle}`;
@@ -64,7 +67,7 @@ export const RunsPanel = ({
       <div style={listStyle}>
         {recentTasks.map((task) => (
           <div key={task.id} style={rowStyle}>
-            <Stamp size="small" variant={OUTCOME_VARIANT[task.status as 'done' | 'error']}>
+            <Stamp size="small" variant={OUTCOME_VARIANT[task.status] ?? 'neutral'}>
               {task.status}
             </Stamp>
             <span style={mutedStyle}>{taskLabel(task)}</span>

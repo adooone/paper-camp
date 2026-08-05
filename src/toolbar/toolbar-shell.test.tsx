@@ -70,6 +70,13 @@ describe('ToolbarShell', () => {
     expect(buttons[1]?.props.disabled).toBe(true);
   });
 
+  it('exposes aria-expanded for enabled segments, matching the active panel', () => {
+    const tree = ToolbarShell({ ...baseProps, activePanelId: 'focus' });
+    const buttons = collect(tree, (el) => el.type === 'button');
+    expect(buttons[0]?.props['aria-expanded']).toBe(true);
+    expect(buttons[1]?.props['aria-expanded']).toBeUndefined();
+  });
+
   it('calls onSelectSegment with the segment id on click', () => {
     const onSelectSegment = vi.fn();
     const tree = ToolbarShell({ ...baseProps, onSelectSegment });

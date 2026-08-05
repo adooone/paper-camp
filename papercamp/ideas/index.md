@@ -128,6 +128,6 @@
 | IDEA-125 | Headless runs die as bare "error" when the agent hits a permission ask | fix | done | agents, tasks |
 | IDEA-126 | Read-only helper tasks silently supersede a running run-all | fix | done | agents, tasks |
 | IDEA-127 | Settings port is a dead field — dev never reads it | fix | done | cli, settings |
-| IDEA-128 | In-app dev toolbar — paper-camp living inside the target application | feat | planned | integration, app |
+| IDEA-128 | In-app dev toolbar — paper-camp living inside the target application | feat | review | integration, app |
 | IDEA-129 | Isolate the StatusBar — store-free core, ready for a second mount | refactor | done | app, integration |
 | IDEA-130 | Paper Scout — the conversational agent | feat | planned | agents, chat, integration |

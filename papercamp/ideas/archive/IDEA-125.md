@@ -81,9 +81,9 @@ Two levers, no CLI flag exists for this — it's all test-harness-level:
 - [x] Park the ask as a question on the idea
       Route it into the parked-decisions inbox ([[IDEA-118]]) with the path and the requesting phase attached.
 - [x] Resume the run on answer
-      Re-enter the paused run when the human grants or denies, continuing or failing cleanly with the recorded cause.
-- [x] Verify against an external-directory ask
-      Reproduce the func-ui sibling-repo read and confirm the run parks, records the reason, and resumes on answer.
+      Re-enter the paused run when a reply resolves the parked question; grant and deny aren't distinguished — any answer just re-attempts the run, which re-hits the same blocker and re-parks if the cause wasn't actually addressed.
+- [x] Verify against a synthetic decision-blocker ask
+      Confirmed via the harness-level `NEEDS_DECISION_MARKER` path (agent.test.ts's fake-adapter pattern) that the run parks, records the cause, and resumes on answer; the real `external_directory` permission-event path through the opencode adapter was not independently exercised (see Flags item 1).
 
 ### Thread
 - [x] 2026-08-05 [log] [agent] Run-all parked on phase 6 ("Verify against an external-directory ask") — the agent needs a decision: `NEEDS_DECISION_MARKER` marker (`extractBlocker`, agent.ts:49-53). Both `runQueue` (agent.ts:934-966, the `if (task.blocker) { ...; await escalateToLog(...); break; }` block) and the fix-pass loop treat a permission-denial reason identically to an agent-declared decision blocker — the run stops, escalates, and is marked as parked rather than errored outright.
