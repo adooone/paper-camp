@@ -27,7 +27,7 @@ Design (decided on [[IDEA-128]], carried here):
       Serializer + types + collapsible rendering in thread views; existing feedback messages migrate or stay as-is per kind.
 - [x] Give the feedback agent the Scout persona and project-wide scope
       Name, tone, and the ability to answer about any idea (not just the bound one) with idea-scoped default.
-- [ ] Fold the questions inbox into the chat surface
+- [x] Fold the questions inbox into the chat surface
       Project-wide open-question badge, oldest-first triage grouped by idea, inline reply wired to run resumption.
 - [ ] Add distillation actions
       In-chat promotion to decision/idea/log + auto-summary on session quiet.

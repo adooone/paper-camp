@@ -4,15 +4,7 @@ import { usePlanStatusPatch, useSendFeedbackMessage, useTrail } from '@/app/feat
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type {
-  AgentTaskState,
-  IdeaEntry,
-  LogEntry,
-  PhaseItem,
-  PlanEntry,
-  ThreadMessage,
-  ThreadMessageKind,
-} from '@/types/index';
+import type { AgentTaskState, IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
   Button,
   Card,
@@ -34,6 +26,7 @@ import {
   PhaseCopyButton,
 } from '../actions';
 import { CollapsibleText } from '../components';
+import { FeedbackThread } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
@@ -300,80 +293,6 @@ const TrailSection = ({ planId }: { planId: string | undefined }) => {
     </div>
   );
 };
-
-const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
-  review: 'review',
-  note: 'note',
-  decision: 'decision',
-  question: 'question',
-  clarification: 'clarification',
-};
-
-const FeedbackThread = ({
-  messages,
-  undo,
-  undoing,
-  onUndo,
-}: {
-  messages: ThreadMessage[];
-  undo: { commitSha: string } | null;
-  undoing: boolean;
-  onUndo: () => void;
-}) => (
-  <>
-    {messages.map((message, i) => {
-      const label = THREAD_KIND_LABEL[message.kind];
-      const fromAgent = message.from === 'agent';
-      const isLast = i === messages.length - 1;
-      return (
-        <div
-          key={`${message.kind}-${message.date ?? ''}-${i}`}
-          className={`flex flex-col gap-1 ${fromAgent ? 'items-start' : 'items-end'}`}
-        >
-          <div className="max-w-[85%]">
-            <Card
-              size="small"
-              surface="paper"
-              texture={fromAgent ? 'kraft' : label ? 'canvas' : 'parchment'}
-              shade={fromAgent}
-              accent={!fromAgent}
-              accentColor={label ? 'rose' : 'blue'}
-            >
-              <CollapsibleText
-                collapsedLines={message.kind === 'chat' ? 1 : 3}
-                resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
-              >
-                {message.text}
-              </CollapsibleText>
-            </Card>
-          </div>
-          <div className="flex items-center gap-2">
-            {fromAgent && (
-              <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
-                agent
-              </Stamp>
-            )}
-            {fromAgent && isLast && undo && (
-              <Tooltip content="Revert this run's plan edit">
-                <Button size="small" variant="ghost" onClick={onUndo} disabled={undoing}>
-                  {undoing ? 'Undoing…' : 'Undo'}
-                </Button>
-              </Tooltip>
-            )}
-            {message.date && (
-              <span className="text-sm font-semibold opacity-[0.45]">{message.date}</span>
-            )}
-            {label && (
-              <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
-                {label}
-              </Stamp>
-            )}
-          </div>
-        </div>
-      );
-    })}
-  </>
-);
 
 const FeedbackSection = ({
   plan,
