@@ -7,6 +7,7 @@ created: 2026-08-04
 tags:
   - agents
   - tasks
+subject: Infrastructure
 ---
 
 `registerTask` sets `state.lastLaunchedId` for **every** task kind, and `isSuperseded(task)` is just `lastLaunchedId !== task.id`. So the read-only helpers launched from the board — commit-suggest, feedback chat, overlap-check, prioritise (`runReadOnlyPrompt` → `registerAndStart`) — supersede a running run-all. The run-all then bails at its next checkpoint **silently**: no `[fail]`/`[verify]` lines, no thread escalation, `onRunComplete` never runs, and the task is finalized as `error`.

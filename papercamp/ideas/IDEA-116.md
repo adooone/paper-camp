@@ -7,6 +7,7 @@ created: 2026-08-04
 tags:
   - app
   - status
+subject: Planning surface
 ---
 
 Status derivation combines the idea file with GitHub state (branch / PR), so work committed straight to main — no branch, no PR — leaves an idea stuck at planned/in-progress forever, even with every phase checked. Hit in the func-ui repo: a fully-built idea showed no status movement on the board, and the only way out was hand-editing frontmatter and moving the file to archive/.

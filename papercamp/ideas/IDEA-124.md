@@ -7,6 +7,7 @@ created: 2026-08-04
 tags:
   - status
   - releases
+subject: Richer review loop
 ---
 
 The release train already knows which commits shipped in a version; the corpus knows which idea each branch/commit served. Join them: each release lists the ideas it shipped, and each done idea records the version that carried it (`released: v0.13.1` in frontmatter or a log line at promotion time).
