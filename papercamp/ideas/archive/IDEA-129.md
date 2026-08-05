@@ -5,6 +5,7 @@ type: refactor
 status: done
 created: 2026-08-05
 updated: 2026-08-05
+released: v0.14.0
 tags:
   - app
   - integration

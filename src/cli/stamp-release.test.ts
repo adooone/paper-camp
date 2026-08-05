@@ -103,6 +103,40 @@ describe('paper-camp stamp-release (CLI)', () => {
     expect(result.stdout).toContain('Stamped 0 of 1 idea(s)');
   });
 
+  it('never overwrites an existing stamp with a later version a follow-up commit shipped in', async () => {
+    const { root, ideaFile } = await makeReleasedProject();
+    runStampRelease(root, 'v0.2.0');
+
+    await writeFile(join(root, 'b.txt'), 'b\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'fix(core): Address it (IDEA-1) (#2)');
+    git(root, 'tag', 'v0.3.0');
+    await writeFile(
+      join(root, 'CHANGELOG.md'),
+      '# Changelog\n\n## [0.3.0](https://github.com/o/r/compare/v0.2.0...v0.3.0) (2026-08-07)\n',
+      { flag: 'a' },
+    );
+
+    const result = runStampRelease(root, 'v0.3.0');
+
+    expect(result.stdout).toContain('[skip]     IDEA-1 — already stamped v0.2.0');
+    expect(result.stdout).toContain('Stamped 0 of 1 idea(s)');
+    const after = parseEntityFile(await readFile(ideaFile, 'utf-8')).entries[0];
+    expect(after.released).toBe('v0.2.0');
+  });
+
+  it('never stamps an idea whose stored status is dropped', async () => {
+    const { root, ideaFile } = await makeReleasedProject();
+    await writeFile(ideaFile, IDEA_1.replace('status: done', 'status: dropped'));
+
+    const result = runStampRelease(root, 'v0.2.0');
+
+    expect(result.stdout).toContain('[skip]     IDEA-1 — dropped');
+    expect(result.stdout).toContain('Stamped 0 of 1 idea(s)');
+    const after = parseEntityFile(await readFile(ideaFile, 'utf-8')).entries[0];
+    expect(after.released).toBeUndefined();
+  });
+
   it('fails when the CHANGELOG has no range for the requested version', async () => {
     const { root } = await makeReleasedProject();
 

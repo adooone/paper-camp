@@ -5,6 +5,7 @@ type: fix
 status: done
 created: 2026-07-25
 updated: 2026-07-26
+released: v0.12.0
 tags:
   - ui
   - layout

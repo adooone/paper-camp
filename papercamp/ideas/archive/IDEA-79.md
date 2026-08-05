@@ -5,6 +5,7 @@ type: feat
 status: done
 created: 2026-07-22
 updated: 2026-07-26
+released: v0.11.0
 tags:
   - cli
   - scaffold

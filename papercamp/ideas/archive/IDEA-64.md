@@ -5,6 +5,7 @@ type: feat
 status: done
 created: 2026-07-15
 updated: 2026-07-19
+released: v0.9.0
 tags:
   - app
   - plans

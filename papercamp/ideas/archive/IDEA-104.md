@@ -5,6 +5,7 @@ type: feat
 status: done
 created: 2026-07-29
 updated: 2026-08-02
+released: v0.13.0
 tags:
   - app
   - core

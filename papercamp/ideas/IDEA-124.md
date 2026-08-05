@@ -2,7 +2,7 @@
 id: IDEA-124
 title: Tie ideas to releases — release notes grouped by idea
 type: feat
-status: idea
+status: review
 created: 2026-08-04
 tags:
   - status
@@ -21,4 +21,4 @@ Two payoffs: release notes grouped by idea (human-readable by construction, bett
       Write `released:` into frontmatter (or a Log line) when a version ships the idea.
 - [x] Build release notes grouped by idea from the join
 - [x] Surface each release's shipped ideas and each idea's release in the UI
-- [ ] Backfill existing releases and done ideas
+- [x] Backfill existing releases and done ideas

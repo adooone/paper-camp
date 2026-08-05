@@ -5,6 +5,7 @@ type: feat
 status: done
 created: 2026-07-04
 updated: 2026-07-06
+released: v0.6.0
 tags:
   - app
   - ideas

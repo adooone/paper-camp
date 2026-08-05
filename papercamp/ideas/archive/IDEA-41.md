@@ -4,6 +4,7 @@ title: Settings and affordance polish
 type: fix
 created: 2026-07-02
 updated: 2026-07-06
+released: v0.6.0
 tags:
   - app
   - ui

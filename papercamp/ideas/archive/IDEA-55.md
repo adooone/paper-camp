@@ -4,6 +4,7 @@ title: Actualise all ideas at once
 type: feat
 created: 2026-07-08
 updated: 2026-07-08
+released: v0.6.0
 tags:
   - app
   - plans

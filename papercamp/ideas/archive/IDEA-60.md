@@ -5,6 +5,7 @@ type: refactor
 status: done
 created: 2026-07-13
 updated: 2026-07-19
+released: v0.8.0
 tags:
   - app
   - refactor

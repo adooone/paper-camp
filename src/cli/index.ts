@@ -555,8 +555,12 @@ program
         console.log(`  [skip]     ${id} — could not parse`);
         continue;
       }
-      if (entry.released === version) {
-        console.log(`  [skip]     ${id} — already stamped ${version}`);
+      if (entry.status === 'dropped') {
+        console.log(`  [skip]     ${id} — dropped`);
+        continue;
+      }
+      if (entry.released) {
+        console.log(`  [skip]     ${id} — already stamped ${entry.released}`);
         continue;
       }
       await writeEntityFile(planFile, entityFileInput(entry, { released: version }));
