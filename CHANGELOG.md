@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.0](https://github.com/adooone/paper-camp/compare/v0.13.2...v0.14.0) (2026-08-05)
+
+
+### Features
+
+* **app:** In-app dev toolbar — paper-camp living inside the target application (IDEA-128) ([#105](https://github.com/adooone/paper-camp/issues/105)) ([c6fb945](https://github.com/adooone/paper-camp/commit/c6fb94500f169c57dd6a1020aa4b30aaf5527624))
+* **repo:** Paper Scout — the conversational agent (IDEA-130) ([#107](https://github.com/adooone/paper-camp/issues/107)) ([2535ca8](https://github.com/adooone/paper-camp/commit/2535ca8c6a3d74a238cd9c2a399d43f527ee0ff6))
+
 ## [0.13.2](https://github.com/adooone/paper-camp/compare/v0.13.1...v0.13.2) (2026-08-05)
 
 
