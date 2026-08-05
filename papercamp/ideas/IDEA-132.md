@@ -2,7 +2,7 @@
 id: IDEA-132
 title: Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end
 type: fix
-status: idea
+status: review
 created: 2026-08-05
 tags:
   - integration
@@ -77,5 +77,5 @@ build's `base` to `'./'`. A release smoke test that curls
       Give the desk hooks (`use-status-client`, `use-focus-client`, `fetchConfig`) a route-prefix seam and honour the injected base for every fetch/EventSource.
 - [x] Set the desk build `base` to `'./'`
       Make `dist/app/index.html` reference its assets relatively so "Open full desk" resolves through the `/__camp` proxy.
-- [ ] Add a packed-tarball smoke test
+- [x] Add a packed-tarball smoke test
       Pack the lib, boot `paper-camp dev`, and curl `/__camp/toolbar.js` to assert it serves as JS — catches the serve/build/base regressions.
