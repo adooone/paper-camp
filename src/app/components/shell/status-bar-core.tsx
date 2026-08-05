@@ -1,6 +1,49 @@
 import type { AgentTaskStatus, BranchHygieneStatus } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
+import type { CSSProperties } from 'react';
 import { CommitIcon, MergeIcon, PullIcon, PushIcon } from '../icons';
+
+const barStyle: CSSProperties = {
+  ...getTextureStyles('kraft'),
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.75rem',
+  height: '2rem',
+  paddingLeft: '1rem',
+  paddingRight: '1rem',
+  borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+  fontSize: '0.75rem',
+  flexShrink: 0,
+  boxSizing: 'border-box',
+  overflowX: 'auto',
+  overflowY: 'hidden',
+  whiteSpace: 'nowrap',
+};
+const leftGroupStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.75rem',
+  flexShrink: 0,
+};
+const branchStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: '0.25rem' };
+const mutedStyle: CSSProperties = { opacity: 0.5 };
+const branchNameStyle: CSSProperties = { color: 'var(--pui-text-primary)' };
+const secondaryStyle: CSSProperties = { opacity: 0.6 };
+const spacerStyle: CSSProperties = { flex: 1 };
+const rightGroupStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  flexShrink: 0,
+};
+const buttonTextStyle: CSSProperties = { fontSize: '0.75rem' };
+const stampTriggerStyle: CSSProperties = {
+  background: 'none',
+  backgroundColor: 'transparent',
+  border: 'none',
+  padding: 0,
+  cursor: 'pointer',
+};
 
 export interface StatusBarCoreProps {
   gitBranch: string | null;
@@ -45,28 +88,21 @@ export const StatusBarCore = ({
   onOpenSetup,
 }: StatusBarCoreProps) => {
   return (
-    <div
-      style={getTextureStyles('kraft')}
-      className="flex items-center gap-3 h-8 px-4 border-b border-black/[8%] text-2xs flex-shrink-0 box-border overflow-x-auto overflow-y-hidden whitespace-nowrap"
-    >
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <span className="flex items-center gap-1">
-          <span className="opacity-50">⌥</span>
-          <code className="text-ink-900">{gitBranch ?? 'no branch'}</code>
+    <div style={barStyle}>
+      <div style={leftGroupStyle}>
+        <span style={branchStyle}>
+          <span style={mutedStyle}>⌥</span>
+          <code style={branchNameStyle}>{gitBranch ?? 'no branch'}</code>
         </span>
-        {gitAhead > 0 && <span className="opacity-60">↑{gitAhead}</span>}
-        <span className="opacity-60">
+        {gitAhead > 0 && <span style={secondaryStyle}>↑{gitAhead}</span>}
+        <span style={secondaryStyle}>
           {changedFileCount > 0 ? `${changedFileCount} changed` : 'clean'}
         </span>
         {agentActive && <Spinner size="small" label={`Agent ${activeTaskStatus}…`} />}
         {agentNotSignedIn && (
           <Tooltip content="Sign in from Settings → Connections so agent tasks can run">
             {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}
-            <button
-              type="button"
-              onClick={onOpenSetup}
-              className="bg-none bg-transparent border-none p-0 cursor-pointer"
-            >
+            <button type="button" onClick={onOpenSetup} style={stampTriggerStyle}>
               <Stamp size="small" variant="warning">
                 Agent not signed in
               </Stamp>
@@ -76,11 +112,7 @@ export const StatusBarCore = ({
         {capabilityGapCount > 0 && (
           <Tooltip content="Some features are disabled — open Setup to fix">
             {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}
-            <button
-              type="button"
-              onClick={onOpenSetup}
-              className="bg-none bg-transparent border-none p-0 cursor-pointer"
-            >
+            <button type="button" onClick={onOpenSetup} style={stampTriggerStyle}>
               <Stamp size="small" variant="warning">
                 Setup ({capabilityGapCount})
               </Stamp>
@@ -89,9 +121,9 @@ export const StatusBarCore = ({
         )}
       </div>
 
-      <div className="flex-1" />
+      <div style={spacerStyle} />
 
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div style={rightGroupStyle}>
         <Tooltip
           content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : 'Sync to main'}
         >
@@ -99,7 +131,7 @@ export const StatusBarCore = ({
             variant="ghost"
             size="small"
             icon={<MergeIcon />}
-            className="text-2xs"
+            style={buttonTextStyle}
             disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
             onClick={onSync}
           >
@@ -111,7 +143,7 @@ export const StatusBarCore = ({
             variant="ghost"
             size="small"
             icon={<PushIcon />}
-            className="text-2xs"
+            style={buttonTextStyle}
             disabled={gitActionBusy || gitAhead === 0}
             onClick={onPush}
           >
@@ -123,7 +155,7 @@ export const StatusBarCore = ({
             variant="ghost"
             size="small"
             icon={<PullIcon />}
-            className="text-2xs"
+            style={buttonTextStyle}
             disabled={gitActionBusy}
             onClick={onPull}
           >
@@ -135,7 +167,7 @@ export const StatusBarCore = ({
             variant="ghost"
             size="small"
             icon={<CommitIcon />}
-            className="text-2xs"
+            style={buttonTextStyle}
             disabled={commitInFlight || changedFileCount === 0}
             onClick={onQuickCommit}
           >
