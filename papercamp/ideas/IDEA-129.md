@@ -52,7 +52,7 @@ Net shape of the extracted core: a presentation component taking the eight data 
       Presentation component taking data + action callbacks as a typed interface — no `useAppStore`, no desk imports.
 - [x] Build the thin status client over the server API
       The segments' data (agent status, git state, setup gaps) fetched/streamed from the existing endpoints, usable outside the desk process.
-- [ ] Re-mount the desk shell on the extracted core
+- [x] Re-mount the desk shell on the extracted core
       Desk wires the core to the store exactly as today — behaviour and visual parity, no regressions.
 - [ ] Make the core embeddable
       Shadow-DOM-safe styling (no reliance on the desk's global CSS) and a package boundary the vite plugin ([[IDEA-128]]) can import.
