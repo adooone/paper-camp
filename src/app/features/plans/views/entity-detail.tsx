@@ -340,7 +340,7 @@ const FeedbackThread = ({
               accentColor={label ? 'rose' : 'blue'}
             >
               <CollapsibleText
-                collapsedLines={3}
+                collapsedLines={message.kind === 'chat' ? 1 : 3}
                 resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
               >
                 {message.text}

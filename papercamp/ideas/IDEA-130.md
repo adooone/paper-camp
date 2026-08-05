@@ -23,7 +23,7 @@ Design (decided on [[IDEA-128]], carried here):
 - **Two mounts**: the desk's Feedback panel (today's UI, renamed and upgraded) and the toolbar's Scout segment ([[IDEA-128]] v2).
 
 ### Phases
-- [ ] Add the `chat` thread-message kind
+- [x] Add the `chat` thread-message kind
       Serializer + types + collapsible rendering in thread views; existing feedback messages migrate or stay as-is per kind.
 - [ ] Give the feedback agent the Scout persona and project-wide scope
       Name, tone, and the ability to answer about any idea (not just the bound one) with idea-scoped default.

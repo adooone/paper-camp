@@ -209,6 +209,12 @@ describe('formatEntityFile round-trip', () => {
       thread: [
         { kind: 'clarification' as const, date: '2026-07-05', text: 'scope confirmed' },
         { kind: 'log' as const, date: '2026-07-05', text: 'drafted' },
+        {
+          kind: 'chat' as const,
+          date: '2026-07-05',
+          text: 'what does this idea unblock?',
+          from: 'agent' as const,
+        },
       ],
     };
     const serialized = formatEntityFile(input);
@@ -228,6 +234,12 @@ describe('formatEntityFile round-trip', () => {
     expect(clarificationsFromThread(e.thread)).toEqual([
       { date: '2026-07-05', text: 'scope confirmed' },
     ]);
+    expect(e.thread).toContainEqual({
+      kind: 'chat',
+      date: '2026-07-05',
+      text: 'what does this idea unblock?',
+      from: 'agent',
+    });
   });
 
   it('writes no body heading and omits absent optionals', () => {
