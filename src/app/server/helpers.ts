@@ -52,6 +52,7 @@ export function entityFileInput(
     updated: entry.updated,
     audited: entry.audited,
     auditedHash: entry.auditedHash,
+    released: entry.released,
     tags: entry.tags,
     subject: entry.subject,
     order: entry.order,

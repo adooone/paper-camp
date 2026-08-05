@@ -17,7 +17,7 @@ Two payoffs: release notes grouped by idea (human-readable by construction, bett
 ### Phases
 - [x] Resolve which idea each shipped commit served
       Join a release's commit range to ideas via branch name and commit trailers.
-- [ ] Stamp the carrying version onto done ideas
+- [x] Stamp the carrying version onto done ideas
       Write `released:` into frontmatter (or a Log line) when a version ships the idea.
 - [ ] Build release notes grouped by idea from the join
 - [ ] Surface each release's shipped ideas and each idea's release in the UI

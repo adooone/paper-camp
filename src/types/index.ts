@@ -280,6 +280,8 @@ export interface EntityEntry {
   updated?: string;
   audited?: string;
   auditedHash?: string;
+  /** Version tag (e.g. v0.13.1) that first shipped this idea, stamped from the release train. */
+  released?: string;
   tags: string[];
   /** Absent renders as the virtual "No subject" group. */
   subject?: string;
