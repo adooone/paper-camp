@@ -351,6 +351,10 @@ process.exit(1)
     expect(planFile).toContain(
       'the agent needs a decision: read outside workspace: /home/user/dev/paper-ui/select.tsx',
     );
+    const parsedPlan = entityToPlan(parseEntityFile(planFile).entries[0]);
+    const parked = parsedPlan.thread?.find((m) => m.kind === 'question');
+    expect(parked?.state).toBe('open');
+    expect(parked?.text).toContain('phase 1 ("First phase")');
   });
 
   it('short-circuits to escalation when the fix pass declares a blocker, without exhausting the cap', async () => {

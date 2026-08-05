@@ -43,7 +43,13 @@ export function agentThreadMessage(
   text: string,
   kind: ThreadMessage['kind'] = 'log',
 ): ThreadMessage {
-  return { kind, date: todayDateString(), text, from: 'agent' };
+  return {
+    kind,
+    date: todayDateString(),
+    text,
+    from: 'agent',
+    ...(kind === 'question' ? { state: 'open' as const } : {}),
+  };
 }
 
 let idAssignmentChain: Promise<unknown> = Promise.resolve();

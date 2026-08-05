@@ -274,7 +274,7 @@ export function createAgentManager(
     await writeEntityFile(
       file,
       entityFileInput(entry, {
-        thread: [...(entry.thread ?? []), agentThreadMessage(message)],
+        thread: [...(entry.thread ?? []), agentThreadMessage(message, 'question')],
         ...(needsInput ? { status: 'in-progress' } : {}),
       }),
     );
