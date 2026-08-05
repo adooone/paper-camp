@@ -2,7 +2,7 @@
 id: IDEA-131
 title: Faster agent runs and chat replies
 type: refactor
-status: idea
+status: review
 created: 2026-08-05
 tags:
   - agent
@@ -36,7 +36,7 @@ Phases run far slower than the same work done directly in chat. The gap is struc
       Add a `feedback` `defaultAgents` bucket (sonnet, medium) surfaced in Settings, route `buildFeedbackReplyPrompt`/`buildFeedbackSummaryPrompt` through it, and send done/dropped ideas as one-line index entries.
 - [x] Reorder and compact the Scout reply prompt
       Move to a stable-first prefix (persona → corpus index → idea → thread → latest) and inline only the prior session summaries plus the last 10 thread messages instead of the whole history.
-- [ ] Compress the corpus in `buildSuggestIdeasPrompt`
+- [x] Compress the corpus in `buildSuggestIdeasPrompt`
       Reduce done/dropped ideas to one-line entries, full bodies only for open ideas, mirroring the feedback treatment.
 
 ### Log

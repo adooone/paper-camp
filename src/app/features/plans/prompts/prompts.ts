@@ -348,7 +348,13 @@ export function buildSuggestIdeasPrompt(
   existingSuggestions: SuggestionEntry[],
 ): string {
   const ideaIndex = ideas.length
-    ? ideas.map((idea) => `### ${idea.id ?? 'no id'}: ${idea.title}\n${idea.body}`).join('\n\n')
+    ? ideas
+        .map((idea) =>
+          idea.status === 'done' || idea.status === 'dropped'
+            ? `- ${idea.id ?? 'no id'}: ${idea.title} (status: ${idea.status})`
+            : `### ${idea.id ?? 'no id'}: ${idea.title}\n${idea.body}`,
+        )
+        .join('\n\n')
     : '(no ideas yet)';
 
   const suggestionList = existingSuggestions.length
