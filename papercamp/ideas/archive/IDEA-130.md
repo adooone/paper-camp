@@ -2,8 +2,9 @@
 id: IDEA-130
 title: Paper Scout — the conversational agent
 type: feat
-status: review
+status: done
 created: 2026-08-05
+updated: 2026-08-05
 tags:
   - agents
   - chat
@@ -35,6 +36,3 @@ Design (decided on [[IDEA-128]], carried here):
       A small interface the desk and toolbar both feed (route/URL, focused idea, viewport) — consumed silently by Scout.
 - [x] Expose Scout as the toolbar mount
       The [[IDEA-128]] v2 segment consumes this; toolbar work stays in that idea.
-
-### Log
-- 2026-08-05 — Extracted from [[IDEA-128]] by owner decision; named Paper Scout to unify with the existing Scout GitHub App identity — one bot for git chores and conversation.

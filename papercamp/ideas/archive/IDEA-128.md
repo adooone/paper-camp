@@ -2,7 +2,7 @@
 id: IDEA-128
 title: In-app dev toolbar — paper-camp living inside the target application
 type: feat
-status: review
+status: done
 created: 2026-08-05
 updated: 2026-08-05
 tags:
