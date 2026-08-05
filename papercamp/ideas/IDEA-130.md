@@ -29,7 +29,7 @@ Design (decided on [[IDEA-128]], carried here):
       Name, tone, and the ability to answer about any idea (not just the bound one) with idea-scoped default.
 - [x] Fold the questions inbox into the chat surface
       Project-wide open-question badge, oldest-first triage grouped by idea, inline reply wired to run resumption.
-- [ ] Add distillation actions
+- [x] Add distillation actions
       In-chat promotion to decision/idea/log + auto-summary on session quiet.
 - [ ] Define the context-injection contract for mounts
       A small interface the desk and toolbar both feed (route/URL, focused idea, viewport) — consumed silently by Scout.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { PhaseItem, PlanEntry } from '../../types/index';
-import { applyFeedbackEdit, replyToFeedback } from './feedback-reply';
+import type { PhaseItem, PlanEntry, ThreadMessage } from '../../types/index';
+import { applyFeedbackEdit, replyToFeedback, summarizeFeedback } from './feedback-reply';
 
 const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
   title: 'A plan',
@@ -87,6 +87,39 @@ describe('replyToFeedback', () => {
       JSON.stringify({ reply: 'Just noting that.', answersQuestion: false });
     const result = await replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt);
     expect(result).toEqual({ reply: 'Just noting that.' });
+  });
+});
+
+describe('summarizeFeedback', () => {
+  const messages: ThreadMessage[] = [
+    { kind: 'chat', text: 'What should we do about X?', from: 'user' },
+    { kind: 'chat', text: "Let's go with Y.", from: 'agent' },
+  ];
+
+  it('rejects when the agent returns no parseable JSON', async () => {
+    await expect(
+      summarizeFeedback(plan({ id: 'IDEA-1' }), messages, async () => 'not json'),
+    ).rejects.toThrow('did not return a summary');
+  });
+
+  it('rejects when the JSON has no summary text', async () => {
+    const runPrompt = async () => JSON.stringify({ nothing: true });
+    await expect(summarizeFeedback(plan({ id: 'IDEA-1' }), messages, runPrompt)).rejects.toThrow(
+      'did not return a summary',
+    );
+  });
+
+  it('returns the trimmed summary', async () => {
+    const runPrompt = async () => JSON.stringify({ summary: '  Settled on approach Y.  ' });
+    const result = await summarizeFeedback(plan({ id: 'IDEA-1' }), messages, runPrompt);
+    expect(result).toBe('Settled on approach Y.');
+  });
+
+  it('accepts a summary wrapped in the claude -p JSON envelope', async () => {
+    const runPrompt = async () =>
+      JSON.stringify({ result: JSON.stringify({ summary: 'Settled on approach Y.' }) });
+    const result = await summarizeFeedback(plan({ id: 'IDEA-1' }), messages, runPrompt);
+    expect(result).toBe('Settled on approach Y.');
   });
 });
 

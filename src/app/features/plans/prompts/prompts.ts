@@ -4,6 +4,7 @@ import type {
   PlanEntry,
   ReviewThread,
   SuggestionEntry,
+  ThreadMessage,
 } from '@/types/index';
 import type { SimilarityCandidate } from '../helpers';
 
@@ -285,6 +286,25 @@ Rules:
 - When every phase above is already checked ([x]) and the message asks for new or still-missing work, use "add" for a new phase — never "reword" a finished phase to smuggle in new work, since a completed phase never re-runs. Adding a phase to a finished idea reopens it, and the app tracks the new work separately as a Fix rather than rewriting the finished Phases history.
 - "edit.body", when present, must be the complete replacement body, not a fragment — reproduce every part that isn't changing, word for word.
 - Only include "edit" when the message clearly asks for a change; a fix request always becomes an "edit" (a phase on this idea), never anything else. Never create a new idea, and never decline a fix request with a bare reply.`;
+}
+
+// Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply, reused for this
+// too) — fires once a chat session goes quiet (routes/agent.ts's feedback-summarize),
+// distilling the exchange since the last log entry into one durable line.
+export function buildFeedbackSummaryPrompt(plan: PlanEntry, messages: ThreadMessage[]): string {
+  const exchange = messages
+    .map((m) => `${m.from === 'agent' ? 'Agent' : 'User'}: ${m.text}`)
+    .join('\n');
+
+  return `You are Paper Scout, distilling a chat session that just went quiet on the idea "${plan.title}" (${plan.id ?? 'no id'}). Do not use any tools, do not read or edit any files — base your answer only on the exchange given below.
+
+Chat exchange since the last recorded summary:
+${exchange}
+
+Task: write ONE concise sentence (no more than 25 words) that a future reader would find worth keeping — what this exchange concluded, decided, or established. If nothing durable came out of it (small talk, an unanswered question, a dead end), say that plainly in one short sentence instead of padding it out.
+
+Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
+{"summary": "one sentence"}`;
 }
 
 // Scans the whole corpus rather than one idea and appends to suggestions.md, so

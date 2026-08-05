@@ -1,6 +1,12 @@
 import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
-import { usePlanStatusPatch, useSendFeedbackMessage, useTrail } from '@/app/features/plans/hooks';
+import {
+  useFeedbackQuietSummary,
+  usePlanStatusPatch,
+  usePromoteThreadMessage,
+  useSendFeedbackMessage,
+  useTrail,
+} from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
@@ -26,13 +32,14 @@ import {
   PhaseCopyButton,
 } from '../actions';
 import { CollapsibleText } from '../components';
-import { FeedbackThread } from '../components';
+import { FeedbackThread, type PromoteTarget } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import { combinedProgress, effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
+import { CreateIdeaModal } from '../modals/create-idea-modal';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -310,11 +317,28 @@ const FeedbackSection = ({
   onUndo: () => void;
 }) => {
   const [input, setInput] = useState('');
+  const [ideaPromptIndex, setIdeaPromptIndex] = useState<number | null>(null);
   const thread = plan.thread ?? [];
+  const { promotingIndex, promoteToDurable, promoteToIdea } = usePromoteThreadMessage(plan);
+  useFeedbackQuietSummary(plan, true);
 
   const handleSend = async () => {
     if (!input.trim()) return;
     if (await onSend(input.trim())) setInput('');
+  };
+
+  const handlePromote = (index: number, target: PromoteTarget) => {
+    if (target === 'idea') setIdeaPromptIndex(index);
+    else promoteToDurable(index, target);
+  };
+
+  const handlePromoteToIdea = async (idea: {
+    title: string;
+    content?: string;
+    kind?: 'idea' | 'note';
+  }) => {
+    if (ideaPromptIndex === null) return;
+    if (await promoteToIdea(ideaPromptIndex, idea)) setIdeaPromptIndex(null);
   };
 
   return (
@@ -323,7 +347,14 @@ const FeedbackSection = ({
       <Card size="small" accent accentColor="slate" texture="kraft">
         <div className="flex flex-col gap-3 mb-4">
           {thread.length > 0 ? (
-            <FeedbackThread messages={thread} undo={undo} undoing={undoing} onUndo={onUndo} />
+            <FeedbackThread
+              messages={thread}
+              undo={undo}
+              undoing={undoing}
+              onUndo={onUndo}
+              onPromote={handlePromote}
+              promotingIndex={promotingIndex}
+            />
           ) : (
             <p className="text-sm m-0 text-ink-500">
               Jot a comment, ask a question, or say what's wrong with this plan.
@@ -349,6 +380,12 @@ const FeedbackSection = ({
           </div>
         </div>
       </Card>
+      <CreateIdeaModal
+        open={ideaPromptIndex !== null}
+        onClose={() => setIdeaPromptIndex(null)}
+        onAdd={handlePromoteToIdea}
+        initialContent={ideaPromptIndex !== null ? thread[ideaPromptIndex]?.text : undefined}
+      />
     </div>
   );
 };

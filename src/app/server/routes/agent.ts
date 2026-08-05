@@ -4,12 +4,12 @@ import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
 import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
 import { agentThreadMessage, todayDateString } from '@/core/serialize';
-import { logFromThread } from '@/core/thread';
+import { chatSinceLastLog, logFromThread, promoteThreadMessage } from '@/core/thread';
 import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry, ThreadMessage } from '@/types/index';
 import { readDefaultAgentIds } from '../agent';
 import { resolveAgent } from '../agents';
 import { probeAgentAuthStatus } from '../capabilities';
-import { applyFeedbackEdit, replyToFeedback } from '../feedback-reply';
+import { applyFeedbackEdit, replyToFeedback, summarizeFeedback } from '../feedback-reply';
 import {
   campFile,
   checkBranchConflictForPlan,
@@ -28,6 +28,21 @@ async function resolveEntityFilePath(root: string, entityId: string): Promise<st
   const archived = join(campFile(root, 'ideas'), 'archive', `${entityId}.md`);
   if (await fileExists(archived)) return archived;
   return null;
+}
+
+// Shared by every feedback-thread route (message, undo, promote, summarize): finds
+// the plan-kind entity a planId names, plus the file it currently lives at.
+async function resolveFeedbackEntity(
+  root: string,
+  planId: string,
+): Promise<{ entries: EntityEntry[]; entity: EntityEntry; targetFile: string } | null> {
+  const ideasDir = campFile(root, 'ideas');
+  const { entries } = await readEntities(ideasDir);
+  const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
+  if (!entity) return null;
+  const targetFile =
+    (await resolveEntityFilePath(root, entity.id)) ?? join(ideasDir, `${entity.id}.md`);
+  return { entries, entity, targetFile };
 }
 
 // Known renames from this project's own history, cheap enough to
@@ -355,17 +370,12 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           return;
         }
 
-        const ideasDir = campFile(root, 'ideas');
-        const { entries } = await readEntities(ideasDir);
-        const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
-        if (!entity) {
+        const resolved = await resolveFeedbackEntity(root, planId);
+        if (!resolved) {
           sendJson(res, 404, { error: 'plan not found' });
           return;
         }
-        const primaryFile = join(ideasDir, `${entity.id}.md`);
-        const targetFile = (await fileExists(primaryFile))
-          ? primaryFile
-          : join(ideasDir, 'archive', `${entity.id}.md`);
+        const { entries, entity, targetFile } = resolved;
 
         const userMessage: ThreadMessage = {
           kind: 'chat',
@@ -474,17 +484,12 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           return;
         }
 
-        const ideasDir = campFile(root, 'ideas');
-        const { entries } = await readEntities(ideasDir);
-        const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
-        if (!entity) {
+        const resolved = await resolveFeedbackEntity(root, planId);
+        if (!resolved) {
           sendJson(res, 404, { error: 'plan not found' });
           return;
         }
-        const primaryFile = join(ideasDir, `${entity.id}.md`);
-        const targetFile = (await fileExists(primaryFile))
-          ? primaryFile
-          : join(ideasDir, 'archive', `${entity.id}.md`);
+        const { targetFile } = resolved;
         const relFile = relative(root, targetFile);
 
         // The commit must still be the file's tip — a later edit landing on top would
@@ -504,6 +509,94 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
         await regenerateIndexes(root);
         sendJson(res, 200, { ok: true });
+      },
+    },
+
+    // Distills one ephemeral `chat` message into a durable thread kind — deterministic,
+    // no agent call, mirroring how applyFeedbackEdit above never touches a file itself
+    // beyond what the route writes. `note` carries the promote-to-idea breadcrumb (the
+    // idea itself is minted through the ordinary POST /api/ideas, then this call marks
+    // the source message as captured — see useSendFeedbackMessage's sibling hook).
+    {
+      method: 'POST',
+      path: '/api/agent/feedback-promote',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { planId, index, target, note } = JSON.parse(reqBody) as {
+          planId?: string;
+          index?: number;
+          target?: 'decision' | 'log';
+          note?: string;
+        };
+        if (!planId || typeof index !== 'number' || (target !== 'decision' && target !== 'log')) {
+          sendJson(res, 400, { error: 'planId, index, and a decision/log target are required' });
+          return;
+        }
+
+        const resolved = await resolveFeedbackEntity(root, planId);
+        if (!resolved) {
+          sendJson(res, 404, { error: 'plan not found' });
+          return;
+        }
+        const { entity, targetFile } = resolved;
+        const thread = entity.thread ?? [];
+        if (thread[index]?.kind !== 'chat') {
+          sendJson(res, 404, { error: 'no chat message at that index' });
+          return;
+        }
+
+        await writeEntityFile(
+          targetFile,
+          entityFileInput(entity, {
+            thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
+            updated: todayDateString(),
+          }),
+        );
+        await regenerateIndexes(root);
+        sendJson(res, 200, { ok: true });
+      },
+    },
+
+    // Fires once a chat session goes quiet (client-side inactivity timer — see
+    // useFeedbackQuietSummary), distilling the exchange since the last log entry into
+    // one durable line. A no-op (skipped: true) when nothing chat-kind followed it,
+    // so re-firing on an already-quiet thread never appends a duplicate summary.
+    {
+      method: 'POST',
+      path: '/api/agent/feedback-summarize',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { planId } = JSON.parse(reqBody) as { planId?: string };
+        if (!planId) {
+          sendJson(res, 400, { error: 'planId is required' });
+          return;
+        }
+
+        const resolved = await resolveFeedbackEntity(root, planId);
+        if (!resolved) {
+          sendJson(res, 404, { error: 'plan not found' });
+          return;
+        }
+        const { entity, targetFile } = resolved;
+        const messages = chatSinceLastLog(entity.thread);
+        if (messages.length === 0) {
+          sendJson(res, 200, { ok: true, skipped: true });
+          return;
+        }
+
+        try {
+          const plan = entityToPlan(entity);
+          const summary = await summarizeFeedback(plan, messages, agent.runFeedbackReply);
+          const thread = [...(entity.thread ?? []), agentThreadMessage(summary)];
+          await writeEntityFile(
+            targetFile,
+            entityFileInput(entity, { thread, updated: todayDateString() }),
+          );
+          await regenerateIndexes(root);
+          sendJson(res, 200, { ok: true, summary });
+        } catch (err) {
+          sendJson(res, 500, { error: (err as Error).message });
+        }
       },
     },
 

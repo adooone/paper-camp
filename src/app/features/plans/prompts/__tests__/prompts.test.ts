@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildConvergenceAuditPrompt,
   buildFeedbackReplyPrompt,
+  buildFeedbackSummaryPrompt,
   buildFixReviewPrompt,
   buildIdeaExtendPrompt,
   buildOverlapCheckPrompt,
@@ -178,5 +179,17 @@ describe('buildFeedbackReplyPrompt', () => {
     expect(prompt).toContain('### IDEA-3: Another idea (status: planned)');
     expect(prompt).toContain('Another idea body.');
     expect(prompt).toContain('never propose an "edit" for it');
+  });
+});
+
+describe('buildFeedbackSummaryPrompt', () => {
+  it('lays out the exchange oldest-first with the Paper Scout persona', () => {
+    const prompt = buildFeedbackSummaryPrompt(plan, [
+      { kind: 'chat', text: 'What should we do about X?', from: 'user' },
+      { kind: 'chat', text: "Let's go with Y.", from: 'agent' },
+    ]);
+    expect(prompt).toContain('You are Paper Scout');
+    expect(prompt).toContain("User: What should we do about X?\nAgent: Let's go with Y.");
+    expect(prompt).toContain('{"summary": "one sentence"}');
   });
 });

@@ -1,4 +1,4 @@
-import { buildFeedbackReplyPrompt } from '@/app/features/plans/prompts';
+import { buildFeedbackReplyPrompt, buildFeedbackSummaryPrompt } from '@/app/features/plans/prompts';
 import type {
   EntityEntry,
   EntityStatus,
@@ -7,6 +7,7 @@ import type {
   FeedbackReplyResult,
   PhaseItem,
   PlanEntry,
+  ThreadMessage,
 } from '@/types/index';
 
 function toPhaseEdit(raw: {
@@ -40,6 +41,18 @@ function toEdit(raw: {
   return { ...(phases.length ? { phases } : {}), ...(body ? { body } : {}) };
 }
 
+// Claude's `-p --output-format json` wraps the model's own text in a {result: "..."}
+// envelope; opencode's `--format json` does not. Unwrap either shape, then pull the
+// JSON object the prompt's contract requires as the final line.
+function extractJsonBlock(output: string): string | null {
+  let resultText = output;
+  try {
+    const parsed = JSON.parse(output) as { result?: string };
+    if (typeof parsed.result === 'string') resultText = parsed.result;
+  } catch {}
+  return resultText.match(/\{[\s\S]*\}/)?.[0] ?? null;
+}
+
 // One-shot, read-only agent call, not the long-running phase/task system in
 // agent.ts: runs independently of the task registry, so it's never blocked by
 // (and never blocks) a running phase/reconcile/etc. Never edits a file itself —
@@ -53,16 +66,10 @@ export async function replyToFeedback(
   const prompt = buildFeedbackReplyPrompt(plan, otherEntities);
   const output = await runPrompt(prompt, plan.title);
 
-  let resultText = output;
-  try {
-    const parsed = JSON.parse(output) as { result?: string };
-    if (typeof parsed.result === 'string') resultText = parsed.result;
-  } catch {}
+  const jsonBlock = extractJsonBlock(output);
+  if (!jsonBlock) throw new Error('Agent did not return a reply');
 
-  const match = resultText.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('Agent did not return a reply');
-
-  const data = JSON.parse(match[0]) as {
+  const data = JSON.parse(jsonBlock) as {
     reply?: string;
     answersQuestion?: boolean;
     edit?: {
@@ -81,6 +88,25 @@ export async function replyToFeedback(
     ...(data.answersQuestion ? { answersQuestion: true } : {}),
     ...(edit ? { edit } : {}),
   };
+}
+
+// Same one-shot read-only shape as replyToFeedback, fired once a chat session goes
+// quiet (routes/agent.ts's feedback-summarize) instead of on every message.
+export async function summarizeFeedback(
+  plan: PlanEntry,
+  messages: ThreadMessage[],
+  runPrompt: (prompt: string, planTitle: string) => Promise<string>,
+): Promise<string> {
+  const prompt = buildFeedbackSummaryPrompt(plan, messages);
+  const output = await runPrompt(prompt, plan.title);
+
+  const jsonBlock = extractJsonBlock(output);
+  if (!jsonBlock) throw new Error('Agent did not return a summary');
+
+  const data = JSON.parse(jsonBlock) as { summary?: string };
+  const summary = data.summary?.trim();
+  if (!summary) throw new Error('Agent did not return a summary');
+  return summary;
 }
 
 // Applies a proposed edit's phase ops onto the entity's current phase/fix lists —
