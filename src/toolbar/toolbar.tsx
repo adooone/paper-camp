@@ -19,7 +19,11 @@ const DEFAULT_ROUTE = '/__camp';
 // v1/v2/v3/Scout have all landed — Focus, Scout, Desk, Ship, Runs.
 const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['focus', 'scout', 'runs', 'ship', 'desk'];
 
-export const Toolbar = () => {
+export interface ToolbarProps {
+  route?: string;
+}
+
+export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
   const status = useStatusClient();
   const checkStatus = useCheckStatusClient();
   const runs = useRunsClient();
@@ -27,7 +31,7 @@ export const Toolbar = () => {
   const scout = useScoutClient();
   const shell = useToolbarShell();
   const [allowedSegments, setAllowedSegments] = useState<ToolbarSegmentId[]>(DEFAULT_SEGMENTS);
-  const [route, setRoute] = useState(DEFAULT_ROUTE);
+  const [route, setRoute] = useState(injectedRoute ?? DEFAULT_ROUTE);
 
   useEffect(() => {
     fetchConfig().then((config) => {

@@ -71,7 +71,7 @@ build's `base` to `'./'`. A release smoke test that curls
 ### Phases
 - [x] Add a browser build pass for the toolbar
       Own Vite pass with no externals, NODE_ENV defined, react/react-dom bundled, emitting a single self-contained `dist/app/toolbar.js`.
-- [ ] Inject the camp route as an element attribute
+- [x] Inject the camp route as an element attribute
       Have the plugin's injected script tag set the API base on the mount element so the toolbar knows the camp origin.
 - [ ] Thread the API base through the thin client
       Give the desk hooks (`use-status-client`, `use-focus-client`, `fetchConfig`) a route-prefix seam and honour the injected base for every fetch/EventSource.
