@@ -2,13 +2,14 @@
 id: IDEA-128
 title: In-app dev toolbar — paper-camp living inside the target application
 type: feat
-status: idea
+status: in-progress
 created: 2026-08-05
 updated: 2026-08-05
 tags:
   - integration
   - app
 subject: In-app dev toolbar
+order: 4
 ---
 
 Owner's idea: integrate paper-camp natively into the application being built. When the target app's dev server runs, paper-camp is present *inside it* — a **docked toolbar** (Vercel-Toolbar-style) wired to the corpus and tools, a link out to the full desk, and optionally the whole desk mounted on a subroute of the app.
@@ -51,23 +52,15 @@ Per-project trimming via `integration.toolbar.segments` allowlist in config.json
       `integration: { toolbar, route }` in config.json with a `toolbar.segments` allowlist, toggleable for frontend targets.
 - [x] Ship v1 segments — Focus, Desk, glance badges
       Read-only only: session focus, open-desk link, and badge counts with no writes or agent controls.
-- [ ] Add the v2 segment — mount Paper Scout
-      Consume [[IDEA-130]]'s chat surface in the toolbar: project-wide questions badge on the bar, panel with the Scout thread and route context injected.
+- [ ] Defer the Scout segment to IDEA-130
+      Skip mounting Scout in the toolbar for now; relocate the Scout segment spec (thread-verbatim chat, questions inbox, parked-questions badge, context injection) into IDEA-130 and leave only a placeholder/segment id here until Scout's own plan lands.
 - [ ] Add v3 segments — Runs and Ship
       Live agent indicator with stop, run-next-phase, plus branch/check stamps and quick commit.
 - [ ] Enforce the dev-only production guard
       Keep the toolbar off production URLs by default; link to remote/hosted mode instead of embedding.
 
-### Log
-- 2026-08-05 — Decision (owner): toolbar form factor over the corner icon-bubble — a docked bar with segments, Vercel-Toolbar-style.
-- 2026-08-05 — Decision (owner): reuse the desk's existing StatusBar as the base — one toolbar component, two mounts (desk shell + injected in-app), not a parallel implementation.
-- 2026-08-05 — Design session: segments (Focus / Capture / Questions / Runs / Ship / Desk), three-tier access model (glance → quick action → deep link), safe-verbs write rule, per-project segment allowlist, v1–v3 delivery phasing. See "Toolbar contents & access model".
-- 2026-08-05 — Decision (owner): v1 is read-only + links — no capture form, no run controls. The capture segment is replaced by an agent Chat (the existing Feedback chat surfaced in-app); capture becomes a chat capability.
-- 2026-08-05 — Decision (owner): chat is thread-verbatim — chat messages are corpus thread messages of a new collapsible `chat` kind, with first-class distillation (promote outcomes to decision/idea/log; auto-summary when a session goes quiet). No session-style side channel.
-- 2026-08-05 — Decision (owner): Questions folds into Chat — one segment, five total. The questions badge stays top-level on the bar and counts open questions project-wide; the panel triages oldest-first, grouped by idea.
-- 2026-08-05 — Decision (owner): the chat extracted to its own idea and named **Paper Scout** ([[IDEA-130]]) — unifying with the existing Scout GitHub App identity. This idea keeps the toolbar shell and mounts Scout as its v2 segment.
-- 2026-08-05 — Completed: built `src/toolbar/` — a `ToolbarShell` (pure, tested) implementing the dock-to-bottom / collapse-to-pill / segment→panel mechanics, backed by a pure `shouldCollapse` idle predicate (tested) and a stateful `useToolbarShell` hook (untested glue, matching this repo's existing hook-testing pattern). `PaperCampToolbarElement` mounts it in a shadow root — paper-ui's stylesheet is injected inline (`?raw` import) so the bar renders correctly on a host page that never loaded paper-ui's CSS. The single segment wired so far is Ship (the existing `StatusBarCore` + `useStatusClient`, mounted verbatim), fulfilling this phase's "mount the extracted StatusBar" literally; Focus/Scout/Runs and the segment allowlist land in later phases per the v1–v3 phasing above. Added a `toolbar` lib entry to `vite.config.ts` (flat `dist/toolbar.js`, its own bundled React copy — the shared `external` list was narrowed since only this entry needs React inlined) so it satisfies the `/__camp/toolbar.js` script tag the vite plugin already injects (`src/vite/index.ts`, phase 1). `tsc`, biome, and the full test/knip/depcruise suite are clean.
-- 2026-08-05 — Known gap, not blocking: `useStatusClient`'s API calls hit relative `/api/...` paths, correct for the desk mount but not proxy-aware — inside an embedded host app they hit the host's own dev server, not `/__camp/api/...`, so the mounted Ship panel currently renders with empty/default data when embedded (git branch, agent status, etc.). Giving the services a configurable base path is real work spanning several files under `src/app/services` and wasn't part of this phase's scope; flagging it for whichever later phase wires the embedded mount to live data.
-
 ### Thread
 - [x] 2026-08-05 [question] [agent] Chat segment design is open: does the toolbar chat reuse the per-idea Feedback thread verbatim (thread = chat history), or get its own session-style thread that files notes/ideas into the corpus as side effects? And does Questions stay a separate segment or fold into Chat once parked questions render in the same thread surface? → Resolved by owner decisions in the Log: thread-verbatim with a collapsible `chat` kind + distillation; Questions folds into Chat with a top-level project-wide badge.
+- [x] 2026-08-05 [question] [agent] Run-all parked on phase 5 ("Add the v2 segment — mount Paper Scout") — the agent needs a decision: Phase 5 says "consume IDEA-130's chat surface in the toolbar," but IDEA-130 (Paper Scout) has none of its phases done yet — no `chat` thread-message kind, no Scout persona, no questions-inbox aggregation/badge endpoint, and no context-injection contract exist anywhere in the codebase (confirmed via code survey: `ThreadMessageKind` only has `log/clarification/review/note/decision/question`, and there's no parked-questions count anywhere). Building a real Scout mount here would mean implementing IDEA-130's phases myself, which is out of scope for "this phase only" and duplicates a separate plan. How do you want to proceed — should I go implement IDEA-130's phases first (as its own run), or is there a reduced version of this toolbar phase you want scoped differently (e.g., just add the `scout` segment id/plumbing with a placeholder panel, deferring real chat wiring)?
+- [x] 2026-08-05 [clarification] skip Scout for now but move related information into 130 idea
+- [x] 2026-08-05 [log] [agent] Got it — deferring Scout. I'll reword phase 5 so it stops trying to mount Scout here and instead defers to IDEA-130, and I'll move the Scout-specific spec (segment 2 details, the v2 delivery note, the chat/questions-inbox/badge contract) over into IDEA-130 so it lives with its own plan. That unblocks run-all to move on to v3 (Runs/Ship) without me having to build out IDEA-130's phases inline.
