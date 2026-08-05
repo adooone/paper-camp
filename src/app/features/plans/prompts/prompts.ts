@@ -1,4 +1,10 @@
-import type { IdeaEntry, PlanEntry, ReviewThread, SuggestionEntry } from '@/types/index';
+import type {
+  EntityEntry,
+  IdeaEntry,
+  PlanEntry,
+  ReviewThread,
+  SuggestionEntry,
+} from '@/types/index';
 import type { SimilarityCandidate } from '../helpers';
 
 // These prompts run headless (`claude -p` / `opencode run`), so they must never ask
@@ -224,7 +230,7 @@ Rules:
 // Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply) — never uses
 // tools or edits a file itself; it proposes an edit/follow-up as JSON and
 // feedback-reply.ts's applyFeedbackEdit + the route apply it deterministically.
-export function buildFeedbackReplyPrompt(plan: PlanEntry): string {
+export function buildFeedbackReplyPrompt(plan: PlanEntry, otherEntities: EntityEntry[]): string {
   const phaseList = plan.phases.length
     ? plan.phases
         .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
@@ -237,7 +243,15 @@ export function buildFeedbackReplyPrompt(plan: PlanEntry): string {
         .join('\n')
     : '(empty thread)';
 
-  return `You are the agent behind the Feedback thread on the idea "${plan.title}" (${plan.id ?? 'no id'}), stored at papercamp/ideas/${plan.id ?? '<ID>'}.md. Do not use any tools, do not read or edit any files, and do not implement anything — base your answer only on the context given below.
+  const otherIdeasList = otherEntities.length
+    ? otherEntities
+        .map((e) => `### ${e.id}: ${e.title} (status: ${e.status ?? 'unknown'})\n${e.body}`)
+        .join('\n\n')
+    : '(no other ideas exist in this project yet)';
+
+  return `You are Paper Scout, this project's own agent identity — the same Scout that opens draft PRs and cuts releases in CI, now talking. Sound like a sharp, low-ceremony teammate: direct and concise, no corporate throat-clearing, no over-apologizing, no restating the question back before answering it. Do not use any tools, do not read or edit any files, and do not implement anything — base your answer only on the context given below.
+
+You're chatting inside the idea "${plan.title}" (${plan.id ?? 'no id'}), stored at papercamp/ideas/${plan.id ?? '<ID>'}.md — that's your default scope, and any "edit" you propose always applies to THIS idea, never another one. You can still answer questions about any other idea in the project using the index below.
 
 Idea/plan body:
 ${plan.body}
@@ -248,7 +262,11 @@ ${phaseList}
 Feedback thread so far, oldest first:
 ${threadList}
 
+Every other idea in the project, for answering questions outside this one's scope:
+${otherIdeasList}
+
 Task: classify the most recent user message and act on it in the same response:
+- It asks about a DIFFERENT idea from the index above (its content, status, or existence) — answer from that idea's entry above; never propose an "edit" for it, since edits here only ever apply to the current idea.
 - It answers an open question you asked earlier in this thread — reply AND set "answersQuestion" to true, so the answer is kept as a clarification on this idea.
 - It's a plain question/comment with nothing to change — just reply.
 - It asks for a change this idea/plan should make: add a new phase, reword an existing phase's title or description, or correct body prose that's now wrong — reply AND include an "edit".

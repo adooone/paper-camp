@@ -1,5 +1,6 @@
 import { buildFeedbackReplyPrompt } from '@/app/features/plans/prompts';
 import type {
+  EntityEntry,
   EntityStatus,
   FeedbackEdit,
   FeedbackPhaseEdit,
@@ -46,9 +47,10 @@ function toEdit(raw: {
 // never creates new ideas — a request always becomes an edit on the current plan.
 export async function replyToFeedback(
   plan: PlanEntry,
+  otherEntities: EntityEntry[],
   runPrompt: (prompt: string, planTitle: string) => Promise<string>,
 ): Promise<FeedbackReplyResult> {
-  const prompt = buildFeedbackReplyPrompt(plan);
+  const prompt = buildFeedbackReplyPrompt(plan, otherEntities);
   const output = await runPrompt(prompt, plan.title);
 
   let resultText = output;

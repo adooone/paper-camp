@@ -14,21 +14,21 @@ const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
 
 describe('replyToFeedback', () => {
   it('rejects when the agent returns no parseable JSON', async () => {
-    await expect(replyToFeedback(plan({ id: 'IDEA-1' }), async () => 'not json')).rejects.toThrow(
-      'did not return a reply',
-    );
+    await expect(
+      replyToFeedback(plan({ id: 'IDEA-1' }), [], async () => 'not json'),
+    ).rejects.toThrow('did not return a reply');
   });
 
   it('rejects when the JSON has no reply text', async () => {
     const runPrompt = async () => JSON.stringify({ edit: { body: 'x' } });
-    await expect(replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt)).rejects.toThrow(
+    await expect(replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt)).rejects.toThrow(
       'did not return a reply',
     );
   });
 
   it('returns a plain reply with no edit or spinOff', async () => {
     const runPrompt = async () => JSON.stringify({ reply: 'Sure, noted.' });
-    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
+    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt);
     expect(result).toEqual({ reply: 'Sure, noted.' });
   });
 
@@ -38,7 +38,7 @@ describe('replyToFeedback', () => {
         reply: 'Added a phase for that.',
         edit: { phases: [{ op: 'add', text: 'Cover the export flow' }] },
       });
-    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
+    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt);
     expect(result).toEqual({
       reply: 'Added a phase for that.',
       edit: { phases: [{ op: 'add', text: 'Cover the export flow' }] },
@@ -51,7 +51,7 @@ describe('replyToFeedback', () => {
         reply: 'Reworded.',
         edit: { phases: [{ op: 'reword', text: 'New title' }] },
       });
-    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
+    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt);
     expect(result).toEqual({ reply: 'Reworded.' });
   });
 
@@ -62,20 +62,20 @@ describe('replyToFeedback', () => {
         edit: { body: 'reworked' },
         spinOff: { title: 'Follow-up idea', body: 'A separate piece of work.' },
       });
-    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
+    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt);
     expect(result).toEqual({ reply: 'Added that here.', edit: { body: 'reworked' } });
   });
 
   it('accepts a reply wrapped in a markdown code fence', async () => {
     const runPrompt = async () => '```json\n{"reply": "Got it."}\n```';
-    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
+    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt);
     expect(result).toEqual({ reply: 'Got it.' });
   });
 
   it('carries answersQuestion through when the agent flags it', async () => {
     const runPrompt = async () =>
       JSON.stringify({ reply: 'Right, scope is just the export flow.', answersQuestion: true });
-    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
+    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt);
     expect(result).toEqual({
       reply: 'Right, scope is just the export flow.',
       answersQuestion: true,
@@ -85,7 +85,7 @@ describe('replyToFeedback', () => {
   it('omits answersQuestion when the agent sends false', async () => {
     const runPrompt = async () =>
       JSON.stringify({ reply: 'Just noting that.', answersQuestion: false });
-    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), runPrompt);
+    const result = await replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt);
     expect(result).toEqual({ reply: 'Just noting that.' });
   });
 });

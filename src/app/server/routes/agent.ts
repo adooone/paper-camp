@@ -368,7 +368,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           : join(ideasDir, 'archive', `${entity.id}.md`);
 
         const userMessage: ThreadMessage = {
-          kind: 'log',
+          kind: 'chat',
           date: todayDateString(),
           text: text.trim(),
         };
@@ -386,7 +386,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         let undo: { commitSha: string } | undefined;
         try {
           const plan = entityToPlan({ ...entity, thread: threadWithUser });
-          const result = await replyToFeedback(plan, agent.runFeedbackReply);
+          const otherEntities = entries.filter((e) => e.id !== entity.id);
+          const result = await replyToFeedback(plan, otherEntities, agent.runFeedbackReply);
           const overrides = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
 
           // The agent flags when this message answers a question it asked earlier —
@@ -420,7 +421,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           const reopen = (overrides.fixes ?? []).slice(priorFixCount).some((p) => !p.done);
           if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
 
-          thread = [...answeredThread, agentThreadMessage(replyText)];
+          thread = [...answeredThread, agentThreadMessage(replyText, 'chat')];
           await writeEntityFile(
             targetFile,
             entityFileInput(entity, {

@@ -1,8 +1,9 @@
 import { buildAgentPrompt } from '@/app/server/agent';
-import type { IdeaEntry, PlanEntry, ReviewThread } from '@/types/index';
+import type { EntityEntry, IdeaEntry, PlanEntry, ReviewThread } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
   buildConvergenceAuditPrompt,
+  buildFeedbackReplyPrompt,
   buildFixReviewPrompt,
   buildIdeaExtendPrompt,
   buildOverlapCheckPrompt,
@@ -150,5 +151,32 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).toContain('no unresolved review threads were found');
     expect(prompt).toContain('do not edit, commit, or push anything');
     expect(prompt).not.toContain('"addressed"');
+  });
+});
+
+describe('buildFeedbackReplyPrompt', () => {
+  it('carries the Paper Scout persona and defaults scope to the bound idea', () => {
+    const prompt = buildFeedbackReplyPrompt(plan, []);
+    expect(prompt).toContain('You are Paper Scout');
+    expect(prompt).toContain("that's your default scope");
+    expect(prompt).toContain('(no other ideas exist in this project yet)');
+  });
+
+  it('lists every other idea for answering questions outside the bound one', () => {
+    const otherEntities: EntityEntry[] = [
+      {
+        id: 'IDEA-3',
+        title: 'Another idea',
+        status: 'planned',
+        created: '2026-06-01',
+        tags: [],
+        body: 'Another idea body.',
+        phases: [],
+      },
+    ];
+    const prompt = buildFeedbackReplyPrompt(plan, otherEntities);
+    expect(prompt).toContain('### IDEA-3: Another idea (status: planned)');
+    expect(prompt).toContain('Another idea body.');
+    expect(prompt).toContain('never propose an "edit" for it');
   });
 });
