@@ -48,7 +48,7 @@ Net shape of the extracted core: a presentation component taking the eight data 
 ### Phases
 - [x] Inventory the StatusBar's dependencies
       List every paper-ui import, `useAppStore` selector, and API call it leans on; decide per item whether it moves into the core, becomes a prop, or stays desk-side.
-- [ ] Extract a store-free StatusBar core
+- [x] Extract a store-free StatusBar core
       Presentation component taking data + action callbacks as a typed interface — no `useAppStore`, no desk imports.
 - [ ] Build the thin status client over the server API
       The segments' data (agent status, git state, setup gaps) fetched/streamed from the existing endpoints, usable outside the desk process.
