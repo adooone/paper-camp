@@ -264,7 +264,11 @@ export function buildFeedbackReplyPrompt(
 
   const otherIdeasList = otherEntities.length
     ? otherEntities
-        .map((e) => `### ${e.id}: ${e.title} (status: ${e.status ?? 'unknown'})\n${e.body}`)
+        .map((e) =>
+          e.status === 'done' || e.status === 'dropped'
+            ? `- ${e.id}: ${e.title} (status: ${e.status})`
+            : `### ${e.id}: ${e.title} (status: ${e.status ?? 'unknown'})\n${e.body}`,
+        )
         .join('\n\n')
     : '(no other ideas exist in this project yet)';
 

@@ -18,7 +18,7 @@ import { MergePolicySection } from './components/merge-policy-section';
 import { SetupSection } from './components/setup-section';
 import { SubjectsSection } from './components/subjects-section';
 
-const TASK_TYPE_KEYS = ['phase', 'planDraft', 'ideaExtend', 'commitSuggest'] as const;
+const TASK_TYPE_KEYS = ['phase', 'planDraft', 'ideaExtend', 'commitSuggest', 'feedback'] as const;
 type TaskTypeKey = (typeof TASK_TYPE_KEYS)[number];
 
 const TASK_TYPE_LABELS: Record<TaskTypeKey, string> = {
@@ -26,6 +26,7 @@ const TASK_TYPE_LABELS: Record<TaskTypeKey, string> = {
   planDraft: 'Plan draft',
   ideaExtend: 'Idea extend',
   commitSuggest: 'Commit suggest',
+  feedback: 'Scout chat',
 };
 
 interface AgentTaskRowProps {
@@ -168,6 +169,7 @@ const GeneralSection = () => {
       planDraft: current?.planDraft ?? DEFAULT_AGENTS.planDraft,
       ideaExtend: current?.ideaExtend ?? DEFAULT_AGENTS.ideaExtend,
       commitSuggest: current?.commitSuggest ?? DEFAULT_AGENTS.commitSuggest,
+      feedback: current?.feedback ?? DEFAULT_AGENTS.feedback,
       [key]: newEntry,
     };
     const { ok, error } = await saveConfig({ defaultAgents: updated });

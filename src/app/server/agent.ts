@@ -95,6 +95,9 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         planDraft: coerceAgentConfig(rawAgents.planDraft),
         ideaExtend: coerceAgentConfig(rawAgents.ideaExtend),
         commitSuggest: coerceAgentConfig(rawAgents.commitSuggest),
+        feedback: rawAgents.feedback
+          ? coerceAgentConfig(rawAgents.feedback)
+          : DEFAULT_AGENTS.feedback,
       };
     }
     if (config.defaultAgent) {
@@ -104,6 +107,7 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         planDraft: { agent: id },
         ideaExtend: { agent: id },
         commitSuggest: { agent: id },
+        feedback: { agent: id },
       };
     }
     return DEFAULT_AGENTS;

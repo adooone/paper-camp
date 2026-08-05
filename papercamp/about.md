@@ -336,7 +336,8 @@ the dashboard's Settings page via `POST /api/config` (`projectName`, `port`,
     "phase": { "agent": "claude-code", "model": "sonnet", "effort": "medium" },
     "planDraft": { "agent": "claude-code", "model": "fable", "effort": "high" },
     "ideaExtend": { "agent": "claude-code", "model": "opus", "effort": "high" },
-    "commitSuggest": { "agent": "claude-code", "model": "sonnet", "effort": "low" }
+    "commitSuggest": { "agent": "claude-code", "model": "sonnet", "effort": "low" },
+    "feedback": { "agent": "claude-code", "model": "sonnet", "effort": "medium" }
   }
 }
 ```

@@ -3,7 +3,7 @@ import { findConsistencyIssues, parseSuggestions, parseTaskLog } from '@/core/pa
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
 import { computeProjectStats } from '@/core/stats';
-import { type ProjectStats, coerceAgentConfig } from '@/types/index';
+import { DEFAULT_AGENTS, type ProjectStats, coerceAgentConfig } from '@/types/index';
 import { cached } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
 import { listConfigFiles } from './system';
@@ -82,6 +82,11 @@ export const readRoutes: ReadRoute[] = [
           planDraft: coerceAgentConfig(config.defaultAgents.planDraft),
           ideaExtend: coerceAgentConfig(config.defaultAgents.ideaExtend),
           commitSuggest: coerceAgentConfig(config.defaultAgents.commitSuggest),
+          // Older configs predate this bucket — default it to sonnet/medium rather
+          // than the bare-claude-code fallback coerceAgentConfig(undefined) gives.
+          feedback: config.defaultAgents.feedback
+            ? coerceAgentConfig(config.defaultAgents.feedback)
+            : DEFAULT_AGENTS.feedback,
         };
       }
       // subjects is regenerated from ROADMAP.md on every read rather than trusted from

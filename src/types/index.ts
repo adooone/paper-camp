@@ -415,6 +415,7 @@ export interface DefaultAgentsMap {
   planDraft: AgentConfig;
   ideaExtend: AgentConfig;
   commitSuggest: AgentConfig;
+  feedback: AgentConfig;
 }
 
 export const DEFAULT_AGENTS: DefaultAgentsMap = {
@@ -422,6 +423,7 @@ export const DEFAULT_AGENTS: DefaultAgentsMap = {
   planDraft: { agent: 'claude-code' },
   ideaExtend: { agent: 'claude-code' },
   commitSuggest: { agent: 'claude-code' },
+  feedback: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
 };
 
 /** Toolbar segments, left to right (IDEA-128); trimmed per project via `IntegrationConfig.toolbar.segments`. */

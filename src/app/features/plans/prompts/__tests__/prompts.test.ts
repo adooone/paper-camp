@@ -181,6 +181,34 @@ describe('buildFeedbackReplyPrompt', () => {
     expect(prompt).toContain('never propose an "edit" for it');
   });
 
+  it('collapses done and dropped ideas to one-line index entries', () => {
+    const otherEntities: EntityEntry[] = [
+      {
+        id: 'IDEA-4',
+        title: 'Finished idea',
+        status: 'done',
+        created: '2026-06-01',
+        tags: [],
+        body: 'Finished idea body.',
+        phases: [],
+      },
+      {
+        id: 'IDEA-5',
+        title: 'Dropped idea',
+        status: 'dropped',
+        created: '2026-06-01',
+        tags: [],
+        body: 'Dropped idea body.',
+        phases: [],
+      },
+    ];
+    const prompt = buildFeedbackReplyPrompt(plan, otherEntities);
+    expect(prompt).toContain('- IDEA-4: Finished idea (status: done)');
+    expect(prompt).toContain('- IDEA-5: Dropped idea (status: dropped)');
+    expect(prompt).not.toContain('Finished idea body.');
+    expect(prompt).not.toContain('Dropped idea body.');
+  });
+
   it('omits the ambient context block when no mount context is given', () => {
     const prompt = buildFeedbackReplyPrompt(plan, []);
     expect(prompt).not.toContain('Ambient context');

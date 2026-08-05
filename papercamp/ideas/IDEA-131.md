@@ -32,7 +32,7 @@ Phases run far slower than the same work done directly in chat. The gap is struc
       Trim `buildAgentPrompt`/`buildFixItemPrompt` to fast targeted checks (`check-types` + `biome check --write`), drop `pnpm test` and the pre-existing-failure clause, and replace any remaining agent-facing `pnpm test` with `npx vitest run`.
 - [x] Resume the claude session across a run-all
       Capture `session_id` from the stream-json `result` event in `parseLine`, and have `runQueue` pass `--resume` on later phases and fix passes of the same run; opencode keeps today's cold-start behavior.
-- [ ] Give the Scout feedback path its own agent bucket
+- [x] Give the Scout feedback path its own agent bucket
       Add a `feedback` `defaultAgents` bucket (sonnet, medium) surfaced in Settings, route `buildFeedbackReplyPrompt`/`buildFeedbackSummaryPrompt` through it, and send done/dropped ideas as one-line index entries.
 - [ ] Reorder and compact the Scout reply prompt
       Move to a stable-first prefix (persona → corpus index → idea → thread → latest) and inline only the prior session summaries plus the last 10 thread messages instead of the whole history.
