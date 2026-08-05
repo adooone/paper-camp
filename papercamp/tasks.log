@@ -39,3 +39,4 @@
 {"id":"cc2452b2-9741-48e8-964b-9e3fb5b9b919","taskKind":"fix-review","planId":"IDEA-130","planTitle":"Paper Scout — the conversational agent","agentId":"claude-code","startedAt":"2026-08-05T15:13:46.074Z","endedAt":"2026-08-05T15:18:05.431Z","outcome":"done"}
 {"id":"aacb2a5b-5214-437d-b03b-ddac299a5546","taskKind":"draft","planTitle":"Draft plan for IDEA-131","agentId":"claude-code","startedAt":"2026-08-05T16:19:56.780Z","endedAt":"2026-08-05T16:20:37.495Z","outcome":"done"}
 {"id":"aacb2a5b-5214-437d-b03b-ddac299a5546","taskKind":"draft","planTitle":"Draft plan for IDEA-131","agentId":"claude-code","startedAt":"2026-08-05T16:19:56.780Z","endedAt":"2026-08-05T16:20:37.575Z","outcome":"done"}
+{"id":"baba2079-f069-4888-b013-b5f5683b497b","taskKind":"run-all","planId":"IDEA-131","planTitle":"Faster agent runs and chat replies","agentId":"claude-code","startedAt":"2026-08-05T16:25:00.076Z","endedAt":"2026-08-05T16:56:17.118Z","outcome":"done"}
