@@ -14,20 +14,23 @@ import { buildAgentPrompt, createAgentManager } from './agent';
 // substituted. `agentScript.current` is what each spawned agent executes.
 const agentScript = vi.hoisted(() => ({
   current: 'process.exit(0)',
-  buildArgs: undefined as ((prompt: string) => string[]) | undefined,
+  buildArgs: undefined as ((prompt: string, opts?: { resume?: string }) => string[]) | undefined,
 }));
 
 vi.mock('./agents', () => {
   const adapter = {
     command: process.execPath,
-    buildArgs: (prompt: string) =>
-      agentScript.buildArgs ? agentScript.buildArgs(prompt) : ['-e', agentScript.current],
+    buildArgs: (prompt: string, opts?: { resume?: string }) =>
+      agentScript.buildArgs ? agentScript.buildArgs(prompt, opts) : ['-e', agentScript.current],
     parseLine: (line: string) => {
       const text = line.trim();
       if (!text) return null;
       if (text.startsWith('PERMISSION-DENIED:')) {
         const reason = text.slice('PERMISSION-DENIED:'.length).trim();
         return { text: reason, error: true, reason };
+      }
+      if (text.startsWith('SESSION:')) {
+        return { text: '', sessionId: text.slice('SESSION:'.length).trim() };
       }
       return { text };
     },
@@ -222,6 +225,49 @@ describe('startRunAllPhases', () => {
     expect(commits).toEqual([1]);
     expect(prompts).toHaveLength(1);
     expect(prompts[0]).toContain('Second phase');
+  });
+
+  it('starts the first phase cold, then resumes each later phase from the prior session id', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const resumes: (string | undefined)[] = [];
+    let call = 0;
+    agentScript.buildArgs = (_prompt, opts) => {
+      call++;
+      resumes.push(opts?.resume);
+      return ['-e', `console.log('SESSION:sess-${call}');\n${FLIP_NEXT_CHECKBOX}`];
+    };
+    const manager = createAgentManager(root);
+
+    expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(resumes).toEqual([undefined, 'sess-1']);
+  });
+
+  it('resumes a same-run fix pass and the next phase from the running session id', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const resumes: (string | undefined)[] = [];
+    let call = 0;
+    agentScript.buildArgs = (prompt, opts) => {
+      call++;
+      resumes.push(opts?.resume);
+      const body = prompt.includes('Only make the failing checks pass')
+        ? 'process.exit(0)'
+        : FLIP_NEXT_CHECKBOX;
+      return ['-e', `console.log('SESSION:sess-${call}');\n${body}`];
+    };
+    const manager = createAgentManager(root);
+
+    let checks = 0;
+    manager.startRunAllPhases(plan, async () => {
+      checks++;
+      // Baseline (call 1) is clean; the gate after phase 1 is red once, triggering
+      // one fix pass, then green for the rest of the run.
+      return checks === 2 ? ['test'] : [];
+    });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    // call 1: phase 1, cold. call 2: fix pass, resumes phase 1's session.
+    // call 3: phase 2, resumes the fix pass's session.
+    expect(resumes).toEqual([undefined, 'sess-1', 'sess-2']);
   });
 
   it('stops with an error when the phase checkbox does not flip', async () => {

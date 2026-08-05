@@ -497,20 +497,25 @@ export function createAgentManager(
     prompt: string,
     model: string | undefined,
     effort: string | undefined,
-    opts: { guardSuperseded?: boolean; trackBlocker?: boolean } = {},
-  ): Promise<{ ok: boolean; timedOut: boolean; stderr: string }> {
+    opts: { guardSuperseded?: boolean; trackBlocker?: boolean; resume?: string } = {},
+  ): Promise<{ ok: boolean; timedOut: boolean; stderr: string; sessionId?: string }> {
     // Cleared per attempt: this task object is reused across a queue's items and a
     // fix pass's retries, so a stale reason from an earlier, ultimately-successful
     // attempt must never be attributed to a later, unrelated failure.
     task.errorReason = undefined;
-    const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
+    const proc = spawnAgent(
+      adapter,
+      adapter.buildArgs(prompt, { model, effort, resume: opts.resume }),
+    );
     task.proc = proc;
 
+    let sessionId: string | undefined;
     if (proc.stdout) {
       const rl = createInterface({ input: proc.stdout });
       rl.on('line', (line) => {
         if (opts.guardSuperseded && isSuperseded(task)) return;
         const parsed = adapter.parseLine(line);
+        if (parsed?.sessionId) sessionId = parsed.sessionId;
         if (parsed?.reason) {
           task.errorReason = parsed.reason;
           if (opts.trackBlocker) task.blocker = parsed.reason;
@@ -530,7 +535,11 @@ export function createAgentManager(
       stderr += d.toString();
     });
 
-    return runProcessWithTimeout(proc, PHASE_TIMEOUT_MS).then((result) => ({ ...result, stderr }));
+    return runProcessWithTimeout(proc, PHASE_TIMEOUT_MS).then((result) => ({
+      ...result,
+      stderr,
+      sessionId,
+    }));
   }
 
   // 'worktree' collides with everything (one git tree); 'entities' only collides
@@ -893,15 +902,17 @@ export function createAgentManager(
     attempt: number,
     attemptCap: number,
     introducedChecks: CheckName[],
-  ): Promise<{ ok: boolean; timedOut: boolean }> {
+    resume: string | undefined,
+  ): Promise<{ ok: boolean; timedOut: boolean; sessionId?: string }> {
     pushLine(task, `[fix] ${label} — fix attempt ${attempt}/${attemptCap} for failing checks`);
     const prompt = buildFixPassPrompt(plan, label, itemText, introducedChecks);
     return runPhaseProcess(task, adapter, prompt, model, effort, {
       guardSuperseded: true,
       trackBlocker: true,
-    }).then(({ ok, timedOut, stderr }) => {
+      resume,
+    }).then(({ ok, timedOut, stderr, sessionId }) => {
       if (!ok && !timedOut && stderr.trim()) pushLine(task, stderr.trim());
-      return { ok, timedOut };
+      return { ok, timedOut, sessionId };
     });
   }
 
@@ -920,15 +931,18 @@ export function createAgentManager(
     effort: string | undefined,
     runProjectChecks: (() => Promise<CheckName[]>) | undefined,
     initialToleratedRed: Set<CheckName>,
+    initialSessionId: string | undefined,
   ): Promise<{
     completed: number;
     failed: number;
     toleratedRed: Set<CheckName>;
+    sessionId: string | undefined;
     exit: 'superseded' | 'stopping' | 'ran';
   }> {
     let completed = 0;
     let failed = 0;
     let toleratedRed = initialToleratedRed;
+    let sessionId = initialSessionId;
 
     for (const { item, i } of items) {
       if (isSuperseded(task) || task.status === 'stopping') break;
@@ -946,12 +960,16 @@ export function createAgentManager(
         ok: exitedOk,
         timedOut,
         stderr,
+        sessionId: newSessionId,
       } = await runPhaseProcess(task, adapter, prompt, model, effort, {
         guardSuperseded: true,
         trackBlocker: true,
+        resume: sessionId,
       });
+      if (newSessionId) sessionId = newSessionId;
 
-      if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+      if (isSuperseded(task))
+        return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
       if (isStopping(task)) break;
 
       if (task.blocker) {
@@ -1002,7 +1020,8 @@ export function createAgentManager(
       if (runProjectChecks) {
         pushLine(task, `[verify] ${kind} ${i + 1} — running lint/format/test`);
         let failing = await runProjectChecks();
-        if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+        if (isSuperseded(task))
+          return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
         if (isStopping(task)) break;
         let introduced = failing.filter((c) => !toleratedRed.has(c));
         let checksOk = introduced.length === 0;
@@ -1015,7 +1034,7 @@ export function createAgentManager(
           task.fixAttempt = fixAttempt;
           task.fixAttemptCap = FIX_ATTEMPT_CAP;
 
-          const { timedOut: fixTimedOut } = await runFixPass(
+          const { timedOut: fixTimedOut, sessionId: fixSessionId } = await runFixPass(
             task,
             plan,
             `${kind} ${i + 1}`,
@@ -1026,8 +1045,11 @@ export function createAgentManager(
             fixAttempt,
             FIX_ATTEMPT_CAP,
             introduced,
+            sessionId,
           );
-          if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+          if (fixSessionId) sessionId = fixSessionId;
+          if (isSuperseded(task))
+            return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
           if (task.blocker) {
             fixBlocker = task.blocker;
             task.blocker = undefined;
@@ -1045,7 +1067,8 @@ export function createAgentManager(
             `[verify] ${kind} ${i + 1} — re-running lint/format/test (attempt ${fixAttempt}/${FIX_ATTEMPT_CAP})`,
           );
           failing = await runProjectChecks();
-          if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+          if (isSuperseded(task))
+            return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
           introduced = failing.filter((c) => !toleratedRed.has(c));
           checksOk = introduced.length === 0;
         }
@@ -1095,6 +1118,7 @@ export function createAgentManager(
       completed,
       failed,
       toleratedRed,
+      sessionId,
       exit: isSuperseded(task) ? 'superseded' : task.status === 'stopping' ? 'stopping' : 'ran',
     };
   }
@@ -1163,6 +1187,7 @@ export function createAgentManager(
           effort,
           runProjectChecks,
           toleratedRed,
+          undefined,
         );
         toleratedRed = phaseResult.toleratedRed;
 
@@ -1181,6 +1206,7 @@ export function createAgentManager(
           completed: 0,
           failed: 0,
           toleratedRed,
+          sessionId: phaseResult.sessionId,
           exit: 'ran',
         };
         if (phaseResult.failed === 0 && uncheckedFixes.length > 0) {
@@ -1195,6 +1221,7 @@ export function createAgentManager(
             effort,
             runProjectChecks,
             toleratedRed,
+            phaseResult.sessionId,
           );
 
           if (fixResult.exit === 'superseded') {

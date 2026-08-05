@@ -5,6 +5,7 @@ export interface ParsedAgentLine {
   done?: boolean;
   error?: boolean;
   reason?: string;
+  sessionId?: string;
 }
 
 export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
@@ -25,6 +26,7 @@ export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
   ];
   if (opts?.model) args.push('--model', opts.model);
   if (opts?.effort) args.push('--effort', opts.effort);
+  if (opts?.resume) args.push('--resume', opts.resume);
   return args;
 }
 
@@ -78,7 +80,8 @@ export function parseLine(line: string): ParsedAgentLine | null {
       const error = Boolean(json.is_error);
       const result = typeof json.result === 'string' ? json.result.trim() : '';
       const text = result || (error ? 'Agent run failed' : 'Agent run finished');
-      return { text, done: true, error };
+      const sessionId = typeof json.session_id === 'string' ? json.session_id : undefined;
+      return { text, done: true, error, sessionId };
     }
     default:
       return { text: 'Agent is working…' };

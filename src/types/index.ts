@@ -380,6 +380,8 @@ export interface AgentConfig {
 export interface AgentRunOptions {
   model?: string;
   effort?: string;
+  /** Prior claude-code session id to continue instead of starting cold; ignored by opencode. */
+  resume?: string;
 }
 
 /** Maps option names to a fixed value list (renders a Select) or null (free-text or hidden). */

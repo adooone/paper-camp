@@ -30,7 +30,7 @@ Phases run far slower than the same work done directly in chat. The gap is struc
 ### Phases
 - [x] Make the harness gate the sole owner of the full test suite
       Trim `buildAgentPrompt`/`buildFixItemPrompt` to fast targeted checks (`check-types` + `biome check --write`), drop `pnpm test` and the pre-existing-failure clause, and replace any remaining agent-facing `pnpm test` with `npx vitest run`.
-- [ ] Resume the claude session across a run-all
+- [x] Resume the claude session across a run-all
       Capture `session_id` from the stream-json `result` event in `parseLine`, and have `runQueue` pass `--resume` on later phases and fix passes of the same run; opencode keeps today's cold-start behavior.
 - [ ] Give the Scout feedback path its own agent bucket
       Add a `feedback` `defaultAgents` bucket (sonnet, medium) surfaced in Settings, route `buildFeedbackReplyPrompt`/`buildFeedbackSummaryPrompt` through it, and send done/dropped ideas as one-line index entries.
