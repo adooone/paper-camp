@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.13.2](https://github.com/adooone/paper-camp/compare/v0.13.1...v0.13.2) (2026-08-05)
+
+
+### Bug Fixes
+
+* **cli:** Settings port is a dead field — dev never reads it (IDEA-127) ([#102](https://github.com/adooone/paper-camp/issues/102)) ([4c5d681](https://github.com/adooone/paper-camp/commit/4c5d681ff9fbd513bb42a3646545e686f985e7ba))
+* **repo:** Headless runs die as bare "error" when the agent hits a permission ask (IDEA-125) ([#103](https://github.com/adooone/paper-camp/issues/103)) ([c07b799](https://github.com/adooone/paper-camp/commit/c07b799b0bf9b9f9cbf764f22bae9c51cabda01c))
+* **repo:** Read-only helper tasks silently supersede a running run-all (IDEA-126) ([#100](https://github.com/adooone/paper-camp/issues/100)) ([41afaf5](https://github.com/adooone/paper-camp/commit/41afaf5b4216de5bbbcf1ff36f87c9a8746f0ccf))
+
 ## [0.13.1](https://github.com/adooone/paper-camp/compare/v0.13.0...v0.13.1) (2026-08-04)
 
 
