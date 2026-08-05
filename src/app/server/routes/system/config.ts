@@ -88,7 +88,13 @@ export function configRoutes({ root }: RouteContext): Route[] {
           return;
         }
         if (rawDefaultAgents !== undefined) {
-          for (const key of ['phase', 'planDraft', 'ideaExtend', 'commitSuggest'] as const) {
+          for (const key of [
+            'phase',
+            'planDraft',
+            'ideaExtend',
+            'commitSuggest',
+            'feedback',
+          ] as const) {
             const val = rawDefaultAgents[key];
             const agentId =
               typeof val === 'string' ? val : (val as Record<string, unknown> | undefined)?.agent;
@@ -146,6 +152,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
               planDraft: coerceAgentConfig(rawDefaultAgents.planDraft),
               ideaExtend: coerceAgentConfig(rawDefaultAgents.ideaExtend),
               commitSuggest: coerceAgentConfig(rawDefaultAgents.commitSuggest),
+              feedback: coerceAgentConfig(rawDefaultAgents.feedback),
             }
           : undefined;
         const resolvedDefaultAgents: DefaultAgentsMap | undefined =
@@ -156,6 +163,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
                 planDraft: { agent: defaultAgent },
                 ideaExtend: { agent: defaultAgent },
                 commitSuggest: { agent: defaultAgent },
+                feedback: { agent: defaultAgent },
               }
             : undefined);
         const configWithOld = config as PaperCampConfig & { defaultAgent?: AgentId };

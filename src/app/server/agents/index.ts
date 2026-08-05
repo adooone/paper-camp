@@ -49,8 +49,7 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   'commit-suggest': 'commitSuggest',
   'overlap-check': 'commitSuggest',
   prioritise: 'commitSuggest',
-  // Replies conversationally from prose context, same authoring bucket as draft.
-  feedback: 'planDraft',
+  feedback: 'feedback',
 };
 
 export function resolveAgent(opts: {

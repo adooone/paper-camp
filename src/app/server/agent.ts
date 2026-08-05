@@ -95,6 +95,9 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         planDraft: coerceAgentConfig(rawAgents.planDraft),
         ideaExtend: coerceAgentConfig(rawAgents.ideaExtend),
         commitSuggest: coerceAgentConfig(rawAgents.commitSuggest),
+        feedback: rawAgents.feedback
+          ? coerceAgentConfig(rawAgents.feedback)
+          : DEFAULT_AGENTS.feedback,
       };
     }
     if (config.defaultAgent) {
@@ -104,6 +107,7 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         planDraft: { agent: id },
         ideaExtend: { agent: id },
         commitSuggest: { agent: id },
+        feedback: { agent: id },
       };
     }
     return DEFAULT_AGENTS;
@@ -133,9 +137,9 @@ Do only this phase — do not start any other phase, even if it looks quick.
 
 Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
-You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, \`pnpm run lint\`, \`pnpm test\`) — never open the app, navigate to a URL, or take screenshots, even if the phase describes a visual check; note in the commit message that it's left to a human instead.
+You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, \`npx biome check . --write\`) — never open the app, navigate to a URL, or take screenshots, even if the phase describes a visual check; note in the commit message that it's left to a human instead.
 
-Leave the whole repo green before you finish, not just the files you edited: run \`pnpm run check-types\` and \`npx biome check . --write\` and fix anything red, including pre-existing failures elsewhere — that's part of completing this phase, not a separate one. Keep such fixes minimal and correct.
+Leave the whole repo green before you finish, not just the files you edited: run \`pnpm run check-types\` and \`npx biome check . --write\` and fix anything red. Keep such fixes minimal and correct.
 
 If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop without finishing the phase.
 
@@ -158,7 +162,7 @@ export function buildFixPassPrompt(
 
 Only make the failing checks pass — change nothing else: no new features, no refactors, no unrelated cleanup, no edits outside what the failures require, and do not touch the plan file.
 
-Run \`pnpm run check-types\`, \`npx biome check . --write\`, and \`pnpm test\` to see what's red, fix exactly that, then stop.
+Run \`pnpm run check-types\`, \`npx biome check . --write\`, and \`npx vitest run\` to see what's red, fix exactly that, then stop.
 
 If the failure requires a decision you can't make on your own — not just a fix you haven't found yet — output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop.`;
 }
@@ -184,9 +188,9 @@ Do only this fix — do not start any other fix or phase, even if it looks quick
 
 Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
-You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, \`pnpm run lint\`, \`pnpm test\`) — never open the app, navigate to a URL, or take screenshots, even if the fix describes a visual check; note in the commit message that it's left to a human instead.
+You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, \`npx biome check . --write\`) — never open the app, navigate to a URL, or take screenshots, even if the fix describes a visual check; note in the commit message that it's left to a human instead.
 
-Leave the whole repo green before you finish, not just the files you edited: run \`pnpm run check-types\` and \`npx biome check . --write\` and fix anything red, including pre-existing failures elsewhere — that's part of completing this fix, not a separate one. Keep such fixes minimal and correct.
+Leave the whole repo green before you finish, not just the files you edited: run \`pnpm run check-types\` and \`npx biome check . --write\` and fix anything red. Keep such fixes minimal and correct.
 
 If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop without finishing the fix.
 
@@ -497,20 +501,25 @@ export function createAgentManager(
     prompt: string,
     model: string | undefined,
     effort: string | undefined,
-    opts: { guardSuperseded?: boolean; trackBlocker?: boolean } = {},
-  ): Promise<{ ok: boolean; timedOut: boolean; stderr: string }> {
+    opts: { guardSuperseded?: boolean; trackBlocker?: boolean; resume?: string } = {},
+  ): Promise<{ ok: boolean; timedOut: boolean; stderr: string; sessionId?: string }> {
     // Cleared per attempt: this task object is reused across a queue's items and a
     // fix pass's retries, so a stale reason from an earlier, ultimately-successful
     // attempt must never be attributed to a later, unrelated failure.
     task.errorReason = undefined;
-    const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
+    const proc = spawnAgent(
+      adapter,
+      adapter.buildArgs(prompt, { model, effort, resume: opts.resume }),
+    );
     task.proc = proc;
 
+    let sessionId: string | undefined;
     if (proc.stdout) {
       const rl = createInterface({ input: proc.stdout });
       rl.on('line', (line) => {
         if (opts.guardSuperseded && isSuperseded(task)) return;
         const parsed = adapter.parseLine(line);
+        if (parsed?.sessionId) sessionId = parsed.sessionId;
         if (parsed?.reason) {
           task.errorReason = parsed.reason;
           if (opts.trackBlocker) task.blocker = parsed.reason;
@@ -530,7 +539,11 @@ export function createAgentManager(
       stderr += d.toString();
     });
 
-    return runProcessWithTimeout(proc, PHASE_TIMEOUT_MS).then((result) => ({ ...result, stderr }));
+    return runProcessWithTimeout(proc, PHASE_TIMEOUT_MS).then((result) => ({
+      ...result,
+      stderr,
+      sessionId,
+    }));
   }
 
   // 'worktree' collides with everything (one git tree); 'entities' only collides
@@ -893,15 +906,17 @@ export function createAgentManager(
     attempt: number,
     attemptCap: number,
     introducedChecks: CheckName[],
-  ): Promise<{ ok: boolean; timedOut: boolean }> {
+    resume: string | undefined,
+  ): Promise<{ ok: boolean; timedOut: boolean; sessionId?: string }> {
     pushLine(task, `[fix] ${label} — fix attempt ${attempt}/${attemptCap} for failing checks`);
     const prompt = buildFixPassPrompt(plan, label, itemText, introducedChecks);
     return runPhaseProcess(task, adapter, prompt, model, effort, {
       guardSuperseded: true,
       trackBlocker: true,
-    }).then(({ ok, timedOut, stderr }) => {
+      resume,
+    }).then(({ ok, timedOut, stderr, sessionId }) => {
       if (!ok && !timedOut && stderr.trim()) pushLine(task, stderr.trim());
-      return { ok, timedOut };
+      return { ok, timedOut, sessionId };
     });
   }
 
@@ -920,15 +935,18 @@ export function createAgentManager(
     effort: string | undefined,
     runProjectChecks: (() => Promise<CheckName[]>) | undefined,
     initialToleratedRed: Set<CheckName>,
+    initialSessionId: string | undefined,
   ): Promise<{
     completed: number;
     failed: number;
     toleratedRed: Set<CheckName>;
+    sessionId: string | undefined;
     exit: 'superseded' | 'stopping' | 'ran';
   }> {
     let completed = 0;
     let failed = 0;
     let toleratedRed = initialToleratedRed;
+    let sessionId = initialSessionId;
 
     for (const { item, i } of items) {
       if (isSuperseded(task) || task.status === 'stopping') break;
@@ -946,12 +964,16 @@ export function createAgentManager(
         ok: exitedOk,
         timedOut,
         stderr,
+        sessionId: newSessionId,
       } = await runPhaseProcess(task, adapter, prompt, model, effort, {
         guardSuperseded: true,
         trackBlocker: true,
+        resume: sessionId,
       });
+      if (newSessionId) sessionId = newSessionId;
 
-      if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+      if (isSuperseded(task))
+        return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
       if (isStopping(task)) break;
 
       if (task.blocker) {
@@ -1002,7 +1024,8 @@ export function createAgentManager(
       if (runProjectChecks) {
         pushLine(task, `[verify] ${kind} ${i + 1} — running lint/format/test`);
         let failing = await runProjectChecks();
-        if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+        if (isSuperseded(task))
+          return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
         if (isStopping(task)) break;
         let introduced = failing.filter((c) => !toleratedRed.has(c));
         let checksOk = introduced.length === 0;
@@ -1015,7 +1038,7 @@ export function createAgentManager(
           task.fixAttempt = fixAttempt;
           task.fixAttemptCap = FIX_ATTEMPT_CAP;
 
-          const { timedOut: fixTimedOut } = await runFixPass(
+          const { timedOut: fixTimedOut, sessionId: fixSessionId } = await runFixPass(
             task,
             plan,
             `${kind} ${i + 1}`,
@@ -1026,8 +1049,11 @@ export function createAgentManager(
             fixAttempt,
             FIX_ATTEMPT_CAP,
             introduced,
+            sessionId,
           );
-          if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+          if (fixSessionId) sessionId = fixSessionId;
+          if (isSuperseded(task))
+            return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
           if (task.blocker) {
             fixBlocker = task.blocker;
             task.blocker = undefined;
@@ -1045,7 +1071,8 @@ export function createAgentManager(
             `[verify] ${kind} ${i + 1} — re-running lint/format/test (attempt ${fixAttempt}/${FIX_ATTEMPT_CAP})`,
           );
           failing = await runProjectChecks();
-          if (isSuperseded(task)) return { completed, failed, toleratedRed, exit: 'superseded' };
+          if (isSuperseded(task))
+            return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
           introduced = failing.filter((c) => !toleratedRed.has(c));
           checksOk = introduced.length === 0;
         }
@@ -1095,6 +1122,7 @@ export function createAgentManager(
       completed,
       failed,
       toleratedRed,
+      sessionId,
       exit: isSuperseded(task) ? 'superseded' : task.status === 'stopping' ? 'stopping' : 'ran',
     };
   }
@@ -1163,6 +1191,7 @@ export function createAgentManager(
           effort,
           runProjectChecks,
           toleratedRed,
+          undefined,
         );
         toleratedRed = phaseResult.toleratedRed;
 
@@ -1181,6 +1210,7 @@ export function createAgentManager(
           completed: 0,
           failed: 0,
           toleratedRed,
+          sessionId: phaseResult.sessionId,
           exit: 'ran',
         };
         if (phaseResult.failed === 0 && uncheckedFixes.length > 0) {
@@ -1195,6 +1225,7 @@ export function createAgentManager(
             effort,
             runProjectChecks,
             toleratedRed,
+            phaseResult.sessionId,
           );
 
           if (fixResult.exit === 'superseded') {

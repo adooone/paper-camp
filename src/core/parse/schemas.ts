@@ -150,6 +150,7 @@ export const paperCampConfigSchema = z.object({
       planDraft: agentConfigSchema,
       ideaExtend: agentConfigSchema,
       commitSuggest: agentConfigSchema,
+      feedback: agentConfigSchema,
     })
     .optional(),
 });

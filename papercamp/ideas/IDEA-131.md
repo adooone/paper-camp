@@ -2,7 +2,7 @@
 id: IDEA-131
 title: Faster agent runs and chat replies
 type: refactor
-status: idea
+status: review
 created: 2026-08-05
 tags:
   - agent
@@ -26,6 +26,18 @@ Phases run far slower than the same work done directly in chat. The gap is struc
 6. **Thread compaction in the reply prompt.** The reply prompt inlines the full thread history forever, while `buildFeedbackSummaryPrompt` already distills quiet sessions into one-line summaries. Send the prior session summaries plus only the last 10 thread messages instead of the whole history — the full thread stays in the entity file untouched; only the prompt is compacted.
 
 7. **Corpus compression in `buildSuggestIdeasPrompt`.** Same full-corpus problem as feedback: it inlines every idea's body on every suggest run, but "don't duplicate this" only needs titles for finished work. Done/dropped ideas become one-line entries (id + title + status); full bodies only for open ideas — mirroring point 3's treatment.
+
+### Phases
+- [x] Make the harness gate the sole owner of the full test suite
+      Trim `buildAgentPrompt`/`buildFixItemPrompt` to fast targeted checks (`check-types` + `biome check --write`), drop `pnpm test` and the pre-existing-failure clause, and replace any remaining agent-facing `pnpm test` with `npx vitest run`.
+- [x] Resume the claude session across a run-all
+      Capture `session_id` from the stream-json `result` event in `parseLine`, and have `runQueue` pass `--resume` on later phases and fix passes of the same run; opencode keeps today's cold-start behavior.
+- [x] Give the Scout feedback path its own agent bucket
+      Add a `feedback` `defaultAgents` bucket (sonnet, medium) surfaced in Settings, route `buildFeedbackReplyPrompt`/`buildFeedbackSummaryPrompt` through it, and send done/dropped ideas as one-line index entries.
+- [x] Reorder and compact the Scout reply prompt
+      Move to a stable-first prefix (persona → corpus index → idea → thread → latest) and inline only the prior session summaries plus the last 10 thread messages instead of the whole history.
+- [x] Compress the corpus in `buildSuggestIdeasPrompt`
+      Reduce done/dropped ideas to one-line entries, full bodies only for open ideas, mirroring the feedback treatment.
 
 ### Log
 - 2026-08-05 — Captured from a pipeline review in chat: per-phase time budget showed 7+ full-suite gate runs on a 6-phase plan plus agent-side re-verification, cold-start re-exploration per phase, and the feedback path routed through opus/high with a full-corpus prompt. All four decisions settled with the owner; one idea by request.
