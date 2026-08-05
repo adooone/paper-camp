@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import type { EntityType } from '../types/index';
+import type { EntityType, ReleaseNoteIdea, ReleaseNoteSection } from '../types/index';
 import { readEntities } from './readers';
 import { readFileMaybe, resolveIdeasForRelease, resolveReleaseRanges } from './trail';
 
@@ -12,16 +12,6 @@ const TYPE_SECTION_LABELS: Record<EntityType, string> = {
 };
 
 const SECTION_ORDER = Array.from(new Set(Object.values(TYPE_SECTION_LABELS)));
-
-export interface ReleaseNoteIdea {
-  id: string;
-  title: string;
-}
-
-export interface ReleaseNoteSection {
-  label: string;
-  ideas: ReleaseNoteIdea[];
-}
 
 // One row per idea rather than per commit — the join dedupes a fix-up commit landing
 // after the idea's initial commit into the same row, and swaps the commit subject for

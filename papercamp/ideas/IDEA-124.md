@@ -20,5 +20,5 @@ Two payoffs: release notes grouped by idea (human-readable by construction, bett
 - [x] Stamp the carrying version onto done ideas
       Write `released:` into frontmatter (or a Log line) when a version ships the idea.
 - [x] Build release notes grouped by idea from the join
-- [ ] Surface each release's shipped ideas and each idea's release in the UI
+- [x] Surface each release's shipped ideas and each idea's release in the UI
 - [ ] Backfill existing releases and done ideas

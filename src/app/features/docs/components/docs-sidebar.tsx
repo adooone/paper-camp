@@ -20,12 +20,21 @@ export const DocsSidebar = () => {
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const docSearchQuery = useAppStore((s) => s.docSearchQuery);
   const setDocSearchQuery = useAppStore((s) => s.setDocSearchQuery);
+  const releaseVersions = useAppStore((s) => s.releaseVersions);
+  const releaseVersionsLoading = useAppStore((s) => s.releaseVersionsLoading);
+  const loadReleaseVersions = useAppStore((s) => s.loadReleaseVersions);
+  const activeReleaseVersion = useAppStore((s) => s.activeReleaseVersion);
+  const setActiveReleaseVersion = useAppStore((s) => s.setActiveReleaseVersion);
   const activeDocSection = useResolvedDocSection();
   const navigate = useNavigate();
 
   useEffect(() => {
     loadRepoDocs();
   }, [loadRepoDocs]);
+
+  useEffect(() => {
+    loadReleaseVersions();
+  }, [loadReleaseVersions]);
 
   return (
     <>
@@ -58,6 +67,28 @@ export const DocsSidebar = () => {
           ))
         ) : (
           <EmptyState>No repo docs found</EmptyState>
+        )}
+      </SidebarSection>
+
+      <SidebarSection label="Releases">
+        {releaseVersionsLoading && releaseVersions.length === 0 ? (
+          <EmptyState>Loading…</EmptyState>
+        ) : releaseVersions.length > 0 ? (
+          releaseVersions.map((version) => (
+            <ListItem
+              key={version}
+              size="small"
+              active={activeDocSection === 'release-notes' && activeReleaseVersion === version}
+              onClick={() => {
+                navigate({ to: '/docs/$section', params: { section: 'release-notes' } });
+                setActiveReleaseVersion(version);
+              }}
+            >
+              {version}
+            </ListItem>
+          ))
+        ) : (
+          <EmptyState>No releases yet</EmptyState>
         )}
       </SidebarSection>
     </>

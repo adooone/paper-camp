@@ -176,6 +176,8 @@ export interface PlanEntry {
   updated?: string;
   audited?: string;
   auditedHash?: string;
+  /** Version tag (e.g. v0.13.1) that first shipped this idea, stamped from the release train. */
+  released?: string;
   tags: string[];
   /** Absent renders under the virtual "No subject" group. */
   subject?: string;
@@ -644,6 +646,16 @@ export interface ProvenanceTrail {
   commits: TrailHop<string[]>;
   pr: TrailHop<PrInfo>;
   releaseLine: TrailHop<string>;
+}
+
+export interface ReleaseNoteIdea {
+  id: string;
+  title: string;
+}
+
+export interface ReleaseNoteSection {
+  label: string;
+  ideas: ReleaseNoteIdea[];
 }
 
 export interface AgentTaskState {

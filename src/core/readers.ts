@@ -94,6 +94,7 @@ export function entityToPlan(e: EntityEntry, pr?: PrInfo, prLookupResolved = fal
     updated: e.updated,
     audited: e.audited,
     auditedHash: e.auditedHash,
+    released: e.released,
     tags: e.tags,
     subject: e.subject,
     order: e.order,

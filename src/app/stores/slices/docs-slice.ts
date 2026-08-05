@@ -1,4 +1,5 @@
 import { fetchRepoDocs } from '../../services/content';
+import { fetchReleaseVersions } from '../../services/release-notes-api';
 import type { GetState, SetState } from './slice-helpers';
 
 export type DocsSlice = {
@@ -11,6 +12,13 @@ export type DocsSlice = {
 
   docSearchQuery: string;
   setDocSearchQuery: (query: string) => void;
+
+  releaseVersions: string[];
+  releaseVersionsLoading: boolean;
+  loadReleaseVersions: () => Promise<void>;
+
+  activeReleaseVersion: string | null;
+  setActiveReleaseVersion: (version: string | null) => void;
 };
 
 export function createDocsSlice(set: SetState, get: GetState): DocsSlice {
@@ -39,5 +47,20 @@ export function createDocsSlice(set: SetState, get: GetState): DocsSlice {
 
     docSearchQuery: '',
     setDocSearchQuery: (query) => set({ docSearchQuery: query }),
+
+    releaseVersions: [],
+    releaseVersionsLoading: true,
+    loadReleaseVersions: async () => {
+      set({ releaseVersionsLoading: true });
+      try {
+        const versions = await fetchReleaseVersions();
+        set({ releaseVersions: versions, releaseVersionsLoading: false });
+      } catch {
+        set({ releaseVersions: [], releaseVersionsLoading: false });
+      }
+    },
+
+    activeReleaseVersion: null,
+    setActiveReleaseVersion: (version) => set({ activeReleaseVersion: version }),
   };
 }

@@ -3,6 +3,7 @@ import { findConsistencyIssues, parseSuggestions, parseTaskLog } from '@/core/pa
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
 import { computeProjectStats } from '@/core/stats';
+import { resolveReleaseRanges } from '@/core/trail';
 import { DEFAULT_AGENTS, type ProjectStats, coerceAgentConfig } from '@/types/index';
 import { cached } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
@@ -124,5 +125,12 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/configs',
     handler: async (root) => listConfigFiles(root),
+  },
+  {
+    path: '/api/releases',
+    handler: async (root) => {
+      const changelog = await readMaybe(join(root, 'CHANGELOG.md'));
+      return { versions: resolveReleaseRanges(changelog).map((r) => r.version) };
+    },
   },
 ];

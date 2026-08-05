@@ -58,11 +58,17 @@ function parseReleaseCommit(line: string): { hash: string; url: string } | undef
 
 interface ProvenanceTrailPanelProps {
   trail: ProvenanceTrail;
+  released?: string;
 }
 
-export const ProvenanceTrailPanel = ({ trail }: ProvenanceTrailPanelProps) => {
+export const ProvenanceTrailPanel = ({ trail, released }: ProvenanceTrailPanelProps) => {
   const { taskRuns, commits, pr, releaseLine } = trail;
   const releaseCommit = releaseLine.data ? parseReleaseCommit(releaseLine.data) : undefined;
+  const releaseLabel = released
+    ? `Released ${released}`
+    : releaseCommit
+      ? `Released ${releaseCommit.hash}`
+      : 'Release';
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -81,8 +87,8 @@ export const ProvenanceTrailPanel = ({ trail }: ProvenanceTrailPanelProps) => {
       {pr.data ? <PrBadge pr={pr.data} /> : <TrailNode reached={false} label="PR" />}
       <TrailArrow />
       <TrailNode
-        reached={releaseLine.reached}
-        label={releaseCommit ? `Released ${releaseCommit.hash}` : 'Release'}
+        reached={releaseLine.reached || Boolean(released)}
+        label={releaseLabel}
         tooltip={releaseLine.data}
         href={releaseCommit?.url}
       />
