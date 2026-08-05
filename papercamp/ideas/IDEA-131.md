@@ -21,5 +21,12 @@ Phases run far slower than the same work done directly in chat. The gap is struc
 
 4. **No coverage tax in agent test runs.** `pnpm test` is `vitest run --coverage`; anywhere agent-facing prompt text still tells an agent to run tests, it says `npx vitest run` instead.
 
+5. **Cache-friendly prompt ordering in the Scout chat.** Anthropic prompt caching hits on the exact stable prefix, and `buildFeedbackReplyPrompt` puts the thread (changes every message) before the corpus index (stable) — every turn invalidates the whole cache. Reorder to stable-first: persona → corpus index → idea body/phases → thread → latest message. No content change; consecutive replies reuse the cached bulk for faster first token and lower cost.
+
+6. **Thread compaction in the reply prompt.** The reply prompt inlines the full thread history forever, while `buildFeedbackSummaryPrompt` already distills quiet sessions into one-line summaries. Send the prior session summaries plus only the last 10 thread messages instead of the whole history — the full thread stays in the entity file untouched; only the prompt is compacted.
+
+7. **Corpus compression in `buildSuggestIdeasPrompt`.** Same full-corpus problem as feedback: it inlines every idea's body on every suggest run, but "don't duplicate this" only needs titles for finished work. Done/dropped ideas become one-line entries (id + title); full bodies only for open ideas — mirroring point 3's treatment.
+
 ### Log
 - 2026-08-05 — Captured from a pipeline review in chat: per-phase time budget showed 7+ full-suite gate runs on a 6-phase plan plus agent-side re-verification, cold-start re-exploration per phase, and the feedback path routed through opus/high with a full-corpus prompt. All four decisions settled with the owner; one idea by request.
+- 2026-08-05 — Extended with three compression points settled in the same conversation: cache-friendly prompt ordering (5), thread compaction reusing the quiet-session summaries (6), and suggest-prompt corpus slimming (7). A fourth lever — a codebase map in AGENTS.md pre-warming phase agents — was done directly as a docs edit, no phase needed.

@@ -1,8 +1,9 @@
 import { FeedbackThread, PlanIdStamp } from '@/app/features/plans/components';
 import { type OpenQuestionGroup, collectOpenQuestions } from '@/app/features/plans/helpers';
 import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
+import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { Accordion, Button, Card, Spinner, Stamp, Textarea } from '@dendelion/paper-ui';
+import { Accordion, Button, Card, Spinner, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 
@@ -10,8 +11,13 @@ const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity
 
 const QuestionGroupCard = ({ plan, questions }: OpenQuestionGroup) => {
   const navigate = useNavigate();
+  const loadPlans = useAppStore((s) => s.loadPlans);
+  const { toast } = useToast();
   const [input, setInput] = useState('');
-  const { sending, send, undo, undoing, undoEdit } = useSendFeedbackMessage(plan);
+  const { sending, send, undo, undoing, undoEdit } = useSendFeedbackMessage(plan, {
+    reload: loadPlans,
+    notify: toast,
+  });
 
   const handleSend = async () => {
     if (!input.trim()) return;

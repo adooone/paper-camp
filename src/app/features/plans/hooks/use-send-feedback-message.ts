@@ -1,15 +1,28 @@
 import { postFeedbackMessage, undoFeedbackEdit } from '@/app/services/agent-api';
-import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { MountContext, PlanEntry } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import type { ToastOptions } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
+
+export interface SendFeedbackMessageCallbacks {
+  /** Refreshes whatever this mount uses to list plans; a toolbar mount whose
+   * activity-stream subscription already refetches for it can pass a no-op. */
+  reload: () => Promise<void> | void;
+  /** paper-ui's `useToast().toast` on the desk — the toolbar has no
+   * `<ToastProvider>` (its portal would escape the shadow DOM), so it supplies
+   * its own inline notify instead. */
+  notify: (options: ToastOptions) => void;
+}
 
 // Posting a feedback message runs a one-shot agent before the reply lands in the
 // thread, so this can't reuse usePlanStatusPatch's plain PATCH-and-reload shape.
-export const useSendFeedbackMessage = (plan: PlanEntry) => {
-  const loadPlans = useAppStore((s) => s.loadPlans);
-  const { toast } = useToast();
+// `reload`/`notify` are injected rather than read from the app store or
+// paper-ui's toast context, so mounts without either (the toolbar — IDEA-130
+// phase 6) can supply their own.
+export const useSendFeedbackMessage = (
+  plan: PlanEntry,
+  { reload, notify }: SendFeedbackMessageCallbacks,
+) => {
   const [sending, setSending] = useState(false);
   const [undoing, setUndoing] = useState(false);
   // Only the reply this hook instance just received carries an Undo — reloading
@@ -29,14 +42,15 @@ export const useSendFeedbackMessage = (plan: PlanEntry) => {
     setUndo(null);
     try {
       const context: MountContext = {
+        route: window.location.pathname,
         focusedIdeaId: plan.id,
         viewport: { width: window.innerWidth, height: window.innerHeight },
       };
       const { error, undo: appliedUndo } = await postFeedbackMessage(plan.id, text, context);
-      await loadPlans();
+      await reload();
       if (appliedUndo) setUndo(appliedUndo);
       if (error) {
-        toast({
+        notify({
           title: 'Agent did not reply',
           description: oneLineErrorSummary(error),
           variant: 'error',
@@ -44,7 +58,7 @@ export const useSendFeedbackMessage = (plan: PlanEntry) => {
       }
       return true;
     } catch (err) {
-      toast({
+      notify({
         title: 'Message failed to send',
         description: oneLineErrorSummary((err as Error).message),
         variant: 'error',
@@ -61,13 +75,13 @@ export const useSendFeedbackMessage = (plan: PlanEntry) => {
     try {
       const { error } = await undoFeedbackEdit(plan.id, undo.commitSha);
       if (error) {
-        toast({ title: 'Undo failed', description: oneLineErrorSummary(error), variant: 'error' });
+        notify({ title: 'Undo failed', description: oneLineErrorSummary(error), variant: 'error' });
         return;
       }
       setUndo(null);
-      await loadPlans();
+      await reload();
     } catch (err) {
-      toast({
+      notify({
         title: 'Undo failed',
         description: oneLineErrorSummary((err as Error).message),
         variant: 'error',

@@ -2,6 +2,23 @@
 
 This file is the source of truth for how AI assistants should work in this repository.
 
+## Codebase map
+
+Use this instead of exploring from scratch — it is kept current like the code.
+
+- `src/core/` — the corpus engine, no UI or server deps: `parse/` (markdown entity grammar), `serialize/` (writing entities back, content hashes), `readers.ts` (entities → plans/ideas), `status/` (derived status), `thread.ts` (thread/log messages), `run-order.ts` + `run-order-file.ts` (queue order), `roadmap.ts`, `trail.ts` (idea→release trace), `git-pr/` (PR state), `scaffold/` (first-run templates), `stats.ts`.
+- `src/app/server/` — the dev-server API (loaded via `ssrLoadModule`, so `@/` imports work): `routes/` (HTTP endpoints; `routes/agent.ts` is the agent-facing surface), `agent.ts` (orchestration: phase runs, the run-all queue, fix passes, read-only prompts), `agents/` (CLI adapters for claude-code and opencode), `status.ts` (the lint/format/test/consistency checks and the run-all verify gate), `git.ts` (branch/commit manager), `services.ts` + `capabilities.ts` (connection probes), `feedback-reply.ts` (Scout chat edit application), `run.ts` (subprocess helper).
+- `src/app/features/` — UI by domain: `plans/` is the heart (`views/entity-detail.tsx` is the idea/plan page, `prompts/prompts.ts` holds every agent prompt), plus `roadmap/`, `settings/`, `stats/`, `tasks/`, `docs/`, `diff/`.
+- `src/app/components/` — shared UI: `stack-panel/` (the control surface — all actions live here), `shell/` (StatusBar, layout), `idea/`.
+- `src/app/stores/` — zustand `app-store.ts` composed from `slices/`.
+- `src/cli/` — the `paper-camp` bin; `dev-server.ts` boots Vite + the API.
+- `src/mcp/` — the MCP server exposing the corpus.
+- `src/toolbar/` — the in-app dev toolbar web component, mounted inside the target application.
+- `src/types/index.ts` — every shared type.
+- `papercamp/` — the corpus itself: `ideas/<ID>.md` (one file per idea, plan included), `ideas/index.md`, `config.json` (id counters, default agents, subjects), `run-order.md`, `suggestions.md`.
+
+Verify with: `pnpm run check-types`, `npx biome check . --write`, and `npx vitest run` (plain — `pnpm test` adds coverage and is much slower).
+
 ## Do one phase at a time
 
 When a user asks you to work on a plan (each entity — an *idea* with its plan as a `### Phases` section — is its own file at `papercamp/ideas/<ID>.md`), complete **only the phase they explicitly asked for** unless they tell you otherwise. Do not automatically continue into later phases.

@@ -394,6 +394,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const allPlans = useAppStore((s) => s.plans);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
+  const loadPlans = useAppStore((s) => s.loadPlans);
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const [branching, setBranching] = useState(false);
@@ -468,7 +469,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     undo: feedbackUndo,
     undoing: undoingFeedback,
     undoEdit,
-  } = useSendFeedbackMessage(plan);
+  } = useSendFeedbackMessage(plan, { reload: loadPlans, notify: toast });
 
   return (
     <div>

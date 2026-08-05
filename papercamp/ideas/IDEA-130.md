@@ -2,7 +2,7 @@
 id: IDEA-130
 title: Paper Scout — the conversational agent
 type: feat
-status: planned
+status: review
 created: 2026-08-05
 tags:
   - agents
@@ -33,7 +33,7 @@ Design (decided on [[IDEA-128]], carried here):
       In-chat promotion to decision/idea/log + auto-summary on session quiet.
 - [x] Define the context-injection contract for mounts
       A small interface the desk and toolbar both feed (route/URL, focused idea, viewport) — consumed silently by Scout.
-- [ ] Expose Scout as the toolbar mount
+- [x] Expose Scout as the toolbar mount
       The [[IDEA-128]] v2 segment consumes this; toolbar work stays in that idea.
 
 ### Log
