@@ -245,6 +245,10 @@ function formatMountContext(context?: MountContext): string {
 // Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply) — never uses
 // tools or edits a file itself; it proposes an edit/follow-up as JSON and
 // feedback-reply.ts's applyFeedbackEdit + the route apply it deterministically.
+//
+// Section order is stable-first (persona, corpus index, idea, thread, latest) so
+// consecutive replies in the same chat reuse Anthropic's prompt cache on the
+// unchanged prefix — only the thread and task tail differ turn to turn.
 export function buildFeedbackReplyPrompt(
   plan: PlanEntry,
   otherEntities: EntityEntry[],
@@ -256,10 +260,15 @@ export function buildFeedbackReplyPrompt(
         .join('\n')
     : '(no phases yet)';
 
-  const threadList = (plan.thread ?? []).length
-    ? (plan.thread as NonNullable<PlanEntry['thread']>)
-        .map((m) => `${m.from === 'agent' ? 'Agent' : 'User'}: ${m.text}`)
-        .join('\n')
+  const thread = plan.thread ?? [];
+  const sessionSummaries = thread.filter((m) => m.kind === 'log');
+  const summaryList = sessionSummaries.length
+    ? sessionSummaries.map((m) => `- ${m.text}`).join('\n')
+    : '(none yet)';
+
+  const recentMessages = thread.filter((m) => m.kind !== 'log').slice(-10);
+  const threadList = recentMessages.length
+    ? recentMessages.map((m) => `${m.from === 'agent' ? 'Agent' : 'User'}: ${m.text}`).join('\n')
     : '(empty thread)';
 
   const otherIdeasList = otherEntities.length
@@ -276,17 +285,20 @@ export function buildFeedbackReplyPrompt(
 
 You're chatting inside the idea "${plan.title}" (${plan.id ?? 'no id'}), stored at papercamp/ideas/${plan.id ?? '<ID>'}.md — that's your default scope, and any "edit" you propose always applies to THIS idea, never another one. You can still answer questions about any other idea in the project using the index below.
 
+Every other idea in the project, for answering questions outside this one's scope:
+${otherIdeasList}
+
 Idea/plan body:
 ${plan.body}
 
 Current phases:
 ${phaseList}
 
-Feedback thread so far, oldest first:
-${threadList}
+Prior session summaries, oldest first:
+${summaryList}
 
-Every other idea in the project, for answering questions outside this one's scope:
-${otherIdeasList}
+Feedback thread, most recent messages:
+${threadList}
 ${formatMountContext(context)}
 Task: classify the most recent user message and act on it in the same response:
 - It asks about a DIFFERENT idea from the index above (its content, status, or existence) — answer from that idea's entry above; never propose an "edit" for it, since edits here only ever apply to the current idea.

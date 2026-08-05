@@ -34,7 +34,7 @@ Phases run far slower than the same work done directly in chat. The gap is struc
       Capture `session_id` from the stream-json `result` event in `parseLine`, and have `runQueue` pass `--resume` on later phases and fix passes of the same run; opencode keeps today's cold-start behavior.
 - [x] Give the Scout feedback path its own agent bucket
       Add a `feedback` `defaultAgents` bucket (sonnet, medium) surfaced in Settings, route `buildFeedbackReplyPrompt`/`buildFeedbackSummaryPrompt` through it, and send done/dropped ideas as one-line index entries.
-- [ ] Reorder and compact the Scout reply prompt
+- [x] Reorder and compact the Scout reply prompt
       Move to a stable-first prefix (persona → corpus index → idea → thread → latest) and inline only the prior session summaries plus the last 10 thread messages instead of the whole history.
 - [ ] Compress the corpus in `buildSuggestIdeasPrompt`
       Reduce done/dropped ideas to one-line entries, full bodies only for open ideas, mirroring the feedback treatment.
