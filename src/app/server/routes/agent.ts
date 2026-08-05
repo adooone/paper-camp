@@ -5,7 +5,14 @@ import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
 import { agentThreadMessage, todayDateString } from '@/core/serialize';
 import { chatSinceLastLog, logFromThread, promoteThreadMessage } from '@/core/thread';
-import type { EntityEntry, IdeaEntry, IdeaStatus, PlanEntry, ThreadMessage } from '@/types/index';
+import type {
+  EntityEntry,
+  IdeaEntry,
+  IdeaStatus,
+  MountContext,
+  PlanEntry,
+  ThreadMessage,
+} from '@/types/index';
 import { readDefaultAgentIds } from '../agent';
 import { resolveAgent } from '../agents';
 import { probeAgentAuthStatus } from '../capabilities';
@@ -364,7 +371,11 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       path: '/api/agent/feedback-message',
       handle: async (req, res) => {
         const reqBody = await readBody(req);
-        const { planId, text } = JSON.parse(reqBody) as { planId?: string; text?: string };
+        const { planId, text, context } = JSON.parse(reqBody) as {
+          planId?: string;
+          text?: string;
+          context?: MountContext;
+        };
         if (!planId || !text?.trim()) {
           sendJson(res, 400, { error: 'planId and text are required' });
           return;
@@ -397,7 +408,12 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         try {
           const plan = entityToPlan({ ...entity, thread: threadWithUser });
           const otherEntities = entries.filter((e) => e.id !== entity.id);
-          const result = await replyToFeedback(plan, otherEntities, agent.runFeedbackReply);
+          const result = await replyToFeedback(
+            plan,
+            otherEntities,
+            agent.runFeedbackReply,
+            context,
+          );
           const overrides = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
 
           // The agent flags when this message answers a question it asked earlier —

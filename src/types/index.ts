@@ -73,6 +73,15 @@ export interface ThreadMessage {
   from?: 'user' | 'agent';
 }
 
+/** Ambient context a chat mount (desk, toolbar) feeds alongside a message — each
+ * mount populates whatever it has (IDEA-130); Scout folds it into the prompt
+ * silently, it never becomes a user-visible field. */
+export interface MountContext {
+  route?: string;
+  focusedIdeaId?: string;
+  viewport?: { width: number; height: number };
+}
+
 export interface RawEntry {
   title: string;
   fields: Record<string, string>;

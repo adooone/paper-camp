@@ -1,7 +1,7 @@
 import { postFeedbackMessage, undoFeedbackEdit } from '@/app/services/agent-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type { PlanEntry } from '@/types/index';
+import type { MountContext, PlanEntry } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 
@@ -28,7 +28,11 @@ export const useSendFeedbackMessage = (plan: PlanEntry) => {
     setSending(true);
     setUndo(null);
     try {
-      const { error, undo: appliedUndo } = await postFeedbackMessage(plan.id, text);
+      const context: MountContext = {
+        focusedIdeaId: plan.id,
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+      };
+      const { error, undo: appliedUndo } = await postFeedbackMessage(plan.id, text, context);
       await loadPlans();
       if (appliedUndo) setUndo(appliedUndo);
       if (error) {

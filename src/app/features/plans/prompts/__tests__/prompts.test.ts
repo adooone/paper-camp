@@ -180,6 +180,23 @@ describe('buildFeedbackReplyPrompt', () => {
     expect(prompt).toContain('Another idea body.');
     expect(prompt).toContain('never propose an "edit" for it');
   });
+
+  it('omits the ambient context block when no mount context is given', () => {
+    const prompt = buildFeedbackReplyPrompt(plan, []);
+    expect(prompt).not.toContain('Ambient context');
+  });
+
+  it('folds whatever a mount fed into a silent ambient context block', () => {
+    const prompt = buildFeedbackReplyPrompt(plan, [], {
+      route: '/checkout',
+      focusedIdeaId: 'IDEA-9',
+      viewport: { width: 375, height: 812 },
+    });
+    expect(prompt).toContain('never mention it explicitly');
+    expect(prompt).toContain('Current route in the host app: /checkout');
+    expect(prompt).toContain('Idea focused in the mount: IDEA-9');
+    expect(prompt).toContain('Viewport: 375×812');
+  });
 });
 
 describe('buildFeedbackSummaryPrompt', () => {

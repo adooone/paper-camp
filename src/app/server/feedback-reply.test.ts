@@ -88,6 +88,20 @@ describe('replyToFeedback', () => {
     const result = await replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt);
     expect(result).toEqual({ reply: 'Just noting that.' });
   });
+
+  it('folds a mount context into the prompt the agent sees', async () => {
+    let seenPrompt = '';
+    const runPrompt = async (prompt: string) => {
+      seenPrompt = prompt;
+      return JSON.stringify({ reply: 'Noted.' });
+    };
+    await replyToFeedback(plan({ id: 'IDEA-1' }), [], runPrompt, {
+      focusedIdeaId: 'IDEA-1',
+      viewport: { width: 1024, height: 768 },
+    });
+    expect(seenPrompt).toContain('Idea focused in the mount: IDEA-1');
+    expect(seenPrompt).toContain('Viewport: 1024×768');
+  });
 });
 
 describe('summarizeFeedback', () => {

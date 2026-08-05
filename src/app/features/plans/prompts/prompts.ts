@@ -1,6 +1,7 @@
 import type {
   EntityEntry,
   IdeaEntry,
+  MountContext,
   PlanEntry,
   ReviewThread,
   SuggestionEntry,
@@ -228,10 +229,27 @@ Rules:
 - If a comment needs a decision only a human can make, skip it and say so in its \`why\` instead of guessing.`;
 }
 
+// Formats whatever a mount fed (IDEA-130 phase 5) into a block Scout reads
+// silently — never surfaced to the user, so an absent field is simply omitted.
+function formatMountContext(context?: MountContext): string {
+  const lines: string[] = [];
+  if (context?.route) lines.push(`- Current route in the host app: ${context.route}`);
+  if (context?.focusedIdeaId) lines.push(`- Idea focused in the mount: ${context.focusedIdeaId}`);
+  if (context?.viewport) {
+    lines.push(`- Viewport: ${context.viewport.width}×${context.viewport.height}`);
+  }
+  if (!lines.length) return '';
+  return `\nAmbient context from the surface you're chatting in — use it silently, never mention it explicitly:\n${lines.join('\n')}\n`;
+}
+
 // Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply) — never uses
 // tools or edits a file itself; it proposes an edit/follow-up as JSON and
 // feedback-reply.ts's applyFeedbackEdit + the route apply it deterministically.
-export function buildFeedbackReplyPrompt(plan: PlanEntry, otherEntities: EntityEntry[]): string {
+export function buildFeedbackReplyPrompt(
+  plan: PlanEntry,
+  otherEntities: EntityEntry[],
+  context?: MountContext,
+): string {
   const phaseList = plan.phases.length
     ? plan.phases
         .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
@@ -265,7 +283,7 @@ ${threadList}
 
 Every other idea in the project, for answering questions outside this one's scope:
 ${otherIdeasList}
-
+${formatMountContext(context)}
 Task: classify the most recent user message and act on it in the same response:
 - It asks about a DIFFERENT idea from the index above (its content, status, or existence) — answer from that idea's entry above; never propose an "edit" for it, since edits here only ever apply to the current idea.
 - It answers an open question you asked earlier in this thread — reply AND set "answersQuestion" to true, so the answer is kept as a clarification on this idea.

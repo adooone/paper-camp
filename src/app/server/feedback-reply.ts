@@ -5,6 +5,7 @@ import type {
   FeedbackEdit,
   FeedbackPhaseEdit,
   FeedbackReplyResult,
+  MountContext,
   PhaseItem,
   PlanEntry,
   ThreadMessage,
@@ -62,8 +63,9 @@ export async function replyToFeedback(
   plan: PlanEntry,
   otherEntities: EntityEntry[],
   runPrompt: (prompt: string, planTitle: string) => Promise<string>,
+  context?: MountContext,
 ): Promise<FeedbackReplyResult> {
-  const prompt = buildFeedbackReplyPrompt(plan, otherEntities);
+  const prompt = buildFeedbackReplyPrompt(plan, otherEntities, context);
   const output = await runPrompt(prompt, plan.title);
 
   const jsonBlock = extractJsonBlock(output);
