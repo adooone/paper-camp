@@ -118,13 +118,16 @@
 | IDEA-115 | npm package is broken on Linux — bundled node-pty can't load | fix | done | cli, packaging |
 | IDEA-116 | Direct-to-main work can never reach review/done in derived status | feat | planned | app, status |
 | IDEA-117 | Multi-project hub — one desk, many corpora | feat | idea | multi-project, app |
-| IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | idea | multi-project, agents, app |
+| IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | planned | multi-project, agents, app |
 | IDEA-119 | Run & monitor — services, checks, and the release train on the desk | feat | idea | app, monitoring |
 | IDEA-120 | Flow profiles — status derivation per project topology | feat | idea | status, planning-surface |
 | IDEA-121 | paper-camp doctor — corpus lint and format migrations | feat | idea | format, cli |
 | IDEA-122 | Make the MCP server the primary write path for agents | feat | idea | format, mcp, agents |
 | IDEA-123 | Cross-corpus idea links | feat | idea | multi-project, format |
 | IDEA-124 | Tie ideas to releases — release notes grouped by idea | feat | planned | status, releases |
-| IDEA-125 | Headless runs die as bare "error" when the agent hits a permission ask | fix | planned | agents, tasks |
-| IDEA-126 | Read-only helper tasks silently supersede a running run-all | fix | planned | agents, tasks |
-| IDEA-127 | Settings port is a dead field — dev never reads it | fix | planned | cli, settings |
+| IDEA-125 | Headless runs die as bare "error" when the agent hits a permission ask | fix | done | agents, tasks |
+| IDEA-126 | Read-only helper tasks silently supersede a running run-all | fix | done | agents, tasks |
+| IDEA-127 | Settings port is a dead field — dev never reads it | fix | done | cli, settings |
+| IDEA-128 | In-app dev toolbar — paper-camp living inside the target application | feat | review | integration, app |
+| IDEA-129 | Isolate the StatusBar — store-free core, ready for a second mount | refactor | done | app, integration |
+| IDEA-130 | Paper Scout — the conversational agent | feat | planned | agents, chat, integration |

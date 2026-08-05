@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { readConfigPort, resolveDevPort } from './dev-port';
+import { readConfigIntegration, readConfigPort, resolveDevPort } from './dev-port';
 
 describe('resolveDevPort', () => {
   it('prefers an explicit port over config', () => {
@@ -54,5 +54,48 @@ describe('readConfigPort', () => {
     const root = await makeRoot(undefined);
     await writeFile(join(root, 'papercamp', 'config.json'), '{not json');
     expect(await readConfigPort(root)).toBeUndefined();
+  });
+});
+
+describe('readConfigIntegration', () => {
+  const dirs: string[] = [];
+
+  afterAll(async () => {
+    await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
+  });
+
+  async function makeRoot(config: unknown): Promise<string> {
+    const root = await mkdtemp(join(tmpdir(), 'paper-camp-dev-integration-'));
+    dirs.push(root);
+    await mkdir(join(root, 'papercamp'), { recursive: true });
+    if (config !== undefined) {
+      await writeFile(join(root, 'papercamp', 'config.json'), JSON.stringify(config));
+    }
+    return root;
+  }
+
+  it('reads toolbar.enabled from config.json', async () => {
+    const root = await makeRoot({ integration: { toolbar: { enabled: false } } });
+    expect(await readConfigIntegration(root)).toEqual({ enabled: false });
+  });
+
+  it('reads toolbar.allowProduction from config.json', async () => {
+    const root = await makeRoot({ integration: { toolbar: { allowProduction: true } } });
+    expect(await readConfigIntegration(root)).toEqual({ allowProduction: true });
+  });
+
+  it('reads route from config.json', async () => {
+    const root = await makeRoot({ integration: { route: '/__toolbar' } });
+    expect(await readConfigIntegration(root)).toEqual({ route: '/__toolbar' });
+  });
+
+  it('returns undefined when no integration block is present', async () => {
+    const root = await makeRoot({ port: 3041 });
+    expect(await readConfigIntegration(root)).toBeUndefined();
+  });
+
+  it('returns undefined when config.json is missing', async () => {
+    const root = await makeRoot(undefined);
+    expect(await readConfigIntegration(root)).toBeUndefined();
   });
 });

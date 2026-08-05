@@ -2,8 +2,9 @@
 id: IDEA-129
 title: Isolate the StatusBar — store-free core, ready for a second mount
 type: refactor
-status: review
+status: done
 created: 2026-08-05
+updated: 2026-08-05
 tags:
   - app
   - integration
@@ -58,7 +59,3 @@ Net shape of the extracted core: a presentation component taking the thirteen da
       Shadow-DOM-safe styling (no reliance on the desk's global CSS) and a package boundary the vite plugin ([[IDEA-128]]) can import.
 - [x] Type-check and test the seam
       Cover the core with props-level tests; `tsc` and lint clean.
-
-### Log
-- 2026-08-05 — Decision: full dependency inventory done, see "StatusBar dependency inventory" above. paper-ui rendering components (`Button`, `Spinner`, `Stamp`, `Tooltip`, `getTextureStyles`) and the desk icon set move into the core; `useToast` and `useNavigate`/router stay out (no assumed provider/router in an embedded mount) and become prop callbacks. Every `useAppStore` selector and `useBranchSync` output becomes a typed prop — the core ends up with zero imports from `@/app/stores` or `@/app/hooks`.
-- 2026-08-05 — Completed: extracted `status-bar-core.tsx` as a store-free presentation component; built `use-status-client.ts`, a thin client polling/streaming the server API for the same props; re-mounted the desk `status-bar.tsx` on the core with the store wired in exactly as before; made the core shadow-DOM-safe (inline styles, no global CSS reliance) for the vite plugin boundary; covered the core with props-level tests in `status-bar-core.test.tsx`. `tsc` and lint are clean. Status stays `review` pending human merge.

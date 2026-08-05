@@ -1,5 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/cli/session-focus.ts"],
-  "ignore": ["src/core/parse/frontmatter-schemas.ts", "src/app/hooks/use-status-client.ts"]
+  "entry": ["src/cli/session-focus.ts", "src/toolbar/index.ts"],
+  "ignore": ["src/core/parse/frontmatter-schemas.ts"]
 }

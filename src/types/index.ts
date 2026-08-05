@@ -411,6 +411,23 @@ export const DEFAULT_AGENTS: DefaultAgentsMap = {
   commitSuggest: { agent: 'claude-code' },
 };
 
+/** Toolbar segments, left to right (IDEA-128); trimmed per project via `IntegrationConfig.toolbar.segments`. */
+export const TOOLBAR_SEGMENT_IDS = ['focus', 'runs', 'ship', 'desk'] as const;
+
+export type ToolbarSegmentId = (typeof TOOLBAR_SEGMENT_IDS)[number];
+
+export interface IntegrationToolbarConfig {
+  enabled?: boolean;
+  segments?: ToolbarSegmentId[];
+  /** Opt-in escape hatch: without it, the vite plugin stays off when `mode` is `production`. */
+  allowProduction?: boolean;
+}
+
+export interface IntegrationConfig {
+  toolbar?: IntegrationToolbarConfig;
+  route?: string;
+}
+
 export interface PaperCampConfig {
   version: string;
   projectName: string;
@@ -424,6 +441,8 @@ export interface PaperCampConfig {
   subjects?: string[];
   /** Opts out of the first-run redirect to Settings > Setup while capabilities are incomplete. */
   setupDismissed?: boolean;
+  /** In-app dev toolbar (IDEA-128) — the `@dendelion/paper-camp/vite` plugin's mount, toggleable for frontend targets. */
+  integration?: IntegrationConfig;
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';

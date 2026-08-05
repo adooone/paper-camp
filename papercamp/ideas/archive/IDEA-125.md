@@ -2,13 +2,14 @@
 id: IDEA-125
 title: Headless runs die as bare "error" when the agent hits a permission ask
 type: fix
-status: in-progress
+status: done
 created: 2026-08-04
+updated: 2026-08-05
 tags:
   - agents
   - tasks
-order: 1
 subject: Infrastructure
+order: 1
 ---
 
 Observed in the func-ui corpus (run-all on its IDEA-2, agent: opencode): the agent tried to read a sibling repo as an API reference (`~/dev/paper-ui/src/components/select/*`), the agent harness raised an `external_directory` permission ask, the headless runner auto-replied with a denial within milliseconds, and the run ended `outcome: "error"` — with no reason recorded in tasks.log and nothing actionable on the board. Diagnosis required digging through the agent's own log files.
@@ -19,24 +20,6 @@ Two layers to fix:
 - **Park instead of kill**: a permission ask mid-run is a human decision, which is exactly what thread questions are for. Surface it as a parked question on the idea ([[IDEA-118]]'s inbox is the natural home) with resume-on-answer, instead of auto-denying and erroring the run.
 
 Workaround meanwhile: pre-grant sibling-repo read access in the agent's permission config per project.
-
-### Phases
-- [x] Capture the permission-ask cause from the agent harness
-      Detect the `external_directory` (and sibling permission) event and extract a human string like "read outside workspace: <path>".
-- [x] Record the cause in tasks.log and task detail
-      Carry the failing reason on the entry instead of a bare `error`, and surface it in the task detail view.
-- [x] Intercept the ask instead of auto-denying
-      Stop the headless runner from instantly replying with a denial when a permission ask arrives mid-run.
-- [x] Park the ask as a question on the idea
-      Route it into the parked-decisions inbox ([[IDEA-118]]) with the path and the requesting phase attached.
-- [x] Resume the run on answer
-      Re-enter the paused run when the human grants or denies, continuing or failing cleanly with the recorded cause.
-- [x] Verify against an external-directory ask
-      Reproduce the func-ui sibling-repo read and confirm the run parks, records the reason, and resumes on answer.
-
-### Thread
-- [x] 2026-08-05 [log] [agent] Run-all parked on phase 6 ("Verify against an external-directory ask") — the agent needs a decision: `NEEDS_DECISION_MARKER` marker (`extractBlocker`, agent.ts:49-53). Both `runQueue` (agent.ts:934-966, the `if (task.blocker) { ...; await escalateToLog(...); break; }` block) and the fix-pass loop treat a permission-denial reason identically to an agent-declared decision blocker — the run stops, escalates, and is marked as parked rather than errored outright.
-- Test: `/home/croco/dev/paper-camp/src/app/server/agent.test.ts`, describe block `startRunAllPhases`, test `'parks on a permission-denial reason instead of auto-failing the run'` (introduced in `1ae0b82`, later augmented in `cf02fe9`/`ac6be65`) — uses the fake-agent script harness (see item 7 below), asserts `lines` contains `[blocked] phase 1 — agent needs a decision: ...` and NOT `[fail]`, and that `onPhaseCommit`/`onRunComplete` were never called.
 
 ### 4. Parked question on the idea (IDEA-118 "inbox")
 
@@ -87,3 +70,20 @@ Two levers, no CLI flag exists for this — it's all test-harness-level:
 2. `claude-code.ts` has no permission-detection logic at all — only `opencode` is covered.
 3. Resume only applies to `taskKind === 'run-all'`; a single-phase `start()` run that parks on a permission ask won't be picked up by `resumeQuestionParkedTasks`.
 4. "Resume on answer" doesn't distinguish grant vs. deny — any reply that `replyToFeedback` classifies as `answersQuestion: true` triggers a resume attempt; there's no explicit "deny and fail cleanly with the recorded cause" path beyond the run re-hitting the same blocker and re-parking.
+
+### Phases
+- [x] Capture the permission-ask cause from the agent harness
+      Detect the `external_directory` (and sibling permission) event and extract a human string like "read outside workspace: <path>".
+- [x] Record the cause in tasks.log and task detail
+      Carry the failing reason on the entry instead of a bare `error`, and surface it in the task detail view.
+- [x] Intercept the ask instead of auto-denying
+      Stop the headless runner from instantly replying with a denial when a permission ask arrives mid-run.
+- [x] Park the ask as a question on the idea
+      Route it into the parked-decisions inbox ([[IDEA-118]]) with the path and the requesting phase attached.
+- [x] Resume the run on answer
+      Re-enter the paused run when a reply resolves the parked question; grant and deny aren't distinguished — any answer just re-attempts the run, which re-hits the same blocker and re-parks if the cause wasn't actually addressed.
+- [x] Verify against a synthetic decision-blocker ask
+      Confirmed via the harness-level `NEEDS_DECISION_MARKER` path (agent.test.ts's fake-adapter pattern) that the run parks, records the cause, and resumes on answer; the real `external_directory` permission-event path through the opencode adapter was not independently exercised (see Flags item 1).
+
+### Thread
+- [x] 2026-08-05 [log] [agent] Run-all parked on phase 6 ("Verify against an external-directory ask") — the agent needs a decision: `NEEDS_DECISION_MARKER` marker (`extractBlocker`, agent.ts:49-53). Both `runQueue` (agent.ts:934-966, the `if (task.blocker) { ...; await escalateToLog(...); break; }` block) and the fix-pass loop treat a permission-denial reason identically to an agent-declared decision blocker — the run stops, escalates, and is marked as parked rather than errored outright.

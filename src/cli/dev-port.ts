@@ -1,17 +1,44 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-export async function readConfigPort(root: string): Promise<number | undefined> {
+async function readConfigJson(root: string): Promise<Record<string, unknown> | undefined> {
   const raw = await readFile(resolve(root, 'papercamp', 'config.json'), 'utf-8').catch(() => null);
   if (!raw) return undefined;
   try {
-    const parsed = JSON.parse(raw) as { port?: unknown };
-    return typeof parsed.port === 'number' && Number.isFinite(parsed.port)
-      ? parsed.port
-      : undefined;
+    return JSON.parse(raw) as Record<string, unknown>;
   } catch {
     return undefined;
   }
+}
+
+export async function readConfigPort(root: string): Promise<number | undefined> {
+  const parsed = await readConfigJson(root);
+  const port = parsed?.port;
+  return typeof port === 'number' && Number.isFinite(port) ? port : undefined;
+}
+
+export interface IntegrationDevConfig {
+  enabled?: boolean;
+  allowProduction?: boolean;
+  route?: string;
+}
+
+export async function readConfigIntegration(
+  root: string,
+): Promise<IntegrationDevConfig | undefined> {
+  const parsed = await readConfigJson(root);
+  const integration = parsed?.integration as
+    | { toolbar?: { enabled?: unknown; allowProduction?: unknown }; route?: unknown }
+    | undefined;
+  if (!integration) return undefined;
+  const enabled = integration.toolbar?.enabled;
+  const allowProduction = integration.toolbar?.allowProduction;
+  const route = integration.route;
+  return {
+    enabled: typeof enabled === 'boolean' ? enabled : undefined,
+    allowProduction: typeof allowProduction === 'boolean' ? allowProduction : undefined,
+    route: typeof route === 'string' ? route : undefined,
+  };
 }
 
 export function resolveDevPort(explicitPort: string | undefined, configPort: number | undefined) {
