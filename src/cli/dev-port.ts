@@ -19,16 +19,23 @@ export async function readConfigPort(root: string): Promise<number | undefined> 
 
 export interface IntegrationDevConfig {
   enabled?: boolean;
+  allowProduction?: boolean;
 }
 
 export async function readConfigIntegration(
   root: string,
 ): Promise<IntegrationDevConfig | undefined> {
   const parsed = await readConfigJson(root);
-  const integration = parsed?.integration as { toolbar?: { enabled?: unknown } } | undefined;
+  const integration = parsed?.integration as
+    | { toolbar?: { enabled?: unknown; allowProduction?: unknown } }
+    | undefined;
   if (!integration) return undefined;
   const enabled = integration.toolbar?.enabled;
-  return { enabled: typeof enabled === 'boolean' ? enabled : undefined };
+  const allowProduction = integration.toolbar?.allowProduction;
+  return {
+    enabled: typeof enabled === 'boolean' ? enabled : undefined,
+    allowProduction: typeof allowProduction === 'boolean' ? allowProduction : undefined,
+  };
 }
 
 export function resolveDevPort(explicitPort: string | undefined, configPort: number | undefined) {

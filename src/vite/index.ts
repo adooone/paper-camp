@@ -18,7 +18,10 @@ export function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
     apply: 'serve',
     async configureServer(server: ViteDevServer) {
       resolvedPort ??= (await readConfigPort(server.config.root)) ?? 3333;
-      enabled = (await readConfigIntegration(server.config.root))?.enabled ?? true;
+      const integration = await readConfigIntegration(server.config.root);
+      const isProduction = server.config.mode === 'production';
+      enabled =
+        (integration?.enabled ?? true) && (!isProduction || integration?.allowProduction === true);
       if (!enabled) return;
       const port = resolvedPort;
       server.middlewares.use(CAMP_ROUTE, (req: IncomingMessage, res: ServerResponse) => {

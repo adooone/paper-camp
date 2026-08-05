@@ -419,6 +419,8 @@ export type ToolbarSegmentId = (typeof TOOLBAR_SEGMENT_IDS)[number];
 export interface IntegrationToolbarConfig {
   enabled?: boolean;
   segments?: ToolbarSegmentId[];
+  /** Opt-in escape hatch: without it, the vite plugin stays off when `mode` is `production`. */
+  allowProduction?: boolean;
 }
 
 export interface IntegrationConfig {

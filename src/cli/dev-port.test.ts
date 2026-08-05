@@ -79,6 +79,11 @@ describe('readConfigIntegration', () => {
     expect(await readConfigIntegration(root)).toEqual({ enabled: false });
   });
 
+  it('reads toolbar.allowProduction from config.json', async () => {
+    const root = await makeRoot({ integration: { toolbar: { allowProduction: true } } });
+    expect(await readConfigIntegration(root)).toEqual({ allowProduction: true });
+  });
+
   it('returns undefined when no integration block is present', async () => {
     const root = await makeRoot({ port: 3041 });
     expect(await readConfigIntegration(root)).toBeUndefined();

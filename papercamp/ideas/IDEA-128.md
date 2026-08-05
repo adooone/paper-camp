@@ -2,7 +2,7 @@
 id: IDEA-128
 title: In-app dev toolbar — paper-camp living inside the target application
 type: feat
-status: in-progress
+status: review
 created: 2026-08-05
 updated: 2026-08-05
 tags:
@@ -56,7 +56,7 @@ Per-project trimming via `integration.toolbar.segments` allowlist in config.json
       Skip mounting Scout in the toolbar for now; relocate the Scout segment spec (thread-verbatim chat, questions inbox, parked-questions badge, context injection) into IDEA-130 and leave only a placeholder/segment id here until Scout's own plan lands.
 - [x] Add v3 segments — Runs and Ship
       Live agent indicator with stop, run-next-phase, plus branch/check stamps and quick commit.
-- [ ] Enforce the dev-only production guard
+- [x] Enforce the dev-only production guard
       Keep the toolbar off production URLs by default; link to remote/hosted mode instead of embedding.
 
 ### Thread

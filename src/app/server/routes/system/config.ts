@@ -55,7 +55,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
           subjects?: unknown;
           setupDismissed?: boolean;
           integration?: {
-            toolbar?: { enabled?: unknown; segments?: unknown };
+            toolbar?: { enabled?: unknown; segments?: unknown; allowProduction?: unknown };
             route?: unknown;
           };
         };
@@ -100,6 +100,13 @@ export function configRoutes({ root }: RouteContext): Route[] {
           typeof integration.toolbar.enabled !== 'boolean'
         ) {
           sendJson(res, 400, { error: 'integration.toolbar.enabled must be a boolean' });
+          return;
+        }
+        if (
+          integration?.toolbar?.allowProduction !== undefined &&
+          typeof integration.toolbar.allowProduction !== 'boolean'
+        ) {
+          sendJson(res, 400, { error: 'integration.toolbar.allowProduction must be a boolean' });
           return;
         }
         if (integration?.toolbar?.segments !== undefined) {
@@ -153,6 +160,9 @@ export function configRoutes({ root }: RouteContext): Route[] {
                   }),
                   ...(integration.toolbar.segments !== undefined && {
                     segments: integration.toolbar.segments as ToolbarSegmentId[],
+                  }),
+                  ...(integration.toolbar.allowProduction !== undefined && {
+                    allowProduction: integration.toolbar.allowProduction as boolean,
                   }),
                 },
               }),

@@ -2,8 +2,9 @@
 id: IDEA-126
 title: Read-only helper tasks silently supersede a running run-all
 type: fix
-status: review
+status: done
 created: 2026-08-04
+updated: 2026-08-05
 tags:
   - agents
   - tasks

@@ -8,7 +8,7 @@ import { proxyToCampServer } from './proxy';
 vi.mock('./proxy', () => ({ proxyToCampServer: vi.fn() }));
 
 interface FakeServer {
-  config: { root: string };
+  config: { root: string; mode?: string };
   middlewares: { use: ReturnType<typeof vi.fn> };
 }
 
@@ -81,5 +81,35 @@ describe('paperCamp', () => {
     const transform = plugin.transformIndexHtml as (html: string) => string;
     const html = transform('<html><body><div id="root"></div></body></html>');
     expect(html).not.toContain('toolbar.js');
+  });
+
+  it('skips the proxy middleware and script injection when mode is production', async () => {
+    const root = await makeRoot({ port: 4242 });
+    const use = vi.fn();
+    const plugin = paperCamp();
+    await (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)({
+      config: { root, mode: 'production' },
+      middlewares: { use },
+    });
+
+    expect(use).not.toHaveBeenCalled();
+    const transform = plugin.transformIndexHtml as (html: string) => string;
+    const html = transform('<html><body><div id="root"></div></body></html>');
+    expect(html).not.toContain('toolbar.js');
+  });
+
+  it('stays enabled in production mode when integration.toolbar.allowProduction is true', async () => {
+    const root = await makeRoot({
+      port: 4242,
+      integration: { toolbar: { allowProduction: true } },
+    });
+    const use = vi.fn();
+    const plugin = paperCamp();
+    await (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)({
+      config: { root, mode: 'production' },
+      middlewares: { use },
+    });
+
+    expect(use).toHaveBeenCalledWith(CAMP_ROUTE, expect.any(Function));
   });
 });
