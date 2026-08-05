@@ -14,7 +14,7 @@ export const usePromoteThreadMessage = (plan: PlanEntry) => {
   const [promotingIndex, setPromotingIndex] = useState<number | null>(null);
 
   const promoteToDurable = async (index: number, target: 'decision' | 'log') => {
-    if (!plan.id) return;
+    if (!plan.id || promotingIndex !== null) return;
     setPromotingIndex(index);
     try {
       await promoteFeedbackMessage(plan.id, index, target);
@@ -34,7 +34,7 @@ export const usePromoteThreadMessage = (plan: PlanEntry) => {
     index: number,
     idea: { title: string; content?: string; kind?: 'idea' | 'note' },
   ): Promise<boolean> => {
-    if (!plan.id) return false;
+    if (!plan.id || promotingIndex !== null) return false;
     setPromotingIndex(index);
     try {
       const newId = await createIdea(idea);

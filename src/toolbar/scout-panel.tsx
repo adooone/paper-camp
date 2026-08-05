@@ -98,10 +98,12 @@ export const ScoutPanel = ({
   onOpenIdea,
   onRefresh,
 }: ScoutPanelProps) => {
-  const [oldest, ...rest] = openQuestions;
+  const [oldest] = openQuestions;
 
   if (oldest) {
     const question = oldest.questions[0];
+    const remainingQuestionCount =
+      openQuestions.reduce((sum, group) => sum + group.questions.length, 0) - 1;
     return (
       <div>
         <div style={titleStyle}>Scout</div>
@@ -116,8 +118,8 @@ export const ScoutPanel = ({
           onSent={onRefresh}
         />
         <div style={footerRowStyle}>
-          {rest.length > 0 ? (
-            <span style={mutedStyle}>{rest.length} more open question(s)</span>
+          {remainingQuestionCount > 0 ? (
+            <span style={mutedStyle}>{remainingQuestionCount} more open question(s)</span>
           ) : (
             <span />
           )}
