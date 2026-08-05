@@ -49,7 +49,7 @@ Per-project trimming via `integration.toolbar.segments` allowlist in config.json
       Framework-agnostic bar docked to the bottom edge, collapsing to a pill when idle; segments expand into panels above it.
 - [x] Wire the `integration` config block and Settings toggle
       `integration: { toolbar, route }` in config.json with a `toolbar.segments` allowlist, toggleable for frontend targets.
-- [ ] Ship v1 segments — Focus, Desk, glance badges
+- [x] Ship v1 segments — Focus, Desk, glance badges
       Read-only only: session focus, open-desk link, and badge counts with no writes or agent controls.
 - [ ] Add the v2 segment — mount Paper Scout
       Consume [[IDEA-130]]'s chat surface in the toolbar: project-wide questions badge on the bar, panel with the Scout thread and route context injected.
