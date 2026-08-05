@@ -592,6 +592,7 @@ export interface TaskLogEntry {
   startedAt: string;
   endedAt: string;
   outcome: 'done' | 'error' | 'superseded';
+  reason?: string;
 }
 
 export interface TrailHop<T> {
@@ -623,7 +624,7 @@ export interface AgentTaskState {
   lines: string[];
   // fix-review only: prefills the commit form once the agent has reported.
   suggestedCommit?: { title: string; message: string };
-  errorKind?: 'auth';
+  errorKind?: 'auth' | 'question';
 }
 
 export interface OverlapVerdict {

@@ -391,12 +391,25 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
           // The agent flags when this message answers a question it asked earlier —
           // reclassify it from a plain log line to a clarification so it's visible
-          // to future runs (readers.ts's clarificationsFromThread) and other agents.
-          const answeredThread = result.answersQuestion
+          // to future runs (readers.ts's clarificationsFromThread) and other agents,
+          // and resolve the open question it answers so a run parked on it (IDEA-125)
+          // is eligible to resume below.
+          const withClarification = result.answersQuestion
             ? threadWithUser.map((m, i) =>
                 i === threadWithUser.length - 1 ? { ...m, kind: 'clarification' as const } : m,
               )
             : threadWithUser;
+          const openQuestionIndex = result.answersQuestion
+            ? withClarification.findLastIndex(
+                (m) => m.kind === 'question' && (m.state ?? 'open') === 'open',
+              )
+            : -1;
+          const answeredThread =
+            openQuestionIndex === -1
+              ? withClarification
+              : withClarification.map((m, i) =>
+                  i === openQuestionIndex ? { ...m, state: 'resolved' as const } : m,
+                );
 
           let replyText = result.reply;
 
@@ -417,6 +430,13 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
               ...(reopen ? { status: 'in-progress' } : {}),
             }),
           );
+
+          // Resolving an open question is exactly the confirmation cue a run-all
+          // parked on it (IDEA-125) is waiting for — re-enter it now instead of
+          // leaving it failed until someone notices and relaunches by hand.
+          if (openQuestionIndex !== -1) {
+            await agent.resumeQuestionParkedTasks(entity.id, () => status.runChecksAndWait());
+          }
 
           // Only a plan edit needs an Undo — commit it on its own so a revert can't
           // also sweep in unrelated dirty files elsewhere in the working tree.

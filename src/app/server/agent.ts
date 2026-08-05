@@ -80,7 +80,8 @@ export interface AgentTask {
   adapter: AgentAdapter;
   proc: ChildProcess;
   lines: string[];
-  errorKind?: 'auth';
+  errorKind?: 'auth' | 'question';
+  errorReason?: string;
 }
 
 export function readDefaultAgentIds(root: string): DefaultAgentsMap {
@@ -257,8 +258,15 @@ export function createAgentManager(
   // question in the same place they'd leave one, and the Feedback chat can pick it
   // back up instead of the run dying with no trace.
   // Also flips the plan back to in-progress so a parked run surfaces in the
-  // worklist as needing input rather than looking merely errored.
-  async function escalateToLog(planId: string | undefined, message: string): Promise<void> {
+  // worklist as needing input rather than looking merely errored, and tags the
+  // task 'question' so resumeQuestionParkedTasks knows to re-enter it once the
+  // Feedback chat's reply resolves the question.
+  async function escalateToLog(
+    task: AgentTask,
+    planId: string | undefined,
+    message: string,
+  ): Promise<void> {
+    task.errorKind = 'question';
     if (!planId) return;
     const ideasDir = campFile(root, 'ideas');
     const { entries } = await readEntities(ideasDir);
@@ -273,7 +281,7 @@ export function createAgentManager(
     await writeEntityFile(
       file,
       entityFileInput(entry, {
-        thread: [...(entry.thread ?? []), agentThreadMessage(message)],
+        thread: [...(entry.thread ?? []), agentThreadMessage(message, 'question')],
         ...(needsInput ? { status: 'in-progress' } : {}),
       }),
     );
@@ -336,7 +344,9 @@ export function createAgentManager(
     // Classify from the terminal output only: a genuine auth failure leaves the marker
     // among the last lines, whereas a transient blip earlier in a long multi-phase run
     // (that then recovered and failed the gate) must not mislabel the run as auth.
-    if (status === 'error') {
+    // A 'question' tag set by escalateToLog is left alone — it already identifies the
+    // parked cause more precisely than anything the terminal lines could tell us.
+    if (status === 'error' && task.errorKind !== 'question') {
       const terminalLines = task.lines.flatMap((entry) => entry.split(/\r?\n/)).slice(-5);
       task.errorKind = terminalLines.some(isAuthError) ? 'auth' : undefined;
     }
@@ -439,6 +449,7 @@ export function createAgentManager(
       if (isTaskDone(task) || !line.trim()) return;
       const parsed = task.adapter.parseLine(line);
       if (!parsed) return;
+      if (parsed.reason) task.errorReason = parsed.reason;
       pushLine(task, parsed.text);
       if (parsed.done) {
         finishTask(task, Boolean(parsed.error));
@@ -488,6 +499,10 @@ export function createAgentManager(
     effort: string | undefined,
     opts: { guardSuperseded?: boolean; trackBlocker?: boolean } = {},
   ): Promise<{ ok: boolean; timedOut: boolean; stderr: string }> {
+    // Cleared per attempt: this task object is reused across a queue's items and a
+    // fix pass's retries, so a stale reason from an earlier, ultimately-successful
+    // attempt must never be attributed to a later, unrelated failure.
+    task.errorReason = undefined;
     const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
     task.proc = proc;
 
@@ -496,6 +511,10 @@ export function createAgentManager(
       rl.on('line', (line) => {
         if (opts.guardSuperseded && isSuperseded(task)) return;
         const parsed = adapter.parseLine(line);
+        if (parsed?.reason) {
+          task.errorReason = parsed.reason;
+          if (opts.trackBlocker) task.blocker = parsed.reason;
+        }
         if (parsed?.text && parsed.text !== 'Agent is working…') {
           pushLine(task, `  ${parsed.text}`);
           if (opts.trackBlocker) {
@@ -833,7 +852,12 @@ export function createAgentManager(
           } else {
             failed++;
             if (stderr.trim()) pushLine(task, stderr.trim());
-            pushLine(task, `[fail] ${plan.id} — agent error`);
+            pushLine(
+              task,
+              task.errorReason
+                ? `[fail] ${plan.id} — ${task.errorReason}`
+                : `[fail] ${plan.id} — agent error`,
+            );
           }
         }
 
@@ -934,6 +958,7 @@ export function createAgentManager(
         failed++;
         pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${task.blocker}`);
         await escalateToLog(
+          task,
           plan.id,
           `Run-all parked on ${kind} ${i + 1} ("${item.text}") — the agent needs a decision: ${task.blocker}`,
         );
@@ -953,7 +978,12 @@ export function createAgentManager(
       if (!exitedOk) {
         failed++;
         if (stderr.trim()) pushLine(task, stderr.trim());
-        pushLine(task, `[fail] ${kind} ${i + 1} — agent error, stopping`);
+        pushLine(
+          task,
+          task.errorReason
+            ? `[fail] ${kind} ${i + 1} — ${task.errorReason}, stopping`
+            : `[fail] ${kind} ${i + 1} — agent error, stopping`,
+        );
         break;
       }
 
@@ -1028,6 +1058,7 @@ export function createAgentManager(
           failed++;
           pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${fixBlocker}`);
           await escalateToLog(
+            task,
             plan.id,
             `Run-all parked on ${kind} ${i + 1} ("${item.text}") — the fix pass needs a decision: ${fixBlocker}`,
           );
@@ -1041,6 +1072,7 @@ export function createAgentManager(
             `[blocked] ${kind} ${i + 1} — project checks still failing after ${fixAttempt} fix attempt(s)`,
           );
           await escalateToLog(
+            task,
             plan.id,
             `Run-all parked on ${kind} ${i + 1} ("${item.text}") — project checks (${introduced.join(', ')}) are still failing after ${fixAttempt} fix attempt(s). Reply here with guidance to unblock and resume.`,
           );
@@ -1409,6 +1441,29 @@ export function createAgentManager(
     return { resumed };
   }
 
+  // The Feedback chat's resolution cue (IDEA-125): a run-all that parked with errorKind
+  // 'question' — a permission ask or NEEDS-DECISION escalateToLog surfaced — re-launches
+  // for the same plan once the human's reply resolves that question, picking back up at
+  // whichever phase/fix is still unchecked instead of staying failed forever.
+  async function resumeQuestionParkedTasks(
+    planId: string,
+    runProjectChecks?: () => Promise<CheckName[]>,
+  ): Promise<{ resumed: boolean }> {
+    const task = [...tasks.values()].find(
+      (t) =>
+        t.status === 'error' &&
+        t.errorKind === 'question' &&
+        t.planId === planId &&
+        t.taskKind === 'run-all',
+    );
+    if (!task) return { resumed: false };
+    const plan = await findPlanById(planId);
+    if (!plan) return { resumed: false };
+    const result = startRunAllPhases(plan, runProjectChecks);
+    if (result.ok) task.errorKind = undefined;
+    return { resumed: result.ok };
+  }
+
   return {
     start,
     startForPlan,
@@ -1420,6 +1475,7 @@ export function createAgentManager(
     startBatchReconcile,
     startRunAllPhases,
     resumeAuthParkedTasks,
+    resumeQuestionParkedTasks,
     startSuggest,
     startGitSyncRecovery,
     startResolveConflict,
@@ -1491,6 +1547,10 @@ export interface AgentManager {
   resumeAuthParkedTasks: (
     runProjectChecks?: () => Promise<CheckName[]>,
   ) => Promise<{ resumed: string[] }>;
+  resumeQuestionParkedTasks: (
+    planId: string,
+    runProjectChecks?: () => Promise<CheckName[]>,
+  ) => Promise<{ resumed: boolean }>;
   startSuggest: (prompt: string) => Promise<Result>;
   startGitSyncRecovery: (prompt: string) => Result;
   startResolveConflict: (prompt: string) => Result;

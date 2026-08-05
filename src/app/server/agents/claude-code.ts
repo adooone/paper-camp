@@ -4,6 +4,7 @@ export interface ParsedAgentLine {
   text: string;
   done?: boolean;
   error?: boolean;
+  reason?: string;
 }
 
 export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {

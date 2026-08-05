@@ -52,6 +52,7 @@ interface CompletedTask {
   agentId: AgentId;
   startedAt: string;
   lines: string[];
+  errorReason?: string;
 }
 
 // Read-only helper runs (commit-message suggestion, capture-time overlap check) produce no
@@ -75,6 +76,7 @@ export function logTaskCompletion(
       startedAt: task.startedAt,
       endedAt: new Date().toISOString(),
       outcome,
+      ...(task.errorReason ? { reason: task.errorReason } : {}),
     };
     // Output file before the row: a visible row with no output file reads as "No output recorded".
     const file = taskLogFile(root, task.id);

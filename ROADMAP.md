@@ -66,6 +66,11 @@ The loop works; make it smarter and more observable.
   agent-fix loop on a failing check. Dev-loop-sized on purpose — link out to
   real observability rather than rebuilding it.
   - → IDEA-119
+- **In-app dev toolbar** — paper-camp inside the target application: a docked
+  toolbar in the app's dev server with capture-in-context, current focus, and
+  parked questions; the full desk proxied on a `/__camp` subroute. Dev-only
+  by default — remote access stays Horizon 3's job.
+  - → IDEA-128
 
 ## Horizon 3 — Beyond one desk
 

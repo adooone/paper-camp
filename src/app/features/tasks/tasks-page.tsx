@@ -203,6 +203,9 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
       </div>
       {expanded && (
         <Card size="small" texture="kraft" className="plan-row-card">
+          {entry.outcome === 'error' && entry.reason && (
+            <p className="m-0 mb-2 text-sm text-state-danger">{entry.reason}</p>
+          )}
           <TaskLogLines id={entry.id} />
         </Card>
       )}

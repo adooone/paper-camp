@@ -22,7 +22,15 @@ vi.mock('./agents', () => {
     command: process.execPath,
     buildArgs: (prompt: string) =>
       agentScript.buildArgs ? agentScript.buildArgs(prompt) : ['-e', agentScript.current],
-    parseLine: (line: string) => (line.trim() ? { text: line.trim() } : null),
+    parseLine: (line: string) => {
+      const text = line.trim();
+      if (!text) return null;
+      if (text.startsWith('PERMISSION-DENIED:')) {
+        const reason = text.slice('PERMISSION-DENIED:'.length).trim();
+        return { text: reason, error: true, reason };
+      }
+      return { text };
+    },
     options: {},
   };
   return {
@@ -317,6 +325,37 @@ describe('startRunAllPhases', () => {
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(planFile).toContain('### Thread');
     expect(planFile).toContain('the agent needs a decision: which auth flow should this use?');
+  });
+
+  it('parks on a permission-denial reason instead of auto-failing the run', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `
+console.log('PERMISSION-DENIED: read outside workspace: /home/user/dev/paper-ui/select.tsx')
+process.exit(1)
+`;
+    const onPhaseCommit = vi.fn(async () => {});
+    const onRunComplete = vi.fn(async () => {});
+    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBe('question');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain(
+      '[blocked] phase 1 — agent needs a decision: read outside workspace: /home/user/dev/paper-ui/select.tsx',
+    );
+    expect(lines).not.toContain('[fail]');
+    expect(onPhaseCommit).not.toHaveBeenCalled();
+    expect(onRunComplete).not.toHaveBeenCalled();
+    const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(planFile).toContain('### Thread');
+    expect(planFile).toContain(
+      'the agent needs a decision: read outside workspace: /home/user/dev/paper-ui/select.tsx',
+    );
+    const parsedPlan = entityToPlan(parseEntityFile(planFile).entries[0]);
+    const parked = parsedPlan.thread?.find((m) => m.kind === 'question');
+    expect(parked?.state).toBe('open');
+    expect(parked?.text).toContain('phase 1 ("First phase")');
   });
 
   it('short-circuits to escalation when the fix pass declares a blocker, without exhausting the cap', async () => {
@@ -854,6 +893,56 @@ describe('resumeAuthParkedTasks', () => {
   });
 });
 
+describe('resumeQuestionParkedTasks', () => {
+  it('re-launches a run-all that parked on a question and clears errorKind', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
+    const manager = createAgentManager(root);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBe('question');
+
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const { resumed } = await manager.resumeQuestionParkedTasks(plan.id as string);
+    expect(resumed).toBe(true);
+
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+    const after = parseEntityFile(
+      await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
+    );
+    expect(after.entries[0].phases.every((phase) => phase.done)).toBe(true);
+  });
+
+  it('leaves a non-question failure untouched', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(1)';
+    const manager = createAgentManager(root);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+
+    const { resumed } = await manager.resumeQuestionParkedTasks(plan.id as string);
+    expect(resumed).toBe(false);
+    expect(currentStatus(manager)?.status).toBe('error');
+  });
+
+  it('ignores a question parked on a different plan', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
+    const manager = createAgentManager(root);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    const { resumed } = await manager.resumeQuestionParkedTasks('IDEA-999');
+    expect(resumed).toBe(false);
+    expect(currentStatus(manager)?.errorKind).toBe('question');
+  });
+});
+
 describe('task log', () => {
   it('appends a done entry with kind, plan, agent, and start/end to papercamp/tasks.log', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
@@ -918,6 +1007,33 @@ describe('task log', () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
     expect(entry.outcome).toBe('error');
+  });
+
+  it('carries a permission-denial reason onto the error entry instead of a bare outcome', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `
+console.log('PERMISSION-DENIED: read outside workspace: /home/user/dev/paper-ui/select.tsx')
+process.exit(1)
+`;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    const logPath = join(root, 'papercamp', 'tasks.log');
+    const start = Date.now();
+    let entry: { outcome?: string; reason?: string } = {};
+    while (Date.now() - start < 2000) {
+      try {
+        const raw = await readFile(logPath, 'utf-8');
+        entry = JSON.parse(raw.trim().split('\n').at(-1) ?? '{}');
+        if (entry.outcome) break;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(entry.reason).toBe('read outside workspace: /home/user/dev/paper-ui/select.tsx');
   });
 
   it('persists the finished task’s output lines to a per-task file', async () => {
