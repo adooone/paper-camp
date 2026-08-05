@@ -4,6 +4,7 @@ title: Make sub-views real routes
 type: feat
 created: 2026-07-04
 updated: 2026-07-08
+released: v0.6.0
 tags:
   - app
   - ui

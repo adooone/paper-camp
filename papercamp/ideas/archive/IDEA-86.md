@@ -5,6 +5,7 @@ type: feat
 status: done
 created: 2026-07-25
 updated: 2026-07-29
+released: v0.12.0
 tags:
   - agent
   - server

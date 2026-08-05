@@ -5,6 +5,7 @@ type: fix
 status: done
 created: 2026-08-04
 updated: 2026-08-05
+released: v0.13.2
 tags:
   - agents
   - tasks

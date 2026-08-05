@@ -5,6 +5,7 @@ type: feat
 status: done
 created: 2026-07-26
 updated: 2026-07-29
+released: v0.12.0
 tags:
   - git
   - app

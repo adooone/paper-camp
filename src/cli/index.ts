@@ -6,6 +6,7 @@ import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
+import { entityFileInput, writeEntityFile } from '../app/server/helpers';
 import {
   resolvePlanForPrRef,
   syncConsistencyCommentToPr,
@@ -17,6 +18,7 @@ import {
 } from '../core/git-pr';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parse';
 import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
+import { formatReleaseNotesMarkdown, resolveReleaseNotes } from '../core/release-notes';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import { computePlanContentHash } from '../core/serialize';
 import {
@@ -26,6 +28,7 @@ import {
   todayDateString,
 } from '../core/serialize';
 import { threadFromLegacy } from '../core/thread';
+import { resolveIdeasForRelease, resolveReleaseRanges } from '../core/trail';
 import { startMcpServer } from '../mcp/server';
 import {
   type AgentRunOptions,
@@ -81,6 +84,7 @@ async function stampCliAuditDate(planFile: string, planId: string): Promise<void
     updated: entry.updated,
     audited: todayDateString(),
     auditedHash: computePlanContentHash({ body: entry.body, phases: entry.phases }),
+    released: entry.released,
     tags: entry.tags,
     body: entry.body,
     phases: entry.phases,
@@ -514,6 +518,72 @@ program
       }
     }
     console.log(bar);
+  });
+
+program
+  .command('stamp-release <version>')
+  .description(
+    'Stamp released: <version> onto every idea that version shipped — resolves the commit ' +
+      'range from the CHANGELOG compare link, then joins each commit to an idea via trailers/branch names',
+  )
+  .action(async (version: string) => {
+    const root = process.cwd();
+    const ideasDir = resolve(root, 'papercamp', 'ideas');
+
+    const changelog = await readFile(join(root, 'CHANGELOG.md'), 'utf-8').catch(() => '');
+    const release = resolveReleaseRanges(changelog).find((r) => r.version === version);
+    if (!release) {
+      fail(`No release range for "${version}" found in CHANGELOG.md`);
+      return;
+    }
+
+    const ideas = await resolveIdeasForRelease(root, release.range);
+    if (ideas.size === 0) {
+      console.log(`No ideas resolved for ${version} (${release.range}).`);
+      return;
+    }
+
+    let stamped = 0;
+    for (const id of ideas.keys()) {
+      const planFile = await findPlanFile(ideasDir, id);
+      if (!planFile) {
+        console.log(`  [skip]     ${id} — file not found`);
+        continue;
+      }
+      const entry = parseEntityFile(await readFile(planFile, 'utf-8')).entries[0];
+      if (!entry) {
+        console.log(`  [skip]     ${id} — could not parse`);
+        continue;
+      }
+      if (entry.status === 'dropped') {
+        console.log(`  [skip]     ${id} — dropped`);
+        continue;
+      }
+      if (entry.released) {
+        console.log(`  [skip]     ${id} — already stamped ${entry.released}`);
+        continue;
+      }
+      await writeEntityFile(planFile, entityFileInput(entry, { released: version }));
+      console.log(`  [stamped]  ${id} -> ${version}`);
+      stamped++;
+    }
+    console.log(`Stamped ${stamped} of ${ideas.size} idea(s) with released: ${version}`);
+  });
+
+program
+  .command('release-notes <version>')
+  .description(
+    'Print release notes for <version> grouped by idea instead of by raw commit — one row per ' +
+      'idea (its title, not the commit subject), sectioned the same as the CHANGELOG',
+  )
+  .action(async (version: string) => {
+    const root = process.cwd();
+    const sections = await resolveReleaseNotes(root, version);
+    if (!sections) {
+      fail(`No release range for "${version}" found in CHANGELOG.md`);
+      return;
+    }
+    console.log(formatReleaseNotesMarkdown(version, sections));
   });
 
 program

@@ -5,6 +5,7 @@ type: fix
 status: done
 created: 2026-07-21
 updated: 2026-07-26
+released: v0.11.0
 tags:
   - app
   - server

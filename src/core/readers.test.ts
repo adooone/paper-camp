@@ -210,6 +210,14 @@ describe('entity views', () => {
     expect(note && entityToIdea(note).title).toBe('A note');
   });
 
+  it('entityToPlan forwards the released version', async () => {
+    const { entries } = await readEntities(makeCorpus());
+    const work = entries.find((e) => e.id === 'IDEA-3');
+    expect(work).toBeDefined();
+    const released = { ...work, released: 'v0.13.1' };
+    expect(entityToPlan(released as EntityEntry).released).toBe('v0.13.1');
+  });
+
   it('entityToPlan preserves the review thread', async () => {
     const { entries } = await readEntities(makeCorpus());
     const work = entries.find((e) => e.id === 'IDEA-3');

@@ -2,6 +2,7 @@ import { agentRoutes } from './agent';
 import { capabilitiesRoutes } from './capabilities';
 import { ideaRoutes, planRoutes } from './content';
 import { gitRoutes } from './git';
+import { releaseNotesRoutes } from './release-notes';
 import { statusRoutes } from './status';
 import { configRoutes, envRoutes, iconRoutes, mergePolicyRoutes } from './system';
 import { taskRoutes } from './tasks';
@@ -25,5 +26,6 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...envRoutes(ctx),
     ...mergePolicyRoutes(ctx),
     ...trailRoutes(ctx),
+    ...releaseNotesRoutes(ctx),
   ];
 }

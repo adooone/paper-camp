@@ -5,6 +5,7 @@ type: fix
 status: done
 created: 2026-08-04
 updated: 2026-08-04
+released: v0.13.1
 tags:
   - cli
   - packaging

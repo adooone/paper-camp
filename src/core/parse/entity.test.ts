@@ -198,6 +198,7 @@ describe('formatEntityFile round-trip', () => {
       updated: '2026-07-05',
       audited: '2026-07-05',
       auditedHash: 'abc123',
+      released: 'v0.13.1',
       tags: ['core', 'ideas'],
       subject: 'Core infra',
       order: 0,
@@ -225,6 +226,7 @@ describe('formatEntityFile round-trip', () => {
     expect(e.type).toBe('feat');
     expect(e.status).toBe('planned');
     expect(e.auditedHash).toBe('abc123');
+    expect(e.released).toBe('v0.13.1');
     expect(e.subject).toBe('Core infra');
     expect(e.order).toBe(0);
     expect(e.body).toBe(input.body);

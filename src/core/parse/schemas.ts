@@ -101,6 +101,12 @@ export const entityFrontmatterSchema = z
       .describe(
         'Content hash of the entity at last audit, used to detect edits regardless of mtime',
       ),
+    released: z
+      .string()
+      .optional()
+      .describe(
+        'Version tag (e.g. v0.13.1) that first shipped this idea, stamped from the release train',
+      ),
     tags: z.array(z.string()).optional().describe('Tagging categories'),
     subject: z
       .string()

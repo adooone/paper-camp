@@ -290,13 +290,13 @@ const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] 
   );
 };
 
-const TrailSection = ({ planId }: { planId: string | undefined }) => {
+const TrailSection = ({ planId, released }: { planId: string | undefined; released?: string }) => {
   const trail = useTrail(planId);
   if (!trail) return null;
   return (
     <div className="mb-8">
       <h3 className={`${sectionHeadingClass} mb-3`}>History</h3>
-      <ProvenanceTrailPanel trail={trail} />
+      <ProvenanceTrailPanel trail={trail} released={released} />
     </div>
   );
 };
@@ -539,7 +539,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             />
           )}
 
-          <TrailSection planId={plan.id} />
+          <TrailSection planId={plan.id} released={plan.released} />
         </>
       )}
     </div>
