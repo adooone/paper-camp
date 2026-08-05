@@ -339,6 +339,7 @@ process.exit(1)
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBe('question');
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
     expect(lines).toContain(
       '[blocked] phase 1 — agent needs a decision: read outside workspace: /home/user/dev/paper-ui/select.tsx',
@@ -889,6 +890,56 @@ describe('resumeAuthParkedTasks', () => {
     expect(byPlan(plan2.id)?.status).toBe('error');
 
     await new Promise((resolve) => setTimeout(resolve, 600));
+  });
+});
+
+describe('resumeQuestionParkedTasks', () => {
+  it('re-launches a run-all that parked on a question and clears errorKind', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
+    const manager = createAgentManager(root);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBe('question');
+
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const { resumed } = await manager.resumeQuestionParkedTasks(plan.id as string);
+    expect(resumed).toBe(true);
+
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+    const after = parseEntityFile(
+      await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
+    );
+    expect(after.entries[0].phases.every((phase) => phase.done)).toBe(true);
+  });
+
+  it('leaves a non-question failure untouched', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(1)';
+    const manager = createAgentManager(root);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+
+    const { resumed } = await manager.resumeQuestionParkedTasks(plan.id as string);
+    expect(resumed).toBe(false);
+    expect(currentStatus(manager)?.status).toBe('error');
+  });
+
+  it('ignores a question parked on a different plan', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
+    const manager = createAgentManager(root);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    const { resumed } = await manager.resumeQuestionParkedTasks('IDEA-999');
+    expect(resumed).toBe(false);
+    expect(currentStatus(manager)?.errorKind).toBe('question');
   });
 });
 

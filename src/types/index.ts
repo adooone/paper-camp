@@ -624,7 +624,7 @@ export interface AgentTaskState {
   lines: string[];
   // fix-review only: prefills the commit form once the agent has reported.
   suggestedCommit?: { title: string; message: string };
-  errorKind?: 'auth';
+  errorKind?: 'auth' | 'question';
 }
 
 export interface OverlapVerdict {

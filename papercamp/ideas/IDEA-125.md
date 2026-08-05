@@ -27,7 +27,7 @@ Workaround meanwhile: pre-grant sibling-repo read access in the agent's permissi
       Stop the headless runner from instantly replying with a denial when a permission ask arrives mid-run.
 - [x] Park the ask as a question on the idea
       Route it into the parked-decisions inbox ([[IDEA-118]]) with the path and the requesting phase attached.
-- [ ] Resume the run on answer
+- [x] Resume the run on answer
       Re-enter the paused run when the human grants or denies, continuing or failing cleanly with the recorded cause.
 - [ ] Verify against an external-directory ask
       Reproduce the func-ui sibling-repo read and confirm the run parks, records the reason, and resumes on answer.
