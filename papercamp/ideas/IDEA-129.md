@@ -2,7 +2,7 @@
 id: IDEA-129
 title: Isolate the StatusBar — store-free core, ready for a second mount
 type: refactor
-status: planned
+status: review
 created: 2026-08-05
 tags:
   - app
@@ -56,7 +56,7 @@ Net shape of the extracted core: a presentation component taking the eight data 
       Desk wires the core to the store exactly as today — behaviour and visual parity, no regressions.
 - [x] Make the core embeddable
       Shadow-DOM-safe styling (no reliance on the desk's global CSS) and a package boundary the vite plugin ([[IDEA-128]]) can import.
-- [ ] Type-check and test the seam
+- [x] Type-check and test the seam
       Cover the core with props-level tests; `tsc` and lint clean.
 
 ### Log
