@@ -28,7 +28,7 @@ export default defineConfig(({ command }) => {
     plugins: [
       dts({
         insertTypesEntry: true,
-        include: ['src/core/**/*', 'src/types/**/*', 'src/vite/**/*', 'src/toolbar/**/*'],
+        include: ['src/core/**/*', 'src/types/**/*', 'src/vite/**/*'],
       }),
     ],
     build: {
@@ -38,7 +38,6 @@ export default defineConfig(({ command }) => {
           types: resolve(__dirname, 'src/types/index.ts'),
           cli: resolve(__dirname, 'src/cli/index.ts'),
           vite: resolve(__dirname, 'src/vite/index.ts'),
-          toolbar: resolve(__dirname, 'src/toolbar/index.ts'),
         },
         formats: ['es'],
       },
@@ -49,7 +48,7 @@ export default defineConfig(({ command }) => {
             id,
           ),
         output: {
-          entryFileNames: (chunk) => (chunk.name === 'toolbar' ? 'toolbar.js' : '[name]/index.js'),
+          entryFileNames: '[name]/index.js',
           chunkFileNames: 'chunks/[name].[hash].js',
         },
       },

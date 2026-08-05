@@ -133,3 +133,4 @@
 | IDEA-130 | Paper Scout — the conversational agent | feat | done | agents, chat, integration |
 | IDEA-131 | Faster agent runs and chat replies | refactor | done | agent, server, performance |
 | IDEA-132 | Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end | fix | idea | integration, app, cli |
+| IDEA-133 | Toolbar is an extended StatusBar — top, full-width, always visible, in layout | feat | idea | integration, app, ux |

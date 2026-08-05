@@ -32,8 +32,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && vite build && vite build --config vite.app.config.ts",
+    "build": "tsc && vite build && vite build --config vite.app.config.ts && vite build --config vite.toolbar.config.ts",
     "build:app": "vite build --config vite.app.config.ts",
+    "build:toolbar": "vite build --config vite.toolbar.config.ts",
     "dev": "vite --config vite.app.config.ts --port 3333",
     "dev:lib": "vite",
     "cli": "bun src/cli/index.ts",
