@@ -67,4 +67,19 @@ describe('paperCamp', () => {
     middleware(req, res);
     expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 9999 });
   });
+
+  it('skips the proxy middleware and script injection when integration.toolbar.enabled is false', async () => {
+    const root = await makeRoot({ port: 4242, integration: { toolbar: { enabled: false } } });
+    const use = vi.fn();
+    const plugin = paperCamp();
+    await (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)({
+      config: { root },
+      middlewares: { use },
+    });
+
+    expect(use).not.toHaveBeenCalled();
+    const transform = plugin.transformIndexHtml as (html: string) => string;
+    const html = transform('<html><body><div id="root"></div></body></html>');
+    expect(html).not.toContain('toolbar.js');
+  });
 });

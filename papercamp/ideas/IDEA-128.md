@@ -47,7 +47,7 @@ Per-project trimming via `integration.toolbar.segments` allowlist in config.json
       Dev-only plugin that injects the toolbar and proxies `/__camp` to the paper-camp server on `config.port`.
 - [x] Mount the extracted StatusBar as a shadow-DOM web component
       Framework-agnostic bar docked to the bottom edge, collapsing to a pill when idle; segments expand into panels above it.
-- [ ] Wire the `integration` config block and Settings toggle
+- [x] Wire the `integration` config block and Settings toggle
       `integration: { toolbar, route }` in config.json with a `toolbar.segments` allowlist, toggleable for frontend targets.
 - [ ] Ship v1 segments — Focus, Desk, glance badges
       Read-only only: session focus, open-desk link, and badge counts with no writes or agent controls.

@@ -4,7 +4,10 @@ import {
   AGENT_IDS,
   type AgentId,
   type DefaultAgentsMap,
+  type IntegrationConfig,
   type PaperCampConfig,
+  TOOLBAR_SEGMENT_IDS,
+  type ToolbarSegmentId,
   coerceAgentConfig,
 } from '@/types/index';
 import { readMaybe } from '../../helpers';
@@ -51,8 +54,13 @@ export function configRoutes({ root }: RouteContext): Route[] {
           defaultAgents?: Record<string, unknown>;
           subjects?: unknown;
           setupDismissed?: boolean;
+          integration?: {
+            toolbar?: { enabled?: unknown; segments?: unknown };
+            route?: unknown;
+          };
         };
-        const { port, projectName, defaultAgent, subjects, setupDismissed } = bodyParsed;
+        const { port, projectName, defaultAgent, subjects, setupDismissed, integration } =
+          bodyParsed;
         const rawDefaultAgents = bodyParsed.defaultAgents;
         if (port !== undefined && (!Number.isInteger(port) || port <= 0)) {
           sendJson(res, 400, { error: 'port must be a positive integer' });
@@ -87,6 +95,32 @@ export function configRoutes({ root }: RouteContext): Route[] {
             }
           }
         }
+        if (
+          integration?.toolbar?.enabled !== undefined &&
+          typeof integration.toolbar.enabled !== 'boolean'
+        ) {
+          sendJson(res, 400, { error: 'integration.toolbar.enabled must be a boolean' });
+          return;
+        }
+        if (integration?.toolbar?.segments !== undefined) {
+          const segments = integration.toolbar.segments;
+          if (
+            !Array.isArray(segments) ||
+            !segments.every((s) => TOOLBAR_SEGMENT_IDS.includes(s as ToolbarSegmentId))
+          ) {
+            sendJson(res, 400, {
+              error: `integration.toolbar.segments must only contain: ${TOOLBAR_SEGMENT_IDS.join(', ')}`,
+            });
+            return;
+          }
+        }
+        if (
+          integration?.route !== undefined &&
+          (typeof integration.route !== 'string' || !integration.route.startsWith('/'))
+        ) {
+          sendJson(res, 400, { error: 'integration.route must be a path starting with /' });
+          return;
+        }
         const config = JSON.parse(raw) as PaperCampConfig;
         const defaultAgents: DefaultAgentsMap | undefined = rawDefaultAgents
           ? {
@@ -108,12 +142,30 @@ export function configRoutes({ root }: RouteContext): Route[] {
             : undefined);
         const configWithOld = config as PaperCampConfig & { defaultAgent?: AgentId };
         const { defaultAgent: _oldAgent, ...configRest } = configWithOld;
+        const resolvedIntegration: IntegrationConfig | undefined = integration
+          ? {
+              ...config.integration,
+              ...(integration.toolbar !== undefined && {
+                toolbar: {
+                  ...config.integration?.toolbar,
+                  ...(integration.toolbar.enabled !== undefined && {
+                    enabled: integration.toolbar.enabled,
+                  }),
+                  ...(integration.toolbar.segments !== undefined && {
+                    segments: integration.toolbar.segments as ToolbarSegmentId[],
+                  }),
+                },
+              }),
+              ...(integration.route !== undefined && { route: integration.route as string }),
+            }
+          : undefined;
         const updated: PaperCampConfig = {
           ...configRest,
           ...(port !== undefined && { port }),
           ...(projectName !== undefined && { projectName: projectName.trim() }),
           ...(resolvedDefaultAgents && { defaultAgents: resolvedDefaultAgents }),
           ...(setupDismissed !== undefined && { setupDismissed }),
+          ...(resolvedIntegration && { integration: resolvedIntegration }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
         sendJson(res, 200, { ok: true });

@@ -195,6 +195,22 @@ const GeneralSection = () => {
     }
   };
 
+  const handleToggleIntegration = async () => {
+    if (!config) return;
+    const next = !(config.integration?.toolbar?.enabled ?? true);
+    const integration = {
+      ...config.integration,
+      toolbar: { ...config.integration?.toolbar, enabled: next },
+    };
+    const { ok, error } = await saveConfig({ integration });
+    if (ok) {
+      setConfig((prev) => (prev ? { ...prev, integration } : prev));
+      toast({ title: 'Saved', variant: 'success' });
+    } else {
+      toast({ title: 'Failed to save', description: error, variant: 'error' });
+    }
+  };
+
   const handleSaveName = async () => {
     const projectName = nameInput.trim();
     if (!config || !projectName || projectName === config.projectName) return;
@@ -294,6 +310,19 @@ const GeneralSection = () => {
               label="Port"
               helperText="Default for `paper-camp dev`. Restart the server to apply a change."
             />
+          </div>
+          <Divider />
+
+          <div className="flex items-center justify-between gap-3 pb-3 pt-3">
+            <div>
+              <p className="m-0">In-app dev toolbar</p>
+              <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
+                Inject the paper-camp toolbar into this project's dev server via the Vite plugin.
+              </p>
+            </div>
+            <Button size="small" onClick={handleToggleIntegration}>
+              {(config.integration?.toolbar?.enabled ?? true) ? 'Disable' : 'Enable'}
+            </Button>
           </div>
           <Divider />
 
