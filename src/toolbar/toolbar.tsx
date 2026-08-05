@@ -42,7 +42,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     });
   }, []);
 
-  const openDesk = () => window.open(route, '_blank', 'noopener,noreferrer');
+  const openDesk = () => window.open(`${route}/`, '_blank', 'noopener,noreferrer');
 
   const shipGlance = status.gitBranch
     ? `${status.gitBranch}${status.changedFileCount > 0 ? ` (${status.changedFileCount})` : ''}`

@@ -148,6 +148,7 @@ function watchPaperUi(): Plugin {
 export default defineConfig({
   plugins: [react(), tsconfigPaths(), papercampApi(), watchPaperUi()],
   root: '.',
+  base: './',
   publicDir: 'public',
   server: {
     port: 3333,
