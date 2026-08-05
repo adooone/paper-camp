@@ -65,3 +65,29 @@ export function replaceThreadKinds(
 ): ThreadMessage[] {
   return [...(thread ?? []).filter((m) => !kinds.includes(m.kind)), ...next];
 }
+
+/** Distills one ephemeral `chat` message into a durable `decision`/`log` entry in
+ * place — `note` appends a breadcrumb (e.g. the idea it was captured to), for the
+ * promote-to-idea case where the new entity lives in its own file. */
+export function promoteThreadMessage(
+  thread: ThreadMessage[],
+  index: number,
+  kind: 'decision' | 'log',
+  note?: string,
+): ThreadMessage[] {
+  return thread.map((m, i) => {
+    if (i !== index) return m;
+    const text = note ? `${m.text}\n\n${note}` : m.text;
+    if (kind === 'decision') return { ...m, kind, state: 'open' as const, text };
+    const { state: _state, ...rest } = m;
+    return { ...rest, kind, text };
+  });
+}
+
+/** Every `chat` message after the thread's last `log` entry — the exchange a quiet
+ * session's auto-summary distills, so a summary never re-covers ground an earlier
+ * one (or a manual promotion) already turned into a log line. */
+export function chatSinceLastLog(thread: ThreadMessage[] = []): ThreadMessage[] {
+  const lastLogIndex = thread.reduce((acc, m, i) => (m.kind === 'log' ? i : acc), -1);
+  return thread.slice(lastLogIndex + 1).filter((m) => m.kind === 'chat');
+}

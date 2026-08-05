@@ -2,7 +2,7 @@
 id: IDEA-130
 title: Paper Scout — the conversational agent
 type: feat
-status: planned
+status: review
 created: 2026-08-05
 tags:
   - agents
@@ -23,17 +23,17 @@ Design (decided on [[IDEA-128]], carried here):
 - **Two mounts**: the desk's Feedback panel (today's UI, renamed and upgraded) and the toolbar's Scout segment ([[IDEA-128]] v2).
 
 ### Phases
-- [ ] Add the `chat` thread-message kind
+- [x] Add the `chat` thread-message kind
       Serializer + types + collapsible rendering in thread views; existing feedback messages migrate or stay as-is per kind.
-- [ ] Give the feedback agent the Scout persona and project-wide scope
+- [x] Give the feedback agent the Scout persona and project-wide scope
       Name, tone, and the ability to answer about any idea (not just the bound one) with idea-scoped default.
-- [ ] Fold the questions inbox into the chat surface
+- [x] Fold the questions inbox into the chat surface
       Project-wide open-question badge, oldest-first triage grouped by idea, inline reply wired to run resumption.
-- [ ] Add distillation actions
+- [x] Add distillation actions
       In-chat promotion to decision/idea/log + auto-summary on session quiet.
-- [ ] Define the context-injection contract for mounts
+- [x] Define the context-injection contract for mounts
       A small interface the desk and toolbar both feed (route/URL, focused idea, viewport) — consumed silently by Scout.
-- [ ] Expose Scout as the toolbar mount
+- [x] Expose Scout as the toolbar mount
       The [[IDEA-128]] v2 segment consumes this; toolbar work stays in that idea.
 
 ### Log

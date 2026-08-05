@@ -13,9 +13,11 @@ interface CreateIdeaModalProps {
   open: boolean;
   onClose: () => void;
   onAdd: (idea: { title: string; content?: string; kind?: 'idea' | 'note' }) => Promise<void>;
+  /** Pre-fills Description — used to promote a chat message into a new idea. */
+  initialContent?: string;
 }
 
-export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) => {
+export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: CreateIdeaModalProps) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isNote, setIsNote] = useState(false);
@@ -43,7 +45,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
   useEffect(() => {
     if (open) {
       setTitle('');
-      setContent('');
+      setContent(initialContent ?? '');
       setIsNote(false);
       setLoading(false);
       setError(null);
@@ -51,7 +53,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd }: CreateIdeaModalProps) 
       setOverlapVerdict(null);
       setOverlapError(null);
     }
-  }, [open]);
+  }, [open, initialContent]);
 
   const handleOpenSimilar = (matchTitle: string) => {
     onClose();

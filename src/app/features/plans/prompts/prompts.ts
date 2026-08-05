@@ -1,4 +1,12 @@
-import type { IdeaEntry, PlanEntry, ReviewThread, SuggestionEntry } from '@/types/index';
+import type {
+  EntityEntry,
+  IdeaEntry,
+  MountContext,
+  PlanEntry,
+  ReviewThread,
+  SuggestionEntry,
+  ThreadMessage,
+} from '@/types/index';
 import type { SimilarityCandidate } from '../helpers';
 
 // These prompts run headless (`claude -p` / `opencode run`), so they must never ask
@@ -221,10 +229,27 @@ Rules:
 - If a comment needs a decision only a human can make, skip it and say so in its \`why\` instead of guessing.`;
 }
 
+// Formats whatever a mount fed (IDEA-130 phase 5) into a block Scout reads
+// silently — never surfaced to the user, so an absent field is simply omitted.
+function formatMountContext(context?: MountContext): string {
+  const lines: string[] = [];
+  if (context?.route) lines.push(`- Current route in the host app: ${context.route}`);
+  if (context?.focusedIdeaId) lines.push(`- Idea focused in the mount: ${context.focusedIdeaId}`);
+  if (context?.viewport) {
+    lines.push(`- Viewport: ${context.viewport.width}×${context.viewport.height}`);
+  }
+  if (!lines.length) return '';
+  return `\nAmbient context from the surface you're chatting in — use it silently, never mention it explicitly:\n${lines.join('\n')}\n`;
+}
+
 // Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply) — never uses
 // tools or edits a file itself; it proposes an edit/follow-up as JSON and
 // feedback-reply.ts's applyFeedbackEdit + the route apply it deterministically.
-export function buildFeedbackReplyPrompt(plan: PlanEntry): string {
+export function buildFeedbackReplyPrompt(
+  plan: PlanEntry,
+  otherEntities: EntityEntry[],
+  context?: MountContext,
+): string {
   const phaseList = plan.phases.length
     ? plan.phases
         .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
@@ -237,7 +262,15 @@ export function buildFeedbackReplyPrompt(plan: PlanEntry): string {
         .join('\n')
     : '(empty thread)';
 
-  return `You are the agent behind the Feedback thread on the idea "${plan.title}" (${plan.id ?? 'no id'}), stored at papercamp/ideas/${plan.id ?? '<ID>'}.md. Do not use any tools, do not read or edit any files, and do not implement anything — base your answer only on the context given below.
+  const otherIdeasList = otherEntities.length
+    ? otherEntities
+        .map((e) => `### ${e.id}: ${e.title} (status: ${e.status ?? 'unknown'})\n${e.body}`)
+        .join('\n\n')
+    : '(no other ideas exist in this project yet)';
+
+  return `You are Paper Scout, this project's own agent identity — the same Scout that opens draft PRs and cuts releases in CI, now talking. Sound like a sharp, low-ceremony teammate: direct and concise, no corporate throat-clearing, no over-apologizing, no restating the question back before answering it. Do not use any tools, do not read or edit any files, and do not implement anything — base your answer only on the context given below.
+
+You're chatting inside the idea "${plan.title}" (${plan.id ?? 'no id'}), stored at papercamp/ideas/${plan.id ?? '<ID>'}.md — that's your default scope, and any "edit" you propose always applies to THIS idea, never another one. You can still answer questions about any other idea in the project using the index below.
 
 Idea/plan body:
 ${plan.body}
@@ -248,7 +281,11 @@ ${phaseList}
 Feedback thread so far, oldest first:
 ${threadList}
 
+Every other idea in the project, for answering questions outside this one's scope:
+${otherIdeasList}
+${formatMountContext(context)}
 Task: classify the most recent user message and act on it in the same response:
+- It asks about a DIFFERENT idea from the index above (its content, status, or existence) — answer from that idea's entry above; never propose an "edit" for it, since edits here only ever apply to the current idea.
 - It answers an open question you asked earlier in this thread — reply AND set "answersQuestion" to true, so the answer is kept as a clarification on this idea.
 - It's a plain question/comment with nothing to change — just reply.
 - It asks for a change this idea/plan should make: add a new phase, reword an existing phase's title or description, or correct body prose that's now wrong — reply AND include an "edit".
@@ -267,6 +304,25 @@ Rules:
 - When every phase above is already checked ([x]) and the message asks for new or still-missing work, use "add" for a new phase — never "reword" a finished phase to smuggle in new work, since a completed phase never re-runs. Adding a phase to a finished idea reopens it, and the app tracks the new work separately as a Fix rather than rewriting the finished Phases history.
 - "edit.body", when present, must be the complete replacement body, not a fragment — reproduce every part that isn't changing, word for word.
 - Only include "edit" when the message clearly asks for a change; a fix request always becomes an "edit" (a phase on this idea), never anything else. Never create a new idea, and never decline a fix request with a bare reply.`;
+}
+
+// Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply, reused for this
+// too) — fires once a chat session goes quiet (routes/agent.ts's feedback-summarize),
+// distilling the exchange since the last log entry into one durable line.
+export function buildFeedbackSummaryPrompt(plan: PlanEntry, messages: ThreadMessage[]): string {
+  const exchange = messages
+    .map((m) => `${m.from === 'agent' ? 'Agent' : 'User'}: ${m.text}`)
+    .join('\n');
+
+  return `You are Paper Scout, distilling a chat session that just went quiet on the idea "${plan.title}" (${plan.id ?? 'no id'}). Do not use any tools, do not read or edit any files — base your answer only on the exchange given below.
+
+Chat exchange since the last recorded summary:
+${exchange}
+
+Task: write ONE concise sentence (no more than 25 words) that a future reader would find worth keeping — what this exchange concluded, decided, or established. If nothing durable came out of it (small talk, an unanswered question, a dead end), say that plainly in one short sentence instead of padding it out.
+
+Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
+{"summary": "one sentence"}`;
 }
 
 // Scans the whole corpus rather than one idea and appends to suggestions.md, so

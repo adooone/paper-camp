@@ -1,18 +1,16 @@
 import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
-import { usePlanStatusPatch, useSendFeedbackMessage, useTrail } from '@/app/features/plans/hooks';
+import {
+  useFeedbackQuietSummary,
+  usePlanStatusPatch,
+  usePromoteThreadMessage,
+  useSendFeedbackMessage,
+  useTrail,
+} from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type {
-  AgentTaskState,
-  IdeaEntry,
-  LogEntry,
-  PhaseItem,
-  PlanEntry,
-  ThreadMessage,
-  ThreadMessageKind,
-} from '@/types/index';
+import type { AgentTaskState, IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
   Button,
   Card,
@@ -34,12 +32,14 @@ import {
   PhaseCopyButton,
 } from '../actions';
 import { CollapsibleText } from '../components';
+import { FeedbackThread, type PromoteTarget } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import { combinedProgress, effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
+import { CreateIdeaModal } from '../modals/create-idea-modal';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -301,80 +301,6 @@ const TrailSection = ({ planId }: { planId: string | undefined }) => {
   );
 };
 
-const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
-  review: 'review',
-  note: 'note',
-  decision: 'decision',
-  question: 'question',
-  clarification: 'clarification',
-};
-
-const FeedbackThread = ({
-  messages,
-  undo,
-  undoing,
-  onUndo,
-}: {
-  messages: ThreadMessage[];
-  undo: { commitSha: string } | null;
-  undoing: boolean;
-  onUndo: () => void;
-}) => (
-  <>
-    {messages.map((message, i) => {
-      const label = THREAD_KIND_LABEL[message.kind];
-      const fromAgent = message.from === 'agent';
-      const isLast = i === messages.length - 1;
-      return (
-        <div
-          key={`${message.kind}-${message.date ?? ''}-${i}`}
-          className={`flex flex-col gap-1 ${fromAgent ? 'items-start' : 'items-end'}`}
-        >
-          <div className="max-w-[85%]">
-            <Card
-              size="small"
-              surface="paper"
-              texture={fromAgent ? 'kraft' : label ? 'canvas' : 'parchment'}
-              shade={fromAgent}
-              accent={!fromAgent}
-              accentColor={label ? 'rose' : 'blue'}
-            >
-              <CollapsibleText
-                collapsedLines={3}
-                resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
-              >
-                {message.text}
-              </CollapsibleText>
-            </Card>
-          </div>
-          <div className="flex items-center gap-2">
-            {fromAgent && (
-              <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
-                agent
-              </Stamp>
-            )}
-            {fromAgent && isLast && undo && (
-              <Tooltip content="Revert this run's plan edit">
-                <Button size="small" variant="ghost" onClick={onUndo} disabled={undoing}>
-                  {undoing ? 'Undoing…' : 'Undo'}
-                </Button>
-              </Tooltip>
-            )}
-            {message.date && (
-              <span className="text-sm font-semibold opacity-[0.45]">{message.date}</span>
-            )}
-            {label && (
-              <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
-                {label}
-              </Stamp>
-            )}
-          </div>
-        </div>
-      );
-    })}
-  </>
-);
-
 const FeedbackSection = ({
   plan,
   updating,
@@ -391,11 +317,28 @@ const FeedbackSection = ({
   onUndo: () => void;
 }) => {
   const [input, setInput] = useState('');
+  const [ideaPromptIndex, setIdeaPromptIndex] = useState<number | null>(null);
   const thread = plan.thread ?? [];
+  const { promotingIndex, promoteToDurable, promoteToIdea } = usePromoteThreadMessage(plan);
+  useFeedbackQuietSummary(plan, true);
 
   const handleSend = async () => {
     if (!input.trim()) return;
     if (await onSend(input.trim())) setInput('');
+  };
+
+  const handlePromote = (index: number, target: PromoteTarget) => {
+    if (target === 'idea') setIdeaPromptIndex(index);
+    else promoteToDurable(index, target);
+  };
+
+  const handlePromoteToIdea = async (idea: {
+    title: string;
+    content?: string;
+    kind?: 'idea' | 'note';
+  }) => {
+    if (ideaPromptIndex === null) return;
+    if (await promoteToIdea(ideaPromptIndex, idea)) setIdeaPromptIndex(null);
   };
 
   return (
@@ -404,7 +347,14 @@ const FeedbackSection = ({
       <Card size="small" accent accentColor="slate" texture="kraft">
         <div className="flex flex-col gap-3 mb-4">
           {thread.length > 0 ? (
-            <FeedbackThread messages={thread} undo={undo} undoing={undoing} onUndo={onUndo} />
+            <FeedbackThread
+              messages={thread}
+              undo={undo}
+              undoing={undoing}
+              onUndo={onUndo}
+              onPromote={handlePromote}
+              promotingIndex={promotingIndex}
+            />
           ) : (
             <p className="text-sm m-0 text-ink-500">
               Jot a comment, ask a question, or say what's wrong with this plan.
@@ -430,6 +380,12 @@ const FeedbackSection = ({
           </div>
         </div>
       </Card>
+      <CreateIdeaModal
+        open={ideaPromptIndex !== null}
+        onClose={() => setIdeaPromptIndex(null)}
+        onAdd={handlePromoteToIdea}
+        initialContent={ideaPromptIndex !== null ? thread[ideaPromptIndex]?.text : undefined}
+      />
     </div>
   );
 };
@@ -438,6 +394,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const allPlans = useAppStore((s) => s.plans);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
+  const loadPlans = useAppStore((s) => s.loadPlans);
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const [branching, setBranching] = useState(false);
@@ -512,7 +469,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     undo: feedbackUndo,
     undoing: undoingFeedback,
     undoEdit,
-  } = useSendFeedbackMessage(plan);
+  } = useSendFeedbackMessage(plan, { reload: loadPlans, notify: toast });
 
   return (
     <div>

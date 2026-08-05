@@ -1,4 +1,9 @@
-import type { AgentTaskState, LoginRelayState, ReconcileQueueItem } from '@/types/index';
+import type {
+  AgentTaskState,
+  LoginRelayState,
+  MountContext,
+  ReconcileQueueItem,
+} from '@/types/index';
 
 const handleAgentResponse = async (
   response: Response,
@@ -100,15 +105,47 @@ export const launchFixReview = async (planId: string): Promise<void> => {
 export const postFeedbackMessage = async (
   planId: string,
   text: string,
+  context?: MountContext,
 ): Promise<{ error?: string; undo?: { commitSha: string } }> => {
   const response = await fetch('/api/agent/feedback-message', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ planId, text }),
+    body: JSON.stringify({ planId, text, context }),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Failed to send message');
   return data as { error?: string; undo?: { commitSha: string } };
+};
+
+export const promoteFeedbackMessage = async (
+  planId: string,
+  index: number,
+  target: 'decision' | 'log',
+  note?: string,
+): Promise<void> => {
+  const response = await fetch('/api/agent/feedback-promote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId, index, target, note }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.error ?? `Failed to promote message (${response.status})`);
+  }
+};
+
+export const summarizeFeedbackSession = async (
+  planId: string,
+): Promise<{ skipped?: boolean; summary?: string }> => {
+  const response = await fetch('/api/agent/feedback-summarize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId }),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok)
+    throw new Error(data?.error ?? `Failed to summarize feedback (${response.status})`);
+  return data as { skipped?: boolean; summary?: string };
 };
 
 export const undoFeedbackEdit = async (

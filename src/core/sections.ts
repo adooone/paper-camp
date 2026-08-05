@@ -14,7 +14,7 @@ const PHASE_SOURCE_RE = /^\[review\]\s+(.*)$/;
 const DATED_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
 const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(?:\[(decision|question)\]\s+)?(.*)$/;
 const THREAD_LINE_RE =
-  /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question)\]\s+(\[agent\]\s+)?(.*)$/;
+  /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question|chat)\]\s+(\[agent\]\s+)?(.*)$/;
 const NOTE_STATE_KINDS: ThreadMessageKind[] = ['note', 'decision', 'question'];
 
 function parsePhaseEntries(lines: string[], start: number, end: number): PhaseItem[] {

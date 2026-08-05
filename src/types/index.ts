@@ -51,14 +51,16 @@ export interface MarginNote {
 
 /** What a thread message originally was, before log/review/notes/clarifications folded
  * into one ordered thread on the entity — 'note'/'decision'/'question' carry `state`,
- * the rest are plain historical records. */
+ * the rest are plain historical records. 'chat' is thread-native (no legacy section):
+ * Paper Scout conversation, collapsed by default in thread views. */
 export type ThreadMessageKind =
   | 'log'
   | 'clarification'
   | 'review'
   | 'note'
   | 'decision'
-  | 'question';
+  | 'question'
+  | 'chat';
 
 export interface ThreadMessage {
   kind: ThreadMessageKind;
@@ -69,6 +71,15 @@ export interface ThreadMessage {
   state?: MarginNoteState;
   /** Absent means 'user' — no thread message predates this field being agent-authored. */
   from?: 'user' | 'agent';
+}
+
+/** Ambient context a chat mount (desk, toolbar) feeds alongside a message — each
+ * mount populates whatever it has (IDEA-130); Scout folds it into the prompt
+ * silently, it never becomes a user-visible field. */
+export interface MountContext {
+  route?: string;
+  focusedIdeaId?: string;
+  viewport?: { width: number; height: number };
 }
 
 export interface RawEntry {
@@ -412,7 +423,7 @@ export const DEFAULT_AGENTS: DefaultAgentsMap = {
 };
 
 /** Toolbar segments, left to right (IDEA-128); trimmed per project via `IntegrationConfig.toolbar.segments`. */
-export const TOOLBAR_SEGMENT_IDS = ['focus', 'runs', 'ship', 'desk'] as const;
+export const TOOLBAR_SEGMENT_IDS = ['focus', 'scout', 'runs', 'ship', 'desk'] as const;
 
 export type ToolbarSegmentId = (typeof TOOLBAR_SEGMENT_IDS)[number];
 

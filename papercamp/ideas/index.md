@@ -130,4 +130,5 @@
 | IDEA-127 | Settings port is a dead field — dev never reads it | fix | done | cli, settings |
 | IDEA-128 | In-app dev toolbar — paper-camp living inside the target application | feat | review | integration, app |
 | IDEA-129 | Isolate the StatusBar — store-free core, ready for a second mount | refactor | done | app, integration |
-| IDEA-130 | Paper Scout — the conversational agent | feat | planned | agents, chat, integration |
+| IDEA-130 | Paper Scout — the conversational agent | feat | review | agents, chat, integration |
+| IDEA-131 | Faster agent runs and chat replies | refactor | idea | agent, server, performance |

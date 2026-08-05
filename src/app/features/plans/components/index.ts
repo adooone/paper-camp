@@ -1,4 +1,5 @@
 export * from './collapsible-text';
+export * from './feedback-thread';
 export * from './plan-id-stamp';
 export * from './pr-badge';
 export * from './progress-bar';

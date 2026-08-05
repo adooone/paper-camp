@@ -13,6 +13,7 @@ import { NoteDetail } from './views';
 import {
   ArchiveSection,
   ListView,
+  OpenQuestionsInbox,
   PlansHeader,
   PlansListSkeleton,
   SuggestionsSection,
@@ -137,6 +138,8 @@ export const PlansPage = () => {
       ) : (
         <div>
           <PlansHeader />
+
+          <OpenQuestionsInbox plans={plans.entries} />
 
           {plans.warnings.length > 0 && (
             <Card size="small" accent accentColor="amber">

@@ -1,12 +1,14 @@
 import { useCheckStatusClient } from '@/app/hooks/use-check-status-client';
 import { useFocusClient } from '@/app/hooks/use-focus-client';
 import { useRunsClient } from '@/app/hooks/use-runs-client';
+import { useScoutClient } from '@/app/hooks/use-scout-client';
 import { useStatusClient } from '@/app/hooks/use-status-client';
 import { fetchConfig } from '@/app/services/system';
-import type { ToolbarSegmentId } from '@/types/index';
+import type { PlanEntry, ToolbarSegmentId } from '@/types/index';
 import { useEffect, useState } from 'react';
 import { FocusPanel } from './focus-panel';
 import { RunsPanel } from './runs-panel';
+import { ScoutPanel } from './scout-panel';
 import { ShipPanel } from './ship-panel';
 import { ToolbarLink } from './toolbar-link';
 import { type ToolbarSegment, ToolbarShell } from './toolbar-shell';
@@ -14,15 +16,15 @@ import { useToolbarShell } from './use-toolbar-shell';
 
 const DEFAULT_ROUTE = '/__camp';
 
-// v1/v2/v3 have all landed — Focus, Desk, Ship, Runs. 'scout' stays out until
-// IDEA-130 lands.
-const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['focus', 'runs', 'ship', 'desk'];
+// v1/v2/v3/Scout have all landed — Focus, Scout, Desk, Ship, Runs.
+const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['focus', 'scout', 'runs', 'ship', 'desk'];
 
 export const Toolbar = () => {
   const status = useStatusClient();
   const checkStatus = useCheckStatusClient();
   const runs = useRunsClient();
   const focusPlan = useFocusClient();
+  const scout = useScoutClient();
   const shell = useToolbarShell();
   const [allowedSegments, setAllowedSegments] = useState<ToolbarSegmentId[]>(DEFAULT_SEGMENTS);
   const [route, setRoute] = useState(DEFAULT_ROUTE);
@@ -42,10 +44,9 @@ export const Toolbar = () => {
     ? `${status.gitBranch}${status.changedFileCount > 0 ? ` (${status.changedFileCount})` : ''}`
     : 'ship';
 
-  const openIdea = () => {
-    if (!focusPlan) return;
+  const openIdea = (plan: PlanEntry) => {
     window.open(
-      `${route}/plans/${encodeURIComponent(focusPlan.title)}`,
+      `${route}/plans/${encodeURIComponent(plan.title)}`,
       '_blank',
       'noopener,noreferrer',
     );
@@ -60,6 +61,8 @@ export const Toolbar = () => {
 
   const runsGlance = runs.activeTask ? `${runs.activeTask.taskKind}…` : 'runs';
 
+  const scoutGlance = scout.openQuestionCount > 0 ? `Scout · ${scout.openQuestionCount}` : 'Scout';
+
   const onRunNextPhase = () => {
     if (focusPlan?.id && nextPhaseIndex >= 0) runs.onRunNextPhase(focusPlan.id, nextPhaseIndex);
   };
@@ -68,7 +71,21 @@ export const Toolbar = () => {
     {
       id: 'focus',
       glance: focusGlance,
-      panel: focusPlan ? <FocusPanel plan={focusPlan} onOpenIdea={openIdea} /> : undefined,
+      panel: focusPlan ? (
+        <FocusPanel plan={focusPlan} onOpenIdea={() => openIdea(focusPlan)} />
+      ) : undefined,
+    },
+    {
+      id: 'scout',
+      glance: scoutGlance,
+      panel: (
+        <ScoutPanel
+          focusPlan={focusPlan}
+          openQuestions={scout.openQuestions}
+          onOpenIdea={openIdea}
+          onRefresh={scout.refresh}
+        />
+      ),
     },
     {
       id: 'runs',
