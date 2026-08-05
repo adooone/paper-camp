@@ -73,7 +73,7 @@ build's `base` to `'./'`. A release smoke test that curls
       Own Vite pass with no externals, NODE_ENV defined, react/react-dom bundled, emitting a single self-contained `dist/app/toolbar.js`.
 - [x] Inject the camp route as an element attribute
       Have the plugin's injected script tag set the API base on the mount element so the toolbar knows the camp origin.
-- [ ] Thread the API base through the thin client
+- [x] Thread the API base through the thin client
       Give the desk hooks (`use-status-client`, `use-focus-client`, `fetchConfig`) a route-prefix seam and honour the injected base for every fetch/EventSource.
 - [ ] Set the desk build `base` to `'./'`
       Make `dist/app/index.html` reference its assets relatively so "Open full desk" resolves through the `/__camp` proxy.

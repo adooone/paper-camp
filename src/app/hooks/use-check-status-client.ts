@@ -1,3 +1,4 @@
+import { apiUrl } from '@/app/services/api-base';
 import { fetchStatus } from '@/app/services/status-api';
 import { type DerivedCheckStatuses, deriveCheckStatuses } from '@/app/utils/check-status';
 import { useCallback, useEffect, useState } from 'react';
@@ -22,7 +23,7 @@ export function useCheckStatusClient(): DerivedCheckStatuses {
   }, [load]);
 
   useEffect(() => {
-    const source = new EventSource('/api/activity/stream');
+    const source = new EventSource(apiUrl('/api/activity/stream'));
     let timer: ReturnType<typeof setTimeout> | undefined;
     source.onmessage = (event) => {
       let payload: { type?: string };

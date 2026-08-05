@@ -1,3 +1,4 @@
+import { setApiBase } from '@/app/services/api-base';
 import paperUiCss from '@dendelion/paper-ui/dist/index.css?raw';
 import { type Root, createRoot } from 'react-dom/client';
 import { ROUTE_ATTRIBUTE } from './route-attribute';
@@ -11,6 +12,8 @@ export class PaperCampToolbarElement extends HTMLElement {
   #root: Root | null = null;
 
   connectedCallback(): void {
+    const route = this.getAttribute(ROUTE_ATTRIBUTE);
+    if (route) setApiBase(route);
     const shadow = this.shadowRoot ?? this.attachShadow({ mode: 'open' });
     shadow.replaceChildren();
     const style = document.createElement('style');
@@ -19,7 +22,7 @@ export class PaperCampToolbarElement extends HTMLElement {
     const mountPoint = document.createElement('div');
     shadow.appendChild(mountPoint);
     this.#root = createRoot(mountPoint);
-    this.#root.render(<Toolbar route={this.getAttribute(ROUTE_ATTRIBUTE) ?? undefined} />);
+    this.#root.render(<Toolbar route={route ?? undefined} />);
   }
 
   disconnectedCallback(): void {

@@ -4,6 +4,7 @@ import type {
   MountContext,
   ReconcileQueueItem,
 } from '@/types/index';
+import { apiUrl } from './api-base';
 
 const handleAgentResponse = async (
   response: Response,
@@ -16,7 +17,7 @@ const handleAgentResponse = async (
 };
 
 export const fetchAgentStatus = async (): Promise<AgentTaskState[]> => {
-  const response = await fetch('/api/agent/status');
+  const response = await fetch(apiUrl('/api/agent/status'));
   return response.json();
 };
 
@@ -26,7 +27,7 @@ export const fetchReconcileQueue = async (): Promise<ReconcileQueueItem[] | null
 };
 
 export const launchAgent = async (planId: string, phaseIndex: number): Promise<void> => {
-  const response = await fetch('/api/agent/launch', {
+  const response = await fetch(apiUrl('/api/agent/launch'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, phaseIndex }),
@@ -163,7 +164,7 @@ export const undoFeedbackEdit = async (
 };
 
 export const stopAgent = async (taskId?: string): Promise<void> => {
-  const response = await fetch('/api/agent/stop', {
+  const response = await fetch(apiUrl('/api/agent/stop'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ taskId }),

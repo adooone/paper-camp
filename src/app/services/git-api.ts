@@ -1,4 +1,5 @@
 import type { FileDiffEntry, GitStatusResponse } from '@/types/index';
+import { apiUrl } from './api-base';
 
 async function throwIfNotOk(response: Response, fallbackError: string): Promise<void> {
   if (response.ok) return;
@@ -7,7 +8,7 @@ async function throwIfNotOk(response: Response, fallbackError: string): Promise<
 }
 
 export const fetchGitStatus = async (): Promise<GitStatusResponse> => {
-  const response = await fetch('/api/git/status');
+  const response = await fetch(apiUrl('/api/git/status'));
   await throwIfNotOk(response, 'Failed to load git status');
   return response.json();
 };
@@ -24,7 +25,7 @@ export const commitChanges = async (
   title: string,
   message?: string,
 ): Promise<void> => {
-  const response = await fetch('/api/git/commit', {
+  const response = await fetch(apiUrl('/api/git/commit'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ files, title, message }),
@@ -33,14 +34,14 @@ export const commitChanges = async (
 };
 
 export const pushChanges = async (): Promise<void> => {
-  const response = await fetch('/api/git/push', { method: 'POST' });
+  const response = await fetch(apiUrl('/api/git/push'), { method: 'POST' });
   await throwIfNotOk(response, 'Push failed');
 };
 
 export const suggestCommitMessage = async (
   files: string[],
 ): Promise<{ title: string; message: string }> => {
-  const response = await fetch('/api/git/suggest-commit-message', {
+  const response = await fetch(apiUrl('/api/git/suggest-commit-message'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ files }),
@@ -59,7 +60,7 @@ export type SyncResult =
   | { ok: false; recovering: false; conflictPrompt: string; message: string };
 
 export const syncToMain = async (): Promise<SyncResult> => {
-  const response = await fetch('/api/git/sync', { method: 'POST' });
+  const response = await fetch(apiUrl('/api/git/sync'), { method: 'POST' });
   if (response.status === 202) {
     const data = await response.json();
     return data.conflictPrompt
@@ -72,7 +73,7 @@ export const syncToMain = async (): Promise<SyncResult> => {
 
 // Fast-forward the current branch from origin in place (no branch switch).
 export const pullFromOrigin = async (): Promise<void> => {
-  const response = await fetch('/api/git/pull', { method: 'POST' });
+  const response = await fetch(apiUrl('/api/git/pull'), { method: 'POST' });
   await throwIfNotOk(response, 'Pull failed');
 };
 

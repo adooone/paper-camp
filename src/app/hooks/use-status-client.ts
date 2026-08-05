@@ -2,6 +2,7 @@ import type { AgentTaskStatus } from '@/types/index';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { StatusBarCoreProps } from '../components/shell/status-bar-core';
 import { fetchAgentStatus } from '../services/agent-api';
+import { apiUrl } from '../services/api-base';
 import {
   commitChanges,
   fetchGitStatus,
@@ -65,7 +66,7 @@ export function useStatusClient(): StatusClientState {
   }, [loadGitStatus, loadAgentStatus]);
 
   useEffect(() => {
-    const source = new EventSource('/api/activity/stream');
+    const source = new EventSource(apiUrl('/api/activity/stream'));
     const timers: Record<string, ReturnType<typeof setTimeout> | undefined> = {};
     const schedule = (key: string, run: () => void, ms: number) => {
       if (timers[key]) clearTimeout(timers[key]);

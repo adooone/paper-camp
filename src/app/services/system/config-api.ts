@@ -1,8 +1,9 @@
 import type { AgentId, DefaultAgentsMap, IntegrationConfig, PaperCampConfig } from '@/types/index';
+import { apiUrl } from '../api-base';
 
 export const fetchConfig = async (): Promise<PaperCampConfig | null> => {
   try {
-    const response = await fetch('/api/config');
+    const response = await fetch(apiUrl('/api/config'));
     if (!response.ok) return null;
     return response.json();
   } catch {
