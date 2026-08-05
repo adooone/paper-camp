@@ -8,6 +8,7 @@ tags:
   - agents
   - tasks
 order: 1
+subject: Infrastructure
 ---
 
 Observed in the func-ui corpus (run-all on its IDEA-2, agent: opencode): the agent tried to read a sibling repo as an API reference (`~/dev/paper-ui/src/components/select/*`), the agent harness raised an `external_directory` permission ask, the headless runner auto-replied with a denial within milliseconds, and the run ended `outcome: "error"` — with no reason recorded in tasks.log and nothing actionable on the board. Diagnosis required digging through the agent's own log files.

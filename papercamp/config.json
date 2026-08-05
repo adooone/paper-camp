@@ -8,7 +8,7 @@
     "chore": 2,
     "docs": 4,
     "refactor": 5,
-    "idea": 130
+    "idea": 131
   },
   "defaultAgents": {
     "phase": {
@@ -38,6 +38,10 @@
     "Richer review loop",
     "Insight from the task log",
     "Mobile control desk",
+    "Multi-project",
+    "Run & monitor",
+    "In-app dev toolbar",
+    "The format as the product",
     "Infrastructure",
     "Planning surface",
     "App UI",

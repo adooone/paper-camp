@@ -7,6 +7,7 @@ created: 2026-08-04
 tags:
   - cli
   - settings
+subject: Packaging
 ---
 
 The Settings page writes `port` into `papercamp/config.json`, but the `dev` command resolved its port exclusively from the `-p` flag with a hardcoded `3333` default — the setting was written by the UI and consumed by nothing. (Second half of the confusion: a running server never re-reads its port, so even a wired-up setting needs a restart notice in the UI.)

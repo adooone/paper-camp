@@ -7,6 +7,7 @@ created: 2026-08-04
 tags:
   - multi-project
   - format
+subject: Multi-project
 ---
 
 `[[project:IDEA-N]]` as a resolvable reference between corpora. Multi-project owners already do this by hand: func-ui's corpus filed a paper-camp bug ([[IDEA-116]]) and the two reference each other only as prose. With the hub ([[IDEA-117]]) both corpora are open in one process, so resolution and backlinks are cheap; single-project mode renders them as plain text gracefully.

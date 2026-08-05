@@ -7,6 +7,7 @@ created: 2026-08-04
 tags:
   - status
   - planning-surface
+subject: Planning surface
 ---
 
 Generalizes [[IDEA-116]]. Status derivation currently assumes one team shape (branch → PR → merge). Solo-direct-on-main is equally legitimate — and hit in practice in the func-ui repo, where a finished idea could not reach review/done without hand-editing files.

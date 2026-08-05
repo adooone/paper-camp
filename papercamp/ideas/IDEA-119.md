@@ -7,6 +7,7 @@ created: 2026-08-04
 tags:
   - app
   - monitoring
+subject: Run & monitor
 ---
 
 A new desk section for the developer loop, declared per project in `papercamp/config.json`:

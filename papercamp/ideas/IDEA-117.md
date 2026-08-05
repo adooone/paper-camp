@@ -7,6 +7,7 @@ created: 2026-08-04
 tags:
   - multi-project
   - app
+subject: Multi-project
 ---
 
 Graduates Horizon 3's **Multi-project** bullet. One local hub app registers project folders (explicitly or by scanning for `papercamp/`), reads each corpus, and offers a project switcher — instead of N dev servers on N ports. The data stays per-repo in git: never centralize the corpus, centralize only the lens. Per-repo `paper-camp dev` remains for guests/CI; the hub is the daily driver.

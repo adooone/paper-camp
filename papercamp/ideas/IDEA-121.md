@@ -7,6 +7,7 @@ created: 2026-08-04
 tags:
   - format
   - cli
+subject: The format as the product
 ---
 
 A `paper-camp doctor` command that validates corpus structure: frontmatter schema, id/counter consistency with config, phases-list integrity, archive placement matching status, dangling `[[links]]`.
