@@ -30,6 +30,11 @@ const PERMISSION_VERBS: Record<string, string> = {
   webfetch: 'fetch',
 };
 
+// Only file-path tools give us a target we can actually call "outside
+// workspace" — a denied bash command or URL fetch isn't a workspace-boundary
+// question, so those get a generic denial reason instead.
+const EXTERNAL_DIRECTORY_TOOLS = new Set(['read', 'write', 'edit']);
+
 function permissionTarget(
   tool: string,
   input: Record<string, unknown> | undefined,
@@ -68,9 +73,12 @@ export function parseLine(line: string): ParsedAgentLine | null {
       if (tool && state?.status === 'error' && state.error === PERMISSION_DENIAL_ERROR) {
         const target = permissionTarget(tool, input);
         const verb = PERMISSION_VERBS[tool] ?? tool;
-        const reason = target
-          ? `${verb} outside workspace: ${target}`
-          : `${verb} denied by permission ask`;
+        const reason =
+          target && EXTERNAL_DIRECTORY_TOOLS.has(tool)
+            ? `${verb} outside workspace: ${target}`
+            : target
+              ? `${verb} denied by permission ask: ${target}`
+              : `${verb} denied by permission ask`;
         return { text: reason, error: true, reason };
       }
       const desc = input?.description;

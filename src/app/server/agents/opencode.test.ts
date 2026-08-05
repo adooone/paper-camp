@@ -23,7 +23,7 @@ describe('opencode parseLine', () => {
     });
   });
 
-  it('extracts a reason for a denied bash command', () => {
+  it('extracts a generic denial reason for a denied bash command', () => {
     const line = toolUseLine('bash', {
       status: 'error',
       input: { command: 'rm -rf /' },
@@ -31,9 +31,9 @@ describe('opencode parseLine', () => {
     });
 
     expect(parseLine(line)).toEqual({
-      text: 'run outside workspace: rm -rf /',
+      text: 'run denied by permission ask: rm -rf /',
       error: true,
-      reason: 'run outside workspace: rm -rf /',
+      reason: 'run denied by permission ask: rm -rf /',
     });
   });
 

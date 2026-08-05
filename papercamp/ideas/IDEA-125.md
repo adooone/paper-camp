@@ -34,7 +34,7 @@ Workaround meanwhile: pre-grant sibling-repo read access in the agent's permissi
       Reproduce the func-ui sibling-repo read and confirm the run parks, records the reason, and resumes on answer.
 
 ### Thread
-- [x] 2026-08-05 [log] [agent] Run-all parked on phase 6 ("Verify against an external-directory ask") — the agent needs a decision: ` marker (`extractBlocker`, agent.ts:49-53). Both `runQueue` (agent.ts:934-966, the `if (task.blocker) { ...; await escalateToLog(...); break; }` block) and the fix-pass loop treat a permission-denial reason identically to an agent-declared decision blocker — the run stops, escalates, and is marked as parked rather than errored outright.
+- [x] 2026-08-05 [log] [agent] Run-all parked on phase 6 ("Verify against an external-directory ask") — the agent needs a decision: `NEEDS_DECISION_MARKER` marker (`extractBlocker`, agent.ts:49-53). Both `runQueue` (agent.ts:934-966, the `if (task.blocker) { ...; await escalateToLog(...); break; }` block) and the fix-pass loop treat a permission-denial reason identically to an agent-declared decision blocker — the run stops, escalates, and is marked as parked rather than errored outright.
 - Test: `/home/croco/dev/paper-camp/src/app/server/agent.test.ts`, describe block `startRunAllPhases`, test `'parks on a permission-denial reason instead of auto-failing the run'` (introduced in `1ae0b82`, later augmented in `cf02fe9`/`ac6be65`) — uses the fake-agent script harness (see item 7 below), asserts `lines` contains `[blocked] phase 1 — agent needs a decision: ...` and NOT `[fail]`, and that `onPhaseCommit`/`onRunComplete` were never called.
 
 ### 4. Parked question on the idea (IDEA-118 "inbox")
