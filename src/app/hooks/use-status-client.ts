@@ -33,6 +33,7 @@ export function useStatusClient(): StatusClientState {
 
   const changedFilesRef = useRef<string[]>([]);
   const gitActionRef = useRef<GitAction | null>(null);
+  const commitInFlightRef = useRef(false);
 
   const loadGitStatus = useCallback(async () => {
     try {
@@ -71,7 +72,12 @@ export function useStatusClient(): StatusClientState {
       timers[key] = setTimeout(run, ms);
     };
     source.onmessage = (event) => {
-      const payload = JSON.parse(event.data) as { message?: string; type?: string };
+      let payload: { message?: string; type?: string };
+      try {
+        payload = JSON.parse(event.data);
+      } catch {
+        return;
+      }
       if (payload.type === 'status') {
         schedule('git', () => loadGitStatus(), 80);
         return;
@@ -133,7 +139,8 @@ export function useStatusClient(): StatusClientState {
 
   const onQuickCommit = useCallback(() => {
     const files = changedFilesRef.current;
-    if (commitInFlight || files.length === 0) return;
+    if (commitInFlightRef.current || files.length === 0) return;
+    commitInFlightRef.current = true;
     setCommitInFlight(true);
     (async () => {
       try {
@@ -142,10 +149,11 @@ export function useStatusClient(): StatusClientState {
         await loadGitStatus();
       } catch {
       } finally {
+        commitInFlightRef.current = false;
         setCommitInFlight(false);
       }
     })();
-  }, [commitInFlight, loadGitStatus]);
+  }, [loadGitStatus]);
 
   return {
     gitBranch,

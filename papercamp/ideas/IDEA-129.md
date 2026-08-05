@@ -43,7 +43,7 @@ Everything `status-bar.tsx` touches today, and where it lands once the core is e
 - `suggestCommitMessage`, `commitChanges` (`git-api`, via `quickCommit`).
 - `loadPlans`, `loadIdeas` (store actions, via `useBranchSync`'s post-sync/pull refresh — desk-side bookkeeping unrelated to the bar's own display).
 
-Net shape of the extracted core: a presentation component taking the eight data props above plus four action callbacks (`onSync`, `onPush`, `onPull`, `onQuickCommit`) and one navigation callback (`onOpenSetup`) — zero imports from `@/app/stores` or `@/app/hooks`.
+Net shape of the extracted core: a presentation component taking the thirteen data props above plus four action callbacks (`onSync`, `onPush`, `onPull`, `onQuickCommit`) and one navigation callback (`onOpenSetup`) — zero imports from `@/app/stores` or `@/app/hooks`.
 
 ### Phases
 - [x] Inventory the StatusBar's dependencies
@@ -61,3 +61,4 @@ Net shape of the extracted core: a presentation component taking the eight data 
 
 ### Log
 - 2026-08-05 — Decision: full dependency inventory done, see "StatusBar dependency inventory" above. paper-ui rendering components (`Button`, `Spinner`, `Stamp`, `Tooltip`, `getTextureStyles`) and the desk icon set move into the core; `useToast` and `useNavigate`/router stay out (no assumed provider/router in an embedded mount) and become prop callbacks. Every `useAppStore` selector and `useBranchSync` output becomes a typed prop — the core ends up with zero imports from `@/app/stores` or `@/app/hooks`.
+- 2026-08-05 — Completed: extracted `status-bar-core.tsx` as a store-free presentation component; built `use-status-client.ts`, a thin client polling/streaming the server API for the same props; re-mounted the desk `status-bar.tsx` on the core with the store wired in exactly as before; made the core shadow-DOM-safe (inline styles, no global CSS reliance) for the vite plugin boundary; covered the core with props-level tests in `status-bar-core.test.tsx`. `tsc` and lint are clean. Status stays `review` pending human merge.

@@ -62,7 +62,7 @@ describe('StatusBarCore', () => {
     expect(textOf(codes[0]?.props.children as ReactNode)).toBe('main');
     const secondary = collect(tree, (el) => el.type === 'span').map(textOf);
     expect(secondary).toContain('clean');
-    expect(secondary).not.toContain('↑');
+    expect(secondary.some((text) => text.startsWith('↑'))).toBe(false);
   });
 
   it('falls back to "no branch" when gitBranch is null', () => {
