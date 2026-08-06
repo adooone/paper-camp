@@ -42,7 +42,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     });
   }, []);
 
-  const openDesk = () => window.open(`${route}/`, '_blank', 'noopener,noreferrer');
+  const handleOpenDesk = () => window.open(`${route}/`, '_blank', 'noopener,noreferrer');
 
   const shipGlance = status.gitBranch
     ? `${status.gitBranch}${status.changedFileCount > 0 ? ` (${status.changedFileCount})` : ''}`
@@ -109,12 +109,12 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     {
       id: 'ship',
       glance: shipGlance,
-      panel: <ShipPanel {...status} {...checkStatus} onOpenSetup={openDesk} />,
+      panel: <ShipPanel {...status} {...checkStatus} onOpenSetup={handleOpenDesk} />,
     },
     {
       id: 'desk',
       glance: 'Desk',
-      panel: <ToolbarLink onClick={openDesk}>Open full desk →</ToolbarLink>,
+      panel: <ToolbarLink onClick={handleOpenDesk}>Open full desk →</ToolbarLink>,
     },
   ];
 

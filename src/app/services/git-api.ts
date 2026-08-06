@@ -14,7 +14,7 @@ export const fetchGitStatus = async (): Promise<GitStatusResponse> => {
 };
 
 export const fetchFileDiffs = async (): Promise<FileDiffEntry[]> => {
-  const response = await fetch('/api/git/diff');
+  const response = await fetch(apiUrl('/api/git/diff'));
   await throwIfNotOk(response, 'Failed to load diff');
   const data = await response.json();
   return data.files;

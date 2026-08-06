@@ -16,7 +16,7 @@ export const fetchAgentAuthStatus = async (): Promise<AgentAuthStatus | null> =>
 
 export const fetchConnections = async (): Promise<ConnectionResult[] | null> => {
   try {
-    const response = await fetch('/api/connections');
+    const response = await fetch(apiUrl('/api/connections'));
     if (!response.ok) return null;
     const body = (await response.json()) as { connections: ConnectionResult[] };
     return body.connections;
