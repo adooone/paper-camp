@@ -1,10 +1,14 @@
 import { useAppStore } from '@/app/stores/app-store';
 import type { ArchivableIdea } from '@/types/index';
-import { Button, Card, IconButton, useToast } from '@dendelion/paper-ui';
+import { Button, Card, useToast } from '@dendelion/paper-ui';
 import { useCallback, useState } from 'react';
 import { PlanIdStamp } from '../components';
 
-export const ArchiveSection = () => {
+interface ArchiveSectionProps {
+  onOpenIdea?: (title: string) => void;
+}
+
+export const ArchiveSection = ({ onOpenIdea }: ArchiveSectionProps) => {
   const archivableIdeas = useAppStore((s) => s.archivableIdeas);
   const archiveIdeas = useAppStore((s) => s.archiveIdeas);
   const [archivingId, setArchivingId] = useState<string | null>(null);
@@ -63,19 +67,35 @@ export const ArchiveSection = () => {
           <div key={idea.id} className="rounded-[10px]">
             <Card size="small" texture="canvas" className="plan-row-card">
               <div className="flex items-center gap-2">
-                <PlanIdStamp id={idea.id} />
-                <span className="flex-1 min-w-0 font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
-                  {idea.title}
-                </span>
-                <IconButton
-                  icon={<span>&rarr;</span>}
+                <div
+                  role={onOpenIdea ? 'button' : undefined}
+                  tabIndex={onOpenIdea ? 0 : undefined}
+                  onClick={onOpenIdea ? () => onOpenIdea(idea.title) : undefined}
+                  onKeyDown={
+                    onOpenIdea
+                      ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onOpenIdea(idea.title);
+                          }
+                        }
+                      : undefined
+                  }
+                  className={`flex items-center gap-2 flex-1 min-w-0 ${onOpenIdea ? 'cursor-pointer' : ''}`}
+                >
+                  <PlanIdStamp id={idea.id} />
+                  <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
+                    {idea.title}
+                  </span>
+                </div>
+                <Button
                   variant="ghost"
                   size="small"
-                  label={`Archive ${idea.title}`}
                   disabled={archivingId === idea.id || archivingAll}
                   onClick={() => handleArchiveOne(idea)}
-                  className="w-[28px] h-[28px]"
-                />
+                >
+                  {archivingId === idea.id ? 'Archiving…' : 'Archive'}
+                </Button>
               </div>
             </Card>
           </div>

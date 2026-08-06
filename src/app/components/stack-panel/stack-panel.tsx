@@ -55,6 +55,16 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     refreshRef.current.loadArchivableIdeas();
   }, []);
 
+  // Catches remote changes (a PR merged on GitHub) faster than the server's own poll.
+  useEffect(() => {
+    const handleFocus = () => {
+      refreshRef.current.loadPlans();
+      refreshRef.current.loadGitStatus();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   useEffect(() => {
     const es = new EventSource('/api/activity/stream');
     // One timer per event type: an agent streaming a line per log row must not keep

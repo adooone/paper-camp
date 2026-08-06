@@ -99,6 +99,16 @@ blocks, and duplicated git identity. Six settled changes:
     labeled ghost "Archive" button — an arrow never stands in for a
     destructive action.
 
+12. **A merged idea's detail offers the actions that fit it.** Today the
+    Actions column of a done/merged idea shows only "Mark dropped" —
+    the one action that makes no sense for shipped work — while Archive,
+    the action a merged idea actually wants, exists only on the list's
+    archive row. Add an "Archive" action to the detail column (same move
+    as the list button) and hide "Mark dropped" once an idea is done —
+    dropped is for abandoned work, not shipped work. Run actions return
+    on their own via [[IDEA-116]]'s reopen rule (the run-all gate follows
+    pending phases, not the pinned done status).
+
 Out of scope: the toolbar/Stack duplication of git *actions*
 (Sync/Push/Pull/Commit appearing in both) is [[IDEA-133]]'s call as the
 toolbar becomes the extended StatusBar; the unnamed-buttons accessibility
@@ -121,10 +131,12 @@ sweep is its own future pass.
       Status rows → `ListItem` (active, dot leading, count trailing); tag chips → small ghost `Button` with `isActive`.
 - [x] Unwrap the plan detail sidebar onto the desk background
       Drop the speckle Card around the field column (Show/Status/Subject/Order/Agent/Tags/Actions); same 32px grid rhythm as the filter column.
-- [ ] Surface remote merges without the Refresh button
+- [x] Surface remote merges without the Refresh button
       Reload plans + git status on window focus; poll open-PR state for review-status plans (~60s) server-side and push the existing SSE tick on change.
-- [ ] Make archive rows open the idea detail
+- [x] Make archive rows open the idea detail
       Stamp + title navigate like worklist rows; replace the unlabeled "→" with a small labeled ghost "Archive" button.
+- [x] Fit the detail Actions column to done ideas
+      Add an "Archive" action (same move as the list button); hide "Mark dropped" for done/merged ideas.
 
 ### Thread
 - [x] 2026-08-06 [decision] Open questions moves off the Plans page entirely — no accordion, no tabs. Its destination is [[IDEA-118]]'s inbox route (nav entry + count badge); the row-inbox rendering is logged there as that view's design. This idea only removes the block.
@@ -132,3 +144,4 @@ sweep is its own future pass.
 - [x] 2026-08-06 [decision] The plan detail field sidebar unwraps too — both sidebars share the frameless desk-background treatment and grid rhythm.
 - [x] 2026-08-06 [decision] Refresh's removal regressed remote-merge visibility (PR badges only refresh on local events). The fix is focus-refetch plus a server-side open-PR poll feeding the SSE stream — liveness stays automatic, the button stays gone.
 - [x] 2026-08-06 [decision] Archive rows become navigable (stamp + title open the detail) and the "→" archive trigger becomes a labeled ghost Archive button — merged ideas must stay reachable from the list.
+- [x] 2026-08-06 [decision] Done ideas get Archive in the detail Actions column and lose "Mark dropped" — dropping is for abandoned work. Run-all's return is [[IDEA-116]]'s reopen rule, not a new gate here.

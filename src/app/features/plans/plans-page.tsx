@@ -166,7 +166,7 @@ export const PlansPage = () => {
             />
           )}
 
-          <ArchiveSection />
+          <ArchiveSection onOpenIdea={handleOpenIdea} />
 
           <SuggestionsSection
             suggestions={suggestions}

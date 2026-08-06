@@ -2,7 +2,7 @@ import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlanTitle, useSubjectVocabulary } from '@/app/hooks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { AGENT_IDS, AGENT_LABELS, type AgentId } from '@/types/index';
-import { Input, ListItem, Select, Stamp } from '@dendelion/paper-ui';
+import { Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
 import { FixReviewButton } from '../actions';
@@ -22,9 +22,12 @@ export const PlanActionsColumn = () => {
   const { subjects, available: subjectsAvailable } = useSubjectVocabulary();
   const detailView = useAppStore((s) => s.detailView);
   const setDetailView = useAppStore((s) => s.setDetailView);
+  const archiveIdeas = useAppStore((s) => s.archiveIdeas);
+  const { toast } = useToast();
 
   const plan = activePlanTitle ? plans?.entries.find((p) => p.title === activePlanTitle) : null;
   const [orderInput, setOrderInput] = useState('');
+  const [archiving, setArchiving] = useState(false);
   useEffect(() => {
     setOrderInput(plan?.order !== undefined ? String(plan?.order) : '');
   }, [plan?.order]);
@@ -33,6 +36,7 @@ export const PlanActionsColumn = () => {
   const inProgress = plan.status === 'in-progress';
   const underReview = plan.status === 'review';
   const dropped = plan.status === 'dropped';
+  const done = plan.status === 'done';
   const hasUnchecked = plan.phases.some((p) => !p.done);
   const canRunAll = (plan.status === 'planned' || inProgress) && hasUnchecked;
   const canFixReview = Boolean(
@@ -46,6 +50,18 @@ export const PlanActionsColumn = () => {
       : undefined;
 
   const patch = (updates: Parameters<typeof patchByTitle>[1]) => patchByTitle(plan.title, updates);
+
+  const handleArchive = async () => {
+    if (!plan.id) return;
+    setArchiving(true);
+    try {
+      await archiveIdeas([plan.id]);
+    } catch (err) {
+      toast({ title: 'Archive failed', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setArchiving(false);
+    }
+  };
 
   // Order is an invariant (contiguous 1..N over planned/in-progress/review):
   // the field only shows for those statuses and an empty value reverts.
@@ -183,21 +199,35 @@ export const PlanActionsColumn = () => {
             </ListItem>
           )}
 
-          <ListItem
-            size="small"
-            icon={
-              <span
-                className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
-              >
-                {dropped ? '↺' : '⊘'}
-              </span>
-            }
-            onClick={() => patch({ status: dropped ? null : 'dropped' })}
-            disabled={updating}
-            className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
-          >
-            {dropped ? 'Reopen plan' : 'Mark dropped'}
-          </ListItem>
+          {done && (
+            <ListItem
+              size="small"
+              icon={<span className="text-ink-300">▣</span>}
+              onClick={handleArchive}
+              disabled={archiving || !plan.id}
+              className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
+            >
+              {archiving ? 'Archiving…' : 'Archive'}
+            </ListItem>
+          )}
+
+          {!done && (
+            <ListItem
+              size="small"
+              icon={
+                <span
+                  className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
+                >
+                  {dropped ? '↺' : '⊘'}
+                </span>
+              }
+              onClick={() => patch({ status: dropped ? null : 'dropped' })}
+              disabled={updating}
+              className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
+            >
+              {dropped ? 'Reopen plan' : 'Mark dropped'}
+            </ListItem>
+          )}
         </div>
       </div>
     </div>
