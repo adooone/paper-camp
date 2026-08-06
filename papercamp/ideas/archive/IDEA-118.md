@@ -10,7 +10,6 @@ tags:
   - agents
   - app
 subject: Multi-project
-order: 2
 ---
 
 Agents park on thread questions ("open the PR or will you handle release?" — IDEA-115 did exactly this) and those threads are only discovered by visiting the right idea at the right time. A dedicated inbox view lists every unresolved agent question / decision request across the corpus, ordered by age, each resolvable inline.

@@ -39,6 +39,14 @@ export const PlanActionsColumn = () => {
   const done = plan.status === 'done';
   const hasUnchecked = plan.phases.some((p) => !p.done);
   const canRunAll = (plan.status === 'planned' || inProgress) && hasUnchecked;
+  const canMarkDone =
+    !plan.pr &&
+    !done &&
+    !dropped &&
+    !underReview &&
+    plan.phases.length > 0 &&
+    !hasUnchecked &&
+    (plan.fixes ?? []).every((f) => f.done);
   const canFixReview = Boolean(
     plan.pr &&
       (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
@@ -208,6 +216,18 @@ export const PlanActionsColumn = () => {
               className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
             >
               {archiving ? 'Archiving…' : 'Archive'}
+            </ListItem>
+          )}
+
+          {canMarkDone && (
+            <ListItem
+              size="small"
+              icon={<span className="text-watercolor-green-dark">✓</span>}
+              onClick={handleArchive}
+              disabled={archiving || !plan.id}
+              className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
+            >
+              {archiving ? 'Marking done…' : 'Mark done'}
             </ListItem>
           )}
 

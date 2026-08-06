@@ -2,8 +2,9 @@
 id: IDEA-133
 title: Toolbar is an extended StatusBar — top, full-width, always visible, in layout
 type: feat
-status: review
+status: done
 created: 2026-08-05
+updated: 2026-08-06
 tags:
   - integration
   - app
@@ -53,10 +54,6 @@ project ever needs it.
 Depends on [[IDEA-132]] landing first — layout and actions are unverifiable
 while the embed's data layer can't reach the camp server.
 
-### Thread
-- [x] 2026-08-05 [decision] Toolbar is not a copy of the StatusBar but an extended version carrying the actions needed in the real app; no pill/idle state — always visible; docked top, full width, in layout above the app UI rather than overlaying it.
-- [ ] 2026-08-05 [question] [agent] The extension action set is drafted from IDEA-128's write-safe verbs (quick capture with route context, focus + run/stop, scout reply + questions badge, desk link) — confirm or trim/extend the list before the plan is drafted.
-
 ### Phases
 - [x] Dock the bar top, full-width, in layout
       Replace the fixed bottom shell with a first-in-flow block (or top-sticky with body offset) so the host UI starts below it, nothing covered.
@@ -66,3 +63,8 @@ while the embed's data layer can't reach the camp server.
 - [x] Add the extension actions: Quick capture, Focus, Scout, Desk
       Panels open downward over the app; hold the desk-only write-safety boundary (no archive, plan edits, settings).
 - [x] Verify layout and actions end-to-end against the camp server
+
+### Thread
+- [x] 2026-08-05 [decision] Toolbar is not a copy of the StatusBar but an extended version carrying the actions needed in the real app; no pill/idle state — always visible; docked top, full width, in layout above the app UI rather than overlaying it.
+- [x] 2026-08-05 [question] [agent] The extension action set is drafted from IDEA-128's write-safe verbs (quick capture with route context, focus + run/stop, scout reply + questions badge, desk link) — confirm or trim/extend the list before the plan is drafted. → Superseded by owner review feedback: single bar with an overflow dropdown, content-bearing actions move to a Stack-style chat-first sidebar — carried forward in [[IDEA-138]].
+- [x] 2026-08-06 [review] Owner review of the shipped bar: overall feel approved (top, full-width, in layout, always visible); UI shape rejected — one bar instead of two, no popup panels, Stack-style chat sidebar instead → [[IDEA-138]]. Desk under the mount 404s and the `/__camp` route pattern is replaced by `/paper-camp` → [[IDEA-139]].
