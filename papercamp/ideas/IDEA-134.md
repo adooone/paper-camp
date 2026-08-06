@@ -81,6 +81,24 @@ blocks, and duplicated git identity. Six settled changes:
    fields directly on the desk background, same 32px grid rhythm, same
    paper-ui controls — the two sidebars read as one system.
 
+10. **Remote merge state arrives without a button.** Removing Refresh
+    (point 6) broke the one flow it silently served: a PR merged on
+    GitHub changes nothing on disk, so no SSE tick fires and the row's
+    "Merged in #N" badge stays stale until unrelated local activity.
+    Restore liveness the desk way, not the button way: reload plans +
+    git status when the window regains focus, and while any review-status
+    plan has an open PR, the server polls its state (~60s) and pushes the
+    existing SSE tick on change.
+
+11. **Merged ideas stay openable.** A merged idea's derived done status
+    hides it from the default-filtered worklist, leaving its "Ready to
+    archive" row as the only surface — and that row is a dead end: the
+    title is plain text and its sole control, an unlabeled "→", archives
+    immediately instead of opening. Make the stamp + title navigate to
+    the detail like every worklist row, and replace "→" with a small
+    labeled ghost "Archive" button — an arrow never stands in for a
+    destructive action.
+
 Out of scope: the toolbar/Stack duplication of git *actions*
 (Sync/Push/Pull/Commit appearing in both) is [[IDEA-133]]'s call as the
 toolbar becomes the extended StatusBar; the unnamed-buttons accessibility
@@ -103,8 +121,14 @@ sweep is its own future pass.
       Status rows → `ListItem` (active, dot leading, count trailing); tag chips → small ghost `Button` with `isActive`.
 - [x] Unwrap the plan detail sidebar onto the desk background
       Drop the speckle Card around the field column (Show/Status/Subject/Order/Agent/Tags/Actions); same 32px grid rhythm as the filter column.
+- [ ] Surface remote merges without the Refresh button
+      Reload plans + git status on window focus; poll open-PR state for review-status plans (~60s) server-side and push the existing SSE tick on change.
+- [ ] Make archive rows open the idea detail
+      Stamp + title navigate like worklist rows; replace the unlabeled "→" with a small labeled ghost "Archive" button.
 
 ### Thread
 - [x] 2026-08-06 [decision] Open questions moves off the Plans page entirely — no accordion, no tabs. Its destination is [[IDEA-118]]'s inbox route (nav entry + count badge); the row-inbox rendering is logged there as that view's design. This idea only removes the block.
 - [x] 2026-08-06 [decision] Review of the unwrapped column added two fixes: sidebar rhythm snaps to the 32px desk grid, and the filter controls drop raw-button chrome for paper-ui — ListItem for status rows, small ghost Button for tag chips.
 - [x] 2026-08-06 [decision] The plan detail field sidebar unwraps too — both sidebars share the frameless desk-background treatment and grid rhythm.
+- [x] 2026-08-06 [decision] Refresh's removal regressed remote-merge visibility (PR badges only refresh on local events). The fix is focus-refetch plus a server-side open-PR poll feeding the SSE stream — liveness stays automatic, the button stays gone.
+- [x] 2026-08-06 [decision] Archive rows become navigable (stamp + title open the detail) and the "→" archive trigger becomes a labeled ghost Archive button — merged ideas must stay reachable from the list.
