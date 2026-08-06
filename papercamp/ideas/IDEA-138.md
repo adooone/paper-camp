@@ -40,3 +40,17 @@ Supersedes the popup/panel interaction model from [[IDEA-133]] (bar position,
 layout, and always-visible behaviour stay). The desk-only write-safety
 boundary from [[IDEA-128]] still holds — the sidebar's chat writes through
 guarded corpus paths, no structural operations from the embed.
+
+### Phases
+- [ ] Collapse the toolbar into one bar with an overflow dropdown
+      Inline the actions that earn a permanent spot; move the rest into a single bar-mounted overflow menu, dropping the second action row.
+- [ ] Replace the downward popups with a Stack-styled slide-in side panel
+      Reuse the desk Stack panel's chalkboard surface and card-section layout for the space-needing actions.
+- [ ] Make the chat thread the sidebar's primary surface
+      Give most of the panel to the Scout chat thread, with the surrounding cards sized around it.
+- [ ] Add the glance/deep-link cards around the thread
+      Branch/checks, focus, open-desk and other deep links as card sections beside the chat.
+- [ ] Keep capture as a card until capture-by-chat lands
+      Hold a dedicated capture card that dissolves once chat capture works.
+- [ ] Enforce the desk-only write-safety boundary and run the checks
+      Confirm chat writes route through guarded corpus paths, then type-check and test.
