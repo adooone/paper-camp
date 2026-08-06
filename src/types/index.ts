@@ -441,8 +441,8 @@ export const DEFAULT_AGENTS: DefaultAgentsMap = {
   feedback: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
 };
 
-/** Toolbar segments, left to right (IDEA-128); trimmed per project via `IntegrationConfig.toolbar.segments`. */
-export const TOOLBAR_SEGMENT_IDS = ['focus', 'scout', 'runs', 'ship', 'desk'] as const;
+/** Toolbar segments, left to right (IDEA-128/IDEA-133); trimmed per project via `IntegrationConfig.toolbar.segments`. */
+export const TOOLBAR_SEGMENT_IDS = ['capture', 'focus', 'scout', 'desk'] as const;
 
 export type ToolbarSegmentId = (typeof TOOLBAR_SEGMENT_IDS)[number];
 

@@ -1,4 +1,4 @@
-import { useCheckStatusClient } from '@/app/hooks/use-check-status-client';
+import { StatusBarCore } from '@/app/components/shell/status-bar-core';
 import { useFocusClient } from '@/app/hooks/use-focus-client';
 import { useRunsClient } from '@/app/hooks/use-runs-client';
 import { useScoutClient } from '@/app/hooks/use-scout-client';
@@ -6,18 +6,17 @@ import { useStatusClient } from '@/app/hooks/use-status-client';
 import { fetchConfig } from '@/app/services/system';
 import type { PlanEntry, ToolbarSegmentId } from '@/types/index';
 import { useEffect, useState } from 'react';
+import { CapturePanel } from './capture-panel';
 import { FocusPanel } from './focus-panel';
-import { RunsPanel } from './runs-panel';
 import { ScoutPanel } from './scout-panel';
-import { ShipPanel } from './ship-panel';
 import { ToolbarLink } from './toolbar-link';
 import { type ToolbarSegment, ToolbarShell } from './toolbar-shell';
 import { useToolbarShell } from './use-toolbar-shell';
 
 const DEFAULT_ROUTE = '/__camp';
 
-// v1/v2/v3/Scout have all landed — Focus, Scout, Desk, Ship, Runs.
-const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['focus', 'scout', 'runs', 'ship', 'desk'];
+// Capture, Focus, Scout, Desk — the extension set that carries the strip (IDEA-129/133).
+const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['capture', 'focus', 'scout', 'desk'];
 
 export interface ToolbarProps {
   route?: string;
@@ -25,7 +24,6 @@ export interface ToolbarProps {
 
 export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
   const status = useStatusClient();
-  const checkStatus = useCheckStatusClient();
   const runs = useRunsClient();
   const focusPlan = useFocusClient();
   const scout = useScoutClient();
@@ -44,10 +42,6 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
 
   const handleOpenDesk = () => window.open(`${route}/`, '_blank', 'noopener,noreferrer');
 
-  const shipGlance = status.gitBranch
-    ? `${status.gitBranch}${status.changedFileCount > 0 ? ` (${status.changedFileCount})` : ''}`
-    : 'ship';
-
   const openIdea = (plan: PlanEntry) => {
     window.open(
       `${route}/plans/${encodeURIComponent(plan.title)}`,
@@ -63,8 +57,6 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
   const nextPhaseIndex = focusPlan?.phases.findIndex((phase) => !phase.done) ?? -1;
   const canRunNextPhase = Boolean(focusPlan?.id) && nextPhaseIndex >= 0;
 
-  const runsGlance = runs.activeTask ? `${runs.activeTask.taskKind}…` : 'runs';
-
   const scoutGlance = scout.openQuestionCount > 0 ? `Scout · ${scout.openQuestionCount}` : 'Scout';
 
   const onRunNextPhase = () => {
@@ -73,10 +65,24 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
 
   const allSegments: ToolbarSegment[] = [
     {
+      id: 'capture',
+      glance: 'Capture',
+      panel: <CapturePanel />,
+    },
+    {
       id: 'focus',
       glance: focusGlance,
       panel: focusPlan ? (
-        <FocusPanel plan={focusPlan} onOpenIdea={() => openIdea(focusPlan)} />
+        <FocusPanel
+          plan={focusPlan}
+          onOpenIdea={() => openIdea(focusPlan)}
+          activeTask={runs.activeTask}
+          stopping={runs.stopping}
+          launching={runs.launching}
+          canRunNextPhase={canRunNextPhase}
+          onStop={runs.onStop}
+          onRunNextPhase={onRunNextPhase}
+        />
       ) : undefined,
     },
     {
@@ -92,26 +98,6 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
       ),
     },
     {
-      id: 'runs',
-      glance: runsGlance,
-      panel: (
-        <RunsPanel
-          activeTask={runs.activeTask}
-          recentTasks={runs.recentTasks}
-          stopping={runs.stopping}
-          launching={runs.launching}
-          canRunNextPhase={canRunNextPhase}
-          onStop={runs.onStop}
-          onRunNextPhase={onRunNextPhase}
-        />
-      ),
-    },
-    {
-      id: 'ship',
-      glance: shipGlance,
-      panel: <ShipPanel {...status} {...checkStatus} onOpenSetup={handleOpenDesk} />,
-    },
-    {
       id: 'desk',
       glance: 'Desk',
       panel: <ToolbarLink onClick={handleOpenDesk}>Open full desk →</ToolbarLink>,
@@ -124,10 +110,9 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
 
   return (
     <ToolbarShell
+      statusBar={<StatusBarCore {...status} onOpenSetup={handleOpenDesk} />}
       segments={segments}
-      expanded={shell.expanded}
       activePanelId={shell.activePanelId}
-      onExpand={shell.onExpand}
       onSelectSegment={shell.onSelectSegment}
     />
   );
