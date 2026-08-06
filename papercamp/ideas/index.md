@@ -116,7 +116,7 @@
 | IDEA-112 | Move all styling to Tailwind | refactor | done | app, ui, refactor |
 | IDEA-113 | Feedback as a single chat thread | feat | done | app, ui, agent, plans |
 | IDEA-115 | npm package is broken on Linux — bundled node-pty can't load | fix | done | cli, packaging |
-| IDEA-116 | Direct-to-main work can never reach review/done in derived status | feat | planned | app, status |
+| IDEA-116 | Direct-to-main work can never reach review/done in derived status | feat | review | app, status |
 | IDEA-117 | Multi-project hub — one desk, many corpora | feat | idea | multi-project, app |
 | IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | done | multi-project, agents, app |
 | IDEA-119 | Run & monitor — services, checks, and the release train on the desk | feat | idea | app, monitoring |

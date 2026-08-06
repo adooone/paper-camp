@@ -1,7 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ProvenanceTrail } from '../types/index';
-import { COMMIT_SHA_RE, resolveDefaultBranch, resolveIdFromCommitMessage, runGit } from './git-log';
+import {
+  COMMIT_SHA_RE,
+  resolveDefaultBranch,
+  resolveIdFromCommitMessage,
+  resolveIdsWithMainActivity,
+  runGit,
+} from './git-log';
 import { resolvePrsByEntity } from './git-pr/pr-lookup';
 import { parseTaskLog } from './parse/parser';
 import { readEntities } from './readers';
@@ -110,12 +116,13 @@ export async function resolveIdeasForRelease(
 }
 
 export async function resolveEntityTrail(root: string, id: string): Promise<ProvenanceTrail> {
-  const [{ entries }, prs, taskLogRaw, changelogRaw, commits] = await Promise.all([
+  const [{ entries }, prs, taskLogRaw, changelogRaw, commits, mainActivityIds] = await Promise.all([
     readEntities(join(root, 'papercamp', 'ideas')),
     resolvePrsByEntity(root),
     readFileMaybe(join(root, 'papercamp', 'tasks.log')),
     readFileMaybe(join(root, 'CHANGELOG.md')),
     resolveCommitsForEntity(root, id),
+    resolveIdsWithMainActivity(root),
   ]);
 
   const entry = entries.find((e) => e.id === id);
@@ -130,7 +137,7 @@ export async function resolveEntityTrail(root: string, id: string): Promise<Prov
           reached: true,
           data: {
             title: entry.title,
-            status: deriveStatus(entry, pr, prs !== undefined),
+            status: deriveStatus(entry, pr, prs !== undefined, mainActivityIds.has(id)),
             type: entry.type,
           },
         }
