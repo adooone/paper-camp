@@ -11,6 +11,7 @@ import { FocusPanel } from './focus-panel';
 import { ScoutPanel } from './scout-panel';
 import { ToolbarLink } from './toolbar-link';
 import { type ToolbarSegment, ToolbarShell } from './toolbar-shell';
+import { ToolbarPanelCard } from './toolbar-side-panel';
 import { useToolbarShell } from './use-toolbar-shell';
 
 const DEFAULT_ROUTE = '/__camp';
@@ -102,7 +103,11 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     {
       id: 'desk',
       glance: 'Desk',
-      panel: <ToolbarLink onClick={handleOpenDesk}>Open full desk →</ToolbarLink>,
+      panel: (
+        <ToolbarPanelCard>
+          <ToolbarLink onClick={handleOpenDesk}>Open full desk →</ToolbarLink>
+        </ToolbarPanelCard>
+      ),
     },
   ];
 

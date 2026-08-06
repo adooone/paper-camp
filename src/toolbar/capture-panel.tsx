@@ -2,6 +2,7 @@ import { createIdea } from '@/app/services/content';
 import { Button, Spinner, Stamp, Textarea } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
 import { useState } from 'react';
+import { ToolbarPanelCard } from './toolbar-side-panel';
 
 const titleStyle: CSSProperties = { fontWeight: 600, marginBottom: '0.5rem' };
 const footerRowStyle: CSSProperties = {
@@ -46,7 +47,7 @@ export const CapturePanel = () => {
   };
 
   return (
-    <div>
+    <ToolbarPanelCard>
       <div style={titleStyle}>Quick capture</div>
       <Textarea
         value={input}
@@ -78,6 +79,6 @@ export const CapturePanel = () => {
           </Stamp>
         </div>
       )}
-    </div>
+    </ToolbarPanelCard>
   );
 };
