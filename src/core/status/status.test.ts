@@ -64,6 +64,12 @@ describe('deriveStatus', () => {
     expect(deriveStatus({ phases: [phase(true)], status: 'done' }, undefined, true)).toBe('done');
   });
 
+  it('trusts a stored review when resolved but no branch or PR exists (direct-to-main)', () => {
+    expect(deriveStatus({ phases: [phase(true)], status: 'review' }, undefined, true)).toBe(
+      'review',
+    );
+  });
+
   it('passes a stored dropped through, even over a merged PR', () => {
     expect(deriveStatus({ phases: [], status: 'dropped' }, undefined, true)).toBe('dropped');
     expect(deriveStatus({ phases: [phase(true)], status: 'dropped' }, pr('merged'), true)).toBe(

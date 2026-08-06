@@ -36,8 +36,9 @@ export function deriveStatus(
     // GitHub unreachable — trust the stored override, else a phases-only guess.
     return entity.status ?? (entity.phases.length > 0 ? 'planned' : 'idea');
   }
-  // Confirmed no PR, but a stored terminal `done` (e.g. an unmatchable legacy PR) still wins.
-  if (entity.status === 'done') return 'done';
+  // Confirmed no PR, but a stored `review`/`done` (e.g. direct-to-main work, or an
+  // unmatchable legacy PR) still wins over a planned/in-progress guess.
+  if (entity.status === 'review' || entity.status === 'done') return entity.status;
   return entity.phases.length > 0 ? 'planned' : 'idea';
 }
 
