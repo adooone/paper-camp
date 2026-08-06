@@ -2,7 +2,7 @@ import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlanTitle, useSubjectVocabulary } from '@/app/hooks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { AGENT_IDS, AGENT_LABELS, type AgentId } from '@/types/index';
-import { Card, Input, ListItem, Select, Stamp } from '@dendelion/paper-ui';
+import { Input, ListItem, Select, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
 import { FixReviewButton } from '../actions';
@@ -11,7 +11,7 @@ import { effectiveStatus } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
 
-const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none text-ink-300 mb-2';
+const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300 mb-2';
 
 export const PlanActionsColumn = () => {
   const plans = useAppStore((s) => s.plans);
@@ -63,148 +63,143 @@ export const PlanActionsColumn = () => {
   };
 
   return (
-    // Pull up by the SidebarShell's top padding to line up with the Page.
-    <div className="-mt-5">
-      <Card surface="paper" texture="speckle" size="small">
-        <div className="flex flex-col gap-5">
-          <h2 className="m-0 font-display-luminari text-base text-ink-900">Plan</h2>
+    <div className="flex flex-col gap-8 -mt-5">
+      <div>
+        <div className={sectionLabelClass}>Show</div>
+        <div className="flex flex-col gap-1">
+          <ListItem
+            size="small"
+            active={detailView === 'details'}
+            onClick={() => setDetailView('details')}
+            className="text-xs leading-4 py-2"
+          >
+            Details
+          </ListItem>
+          <ListItem
+            size="small"
+            active={detailView === 'feedback'}
+            onClick={() => setDetailView('feedback')}
+            className="text-xs leading-4 py-2"
+          >
+            Feedback
+          </ListItem>
+        </div>
+      </div>
 
-          <div>
-            <div className={sectionLabelClass}>Show</div>
-            <div className="flex flex-col gap-1">
-              <ListItem
-                size="small"
-                active={detailView === 'details'}
-                onClick={() => setDetailView('details')}
-              >
-                Details
-              </ListItem>
-              <ListItem
-                size="small"
-                active={detailView === 'feedback'}
-                onClick={() => setDetailView('feedback')}
-              >
-                Feedback
-              </ListItem>
-            </div>
-          </div>
+      <div>
+        <div className={sectionLabelClass}>Status</div>
+        {/* Read-only: the dropped/reopen override lives in Actions below since
+            abandonment leaves no branch or PR to derive status from. */}
+        <Stamp
+          size="small"
+          fillColor={STATUS_STAMP[displayStatus].fill}
+          textColor={STATUS_STAMP[displayStatus].text}
+        >
+          {STATUS_LABEL[displayStatus]}
+        </Stamp>
+      </div>
 
-          <div>
-            <div className={sectionLabelClass}>Status</div>
-            {/* Read-only: the dropped/reopen override lives in Actions below since
-                abandonment leaves no branch or PR to derive status from. */}
-            <Stamp
-              size="small"
-              fillColor={STATUS_STAMP[displayStatus].fill}
-              textColor={STATUS_STAMP[displayStatus].text}
-            >
-              {STATUS_LABEL[displayStatus]}
-            </Stamp>
-          </div>
+      <div>
+        <div className={sectionLabelClass}>Subject</div>
+        <Select
+          size="small"
+          value={plan.subject ?? NO_SUBJECT}
+          onChange={(value) => patch({ subject: value === NO_SUBJECT ? null : value })}
+          disabled={updating || !subjectsAvailable}
+          options={[
+            { value: NO_SUBJECT, label: 'No subject' },
+            ...(orphanSubject
+              ? [{ value: orphanSubject, label: `${orphanSubject} (orphan)` }]
+              : []),
+            ...(!subjectsAvailable && plan.subject && !orphanSubject
+              ? [{ value: plan.subject, label: plan.subject }]
+              : []),
+            ...subjects.map((s) => ({ value: s, label: s })),
+          ]}
+        />
+      </div>
 
-          <div>
-            <div className={sectionLabelClass}>Subject</div>
-            <Select
-              size="small"
-              value={plan.subject ?? NO_SUBJECT}
-              onChange={(value) => patch({ subject: value === NO_SUBJECT ? null : value })}
-              disabled={updating || !subjectsAvailable}
-              options={[
-                { value: NO_SUBJECT, label: 'No subject' },
-                ...(orphanSubject
-                  ? [{ value: orphanSubject, label: `${orphanSubject} (orphan)` }]
-                  : []),
-                ...(!subjectsAvailable && plan.subject && !orphanSubject
-                  ? [{ value: plan.subject, label: plan.subject }]
-                  : []),
-                ...subjects.map((s) => ({ value: s, label: s })),
-              ]}
-            />
-          </div>
+      {hasRunOrder && (
+        <div>
+          <div className={sectionLabelClass}>Order</div>
+          <Input
+            type="number"
+            size="small"
+            aria-label="Run order"
+            min={1}
+            value={orderInput}
+            onChange={(e) => setOrderInput(e.target.value)}
+            onBlur={handleOrderBlur}
+            disabled={updating}
+          />
+        </div>
+      )}
 
-          {hasRunOrder && (
-            <div>
-              <div className={sectionLabelClass}>Order</div>
-              <Input
-                type="number"
-                size="small"
-                aria-label="Run order"
-                min={1}
-                value={orderInput}
-                onChange={(e) => setOrderInput(e.target.value)}
-                onBlur={handleOrderBlur}
-                disabled={updating}
-              />
-            </div>
-          )}
+      <div>
+        <div className={sectionLabelClass}>Agent</div>
+        <Select
+          size="small"
+          value={plan.agent ?? ''}
+          onChange={(value) => patch({ agent: value ? (value as AgentId) : null })}
+          disabled={updating}
+          options={[
+            { value: '', label: 'Project default agent' },
+            ...AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] })),
+          ]}
+        />
+      </div>
 
-          <div>
-            <div className={sectionLabelClass}>Agent</div>
-            <Select
-              size="small"
-              value={plan.agent ?? ''}
-              onChange={(value) => patch({ agent: value ? (value as AgentId) : null })}
-              disabled={updating}
-              options={[
-                { value: '', label: 'Project default agent' },
-                ...AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] })),
-              ]}
-            />
-          </div>
-
-          {plan.tags.length > 0 && (
-            <div>
-              <div className={sectionLabelClass}>Tags</div>
-              <div className="flex items-center gap-1 flex-wrap">
-                {plan.tags.map((tag) => (
-                  <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
-                    {tag}
-                  </Stamp>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div>
-            <div className={sectionLabelClass}>Actions</div>
-            <div className="flex flex-col gap-1">
-              {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
-              {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
-
-              {underReview && (
-                // Offline fallback: sticks only once the live PR lookup can't resolve
-                // a merge either way (done normally derives from the PR merging).
-                <ListItem
-                  size="small"
-                  // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
-                  icon={<span className="text-watercolor-green-dark">✓</span>}
-                  onClick={() => patch({ status: 'done' })}
-                  disabled={updating}
-                  className={updating ? 'opacity-50' : undefined}
-                >
-                  Approve &amp; close
-                </ListItem>
-              )}
-
-              <ListItem
-                size="small"
-                icon={
-                  <span
-                    className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
-                  >
-                    {dropped ? '↺' : '⊘'}
-                  </span>
-                }
-                onClick={() => patch({ status: dropped ? null : 'dropped' })}
-                disabled={updating}
-                className={updating ? 'opacity-50' : undefined}
-              >
-                {dropped ? 'Reopen plan' : 'Mark dropped'}
-              </ListItem>
-            </div>
+      {plan.tags.length > 0 && (
+        <div>
+          <div className={sectionLabelClass}>Tags</div>
+          <div className="flex items-center gap-1 flex-wrap">
+            {plan.tags.map((tag) => (
+              <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
+                {tag}
+              </Stamp>
+            ))}
           </div>
         </div>
-      </Card>
+      )}
+
+      <div>
+        <div className={sectionLabelClass}>Actions</div>
+        <div className="flex flex-col gap-1">
+          {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
+          {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
+
+          {underReview && (
+            // Offline fallback: sticks only once the live PR lookup can't resolve
+            // a merge either way (done normally derives from the PR merging).
+            <ListItem
+              size="small"
+              // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
+              icon={<span className="text-watercolor-green-dark">✓</span>}
+              onClick={() => patch({ status: 'done' })}
+              disabled={updating}
+              className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
+            >
+              Approve &amp; close
+            </ListItem>
+          )}
+
+          <ListItem
+            size="small"
+            icon={
+              <span
+                className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
+              >
+                {dropped ? '↺' : '⊘'}
+              </span>
+            }
+            onClick={() => patch({ status: dropped ? null : 'dropped' })}
+            disabled={updating}
+            className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
+          >
+            {dropped ? 'Reopen plan' : 'Mark dropped'}
+          </ListItem>
+        </div>
+      </div>
     </div>
   );
 };

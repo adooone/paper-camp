@@ -253,16 +253,56 @@ describe('selectWorklistRows', () => {
 });
 
 describe('groupRowsBySubject', () => {
-  it('groups plan and note rows by subject, in first-seen order', () => {
+  it('groups plan and note rows by subject, keeping each row in its group', () => {
     const rows = [
       { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend' }) },
       { type: 'note' as const, idea: idea({ title: 'B', subject: 'Frontend' }) },
       { type: 'plan' as const, plan: plan({ title: 'C', subject: 'Backend' }) },
     ];
-    expect(groupRowsBySubject(rows)).toEqual([
-      { subject: 'Backend', rows: [rows[0], rows[2]] },
-      { subject: 'Frontend', rows: [rows[1]] },
-    ]);
+    const groups = groupRowsBySubject(rows);
+    expect(groups.find((g) => g.subject === 'Backend')?.rows).toEqual([rows[0], rows[2]]);
+    expect(groups.find((g) => g.subject === 'Frontend')?.rows).toEqual([rows[1]]);
+  });
+
+  it('orders named groups by the best run-order rank among their rows', () => {
+    const rows = [
+      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend', order: 3 }) },
+      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Frontend', order: 1 }) },
+      { type: 'plan' as const, plan: plan({ title: 'C', subject: 'Backend', order: 5 }) },
+    ];
+    expect(groupRowsBySubject(rows).map((g) => g.subject)).toEqual(['Frontend', 'Backend']);
+  });
+
+  it('reverses ranked group order when sortDirection is desc', () => {
+    const rows = [
+      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend', order: 1 }) },
+      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Frontend', order: 2 }) },
+    ];
+    expect(groupRowsBySubject(rows, 'desc').map((g) => g.subject)).toEqual(['Frontend', 'Backend']);
+  });
+
+  it('leads a desc-sorted group by its highest rank, not its lowest', () => {
+    const rows = [
+      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend', order: 1 }) },
+      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Frontend', order: 3 }) },
+      { type: 'plan' as const, plan: plan({ title: 'C', subject: 'Backend', order: 5 }) },
+    ];
+    expect(groupRowsBySubject(rows, 'desc').map((g) => g.subject)).toEqual(['Backend', 'Frontend']);
+  });
+
+  it('orders unranked groups after ranked ones, newest-updated first', () => {
+    const rows = [
+      {
+        type: 'plan' as const,
+        plan: plan({ title: 'A', subject: 'Stale', updated: '2026-01-01' }),
+      },
+      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Ranked', order: 1 }) },
+      {
+        type: 'plan' as const,
+        plan: plan({ title: 'C', subject: 'Fresh', updated: '2026-02-01' }),
+      },
+    ];
+    expect(groupRowsBySubject(rows).map((g) => g.subject)).toEqual(['Ranked', 'Fresh', 'Stale']);
   });
 
   it('collects subjectless rows into a virtual "No subject" group, ordered last', () => {
@@ -285,22 +325,9 @@ describe('groupRowsBySubject', () => {
       { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend' }) },
       { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Deleted subject' }) },
     ];
-    expect(groupRowsBySubject(rows, ['Backend'])).toEqual([
+    expect(groupRowsBySubject(rows, 'asc', ['Backend'])).toEqual([
       { subject: 'Backend', rows: [rows[0]] },
       { subject: null, rows: [rows[1]] },
-    ]);
-  });
-
-  it('orders groups by validSubjects (horizon order), not first-seen order', () => {
-    const rows = [
-      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Long bet' }) },
-      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Near-term bet' }) },
-      { type: 'plan' as const, plan: plan({ title: 'C', subject: 'Standing concern' }) },
-    ];
-    expect(groupRowsBySubject(rows, ['Near-term bet', 'Long bet', 'Standing concern'])).toEqual([
-      { subject: 'Near-term bet', rows: [rows[1]] },
-      { subject: 'Long bet', rows: [rows[0]] },
-      { subject: 'Standing concern', rows: [rows[2]] },
     ]);
   });
 });

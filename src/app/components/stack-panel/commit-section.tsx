@@ -531,21 +531,13 @@ const NoChangesActions = ({
 
 export const CommitSection = () => {
   const gitStatus = useAppStore((s) => s.gitStatus);
-  const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
   const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
   const files = useMemo(() => gitStatus?.map((entry) => entry.path) ?? [], [gitStatus]);
 
   return (
     <div className="flex-none flex flex-col p-6">
-      <div className={`${sectionLabelClassName} flex items-center gap-2`}>
-        Deliver
-        {gitBranch && (
-          <Stamp surface="chalkboard" size="small">
-            {gitBranch}
-          </Stamp>
-        )}
-      </div>
+      <div className={sectionLabelClassName}>Deliver</div>
       <Card surface="chalkboard" size="small">
         <StatusStamps />
         {gitStatus && gitStatus.length > 0 ? (
