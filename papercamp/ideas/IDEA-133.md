@@ -2,7 +2,7 @@
 id: IDEA-133
 title: Toolbar is an extended StatusBar — top, full-width, always visible, in layout
 type: feat
-status: idea
+status: review
 created: 2026-08-05
 tags:
   - integration
@@ -65,4 +65,4 @@ while the embed's data layer can't reach the camp server.
       Reuse IDEA-129's seam for branch, changed count, Sync/Push/Pull/Commit.
 - [x] Add the extension actions: Quick capture, Focus, Scout, Desk
       Panels open downward over the app; hold the desk-only write-safety boundary (no archive, plan edits, settings).
-- [ ] Verify layout and actions end-to-end against the camp server
+- [x] Verify layout and actions end-to-end against the camp server
