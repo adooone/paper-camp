@@ -38,10 +38,19 @@ describe('deriveStatus', () => {
     );
   });
 
-  it('is done when the PR is merged, even overriding a stale stored value', () => {
+  it('is done when the PR is merged and every phase is checked, even overriding a stale stored value', () => {
+    expect(deriveStatus({ phases: [phase(true)], status: 'in-progress' }, pr('merged'), true)).toBe(
+      'done',
+    );
+  });
+
+  it('is planned when the PR is merged but a phase is unchecked, regardless of a stored done', () => {
     expect(
       deriveStatus({ phases: [phase(false)], status: 'in-progress' }, pr('merged'), true),
-    ).toBe('done');
+    ).toBe('planned');
+    expect(deriveStatus({ phases: [phase(false)], status: 'done' }, pr('merged'), true)).toBe(
+      'planned',
+    );
   });
 
   it('reads a closed-unmerged PR as dropped', () => {
@@ -62,6 +71,32 @@ describe('deriveStatus', () => {
 
   it('trusts a stored done when resolved but the entity has no matchable PR (legacy)', () => {
     expect(deriveStatus({ phases: [phase(true)], status: 'done' }, undefined, true)).toBe('done');
+  });
+
+  it('trusts a stored review when resolved but no branch or PR exists (direct-to-main)', () => {
+    expect(deriveStatus({ phases: [phase(true)], status: 'review' }, undefined, true)).toBe(
+      'review',
+    );
+  });
+
+  it('is in-progress when main activity references the id but phases are unchecked', () => {
+    expect(deriveStatus({ phases: [phase(false)] }, undefined, true, true)).toBe('in-progress');
+  });
+
+  it('is review when main activity references the id and every phase is checked', () => {
+    expect(deriveStatus({ phases: [phase(true)] }, undefined, true, true)).toBe('review');
+  });
+
+  it('ignores main activity when there are no phases at all', () => {
+    expect(deriveStatus({ phases: [] }, undefined, true, true)).toBe('idea');
+  });
+
+  it('ignores main activity when GitHub is unreachable, deferring to the stored/phase guess', () => {
+    expect(deriveStatus({ phases: [phase(true)] }, undefined, false, true)).toBe('planned');
+  });
+
+  it('ignores main activity once a PR exists', () => {
+    expect(deriveStatus({ phases: [phase(false)] }, pr('open'), true, true)).toBe('in-progress');
   });
 
   it('passes a stored dropped through, even over a merged PR', () => {
@@ -103,5 +138,11 @@ describe('isArchivable', () => {
 
   it('is false when a stored dropped wins over the merged PR', () => {
     expect(isArchivable({ phases: [phase(true)], status: 'dropped' }, pr('merged'))).toBe(false);
+  });
+
+  it('is false once a merged idea gains a new unchecked phase, even if stored as done', () => {
+    expect(
+      isArchivable({ phases: [phase(true), phase(false)], status: 'done' }, pr('merged')),
+    ).toBe(false);
   });
 });

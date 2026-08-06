@@ -2,7 +2,7 @@
 id: IDEA-134
 title: Plans page decluttering
 type: fix
-status: review
+status: done
 created: 2026-08-06
 updated: 2026-08-06
 tags:

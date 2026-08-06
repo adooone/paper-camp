@@ -116,7 +116,7 @@
 | IDEA-112 | Move all styling to Tailwind | refactor | done | app, ui, refactor |
 | IDEA-113 | Feedback as a single chat thread | feat | done | app, ui, agent, plans |
 | IDEA-115 | npm package is broken on Linux — bundled node-pty can't load | fix | done | cli, packaging |
-| IDEA-116 | Direct-to-main work can never reach review/done in derived status | feat | planned | app, status |
+| IDEA-116 | Direct-to-main work can never reach review/done in derived status | feat | review | app, status |
 | IDEA-117 | Multi-project hub — one desk, many corpora | feat | idea | multi-project, app |
 | IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | done | multi-project, agents, app |
 | IDEA-119 | Run & monitor — services, checks, and the release train on the desk | feat | idea | app, monitoring |
@@ -133,8 +133,10 @@
 | IDEA-130 | Paper Scout — the conversational agent | feat | done | agents, chat, integration |
 | IDEA-131 | Faster agent runs and chat replies | refactor | done | agent, server, performance |
 | IDEA-132 | Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end | fix | done | integration, app, cli |
-| IDEA-133 | Toolbar is an extended StatusBar — top, full-width, always visible, in layout | feat | idea | integration, app, ux |
-| IDEA-134 | Plans page decluttering | fix | review | app, ui, plans, stack |
+| IDEA-133 | Toolbar is an extended StatusBar — top, full-width, always visible, in layout | feat | done | integration, app, ux |
+| IDEA-134 | Plans page decluttering | fix | done | app, ui, plans, stack |
 | IDEA-135 | Run analytics — time, tokens, capacity | feat | idea | agent, stats, server, ui |
 | IDEA-136 | Roadmap page redesign | fix | idea | app, ui, roadmap |
 | IDEA-137 | Drafted plans vanish when a phase agent stashes | fix | idea | agents, plans, git |
+| IDEA-138 | Single-bar toolbar with a Stack-style chat sidebar | feat | idea | integration, app, ux, chat |
+| IDEA-139 | Desk is broken under the mount — router basepath, API base, and a friendlier route | fix | idea | integration, app, cli |
