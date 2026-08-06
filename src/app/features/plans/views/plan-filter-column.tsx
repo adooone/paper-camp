@@ -2,7 +2,7 @@ import { selectPlanRows } from '@/app/features/plans/helpers';
 import { useActivePlanTitle } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanStatus } from '@/types/index';
-import { Input } from '@dendelion/paper-ui';
+import { Button, Input, ListItem } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
@@ -85,23 +85,22 @@ export const PlanFilterColumn = () => {
           {visibleStatuses.map((status) => {
             const isActive = activeStatuses.has(status);
             return (
-              // Raw <button>: paper-ui Button draws its own filled/washed chrome.
-              <button
+              <ListItem
                 key={status}
-                type="button"
+                size="small"
+                active={isActive}
                 onClick={() => togglePlanStatus(status)}
-                aria-pressed={isActive}
-                className={`flex items-center gap-2 w-full px-2 py-2 rounded-md border-none cursor-pointer text-left ${
-                  isActive ? 'bg-black/[5%] opacity-100' : 'bg-transparent opacity-50'
-                }`}
+                className="text-xs leading-4 py-2"
+                icon={
+                  <span
+                    className="w-[9px] h-[9px] rounded-full shrink-0"
+                    style={{ background: STATUS_STAMP[status].text }}
+                  />
+                }
+                action={<span className="text-2xs text-ink-500">{statusCounts[status]}</span>}
               >
-                <span
-                  className="w-[9px] h-[9px] rounded-full shrink-0"
-                  style={{ background: STATUS_STAMP[status].text }}
-                />
-                <span className="flex-1 text-xs text-ink-900">{STATUS_LABEL[status]}</span>
-                <span className="text-2xs text-ink-500">{statusCounts[status]}</span>
-              </button>
+                {STATUS_LABEL[status]}
+              </ListItem>
             );
           })}
         </div>
@@ -114,18 +113,17 @@ export const PlanFilterColumn = () => {
           {visibleTags.map((tag) => {
             const isActive = activeTags.has(tag);
             return (
-              // Raw <button>: paper-ui Button doesn't offer this border/background treatment.
-              <button
+              <Button
                 key={tag}
                 type="button"
-                onClick={() => togglePlanTag(tag)}
+                variant="ghost"
+                size="small"
+                isActive={isActive}
                 aria-pressed={isActive}
-                className={`text-2xs px-2 py-[2px] rounded-md border-[0.5px] border-black/[12%] cursor-pointer ${
-                  isActive ? 'bg-black/[8%] opacity-100' : 'bg-transparent opacity-55'
-                }`}
+                onClick={() => togglePlanTag(tag)}
               >
                 {tag} {tagCounts[tag] ?? 0}
-              </button>
+              </Button>
             );
           })}
           {/* Raw <button>: needs a muted opacity/font-size LinkButton's fixed amber style can't give. */}
