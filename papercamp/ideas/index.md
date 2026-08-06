@@ -124,7 +124,7 @@
 | IDEA-121 | paper-camp doctor — corpus lint and format migrations | feat | idea | format, cli |
 | IDEA-122 | Make the MCP server the primary write path for agents | feat | idea | format, mcp, agents |
 | IDEA-123 | Cross-corpus idea links | feat | idea | multi-project, format |
-| IDEA-124 | Tie ideas to releases — release notes grouped by idea | feat | planned | status, releases |
+| IDEA-124 | Tie ideas to releases — release notes grouped by idea | feat | done | status, releases |
 | IDEA-125 | Headless runs die as bare "error" when the agent hits a permission ask | fix | done | agents, tasks |
 | IDEA-126 | Read-only helper tasks silently supersede a running run-all | fix | done | agents, tasks |
 | IDEA-127 | Settings port is a dead field — dev never reads it | fix | done | cli, settings |
@@ -132,5 +132,6 @@
 | IDEA-129 | Isolate the StatusBar — store-free core, ready for a second mount | refactor | done | app, integration |
 | IDEA-130 | Paper Scout — the conversational agent | feat | done | agents, chat, integration |
 | IDEA-131 | Faster agent runs and chat replies | refactor | done | agent, server, performance |
-| IDEA-132 | Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end | fix | review | integration, app, cli |
+| IDEA-132 | Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end | fix | done | integration, app, cli |
 | IDEA-133 | Toolbar is an extended StatusBar — top, full-width, always visible, in layout | feat | idea | integration, app, ux |
+| IDEA-134 | Plans page decluttering | fix | idea | app, ui, plans, stack |

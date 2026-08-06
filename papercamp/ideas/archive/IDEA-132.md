@@ -2,8 +2,9 @@
 id: IDEA-132
 title: Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end
 type: fix
-status: review
+status: done
 created: 2026-08-05
+updated: 2026-08-06
 tags:
   - integration
   - app
