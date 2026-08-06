@@ -281,6 +281,15 @@ describe('groupRowsBySubject', () => {
     expect(groupRowsBySubject(rows, 'desc').map((g) => g.subject)).toEqual(['Frontend', 'Backend']);
   });
 
+  it('leads a desc-sorted group by its highest rank, not its lowest', () => {
+    const rows = [
+      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend', order: 1 }) },
+      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Frontend', order: 3 }) },
+      { type: 'plan' as const, plan: plan({ title: 'C', subject: 'Backend', order: 5 }) },
+    ];
+    expect(groupRowsBySubject(rows, 'desc').map((g) => g.subject)).toEqual(['Backend', 'Frontend']);
+  });
+
   it('orders unranked groups after ranked ones, newest-updated first', () => {
     const rows = [
       {

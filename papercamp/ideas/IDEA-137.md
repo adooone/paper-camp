@@ -27,9 +27,10 @@ make any stash pop conflict-prone. Two fixes close it:
 
 1. **Run-all commits the corpus before phase 1.** Right after branch
    setup, any pending `papercamp/` changes are committed as
-   `docs(ideas): <plan title> — plan` so the drafted phases (and any
-   last-minute edits to them) are durable before an agent ever touches
-   the tree. A run can no longer erase the plan it is executing.
+   `docs(ideas): <plan title> — plan` with a `Refs: <plan id>` trailer
+   so the drafted phases (and any last-minute edits to them) are durable
+   before an agent ever touches the tree. A run can no longer erase the
+   plan it is executing.
 
 2. **Phase prompts ban destructive git on pre-existing state.** The
    headless phase prompt gets an explicit rule: never `git stash`,

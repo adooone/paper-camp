@@ -224,11 +224,12 @@ const rowUpdatedTimestamp = (row: WorklistRow): number => {
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
-const groupOrderRank = (rows: WorklistRow[]): number | undefined =>
+const groupOrderRank = (rows: WorklistRow[], direction: SortDirection): number | undefined =>
   rows.reduce<number | undefined>((best, row) => {
     const rowRank = rowOrder(row);
     if (rowRank === undefined) return best;
-    return best === undefined ? rowRank : Math.min(best, rowRank);
+    if (best === undefined) return rowRank;
+    return direction === 'desc' ? Math.max(best, rowRank) : Math.min(best, rowRank);
   }, undefined);
 
 const groupLatestUpdate = (rows: WorklistRow[]): number =>
@@ -238,8 +239,10 @@ const groupLatestUpdate = (rows: WorklistRow[]): number =>
  * order within a group; rows with no subject collect into the virtual "No subject"
  * group, last. When `validSubjects` is given, a row whose subject isn't in it (e.g.
  * removed from Settings) demotes to "No subject" without touching the idea file.
- * Named groups order by the best run-order rank among their rows, following
- * `sortDirection`; groups with no ranked row come after, newest-updated first.
+ * Named groups order by the leading run-order rank among their rows for
+ * `sortDirection` — the lowest rank ascending, the highest rank descending —
+ * so a group's position matches where its top-priority row would land if the
+ * rows were flattened. Groups with no ranked row come after, newest-updated first.
  * The order derives from plans data alone, so it never reshuffles once vocabulary
  * arrives after first paint. */
 export const groupRowsBySubject = (
@@ -264,8 +267,8 @@ export const groupRowsBySubject = (
   const groups: SubjectGroup[] = [...bySubject.entries()]
     .map(([subject, groupRows]) => ({ subject, rows: groupRows }))
     .sort((a, b) => {
-      const rankA = groupOrderRank(a.rows);
-      const rankB = groupOrderRank(b.rows);
+      const rankA = groupOrderRank(a.rows, sortDirection);
+      const rankB = groupOrderRank(b.rows, sortDirection);
       if (rankA !== undefined && rankB !== undefined) return dirMul * (rankA - rankB);
       if (rankA !== undefined) return -1;
       if (rankB !== undefined) return 1;
