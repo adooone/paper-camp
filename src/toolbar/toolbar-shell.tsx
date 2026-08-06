@@ -9,18 +9,6 @@ const dockStyle: CSSProperties = {
   justifyContent: 'center',
 };
 
-const pillStyle: CSSProperties = {
-  ...getTextureStyles('kraft'),
-  margin: '0.75rem 0 0 0',
-  padding: '0.375rem 0.75rem',
-  borderRadius: '999px',
-  border: '1px solid rgba(0, 0, 0, 0.12)',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-  fontSize: '0.75rem',
-  cursor: 'pointer',
-  color: 'var(--pui-text-primary)',
-};
-
 const barStyle: CSSProperties = {
   ...getTextureStyles('kraft'),
   display: 'flex',
@@ -78,29 +66,11 @@ export interface ToolbarSegment {
 
 export interface ToolbarShellProps {
   segments: ToolbarSegment[];
-  expanded: boolean;
   activePanelId: string | null;
-  onExpand: () => void;
   onSelectSegment: (id: string) => void;
 }
 
-export const ToolbarShell = ({
-  segments,
-  expanded,
-  activePanelId,
-  onExpand,
-  onSelectSegment,
-}: ToolbarShellProps) => {
-  if (!expanded) {
-    return (
-      <div style={dockStyle}>
-        <button type="button" style={pillStyle} onClick={onExpand}>
-          paper-camp
-        </button>
-      </div>
-    );
-  }
-
+export const ToolbarShell = ({ segments, activePanelId, onSelectSegment }: ToolbarShellProps) => {
   const activeSegment = segments.find((segment) => segment.id === activePanelId);
 
   return (

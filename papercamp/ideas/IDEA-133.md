@@ -60,7 +60,7 @@ while the embed's data layer can't reach the camp server.
 ### Phases
 - [x] Dock the bar top, full-width, in layout
       Replace the fixed bottom shell with a first-in-flow block (or top-sticky with body offset) so the host UI starts below it, nothing covered.
-- [ ] Drop the idle pill; bar is always visible when enabled
+- [x] Drop the idle pill; bar is always visible when enabled
 - [ ] Render the StatusBarCore strip inside the embed
       Reuse IDEA-129's seam for branch, changed count, Sync/Push/Pull/Commit.
 - [ ] Add the extension actions: Quick capture, Focus, Scout, Desk

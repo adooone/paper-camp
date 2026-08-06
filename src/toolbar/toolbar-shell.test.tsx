@@ -32,29 +32,12 @@ const segments: ToolbarSegment[] = [
 
 const baseProps: ToolbarShellProps = {
   segments,
-  expanded: true,
   activePanelId: null,
-  onExpand: () => {},
   onSelectSegment: () => {},
 };
 
 describe('ToolbarShell', () => {
-  it('renders only a pill when collapsed', () => {
-    const tree = ToolbarShell({ ...baseProps, expanded: false });
-    const buttons = collect(tree, (el) => el.type === 'button');
-    expect(buttons).toHaveLength(1);
-    expect(textOf(buttons[0]?.props.children as ReactNode)).toBe('paper-camp');
-  });
-
-  it('expands the pill on click', () => {
-    const onExpand = vi.fn();
-    const tree = ToolbarShell({ ...baseProps, expanded: false, onExpand });
-    const buttons = collect(tree, (el) => el.type === 'button');
-    (buttons[0]?.props.onClick as () => void)();
-    expect(onExpand).toHaveBeenCalledTimes(1);
-  });
-
-  it('renders every segment glance in the docked bar when expanded', () => {
+  it('renders every segment glance in the docked bar', () => {
     const tree = ToolbarShell(baseProps);
     const buttons = collect(tree, (el) => el.type === 'button');
     expect(buttons.map((btn) => textOf(btn.props.children as ReactNode))).toEqual([

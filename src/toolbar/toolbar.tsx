@@ -125,9 +125,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
   return (
     <ToolbarShell
       segments={segments}
-      expanded={shell.expanded}
       activePanelId={shell.activePanelId}
-      onExpand={shell.onExpand}
       onSelectSegment={shell.onSelectSegment}
     />
   );
