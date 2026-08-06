@@ -42,12 +42,13 @@ boundary from [[IDEA-128]] still holds — the sidebar's chat writes through
 guarded corpus paths, no structural operations from the embed.
 
 ### Thread
-- [ ] 2026-08-06 [question] [agent] Height handling: the in-flow bar pushes the host app down, but child `100vh`/`100dvh` layouts still measure the full window — full-viewport apps (e.g. the func-ui showcase) overflow by the bar height, and no CSS can redefine vh for a subtree from outside. Options: (a) accept the push — fine for scrolling apps, breaks full-viewport ones; (b) iframe harness — the plugin serves a shell page (toolbar + same-origin iframe at `calc(100dvh − bar)` loading the real app) so the child's vh measures the remaining space, zero child changes, cost is URL/history + title sync and `window.top` edge cases; (c) both behind `integration.toolbar.mode: 'frame' | 'flow'`. Agent recommends (c) with frame as the full-viewport answer — owner to confirm the mode split and default.
+- [x] 2026-08-06 [question] [agent] Height handling: the in-flow bar pushes the host app down, but child `100vh`/`100dvh` layouts still measure the full window — full-viewport apps (e.g. the func-ui showcase) overflow by the bar height, and no CSS can redefine vh for a subtree from outside. Options: (a) accept the push; (b) iframe harness (shell page: toolbar + same-origin iframe at `calc(100dvh − bar)`, cost is URL/history + title sync); (c) both behind `integration.toolbar.mode`. → Dissolved by the owner's pivot to a hidden-by-default bottom-center island ([[IDEA-140]]): a transient floating overlay takes no layout space, so nothing pushes and vh stays honest. The harness stays parked here in case a persistent in-flow mode ever returns.
+- [x] 2026-08-06 [decision] Owner pivot: the persistent bar shape is dropped in favour of a bottom-center island, hidden by default behind a paper-camp-logo hover trigger with a reveal animation → [[IDEA-140]]. The bar-shape work here stops after phase 1; the Stack-style chat sidebar phases (2–5) carry on, expected to open from the island.
 
 ### Phases
 - [x] Collapse the toolbar into one bar with an overflow dropdown
       Inline the actions that earn a permanent spot; move the rest into a single bar-mounted overflow menu, dropping the second action row.
-- [ ] Replace the downward popups with a Stack-styled slide-in side panel
+- [x] Replace the downward popups with a Stack-styled slide-in side panel
       Reuse the desk Stack panel's chalkboard surface and card-section layout for the space-needing actions.
 - [ ] Make the chat thread the sidebar's primary surface
       Give most of the panel to the Scout chat thread, with the surrounding cards sized around it.

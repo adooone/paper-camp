@@ -2,6 +2,7 @@ import { Menu } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { type ToolbarSegment, ToolbarShell, type ToolbarShellProps } from './toolbar-shell';
+import { ToolbarSidePanel } from './toolbar-side-panel';
 
 type Elementish = { type: unknown; props: Record<string, unknown> };
 
@@ -94,18 +95,32 @@ describe('ToolbarShell', () => {
     expect(menus).toHaveLength(0);
   });
 
-  it('renders no panel when nothing is active', () => {
+  it('renders the side panel closed when nothing is active', () => {
     const tree = ToolbarShell(baseProps);
-    expect(textOf(tree).includes('Focus panel')).toBe(false);
+    const panel = collect(tree, (el) => el.type === ToolbarSidePanel)[0];
+    expect(panel?.props.open).toBe(false);
+    expect(textOf(panel?.props.children as ReactNode).includes('Focus panel')).toBe(false);
   });
 
-  it('renders the active segment panel above the bar', () => {
+  it('opens the side panel with the active segment as its content and title', () => {
     const tree = ToolbarShell({ ...baseProps, activePanelId: 'focus' });
-    expect(textOf(tree)).toContain('Focus panel');
+    const panel = collect(tree, (el) => el.type === ToolbarSidePanel)[0];
+    expect(panel?.props.open).toBe(true);
+    expect(panel?.props.title).toBe('Focus');
+    expect(textOf(panel?.props.children as ReactNode)).toContain('Focus panel');
   });
 
-  it('renders no panel when the active segment has none', () => {
+  it('keeps the side panel closed when the active segment has no panel', () => {
     const tree = ToolbarShell({ ...baseProps, activePanelId: 'desk' });
-    expect(textOf(tree).includes('Focus panel')).toBe(false);
+    const panel = collect(tree, (el) => el.type === ToolbarSidePanel)[0];
+    expect(panel?.props.open).toBe(false);
+  });
+
+  it('closing the side panel calls onSelectSegment with the active segment id', () => {
+    const onSelectSegment = vi.fn();
+    const tree = ToolbarShell({ ...baseProps, activePanelId: 'focus', onSelectSegment });
+    const panel = collect(tree, (el) => el.type === ToolbarSidePanel)[0];
+    (panel?.props.onClose as () => void)();
+    expect(onSelectSegment).toHaveBeenCalledWith('focus');
   });
 });

@@ -1,6 +1,7 @@
 import { MoreIcon } from '@/app/components/icons';
-import { Button, Menu, type MenuEntry, getTextureStyles } from '@dendelion/paper-ui';
+import { Button, Menu, type MenuEntry } from '@dendelion/paper-ui';
 import type { CSSProperties, ReactNode } from 'react';
+import { ToolbarSidePanel } from './toolbar-side-panel';
 
 const dockStyle: CSSProperties = {
   position: 'relative',
@@ -22,26 +23,6 @@ const activeSegmentButtonStyle: CSSProperties = {
   ...segmentButtonStyle,
   backgroundColor: 'rgba(0, 0, 0, 0.08)',
   borderRadius: '0.25rem',
-};
-
-const panelWrapperStyle: CSSProperties = {
-  position: 'fixed',
-  left: 0,
-  right: 0,
-  top: '2rem',
-  display: 'flex',
-  justifyContent: 'center',
-  zIndex: 2147483647,
-};
-
-const panelStyle: CSSProperties = {
-  ...getTextureStyles('paper'),
-  border: '1px solid rgba(0, 0, 0, 0.12)',
-  borderRadius: '0.5rem',
-  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.2)',
-  padding: '0.75rem',
-  maxWidth: '32rem',
-  width: '100%',
 };
 
 export interface ToolbarSegment {
@@ -104,11 +85,13 @@ export const ToolbarShell = ({
 
   return (
     <>
-      {activeSegment?.panel && (
-        <div style={panelWrapperStyle}>
-          <div style={panelStyle}>{activeSegment.panel}</div>
-        </div>
-      )}
+      <ToolbarSidePanel
+        open={Boolean(activeSegment?.panel)}
+        title={activeSegment?.glance}
+        onClose={() => activeSegment && onSelectSegment(activeSegment.id)}
+      >
+        {activeSegment?.panel}
+      </ToolbarSidePanel>
       <div style={dockStyle}>{renderStatusBar(trailing)}</div>
     </>
   );
