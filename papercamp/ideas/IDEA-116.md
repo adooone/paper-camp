@@ -34,7 +34,7 @@ new run ships them.
       A control that sets `status: done` and runs the existing archive move, so a fully-built direct-to-main idea can be closed without ever cutting a branch or opening a PR.
 - [x] Derive progress from main-branch commits referencing the idea id
       Scan `main`'s commit messages for the `IDEA-N` id and let that advance derivation, so work landed straight on main registers without a branch.
-- [ ] Reopen merged ideas that gain new phases
+- [x] Reopen merged ideas that gain new phases
       Unchecked phases outrank the merged-PR signal in deriveStatus: the entity derives planned, not done, and leaves the archivable set until the new phases ship.
 - [ ] Type-check and test the new derivation and action paths
       `tsc` and `biome` clean; cover the no-git-signal override, the mark-done archive flow, the commit-scan path, and the merged-then-extended reopen.

@@ -29,7 +29,7 @@ export function deriveStatus(
   // `dropped` can't be derived (abandonment leaves no trace), so a stored one always wins.
   if (entity.status === 'dropped') return entity.status;
   if (pr) {
-    if (pr.state === 'merged') return 'done';
+    if (pr.state === 'merged') return allChecked(entity) ? 'done' : 'planned';
     if (pr.state === 'closed') return 'dropped';
     return allChecked(entity) ? 'review' : 'in-progress';
   }

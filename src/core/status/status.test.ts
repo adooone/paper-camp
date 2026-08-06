@@ -38,10 +38,19 @@ describe('deriveStatus', () => {
     );
   });
 
-  it('is done when the PR is merged, even overriding a stale stored value', () => {
+  it('is done when the PR is merged and every phase is checked, even overriding a stale stored value', () => {
+    expect(deriveStatus({ phases: [phase(true)], status: 'in-progress' }, pr('merged'), true)).toBe(
+      'done',
+    );
+  });
+
+  it('is planned when the PR is merged but a phase is unchecked, regardless of a stored done', () => {
     expect(
       deriveStatus({ phases: [phase(false)], status: 'in-progress' }, pr('merged'), true),
-    ).toBe('done');
+    ).toBe('planned');
+    expect(deriveStatus({ phases: [phase(false)], status: 'done' }, pr('merged'), true)).toBe(
+      'planned',
+    );
   });
 
   it('reads a closed-unmerged PR as dropped', () => {
@@ -129,5 +138,11 @@ describe('isArchivable', () => {
 
   it('is false when a stored dropped wins over the merged PR', () => {
     expect(isArchivable({ phases: [phase(true)], status: 'dropped' }, pr('merged'))).toBe(false);
+  });
+
+  it('is false once a merged idea gains a new unchecked phase, even if stored as done', () => {
+    expect(
+      isArchivable({ phases: [phase(true), phase(false)], status: 'done' }, pr('merged')),
+    ).toBe(false);
   });
 });
