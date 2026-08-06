@@ -2,7 +2,7 @@
 id: IDEA-138
 title: Single-bar toolbar with a Stack-style chat sidebar
 type: feat
-status: idea
+status: review
 created: 2026-08-06
 tags:
   - integration
@@ -56,5 +56,5 @@ guarded corpus paths, no structural operations from the embed.
       Branch/checks, focus, open-desk and other deep links as card sections beside the chat.
 - [x] Keep capture as a card until capture-by-chat lands
       Hold a dedicated capture card that dissolves once chat capture works.
-- [ ] Enforce the desk-only write-safety boundary and run the checks
+- [x] Enforce the desk-only write-safety boundary and run the checks
       Confirm chat writes route through guarded corpus paths, then type-check and test.
