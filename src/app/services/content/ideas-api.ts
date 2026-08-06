@@ -1,4 +1,5 @@
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
+import { apiUrl } from '@/app/services/api-base';
 import type { ArchivableIdea, IdeaEntry, OverlapVerdict, ParseResult } from '@/types/index';
 
 export interface PrioritiseResult {
@@ -33,7 +34,7 @@ export const createIdea = async (idea: {
   content?: string;
   kind?: 'idea' | 'note';
 }): Promise<string> => {
-  const response = await fetch('/api/ideas', {
+  const response = await fetch(apiUrl('/api/ideas'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(idea),

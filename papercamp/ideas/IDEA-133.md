@@ -63,6 +63,6 @@ while the embed's data layer can't reach the camp server.
 - [x] Drop the idle pill; bar is always visible when enabled
 - [x] Render the StatusBarCore strip inside the embed
       Reuse IDEA-129's seam for branch, changed count, Sync/Push/Pull/Commit.
-- [ ] Add the extension actions: Quick capture, Focus, Scout, Desk
+- [x] Add the extension actions: Quick capture, Focus, Scout, Desk
       Panels open downward over the app; hold the desk-only write-safety boundary (no archive, plan edits, settings).
 - [ ] Verify layout and actions end-to-end against the camp server
