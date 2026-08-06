@@ -5,7 +5,7 @@ import { CheckIcon, IconButton, Menu, type MenuEntry, useToast } from '@dendelio
 import { useState } from 'react';
 import { buildSuggestIdeasPrompt } from '../prompts';
 
-type RunningAction = 'suggest' | 'actualise' | 'prioritise' | null;
+type RunningAction = 'suggest' | 'reconcile' | 'prioritise' | null;
 
 export const WorklistActionsMenu = () => {
   const launchSuggestIdeas = useAppStore((s) => s.launchSuggestIdeas);
@@ -33,8 +33,8 @@ export const WorklistActionsMenu = () => {
     }
   };
 
-  const handleActualiseAll = async () => {
-    setRunning('actualise');
+  const handleReconcileAll = async () => {
+    setRunning('reconcile');
     try {
       await launchBatchReconcile();
     } catch (err) {
@@ -79,11 +79,11 @@ export const WorklistActionsMenu = () => {
       onSelect: handleSuggestIdeas,
     },
     {
-      id: 'actualise-all',
-      label: running === 'actualise' ? 'Starting…' : 'Actualise all',
+      id: 'reconcile-all',
+      label: running === 'reconcile' ? 'Starting…' : 'Reconcile all',
       icon: <CheckIcon size={16} />,
       disabled: busy || !hasAgent,
-      onSelect: handleActualiseAll,
+      onSelect: handleReconcileAll,
     },
     {
       id: 'prioritise',

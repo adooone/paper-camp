@@ -2,8 +2,8 @@ import { RefreshIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import { IconButton, useToast } from '@dendelion/paper-ui';
 
-/** Only re-reads what's already there — distinct from `ActualiseAllButton`, which
- * launches a reconcile agent that rewrites entities. */
+/** Only re-reads what's already there — distinct from `WorklistActionsMenu`'s
+ * "Reconcile all", which launches a reconcile agent that rewrites entities. */
 export const RefreshButton = () => {
   const refreshAll = useAppStore((s) => s.refreshAll);
   const refreshing = useAppStore((s) => s.refreshing);

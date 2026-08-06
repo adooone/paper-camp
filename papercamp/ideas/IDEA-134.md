@@ -59,6 +59,21 @@ blocks, and duplicated git identity. Six settled changes:
    everything on change). "Actualise all" renames to "Reconcile all" — it
    launches the batch reconcile and the menu should say so.
 
+7. **The filter column sits on the desk grid.** The desk background is a
+   32px graph grid, and the unwrapped column currently floats off it.
+   Snap the rhythm to the grid module: left edge and top on grid lines,
+   32px-tall status rows, section gaps in 32px multiples — the same trick
+   the layout header already uses (64px = two cells). Aligned reads as
+   intentional; off-grid reads as floating.
+
+8. **Filter controls are paper-ui components, not custom chrome.** The
+   raw `<button>`s go: status rows become `ListItem` (`active` for an
+   enabled filter, status dot leading, count trailing); tag chips become
+   small ghost `Button`s with `isActive` — the toggle idiom the app
+   already uses for view switches. If ListItem's chrome fights the grid
+   rhythm, the component gains the needed variant in paper-ui first
+   rather than reverting to raw buttons here.
+
 Out of scope: the toolbar/Stack duplication of git *actions*
 (Sync/Push/Pull/Commit appearing in both) is [[IDEA-133]]'s call as the
 toolbar becomes the extended StatusBar; the unnamed-buttons accessibility
@@ -66,6 +81,7 @@ sweep is its own future pass.
 
 ### Thread
 - [x] 2026-08-06 [decision] Open questions moves off the Plans page entirely — no accordion, no tabs. Its destination is [[IDEA-118]]'s inbox route (nav entry + count badge); the row-inbox rendering is logged there as that view's design. This idea only removes the block.
+- [x] 2026-08-06 [decision] Review of the unwrapped column added two fixes: sidebar rhythm snaps to the 32px desk grid, and the filter controls drop raw-button chrome for paper-ui — ListItem for status rows, small ghost Button for tag chips.
 
 ### Phases
 - [x] Remove the Open questions block from the Plans page
@@ -76,5 +92,9 @@ sweep is its own future pass.
 - [x] Order worklist subject groups deterministically from plans data
       Rank by best run-order rank per active sort direction; unranked groups follow, newest-updated first — no re-sort on late vocabulary.
 - [x] Reserve three agent cards of stack height instead of eight
-- [ ] Rework header actions
+- [x] Rework header actions
       Labeled "New idea" button, remove Refresh, rename "Actualise all" to "Reconcile all".
+- [ ] Align the filter column to the 32px desk grid
+      Left edge and top on grid lines, 32px status rows, section gaps in 32px multiples.
+- [ ] Replace filter-column raw buttons with paper-ui components
+      Status rows → `ListItem` (active, dot leading, count trailing); tag chips → small ghost `Button` with `isActive`.
