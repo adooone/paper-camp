@@ -72,6 +72,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     {
       id: 'focus',
       glance: focusGlance,
+      pinned: true,
       panel: focusPlan ? (
         <FocusPanel
           plan={focusPlan}
@@ -88,6 +89,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     {
       id: 'scout',
       glance: scoutGlance,
+      pinned: true,
       panel: (
         <ScoutPanel
           focusPlan={focusPlan}
@@ -110,7 +112,9 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
 
   return (
     <ToolbarShell
-      statusBar={<StatusBarCore {...status} onOpenSetup={handleOpenDesk} />}
+      renderStatusBar={(trailing) => (
+        <StatusBarCore {...status} onOpenSetup={handleOpenDesk} trailing={trailing} />
+      )}
       segments={segments}
       activePanelId={shell.activePanelId}
       onSelectSegment={shell.onSelectSegment}

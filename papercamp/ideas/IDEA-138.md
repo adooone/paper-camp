@@ -41,8 +41,11 @@ layout, and always-visible behaviour stay). The desk-only write-safety
 boundary from [[IDEA-128]] still holds — the sidebar's chat writes through
 guarded corpus paths, no structural operations from the embed.
 
+### Thread
+- [ ] 2026-08-06 [question] [agent] Height handling: the in-flow bar pushes the host app down, but child `100vh`/`100dvh` layouts still measure the full window — full-viewport apps (e.g. the func-ui showcase) overflow by the bar height, and no CSS can redefine vh for a subtree from outside. Options: (a) accept the push — fine for scrolling apps, breaks full-viewport ones; (b) iframe harness — the plugin serves a shell page (toolbar + same-origin iframe at `calc(100dvh − bar)` loading the real app) so the child's vh measures the remaining space, zero child changes, cost is URL/history + title sync and `window.top` edge cases; (c) both behind `integration.toolbar.mode: 'frame' | 'flow'`. Agent recommends (c) with frame as the full-viewport answer — owner to confirm the mode split and default.
+
 ### Phases
-- [ ] Collapse the toolbar into one bar with an overflow dropdown
+- [x] Collapse the toolbar into one bar with an overflow dropdown
       Inline the actions that earn a permanent spot; move the rest into a single bar-mounted overflow menu, dropping the second action row.
 - [ ] Replace the downward popups with a Stack-styled slide-in side panel
       Reuse the desk Stack panel's chalkboard surface and card-section layout for the space-needing actions.
