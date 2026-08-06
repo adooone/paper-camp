@@ -73,7 +73,7 @@ sweep is its own future pass.
 - [x] Unwrap the filter column onto the desk background
       Drop the Card, "Filters" heading, and `-mt-5` hack; hide zero-count statuses unless active; drop the "Backlog" label override.
 - [x] Drop the branch stamp next to Deliver, keeping branch text only in the diverged-state copy
-- [ ] Order worklist subject groups deterministically from plans data
+- [x] Order worklist subject groups deterministically from plans data
       Rank by best run-order rank per active sort direction; unranked groups follow, newest-updated first — no re-sort on late vocabulary.
 - [ ] Reserve three agent cards of stack height instead of eight
 - [ ] Rework header actions

@@ -215,18 +215,38 @@ export interface SubjectGroup {
 const subjectOf = (row: WorklistRow): string | undefined =>
   row.type === 'plan' ? row.plan.subject : row.idea.subject;
 
+const rowOrder = (row: WorklistRow): number | undefined =>
+  row.type === 'plan' ? row.plan.order : row.idea.order;
+
+const rowUpdatedTimestamp = (row: WorklistRow): number => {
+  const raw = row.type === 'plan' ? (row.plan.updated ?? row.plan.created) : row.idea.created;
+  const parsed = new Date(raw ?? '').getTime();
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const groupOrderRank = (rows: WorklistRow[]): number | undefined =>
+  rows.reduce<number | undefined>((best, row) => {
+    const rowRank = rowOrder(row);
+    if (rowRank === undefined) return best;
+    return best === undefined ? rowRank : Math.min(best, rowRank);
+  }, undefined);
+
+const groupLatestUpdate = (rows: WorklistRow[]): number =>
+  rows.reduce((latest, row) => Math.max(latest, rowUpdatedTimestamp(row)), 0);
+
 /** Groups already-sorted worklist rows by subject, keeping each row's relative
  * order within a group; rows with no subject collect into the virtual "No subject"
  * group, last. When `validSubjects` is given, a row whose subject isn't in it (e.g.
- * removed from Settings) demotes to "No subject" without touching the idea file,
- * and groups are ordered per `validSubjects` — the roadmap's horizon order (H1 near-term
- * → H3 long bets, standing concerns last) — rather than first-seen order; without it,
- * groups fall back to first-seen order. */
+ * removed from Settings) demotes to "No subject" without touching the idea file.
+ * Named groups order by the best run-order rank among their rows, following
+ * `sortDirection`; groups with no ranked row come after, newest-updated first.
+ * The order derives from plans data alone, so it never reshuffles once vocabulary
+ * arrives after first paint. */
 export const groupRowsBySubject = (
   rows: WorklistRow[],
+  sortDirection: SortDirection = 'asc',
   validSubjects?: string[],
 ): SubjectGroup[] => {
-  const order: string[] = [];
   const bySubject = new Map<string, WorklistRow[]>();
   const noSubject: WorklistRow[] = [];
 
@@ -236,18 +256,22 @@ export const groupRowsBySubject = (
       noSubject.push(row);
       continue;
     }
-    if (!bySubject.has(subject)) {
-      order.push(subject);
-      bySubject.set(subject, []);
-    }
+    if (!bySubject.has(subject)) bySubject.set(subject, []);
     bySubject.get(subject)?.push(row);
   }
 
-  const subjectOrder = validSubjects ? validSubjects.filter((s) => bySubject.has(s)) : order;
-  const groups: SubjectGroup[] = subjectOrder.map((subject) => ({
-    subject,
-    rows: bySubject.get(subject) ?? [],
-  }));
+  const dirMul = sortDirection === 'desc' ? -1 : 1;
+  const groups: SubjectGroup[] = [...bySubject.entries()]
+    .map(([subject, groupRows]) => ({ subject, rows: groupRows }))
+    .sort((a, b) => {
+      const rankA = groupOrderRank(a.rows);
+      const rankB = groupOrderRank(b.rows);
+      if (rankA !== undefined && rankB !== undefined) return dirMul * (rankA - rankB);
+      if (rankA !== undefined) return -1;
+      if (rankB !== undefined) return 1;
+      return groupLatestUpdate(b.rows) - groupLatestUpdate(a.rows);
+    });
+
   if (noSubject.length > 0) groups.push({ subject: null, rows: noSubject });
   return groups;
 };

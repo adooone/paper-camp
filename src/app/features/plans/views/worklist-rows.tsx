@@ -114,6 +114,7 @@ export const WorklistRows = ({
 
   const groups = groupRowsBySubject(
     rows,
+    sortDirection,
     subjectsLoading || !subjectsAvailable ? undefined : validSubjects,
   );
   const showSubjectHeaders = groups.length > 1;
