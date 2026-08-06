@@ -1,4 +1,5 @@
 import { StatusBarCore } from '@/app/components/shell/status-bar-core';
+import { useChecksClient } from '@/app/hooks/use-checks-client';
 import { useFocusClient } from '@/app/hooks/use-focus-client';
 import { useRunsClient } from '@/app/hooks/use-runs-client';
 import { useScoutClient } from '@/app/hooks/use-scout-client';
@@ -25,6 +26,7 @@ export interface ToolbarProps {
 
 export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
   const status = useStatusClient();
+  const checks = useChecksClient();
   const runs = useRunsClient();
   const focusPlan = useFocusClient();
   const scout = useScoutClient();
@@ -95,7 +97,10 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
         <ScoutPanel
           focusPlan={focusPlan}
           openQuestions={scout.openQuestions}
+          status={status}
+          checks={checks}
           onOpenIdea={openIdea}
+          onOpenDesk={handleOpenDesk}
           onRefresh={scout.refresh}
         />
       ),

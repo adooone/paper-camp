@@ -1,9 +1,12 @@
 import type { OpenQuestionGroup } from '@/app/features/plans/helpers';
 import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
+import type { ChecksClientState } from '@/app/hooks/use-checks-client';
+import type { StatusClientState } from '@/app/hooks/use-status-client';
 import type { PlanEntry, ThreadMessage } from '@/types/index';
 import { Button, Card, Divider, Spinner, Stamp, Textarea } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { ScoutGlanceCards } from './scout-glance-cards';
 import { ToolbarLink } from './toolbar-link';
 
 const rootStyle: CSSProperties = {
@@ -208,7 +211,10 @@ const GlanceRow = ({ plan, onOpenIdea }: { plan: PlanEntry; onOpenIdea: () => vo
 export interface ScoutPanelProps {
   focusPlan: PlanEntry | null;
   openQuestions: OpenQuestionGroup[];
+  status: StatusClientState;
+  checks: ChecksClientState;
   onOpenIdea: (plan: PlanEntry) => void;
+  onOpenDesk: () => void;
   onRefresh: () => void;
 }
 
@@ -216,18 +222,32 @@ export interface ScoutPanelProps {
 // the oldest project-wide open question's idea takes the thread first — replying
 // resumes its parked run — falling back to the focused idea's thread once the
 // inbox is empty. Full history and promote-to-decision/idea/log stay desk-only.
+// The glance/deep-link cards (IDEA-138 phase 4) show regardless of thread state.
 export const ScoutPanel = ({
   focusPlan,
   openQuestions,
+  status,
+  checks,
   onOpenIdea,
+  onOpenDesk,
   onRefresh,
 }: ScoutPanelProps) => {
   const [oldest] = openQuestions;
   const activePlan = oldest?.plan ?? focusPlan;
+  // The idea chip above the thread already names the focused plan when it's the
+  // one being chatted about — the Focus card only adds information when they differ.
+  const distinctFocusPlan = focusPlan && focusPlan.id !== activePlan?.id ? focusPlan : null;
 
   if (!activePlan) {
     return (
       <div style={rootStyle}>
+        <ScoutGlanceCards
+          status={status}
+          checks={checks}
+          focusPlan={distinctFocusPlan}
+          onOpenIdea={onOpenIdea}
+          onOpenDesk={onOpenDesk}
+        />
         <span style={emptyStateStyle}>No active idea and no open questions.</span>
       </div>
     );
@@ -245,6 +265,13 @@ export const ScoutPanel = ({
           <span style={mutedStyle}>{remainingQuestionCount} more open question(s)</span>
         </div>
       )}
+      <ScoutGlanceCards
+        status={status}
+        checks={checks}
+        focusPlan={distinctFocusPlan}
+        onOpenIdea={onOpenIdea}
+        onOpenDesk={onOpenDesk}
+      />
       <div style={threadStyle}>
         <ThreadMessages messages={activePlan.thread ?? []} />
       </div>

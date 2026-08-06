@@ -52,7 +52,7 @@ guarded corpus paths, no structural operations from the embed.
       Reuse the desk Stack panel's chalkboard surface and card-section layout for the space-needing actions.
 - [x] Make the chat thread the sidebar's primary surface
       Give most of the panel to the Scout chat thread, with the surrounding cards sized around it.
-- [ ] Add the glance/deep-link cards around the thread
+- [x] Add the glance/deep-link cards around the thread
       Branch/checks, focus, open-desk and other deep links as card sections beside the chat.
 - [ ] Keep capture as a card until capture-by-chat lands
       Hold a dedicated capture card that dissolves once chat capture works.
