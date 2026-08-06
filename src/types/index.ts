@@ -206,6 +206,17 @@ export interface ArchivableIdea {
   pr: PrInfo;
 }
 
+/** One open `question` thread message, resolved to the idea it's parked on. `ageDays`
+ * is `Infinity` for a question ported from the pre-Thread Notes section, which never
+ * carried a date — the oldest kind of unresolved question there is. */
+export interface ParkedQuestion {
+  entityId: string;
+  entityTitle: string;
+  text: string;
+  date?: string;
+  ageDays: number;
+}
+
 export type ConsistencyIssueKind = 'orphan-subject';
 
 export interface ConsistencyIssue {

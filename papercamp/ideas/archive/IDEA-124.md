@@ -2,8 +2,9 @@
 id: IDEA-124
 title: Tie ideas to releases — release notes grouped by idea
 type: feat
-status: review
+status: done
 created: 2026-08-04
+updated: 2026-08-06
 tags:
   - status
   - releases
