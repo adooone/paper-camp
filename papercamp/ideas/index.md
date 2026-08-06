@@ -118,7 +118,7 @@
 | IDEA-115 | npm package is broken on Linux — bundled node-pty can't load | fix | done | cli, packaging |
 | IDEA-116 | Direct-to-main work can never reach review/done in derived status | feat | planned | app, status |
 | IDEA-117 | Multi-project hub — one desk, many corpora | feat | idea | multi-project, app |
-| IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | review | multi-project, agents, app |
+| IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | done | multi-project, agents, app |
 | IDEA-119 | Run & monitor — services, checks, and the release train on the desk | feat | idea | app, monitoring |
 | IDEA-120 | Flow profiles — status derivation per project topology | feat | idea | status, planning-surface |
 | IDEA-121 | paper-camp doctor — corpus lint and format migrations | feat | idea | format, cli |
@@ -136,3 +136,5 @@
 | IDEA-133 | Toolbar is an extended StatusBar — top, full-width, always visible, in layout | feat | idea | integration, app, ux |
 | IDEA-134 | Plans page decluttering | fix | idea | app, ui, plans, stack |
 | IDEA-135 | Run analytics — time, tokens, capacity | feat | idea | agent, stats, server, ui |
+| IDEA-136 | Roadmap page redesign | fix | idea | app, ui, roadmap |
+| IDEA-137 | Drafted plans vanish when a phase agent stashes | fix | idea | agents, plans, git |

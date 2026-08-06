@@ -66,3 +66,15 @@ sweep is its own future pass.
 
 ### Thread
 - [x] 2026-08-06 [decision] Open questions moves off the Plans page entirely — no accordion, no tabs. Its destination is [[IDEA-118]]'s inbox route (nav entry + count badge); the row-inbox rendering is logged there as that view's design. This idea only removes the block.
+
+### Phases
+- [x] Remove the Open questions block from the Plans page
+      Gated on [[IDEA-118]]'s inbox route existing so parked questions never go dark.
+- [ ] Unwrap the filter column onto the desk background
+      Drop the Card, "Filters" heading, and `-mt-5` hack; hide zero-count statuses unless active; drop the "Backlog" label override.
+- [ ] Drop the branch stamp next to Deliver, keeping branch text only in the diverged-state copy
+- [ ] Order worklist subject groups deterministically from plans data
+      Rank by best run-order rank per active sort direction; unranked groups follow, newest-updated first — no re-sort on late vocabulary.
+- [ ] Reserve three agent cards of stack height instead of eight
+- [ ] Rework header actions
+      Labeled "New idea" button, remove Refresh, rename "Actualise all" to "Reconcile all".
