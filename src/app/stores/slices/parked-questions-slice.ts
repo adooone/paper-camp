@@ -1,5 +1,5 @@
+import { fetchParkedQuestions } from '@/app/services/content';
 import type { ParkedQuestion } from '@/types/index';
-import { fetchParkedQuestions } from '../../services/content';
 import type { SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 

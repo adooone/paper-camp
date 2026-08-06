@@ -37,10 +37,10 @@ blocks, and duplicated git identity. Six settled changes:
    active in the filter. The "Backlog" label override is dropped — the
    status reads "Idea" everywhere, matching the row stamps.
 
-3. **Deliver drops the branch stamp.** The toolbar owns branch identity;
-   the stamp next to "Deliver" duplicates it and on long generated branch
-   names overflows the panel edge unellipsized. Branch text remains only in
-   state copy that needs it (the diverged message).
+3. **Deliver drops the branch stamp.** The stamp next to "Deliver" duplicates
+   the toolbar branch identity and overflows the panel edge on long
+   generated branch names because the text is not ellipsized. Branch text
+   remains only in state copy that needs it (the diverged message).
 
 4. **Deterministic worklist group order.** Subject groups order by the
    best run-order rank among their plans, following the active sort
