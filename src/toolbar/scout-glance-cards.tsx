@@ -1,8 +1,10 @@
 import type { ChecksClientState } from '@/app/hooks/use-checks-client';
 import type { StatusClientState } from '@/app/hooks/use-status-client';
+import { createIdea } from '@/app/services/content';
 import type { CheckStatus, PlanEntry } from '@/types/index';
-import { Card, Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { Button, Card, Spinner, Stamp, type StampVariant, Textarea } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
+import { useState } from 'react';
 import { ToolbarLink } from './toolbar-link';
 
 const sectionStyle: CSSProperties = {
@@ -44,6 +46,24 @@ const CHECK_STAMP_VARIANT: Record<CheckStatus, StampVariant> = {
   running: 'warning',
   stale: 'neutral',
 };
+
+const captureStackStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.5rem',
+};
+
+const captureFooterStyle: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: '0.5rem',
+};
+
+const CAPTURE_TITLE_LIMIT = 80;
+
+const captureTitle = (text: string) =>
+  text.length > CAPTURE_TITLE_LIMIT ? `${text.slice(0, CAPTURE_TITLE_LIMIT - 1)}…` : text;
 
 const BranchChecksCard = ({
   status,
@@ -104,6 +124,71 @@ const DeepLinksCard = ({ onOpenDesk }: { onOpenDesk: () => void }) => (
   </Card>
 );
 
+// Dissolves once capture-by-chat (IDEA-130) lets "note this down as an idea"
+// handle this from the thread itself (IDEA-138 phase 5).
+const CaptureCard = () => {
+  const [input, setInput] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleCapture = async () => {
+    const text = input.trim();
+    if (!text || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await createIdea({
+        title: captureTitle(text),
+        content: `${text}\n\nCaptured from ${window.location.href}`,
+        kind: 'note',
+      });
+      setInput('');
+      setSaved(true);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card surface="chalkboard" size="small">
+      <div style={captureStackStyle}>
+        <span style={ideaTextStyle}>Quick capture</span>
+        <Textarea
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+            setSaved(false);
+          }}
+          aria-label="Capture an idea"
+          placeholder="Note an idea in a sentence or two…"
+          rows={2}
+          disabled={saving}
+        />
+        <div style={captureFooterStyle}>
+          {saving ? (
+            <Spinner size="small" label="Capturing…" />
+          ) : saved ? (
+            <span style={mutedStyle}>Captured with the current URL attached.</span>
+          ) : (
+            <span />
+          )}
+          <Button size="small" onClick={handleCapture} disabled={saving || !input.trim()}>
+            Capture
+          </Button>
+        </div>
+        {error && (
+          <Stamp size="small" surface="chalkboard" variant="error">
+            {error}
+          </Stamp>
+        )}
+      </div>
+    </Card>
+  );
+};
+
 export interface ScoutGlanceCardsProps {
   status: StatusClientState;
   checks: ChecksClientState;
@@ -123,5 +208,6 @@ export const ScoutGlanceCards = ({
     <BranchChecksCard status={status} checks={checks} />
     {focusPlan && <FocusCard plan={focusPlan} onOpenIdea={() => onOpenIdea(focusPlan)} />}
     <DeepLinksCard onOpenDesk={onOpenDesk} />
+    <CaptureCard />
   </div>
 );

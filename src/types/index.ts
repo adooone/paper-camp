@@ -442,7 +442,7 @@ export const DEFAULT_AGENTS: DefaultAgentsMap = {
 };
 
 /** Toolbar segments, left to right (IDEA-128/IDEA-133); trimmed per project via `IntegrationConfig.toolbar.segments`. */
-export const TOOLBAR_SEGMENT_IDS = ['capture', 'focus', 'scout', 'desk'] as const;
+export const TOOLBAR_SEGMENT_IDS = ['focus', 'scout', 'desk'] as const;
 
 export type ToolbarSegmentId = (typeof TOOLBAR_SEGMENT_IDS)[number];
 

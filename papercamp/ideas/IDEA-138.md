@@ -54,7 +54,7 @@ guarded corpus paths, no structural operations from the embed.
       Give most of the panel to the Scout chat thread, with the surrounding cards sized around it.
 - [x] Add the glance/deep-link cards around the thread
       Branch/checks, focus, open-desk and other deep links as card sections beside the chat.
-- [ ] Keep capture as a card until capture-by-chat lands
+- [x] Keep capture as a card until capture-by-chat lands
       Hold a dedicated capture card that dissolves once chat capture works.
 - [ ] Enforce the desk-only write-safety boundary and run the checks
       Confirm chat writes route through guarded corpus paths, then type-check and test.

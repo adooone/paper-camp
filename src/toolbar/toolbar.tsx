@@ -7,7 +7,6 @@ import { useStatusClient } from '@/app/hooks/use-status-client';
 import { fetchConfig } from '@/app/services/system';
 import type { PlanEntry, ToolbarSegmentId } from '@/types/index';
 import { useEffect, useState } from 'react';
-import { CapturePanel } from './capture-panel';
 import { FocusPanel } from './focus-panel';
 import { ScoutPanel } from './scout-panel';
 import { ToolbarLink } from './toolbar-link';
@@ -17,8 +16,9 @@ import { useToolbarShell } from './use-toolbar-shell';
 
 const DEFAULT_ROUTE = '/__camp';
 
-// Capture, Focus, Scout, Desk — the extension set that carries the strip (IDEA-129/133).
-const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['capture', 'focus', 'scout', 'desk'];
+// Focus, Scout, Desk — the extension set that carries the strip (IDEA-129/133).
+// Capture dissolved into a Scout card (IDEA-138 phase 5) — no standalone segment.
+const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['focus', 'scout', 'desk'];
 
 export interface ToolbarProps {
   route?: string;
@@ -67,11 +67,6 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
   };
 
   const allSegments: ToolbarSegment[] = [
-    {
-      id: 'capture',
-      glance: 'Capture',
-      panel: <CapturePanel />,
-    },
     {
       id: 'focus',
       glance: focusGlance,
