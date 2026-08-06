@@ -20,7 +20,7 @@ Valuable single-project; becomes the flagship screen of the multi-project hub ([
       Add a core reader that scans every entity's thread for `kind: 'question'` / `state: 'open'` items, returning each with its owning idea and age.
 - [x] Serve the queue over the API
       Expose a read route that returns the parked questions oldest-first, each carrying enough context (idea id/title, parked phase, question text) to resolve without opening the idea.
-- [ ] Build the inbox view
+- [x] Build the inbox view
       A route listing every parked question as an age-ordered queue, with an empty state when nothing is waiting.
 - [ ] Resolve inline, reusing the resume flow
       Answer or dismiss a question from the inbox through the existing feedback-message path so the parked run resumes on reply.

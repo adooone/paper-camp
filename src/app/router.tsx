@@ -46,9 +46,13 @@ const DiffPage = lazy(() =>
 const StatsPage = lazy(() =>
   import('@/app/features/stats/index').then((m) => ({ default: m.StatsPage })),
 );
+const InboxPage = lazy(() =>
+  import('@/app/features/inbox/index').then((m) => ({ default: m.InboxPage })),
+);
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
+  { id: 'inbox', label: 'Inbox', path: '/inbox' },
   { id: 'roadmap', label: 'Roadmap', path: '/roadmap' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'tasks', label: 'Tasks', path: '/tasks' },
@@ -384,6 +388,12 @@ const diffRoute = createRoute({
   component: DiffPage,
 });
 
+const inboxRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/inbox',
+  component: InboxPage,
+});
+
 const statsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/stats',
@@ -411,6 +421,7 @@ const routeTree = rootRoute.addChildren([
   roadmapRoute,
   diffRoute,
   statsRoute,
+  inboxRoute,
 ]);
 
 export const router = createRouter({ routeTree });
