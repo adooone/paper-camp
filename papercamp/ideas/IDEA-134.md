@@ -101,7 +101,7 @@ sweep is its own future pass.
       Left edge and top on grid lines, 32px status rows, section gaps in 32px multiples.
 - [x] Replace filter-column raw buttons with paper-ui components
       Status rows → `ListItem` (active, dot leading, count trailing); tag chips → small ghost `Button` with `isActive`.
-- [ ] Unwrap the plan detail sidebar onto the desk background
+- [x] Unwrap the plan detail sidebar onto the desk background
       Drop the speckle Card around the field column (Show/Status/Subject/Order/Agent/Tags/Actions); same 32px grid rhythm as the filter column.
 
 ### Thread

@@ -46,7 +46,7 @@ export const FixReviewButton = ({ plan, disabled }: FixReviewButtonProps) => {
         icon={<span className="text-watercolor-amber-dark">⚑</span>}
         onClick={handleClick}
         disabled={isDisabled}
-        className={isDisabled ? 'opacity-50' : undefined}
+        className={`text-xs leading-4 py-2 ${isDisabled ? 'opacity-50' : ''}`}
       >
         {launching ? 'Starting…' : 'Fix review comments'}
       </ListItem>
