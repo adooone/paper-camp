@@ -1,30 +1,26 @@
 import { PageTitle } from '@/app/components/page-title';
 import { PlanIdStamp } from '@/app/features/plans/components';
-import { fetchParkedQuestions } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
-import type { ParkedQuestion } from '@/types/index';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { formatAge } from './helpers';
 import { QuestionRow } from './question-row';
 
 export const InboxPage = () => {
-  const [questions, setQuestions] = useState<ParkedQuestion[] | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const questions = useAppStore((s) => s.parkedQuestions);
+  const loadFailed = useAppStore((s) => s.parkedQuestionsError !== null);
   const plans = useAppStore((s) => s.plans);
   const loadPlans = useAppStore((s) => s.loadPlans);
+  const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchParkedQuestions()
-      .then(setQuestions)
-      .catch(() => setLoadFailed(true));
-  }, []);
+    loadParkedQuestions();
+  }, [loadParkedQuestions]);
 
   const reload = async () => {
-    await loadPlans();
-    setQuestions(await fetchParkedQuestions());
+    await Promise.all([loadPlans(), loadParkedQuestions()]);
   };
 
   const openEntity = (title: string) => {

@@ -2,6 +2,10 @@ import { create } from 'zustand';
 import { type AgentSlice, createAgentSlice } from './slices/agent-slice';
 import { type DocsSlice, createDocsSlice } from './slices/docs-slice';
 import { type IdeasSlice, createIdeasSlice } from './slices/ideas-slice';
+import {
+  type ParkedQuestionsSlice,
+  createParkedQuestionsSlice,
+} from './slices/parked-questions-slice';
 import { type PlansSlice, createPlansSlice } from './slices/plans-slice';
 import { type StatusSlice, createStatusSlice } from './slices/status-slice';
 import { type SuggestionsSlice, createSuggestionsSlice } from './slices/suggestions-slice';
@@ -15,7 +19,8 @@ export type AppStore = PlansSlice &
   TaskLogSlice &
   DocsSlice &
   StatusSlice &
-  AgentSlice;
+  AgentSlice &
+  ParkedQuestionsSlice;
 
 export const useAppStore = create<AppStore>()((set, get) => ({
   ...createPlansSlice(set, get),
@@ -25,6 +30,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   ...createDocsSlice(set, get),
   ...createStatusSlice(set, get),
   ...createAgentSlice(set, get),
+  ...createParkedQuestionsSlice(set),
 }));
 
 export const selectAgentBusy = (s: AppStore) =>

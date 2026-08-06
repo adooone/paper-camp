@@ -8,7 +8,7 @@ import {
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
-import { Button, IconButton, Layout, Page, ToastProvider } from '@dendelion/paper-ui';
+import { Button, IconButton, Layout, Page, Stamp, ToastProvider } from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -59,6 +59,17 @@ const navItems = [
   { id: 'stats', label: 'Stats', path: '/stats' },
   { id: 'settings', label: 'Settings', path: '/settings' },
 ];
+
+const NavLabel = ({ item, count }: { item: (typeof navItems)[number]; count: number }) => (
+  <span className="inline-flex items-center gap-1.5">
+    {item.label}
+    {item.id === 'inbox' && count > 0 && (
+      <Stamp size="small" variant="warning">
+        {count}
+      </Stamp>
+    )}
+  </span>
+);
 
 const SidebarToggleIcon = () => (
   <svg
@@ -117,6 +128,8 @@ const RootLayout = () => {
   const loadSuggestions = useAppStore((s) => s.loadSuggestions);
   const loadCapabilities = useAppStore((s) => s.loadCapabilities);
   const loadAgentAuthStatus = useAppStore((s) => s.loadAgentAuthStatus);
+  const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
+  const parkedQuestionCount = useAppStore((s) => s.parkedQuestions?.length ?? 0);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
@@ -143,7 +156,15 @@ const RootLayout = () => {
     loadSuggestions();
     loadCapabilities();
     loadAgentAuthStatus();
-  }, [loadPlans, loadIdeas, loadSuggestions, loadCapabilities, loadAgentAuthStatus]);
+    loadParkedQuestions();
+  }, [
+    loadPlans,
+    loadIdeas,
+    loadSuggestions,
+    loadCapabilities,
+    loadAgentAuthStatus,
+    loadParkedQuestions,
+  ]);
 
   // Land fresh installs (or any install with an incomplete capability) on Setup
   // instead of letting them discover gaps by hitting a broken PR badge or agent button.
@@ -213,7 +234,7 @@ const RootLayout = () => {
                     onClick={() => navigate({ to: item.path })}
                     aria-current={item.id === activeId ? 'page' : undefined}
                   >
-                    {item.label}
+                    <NavLabel item={item} count={parkedQuestionCount} />
                   </Button>
                 ))}
               </nav>
@@ -323,7 +344,7 @@ const RootLayout = () => {
             aria-current={item.id === activeId ? 'page' : undefined}
             className="min-h-11"
           >
-            {item.label}
+            <NavLabel item={item} count={parkedQuestionCount} />
           </Button>
         ))}
       </nav>
