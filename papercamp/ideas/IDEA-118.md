@@ -2,7 +2,7 @@
 id: IDEA-118
 title: Parked-decisions inbox — every agent question awaiting a human, one queue
 type: feat
-status: idea
+status: review
 created: 2026-08-04
 tags:
   - multi-project
@@ -26,7 +26,7 @@ Valuable single-project; becomes the flagship screen of the multi-project hub ([
       Answer or dismiss a question from the inbox through the existing feedback-message path so the parked run resumes on reply.
 - [x] Surface the unresolved count in the nav
       Badge the inbox nav entry with the number of open questions so parked work is visible without opening the screen.
-- [ ] Test the reader and resolve path
+- [x] Test the reader and resolve path
       Cover the cross-entity collection, oldest-first ordering, and that resolving from the inbox flips the question and triggers resume.
 
 ### Thread
