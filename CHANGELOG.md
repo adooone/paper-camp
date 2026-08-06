@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.15.0](https://github.com/adooone/paper-camp/compare/v0.14.0...v0.15.0) (2026-08-06)
+
+
+### Features
+
+* **app:** Parked-decisions inbox — every agent question awaiting a human, one queue (IDEA-118) ([#112](https://github.com/adooone/paper-camp/issues/112)) ([6f304d4](https://github.com/adooone/paper-camp/commit/6f304d40fbd5c023a9addb784a3f2504698d1b7d))
+* **app:** Toolbar is an extended StatusBar — top, full-width, always visible, in layout (IDEA-133) ([#114](https://github.com/adooone/paper-camp/issues/114)) ([6484450](https://github.com/adooone/paper-camp/commit/64844506d458f271418c79a3ec05741ba58b38cf))
+* **repo:** Tie ideas to releases — release notes grouped by idea (IDEA-124) ([#109](https://github.com/adooone/paper-camp/issues/109)) ([27c2f5d](https://github.com/adooone/paper-camp/commit/27c2f5d61658e0c2bd781b9e71aaa67e5868a0be))
+
+
+### Bug Fixes
+
+* **app:** Plans page decluttering (IDEA-134) ([#113](https://github.com/adooone/paper-camp/issues/113)) ([800f07c](https://github.com/adooone/paper-camp/commit/800f07cddc7b96cbbd5885dae8c39944796573e6))
+* **app:** Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end (IDEA-132) ([#111](https://github.com/adooone/paper-camp/issues/111)) ([84d3f75](https://github.com/adooone/paper-camp/commit/84d3f756cb091a975e5d98f9c9eb38d787d9f25a))
+
 ## [0.14.0](https://github.com/adooone/paper-camp/compare/v0.13.2...v0.14.0) (2026-08-05)
 
 
