@@ -70,7 +70,7 @@ sweep is its own future pass.
 ### Phases
 - [x] Remove the Open questions block from the Plans page
       Gated on [[IDEA-118]]'s inbox route existing so parked questions never go dark.
-- [ ] Unwrap the filter column onto the desk background
+- [x] Unwrap the filter column onto the desk background
       Drop the Card, "Filters" heading, and `-mt-5` hack; hide zero-count statuses unless active; drop the "Backlog" label override.
 - [ ] Drop the branch stamp next to Deliver, keeping branch text only in the diverged-state copy
 - [ ] Order worklist subject groups deterministically from plans data
