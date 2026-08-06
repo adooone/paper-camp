@@ -75,6 +75,6 @@ sweep is its own future pass.
 - [x] Drop the branch stamp next to Deliver, keeping branch text only in the diverged-state copy
 - [x] Order worklist subject groups deterministically from plans data
       Rank by best run-order rank per active sort direction; unranked groups follow, newest-updated first — no re-sort on late vocabulary.
-- [ ] Reserve three agent cards of stack height instead of eight
+- [x] Reserve three agent cards of stack height instead of eight
 - [ ] Rework header actions
       Labeled "New idea" button, remove Refresh, rename "Actualise all" to "Reconcile all".

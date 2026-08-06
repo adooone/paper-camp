@@ -6,9 +6,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { chalkStatusFill, chalkStatusText, sectionLabelClassName } from './shared';
 
 const MAX_VISIBLE_TASKS = 8;
-// 25.5rem = MAX_VISIBLE_TASKS * 2.75rem card height + (MAX_VISIBLE_TASKS - 1) * 0.5rem gap,
-// reserved so the empty state doesn't shrink the panel when tasks finish and clear.
-const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[25.5rem]';
+// 9.25rem = 3 cards * 2.75rem card height + 2 gaps * 0.5rem, reserved so the
+// empty state doesn't shrink the panel when tasks finish and clear.
+const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[9.25rem]';
 
 const taskSubtitle = (task: AgentTaskState): string => {
   switch (task.taskKind) {
