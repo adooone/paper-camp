@@ -16,6 +16,9 @@ export class PaperCampToolbarElement extends HTMLElement {
     if (route) setApiBase(route);
     const shadow = this.shadowRoot ?? this.attachShadow({ mode: 'open' });
     shadow.replaceChildren();
+    const hostStyle = document.createElement('style');
+    hostStyle.textContent = ':host { display: block; width: 100%; }';
+    shadow.appendChild(hostStyle);
     const style = document.createElement('style');
     style.textContent = paperUiCss;
     shadow.appendChild(style);

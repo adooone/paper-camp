@@ -90,7 +90,7 @@ describe('ToolbarShell', () => {
     expect(textOf(tree).includes('Focus panel')).toBe(false);
   });
 
-  it('renders the active segment panel above the bar', () => {
+  it('renders the active segment panel below the bar', () => {
     const tree = ToolbarShell({ ...baseProps, activePanelId: 'focus' });
     expect(textOf(tree)).toContain('Focus panel');
   });

@@ -9,5 +9,5 @@ if (!document.querySelector(TOOLBAR_TAG_NAME)) {
   const el = document.createElement(TOOLBAR_TAG_NAME);
   const route = document.getElementById(TOOLBAR_SCRIPT_ID)?.getAttribute(ROUTE_ATTRIBUTE);
   if (route) el.setAttribute(ROUTE_ATTRIBUTE, route);
-  document.body.appendChild(el);
+  document.body.insertBefore(el, document.body.firstChild);
 }

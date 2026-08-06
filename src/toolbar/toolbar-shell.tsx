@@ -2,10 +2,8 @@ import { getTextureStyles } from '@dendelion/paper-ui';
 import type { CSSProperties, ReactNode } from 'react';
 
 const dockStyle: CSSProperties = {
-  position: 'fixed',
-  left: 0,
-  right: 0,
-  bottom: 0,
+  position: 'relative',
+  width: '100%',
   zIndex: 2147483647,
   display: 'flex',
   justifyContent: 'center',
@@ -13,7 +11,7 @@ const dockStyle: CSSProperties = {
 
 const pillStyle: CSSProperties = {
   ...getTextureStyles('kraft'),
-  margin: '0 0 0.75rem 0',
+  margin: '0.75rem 0 0 0',
   padding: '0.375rem 0.75rem',
   borderRadius: '999px',
   border: '1px solid rgba(0, 0, 0, 0.12)',
@@ -29,8 +27,8 @@ const barStyle: CSSProperties = {
   alignItems: 'center',
   gap: '0.5rem',
   padding: '0.375rem 0.75rem',
-  borderTop: '1px solid rgba(0, 0, 0, 0.12)',
-  boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.15)',
+  borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
   fontSize: '0.75rem',
   width: '100%',
   boxSizing: 'border-box',
@@ -56,7 +54,7 @@ const panelWrapperStyle: CSSProperties = {
   position: 'fixed',
   left: 0,
   right: 0,
-  bottom: '2.5rem',
+  top: '2.5rem',
   display: 'flex',
   justifyContent: 'center',
   zIndex: 2147483647,
@@ -66,7 +64,7 @@ const panelStyle: CSSProperties = {
   ...getTextureStyles('paper'),
   border: '1px solid rgba(0, 0, 0, 0.12)',
   borderRadius: '0.5rem',
-  boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.2)',
+  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.2)',
   padding: '0.75rem',
   maxWidth: '32rem',
   width: '100%',

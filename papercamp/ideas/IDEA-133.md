@@ -56,3 +56,13 @@ while the embed's data layer can't reach the camp server.
 ### Thread
 - [x] 2026-08-05 [decision] Toolbar is not a copy of the StatusBar but an extended version carrying the actions needed in the real app; no pill/idle state — always visible; docked top, full width, in layout above the app UI rather than overlaying it.
 - [ ] 2026-08-05 [question] [agent] The extension action set is drafted from IDEA-128's write-safe verbs (quick capture with route context, focus + run/stop, scout reply + questions badge, desk link) — confirm or trim/extend the list before the plan is drafted.
+
+### Phases
+- [x] Dock the bar top, full-width, in layout
+      Replace the fixed bottom shell with a first-in-flow block (or top-sticky with body offset) so the host UI starts below it, nothing covered.
+- [ ] Drop the idle pill; bar is always visible when enabled
+- [ ] Render the StatusBarCore strip inside the embed
+      Reuse IDEA-129's seam for branch, changed count, Sync/Push/Pull/Commit.
+- [ ] Add the extension actions: Quick capture, Focus, Scout, Desk
+      Panels open downward over the app; hold the desk-only write-safety boundary (no archive, plan edits, settings).
+- [ ] Verify layout and actions end-to-end against the camp server

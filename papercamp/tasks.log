@@ -47,3 +47,4 @@
 {"id":"afd1a985-8198-4c7e-ac71-ccf0468e0755","taskKind":"phase","planId":"IDEA-134","planTitle":"Plans page decluttering","agentId":"claude-code","startedAt":"2026-08-06T11:27:32.162Z","endedAt":"2026-08-06T11:35:22.264Z","outcome":"done"}
 {"id":"1e1baa39-8e2b-4120-bf54-f7682f25f8be","taskKind":"phase","planId":"IDEA-134","planTitle":"Plans page decluttering","agentId":"claude-code","startedAt":"2026-08-06T11:38:02.472Z","endedAt":"2026-08-06T11:40:43.453Z","outcome":"done"}
 {"id":"474075a5-0083-4237-87a7-8459a6417017","taskKind":"phase","planId":"IDEA-134","planTitle":"Plans page decluttering","agentId":"claude-code","startedAt":"2026-08-06T11:59:28.347Z","endedAt":"2026-08-06T12:05:06.995Z","outcome":"done"}
+{"id":"00f9a4ce-af5a-46a4-a4f5-6984b6ce3b6a","taskKind":"draft","planTitle":"Draft plan for IDEA-133","agentId":"claude-code","startedAt":"2026-08-06T12:08:16.369Z","endedAt":"2026-08-06T12:08:38.274Z","outcome":"done"}
