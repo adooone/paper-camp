@@ -18,7 +18,7 @@ Valuable single-project; becomes the flagship screen of the multi-project hub ([
 ### Phases
 - [x] Collect open agent questions across the corpus
       Add a core reader that scans every entity's thread for `kind: 'question'` / `state: 'open'` items, returning each with its owning idea and age.
-- [ ] Serve the queue over the API
+- [x] Serve the queue over the API
       Expose a read route that returns the parked questions oldest-first, each carrying enough context (idea id/title, parked phase, question text) to resolve without opening the idea.
 - [ ] Build the inbox view
       A route listing every parked question as an age-ordered queue, with an empty state when nothing is waiting.

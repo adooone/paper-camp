@@ -135,3 +135,4 @@
 | IDEA-132 | Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end | fix | done | integration, app, cli |
 | IDEA-133 | Toolbar is an extended StatusBar — top, full-width, always visible, in layout | feat | idea | integration, app, ux |
 | IDEA-134 | Plans page decluttering | fix | idea | app, ui, plans, stack |
+| IDEA-135 | Run analytics — time, tokens, capacity | feat | idea | agent, stats, server, ui |

@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { readParkedQuestions } from '@/core/parked-questions';
 import { findConsistencyIssues, parseSuggestions, parseTaskLog } from '@/core/parse';
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
@@ -53,6 +54,10 @@ export const readRoutes: ReadRoute[] = [
     path: '/api/archivable-ideas',
     handler: async (root) =>
       cached(`archivable:${root}`, () => findArchivableIdeas(campFile(root, 'ideas'))),
+  },
+  {
+    path: '/api/parked-questions',
+    handler: async (root) => readParkedQuestions(campFile(root, 'ideas')),
   },
   {
     path: '/api/consistency',
