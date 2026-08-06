@@ -70,6 +70,26 @@ describe('deriveStatus', () => {
     );
   });
 
+  it('is in-progress when main activity references the id but phases are unchecked', () => {
+    expect(deriveStatus({ phases: [phase(false)] }, undefined, true, true)).toBe('in-progress');
+  });
+
+  it('is review when main activity references the id and every phase is checked', () => {
+    expect(deriveStatus({ phases: [phase(true)] }, undefined, true, true)).toBe('review');
+  });
+
+  it('ignores main activity when there are no phases at all', () => {
+    expect(deriveStatus({ phases: [] }, undefined, true, true)).toBe('idea');
+  });
+
+  it('ignores main activity when GitHub is unreachable, deferring to the stored/phase guess', () => {
+    expect(deriveStatus({ phases: [phase(true)] }, undefined, false, true)).toBe('planned');
+  });
+
+  it('ignores main activity once a PR exists', () => {
+    expect(deriveStatus({ phases: [phase(false)] }, pr('open'), true, true)).toBe('in-progress');
+  });
+
   it('passes a stored dropped through, even over a merged PR', () => {
     expect(deriveStatus({ phases: [], status: 'dropped' }, undefined, true)).toBe('dropped');
     expect(deriveStatus({ phases: [phase(true)], status: 'dropped' }, pr('merged'), true)).toBe(

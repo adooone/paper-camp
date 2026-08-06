@@ -11,6 +11,7 @@ import type {
   PlanStatus,
   PrInfo,
 } from '../types/index';
+import { resolveIdsWithMainActivity } from './git-log';
 import { resolvePrsByEntity } from './git-pr/pr-lookup';
 import { parseEntityFile } from './parse/parser';
 import { parseRunOrderFile } from './run-order-file';
@@ -82,11 +83,16 @@ export async function readEntities(
 // status is derived via deriveStatus, not read from e.status: e.status stays the
 // raw stored override so round-tripping an EntityEntry back to disk never persists
 // a derived value.
-export function entityToPlan(e: EntityEntry, pr?: PrInfo, prLookupResolved = false): PlanEntry {
+export function entityToPlan(
+  e: EntityEntry,
+  pr?: PrInfo,
+  prLookupResolved = false,
+  hasMainActivity = false,
+): PlanEntry {
   return {
     title: e.title,
     // Non-note entities can't carry the note-only 'open' (schema-enforced).
-    status: deriveStatus(e, pr, prLookupResolved) as PlanStatus,
+    status: deriveStatus(e, pr, prLookupResolved, hasMainActivity) as PlanStatus,
     kind: e.type,
     id: e.id,
     agent: e.agent,
@@ -127,8 +133,12 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
 
 async function readEntitiesAndPrs(ideasDir: string) {
   const { entries, warnings } = await readEntities(ideasDir);
-  const prs = await resolvePrsByEntity(join(ideasDir, '..', '..'));
-  return { entries, warnings, prs, resolved: prs !== undefined };
+  const root = join(ideasDir, '..', '..');
+  const [prs, mainActivityIds] = await Promise.all([
+    resolvePrsByEntity(root),
+    resolveIdsWithMainActivity(root),
+  ]);
+  return { entries, warnings, prs, resolved: prs !== undefined, mainActivityIds };
 }
 
 // One `gh` PR listing resolves every entity's PR (cached); this is a shallow copy
@@ -137,20 +147,20 @@ async function readEntitiesAndPrs(ideasDir: string) {
 export async function readEntitiesWithDerivedStatus(
   ideasDir: string,
 ): Promise<ParseResult<EntityEntry>> {
-  const { entries, warnings, prs, resolved } = await readEntitiesAndPrs(ideasDir);
+  const { entries, warnings, prs, resolved, mainActivityIds } = await readEntitiesAndPrs(ideasDir);
   const derived = entries.map((e) => ({
     ...e,
-    status: deriveStatus(e, prs?.get(e.id), resolved),
+    status: deriveStatus(e, prs?.get(e.id), resolved, mainActivityIds.has(e.id)),
   }));
   return { entries: derived, warnings };
 }
 
 export async function readWorkEntries(ideasDir: string): Promise<ParseResult<PlanEntry>> {
-  const { entries, warnings, prs, resolved } = await readEntitiesAndPrs(ideasDir);
+  const { entries, warnings, prs, resolved, mainActivityIds } = await readEntitiesAndPrs(ideasDir);
   return {
     entries: entries
       .filter((e) => e.kind !== 'note')
-      .map((e) => entityToPlan(e, prs?.get(e.id), resolved)),
+      .map((e) => entityToPlan(e, prs?.get(e.id), resolved, mainActivityIds.has(e.id))),
     warnings,
   };
 }

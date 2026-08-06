@@ -23,6 +23,7 @@ export function deriveStatus(
   entity: StatusDerivationInput,
   pr: PrInfo | undefined,
   prLookupResolved: boolean,
+  hasMainActivity = false,
 ): EntityStatus | undefined {
   if (entity.kind === 'note') return entity.status;
   // `dropped` can't be derived (abandonment leaves no trace), so a stored one always wins.
@@ -39,6 +40,9 @@ export function deriveStatus(
   // Confirmed no PR, but a stored `review`/`done` (e.g. direct-to-main work, or an
   // unmatchable legacy PR) still wins over a planned/in-progress guess.
   if (entity.status === 'review' || entity.status === 'done') return entity.status;
+  if (hasMainActivity && entity.phases.length > 0) {
+    return allChecked(entity) ? 'review' : 'in-progress';
+  }
   return entity.phases.length > 0 ? 'planned' : 'idea';
 }
 

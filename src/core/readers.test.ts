@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -365,6 +366,52 @@ describe('status derivation from PR state', () => {
     await readEntitiesWithDerivedStatus(dir);
     const { entries: raw } = await readEntities(dir);
     expect(raw.find((e) => e.id === 'IDEA-9')?.status).toBeUndefined();
+  });
+});
+
+describe('status derivation from main-branch commit activity', () => {
+  it('advances a no-PR idea from main commits referencing its id: in-progress, then review once all phases are checked', async () => {
+    installGh([]); // gh resolves, repo has no PRs
+    const root = mkdtempSync(join(tmpdir(), 'papercamp-readers-git-'));
+    const dir = join(root, 'papercamp', 'ideas');
+    mkdirSync(join(dir, 'archive'), { recursive: true });
+    const run = (...args: string[]) => spawnSync('git', args, { cwd: root, encoding: 'utf-8' });
+    run('init', '-b', 'main');
+    run('config', 'user.email', 'test@example.com');
+    run('config', 'user.name', 'Test User');
+    run('config', 'commit.gpgsign', 'false');
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    run('add', '.');
+    run('commit', '-m', 'feat(core): Add the thing\n\nRefs: IDEA-20');
+    writeFileSync(join(root, 'b.txt'), 'b\n');
+    run('add', '.');
+    run('commit', '-m', 'feat(core): Finish it\n\nRefs: IDEA-21');
+
+    write(dir, {
+      id: 'IDEA-20',
+      title: 'In progress via main',
+      type: 'feat',
+      created: '2026-07-01',
+      body: 'x',
+      phases: [
+        { text: 'One', done: true },
+        { text: 'Two', done: false },
+      ],
+    });
+    write(dir, {
+      id: 'IDEA-21',
+      title: 'Review via main',
+      type: 'feat',
+      created: '2026-07-01',
+      body: 'x',
+      phases: [{ text: 'One', done: true }],
+    });
+
+    const byId = Object.fromEntries(
+      (await readWorkEntries(dir)).entries.map((e) => [e.id, e.status]),
+    );
+    expect(byId['IDEA-20']).toBe('in-progress');
+    expect(byId['IDEA-21']).toBe('review');
   });
 });
 
