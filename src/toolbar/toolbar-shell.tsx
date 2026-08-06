@@ -6,7 +6,7 @@ const dockStyle: CSSProperties = {
   width: '100%',
   zIndex: 2147483647,
   display: 'flex',
-  justifyContent: 'center',
+  flexDirection: 'column',
 };
 
 const barStyle: CSSProperties = {
@@ -42,7 +42,7 @@ const panelWrapperStyle: CSSProperties = {
   position: 'fixed',
   left: 0,
   right: 0,
-  top: '2.5rem',
+  top: '4.5rem',
   display: 'flex',
   justifyContent: 'center',
   zIndex: 2147483647,
@@ -65,12 +65,18 @@ export interface ToolbarSegment {
 }
 
 export interface ToolbarShellProps {
+  statusBar: ReactNode;
   segments: ToolbarSegment[];
   activePanelId: string | null;
   onSelectSegment: (id: string) => void;
 }
 
-export const ToolbarShell = ({ segments, activePanelId, onSelectSegment }: ToolbarShellProps) => {
+export const ToolbarShell = ({
+  statusBar,
+  segments,
+  activePanelId,
+  onSelectSegment,
+}: ToolbarShellProps) => {
   const activeSegment = segments.find((segment) => segment.id === activePanelId);
 
   return (
@@ -81,6 +87,7 @@ export const ToolbarShell = ({ segments, activePanelId, onSelectSegment }: Toolb
         </div>
       )}
       <div style={dockStyle}>
+        {statusBar}
         <div style={barStyle}>
           {segments.map((segment) => (
             <button

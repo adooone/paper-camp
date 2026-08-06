@@ -1,3 +1,4 @@
+import { StatusBarCore } from '@/app/components/shell/status-bar-core';
 import { useCheckStatusClient } from '@/app/hooks/use-check-status-client';
 import { useFocusClient } from '@/app/hooks/use-focus-client';
 import { useRunsClient } from '@/app/hooks/use-runs-client';
@@ -124,6 +125,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
 
   return (
     <ToolbarShell
+      statusBar={<StatusBarCore {...status} onOpenSetup={handleOpenDesk} />}
       segments={segments}
       activePanelId={shell.activePanelId}
       onSelectSegment={shell.onSelectSegment}

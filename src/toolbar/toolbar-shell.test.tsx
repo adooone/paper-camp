@@ -31,12 +31,18 @@ const segments: ToolbarSegment[] = [
 ];
 
 const baseProps: ToolbarShellProps = {
+  statusBar: 'Status bar',
   segments,
   activePanelId: null,
   onSelectSegment: () => {},
 };
 
 describe('ToolbarShell', () => {
+  it('renders the status bar strip', () => {
+    const tree = ToolbarShell(baseProps);
+    expect(textOf(tree)).toContain('Status bar');
+  });
+
   it('renders every segment glance in the docked bar', () => {
     const tree = ToolbarShell(baseProps);
     const buttons = collect(tree, (el) => el.type === 'button');
