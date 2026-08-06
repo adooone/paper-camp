@@ -75,6 +75,12 @@ blocks, and duplicated git identity. Six settled changes:
    rhythm, the component gains the needed variant in paper-ui first
    rather than reverting to raw buttons here.
 
+9. **The plan detail sidebar matches.** The entity-detail field column
+   (Show / Status / Subject / Order / Agent / Tags / Actions) still wraps
+   in the same speckle Card the filter column shed. Unwrap it identically:
+   fields directly on the desk background, same 32px grid rhythm, same
+   paper-ui controls — the two sidebars read as one system.
+
 Out of scope: the toolbar/Stack duplication of git *actions*
 (Sync/Push/Pull/Commit appearing in both) is [[IDEA-133]]'s call as the
 toolbar becomes the extended StatusBar; the unnamed-buttons accessibility
@@ -91,11 +97,14 @@ sweep is its own future pass.
 - [x] Reserve three agent cards of stack height instead of eight
 - [x] Rework header actions
       Labeled "New idea" button, remove Refresh, rename "Actualise all" to "Reconcile all".
-- [ ] Align the filter column to the 32px desk grid
+- [x] Align the filter column to the 32px desk grid
       Left edge and top on grid lines, 32px status rows, section gaps in 32px multiples.
 - [ ] Replace filter-column raw buttons with paper-ui components
       Status rows → `ListItem` (active, dot leading, count trailing); tag chips → small ghost `Button` with `isActive`.
+- [ ] Unwrap the plan detail sidebar onto the desk background
+      Drop the speckle Card around the field column (Show/Status/Subject/Order/Agent/Tags/Actions); same 32px grid rhythm as the filter column.
 
 ### Thread
 - [x] 2026-08-06 [decision] Open questions moves off the Plans page entirely — no accordion, no tabs. Its destination is [[IDEA-118]]'s inbox route (nav entry + count badge); the row-inbox rendering is logged there as that view's design. This idea only removes the block.
 - [x] 2026-08-06 [decision] Review of the unwrapped column added two fixes: sidebar rhythm snaps to the 32px desk grid, and the filter controls drop raw-button chrome for paper-ui — ListItem for status rows, small ghost Button for tag chips.
+- [x] 2026-08-06 [decision] The plan detail field sidebar unwraps too — both sidebars share the frameless desk-background treatment and grid rhythm.

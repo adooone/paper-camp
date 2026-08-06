@@ -53,7 +53,7 @@ export const PlanFilterColumn = () => {
   );
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-8 -mt-5">
       <Input
         type="search"
         size="small"
@@ -91,7 +91,7 @@ export const PlanFilterColumn = () => {
                 type="button"
                 onClick={() => togglePlanStatus(status)}
                 aria-pressed={isActive}
-                className={`flex items-center gap-2 w-full px-2 py-1 rounded-md border-none cursor-pointer text-left ${
+                className={`flex items-center gap-2 w-full px-2 py-2 rounded-md border-none cursor-pointer text-left ${
                   isActive ? 'bg-black/[5%] opacity-100' : 'bg-transparent opacity-50'
                 }`}
               >
