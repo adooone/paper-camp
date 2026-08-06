@@ -31,6 +31,9 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Smoke test the packed tarball
+        run: pnpm run smoke
+
       - name: Publish to npm
         run: npm publish --access public
         env:

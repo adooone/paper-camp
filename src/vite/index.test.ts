@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
+import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID } from '../toolbar/route-attribute';
 import { CAMP_ROUTE, type PaperCampToolbarOptions, paperCamp } from './index';
 import { proxyToCampServer } from './proxy';
 
@@ -40,7 +41,9 @@ describe('paperCamp', () => {
     const plugin = paperCamp();
     const transform = plugin.transformIndexHtml as (html: string) => string;
     const html = transform('<html><body><div id="root"></div></body></html>');
-    expect(html).toContain(`<script type="module" src="${CAMP_ROUTE}/toolbar.js"></script></body>`);
+    expect(html).toContain(
+      `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="${CAMP_ROUTE}" src="${CAMP_ROUTE}/toolbar.js"></script></body>`,
+    );
   });
 
   it('proxies to the port from papercamp/config.json', async () => {
@@ -110,7 +113,9 @@ describe('paperCamp', () => {
     expect(use).toHaveBeenCalledWith('/__toolbar', expect.any(Function));
     const transform = plugin.transformIndexHtml as (html: string) => string;
     const html = transform('<html><body><div id="root"></div></body></html>');
-    expect(html).toContain('<script type="module" src="/__toolbar/toolbar.js"></script></body>');
+    expect(html).toContain(
+      `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="/__toolbar" src="/__toolbar/toolbar.js"></script></body>`,
+    );
   });
 
   it('stays enabled in production mode when integration.toolbar.allowProduction is true', async () => {

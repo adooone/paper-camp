@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin, ViteDevServer } from 'vite';
 import { readConfigIntegration, readConfigPort } from '../cli/dev-port';
+import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID } from '../toolbar/route-attribute';
 import { proxyToCampServer } from './proxy';
 
 export const CAMP_ROUTE = '/__camp';
@@ -34,7 +35,7 @@ export function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
       if (!enabled) return html;
       return html.replace(
         '</body>',
-        `<script type="module" src="${route}/toolbar.js"></script></body>`,
+        `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="${route}" src="${route}/toolbar.js"></script></body>`,
       );
     },
   };

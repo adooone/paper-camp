@@ -2,7 +2,7 @@
 id: IDEA-132
 title: Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end
 type: fix
-status: idea
+status: review
 created: 2026-08-05
 tags:
   - integration
@@ -67,3 +67,15 @@ camp route into the element (attribute set by the plugin's injected tag) and
 thread it through the thin client as the fetch/EventSource base; set the desk
 build's `base` to `'./'`. A release smoke test that curls
 `/__camp/toolbar.js` through a packed tarball would have caught 1, 2, and 4.
+
+### Phases
+- [x] Add a browser build pass for the toolbar
+      Own Vite pass with no externals, NODE_ENV defined, react/react-dom bundled, emitting a single self-contained `dist/app/toolbar.js`.
+- [x] Inject the camp route as an element attribute
+      Have the plugin's injected script tag set the API base on the mount element so the toolbar knows the camp origin.
+- [x] Thread the API base through the thin client
+      Give the desk hooks (`use-status-client`, `use-focus-client`, `fetchConfig`) a route-prefix seam and honour the injected base for every fetch/EventSource.
+- [x] Set the desk build `base` to `'./'`
+      Make `dist/app/index.html` reference its assets relatively so "Open full desk" resolves through the `/__camp` proxy.
+- [x] Add a packed-tarball smoke test
+      Pack the lib, boot `paper-camp dev`, and curl `/__camp/toolbar.js` to assert it serves as JS — catches the serve/build/base regressions.

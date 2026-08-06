@@ -1,6 +1,7 @@
 import type { PlanEntry } from '@/types/index';
 import { useCallback, useEffect, useState } from 'react';
 import { findFocusPlan } from '../features/plans/helpers';
+import { apiUrl } from '../services/api-base';
 import { fetchPlans } from '../services/content';
 
 export function useFocusClient(): PlanEntry | null {
@@ -18,7 +19,7 @@ export function useFocusClient(): PlanEntry | null {
   }, [load]);
 
   useEffect(() => {
-    const source = new EventSource('/api/activity/stream');
+    const source = new EventSource(apiUrl('/api/activity/stream'));
     let timer: ReturnType<typeof setTimeout> | undefined;
     source.onmessage = (event) => {
       let payload: { message?: string };

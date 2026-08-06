@@ -19,7 +19,11 @@ const DEFAULT_ROUTE = '/__camp';
 // v1/v2/v3/Scout have all landed — Focus, Scout, Desk, Ship, Runs.
 const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['focus', 'scout', 'runs', 'ship', 'desk'];
 
-export const Toolbar = () => {
+export interface ToolbarProps {
+  route?: string;
+}
+
+export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
   const status = useStatusClient();
   const checkStatus = useCheckStatusClient();
   const runs = useRunsClient();
@@ -27,7 +31,7 @@ export const Toolbar = () => {
   const scout = useScoutClient();
   const shell = useToolbarShell();
   const [allowedSegments, setAllowedSegments] = useState<ToolbarSegmentId[]>(DEFAULT_SEGMENTS);
-  const [route, setRoute] = useState(DEFAULT_ROUTE);
+  const [route, setRoute] = useState(injectedRoute ?? DEFAULT_ROUTE);
 
   useEffect(() => {
     fetchConfig().then((config) => {
@@ -38,7 +42,7 @@ export const Toolbar = () => {
     });
   }, []);
 
-  const openDesk = () => window.open(route, '_blank', 'noopener,noreferrer');
+  const handleOpenDesk = () => window.open(`${route}/`, '_blank', 'noopener,noreferrer');
 
   const shipGlance = status.gitBranch
     ? `${status.gitBranch}${status.changedFileCount > 0 ? ` (${status.changedFileCount})` : ''}`
@@ -105,12 +109,12 @@ export const Toolbar = () => {
     {
       id: 'ship',
       glance: shipGlance,
-      panel: <ShipPanel {...status} {...checkStatus} onOpenSetup={openDesk} />,
+      panel: <ShipPanel {...status} {...checkStatus} onOpenSetup={handleOpenDesk} />,
     },
     {
       id: 'desk',
       glance: 'Desk',
-      panel: <ToolbarLink onClick={openDesk}>Open full desk →</ToolbarLink>,
+      panel: <ToolbarLink onClick={handleOpenDesk}>Open full desk →</ToolbarLink>,
     },
   ];
 

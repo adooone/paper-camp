@@ -7,9 +7,10 @@ import type {
   PlanStatus,
   ThreadMessage,
 } from '@/types/index';
+import { apiUrl } from '../api-base';
 
 export const fetchPlans = async (): Promise<ParseResult<PlanEntry>> => {
-  const response = await fetch('/api/plans');
+  const response = await fetch(apiUrl('/api/plans'));
   return response.json();
 };
 

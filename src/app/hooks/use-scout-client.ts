@@ -1,4 +1,5 @@
 import { type OpenQuestionGroup, collectOpenQuestions } from '@/app/features/plans/helpers';
+import { apiUrl } from '@/app/services/api-base';
 import { fetchPlans } from '@/app/services/content';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -25,7 +26,7 @@ export function useScoutClient(): ScoutClientState {
   }, [load]);
 
   useEffect(() => {
-    const source = new EventSource('/api/activity/stream');
+    const source = new EventSource(apiUrl('/api/activity/stream'));
     let timer: ReturnType<typeof setTimeout> | undefined;
     source.onmessage = (event) => {
       let payload: { message?: string };

@@ -1,4 +1,5 @@
 import type { CheckName, CheckResult } from '@/types/index';
+import { apiUrl } from './api-base';
 
 export interface StatusState {
   lint: CheckResult;
@@ -8,7 +9,7 @@ export interface StatusState {
 }
 
 export const fetchStatus = async (): Promise<StatusState> => {
-  const response = await fetch('/api/status');
+  const response = await fetch(apiUrl('/api/status'));
   return response.json();
 };
 

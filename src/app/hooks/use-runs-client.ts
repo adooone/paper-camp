@@ -1,6 +1,7 @@
 import type { AgentTaskState } from '@/types/index';
 import { useCallback, useEffect, useState } from 'react';
 import { fetchAgentStatus, launchAgent, stopAgent } from '../services/agent-api';
+import { apiUrl } from '../services/api-base';
 
 const ACTIVE_STATUSES: AgentTaskState['status'][] = ['starting', 'running', 'stopping'];
 const RECENT_OUTCOME_COUNT = 3;
@@ -30,7 +31,7 @@ export function useRunsClient(): RunsClientState {
   }, [load]);
 
   useEffect(() => {
-    const source = new EventSource('/api/activity/stream');
+    const source = new EventSource(apiUrl('/api/activity/stream'));
     let timer: ReturnType<typeof setTimeout> | undefined;
     source.onmessage = (event) => {
       let payload: { type?: string };
