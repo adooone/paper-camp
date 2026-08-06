@@ -44,6 +44,15 @@ export const effectiveStatus = (
   return runningTaskForPlan(plan.id, agentStatus) ? 'in-progress' : plan.status;
 };
 
+export const canMarkPlanDone = (plan: PlanEntry): boolean =>
+  !plan.pr &&
+  plan.status !== 'done' &&
+  plan.status !== 'dropped' &&
+  plan.status !== 'review' &&
+  plan.phases.length > 0 &&
+  plan.phases.every((p) => p.done) &&
+  (plan.fixes ?? []).every((f) => f.done);
+
 export interface OpenQuestionGroup {
   plan: PlanEntry;
   questions: ThreadMessage[];

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
 import { FixReviewButton } from '../actions';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { effectiveStatus } from '../helpers';
+import { canMarkPlanDone, effectiveStatus } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
 
@@ -39,14 +39,7 @@ export const PlanActionsColumn = () => {
   const done = plan.status === 'done';
   const hasUnchecked = plan.phases.some((p) => !p.done);
   const canRunAll = (plan.status === 'planned' || inProgress) && hasUnchecked;
-  const canMarkDone =
-    !plan.pr &&
-    !done &&
-    !dropped &&
-    !underReview &&
-    plan.phases.length > 0 &&
-    !hasUnchecked &&
-    (plan.fixes ?? []).every((f) => f.done);
+  const canMarkDone = canMarkPlanDone(plan);
   const canFixReview = Boolean(
     plan.pr &&
       (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
