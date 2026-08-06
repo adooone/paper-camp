@@ -22,7 +22,7 @@ Valuable single-project; becomes the flagship screen of the multi-project hub ([
       Expose a read route that returns the parked questions oldest-first, each carrying enough context (idea id/title, parked phase, question text) to resolve without opening the idea.
 - [x] Build the inbox view
       A route listing every parked question as an age-ordered queue, with an empty state when nothing is waiting.
-- [ ] Resolve inline, reusing the resume flow
+- [x] Resolve inline, reusing the resume flow
       Answer or dismiss a question from the inbox through the existing feedback-message path so the parked run resumes on reply.
 - [ ] Surface the unresolved count in the nav
       Badge the inbox nav entry with the number of open questions so parked work is visible without opening the screen.

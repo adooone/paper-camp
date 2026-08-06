@@ -5,17 +5,15 @@ import { useAppStore } from '@/app/stores/app-store';
 import type { ParkedQuestion } from '@/types/index';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-
-const formatAge = (ageDays: number): string => {
-  if (!Number.isFinite(ageDays)) return 'age unknown';
-  if (ageDays <= 0) return 'today';
-  return ageDays === 1 ? '1 day ago' : `${ageDays} days ago`;
-};
+import { formatAge } from './helpers';
+import { QuestionRow } from './question-row';
 
 export const InboxPage = () => {
   const [questions, setQuestions] = useState<ParkedQuestion[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const plans = useAppStore((s) => s.plans);
+  const loadPlans = useAppStore((s) => s.loadPlans);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,6 +21,11 @@ export const InboxPage = () => {
       .then(setQuestions)
       .catch(() => setLoadFailed(true));
   }, []);
+
+  const reload = async () => {
+    await loadPlans();
+    setQuestions(await fetchParkedQuestions());
+  };
 
   const openEntity = (title: string) => {
     if (plans?.entries.some((p) => p.title === title)) {
@@ -45,23 +48,42 @@ export const InboxPage = () => {
       )}
       {questions && questions.length > 0 && (
         <div className="flex flex-col">
-          {questions.map((q, i) => (
-            <div
-              key={`${q.entityId}-${i}`}
-              className="flex items-center gap-3 py-2.5 border-b border-black/10 last:border-b-0"
-            >
-              <button
-                type="button"
-                onClick={() => openEntity(q.entityTitle)}
-                aria-label={`Open ${q.entityTitle}`}
-                className="bg-transparent border-none p-0 cursor-pointer"
-              >
-                <PlanIdStamp id={q.entityId} />
-              </button>
-              <span className="flex-1 min-w-0 truncate">{q.text}</span>
-              <span className="opacity-50 text-xs whitespace-nowrap">{formatAge(q.ageDays)}</span>
-            </div>
-          ))}
+          {questions.map((q, i) => {
+            const key = `${q.entityId}-${i}`;
+            const plan = plans?.entries.find((p) => p.id === q.entityId);
+            if (!plan) {
+              return (
+                <div
+                  key={key}
+                  className="flex items-center gap-3 py-2.5 border-b border-black/10 last:border-b-0"
+                >
+                  <button
+                    type="button"
+                    onClick={() => openEntity(q.entityTitle)}
+                    aria-label={`Open ${q.entityTitle}`}
+                    className="bg-transparent border-none p-0 cursor-pointer"
+                  >
+                    <PlanIdStamp id={q.entityId} />
+                  </button>
+                  <span className="flex-1 min-w-0 truncate">{q.text}</span>
+                  <span className="opacity-50 text-xs whitespace-nowrap">
+                    {formatAge(q.ageDays)}
+                  </span>
+                </div>
+              );
+            }
+            return (
+              <QuestionRow
+                key={key}
+                question={q}
+                plan={plan}
+                expanded={expandedKey === key}
+                onToggle={() => setExpandedKey((cur) => (cur === key ? null : key))}
+                onOpen={() => openEntity(q.entityTitle)}
+                reload={reload}
+              />
+            );
+          })}
         </div>
       )}
     </div>
