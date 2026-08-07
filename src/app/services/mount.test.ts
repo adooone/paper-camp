@@ -1,16 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { deriveMountPrefix } from './mount';
+import { readMountPrefix } from './mount';
 
-describe('deriveMountPrefix', () => {
-  it('is empty for the standalone camp root', () => {
-    expect(deriveMountPrefix('http://localhost:3333/')).toBe('');
+function root(mount: string | null): { getAttribute(name: string): string | null } {
+  return { getAttribute: () => mount };
+}
+
+describe('readMountPrefix', () => {
+  it('is empty when the standalone serving layer injects no mount', () => {
+    expect(readMountPrefix(root(null))).toBe('');
   });
 
-  it('returns the mount directory when embedded under a prefix', () => {
-    expect(deriveMountPrefix('http://localhost:5173/paper-camp/')).toBe('/paper-camp');
+  it('is empty when the root element is missing', () => {
+    expect(readMountPrefix(null)).toBe('');
   });
 
-  it('tolerates the legacy dunder route prefix', () => {
-    expect(deriveMountPrefix('http://localhost:5173/__camp/')).toBe('/__camp');
+  it('returns the injected mount when embedded under a prefix', () => {
+    expect(readMountPrefix(root('/paper-camp'))).toBe('/paper-camp');
+  });
+
+  it('reads the injected mount, not the page URL, so a deep-link reload does not poison it', () => {
+    expect(readMountPrefix(root(''))).toBe('');
+    expect(readMountPrefix(root('/paper-camp'))).toBe('/paper-camp');
   });
 });

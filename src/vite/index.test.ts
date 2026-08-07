@@ -56,7 +56,7 @@ describe('paperCamp', () => {
     const req = {};
     const res = {};
     middleware(req, res);
-    expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 4242 });
+    expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 4242, mount: CAMP_ROUTE });
   });
 
   it('prefers an explicit port option over config.json', async () => {
@@ -68,7 +68,7 @@ describe('paperCamp', () => {
     const req = {};
     const res = {};
     middleware(req, res);
-    expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 9999 });
+    expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 9999, mount: CAMP_ROUTE });
   });
 
   it('skips the proxy middleware and script injection when integration.toolbar.enabled is false', async () => {

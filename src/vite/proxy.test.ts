@@ -1,7 +1,24 @@
 import { type Server, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it } from 'vitest';
-import { proxyToCampServer } from './proxy';
+import { MOUNT_ATTRIBUTE, readMountPrefix } from '../app/services/mount';
+import { injectMountAttribute, proxyToCampServer } from './proxy';
+
+const SPA_FALLBACK = '<!DOCTYPE html><html><body><div id="root"></div></body></html>';
+
+function htmlServer(servers: Server[]): Promise<number> {
+  const server = createServer((_req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end(SPA_FALLBACK);
+  });
+  servers.push(server);
+  return listen(server);
+}
+
+function rootMount(html: string): string {
+  const match = html.match(new RegExp(`<div id="root"(?: ${MOUNT_ATTRIBUTE}="([^"]*)")?>`));
+  return readMountPrefix({ getAttribute: () => match?.[1] ?? null });
+}
 
 function listen(server: Server): Promise<number> {
   return new Promise((resolve) => {
@@ -56,5 +73,60 @@ describe('proxyToCampServer', () => {
     const response = await fetch(`http://127.0.0.1:${proxyPort}/status`);
 
     expect(response.status).toBe(502);
+  });
+
+  it('injects the mount into the SPA fallback so a deep-link reload reads it, not the URL', async () => {
+    const targetPort = await htmlServer(servers);
+    const proxy = createServer((req, res) =>
+      proxyToCampServer(req, res, { port: targetPort, mount: '/paper-camp' }),
+    );
+    servers.push(proxy);
+    const proxyPort = await listen(proxy);
+
+    const response = await fetch(`http://127.0.0.1:${proxyPort}/plans/some-deep-title`);
+    const html = await response.text();
+
+    expect(html).toContain(`<div id="root" ${MOUNT_ATTRIBUTE}="/paper-camp">`);
+    expect(rootMount(html)).toBe('/paper-camp');
+  });
+
+  it('leaves the SPA fallback untouched when serving standalone (no mount)', async () => {
+    const targetPort = await htmlServer(servers);
+    const proxy = createServer((req, res) => proxyToCampServer(req, res, { port: targetPort }));
+    servers.push(proxy);
+    const proxyPort = await listen(proxy);
+
+    const response = await fetch(`http://127.0.0.1:${proxyPort}/plans/some-deep-title`);
+    const html = await response.text();
+
+    expect(html).toBe(SPA_FALLBACK);
+    expect(rootMount(html)).toBe('');
+  });
+
+  it('does not rewrite non-HTML responses even under a mount', async () => {
+    const target = createServer((_req, res) => {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end('{"branch":"main"}');
+    });
+    servers.push(target);
+    const targetPort = await listen(target);
+
+    const proxy = createServer((req, res) =>
+      proxyToCampServer(req, res, { port: targetPort, mount: '/paper-camp' }),
+    );
+    servers.push(proxy);
+    const proxyPort = await listen(proxy);
+
+    const response = await fetch(`http://127.0.0.1:${proxyPort}/api/status`);
+
+    expect(await response.text()).toBe('{"branch":"main"}');
+  });
+});
+
+describe('injectMountAttribute', () => {
+  it('marks the root element with the serving mount', () => {
+    expect(injectMountAttribute('<div id="root"></div>', '/paper-camp')).toBe(
+      `<div id="root" ${MOUNT_ATTRIBUTE}="/paper-camp"></div>`,
+    );
   });
 });

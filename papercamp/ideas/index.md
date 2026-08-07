@@ -141,3 +141,4 @@
 | IDEA-138 | Single-bar toolbar with a Stack-style chat sidebar | feat | review | integration, app, ux, chat |
 | IDEA-139 | Desk is broken under the mount — router basepath, API base, and a friendlier route | fix | idea | integration, app, cli |
 | IDEA-140 | Bottom-center island — hidden by default, revealed from the logo trigger | feat | idea | integration, app, ux, motion |
+| IDEA-141 | Phases as living progress rows | feat | idea | app, ui, plans |

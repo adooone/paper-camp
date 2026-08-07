@@ -28,7 +28,7 @@ export function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
       if (!enabled) return;
       const port = resolvedPort;
       server.middlewares.use(route, (req: IncomingMessage, res: ServerResponse) => {
-        proxyToCampServer(req, res, { port });
+        proxyToCampServer(req, res, { port, mount: route });
       });
     },
     transformIndexHtml(html: string) {

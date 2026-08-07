@@ -50,5 +50,5 @@ the page is unusable there. Two mount bugs and one naming decision:
       Change `CAMP_ROUTE` in the vite plugin and `DEFAULT_ROUTE` in the toolbar; keep `integration.route` as the override and tolerate the old `/__camp` default.
 - [x] Update docs and verify under the mount
       Refresh route references in docs and confirm the desk works both standalone and embedded.
-- [ ] Derive the mount prefix from a serve-time signal, not the page URL
+- [x] Derive the mount prefix from a serve-time signal, not the page URL
       Review-found: `deriveMountPrefix(document.baseURI)` reads the page URL's directory, so reloading any deep link (`/plans/<title>`, `/plans/`, `/paper-camp/plans/<title>`) poisons the prefix and every `/api` call gets the SPA-fallback HTML ("<!DOCTYPE is not valid JSON", dead StatusBar). The serving layer must declare the mount instead — CLI/standalone serves `''`, the vite plugin injects its route (the [[IDEA-132]] injected-attribute seam) — with tests covering deep-link reloads standalone and mounted.
