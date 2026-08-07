@@ -1,5 +1,5 @@
 import { IconButton } from '@dendelion/paper-ui';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { PaperLogo } from './paper-logo';
 import { useIslandReveal } from './use-island-reveal';
 
@@ -20,22 +20,17 @@ const islandStyle: CSSProperties = {
   gap: '0.5rem',
 };
 
-const revealStyle: CSSProperties = {
-  minWidth: '16rem',
-  minHeight: '5rem',
-};
-
 const triggerStyle: CSSProperties = {
   borderRadius: '9999px',
 };
 
-export const IslandTrigger = () => {
+export const IslandTrigger = ({ children }: { children?: ReactNode }) => {
   const { open, rootRef, rootProps, triggerProps } = useIslandReveal();
 
   return (
     <div style={dockStyle}>
       <div ref={rootRef} style={islandStyle} {...rootProps}>
-        {open && <div style={revealStyle} />}
+        {open && children}
         <IconButton
           surface="paper"
           size="large"

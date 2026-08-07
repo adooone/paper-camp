@@ -79,7 +79,7 @@ morphs into/behind the card rather than coexisting with it.
       A floating, always-present affordance that overlays the host app with zero layout space.
 - [x] Wire reveal and dismiss interaction
       Hover-intent delay, click/tap, and focus/Enter to open; pin while pointer is inside or a menu is open; dismiss on outside-click, Escape, or pointer-leave with a grace period.
-- [ ] Assemble the Island card on `surface="paper"`
+- [x] Assemble the Island card on `surface="paper"`
       State line (branch, changed count, ahead marker, check stamp) above the action line, with the optional focus footer when a plan is active.
 - [ ] Wire the action verbs
       Sync, Push, Commit, Capture, Desk inline; Chat opens the IDEA-138 chalkboard sidebar.
