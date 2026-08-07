@@ -60,5 +60,19 @@ source we trust, and disk transcripts are never read.
    anthropics/claude-code#44328), and unofficial endpoints are out. If a
    usage API ships later, the card upgrades to a real gauge.
 
+### Phases
+- [ ] Capture usage and capacity from the stream
+      Parser retains the `result` event's usage, duration, and model plus the latest `rate_limit_event` snapshot; run-all records each phase at its per-phase seam.
+- [ ] Persist the usage record into tasks.log
+      Grow each git-tracked log entry with the captured usage so run history is durable.
+- [ ] Write the `run:` line under done phases
+      Land the compact annotation in the idea file, cumulative across attempts, and mirror the grammar in about.md.
+- [ ] Render phase columns and the idea rollup
+      Entity detail shows Time / Tokens / Model per done phase and a derived idea-level rollup, computed at read time.
+- [ ] Add Stats analytics cards
+      Tokens and agent-minutes per week, median phase duration, most expensive ideas.
+- [ ] Add the capacity card and StatusBar pill
+      Latest rate-limit snapshot on Stats; a warning pill in the StatusBar only when status leaves "allowed".
+
 ### Thread
 - [x] 2026-08-06 [decision] Live stream is the sole usage source (disk transcripts are known-wrong); tokens not USD in the UI; capacity is a passive per-run snapshot from `rate_limit_event` — status + reset clock, no percent — rather than anything scraped or reverse-engineered.

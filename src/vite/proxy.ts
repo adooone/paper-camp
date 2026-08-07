@@ -22,7 +22,7 @@ export function proxyToCampServer(
       port,
       path: req.url ?? '/',
       method: req.method,
-      headers: { ...req.headers, host: `${host}:${port}` },
+      headers: { ...req.headers, host: `${host}:${port}`, 'accept-encoding': 'identity' },
     },
     (proxyRes) => {
       const isHtml = (proxyRes.headers['content-type'] ?? '').includes('text/html');

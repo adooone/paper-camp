@@ -19,12 +19,17 @@ run is idle, mid-phase, or done. Make each row carry its state visually:
    the bright part of the table.
 
 2. **The running phase fills like a loading line.** The row's background
-   fills left-to-right proportional to progress. The percent is honest,
-   not cosmetic: `elapsed / median duration of past phase runs` from
-   [[IDEA-135]]'s per-phase records, clamped at 95% until the phase truly
-   completes; with no history yet the fill renders as an indeterminate
-   shimmer instead of a fake number. Depends on [[IDEA-135]] for the
-   duration data.
+   fills left-to-right proportional to progress, measured as a hybrid:
+   milestone anchors detected from the run's own stream — the phase
+   prompt fixes the shape, so `Edit`/`Write` tool calls mean implementing
+   (0–60%), a Bash call running `check-types`/biome means verifying
+   (60–90%), the edit flipping the plan file's checkbox lands at 95% —
+   with elapsed-vs-median-segment-duration from [[IDEA-135]]'s records
+   interpolating inside a segment once history exists (the bar holds at
+   the anchor before that). Two honesty rules: the fill clamps at 95%
+   until the phase truly completes, and ~30s without a stream event
+   freezes the bar — a stalled run visibly stalls. Works from the very
+   first run; [[IDEA-135]] only sharpens it.
 
 3. **Spinner replaces the checkbox.** While a phase runs, its leading
    slot shows the spinner where the checkbox sits — one glance says
@@ -44,4 +49,4 @@ run is idle, mid-phase, or done. Make each row carry its state visually:
    instead of stepping whole phases only.
 
 ### Thread
-- [x] 2026-08-07 [decision] Per-phase percent derives from elapsed-vs-median-duration (IDEA-135 data), clamped at 95% and indeterminate before history exists — never a cosmetic animation pretending to be measurement.
+- [x] 2026-08-07 [decision] Per-phase percent is milestones-plus-time: stream-detected stage anchors (implement / verify / checkbox) carry the bar from run one, elapsed-vs-median segment time from [[IDEA-135]] interpolates between them, the fill clamps at 95%, and ~30s of stream silence freezes the bar. Pure elapsed-vs-median was rejected (a stuck agent would keep "progressing"); agent self-reported progress was rejected (prompt pollution, unreliable emission).

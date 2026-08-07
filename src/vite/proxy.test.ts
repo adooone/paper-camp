@@ -1,5 +1,6 @@
 import { type Server, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { gzipSync } from 'node:zlib';
 import { afterEach, describe, expect, it } from 'vitest';
 import { MOUNT_ATTRIBUTE, readMountPrefix } from '../app/services/mount';
 import { injectMountAttribute, proxyToCampServer } from './proxy';
@@ -77,6 +78,35 @@ describe('proxyToCampServer', () => {
 
   it('injects the mount into the SPA fallback so a deep-link reload reads it, not the URL', async () => {
     const targetPort = await htmlServer(servers);
+    const proxy = createServer((req, res) =>
+      proxyToCampServer(req, res, { port: targetPort, mount: '/paper-camp' }),
+    );
+    servers.push(proxy);
+    const proxyPort = await listen(proxy);
+
+    const response = await fetch(`http://127.0.0.1:${proxyPort}/plans/some-deep-title`);
+    const html = await response.text();
+
+    expect(html).toContain(`<div id="root" ${MOUNT_ATTRIBUTE}="/paper-camp">`);
+    expect(rootMount(html)).toBe('/paper-camp');
+  });
+
+  it('forces identity encoding so a compressing upstream still yields injectable HTML', async () => {
+    const target = createServer((req, res) => {
+      if ((req.headers['accept-encoding'] ?? '').includes('gzip')) {
+        res.writeHead(200, {
+          'content-type': 'text/html; charset=utf-8',
+          'content-encoding': 'gzip',
+        });
+        res.end(gzipSync(Buffer.from(SPA_FALLBACK)));
+        return;
+      }
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+      res.end(SPA_FALLBACK);
+    });
+    servers.push(target);
+    const targetPort = await listen(target);
+
     const proxy = createServer((req, res) =>
       proxyToCampServer(req, res, { port: targetPort, mount: '/paper-camp' }),
     );
