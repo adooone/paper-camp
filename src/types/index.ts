@@ -644,6 +644,9 @@ export interface TaskLogEntry {
   endedAt: string;
   outcome: 'done' | 'error' | 'superseded';
   reason?: string;
+  usage?: RunUsage;
+  phaseRuns?: PhaseRunRecord[];
+  rateLimit?: RateLimitSnapshot;
 }
 
 export interface RunUsage {

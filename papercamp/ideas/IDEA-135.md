@@ -63,7 +63,7 @@ source we trust, and disk transcripts are never read.
 ### Phases
 - [x] Capture usage and capacity from the stream
       Parser retains the `result` event's usage, duration, and model plus the latest `rate_limit_event` snapshot; run-all records each phase at its per-phase seam.
-- [ ] Persist the usage record into tasks.log
+- [x] Persist the usage record into tasks.log
       Grow each git-tracked log entry with the captured usage so run history is durable.
 - [ ] Write the `run:` line under done phases
       Land the compact annotation in the idea file, cumulative across attempts, and mirror the grammar in about.md.

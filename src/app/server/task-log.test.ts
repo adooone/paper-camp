@@ -84,6 +84,78 @@ describe('logTaskCompletion reason', () => {
   });
 });
 
+describe('logTaskCompletion usage', () => {
+  const findRow = (root: string, id: string) =>
+    readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8')
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => JSON.parse(l))
+      .find((e) => e.id === id);
+
+  const usage = {
+    durationMs: 400000,
+    numTurns: 12,
+    model: 'claude-fable-5',
+    inputTokens: 1_200_000,
+    outputTokens: 38_000,
+    cacheCreationTokens: 5000,
+    cacheReadTokens: 900_000,
+    costUsd: 1.23,
+  };
+
+  it('grows a single-run entry with its usage and rate-limit snapshot', async () => {
+    const root = makeRoot();
+    const id = '11111111-0000-0000-0000-000000000010';
+    await logTaskCompletion(
+      root,
+      {
+        ...completed(id),
+        runUsage: usage,
+        rateLimit: { status: 'allowed_warning', resetsAt: 1_700_000_000, overage: false },
+      },
+      'done',
+    );
+
+    const logged = findRow(root, id);
+    expect(logged.usage).toEqual(usage);
+    expect(logged.rateLimit.status).toBe('allowed_warning');
+    expect(logged.phaseRuns).toBeUndefined();
+  });
+
+  it('records run-all phases separately as a per-phase breakdown', async () => {
+    const root = makeRoot();
+    const id = '22222222-0000-0000-0000-000000000011';
+    await logTaskCompletion(
+      root,
+      {
+        ...completed(id),
+        taskKind: 'run-all',
+        phaseRuns: [
+          { kind: 'phase', index: 0, usage },
+          { kind: 'phase', index: 1, usage },
+        ],
+      },
+      'done',
+    );
+
+    const logged = findRow(root, id);
+    expect(logged.phaseRuns).toHaveLength(2);
+    expect(logged.phaseRuns[1].index).toBe(1);
+    expect(logged.usage).toBeUndefined();
+  });
+
+  it('omits usage fields entirely when nothing was captured', async () => {
+    const root = makeRoot();
+    const id = '33333333-0000-0000-0000-000000000012';
+    await logTaskCompletion(root, completed(id), 'done');
+
+    const logged = findRow(root, id);
+    expect(logged.usage).toBeUndefined();
+    expect(logged.phaseRuns).toBeUndefined();
+    expect(logged.rateLimit).toBeUndefined();
+  });
+});
+
 describe('logTaskCompletion retention', () => {
   it('drops runs older than the retention window and keeps recent ones', async () => {
     const root = makeRoot();
