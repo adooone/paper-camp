@@ -138,6 +138,6 @@
 | IDEA-135 | Run analytics — time, tokens, capacity | feat | idea | agent, stats, server, ui |
 | IDEA-136 | Roadmap page redesign | fix | idea | app, ui, roadmap |
 | IDEA-137 | Drafted plans vanish when a phase agent stashes | fix | idea | agents, plans, git |
-| IDEA-138 | Single-bar toolbar with a Stack-style chat sidebar | feat | idea | integration, app, ux, chat |
+| IDEA-138 | Single-bar toolbar with a Stack-style chat sidebar | feat | review | integration, app, ux, chat |
 | IDEA-139 | Desk is broken under the mount — router basepath, API base, and a friendlier route | fix | idea | integration, app, cli |
 | IDEA-140 | Bottom-center island — hidden by default, revealed from the logo trigger | feat | idea | integration, app, ux, motion |

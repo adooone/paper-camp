@@ -140,7 +140,7 @@ const CaptureCard = () => {
     try {
       await createIdea({
         title: captureTitle(text),
-        content: `${text}\n\nCaptured from ${window.location.href}`,
+        content: `${text}\n\nCaptured from ${window.location.origin}${window.location.pathname}`,
         kind: 'note',
       });
       setInput('');

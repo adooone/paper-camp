@@ -49,7 +49,7 @@ The Stack-style chat sidebar ([[IDEA-138]] phases 2–5) is expected to stay
 as the deep surface, opened *from* the island's chat action — island for
 glance + quick verbs, sidebar for chat and anything content-bearing.
 
-## UI
+**UI**
 
 Built on paper-ui's existing `Island` component (`surface="paper"`), so the
 embed inherits the library's card language instead of inventing chrome. Two

@@ -236,7 +236,11 @@ export const ScoutPanel = ({
   const activePlan = oldest?.plan ?? focusPlan;
   // The idea chip above the thread already names the focused plan when it's the
   // one being chatted about — the Focus card only adds information when they differ.
-  const distinctFocusPlan = focusPlan && focusPlan.id !== activePlan?.id ? focusPlan : null;
+  const samePlan =
+    focusPlan?.id && activePlan?.id
+      ? focusPlan.id === activePlan.id
+      : focusPlan?.title === activePlan?.title;
+  const distinctFocusPlan = focusPlan && !samePlan ? focusPlan : null;
 
   if (!activePlan) {
     return (
