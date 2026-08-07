@@ -97,6 +97,19 @@ at a UI change before reporting it done, not just `tsc`/lint.
 - After navigating, `browser_batch` a `screenshot` and actually look at it; check
   `read_console_messages` for thrown errors before calling a change verified.
 
+## Title style
+
+An entity title is a noun/verb phrase, at most 40 characters, roughly 3–6
+words. No em-dash subtitles, no trailing clause — the symptom, mechanism, and
+detail belong in the body's first paragraph, not the title. One style for every
+type; a fix is not licensed to be a sentence. This holds for every author —
+human, desk capture, suggest-ideas, conversation captures — and the branch
+scheme below depends on it (the kebab title is the branch slug).
+
+- Example: "Desk is broken under the mount — router basepath, API base, and a
+  friendlier route" → "Desk breaks under the mount", with the rest of the
+  sentence moved into the body.
+
 ## Branch workflow
 
 Work on a plan (feature, fix, refactor, etc.) happens on a feature branch, not

@@ -49,6 +49,18 @@ legacy plan (including archived ones) into unified entities under `papercamp/ide
 - Shorter than id+slug — easier for agents to reference in file tool calls.
 - The generated index provides the id → title mapping for human readability.
 
+### Title style
+
+A `title` is a noun/verb phrase, at most 40 characters, roughly 3–6 words. No
+em-dash subtitles, no trailing clause — the symptom, mechanism, and detail
+belong in the body's first paragraph. One style for every type; a fix is not
+licensed to be a sentence ("Desk is broken under the mount — router basepath,
+API base, and a friendlier route" → "Desk breaks under the mount"). Every author
+that mints a title — the New idea capture, suggest-ideas, the draft prompt, desk
+capture, and any hand-written entity — follows the same rule, and `branchName()`
+caps the kebab slug at 40 characters so legacy long titles still produce sane
+branches. AGENTS.md carries the same rule beside the branch scheme it protects.
+
 ### YAML frontmatter format
 
 Each entity file starts with a `---`-delimited YAML frontmatter block containing all
