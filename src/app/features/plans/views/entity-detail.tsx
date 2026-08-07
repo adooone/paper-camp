@@ -1,9 +1,11 @@
 import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import {
+  type RunningPhaseFill,
   useFeedbackQuietSummary,
   usePlanStatusPatch,
   usePromoteThreadMessage,
+  useRunningPhaseFill,
   useSendFeedbackMessage,
   useTrail,
 } from '@/app/features/plans/hooks';
@@ -22,7 +24,7 @@ import {
   Tooltip,
   useToast,
 } from '@dendelion/paper-ui';
-import { useState } from 'react';
+import { type CSSProperties, useEffect, useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
@@ -63,6 +65,7 @@ const PhasesSection = ({
   agentBusy,
   agentPhaseIndex,
   planTask,
+  runningFill,
   updating,
   onTogglePhase,
   onToggleFix,
@@ -73,6 +76,7 @@ const PhasesSection = ({
   agentBusy: boolean;
   agentPhaseIndex: number | null | undefined;
   planTask: AgentTaskState | undefined;
+  runningFill: RunningPhaseFill | null;
   updating: boolean;
   onTogglePhase: (index: number) => void;
   onToggleFix: (index: number) => void;
@@ -85,8 +89,17 @@ const PhasesSection = ({
     ...plan.phases.map((item, index) => ({ kind: 'phase' as const, item, index })),
     ...fixes.map((item, index) => ({ kind: 'fix' as const, item, index })),
   ];
+  const isRunningRow = (row: WorkRow) =>
+    row.kind === 'phase' && !row.item.done && runningFill?.index === row.index;
   return (
-    <div className="mb-8">
+    <div
+      className="mb-8"
+      style={
+        runningFill
+          ? ({ '--phase-fill': `${runningFill.fraction * 100}%` } as CSSProperties)
+          : undefined
+      }
+    >
       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <h3 className={`${sectionHeadingClass} m-0`}>Phases</h3>
         <div className="flex items-center gap-2 flex-wrap">
@@ -115,15 +128,18 @@ const PhasesSection = ({
           {
             key: 'checkbox',
             header: 'Status',
-            cell: (row: WorkRow) => (
-              <Checkbox
-                checked={row.item.done}
-                onChange={() =>
-                  row.kind === 'phase' ? onTogglePhase(row.index) : onToggleFix(row.index)
-                }
-                disabled={updating}
-              />
-            ),
+            cell: (row: WorkRow) =>
+              isRunningRow(row) ? (
+                <Spinner size="small" />
+              ) : (
+                <Checkbox
+                  checked={row.item.done}
+                  onChange={() =>
+                    row.kind === 'phase' ? onTogglePhase(row.index) : onToggleFix(row.index)
+                  }
+                  disabled={updating}
+                />
+              ),
             width: 2,
           },
           {
@@ -180,11 +196,14 @@ const PhasesSection = ({
         }}
         showExpandColumn={false}
         rowTexture={(row: WorkRow) => (row.kind === 'fix' ? 'kraft' : undefined)}
-        rowClassName={(row: WorkRow) =>
-          row.kind === 'phase' && row.item.source === 'review'
-            ? 'bg-[rgba(155,122,181,0.08)]'
-            : undefined
-        }
+        rowClassName={(row: WorkRow) => {
+          if (isRunningRow(row)) return 'phase-running-row';
+          if (row.kind === 'phase' && row.item.done) return 'phase-done-row';
+          if (row.kind === 'phase' && row.item.source === 'review') {
+            return 'bg-[rgba(155,122,181,0.08)]';
+          }
+          return undefined;
+        }}
         className="phase-table-phone"
       />
     </div>
@@ -401,8 +420,11 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
   const detailView = useAppStore((s) => s.detailView);
+  const taskLog = useAppStore((s) => s.taskLog);
+  const loadTaskLog = useAppStore((s) => s.loadTaskLog);
   const planTask = runningTaskForPlan(plan.id, agentStatus);
   const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
+  const runningFill = useRunningPhaseFill(planTask, taskLog);
   const auditRunning = planTask?.taskKind === 'audit';
   const progress = combinedProgress(plan);
   const hasPhases = plan.phases.length > 0;
@@ -416,6 +438,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
   // The app never switches branches on its own; this just offers the plan's branch as one click.
   const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
+
+  useEffect(() => {
+    loadTaskLog();
+  }, [loadTaskLog]);
 
   const handleCreateBranch = async () => {
     if (!plan.id) return;
@@ -532,6 +558,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               agentBusy={agentBusy}
               agentPhaseIndex={agentPhaseIndex}
               planTask={planTask}
+              runningFill={runningFill}
               updating={updating}
               onTogglePhase={handleTogglePhase}
               onToggleFix={handleToggleFix}
