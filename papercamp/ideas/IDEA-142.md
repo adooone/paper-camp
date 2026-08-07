@@ -48,7 +48,7 @@ stages this idea edits — keep the two in sync.
 ### Phases
 - [x] Make type checks incremental
       Switch the check-types config to `tsc --incremental` so chained re-checks take seconds.
-- [ ] Run biome autofix in the server pre-commit
+- [x] Run biome autofix in the server pre-commit
       Server runs `biome check --write` before each per-phase commit.
 - [ ] Drop the biome instruction from the phase prompt
 - [ ] Default run-all effort to medium in Settings
