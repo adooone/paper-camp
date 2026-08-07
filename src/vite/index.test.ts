@@ -56,7 +56,7 @@ describe('paperCamp', () => {
     const req = {};
     const res = {};
     middleware(req, res);
-    expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 4242 });
+    expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 4242, mount: CAMP_ROUTE });
   });
 
   it('prefers an explicit port option over config.json', async () => {
@@ -68,7 +68,7 @@ describe('paperCamp', () => {
     const req = {};
     const res = {};
     middleware(req, res);
-    expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 9999 });
+    expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 9999, mount: CAMP_ROUTE });
   });
 
   it('skips the proxy middleware and script injection when integration.toolbar.enabled is false', async () => {
@@ -115,6 +115,23 @@ describe('paperCamp', () => {
     const html = transform('<html><body><div id="root"></div></body></html>');
     expect(html).toContain(
       `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="/__toolbar" src="/__toolbar/toolbar.js"></script></body>`,
+    );
+  });
+
+  it('still honors the legacy /__camp route when pinned in an existing config', async () => {
+    const root = await makeRoot({ port: 4242, integration: { route: '/__camp' } });
+    const use = vi.fn();
+    const plugin = paperCamp();
+    await (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)({
+      config: { root },
+      middlewares: { use },
+    });
+
+    expect(use).toHaveBeenCalledWith('/__camp', expect.any(Function));
+    const transform = plugin.transformIndexHtml as (html: string) => string;
+    const html = transform('<html><body><div id="root"></div></body></html>');
+    expect(html).toContain(
+      `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="/__camp" src="/__camp/toolbar.js"></script></body>`,
     );
   });
 

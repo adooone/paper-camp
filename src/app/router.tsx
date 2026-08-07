@@ -7,6 +7,7 @@ import {
 } from '@/app/components';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
+import { mountPrefix } from '@/app/services/mount';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
 import { Button, IconButton, Layout, Page, Stamp, ToastProvider } from '@dendelion/paper-ui';
 import {
@@ -445,7 +446,7 @@ const routeTree = rootRoute.addChildren([
   inboxRoute,
 ]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({ routeTree, basepath: mountPrefix || '/' });
 
 declare module '@tanstack/react-router' {
   interface Register {

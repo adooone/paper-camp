@@ -14,7 +14,7 @@ import { type ToolbarSegment, ToolbarShell } from './toolbar-shell';
 import { ToolbarPanelCard } from './toolbar-side-panel';
 import { useToolbarShell } from './use-toolbar-shell';
 
-const DEFAULT_ROUTE = '/__camp';
+const DEFAULT_ROUTE = '/paper-camp';
 
 // Focus, Scout, Desk — the extension set that carries the strip (IDEA-129/133).
 // Capture dissolved into a Scout card (IDEA-138 phase 5) — no standalone segment.

@@ -2,7 +2,7 @@
 id: IDEA-139
 title: Desk is broken under the mount — router basepath, API base, and a friendlier route
 type: fix
-status: idea
+status: review
 created: 2026-08-06
 tags:
   - integration
@@ -40,13 +40,15 @@ the page is unusable there. Two mount bugs and one naming decision:
 - [x] 2026-08-06 [decision] Route pattern is `/paper-camp/...` — simple URLs, no lowdash-prefixed technical routes.
 
 ### Phases
-- [ ] Derive the mount prefix once
+- [x] Derive the mount prefix once
       A single mount-aware helper the router and desk data layer both read, staying `/` for the standalone camp port.
-- [ ] Give the SPA router a mount-aware basepath
+- [x] Give the SPA router a mount-aware basepath
       Pass the derived prefix as `basepath` in `src/app/router.tsx` so routes resolve under the mount.
-- [ ] Make the desk build's apiUrl base mount-aware
+- [x] Make the desk build's apiUrl base mount-aware
       Prefix desk `/api/...` calls with the mount so StatusBar and Deliver hit the right origin.
-- [ ] Rename the default route to `/paper-camp`
+- [x] Rename the default route to `/paper-camp`
       Change `CAMP_ROUTE` in the vite plugin and `DEFAULT_ROUTE` in the toolbar; keep `integration.route` as the override and tolerate the old `/__camp` default.
-- [ ] Update docs and verify under the mount
+- [x] Update docs and verify under the mount
       Refresh route references in docs and confirm the desk works both standalone and embedded.
+- [x] Derive the mount prefix from a serve-time signal, not the page URL
+      Review-found: `deriveMountPrefix(document.baseURI)` reads the page URL's directory, so reloading any deep link (`/plans/<title>`, `/plans/`, `/paper-camp/plans/<title>`) poisons the prefix and every `/api` call gets the SPA-fallback HTML ("<!DOCTYPE is not valid JSON", dead StatusBar). The serving layer must declare the mount instead — CLI/standalone serves `''`, the vite plugin injects its route (the [[IDEA-132]] injected-attribute seam) — with tests covering deep-link reloads standalone and mounted.

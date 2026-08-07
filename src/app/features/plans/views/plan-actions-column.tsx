@@ -1,7 +1,6 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlanTitle, useSubjectVocabulary } from '@/app/hooks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { AGENT_IDS, AGENT_LABELS, type AgentId } from '@/types/index';
 import { Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
@@ -11,7 +10,7 @@ import { canMarkPlanDone, effectiveStatus } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
 
-const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300 mb-2';
+const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300';
 
 export const PlanActionsColumn = () => {
   const plans = useAppStore((s) => s.plans);
@@ -80,9 +79,9 @@ export const PlanActionsColumn = () => {
   };
 
   return (
-    <div className="flex flex-col gap-8 -mt-5">
+    <div className="flex flex-col gap-4 -mt-5">
       <div>
-        <div className={sectionLabelClass}>Show</div>
+        <div className={`${sectionLabelClass} mb-1.5`}>Show</div>
         <div className="flex flex-col gap-1">
           <ListItem
             size="small"
@@ -103,7 +102,7 @@ export const PlanActionsColumn = () => {
         </div>
       </div>
 
-      <div>
+      <div className="flex items-center justify-between">
         <div className={sectionLabelClass}>Status</div>
         {/* Read-only: the dropped/reopen override lives in Actions below since
             abandonment leaves no branch or PR to derive status from. */}
@@ -117,7 +116,7 @@ export const PlanActionsColumn = () => {
       </div>
 
       <div>
-        <div className={sectionLabelClass}>Subject</div>
+        <div className={`${sectionLabelClass} mb-1.5`}>Subject</div>
         <Select
           size="small"
           value={plan.subject ?? NO_SUBJECT}
@@ -137,7 +136,7 @@ export const PlanActionsColumn = () => {
       </div>
 
       {hasRunOrder && (
-        <div>
+        <div className="flex items-center justify-between">
           <div className={sectionLabelClass}>Order</div>
           <Input
             type="number"
@@ -148,27 +147,14 @@ export const PlanActionsColumn = () => {
             onChange={(e) => setOrderInput(e.target.value)}
             onBlur={handleOrderBlur}
             disabled={updating}
+            className="w-20"
           />
         </div>
       )}
 
-      <div>
-        <div className={sectionLabelClass}>Agent</div>
-        <Select
-          size="small"
-          value={plan.agent ?? ''}
-          onChange={(value) => patch({ agent: value ? (value as AgentId) : null })}
-          disabled={updating}
-          options={[
-            { value: '', label: 'Project default agent' },
-            ...AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] })),
-          ]}
-        />
-      </div>
-
       {plan.tags.length > 0 && (
         <div>
-          <div className={sectionLabelClass}>Tags</div>
+          <div className={`${sectionLabelClass} mb-1.5`}>Tags</div>
           <div className="flex items-center gap-1 flex-wrap">
             {plan.tags.map((tag) => (
               <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
@@ -180,7 +166,7 @@ export const PlanActionsColumn = () => {
       )}
 
       <div>
-        <div className={sectionLabelClass}>Actions</div>
+        <div className={`${sectionLabelClass} mb-1.5`}>Actions</div>
         <div className="flex flex-col gap-1">
           {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
           {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
