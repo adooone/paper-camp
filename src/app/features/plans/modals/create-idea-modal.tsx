@@ -132,6 +132,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Idea title…"
+          helperText="Noun/verb phrase, ≤40 chars — no subtitle; the detail goes in the description below."
           disabled={loading}
           autoFocus
           required

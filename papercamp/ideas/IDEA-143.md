@@ -44,7 +44,7 @@ own length. One convention, enforced where titles are born:
 ### Phases
 - [x] Write the rule into AGENTS.md and about.md
       Place it beside the branch scheme in AGENTS.md so the two stay together.
-- [ ] Add the one-line rule to the New idea, suggest-ideas, and draft prompts
+- [x] Add the one-line rule to the New idea, suggest-ideas, and draft prompts
 - [ ] Cap the branch slug at 40 chars on a word boundary in branchName()
       Truncate the kebab slug only; no titles are renamed.
 - [ ] Lint titles in doctor, flagging active ideas only

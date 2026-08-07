@@ -14,6 +14,8 @@ import type { SimilarityCandidate } from '../helpers';
 
 export const BREVITY_CONTRACT = `Keep phases short: 3-7 phases, each a one-line imperative title. Add a description only when the phase isn't self-explanatory, and keep it to one sentence. Never restate the idea's body and never summarise the work you did.`;
 
+export const TITLE_STYLE = `A title is a noun/verb phrase, at most 40 characters (roughly 3-6 words), no em-dash subtitles or trailing clauses — the symptom, mechanism, and detail belong in the body's first paragraph, not the title.`;
+
 export function buildConvergenceAuditPrompt(plan: PlanEntry): string {
   const phaseList = plan.phases
     .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
@@ -177,7 +179,7 @@ The file already has YAML frontmatter (id, title, status, created, …) and the 
 ${BREVITY_CONTRACT}
 
 Hard rules:
-- Never change the \`id\`, \`title\`, \`status\`, or \`created\` fields — \`status\` stays exactly \`idea\`; a human promotes it after reviewing your draft.
+- Never change the \`id\`, \`title\`, \`status\`, or \`created\` fields — \`status\` stays exactly \`idea\`; a human promotes it after reviewing your draft. (${TITLE_STYLE} Leave the existing title as-is even if it breaks this; never expand it into a symptom-sentence.)
 - Never rewrite or delete the existing prose body or \`### Log\` entries — the idea's history stays intact.
 - Phases: actionable steps a future agent or human could pick up one at a time, not one giant phase.
 
@@ -371,7 +373,7 @@ ${suggestionList}
 
 Task:
 1. Explore this codebase for gaps, rough edges, or "you might want to do X" hunches that aren't already an idea or an existing suggestion above — things like missing error handling, an obvious follow-up to recent work, a TODO left in code, or a UX gap you notice while reading the app.
-2. For each genuinely new one you find (0 to a handful — do not force a quota), append one line to papercamp/suggestions.md formatted exactly \`- YYYY-MM-DD: Title — one-line description\`, using today's date. Keep the title short (a few words, like an idea title) and the description to a single physical line (no literal line breaks).
+2. For each genuinely new one you find (0 to a handful — do not force a quota), append one line to papercamp/suggestions.md formatted exactly \`- YYYY-MM-DD: Title — one-line description\`, using today's date. ${TITLE_STYLE} Keep the description to a single physical line (no literal line breaks).
 3. If you find nothing worth suggesting, make no edits at all — no empty line, no placeholder.
 
 Rules:
