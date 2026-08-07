@@ -114,10 +114,18 @@ Description and rationale...
 ### Phases
 - [ ] Phase 1: Design per-file schema
 - [x] Phase 2: Build frontmatter parser
+      run: 6m40s · 1.2M in · 38k out · fable-5
 
 ### Log
 - 2026-06-28: Initial design drafted
 ```
+
+A completed phase (or fix) may carry a `run:` annotation as an indented sub-line,
+alongside any description: `run: <time> · <in> tokens · <out> tokens · <model>`, with
+a trailing `· ×N` when it ran more than once. Run-all writes it when a phase lands and
+keeps it cumulative across attempts; the precise, unrounded figures live in the
+git-tracked `tasks.log`, so this line is a compact human annotation, not the source of
+truth.
 
 Example note (planless entity, manually closed), unchanged in spirit from before the
 merge:

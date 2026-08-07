@@ -243,7 +243,12 @@ function createEmptyAgentState(): AgentManagerState {
 export function createAgentManager(
   root: string,
   onAuditComplete?: (planId: string) => Promise<void>,
-  onPhaseCommit?: (plan: PlanEntry, phase: PhaseItem, phaseIndex: number) => Promise<void>,
+  onPhaseCommit?: (
+    plan: PlanEntry,
+    phase: PhaseItem,
+    phaseIndex: number,
+    run?: { usage: RunUsage; kind: 'phase' | 'fix' },
+  ) => Promise<void>,
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
   state: AgentManagerState = createEmptyAgentState(),
 ) {
@@ -1161,7 +1166,7 @@ export function createAgentManager(
       }
       if (onPhaseCommit) {
         pushLine(task, `[commit] ${kind} ${i + 1} — ${item.text}`);
-        await onPhaseCommit(plan, item, i);
+        await onPhaseCommit(plan, item, i, phaseUsage ? { usage: phaseUsage, kind } : undefined);
       }
     }
 

@@ -65,7 +65,7 @@ source we trust, and disk transcripts are never read.
       Parser retains the `result` event's usage, duration, and model plus the latest `rate_limit_event` snapshot; run-all records each phase at its per-phase seam.
 - [x] Persist the usage record into tasks.log
       Grow each git-tracked log entry with the captured usage so run history is durable.
-- [ ] Write the `run:` line under done phases
+- [x] Write the `run:` line under done phases
       Land the compact annotation in the idea file, cumulative across attempts, and mirror the grammar in about.md.
 - [ ] Render phase columns and the idea rollup
       Entity detail shows Time / Tokens / Model per done phase and a derived idea-level rollup, computed at read time.

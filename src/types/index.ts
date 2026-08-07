@@ -27,11 +27,20 @@ export const AGENT_LABELS: Record<AgentId, string> = {
   opencode: 'OpenCode',
 };
 
+export interface PhaseRun {
+  durationMs: number;
+  inputTokens: number;
+  outputTokens: number;
+  model?: string;
+  attempts: number;
+}
+
 export interface PhaseItem {
   done: boolean;
   text: string;
   description?: string;
   source?: 'review';
+  run?: PhaseRun;
 }
 
 export type PhaseMilestone = 'implement' | 'verify' | 'checkbox';

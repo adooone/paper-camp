@@ -7,10 +7,12 @@ import type {
   ThreadMessage,
   ThreadMessageKind,
 } from '../types/index';
+import { formatRunLine, parseRunLine } from './phase-run';
 
 const SUB_HEADING_RE = /^#{2,3}\s+/;
 const CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.*)$/;
 const PHASE_SOURCE_RE = /^\[review\]\s+(.*)$/;
+const RUN_LINE_RE = /^run:\s*(.+)$/;
 const DATED_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
 const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(?:\[(decision|question)\]\s+)?(.*)$/;
 const THREAD_LINE_RE =
@@ -29,13 +31,17 @@ function parsePhaseEntries(lines: string[], start: number, end: number): PhaseIt
       const text = sourceMatch ? sourceMatch[1].trim() : rawText;
       const source = sourceMatch ? ('review' as const) : undefined;
       const descriptionLines: string[] = [];
+      let run: PhaseItem['run'];
       i++;
       while (i < end) {
         const next = lines[i];
         if (next.trim() === '') break;
         if (CHECKBOX_RE.test(next) || SUB_HEADING_RE.test(next)) break;
         if (/^\s/.test(next)) {
-          descriptionLines.push(next.trimStart());
+          const trimmed = next.trimStart();
+          const runMatch = trimmed.match(RUN_LINE_RE);
+          if (runMatch) run = parseRunLine(runMatch[1]);
+          else descriptionLines.push(trimmed);
           i++;
         } else {
           break;
@@ -46,6 +52,7 @@ function parsePhaseEntries(lines: string[], start: number, end: number): PhaseIt
         text,
         description: descriptionLines.length > 0 ? descriptionLines.join('\n') : undefined,
         source,
+        run,
       });
     } else {
       i++;
@@ -71,6 +78,7 @@ function formatPhaseLines(heading: string, phases: PhaseItem[]): string[] {
     if (phase.description) {
       for (const descLine of phase.description.split('\n')) lines.push(`      ${descLine}`);
     }
+    if (phase.run) lines.push(`      run: ${formatRunLine(phase.run)}`);
   }
   return lines;
 }
