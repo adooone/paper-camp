@@ -5,9 +5,12 @@ import type {
   CommentStats,
   EntityEntry,
   EntityStatus,
+  IdeaCost,
   ProjectStats,
+  RunUsage,
   TaskLogEntry,
   TasksPerWeek,
+  UsagePerWeek,
 } from '../types/index';
 import { parseTaskLog } from './parse';
 import { readEntitiesWithDerivedStatus } from './readers';
@@ -125,6 +128,85 @@ export function tasksPerWeek(entries: TaskLogEntry[]): TasksPerWeek[] {
     .map(([week, count]) => ({ week, count }));
 }
 
+function entryTokens(entry: TaskLogEntry): { inputTokens: number; outputTokens: number } {
+  let inputTokens = 0;
+  let outputTokens = 0;
+  const add = (usage: RunUsage) => {
+    inputTokens += usage.inputTokens;
+    outputTokens += usage.outputTokens;
+  };
+  if (entry.phaseRuns?.length) for (const p of entry.phaseRuns) add(p.usage);
+  else if (entry.usage) add(entry.usage);
+  return { inputTokens, outputTokens };
+}
+
+function taskWallClockMs(entry: TaskLogEntry): number {
+  const started = Date.parse(entry.startedAt);
+  const ended = Date.parse(entry.endedAt);
+  if (Number.isNaN(started) || Number.isNaN(ended)) return 0;
+  return Math.max(0, ended - started);
+}
+
+export function usagePerWeek(entries: TaskLogEntry[]): UsagePerWeek[] {
+  const buckets = new Map<string, { agentMs: number; inputTokens: number; outputTokens: number }>();
+  for (const entry of entries) {
+    const week = isoWeekKey(entry.startedAt);
+    const bucket = buckets.get(week) ?? { agentMs: 0, inputTokens: 0, outputTokens: 0 };
+    const { inputTokens, outputTokens } = entryTokens(entry);
+    bucket.agentMs += taskWallClockMs(entry);
+    bucket.inputTokens += inputTokens;
+    bucket.outputTokens += outputTokens;
+    buckets.set(week, bucket);
+  }
+  return [...buckets.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([week, b]) => ({
+      week,
+      agentMinutes: Math.round(b.agentMs / 60000),
+      inputTokens: b.inputTokens,
+      outputTokens: b.outputTokens,
+    }));
+}
+
+export function medianPhaseDurationMs(entries: TaskLogEntry[]): number | null {
+  const durations: number[] = [];
+  for (const entry of entries) {
+    if (entry.phaseRuns?.length) {
+      for (const p of entry.phaseRuns) if (p.kind === 'phase') durations.push(p.usage.durationMs);
+    } else if (entry.taskKind === 'phase' && entry.usage) {
+      durations.push(entry.usage.durationMs);
+    }
+  }
+  if (durations.length === 0) return null;
+  durations.sort((a, b) => a - b);
+  const mid = Math.floor(durations.length / 2);
+  return durations.length % 2 === 0 ? (durations[mid - 1] + durations[mid]) / 2 : durations[mid];
+}
+
+export function mostExpensiveIdeas(entries: TaskLogEntry[], limit = 5): IdeaCost[] {
+  const byId = new Map<string, IdeaCost>();
+  for (const entry of entries) {
+    if (!entry.planId) continue;
+    const { inputTokens, outputTokens } = entryTokens(entry);
+    if (inputTokens === 0 && outputTokens === 0) continue;
+    const cost = byId.get(entry.planId) ?? {
+      planId: entry.planId,
+      planTitle: entry.planTitle,
+      inputTokens: 0,
+      outputTokens: 0,
+      durationMs: 0,
+    };
+    cost.planTitle = entry.planTitle;
+    cost.inputTokens += inputTokens;
+    cost.outputTokens += outputTokens;
+    cost.durationMs += taskWallClockMs(entry);
+    byId.set(entry.planId, cost);
+  }
+  return [...byId.values()]
+    .sort((a, b) => b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens))
+    .slice(0, limit);
+}
+
 export async function computeProjectStats(root: string): Promise<ProjectStats> {
   const ideasDir = join(root, 'papercamp', 'ideas');
   const [comments, testLines, testCoveragePct, { entries }, taskLogRaw] = await Promise.all([
@@ -135,6 +217,7 @@ export async function computeProjectStats(root: string): Promise<ProjectStats> {
     readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8').catch(() => ''),
   ]);
   const { openQuestions, decisions } = countThreadNotes(entries);
+  const taskLog = parseTaskLog(taskLogRaw);
   return {
     generatedAt: new Date().toISOString(),
     comments,
@@ -143,6 +226,9 @@ export async function computeProjectStats(root: string): Promise<ProjectStats> {
     entitiesByStatus: countEntitiesByStatus(entries),
     openQuestions,
     decisions,
-    tasksPerWeek: tasksPerWeek(parseTaskLog(taskLogRaw)),
+    tasksPerWeek: tasksPerWeek(taskLog),
+    usagePerWeek: usagePerWeek(taskLog),
+    medianPhaseDurationMs: medianPhaseDurationMs(taskLog),
+    mostExpensiveIdeas: mostExpensiveIdeas(taskLog),
   };
 }

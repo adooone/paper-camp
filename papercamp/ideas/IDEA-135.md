@@ -69,7 +69,7 @@ source we trust, and disk transcripts are never read.
       Land the compact annotation in the idea file, cumulative across attempts, and mirror the grammar in about.md.
 - [x] Render phase columns and the idea rollup
       Entity detail shows Time / Tokens / Model per done phase and a derived idea-level rollup, computed at read time.
-- [ ] Add Stats analytics cards
+- [x] Add Stats analytics cards
       Tokens and agent-minutes per week, median phase duration, most expensive ideas.
 - [ ] Add the capacity card and StatusBar pill
       Latest rate-limit snapshot on Stats; a warning pill in the StatusBar only when status leaves "allowed".

@@ -250,6 +250,22 @@ export interface TasksPerWeek {
   count: number;
 }
 
+export interface UsagePerWeek {
+  /** ISO week, e.g. "2026-W05". */
+  week: string;
+  agentMinutes: number;
+  inputTokens: number;
+  outputTokens: number;
+}
+
+export interface IdeaCost {
+  planId: string;
+  planTitle: string;
+  inputTokens: number;
+  outputTokens: number;
+  durationMs: number;
+}
+
 export interface ProjectStats {
   generatedAt: string;
   comments: CommentStats;
@@ -260,6 +276,9 @@ export interface ProjectStats {
   openQuestions: number;
   decisions: number;
   tasksPerWeek: TasksPerWeek[];
+  usagePerWeek: UsagePerWeek[];
+  medianPhaseDurationMs: number | null;
+  mostExpensiveIdeas: IdeaCost[];
 }
 
 export type IdeaKind = 'idea' | 'note';
