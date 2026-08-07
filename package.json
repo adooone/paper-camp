@@ -38,7 +38,7 @@
     "dev": "vite --config vite.app.config.ts --port 3333",
     "dev:lib": "vite",
     "cli": "bun src/cli/index.ts",
-    "check-types": "tsc --noEmit",
+    "check-types": "tsc --noEmit --incremental",
     "lint": "biome check .",
     "lint:write": "biome check --write .",
     "test": "vitest run --coverage",

@@ -2,7 +2,7 @@
 id: IDEA-142
 title: Faster phase runs
 type: refactor
-status: idea
+status: review
 created: 2026-08-07
 tags:
   - agent
@@ -46,11 +46,11 @@ stages this idea edits — keep the two in sync.
 - [x] 2026-08-07 [decision] A single final "lint and fix" phase per idea was rejected: biome needs no agent at all (harness autofix pre-commit), and deferring type checks makes later phases build on broken types — the expensive generation time would grow, not shrink. Effort default drops to medium as the lever actually pointed at generation.
 
 ### Phases
-- [ ] Make type checks incremental
+- [x] Make type checks incremental
       Switch the check-types config to `tsc --incremental` so chained re-checks take seconds.
-- [ ] Run biome autofix in the server pre-commit
+- [x] Run biome autofix in the server pre-commit
       Server runs `biome check --write` before each per-phase commit.
-- [ ] Drop the biome instruction from the phase prompt
-- [ ] Default run-all effort to medium in Settings
+- [x] Drop the biome instruction from the phase prompt
+- [x] Default run-all effort to medium in Settings
       Keep high selectable there for projects or stretches that need it.
-- [ ] Keep IDEA-141's milestone detector in sync with the edited prompt stages
+- [x] Keep IDEA-141's milestone detector in sync with the edited prompt stages

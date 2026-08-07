@@ -14,7 +14,7 @@
     "phase": {
       "agent": "claude-code",
       "model": "opus",
-      "effort": "high"
+      "effort": "medium"
     },
     "planDraft": {
       "agent": "claude-code",

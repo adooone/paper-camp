@@ -3,6 +3,7 @@ import { watch } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import type { CheckName, CheckResult, CheckStatus } from '../../types';
+import { BIOME_FIX_COMMAND } from './biome-fix';
 
 interface StatusSnapshot {
   lint: CheckResult;
@@ -18,9 +19,6 @@ const CHECK_COMMANDS: Record<CheckName, string> = {
   // Codebase consistency — mirrors the CI "Consistency" job (dead code + architecture).
   consistency: 'pnpm run consistency',
 };
-
-// Shared by the "Fix" action and the run-all verification gate's pre-check.
-const BIOME_FIX_COMMAND = 'npx biome check . --write';
 
 export type StatusManager = ReturnType<typeof createStatusManager>;
 

@@ -4,6 +4,7 @@ import { parseEntityFile } from '@/core/parse';
 import { computePlanContentHash } from '@/core/serialize';
 import { todayDateString } from '@/core/serialize';
 import type { PhaseItem, PlanEntry } from '@/types/index';
+import { runBiomeFix } from './biome-fix';
 import type { GitManager } from './git';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 
@@ -41,6 +42,7 @@ export function createAgentHooks(root: string, git: GitManager) {
     const area = resolveCommitScope(plan);
     const title = `${plan.kind ?? 'feat'}(${area}): ${phase.text}`;
     const refs = plan.id ? `Refs: ${plan.id}` : undefined;
+    await runBiomeFix(root);
     await git.stageAll();
     // noVerify: this is a machine-generated commit; the message is valid by
     // construction, so the commit-msg hook must not block an unattended run.
