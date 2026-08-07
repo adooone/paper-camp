@@ -51,6 +51,6 @@ stages this idea edits — keep the two in sync.
 - [x] Run biome autofix in the server pre-commit
       Server runs `biome check --write` before each per-phase commit.
 - [x] Drop the biome instruction from the phase prompt
-- [ ] Default run-all effort to medium in Settings
+- [x] Default run-all effort to medium in Settings
       Keep high selectable there for projects or stretches that need it.
 - [ ] Keep IDEA-141's milestone detector in sync with the edited prompt stages
