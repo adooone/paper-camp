@@ -59,7 +59,7 @@ run is idle, mid-phase, or done. Make each row carry its state visually:
       Blend elapsed-vs-median segment duration from [[IDEA-135]] records to move the bar between anchors, holding at the anchor when no history exists.
 - [x] Render per-row state
       Dim done rows, fill the running row left-to-right by fraction, and swap the leading checkbox for a spinner while a phase runs.
-- [ ] Add the per-row action and title suffix
+- [x] Add the per-row action and title suffix
       Show ▶ run on pending rows and copy on done rows; append live percent to the running title and recorded run time to done titles.
 - [ ] Roll the fraction into plan progress
       Compute plan progress as (done + running fraction) / total and give the plan bar its partial fill and percent.

@@ -12,7 +12,7 @@ import {
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type { AgentTaskState, IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
+import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
   Button,
   Card,
@@ -63,8 +63,6 @@ const PhasesSection = ({
   plan,
   auditRunning,
   agentBusy,
-  agentPhaseIndex,
-  planTask,
   runningFill,
   updating,
   onTogglePhase,
@@ -74,8 +72,6 @@ const PhasesSection = ({
   plan: PlanEntry;
   auditRunning: boolean;
   agentBusy: boolean;
-  agentPhaseIndex: number | null | undefined;
-  planTask: AgentTaskState | undefined;
   runningFill: RunningPhaseFill | null;
   updating: boolean;
   onTogglePhase: (index: number) => void;
@@ -150,6 +146,11 @@ const PhasesSection = ({
                 className={`inline-flex items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
               >
                 {row.item.text}
+                {isRunningRow(row) && (
+                  <span className="text-xs opacity-[0.55]">
+                    {Math.round((runningFill?.fraction ?? 0) * 100)}%
+                  </span>
+                )}
                 {row.kind === 'phase' && row.item.source === 'review' && (
                   <Stamp
                     size="small"
@@ -171,23 +172,14 @@ const PhasesSection = ({
             key: 'actions',
             header: 'Actions',
             align: 'end',
-            cell: (row: WorkRow) =>
-              row.kind === 'phase' ? (
-                <div className="inline-flex gap-2 items-center">
-                  <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={row.index} />
-                  {!row.item.done && agentPhaseIndex === row.index ? (
-                    <Spinner size="small" label={`Agent ${planTask?.status}…`} />
-                  ) : (
-                    !row.item.done && (
-                      <AgentStartButton
-                        planId={plan.id}
-                        phaseIndex={row.index}
-                        disabled={agentBusy}
-                      />
-                    )
-                  )}
-                </div>
-              ) : null,
+            cell: (row: WorkRow) => {
+              if (row.kind !== 'phase' || isRunningRow(row)) return null;
+              return row.item.done ? (
+                <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={row.index} />
+              ) : (
+                <AgentStartButton planId={plan.id} phaseIndex={row.index} disabled={agentBusy} />
+              );
+            },
             width: 7,
           },
         ]}
@@ -423,7 +415,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const taskLog = useAppStore((s) => s.taskLog);
   const loadTaskLog = useAppStore((s) => s.loadTaskLog);
   const planTask = runningTaskForPlan(plan.id, agentStatus);
-  const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
   const runningFill = useRunningPhaseFill(planTask, taskLog);
   const auditRunning = planTask?.taskKind === 'audit';
   const progress = combinedProgress(plan);
@@ -556,8 +547,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               plan={plan}
               auditRunning={auditRunning}
               agentBusy={agentBusy}
-              agentPhaseIndex={agentPhaseIndex}
-              planTask={planTask}
               runningFill={runningFill}
               updating={updating}
               onTogglePhase={handleTogglePhase}
