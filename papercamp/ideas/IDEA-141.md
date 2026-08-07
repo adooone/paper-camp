@@ -51,3 +51,15 @@ run is idle, mid-phase, or done. Make each row carry its state visually:
 ### Thread
 - [x] 2026-08-07 [decision] Per-phase percent is milestones-plus-time: stream-detected stage anchors (implement / verify / checkbox) carry the bar from run one, elapsed-vs-median segment time from [[IDEA-135]] interpolates between them, the fill clamps at 95%, and ~30s of stream silence freezes the bar. Pure elapsed-vs-median was rejected (a stuck agent would keep "progressing"); agent self-reported progress was rejected (prompt pollution, unreliable emission).
 - [x] 2026-08-07 [decision] The verify anchor keys on a `check-types` Bash call only — [[IDEA-142]] moved biome out of the phase prompt into the server's per-commit autofix, so the agent no longer runs biome and the detector must not wait on it.
+
+### Phases
+- [x] Build the phase-progress engine
+      Derive a running phase's fraction from stream milestone anchors (implement/verify/checkbox), clamping at 95% and freezing after ~30s of stream silence.
+- [ ] Interpolate anchors with median segment time
+      Blend elapsed-vs-median segment duration from [[IDEA-135]] records to move the bar between anchors, holding at the anchor when no history exists.
+- [ ] Render per-row state
+      Dim done rows, fill the running row left-to-right by fraction, and swap the leading checkbox for a spinner while a phase runs.
+- [ ] Add the per-row action and title suffix
+      Show ▶ run on pending rows and copy on done rows; append live percent to the running title and recorded run time to done titles.
+- [ ] Roll the fraction into plan progress
+      Compute plan progress as (done + running fraction) / total and give the plan bar its partial fill and percent.

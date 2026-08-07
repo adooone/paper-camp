@@ -1,4 +1,5 @@
-import type { AgentRunOptions } from '@/types/index';
+import { classifyAnchor } from '@/core/phase-progress';
+import type { AgentRunOptions, PhaseMilestone } from '@/types/index';
 
 export interface ParsedAgentLine {
   text: string;
@@ -6,6 +7,7 @@ export interface ParsedAgentLine {
   error?: boolean;
   reason?: string;
   sessionId?: string;
+  milestone?: PhaseMilestone;
 }
 
 export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
@@ -56,9 +58,15 @@ export function parseLine(line: string): ParsedAgentLine | null {
       const message = json.message as { content?: unknown[] } | undefined;
       const blocks = message?.content ?? [];
       for (const block of blocks) {
-        const b = block as { type?: string; name?: string; text?: string };
+        const b = block as {
+          type?: string;
+          name?: string;
+          text?: string;
+          input?: Record<string, unknown>;
+        };
         if (b.type === 'tool_use') {
-          return { text: `Running ${b.name ?? 'a tool'}…` };
+          const milestone = classifyAnchor(b.name ?? '', b.input) ?? undefined;
+          return { text: `Running ${b.name ?? 'a tool'}…`, ...(milestone && { milestone }) };
         }
         if (b.type === 'text' && typeof b.text === 'string' && b.text.trim()) {
           return { text: b.text.trim() };
