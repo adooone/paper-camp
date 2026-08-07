@@ -4,7 +4,7 @@ import { readConfigIntegration, readConfigPort } from '../cli/dev-port';
 import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID } from '../toolbar/route-attribute';
 import { proxyToCampServer } from './proxy';
 
-export const CAMP_ROUTE = '/__camp';
+export const CAMP_ROUTE = '/paper-camp';
 
 export interface PaperCampToolbarOptions {
   port?: number;
