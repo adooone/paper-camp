@@ -40,6 +40,7 @@ own length. One convention, enforced where titles are born:
 
 ### Thread
 - [x] 2026-08-07 [decision] Convention: noun/verb phrase, ≤40 chars, no em-dash subtitles, detail in the body — applied to new and active ideas only; legacy titles are handled by the branch-slug cap, not renames.
+- [x] 2026-08-07 [decision] Backfill narrowed the no-renames call: the eight not-started ideas (117, 119–122, 135, 137, 140) were renamed to the convention — safe because nothing references their titles yet (no branch, no PR, no history). Started and closed ideas keep their titles.
 
 ### Phases
 - [x] Write the rule into AGENTS.md and about.md

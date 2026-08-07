@@ -1,6 +1,6 @@
 ---
 id: IDEA-140
-title: Bottom-center island — hidden by default, revealed from the logo trigger
+title: Bottom-center island
 type: feat
 status: idea
 created: 2026-08-06

@@ -1,6 +1,6 @@
 ---
 id: IDEA-137
-title: Drafted plans vanish when a phase agent stashes
+title: Durable drafted plans
 type: fix
 status: idea
 created: 2026-08-06

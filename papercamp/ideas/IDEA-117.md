@@ -1,6 +1,6 @@
 ---
 id: IDEA-117
-title: Multi-project hub — one desk, many corpora
+title: Multi-project hub
 type: feat
 status: idea
 created: 2026-08-04

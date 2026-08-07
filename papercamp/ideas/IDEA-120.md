@@ -1,6 +1,6 @@
 ---
 id: IDEA-120
-title: Flow profiles — status derivation per project topology
+title: Flow profiles
 type: feat
 status: idea
 created: 2026-08-04

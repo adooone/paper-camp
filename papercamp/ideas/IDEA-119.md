@@ -1,6 +1,6 @@
 ---
 id: IDEA-119
-title: Run & monitor — services, checks, and the release train on the desk
+title: Run & monitor on the desk
 type: feat
 status: idea
 created: 2026-08-04

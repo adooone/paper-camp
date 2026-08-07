@@ -1,6 +1,6 @@
 ---
 id: IDEA-121
-title: paper-camp doctor — corpus lint and format migrations
+title: paper-camp doctor
 type: feat
 status: idea
 created: 2026-08-04

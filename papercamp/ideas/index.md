@@ -120,9 +120,9 @@
 | IDEA-117 | Multi-project hub — one desk, many corpora | feat | idea | multi-project, app |
 | IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | done | multi-project, agents, app |
 | IDEA-119 | Run & monitor — services, checks, and the release train on the desk | feat | idea | app, monitoring |
-| IDEA-120 | Flow profiles — status derivation per project topology | feat | idea | status, planning-surface |
-| IDEA-121 | paper-camp doctor — corpus lint and format migrations | feat | idea | format, cli |
-| IDEA-122 | Make the MCP server the primary write path for agents | feat | idea | format, mcp, agents |
+| IDEA-120 | Flow profiles | feat | idea | status, planning-surface |
+| IDEA-121 | paper-camp doctor | feat | idea | format, cli |
+| IDEA-122 | MCP as the primary write path | feat | idea | format, mcp, agents |
 | IDEA-123 | Cross-corpus idea links | feat | idea | multi-project, format |
 | IDEA-124 | Tie ideas to releases — release notes grouped by idea | feat | done | status, releases |
 | IDEA-125 | Headless runs die as bare "error" when the agent hits a permission ask | fix | done | agents, tasks |
@@ -135,12 +135,12 @@
 | IDEA-132 | Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end | fix | done | integration, app, cli |
 | IDEA-133 | Toolbar is an extended StatusBar — top, full-width, always visible, in layout | feat | done | integration, app, ux |
 | IDEA-134 | Plans page decluttering | fix | done | app, ui, plans, stack |
-| IDEA-135 | Run analytics — time, tokens, capacity | feat | idea | agent, stats, server, ui |
+| IDEA-135 | Run analytics | feat | idea | agent, stats, server, ui |
 | IDEA-136 | Roadmap page redesign | fix | idea | app, ui, roadmap |
-| IDEA-137 | Drafted plans vanish when a phase agent stashes | fix | idea | agents, plans, git |
+| IDEA-137 | Durable drafted plans | fix | idea | agents, plans, git |
 | IDEA-138 | Single-bar toolbar with a Stack-style chat sidebar | feat | review | integration, app, ux, chat |
 | IDEA-139 | Desk is broken under the mount — router basepath, API base, and a friendlier route | fix | idea | integration, app, cli |
-| IDEA-140 | Bottom-center island — hidden by default, revealed from the logo trigger | feat | idea | integration, app, ux, motion |
+| IDEA-140 | Bottom-center island | feat | idea | integration, app, ux, motion |
 | IDEA-141 | Phases as living progress rows | feat | idea | app, ui, plans |
 | IDEA-142 | Faster phase runs | refactor | idea | agent, server, performance |
 | IDEA-143 | One title style for all ideas | chore | idea | format, docs, git |

@@ -1,6 +1,6 @@
 ---
 id: IDEA-122
-title: Make the MCP server the primary write path for agents
+title: MCP as the primary write path
 type: feat
 status: idea
 created: 2026-08-04

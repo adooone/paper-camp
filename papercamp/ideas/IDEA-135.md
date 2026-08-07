@@ -1,6 +1,6 @@
 ---
 id: IDEA-135
-title: Run analytics — time, tokens, capacity
+title: Run analytics
 type: feat
 status: idea
 created: 2026-08-06
