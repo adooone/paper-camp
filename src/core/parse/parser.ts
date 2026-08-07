@@ -357,6 +357,8 @@ export function parseIdeas(markdown: string): IdeaEntry[] {
   });
 }
 
+export const MAX_TITLE_LENGTH = 40;
+
 export function findConsistencyIssues(
   plans: PlanEntry[],
   subjectVocabulary: string[] = [],
@@ -375,6 +377,25 @@ export function findConsistencyIssues(
         planId: plan.id,
         message: `Subject "${plan.subject}" isn't in the roadmap vocabulary — "${plan.title}"`,
       });
+    }
+
+    // Done/dropped titles are referenced by routes and history; renaming closed work is
+    // churn with no payoff, so the style rule flags active ideas only.
+    if (plan.status !== 'done' && plan.status !== 'dropped') {
+      const faults: string[] = [];
+      if (plan.title.length > MAX_TITLE_LENGTH) {
+        faults.push(`${plan.title.length} chars over the ${MAX_TITLE_LENGTH}-char limit`);
+      }
+      if (plan.title.includes('—')) faults.push('em-dash subtitle');
+      if (faults.length > 0) {
+        issues.push({
+          kind: 'title-style',
+          section: 'plans',
+          title: plan.title,
+          planId: plan.id,
+          message: `Title style — ${faults.join(', ')}; the detail belongs in the body: "${plan.title}"`,
+        });
+      }
     }
   }
 

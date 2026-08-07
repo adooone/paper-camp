@@ -79,9 +79,7 @@ const StatusStamps = () => {
 
   const linkedPlanFor = useCallback(
     (issue: ConsistencyIssue) =>
-      issue.kind === 'orphan-subject' && issue.planId
-        ? plans?.entries.find((p) => p.id === issue.planId)
-        : undefined,
+      issue.planId ? plans?.entries.find((p) => p.id === issue.planId) : undefined,
     [plans?.entries],
   );
 
@@ -170,8 +168,8 @@ const StatusStamps = () => {
           <Tooltip
             content={
               hasIssues
-                ? 'Plan/idea doc findings — orphan subjects & stale references. Click to show.'
-                : 'Plan/idea docs — no findings (orphan subjects, stale references).'
+                ? 'Plan/idea doc findings — orphan subjects, title style & stale references. Click to show.'
+                : 'Plan/idea docs — no findings (orphan subjects, title style, stale references).'
             }
             surface="chalkboard"
           >

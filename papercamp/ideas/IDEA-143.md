@@ -2,7 +2,7 @@
 id: IDEA-143
 title: One title style for all ideas
 type: chore
-status: idea
+status: review
 created: 2026-08-07
 tags:
   - format
@@ -47,5 +47,5 @@ own length. One convention, enforced where titles are born:
 - [x] Add the one-line rule to the New idea, suggest-ideas, and draft prompts
 - [x] Cap the branch slug at 40 chars on a word boundary in branchName()
       Truncate the kebab slug only; no titles are renamed.
-- [ ] Lint titles in doctor, flagging active ideas only
+- [x] Lint titles in doctor, flagging active ideas only
       Extend IDEA-121's corpus lint; skip done and archived ideas.

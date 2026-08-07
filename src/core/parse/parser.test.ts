@@ -289,6 +289,43 @@ describe('findConsistencyIssues', () => {
     ];
     expect(findConsistencyIssues(plans, ['Packaging'])).toEqual([]);
   });
+
+  it('flags an active idea whose title runs past 40 characters', () => {
+    const plans = [
+      plan({
+        title: 'Desk is broken under the mount, router basepath and a friendlier route',
+        id: 'IDEA-139',
+      }),
+    ];
+    expect(findConsistencyIssues(plans)).toEqual([
+      expect.objectContaining({
+        kind: 'title-style',
+        title: expect.any(String),
+        planId: 'IDEA-139',
+      }),
+    ]);
+  });
+
+  it('flags an active idea with an em-dash subtitle even under 40 characters', () => {
+    const plans = [plan({ title: 'Desk breaks — router basepath', id: 'IDEA-140' })];
+    expect(findConsistencyIssues(plans)).toEqual([
+      expect.objectContaining({ kind: 'title-style', planId: 'IDEA-140' }),
+    ]);
+  });
+
+  it('does not flag a short, clean active title', () => {
+    const plans = [plan({ title: 'Desk breaks under the mount', id: 'IDEA-1' })];
+    expect(findConsistencyIssues(plans)).toEqual([]);
+  });
+
+  it('does not flag a long title on a done or dropped idea', () => {
+    const longTitle = 'Desk is broken under the mount, router basepath and a friendlier route';
+    const plans = [
+      plan({ title: longTitle, id: 'IDEA-8', status: 'done' }),
+      plan({ title: longTitle, id: 'IDEA-9', status: 'dropped' }),
+    ];
+    expect(findConsistencyIssues(plans)).toEqual([]);
+  });
 });
 
 describe('parseIdeas', () => {
