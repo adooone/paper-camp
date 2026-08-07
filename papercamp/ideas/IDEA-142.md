@@ -2,7 +2,7 @@
 id: IDEA-142
 title: Faster phase runs
 type: refactor
-status: idea
+status: review
 created: 2026-08-07
 tags:
   - agent
@@ -53,4 +53,4 @@ stages this idea edits — keep the two in sync.
 - [x] Drop the biome instruction from the phase prompt
 - [x] Default run-all effort to medium in Settings
       Keep high selectable there for projects or stretches that need it.
-- [ ] Keep IDEA-141's milestone detector in sync with the edited prompt stages
+- [x] Keep IDEA-141's milestone detector in sync with the edited prompt stages
