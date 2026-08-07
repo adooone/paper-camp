@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { lstat, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
+  CapacityStat,
   CommentStats,
   EntityEntry,
   EntityStatus,
@@ -183,6 +184,21 @@ export function medianPhaseDurationMs(entries: TaskLogEntry[]): number | null {
   return durations.length % 2 === 0 ? (durations[mid - 1] + durations[mid]) / 2 : durations[mid];
 }
 
+export function latestCapacity(entries: TaskLogEntry[]): CapacityStat | null {
+  let latest: CapacityStat | null = null;
+  let latestMs = Number.NEGATIVE_INFINITY;
+  for (const entry of entries) {
+    if (!entry.rateLimit) continue;
+    const parsed = Date.parse(entry.endedAt);
+    const at = Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
+    if (at >= latestMs) {
+      latestMs = at;
+      latest = { snapshot: entry.rateLimit, capturedAt: entry.endedAt };
+    }
+  }
+  return latest;
+}
+
 export function mostExpensiveIdeas(entries: TaskLogEntry[], limit = 5): IdeaCost[] {
   const byId = new Map<string, IdeaCost>();
   for (const entry of entries) {
@@ -230,5 +246,6 @@ export async function computeProjectStats(root: string): Promise<ProjectStats> {
     usagePerWeek: usagePerWeek(taskLog),
     medianPhaseDurationMs: medianPhaseDurationMs(taskLog),
     mostExpensiveIdeas: mostExpensiveIdeas(taskLog),
+    capacity: latestCapacity(taskLog),
   };
 }

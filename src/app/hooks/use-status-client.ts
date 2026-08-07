@@ -1,4 +1,4 @@
-import type { AgentTaskStatus } from '@/types/index';
+import type { AgentTaskStatus, RateLimitSnapshot } from '@/types/index';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { StatusBarCoreProps } from '../components/shell/status-bar-core';
 import { fetchAgentStatus } from '../services/agent-api';
@@ -27,6 +27,7 @@ export function useStatusClient(): StatusClientState {
     useState<StatusBarCoreProps['gitBranchHygiene']>(null);
   const [agentActive, setAgentActive] = useState(false);
   const [activeTaskStatus, setActiveTaskStatus] = useState<AgentTaskStatus | undefined>(undefined);
+  const [rateLimit, setRateLimit] = useState<RateLimitSnapshot | null>(null);
   const [agentNotSignedIn, setAgentNotSignedIn] = useState(false);
   const [capabilityGapCount, setCapabilityGapCount] = useState(0);
   const [commitInFlight, setCommitInFlight] = useState(false);
@@ -53,6 +54,7 @@ export function useStatusClient(): StatusClientState {
       const active = tasks.find((task) => ACTIVE_TASK_STATUSES.includes(task.status));
       setAgentActive(active !== undefined);
       setActiveTaskStatus(active?.status);
+      setRateLimit(tasks.find((task) => task.rateLimit)?.rateLimit ?? null);
     } catch {}
   }, []);
 
@@ -164,6 +166,7 @@ export function useStatusClient(): StatusClientState {
     activeTaskStatus,
     agentNotSignedIn,
     capabilityGapCount,
+    rateLimit,
     gitBranchHygiene,
     commitInFlight,
     gitActionBusy: gitAction !== null,

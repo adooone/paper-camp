@@ -4,6 +4,7 @@ import {
   countEntitiesByStatus,
   countThreadNotes,
   isoWeekKey,
+  latestCapacity,
   medianPhaseDurationMs,
   mostExpensiveIdeas,
   tasksPerWeek,
@@ -200,5 +201,29 @@ describe('mostExpensiveIdeas', () => {
       logEntry({ planId: `IDEA-${n}`, usage: usage({ inputTokens: n * 100, outputTokens: n }) }),
     );
     expect(mostExpensiveIdeas(entries, 2)).toHaveLength(2);
+  });
+});
+
+describe('latestCapacity', () => {
+  it('returns the rate-limit snapshot from the most recently ended run that carried one', () => {
+    const entries: TaskLogEntry[] = [
+      logEntry({
+        endedAt: '2026-08-01T10:00:00Z',
+        rateLimit: { status: 'allowed' },
+      }),
+      logEntry({
+        endedAt: '2026-08-03T10:00:00Z',
+        rateLimit: { status: 'allowed_warning', resetsAt: 1_700_000_000 },
+      }),
+      logEntry({ endedAt: '2026-08-04T10:00:00Z' }),
+    ];
+    expect(latestCapacity(entries)).toEqual({
+      snapshot: { status: 'allowed_warning', resetsAt: 1_700_000_000 },
+      capturedAt: '2026-08-03T10:00:00Z',
+    });
+  });
+
+  it('returns null when no run reported capacity', () => {
+    expect(latestCapacity([logEntry({})])).toBeNull();
   });
 });

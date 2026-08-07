@@ -2,7 +2,7 @@
 id: IDEA-135
 title: Run analytics
 type: feat
-status: idea
+status: review
 created: 2026-08-06
 tags:
   - agent
@@ -71,7 +71,7 @@ source we trust, and disk transcripts are never read.
       Entity detail shows Time / Tokens / Model per done phase and a derived idea-level rollup, computed at read time.
 - [x] Add Stats analytics cards
       Tokens and agent-minutes per week, median phase duration, most expensive ideas.
-- [ ] Add the capacity card and StatusBar pill
+- [x] Add the capacity card and StatusBar pill
       Latest rate-limit snapshot on Stats; a warning pill in the StatusBar only when status leaves "allowed".
 
 ### Thread

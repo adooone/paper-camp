@@ -1477,6 +1477,7 @@ export function createAgentManager(
       ...(task.lastStreamAt !== undefined ? { lastStreamAt: task.lastStreamAt } : {}),
       ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
       ...(task.errorKind ? { errorKind: task.errorKind } : {}),
+      ...(task.rateLimit ? { rateLimit: task.rateLimit } : {}),
     }));
   }
 

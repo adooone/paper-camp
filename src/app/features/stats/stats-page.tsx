@@ -3,8 +3,9 @@ import { STATUS_LABEL } from '@/app/features/plans/constants';
 import { fetchStats } from '@/app/services/content';
 import { color } from '@/app/styles/tokens';
 import { formatDuration, formatTokens } from '@/core/phase-run';
+import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
 import { type EntityStatus, PLAN_STATUSES, type ProjectStats } from '@/types/index';
-import { Card, Progress } from '@dendelion/paper-ui';
+import { Card, Progress, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 
 const ENTITY_STATUS_ORDER: EntityStatus[] = ['open', ...PLAN_STATUSES];
@@ -145,6 +146,46 @@ const MostExpensiveIdeasCard = ({
   </StatCard>
 );
 
+const CAPACITY_STAMP = {
+  allowed: 'success',
+  warning: 'warning',
+  rejected: 'error',
+} as const;
+
+const ClaudeCapacityCard = ({ capacity }: { capacity: ProjectStats['capacity'] }) => (
+  <StatCard title="Claude capacity">
+    {capacity === null ? (
+      <p className="opacity-50 m-0">No agent run has reported capacity yet.</p>
+    ) : (
+      <>
+        <div className="flex items-center gap-2">
+          <Stamp size="small" variant={CAPACITY_STAMP[capacityLevel(capacity.snapshot.status)]}>
+            {capacity.snapshot.status}
+          </Stamp>
+          {capacity.snapshot.overage && (
+            <Stamp size="small" variant="warning">
+              overage
+            </Stamp>
+          )}
+        </div>
+        {capacity.snapshot.rateLimitType && (
+          <StatRow label="Window" value={capacity.snapshot.rateLimitType} />
+        )}
+        {capacity.snapshot.resetsAt !== undefined && (
+          <StatRow
+            label="Resets"
+            value={new Date(resetsAtMs(capacity.snapshot.resetsAt)).toLocaleTimeString()}
+          />
+        )}
+        <span className="text-2xs opacity-50">
+          as of last agent run,{' '}
+          {formatDuration(Math.max(0, Date.now() - Date.parse(capacity.capturedAt)))} ago
+        </span>
+      </>
+    )}
+  </StatCard>
+);
+
 export const StatsPage = () => {
   const [stats, setStats] = useState<ProjectStats | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -179,6 +220,7 @@ export const StatsPage = () => {
             <UsagePerWeekCard usagePerWeek={stats.usagePerWeek} />
             <MedianPhaseDurationCard medianPhaseDurationMs={stats.medianPhaseDurationMs} />
             <MostExpensiveIdeasCard mostExpensiveIdeas={stats.mostExpensiveIdeas} />
+            <ClaudeCapacityCard capacity={stats.capacity} />
           </div>
           <p className="opacity-[0.4] text-2xs mt-6">
             Generated {new Date(stats.generatedAt).toLocaleString()}

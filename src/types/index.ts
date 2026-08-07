@@ -266,6 +266,11 @@ export interface IdeaCost {
   durationMs: number;
 }
 
+export interface CapacityStat {
+  snapshot: RateLimitSnapshot;
+  capturedAt: string;
+}
+
 export interface ProjectStats {
   generatedAt: string;
   comments: CommentStats;
@@ -279,6 +284,7 @@ export interface ProjectStats {
   usagePerWeek: UsagePerWeek[];
   medianPhaseDurationMs: number | null;
   mostExpensiveIdeas: IdeaCost[];
+  capacity: CapacityStat | null;
 }
 
 export type IdeaKind = 'idea' | 'note';
@@ -744,6 +750,7 @@ export interface AgentTaskState {
   // fix-review only: prefills the commit form once the agent has reported.
   suggestedCommit?: { title: string; message: string };
   errorKind?: 'auth' | 'question';
+  rateLimit?: RateLimitSnapshot;
 }
 
 export interface OverlapVerdict {

@@ -52,3 +52,6 @@ export const selectCapabilityGapCount = (s: AppStore) =>
 // loggedIn: null means unknown (non claude-code agent, or the probe couldn't tell) — only
 // an explicit false should surface as "not signed in".
 export const selectAgentNotSignedIn = (s: AppStore) => s.agentAuthStatus?.loggedIn === false;
+
+export const selectLatestRateLimit = (s: AppStore) =>
+  s.agentStatus.find((t) => t.rateLimit)?.rateLimit ?? null;
