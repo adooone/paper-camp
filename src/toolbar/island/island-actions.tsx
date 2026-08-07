@@ -35,7 +35,7 @@ export const IslandActions = ({ status, onCapture, onChat, onOpenDesk }: IslandA
       variant="ghost"
       size="small"
       style={buttonStyle}
-      disabled={status.commitInFlight || status.changedFileCount === 0}
+      disabled={status.commitInFlight || status.gitActionBusy || status.changedFileCount === 0}
       onClick={status.onQuickCommit}
     >
       {status.commitInFlight ? 'Committing…' : 'Commit'}

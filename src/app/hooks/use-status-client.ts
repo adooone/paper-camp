@@ -140,7 +140,7 @@ export function useStatusClient(): StatusClientState {
 
   const onQuickCommit = useCallback(() => {
     const files = changedFilesRef.current;
-    if (commitInFlightRef.current || files.length === 0) return;
+    if (commitInFlightRef.current || gitActionRef.current || files.length === 0) return;
     commitInFlightRef.current = true;
     setCommitInFlight(true);
     (async () => {
