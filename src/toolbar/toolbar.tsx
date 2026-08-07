@@ -8,6 +8,7 @@ import { fetchConfig } from '@/app/services/system';
 import type { PlanEntry, ToolbarSegmentId } from '@/types/index';
 import { useEffect, useState } from 'react';
 import { FocusPanel } from './focus-panel';
+import { IslandActions } from './island/island-actions';
 import { IslandCard } from './island/island-card';
 import { IslandTrigger } from './island/island-trigger';
 import { ScoutPanel } from './scout-panel';
@@ -128,7 +129,19 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
         onSelectSegment={shell.onSelectSegment}
       />
       <IslandTrigger>
-        <IslandCard status={status} checks={checks} focusPlan={focusPlan} />
+        <IslandCard
+          status={status}
+          checks={checks}
+          focusPlan={focusPlan}
+          actions={
+            <IslandActions
+              status={status}
+              onCapture={() => shell.onSelectSegment('scout')}
+              onChat={() => shell.onSelectSegment('scout')}
+              onOpenDesk={handleOpenDesk}
+            />
+          }
+        />
       </IslandTrigger>
     </>
   );
