@@ -112,8 +112,8 @@ header[class*="layout-module__header___"] {
  * A running phase row fills left-to-right like a loading line: the fraction is
  * published as --phase-fill on the Phases wrapper (entity-detail.tsx) and read
  * here, since paper-ui's Table exposes only rowClassName (a static class), no
- * per-row inline style. A done phase row drops to the muted elevated paper so
- * pending work stays the bright part of the table.
+ * per-row inline style. Done rows get a darker canvas paper texture via the
+ * Table's rowTexture prop so pending work stays the bright part of the table.
  */
 .phase-running-row {
   background-image: linear-gradient(
@@ -122,9 +122,6 @@ header[class*="layout-module__header___"] {
     var(--pui-btn-primary) var(--phase-fill, 0%),
     transparent var(--phase-fill, 0%)
   );
-}
-.phase-done-row {
-  background-color: var(--pui-bg-elevated);
 }
 
 /*

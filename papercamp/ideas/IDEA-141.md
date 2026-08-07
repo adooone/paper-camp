@@ -63,7 +63,7 @@ run is idle, mid-phase, or done. Make each row carry its state visually:
       Compute plan progress as (done + running fraction) / total and give the plan bar its partial fill and percent.
 
 ### Fixes
-- [ ] Darken done rows and fix Copy button alignment
+- [x] Darken done rows and fix Copy button alignment
       Use a darker paper texture/background for completed phase rows to increase contrast against pending rows. Align the Copy prompt button in the Actions column so it matches the column header instead of sitting far left of it.
 
 ### Thread

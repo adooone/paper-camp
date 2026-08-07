@@ -140,7 +140,7 @@
 | IDEA-137 | Durable drafted plans | fix | idea | agents, plans, git |
 | IDEA-138 | Single-bar toolbar with a Stack-style chat sidebar | feat | done | integration, app, ux, chat |
 | IDEA-139 | Desk is broken under the mount — router basepath, API base, and a friendlier route | fix | done | integration, app, cli |
-| IDEA-140 | Bottom-center island | feat | review | integration, app, ux, motion |
-| IDEA-141 | Phases as living progress rows | feat | idea | app, ui, plans |
+| IDEA-140 | Bottom-center island | feat | done | integration, app, ux, motion |
+| IDEA-141 | Phases as living progress rows | feat | in-progress | app, ui, plans |
 | IDEA-142 | Faster phase runs | refactor | done | agent, server, performance |
 | IDEA-143 | One title style for all ideas | chore | done | format, docs, git |

@@ -174,10 +174,22 @@ const PhasesSection = ({
             align: 'end',
             cell: (row: WorkRow) => {
               if (row.kind !== 'phase' || isRunningRow(row)) return null;
-              return row.item.done ? (
-                <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={row.index} />
-              ) : (
-                <AgentStartButton planId={plan.id} phaseIndex={row.index} disabled={agentBusy} />
+              return (
+                <div className="flex justify-end">
+                  {row.item.done ? (
+                    <PhaseCopyButton
+                      planTitle={plan.title}
+                      planId={plan.id}
+                      phaseIndex={row.index}
+                    />
+                  ) : (
+                    <AgentStartButton
+                      planId={plan.id}
+                      phaseIndex={row.index}
+                      disabled={agentBusy}
+                    />
+                  )}
+                </div>
               );
             },
             width: 7,
@@ -187,10 +199,13 @@ const PhasesSection = ({
           render: (row: WorkRow) => row.item.description || null,
         }}
         showExpandColumn={false}
-        rowTexture={(row: WorkRow) => (row.kind === 'fix' ? 'kraft' : undefined)}
+        rowTexture={(row: WorkRow) => {
+          if (row.kind === 'fix') return 'kraft';
+          if (row.kind === 'phase' && row.item.done) return 'canvas';
+          return undefined;
+        }}
         rowClassName={(row: WorkRow) => {
           if (isRunningRow(row)) return 'phase-running-row';
-          if (row.kind === 'phase' && row.item.done) return 'phase-done-row';
           if (row.kind === 'phase' && row.item.source === 'review') {
             return 'bg-[rgba(155,122,181,0.08)]';
           }
@@ -326,14 +341,19 @@ const FeedbackSection = ({
   onUndo: () => void;
 }) => {
   const [input, setInput] = useState('');
+  const [pending, setPending] = useState<string | null>(null);
   const [ideaPromptIndex, setIdeaPromptIndex] = useState<number | null>(null);
   const thread = plan.thread ?? [];
   const { promotingIndex, promoteToDurable, promoteToIdea } = usePromoteThreadMessage(plan);
   useFeedbackQuietSummary(plan, true);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
-    if (await onSend(input.trim())) setInput('');
+    const text = input.trim();
+    if (!text) return;
+    setPending(text);
+    setInput('');
+    if (!(await onSend(text))) setInput(text);
+    setPending(null);
   };
 
   const handlePromote = (index: number, target: PromoteTarget) => {
@@ -355,15 +375,39 @@ const FeedbackSection = ({
       <h3 className={`${sectionHeadingClass} mb-3`}>Feedback</h3>
       <Card size="small" accent accentColor="slate" texture="kraft">
         <div className="flex flex-col gap-3 mb-4">
-          {thread.length > 0 ? (
-            <FeedbackThread
-              messages={thread}
-              undo={undo}
-              undoing={undoing}
-              onUndo={onUndo}
-              onPromote={handlePromote}
-              promotingIndex={promotingIndex}
-            />
+          {thread.length > 0 || pending ? (
+            <>
+              <FeedbackThread
+                messages={thread}
+                undo={undo}
+                undoing={undoing}
+                onUndo={onUndo}
+                onPromote={handlePromote}
+                promotingIndex={promotingIndex}
+              />
+              {pending && thread[thread.length - 1]?.text !== pending && (
+                <div className="flex flex-col gap-1 items-end">
+                  <div className="max-w-[85%]">
+                    <Card
+                      size="small"
+                      surface="paper"
+                      texture="parchment"
+                      accent
+                      accentColor="blue"
+                    >
+                      {pending}
+                    </Card>
+                  </div>
+                </div>
+              )}
+              {updating && (
+                <div className="flex flex-col gap-1 items-start">
+                  <Card size="small" surface="paper" texture="kraft" shade>
+                    <Spinner size="small" label="Agent thinking…" />
+                  </Card>
+                </div>
+              )}
+            </>
           ) : (
             <p className="text-sm m-0 text-ink-500">
               Jot a comment, ask a question, or say what's wrong with this plan.
@@ -377,12 +421,8 @@ const FeedbackSection = ({
             aria-label="Feedback message"
             placeholder="Write a message…"
             rows={3}
-            disabled={updating}
           />
           <div className="flex justify-end items-center gap-3">
-            <span className={updating ? 'visible' : 'invisible'}>
-              <Spinner size="small" label="Agent replying…" />
-            </span>
             <Button size="small" onClick={handleSend} disabled={updating || !input.trim()}>
               Send
             </Button>
