@@ -8,4 +8,5 @@ export * from './release-notes';
 export * from './roadmap';
 export * from './trail';
 export * from './parked-questions';
+export * from './phase-progress';
 export * from '../types/index';

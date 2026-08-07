@@ -26,6 +26,16 @@ export const phasePercentage = (plan: PlanEntry): number | null => phaseProgress
 export const combinedProgress = (plan: PlanEntry) =>
   itemProgress([...plan.phases, ...(plan.fixes ?? [])]);
 
+export const rollupProgress = (
+  plan: PlanEntry,
+  runningFraction: number,
+): { done: number; total: number; pct: number } | null => {
+  const base = combinedProgress(plan);
+  if (!base) return null;
+  const filled = Math.min(base.total, base.done + runningFraction);
+  return { done: base.done, total: base.total, pct: (filled / base.total) * 100 };
+};
+
 export const runningTaskForPlan = (
   planId: string | undefined,
   agentStatus: AgentTaskState[],

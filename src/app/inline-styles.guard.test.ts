@@ -15,6 +15,7 @@ const DYNAMIC_STYLE_ALLOWLIST = new Set([
   'features/plans/views/plan-filter-column.tsx', // status-dot colour from STATUS_STAMP
   'router.tsx', // paper-ui's Layout has no className prop, only style
   'components/shell/status-bar-core.tsx', // paper-ui's getTextureStyles() has no className form
+  'features/plans/views/entity-detail.tsx', // running-phase fill fraction via --phase-fill CSS var
 ]);
 
 const APP_DIR = dirname(fileURLToPath(import.meta.url));

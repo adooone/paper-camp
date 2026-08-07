@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": ["src/cli/session-focus.ts", "src/toolbar/index.ts"],
-  "ignore": ["src/core/parse/frontmatter-schemas.ts"]
+  "ignore": ["src/core/parse/frontmatter-schemas.ts"],
+  "ignoreDependencies": ["@dendelion/paper-camp"]
 }

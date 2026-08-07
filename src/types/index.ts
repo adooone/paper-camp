@@ -34,6 +34,8 @@ export interface PhaseItem {
   source?: 'review';
 }
 
+export type PhaseMilestone = 'implement' | 'verify' | 'checkbox';
+
 /** A body section anchor is `body` for now — the whole prose block is the only
  * body section a plan/entity has until later phases break it into sub-sections. */
 export type MarginNoteAnchor = { kind: 'phase'; index: number } | { kind: 'body' };
@@ -681,6 +683,9 @@ export interface AgentTaskState {
   ideaId?: string;
   agentId: AgentId;
   lines: string[];
+  phaseAnchor?: PhaseMilestone;
+  anchorEnteredAt?: number;
+  lastStreamAt?: number;
   // fix-review only: prefills the commit form once the agent has reported.
   suggestedCommit?: { title: string; message: string };
   errorKind?: 'auth' | 'question';

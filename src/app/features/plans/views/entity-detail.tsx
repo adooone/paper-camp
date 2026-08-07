@@ -1,16 +1,18 @@
 import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import {
+  type RunningPhaseFill,
   useFeedbackQuietSummary,
   usePlanStatusPatch,
   usePromoteThreadMessage,
+  useRunningPhaseFill,
   useSendFeedbackMessage,
   useTrail,
 } from '@/app/features/plans/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type { AgentTaskState, IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
+import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
   Button,
   Card,
@@ -22,7 +24,7 @@ import {
   Tooltip,
   useToast,
 } from '@dendelion/paper-ui';
-import { useState } from 'react';
+import { type CSSProperties, useEffect, useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
@@ -38,7 +40,7 @@ import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
-import { combinedProgress, effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
+import { effectiveStatus, relativeDate, rollupProgress, runningTaskForPlan } from '../helpers';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
 
 interface EntityDetailProps {
@@ -61,8 +63,7 @@ const PhasesSection = ({
   plan,
   auditRunning,
   agentBusy,
-  agentPhaseIndex,
-  planTask,
+  runningFill,
   updating,
   onTogglePhase,
   onToggleFix,
@@ -71,8 +72,7 @@ const PhasesSection = ({
   plan: PlanEntry;
   auditRunning: boolean;
   agentBusy: boolean;
-  agentPhaseIndex: number | null | undefined;
-  planTask: AgentTaskState | undefined;
+  runningFill: RunningPhaseFill | null;
   updating: boolean;
   onTogglePhase: (index: number) => void;
   onToggleFix: (index: number) => void;
@@ -85,8 +85,17 @@ const PhasesSection = ({
     ...plan.phases.map((item, index) => ({ kind: 'phase' as const, item, index })),
     ...fixes.map((item, index) => ({ kind: 'fix' as const, item, index })),
   ];
+  const isRunningRow = (row: WorkRow) =>
+    row.kind === 'phase' && !row.item.done && runningFill?.index === row.index;
   return (
-    <div className="mb-8">
+    <div
+      className="mb-8"
+      style={
+        runningFill
+          ? ({ '--phase-fill': `${runningFill.fraction * 100}%` } as CSSProperties)
+          : undefined
+      }
+    >
       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <h3 className={`${sectionHeadingClass} m-0`}>Phases</h3>
         <div className="flex items-center gap-2 flex-wrap">
@@ -115,15 +124,18 @@ const PhasesSection = ({
           {
             key: 'checkbox',
             header: 'Status',
-            cell: (row: WorkRow) => (
-              <Checkbox
-                checked={row.item.done}
-                onChange={() =>
-                  row.kind === 'phase' ? onTogglePhase(row.index) : onToggleFix(row.index)
-                }
-                disabled={updating}
-              />
-            ),
+            cell: (row: WorkRow) =>
+              isRunningRow(row) ? (
+                <Spinner size="small" />
+              ) : (
+                <Checkbox
+                  checked={row.item.done}
+                  onChange={() =>
+                    row.kind === 'phase' ? onTogglePhase(row.index) : onToggleFix(row.index)
+                  }
+                  disabled={updating}
+                />
+              ),
             width: 2,
           },
           {
@@ -134,6 +146,11 @@ const PhasesSection = ({
                 className={`inline-flex items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
               >
                 {row.item.text}
+                {isRunningRow(row) && (
+                  <span className="text-xs opacity-[0.55]">
+                    {Math.round((runningFill?.fraction ?? 0) * 100)}%
+                  </span>
+                )}
                 {row.kind === 'phase' && row.item.source === 'review' && (
                   <Stamp
                     size="small"
@@ -155,23 +172,26 @@ const PhasesSection = ({
             key: 'actions',
             header: 'Actions',
             align: 'end',
-            cell: (row: WorkRow) =>
-              row.kind === 'phase' ? (
-                <div className="inline-flex gap-2 items-center">
-                  <PhaseCopyButton planTitle={plan.title} planId={plan.id} phaseIndex={row.index} />
-                  {!row.item.done && agentPhaseIndex === row.index ? (
-                    <Spinner size="small" label={`Agent ${planTask?.status}…`} />
+            cell: (row: WorkRow) => {
+              if (row.kind !== 'phase' || isRunningRow(row)) return null;
+              return (
+                <div className="flex justify-end">
+                  {row.item.done ? (
+                    <PhaseCopyButton
+                      planTitle={plan.title}
+                      planId={plan.id}
+                      phaseIndex={row.index}
+                    />
                   ) : (
-                    !row.item.done && (
-                      <AgentStartButton
-                        planId={plan.id}
-                        phaseIndex={row.index}
-                        disabled={agentBusy}
-                      />
-                    )
+                    <AgentStartButton
+                      planId={plan.id}
+                      phaseIndex={row.index}
+                      disabled={agentBusy}
+                    />
                   )}
                 </div>
-              ) : null,
+              );
+            },
             width: 7,
           },
         ]}
@@ -179,12 +199,18 @@ const PhasesSection = ({
           render: (row: WorkRow) => row.item.description || null,
         }}
         showExpandColumn={false}
-        rowTexture={(row: WorkRow) => (row.kind === 'fix' ? 'kraft' : undefined)}
-        rowClassName={(row: WorkRow) =>
-          row.kind === 'phase' && row.item.source === 'review'
-            ? 'bg-[rgba(155,122,181,0.08)]'
-            : undefined
-        }
+        rowTexture={(row: WorkRow) => {
+          if (row.kind === 'fix') return 'kraft';
+          if (row.kind === 'phase' && row.item.done) return 'canvas';
+          return undefined;
+        }}
+        rowClassName={(row: WorkRow) => {
+          if (isRunningRow(row)) return 'phase-running-row';
+          if (row.kind === 'phase' && row.item.source === 'review') {
+            return 'bg-[rgba(155,122,181,0.08)]';
+          }
+          return undefined;
+        }}
         className="phase-table-phone"
       />
     </div>
@@ -250,9 +276,7 @@ const PlanProgressBar = ({
     <div className="flex-1">
       <ProgressBar pct={progress.pct} color={barColor} />
     </div>
-    <span className="text-sm opacity-50 flex-shrink-0">
-      {progress.done}/{progress.total}
-    </span>
+    <span className="text-sm opacity-50 flex-shrink-0">{Math.round(progress.pct)}%</span>
   </div>
 );
 
@@ -317,14 +341,19 @@ const FeedbackSection = ({
   onUndo: () => void;
 }) => {
   const [input, setInput] = useState('');
+  const [pending, setPending] = useState<string | null>(null);
   const [ideaPromptIndex, setIdeaPromptIndex] = useState<number | null>(null);
   const thread = plan.thread ?? [];
   const { promotingIndex, promoteToDurable, promoteToIdea } = usePromoteThreadMessage(plan);
   useFeedbackQuietSummary(plan, true);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
-    if (await onSend(input.trim())) setInput('');
+    const text = input.trim();
+    if (!text) return;
+    setPending(text);
+    setInput('');
+    if (!(await onSend(text))) setInput((current) => current || text);
+    setPending(null);
   };
 
   const handlePromote = (index: number, target: PromoteTarget) => {
@@ -346,15 +375,39 @@ const FeedbackSection = ({
       <h3 className={`${sectionHeadingClass} mb-3`}>Feedback</h3>
       <Card size="small" accent accentColor="slate" texture="kraft">
         <div className="flex flex-col gap-3 mb-4">
-          {thread.length > 0 ? (
-            <FeedbackThread
-              messages={thread}
-              undo={undo}
-              undoing={undoing}
-              onUndo={onUndo}
-              onPromote={handlePromote}
-              promotingIndex={promotingIndex}
-            />
+          {thread.length > 0 || pending ? (
+            <>
+              <FeedbackThread
+                messages={thread}
+                undo={undo}
+                undoing={undoing}
+                onUndo={onUndo}
+                onPromote={handlePromote}
+                promotingIndex={promotingIndex}
+              />
+              {pending && (
+                <div className="flex flex-col gap-1 items-end">
+                  <div className="max-w-[85%]">
+                    <Card
+                      size="small"
+                      surface="paper"
+                      texture="parchment"
+                      accent
+                      accentColor="blue"
+                    >
+                      {pending}
+                    </Card>
+                  </div>
+                </div>
+              )}
+              {updating && (
+                <div className="flex flex-col gap-1 items-start">
+                  <Card size="small" surface="paper" texture="kraft" shade>
+                    <Spinner size="small" label="Agent thinking…" />
+                  </Card>
+                </div>
+              )}
+            </>
           ) : (
             <p className="text-sm m-0 text-ink-500">
               Jot a comment, ask a question, or say what's wrong with this plan.
@@ -368,12 +421,8 @@ const FeedbackSection = ({
             aria-label="Feedback message"
             placeholder="Write a message…"
             rows={3}
-            disabled={updating}
           />
           <div className="flex justify-end items-center gap-3">
-            <span className={updating ? 'visible' : 'invisible'}>
-              <Spinner size="small" label="Agent replying…" />
-            </span>
             <Button size="small" onClick={handleSend} disabled={updating || !input.trim()}>
               Send
             </Button>
@@ -401,10 +450,12 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
   const detailView = useAppStore((s) => s.detailView);
+  const taskLog = useAppStore((s) => s.taskLog);
+  const loadTaskLog = useAppStore((s) => s.loadTaskLog);
   const planTask = runningTaskForPlan(plan.id, agentStatus);
-  const agentPhaseIndex = planTask ? planTask.phaseIndex : null;
+  const runningFill = useRunningPhaseFill(planTask, taskLog);
   const auditRunning = planTask?.taskKind === 'audit';
-  const progress = combinedProgress(plan);
+  const progress = rollupProgress(plan, runningFill?.fraction ?? 0);
   const hasPhases = plan.phases.length > 0;
   const showFeedback = detailView === 'feedback';
   const ideaView: IdeaEntry = {
@@ -416,6 +467,10 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
   // The app never switches branches on its own; this just offers the plan's branch as one click.
   const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
+
+  useEffect(() => {
+    loadTaskLog();
+  }, [loadTaskLog]);
 
   const handleCreateBranch = async () => {
     if (!plan.id) return;
@@ -530,8 +585,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               plan={plan}
               auditRunning={auditRunning}
               agentBusy={agentBusy}
-              agentPhaseIndex={agentPhaseIndex}
-              planTask={planTask}
+              runningFill={runningFill}
               updating={updating}
               onTogglePhase={handleTogglePhase}
               onToggleFix={handleToggleFix}

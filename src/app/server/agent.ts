@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { buildReconcilePrompt } from '@/app/features/plans/prompts';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
+import { advanceAnchor } from '@/core/phase-progress';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
 import { agentThreadMessage, computePlanContentHash } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
@@ -21,6 +22,7 @@ import {
   type IdeaEntry,
   type PaperCampConfig,
   type PhaseItem,
+  type PhaseMilestone,
   type PlanEntry,
   type ReconcileQueueItem,
   type ReviewThread,
@@ -80,6 +82,9 @@ export interface AgentTask {
   adapter: AgentAdapter;
   proc: ChildProcess;
   lines: string[];
+  phaseAnchor?: PhaseMilestone;
+  anchorEnteredAt?: number;
+  lastStreamAt?: number;
   errorKind?: 'auth' | 'question';
   errorReason?: string;
 }
@@ -446,13 +451,24 @@ export function createAgentManager(
     return task.status === 'done' || task.status === 'error' || task.status === 'superseded';
   }
 
+  function noteAnchor(task: AgentTask, milestone: PhaseMilestone) {
+    const advanced = advanceAnchor(task.phaseAnchor, milestone);
+    if (advanced !== task.phaseAnchor) {
+      task.phaseAnchor = advanced;
+      task.anchorEnteredAt = Date.now();
+    }
+  }
+
   function attachReader(task: AgentTask) {
     if (!task.proc.stdout) return;
+    task.lastStreamAt = Date.now();
     const rl = createInterface({ input: task.proc.stdout });
     rl.on('line', (line) => {
       if (isTaskDone(task) || !line.trim()) return;
+      task.lastStreamAt = Date.now();
       const parsed = task.adapter.parseLine(line);
       if (!parsed) return;
+      if (parsed.milestone) noteAnchor(task, parsed.milestone);
       if (parsed.reason) task.errorReason = parsed.reason;
       pushLine(task, parsed.text);
       if (parsed.done) {
@@ -507,6 +523,9 @@ export function createAgentManager(
     // fix pass's retries, so a stale reason from an earlier, ultimately-successful
     // attempt must never be attributed to a later, unrelated failure.
     task.errorReason = undefined;
+    task.phaseAnchor = undefined;
+    task.anchorEnteredAt = undefined;
+    task.lastStreamAt = Date.now();
     const proc = spawnAgent(
       adapter,
       adapter.buildArgs(prompt, { model, effort, resume: opts.resume }),
@@ -518,7 +537,9 @@ export function createAgentManager(
       const rl = createInterface({ input: proc.stdout });
       rl.on('line', (line) => {
         if (opts.guardSuperseded && isSuperseded(task)) return;
+        task.lastStreamAt = Date.now();
         const parsed = adapter.parseLine(line);
+        if (parsed?.milestone) noteAnchor(task, parsed.milestone);
         if (parsed?.sessionId) sessionId = parsed.sessionId;
         if (parsed?.reason) {
           task.errorReason = parsed.reason;
@@ -953,7 +974,10 @@ export function createAgentManager(
 
       // Set phaseIndex/fixIndex so didTaskProgress can verify the right checkbox.
       if (kind === 'phase') task.phaseIndex = i;
-      else task.fixIndex = i;
+      else {
+        task.fixIndex = i;
+        task.phaseIndex = undefined;
+      }
       pushLine(task, `[${kind} ${i + 1}/${total}] ${item.text}`);
 
       const prompt =
@@ -1420,6 +1444,9 @@ export function createAgentManager(
       ideaId: task.ideaId,
       agentId: task.agentId,
       lines: [...task.lines],
+      ...(task.phaseAnchor ? { phaseAnchor: task.phaseAnchor } : {}),
+      ...(task.anchorEnteredAt !== undefined ? { anchorEnteredAt: task.anchorEnteredAt } : {}),
+      ...(task.lastStreamAt !== undefined ? { lastStreamAt: task.lastStreamAt } : {}),
       ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
       ...(task.errorKind ? { errorKind: task.errorKind } : {}),
     }));

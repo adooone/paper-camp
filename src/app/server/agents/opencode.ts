@@ -1,3 +1,4 @@
+import { classifyAnchor } from '@/core/phase-progress';
 import type { AgentRunOptions } from '@/types/index';
 import type { ParsedAgentLine } from './claude-code';
 
@@ -84,7 +85,9 @@ export function parseLine(line: string): ParsedAgentLine | null {
       const desc = input?.description;
       const label = tool ? TOOL_LABELS[tool] : 'Running tool';
       const detail = typeof desc === 'string' && desc.trim() ? `: ${desc.trim()}` : '';
-      return tool ? { text: `${label}${detail}…` } : null;
+      if (!tool) return null;
+      const milestone = classifyAnchor(tool, input) ?? undefined;
+      return { text: `${label}${detail}…`, ...(milestone && { milestone }) };
     }
     case 'step_finish': {
       const reason = part.reason as string | undefined;
