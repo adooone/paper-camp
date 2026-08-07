@@ -44,7 +44,7 @@ the page is unusable there. Two mount bugs and one naming decision:
       A single mount-aware helper the router and desk data layer both read, staying `/` for the standalone camp port.
 - [x] Give the SPA router a mount-aware basepath
       Pass the derived prefix as `basepath` in `src/app/router.tsx` so routes resolve under the mount.
-- [ ] Make the desk build's apiUrl base mount-aware
+- [x] Make the desk build's apiUrl base mount-aware
       Prefix desk `/api/...` calls with the mount so StatusBar and Deliver hit the right origin.
 - [ ] Rename the default route to `/paper-camp`
       Change `CAMP_ROUTE` in the vite plugin and `DEFAULT_ROUTE` in the toolbar; keep `integration.route` as the override and tolerate the old `/__camp` default.
