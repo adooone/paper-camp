@@ -42,7 +42,7 @@ the page is unusable there. Two mount bugs and one naming decision:
 ### Phases
 - [x] Derive the mount prefix once
       A single mount-aware helper the router and desk data layer both read, staying `/` for the standalone camp port.
-- [ ] Give the SPA router a mount-aware basepath
+- [x] Give the SPA router a mount-aware basepath
       Pass the derived prefix as `basepath` in `src/app/router.tsx` so routes resolve under the mount.
 - [ ] Make the desk build's apiUrl base mount-aware
       Prefix desk `/api/...` calls with the mount so StatusBar and Deliver hit the right origin.
