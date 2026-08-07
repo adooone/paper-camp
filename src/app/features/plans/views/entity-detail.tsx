@@ -352,7 +352,7 @@ const FeedbackSection = ({
     if (!text) return;
     setPending(text);
     setInput('');
-    if (!(await onSend(text))) setInput(text);
+    if (!(await onSend(text))) setInput((current) => current || text);
     setPending(null);
   };
 
@@ -385,7 +385,7 @@ const FeedbackSection = ({
                 onPromote={handlePromote}
                 promotingIndex={promotingIndex}
               />
-              {pending && thread[thread.length - 1]?.text !== pending && (
+              {pending && (
                 <div className="flex flex-col gap-1 items-end">
                   <div className="max-w-[85%]">
                     <Card

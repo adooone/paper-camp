@@ -38,8 +38,7 @@ describe('rollupProgress', () => {
   });
 
   it('never fills past the total', () => {
-    const result = rollupProgress(plan([phase(true), phase(false)]), 0.95);
-    expect(result?.pct).toBeCloseTo((1.95 / 2) * 100, 5);
-    expect(result?.pct).toBeLessThan(100);
+    const result = rollupProgress(plan([phase(true), phase(false)]), 1.5);
+    expect(result).toEqual({ done: 1, total: 2, pct: 100 });
   });
 });

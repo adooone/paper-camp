@@ -974,7 +974,10 @@ export function createAgentManager(
 
       // Set phaseIndex/fixIndex so didTaskProgress can verify the right checkbox.
       if (kind === 'phase') task.phaseIndex = i;
-      else task.fixIndex = i;
+      else {
+        task.fixIndex = i;
+        task.phaseIndex = undefined;
+      }
       pushLine(task, `[${kind} ${i + 1}/${total}] ${item.text}`);
 
       const prompt =

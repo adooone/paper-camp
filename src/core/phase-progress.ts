@@ -15,6 +15,13 @@ const ANCHOR_RANK: Record<PhaseMilestone, number> = {
   checkbox: 2,
 };
 
+function readString(input: Record<string, unknown> | undefined, ...keys: string[]): string {
+  for (const key of keys) {
+    if (typeof input?.[key] === 'string') return input[key] as string;
+  }
+  return '';
+}
+
 export function classifyAnchor(
   tool: string,
   input: Record<string, unknown> | undefined,
@@ -25,8 +32,8 @@ export function classifyAnchor(
     return command.includes('check-types') ? 'verify' : null;
   }
   if (name === 'edit' || name === 'multiedit' || name === 'write') {
-    const before = typeof input?.old_string === 'string' ? input.old_string : '';
-    const after = typeof input?.new_string === 'string' ? input.new_string : '';
+    const before = readString(input, 'old_string', 'oldString');
+    const after = readString(input, 'new_string', 'newString');
     if (before.includes('- [ ]') && after.includes('- [x]')) return 'checkbox';
     return 'implement';
   }

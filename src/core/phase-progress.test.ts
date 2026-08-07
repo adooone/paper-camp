@@ -35,6 +35,14 @@ describe('classifyAnchor', () => {
     };
     expect(classifyAnchor('Edit', flip)).toBe('checkbox');
   });
+
+  it("reads OpenCode's camelCase edit keys as the checkbox anchor", () => {
+    const flip = {
+      oldString: '- [ ] Build the phase-progress engine',
+      newString: '- [x] Build the phase-progress engine',
+    };
+    expect(classifyAnchor('edit', flip)).toBe('checkbox');
+  });
 });
 
 describe('advanceAnchor', () => {
