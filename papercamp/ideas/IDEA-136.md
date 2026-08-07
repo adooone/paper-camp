@@ -51,5 +51,17 @@ visual grammar — full-width rows, not cards:
 
 6. **Deep-linking stays**: `?item=` auto-expands and scrolls to its row.
 
+### Phases
+- [ ] Delete Board and Timeline views and the view-mode state
+      Keep Board's progress data; fold it into the row model.
+- [ ] Build the full-width item row under its horizon heading
+      Expand caret, name, slim progress bar, and count stamps on one uniform line; no buttons collapsed.
+- [ ] Build the expanded row body
+      Description, one merged idea list (status stamp + PR badge), candidate rows with promote, "Add option", single "Promote to idea".
+- [ ] Rework the header
+      Normal "Roadmap" title with the goal beneath in body font: first paragraph always visible, rest behind Show more.
+- [ ] Remove the "N graduated · M charted" pulse caption
+- [ ] Wire deep-linking: `?item=` auto-expands and scrolls to its row
+
 ### Thread
 - [x] 2026-08-06 [decision] The three roadmap views collapse into one row-based view; Board and Timeline are deleted, not hidden. Promote lives only in the expanded row. The goal is body text under a normal page title — always readable, never truncated.

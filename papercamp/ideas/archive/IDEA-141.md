@@ -2,7 +2,7 @@
 id: IDEA-141
 title: Phases as living progress rows
 type: feat
-status: review
+status: done
 created: 2026-08-07
 updated: 2026-08-07
 tags:

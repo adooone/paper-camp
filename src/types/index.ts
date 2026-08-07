@@ -646,6 +646,30 @@ export interface TaskLogEntry {
   reason?: string;
 }
 
+export interface RunUsage {
+  durationMs: number;
+  numTurns: number;
+  model?: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  costUsd: number;
+}
+
+export interface RateLimitSnapshot {
+  status: string;
+  rateLimitType?: string;
+  resetsAt?: number;
+  overage?: boolean;
+}
+
+export interface PhaseRunRecord {
+  kind: 'phase' | 'fix';
+  index: number;
+  usage: RunUsage;
+}
+
 export interface TrailHop<T> {
   reached: boolean;
   data?: T;

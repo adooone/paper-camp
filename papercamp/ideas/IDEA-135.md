@@ -61,7 +61,7 @@ source we trust, and disk transcripts are never read.
    usage API ships later, the card upgrades to a real gauge.
 
 ### Phases
-- [ ] Capture usage and capacity from the stream
+- [x] Capture usage and capacity from the stream
       Parser retains the `result` event's usage, duration, and model plus the latest `rate_limit_event` snapshot; run-all records each phase at its per-phase seam.
 - [ ] Persist the usage record into tasks.log
       Grow each git-tracked log entry with the captured usage so run history is durable.
