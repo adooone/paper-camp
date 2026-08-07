@@ -83,7 +83,7 @@ morphs into/behind the card rather than coexisting with it.
       State line (branch, changed count, ahead marker, check stamp) above the action line, with the optional focus footer when a plan is active.
 - [x] Wire the action verbs
       Sync, Push, Commit, Capture, Desk inline; Chat opens the IDEA-138 chalkboard sidebar.
-- [ ] Build the grow-from-trigger reveal animation
+- [x] Build the grow-from-trigger reveal animation
       Transform-origin at bottom center with a spring/overshoot feel; trigger morphs into the card rather than coexisting.
 - [ ] Swap the top full-width bar mount for the island overlay
 
