@@ -50,7 +50,7 @@ stages this idea edits — keep the two in sync.
       Switch the check-types config to `tsc --incremental` so chained re-checks take seconds.
 - [x] Run biome autofix in the server pre-commit
       Server runs `biome check --write` before each per-phase commit.
-- [ ] Drop the biome instruction from the phase prompt
+- [x] Drop the biome instruction from the phase prompt
 - [ ] Default run-all effort to medium in Settings
       Keep high selectable there for projects or stretches that need it.
 - [ ] Keep IDEA-141's milestone detector in sync with the edited prompt stages
