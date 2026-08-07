@@ -90,23 +90,25 @@ async function main() {
     });
     await viteServer.listen();
 
-    const response = await fetch(`http://localhost:${hostPort}/__camp/toolbar.js`);
+    const response = await fetch(`http://localhost:${hostPort}/paper-camp/toolbar.js`);
     const contentType = response.headers.get('content-type') ?? '';
     const body = await response.text();
 
     if (!response.ok) {
-      throw new Error(`/__camp/toolbar.js responded with status ${response.status}`);
+      throw new Error(`/paper-camp/toolbar.js responded with status ${response.status}`);
     }
     if (!contentType.includes('javascript')) {
       throw new Error(
-        `/__camp/toolbar.js served content-type "${contentType}", expected JavaScript`,
+        `/paper-camp/toolbar.js served content-type "${contentType}", expected JavaScript`,
       );
     }
     if (body.trimStart().startsWith('<!DOCTYPE') || body.trimStart().startsWith('<html')) {
-      throw new Error('/__camp/toolbar.js served an HTML fallback instead of the toolbar bundle');
+      throw new Error(
+        '/paper-camp/toolbar.js served an HTML fallback instead of the toolbar bundle',
+      );
     }
 
-    console.log('/__camp/toolbar.js served as JavaScript through a packed tarball.');
+    console.log('/paper-camp/toolbar.js served as JavaScript through a packed tarball.');
   } finally {
     if (viteServer) await viteServer.close();
     await stopProcess(campServer);
