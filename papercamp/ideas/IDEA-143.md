@@ -2,7 +2,7 @@
 id: IDEA-143
 title: One title style for all ideas
 type: chore
-status: idea
+status: review
 created: 2026-08-07
 tags:
   - format
@@ -40,3 +40,12 @@ own length. One convention, enforced where titles are born:
 
 ### Thread
 - [x] 2026-08-07 [decision] Convention: noun/verb phrase, ≤40 chars, no em-dash subtitles, detail in the body — applied to new and active ideas only; legacy titles are handled by the branch-slug cap, not renames.
+
+### Phases
+- [x] Write the rule into AGENTS.md and about.md
+      Place it beside the branch scheme in AGENTS.md so the two stay together.
+- [x] Add the one-line rule to the New idea, suggest-ideas, and draft prompts
+- [x] Cap the branch slug at 40 chars on a word boundary in branchName()
+      Truncate the kebab slug only; no titles are renamed.
+- [x] Lint titles in doctor, flagging active ideas only
+      Extend IDEA-121's corpus lint; skip done and archived ideas.

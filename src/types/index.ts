@@ -217,7 +217,7 @@ export interface ParkedQuestion {
   ageDays: number;
 }
 
-export type ConsistencyIssueKind = 'orphan-subject';
+export type ConsistencyIssueKind = 'orphan-subject' | 'title-style';
 
 export interface ConsistencyIssue {
   kind: ConsistencyIssueKind;

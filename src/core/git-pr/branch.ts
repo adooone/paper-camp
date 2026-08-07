@@ -11,5 +11,11 @@ export function branchName(
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return `${kind}/${id.toLowerCase()}-${slug}`;
+  const capped =
+    slug.length <= 40
+      ? slug
+      : slug[40] === '-'
+        ? slug.slice(0, 40)
+        : slug.slice(0, 40).replace(/-[^-]*$/, '');
+  return `${kind}/${id.toLowerCase()}-${capped}`;
 }

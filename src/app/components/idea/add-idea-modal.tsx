@@ -147,6 +147,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Backlog item title…"
+          helperText="Noun/verb phrase, ≤40 chars — no subtitle; the detail goes in the description below."
           disabled={loading}
           autoFocus
           required
