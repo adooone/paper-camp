@@ -2,7 +2,7 @@
 id: IDEA-140
 title: Bottom-center island
 type: feat
-status: idea
+status: review
 created: 2026-08-06
 tags:
   - integration
@@ -85,7 +85,7 @@ morphs into/behind the card rather than coexisting with it.
       Sync, Push, Commit, Capture, Desk inline; Chat opens the IDEA-138 chalkboard sidebar.
 - [x] Build the grow-from-trigger reveal animation
       Transform-origin at bottom center with a spring/overshoot feel; trigger morphs into the card rather than coexisting.
-- [ ] Swap the top full-width bar mount for the island overlay
+- [x] Swap the top full-width bar mount for the island overlay
 
 ### Thread
 - [ ] 2026-08-06 [question] [agent] Confirm the split: island = glance info + quick actions, Stack-style chat sidebar (IDEA-138) stays as the deep surface opened from the island — or should the island itself grow into the chat surface?
