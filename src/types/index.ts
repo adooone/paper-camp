@@ -684,6 +684,7 @@ export interface AgentTaskState {
   agentId: AgentId;
   lines: string[];
   phaseAnchor?: PhaseMilestone;
+  anchorEnteredAt?: number;
   lastStreamAt?: number;
   // fix-review only: prefills the commit form once the agent has reported.
   suggestedCommit?: { title: string; message: string };

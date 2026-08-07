@@ -83,6 +83,7 @@ export interface AgentTask {
   proc: ChildProcess;
   lines: string[];
   phaseAnchor?: PhaseMilestone;
+  anchorEnteredAt?: number;
   lastStreamAt?: number;
   errorKind?: 'auth' | 'question';
   errorReason?: string;
@@ -450,6 +451,14 @@ export function createAgentManager(
     return task.status === 'done' || task.status === 'error' || task.status === 'superseded';
   }
 
+  function noteAnchor(task: AgentTask, milestone: PhaseMilestone) {
+    const advanced = advanceAnchor(task.phaseAnchor, milestone);
+    if (advanced !== task.phaseAnchor) {
+      task.phaseAnchor = advanced;
+      task.anchorEnteredAt = Date.now();
+    }
+  }
+
   function attachReader(task: AgentTask) {
     if (!task.proc.stdout) return;
     task.lastStreamAt = Date.now();
@@ -459,7 +468,7 @@ export function createAgentManager(
       task.lastStreamAt = Date.now();
       const parsed = task.adapter.parseLine(line);
       if (!parsed) return;
-      if (parsed.milestone) task.phaseAnchor = advanceAnchor(task.phaseAnchor, parsed.milestone);
+      if (parsed.milestone) noteAnchor(task, parsed.milestone);
       if (parsed.reason) task.errorReason = parsed.reason;
       pushLine(task, parsed.text);
       if (parsed.done) {
@@ -515,6 +524,7 @@ export function createAgentManager(
     // attempt must never be attributed to a later, unrelated failure.
     task.errorReason = undefined;
     task.phaseAnchor = undefined;
+    task.anchorEnteredAt = undefined;
     task.lastStreamAt = Date.now();
     const proc = spawnAgent(
       adapter,
@@ -529,7 +539,7 @@ export function createAgentManager(
         if (opts.guardSuperseded && isSuperseded(task)) return;
         task.lastStreamAt = Date.now();
         const parsed = adapter.parseLine(line);
-        if (parsed?.milestone) task.phaseAnchor = advanceAnchor(task.phaseAnchor, parsed.milestone);
+        if (parsed?.milestone) noteAnchor(task, parsed.milestone);
         if (parsed?.sessionId) sessionId = parsed.sessionId;
         if (parsed?.reason) {
           task.errorReason = parsed.reason;
@@ -1432,6 +1442,7 @@ export function createAgentManager(
       agentId: task.agentId,
       lines: [...task.lines],
       ...(task.phaseAnchor ? { phaseAnchor: task.phaseAnchor } : {}),
+      ...(task.anchorEnteredAt !== undefined ? { anchorEnteredAt: task.anchorEnteredAt } : {}),
       ...(task.lastStreamAt !== undefined ? { lastStreamAt: task.lastStreamAt } : {}),
       ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
       ...(task.errorKind ? { errorKind: task.errorKind } : {}),

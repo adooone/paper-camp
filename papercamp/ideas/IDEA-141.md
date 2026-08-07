@@ -55,7 +55,7 @@ run is idle, mid-phase, or done. Make each row carry its state visually:
 ### Phases
 - [x] Build the phase-progress engine
       Derive a running phase's fraction from stream milestone anchors (implement/verify/checkbox), clamping at 95% and freezing after ~30s of stream silence.
-- [ ] Interpolate anchors with median segment time
+- [x] Interpolate anchors with median segment time
       Blend elapsed-vs-median segment duration from [[IDEA-135]] records to move the bar between anchors, holding at the anchor when no history exists.
 - [ ] Render per-row state
       Dim done rows, fill the running row left-to-right by fraction, and swap the leading checkbox for a spinner while a phase runs.
