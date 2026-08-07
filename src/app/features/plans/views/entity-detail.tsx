@@ -40,7 +40,7 @@ import { ProgressBar } from '../components';
 import { PrBadge, ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
-import { combinedProgress, effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
+import { effectiveStatus, relativeDate, rollupProgress, runningTaskForPlan } from '../helpers';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
 
 interface EntityDetailProps {
@@ -261,9 +261,7 @@ const PlanProgressBar = ({
     <div className="flex-1">
       <ProgressBar pct={progress.pct} color={barColor} />
     </div>
-    <span className="text-sm opacity-50 flex-shrink-0">
-      {progress.done}/{progress.total}
-    </span>
+    <span className="text-sm opacity-50 flex-shrink-0">{Math.round(progress.pct)}%</span>
   </div>
 );
 
@@ -417,7 +415,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const planTask = runningTaskForPlan(plan.id, agentStatus);
   const runningFill = useRunningPhaseFill(planTask, taskLog);
   const auditRunning = planTask?.taskKind === 'audit';
-  const progress = combinedProgress(plan);
+  const progress = rollupProgress(plan, runningFill?.fraction ?? 0);
   const hasPhases = plan.phases.length > 0;
   const showFeedback = detailView === 'feedback';
   const ideaView: IdeaEntry = {

@@ -2,7 +2,7 @@
 id: IDEA-141
 title: Phases as living progress rows
 type: feat
-status: idea
+status: review
 created: 2026-08-07
 tags:
   - app
@@ -61,5 +61,5 @@ run is idle, mid-phase, or done. Make each row carry its state visually:
       Dim done rows, fill the running row left-to-right by fraction, and swap the leading checkbox for a spinner while a phase runs.
 - [x] Add the per-row action and title suffix
       Show ▶ run on pending rows and copy on done rows; append live percent to the running title and recorded run time to done titles.
-- [ ] Roll the fraction into plan progress
+- [x] Roll the fraction into plan progress
       Compute plan progress as (done + running fraction) / total and give the plan bar its partial fill and percent.
