@@ -75,7 +75,7 @@ Reveal animation: the island grows out of the trigger
 morphs into/behind the card rather than coexisting with it.
 
 ### Phases
-- [ ] Add the bottom-center logo trigger
+- [x] Add the bottom-center logo trigger
       A floating, always-present affordance that overlays the host app with zero layout space.
 - [ ] Wire reveal and dismiss interaction
       Hover-intent delay, click/tap, and focus/Enter to open; pin while pointer is inside or a menu is open; dismiss on outside-click, Escape, or pointer-leave with a grace period.

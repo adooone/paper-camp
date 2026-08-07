@@ -2,8 +2,9 @@
 id: IDEA-116
 title: Direct-to-main work can never reach review/done in derived status
 type: feat
-status: review
+status: done
 created: 2026-08-04
+updated: 2026-08-07
 tags:
   - app
   - status
@@ -41,6 +42,3 @@ new run ships them.
 
 ### Thread
 - [x] 2026-08-06 [decision] Phase checkboxes are the strongest status signal in both directions: no git signal must not pin an entity open, and a merged PR must not pin it closed. Derivation reads the file first, git second.
-
-### Log
-- 2026-08-04 — Filed from func-ui after IDEA-1 there had to be completed by hand-editing files.

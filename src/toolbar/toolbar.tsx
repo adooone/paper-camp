@@ -8,6 +8,7 @@ import { fetchConfig } from '@/app/services/system';
 import type { PlanEntry, ToolbarSegmentId } from '@/types/index';
 import { useEffect, useState } from 'react';
 import { FocusPanel } from './focus-panel';
+import { IslandTrigger } from './island/island-trigger';
 import { ScoutPanel } from './scout-panel';
 import { ToolbarLink } from './toolbar-link';
 import { type ToolbarSegment, ToolbarShell } from './toolbar-shell';
@@ -116,13 +117,16 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
   );
 
   return (
-    <ToolbarShell
-      renderStatusBar={(trailing) => (
-        <StatusBarCore {...status} onOpenSetup={handleOpenDesk} trailing={trailing} />
-      )}
-      segments={segments}
-      activePanelId={shell.activePanelId}
-      onSelectSegment={shell.onSelectSegment}
-    />
+    <>
+      <ToolbarShell
+        renderStatusBar={(trailing) => (
+          <StatusBarCore {...status} onOpenSetup={handleOpenDesk} trailing={trailing} />
+        )}
+        segments={segments}
+        activePanelId={shell.activePanelId}
+        onSelectSegment={shell.onSelectSegment}
+      />
+      <IslandTrigger />
+    </>
   );
 };
