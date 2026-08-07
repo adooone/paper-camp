@@ -1,4 +1,5 @@
 import { StatusBarCore } from '@/app/components/shell/status-bar-core';
+import { useChecksClient } from '@/app/hooks/use-checks-client';
 import { useFocusClient } from '@/app/hooks/use-focus-client';
 import { useRunsClient } from '@/app/hooks/use-runs-client';
 import { useScoutClient } from '@/app/hooks/use-scout-client';
@@ -6,17 +7,18 @@ import { useStatusClient } from '@/app/hooks/use-status-client';
 import { fetchConfig } from '@/app/services/system';
 import type { PlanEntry, ToolbarSegmentId } from '@/types/index';
 import { useEffect, useState } from 'react';
-import { CapturePanel } from './capture-panel';
 import { FocusPanel } from './focus-panel';
 import { ScoutPanel } from './scout-panel';
 import { ToolbarLink } from './toolbar-link';
 import { type ToolbarSegment, ToolbarShell } from './toolbar-shell';
+import { ToolbarPanelCard } from './toolbar-side-panel';
 import { useToolbarShell } from './use-toolbar-shell';
 
 const DEFAULT_ROUTE = '/__camp';
 
-// Capture, Focus, Scout, Desk — the extension set that carries the strip (IDEA-129/133).
-const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['capture', 'focus', 'scout', 'desk'];
+// Focus, Scout, Desk — the extension set that carries the strip (IDEA-129/133).
+// Capture dissolved into a Scout card (IDEA-138 phase 5) — no standalone segment.
+const DEFAULT_SEGMENTS: ToolbarSegmentId[] = ['focus', 'scout', 'desk'];
 
 export interface ToolbarProps {
   route?: string;
@@ -24,6 +26,7 @@ export interface ToolbarProps {
 
 export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
   const status = useStatusClient();
+  const checks = useChecksClient();
   const runs = useRunsClient();
   const focusPlan = useFocusClient();
   const scout = useScoutClient();
@@ -65,13 +68,9 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
 
   const allSegments: ToolbarSegment[] = [
     {
-      id: 'capture',
-      glance: 'Capture',
-      panel: <CapturePanel />,
-    },
-    {
       id: 'focus',
       glance: focusGlance,
+      pinned: true,
       panel: focusPlan ? (
         <FocusPanel
           plan={focusPlan}
@@ -88,11 +87,15 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     {
       id: 'scout',
       glance: scoutGlance,
+      pinned: true,
       panel: (
         <ScoutPanel
           focusPlan={focusPlan}
           openQuestions={scout.openQuestions}
+          status={status}
+          checks={checks}
           onOpenIdea={openIdea}
+          onOpenDesk={handleOpenDesk}
           onRefresh={scout.refresh}
         />
       ),
@@ -100,7 +103,11 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     {
       id: 'desk',
       glance: 'Desk',
-      panel: <ToolbarLink onClick={handleOpenDesk}>Open full desk →</ToolbarLink>,
+      panel: (
+        <ToolbarPanelCard>
+          <ToolbarLink onClick={handleOpenDesk}>Open full desk →</ToolbarLink>
+        </ToolbarPanelCard>
+      ),
     },
   ];
 
@@ -110,7 +117,9 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
 
   return (
     <ToolbarShell
-      statusBar={<StatusBarCore {...status} onOpenSetup={handleOpenDesk} />}
+      renderStatusBar={(trailing) => (
+        <StatusBarCore {...status} onOpenSetup={handleOpenDesk} trailing={trailing} />
+      )}
       segments={segments}
       activePanelId={shell.activePanelId}
       onSelectSegment={shell.onSelectSegment}

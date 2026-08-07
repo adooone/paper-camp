@@ -1,6 +1,8 @@
+import { Menu } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { type ToolbarSegment, ToolbarShell, type ToolbarShellProps } from './toolbar-shell';
+import { ToolbarSidePanel } from './toolbar-side-panel';
 
 type Elementish = { type: unknown; props: Record<string, unknown> };
 
@@ -26,66 +28,99 @@ const textOf = (node: unknown): string => {
 };
 
 const segments: ToolbarSegment[] = [
-  { id: 'focus', glance: 'Focus', panel: 'Focus panel' },
+  { id: 'focus', glance: 'Focus', panel: 'Focus panel', pinned: true },
   { id: 'desk', glance: 'Desk' },
 ];
 
 const baseProps: ToolbarShellProps = {
-  statusBar: 'Status bar',
+  renderStatusBar: (trailing) => <div data-status-bar>{trailing}</div>,
   segments,
   activePanelId: null,
   onSelectSegment: () => {},
 };
 
+const trailingOf = (tree: unknown) =>
+  collect(tree, (el) => 'data-status-bar' in el.props)[0]?.props.children;
+
 describe('ToolbarShell', () => {
-  it('renders the status bar strip', () => {
+  it('hands the trailing content to the status bar renderer', () => {
     const tree = ToolbarShell(baseProps);
-    expect(textOf(tree)).toContain('Status bar');
+    expect(textOf(trailingOf(tree))).toContain('Focus');
   });
 
-  it('renders every segment glance in the docked bar', () => {
+  it('renders pinned segments as inline buttons', () => {
     const tree = ToolbarShell(baseProps);
-    const buttons = collect(tree, (el) => el.type === 'button');
-    expect(buttons.map((btn) => textOf(btn.props.children as ReactNode))).toEqual([
-      'Focus',
-      'Desk',
-    ]);
-  });
-
-  it('disables segments with no panel', () => {
-    const tree = ToolbarShell(baseProps);
-    const buttons = collect(tree, (el) => el.type === 'button');
+    const buttons = collect(trailingOf(tree), (el) => el.type === 'button');
+    expect(buttons.map((btn) => textOf(btn.props.children as ReactNode))).toEqual(['Focus']);
     expect(buttons[0]?.props.disabled).toBe(false);
-    expect(buttons[1]?.props.disabled).toBe(true);
   });
 
-  it('exposes aria-expanded for enabled segments, matching the active panel', () => {
+  it('exposes aria-expanded for a pinned segment, matching the active panel', () => {
     const tree = ToolbarShell({ ...baseProps, activePanelId: 'focus' });
-    const buttons = collect(tree, (el) => el.type === 'button');
+    const buttons = collect(trailingOf(tree), (el) => el.type === 'button');
     expect(buttons[0]?.props['aria-expanded']).toBe(true);
-    expect(buttons[1]?.props['aria-expanded']).toBeUndefined();
   });
 
-  it('calls onSelectSegment with the segment id on click', () => {
+  it('calls onSelectSegment with the segment id when a pinned segment is clicked', () => {
     const onSelectSegment = vi.fn();
     const tree = ToolbarShell({ ...baseProps, onSelectSegment });
-    const buttons = collect(tree, (el) => el.type === 'button');
+    const buttons = collect(trailingOf(tree), (el) => el.type === 'button');
     (buttons[0]?.props.onClick as () => void)();
     expect(onSelectSegment).toHaveBeenCalledWith('focus');
   });
 
-  it('renders no panel when nothing is active', () => {
+  it('moves unpinned segments into the overflow menu', () => {
     const tree = ToolbarShell(baseProps);
-    expect(textOf(tree).includes('Focus panel')).toBe(false);
+    const menus = collect(trailingOf(tree), (el) => el.type === Menu);
+    const items = menus[0]?.props.items as Array<{ id: string; disabled?: boolean }>;
+    expect(items.map((item) => item.id)).toEqual(['desk']);
+    expect(items[0]?.disabled).toBe(true);
   });
 
-  it('renders the active segment panel below the bar', () => {
+  it('selecting an overflow item calls onSelectSegment with its id', () => {
+    const onSelectSegment = vi.fn();
+    const tree = ToolbarShell({ ...baseProps, onSelectSegment });
+    const menus = collect(trailingOf(tree), (el) => el.type === Menu);
+    const items = menus[0]?.props.items as Array<{ id: string; onSelect?: () => void }>;
+    items[0]?.onSelect?.();
+    expect(onSelectSegment).toHaveBeenCalledWith('desk');
+  });
+
+  it('omits the overflow menu when every segment is pinned', () => {
+    const tree = ToolbarShell({
+      ...baseProps,
+      segments: [{ id: 'focus', glance: 'Focus', panel: 'Focus panel', pinned: true }],
+    });
+    const menus = collect(trailingOf(tree), (el) => el.type === Menu);
+    expect(menus).toHaveLength(0);
+  });
+
+  it('renders the side panel closed when nothing is active', () => {
+    const tree = ToolbarShell(baseProps);
+    const panel = collect(tree, (el) => el.type === ToolbarSidePanel)[0];
+    expect(panel?.props.open).toBe(false);
+    expect(textOf(panel?.props.children as ReactNode).includes('Focus panel')).toBe(false);
+  });
+
+  it('opens the side panel with the active segment as its content and title', () => {
     const tree = ToolbarShell({ ...baseProps, activePanelId: 'focus' });
-    expect(textOf(tree)).toContain('Focus panel');
+    const panel = collect(tree, (el) => el.type === ToolbarSidePanel)[0];
+    expect(panel?.props.open).toBe(true);
+    expect(panel?.props.title).toBe('Focus');
+    expect(textOf(panel?.props.children as ReactNode)).toContain('Focus panel');
   });
 
-  it('renders no panel when the active segment has none', () => {
+  it('keeps the side panel closed when the active segment has no panel', () => {
     const tree = ToolbarShell({ ...baseProps, activePanelId: 'desk' });
-    expect(textOf(tree).includes('Focus panel')).toBe(false);
+    const panel = collect(tree, (el) => el.type === ToolbarSidePanel)[0];
+    expect(panel?.props.open).toBe(false);
+  });
+
+  it('closing the side panel calls onSelectSegment with the active segment id', () => {
+    const onSelectSegment = vi.fn();
+    const tree = ToolbarShell({ ...baseProps, activePanelId: 'focus', onSelectSegment });
+    const panel = collect(tree, (el) => el.type === ToolbarSidePanel)[0];
+    (panel?.props.onClose as () => void)();
+    expect(onSelectSegment).toHaveBeenCalledWith('focus');
   });
 });

@@ -8,12 +8,12 @@
     "chore": 2,
     "docs": 4,
     "refactor": 5,
-    "idea": 140
+    "idea": 141
   },
   "defaultAgents": {
     "phase": {
       "agent": "claude-code",
-      "model": "sonnet",
+      "model": "opus",
       "effort": "high"
     },
     "planDraft": {
@@ -30,6 +30,11 @@
       "agent": "claude-code",
       "model": "sonnet",
       "effort": "low"
+    },
+    "feedback": {
+      "agent": "claude-code",
+      "model": "sonnet",
+      "effort": "medium"
     }
   },
   "subjects": [

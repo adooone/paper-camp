@@ -1,6 +1,6 @@
 import type { AgentTaskStatus, BranchHygieneStatus } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { CommitIcon, MergeIcon, PullIcon, PushIcon } from '../icons';
 
 const barStyle: CSSProperties = {
@@ -64,6 +64,7 @@ export interface StatusBarCoreProps {
   onPull: () => void;
   onQuickCommit: () => void;
   onOpenSetup: () => void;
+  trailing?: ReactNode;
 }
 
 // Ambient status + immediate quick actions; the Stack panel remains the full control surface.
@@ -86,6 +87,7 @@ export const StatusBarCore = ({
   onPull,
   onQuickCommit,
   onOpenSetup,
+  trailing,
 }: StatusBarCoreProps) => {
   return (
     <div style={barStyle}>
@@ -122,6 +124,8 @@ export const StatusBarCore = ({
       </div>
 
       <div style={spacerStyle} />
+
+      {trailing && <div style={rightGroupStyle}>{trailing}</div>}
 
       <div style={rightGroupStyle}>
         <Tooltip

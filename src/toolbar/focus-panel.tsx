@@ -2,6 +2,7 @@ import { AGENT_LABELS, type AgentTaskState, type PlanEntry } from '@/types/index
 import { Button, Checkbox, Stamp } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
 import { ToolbarLink } from './toolbar-link';
+import { ToolbarPanelCard } from './toolbar-side-panel';
 
 const titleStyle: CSSProperties = {
   fontWeight: 600,
@@ -48,7 +49,7 @@ export const FocusPanel = ({
   onStop,
   onRunNextPhase,
 }: FocusPanelProps) => (
-  <div>
+  <ToolbarPanelCard>
     <div style={titleStyle}>{plan.id ? `${plan.id} — ${plan.title}` : plan.title}</div>
     <div style={runRowStyle}>
       {activeTask ? (
@@ -77,5 +78,5 @@ export const FocusPanel = ({
       ))}
     </div>
     <ToolbarLink onClick={onOpenIdea}>Open idea →</ToolbarLink>
-  </div>
+  </ToolbarPanelCard>
 );
