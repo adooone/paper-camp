@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.16.0](https://github.com/adooone/paper-camp/compare/v0.15.0...v0.16.0) (2026-08-07)
+
+
+### Features
+
+* **app:** Bottom-center island (IDEA-140) ([#121](https://github.com/adooone/paper-camp/issues/121)) ([768fb35](https://github.com/adooone/paper-camp/commit/768fb35550d352c5009451160a1893e744988aa3))
+* **app:** Direct-to-main work can never reach review/done in derived status (IDEA-116) ([#115](https://github.com/adooone/paper-camp/issues/115)) ([9a99483](https://github.com/adooone/paper-camp/commit/9a994839777b8b49de2af0394f8f1538a1480feb))
+* **app:** Single-bar toolbar with a Stack-style chat sidebar (IDEA-138) ([#117](https://github.com/adooone/paper-camp/issues/117)) ([6b7ba74](https://github.com/adooone/paper-camp/commit/6b7ba74f722e119d1d9da1b2d5db9169a93042f3))
+
+
+### Bug Fixes
+
+* **app:** Desk is broken under the mount — router basepath, API base, and a friendlier route (IDEA-139) ([#118](https://github.com/adooone/paper-camp/issues/118)) ([0f8d4f1](https://github.com/adooone/paper-camp/commit/0f8d4f1a5c79d2e0c455e92cdaf7adb6650d79c2))
+
 ## [0.15.0](https://github.com/adooone/paper-camp/compare/v0.14.0...v0.15.0) (2026-08-06)
 
 
