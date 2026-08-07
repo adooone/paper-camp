@@ -12,6 +12,7 @@ import {
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import { type UsageRollup, formatDuration, formatTokens, rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
   Button,
@@ -24,7 +25,7 @@ import {
   Tooltip,
   useToast,
 } from '@dendelion/paper-ui';
-import { type CSSProperties, useEffect, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import {
@@ -58,6 +59,29 @@ const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity
 // Phases and post-build fixes share one table; fixes are appended and tinted
 // (`.fix-row`) so they read as part of the same list, distinct only by colour.
 type WorkRow = { kind: 'phase' | 'fix'; item: PhaseItem; index: number };
+
+const IdeaUsageRollup = ({ rollup }: { rollup: UsageRollup }) => {
+  if (rollup.runs === 0) return null;
+  return (
+    <div className="flex items-center gap-2 text-xs opacity-[0.55] mb-4 flex-wrap">
+      <span className="font-semibold opacity-[0.85]">Run cost</span>
+      <span aria-hidden>·</span>
+      <span>
+        {rollup.runs} {rollup.runs === 1 ? 'run' : 'runs'}
+      </span>
+      <span aria-hidden>·</span>
+      <span>{formatDuration(rollup.durationMs)}</span>
+      <span aria-hidden>·</span>
+      <Tooltip
+        content={`Cache: ${formatTokens(rollup.cacheCreationTokens)} write · ${formatTokens(rollup.cacheReadTokens)} read`}
+      >
+        <span>
+          {formatTokens(rollup.inputTokens)} in · {formatTokens(rollup.outputTokens)} out
+        </span>
+      </Tooltip>
+    </div>
+  );
+};
 
 const PhasesSection = ({
   plan,
@@ -167,6 +191,46 @@ const PhasesSection = ({
                 )}
               </span>
             ),
+          },
+          {
+            key: 'time',
+            header: 'Time',
+            align: 'end',
+            width: 3,
+            cell: (row: WorkRow) =>
+              row.item.run ? (
+                <span className="text-xs opacity-[0.55] whitespace-nowrap">
+                  {formatDuration(row.item.run.durationMs)}
+                  {row.item.run.attempts > 1 && (
+                    <span className="opacity-[0.75]"> ×{row.item.run.attempts}</span>
+                  )}
+                </span>
+              ) : null,
+          },
+          {
+            key: 'tokens',
+            header: 'Tokens',
+            align: 'end',
+            width: 6,
+            cell: (row: WorkRow) =>
+              row.item.run ? (
+                <span className="text-xs opacity-[0.55] whitespace-nowrap">
+                  {formatTokens(row.item.run.inputTokens)} in ·{' '}
+                  {formatTokens(row.item.run.outputTokens)} out
+                </span>
+              ) : null,
+          },
+          {
+            key: 'model',
+            header: 'Model',
+            align: 'end',
+            width: 4,
+            cell: (row: WorkRow) =>
+              row.item.run?.model ? (
+                <span className="text-xs opacity-[0.55] whitespace-nowrap">
+                  {row.item.run.model}
+                </span>
+              ) : null,
           },
           {
             key: 'actions',
@@ -454,6 +518,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const loadTaskLog = useAppStore((s) => s.loadTaskLog);
   const planTask = runningTaskForPlan(plan.id, agentStatus);
   const runningFill = useRunningPhaseFill(planTask, taskLog);
+  const usageRollup = useMemo(() => rollupUsage(taskLog, plan.id), [taskLog, plan.id]);
   const auditRunning = planTask?.taskKind === 'audit';
   const progress = rollupProgress(plan, runningFill?.fraction ?? 0);
   const hasPhases = plan.phases.length > 0;
@@ -572,6 +637,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           <PlanBodySection plan={plan} />
 
           <ClarificationsSection clarifications={plan.clarifications ?? []} />
+
+          <IdeaUsageRollup rollup={usageRollup} />
 
           {!hasPhases && (
             <div className="flex items-center gap-3 mb-8">

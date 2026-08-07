@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { RunUsage } from '../types/index';
+import type { RunUsage, TaskLogEntry } from '../types/index';
 import {
   formatDuration,
   formatRunLine,
   formatTokens,
   mergeRun,
   parseRunLine,
+  rollupUsage,
   shortModel,
 } from './phase-run';
 
@@ -99,5 +100,55 @@ describe('mergeRun', () => {
       model: 'fable-5',
       attempts: 2,
     });
+  });
+});
+
+describe('rollupUsage', () => {
+  const usage = (durationMs: number, input: number, output: number): RunUsage => ({
+    durationMs,
+    numTurns: 1,
+    inputTokens: input,
+    outputTokens: output,
+    cacheCreationTokens: 10,
+    cacheReadTokens: 20,
+    costUsd: 0,
+  });
+  const base = {
+    taskKind: 'phase' as const,
+    planTitle: 'X',
+    agentId: 'claude-code' as const,
+    startedAt: '2026-08-01T00:00:00Z',
+    endedAt: '2026-08-01T00:10:00Z',
+    outcome: 'done' as const,
+  };
+
+  it('sums per-phase run-all entries and single overhead runs, counting each run', () => {
+    const entries: TaskLogEntry[] = [
+      {
+        ...base,
+        id: 'a',
+        planId: 'IDEA-1',
+        taskKind: 'run-all',
+        phaseRuns: [
+          { kind: 'phase', index: 0, usage: usage(1000, 100, 10) },
+          { kind: 'phase', index: 1, usage: usage(2000, 200, 20) },
+        ],
+      },
+      { ...base, id: 'b', planId: 'IDEA-1', taskKind: 'draft', usage: usage(500, 50, 5) },
+      { ...base, id: 'c', planId: 'IDEA-2', taskKind: 'draft', usage: usage(999, 99, 9) },
+      { ...base, id: 'd', planId: 'IDEA-1', taskKind: 'feedback' },
+    ];
+    expect(rollupUsage(entries, 'IDEA-1')).toEqual({
+      runs: 3,
+      durationMs: 3500,
+      inputTokens: 350,
+      outputTokens: 35,
+      cacheCreationTokens: 30,
+      cacheReadTokens: 60,
+    });
+  });
+
+  it('returns an empty rollup when no entries match the plan', () => {
+    expect(rollupUsage([], 'IDEA-1').runs).toBe(0);
   });
 });

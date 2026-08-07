@@ -67,7 +67,7 @@ source we trust, and disk transcripts are never read.
       Grow each git-tracked log entry with the captured usage so run history is durable.
 - [x] Write the `run:` line under done phases
       Land the compact annotation in the idea file, cumulative across attempts, and mirror the grammar in about.md.
-- [ ] Render phase columns and the idea rollup
+- [x] Render phase columns and the idea rollup
       Entity detail shows Time / Tokens / Model per done phase and a derived idea-level rollup, computed at read time.
 - [ ] Add Stats analytics cards
       Tokens and agent-minutes per week, median phase duration, most expensive ideas.

@@ -1,4 +1,4 @@
-import type { PhaseRun, RunUsage } from '../types/index';
+import type { PhaseRun, RunUsage, TaskLogEntry } from '../types/index';
 
 function trimDecimal(value: number, places: number): string {
   return value
@@ -92,4 +92,38 @@ export function mergeRun(prev: PhaseRun | undefined, usage: RunUsage): PhaseRun 
     model: usage.model ? shortModel(usage.model) : prev?.model,
     attempts: (prev?.attempts ?? 0) + 1,
   };
+}
+
+export interface UsageRollup {
+  runs: number;
+  durationMs: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+}
+
+export function rollupUsage(taskRuns: TaskLogEntry[], planId?: string): UsageRollup {
+  const rollup: UsageRollup = {
+    runs: 0,
+    durationMs: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheCreationTokens: 0,
+    cacheReadTokens: 0,
+  };
+  const add = (usage: RunUsage) => {
+    rollup.runs += 1;
+    rollup.durationMs += usage.durationMs;
+    rollup.inputTokens += usage.inputTokens;
+    rollup.outputTokens += usage.outputTokens;
+    rollup.cacheCreationTokens += usage.cacheCreationTokens;
+    rollup.cacheReadTokens += usage.cacheReadTokens;
+  };
+  for (const entry of taskRuns) {
+    if (planId && entry.planId !== planId) continue;
+    if (entry.phaseRuns?.length) for (const p of entry.phaseRuns) add(p.usage);
+    else if (entry.usage) add(entry.usage);
+  }
+  return rollup;
 }
