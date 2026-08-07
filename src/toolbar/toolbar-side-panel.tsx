@@ -1,5 +1,4 @@
 import {
-  Card,
   CloseIcon,
   Divider,
   IconButton,
@@ -48,23 +47,6 @@ const contentStyle: CSSProperties = {
   minHeight: 0,
   overflow: 'hidden',
 };
-
-const panelCardWrapStyle: CSSProperties = {
-  height: '100%',
-  overflowY: 'auto',
-  padding: '0 1rem 1rem',
-};
-
-// The default card-section treatment for panels that just size to their own
-// content — the chat thread panel instead fills contentStyle directly so its
-// thread can flex and scroll independently of a pinned composer.
-export const ToolbarPanelCard = ({ children }: { children: ReactNode }) => (
-  <div style={panelCardWrapStyle}>
-    <Card surface="chalkboard" size="small">
-      {children}
-    </Card>
-  </div>
-);
 
 export interface ToolbarSidePanelProps {
   open: boolean;

@@ -2,7 +2,7 @@
 id: IDEA-140
 title: Bottom-center island
 type: feat
-status: idea
+status: review
 created: 2026-08-06
 tags:
   - integration
@@ -75,17 +75,17 @@ Reveal animation: the island grows out of the trigger
 morphs into/behind the card rather than coexisting with it.
 
 ### Phases
-- [ ] Add the bottom-center logo trigger
+- [x] Add the bottom-center logo trigger
       A floating, always-present affordance that overlays the host app with zero layout space.
-- [ ] Wire reveal and dismiss interaction
+- [x] Wire reveal and dismiss interaction
       Hover-intent delay, click/tap, and focus/Enter to open; pin while pointer is inside or a menu is open; dismiss on outside-click, Escape, or pointer-leave with a grace period.
-- [ ] Assemble the Island card on `surface="paper"`
+- [x] Assemble the Island card on `surface="paper"`
       State line (branch, changed count, ahead marker, check stamp) above the action line, with the optional focus footer when a plan is active.
-- [ ] Wire the action verbs
+- [x] Wire the action verbs
       Sync, Push, Commit, Capture, Desk inline; Chat opens the IDEA-138 chalkboard sidebar.
-- [ ] Build the grow-from-trigger reveal animation
+- [x] Build the grow-from-trigger reveal animation
       Transform-origin at bottom center with a spring/overshoot feel; trigger morphs into the card rather than coexisting.
-- [ ] Swap the top full-width bar mount for the island overlay
+- [x] Swap the top full-width bar mount for the island overlay
 
 ### Thread
 - [ ] 2026-08-06 [question] [agent] Confirm the split: island = glance info + quick actions, Stack-style chat sidebar (IDEA-138) stays as the deep surface opened from the island — or should the island itself grow into the chat surface?

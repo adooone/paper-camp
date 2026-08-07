@@ -1,9 +1,11 @@
 ---
 id: IDEA-139
-title: Desk is broken under the mount — router basepath, API base, and a friendlier route
+title: Desk is broken under the mount — router basepath, API base, and a
+  friendlier route
 type: fix
-status: review
+status: done
 created: 2026-08-06
+updated: 2026-08-07
 tags:
   - integration
   - app
@@ -36,9 +38,6 @@ the page is unusable there. Two mount bugs and one naming decision:
    `integration.route` in config.json keeps working as the override, and the
    plugin should tolerate the old default for existing configs.
 
-### Thread
-- [x] 2026-08-06 [decision] Route pattern is `/paper-camp/...` — simple URLs, no lowdash-prefixed technical routes.
-
 ### Phases
 - [x] Derive the mount prefix once
       A single mount-aware helper the router and desk data layer both read, staying `/` for the standalone camp port.
@@ -52,3 +51,6 @@ the page is unusable there. Two mount bugs and one naming decision:
       Refresh route references in docs and confirm the desk works both standalone and embedded.
 - [x] Derive the mount prefix from a serve-time signal, not the page URL
       Review-found: `deriveMountPrefix(document.baseURI)` reads the page URL's directory, so reloading any deep link (`/plans/<title>`, `/plans/`, `/paper-camp/plans/<title>`) poisons the prefix and every `/api` call gets the SPA-fallback HTML ("<!DOCTYPE is not valid JSON", dead StatusBar). The serving layer must declare the mount instead — CLI/standalone serves `''`, the vite plugin injects its route (the [[IDEA-132]] injected-attribute seam) — with tests covering deep-link reloads standalone and mounted.
+
+### Thread
+- [x] 2026-08-06 [decision] Route pattern is `/paper-camp/...` — simple URLs, no lowdash-prefixed technical routes.
