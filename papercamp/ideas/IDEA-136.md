@@ -2,7 +2,7 @@
 id: IDEA-136
 title: Roadmap page redesign
 type: fix
-status: in-progress
+status: review
 created: 2026-08-06
 updated: 2026-08-08
 tags:
