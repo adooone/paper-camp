@@ -25,8 +25,6 @@ const graduationCounts = (graduated: PlanEntry[]) => ({
 const HORIZON_HEADER_CLASSES =
   'font-handwritten text-md font-semibold opacity-70 leading-none pt-2 px-1 pb-0';
 
-const HORIZON_PULSE_CLASSES = 'text-2xs font-normal px-1 py-0 opacity-50';
-
 const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
   <svg
     width={size}
@@ -363,22 +361,6 @@ const GoalBanner = ({ goal }: { goal: string }) => {
   );
 };
 
-const HorizonPulse = ({
-  items,
-  graduatedByItem,
-}: {
-  items: ResolvedRoadmapItem[];
-  graduatedByItem: (item: ResolvedRoadmapItem) => PlanEntry[];
-}) => {
-  const graduated = items.filter((item) => graduatedByItem(item).length > 0).length;
-  const charted = items.length - graduated;
-  return (
-    <div className={HORIZON_PULSE_CLASSES}>
-      {graduated} graduated · {charted} charted
-    </div>
-  );
-};
-
 export const RoadmapPage = () => {
   const [roadmap, setRoadmap] = useState<ResolvedRoadmap | null>(null);
   const [loading, setLoading] = useState(true);
@@ -455,10 +437,7 @@ export const RoadmapPage = () => {
       <div className="flex flex-col gap-6">
         {roadmap.horizons.map((horizon) => (
           <div key={horizon.title} className="flex flex-col gap-1">
-            <div className="flex items-baseline gap-2">
-              <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
-              <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
-            </div>
+            <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
             <div className="flex flex-col gap-1">
               {horizon.items.map((item) => (
                 <RoadmapItemRow
