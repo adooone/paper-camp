@@ -5,7 +5,6 @@ import { useStatusClient } from '@/app/hooks/use-status-client';
 import { fetchConfig } from '@/app/services/system';
 import type { PlanEntry } from '@/types/index';
 import { useEffect, useState } from 'react';
-import { IslandActions } from './island/island-actions';
 import { IslandCard } from './island/island-card';
 import { IslandTrigger } from './island/island-trigger';
 import { ScoutPanel } from './scout-panel';
@@ -33,8 +32,6 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     });
   }, []);
 
-  const handleOpenDesk = () => window.open(`${route}/`, '_blank', 'noopener,noreferrer');
-
   const openIdea = (plan: PlanEntry) => {
     window.open(
       `${route}/plans/${encodeURIComponent(plan.title)}`,
@@ -56,10 +53,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
         <ScoutPanel
           focusPlan={focusPlan}
           openQuestions={scout.openQuestions}
-          status={status}
-          checks={checks}
           onOpenIdea={openIdea}
-          onOpenDesk={handleOpenDesk}
           onRefresh={scout.refresh}
         />
       </ToolbarSidePanel>
@@ -68,14 +62,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
           status={status}
           checks={checks}
           focusPlan={focusPlan}
-          actions={
-            <IslandActions
-              status={status}
-              onCapture={toggleChat}
-              onChat={toggleChat}
-              onOpenDesk={handleOpenDesk}
-            />
-          }
+          onOpenStack={toggleChat}
         />
       </IslandTrigger>
     </>

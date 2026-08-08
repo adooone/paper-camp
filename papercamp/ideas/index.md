@@ -144,3 +144,4 @@
 | IDEA-141 | Phases as living progress rows | feat | idea | app, ui, plans |
 | IDEA-142 | Faster phase runs | refactor | done | agent, server, performance |
 | IDEA-143 | One title style for all ideas | chore | done | format, docs, git |
+| IDEA-144 | Minimal island — branch banner, one glance row, single Stack button | fix | review | integration, app, ux |

@@ -5,25 +5,26 @@ import type {
   SuggestionEntry,
   TaskLogEntry,
 } from '@/types/index';
+import { apiUrl } from '../api-base';
 
 export const fetchTaskLog = async () => {
-  const res = await fetch('/api/tasks');
+  const res = await fetch(apiUrl('/api/tasks'));
   return res.json() as Promise<{ entries: TaskLogEntry[] }>;
 };
 
 export const fetchTaskLogLines = async (id: string) => {
-  const res = await fetch(`/api/tasks/output?id=${encodeURIComponent(id)}`);
+  const res = await fetch(apiUrl(`/api/tasks/output?id=${encodeURIComponent(id)}`));
   if (!res.ok) throw new Error(`Failed to fetch task log: ${res.status}`);
   return res.json() as Promise<{ lines: string[] }>;
 };
 
 export const fetchSuggestions = async () => {
-  const res = await fetch('/api/suggestions');
+  const res = await fetch(apiUrl('/api/suggestions'));
   return res.json() as Promise<{ entries: SuggestionEntry[] }>;
 };
 
 export const promoteSuggestion = async (suggestion: SuggestionEntry) => {
-  const res = await fetch('/api/suggestions/promote', {
+  const res = await fetch(apiUrl('/api/suggestions/promote'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ suggestion }),
@@ -36,7 +37,7 @@ export const promoteSuggestion = async (suggestion: SuggestionEntry) => {
 };
 
 export const dismissSuggestion = async (suggestion: SuggestionEntry) => {
-  const res = await fetch('/api/suggestions/dismiss', {
+  const res = await fetch(apiUrl('/api/suggestions/dismiss'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ suggestion }),
@@ -48,12 +49,12 @@ export const dismissSuggestion = async (suggestion: SuggestionEntry) => {
 };
 
 export const fetchRepoDocs = async () => {
-  const res = await fetch('/api/docs');
+  const res = await fetch(apiUrl('/api/docs'));
   return res.json() as Promise<{ files: { name: string; content: string }[] }>;
 };
 
 export const fetchRoadmap = async () => {
-  const res = await fetch('/api/roadmap');
+  const res = await fetch(apiUrl('/api/roadmap'));
   if (!res.ok) throw new Error(`Failed to fetch roadmap: ${res.status}`);
   return res.json() as Promise<ResolvedRoadmap | null>;
 };
@@ -64,7 +65,7 @@ export const promoteRoadmapItem = async (
   subject?: string,
   candidateName?: string,
 ) => {
-  const res = await fetch('/api/roadmap/promote', {
+  const res = await fetch(apiUrl('/api/roadmap/promote'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ horizonTitle, item, subject, candidateName }),
@@ -77,7 +78,7 @@ export const promoteRoadmapItem = async (
 };
 
 export const addRoadmapItem = async (horizonTitle: string, name: string, description: string) => {
-  const res = await fetch('/api/roadmap/items', {
+  const res = await fetch(apiUrl('/api/roadmap/items'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ horizonTitle, name, description }),
@@ -89,7 +90,7 @@ export const addRoadmapItem = async (horizonTitle: string, name: string, descrip
 };
 
 export const addRoadmapCandidate = async (horizonTitle: string, itemName: string, name: string) => {
-  const res = await fetch('/api/roadmap/candidates', {
+  const res = await fetch(apiUrl('/api/roadmap/candidates'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ horizonTitle, itemName, name }),
@@ -101,6 +102,6 @@ export const addRoadmapCandidate = async (horizonTitle: string, itemName: string
 };
 
 export const fetchConsistency = async () => {
-  const res = await fetch('/api/consistency');
+  const res = await fetch(apiUrl('/api/consistency'));
   return res.json() as Promise<ConsistencyIssue[]>;
 };

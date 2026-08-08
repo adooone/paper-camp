@@ -9,17 +9,17 @@ export interface PrioritiseResult {
 }
 
 export const fetchIdeas = async (): Promise<ParseResult<IdeaEntry>> => {
-  const response = await fetch('/api/ideas');
+  const response = await fetch(apiUrl('/api/ideas'));
   return response.json();
 };
 
 export const fetchArchivableIdeas = async (): Promise<ArchivableIdea[]> => {
-  const response = await fetch('/api/archivable-ideas');
+  const response = await fetch(apiUrl('/api/archivable-ideas'));
   return response.json();
 };
 
 export const archiveIdeas = async (ids: string[]): Promise<{ archived: string[] }> => {
-  const response = await fetch('/api/ideas/archive', {
+  const response = await fetch(apiUrl('/api/ideas/archive'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ids }),
@@ -48,7 +48,7 @@ export const checkIdeaOverlap = async (
   text: string,
   candidates: SimilarityCandidate[],
 ): Promise<OverlapVerdict> => {
-  const response = await fetch('/api/ideas/check-overlap', {
+  const response = await fetch(apiUrl('/api/ideas/check-overlap'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text, candidates }),
@@ -59,7 +59,7 @@ export const checkIdeaOverlap = async (
 };
 
 export const prioritiseQueue = async (): Promise<PrioritiseResult> => {
-  const response = await fetch('/api/ideas/prioritise', { method: 'POST' });
+  const response = await fetch(apiUrl('/api/ideas/prioritise'), { method: 'POST' });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Failed to prioritise queue');
   return data as PrioritiseResult;

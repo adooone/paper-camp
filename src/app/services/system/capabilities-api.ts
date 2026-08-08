@@ -27,7 +27,7 @@ export const fetchConnections = async (): Promise<ConnectionResult[] | null> => 
 
 export const connectService = async (id: string): Promise<ConnectionResult | null> => {
   try {
-    const response = await fetch(`/api/connections/connect?id=${encodeURIComponent(id)}`, {
+    const response = await fetch(apiUrl(`/api/connections/connect?id=${encodeURIComponent(id)}`), {
       method: 'POST',
     });
     if (!response.ok) return null;

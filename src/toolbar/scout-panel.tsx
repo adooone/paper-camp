@@ -1,13 +1,10 @@
 import type { OpenQuestionGroup } from '@/app/features/plans/helpers';
 import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
-import type { ChecksClientState } from '@/app/hooks/use-checks-client';
-import type { StatusClientState } from '@/app/hooks/use-status-client';
 import type { PlanEntry, ThreadMessage } from '@/types/index';
 import { Button, Card, Divider, Spinner, Stamp, Textarea } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { ScoutGlanceCards } from './scout-glance-cards';
-import { ToolbarLink } from './toolbar-link';
+import { ScoutPlanCard } from './scout-plan-card';
 
 const rootStyle: CSSProperties = {
   display: 'flex',
@@ -15,24 +12,6 @@ const rootStyle: CSSProperties = {
   height: '100%',
   minHeight: 0,
 };
-
-const glanceRowStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  padding: '0.75rem 1rem 0',
-  flexShrink: 0,
-};
-
-const ideaTitleStyle: CSSProperties = {
-  fontWeight: 600,
-  fontSize: '0.8125rem',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
-
-const spacerStyle: CSSProperties = { flex: 1, minWidth: '0.5rem' };
 
 const questionCountStyle: CSSProperties = {
   padding: '0.25rem 1rem 0',
@@ -171,6 +150,7 @@ const ReplyBox = ({
   return (
     <div style={composerStyle}>
       <Textarea
+        surface="chalkboard"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         aria-label={`Reply to ${plan.title}`}
@@ -179,14 +159,19 @@ const ReplyBox = ({
         disabled={sending}
       />
       <div style={footerRowStyle}>
-        {sending ? <Spinner size="small" label="Scout replying…" /> : <span />}
-        <Button size="small" onClick={handleSend} disabled={sending || !input.trim()}>
+        {sending ? <Spinner size="small" surface="chalkboard" label="Scout replying…" /> : <span />}
+        <Button
+          size="small"
+          surface="chalkboard"
+          onClick={handleSend}
+          disabled={sending || !input.trim()}
+        >
           Send
         </Button>
       </div>
       {error && (
         <div style={errorRowStyle}>
-          <Stamp size="small" variant="error">
+          <Stamp size="small" surface="chalkboard" variant="error">
             {error}
           </Stamp>
         </div>
@@ -195,63 +180,30 @@ const ReplyBox = ({
   );
 };
 
-const GlanceRow = ({ plan, onOpenIdea }: { plan: PlanEntry; onOpenIdea: () => void }) => (
-  <div style={glanceRowStyle}>
-    {plan.id && (
-      <Stamp size="small" surface="chalkboard">
-        {plan.id}
-      </Stamp>
-    )}
-    <span style={ideaTitleStyle}>{plan.title}</span>
-    <span style={spacerStyle} />
-    <ToolbarLink onClick={onOpenIdea}>Open idea →</ToolbarLink>
-  </div>
-);
-
 export interface ScoutPanelProps {
   focusPlan: PlanEntry | null;
   openQuestions: OpenQuestionGroup[];
-  status: StatusClientState;
-  checks: ChecksClientState;
   onOpenIdea: (plan: PlanEntry) => void;
-  onOpenDesk: () => void;
   onRefresh: () => void;
 }
 
 // Toolbar-safe Scout mount (IDEA-130 phase 6, thread-primary per IDEA-138 phase 3):
 // the oldest project-wide open question's idea takes the thread first — replying
 // resumes its parked run — falling back to the focused idea's thread once the
-// inbox is empty. Full history and promote-to-decision/idea/log stay desk-only.
-// The glance/deep-link cards (IDEA-138 phase 4) show regardless of thread state.
+// inbox is empty. One plan-row card on top (mirroring the desk Plans table row),
+// then the chat; everything deeper deep-links into the desk.
 export const ScoutPanel = ({
   focusPlan,
   openQuestions,
-  status,
-  checks,
   onOpenIdea,
-  onOpenDesk,
   onRefresh,
 }: ScoutPanelProps) => {
   const [oldest] = openQuestions;
   const activePlan = oldest?.plan ?? focusPlan;
-  // The idea chip above the thread already names the focused plan when it's the
-  // one being chatted about — the Focus card only adds information when they differ.
-  const samePlan =
-    focusPlan?.id && activePlan?.id
-      ? focusPlan.id === activePlan.id
-      : focusPlan?.title === activePlan?.title;
-  const distinctFocusPlan = focusPlan && !samePlan ? focusPlan : null;
 
   if (!activePlan) {
     return (
       <div style={rootStyle}>
-        <ScoutGlanceCards
-          status={status}
-          checks={checks}
-          focusPlan={distinctFocusPlan}
-          onOpenIdea={onOpenIdea}
-          onOpenDesk={onOpenDesk}
-        />
         <span style={emptyStateStyle}>No active idea and no open questions.</span>
       </div>
     );
@@ -263,19 +215,12 @@ export const ScoutPanel = ({
 
   return (
     <div style={rootStyle}>
-      <GlanceRow plan={activePlan} onOpenIdea={() => onOpenIdea(activePlan)} />
+      <ScoutPlanCard plan={activePlan} onOpenDesk={() => onOpenIdea(activePlan)} />
       {remainingQuestionCount > 0 && (
         <div style={questionCountStyle}>
           <span style={mutedStyle}>{remainingQuestionCount} more open question(s)</span>
         </div>
       )}
-      <ScoutGlanceCards
-        status={status}
-        checks={checks}
-        focusPlan={distinctFocusPlan}
-        onOpenIdea={onOpenIdea}
-        onOpenDesk={onOpenDesk}
-      />
       <div style={threadStyle}>
         <ThreadMessages messages={activePlan.thread ?? []} />
       </div>

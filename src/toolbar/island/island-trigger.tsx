@@ -1,4 +1,3 @@
-import { IconButton } from '@dendelion/paper-ui';
 import type { CSSProperties, ReactNode } from 'react';
 import { PaperLogo } from './paper-logo';
 import { useIslandReveal } from './use-island-reveal';
@@ -20,14 +19,26 @@ const rootStyle: CSSProperties = {
   pointerEvents: 'auto',
 };
 
+// A plain circle instead of paper-ui's IconButton — its SVG blob background
+// reads as an arbitrary shape at trigger size; the owner wants it round.
 const triggerStyle = (open: boolean): CSSProperties => ({
-  borderRadius: '9999px',
+  width: '48px',
+  height: '48px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '1px solid rgba(61, 53, 43, 0.25)',
+  borderRadius: '50%',
+  background: '#E5DBC4',
+  color: 'var(--pui-text-primary)',
+  cursor: 'pointer',
+  boxShadow: '0 4px 10px rgba(61, 53, 43, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
   transform: open ? 'scale(0.6)' : undefined,
   opacity: open ? 0 : 1,
   visibility: open ? 'hidden' : 'visible',
   transition: open
     ? 'transform 0.24s ease, opacity 0.18s ease, visibility 0s 0.24s'
-    : `transform 0.3s ${SPRING}, opacity 0.2s ease, visibility 0s`,
+    : `transform 0.3s ${SPRING}, opacity 0.2s ease, visibility 0s, box-shadow 0.2s ease`,
 });
 
 const cardLayerStyle = (open: boolean): CSSProperties => ({
@@ -48,6 +59,9 @@ const cardLayerStyle = (open: boolean): CSSProperties => ({
 // can't target by name; this scoped child-selector rule (higher specificity)
 // neutralises that so the card flows inside the grow-from-trigger layer we animate.
 const islandCss = `
+.pc-island-trigger:hover {
+  border-color: rgba(61, 53, 43, 0.5);
+}
 .pc-island-card > section {
   position: static;
   transform: none;
@@ -68,16 +82,16 @@ export const IslandTrigger = ({ children }: { children?: ReactNode }) => {
     <div style={dockStyle}>
       <style>{islandCss}</style>
       <div ref={rootRef} style={rootStyle} {...rootProps}>
-        <IconButton
+        <button
+          type="button"
           className="pc-island-trigger"
-          surface="paper"
-          size="large"
-          label="Open paper camp"
-          icon={<PaperLogo size={22} />}
+          aria-label="Open paper camp"
           style={triggerStyle(open)}
           aria-expanded={open}
           {...triggerProps}
-        />
+        >
+          <PaperLogo size={22} />
+        </button>
         <div className="pc-island-card" style={cardLayerStyle(open)} aria-hidden={!open}>
           {children}
         </div>
