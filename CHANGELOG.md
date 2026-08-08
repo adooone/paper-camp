@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.17.1](https://github.com/adooone/paper-camp/compare/v0.17.0...v0.17.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* **app:** Minimal island — branch banner, one glance row, single Stack button (IDEA-144) ([#126](https://github.com/adooone/paper-camp/issues/126)) ([9a61b13](https://github.com/adooone/paper-camp/commit/9a61b131f3a9aa1612e4676238a7e4c208ce09bf))
+
 ## [0.17.0](https://github.com/adooone/paper-camp/compare/v0.16.0...v0.17.0) (2026-08-08)
 
 
