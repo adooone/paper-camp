@@ -56,7 +56,7 @@ visual grammar — full-width rows, not cards:
       Keep Board's progress data; fold it into the row model.
 - [x] Build the full-width item row under its horizon heading
       Expand caret, name, slim progress bar, and count stamps on one uniform line; no buttons collapsed.
-- [ ] Build the expanded row body
+- [x] Build the expanded row body
       Description, one merged idea list (status stamp + PR badge), candidate rows with promote, "Add option", single "Promote to idea".
 - [ ] Rework the header
       Normal "Roadmap" title with the goal beneath in body font: first paragraph always visible, rest behind Show more.

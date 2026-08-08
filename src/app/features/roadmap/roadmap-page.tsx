@@ -4,8 +4,15 @@ import { PrBadge } from '@/app/features/plans/components/pr-badge';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { addRoadmapCandidate, addRoadmapItem, fetchRoadmap } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
-import type { PlanEntry, ResolvedRoadmap, ResolvedRoadmapItem, RoadmapLink } from '@/types/index';
-import { Button, Card, Input, Stamp, Tooltip } from '@dendelion/paper-ui';
+import type {
+  PlanEntry,
+  PlanStatus,
+  PrInfo,
+  ResolvedRoadmap,
+  ResolvedRoadmapItem,
+  RoadmapLink,
+} from '@/types/index';
+import { Button, Card, Input, Stamp } from '@dendelion/paper-ui';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { PromoteRoadmapItemModal } from './promote-roadmap-item-modal';
@@ -163,39 +170,59 @@ const AddItemForm = ({
   );
 };
 
-const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
+interface MergedIdea {
+  key: string;
+  label: string;
+  status: PlanStatus;
+  pr?: PrInfo;
+  planTitle?: string;
+}
 
-const RoadmapLinkTrail = ({ link }: { link: RoadmapLink }) => (
-  <div className="flex items-center gap-1">
-    <Tooltip content={`${plural(link.taskRuns, 'task run')}${link.released ? ' · released' : ''}`}>
-      <Stamp
-        size="small"
-        fillColor={STATUS_STAMP[link.status].fill}
-        textColor={STATUS_STAMP[link.status].text}
-      >
-        {link.id}
-      </Stamp>
-    </Tooltip>
-    {link.pr && <PrBadge pr={link.pr} />}
-  </div>
-);
+const mergeIdeas = (links: RoadmapLink[], graduated: PlanEntry[]): MergedIdea[] => {
+  const represented = new Set<string>();
+  const merged: MergedIdea[] = graduated.map((plan) => {
+    if (plan.id) represented.add(plan.id);
+    if (plan.idea) represented.add(plan.idea);
+    return {
+      key: plan.title,
+      label: plan.title,
+      status: plan.status,
+      pr: plan.pr,
+      planTitle: plan.title,
+    };
+  });
+  for (const link of links) {
+    if (represented.has(link.id)) continue;
+    merged.push({ key: link.id, label: link.id, status: link.status, pr: link.pr });
+  }
+  return merged;
+};
 
-const GraduatedRow = ({ plan, onOpen }: { plan: PlanEntry; onOpen: () => void }) => (
+const IdeaRow = ({ idea, onOpen }: { idea: MergedIdea; onOpen?: () => void }) => (
   <Card size="small" texture="kraft" className="plan-row-card">
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex items-center gap-3 w-full bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left"
-    >
-      <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{plan.title}</span>
+    <div className="flex items-center gap-3">
+      {onOpen ? (
+        <button
+          type="button"
+          onClick={onOpen}
+          className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left"
+        >
+          {idea.label}
+        </button>
+      ) : (
+        <span className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+          {idea.label}
+        </span>
+      )}
+      {idea.pr && <PrBadge pr={idea.pr} />}
       <Stamp
         size="small"
-        fillColor={STATUS_STAMP[plan.status].fill}
-        textColor={STATUS_STAMP[plan.status].text}
+        fillColor={STATUS_STAMP[idea.status].fill}
+        textColor={STATUS_STAMP[idea.status].text}
       >
-        {STATUS_LABEL[plan.status]}
+        {STATUS_LABEL[idea.status]}
       </Stamp>
-    </button>
+    </div>
   </Card>
 );
 
@@ -231,6 +258,7 @@ const RoadmapItemRow = ({
   const [expanded, setExpanded] = useState(highlighted);
   const { shipped, queued } = graduationCounts(graduated);
   const candidates = item.candidates.length;
+  const ideas = mergeIdeas(item.links, graduated);
 
   return (
     <div
@@ -280,22 +308,19 @@ const RoadmapItemRow = ({
       {expanded && (
         <div className="flex flex-col gap-1 pl-6">
           <span className="text-sm opacity-70">{item.description}</span>
-          {item.links.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap">
-              {item.links.map((link) => (
-                <RoadmapLinkTrail key={link.id} link={link} />
-              ))}
-            </div>
-          )}
+          {ideas.map((idea) => (
+            <IdeaRow
+              key={idea.key}
+              idea={idea}
+              onOpen={idea.planTitle ? () => onOpenGraduated(idea.planTitle as string) : undefined}
+            />
+          ))}
           {item.candidates.map((candidateName) => (
             <CandidateRow
               key={candidateName}
               name={candidateName}
               onPromote={() => onPromoteCandidate(candidateName)}
             />
-          ))}
-          {graduated.map((plan) => (
-            <GraduatedRow key={plan.title} plan={plan} onOpen={() => onOpenGraduated(plan.title)} />
           ))}
           <AddCandidateForm onAdd={onAddCandidate} />
           <Button
