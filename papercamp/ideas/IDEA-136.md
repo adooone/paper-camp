@@ -2,7 +2,7 @@
 id: IDEA-136
 title: Roadmap page redesign
 type: fix
-status: idea
+status: review
 created: 2026-08-06
 tags:
   - app
@@ -61,7 +61,7 @@ visual grammar — full-width rows, not cards:
 - [x] Rework the header
       Normal "Roadmap" title with the goal beneath in body font: first paragraph always visible, rest behind Show more.
 - [x] Remove the "N graduated · M charted" pulse caption
-- [ ] Wire deep-linking: `?item=` auto-expands and scrolls to its row
+- [x] Wire deep-linking: `?item=` auto-expands and scrolls to its row
 
 ### Thread
 - [x] 2026-08-06 [decision] The three roadmap views collapse into one row-based view; Board and Timeline are deleted, not hidden. Promote lives only in the expanded row. The goal is body text under a normal page title — always readable, never truncated.

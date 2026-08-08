@@ -258,6 +258,10 @@ const RoadmapItemRow = ({
   const candidates = item.candidates.length;
   const ideas = mergeIdeas(item.links, graduated);
 
+  useEffect(() => {
+    if (highlighted) setExpanded(true);
+  }, [highlighted]);
+
   return (
     <div
       className={`flex flex-col gap-1 ${highlighted ? 'roadmap-item-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
