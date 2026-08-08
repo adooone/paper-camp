@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.17.0](https://github.com/adooone/paper-camp/compare/v0.16.0...v0.17.0) (2026-08-08)
+
+
+### Features
+
+* **agent:** Run analytics (IDEA-135) ([#124](https://github.com/adooone/paper-camp/issues/124)) ([dd1682b](https://github.com/adooone/paper-camp/commit/dd1682b4848c90a8d81e0fb99141e56c91cc759a))
+* **app:** Phases as living progress rows (IDEA-141) ([#122](https://github.com/adooone/paper-camp/issues/122)) ([610ab2e](https://github.com/adooone/paper-camp/commit/610ab2e292c78f58d595ce7891ac5d0fa1bca5fb))
+
+
+### Bug Fixes
+
+* **app:** Roadmap page redesign (IDEA-136) ([#125](https://github.com/adooone/paper-camp/issues/125)) ([0d863b3](https://github.com/adooone/paper-camp/commit/0d863b3e532d2899dab607be3ca365f599af5309))
+
 ## [0.16.0](https://github.com/adooone/paper-camp/compare/v0.15.0...v0.16.0) (2026-08-07)
 
 
