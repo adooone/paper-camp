@@ -19,7 +19,7 @@ export const createPlan = async (idea: {
   content?: string;
   kind?: string;
 }): Promise<void> => {
-  await fetch('/api/plans', {
+  await fetch(apiUrl('/api/plans'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(idea),
@@ -43,7 +43,7 @@ export const updatePlan = async (
     order?: number | null;
   },
 ): Promise<void> => {
-  const response = await fetch(`/api/plans?title=${encodeURIComponent(title)}`, {
+  const response = await fetch(apiUrl(`/api/plans?title=${encodeURIComponent(title)}`), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),

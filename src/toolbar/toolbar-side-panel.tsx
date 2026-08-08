@@ -1,24 +1,24 @@
-import {
-  CloseIcon,
-  Divider,
-  IconButton,
-  colors,
-  getTextureStyles,
-  withAlpha,
-} from '@dendelion/paper-ui';
+import { CloseIcon, Divider, IconButton, colors, withAlpha } from '@dendelion/paper-ui';
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
+// Mirrors the desk Stack panel's surface (tailwind `bg-desk-bg bg-chalkboard`
+// in tailwind.config.ts): noise over a lighter green gradient, so the
+// chalkboard cards (#142e22) inside read a shade darker than the panel.
+const CHALKBOARD_NOISE = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.15 0 0 0 0 0.28 0 0 0 0 0.20 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)' opacity='1'/%3E%3C/svg%3E")`;
+
 const panelStyle: CSSProperties = {
-  ...getTextureStyles('chalkboard'),
   position: 'fixed',
-  top: '2rem',
+  top: 0,
   bottom: 0,
   right: 0,
   width: 'min(22rem, 100vw)',
   display: 'flex',
   flexDirection: 'column',
-  color: colors.chalkboardText,
+  backgroundImage: `${CHALKBOARD_NOISE}, linear-gradient(135deg, #264a3a 0%, #1e3a2d 60%)`,
+  backgroundRepeat: 'repeat, no-repeat',
+  backgroundSize: '200px 200px, auto',
+  color: '#e8e4d9',
   borderLeft: `1px solid ${withAlpha(colors.chalkboardBorderBase, 0.2)}`,
   boxShadow: '-2px 0 12px rgba(0, 0, 0, 0.3)',
   transition: 'transform 0.25s ease',

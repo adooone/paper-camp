@@ -80,7 +80,7 @@ export const pullFromOrigin = async (): Promise<void> => {
 // Rebase the current branch onto its diverged remote; on conflict the server
 // hands off to a recovery agent instead of throwing (see SyncResult).
 export const fixGitDivergence = async (): Promise<SyncResult> => {
-  const response = await fetch('/api/git/fix-divergence', { method: 'POST' });
+  const response = await fetch(apiUrl('/api/git/fix-divergence'), { method: 'POST' });
   if (response.status === 202) {
     const data = await response.json();
     return data.conflictPrompt
@@ -94,7 +94,7 @@ export const fixGitDivergence = async (): Promise<SyncResult> => {
 // Launches the resolve-conflict agent against a paused-then-aborted rebase — only
 // called on explicit "ask the agent to resolve" confirmation from the sync-failed toast.
 export const resolveConflict = async (prompt: string): Promise<{ ok: boolean; error?: string }> => {
-  const response = await fetch('/api/git/resolve-conflict', {
+  const response = await fetch(apiUrl('/api/git/resolve-conflict'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt }),
@@ -107,7 +107,7 @@ export const resolveConflict = async (prompt: string): Promise<{ ok: boolean; er
 };
 
 export const createPlanBranch = async (planId: string): Promise<string> => {
-  const response = await fetch('/api/git/branch', {
+  const response = await fetch(apiUrl('/api/git/branch'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),

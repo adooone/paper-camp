@@ -26,7 +26,7 @@ export const saveConfig = async (updates: {
   integration?: IntegrationConfig;
 }): Promise<SaveConfigResult> => {
   try {
-    const response = await fetch('/api/config', {
+    const response = await fetch(apiUrl('/api/config'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),

@@ -14,17 +14,17 @@ export const fetchStatus = async (): Promise<StatusState> => {
 };
 
 export const triggerCheck = async (name: CheckName): Promise<void> => {
-  await fetch(`/api/status/check?name=${name}`, { method: 'POST' });
+  await fetch(apiUrl(`/api/status/check?name=${name}`), { method: 'POST' });
 };
 
 export const triggerQualityFix = async (): Promise<void> => {
-  await fetch('/api/status/fix', { method: 'POST' });
+  await fetch(apiUrl('/api/status/fix'), { method: 'POST' });
 };
 
 // Drops the server's resolved-PR cache so the reads that follow re-fetch review
 // state from `gh` rather than replaying the cache window.
 export const dropServerCaches = async (): Promise<void> => {
-  const response = await fetch('/api/refresh', { method: 'POST' });
+  const response = await fetch(apiUrl('/api/refresh'), { method: 'POST' });
   if (!response.ok) {
     throw new Error(`Failed to drop caches: ${response.statusText}`);
   }

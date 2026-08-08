@@ -1,8 +1,9 @@
 import type { MergePolicyResult } from '@/types/index';
+import { apiUrl } from '../api-base';
 
 export const fetchMergePolicy = async (): Promise<MergePolicyResult | null> => {
   try {
-    const response = await fetch('/api/merge-policy');
+    const response = await fetch(apiUrl('/api/merge-policy'));
     if (!response.ok) return null;
     return (await response.json()) as MergePolicyResult;
   } catch {
@@ -12,7 +13,7 @@ export const fetchMergePolicy = async (): Promise<MergePolicyResult | null> => {
 
 export const applyMergePolicy = async (): Promise<MergePolicyResult | null> => {
   try {
-    const response = await fetch('/api/merge-policy/apply', { method: 'POST' });
+    const response = await fetch(apiUrl('/api/merge-policy/apply'), { method: 'POST' });
     if (!response.ok) return null;
     return (await response.json()) as MergePolicyResult;
   } catch {

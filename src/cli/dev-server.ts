@@ -49,6 +49,11 @@ export async function startDevServer({ root, port }: DevServerOptions): Promise<
     // escape staticDir and serve arbitrary files; treat it as the SPA fallback instead.
     const escapesStaticDir = filePath !== staticDir && !filePath.startsWith(staticDir + sep);
 
+    // Without any caching headers browsers cache heuristically and keep serving
+    // stale bundles (the embedded toolbar.js especially) across rebuilds; this
+    // is a dev server, so always revalidate.
+    res.setHeader('Cache-Control', 'no-cache');
+
     try {
       const fileStat = escapesStaticDir ? null : await stat(filePath);
       if (fileStat?.isFile()) {

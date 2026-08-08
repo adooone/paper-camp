@@ -5,7 +5,9 @@ const linkStyle: CSSProperties = {
   border: 'none',
   padding: 0,
   cursor: 'pointer',
-  color: 'var(--pui-text-primary)',
+  // Inherit the surface's text colour (chalk on chalkboard cards, ink on
+  // paper) — a hardcoded ink colour disappears on the dark surfaces.
+  color: 'inherit',
   textDecoration: 'underline',
   fontSize: '0.75rem',
 };

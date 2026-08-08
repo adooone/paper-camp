@@ -1,6 +1,7 @@
+import { apiUrl } from '../api-base';
 export const fetchIconDataUri = async (): Promise<string | null> => {
   try {
-    const response = await fetch('/api/icon');
+    const response = await fetch(apiUrl('/api/icon'));
     if (!response.ok) return null;
     const blob = await response.blob();
     return new Promise((resolve) => {
@@ -15,7 +16,7 @@ export const fetchIconDataUri = async (): Promise<string | null> => {
 
 export const uploadIcon = async (dataUri: string): Promise<boolean> => {
   try {
-    const response = await fetch('/api/icon', {
+    const response = await fetch(apiUrl('/api/icon'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ dataUri }),
