@@ -199,6 +199,18 @@ const GraduatedRow = ({ plan, onOpen }: { plan: PlanEntry; onOpen: () => void })
   </Card>
 );
 
+const ProgressBar = ({ done, total }: { done: number; total: number }) => {
+  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+  return (
+    <div className="w-24 h-1.5 rounded-full bg-black/[0.08] overflow-hidden shrink-0">
+      <div
+        className={`h-full rounded-full ${total > 0 ? 'bg-watercolor-green' : 'bg-transparent'}`}
+        style={{ width: `${percent}%` }}
+      />
+    </div>
+  );
+};
+
 const RoadmapItemRow = ({
   item,
   graduated,
@@ -206,7 +218,6 @@ const RoadmapItemRow = ({
   onPromote,
   onPromoteCandidate,
   onAddCandidate,
-  onViewGraduated,
   onOpenGraduated,
 }: {
   item: ResolvedRoadmapItem;
@@ -215,80 +226,60 @@ const RoadmapItemRow = ({
   onPromote: () => void;
   onPromoteCandidate: (candidateName: string) => void;
   onAddCandidate: (name: string) => Promise<void>;
-  onViewGraduated: () => void;
   onOpenGraduated: (title: string) => void;
 }) => {
   const [expanded, setExpanded] = useState(highlighted);
-  const hasCandidates = item.candidates.length > 0;
   const { shipped, queued } = graduationCounts(graduated);
+  const candidates = item.candidates.length;
 
   return (
     <div
       className={`flex flex-col gap-1 ${highlighted ? 'roadmap-item-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
     >
       <Card size="small" texture="canvas" className="plan-row-card">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            {/* Raw <button>: icon-only toggle, paper-ui Button doesn't offer this compact chrome. */}
-            <button
-              type="button"
-              aria-expanded={expanded}
-              aria-label={expanded ? 'Collapse item' : 'Expand item'}
-              onClick={() => setExpanded((v) => !v)}
-              className={`inline-flex items-center bg-transparent border-none cursor-pointer opacity-50 p-0 ${expanded ? 'rotate-90' : ''}`}
-            >
-              <ChevronRightIcon />
-            </button>
-            <span className="font-semibold flex-1">{item.name}</span>
-            <Button type="button" variant="ghost" size="small" onClick={onPromote}>
-              Promote to idea
-            </Button>
-          </div>
-          <span className={`text-sm opacity-70 ${expanded ? '' : 'line-clamp-2'}`}>
-            {item.description}
+        <div className="flex items-center gap-2">
+          {/* Raw <button>: icon-only toggle, paper-ui Button doesn't offer this compact chrome. */}
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-label={expanded ? 'Collapse item' : 'Expand item'}
+            onClick={() => setExpanded((v) => !v)}
+            className={`inline-flex items-center bg-transparent border-none cursor-pointer opacity-50 p-0 ${expanded ? 'rotate-90' : ''}`}
+          >
+            <ChevronRightIcon />
+          </button>
+          <span className="font-semibold flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+            {item.name}
           </span>
-          <div className="flex items-center gap-1">
-            {(queued > 0 || shipped > 0) && (
-              <button
-                type="button"
-                onClick={onViewGraduated}
-                className="flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer"
-              >
-                {queued > 0 && (
-                  <Stamp
-                    size="small"
-                    fillColor={STATUS_STAMP.planned.fill}
-                    textColor={STATUS_STAMP.planned.text}
-                  >
-                    {queued} in queue
-                  </Stamp>
-                )}
-                {shipped > 0 && (
-                  <Stamp
-                    size="small"
-                    fillColor={STATUS_STAMP.done.fill}
-                    textColor={STATUS_STAMP.done.text}
-                  >
-                    {shipped} shipped
-                  </Stamp>
-                )}
-              </button>
-            )}
-            {hasCandidates && (
-              <Stamp size="small" fillColor="rgba(0, 0, 0, 0.06)" textColor="rgba(0, 0, 0, 0.55)">
-                {item.candidates.length} candidate{item.candidates.length === 1 ? '' : 's'}
-              </Stamp>
-            )}
-            {item.rollup.total > 0 && (
-              <Stamp
-                size="small"
-                fillColor={STATUS_STAMP.planned.fill}
-                textColor={STATUS_STAMP.planned.text}
-              >
-                {item.rollup.done}/{item.rollup.total} done
-              </Stamp>
-            )}
-          </div>
+          <ProgressBar done={item.rollup.done} total={item.rollup.total} />
+          {queued > 0 && (
+            <Stamp
+              size="small"
+              fillColor={STATUS_STAMP.planned.fill}
+              textColor={STATUS_STAMP.planned.text}
+            >
+              {queued} in queue
+            </Stamp>
+          )}
+          {shipped > 0 && (
+            <Stamp
+              size="small"
+              fillColor={STATUS_STAMP.done.fill}
+              textColor={STATUS_STAMP.done.text}
+            >
+              {shipped} shipped
+            </Stamp>
+          )}
+          {candidates > 0 && (
+            <Stamp size="small" fillColor="rgba(0, 0, 0, 0.06)" textColor="rgba(0, 0, 0, 0.55)">
+              {candidates} candidate{candidates === 1 ? '' : 's'}
+            </Stamp>
+          )}
+        </div>
+      </Card>
+      {expanded && (
+        <div className="flex flex-col gap-1 pl-6">
+          <span className="text-sm opacity-70">{item.description}</span>
           {item.links.length > 0 && (
             <div className="flex items-center gap-1 flex-wrap">
               {item.links.map((link) => (
@@ -296,10 +287,6 @@ const RoadmapItemRow = ({
               ))}
             </div>
           )}
-        </div>
-      </Card>
-      {expanded && (
-        <div className="flex flex-col gap-1 pl-6">
           {item.candidates.map((candidateName) => (
             <CandidateRow
               key={candidateName}
@@ -311,6 +298,15 @@ const RoadmapItemRow = ({
             <GraduatedRow key={plan.title} plan={plan} onOpen={() => onOpenGraduated(plan.title)} />
           ))}
           <AddCandidateForm onAdd={onAddCandidate} />
+          <Button
+            type="button"
+            variant="ghost"
+            size="small"
+            onClick={onPromote}
+            className="self-start"
+          >
+            Promote to idea
+          </Button>
         </div>
       )}
     </div>
@@ -439,36 +435,29 @@ export const RoadmapPage = () => {
               <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
               <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
             </div>
-            <div className="flex flex-wrap items-start gap-2.5">
+            <div className="flex flex-col gap-1">
               {horizon.items.map((item) => (
-                <div
+                <RoadmapItemRow
                   key={item.name}
-                  className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none"
-                >
-                  <RoadmapItemRow
-                    item={item}
-                    graduated={graduatedByItem(item)}
-                    highlighted={item.name === highlightedItem}
-                    onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
-                    onPromoteCandidate={(candidateName) =>
-                      setPromoting({ horizonTitle: horizon.title, item, candidateName })
-                    }
-                    onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
-                    onViewGraduated={() => navigate({ to: '/', search: { subject: item.name } })}
-                    onOpenGraduated={(title) =>
-                      navigate({
-                        to: '/plans/$planId',
-                        params: { planId: encodeURIComponent(title) },
-                      })
-                    }
-                  />
-                </div>
-              ))}
-              <div className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none">
-                <AddItemForm
-                  onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
+                  item={item}
+                  graduated={graduatedByItem(item)}
+                  highlighted={item.name === highlightedItem}
+                  onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
+                  onPromoteCandidate={(candidateName) =>
+                    setPromoting({ horizonTitle: horizon.title, item, candidateName })
+                  }
+                  onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
+                  onOpenGraduated={(title) =>
+                    navigate({
+                      to: '/plans/$planId',
+                      params: { planId: encodeURIComponent(title) },
+                    })
+                  }
                 />
-              </div>
+              ))}
+              <AddItemForm
+                onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
+              />
             </div>
           </div>
         ))}

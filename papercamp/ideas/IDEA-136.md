@@ -54,7 +54,7 @@ visual grammar — full-width rows, not cards:
 ### Phases
 - [x] Delete Board and Timeline views and the view-mode state
       Keep Board's progress data; fold it into the row model.
-- [ ] Build the full-width item row under its horizon heading
+- [x] Build the full-width item row under its horizon heading
       Expand caret, name, slim progress bar, and count stamps on one uniform line; no buttons collapsed.
 - [ ] Build the expanded row body
       Description, one merged idea list (status stamp + PR badge), candidate rows with promote, "Add option", single "Promote to idea".
