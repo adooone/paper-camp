@@ -52,7 +52,7 @@ visual grammar — full-width rows, not cards:
 6. **Deep-linking stays**: `?item=` auto-expands and scrolls to its row.
 
 ### Phases
-- [ ] Delete Board and Timeline views and the view-mode state
+- [x] Delete Board and Timeline views and the view-mode state
       Keep Board's progress data; fold it into the row model.
 - [ ] Build the full-width item row under its horizon heading
       Expand caret, name, slim progress bar, and count stamps on one uniform line; no buttons collapsed.

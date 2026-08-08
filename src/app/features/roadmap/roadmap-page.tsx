@@ -4,14 +4,7 @@ import { PrBadge } from '@/app/features/plans/components/pr-badge';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { addRoadmapCandidate, addRoadmapItem, fetchRoadmap } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
-import type {
-  PlanEntry,
-  ResolvedRoadmap,
-  ResolvedRoadmapItem,
-  RoadmapEvent,
-  RoadmapEventKind,
-  RoadmapLink,
-} from '@/types/index';
+import type { PlanEntry, ResolvedRoadmap, ResolvedRoadmapItem, RoadmapLink } from '@/types/index';
 import { Button, Card, Input, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
@@ -351,38 +344,6 @@ const GoalBanner = ({ goal }: { goal: string }) => {
   );
 };
 
-type RoadmapViewMode = 'tree' | 'map' | 'timeline';
-
-const VIEW_MODES: { id: RoadmapViewMode; label: string }[] = [
-  { id: 'tree', label: 'Outline' },
-  { id: 'map', label: 'Board' },
-  { id: 'timeline', label: 'Timeline' },
-];
-
-const RoadmapViewModeSwitch = ({
-  mode,
-  onChange,
-}: {
-  mode: RoadmapViewMode;
-  onChange: (mode: RoadmapViewMode) => void;
-}) => (
-  <nav aria-label="Roadmap view" className="flex gap-1 mb-4">
-    {VIEW_MODES.map((viewMode) => (
-      <Button
-        key={viewMode.id}
-        type="button"
-        variant="ghost"
-        size="small"
-        isActive={mode === viewMode.id}
-        aria-pressed={mode === viewMode.id}
-        onClick={() => onChange(viewMode.id)}
-      >
-        {viewMode.label}
-      </Button>
-    ))}
-  </nav>
-);
-
 const HorizonPulse = ({
   items,
   graduatedByItem,
@@ -399,121 +360,6 @@ const HorizonPulse = ({
   );
 };
 
-const EVENT_KIND_COLOR: Record<RoadmapEventKind, string> = {
-  created: 'bg-watercolor-slate',
-  'task-run': 'bg-watercolor-amber',
-};
-
-const RoadmapTimelineTrack = ({
-  events,
-  rangeStart,
-  rangeEnd,
-}: {
-  events: RoadmapEvent[];
-  rangeStart: number;
-  rangeEnd: number;
-}) => {
-  const span = rangeEnd - rangeStart || 1;
-  return (
-    <div className="relative h-8 mx-1 border-b border-black/10">
-      {events.map((event, i) => (
-        <button
-          type="button"
-          key={`${event.entityId}-${event.kind}-${i}`}
-          className={`absolute top-1/2 w-2.5 h-2.5 p-0 border-none rounded-full -translate-x-1/2 -translate-y-1/2 cursor-pointer ${EVENT_KIND_COLOR[event.kind]}`}
-          style={{
-            left: `${((Date.parse(event.date) - rangeStart) / span) * 100}%`,
-          }}
-          title={`${event.itemName} — ${event.label} (${event.date})`}
-          aria-label={`${event.itemName} — ${event.label} (${event.date})`}
-        />
-      ))}
-    </div>
-  );
-};
-
-const RoadmapMapItem = ({ item }: { item: ResolvedRoadmapItem }) => {
-  const percent =
-    item.rollup.total > 0 ? Math.round((item.rollup.done / item.rollup.total) * 100) : 0;
-  return (
-    <div className="flex flex-col gap-1 py-2 px-2.5">
-      <div className="font-semibold text-sm">{item.name}</div>
-      <div className="h-1.5 rounded-full bg-black/[0.08] overflow-hidden">
-        <div
-          className={`h-full rounded-full ${item.rollup.total > 0 ? 'bg-watercolor-green' : 'bg-transparent'}`}
-          style={{
-            width: `${percent}%`,
-          }}
-        />
-      </div>
-      <div className="text-2xs opacity-50">
-        {item.rollup.total > 0 ? `${item.rollup.done}/${item.rollup.total} done` : 'not started'}
-      </div>
-    </div>
-  );
-};
-
-const RoadmapMap = ({
-  roadmap,
-  graduatedByItem,
-}: {
-  roadmap: ResolvedRoadmap;
-  graduatedByItem: (item: ResolvedRoadmapItem) => PlanEntry[];
-}) => (
-  <div className="flex flex-col gap-6">
-    {roadmap.horizons.map((horizon) => (
-      <div key={horizon.title} className="flex flex-col gap-1">
-        <div className="flex items-baseline gap-2">
-          <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
-          <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
-        </div>
-        <div className="flex flex-wrap items-start gap-2.5">
-          {horizon.items.map((item) => (
-            <div
-              key={item.name}
-              className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none"
-            >
-              <RoadmapMapItem item={item} />
-            </div>
-          ))}
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
-const RoadmapTimeline = ({ roadmap }: { roadmap: ResolvedRoadmap }) => {
-  if (roadmap.events.length === 0) {
-    return <p className="opacity-50">No dated events yet.</p>;
-  }
-
-  const dates = roadmap.events.map((event) => Date.parse(event.date));
-  const rangeStart = Math.min(...dates);
-  const rangeEnd = Math.max(...dates);
-
-  return (
-    <div className="flex flex-col gap-6">
-      {roadmap.horizons.map((horizon) => {
-        const events = roadmap.events.filter((event) => event.horizonTitle === horizon.title);
-        return (
-          <div key={horizon.title} className="flex flex-col gap-1">
-            <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
-            {events.length === 0 ? (
-              <div className="text-2xs font-normal px-1 py-0 opacity-40">No events yet</div>
-            ) : (
-              <RoadmapTimelineTrack events={events} rangeStart={rangeStart} rangeEnd={rangeEnd} />
-            )}
-          </div>
-        );
-      })}
-      <div className="flex justify-between text-2xs opacity-50">
-        <span>{new Date(rangeStart).toLocaleDateString()}</span>
-        <span>{new Date(rangeEnd).toLocaleDateString()}</span>
-      </div>
-    </div>
-  );
-};
-
 export const RoadmapPage = () => {
   const [roadmap, setRoadmap] = useState<ResolvedRoadmap | null>(null);
   const [loading, setLoading] = useState(true);
@@ -523,7 +369,6 @@ export const RoadmapPage = () => {
     item: ResolvedRoadmapItem;
     candidateName?: string;
   } | null>(null);
-  const [viewMode, setViewMode] = useState<RoadmapViewMode>('tree');
   const plans = useAppStore((s) => s.plans);
   const navigate = useNavigate();
   const { item: highlightedItem } = useSearch({ from: '/roadmap' });
@@ -587,52 +432,47 @@ export const RoadmapPage = () => {
   return (
     <div ref={containerRef}>
       <GoalBanner goal={roadmap.goal} />
-      <RoadmapViewModeSwitch mode={viewMode} onChange={setViewMode} />
-      {viewMode === 'tree' && (
-        <div className="flex flex-col gap-6">
-          {roadmap.horizons.map((horizon) => (
-            <div key={horizon.title} className="flex flex-col gap-1">
-              <div className="flex items-baseline gap-2">
-                <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
-                <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
-              </div>
-              <div className="flex flex-wrap items-start gap-2.5">
-                {horizon.items.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none"
-                  >
-                    <RoadmapItemRow
-                      item={item}
-                      graduated={graduatedByItem(item)}
-                      highlighted={item.name === highlightedItem}
-                      onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
-                      onPromoteCandidate={(candidateName) =>
-                        setPromoting({ horizonTitle: horizon.title, item, candidateName })
-                      }
-                      onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
-                      onViewGraduated={() => navigate({ to: '/', search: { subject: item.name } })}
-                      onOpenGraduated={(title) =>
-                        navigate({
-                          to: '/plans/$planId',
-                          params: { planId: encodeURIComponent(title) },
-                        })
-                      }
-                    />
-                  </div>
-                ))}
-                <div className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none">
-                  <AddItemForm
-                    onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
+      <div className="flex flex-col gap-6">
+        {roadmap.horizons.map((horizon) => (
+          <div key={horizon.title} className="flex flex-col gap-1">
+            <div className="flex items-baseline gap-2">
+              <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
+              <HorizonPulse items={horizon.items} graduatedByItem={graduatedByItem} />
+            </div>
+            <div className="flex flex-wrap items-start gap-2.5">
+              {horizon.items.map((item) => (
+                <div
+                  key={item.name}
+                  className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none"
+                >
+                  <RoadmapItemRow
+                    item={item}
+                    graduated={graduatedByItem(item)}
+                    highlighted={item.name === highlightedItem}
+                    onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
+                    onPromoteCandidate={(candidateName) =>
+                      setPromoting({ horizonTitle: horizon.title, item, candidateName })
+                    }
+                    onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
+                    onViewGraduated={() => navigate({ to: '/', search: { subject: item.name } })}
+                    onOpenGraduated={(title) =>
+                      navigate({
+                        to: '/plans/$planId',
+                        params: { planId: encodeURIComponent(title) },
+                      })
+                    }
                   />
                 </div>
+              ))}
+              <div className="flex-[1_1_240px] max-w-[320px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none">
+                <AddItemForm
+                  onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
+                />
               </div>
             </div>
-          ))}
-        </div>
-      )}
-      {viewMode === 'map' && <RoadmapMap roadmap={roadmap} graduatedByItem={graduatedByItem} />}
-      {viewMode === 'timeline' && <RoadmapTimeline roadmap={roadmap} />}
+          </div>
+        ))}
+      </div>
       <PromoteRoadmapItemModal
         horizonTitle={promoting?.horizonTitle ?? null}
         item={promoting?.item ?? null}
