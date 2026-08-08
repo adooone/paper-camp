@@ -2,13 +2,15 @@
 id: IDEA-136
 title: Roadmap page redesign
 type: fix
-status: idea
+status: review
 created: 2026-08-06
+updated: 2026-08-08
 tags:
   - app
   - ui
   - roadmap
 subject: Planning surface
+order: 1
 ---
 
 Visual review of the Roadmap page (2026-08-06): three views fragment one
@@ -52,16 +54,24 @@ visual grammar — full-width rows, not cards:
 6. **Deep-linking stays**: `?item=` auto-expands and scrolls to its row.
 
 ### Phases
-- [ ] Delete Board and Timeline views and the view-mode state
+- [x] Delete Board and Timeline views and the view-mode state
       Keep Board's progress data; fold it into the row model.
-- [ ] Build the full-width item row under its horizon heading
+- [x] Build the full-width item row under its horizon heading
       Expand caret, name, slim progress bar, and count stamps on one uniform line; no buttons collapsed.
-- [ ] Build the expanded row body
+- [x] Build the expanded row body
       Description, one merged idea list (status stamp + PR badge), candidate rows with promote, "Add option", single "Promote to idea".
-- [ ] Rework the header
+- [x] Rework the header
       Normal "Roadmap" title with the goal beneath in body font: first paragraph always visible, rest behind Show more.
-- [ ] Remove the "N graduated · M charted" pulse caption
-- [ ] Wire deep-linking: `?item=` auto-expands and scrolls to its row
+- [x] Remove the "N graduated · M charted" pulse caption
+- [x] Wire deep-linking: `?item=` auto-expands and scrolls to its row
+
+### Fixes
+- [x] Make rows clickable and match Inbox list styling
+      Rows navigate on click (not just the expand caret); adopt the same row visual treatment used in the Inbox list (spacing, hover, typography) instead of the current bespoke styling.
+- [x] Add left sidebar with quick filters and an Add item button
+      Mirror the Plans page's left sidebar layout: horizon/status quick filters for the roadmap list, plus an Add item button to create a new roadmap item.
 
 ### Thread
 - [x] 2026-08-06 [decision] The three roadmap views collapse into one row-based view; Board and Timeline are deleted, not hidden. Promote lives only in the expanded row. The goal is body text under a normal page title — always readable, never truncated.
+- [x] 2026-08-08 [chat] rows should be clickable, and also I want to make this list the same design as we have in the inbox. And another point is to add sidebar at the left as in Plans page and add some quick filters for the roadmap and add item button.
+- [x] 2026-08-08 [chat] [agent] Added two phases: making rows clickable and matching the Inbox's list styling, plus a left sidebar (mirroring Plans) with quick filters and an Add item button. (reopened this idea to re-run)
