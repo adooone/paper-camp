@@ -264,51 +264,43 @@ const RoadmapItemRow = ({
 
   return (
     <div
-      className={`flex flex-col gap-1 ${highlighted ? 'roadmap-item-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
+      className={`border-b border-black/10 last:border-b-0 ${highlighted ? 'roadmap-item-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
     >
-      <Card size="small" texture="canvas" className="plan-row-card">
-        <div className="flex items-center gap-2">
-          {/* Raw <button>: icon-only toggle, paper-ui Button doesn't offer this compact chrome. */}
-          <button
-            type="button"
-            aria-expanded={expanded}
-            aria-label={expanded ? 'Collapse item' : 'Expand item'}
-            onClick={() => setExpanded((v) => !v)}
-            className={`inline-flex items-center bg-transparent border-none cursor-pointer opacity-50 p-0 ${expanded ? 'rotate-90' : ''}`}
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center gap-3 py-2.5 px-0 bg-transparent border-none cursor-pointer text-left [font:inherit] text-inherit"
+      >
+        <span
+          className={`inline-flex items-center opacity-50 shrink-0 ${expanded ? 'rotate-90' : ''}`}
+        >
+          <ChevronRightIcon />
+        </span>
+        <span className="font-semibold flex-1 min-w-0 truncate">{item.name}</span>
+        <ProgressBar done={item.rollup.done} total={item.rollup.total} />
+        {queued > 0 && (
+          <Stamp
+            size="small"
+            fillColor={STATUS_STAMP.planned.fill}
+            textColor={STATUS_STAMP.planned.text}
           >
-            <ChevronRightIcon />
-          </button>
-          <span className="font-semibold flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-            {item.name}
-          </span>
-          <ProgressBar done={item.rollup.done} total={item.rollup.total} />
-          {queued > 0 && (
-            <Stamp
-              size="small"
-              fillColor={STATUS_STAMP.planned.fill}
-              textColor={STATUS_STAMP.planned.text}
-            >
-              {queued} in queue
-            </Stamp>
-          )}
-          {shipped > 0 && (
-            <Stamp
-              size="small"
-              fillColor={STATUS_STAMP.done.fill}
-              textColor={STATUS_STAMP.done.text}
-            >
-              {shipped} shipped
-            </Stamp>
-          )}
-          {candidates > 0 && (
-            <Stamp size="small" fillColor="rgba(0, 0, 0, 0.06)" textColor="rgba(0, 0, 0, 0.55)">
-              {candidates} candidate{candidates === 1 ? '' : 's'}
-            </Stamp>
-          )}
-        </div>
-      </Card>
+            {queued} in queue
+          </Stamp>
+        )}
+        {shipped > 0 && (
+          <Stamp size="small" fillColor={STATUS_STAMP.done.fill} textColor={STATUS_STAMP.done.text}>
+            {shipped} shipped
+          </Stamp>
+        )}
+        {candidates > 0 && (
+          <Stamp size="small" fillColor="rgba(0, 0, 0, 0.06)" textColor="rgba(0, 0, 0, 0.55)">
+            {candidates} candidate{candidates === 1 ? '' : 's'}
+          </Stamp>
+        )}
+      </button>
       {expanded && (
-        <div className="flex flex-col gap-1 pl-6">
+        <div className="flex flex-col gap-1 pl-6 pb-4">
           <span className="text-sm opacity-70">{item.description}</span>
           {ideas.map((idea) => (
             <IdeaRow
@@ -442,7 +434,7 @@ export const RoadmapPage = () => {
         {roadmap.horizons.map((horizon) => (
           <div key={horizon.title} className="flex flex-col gap-1">
             <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col">
               {horizon.items.map((item) => (
                 <RoadmapItemRow
                   key={item.name}
@@ -462,9 +454,11 @@ export const RoadmapPage = () => {
                   }
                 />
               ))}
-              <AddItemForm
-                onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
-              />
+              <div className="pt-2">
+                <AddItemForm
+                  onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
+                />
+              </div>
             </div>
           </div>
         ))}

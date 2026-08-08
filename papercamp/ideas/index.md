@@ -122,7 +122,7 @@
 | IDEA-119 | Run & monitor on the desk | feat | idea | app, monitoring |
 | IDEA-120 | Flow profiles | feat | idea | status, planning-surface |
 | IDEA-121 | paper-camp doctor | feat | idea | format, cli |
-| IDEA-122 | MCP as the primary write path | feat | idea | format, mcp, agents |
+| IDEA-122 | MCP as the primary write path | feat | planned | format, mcp, agents |
 | IDEA-123 | Cross-corpus idea links | feat | idea | multi-project, format |
 | IDEA-124 | Tie ideas to releases — release notes grouped by idea | feat | done | status, releases |
 | IDEA-125 | Headless runs die as bare "error" when the agent hits a permission ask | fix | done | agents, tasks |
@@ -135,8 +135,8 @@
 | IDEA-132 | Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end | fix | done | integration, app, cli |
 | IDEA-133 | Toolbar is an extended StatusBar — top, full-width, always visible, in layout | feat | done | integration, app, ux |
 | IDEA-134 | Plans page decluttering | fix | done | app, ui, plans, stack |
-| IDEA-135 | Run analytics | feat | review | agent, stats, server, ui |
-| IDEA-136 | Roadmap page redesign | fix | idea | app, ui, roadmap |
+| IDEA-135 | Run analytics | feat | done | agent, stats, server, ui |
+| IDEA-136 | Roadmap page redesign | fix | planned | app, ui, roadmap |
 | IDEA-137 | Durable drafted plans | fix | idea | agents, plans, git |
 | IDEA-138 | Single-bar toolbar with a Stack-style chat sidebar | feat | done | integration, app, ux, chat |
 | IDEA-139 | Desk is broken under the mount — router basepath, API base, and a friendlier route | fix | done | integration, app, cli |
