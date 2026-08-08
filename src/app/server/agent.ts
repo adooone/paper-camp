@@ -23,9 +23,12 @@ import {
   type PaperCampConfig,
   type PhaseItem,
   type PhaseMilestone,
+  type PhaseRunRecord,
   type PlanEntry,
+  type RateLimitSnapshot,
   type ReconcileQueueItem,
   type ReviewThread,
+  type RunUsage,
   type TaskKind,
   coerceAgentConfig,
 } from '@/types/index';
@@ -87,6 +90,9 @@ export interface AgentTask {
   lastStreamAt?: number;
   errorKind?: 'auth' | 'question';
   errorReason?: string;
+  runUsage?: RunUsage;
+  rateLimit?: RateLimitSnapshot;
+  phaseRuns?: PhaseRunRecord[];
 }
 
 export function readDefaultAgentIds(root: string): DefaultAgentsMap {
@@ -237,7 +243,12 @@ function createEmptyAgentState(): AgentManagerState {
 export function createAgentManager(
   root: string,
   onAuditComplete?: (planId: string) => Promise<void>,
-  onPhaseCommit?: (plan: PlanEntry, phase: PhaseItem, phaseIndex: number) => Promise<void>,
+  onPhaseCommit?: (
+    plan: PlanEntry,
+    phase: PhaseItem,
+    phaseIndex: number,
+    run?: { usage: RunUsage; kind: 'phase' | 'fix' },
+  ) => Promise<void>,
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
   state: AgentManagerState = createEmptyAgentState(),
 ) {
@@ -470,7 +481,9 @@ export function createAgentManager(
       if (!parsed) return;
       if (parsed.milestone) noteAnchor(task, parsed.milestone);
       if (parsed.reason) task.errorReason = parsed.reason;
-      pushLine(task, parsed.text);
+      if (parsed.rateLimit) task.rateLimit = parsed.rateLimit;
+      if (parsed.usage) task.runUsage = parsed.usage;
+      if (parsed.text) pushLine(task, parsed.text);
       if (parsed.done) {
         finishTask(task, Boolean(parsed.error));
       }
@@ -518,7 +531,13 @@ export function createAgentManager(
     model: string | undefined,
     effort: string | undefined,
     opts: { guardSuperseded?: boolean; trackBlocker?: boolean; resume?: string } = {},
-  ): Promise<{ ok: boolean; timedOut: boolean; stderr: string; sessionId?: string }> {
+  ): Promise<{
+    ok: boolean;
+    timedOut: boolean;
+    stderr: string;
+    sessionId?: string;
+    usage?: RunUsage;
+  }> {
     // Cleared per attempt: this task object is reused across a queue's items and a
     // fix pass's retries, so a stale reason from an earlier, ultimately-successful
     // attempt must never be attributed to a later, unrelated failure.
@@ -533,6 +552,7 @@ export function createAgentManager(
     task.proc = proc;
 
     let sessionId: string | undefined;
+    let usage: RunUsage | undefined;
     if (proc.stdout) {
       const rl = createInterface({ input: proc.stdout });
       rl.on('line', (line) => {
@@ -541,6 +561,8 @@ export function createAgentManager(
         const parsed = adapter.parseLine(line);
         if (parsed?.milestone) noteAnchor(task, parsed.milestone);
         if (parsed?.sessionId) sessionId = parsed.sessionId;
+        if (parsed?.usage) usage = parsed.usage;
+        if (parsed?.rateLimit) task.rateLimit = parsed.rateLimit;
         if (parsed?.reason) {
           task.errorReason = parsed.reason;
           if (opts.trackBlocker) task.blocker = parsed.reason;
@@ -564,6 +586,7 @@ export function createAgentManager(
       ...result,
       stderr,
       sessionId,
+      usage,
     }));
   }
 
@@ -989,6 +1012,7 @@ export function createAgentManager(
         timedOut,
         stderr,
         sessionId: newSessionId,
+        usage: phaseUsage,
       } = await runPhaseProcess(task, adapter, prompt, model, effort, {
         guardSuperseded: true,
         trackBlocker: true,
@@ -1136,9 +1160,13 @@ export function createAgentManager(
       }
 
       completed++;
+      if (phaseUsage) {
+        task.phaseRuns ??= [];
+        task.phaseRuns.push({ kind, index: i, usage: phaseUsage });
+      }
       if (onPhaseCommit) {
         pushLine(task, `[commit] ${kind} ${i + 1} — ${item.text}`);
-        await onPhaseCommit(plan, item, i);
+        await onPhaseCommit(plan, item, i, phaseUsage ? { usage: phaseUsage, kind } : undefined);
       }
     }
 
@@ -1449,6 +1477,7 @@ export function createAgentManager(
       ...(task.lastStreamAt !== undefined ? { lastStreamAt: task.lastStreamAt } : {}),
       ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
       ...(task.errorKind ? { errorKind: task.errorKind } : {}),
+      ...(task.rateLimit ? { rateLimit: task.rateLimit } : {}),
     }));
   }
 

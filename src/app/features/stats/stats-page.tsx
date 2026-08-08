@@ -2,8 +2,10 @@ import { PageTitle } from '@/app/components/page-title';
 import { STATUS_LABEL } from '@/app/features/plans/constants';
 import { fetchStats } from '@/app/services/content';
 import { color } from '@/app/styles/tokens';
+import { formatDuration, formatTokens } from '@/core/phase-run';
+import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
 import { type EntityStatus, PLAN_STATUSES, type ProjectStats } from '@/types/index';
-import { Card, Progress } from '@dendelion/paper-ui';
+import { Card, Progress, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 
 const ENTITY_STATUS_ORDER: EntityStatus[] = ['open', ...PLAN_STATUSES];
@@ -97,6 +99,100 @@ const TasksPerWeekCard = ({ tasksPerWeek }: { tasksPerWeek: ProjectStats['tasksP
   );
 };
 
+const UsagePerWeekCard = ({ usagePerWeek }: { usagePerWeek: ProjectStats['usagePerWeek'] }) => {
+  const max = Math.max(1, ...usagePerWeek.map((w) => w.agentMinutes));
+  return (
+    <StatCard title="Usage per week">
+      {usagePerWeek.length === 0 && <p className="opacity-50 m-0">No usage recorded yet.</p>}
+      {usagePerWeek.map((week) => (
+        <div key={week.week} className="flex flex-col gap-1">
+          <StatRow label={week.week} value={`${week.agentMinutes}m`} />
+          <Progress value={week.agentMinutes} max={max} color={color.accentAmber} height={4} />
+          <span className="text-2xs opacity-50">
+            {formatTokens(week.inputTokens)} in · {formatTokens(week.outputTokens)} out
+          </span>
+        </div>
+      ))}
+    </StatCard>
+  );
+};
+
+const MedianPhaseDurationCard = ({
+  medianPhaseDurationMs,
+}: { medianPhaseDurationMs: number | null }) => (
+  <StatCard title="Median phase duration">
+    {medianPhaseDurationMs === null ? (
+      <p className="opacity-50 m-0">No phase runs recorded yet.</p>
+    ) : (
+      <StatRow label="Median" value={formatDuration(medianPhaseDurationMs)} />
+    )}
+  </StatCard>
+);
+
+const MostExpensiveIdeasCard = ({
+  mostExpensiveIdeas,
+}: { mostExpensiveIdeas: ProjectStats['mostExpensiveIdeas'] }) => (
+  <StatCard title="Most expensive ideas">
+    {mostExpensiveIdeas.length === 0 && <p className="opacity-50 m-0">No usage recorded yet.</p>}
+    {mostExpensiveIdeas.map((idea) => (
+      <div key={idea.planId} className="flex flex-col gap-0.5">
+        <StatRow
+          label={idea.planId}
+          value={`${formatTokens(idea.inputTokens)} in · ${formatTokens(idea.outputTokens)} out`}
+        />
+        <span className="text-2xs opacity-50 truncate">{idea.planTitle}</span>
+      </div>
+    ))}
+  </StatCard>
+);
+
+const CAPACITY_STAMP = {
+  allowed: 'success',
+  warning: 'warning',
+  rejected: 'error',
+} as const;
+
+const ClaudeCapacityCard = ({ capacity }: { capacity: ProjectStats['capacity'] }) => {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <StatCard title="Claude capacity">
+      {capacity === null ? (
+        <p className="opacity-50 m-0">No agent run has reported capacity yet.</p>
+      ) : (
+        <>
+          <div className="flex items-center gap-2">
+            <Stamp size="small" variant={CAPACITY_STAMP[capacityLevel(capacity.snapshot.status)]}>
+              {capacity.snapshot.status}
+            </Stamp>
+            {capacity.snapshot.overage && (
+              <Stamp size="small" variant="warning">
+                overage
+              </Stamp>
+            )}
+          </div>
+          {capacity.snapshot.rateLimitType && (
+            <StatRow label="Window" value={capacity.snapshot.rateLimitType} />
+          )}
+          {capacity.snapshot.resetsAt !== undefined && (
+            <StatRow
+              label="Resets"
+              value={new Date(resetsAtMs(capacity.snapshot.resetsAt)).toLocaleTimeString()}
+            />
+          )}
+          <span className="text-2xs opacity-50">
+            as of last agent run,{' '}
+            {formatDuration(Math.max(0, now - Date.parse(capacity.capturedAt)))} ago
+          </span>
+        </>
+      )}
+    </StatCard>
+  );
+};
+
 export const StatsPage = () => {
   const [stats, setStats] = useState<ProjectStats | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -128,6 +224,10 @@ export const StatsPage = () => {
             <EntitiesByStatusCard entitiesByStatus={stats.entitiesByStatus} />
             <NotesCard openQuestions={stats.openQuestions} decisions={stats.decisions} />
             <TasksPerWeekCard tasksPerWeek={stats.tasksPerWeek} />
+            <UsagePerWeekCard usagePerWeek={stats.usagePerWeek} />
+            <MedianPhaseDurationCard medianPhaseDurationMs={stats.medianPhaseDurationMs} />
+            <MostExpensiveIdeasCard mostExpensiveIdeas={stats.mostExpensiveIdeas} />
+            <ClaudeCapacityCard capacity={stats.capacity} />
           </div>
           <p className="opacity-[0.4] text-2xs mt-6">
             Generated {new Date(stats.generatedAt).toLocaleString()}

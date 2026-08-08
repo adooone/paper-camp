@@ -2,6 +2,7 @@ import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import {
   selectAgentNotSignedIn,
   selectCapabilityGapCount,
+  selectLatestRateLimit,
   useAppStore,
 } from '@/app/stores/app-store';
 import { useToast } from '@dendelion/paper-ui';
@@ -18,6 +19,7 @@ export const StatusBar = () => {
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const capabilityGapCount = useAppStore(selectCapabilityGapCount);
   const agentNotSignedIn = useAppStore(selectAgentNotSignedIn);
+  const rateLimit = useAppStore(selectLatestRateLimit);
   const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
     useBranchSync();
   const { toast } = useToast();
@@ -56,6 +58,7 @@ export const StatusBar = () => {
       activeTaskStatus={activeTask?.status}
       agentNotSignedIn={agentNotSignedIn}
       capabilityGapCount={capabilityGapCount}
+      rateLimit={rateLimit}
       gitBranchHygiene={gitBranchHygiene}
       commitInFlight={commitInFlight}
       gitActionBusy={gitActionBusy}

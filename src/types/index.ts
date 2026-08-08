@@ -27,11 +27,20 @@ export const AGENT_LABELS: Record<AgentId, string> = {
   opencode: 'OpenCode',
 };
 
+export interface PhaseRun {
+  durationMs: number;
+  inputTokens: number;
+  outputTokens: number;
+  model?: string;
+  attempts: number;
+}
+
 export interface PhaseItem {
   done: boolean;
   text: string;
   description?: string;
   source?: 'review';
+  run?: PhaseRun;
 }
 
 export type PhaseMilestone = 'implement' | 'verify' | 'checkbox';
@@ -241,6 +250,27 @@ export interface TasksPerWeek {
   count: number;
 }
 
+export interface UsagePerWeek {
+  /** ISO week, e.g. "2026-W05". */
+  week: string;
+  agentMinutes: number;
+  inputTokens: number;
+  outputTokens: number;
+}
+
+export interface IdeaCost {
+  planId: string;
+  planTitle: string;
+  inputTokens: number;
+  outputTokens: number;
+  durationMs: number;
+}
+
+export interface CapacityStat {
+  snapshot: RateLimitSnapshot;
+  capturedAt: string;
+}
+
 export interface ProjectStats {
   generatedAt: string;
   comments: CommentStats;
@@ -251,6 +281,10 @@ export interface ProjectStats {
   openQuestions: number;
   decisions: number;
   tasksPerWeek: TasksPerWeek[];
+  usagePerWeek: UsagePerWeek[];
+  medianPhaseDurationMs: number | null;
+  mostExpensiveIdeas: IdeaCost[];
+  capacity: CapacityStat | null;
 }
 
 export type IdeaKind = 'idea' | 'note';
@@ -644,6 +678,33 @@ export interface TaskLogEntry {
   endedAt: string;
   outcome: 'done' | 'error' | 'superseded';
   reason?: string;
+  usage?: RunUsage;
+  phaseRuns?: PhaseRunRecord[];
+  rateLimit?: RateLimitSnapshot;
+}
+
+export interface RunUsage {
+  durationMs: number;
+  numTurns: number;
+  model?: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  costUsd: number;
+}
+
+export interface RateLimitSnapshot {
+  status: string;
+  rateLimitType?: string;
+  resetsAt?: number;
+  overage?: boolean;
+}
+
+export interface PhaseRunRecord {
+  kind: 'phase' | 'fix';
+  index: number;
+  usage: RunUsage;
 }
 
 export interface TrailHop<T> {
@@ -689,6 +750,7 @@ export interface AgentTaskState {
   // fix-review only: prefills the commit form once the agent has reported.
   suggestedCommit?: { title: string; message: string };
   errorKind?: 'auth' | 'question';
+  rateLimit?: RateLimitSnapshot;
 }
 
 export interface OverlapVerdict {

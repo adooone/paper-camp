@@ -2,8 +2,9 @@
 id: IDEA-140
 title: Bottom-center island
 type: feat
-status: review
+status: done
 created: 2026-08-06
+updated: 2026-08-07
 tags:
   - integration
   - app

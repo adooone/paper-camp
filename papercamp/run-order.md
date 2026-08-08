@@ -1,2 +1,3 @@
 IDEA-135 — Run analytics
-IDEA-141 — Phases as living progress rows
+IDEA-136 — Roadmap page redesign
+IDEA-122 — MCP as the primary write path

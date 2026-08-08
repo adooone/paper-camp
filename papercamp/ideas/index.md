@@ -135,12 +135,12 @@
 | IDEA-132 | Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end | fix | done | integration, app, cli |
 | IDEA-133 | Toolbar is an extended StatusBar — top, full-width, always visible, in layout | feat | done | integration, app, ux |
 | IDEA-134 | Plans page decluttering | fix | done | app, ui, plans, stack |
-| IDEA-135 | Run analytics | feat | planned | agent, stats, server, ui |
+| IDEA-135 | Run analytics | feat | review | agent, stats, server, ui |
 | IDEA-136 | Roadmap page redesign | fix | idea | app, ui, roadmap |
 | IDEA-137 | Durable drafted plans | fix | idea | agents, plans, git |
 | IDEA-138 | Single-bar toolbar with a Stack-style chat sidebar | feat | done | integration, app, ux, chat |
 | IDEA-139 | Desk is broken under the mount — router basepath, API base, and a friendlier route | fix | done | integration, app, cli |
 | IDEA-140 | Bottom-center island | feat | done | integration, app, ux, motion |
-| IDEA-141 | Phases as living progress rows | feat | review | app, ui, plans |
+| IDEA-141 | Phases as living progress rows | feat | done | app, ui, plans |
 | IDEA-142 | Faster phase runs | refactor | done | agent, server, performance |
 | IDEA-143 | One title style for all ideas | chore | done | format, docs, git |

@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { watch } from 'node:fs';
+import { readFileSync, watch } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import type { CheckName, CheckResult, CheckStatus } from '../../types';
@@ -15,10 +15,20 @@ interface StatusSnapshot {
 const CHECK_COMMANDS: Record<CheckName, string> = {
   lint: 'npx biome lint .',
   format: 'npx biome format .',
-  test: 'npx vitest run',
+  test: 'npx vitest run --passWithNoTests',
   // Codebase consistency — mirrors the CI "Consistency" job (dead code + architecture).
   consistency: 'pnpm run consistency',
 };
+
+function repoHasVitest(root: string): boolean {
+  try {
+    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf-8'));
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    return Boolean(deps.vitest);
+  } catch {
+    return false;
+  }
+}
 
 export type StatusManager = ReturnType<typeof createStatusManager>;
 
@@ -81,6 +91,10 @@ export function createStatusManager(
   }
 
   function runCheck(name: CheckName) {
+    if (name === 'test' && !repoHasVitest(root)) {
+      setResult('test', 'pass', 'No test framework configured — nothing to run.');
+      return;
+    }
     if (running.has(name)) {
       queued.add(name);
       return;
@@ -178,7 +192,12 @@ export function createStatusManager(
           if (pending === 0) resolve(names.filter((n) => passed.get(n) !== true));
         }
 
+        const hasVitest = repoHasVitest(root);
         for (const name of names) {
+          if (name === 'test' && !hasVitest) {
+            onDone(name, true);
+            continue;
+          }
           const proc = spawn(CHECK_COMMANDS[name], { cwd: root, stdio: 'ignore', shell: true });
           proc.on('close', (code) => onDone(name, code === 0));
           proc.on('error', () => onDone(name, false));

@@ -28,6 +28,7 @@ Rationale prose.
 ### Phases
 - [x] First phase
       With a description line.
+      run: 6m40s · 1.2M in · 38k out · fable-5
 - [ ] Second phase
 
 ### Log
@@ -37,6 +38,15 @@ Rationale prose.
     expect(warnings).toEqual([]);
     expect(entries).toHaveLength(1);
     const e = entries[0];
+    expect(e.phases[0].description).toBe('With a description line.');
+    expect(e.phases[0].run).toEqual({
+      durationMs: 400_000,
+      inputTokens: 1_200_000,
+      outputTokens: 38_000,
+      model: 'fable-5',
+      attempts: 1,
+    });
+    expect(formatEntityFile(e)).toContain('      run: 6m40s · 1.2M in · 38k out · fable-5');
     expect(e.id).toBe('IDEA-45');
     expect(e.type).toBe('feat');
     expect(e.status).toBe('in-progress');

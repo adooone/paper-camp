@@ -2,7 +2,7 @@
 id: IDEA-135
 title: Run analytics
 type: feat
-status: idea
+status: review
 created: 2026-08-06
 tags:
   - agent
@@ -61,17 +61,17 @@ source we trust, and disk transcripts are never read.
    usage API ships later, the card upgrades to a real gauge.
 
 ### Phases
-- [ ] Capture usage and capacity from the stream
+- [x] Capture usage and capacity from the stream
       Parser retains the `result` event's usage, duration, and model plus the latest `rate_limit_event` snapshot; run-all records each phase at its per-phase seam.
-- [ ] Persist the usage record into tasks.log
+- [x] Persist the usage record into tasks.log
       Grow each git-tracked log entry with the captured usage so run history is durable.
-- [ ] Write the `run:` line under done phases
+- [x] Write the `run:` line under done phases
       Land the compact annotation in the idea file, cumulative across attempts, and mirror the grammar in about.md.
-- [ ] Render phase columns and the idea rollup
+- [x] Render phase columns and the idea rollup
       Entity detail shows Time / Tokens / Model per done phase and a derived idea-level rollup, computed at read time.
-- [ ] Add Stats analytics cards
+- [x] Add Stats analytics cards
       Tokens and agent-minutes per week, median phase duration, most expensive ideas.
-- [ ] Add the capacity card and StatusBar pill
+- [x] Add the capacity card and StatusBar pill
       Latest rate-limit snapshot on Stats; a warning pill in the StatusBar only when status leaves "allowed".
 
 ### Thread

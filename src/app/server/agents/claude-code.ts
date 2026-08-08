@@ -1,5 +1,5 @@
 import { classifyAnchor } from '@/core/phase-progress';
-import type { AgentRunOptions, PhaseMilestone } from '@/types/index';
+import type { AgentRunOptions, PhaseMilestone, RateLimitSnapshot, RunUsage } from '@/types/index';
 
 export interface ParsedAgentLine {
   text: string;
@@ -8,6 +8,76 @@ export interface ParsedAgentLine {
   reason?: string;
   sessionId?: string;
   milestone?: PhaseMilestone;
+  usage?: RunUsage;
+  rateLimit?: RateLimitSnapshot;
+}
+
+function readNum(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function dominantModel(
+  json: Record<string, unknown>,
+  modelUsage: Record<string, Record<string, unknown>> | undefined,
+): string | undefined {
+  if (typeof json.model === 'string') return json.model;
+  if (!modelUsage) return undefined;
+  let best: string | undefined;
+  let bestOut = -1;
+  for (const [name, u] of Object.entries(modelUsage)) {
+    const out = readNum(u?.outputTokens);
+    if (out > bestOut) {
+      bestOut = out;
+      best = name;
+    }
+  }
+  return best;
+}
+
+function extractUsage(json: Record<string, unknown>): RunUsage {
+  const modelUsage = json.modelUsage as Record<string, Record<string, unknown>> | undefined;
+  const usage = (json.usage ?? {}) as Record<string, unknown>;
+  let inputTokens = readNum(usage.input_tokens);
+  let outputTokens = readNum(usage.output_tokens);
+  let cacheCreationTokens = readNum(usage.cache_creation_input_tokens);
+  let cacheReadTokens = readNum(usage.cache_read_input_tokens);
+  if (modelUsage) {
+    inputTokens = outputTokens = cacheCreationTokens = cacheReadTokens = 0;
+    for (const u of Object.values(modelUsage)) {
+      if (!u || typeof u !== 'object') continue;
+      inputTokens += readNum(u.inputTokens);
+      outputTokens += readNum(u.outputTokens);
+      cacheCreationTokens += readNum(u.cacheCreationInputTokens);
+      cacheReadTokens += readNum(u.cacheReadInputTokens);
+    }
+  }
+  return {
+    durationMs: readNum(json.duration_ms),
+    numTurns: readNum(json.num_turns),
+    model: dominantModel(json, modelUsage),
+    inputTokens,
+    outputTokens,
+    cacheCreationTokens,
+    cacheReadTokens,
+    costUsd: readNum(json.total_cost_usd),
+  };
+}
+
+function extractRateLimit(json: Record<string, unknown>): RateLimitSnapshot | null {
+  const rl = (json.rate_limit ?? json.rateLimit ?? json) as Record<string, unknown>;
+  const status = typeof rl.status === 'string' ? rl.status : undefined;
+  if (!status) return null;
+  const rateLimitType =
+    typeof rl.rateLimitType === 'string'
+      ? rl.rateLimitType
+      : typeof rl.rate_limit_type === 'string'
+        ? rl.rate_limit_type
+        : undefined;
+  const resetsAtRaw = rl.resetsAt ?? rl.resets_at;
+  const resetsAt =
+    typeof resetsAtRaw === 'number' && Number.isFinite(resetsAtRaw) ? resetsAtRaw : undefined;
+  const overage = Boolean(rl.overage ?? rl.usingOverage ?? rl.overageActive);
+  return { status, rateLimitType, resetsAt, overage };
 }
 
 export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
@@ -52,8 +122,10 @@ export function parseLine(line: string): ParsedAgentLine | null {
       }
       return null;
     }
-    case 'rate_limit_event':
-      return null;
+    case 'rate_limit_event': {
+      const rateLimit = extractRateLimit(json);
+      return rateLimit ? { text: '', rateLimit } : null;
+    }
     case 'assistant': {
       const message = json.message as { content?: unknown[] } | undefined;
       const blocks = message?.content ?? [];
@@ -89,7 +161,7 @@ export function parseLine(line: string): ParsedAgentLine | null {
       const result = typeof json.result === 'string' ? json.result.trim() : '';
       const text = result || (error ? 'Agent run failed' : 'Agent run finished');
       const sessionId = typeof json.session_id === 'string' ? json.session_id : undefined;
-      return { text, done: true, error, sessionId };
+      return { text, done: true, error, sessionId, usage: extractUsage(json) };
     }
     default:
       return { text: 'Agent is working…' };

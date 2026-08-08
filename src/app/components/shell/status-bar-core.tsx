@@ -1,7 +1,17 @@
-import type { AgentTaskStatus, BranchHygieneStatus } from '@/types/index';
+import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
+import type { AgentTaskStatus, BranchHygieneStatus, RateLimitSnapshot } from '@/types/index';
 import { Button, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
 import type { CSSProperties, ReactNode } from 'react';
 import { CommitIcon, MergeIcon, PullIcon, PushIcon } from '../icons';
+
+function capacityTooltip(snapshot: RateLimitSnapshot): string {
+  const parts = [`Claude usage: ${snapshot.status}`];
+  if (snapshot.rateLimitType) parts.push(snapshot.rateLimitType);
+  if (snapshot.resetsAt !== undefined)
+    parts.push(`resets ${new Date(resetsAtMs(snapshot.resetsAt)).toLocaleTimeString()}`);
+  if (snapshot.overage) parts.push('overage on');
+  return parts.join(' · ');
+}
 
 const barStyle: CSSProperties = {
   ...getTextureStyles('kraft'),
@@ -53,6 +63,7 @@ export interface StatusBarCoreProps {
   activeTaskStatus?: AgentTaskStatus;
   agentNotSignedIn: boolean;
   capabilityGapCount: number;
+  rateLimit?: RateLimitSnapshot | null;
   gitBranchHygiene: BranchHygieneStatus | null;
   commitInFlight: boolean;
   gitActionBusy: boolean;
@@ -76,6 +87,7 @@ export const StatusBarCore = ({
   activeTaskStatus,
   agentNotSignedIn,
   capabilityGapCount,
+  rateLimit,
   gitBranchHygiene,
   commitInFlight,
   gitActionBusy,
@@ -119,6 +131,18 @@ export const StatusBarCore = ({
                 Setup ({capabilityGapCount})
               </Stamp>
             </button>
+          </Tooltip>
+        )}
+        {rateLimit && capacityLevel(rateLimit.status) !== 'allowed' && (
+          <Tooltip content={capacityTooltip(rateLimit)}>
+            <Stamp
+              size="small"
+              variant={capacityLevel(rateLimit.status) === 'rejected' ? 'error' : 'warning'}
+            >
+              {capacityLevel(rateLimit.status) === 'rejected'
+                ? 'Claude limit reached'
+                : 'Claude usage warning'}
+            </Stamp>
           </Tooltip>
         )}
       </div>
