@@ -67,6 +67,11 @@ describe('run line round-trip', () => {
     expect(formatRunLine(run)).toBe('1s · 0 in · 0 out');
     expect(parseRunLine(formatRunLine(run))?.model).toBeUndefined();
   });
+
+  it('rejects a run line whose first segment is not a duration', () => {
+    expect(parseRunLine('see the notes below')).toBeUndefined();
+    expect(parseRunLine('not-a-time · 1.2M in')).toBeUndefined();
+  });
 });
 
 describe('mergeRun', () => {

@@ -192,7 +192,12 @@ export function createStatusManager(
           if (pending === 0) resolve(names.filter((n) => passed.get(n) !== true));
         }
 
+        const hasVitest = repoHasVitest(root);
         for (const name of names) {
+          if (name === 'test' && !hasVitest) {
+            onDone(name, true);
+            continue;
+          }
           const proc = spawn(CHECK_COMMANDS[name], { cwd: root, stdio: 'ignore', shell: true });
           proc.on('close', (code) => onDone(name, code === 0));
           proc.on('error', () => onDone(name, false));

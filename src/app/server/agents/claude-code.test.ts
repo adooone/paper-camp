@@ -64,6 +64,21 @@ describe('claude-code parseLine', () => {
     });
   });
 
+  it('skips null modelUsage entries without throwing', () => {
+    const line = JSON.stringify({
+      type: 'result',
+      is_error: false,
+      result: 'Done',
+      modelUsage: {
+        'claude-fable-5': { inputTokens: 100, outputTokens: 20 },
+        broken: null,
+      },
+    });
+    const usage = parseLine(line)?.usage;
+    expect(usage?.inputTokens).toBe(100);
+    expect(usage?.outputTokens).toBe(20);
+  });
+
   it('falls back to the top-level usage bucket when modelUsage is absent', () => {
     const line = JSON.stringify({
       type: 'result',

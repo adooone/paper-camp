@@ -44,6 +44,7 @@ function extractUsage(json: Record<string, unknown>): RunUsage {
   if (modelUsage) {
     inputTokens = outputTokens = cacheCreationTokens = cacheReadTokens = 0;
     for (const u of Object.values(modelUsage)) {
+      if (!u || typeof u !== 'object') continue;
       inputTokens += readNum(u.inputTokens);
       outputTokens += readNum(u.outputTokens);
       cacheCreationTokens += readNum(u.cacheCreationInputTokens);

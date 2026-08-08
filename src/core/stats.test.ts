@@ -158,6 +158,20 @@ describe('usagePerWeek', () => {
       { week: isoWeekKey('2026-07-27'), agentMinutes: 30, inputTokens: 3500, outputTokens: 350 },
     ]);
   });
+
+  it('skips records with an unparseable startedAt', () => {
+    const entries: TaskLogEntry[] = [
+      logEntry({ startedAt: 'not-a-date', endedAt: 'also-bad' }),
+      logEntry({
+        startedAt: '2026-07-27T10:00:00Z',
+        endedAt: '2026-07-27T10:10:00Z',
+        usage: usage({ inputTokens: 1000, outputTokens: 100 }),
+      }),
+    ];
+    expect(usagePerWeek(entries)).toEqual([
+      { week: isoWeekKey('2026-07-27'), agentMinutes: 10, inputTokens: 1000, outputTokens: 100 },
+    ]);
+  });
 });
 
 describe('medianPhaseDurationMs', () => {
@@ -220,6 +234,17 @@ describe('latestCapacity', () => {
     expect(latestCapacity(entries)).toEqual({
       snapshot: { status: 'allowed_warning', resetsAt: 1_700_000_000 },
       capturedAt: '2026-08-03T10:00:00Z',
+    });
+  });
+
+  it('ignores a capacity record with an unparseable endedAt', () => {
+    const entries: TaskLogEntry[] = [
+      logEntry({ endedAt: 'not-a-date', rateLimit: { status: 'rejected' } }),
+      logEntry({ endedAt: '2026-08-01T10:00:00Z', rateLimit: { status: 'allowed' } }),
+    ];
+    expect(latestCapacity(entries)).toEqual({
+      snapshot: { status: 'allowed' },
+      capturedAt: '2026-08-01T10:00:00Z',
     });
   });
 

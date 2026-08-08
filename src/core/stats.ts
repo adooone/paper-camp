@@ -151,6 +151,7 @@ function taskWallClockMs(entry: TaskLogEntry): number {
 export function usagePerWeek(entries: TaskLogEntry[]): UsagePerWeek[] {
   const buckets = new Map<string, { agentMs: number; inputTokens: number; outputTokens: number }>();
   for (const entry of entries) {
+    if (Number.isNaN(Date.parse(entry.startedAt))) continue;
     const week = isoWeekKey(entry.startedAt);
     const bucket = buckets.get(week) ?? { agentMs: 0, inputTokens: 0, outputTokens: 0 };
     const { inputTokens, outputTokens } = entryTokens(entry);
@@ -189,8 +190,8 @@ export function latestCapacity(entries: TaskLogEntry[]): CapacityStat | null {
   let latestMs = Number.NEGATIVE_INFINITY;
   for (const entry of entries) {
     if (!entry.rateLimit) continue;
-    const parsed = Date.parse(entry.endedAt);
-    const at = Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
+    const at = Date.parse(entry.endedAt);
+    if (Number.isNaN(at)) continue;
     if (at >= latestMs) {
       latestMs = at;
       latest = { snapshot: entry.rateLimit, capturedAt: entry.endedAt };

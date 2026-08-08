@@ -17,9 +17,9 @@ export function formatDuration(ms: number): string {
   return `${seconds}s`;
 }
 
-function parseDuration(text: string): number {
+function parseDuration(text: string): number | null {
   const match = text.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
-  if (!match || (!match[1] && !match[2] && !match[3])) return 0;
+  if (!match || (!match[1] && !match[2] && !match[3])) return null;
   const hours = Number(match[1] ?? 0);
   const minutes = Number(match[2] ?? 0);
   const seconds = Number(match[3] ?? 0);
@@ -66,8 +66,10 @@ export function parseRunLine(value: string): PhaseRun | undefined {
     .map((s) => s.trim())
     .filter(Boolean);
   if (segments.length === 0) return undefined;
+  const durationMs = parseDuration(segments[0]);
+  if (durationMs === null) return undefined;
   const run: PhaseRun = {
-    durationMs: parseDuration(segments[0]),
+    durationMs,
     inputTokens: 0,
     outputTokens: 0,
     attempts: 1,

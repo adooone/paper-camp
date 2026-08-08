@@ -40,7 +40,8 @@ function parsePhaseEntries(lines: string[], start: number, end: number): PhaseIt
         if (/^\s/.test(next)) {
           const trimmed = next.trimStart();
           const runMatch = trimmed.match(RUN_LINE_RE);
-          if (runMatch) run = parseRunLine(runMatch[1]);
+          const parsedRun = runMatch ? parseRunLine(runMatch[1]) : undefined;
+          if (parsedRun) run = parsedRun;
           else descriptionLines.push(trimmed);
           i++;
         } else {
