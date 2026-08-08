@@ -1,7 +1,7 @@
 import { addRoadmapItem } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { Button, Input, Modal, Select } from '@dendelion/paper-ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface AddRoadmapItemModalProps {
   open: boolean;
@@ -16,16 +16,18 @@ export const AddRoadmapItemModal = ({ open, horizonTitles, onClose }: AddRoadmap
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const horizonTitlesRef = useRef(horizonTitles);
+  horizonTitlesRef.current = horizonTitles;
 
   useEffect(() => {
     if (open) {
-      setHorizon(horizonTitles[0] ?? '');
+      setHorizon(horizonTitlesRef.current[0] ?? '');
       setName('');
       setDescription('');
       setError(null);
       setSaving(false);
     }
-  }, [open, horizonTitles]);
+  }, [open]);
 
   const handleAdd = async () => {
     if (!name.trim() || !horizon) return;

@@ -352,6 +352,7 @@ export const RoadmapPage = () => {
 
   const horizons = filterHorizons(roadmap, filters);
   const totalVisible = horizons.reduce((count, horizon) => count + horizon.items.length, 0);
+  const hasActiveFilters = filters.horizons.length > 0 || filters.statuses.length > 0;
 
   return (
     <div ref={containerRef}>
@@ -359,7 +360,9 @@ export const RoadmapPage = () => {
       <GoalBanner goal={roadmap.goal} />
       {totalVisible === 0 ? (
         <p className="opacity-50 py-6 px-0 text-center">
-          Nothing matches these filters — clear one from the sidebar to see more.
+          {hasActiveFilters
+            ? 'Nothing matches these filters — clear one from the sidebar to see more.'
+            : 'No roadmap items yet — add one from the sidebar.'}
         </p>
       ) : (
         <div className="flex flex-col gap-6">
