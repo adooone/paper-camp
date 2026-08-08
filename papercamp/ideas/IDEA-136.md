@@ -68,7 +68,7 @@ visual grammar — full-width rows, not cards:
 ### Fixes
 - [x] Make rows clickable and match Inbox list styling
       Rows navigate on click (not just the expand caret); adopt the same row visual treatment used in the Inbox list (spacing, hover, typography) instead of the current bespoke styling.
-- [ ] Add left sidebar with quick filters and an Add item button
+- [x] Add left sidebar with quick filters and an Add item button
       Mirror the Plans page's left sidebar layout: horizon/status quick filters for the roadmap list, plus an Add item button to create a new roadmap item.
 
 ### Thread

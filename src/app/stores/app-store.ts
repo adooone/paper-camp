@@ -7,6 +7,7 @@ import {
   createParkedQuestionsSlice,
 } from './slices/parked-questions-slice';
 import { type PlansSlice, createPlansSlice } from './slices/plans-slice';
+import { type RoadmapSlice, createRoadmapSlice } from './slices/roadmap-slice';
 import { type StatusSlice, createStatusSlice } from './slices/status-slice';
 import { type SuggestionsSlice, createSuggestionsSlice } from './slices/suggestions-slice';
 import { type TaskLogSlice, createTaskLogSlice } from './slices/task-log-slice';
@@ -14,6 +15,7 @@ import { type TaskLogSlice, createTaskLogSlice } from './slices/task-log-slice';
 export type { DetailView } from './slices/plans-slice';
 
 export type AppStore = PlansSlice &
+  RoadmapSlice &
   IdeasSlice &
   SuggestionsSlice &
   TaskLogSlice &
@@ -24,6 +26,7 @@ export type AppStore = PlansSlice &
 
 export const useAppStore = create<AppStore>()((set, get) => ({
   ...createPlansSlice(set, get),
+  ...createRoadmapSlice(set, get),
   ...createIdeasSlice(set, get),
   ...createSuggestionsSlice(set, get),
   ...createTaskLogSlice(set),

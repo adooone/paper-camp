@@ -41,6 +41,9 @@ const TasksPage = lazy(() =>
 const RoadmapPage = lazy(() =>
   import('@/app/features/roadmap/index').then((m) => ({ default: m.RoadmapPage })),
 );
+const RoadmapSidebar = lazy(() =>
+  import('@/app/features/roadmap/index').then((m) => ({ default: m.RoadmapSidebar })),
+);
 const DiffPage = lazy(() =>
   import('@/app/features/diff/index').then((m) => ({ default: m.DiffPage })),
 );
@@ -136,6 +139,7 @@ const RootLayout = () => {
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
+  const isRoadmapArea = pathname === '/roadmap';
   const activeId = isPlansArea
     ? 'plans'
     : isDocsArea
@@ -143,8 +147,14 @@ const RootLayout = () => {
       : isSettingsArea
         ? 'settings'
         : navItems.find((item) => item.path === pathname)?.id;
-  const hasSidebar = isPlansArea || isDocsArea || isSettingsArea;
-  const sidebarAreaKey = isPlansArea ? 'plans' : isDocsArea ? 'docs' : 'settings';
+  const hasSidebar = isPlansArea || isDocsArea || isSettingsArea || isRoadmapArea;
+  const sidebarAreaKey = isPlansArea
+    ? 'plans'
+    : isDocsArea
+      ? 'docs'
+      : isSettingsArea
+        ? 'settings'
+        : 'roadmap';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -278,6 +288,11 @@ const RootLayout = () => {
                     {isSettingsArea && (
                       <Suspense fallback={null}>
                         <SettingsSidebar />
+                      </Suspense>
+                    )}
+                    {isRoadmapArea && (
+                      <Suspense fallback={null}>
+                        <RoadmapSidebar />
                       </Suspense>
                     )}
                   </SidebarShell>

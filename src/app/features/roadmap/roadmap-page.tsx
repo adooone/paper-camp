@@ -2,13 +2,12 @@ import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
 import { PrBadge } from '@/app/features/plans/components/pr-badge';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
-import { addRoadmapCandidate, addRoadmapItem, fetchRoadmap } from '@/app/services/content/docs-api';
+import { addRoadmapCandidate } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import type {
   PlanEntry,
   PlanStatus,
   PrInfo,
-  ResolvedRoadmap,
   ResolvedRoadmapItem,
   RoadmapLink,
 } from '@/types/index';
@@ -16,6 +15,7 @@ import { Button, Card, Input, Stamp } from '@dendelion/paper-ui';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { PromoteRoadmapItemModal } from './promote-roadmap-item-modal';
+import { filterHorizons } from './roadmap-filters';
 
 const graduationCounts = (graduated: PlanEntry[]) => ({
   shipped: graduated.filter((p) => p.status === 'done').length,
@@ -95,75 +95,6 @@ const AddCandidateForm = ({ onAdd }: { onAdd: (name: string) => Promise<void> })
       >
         Add
       </Button>
-    </div>
-  );
-};
-
-const AddItemForm = ({
-  onAdd,
-}: {
-  onAdd: (name: string, description: string) => Promise<void>;
-}) => {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  const handleAdd = async () => {
-    if (!name.trim()) return;
-    setSaving(true);
-    try {
-      await onAdd(name.trim(), description.trim());
-      setName('');
-      setDescription('');
-      setOpen(false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!open) {
-    return (
-      <Button type="button" variant="ghost" size="small" onClick={() => setOpen(true)}>
-        + Add item
-      </Button>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <Input
-        size="small"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Item name…"
-        disabled={saving}
-        autoFocus
-      />
-      <Input
-        size="small"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') handleAdd();
-        }}
-        placeholder="Description…"
-        disabled={saving}
-      />
-      <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="small"
-          onClick={() => setOpen(false)}
-          disabled={saving}
-        >
-          Cancel
-        </Button>
-        <Button type="button" size="small" onClick={handleAdd} disabled={saving || !name.trim()}>
-          Add
-        </Button>
-      </div>
     </div>
   );
 };
@@ -358,9 +289,10 @@ const GoalBanner = ({ goal }: { goal: string }) => {
 };
 
 export const RoadmapPage = () => {
-  const [roadmap, setRoadmap] = useState<ResolvedRoadmap | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadFailed, setLoadFailed] = useState(false);
+  const roadmap = useAppStore((s) => s.roadmap);
+  const roadmapError = useAppStore((s) => s.roadmapError);
+  const loadRoadmap = useAppStore((s) => s.loadRoadmap);
+  const filters = useAppStore((s) => s.roadmapFilters);
   const [promoting, setPromoting] = useState<{
     horizonTitle: string;
     item: ResolvedRoadmapItem;
@@ -372,28 +304,16 @@ export const RoadmapPage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchRoadmap()
-      .then(setRoadmap)
-      .catch(() => setLoadFailed(true))
-      .finally(() => setLoading(false));
-  }, []);
+    loadRoadmap();
+  }, [loadRoadmap]);
 
   useEffect(() => {
-    if (!highlightedItem || loading) return;
+    if (!highlightedItem || !roadmap) return;
     const row = containerRef.current?.querySelector('.roadmap-item-highlighted');
     row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [highlightedItem, loading]);
+  }, [highlightedItem, roadmap]);
 
-  if (loading) {
-    return (
-      <div>
-        <PageTitle>Roadmap</PageTitle>
-        <p className="opacity-50">Loading…</p>
-      </div>
-    );
-  }
-
-  if (loadFailed) {
+  if (roadmapError) {
     return (
       <div>
         <PageTitle>Roadmap</PageTitle>
@@ -404,7 +324,16 @@ export const RoadmapPage = () => {
     );
   }
 
-  if (!roadmap || roadmap.horizons.length === 0) {
+  if (!roadmap) {
+    return (
+      <div>
+        <PageTitle>Roadmap</PageTitle>
+        <p className="opacity-50">Loading…</p>
+      </div>
+    );
+  }
+
+  if (roadmap.horizons.length === 0) {
     return (
       <div>
         <PageTitle>Roadmap</PageTitle>
@@ -416,59 +345,60 @@ export const RoadmapPage = () => {
   const graduatedByItem = (item: ResolvedRoadmapItem) =>
     plans?.entries.filter((p) => p.subject === item.name) ?? [];
 
-  const handleAddItem = async (horizonTitle: string, name: string, description: string) => {
-    await addRoadmapItem(horizonTitle, name, description);
-    setRoadmap(await fetchRoadmap());
-  };
-
   const handleAddCandidate = async (horizonTitle: string, itemName: string, name: string) => {
     await addRoadmapCandidate(horizonTitle, itemName, name);
-    setRoadmap(await fetchRoadmap());
+    await loadRoadmap();
   };
+
+  const horizons = filterHorizons(roadmap, filters);
+  const totalVisible = horizons.reduce((count, horizon) => count + horizon.items.length, 0);
 
   return (
     <div ref={containerRef}>
       <PageTitle>Roadmap</PageTitle>
       <GoalBanner goal={roadmap.goal} />
-      <div className="flex flex-col gap-6">
-        {roadmap.horizons.map((horizon) => (
-          <div key={horizon.title} className="flex flex-col gap-1">
-            <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
-            <div className="flex flex-col">
-              {horizon.items.map((item) => (
-                <RoadmapItemRow
-                  key={item.name}
-                  item={item}
-                  graduated={graduatedByItem(item)}
-                  highlighted={item.name === highlightedItem}
-                  onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
-                  onPromoteCandidate={(candidateName) =>
-                    setPromoting({ horizonTitle: horizon.title, item, candidateName })
-                  }
-                  onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
-                  onOpenGraduated={(title) =>
-                    navigate({
-                      to: '/plans/$planId',
-                      params: { planId: encodeURIComponent(title) },
-                    })
-                  }
-                />
-              ))}
-              <div className="pt-2">
-                <AddItemForm
-                  onAdd={(name, description) => handleAddItem(horizon.title, name, description)}
-                />
+      {totalVisible === 0 ? (
+        <p className="opacity-50 py-6 px-0 text-center">
+          Nothing matches these filters — clear one from the sidebar to see more.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {horizons
+            .filter((horizon) => horizon.items.length > 0)
+            .map((horizon) => (
+              <div key={horizon.title} className="flex flex-col gap-1">
+                <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
+                <div className="flex flex-col">
+                  {horizon.items.map((item) => (
+                    <RoadmapItemRow
+                      key={item.name}
+                      item={item}
+                      graduated={graduatedByItem(item)}
+                      highlighted={item.name === highlightedItem}
+                      onPromote={() => setPromoting({ horizonTitle: horizon.title, item })}
+                      onPromoteCandidate={(candidateName) =>
+                        setPromoting({ horizonTitle: horizon.title, item, candidateName })
+                      }
+                      onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
+                      onOpenGraduated={(title) =>
+                        navigate({
+                          to: '/plans/$planId',
+                          params: { planId: encodeURIComponent(title) },
+                        })
+                      }
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
+            ))}
+        </div>
+      )}
       <PromoteRoadmapItemModal
         horizonTitle={promoting?.horizonTitle ?? null}
         item={promoting?.item ?? null}
         candidateName={promoting?.candidateName}
         onClose={() => setPromoting(null)}
-        onPromoted={() => fetchRoadmap().then(setRoadmap)}
+        onPromoted={loadRoadmap}
       />
     </div>
   );

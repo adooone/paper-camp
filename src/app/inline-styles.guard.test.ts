@@ -10,7 +10,8 @@ import { describe, expect, it } from 'vitest';
 // A file may opt out ONLY for genuinely dynamic values that can't be a class — a
 // colour/size computed from data at render time. Add it here with a one-line reason.
 const DYNAMIC_STYLE_ALLOWLIST = new Set([
-  'features/roadmap/roadmap-page.tsx', // lane offsets/heights computed from timeline data
+  'features/roadmap/roadmap-page.tsx', // progress-bar fill width computed from rollup data
+  'features/roadmap/roadmap-sidebar.tsx', // status-dot colour from STATUS_STAMP
   'components/stack-panel/stack-panel.tsx', // framer-motion owns `transform`
   'features/plans/views/plan-filter-column.tsx', // status-dot colour from STATUS_STAMP
   'router.tsx', // paper-ui's Layout has no className prop, only style
