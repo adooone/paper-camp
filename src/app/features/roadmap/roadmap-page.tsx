@@ -346,10 +346,8 @@ const GoalBanner = ({ goal }: { goal: string }) => {
   return (
     <div className="mb-6 pb-4 border-b border-black/[8%]">
       <span className="font-handwritten text-xs font-semibold opacity-[0.55]">The goal</span>
-      <div className="font-display-luminari text-lg leading-[1.4] mt-2">
-        <div className={expanded ? undefined : 'line-clamp-1'}>
-          <Markdown>{firstParagraph}</Markdown>
-        </div>
+      <div className="text-sm leading-relaxed opacity-80 mt-2">
+        <Markdown>{firstParagraph}</Markdown>
         {expanded && hasMore && <Markdown>{restParagraphs.join('\n\n')}</Markdown>}
       </div>
       {hasMore && (
@@ -452,6 +450,7 @@ export const RoadmapPage = () => {
 
   return (
     <div ref={containerRef}>
+      <PageTitle>Roadmap</PageTitle>
       <GoalBanner goal={roadmap.goal} />
       <div className="flex flex-col gap-6">
         {roadmap.horizons.map((horizon) => (

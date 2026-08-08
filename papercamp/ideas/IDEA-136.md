@@ -58,7 +58,7 @@ visual grammar — full-width rows, not cards:
       Expand caret, name, slim progress bar, and count stamps on one uniform line; no buttons collapsed.
 - [x] Build the expanded row body
       Description, one merged idea list (status stamp + PR badge), candidate rows with promote, "Add option", single "Promote to idea".
-- [ ] Rework the header
+- [x] Rework the header
       Normal "Roadmap" title with the goal beneath in body font: first paragraph always visible, rest behind Show more.
 - [ ] Remove the "N graduated · M charted" pulse caption
 - [ ] Wire deep-linking: `?item=` auto-expands and scrolls to its row
