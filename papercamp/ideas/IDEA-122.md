@@ -2,7 +2,7 @@
 id: IDEA-122
 title: MCP as the primary write path
 type: feat
-status: idea
+status: review
 created: 2026-08-04
 tags:
   - format
@@ -31,4 +31,5 @@ This is Horizon 4's **format as the product** from the write side: Paper Camp th
 - [x] Rewrite the skill to steer agents to MCP first
       Update SKILL.md so the full write surface routes through MCP tools, with raw file edits called out as fallback only.
       run: 1m36s · 684 in · 5.9k out · opus-4-8
-- [ ] Cover the new write tools with tests
+- [x] Cover the new write tools with tests
+      run: 3m10s · 361 in · 13.4k out · opus-4-8
