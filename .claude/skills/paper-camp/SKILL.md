@@ -72,6 +72,9 @@ mechanics (in parentheses) only when no `papercamp` MCP server is connected.
   frontmatter file — change only that line, don't touch other phases or prose).
 - **Plan status**: keep the plan's status honest
   (`planned` / `in-progress` / `review` / `done`) via `update_phase`'s `status`
+  (`status` is optional, but `update_phase` always requires `id`, `phaseIndex`,
+  and `done` — a status-only change still has to name a phase and its done
+  state, so pass that phase's current `done` value to leave it as-is)
   (raw fallback: edit the `status:` frontmatter field). When every phase is
   checked, set status to `review` — never `done`. `done` is a human-only
   promotion after review; an agent finishing the last phase does not close

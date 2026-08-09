@@ -210,13 +210,13 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         };
 
         await writeEntityFile(targetFile, entityFileInput(updatedEntry));
-        await regenerateIndexes(root);
 
         // `done` is derived from a merged PR and needs no archiving; `dropped` has no
         // such signal, so it's the one status that still archives on write.
         if (status === 'dropped') {
           await archiveEntityFile(root, target.id);
         }
+        await regenerateIndexes(root);
 
         return json({ ok: true });
       }),
@@ -506,8 +506,8 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
           targetFile,
           entityFileInput(entry, { status: 'dropped', updated: todayDateString() }),
         );
-        await regenerateIndexes(root);
         await archiveEntityFile(root, target.id);
+        await regenerateIndexes(root);
         return json({ ok: true });
       }),
   );
