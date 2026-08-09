@@ -28,6 +28,7 @@ This is Horizon 4's **format as the product** from the write side: Paper Camp th
 - [x] Extend the branch-conflict guard to every write path
       Backfill `add_idea` and route all mutations through one shared guard + serialization helper.
       run: 2m34s · 378 in · 10.3k out · opus-4-8
-- [ ] Rewrite the skill to steer agents to MCP first
+- [x] Rewrite the skill to steer agents to MCP first
       Update SKILL.md so the full write surface routes through MCP tools, with raw file edits called out as fallback only.
+      run: 1m36s · 684 in · 5.9k out · opus-4-8
 - [ ] Cover the new write tools with tests
