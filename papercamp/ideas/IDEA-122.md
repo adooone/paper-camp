@@ -19,8 +19,9 @@ This is Horizon 4's **format as the product** from the write side: Paper Camp th
 - [x] Add an edit tool for existing entities
       Expose title, body, tags, and type edits over MCP with the id-allocation mutex and branch-conflict guard applied.
       run: 1m31s · 5.5k in · 5k out · opus-4-8
-- [ ] Add append tools for log and thread notes
+- [x] Add append tools for log and thread notes
       One tool per note kind (log line, decision, clarification, thread message) so agents never hand-write the note grammar.
+      run: 3m5s · 237 in · 11.9k out · opus-4-8
 - [ ] Add promote and archive tools
       Cover suggestion/roadmap/thread promotion and a standalone archive, replacing the raw-file and `update_phase`-dropped workarounds.
 - [ ] Extend the branch-conflict guard to every write path

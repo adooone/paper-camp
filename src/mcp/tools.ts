@@ -14,12 +14,13 @@ import {
 import { parseEntityFile } from '../core/parse';
 import { entityToPlan, readEntities, readWorkEntries } from '../core/readers';
 import {
+  agentThreadMessage,
   archiveEntityFile,
   assignEntityId,
   formatEntityFile,
   todayDateString,
 } from '../core/serialize';
-import { PLAN_KINDS, PLAN_STATUSES } from '../types/index';
+import { PLAN_KINDS, PLAN_STATUSES, type ThreadMessage } from '../types/index';
 import { idResultSchema, okResultSchema, parseWarningSchema, planEntrySchema } from './schemas';
 
 function json(data: Record<string, unknown>) {
@@ -261,5 +262,87 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
 
         return json({ ok: true });
       }),
+  );
+
+  const NOTE_STATE_KINDS = new Set<ThreadMessage['kind']>(['note', 'decision', 'question']);
+
+  async function appendThreadMessage(
+    id: string,
+    kind: ThreadMessage['kind'],
+    text: string,
+  ): Promise<void> {
+    if (!text.trim()) throw new Error('text is required');
+    const ideasDir = campFile(root, 'ideas');
+    const { entries } = await readEntities(ideasDir);
+    const target = entries.find((e) => e.id === id);
+    if (!target) throw new Error(`entity "${id}" not found`);
+
+    const targetFile = join(ideasDir, `${target.id}.md`);
+    const raw = await readMaybe(targetFile);
+    if (!raw) throw new Error('entity file not found');
+
+    const parsed = parseEntityFile(raw);
+    if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
+    const entry = parsed.entries[0];
+
+    const message = agentThreadMessage(text.trim(), kind);
+    if (NOTE_STATE_KINDS.has(kind) && message.state === undefined) message.state = 'open';
+    const thread = [...(entry.thread ?? []), message];
+
+    await writeEntityFile(
+      targetFile,
+      entityFileInput({ ...entry, thread, updated: todayDateString() }),
+    );
+    await regenerateIndexes(root);
+  }
+
+  function registerAppendTool(
+    name: string,
+    title: string,
+    description: string,
+    kind: ThreadMessage['kind'],
+  ): void {
+    server.registerTool(
+      name,
+      {
+        title,
+        description,
+        inputSchema: {
+          id: z.string().describe('Entity id, e.g. IDEA-43'),
+          text: z.string().describe('Message text (markdown)'),
+        },
+        outputSchema: okResultSchema.shape,
+      },
+      ({ id, text }) =>
+        runExclusive(async () => {
+          await appendThreadMessage(id, kind, text);
+          return json({ ok: true });
+        }),
+    );
+  }
+
+  registerAppendTool(
+    'append_log',
+    'Append log line',
+    "Append a dated log line to an entity's thread.",
+    'log',
+  );
+  registerAppendTool(
+    'append_clarification',
+    'Append clarification',
+    "Append a clarification to an entity's thread.",
+    'clarification',
+  );
+  registerAppendTool(
+    'append_decision',
+    'Append decision',
+    "Append an open decision note to an entity's thread.",
+    'decision',
+  );
+  registerAppendTool(
+    'append_note',
+    'Append thread note',
+    "Append an open note to an entity's thread.",
+    'note',
   );
 }
