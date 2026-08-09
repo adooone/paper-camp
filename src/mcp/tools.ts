@@ -11,15 +11,18 @@ import {
   regenerateIndexes,
   writeEntityFile,
 } from '../app/server/helpers';
-import { parseEntityFile } from '../core/parse';
+import { parseEntityFile, parseSuggestions } from '../core/parse';
 import { entityToPlan, readEntities, readWorkEntries } from '../core/readers';
+import { linkRoadmapItem, parseRoadmap, removeRoadmapItem } from '../core/roadmap';
 import {
   agentThreadMessage,
   archiveEntityFile,
   assignEntityId,
   formatEntityFile,
+  removeSuggestionLine,
   todayDateString,
 } from '../core/serialize';
+import { promoteThreadMessage } from '../core/thread';
 import { PLAN_KINDS, PLAN_STATUSES, type ThreadMessage } from '../types/index';
 import { idResultSchema, okResultSchema, parseWarningSchema, planEntrySchema } from './schemas';
 
@@ -93,6 +96,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     title: string;
     content?: string;
     type?: string;
+    subject?: string;
   }): Promise<string> {
     const configPath = join(root, 'papercamp', 'config.json');
     const id = await assignEntityId(configPath);
@@ -105,6 +109,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       type: input.type,
       status: 'idea',
       created: todayDateString(),
+      subject: input.subject,
       body: input.content?.trim(),
     });
     await writeFile(join(ideasDir, `${id}.md`), `${content}\n`, 'utf-8');
@@ -344,5 +349,166 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     'Append thread note',
     "Append an open note to an entity's thread.",
     'note',
+  );
+
+  server.registerTool(
+    'promote_suggestion',
+    {
+      title: 'Promote suggestion',
+      description: 'Mint an idea from a suggestion line in suggestions.md and remove that line.',
+      inputSchema: {
+        title: z.string().describe('Suggestion title, matched against suggestions.md'),
+        date: z
+          .string()
+          .optional()
+          .describe('Suggestion date (YYYY-MM-DD), to disambiguate a repeated title'),
+      },
+      outputSchema: idResultSchema.shape,
+    },
+    ({ title, date }) =>
+      runExclusive(async () => {
+        const suggestionsPath = campFile(root, 'suggestions.md');
+        const raw = await readMaybe(suggestionsPath);
+        const suggestion = parseSuggestions(raw).find(
+          (s) => s.title === title.trim() && (date === undefined || s.date === date),
+        );
+        if (!suggestion) throw new Error(`suggestion "${title}" not found`);
+        const id = await createIdeaEntity({
+          title: suggestion.title,
+          content: suggestion.description,
+        });
+        await writeFile(suggestionsPath, removeSuggestionLine(raw, suggestion), 'utf-8');
+        return json({ ok: true, id });
+      }),
+  );
+
+  server.registerTool(
+    'promote_roadmap_item',
+    {
+      title: 'Promote roadmap item',
+      description:
+        'Mint an idea from a roadmap item (or one of its candidates) in ROADMAP.md, linking it back to the item.',
+      inputSchema: {
+        horizonTitle: z.string().describe('Horizon heading the item lives under'),
+        itemName: z.string().describe('Roadmap item name'),
+        candidateName: z
+          .string()
+          .optional()
+          .describe('Candidate bullet to promote; omit to promote the item itself'),
+        subject: z.string().optional().describe('Subject override for the new idea'),
+      },
+      outputSchema: idResultSchema.shape,
+    },
+    ({ horizonTitle, itemName, candidateName, subject }) =>
+      runExclusive(async () => {
+        const roadmapPath = join(root, 'ROADMAP.md');
+        const raw = await readMaybe(roadmapPath);
+        if (!raw) throw new Error('ROADMAP.md not found');
+        const item = parseRoadmap(raw)
+          .horizons.find((h) => h.title === horizonTitle)
+          ?.items.find((it) => it.name === itemName);
+        if (!item || (candidateName !== undefined && !item.candidates.includes(candidateName))) {
+          throw new Error('roadmap item or candidate not found');
+        }
+        const id = await createIdeaEntity({
+          title: candidateName ?? item.name,
+          subject: subject?.trim() || (candidateName ? item.name : undefined),
+          content: candidateName
+            ? `From the roadmap: ${horizonTitle} — ${item.name}.`
+            : `${item.description}\n\nFrom the roadmap: ${horizonTitle}.`,
+        });
+        const withoutCandidate = candidateName
+          ? removeRoadmapItem(raw, horizonTitle, item.name, candidateName)
+          : raw;
+        await writeFile(
+          roadmapPath,
+          linkRoadmapItem(withoutCandidate, horizonTitle, item.name, id),
+          'utf-8',
+        );
+        return json({ ok: true, id });
+      }),
+  );
+
+  server.registerTool(
+    'promote_thread_message',
+    {
+      title: 'Promote thread message',
+      description:
+        'Distill one thread message in place into a durable decision or log entry, optionally appending a breadcrumb note.',
+      inputSchema: {
+        id: z.string().describe('Entity id, e.g. IDEA-43'),
+        index: z.number().int().nonnegative().describe('0-based index into the entity thread'),
+        target: z.enum(['decision', 'log']).describe('Durable kind to distill the message into'),
+        note: z.string().optional().describe('Breadcrumb appended to the message text'),
+      },
+      outputSchema: okResultSchema.shape,
+    },
+    ({ id, index, target, note }) =>
+      runExclusive(async () => {
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const targetEntity = entries.find((e) => e.id === id);
+        if (!targetEntity) throw new Error(`entity "${id}" not found`);
+
+        const targetFile = join(ideasDir, `${targetEntity.id}.md`);
+        const raw = await readMaybe(targetFile);
+        if (!raw) throw new Error('entity file not found');
+
+        const parsed = parseEntityFile(raw);
+        if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
+        const entry = parsed.entries[0];
+
+        const thread = entry.thread ?? [];
+        if (index < 0 || index >= thread.length) {
+          throw new Error(
+            `thread index ${index} out of range (thread has ${thread.length} messages)`,
+          );
+        }
+
+        await writeEntityFile(
+          targetFile,
+          entityFileInput(entry, {
+            thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
+            updated: todayDateString(),
+          }),
+        );
+        await regenerateIndexes(root);
+        return json({ ok: true });
+      }),
+  );
+
+  server.registerTool(
+    'archive_entity',
+    {
+      title: 'Archive entity',
+      description: 'Drop an entity: set its status to dropped and move its file into the archive.',
+      inputSchema: {
+        id: z.string().describe('Entity id, e.g. IDEA-43'),
+      },
+      outputSchema: okResultSchema.shape,
+    },
+    ({ id }) =>
+      runExclusive(async () => {
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const target = entries.find((e) => e.id === id && !e.archived);
+        if (!target) throw new Error(`entity "${id}" not found`);
+
+        const targetFile = join(ideasDir, `${target.id}.md`);
+        const raw = await readMaybe(targetFile);
+        if (!raw) throw new Error('entity file not found');
+
+        const parsed = parseEntityFile(raw);
+        if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
+        const entry = parsed.entries[0];
+
+        await writeEntityFile(
+          targetFile,
+          entityFileInput(entry, { status: 'dropped', updated: todayDateString() }),
+        );
+        await regenerateIndexes(root);
+        await archiveEntityFile(root, target.id);
+        return json({ ok: true });
+      }),
   );
 }
