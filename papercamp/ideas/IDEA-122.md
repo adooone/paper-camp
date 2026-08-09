@@ -25,8 +25,9 @@ This is Horizon 4's **format as the product** from the write side: Paper Camp th
 - [x] Add promote and archive tools
       Cover suggestion/roadmap/thread promotion and a standalone archive, replacing the raw-file and `update_phase`-dropped workarounds.
       run: 3m47s · 501 in · 15.6k out · opus-4-8
-- [ ] Extend the branch-conflict guard to every write path
+- [x] Extend the branch-conflict guard to every write path
       Backfill `add_idea` and route all mutations through one shared guard + serialization helper.
+      run: 2m34s · 378 in · 10.3k out · opus-4-8
 - [ ] Rewrite the skill to steer agents to MCP first
       Update SKILL.md so the full write surface routes through MCP tools, with raw file edits called out as fallback only.
 - [ ] Cover the new write tools with tests

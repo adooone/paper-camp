@@ -92,6 +92,13 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     return result;
   };
 
+  const guardedWrite = <T>(targetPlanId: string | undefined, fn: () => Promise<T>): Promise<T> =>
+    runExclusive(async () => {
+      const conflict = await checkBranchConflictForPlan(root, git, targetPlanId);
+      if (conflict) throw new Error(conflict);
+      return fn();
+    });
+
   async function createIdeaEntity(input: {
     title: string;
     content?: string;
@@ -129,7 +136,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       outputSchema: idResultSchema.shape,
     },
     ({ title, content }) =>
-      runExclusive(async () => {
+      guardedWrite(undefined, async () => {
         if (!title.trim()) throw new Error('title is required');
         const id = await createIdeaEntity({ title, content });
         return json({ ok: true, id });
@@ -150,10 +157,8 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       outputSchema: idResultSchema.shape,
     },
     ({ title, content, kind }) =>
-      runExclusive(async () => {
+      guardedWrite(undefined, async () => {
         if (!title.trim()) throw new Error('title is required');
-        const conflict = await checkBranchConflictForPlan(root, git);
-        if (conflict) throw new Error(conflict);
         const id = await createIdeaEntity({ title, content, type: kind ?? 'feat' });
         return json({ ok: true, id });
       }),
@@ -173,50 +178,48 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: okResultSchema.shape,
     },
-    async ({ id, phaseIndex, done, status }) => {
-      const ideasDir = campFile(root, 'ideas');
-      const { entries } = await readEntities(ideasDir);
-      const target = entries.find((e) => e.id === id && e.kind !== 'note');
-      if (!target) throw new Error(`plan "${id}" not found`);
+    ({ id, phaseIndex, done, status }) =>
+      guardedWrite(id, async () => {
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const target = entries.find((e) => e.id === id && e.kind !== 'note');
+        if (!target) throw new Error(`plan "${id}" not found`);
 
-      const conflict = await checkBranchConflictForPlan(root, git, target.id);
-      if (conflict) throw new Error(conflict);
+        const targetFile = join(ideasDir, `${target.id}.md`);
+        const raw = await readMaybe(targetFile);
+        if (!raw) throw new Error('entity file not found');
 
-      const targetFile = join(ideasDir, `${target.id}.md`);
-      const raw = await readMaybe(targetFile);
-      if (!raw) throw new Error('entity file not found');
+        const parsed = parseEntityFile(raw);
+        if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
+        const entry = parsed.entries[0];
 
-      const parsed = parseEntityFile(raw);
-      if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
-      const entry = parsed.entries[0];
+        if (phaseIndex < 0 || phaseIndex >= entry.phases.length) {
+          throw new Error(
+            `phase index ${phaseIndex} out of range (plan has ${entry.phases.length} phases)`,
+          );
+        }
 
-      if (phaseIndex < 0 || phaseIndex >= entry.phases.length) {
-        throw new Error(
-          `phase index ${phaseIndex} out of range (plan has ${entry.phases.length} phases)`,
+        const phases = entry.phases.map((phase, i) =>
+          i === phaseIndex ? { ...phase, done } : phase,
         );
-      }
+        const updatedEntry = {
+          ...entry,
+          phases,
+          ...(status !== undefined && { status }),
+          updated: todayDateString(),
+        };
 
-      const phases = entry.phases.map((phase, i) =>
-        i === phaseIndex ? { ...phase, done } : phase,
-      );
-      const updatedEntry = {
-        ...entry,
-        phases,
-        ...(status !== undefined && { status }),
-        updated: todayDateString(),
-      };
+        await writeEntityFile(targetFile, entityFileInput(updatedEntry));
+        await regenerateIndexes(root);
 
-      await writeEntityFile(targetFile, entityFileInput(updatedEntry));
-      await regenerateIndexes(root);
+        // `done` is derived from a merged PR and needs no archiving; `dropped` has no
+        // such signal, so it's the one status that still archives on write.
+        if (status === 'dropped') {
+          await archiveEntityFile(root, target.id);
+        }
 
-      // `done` is derived from a merged PR and needs no archiving; `dropped` has no
-      // such signal, so it's the one status that still archives on write.
-      if (status === 'dropped') {
-        await archiveEntityFile(root, target.id);
-      }
-
-      return json({ ok: true });
-    },
+        return json({ ok: true });
+      }),
   );
 
   server.registerTool(
@@ -235,14 +238,11 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       outputSchema: okResultSchema.shape,
     },
     ({ id, title, content, tags, type }) =>
-      runExclusive(async () => {
+      guardedWrite(id, async () => {
         const ideasDir = campFile(root, 'ideas');
         const { entries } = await readEntities(ideasDir);
         const target = entries.find((e) => e.id === id && e.kind !== 'note');
         if (!target) throw new Error(`entity "${id}" not found`);
-
-        const conflict = await checkBranchConflictForPlan(root, git, target.id);
-        if (conflict) throw new Error(conflict);
 
         const targetFile = join(ideasDir, `${target.id}.md`);
         const raw = await readMaybe(targetFile);
@@ -319,7 +319,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         outputSchema: okResultSchema.shape,
       },
       ({ id, text }) =>
-        runExclusive(async () => {
+        guardedWrite(id, async () => {
           await appendThreadMessage(id, kind, text);
           return json({ ok: true });
         }),
@@ -366,7 +366,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       outputSchema: idResultSchema.shape,
     },
     ({ title, date }) =>
-      runExclusive(async () => {
+      guardedWrite(undefined, async () => {
         const suggestionsPath = campFile(root, 'suggestions.md');
         const raw = await readMaybe(suggestionsPath);
         const suggestion = parseSuggestions(raw).find(
@@ -400,7 +400,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       outputSchema: idResultSchema.shape,
     },
     ({ horizonTitle, itemName, candidateName, subject }) =>
-      runExclusive(async () => {
+      guardedWrite(undefined, async () => {
         const roadmapPath = join(root, 'ROADMAP.md');
         const raw = await readMaybe(roadmapPath);
         if (!raw) throw new Error('ROADMAP.md not found');
@@ -444,7 +444,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       outputSchema: okResultSchema.shape,
     },
     ({ id, index, target, note }) =>
-      runExclusive(async () => {
+      guardedWrite(id, async () => {
         const ideasDir = campFile(root, 'ideas');
         const { entries } = await readEntities(ideasDir);
         const targetEntity = entries.find((e) => e.id === id);
@@ -488,7 +488,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       outputSchema: okResultSchema.shape,
     },
     ({ id }) =>
-      runExclusive(async () => {
+      guardedWrite(id, async () => {
         const ideasDir = campFile(root, 'ideas');
         const { entries } = await readEntities(ideasDir);
         const target = entries.find((e) => e.id === id && !e.archived);
