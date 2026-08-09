@@ -212,4 +212,54 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       return json({ ok: true });
     },
   );
+
+  server.registerTool(
+    'edit_idea',
+    {
+      title: 'Edit idea',
+      description:
+        'Edit an existing entity in place — any of title, body, tags, or type. Omitted fields are left untouched.',
+      inputSchema: {
+        id: z.string().describe('Entity id, e.g. IDEA-43'),
+        title: z.string().optional().describe('New title'),
+        content: z.string().optional().describe('New body (markdown), replacing the current body'),
+        tags: z.array(z.string()).optional().describe('New tag list, replacing the current tags'),
+        type: z.enum(PLAN_KINDS).optional().describe('New work type'),
+      },
+      outputSchema: okResultSchema.shape,
+    },
+    ({ id, title, content, tags, type }) =>
+      runExclusive(async () => {
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntities(ideasDir);
+        const target = entries.find((e) => e.id === id && e.kind !== 'note');
+        if (!target) throw new Error(`entity "${id}" not found`);
+
+        const conflict = await checkBranchConflictForPlan(root, git, target.id);
+        if (conflict) throw new Error(conflict);
+
+        const targetFile = join(ideasDir, `${target.id}.md`);
+        const raw = await readMaybe(targetFile);
+        if (!raw) throw new Error('entity file not found');
+
+        const parsed = parseEntityFile(raw);
+        if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
+        const entry = parsed.entries[0];
+
+        const overrides: Partial<ReturnType<typeof entityFileInput>> = {};
+        if (title !== undefined) {
+          if (!title.trim()) throw new Error('title cannot be empty');
+          overrides.title = title.trim();
+        }
+        if (content !== undefined) overrides.body = content.trim();
+        if (tags !== undefined) overrides.tags = tags;
+        if (type !== undefined) overrides.type = type;
+
+        const updatedEntry = { ...entry, updated: todayDateString() };
+        await writeEntityFile(targetFile, entityFileInput(updatedEntry, overrides));
+        await regenerateIndexes(root);
+
+        return json({ ok: true });
+      }),
+  );
 }
