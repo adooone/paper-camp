@@ -36,8 +36,9 @@ trigger ([[IDEA-140]]) — made slightly larger, a single Scout panel.
    today; only the panel's size and contents change.
 
 ### Phases
-- [ ] Rename the island to Scout
+- [x] Rename the island to Scout
       Update the component names, labels, and user-facing strings.
+      run: 3m40s · 20.8k in · 19.1k out · sonnet-5
 - [ ] Delete the slide-in sidesheet
       Remove the component, its open/close state, and the slide animation.
 - [ ] Enlarge the logo-trigger panel

@@ -60,14 +60,14 @@ const overallCheckVariant = (checks: ChecksClientState): StampVariant => {
   return 'neutral';
 };
 
-export interface IslandCardProps {
+export interface ScoutCardProps {
   status: StatusClientState;
   checks: ChecksClientState;
   focusPlan: PlanEntry | null;
-  onOpenStack: () => void;
+  onOpenScout: () => void;
 }
 
-export const IslandCard = ({ status, checks, focusPlan, onOpenStack }: IslandCardProps) => {
+export const ScoutCard = ({ status, checks, focusPlan, onOpenScout }: ScoutCardProps) => {
   const branch = status.gitBranch ?? 'no branch';
   const doneCount = focusPlan?.phases.filter((phase) => phase.done).length ?? 0;
 
@@ -94,8 +94,8 @@ export const IslandCard = ({ status, checks, focusPlan, onOpenStack }: IslandCar
             Checks
           </Stamp>
           <span style={spacerStyle} />
-          <Button size="small" onClick={onOpenStack}>
-            Stack
+          <Button size="small" onClick={onOpenScout}>
+            Scout
           </Button>
         </div>
       </div>

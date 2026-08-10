@@ -5,9 +5,9 @@ import { useStatusClient } from '@/app/hooks/use-status-client';
 import { fetchConfig } from '@/app/services/system';
 import type { PlanEntry } from '@/types/index';
 import { useEffect, useState } from 'react';
-import { IslandCard } from './island/island-card';
-import { IslandTrigger } from './island/island-trigger';
 import { ScoutPanel } from './scout-panel';
+import { ScoutCard } from './scout/scout-card';
+import { ScoutTrigger } from './scout/scout-trigger';
 import { ToolbarSidePanel } from './toolbar-side-panel';
 import { useToolbarShell } from './use-toolbar-shell';
 
@@ -57,14 +57,9 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
           onRefresh={scout.refresh}
         />
       </ToolbarSidePanel>
-      <IslandTrigger>
-        <IslandCard
-          status={status}
-          checks={checks}
-          focusPlan={focusPlan}
-          onOpenStack={toggleChat}
-        />
-      </IslandTrigger>
+      <ScoutTrigger>
+        <ScoutCard status={status} checks={checks} focusPlan={focusPlan} onOpenScout={toggleChat} />
+      </ScoutTrigger>
     </>
   );
 };
