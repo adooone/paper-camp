@@ -150,3 +150,4 @@
 | IDEA-147 | Scout panel replaces the sidesheet | feat | planned | integration, app, ux, chat |
 | IDEA-148 | Bare mount URL white-screens the desk | fix | planned | integration, cli, app |
 | IDEA-150 | Route plans and ideas by id | refactor | idea | app, routing |
+| IDEA-151 | Manual commits become phase rows | feat | idea | app, plans, git |
