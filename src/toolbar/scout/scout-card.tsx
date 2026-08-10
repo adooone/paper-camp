@@ -1,7 +1,7 @@
 import type { ChecksClientState } from '@/app/hooks/use-checks-client';
 import type { StatusClientState } from '@/app/hooks/use-status-client';
 import type { CheckStatus, PlanEntry } from '@/types/index';
-import { Button, Island, Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { Island, Stamp, type StampVariant } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
 
 const bodyStyle: CSSProperties = {
@@ -46,8 +46,6 @@ const glanceRowStyle: CSSProperties = {
   gap: '0.5rem',
 };
 
-const spacerStyle: CSSProperties = { flex: 1 };
-
 const overallCheckVariant = (checks: ChecksClientState): StampVariant => {
   const statuses: CheckStatus[] = [
     checks.qualityStatus,
@@ -64,10 +62,9 @@ export interface ScoutCardProps {
   status: StatusClientState;
   checks: ChecksClientState;
   focusPlan: PlanEntry | null;
-  onOpenScout: () => void;
 }
 
-export const ScoutCard = ({ status, checks, focusPlan, onOpenScout }: ScoutCardProps) => {
+export const ScoutCard = ({ status, checks, focusPlan }: ScoutCardProps) => {
   const branch = status.gitBranch ?? 'no branch';
   const doneCount = focusPlan?.phases.filter((phase) => phase.done).length ?? 0;
 
@@ -93,10 +90,6 @@ export const ScoutCard = ({ status, checks, focusPlan, onOpenScout }: ScoutCardP
           <Stamp size="small" variant={overallCheckVariant(checks)}>
             Checks
           </Stamp>
-          <span style={spacerStyle} />
-          <Button size="small" onClick={onOpenScout}>
-            Scout
-          </Button>
         </div>
       </div>
     </Island>
