@@ -18,6 +18,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Divider,
   Spinner,
   Stamp,
   Table,
@@ -380,11 +381,12 @@ const DeliverSection = ({ plan, onOwnBranch }: { plan: PlanEntry; onOwnBranch: b
       <Card size="small" texture="paper">
         <div className="flex flex-col gap-4">
           <h3 className={`${sectionHeadingClass} m-0`}>Deliver</h3>
-          <div className="grid grid-cols-1 items-start gap-x-8 gap-y-4 md:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="grid grid-cols-1 items-start gap-x-8 gap-y-4 md:grid-cols-[minmax(0,1fr)_auto_20rem]">
             <div className="flex flex-col gap-3">
               <DeliverChecksRow />
               {hasChanges && <DeliverChangedFiles count={files.length} />}
             </div>
+            <Divider orientation="vertical" className="hidden md:block" />
             {hasChanges ? <DeliverCommitForm plan={plan} files={files} /> : <DeliverEmptyState />}
           </div>
         </div>

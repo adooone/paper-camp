@@ -74,8 +74,9 @@ integrated into the sheet:
 - [x] Polish Deliver card layout and empty state
       Match the phases-list paper texture; move the section title inside the Card; lock the Card to a fixed layout with no stretching or height changes; make status checks inline; add an empty state (clear message + Push button, matching the old Stack version) when there's nothing to commit; tighten and organize spacing throughout.
       run: 6m4s · 18k in · 21.2k out · opus-4-8
-- [ ] Add vertical separator between Deliver card columns
+- [x] Add vertical separator between Deliver card columns
       Insert a vertical divider line between the left (files/checks) and right (commit) columns of the Deliver card.
+      run: 1m52s · 5.5k in · 4.7k out · opus-4-8
 - [ ] Set Stack panel to show 3 agent work cards
       Cap/target the visible agent-card count at 3 when recalculating Stack panel layout so Desk section height no longer crowds them out.
 
