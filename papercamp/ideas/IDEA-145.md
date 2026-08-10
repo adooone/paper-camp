@@ -49,8 +49,9 @@ and the restructure, settled:
 - [x] Render all diffs in one paper page
       File sections divided by rules with a path/rename/stamp/counts header row; keep the binary, too-large, and rename-only states.
       run: 1m52s · 280 in · 6.2k out · opus-4-8
-- [ ] Constrain the hunk width chain so code stays inside the sheet
+- [x] Constrain the hunk width chain so code stays inside the sheet
       Thread min-w-0/max-w-full down to each hunk pre so it scrolls horizontally instead of widening the page.
+      run: 55s · 228 in · 1.9k out · opus-4-8
 - [ ] Refetch diffs live
       Debounced refetch on the activity stream tick plus window focus.
 
