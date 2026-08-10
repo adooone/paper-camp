@@ -2,7 +2,7 @@
 id: IDEA-145
 title: Changes page in Plans style
 type: fix
-status: idea
+status: review
 created: 2026-08-07
 tags:
   - app
@@ -52,8 +52,9 @@ and the restructure, settled:
 - [x] Constrain the hunk width chain so code stays inside the sheet
       Thread min-w-0/max-w-full down to each hunk pre so it scrolls horizontally instead of widening the page.
       run: 55s · 228 in · 1.9k out · opus-4-8
-- [ ] Refetch diffs live
+- [x] Refetch diffs live
       Debounced refetch on the activity stream tick plus window focus.
+      run: 1m41s · 5.5k in · 4.8k out · opus-4-8
 
 ### Thread
 - [x] 2026-08-07 [decision] The Changes page adopts the Plans grammar — sidebar in the shell, one sheet of content. Per-file Cards and the in-content sticky column are removed, not restyled. Captured as findings only; no direct edits shipped with the review.
