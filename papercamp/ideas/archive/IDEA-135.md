@@ -2,8 +2,9 @@
 id: IDEA-135
 title: Run analytics
 type: feat
-status: review
+status: done
 created: 2026-08-06
+updated: 2026-08-10
 tags:
   - agent
   - stats

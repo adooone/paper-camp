@@ -2,8 +2,9 @@
 id: IDEA-119
 title: Run & monitor on the desk
 type: feat
-status: review
+status: done
 created: 2026-08-04
+updated: 2026-08-10
 tags:
   - app
   - monitoring
