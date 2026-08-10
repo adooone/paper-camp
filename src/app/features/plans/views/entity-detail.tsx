@@ -35,6 +35,7 @@ import {
   PhaseCopyButton,
 } from '../actions';
 import { CollapsibleText } from '../components';
+import { DeliverChangedFiles, DeliverChecksRow, DeliverCommitForm } from '../components';
 import { FeedbackThread, type PromoteTarget } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
@@ -354,10 +355,11 @@ const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] 
   );
 };
 
-const useDeliverVisible = (plan: PlanEntry, onOwnBranch: boolean) => {
+const DeliverSection = ({ plan, onOwnBranch }: { plan: PlanEntry; onOwnBranch: boolean }) => {
   const gitStatus = useAppStore((s) => s.gitStatus);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const hasUncommittedChanges = onOwnBranch && (gitStatus?.length ?? 0) > 0;
+  const files = useMemo(() => gitStatus?.map((entry) => entry.path) ?? [], [gitStatus]);
+  const hasUncommittedChanges = onOwnBranch && files.length > 0;
   const hasFinishedRun =
     plan.id !== undefined &&
     agentStatus.some(
@@ -366,18 +368,14 @@ const useDeliverVisible = (plan: PlanEntry, onOwnBranch: boolean) => {
         task.status === 'done' &&
         (task.taskKind === 'run-all' || task.taskKind === 'phase'),
     );
-  return hasUncommittedChanges || hasFinishedRun;
-};
-
-const DeliverSection = ({ plan, onOwnBranch }: { plan: PlanEntry; onOwnBranch: boolean }) => {
-  if (!useDeliverVisible(plan, onOwnBranch)) return null;
+  if (!hasUncommittedChanges && !hasFinishedRun) return null;
   return (
     <div className="mb-8">
       <h3 className={`${sectionHeadingClass} mb-3`}>Deliver</h3>
       <div className="flex flex-col gap-4">
-        <div data-deliver-region="checks" />
-        <div data-deliver-region="changes" />
-        <div data-deliver-region="commit" />
+        <DeliverChecksRow />
+        {files.length > 0 && <DeliverChangedFiles count={files.length} />}
+        <DeliverCommitForm plan={plan} files={files} />
       </div>
     </div>
   );
