@@ -62,8 +62,9 @@ integrated into the sheet:
       run: 3m42s · 371 in · 12.2k out · opus-4-8
 - [x] Remove Deliver from the Stack panel
       run: 2m45s · 1.1k in · 7.6k out · opus-4-8
-- [ ] Make the Desk section always open
+- [x] Make the Desk section always open
       Drop its Accordion and the persisted `desk-section-expanded` flag.
+      run: 1m10s · 222 in · 2.8k out · opus-4-8
 - [ ] Redesign Deliver as a two-column Card
       Below Phases, wrap Deliver in a Card with two columns: left holds the check stamps and changed-files info, right holds the commit title input, suggest action, and Commit button.
 
