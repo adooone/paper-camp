@@ -494,6 +494,31 @@ export interface IntegrationConfig {
   route?: string;
 }
 
+export interface DeskService {
+  name: string;
+  cmd: string;
+  port?: number;
+  healthcheck?: string;
+}
+
+export interface DeskCheck {
+  name: string;
+  cmd: string;
+}
+
+export interface DeskCi {
+  repo: string;
+  branch?: string;
+  releasePlease?: boolean;
+}
+
+/** Dev-loop manifest (IDEA-119): declared services, one-click checks, and CI/release sources. */
+export interface DeskConfig {
+  services?: DeskService[];
+  checks?: DeskCheck[];
+  ci?: DeskCi;
+}
+
 export interface PaperCampConfig {
   version: string;
   projectName: string;
@@ -509,6 +534,8 @@ export interface PaperCampConfig {
   setupDismissed?: boolean;
   /** In-app dev toolbar (IDEA-128) — the `@dendelion/paper-camp/vite` plugin's mount, toggleable for frontend targets. */
   integration?: IntegrationConfig;
+  /** Dev-loop desk manifest (IDEA-119) — declared services, checks, and CI/release sources per project. */
+  desk?: DeskConfig;
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';

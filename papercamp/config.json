@@ -53,5 +53,22 @@
     "Code health",
     "Testing"
   ],
-  "setupDismissed": true
+  "setupDismissed": true,
+  "desk": {
+    "services": [
+      { "name": "app", "cmd": "pnpm dev", "port": 3333, "healthcheck": "http://localhost:3333/" },
+      { "name": "lib", "cmd": "pnpm dev:lib" }
+    ],
+    "checks": [
+      { "name": "types", "cmd": "pnpm check-types" },
+      { "name": "lint", "cmd": "pnpm lint" },
+      { "name": "test", "cmd": "pnpm test" },
+      { "name": "build", "cmd": "pnpm build" }
+    ],
+    "ci": {
+      "repo": "adooone/paper-camp",
+      "branch": "main",
+      "releasePlease": true
+    }
+  }
 }

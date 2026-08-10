@@ -133,6 +133,30 @@ export const entityFrontmatterSchema = z
     path: ['status'],
   });
 
+export const deskServiceSchema = z.object({
+  name: z.string(),
+  cmd: z.string(),
+  port: z.number().int().positive().optional(),
+  healthcheck: z.string().optional(),
+});
+
+export const deskCheckSchema = z.object({
+  name: z.string(),
+  cmd: z.string(),
+});
+
+export const deskCiSchema = z.object({
+  repo: z.string(),
+  branch: z.string().optional(),
+  releasePlease: z.boolean().optional(),
+});
+
+export const deskConfigSchema = z.object({
+  services: z.array(deskServiceSchema).optional(),
+  checks: z.array(deskCheckSchema).optional(),
+  ci: deskCiSchema.optional(),
+});
+
 export const paperCampConfigSchema = z.object({
   version: z.string(),
   projectName: z.string(),
@@ -159,6 +183,7 @@ export const paperCampConfigSchema = z.object({
       feedback: agentConfigSchema,
     })
     .optional(),
+  desk: deskConfigSchema.optional(),
 });
 
 export type PlanFields = z.infer<typeof planFieldsSchema>;
