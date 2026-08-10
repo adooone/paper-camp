@@ -2,7 +2,7 @@
 id: IDEA-121
 title: paper-camp doctor
 type: feat
-status: idea
+status: review
 created: 2026-08-04
 tags:
   - format
@@ -15,3 +15,22 @@ A `paper-camp doctor` command that validates corpus structure: frontmatter schem
 Motivated by a real corruption: in the func-ui corpus, an agent inserting a Log section mid-file accidentally split a Phases list, orphaning two phases inside the Log — the idea silently parsed as one checked phase and displayed as complete. A linter catches that class of damage instantly; hand-editing agents guarantee it will keep happening ([[IDEA-122]] is the prevention side, this is the detection side).
 
 Doctor is also the natural home for format migrations when the schema evolves — which Horizon 4's **format as the product** requires anyway: a documented schema needs a validator, and a validator is 80% of a migrator.
+
+### Phases
+- [x] Codify the corpus schema and rule set
+      Enumerate each check (frontmatter fields, id/counter, phases-list integrity, archive placement, dangling links) with a severity.
+      run: 2m20s · 5.4k in · 7.9k out · opus-4-8
+- [x] Scaffold the `paper-camp doctor` command and reporter
+      One reporter emitting file, line, rule, and severity so findings are addressable.
+      run: 2m33s · 748 in · 10.3k out · opus-4-8
+- [x] Implement the metadata checks
+      Frontmatter schema validation and id/counter consistency against config.
+      run: 3m9s · 1.2k in · 12.8k out · opus-4-8
+- [x] Implement the structural checks
+      Parse the body for split/orphaned phases lists, archive placement matching status, and dangling `[[links]]`.
+      run: 4m6s · 3.4k in · 17.3k out · opus-4-8
+- [x] Surface doctor findings in the app's checks panel
+      run: 6m53s · 11.7k in · 24.5k out · opus-4-8
+- [x] Add a migration path for schema evolution
+      Reuse the validator as the basis for `--fix` / migrate when the format changes.
+      run: 5m4s · 11.6k in · 18k out · opus-4-8

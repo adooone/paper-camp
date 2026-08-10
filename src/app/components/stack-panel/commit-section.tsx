@@ -59,6 +59,7 @@ const StatusStamps = () => {
   const runCheck = useAppStore((s) => s.runCheck);
   const fixQuality = useAppStore((s) => s.fixQuality);
   const consistency = useAppStore((s) => s.consistency);
+  const doctor = useAppStore((s) => s.doctor);
   const plans = useAppStore((s) => s.plans);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
@@ -66,6 +67,7 @@ const StatusStamps = () => {
   const gitDiverged = useAppStore((s) => s.gitDiverged);
   const navigate = useNavigate();
   const [docIssuesExpanded, setDocIssuesExpanded] = useState(false);
+  const [doctorExpanded, setDoctorExpanded] = useState(false);
   const { fixingDivergence, gitActionBusy, handleFixDivergence } = useBranchSync();
 
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
@@ -76,6 +78,8 @@ const StatusStamps = () => {
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
   // `consistency` is doc findings (orphan subjects), distinct from consistencyStatus (code check).
   const hasDocIssues = consistency.length > 0;
+  // `doctor` is corpus-structure findings (paper-camp doctor), distinct from both above.
+  const hasDoctorFindings = doctor.findings.length > 0;
 
   const linkedPlanFor = useCallback(
     (issue: ConsistencyIssue) =>
@@ -211,6 +215,69 @@ const StatusStamps = () => {
                   ) : (
                     <span className="text-left">{issue.message}</span>
                   )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div>
+          <Tooltip
+            content={
+              hasDoctorFindings
+                ? 'Corpus structure findings (paper-camp doctor) — frontmatter, ids, phases lists, archive placement, dangling links. Click to show.'
+                : 'Corpus structure (paper-camp doctor) — no findings.'
+            }
+            surface="chalkboard"
+          >
+            <button
+              type="button"
+              className={`inline-flex bg-none bg-transparent border-none p-0 ${hasDoctorFindings ? 'enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] cursor-pointer' : 'cursor-default'}`}
+              disabled={!hasDoctorFindings}
+              aria-expanded={hasDoctorFindings ? doctorExpanded : undefined}
+              aria-controls="stack-doctor-findings"
+              onClick={() => {
+                if (hasDoctorFindings) setDoctorExpanded((prev) => !prev);
+              }}
+            >
+              <Stamp
+                surface="chalkboard"
+                size="small"
+                fillColor={
+                  doctor.errorCount > 0
+                    ? chalkStatusFill.fail
+                    : doctor.warningCount > 0
+                      ? chalkStatusFill.running
+                      : chalkStatusFill.pass
+                }
+                textColor={
+                  doctor.errorCount > 0
+                    ? chalkStatusText.fail
+                    : doctor.warningCount > 0
+                      ? chalkStatusText.running
+                      : chalkStatusText.pass
+                }
+              >
+                Doctor
+              </Stamp>
+            </button>
+          </Tooltip>
+          {doctorExpanded && hasDoctorFindings && (
+            <div id="stack-doctor-findings" className="mt-2 flex flex-col gap-2">
+              {doctor.findings.map((finding, i) => (
+                <div
+                  key={`${finding.file}-${finding.line}-${finding.rule}-${i}`}
+                  className="font-mono text-2xs text-desk-text-muted text-left"
+                >
+                  <span
+                    className={
+                      finding.severity === 'error'
+                        ? 'text-chalk-fail-text'
+                        : 'text-chalk-running-text'
+                    }
+                  >
+                    {finding.severity}
+                  </span>{' '}
+                  {finding.file}:{finding.line} — {finding.rule}: {finding.message}
                 </div>
               ))}
             </div>

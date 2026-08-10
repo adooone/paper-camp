@@ -69,7 +69,7 @@ const DiffBody = ({ entry }: DiffBodyProps) => {
         <div key={`${hunk.header}-${i}`}>
           {hunk.header && <div className="mb-1 font-mono text-2xs opacity-50">{hunk.header}</div>}
           {/* paper-ui's CodeBlock has no per-line add/remove styling. */}
-          <pre className="m-0 overflow-x-auto font-mono text-2xs">
+          <pre className="m-0 max-w-full overflow-x-auto font-mono text-2xs">
             {hunk.lines.map((line, j) => (
               <span key={`${line.type}-${j}`} className={`block ${LINE_CLASS[line.type]}`}>
                 {LINE_PREFIX[line.type]}
@@ -89,8 +89,8 @@ interface FileDiffSectionProps {
 }
 
 export const FileDiffSection = ({ entry, sectionRef }: FileDiffSectionProps) => (
-  <div ref={sectionRef} className="scroll-mt-4">
-    <Card>
+  <div ref={sectionRef} className="min-w-0 max-w-full scroll-mt-4">
+    <Card className="min-w-0 max-w-full">
       <div className="mb-3">
         <CardTitle entry={entry} />
       </div>

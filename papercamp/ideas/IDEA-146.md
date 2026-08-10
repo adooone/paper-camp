@@ -1,0 +1,52 @@
+---
+id: IDEA-146
+title: Deliver lives in the idea view
+type: feat
+status: idea
+created: 2026-08-07
+tags:
+  - app
+  - ui
+  - stack
+  - git
+subject: App UI
+---
+
+Deliver sits in the Stack panel, a room away from the work it closes:
+you watch phases land in the idea view, then leave it to commit. Move
+delivery into the idea view — not the card copied over, but the flow
+integrated into the sheet:
+
+1. **A Deliver section below Phases**, in the page's own grammar (same
+   section heading style as Phases/Feedback, no dark sub-card). It
+   appears when the idea's branch has uncommitted changes or a finished
+   run, and reads top-down like the work itself: checks row → changes →
+   commit.
+
+2. **The basic features carry over**: the four check stamps
+   (Quality / Tests / Consistency / Docs), the "N files changed" link
+   into the Changes page ([[IDEA-145]]), the commit title input with the
+   suggest-from-diff action, and Commit. Fix-review's suggested-commit
+   prefill keeps working — it lands in this section now.
+
+3. **Checks auto-run when a run completes.** Run-all's last phase (and
+   any standalone final phase) triggers the full check suite so the
+   section greets you with fresh stamps — style and lint issues surface
+   without anyone pressing anything. Mid-run, the stamps keep their
+   existing live states.
+
+4. **The Stack panel narrows to what remains: agent activity and the
+   desk.** Deliver leaves it entirely; branch-level git (Sync/Push/Pull
+   and the ambient branch + changed count) stays in the toolbar
+   ([[IDEA-94]]), so nothing loses a home: toolbar = repo ambient, idea
+   view = this idea's delivery, Stack = who's working and whether the
+   desk is healthy.
+
+5. **The Desk section stops collapsing.** The space Deliver frees goes
+   to [[IDEA-119]]'s Desk section: drop its Accordion and the persisted
+   `desk-section-expanded` flag — services, checks, and the release
+   train render open, always. A monitor you have to unfold isn't
+   monitoring.
+
+### Thread
+- [x] 2026-08-07 [decision] Owner direction: delivery moves from the Stack panel into the idea view, integrated below Phases rather than transplanted as a card. Stack keeps agent activity plus an always-open Desk section (Accordion and persisted flag removed); the toolbar keeps repo-level git. Checks auto-run on run completion.

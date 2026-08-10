@@ -3,3 +3,4 @@ dist
 coverage
 *.tsbuildinfo
 papercamp/.task-logs/
+papercamp/tasks.log

@@ -2,8 +2,9 @@
 id: IDEA-122
 title: MCP as the primary write path
 type: feat
-status: review
+status: done
 created: 2026-08-04
+updated: 2026-08-10
 tags:
   - format
   - mcp

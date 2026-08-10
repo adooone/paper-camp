@@ -147,7 +147,7 @@ const PhasesSection = ({
         columns={[
           {
             key: 'checkbox',
-            header: 'Status',
+            header: '',
             cell: (row: WorkRow) =>
               isRunningRow(row) ? (
                 <Spinner size="small" />
@@ -166,71 +166,48 @@ const PhasesSection = ({
             key: 'title',
             header: 'Title',
             cell: (row: WorkRow) => (
-              <span
-                className={`inline-flex items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
-              >
-                {row.item.text}
-                {isRunningRow(row) && (
-                  <span className="text-xs opacity-[0.55]">
-                    {Math.round((runningFill?.fraction ?? 0) * 100)}%
-                  </span>
-                )}
-                {row.kind === 'phase' && row.item.source === 'review' && (
-                  <Stamp
-                    size="small"
-                    fillColor={STATUS_STAMP.review.fill}
-                    textColor={STATUS_STAMP.review.text}
+              <span className="flex min-w-0 flex-col gap-1 pb-1">
+                <span
+                  className={`inline-flex min-w-0 items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
+                >
+                  <span
+                    title={row.item.text}
+                    className="overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-base leading-tight"
                   >
-                    review
-                  </Stamp>
-                )}
-                {row.kind === 'fix' && (
-                  <Stamp size="small" variant="warning">
-                    fix
-                  </Stamp>
+                    {row.item.text}
+                  </span>
+                  {isRunningRow(row) && (
+                    <span className="text-xs opacity-[0.55]">
+                      {Math.round((runningFill?.fraction ?? 0) * 100)}%
+                    </span>
+                  )}
+                  {row.kind === 'phase' && row.item.source === 'review' && (
+                    <Stamp
+                      size="small"
+                      fillColor={STATUS_STAMP.review.fill}
+                      textColor={STATUS_STAMP.review.text}
+                    >
+                      review
+                    </Stamp>
+                  )}
+                  {row.kind === 'fix' && (
+                    <Stamp size="small" variant="warning">
+                      fix
+                    </Stamp>
+                  )}
+                </span>
+                {row.item.run && (
+                  <span className="self-stretch whitespace-nowrap rounded-md bg-[var(--pui-texture-shade,rgba(0,0,0,0.05))] px-2 py-0.5 text-xs opacity-[0.7]">
+                    {formatDuration(row.item.run.durationMs)}
+                    {row.item.run.attempts > 1 && ` ×${row.item.run.attempts}`}
+                    {' · '}
+                    {formatTokens(row.item.run.inputTokens)} in ·{' '}
+                    {formatTokens(row.item.run.outputTokens)} out
+                    {row.item.run.model && ` · ${row.item.run.model}`}
+                  </span>
                 )}
               </span>
             ),
-          },
-          {
-            key: 'time',
-            header: 'Time',
-            align: 'end',
-            width: 3,
-            cell: (row: WorkRow) =>
-              row.item.run ? (
-                <span className="text-xs opacity-[0.55] whitespace-nowrap">
-                  {formatDuration(row.item.run.durationMs)}
-                  {row.item.run.attempts > 1 && (
-                    <span className="opacity-[0.75]"> ×{row.item.run.attempts}</span>
-                  )}
-                </span>
-              ) : null,
-          },
-          {
-            key: 'tokens',
-            header: 'Tokens',
-            align: 'end',
-            width: 6,
-            cell: (row: WorkRow) =>
-              row.item.run ? (
-                <span className="text-xs opacity-[0.55] whitespace-nowrap">
-                  {formatTokens(row.item.run.inputTokens)} in ·{' '}
-                  {formatTokens(row.item.run.outputTokens)} out
-                </span>
-              ) : null,
-          },
-          {
-            key: 'model',
-            header: 'Model',
-            align: 'end',
-            width: 4,
-            cell: (row: WorkRow) =>
-              row.item.run?.model ? (
-                <span className="text-xs opacity-[0.55] whitespace-nowrap">
-                  {row.item.run.model}
-                </span>
-              ) : null,
           },
           {
             key: 'actions',
@@ -256,7 +233,7 @@ const PhasesSection = ({
                 </div>
               );
             },
-            width: 7,
+            width: 4,
           },
         ]}
         expandable={{

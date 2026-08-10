@@ -1,6 +1,7 @@
 export * from './env';
 export * from './readers';
 export * from './parse';
+export * from './doctor';
 export * from './git-pr';
 export * from './scaffold';
 export * from './serialize';

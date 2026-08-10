@@ -21,6 +21,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   const loadStatus = useAppStore((s) => s.loadStatus);
   const consistency = useAppStore((s) => s.consistency);
   const loadConsistency = useAppStore((s) => s.loadConsistency);
+  const doctor = useAppStore((s) => s.doctor);
+  const loadDoctor = useAppStore((s) => s.loadDoctor);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
@@ -31,6 +33,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     loadPlans,
     loadStatus,
     loadConsistency,
+    loadDoctor,
     loadGitStatus,
     loadAgentStatus,
     loadSuggestions,
@@ -41,6 +44,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       loadPlans,
       loadStatus,
       loadConsistency,
+      loadDoctor,
       loadGitStatus,
       loadAgentStatus,
       loadSuggestions,
@@ -51,6 +55,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   useEffect(() => {
     refreshRef.current.loadStatus();
     refreshRef.current.loadConsistency();
+    refreshRef.current.loadDoctor();
     refreshRef.current.loadGitStatus();
     refreshRef.current.loadAgentStatus();
     refreshRef.current.loadArchivableIdeas();
@@ -102,6 +107,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           refreshRef.current.loadSuggestions();
           refreshRef.current.loadStatus();
           refreshRef.current.loadConsistency();
+          refreshRef.current.loadDoctor();
           refreshRef.current.loadGitStatus();
           refreshRef.current.loadAgentStatus();
           refreshRef.current.loadArchivableIdeas();
@@ -126,7 +132,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     qualityStatus === 'fail' ||
     testStatus === 'fail' ||
     consistencyStatus === 'fail' ||
-    hasDocIssues;
+    hasDocIssues ||
+    doctor.errorCount > 0;
   const agentActive = agentStatus.some(
     (t) => t.status === 'running' || t.status === 'starting' || t.status === 'stopping',
   );
