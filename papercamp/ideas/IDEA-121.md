@@ -23,8 +23,9 @@ Doctor is also the natural home for format migrations when the schema evolves 鈥
 - [x] Scaffold the `paper-camp doctor` command and reporter
       One reporter emitting file, line, rule, and severity so findings are addressable.
       run: 2m33s 路 748 in 路 10.3k out 路 opus-4-8
-- [ ] Implement the metadata checks
+- [x] Implement the metadata checks
       Frontmatter schema validation and id/counter consistency against config.
+      run: 3m9s 路 1.2k in 路 12.8k out 路 opus-4-8
 - [ ] Implement the structural checks
       Parse the body for split/orphaned phases lists, archive placement matching status, and dangling `[[links]]`.
 - [ ] Surface doctor findings in the app's checks panel

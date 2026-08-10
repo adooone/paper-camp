@@ -2,12 +2,9 @@ import { selectPlanRows } from '@/app/features/plans/helpers';
 import { useActivePlanTitle } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanStatus } from '@/types/index';
-import { Button, Input, ListItem } from '@dendelion/paper-ui';
+import { Input, ListItem } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
-
-const VISIBLE_TAG_COUNT = 8;
 
 const STATUS_CHIP_ORDER: PlanStatus[] = [
   'in-progress',
@@ -25,25 +22,14 @@ export const PlanFilterColumn = () => {
   const activePlanTitle = useActivePlanTitle();
   const filters = useAppStore((s) => s.planFilters);
   const togglePlanStatus = useAppStore((s) => s.togglePlanStatus);
-  const togglePlanTag = useAppStore((s) => s.togglePlanTag);
   const setPlanSearch = useAppStore((s) => s.setPlanSearch);
   const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
   const navigate = useNavigate();
-  const [tagsExpanded, setTagsExpanded] = useState(false);
 
   if (!plans || activePlanTitle) return null;
 
-  const { statusCounts, tagCounts } = selectPlanRows(plans.entries, filters);
+  const { statusCounts } = selectPlanRows(plans.entries, filters);
   const activeStatuses = new Set(filters.statuses);
-  const activeTags = new Set(filters.tags);
-
-  const allTags = new Set([...Object.keys(tagCounts), ...filters.tags]);
-  const sortedTags = [...allTags].sort((a, b) => {
-    const byCount = (tagCounts[b] ?? 0) - (tagCounts[a] ?? 0);
-    return byCount !== 0 ? byCount : a.localeCompare(b);
-  });
-  const visibleTags = tagsExpanded ? sortedTags : sortedTags.slice(0, VISIBLE_TAG_COUNT);
-  const hiddenCount = sortedTags.length - visibleTags.length;
 
   const linkClass =
     'bg-none bg-transparent border-none p-0 cursor-pointer opacity-70 underline text-2xs';
@@ -103,40 +89,6 @@ export const PlanFilterColumn = () => {
               </ListItem>
             );
           })}
-        </div>
-      </div>
-
-      <div>
-        <div className={sectionLabelClass}>Tags</div>
-        <div className="flex flex-wrap gap-1 items-center">
-          {sortedTags.length === 0 && <span className="opacity-50 text-2xs">No tags</span>}
-          {visibleTags.map((tag) => {
-            const isActive = activeTags.has(tag);
-            return (
-              <Button
-                key={tag}
-                type="button"
-                variant="ghost"
-                size="small"
-                isActive={isActive}
-                aria-pressed={isActive}
-                onClick={() => togglePlanTag(tag)}
-              >
-                {tag} {tagCounts[tag] ?? 0}
-              </Button>
-            );
-          })}
-          {/* Raw <button>: needs a muted opacity/font-size LinkButton's fixed amber style can't give. */}
-          {hiddenCount > 0 && (
-            <button type="button" onClick={() => setTagsExpanded(true)} className={linkClass}>
-              +{hiddenCount} more
-            </button>
-          )}
-          {tagsExpanded && sortedTags.length > VISIBLE_TAG_COUNT && (
-            <button type="button" onClick={() => setTagsExpanded(false)} className={linkClass}>
-              Show less
-            </button>
-          )}
         </div>
       </div>
     </div>

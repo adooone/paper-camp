@@ -152,19 +152,6 @@ export const PlanActionsColumn = () => {
         </div>
       )}
 
-      {plan.tags.length > 0 && (
-        <div>
-          <div className={`${sectionLabelClass} mb-1.5`}>Tags</div>
-          <div className="flex items-center gap-1 flex-wrap">
-            {plan.tags.map((tag) => (
-              <Stamp key={tag} size="small" fillColor="rgba(0,0,0,0.06)">
-                {tag}
-              </Stamp>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div>
         <div className={`${sectionLabelClass} mb-1.5`}>Actions</div>
         <div className="flex flex-col gap-1">
