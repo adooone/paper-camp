@@ -57,8 +57,9 @@ trigger ([[IDEA-140]]) — made slightly larger, a single Scout panel.
       run: 6m59s · 3.4k in · 19k out · sonnet-5
 
 ### Fixes
-- [ ] Enlarge panel further and wrap glance column in a textured Card
+- [x] Enlarge panel further and wrap glance column in a textured Card
       Increase the Scout panel's overall size beyond the current enlargement. Wrap the left glance column in a paper-ui Card with canvas texture. Reduce the glance column's footprint so the chat thread on the right gets more visible history.
+      run: 1m24s · 5.8k in · 4.7k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-07 [decision] The island is named Scout, after the agent. One panel from the logo trigger holds everything — git stripe on top, glance column left, chat dominant right, desk link out; the chat sidesheet is removed entirely.

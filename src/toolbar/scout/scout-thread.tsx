@@ -18,7 +18,7 @@ const questionCountStyle: CSSProperties = {
 };
 
 const threadStyle: CSSProperties = {
-  maxHeight: '14rem',
+  maxHeight: '22rem',
   overflowY: 'auto',
   display: 'flex',
   flexDirection: 'column',

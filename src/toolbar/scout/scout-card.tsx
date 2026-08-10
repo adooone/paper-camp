@@ -3,7 +3,7 @@ import { STATUS_COLOR, STATUS_LABEL } from '@/app/features/plans/constants';
 import { type OpenQuestionGroup, phaseProgress } from '@/app/features/plans/helpers';
 import type { StatusClientState } from '@/app/hooks/use-status-client';
 import type { PlanEntry } from '@/types/index';
-import { Island, Stamp } from '@dendelion/paper-ui';
+import { Card, Island, Stamp } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
 import { ScoutThread } from './scout-thread';
 
@@ -11,7 +11,7 @@ const bodyStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '0.625rem',
-  width: 'min(24rem, calc(100vw - 2rem))',
+  width: 'min(34rem, calc(100vw - 2rem))',
 };
 
 // Bleeds across the Island's own padding (0.75rem 1.25rem) so the darker
@@ -50,15 +50,21 @@ const columnsStyle: CSSProperties = {
 };
 
 const glanceColumnStyle: CSSProperties = {
-  flex: '1 1 0%',
+  flex: '0 1 9rem',
   display: 'flex',
   flexDirection: 'column',
   gap: '0.5rem',
   minWidth: 0,
 };
 
+const glanceCardBodyStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.5rem',
+};
+
 const chatColumnStyle: CSSProperties = {
-  flex: '2 1 0%',
+  flex: '1 1 0%',
   minWidth: 0,
 };
 
@@ -128,32 +134,36 @@ export const ScoutCard = ({
 
         <div style={columnsStyle}>
           <div style={glanceColumnStyle}>
-            {focusPlan ? (
-              <>
-                <div style={stampRowStyle}>
-                  <Stamp size="small">{focusPlan.id ?? '—'}</Stamp>
-                  <Stamp size="small">{STATUS_LABEL[focusPlan.status]}</Stamp>
-                </div>
-                <span style={phaseTextStyle}>
-                  {currentPhase ? currentPhase.text : 'All phases done'}
-                </span>
-                {progress && (
-                  <div style={progressRowStyle}>
-                    <div style={progressBarWrapStyle}>
-                      <ProgressBar pct={progress.pct} color={STATUS_COLOR[focusPlan.status]} />
+            <Card size="small" texture="canvas">
+              <div style={glanceCardBodyStyle}>
+                {focusPlan ? (
+                  <>
+                    <div style={stampRowStyle}>
+                      <Stamp size="small">{focusPlan.id ?? '—'}</Stamp>
+                      <Stamp size="small">{STATUS_LABEL[focusPlan.status]}</Stamp>
                     </div>
-                    <span style={progressCountStyle}>
-                      {progress.done}/{progress.total}
+                    <span style={phaseTextStyle}>
+                      {currentPhase ? currentPhase.text : 'All phases done'}
                     </span>
-                  </div>
+                    {progress && (
+                      <div style={progressRowStyle}>
+                        <div style={progressBarWrapStyle}>
+                          <ProgressBar pct={progress.pct} color={STATUS_COLOR[focusPlan.status]} />
+                        </div>
+                        <span style={progressCountStyle}>
+                          {progress.done}/{progress.total}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <span style={mutedStyle}>no active plan</span>
                 )}
-              </>
-            ) : (
-              <span style={mutedStyle}>no active plan</span>
-            )}
-            <a style={deskLinkStyle} href={deskUrl} target="_blank" rel="noopener noreferrer">
-              Open Paper Camp →
-            </a>
+                <a style={deskLinkStyle} href={deskUrl} target="_blank" rel="noopener noreferrer">
+                  Open Paper Camp →
+                </a>
+              </div>
+            </Card>
           </div>
           <div style={chatColumnStyle}>
             <ScoutThread
