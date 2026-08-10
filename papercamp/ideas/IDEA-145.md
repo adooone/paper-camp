@@ -43,8 +43,9 @@ and the restructure, settled:
 - [x] Move the file list into the left sidebar
       Frameless desk-background slot like the Plans filter column, keeping the staged stamp and +/− counts per row.
       run: 4m26s · 5.8k in · 17.8k out · opus-4-8
-- [ ] Add scroll-spy active state to the file list
+- [x] Add scroll-spy active state to the file list
       Highlight the row for the file currently in view as the sheet scrolls.
+      run: 1m38s · 233 in · 6k out · opus-4-8
 - [ ] Render all diffs in one paper page
       File sections divided by rules with a path/rename/stamp/counts header row; keep the binary, too-large, and rename-only states.
 - [ ] Constrain the hunk width chain so code stays inside the sheet

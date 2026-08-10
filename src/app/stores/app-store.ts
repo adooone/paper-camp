@@ -35,7 +35,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   ...createDocsSlice(set, get),
   ...createStatusSlice(set, get),
   ...createAgentSlice(set, get),
-  ...createDiffSlice(set),
+  ...createDiffSlice(set, get),
   ...createParkedQuestionsSlice(set),
 }));
 

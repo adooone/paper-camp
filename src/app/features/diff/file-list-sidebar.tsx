@@ -23,6 +23,7 @@ const scrollToFile = (path: string) => {
 
 export const DiffFileList = () => {
   const files = useAppStore((s) => s.diffFiles);
+  const activePath = useAppStore((s) => s.activeDiffPath);
 
   if (!files || files.length === 0) return null;
 
@@ -35,6 +36,7 @@ export const DiffFileList = () => {
             <ListItem
               key={entry.path}
               size="small"
+              active={entry.path === activePath}
               onClick={() => scrollToFile(entry.path)}
               action={
                 <span className="flex items-center gap-2">
