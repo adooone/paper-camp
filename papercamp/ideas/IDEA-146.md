@@ -2,7 +2,7 @@
 id: IDEA-146
 title: Deliver lives in the idea view
 type: feat
-status: review
+status: in-progress
 created: 2026-08-07
 updated: 2026-08-10
 tags:
@@ -80,6 +80,8 @@ integrated into the sheet:
 - [x] Set Stack panel to show 3 agent work cards
       Cap/target the visible agent-card count at 3 when recalculating Stack panel layout so Desk section height no longer crowds them out.
       run: 40s · 14 in · 1.3k out · opus-4-8
+- [ ] Make Desk section fill available height instead of scrolling
+      Remove the scroll constraint on the Desk section in the Stack panel so it expands to fill the space allotted to it rather than scrolling internally.
 
 ### Thread
 - [x] 2026-08-07 [decision] Owner direction: delivery moves from the Stack panel into the idea view, integrated below Phases rather than transplanted as a card. Stack keeps agent activity plus an always-open Desk section (Accordion and persisted flag removed); the toolbar keeps repo-level git. Checks auto-run on run completion.
@@ -95,3 +97,5 @@ integrated into the sheet:
 - [x] 2026-08-10 [chat] [agent] Noted — I'll get the Stack layout recalculation logged as its own fix so Desk's height stops crowding out the agent work cards.
 - [x] 2026-08-10 [chat] I dont see changes in stack agents count. Let set them to 3
 - [x] 2026-08-10 [chat] [agent] Added that as a fix here — set the Stack panel's visible agent-card count to 3 as part of the layout recalculation. (reopened this idea to re-run)
+- [x] 2026-08-10 [chat] desk section should not be scrollable. It should take all the available space
+- [x] 2026-08-10 [chat] [agent] Got it — Desk section will take all available vertical space in Stack instead of scrolling. (reopened this idea to re-run)
