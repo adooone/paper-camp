@@ -65,7 +65,7 @@ integrated into the sheet:
 - [x] Make the Desk section always open
       Drop its Accordion and the persisted `desk-section-expanded` flag.
       run: 1m10s · 222 in · 2.8k out · opus-4-8
-- [ ] Redesign Deliver as a two-column Card
+- [x] Redesign Deliver as a two-column Card
       Below Phases, wrap Deliver in a Card with two columns: left holds the check stamps and changed-files info, right holds the commit title input, suggest action, and Commit button.
 
 ### Thread

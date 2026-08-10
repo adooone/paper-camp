@@ -372,11 +372,15 @@ const DeliverSection = ({ plan, onOwnBranch }: { plan: PlanEntry; onOwnBranch: b
   return (
     <div className="mb-8">
       <h3 className={`${sectionHeadingClass} mb-3`}>Deliver</h3>
-      <div className="flex flex-col gap-4">
-        <DeliverChecksRow />
-        {files.length > 0 && <DeliverChangedFiles count={files.length} />}
-        <DeliverCommitForm plan={plan} files={files} />
-      </div>
+      <Card size="small" texture="kraft">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="flex flex-col gap-4">
+            <DeliverChecksRow />
+            {files.length > 0 && <DeliverChangedFiles count={files.length} />}
+          </div>
+          <DeliverCommitForm plan={plan} files={files} />
+        </div>
+      </Card>
     </div>
   );
 };
