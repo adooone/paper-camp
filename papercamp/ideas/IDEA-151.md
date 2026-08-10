@@ -25,7 +25,7 @@ action.
    the fact is captured live, not reconstructed later.
 
 2. **Title stripping.** The commit title's conventional-commit prefix
-   (`type(scope): `) is stripped before it becomes the phase text — the
+   (`type(scope):`) and its following space are stripped before it becomes the phase text — the
    inverse of `deriveSuggestedCommit`'s own `${kind}(${scope}): ${title}`
    assembly. `fix(app): Smaller toolbar button text` → `Smaller toolbar
    button text`.

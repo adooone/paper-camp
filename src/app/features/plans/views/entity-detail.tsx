@@ -688,6 +688,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             </div>
           )}
 
+          {!hasPhases && <DeliverSection plan={plan} />}
+
           {hasPhases && (
             <PhasesSection
               plan={plan}

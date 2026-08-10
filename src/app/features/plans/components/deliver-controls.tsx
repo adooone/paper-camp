@@ -214,6 +214,7 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: string[]) => {
   const { toast } = useToast();
 
   const [commitTitle, setCommitTitle] = useState('');
+  const [commitMessage, setCommitMessage] = useState('');
   const [committing, setCommitting] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
@@ -234,20 +235,22 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: string[]) => {
       );
     }
     const task = agentStatus.find(
-      (t) => t.suggestedCommit && !staleSuggestionIds.current?.has(t.id),
+      (t) => t.planId === plan.id && t.suggestedCommit && !staleSuggestionIds.current?.has(t.id),
     );
     if (!task?.suggestedCommit || appliedSuggestionId.current === task.id) return;
     appliedSuggestionId.current = task.id;
     setCommitTitle(task.suggestedCommit.title);
-  }, [agentStatus]);
+    setCommitMessage(task.suggestedCommit.message);
+  }, [agentStatus, plan.id]);
 
   const handleCommit = useCallback(async () => {
     if (!commitTitle.trim() || commitInFlight) return;
     setCommitting(true);
     setCommitInFlight(true);
     try {
-      await commitChanges(files, commitTitle.trim());
+      await commitChanges(files, commitTitle.trim(), commitMessage.trim() || undefined);
       setCommitTitle('');
+      setCommitMessage('');
       await loadGitStatus();
     } catch (err) {
       toast({
@@ -260,7 +263,7 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: string[]) => {
       setCommitting(false);
       setCommitInFlight(false);
     }
-  }, [commitTitle, files, loadGitStatus, commitInFlight, setCommitInFlight, toast]);
+  }, [commitTitle, commitMessage, files, loadGitStatus, commitInFlight, setCommitInFlight, toast]);
 
   const handleSuggestFromChanges = useCallback(async () => {
     if (files.length === 0) return;
@@ -269,6 +272,7 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: string[]) => {
     try {
       const result = await suggestCommitMessage(files);
       setCommitTitle(result.title);
+      setCommitMessage(result.message);
     } catch (err) {
       setSuggestError((err as Error).message);
     } finally {
