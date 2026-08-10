@@ -545,6 +545,38 @@ export interface DeskCheckState {
   output: string;
 }
 
+export type CiRunStatus =
+  | 'success'
+  | 'failure'
+  | 'in_progress'
+  | 'queued'
+  | 'cancelled'
+  | 'unknown';
+
+export interface CiRun {
+  workflow: string;
+  status: CiRunStatus;
+  url: string | null;
+}
+
+export interface ReleasePr {
+  number: number;
+  title: string;
+  url: string;
+  version: string | null;
+}
+
+/** CI & release mirror for a declared repo (IDEA-119): latest Actions runs on the tracked
+ * branch, the open release-please PR, and the released vs. queued version. */
+export interface CiReleaseState {
+  repo: string;
+  branch: string;
+  available: boolean;
+  runs: CiRun[];
+  releasePr: ReleasePr | null;
+  releasedVersion: string | null;
+}
+
 export interface PaperCampConfig {
   version: string;
   projectName: string;

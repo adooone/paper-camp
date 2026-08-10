@@ -2,7 +2,7 @@
 id: IDEA-119
 title: Run & monitor on the desk
 type: feat
-status: idea
+status: review
 created: 2026-08-04
 tags:
   - app
@@ -33,5 +33,6 @@ Adjacent to Horizon 2's **Insight from the task log** (that bullet is about past
 - [x] Render Checks as one-click runs
       Reuse the Quality/Tests stamps and the failing-check → suggested-fix → launch-agent loop for any registered check.
       run: 6m46s · 813 in · 22.1k out · opus-4-8
-- [ ] Mirror CI & release state
+- [x] Mirror CI & release state
       Show main's Actions status, the open release-please PR, and released vs. queued version.
+      run: 7m · 4.3k in · 22.2k out · opus-4-8
