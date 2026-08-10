@@ -13,7 +13,7 @@ export const DeskSection = () => {
   return (
     <>
       <Divider surface="chalkboard" />
-      <div className="min-h-0 max-h-[50%] shrink-0 overflow-y-auto p-6">
+      <div className="min-h-0 flex-1 p-6">
         <div className={sectionLabelClassName}>Desk</div>
         <div className="flex flex-col gap-4">
           <ServicesGroup />

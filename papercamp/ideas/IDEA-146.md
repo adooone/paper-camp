@@ -80,8 +80,9 @@ integrated into the sheet:
 - [x] Set Stack panel to show 3 agent work cards
       Cap/target the visible agent-card count at 3 when recalculating Stack panel layout so Desk section height no longer crowds them out.
       run: 40s · 14 in · 1.3k out · opus-4-8
-- [ ] Make Desk section fill available height instead of scrolling
+- [x] Make Desk section fill available height instead of scrolling
       Remove the scroll constraint on the Desk section in the Stack panel so it expands to fill the space allotted to it rather than scrolling internally.
+      run: 2m20s · 11.4k in · 10.6k out · opus-4-8
 
 ### Thread
 - [x] 2026-08-07 [decision] Owner direction: delivery moves from the Stack panel into the idea view, integrated below Phases rather than transplanted as a card. Stack keeps agent activity plus an always-open Desk section (Accordion and persisted flag removed); the toolbar keeps repo-level git. Checks auto-run on run completion.
