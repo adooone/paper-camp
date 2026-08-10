@@ -1,5 +1,5 @@
 ---
-id: IDEA-144
+id: IDEA-145
 title: Changes page in Plans style
 type: fix
 status: idea
@@ -8,7 +8,7 @@ tags:
   - app
   - ui
   - git
-subject: Planning surface
+subject: App UI
 ---
 
 The Changes page (`/diff`, [[IDEA-110]]) doesn't speak the desk's layout
@@ -28,11 +28,11 @@ and the restructure, settled:
    inside a single page card — not one Card per file. Binary, too-large,
    and rename-only states carry over unchanged; they're good.
 
-3. **Code never escapes the page.** Each hunk scrolls horizontally
-   inside the page (`min-w-0`/`max-w-full` chain down to the `pre`,
-   which keeps `overflow-x-auto`) — a long line must never widen or
-   overflow the sheet. The clamp is applied as an interim fix on the
-   current cards; the redesign keeps it structurally.
+3. **Code never escapes the page.** Long lines currently overflow past
+   the container so the line can't be read. Constrain the width chain
+   (`min-w-0`/`max-w-full`) down to each hunk's `pre`, which keeps
+   `overflow-x-auto` — a hunk scrolls horizontally inside the page and
+   never widens the sheet.
 
 4. **Diffs go live.** The page fetches once on mount and never again —
    stale the moment an agent writes a file. Refetch on the activity
@@ -40,4 +40,4 @@ and the restructure, settled:
    focus (the [[IDEA-134]] remote-liveness pattern).
 
 ### Thread
-- [x] 2026-08-07 [decision] The Changes page adopts the Plans grammar — sidebar in the shell, one sheet of content. Per-file Cards and the in-content sticky column are removed, not restyled.
+- [x] 2026-08-07 [decision] The Changes page adopts the Plans grammar — sidebar in the shell, one sheet of content. Per-file Cards and the in-content sticky column are removed, not restyled. Captured as findings only; no direct edits shipped with the review.

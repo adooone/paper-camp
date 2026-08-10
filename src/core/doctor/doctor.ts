@@ -2,6 +2,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import type { PaperCampConfig } from '../../types/index';
 import { metadataChecks } from './checks/metadata';
+import { structuralChecks } from './checks/structural';
 import type { DoctorFinding } from './finding';
 
 export interface DoctorEntityFile {
@@ -18,7 +19,7 @@ export interface DoctorContext {
 
 export type DoctorCheck = (context: DoctorContext) => DoctorFinding[];
 
-export const DOCTOR_CHECKS: DoctorCheck[] = [...metadataChecks];
+export const DOCTOR_CHECKS: DoctorCheck[] = [...metadataChecks, ...structuralChecks];
 
 async function readdirMaybe(dir: string): Promise<string[]> {
   try {
