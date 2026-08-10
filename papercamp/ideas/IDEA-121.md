@@ -2,7 +2,7 @@
 id: IDEA-121
 title: paper-camp doctor
 type: feat
-status: idea
+status: review
 created: 2026-08-04
 tags:
   - format
@@ -31,5 +31,6 @@ Doctor is also the natural home for format migrations when the schema evolves 鈥
       run: 4m6s 路 3.4k in 路 17.3k out 路 opus-4-8
 - [x] Surface doctor findings in the app's checks panel
       run: 6m53s 路 11.7k in 路 24.5k out 路 opus-4-8
-- [ ] Add a migration path for schema evolution
+- [x] Add a migration path for schema evolution
       Reuse the validator as the basis for `--fix` / migrate when the format changes.
+      run: 5m4s 路 11.6k in 路 18k out 路 opus-4-8

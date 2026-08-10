@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
-import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
-import { basename, join, resolve } from 'node:path';
+import { mkdir, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
+import { basename, dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { entityFileInput, writeEntityFile } from '../app/server/helpers';
-import { reportFindings, runDoctor } from '../core/doctor';
+import {
+  collectDoctorContext,
+  planDoctorFixes,
+  reportFindings,
+  runDoctorChecks,
+} from '../core/doctor';
 import {
   resolvePlanForPrRef,
   syncConsistencyCommentToPr,
@@ -526,12 +531,47 @@ program
   .description(
     'Validate corpus structure — frontmatter schema, id/counter, phases-list integrity, archive placement, dangling links',
   )
-  .action(async () => {
+  .option(
+    '--fix',
+    'apply the automatic fixes doctor knows how to migrate (currently: archive placement)',
+  )
+  .action(async (opts: { fix?: boolean }) => {
     const root = process.cwd();
-    const findings = await runDoctor(resolve(root, 'papercamp'));
-    const report = reportFindings(findings);
-    console.log(report.text);
-    if (report.errorCount > 0) process.exitCode = 1;
+    const paperCampDir = resolve(root, 'papercamp');
+    const context = await collectDoctorContext(paperCampDir);
+    const findings = runDoctorChecks(context);
+
+    if (!opts.fix) {
+      const report = reportFindings(findings);
+      console.log(report.text);
+      if (report.errorCount > 0) process.exitCode = 1;
+      return;
+    }
+
+    const plan = planDoctorFixes(context, findings);
+    for (const action of plan.actions) {
+      if (action.kind === 'move') {
+        await mkdir(dirname(join(root, action.to)), { recursive: true });
+        await rename(join(root, action.from), join(root, action.to));
+        console.log(`  [moved]  ${action.from} -> ${action.to}`);
+      } else {
+        await writeFile(join(root, action.path), action.content, 'utf-8');
+        console.log(`  [fixed]  ${action.path}`);
+      }
+    }
+
+    if (plan.actions.length > 0) {
+      const ideasDir = join(paperCampDir, 'ideas');
+      const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
+      await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries), 'utf-8');
+    }
+
+    const remaining = reportFindings(plan.unfixable);
+    console.log(remaining.text);
+    console.log(
+      `Applied ${plan.actions.length} fix(es); ${plan.unfixable.length} finding(s) need manual attention.`,
+    );
+    if (remaining.errorCount > 0) process.exitCode = 1;
   });
 
 program
