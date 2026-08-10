@@ -46,8 +46,9 @@ and the restructure, settled:
 - [x] Add scroll-spy active state to the file list
       Highlight the row for the file currently in view as the sheet scrolls.
       run: 1m38s · 233 in · 6k out · opus-4-8
-- [ ] Render all diffs in one paper page
+- [x] Render all diffs in one paper page
       File sections divided by rules with a path/rename/stamp/counts header row; keep the binary, too-large, and rename-only states.
+      run: 1m52s · 280 in · 6.2k out · opus-4-8
 - [ ] Constrain the hunk width chain so code stays inside the sheet
       Thread min-w-0/max-w-full down to each hunk pre so it scrolls horizontally instead of widening the page.
 - [ ] Refetch diffs live

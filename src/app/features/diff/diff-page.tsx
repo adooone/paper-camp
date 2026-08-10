@@ -1,8 +1,8 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { Breadcrumb } from '@dendelion/paper-ui';
+import { Breadcrumb, Divider } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useRef } from 'react';
-import { FileDiffSection } from './file-diff-card';
+import { Fragment, useEffect, useRef } from 'react';
+import { FileDiffSection } from './file-diff-section';
 
 export const DiffPage = () => {
   const navigate = useNavigate();
@@ -82,8 +82,11 @@ export const DiffPage = () => {
         </div>
       ) : (
         <div ref={sectionsRef} className={`flex min-w-0 flex-col gap-6 ${contentClass}`}>
-          {files.map((entry) => (
-            <FileDiffSection key={entry.path} entry={entry} />
+          {files.map((entry, idx) => (
+            <Fragment key={entry.path}>
+              {idx > 0 && <Divider />}
+              <FileDiffSection entry={entry} />
+            </Fragment>
           ))}
         </div>
       )}

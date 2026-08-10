@@ -1,6 +1,6 @@
 import { type DiffLineType, parsePatch, rawContentHunks } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
-import { Card, Stamp } from '@dendelion/paper-ui';
+import { Stamp } from '@dendelion/paper-ui';
 
 const LINE_CLASS: Record<DiffLineType, string> = {
   add: 'bg-watercolor-green/[18%] text-watercolor-green-dark',
@@ -22,11 +22,11 @@ const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
   </span>
 );
 
-interface CardTitleProps {
+interface FileHeaderProps {
   entry: FileDiffEntry;
 }
 
-const CardTitle = ({ entry }: CardTitleProps) => (
+const FileHeader = ({ entry }: FileHeaderProps) => (
   <div className="flex w-full min-w-0 items-center justify-between gap-3">
     <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs">
       {entry.renameSource ? `${entry.renameSource} → ${entry.path}` : entry.path}
@@ -89,11 +89,9 @@ interface FileDiffSectionProps {
 
 export const FileDiffSection = ({ entry }: FileDiffSectionProps) => (
   <div data-diff-path={entry.path} className="min-w-0 max-w-full scroll-mt-4">
-    <Card className="min-w-0 max-w-full">
-      <div className="mb-3">
-        <CardTitle entry={entry} />
-      </div>
-      <DiffBody entry={entry} />
-    </Card>
+    <div className="mb-3">
+      <FileHeader entry={entry} />
+    </div>
+    <DiffBody entry={entry} />
   </div>
 );
