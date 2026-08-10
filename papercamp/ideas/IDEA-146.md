@@ -4,12 +4,14 @@ title: Deliver lives in the idea view
 type: feat
 status: idea
 created: 2026-08-07
+updated: 2026-08-10
 tags:
   - app
   - ui
   - stack
   - git
 subject: App UI
+order: 1
 ---
 
 Deliver sits in the Stack panel, a room away from the work it closes:
@@ -61,6 +63,10 @@ integrated into the sheet:
 - [ ] Remove Deliver from the Stack panel
 - [ ] Make the Desk section always open
       Drop its Accordion and the persisted `desk-section-expanded` flag.
+- [ ] Redesign Deliver as a two-column Card
+      Below Phases, wrap Deliver in a Card with two columns: left holds the check stamps and changed-files info, right holds the commit title input, suggest action, and Commit button.
 
 ### Thread
 - [x] 2026-08-07 [decision] Owner direction: delivery moves from the Stack panel into the idea view, integrated below Phases rather than transplanted as a card. Stack keeps agent activity plus an always-open Desk section (Accordion and persisted flag removed); the toolbar keeps repo-level git. Checks auto-run on run completion.
+- [x] 2026-08-10 [chat] redesign deliver section. I want it to be a Card below the phases list with 2 columns, one with information files and checks and another with commit section.
+- [x] 2026-08-10 [chat] [agent] Added that as a fix here — restructure Deliver into a two-column Card below Phases: left column for check stamps and changed-files info, right column for the commit controls.
