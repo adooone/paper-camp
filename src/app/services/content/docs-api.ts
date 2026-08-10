@@ -1,3 +1,4 @@
+import type { DoctorFindingSummary } from '@/core/doctor';
 import type {
   ConsistencyIssue,
   ResolvedRoadmap,
@@ -104,4 +105,9 @@ export const addRoadmapCandidate = async (horizonTitle: string, itemName: string
 export const fetchConsistency = async () => {
   const res = await fetch(apiUrl('/api/consistency'));
   return res.json() as Promise<ConsistencyIssue[]>;
+};
+
+export const fetchDoctor = async () => {
+  const res = await fetch(apiUrl('/api/doctor'));
+  return res.json() as Promise<DoctorFindingSummary>;
 };

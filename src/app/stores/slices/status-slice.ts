@@ -1,4 +1,5 @@
 import { fetchCapabilities } from '@/app/services/system';
+import type { DoctorFindingSummary } from '@/core/doctor';
 import type {
   BranchHygieneStatus,
   CapabilityResult,
@@ -6,7 +7,7 @@ import type {
   ConsistencyIssue,
   GitStatusEntry,
 } from '@/types/index';
-import { fetchConsistency } from '../../services/content';
+import { fetchConsistency, fetchDoctor } from '../../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../../services/git-api';
 import type { StatusState } from '../../services/status-api';
 import {
@@ -36,6 +37,9 @@ export type StatusSlice = {
 
   consistency: ConsistencyIssue[];
   loadConsistency: () => Promise<void>;
+
+  doctor: DoctorFindingSummary;
+  loadDoctor: () => Promise<void>;
 
   gitStatus: GitStatusEntry[] | null;
   gitBranch: string | null;
@@ -67,6 +71,7 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
           get().loadSuggestions(),
           get().loadStatus(),
           get().loadConsistency(),
+          get().loadDoctor(),
           get().loadGitStatus(),
           get().loadAgentStatus(),
           get().loadAgentAuthStatus(),
@@ -124,6 +129,9 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
 
     consistency: [],
     loadConsistency: loadSlice(set, fetchConsistency, (data) => ({ consistency: data })),
+
+    doctor: { findings: [], errorCount: 0, warningCount: 0 },
+    loadDoctor: loadSlice(set, fetchDoctor, (data) => ({ doctor: data })),
 
     gitStatus: null,
     gitBranch: null,

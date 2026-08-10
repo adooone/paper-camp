@@ -29,6 +29,7 @@ Doctor is also the natural home for format migrations when the schema evolves 鈥
 - [x] Implement the structural checks
       Parse the body for split/orphaned phases lists, archive placement matching status, and dangling `[[links]]`.
       run: 4m6s 路 3.4k in 路 17.3k out 路 opus-4-8
-- [ ] Surface doctor findings in the app's checks panel
+- [x] Surface doctor findings in the app's checks panel
+      run: 6m53s 路 11.7k in 路 24.5k out 路 opus-4-8
 - [ ] Add a migration path for schema evolution
       Reuse the validator as the basis for `--fix` / migrate when the format changes.

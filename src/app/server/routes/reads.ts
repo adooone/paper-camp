@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { describeFindings, runDoctor } from '@/core/doctor';
 import { readParkedQuestions } from '@/core/parked-questions';
 import {
   deskConfigSchema,
@@ -74,6 +75,10 @@ export const readRoutes: ReadRoute[] = [
       const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
       return findConsistencyIssues(plansResult.entries, subjectVocabulary);
     },
+  },
+  {
+    path: '/api/doctor',
+    handler: async (root) => describeFindings(await runDoctor(join(root, 'papercamp'))),
   },
   {
     path: '/api/stats',

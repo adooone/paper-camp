@@ -23,6 +23,28 @@ export function sortFindings(findings: DoctorFinding[]): DoctorFinding[] {
   );
 }
 
+export interface DoctorFindingWithSeverity extends DoctorFinding {
+  severity: DoctorSeverity;
+}
+
+export interface DoctorFindingSummary {
+  findings: DoctorFindingWithSeverity[];
+  errorCount: number;
+  warningCount: number;
+}
+
+export function describeFindings(findings: DoctorFinding[]): DoctorFindingSummary {
+  const withSeverity = sortFindings(findings).map((finding) => ({
+    ...finding,
+    severity: findingSeverity(finding),
+  }));
+  return {
+    findings: withSeverity,
+    errorCount: withSeverity.filter((f) => f.severity === 'error').length,
+    warningCount: withSeverity.filter((f) => f.severity === 'warning').length,
+  };
+}
+
 export interface DoctorReport {
   text: string;
   errorCount: number;
