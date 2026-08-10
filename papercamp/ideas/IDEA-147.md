@@ -2,7 +2,7 @@
 id: IDEA-147
 title: Scout panel replaces the sidesheet
 type: feat
-status: idea
+status: review
 created: 2026-08-07
 tags:
   - integration
@@ -50,8 +50,9 @@ trigger ([[IDEA-140]]) — made slightly larger, a single Scout panel.
       run: 57s · 236 in · 3.6k out · sonnet-5
 - [x] Fold the chat thread into the right column
       run: 5m48s · 1.3k in · 14.3k out · sonnet-5
-- [ ] Populate the left glance column
+- [x] Populate the left glance column
       Idea ID stamp, current phase title and status, live progress fraction, and the Open Paper Camp link.
+      run: 6m59s · 3.4k in · 19k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-07 [decision] The island is named Scout, after the agent. One panel from the logo trigger holds everything — git stripe on top, glance column left, chat dominant right, desk link out; the chat sidesheet is removed entirely.

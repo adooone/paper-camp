@@ -1,8 +1,9 @@
-import type { OpenQuestionGroup } from '@/app/features/plans/helpers';
-import type { ChecksClientState } from '@/app/hooks/use-checks-client';
+import { ProgressBar } from '@/app/features/plans/components';
+import { STATUS_COLOR, STATUS_LABEL } from '@/app/features/plans/constants';
+import { type OpenQuestionGroup, phaseProgress } from '@/app/features/plans/helpers';
 import type { StatusClientState } from '@/app/hooks/use-status-client';
-import type { CheckStatus, PlanEntry } from '@/types/index';
-import { Island, Stamp, type StampVariant } from '@dendelion/paper-ui';
+import type { PlanEntry } from '@/types/index';
+import { Island, Stamp } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
 import { ScoutThread } from './scout-thread';
 
@@ -61,35 +62,56 @@ const chatColumnStyle: CSSProperties = {
   minWidth: 0,
 };
 
-const overallCheckVariant = (checks: ChecksClientState): StampVariant => {
-  const statuses: CheckStatus[] = [
-    checks.qualityStatus,
-    checks.testStatus,
-    checks.consistencyStatus,
-  ];
-  if (statuses.includes('fail') || checks.hasDocIssues) return 'error';
-  if (statuses.includes('running')) return 'warning';
-  if (statuses.every((status) => status === 'pass')) return 'success';
-  return 'neutral';
+const stampRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.375rem',
+};
+
+const phaseTextStyle: CSSProperties = {
+  fontSize: '0.75rem',
+  color: 'var(--pui-text-secondary)',
+  lineHeight: 1.35,
+  overflowWrap: 'anywhere',
+};
+
+const progressRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.375rem',
+};
+
+const progressBarWrapStyle: CSSProperties = { flex: 1, minWidth: 0 };
+
+const progressCountStyle: CSSProperties = {
+  fontSize: '0.6875rem',
+  color: 'var(--pui-text-secondary)',
+  flexShrink: 0,
+};
+
+const deskLinkStyle: CSSProperties = {
+  fontSize: '0.75rem',
+  color: 'var(--pui-text-primary)',
 };
 
 export interface ScoutCardProps {
   status: StatusClientState;
-  checks: ChecksClientState;
   focusPlan: PlanEntry | null;
   openQuestions: OpenQuestionGroup[];
   onRefreshScout: () => void;
+  deskUrl: string;
 }
 
 export const ScoutCard = ({
   status,
-  checks,
   focusPlan,
   openQuestions,
   onRefreshScout,
+  deskUrl,
 }: ScoutCardProps) => {
   const branch = status.gitBranch ?? 'no branch';
-  const doneCount = focusPlan?.phases.filter((phase) => phase.done).length ?? 0;
+  const progress = focusPlan ? phaseProgress(focusPlan) : null;
+  const currentPhase = focusPlan?.phases.find((phase) => !phase.done);
 
   return (
     <Island surface="paper" label="Paper camp">
@@ -106,14 +128,32 @@ export const ScoutCard = ({
 
         <div style={columnsStyle}>
           <div style={glanceColumnStyle}>
-            <span style={mutedStyle}>
-              {focusPlan
-                ? `${focusPlan.id ?? focusPlan.title} · phase ${doneCount}/${focusPlan.phases.length}`
-                : 'no active plan'}
-            </span>
-            <Stamp size="small" variant={overallCheckVariant(checks)}>
-              Checks
-            </Stamp>
+            {focusPlan ? (
+              <>
+                <div style={stampRowStyle}>
+                  <Stamp size="small">{focusPlan.id ?? '—'}</Stamp>
+                  <Stamp size="small">{STATUS_LABEL[focusPlan.status]}</Stamp>
+                </div>
+                <span style={phaseTextStyle}>
+                  {currentPhase ? currentPhase.text : 'All phases done'}
+                </span>
+                {progress && (
+                  <div style={progressRowStyle}>
+                    <div style={progressBarWrapStyle}>
+                      <ProgressBar pct={progress.pct} color={STATUS_COLOR[focusPlan.status]} />
+                    </div>
+                    <span style={progressCountStyle}>
+                      {progress.done}/{progress.total}
+                    </span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <span style={mutedStyle}>no active plan</span>
+            )}
+            <a style={deskLinkStyle} href={deskUrl} target="_blank" rel="noopener noreferrer">
+              Open Paper Camp →
+            </a>
           </div>
           <div style={chatColumnStyle}>
             <ScoutThread
