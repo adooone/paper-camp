@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { entityFileInput, writeEntityFile } from '../app/server/helpers';
+import { reportFindings, runDoctor } from '../core/doctor';
 import {
   resolvePlanForPrRef,
   syncConsistencyCommentToPr,
@@ -518,6 +519,19 @@ program
       }
     }
     console.log(bar);
+  });
+
+program
+  .command('doctor')
+  .description(
+    'Validate corpus structure — frontmatter schema, id/counter, phases-list integrity, archive placement, dangling links',
+  )
+  .action(async () => {
+    const root = process.cwd();
+    const findings = await runDoctor(resolve(root, 'papercamp'));
+    const report = reportFindings(findings);
+    console.log(report.text);
+    if (report.errorCount > 0) process.exitCode = 1;
   });
 
 program

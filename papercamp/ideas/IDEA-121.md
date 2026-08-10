@@ -20,8 +20,9 @@ Doctor is also the natural home for format migrations when the schema evolves 鈥
 - [x] Codify the corpus schema and rule set
       Enumerate each check (frontmatter fields, id/counter, phases-list integrity, archive placement, dangling links) with a severity.
       run: 2m20s 路 5.4k in 路 7.9k out 路 opus-4-8
-- [ ] Scaffold the `paper-camp doctor` command and reporter
+- [x] Scaffold the `paper-camp doctor` command and reporter
       One reporter emitting file, line, rule, and severity so findings are addressable.
+      run: 2m33s 路 748 in 路 10.3k out 路 opus-4-8
 - [ ] Implement the metadata checks
       Frontmatter schema validation and id/counter consistency against config.
 - [ ] Implement the structural checks
