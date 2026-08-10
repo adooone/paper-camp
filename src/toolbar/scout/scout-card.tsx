@@ -1,8 +1,10 @@
+import type { OpenQuestionGroup } from '@/app/features/plans/helpers';
 import type { ChecksClientState } from '@/app/hooks/use-checks-client';
 import type { StatusClientState } from '@/app/hooks/use-status-client';
 import type { CheckStatus, PlanEntry } from '@/types/index';
 import { Island, Stamp, type StampVariant } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
+import { ScoutThread } from './scout-thread';
 
 const bodyStyle: CSSProperties = {
   display: 'flex',
@@ -75,9 +77,17 @@ export interface ScoutCardProps {
   status: StatusClientState;
   checks: ChecksClientState;
   focusPlan: PlanEntry | null;
+  openQuestions: OpenQuestionGroup[];
+  onRefreshScout: () => void;
 }
 
-export const ScoutCard = ({ status, checks, focusPlan }: ScoutCardProps) => {
+export const ScoutCard = ({
+  status,
+  checks,
+  focusPlan,
+  openQuestions,
+  onRefreshScout,
+}: ScoutCardProps) => {
   const branch = status.gitBranch ?? 'no branch';
   const doneCount = focusPlan?.phases.filter((phase) => phase.done).length ?? 0;
 
@@ -105,7 +115,13 @@ export const ScoutCard = ({ status, checks, focusPlan }: ScoutCardProps) => {
               Checks
             </Stamp>
           </div>
-          <div style={chatColumnStyle} />
+          <div style={chatColumnStyle}>
+            <ScoutThread
+              focusPlan={focusPlan}
+              openQuestions={openQuestions}
+              onRefresh={onRefreshScout}
+            />
+          </div>
         </div>
       </div>
     </Island>
