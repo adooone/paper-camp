@@ -42,8 +42,9 @@ trigger ([[IDEA-140]]) — made slightly larger, a single Scout panel.
 - [x] Delete the slide-in sidesheet
       Remove the component, its open/close state, and the slide animation.
       run: 3m59s · 524 in · 15.3k out · sonnet-5
-- [ ] Enlarge the logo-trigger panel
+- [x] Enlarge the logo-trigger panel
       Keep the reveal behavior; only grow the panel's size.
+      run: 1m26s · 368 in · 4.9k out · sonnet-5
 - [ ] Lay out the two columns under the top stripe
       Glance column left (~one third), chat right (~two thirds).
 - [ ] Fold the chat thread into the right column

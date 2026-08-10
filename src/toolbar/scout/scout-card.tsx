@@ -8,7 +8,7 @@ const bodyStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '0.625rem',
-  minWidth: '17rem',
+  width: 'min(24rem, calc(100vw - 2rem))',
 };
 
 // Bleeds across the Island's own padding (0.75rem 1.25rem) so the darker
