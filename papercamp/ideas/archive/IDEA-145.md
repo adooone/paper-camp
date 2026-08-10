@@ -2,13 +2,15 @@
 id: IDEA-145
 title: Changes page in Plans style
 type: fix
-status: review
+status: done
 created: 2026-08-07
+updated: 2026-08-10
 tags:
   - app
   - ui
   - git
 subject: App UI
+order: 1
 ---
 
 The Changes page (`/diff`, [[IDEA-110]]) doesn't speak the desk's layout

@@ -152,19 +152,35 @@ function papercampApi(): Plugin {
 
 const paperUiRoot = resolve(__dirname, '../paper-ui');
 
+// Local `file:../paper-ui` iteration: watches the built dist so a rebuilt
+// local package reaches the browser without restarting `pnpm dev`. CSS and JS
+// need separate handling — Vite's dependency pre-bundler (see
+// optimizeDeps.exclude below) never touches CSS, so the CSS half needed no
+// extra help beyond invalidating its module; the JS half is only reachable
+// at all once optimizeDeps stops freezing it into a cached pre-bundle.
 function watchPaperUi(): Plugin {
   return {
     name: 'watch-paper-ui',
     configureServer(server) {
-      const cssPath = resolve(paperUiRoot, 'dist/index.css');
-      server.watcher.add(cssPath);
-      server.watcher.on('change', (file) => {
-        if (file === cssPath) {
-          const mod = server.moduleGraph.getModuleById(cssPath);
-          if (mod) {
-            server.moduleGraph.invalidateModule(mod);
-          }
-        }
+      const watched = [
+        resolve(paperUiRoot, 'dist/index.css'),
+        resolve(paperUiRoot, 'dist/index.mjs'),
+      ];
+      for (const file of watched) server.watcher.add(file);
+      // 'all' (not just 'change'): `pnpm add file:../paper-ui` swaps the
+      // symlinked package's store entry rather than editing the existing
+      // file in place, so chokidar reports 'unlink' + 'add', which a
+      // change-only listener silently misses — the on-disk file was fresh
+      // but the server kept transforming/serving its old cached copy.
+      // Neither module has HMR accept boundaries wired up (paper-ui ships
+      // one flat bundle), so a full reload is the correct signal — a
+      // component-level hot-swap can't apply here anyway.
+      server.watcher.on('all', (event, file) => {
+        if (!watched.includes(file)) return;
+        if (event === 'unlink') server.watcher.add(file);
+        const mod = server.moduleGraph.getModuleById(file);
+        if (mod) server.moduleGraph.invalidateModule(mod);
+        server.ws.send({ type: 'full-reload' });
       });
     },
   };
@@ -188,6 +204,24 @@ export default defineConfig({
         return !path.includes('@dendelion/paper-ui');
       },
     },
+  },
+  optimizeDeps: {
+    // Vite's dependency pre-bundler caches a dependency's whole module graph
+    // into one frozen file at server startup and only re-scans it when its
+    // own heuristics say to — which a same-version `file:../paper-ui` rebuild
+    // never triggers. Excluding it drops that dependency out of the cache
+    // entirely, so it's served (and watched — see watchPaperUi above) like a
+    // normal source file instead, and a rebuilt local package reaches the
+    // browser without a `pnpm dev` restart.
+    exclude: ['@dendelion/paper-ui'],
+    // Excluding paper-ui also excludes it from the optimizer's dependency
+    // scan, so its own `import { createPortal } from 'react-dom'` (Menu,
+    // Select, Modal) never gets the CJS→ESM named-export shim that scan
+    // normally produces — the browser then fails loading react-dom's raw
+    // CJS entry directly. paper-camp only imports `react-dom/client`
+    // itself, so the plain `react-dom` specifier was never optimized by
+    // auto-discovery either; forcing both in fixes it for both import paths.
+    include: ['react-dom', 'react-dom/client'],
   },
   build: {
     outDir: 'dist/app',

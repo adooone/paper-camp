@@ -1,5 +1,3 @@
-import { oneLineErrorSummary } from '@/app/utils/error-summary';
-
 export const sectionLabelClassName =
   'font-display-luminari text-base font-semibold text-desk-text-muted mb-3';
 
@@ -17,5 +15,3 @@ export const chalkStatusText = {
   fail: '#d6a0a0',
   running: '#d6c4a0',
 } as const;
-
-export const gitErrorSummary = oneLineErrorSummary;

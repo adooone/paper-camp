@@ -145,7 +145,10 @@
 | IDEA-142 | Faster phase runs | refactor | done | agent, server, performance |
 | IDEA-143 | One title style for all ideas | chore | done | format, docs, git |
 | IDEA-144 | Minimal island — branch banner, one glance row, single Stack button | fix | done | integration, app, ux |
-| IDEA-145 | Changes page in Plans style | fix | planned | app, ui, git |
-| IDEA-146 | Deliver lives in the idea view | feat | planned | app, ui, stack, git |
-| IDEA-147 | Scout panel replaces the sidesheet | feat | idea | integration, app, ux, chat |
-| IDEA-148 | Bare mount URL white-screens the desk | fix | idea | integration, cli, app |
+| IDEA-145 | Changes page in Plans style | fix | done | app, ui, git |
+| IDEA-146 | Deliver lives in the idea view | feat | review | app, ui, stack, git |
+| IDEA-147 | Scout panel replaces the sidesheet | feat | planned | integration, app, ux, chat |
+| IDEA-148 | Bare mount URL white-screens the desk | fix | planned | integration, cli, app |
+| IDEA-149 | Feedback fixes start running at once | feat | idea | agents, plans, app |
+| IDEA-150 | Route plans and ideas by id | refactor | idea | app, routing |
+| IDEA-151 | Manual commits become phase rows | feat | idea | app, plans, git |

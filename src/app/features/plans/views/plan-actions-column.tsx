@@ -1,7 +1,8 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlanTitle, useSubjectVocabulary } from '@/app/hooks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
+import { Breadcrumb, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
 import { FixReviewButton } from '../actions';
@@ -23,6 +24,7 @@ export const PlanActionsColumn = () => {
   const setDetailView = useAppStore((s) => s.setDetailView);
   const archiveIdeas = useAppStore((s) => s.archiveIdeas);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const plan = activePlanTitle ? plans?.entries.find((p) => p.title === activePlanTitle) : null;
   const [orderInput, setOrderInput] = useState('');
@@ -80,6 +82,12 @@ export const PlanActionsColumn = () => {
 
   return (
     <div className="flex flex-col gap-4 -mt-5">
+      <Breadcrumb
+        items={[
+          { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
+          { id: 'plan', label: plan.title },
+        ]}
+      />
       <div>
         <div className={`${sectionLabelClass} mb-1.5`}>Show</div>
         <div className="flex flex-col gap-1">

@@ -91,6 +91,20 @@ export const PlansPage = () => {
   }
 
   if (!plans) {
+    // A direct reload/deep-link into a plan or idea route lands here too —
+    // the worklist skeleton (table rows, search bar) reads as a mismatched
+    // flash of the wrong page rather than a loading state for the detail
+    // view about to render, so it's scoped to the actual worklist case.
+    if (activePlanTitle || activeIdeaTitle) {
+      return (
+        <div>
+          <output aria-live="polite" className="sr-only">
+            Loading…
+          </output>
+          <p className="opacity-50">Loading…</p>
+        </div>
+      );
+    }
     return (
       <div>
         <PlansHeader />
@@ -112,14 +126,6 @@ export const PlansPage = () => {
       <ReconcileQueueReview />
       {activePlan ? (
         <div>
-          <div className="mb-4">
-            <Breadcrumb
-              items={[
-                { id: 'plans', label: 'Plans', onClick: handleBack },
-                { id: 'plan', label: activePlan.title },
-              ]}
-            />
-          </div>
           <EntityDetail plan={activePlan} />
         </div>
       ) : activeIdea ? (

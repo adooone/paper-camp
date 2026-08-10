@@ -5,7 +5,7 @@ import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-u
 import { useNavigate } from '@tanstack/react-router';
 import { chalkStatusFill, chalkStatusText, sectionLabelClassName } from './shared';
 
-const MAX_VISIBLE_TASKS = 8;
+const MAX_VISIBLE_TASKS = 3;
 // 9.25rem = 3 cards * 2.75rem card height + 2 gaps * 0.5rem, reserved so the
 // empty state doesn't shrink the panel when tasks finish and clear.
 const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[9.25rem]';
@@ -156,7 +156,7 @@ export const AgentSection = () => {
   const visibleTasks = agentStatus.slice(0, MAX_VISIBLE_TASKS);
 
   return (
-    <div className="flex min-h-0 flex-auto flex-col p-6">
+    <div className="flex min-h-0 flex-none flex-col p-6">
       <div className={sectionLabelClassName}>Agent</div>
       <div
         className={`flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto ${TASK_STACK_MIN_HEIGHT_CLASS} ${

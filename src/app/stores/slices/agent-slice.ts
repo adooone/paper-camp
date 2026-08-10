@@ -1,5 +1,11 @@
 import { fetchAgentAuthStatus } from '@/app/services/system';
-import type { AgentAuthStatus, AgentTaskState, LoginRelayState, PlanEntry } from '@/types/index';
+import type {
+  AgentAuthStatus,
+  AgentTaskState,
+  CheckName,
+  LoginRelayState,
+  PlanEntry,
+} from '@/types/index';
 import {
   cancelLoginRelay as cancelLoginRelayApi,
   fetchAgentStatus,
@@ -85,7 +91,26 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
     loadAgentStatus: async () => {
       try {
         const data = await fetchAgentStatus();
+        const prev = get().agentStatus;
         set({ agentStatus: data });
+
+        const completedRun = data.find((t) => {
+          if (t.status !== 'done') return false;
+          if (t.taskKind !== 'run-all' && t.taskKind !== 'phase') return false;
+          const before = prev.find((p) => p.id === t.id);
+          if (!before || before.status === 'done' || before.status === 'error') return false;
+          if (t.taskKind === 'phase') {
+            const plan = get().plans?.entries.find((p) => p.id === t.planId);
+            if (!plan || t.phaseIndex !== plan.phases.length - 1) return false;
+          }
+          return true;
+        });
+        if (completedRun) {
+          const { runCheck } = get();
+          for (const name of ['lint', 'format', 'test', 'consistency'] as CheckName[]) {
+            runCheck(name);
+          }
+        }
 
         const pending = get().pendingReconcile;
         const reconcileTask = pending
