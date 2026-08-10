@@ -67,6 +67,8 @@ integrated into the sheet:
       run: 1m10s · 222 in · 2.8k out · opus-4-8
 - [x] Redesign Deliver as a two-column Card
       Below Phases, wrap Deliver in a Card with two columns: left holds the check stamps and changed-files info, right holds the commit title input, suggest action, and Commit button.
+- [ ] Recalculate Stack panel layout so Desk section height doesn't crowd out agent work cards
+      Desk section is currently taller than Deliver was, squeezing the space available for agent work cards in the Stack panel. Fix the layout sizing so both fit properly.
 
 ### Fixes
 - [x] Polish Deliver card layout and empty state
@@ -85,3 +87,5 @@ integrated into the sheet:
 - [x] 2026-08-10 [chat] [agent] Noted — Desk currently outgrows Deliver's height, so agent cards get squeezed. Added a fix to recalc the Stack panel layout so Desk's height doesn't crowd out the agent work cards.
 - [x] 2026-08-10 [chat] I dont see the last point fix phase in the list, Also I want to add a vertical separator for the Deliver card
 - [x] 2026-08-10 [chat] [agent] Got it — the last fix (fixed layout / two-column card / empty state / spacing) is already logged as phase 6 and it's marked done, since it landed the two-column Card redesign. Adding the vertical separator between the columns as a new fix now. (reopened this idea to re-run)
+- [x] 2026-08-10 [chat] I mean this one - recalculate and fix layout in Stack. Currently we cant fit that amount of agent work cards. Because Desk section is higher than Deliver
+- [x] 2026-08-10 [chat] [agent] Noted — I'll get the Stack layout recalculation logged as its own fix so Desk's height stops crowding out the agent work cards.
