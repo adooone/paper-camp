@@ -55,8 +55,9 @@ integrated into the sheet:
 - [x] Carry the delivery controls into the section
       The four check stamps, the "N files changed" link, the commit title input with suggest-from-diff, and Commit; keep fix-review's suggested-commit prefill landing here.
       run: 6m45s · 4.2k in · 26.2k out · opus-4-8
-- [ ] Auto-run the check suite on run completion
+- [x] Auto-run the check suite on run completion
       Trigger the full suite from run-all's last phase and any standalone final phase, leaving mid-run live stamp states untouched.
+      run: 3m42s · 371 in · 12.2k out · opus-4-8
 - [ ] Remove Deliver from the Stack panel
 - [ ] Make the Desk section always open
       Drop its Accordion and the persisted `desk-section-expanded` flag.
