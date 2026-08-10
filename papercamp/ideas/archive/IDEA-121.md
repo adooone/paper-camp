@@ -2,8 +2,9 @@
 id: IDEA-121
 title: paper-camp doctor
 type: feat
-status: review
+status: done
 created: 2026-08-04
+updated: 2026-08-10
 tags:
   - format
   - cli

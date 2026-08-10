@@ -166,45 +166,33 @@ const PhasesSection = ({
             key: 'title',
             header: 'Title',
             cell: (row: WorkRow) => (
-              <span className="flex min-w-0 flex-col gap-1 pb-1">
+              <span
+                className={`inline-flex min-w-0 max-w-full items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
+              >
                 <span
-                  className={`inline-flex min-w-0 items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
+                  title={row.item.text}
+                  className="overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-base leading-tight"
                 >
-                  <span
-                    title={row.item.text}
-                    className="overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-base leading-tight"
-                  >
-                    {row.item.text}
-                  </span>
-                  {isRunningRow(row) && (
-                    <span className="text-xs opacity-[0.55]">
-                      {Math.round((runningFill?.fraction ?? 0) * 100)}%
-                    </span>
-                  )}
-                  {row.kind === 'phase' && row.item.source === 'review' && (
-                    <Stamp
-                      size="small"
-                      fillColor={STATUS_STAMP.review.fill}
-                      textColor={STATUS_STAMP.review.text}
-                    >
-                      review
-                    </Stamp>
-                  )}
-                  {row.kind === 'fix' && (
-                    <Stamp size="small" variant="warning">
-                      fix
-                    </Stamp>
-                  )}
+                  {row.item.text}
                 </span>
-                {row.item.run && (
-                  <span className="self-stretch whitespace-nowrap rounded-md bg-[var(--pui-texture-shade,rgba(0,0,0,0.05))] px-2 py-0.5 text-xs opacity-[0.7]">
-                    {formatDuration(row.item.run.durationMs)}
-                    {row.item.run.attempts > 1 && ` ×${row.item.run.attempts}`}
-                    {' · '}
-                    {formatTokens(row.item.run.inputTokens)} in ·{' '}
-                    {formatTokens(row.item.run.outputTokens)} out
-                    {row.item.run.model && ` · ${row.item.run.model}`}
+                {isRunningRow(row) && (
+                  <span className="text-xs opacity-[0.55]">
+                    {Math.round((runningFill?.fraction ?? 0) * 100)}%
                   </span>
+                )}
+                {row.kind === 'phase' && row.item.source === 'review' && (
+                  <Stamp
+                    size="small"
+                    fillColor={STATUS_STAMP.review.fill}
+                    textColor={STATUS_STAMP.review.text}
+                  >
+                    review
+                  </Stamp>
+                )}
+                {row.kind === 'fix' && (
+                  <Stamp size="small" variant="warning">
+                    fix
+                  </Stamp>
                 )}
               </span>
             ),
@@ -239,6 +227,17 @@ const PhasesSection = ({
         expandable={{
           render: (row: WorkRow) => row.item.description || null,
         }}
+        rowFooter={(row: WorkRow) =>
+          row.item.run
+            ? [
+                formatDuration(row.item.run.durationMs) +
+                  (row.item.run.attempts > 1 ? ` ×${row.item.run.attempts}` : ''),
+                `${formatTokens(row.item.run.inputTokens)} in`,
+                `${formatTokens(row.item.run.outputTokens)} out`,
+                ...(row.item.run.model ? [row.item.run.model] : []),
+              ].join(' · ')
+            : null
+        }
         showExpandColumn={false}
         rowTexture={(row: WorkRow) => {
           if (row.kind === 'fix') return 'kraft';

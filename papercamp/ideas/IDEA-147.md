@@ -35,5 +35,18 @@ trigger ([[IDEA-140]]) — made slightly larger, a single Scout panel.
 4. **Reveal behavior is unchanged** — the logo trigger opens it as
    today; only the panel's size and contents change.
 
+### Phases
+- [ ] Rename the island to Scout
+      Update the component names, labels, and user-facing strings.
+- [ ] Delete the slide-in sidesheet
+      Remove the component, its open/close state, and the slide animation.
+- [ ] Enlarge the logo-trigger panel
+      Keep the reveal behavior; only grow the panel's size.
+- [ ] Lay out the two columns under the top stripe
+      Glance column left (~one third), chat right (~two thirds).
+- [ ] Fold the chat thread into the right column
+- [ ] Populate the left glance column
+      Idea ID stamp, current phase title and status, live progress fraction, and the Open Paper Camp link.
+
 ### Thread
 - [x] 2026-08-07 [decision] The island is named Scout, after the agent. One panel from the logo trigger holds everything — git stripe on top, glance column left, chat dominant right, desk link out; the chat sidesheet is removed entirely.

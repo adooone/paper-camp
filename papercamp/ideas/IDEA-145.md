@@ -39,12 +39,10 @@ and the restructure, settled:
    stream tick, debounced like every other listener, plus on window
    focus (the [[IDEA-134]] remote-liveness pattern).
 
-### Thread
-- [x] 2026-08-07 [decision] The Changes page adopts the Plans grammar — sidebar in the shell, one sheet of content. Per-file Cards and the in-content sticky column are removed, not restyled. Captured as findings only; no direct edits shipped with the review.
-
 ### Phases
-- [ ] Move the file list into the left sidebar
+- [x] Move the file list into the left sidebar
       Frameless desk-background slot like the Plans filter column, keeping the staged stamp and +/− counts per row.
+      run: 4m26s · 5.8k in · 17.8k out · opus-4-8
 - [ ] Add scroll-spy active state to the file list
       Highlight the row for the file currently in view as the sheet scrolls.
 - [ ] Render all diffs in one paper page
@@ -53,3 +51,6 @@ and the restructure, settled:
       Thread min-w-0/max-w-full down to each hunk pre so it scrolls horizontally instead of widening the page.
 - [ ] Refetch diffs live
       Debounced refetch on the activity stream tick plus window focus.
+
+### Thread
+- [x] 2026-08-07 [decision] The Changes page adopts the Plans grammar — sidebar in the shell, one sheet of content. Per-file Cards and the in-content sticky column are removed, not restyled. Captured as findings only; no direct edits shipped with the review.

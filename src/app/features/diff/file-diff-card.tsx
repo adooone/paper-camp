@@ -85,11 +85,10 @@ const DiffBody = ({ entry }: DiffBodyProps) => {
 
 interface FileDiffSectionProps {
   entry: FileDiffEntry;
-  sectionRef: (el: HTMLDivElement | null) => void;
 }
 
-export const FileDiffSection = ({ entry, sectionRef }: FileDiffSectionProps) => (
-  <div ref={sectionRef} className="min-w-0 max-w-full scroll-mt-4">
+export const FileDiffSection = ({ entry }: FileDiffSectionProps) => (
+  <div data-diff-path={entry.path} className="min-w-0 max-w-full scroll-mt-4">
     <Card className="min-w-0 max-w-full">
       <div className="mb-3">
         <CardTitle entry={entry} />
