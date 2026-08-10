@@ -2,7 +2,7 @@
 id: IDEA-145
 title: Changes page in Plans style
 type: fix
-status: idea
+status: review
 created: 2026-08-07
 tags:
   - app
@@ -39,17 +39,22 @@ and the restructure, settled:
    stream tick, debounced like every other listener, plus on window
    focus (the [[IDEA-134]] remote-liveness pattern).
 
+### Phases
+- [x] Move the file list into the left sidebar
+      Frameless desk-background slot like the Plans filter column, keeping the staged stamp and +/− counts per row.
+      run: 4m26s · 5.8k in · 17.8k out · opus-4-8
+- [x] Add scroll-spy active state to the file list
+      Highlight the row for the file currently in view as the sheet scrolls.
+      run: 1m38s · 233 in · 6k out · opus-4-8
+- [x] Render all diffs in one paper page
+      File sections divided by rules with a path/rename/stamp/counts header row; keep the binary, too-large, and rename-only states.
+      run: 1m52s · 280 in · 6.2k out · opus-4-8
+- [x] Constrain the hunk width chain so code stays inside the sheet
+      Thread min-w-0/max-w-full down to each hunk pre so it scrolls horizontally instead of widening the page.
+      run: 55s · 228 in · 1.9k out · opus-4-8
+- [x] Refetch diffs live
+      Debounced refetch on the activity stream tick plus window focus.
+      run: 1m41s · 5.5k in · 4.8k out · opus-4-8
+
 ### Thread
 - [x] 2026-08-07 [decision] The Changes page adopts the Plans grammar — sidebar in the shell, one sheet of content. Per-file Cards and the in-content sticky column are removed, not restyled. Captured as findings only; no direct edits shipped with the review.
-
-### Phases
-- [ ] Move the file list into the left sidebar
-      Frameless desk-background slot like the Plans filter column, keeping the staged stamp and +/− counts per row.
-- [ ] Add scroll-spy active state to the file list
-      Highlight the row for the file currently in view as the sheet scrolls.
-- [ ] Render all diffs in one paper page
-      File sections divided by rules with a path/rename/stamp/counts header row; keep the binary, too-large, and rename-only states.
-- [ ] Constrain the hunk width chain so code stays inside the sheet
-      Thread min-w-0/max-w-full down to each hunk pre so it scrolls horizontally instead of widening the page.
-- [ ] Refetch diffs live
-      Debounced refetch on the activity stream tick plus window focus.

@@ -48,5 +48,16 @@ integrated into the sheet:
    train render open, always. A monitor you have to unfold isn't
    monitoring.
 
+### Phases
+- [ ] Add the Deliver section to the idea view
+      Render it below Phases in the page's section grammar, gated on uncommitted changes or a finished run, laid out checks row → changes → commit.
+- [ ] Carry the delivery controls into the section
+      The four check stamps, the "N files changed" link, the commit title input with suggest-from-diff, and Commit; keep fix-review's suggested-commit prefill landing here.
+- [ ] Auto-run the check suite on run completion
+      Trigger the full suite from run-all's last phase and any standalone final phase, leaving mid-run live stamp states untouched.
+- [ ] Remove Deliver from the Stack panel
+- [ ] Make the Desk section always open
+      Drop its Accordion and the persisted `desk-section-expanded` flag.
+
 ### Thread
 - [x] 2026-08-07 [decision] Owner direction: delivery moves from the Stack panel into the idea view, integrated below Phases rather than transplanted as a card. Stack keeps agent activity plus an always-open Desk section (Accordion and persisted flag removed); the toolbar keeps repo-level git. Checks auto-run on run completion.

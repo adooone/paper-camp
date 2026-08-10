@@ -1,5 +1,7 @@
-import type { FileDiffEntry } from '@/types/index';
+import { useAppStore } from '@/app/stores/app-store';
 import { ListItem, Stamp } from '@dendelion/paper-ui';
+
+const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300 mb-2';
 
 interface CountBadgeProps {
   additions: number;
@@ -13,31 +15,45 @@ const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
   </span>
 );
 
-interface FileListSidebarProps {
-  files: FileDiffEntry[];
-  onSelect: (path: string) => void;
-}
+const scrollToFile = (path: string) => {
+  document
+    .querySelector(`[data-diff-path="${CSS.escape(path)}"]`)
+    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
 
-export const FileListSidebar = ({ files, onSelect }: FileListSidebarProps) => (
-  <div className="sticky top-4 flex w-[288px] shrink-0 flex-col gap-1 max-h-page overflow-y-auto">
-    {files.map((entry) => (
-      <ListItem
-        key={entry.path}
-        size="small"
-        onClick={() => onSelect(entry.path)}
-        action={
-          <span className="flex items-center gap-2">
-            {entry.staged && <Stamp size="small">staged</Stamp>}
-            {!entry.binary && (
-              <CountBadge additions={entry.additions} deletions={entry.deletions} />
-            )}
-          </span>
-        }
-      >
-        <span className="block overflow-hidden text-ellipsis whitespace-nowrap font-mono text-2xs">
-          {entry.path}
-        </span>
-      </ListItem>
-    ))}
-  </div>
-);
+export const DiffFileList = () => {
+  const files = useAppStore((s) => s.diffFiles);
+  const activePath = useAppStore((s) => s.activeDiffPath);
+
+  if (!files || files.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-8 -mt-5">
+      <div>
+        <div className={sectionLabelClass}>Changed files</div>
+        <div className="flex flex-col gap-1">
+          {files.map((entry) => (
+            <ListItem
+              key={entry.path}
+              size="small"
+              active={entry.path === activePath}
+              onClick={() => scrollToFile(entry.path)}
+              action={
+                <span className="flex items-center gap-2">
+                  {entry.staged && <Stamp size="small">staged</Stamp>}
+                  {!entry.binary && (
+                    <CountBadge additions={entry.additions} deletions={entry.deletions} />
+                  )}
+                </span>
+              }
+            >
+              <span className="block overflow-hidden text-ellipsis whitespace-nowrap font-mono text-2xs">
+                {entry.path}
+              </span>
+            </ListItem>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};

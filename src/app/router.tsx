@@ -47,6 +47,9 @@ const RoadmapSidebar = lazy(() =>
 const DiffPage = lazy(() =>
   import('@/app/features/diff/index').then((m) => ({ default: m.DiffPage })),
 );
+const DiffFileList = lazy(() =>
+  import('@/app/features/diff/index').then((m) => ({ default: m.DiffFileList })),
+);
 const StatsPage = lazy(() =>
   import('@/app/features/stats/index').then((m) => ({ default: m.StatsPage })),
 );
@@ -140,6 +143,7 @@ const RootLayout = () => {
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
   const isRoadmapArea = pathname === '/roadmap';
+  const isDiffArea = pathname === '/diff';
   const activeId = isPlansArea
     ? 'plans'
     : isDocsArea
@@ -147,14 +151,16 @@ const RootLayout = () => {
       : isSettingsArea
         ? 'settings'
         : navItems.find((item) => item.path === pathname)?.id;
-  const hasSidebar = isPlansArea || isDocsArea || isSettingsArea || isRoadmapArea;
+  const hasSidebar = isPlansArea || isDocsArea || isSettingsArea || isRoadmapArea || isDiffArea;
   const sidebarAreaKey = isPlansArea
     ? 'plans'
     : isDocsArea
       ? 'docs'
       : isSettingsArea
         ? 'settings'
-        : 'roadmap';
+        : isRoadmapArea
+          ? 'roadmap'
+          : 'diff';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -293,6 +299,11 @@ const RootLayout = () => {
                     {isRoadmapArea && (
                       <Suspense fallback={null}>
                         <RoadmapSidebar />
+                      </Suspense>
+                    )}
+                    {isDiffArea && (
+                      <Suspense fallback={null}>
+                        <DiffFileList />
                       </Suspense>
                     )}
                   </SidebarShell>

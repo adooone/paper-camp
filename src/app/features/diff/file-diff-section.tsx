@@ -1,6 +1,6 @@
 import { type DiffLineType, parsePatch, rawContentHunks } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
-import { Card, Stamp } from '@dendelion/paper-ui';
+import { Stamp } from '@dendelion/paper-ui';
 
 const LINE_CLASS: Record<DiffLineType, string> = {
   add: 'bg-watercolor-green/[18%] text-watercolor-green-dark',
@@ -22,11 +22,11 @@ const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
   </span>
 );
 
-interface CardTitleProps {
+interface FileHeaderProps {
   entry: FileDiffEntry;
 }
 
-const CardTitle = ({ entry }: CardTitleProps) => (
+const FileHeader = ({ entry }: FileHeaderProps) => (
   <div className="flex w-full min-w-0 items-center justify-between gap-3">
     <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs">
       {entry.renameSource ? `${entry.renameSource} → ${entry.path}` : entry.path}
@@ -64,12 +64,12 @@ const DiffBody = ({ entry }: DiffBodyProps) => {
     return <p className="m-0 opacity-60">No changes to preview.</p>;
   }
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-w-0 max-w-full flex-col gap-3">
       {hunks.map((hunk, i) => (
-        <div key={`${hunk.header}-${i}`}>
+        <div key={`${hunk.header}-${i}`} className="min-w-0 max-w-full">
           {hunk.header && <div className="mb-1 font-mono text-2xs opacity-50">{hunk.header}</div>}
           {/* paper-ui's CodeBlock has no per-line add/remove styling. */}
-          <pre className="m-0 max-w-full overflow-x-auto font-mono text-2xs">
+          <pre className="m-0 min-w-0 max-w-full overflow-x-auto font-mono text-2xs">
             {hunk.lines.map((line, j) => (
               <span key={`${line.type}-${j}`} className={`block ${LINE_CLASS[line.type]}`}>
                 {LINE_PREFIX[line.type]}
@@ -85,16 +85,13 @@ const DiffBody = ({ entry }: DiffBodyProps) => {
 
 interface FileDiffSectionProps {
   entry: FileDiffEntry;
-  sectionRef: (el: HTMLDivElement | null) => void;
 }
 
-export const FileDiffSection = ({ entry, sectionRef }: FileDiffSectionProps) => (
-  <div ref={sectionRef} className="min-w-0 max-w-full scroll-mt-4">
-    <Card className="min-w-0 max-w-full">
-      <div className="mb-3">
-        <CardTitle entry={entry} />
-      </div>
-      <DiffBody entry={entry} />
-    </Card>
+export const FileDiffSection = ({ entry }: FileDiffSectionProps) => (
+  <div data-diff-path={entry.path} className="min-w-0 max-w-full scroll-mt-4">
+    <div className="mb-3">
+      <FileHeader entry={entry} />
+    </div>
+    <DiffBody entry={entry} />
   </div>
 );

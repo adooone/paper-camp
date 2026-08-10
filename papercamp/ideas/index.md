@@ -121,7 +121,7 @@
 | IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | done | multi-project, agents, app |
 | IDEA-119 | Run & monitor on the desk | feat | done | app, monitoring |
 | IDEA-120 | Flow profiles | feat | idea | status, planning-surface |
-| IDEA-121 | paper-camp doctor | feat | idea | format, cli |
+| IDEA-121 | paper-camp doctor | feat | done | format, cli |
 | IDEA-122 | MCP as the primary write path | feat | done | format, mcp, agents |
 | IDEA-123 | Cross-corpus idea links | feat | idea | multi-project, format |
 | IDEA-124 | Tie ideas to releases — release notes grouped by idea | feat | done | status, releases |
@@ -145,3 +145,7 @@
 | IDEA-142 | Faster phase runs | refactor | done | agent, server, performance |
 | IDEA-143 | One title style for all ideas | chore | done | format, docs, git |
 | IDEA-144 | Minimal island — branch banner, one glance row, single Stack button | fix | done | integration, app, ux |
+| IDEA-145 | Changes page in Plans style | fix | planned | app, ui, git |
+| IDEA-146 | Deliver lives in the idea view | feat | planned | app, ui, stack, git |
+| IDEA-147 | Scout panel replaces the sidesheet | feat | idea | integration, app, ux, chat |
+| IDEA-148 | Bare mount URL white-screens the desk | fix | idea | integration, cli, app |
