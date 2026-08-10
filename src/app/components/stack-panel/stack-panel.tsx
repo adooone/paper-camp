@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef } from 'react';
 import { AgentSection } from './agent-section';
 import { CommitSection } from './commit-section';
+import { DeskSection } from './desk-section';
 
 interface StackPanelProps {
   open: boolean;
@@ -205,6 +206,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         <Divider surface="chalkboard" />
         <div className="flex min-h-0 flex-1 flex-col">
           <AgentSection />
+          <DeskSection />
           <Divider surface="chalkboard" />
           <CommitSection />
         </div>

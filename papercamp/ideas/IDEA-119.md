@@ -24,8 +24,9 @@ Adjacent to Horizon 2's **Insight from the task log** (that bullet is about past
 - [x] Define the desk manifest schema in config.json
       Declare services, checks, and CI/release sources per project; validate on load.
       run: 4m29s · 8.6k in · 12.7k out · opus-4-8
-- [ ] Add the desk section shell to the app
+- [x] Add the desk section shell to the app
       New collapsible section that reads the manifest and renders empty Services/Checks/CI groups.
+      run: 3m57s · 660 in · 12.1k out · opus-4-8
 - [ ] Wire Services to node-pty
       Start/stop, status dot, healthcheck polling, and log tail per declared service.
 - [ ] Render Checks as one-click runs
