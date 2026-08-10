@@ -2,7 +2,7 @@
 id: IDEA-147
 title: Scout panel replaces the sidesheet
 type: feat
-status: in-progress
+status: review
 created: 2026-08-07
 updated: 2026-08-10
 tags:
