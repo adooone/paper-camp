@@ -354,6 +354,35 @@ const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] 
   );
 };
 
+const useDeliverVisible = (plan: PlanEntry, onOwnBranch: boolean) => {
+  const gitStatus = useAppStore((s) => s.gitStatus);
+  const agentStatus = useAppStore((s) => s.agentStatus);
+  const hasUncommittedChanges = onOwnBranch && (gitStatus?.length ?? 0) > 0;
+  const hasFinishedRun =
+    plan.id !== undefined &&
+    agentStatus.some(
+      (task) =>
+        task.planId === plan.id &&
+        task.status === 'done' &&
+        (task.taskKind === 'run-all' || task.taskKind === 'phase'),
+    );
+  return hasUncommittedChanges || hasFinishedRun;
+};
+
+const DeliverSection = ({ plan, onOwnBranch }: { plan: PlanEntry; onOwnBranch: boolean }) => {
+  if (!useDeliverVisible(plan, onOwnBranch)) return null;
+  return (
+    <div className="mb-8">
+      <h3 className={`${sectionHeadingClass} mb-3`}>Deliver</h3>
+      <div className="flex flex-col gap-4">
+        <div data-deliver-region="checks" />
+        <div data-deliver-region="changes" />
+        <div data-deliver-region="commit" />
+      </div>
+    </div>
+  );
+};
+
 const TrailSection = ({ planId, released }: { planId: string | undefined; released?: string }) => {
   const trail = useTrail(planId);
   if (!trail) return null;
@@ -635,6 +664,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               onAddReviewPhases={handleAddReviewPhases}
             />
           )}
+
+          <DeliverSection plan={plan} onOwnBranch={onOwnBranch} />
 
           <TrailSection planId={plan.id} released={plan.released} />
         </>

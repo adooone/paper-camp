@@ -49,8 +49,9 @@ integrated into the sheet:
    monitoring.
 
 ### Phases
-- [ ] Add the Deliver section to the idea view
+- [x] Add the Deliver section to the idea view
       Render it below Phases in the page's section grammar, gated on uncommitted changes or a finished run, laid out checks row → changes → commit.
+      run: 5m5s · 13k in · 21.1k out · opus-4-8
 - [ ] Carry the delivery controls into the section
       The four check stamps, the "N files changed" link, the commit title input with suggest-from-diff, and Commit; keep fix-review's suggested-commit prefill landing here.
 - [ ] Auto-run the check suite on run completion
