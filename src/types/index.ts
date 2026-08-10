@@ -494,6 +494,89 @@ export interface IntegrationConfig {
   route?: string;
 }
 
+export interface DeskService {
+  name: string;
+  cmd: string;
+  port?: number;
+  healthcheck?: string;
+}
+
+export interface DeskCheck {
+  name: string;
+  cmd: string;
+}
+
+export interface DeskCi {
+  repo: string;
+  branch?: string;
+  releasePlease?: boolean;
+}
+
+/** Dev-loop manifest (IDEA-119): declared services, one-click checks, and CI/release sources. */
+export interface DeskConfig {
+  services?: DeskService[];
+  checks?: DeskCheck[];
+  ci?: DeskCi;
+}
+
+export type ServiceRunStatus = 'stopped' | 'running' | 'stopping' | 'crashed';
+
+export type ServiceHealth = 'unknown' | 'up' | 'down';
+
+/** Live runtime view of a declared service (IDEA-119), merging manifest + process state. */
+export interface ServiceState {
+  name: string;
+  cmd: string;
+  port?: number;
+  hasHealthcheck: boolean;
+  status: ServiceRunStatus;
+  health: ServiceHealth;
+  pid: number | null;
+  startedAt: string | null;
+  exitCode: number | null;
+}
+
+/** Live result of a declared one-click check (IDEA-119), mirroring the Stack panel's CheckResult. */
+export interface DeskCheckState {
+  name: string;
+  cmd: string;
+  status: CheckStatus;
+  lastRun: string | null;
+  output: string;
+}
+
+export type CiRunStatus =
+  | 'success'
+  | 'failure'
+  | 'in_progress'
+  | 'queued'
+  | 'cancelled'
+  | 'unknown';
+
+export interface CiRun {
+  workflow: string;
+  status: CiRunStatus;
+  url: string | null;
+}
+
+export interface ReleasePr {
+  number: number;
+  title: string;
+  url: string;
+  version: string | null;
+}
+
+/** CI & release mirror for a declared repo (IDEA-119): latest Actions runs on the tracked
+ * branch, the open release-please PR, and the released vs. queued version. */
+export interface CiReleaseState {
+  repo: string;
+  branch: string;
+  available: boolean;
+  runs: CiRun[];
+  releasePr: ReleasePr | null;
+  releasedVersion: string | null;
+}
+
 export interface PaperCampConfig {
   version: string;
   projectName: string;
@@ -509,6 +592,8 @@ export interface PaperCampConfig {
   setupDismissed?: boolean;
   /** In-app dev toolbar (IDEA-128) — the `@dendelion/paper-camp/vite` plugin's mount, toggleable for frontend targets. */
   integration?: IntegrationConfig;
+  /** Dev-loop desk manifest (IDEA-119) — declared services, checks, and CI/release sources per project. */
+  desk?: DeskConfig;
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';

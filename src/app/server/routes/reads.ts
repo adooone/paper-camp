@@ -1,6 +1,11 @@
 import { join } from 'node:path';
 import { readParkedQuestions } from '@/core/parked-questions';
-import { findConsistencyIssues, parseSuggestions, parseTaskLog } from '@/core/parse';
+import {
+  deskConfigSchema,
+  findConsistencyIssues,
+  parseSuggestions,
+  parseTaskLog,
+} from '@/core/parse';
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
 import { computeProjectStats } from '@/core/stats';
@@ -94,6 +99,12 @@ export const readRoutes: ReadRoute[] = [
             ? coerceAgentConfig(config.defaultAgents.feedback)
             : DEFAULT_AGENTS.feedback,
         };
+      }
+      // A malformed desk manifest (IDEA-119) is dropped rather than crashing the page,
+      // matching the defensive coercion above for legacy configs.
+      if (config?.desk !== undefined) {
+        const desk = deskConfigSchema.safeParse(config.desk);
+        config.desk = desk.success ? desk.data : undefined;
       }
       // subjects is regenerated from ROADMAP.md on every read rather than trusted from
       // disk — the roadmap is the only writable source of the vocabulary (IDEA-95).

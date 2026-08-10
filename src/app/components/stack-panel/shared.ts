@@ -3,6 +3,9 @@ import { oneLineErrorSummary } from '@/app/utils/error-summary';
 export const sectionLabelClassName =
   'font-display-luminari text-base font-semibold text-desk-text-muted mb-3';
 
+export const groupLabelClassName =
+  'font-display-luminari text-xs font-semibold uppercase tracking-wide text-desk-text-muted mb-2';
+
 export const chalkStatusFill = {
   pass: '#2d5a3b',
   fail: '#5a2d2d',

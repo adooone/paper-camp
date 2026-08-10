@@ -126,6 +126,12 @@ export const RunIcon = ({ size = 12 }: IconProps) => (
   </svg>
 );
 
+export const StopIcon = ({ size = 12 }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <rect x="5" y="5" width="10" height="10" rx="1.5" />
+  </svg>
+);
+
 export const CommitIcon = ({ size = 12 }: IconProps) => (
   <svg
     width={size}

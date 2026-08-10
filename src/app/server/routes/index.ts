@@ -1,8 +1,11 @@
 import { agentRoutes } from './agent';
 import { capabilitiesRoutes } from './capabilities';
+import { checkRoutes } from './checks';
+import { ciRoutes } from './ci';
 import { ideaRoutes, planRoutes } from './content';
 import { gitRoutes } from './git';
 import { releaseNotesRoutes } from './release-notes';
+import { serviceRoutes } from './services';
 import { statusRoutes } from './status';
 import { configRoutes, envRoutes, iconRoutes, mergePolicyRoutes } from './system';
 import { taskRoutes } from './tasks';
@@ -20,6 +23,9 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...gitRoutes(ctx),
     ...capabilitiesRoutes(ctx),
     ...statusRoutes(ctx),
+    ...serviceRoutes(ctx),
+    ...checkRoutes(ctx),
+    ...ciRoutes(ctx),
     ...agentRoutes(ctx),
     ...taskRoutes(ctx),
     ...configRoutes(ctx),

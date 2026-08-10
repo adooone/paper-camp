@@ -1,9 +1,17 @@
+import { clearCiCache } from '@/core/ci';
 import { clearPrCache } from '@/core/git-pr';
 import { invalidateCorpusCache } from '../corpus-cache';
 import { requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
-export function statusRoutes({ activity, agent, git, status }: RouteContext): Route[] {
+export function statusRoutes({
+  activity,
+  agent,
+  git,
+  status,
+  services,
+  checks,
+}: RouteContext): Route[] {
   return [
     {
       method: 'GET',
@@ -20,6 +28,7 @@ export function statusRoutes({ activity, agent, git, status }: RouteContext): Ro
       path: '/api/refresh',
       handle: (_req, res) => {
         clearPrCache();
+        clearCiCache();
         // The corpus cache bakes PR state into each entry and is only invalidated by
         // the file watcher, so a PR appearing on GitHub alone wouldn't refresh it.
         invalidateCorpusCache();
@@ -63,6 +72,8 @@ export function statusRoutes({ activity, agent, git, status }: RouteContext): Ro
         git.subscribe(res);
         status.subscribe(res);
         agent.subscribe(res);
+        services.subscribe(res);
+        checks.subscribe(res);
       },
     },
   ];
