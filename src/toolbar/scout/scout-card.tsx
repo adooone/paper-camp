@@ -40,10 +40,23 @@ const mutedStyle: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
-const glanceRowStyle: CSSProperties = {
+const columnsStyle: CSSProperties = {
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'flex-start',
+  gap: '0.75rem',
+};
+
+const glanceColumnStyle: CSSProperties = {
+  flex: '1 1 0%',
+  display: 'flex',
+  flexDirection: 'column',
   gap: '0.5rem',
+  minWidth: 0,
+};
+
+const chatColumnStyle: CSSProperties = {
+  flex: '2 1 0%',
+  minWidth: 0,
 };
 
 const overallCheckVariant = (checks: ChecksClientState): StampVariant => {
@@ -81,15 +94,18 @@ export const ScoutCard = ({ status, checks, focusPlan }: ScoutCardProps) => {
           </span>
         </div>
 
-        <div style={glanceRowStyle}>
-          <span style={mutedStyle}>
-            {focusPlan
-              ? `${focusPlan.id ?? focusPlan.title} · phase ${doneCount}/${focusPlan.phases.length}`
-              : 'no active plan'}
-          </span>
-          <Stamp size="small" variant={overallCheckVariant(checks)}>
-            Checks
-          </Stamp>
+        <div style={columnsStyle}>
+          <div style={glanceColumnStyle}>
+            <span style={mutedStyle}>
+              {focusPlan
+                ? `${focusPlan.id ?? focusPlan.title} · phase ${doneCount}/${focusPlan.phases.length}`
+                : 'no active plan'}
+            </span>
+            <Stamp size="small" variant={overallCheckVariant(checks)}>
+              Checks
+            </Stamp>
+          </div>
+          <div style={chatColumnStyle} />
         </div>
       </div>
     </Island>

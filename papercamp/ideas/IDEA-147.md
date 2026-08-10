@@ -45,8 +45,9 @@ trigger ([[IDEA-140]]) — made slightly larger, a single Scout panel.
 - [x] Enlarge the logo-trigger panel
       Keep the reveal behavior; only grow the panel's size.
       run: 1m26s · 368 in · 4.9k out · sonnet-5
-- [ ] Lay out the two columns under the top stripe
+- [x] Lay out the two columns under the top stripe
       Glance column left (~one third), chat right (~two thirds).
+      run: 57s · 236 in · 3.6k out · sonnet-5
 - [ ] Fold the chat thread into the right column
 - [ ] Populate the left glance column
       Idea ID stamp, current phase title and status, live progress fraction, and the Open Paper Camp link.
