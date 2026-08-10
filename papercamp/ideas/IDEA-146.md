@@ -2,7 +2,7 @@
 id: IDEA-146
 title: Deliver lives in the idea view
 type: feat
-status: review
+status: in-progress
 created: 2026-08-07
 updated: 2026-08-10
 tags:
@@ -72,6 +72,8 @@ integrated into the sheet:
 - [x] Polish Deliver card layout and empty state
       Match the phases-list paper texture; move the section title inside the Card; lock the Card to a fixed layout with no stretching or height changes; make status checks inline; add an empty state (clear message + Push button, matching the old Stack version) when there's nothing to commit; tighten and organize spacing throughout.
       run: 6m4s · 18k in · 21.2k out · opus-4-8
+- [ ] Add vertical separator between Deliver card columns
+      Insert a vertical divider line between the left (files/checks) and right (commit) columns of the Deliver card.
 
 ### Thread
 - [x] 2026-08-07 [decision] Owner direction: delivery moves from the Stack panel into the idea view, integrated below Phases rather than transplanted as a card. Stack keeps agent activity plus an always-open Desk section (Accordion and persisted flag removed); the toolbar keeps repo-level git. Checks auto-run on run completion.
@@ -81,3 +83,5 @@ integrated into the sheet:
 - [x] 2026-08-10 [chat] [agent] Added that as a fix here — matching paper texture, in-card title, fixed non-stretching layout, inline status checks, tightened/organized spacing, and an empty state (message + push button) when there's nothing to commit. (reopened this idea to re-run)
 - [x] 2026-08-10 [chat] recalculate and fix layout in Stack. Currently we cant fit that amount of agent work cards. Because Desk section is higher than Deliver
 - [x] 2026-08-10 [chat] [agent] Noted — Desk currently outgrows Deliver's height, so agent cards get squeezed. Added a fix to recalc the Stack panel layout so Desk's height doesn't crowd out the agent work cards.
+- [x] 2026-08-10 [chat] I dont see the last point fix phase in the list, Also I want to add a vertical separator for the Deliver card
+- [x] 2026-08-10 [chat] [agent] Got it — the last fix (fixed layout / two-column card / empty state / spacing) is already logged as phase 6 and it's marked done, since it landed the two-column Card redesign. Adding the vertical separator between the columns as a new fix now. (reopened this idea to re-run)
