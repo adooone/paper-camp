@@ -27,8 +27,9 @@ Adjacent to Horizon 2's **Insight from the task log** (that bullet is about past
 - [x] Add the desk section shell to the app
       New collapsible section that reads the manifest and renders empty Services/Checks/CI groups.
       run: 3m57s · 660 in · 12.1k out · opus-4-8
-- [ ] Wire Services to node-pty
+- [x] Wire Services to node-pty
       Start/stop, status dot, healthcheck polling, and log tail per declared service.
+      run: 12m · 7.6k in · 40.6k out · opus-4-8
 - [ ] Render Checks as one-click runs
       Reuse the Quality/Tests stamps and the failing-check → suggested-fix → launch-agent loop for any registered check.
 - [ ] Mirror CI & release state

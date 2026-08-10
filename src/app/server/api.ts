@@ -3,6 +3,11 @@ import { hostname } from 'node:os';
 import { createActivityManager } from './activity';
 import { type AgentManager, type AgentManagerState, createAgentManager } from './agent';
 import { createAgentHooks } from './agent-hooks';
+import {
+  type DeskServiceManager,
+  type DeskServiceManagerState,
+  createDeskServiceManager,
+} from './desk-services';
 import { createGitManager } from './git';
 import { sendJson } from './http';
 import { buildRoutes, readRoutes } from './routes/index';
@@ -11,7 +16,9 @@ import { type StatusManagerState, createStatusManager } from './status';
 export interface ApiMiddleware {
   (req: IncomingMessage, res: ServerResponse, next: () => void): Promise<void>;
   agent: AgentManager;
+  services: DeskServiceManager;
   getStatusState: () => StatusManagerState;
+  getServiceState: () => DeskServiceManagerState;
 }
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -92,10 +99,12 @@ export function createApiMiddleware(
   root: string,
   agentState?: AgentManagerState,
   statusState?: StatusManagerState,
+  serviceState?: DeskServiceManagerState,
 ): ApiMiddleware {
   const activity = createActivityManager(root);
   const git = createGitManager(root);
   const status = createStatusManager(root, statusState);
+  const services = createDeskServiceManager(root, serviceState);
   const hooks = createAgentHooks(root, git);
   const agent = createAgentManager(
     root,
@@ -105,7 +114,7 @@ export function createApiMiddleware(
     agentState,
   );
 
-  const routes = buildRoutes({ root, activity, agent, git, status });
+  const routes = buildRoutes({ root, activity, agent, git, status, services });
 
   const handler = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const pathname = (req.url ?? '').split('?')[0];
@@ -140,6 +149,8 @@ export function createApiMiddleware(
   };
 
   (handler as ApiMiddleware).agent = agent;
+  (handler as ApiMiddleware).services = services;
   (handler as ApiMiddleware).getStatusState = status.getState;
+  (handler as ApiMiddleware).getServiceState = services.getState;
   return handler as ApiMiddleware;
 }

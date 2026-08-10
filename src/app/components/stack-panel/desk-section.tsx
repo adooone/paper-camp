@@ -1,7 +1,9 @@
 import { useDeskManifest } from '@/app/hooks/use-desk-manifest';
-import type { DeskCheck, DeskCi, DeskService } from '@/types/index';
+import type { DeskCheck, DeskCi } from '@/types/index';
 import { Accordion, Card, Divider } from '@dendelion/paper-ui';
 import { useState } from 'react';
+import { ServicesGroup } from './services-group';
+import { groupLabelClassName } from './shared';
 
 const DESK_EXPANDED_KEY = 'desk-section-expanded';
 
@@ -21,9 +23,6 @@ const writeExpanded = (value: boolean): void => {
   }
 };
 
-const groupLabelClassName =
-  'font-display-luminari text-xs font-semibold uppercase tracking-wide text-desk-text-muted mb-2';
-
 const InertRow = ({ primary, secondary }: { primary: string; secondary?: string }) => (
   <Card surface="chalkboard" size="small">
     <div className="flex items-center justify-between gap-2">
@@ -41,25 +40,6 @@ const EmptyRow = ({ label }: { label: string }) => (
   <Card surface="chalkboard" size="small">
     <p className="m-0 text-center text-xs opacity-50">{label}</p>
   </Card>
-);
-
-const ServicesGroup = ({ services }: { services: DeskService[] }) => (
-  <div>
-    <div className={groupLabelClassName}>Services</div>
-    <div className="flex flex-col gap-2">
-      {services.length > 0 ? (
-        services.map((service) => (
-          <InertRow
-            key={service.name}
-            primary={service.name}
-            secondary={service.port ? `:${service.port}` : undefined}
-          />
-        ))
-      ) : (
-        <EmptyRow label="No services declared." />
-      )}
-    </div>
-  </div>
 );
 
 const ChecksGroup = ({ checks }: { checks: DeskCheck[] }) => (
@@ -106,7 +86,7 @@ export const DeskSection = () => {
       <div className="p-6">
         <Accordion title="Desk" surface="chalkboard" expanded={expanded} onToggle={toggle}>
           <div className="flex flex-col gap-4">
-            <ServicesGroup services={desk.services ?? []} />
+            <ServicesGroup />
             <ChecksGroup checks={desk.checks ?? []} />
             <CiGroup ci={desk.ci} />
           </div>

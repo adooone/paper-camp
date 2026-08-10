@@ -3,7 +3,7 @@ import { invalidateCorpusCache } from '../corpus-cache';
 import { requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
-export function statusRoutes({ activity, agent, git, status }: RouteContext): Route[] {
+export function statusRoutes({ activity, agent, git, status, services }: RouteContext): Route[] {
   return [
     {
       method: 'GET',
@@ -63,6 +63,7 @@ export function statusRoutes({ activity, agent, git, status }: RouteContext): Ro
         git.subscribe(res);
         status.subscribe(res);
         agent.subscribe(res);
+        services.subscribe(res);
       },
     },
   ];

@@ -519,6 +519,23 @@ export interface DeskConfig {
   ci?: DeskCi;
 }
 
+export type ServiceRunStatus = 'stopped' | 'running' | 'stopping' | 'crashed';
+
+export type ServiceHealth = 'unknown' | 'up' | 'down';
+
+/** Live runtime view of a declared service (IDEA-119), merging manifest + process state. */
+export interface ServiceState {
+  name: string;
+  cmd: string;
+  port?: number;
+  hasHealthcheck: boolean;
+  status: ServiceRunStatus;
+  health: ServiceHealth;
+  pid: number | null;
+  startedAt: string | null;
+  exitCode: number | null;
+}
+
 export interface PaperCampConfig {
   version: string;
   projectName: string;

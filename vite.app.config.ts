@@ -6,6 +6,7 @@ import { resolve } from 'path';
 // server's runtime graph (and its `@/` imports) into the config bundle.
 import type { ApiMiddleware } from './src/app/server/api';
 import type { AgentManagerState } from './src/app/server/agent';
+import type { DeskServiceManagerState } from './src/app/server/desk-services';
 import type { StatusManagerState } from './src/app/server/status';
 
 // src/app/server/** isn't a config dependency, so Vite never restarts for it — the
@@ -20,6 +21,7 @@ const g = globalThis as {
   __paperCampShutdownRegistered?: boolean;
   __paperCampAgentState?: AgentManagerState;
   __paperCampStatusState?: StatusManagerState;
+  __paperCampServiceState?: DeskServiceManagerState;
 };
 
 function papercampApi(): Plugin {
@@ -61,13 +63,16 @@ function papercampApi(): Plugin {
               root: string,
               agentState?: AgentManagerState,
               statusState?: StatusManagerState,
+              serviceState?: DeskServiceManagerState,
             ) => ApiMiddleware;
           };
           const agentState = g.__paperCampAgentState;
           const statusState = g.__paperCampStatusState;
+          const serviceState = g.__paperCampServiceState;
           g.__paperCampAgentState = undefined;
           g.__paperCampStatusState = undefined;
-          const api = mod.createApiMiddleware(process.cwd(), agentState, statusState);
+          g.__paperCampServiceState = undefined;
+          const api = mod.createApiMiddleware(process.cwd(), agentState, statusState, serviceState);
           g.__paperCampApi = api;
           if (reloadFailed) {
             reloadFailed = false;
@@ -77,7 +82,10 @@ function papercampApi(): Plugin {
             g.__paperCampShutdownRegistered = true;
             // Reads g.__paperCampApi at signal time, not a closed-over `api`, so it still
             // targets the live instance after a hot-reload has swapped it out.
-            const shutdown = () => g.__paperCampApi?.agent.killCurrent();
+            const shutdown = () => {
+              void g.__paperCampApi?.agent.killCurrent();
+              void g.__paperCampApi?.services.killAll();
+            };
             process.on('SIGINT', shutdown);
             process.on('SIGTERM', shutdown);
           }
@@ -110,6 +118,9 @@ function papercampApi(): Plugin {
           // Without this the in-flight check guard resets on every server edit, and a
           // fresh lint/test stacks on the ones still running until the box is starved.
           g.__paperCampStatusState = g.__paperCampApi.getStatusState();
+          // Preserve running service child processes and their log buffers across the
+          // hot-swap so a server edit doesn't orphan a dev server the user started.
+          g.__paperCampServiceState = g.__paperCampApi.getServiceState();
         }
         g.__paperCampApi = undefined;
         // Fire-and-forget here: `reportReloadFailure` above already handles logging
