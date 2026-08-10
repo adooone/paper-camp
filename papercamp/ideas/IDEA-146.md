@@ -67,7 +67,7 @@ integrated into the sheet:
       run: 1m10s · 222 in · 2.8k out · opus-4-8
 - [x] Redesign Deliver as a two-column Card
       Below Phases, wrap Deliver in a Card with two columns: left holds the check stamps and changed-files info, right holds the commit title input, suggest action, and Commit button.
-- [ ] Recalculate Stack panel layout so Desk section height doesn't crowd out agent work cards
+- [x] Recalculate Stack panel layout so Desk section height doesn't crowd out agent work cards
       Desk section is currently taller than Deliver was, squeezing the space available for agent work cards in the Stack panel. Fix the layout sizing so both fit properly.
 
 ### Fixes
@@ -76,6 +76,8 @@ integrated into the sheet:
       run: 6m4s · 18k in · 21.2k out · opus-4-8
 - [ ] Add vertical separator between Deliver card columns
       Insert a vertical divider line between the left (files/checks) and right (commit) columns of the Deliver card.
+- [ ] Set Stack panel to show 3 agent work cards
+      Cap/target the visible agent-card count at 3 when recalculating Stack panel layout so Desk section height no longer crowds them out.
 
 ### Thread
 - [x] 2026-08-07 [decision] Owner direction: delivery moves from the Stack panel into the idea view, integrated below Phases rather than transplanted as a card. Stack keeps agent activity plus an always-open Desk section (Accordion and persisted flag removed); the toolbar keeps repo-level git. Checks auto-run on run completion.
@@ -89,3 +91,5 @@ integrated into the sheet:
 - [x] 2026-08-10 [chat] [agent] Got it — the last fix (fixed layout / two-column card / empty state / spacing) is already logged as phase 6 and it's marked done, since it landed the two-column Card redesign. Adding the vertical separator between the columns as a new fix now. (reopened this idea to re-run)
 - [x] 2026-08-10 [chat] I mean this one - recalculate and fix layout in Stack. Currently we cant fit that amount of agent work cards. Because Desk section is higher than Deliver
 - [x] 2026-08-10 [chat] [agent] Noted — I'll get the Stack layout recalculation logged as its own fix so Desk's height stops crowding out the agent work cards.
+- [x] 2026-08-10 [chat] I dont see changes in stack agents count. Let set them to 3
+- [x] 2026-08-10 [chat] [agent] Added that as a fix here — set the Stack panel's visible agent-card count to 3 as part of the layout recalculation. (reopened this idea to re-run)
