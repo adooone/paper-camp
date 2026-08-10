@@ -77,8 +77,9 @@ integrated into the sheet:
 - [x] Add vertical separator between Deliver card columns
       Insert a vertical divider line between the left (files/checks) and right (commit) columns of the Deliver card.
       run: 1m52s · 5.5k in · 4.7k out · opus-4-8
-- [ ] Set Stack panel to show 3 agent work cards
+- [x] Set Stack panel to show 3 agent work cards
       Cap/target the visible agent-card count at 3 when recalculating Stack panel layout so Desk section height no longer crowds them out.
+      run: 40s · 14 in · 1.3k out · opus-4-8
 
 ### Thread
 - [x] 2026-08-07 [decision] Owner direction: delivery moves from the Stack panel into the idea view, integrated below Phases rather than transplanted as a card. Stack keeps agent activity plus an always-open Desk section (Accordion and persisted flag removed); the toolbar keeps repo-level git. Checks auto-run on run completion.
