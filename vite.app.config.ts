@@ -6,6 +6,7 @@ import { resolve } from 'path';
 // server's runtime graph (and its `@/` imports) into the config bundle.
 import type { ApiMiddleware } from './src/app/server/api';
 import type { AgentManagerState } from './src/app/server/agent';
+import type { DeskCheckManagerState } from './src/app/server/desk-checks';
 import type { DeskServiceManagerState } from './src/app/server/desk-services';
 import type { StatusManagerState } from './src/app/server/status';
 
@@ -22,6 +23,7 @@ const g = globalThis as {
   __paperCampAgentState?: AgentManagerState;
   __paperCampStatusState?: StatusManagerState;
   __paperCampServiceState?: DeskServiceManagerState;
+  __paperCampCheckState?: DeskCheckManagerState;
 };
 
 function papercampApi(): Plugin {
@@ -64,15 +66,24 @@ function papercampApi(): Plugin {
               agentState?: AgentManagerState,
               statusState?: StatusManagerState,
               serviceState?: DeskServiceManagerState,
+              checkState?: DeskCheckManagerState,
             ) => ApiMiddleware;
           };
           const agentState = g.__paperCampAgentState;
           const statusState = g.__paperCampStatusState;
           const serviceState = g.__paperCampServiceState;
+          const checkState = g.__paperCampCheckState;
           g.__paperCampAgentState = undefined;
           g.__paperCampStatusState = undefined;
           g.__paperCampServiceState = undefined;
-          const api = mod.createApiMiddleware(process.cwd(), agentState, statusState, serviceState);
+          g.__paperCampCheckState = undefined;
+          const api = mod.createApiMiddleware(
+            process.cwd(),
+            agentState,
+            statusState,
+            serviceState,
+            checkState,
+          );
           g.__paperCampApi = api;
           if (reloadFailed) {
             reloadFailed = false;
@@ -121,6 +132,9 @@ function papercampApi(): Plugin {
           // Preserve running service child processes and their log buffers across the
           // hot-swap so a server edit doesn't orphan a dev server the user started.
           g.__paperCampServiceState = g.__paperCampApi.getServiceState();
+          // Likewise keep the last check results so a running one-click check isn't
+          // dropped and its stamp doesn't reset to stale on every server edit.
+          g.__paperCampCheckState = g.__paperCampApi.getCheckState();
         }
         g.__paperCampApi = undefined;
         // Fire-and-forget here: `reportReloadFailure` above already handles logging

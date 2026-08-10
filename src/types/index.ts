@@ -536,6 +536,15 @@ export interface ServiceState {
   exitCode: number | null;
 }
 
+/** Live result of a declared one-click check (IDEA-119), mirroring the Stack panel's CheckResult. */
+export interface DeskCheckState {
+  name: string;
+  cmd: string;
+  status: CheckStatus;
+  lastRun: string | null;
+  output: string;
+}
+
 export interface PaperCampConfig {
   version: string;
   projectName: string;

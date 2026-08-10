@@ -1,7 +1,8 @@
 import { useDeskManifest } from '@/app/hooks/use-desk-manifest';
-import type { DeskCheck, DeskCi } from '@/types/index';
+import type { DeskCi } from '@/types/index';
 import { Accordion, Card, Divider } from '@dendelion/paper-ui';
 import { useState } from 'react';
+import { ChecksGroup } from './checks-group';
 import { ServicesGroup } from './services-group';
 import { groupLabelClassName } from './shared';
 
@@ -42,19 +43,6 @@ const EmptyRow = ({ label }: { label: string }) => (
   </Card>
 );
 
-const ChecksGroup = ({ checks }: { checks: DeskCheck[] }) => (
-  <div>
-    <div className={groupLabelClassName}>Checks</div>
-    <div className="flex flex-col gap-2">
-      {checks.length > 0 ? (
-        checks.map((check) => <InertRow key={check.name} primary={check.name} />)
-      ) : (
-        <EmptyRow label="No checks declared." />
-      )}
-    </div>
-  </div>
-);
-
 const CiGroup = ({ ci }: { ci?: DeskCi }) => (
   <div>
     <div className={groupLabelClassName}>CI &amp; release</div>
@@ -87,7 +75,7 @@ export const DeskSection = () => {
         <Accordion title="Desk" surface="chalkboard" expanded={expanded} onToggle={toggle}>
           <div className="flex flex-col gap-4">
             <ServicesGroup />
-            <ChecksGroup checks={desk.checks ?? []} />
+            <ChecksGroup />
             <CiGroup ci={desk.ci} />
           </div>
         </Accordion>

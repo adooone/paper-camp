@@ -1,5 +1,6 @@
 import { agentRoutes } from './agent';
 import { capabilitiesRoutes } from './capabilities';
+import { checkRoutes } from './checks';
 import { ideaRoutes, planRoutes } from './content';
 import { gitRoutes } from './git';
 import { releaseNotesRoutes } from './release-notes';
@@ -22,6 +23,7 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...capabilitiesRoutes(ctx),
     ...statusRoutes(ctx),
     ...serviceRoutes(ctx),
+    ...checkRoutes(ctx),
     ...agentRoutes(ctx),
     ...taskRoutes(ctx),
     ...configRoutes(ctx),

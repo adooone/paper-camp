@@ -30,7 +30,8 @@ Adjacent to Horizon 2's **Insight from the task log** (that bullet is about past
 - [x] Wire Services to node-pty
       Start/stop, status dot, healthcheck polling, and log tail per declared service.
       run: 12m · 7.6k in · 40.6k out · opus-4-8
-- [ ] Render Checks as one-click runs
+- [x] Render Checks as one-click runs
       Reuse the Quality/Tests stamps and the failing-check → suggested-fix → launch-agent loop for any registered check.
+      run: 6m46s · 813 in · 22.1k out · opus-4-8
 - [ ] Mirror CI & release state
       Show main's Actions status, the open release-please PR, and released vs. queued version.

@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ActivityManager } from '../activity';
 import type { AgentManager } from '../agent';
+import type { DeskCheckManager } from '../desk-checks';
 import type { DeskServiceManager } from '../desk-services';
 import type { GitManager } from '../git';
 import type { StatusManager } from '../status';
@@ -13,6 +14,7 @@ export interface RouteContext {
   git: GitManager;
   status: StatusManager;
   services: DeskServiceManager;
+  checks: DeskCheckManager;
 }
 
 /** Exact method + pathname match. An error thrown from handle becomes a 500 JSON reply. */
