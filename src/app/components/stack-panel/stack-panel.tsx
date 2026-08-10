@@ -4,7 +4,6 @@ import { Divider, IconButton, Spinner } from '@dendelion/paper-ui';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef } from 'react';
 import { AgentSection } from './agent-section';
-import { CommitSection } from './commit-section';
 import { DeskSection } from './desk-section';
 
 interface StackPanelProps {
@@ -214,8 +213,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         <div className="flex min-h-0 flex-1 flex-col">
           <AgentSection />
           <DeskSection />
-          <Divider surface="chalkboard" />
-          <CommitSection />
         </div>
       </motion.div>
     </>

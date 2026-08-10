@@ -60,7 +60,8 @@ integrated into the sheet:
 - [x] Auto-run the check suite on run completion
       Trigger the full suite from run-all's last phase and any standalone final phase, leaving mid-run live stamp states untouched.
       run: 3m42s · 371 in · 12.2k out · opus-4-8
-- [ ] Remove Deliver from the Stack panel
+- [x] Remove Deliver from the Stack panel
+      run: 2m45s · 1.1k in · 7.6k out · opus-4-8
 - [ ] Make the Desk section always open
       Drop its Accordion and the persisted `desk-section-expanded` flag.
 - [ ] Redesign Deliver as a two-column Card
