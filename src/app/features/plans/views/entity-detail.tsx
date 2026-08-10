@@ -35,7 +35,12 @@ import {
   PhaseCopyButton,
 } from '../actions';
 import { CollapsibleText } from '../components';
-import { DeliverChangedFiles, DeliverChecksRow, DeliverCommitForm } from '../components';
+import {
+  DeliverChangedFiles,
+  DeliverChecksRow,
+  DeliverCommitForm,
+  DeliverEmptyState,
+} from '../components';
 import { FeedbackThread, type PromoteTarget } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
@@ -369,16 +374,19 @@ const DeliverSection = ({ plan, onOwnBranch }: { plan: PlanEntry; onOwnBranch: b
         (task.taskKind === 'run-all' || task.taskKind === 'phase'),
     );
   if (!hasUncommittedChanges && !hasFinishedRun) return null;
+  const hasChanges = files.length > 0;
   return (
     <div className="mb-8">
-      <h3 className={`${sectionHeadingClass} mb-3`}>Deliver</h3>
-      <Card size="small" texture="kraft">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="flex flex-col gap-4">
-            <DeliverChecksRow />
-            {files.length > 0 && <DeliverChangedFiles count={files.length} />}
+      <Card size="small" texture="paper">
+        <div className="flex flex-col gap-4">
+          <h3 className={`${sectionHeadingClass} m-0`}>Deliver</h3>
+          <div className="grid grid-cols-1 items-start gap-x-8 gap-y-4 md:grid-cols-[minmax(0,1fr)_20rem]">
+            <div className="flex flex-col gap-3">
+              <DeliverChecksRow />
+              {hasChanges && <DeliverChangedFiles count={files.length} />}
+            </div>
+            {hasChanges ? <DeliverCommitForm plan={plan} files={files} /> : <DeliverEmptyState />}
           </div>
-          <DeliverCommitForm plan={plan} files={files} />
         </div>
       </Card>
     </div>

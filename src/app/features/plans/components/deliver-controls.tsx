@@ -1,4 +1,5 @@
-import { WandIcon } from '@/app/components/icons';
+import { MergeIcon, PullIcon, PushIcon, WandIcon } from '@/app/components/icons';
+import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
@@ -105,7 +106,7 @@ export const DeliverChecksRow = () => {
   );
 
   return (
-    <div className="flex flex-wrap items-start gap-2">
+    <div className="flex items-start gap-2">
       <CheckStamp
         label="Quality"
         status={qualityStatus}
@@ -305,6 +306,59 @@ export const DeliverCommitForm = ({ plan, files }: { plan: PlanEntry; files: str
       >
         {committing || commitInFlight ? 'Committing…' : 'Commit'}
       </Button>
+    </div>
+  );
+};
+
+export const DeliverEmptyState = () => {
+  const gitAhead = useAppStore((s) => s.gitAhead);
+  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
+  const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
+    useBranchSync();
+
+  if (gitAhead > 0) {
+    return (
+      <div className="flex flex-col items-start gap-3">
+        <p className="m-0 text-xs opacity-50">
+          All changes committed — {gitAhead} commit{gitAhead === 1 ? '' : 's'} ready to push.
+        </p>
+        <Button
+          size="small"
+          icon={<PushIcon size={14} />}
+          disabled={gitActionBusy}
+          onClick={handlePush}
+        >
+          {pushing ? 'Pushing…' : `Push ${gitAhead} commit${gitAhead === 1 ? '' : 's'}`}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-start gap-3">
+      <p className="m-0 text-xs opacity-50">No changed files.</p>
+      <div className="flex items-center gap-2">
+        <Tooltip
+          content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined}
+        >
+          <Button
+            size="small"
+            icon={<MergeIcon size={14} />}
+            disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
+            onClick={handleSync}
+          >
+            {syncing ? 'Syncing…' : 'Sync to main'}
+          </Button>
+        </Tooltip>
+        <Button
+          size="small"
+          icon={<PullIcon size={14} />}
+          disabled={gitActionBusy}
+          onClick={handlePull}
+        >
+          {pulling ? 'Pulling…' : 'Pull'}
+        </Button>
+      </div>
     </div>
   );
 };

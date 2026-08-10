@@ -69,8 +69,9 @@ integrated into the sheet:
       Below Phases, wrap Deliver in a Card with two columns: left holds the check stamps and changed-files info, right holds the commit title input, suggest action, and Commit button.
 
 ### Fixes
-- [ ] Polish Deliver card layout and empty state
+- [x] Polish Deliver card layout and empty state
       Match the phases-list paper texture; move the section title inside the Card; lock the Card to a fixed layout with no stretching or height changes; make status checks inline; add an empty state (clear message + Push button, matching the old Stack version) when there's nothing to commit; tighten and organize spacing throughout.
+      run: 6m4s · 18k in · 21.2k out · opus-4-8
 
 ### Thread
 - [x] 2026-08-07 [decision] Owner direction: delivery moves from the Stack panel into the idea view, integrated below Phases rather than transplanted as a card. Stack keeps agent activity plus an always-open Desk section (Accordion and persisted flag removed); the toolbar keeps repo-level git. Checks auto-run on run completion.
@@ -78,3 +79,5 @@ integrated into the sheet:
 - [x] 2026-08-10 [chat] [agent] Added that as a fix here — restructure Deliver into a two-column Card below Phases: left column for check stamps and changed-files info, right column for the commit controls.
 - [x] 2026-08-10 [chat] Deliver Card should be the same paper texture as plan's phases. And Deliver title should be inside Card. Also Card should have fixed layout, no stretching or changes in height. All elements should be strictly organised. Status checks should be inline. And if there is nothing to commit there should be an empty state with push button and clear message as we had before in Stack. Another point is spacing. Improve spacing to make this card look better
 - [x] 2026-08-10 [chat] [agent] Added that as a fix here — matching paper texture, in-card title, fixed non-stretching layout, inline status checks, tightened/organized spacing, and an empty state (message + push button) when there's nothing to commit. (reopened this idea to re-run)
+- [x] 2026-08-10 [chat] recalculate and fix layout in Stack. Currently we cant fit that amount of agent work cards. Because Desk section is higher than Deliver
+- [x] 2026-08-10 [chat] [agent] Noted — Desk currently outgrows Deliver's height, so agent cards get squeezed. Added a fix to recalc the Stack panel layout so Desk's height doesn't crowd out the agent work cards.
