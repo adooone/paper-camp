@@ -106,7 +106,7 @@ export const DeliverChecksRow = () => {
   );
 
   return (
-    <div className="flex items-start gap-2">
+    <div className="flex flex-wrap items-start gap-2">
       <CheckStamp
         label="Quality"
         status={qualityStatus}
@@ -197,14 +197,16 @@ export const DeliverChangedFiles = ({ count }: { count: number }) => {
     <button
       type="button"
       onClick={() => navigate({ to: '/diff' })}
-      className="self-start bg-none bg-transparent border-none p-0 font-mono text-xs opacity-[0.6] underline cursor-pointer"
+      className="bg-none bg-transparent border-none p-0 font-handwritten text-xs opacity-[0.6] underline cursor-pointer"
     >
       {count} file{count === 1 ? '' : 's'} changed
     </button>
   );
 };
 
-export const DeliverCommitForm = ({ plan, files }: { plan: PlanEntry; files: string[] }) => {
+/** Shared state/handlers for the split commit input row (left column) and
+ *  Commit button (right column) — both need the same title/in-flight state. */
+export const useDeliverCommitForm = (plan: PlanEntry, files: string[]) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
@@ -274,41 +276,72 @@ export const DeliverCommitForm = ({ plan, files }: { plan: PlanEntry; files: str
     }
   }, [files]);
 
-  return (
-    <div className="flex flex-col gap-2">
-      {suggestError && (
-        <Alert dismissible onDismiss={() => setSuggestError(null)}>
-          {suggestError}
-        </Alert>
-      )}
-      <div className="flex gap-2 items-center">
-        <div className="flex-1">
-          <Input
-            size="small"
-            placeholder="Commit title"
-            value={commitTitle}
-            onChange={(e) => setCommitTitle(e.currentTarget.value)}
-          />
-        </div>
-        <IconButton
-          icon={<WandIcon size={16} />}
+  return {
+    commitTitle,
+    setCommitTitle,
+    committing,
+    commitInFlight,
+    suggesting,
+    suggestError,
+    setSuggestError,
+    handleCommit,
+    handleSuggestFromChanges,
+  };
+};
+
+export type DeliverCommitFormState = ReturnType<typeof useDeliverCommitForm>;
+
+/** Left column, under the check stamps: title input + suggest-from-diff. */
+export const DeliverCommitInputRow = ({
+  state,
+  filesEmpty,
+}: {
+  state: DeliverCommitFormState;
+  filesEmpty: boolean;
+}) => (
+  <div className="flex flex-col gap-2">
+    {state.suggestError && (
+      <Alert dismissible onDismiss={() => state.setSuggestError(null)}>
+        {state.suggestError}
+      </Alert>
+    )}
+    <div className="flex gap-2 items-center">
+      <div className="flex-1">
+        <Input
           size="small"
-          label="Suggest title and message from the diff"
-          disabled={files.length === 0 || suggesting}
-          onClick={handleSuggestFromChanges}
-          wobble={suggesting ? 1 : 0}
+          placeholder="Commit title"
+          value={state.commitTitle}
+          onChange={(e) => state.setCommitTitle(e.currentTarget.value)}
         />
       </div>
-      <Button
+      <IconButton
+        icon={<WandIcon size={16} />}
         size="small"
-        disabled={files.length === 0 || !commitTitle.trim() || committing || commitInFlight}
-        onClick={handleCommit}
-      >
-        {committing || commitInFlight ? 'Committing…' : 'Commit'}
-      </Button>
+        label="Suggest title and message from the diff"
+        disabled={filesEmpty || state.suggesting}
+        onClick={state.handleSuggestFromChanges}
+        wobble={state.suggesting ? 1 : 0}
+      />
     </div>
-  );
-};
+  </div>
+);
+
+/** Right column, under "N files changed": the Commit action itself. */
+export const DeliverCommitButton = ({
+  state,
+  filesEmpty,
+}: {
+  state: DeliverCommitFormState;
+  filesEmpty: boolean;
+}) => (
+  <Button
+    size="small"
+    disabled={filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight}
+    onClick={state.handleCommit}
+  >
+    {state.committing || state.commitInFlight ? 'Committing…' : 'Commit'}
+  </Button>
+);
 
 export const DeliverEmptyState = () => {
   const gitAhead = useAppStore((s) => s.gitAhead);

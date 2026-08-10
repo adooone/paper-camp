@@ -15,10 +15,12 @@ import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { type UsageRollup, formatDuration, formatTokens, rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
+  Accordion,
   Button,
   Card,
   Checkbox,
   Divider,
+  Skeleton,
   Spinner,
   Stamp,
   Table,
@@ -29,23 +31,19 @@ import {
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
-import {
-  AddReviewPhasesButton,
-  AgentStartButton,
-  AuditPhasesButton,
-  PhaseCopyButton,
-} from '../actions';
-import { CollapsibleText } from '../components';
+import { AddReviewPhasesButton, AgentStartButton, AuditPhasesButton } from '../actions';
 import {
   DeliverChangedFiles,
   DeliverChecksRow,
-  DeliverCommitForm,
+  DeliverCommitButton,
+  DeliverCommitInputRow,
   DeliverEmptyState,
+  useDeliverCommitForm,
 } from '../components';
 import { FeedbackThread, type PromoteTarget } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
-import { PrBadge, ReviewSignalBadge } from '../components';
+import { ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import { effectiveStatus, relativeDate, rollupProgress, runningTaskForPlan } from '../helpers';
@@ -67,10 +65,10 @@ const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity
 // (`.fix-row`) so they read as part of the same list, distinct only by colour.
 type WorkRow = { kind: 'phase' | 'fix'; item: PhaseItem; index: number };
 
-const IdeaUsageRollup = ({ rollup }: { rollup: UsageRollup }) => {
+const RunCostSummary = ({ rollup }: { rollup: UsageRollup }) => {
   if (rollup.runs === 0) return null;
   return (
-    <div className="flex items-center gap-2 text-xs opacity-[0.55] mb-4 flex-wrap">
+    <div className="flex items-center gap-2 text-xs opacity-[0.55] flex-wrap flex-shrink-0 ml-auto">
       <span className="font-semibold opacity-[0.85]">Run cost</span>
       <span aria-hidden>·</span>
       <span>
@@ -127,30 +125,33 @@ const PhasesSection = ({
           : undefined
       }
     >
-      <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-        <h3 className={`${sectionHeadingClass} m-0`}>Phases</h3>
-        <div className="flex items-center gap-2 flex-wrap">
-          {auditRunning && <Spinner size="small" label="Audit running…" />}
-          {(plan.status === 'review' || plan.status === 'done') && (
-            <AuditPhasesButton plan={plan} />
-          )}
-          {plan.status !== 'done' && <ReconcileButton plan={plan} />}
-          <AddReviewPhasesButton onAdd={onAddReviewPhases} disabled={updating} />
-          {plan.id && hasOpenFix && (
-            <Tooltip content="Run the open fixes with an agent">
-              <Button
-                size="small"
-                onClick={() => plan.id && launchRunAll(plan.id)}
-                disabled={agentBusy}
-              >
-                {agentBusy ? 'Running…' : 'Run fixes'}
-              </Button>
-            </Tooltip>
-          )}
-        </div>
-      </div>
       <Table
         data={rows}
+        toolbar={{
+          title: <h3 className={`${sectionHeadingClass} m-0`}>Phases</h3>,
+          actions: (
+            <>
+              {auditRunning && <Spinner size="small" label="Audit running…" />}
+              {(plan.status === 'review' || plan.status === 'done') && (
+                <AuditPhasesButton plan={plan} />
+              )}
+              {plan.status !== 'done' && <ReconcileButton plan={plan} />}
+              <AddReviewPhasesButton onAdd={onAddReviewPhases} disabled={updating} />
+              {plan.id && hasOpenFix && (
+                <Tooltip content="Run the open fixes with an agent">
+                  <Button
+                    size="small"
+                    onClick={() => plan.id && launchRunAll(plan.id)}
+                    disabled={agentBusy}
+                  >
+                    {agentBusy ? 'Running…' : 'Run fixes'}
+                  </Button>
+                </Tooltip>
+              )}
+            </>
+          ),
+        }}
+        panelFooter={<DeliverSection plan={plan} />}
         columns={[
           {
             key: 'checkbox',
@@ -167,7 +168,7 @@ const PhasesSection = ({
                   disabled={updating}
                 />
               ),
-            width: 2,
+            width: 1,
           },
           {
             key: 'title',
@@ -206,45 +207,44 @@ const PhasesSection = ({
           },
           {
             key: 'actions',
-            header: 'Actions',
+            header: '',
             align: 'end',
             cell: (row: WorkRow) => {
-              if (row.kind !== 'phase' || isRunningRow(row)) return null;
+              if (isRunningRow(row)) return null;
+              if (row.item.done) {
+                if (!row.item.run) return null;
+                return (
+                  <div className="flex justify-end">
+                    <Stamp
+                      size="small"
+                      fillColor="var(--pui-texture-shade, rgba(0,0,0,0.06))"
+                      textColor="inherit"
+                    >
+                      <span className="whitespace-nowrap font-mono text-3xs font-normal opacity-[0.7]">
+                        {formatTokens(row.item.run.inputTokens + row.item.run.outputTokens)} tokens
+                        · {formatDuration(row.item.run.durationMs)}
+                        {row.item.run.attempts > 1 && ` ×${row.item.run.attempts}`}
+                        {row.item.run.model && ` · ${row.item.run.model}`}
+                      </span>
+                    </Stamp>
+                  </div>
+                );
+              }
+              if (row.kind !== 'phase') return null;
               return (
                 <div className="flex justify-end">
-                  {row.item.done ? (
-                    <PhaseCopyButton
-                      planTitle={plan.title}
-                      planId={plan.id}
-                      phaseIndex={row.index}
-                    />
-                  ) : (
-                    <AgentStartButton
-                      planId={plan.id}
-                      phaseIndex={row.index}
-                      disabled={agentBusy}
-                    />
-                  )}
+                  <AgentStartButton planId={plan.id} phaseIndex={row.index} disabled={agentBusy} />
                 </div>
               );
             },
-            width: 4,
+            width: 5,
           },
         ]}
         expandable={{
           render: (row: WorkRow) => row.item.description || null,
         }}
-        rowFooter={(row: WorkRow) =>
-          row.item.run
-            ? [
-                formatDuration(row.item.run.durationMs) +
-                  (row.item.run.attempts > 1 ? ` ×${row.item.run.attempts}` : ''),
-                `${formatTokens(row.item.run.inputTokens)} in`,
-                `${formatTokens(row.item.run.outputTokens)} out`,
-                ...(row.item.run.model ? [row.item.run.model] : []),
-              ].join(' · ')
-            : null
-        }
+        hideHeader
+        density="compact"
         showExpandColumn={false}
         rowTexture={(row: WorkRow) => {
           if (row.kind === 'fix') return 'kraft';
@@ -282,12 +282,12 @@ const BranchRow = ({
   if (!showBranchRow && !plan.pr) return null;
 
   return (
-    <div className="flex items-center gap-3 flex-wrap mb-4">
+    <div className="flex items-center gap-3 flex-wrap mb-3 min-h-8">
       {showBranchRow && !onOwnBranch && (
         <Card size="small" accent accentColor="amber" texture="kraft">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm">
-              Working branch: <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
+            <span className="text-xs">
+              <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
             </span>
             {plan.id && (
               <Tooltip
@@ -302,42 +302,63 @@ const BranchRow = ({
         </Card>
       )}
       {showBranchRow && onOwnBranch && (
-        <span className="text-sm opacity-[0.45]">
-          Working branch: <code>{gitBranch}</code>
-        </span>
+        <Card size="small" texture="paper">
+          <span className="text-xs opacity-[0.6]">
+            <code>{gitBranch}</code>
+          </span>
+        </Card>
       )}
-      {plan.pr && <PrBadge pr={plan.pr} />}
       {plan.pr && <ReviewSignalBadge pr={plan.pr} />}
     </div>
   );
 };
 
-const PlanProgressBar = ({
+const PlanProgressRow = ({
   progress,
   color: barColor,
+  rollup,
 }: {
-  progress: { pct: number; done: number; total: number };
+  progress: { pct: number; done: number; total: number } | null;
   color: string;
-}) => (
-  <div className="flex items-center gap-3 mb-4">
-    <div className="flex-1">
-      <ProgressBar pct={progress.pct} color={barColor} />
-    </div>
-    <span className="text-sm opacity-50 flex-shrink-0">{Math.round(progress.pct)}%</span>
-  </div>
-);
-
-const PlanBodySection = ({ plan }: { plan: PlanEntry }) => (
-  <div className="mb-4">
-    <div className="opacity-[0.85]">
-      {plan.body && (
-        <CollapsibleText resetKey={plan.id ?? plan.title}>
-          <Markdown>{plan.body}</Markdown>
-        </CollapsibleText>
+  rollup: UsageRollup;
+}) => {
+  if (progress === null && rollup.runs === 0) return null;
+  return (
+    <div className="flex items-center gap-3 mb-3 flex-wrap">
+      {progress !== null && (
+        <>
+          <div className="flex-1 min-w-24">
+            <ProgressBar pct={progress.pct} color={barColor} />
+          </div>
+          <span className="text-sm opacity-50 flex-shrink-0">{Math.round(progress.pct)}%</span>
+        </>
       )}
+      <RunCostSummary rollup={rollup} />
     </div>
-  </div>
-);
+  );
+};
+
+const PlanBodySection = ({ plan }: { plan: PlanEntry }) => {
+  const [expanded, setExpanded] = useState(false);
+  // Collapse again when the active plan changes, instead of carrying an open
+  // description over onto a different idea.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the id/title pair is the reset trigger, not read
+  useEffect(() => setExpanded(false), [plan.id, plan.title]);
+  if (!plan.body) return null;
+  return (
+    <div className="mb-4">
+      <Accordion
+        title={<span className={sectionHeadingClass}>Description</span>}
+        expanded={expanded}
+        onToggle={() => setExpanded((v) => !v)}
+      >
+        <div className="opacity-[0.85]">
+          <Markdown>{plan.body}</Markdown>
+        </div>
+      </Accordion>
+    </div>
+  );
+};
 
 const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] }) => {
   if (clarifications.length === 0) return null;
@@ -361,47 +382,51 @@ const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] 
   );
 };
 
-const DeliverSection = ({ plan, onOwnBranch }: { plan: PlanEntry; onOwnBranch: boolean }) => {
+// Always rendered as the Phases table's panelFooter — never hidden, so the
+// panel reads as a persistent Deliver station rather than something that
+// pops in only once there happens to be a change to commit.
+const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
   const gitStatus = useAppStore((s) => s.gitStatus);
-  const agentStatus = useAppStore((s) => s.agentStatus);
   const files = useMemo(() => gitStatus?.map((entry) => entry.path) ?? [], [gitStatus]);
-  const hasUncommittedChanges = onOwnBranch && files.length > 0;
-  const hasFinishedRun =
-    plan.id !== undefined &&
-    agentStatus.some(
-      (task) =>
-        task.planId === plan.id &&
-        task.status === 'done' &&
-        (task.taskKind === 'run-all' || task.taskKind === 'phase'),
-    );
-  if (!hasUncommittedChanges && !hasFinishedRun) return null;
+  const commitForm = useDeliverCommitForm(plan, files);
   const hasChanges = files.length > 0;
   return (
-    <div className="mb-8">
-      <Card size="small" texture="paper">
-        <div className="flex flex-col gap-4">
-          <h3 className={`${sectionHeadingClass} m-0`}>Deliver</h3>
-          <div className="grid grid-cols-1 items-start gap-x-8 gap-y-4 md:grid-cols-[minmax(0,1fr)_auto_20rem]">
-            <div className="flex flex-col gap-3">
-              <DeliverChecksRow />
-              {hasChanges && <DeliverChangedFiles count={files.length} />}
-            </div>
-            <Divider orientation="vertical" className="hidden md:block" />
-            {hasChanges ? <DeliverCommitForm plan={plan} files={files} /> : <DeliverEmptyState />}
-          </div>
-        </div>
-      </Card>
+    <div className="grid grid-cols-1 items-start gap-x-6 gap-y-2 md:grid-cols-[minmax(0,1fr)_auto_16rem]">
+      <div className="flex flex-col gap-2">
+        <DeliverChecksRow />
+        {hasChanges && <DeliverCommitInputRow state={commitForm} filesEmpty={!hasChanges} />}
+      </div>
+      <Divider orientation="vertical" className="hidden md:block" />
+      <div className="flex flex-col gap-2">
+        {hasChanges ? (
+          <>
+            <DeliverChangedFiles count={files.length} />
+            <DeliverCommitButton state={commitForm} filesEmpty={!hasChanges} />
+          </>
+        ) : (
+          <DeliverEmptyState />
+        )}
+      </div>
     </div>
   );
 };
 
 const TrailSection = ({ planId, released }: { planId: string | undefined; released?: string }) => {
   const trail = useTrail(planId);
-  if (!trail) return null;
+  if (!planId) return null;
   return (
-    <div className="mb-8">
-      <h3 className={`${sectionHeadingClass} mb-3`}>History</h3>
-      <ProvenanceTrailPanel trail={trail} released={released} />
+    <div className="mb-3 text-xs opacity-80">
+      {trail ? (
+        <ProvenanceTrailPanel trail={trail} released={released} />
+      ) : (
+        // Reserves the real row's height (4 small stamps + arrows) so the
+        // trail fetch resolving doesn't push the header content below it
+        // down once it lands — most visible now that History sits right
+        // under the title instead of at the page's bottom.
+        <div className="max-w-xs" aria-hidden="true">
+          <Skeleton variant="text" height={32} />
+        </div>
+      )}
     </div>
   );
 };
@@ -610,7 +635,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-3 mb-3 flex-wrap">
+      <div className="flex items-baseline justify-between gap-3 mb-2 flex-wrap">
         <h2 className={`${detailHeadingClassName} m-0 flex items-center gap-3 min-w-0 flex-wrap`}>
           <PlanIdStamp id={plan.id} />
           {plan.title}
@@ -624,6 +649,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           <RefreshButton />
         </div>
       </div>
+
+      <TrailSection planId={plan.id} released={plan.released} />
 
       {showFeedback ? (
         <FeedbackSection
@@ -644,18 +671,15 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             onCreateBranch={handleCreateBranch}
           />
 
-          {progress !== null && (
-            <PlanProgressBar
-              progress={progress}
-              color={STATUS_COLOR[effectiveStatus(plan, agentStatus)]}
-            />
-          )}
+          <PlanProgressRow
+            progress={progress}
+            color={STATUS_COLOR[effectiveStatus(plan, agentStatus)]}
+            rollup={usageRollup}
+          />
 
           <PlanBodySection plan={plan} />
 
           <ClarificationsSection clarifications={plan.clarifications ?? []} />
-
-          <IdeaUsageRollup rollup={usageRollup} />
 
           {!hasPhases && (
             <div className="flex items-center gap-3 mb-8">
@@ -676,10 +700,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               onAddReviewPhases={handleAddReviewPhases}
             />
           )}
-
-          <DeliverSection plan={plan} onOwnBranch={onOwnBranch} />
-
-          <TrailSection planId={plan.id} released={plan.released} />
         </>
       )}
     </div>

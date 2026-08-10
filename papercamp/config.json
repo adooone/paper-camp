@@ -8,12 +8,12 @@
     "chore": 2,
     "docs": 4,
     "refactor": 5,
-    "idea": 149
+    "idea": 151
   },
   "defaultAgents": {
     "phase": {
       "agent": "claude-code",
-      "model": "opus",
+      "model": "sonnet",
       "effort": "medium"
     },
     "planDraft": {
@@ -56,14 +56,34 @@
   "setupDismissed": true,
   "desk": {
     "services": [
-      { "name": "app", "cmd": "pnpm dev", "port": 3333, "healthcheck": "http://localhost:3333/" },
-      { "name": "lib", "cmd": "pnpm dev:lib" }
+      {
+        "name": "app",
+        "cmd": "pnpm dev",
+        "port": 3333,
+        "healthcheck": "http://localhost:3333/"
+      },
+      {
+        "name": "lib",
+        "cmd": "pnpm dev:lib"
+      }
     ],
     "checks": [
-      { "name": "types", "cmd": "pnpm check-types" },
-      { "name": "lint", "cmd": "pnpm lint" },
-      { "name": "test", "cmd": "pnpm test" },
-      { "name": "build", "cmd": "pnpm build" }
+      {
+        "name": "types",
+        "cmd": "pnpm check-types"
+      },
+      {
+        "name": "lint",
+        "cmd": "pnpm lint"
+      },
+      {
+        "name": "test",
+        "cmd": "pnpm test"
+      },
+      {
+        "name": "build",
+        "cmd": "pnpm build"
+      }
     ],
     "ci": {
       "repo": "adooone/paper-camp",

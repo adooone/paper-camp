@@ -149,3 +149,4 @@
 | IDEA-146 | Deliver lives in the idea view | feat | in-progress | app, ui, stack, git |
 | IDEA-147 | Scout panel replaces the sidesheet | feat | planned | integration, app, ux, chat |
 | IDEA-148 | Bare mount URL white-screens the desk | fix | planned | integration, cli, app |
+| IDEA-150 | Route plans and ideas by id | refactor | idea | app, routing |
