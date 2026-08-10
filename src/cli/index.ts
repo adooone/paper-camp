@@ -566,11 +566,18 @@ program
       await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries), 'utf-8');
     }
 
-    const remaining = reportFindings(plan.unfixable);
+    const manual = [...plan.unfixable, ...plan.rejected];
+    const remaining = reportFindings(manual);
     console.log(remaining.text);
     console.log(
-      `Applied ${plan.actions.length} fix(es); ${plan.unfixable.length} finding(s) need manual attention.`,
+      `Applied ${plan.actions.length} fix(es); ${manual.length} finding(s) need manual attention.`,
     );
+    if (plan.rejected.length > 0) {
+      console.log(
+        `Refused ${plan.rejected.length} move(s): destination already exists — resolve the duplicate by hand.`,
+      );
+      process.exitCode = 1;
+    }
     if (remaining.errorCount > 0) process.exitCode = 1;
   });
 

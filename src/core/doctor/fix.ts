@@ -16,7 +16,9 @@ const archivePlacementFixer: DoctorFixer = {
   fix: (_finding, file) => ({
     kind: 'move',
     from: file.path,
-    to: file.archived ? `papercamp/ideas/${file.id}.md` : `papercamp/ideas/archive/${file.id}.md`,
+    to: file.archived
+      ? file.path.replace('/archive/', '/')
+      : file.path.replace(/\/(?=[^/]+$)/, '/archive/'),
   }),
 };
 
@@ -30,6 +32,7 @@ export interface DoctorFixPlan {
   actions: DoctorFixAction[];
   fixed: DoctorFinding[];
   unfixable: DoctorFinding[];
+  rejected: DoctorFinding[];
 }
 
 export function planDoctorFixes(context: DoctorContext, findings: DoctorFinding[]): DoctorFixPlan {
@@ -37,18 +40,25 @@ export function planDoctorFixes(context: DoctorContext, findings: DoctorFinding[
   const actions: DoctorFixAction[] = [];
   const fixed: DoctorFinding[] = [];
   const unfixable: DoctorFinding[] = [];
+  const rejected: DoctorFinding[] = [];
 
   for (const finding of findings) {
     const fixer = FIXERS_BY_RULE.get(finding.rule);
     const file = fileByPath.get(finding.file);
     const action = fixer && file ? fixer.fix(finding, file) : null;
-    if (action) {
-      actions.push(action);
-      fixed.push(finding);
-    } else {
+    if (!action) {
       unfixable.push(finding);
+      continue;
     }
+    // A move onto an existing path would overwrite it (rename replaces the destination
+    // on POSIX) and silently destroy the other entity — never auto-fix that.
+    if (action.kind === 'move' && fileByPath.has(action.to)) {
+      rejected.push(finding);
+      continue;
+    }
+    actions.push(action);
+    fixed.push(finding);
   }
 
-  return { actions, fixed, unfixable };
+  return { actions, fixed, unfixable, rejected };
 }

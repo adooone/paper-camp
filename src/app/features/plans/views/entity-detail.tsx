@@ -147,7 +147,7 @@ const PhasesSection = ({
         columns={[
           {
             key: 'checkbox',
-            header: 'Status',
+            header: '',
             cell: (row: WorkRow) =>
               isRunningRow(row) ? (
                 <Spinner size="small" />
@@ -166,11 +166,16 @@ const PhasesSection = ({
             key: 'title',
             header: 'Title',
             cell: (row: WorkRow) => (
-              <span className="flex flex-col gap-0.5">
+              <span className="flex min-w-0 flex-col gap-1 pb-1">
                 <span
-                  className={`inline-flex items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
+                  className={`inline-flex min-w-0 items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
                 >
-                  {row.item.text}
+                  <span
+                    title={row.item.text}
+                    className="overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-base leading-tight"
+                  >
+                    {row.item.text}
+                  </span>
                   {isRunningRow(row) && (
                     <span className="text-xs opacity-[0.55]">
                       {Math.round((runningFill?.fraction ?? 0) * 100)}%
@@ -192,7 +197,7 @@ const PhasesSection = ({
                   )}
                 </span>
                 {row.item.run && (
-                  <span className="text-xs opacity-[0.55]">
+                  <span className="self-stretch whitespace-nowrap rounded-md bg-[var(--pui-texture-shade,rgba(0,0,0,0.05))] px-2 py-0.5 text-xs opacity-[0.7]">
                     {formatDuration(row.item.run.durationMs)}
                     {row.item.run.attempts > 1 && ` ×${row.item.run.attempts}`}
                     {' · '}
@@ -228,7 +233,7 @@ const PhasesSection = ({
                 </div>
               );
             },
-            width: 7,
+            width: 4,
           },
         ]}
         expandable={{

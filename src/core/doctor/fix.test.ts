@@ -43,6 +43,29 @@ describe('planDoctorFixes', () => {
     ]);
   });
 
+  it('derives the move destination from the file path, preserving the corpus base', () => {
+    const at = file({ path: '/tmp/corpus/ideas/IDEA-1.md' });
+    const context: DoctorContext = { files: [at], config: null };
+    const plan = planDoctorFixes(context, [finding({ file: at.path })]);
+    expect(plan.actions).toEqual([
+      {
+        kind: 'move',
+        from: '/tmp/corpus/ideas/IDEA-1.md',
+        to: '/tmp/corpus/ideas/archive/IDEA-1.md',
+      },
+    ]);
+  });
+
+  it('refuses a move that would overwrite an existing destination', () => {
+    const active = file({});
+    const collidingArchive = file({ path: 'papercamp/ideas/archive/IDEA-1.md', archived: true });
+    const context: DoctorContext = { files: [active, collidingArchive], config: null };
+    const plan = planDoctorFixes(context, [finding({ file: active.path })]);
+    expect(plan.actions).toEqual([]);
+    expect(plan.fixed).toEqual([]);
+    expect(plan.rejected).toHaveLength(1);
+  });
+
   it('leaves findings with no registered fixer for manual attention', () => {
     const context: DoctorContext = { files: [file({})], config: null };
     const plan = planDoctorFixes(context, [finding({ rule: 'frontmatter-schema' })]);

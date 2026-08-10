@@ -21,25 +21,29 @@ export type DoctorCheck = (context: DoctorContext) => DoctorFinding[];
 
 export const DOCTOR_CHECKS: DoctorCheck[] = [...metadataChecks, ...structuralChecks];
 
-async function readdirMaybe(dir: string): Promise<string[]> {
-  try {
-    return await readdir(dir);
-  } catch {
-    return [];
-  }
+function isEnoent(error: unknown): boolean {
+  return (error as NodeJS.ErrnoException | null)?.code === 'ENOENT';
 }
 
-async function readFileMaybe(path: string): Promise<string> {
+// Only a missing directory is benign; any other failure (unreadable dir, permissions)
+// must surface rather than masquerade as an empty corpus.
+async function readdirOptional(dir: string): Promise<string[]> {
   try {
-    return await readFile(path, 'utf-8');
-  } catch {
-    return '';
+    return await readdir(dir);
+  } catch (error) {
+    if (isEnoent(error)) return [];
+    throw error;
   }
 }
 
 async function readConfig(configPath: string): Promise<PaperCampConfig | null> {
-  const raw = await readFileMaybe(configPath);
-  if (!raw) return null;
+  let raw: string;
+  try {
+    raw = await readFile(configPath, 'utf-8');
+  } catch (error) {
+    if (isEnoent(error)) return null;
+    throw error;
+  }
   try {
     return JSON.parse(raw) as PaperCampConfig;
   } catch {
@@ -51,14 +55,22 @@ export async function collectDoctorContext(paperCampDir: string): Promise<Doctor
   const ideasDir = join(paperCampDir, 'ideas');
   const files: DoctorEntityFile[] = [];
 
-  for (const dir of [ideasDir, join(ideasDir, 'archive')]) {
-    const archived = dir !== ideasDir;
-    const names = (await readdirMaybe(dir)).filter((f) => f.endsWith('.md') && f !== 'index.md');
-    for (const name of names.sort()) {
+  const dirs = [
+    { dir: ideasDir, archived: false, names: await readdir(ideasDir) },
+    {
+      dir: join(ideasDir, 'archive'),
+      archived: true,
+      names: await readdirOptional(join(ideasDir, 'archive')),
+    },
+  ];
+
+  for (const { dir, archived, names } of dirs) {
+    const mdNames = names.filter((f) => f.endsWith('.md') && f !== 'index.md').sort();
+    for (const name of mdNames) {
       files.push({
         id: basename(name, '.md'),
         path: `papercamp/ideas${archived ? '/archive' : ''}/${name}`,
-        content: await readFileMaybe(join(dir, name)),
+        content: await readFile(join(dir, name), 'utf-8'),
         archived,
       });
     }
