@@ -42,8 +42,9 @@ re-skin.
 - [x] Drop framer-motion from the routed page and sidebar
       Remove the crossfade in `router.tsx` and the route-change fade/slide in `sidebar-shell.tsx`.
       run: 1m14s · 5.9k in · 4.1k out · sonnet-5
-- [ ] Drop framer-motion from the Stack panel
+- [x] Drop framer-motion from the Stack panel
       Remove the reopen tab's fade/slide and the panel's open/close drawer slide in `stack-panel.tsx`.
+      run: 1m10s · 230 in · 4.7k out · sonnet-5
 - [ ] Delete the crossfade helpers and the framer-motion dependency
       Remove `styles/motion.ts` and drop `framer-motion` from package.json once nothing imports it.
 - [ ] Snap the Tailwind-animated UI
