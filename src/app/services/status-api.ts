@@ -6,6 +6,8 @@ export interface StatusState {
   format: CheckResult;
   test: CheckResult;
   consistency: CheckResult;
+  /** Optional so clients tolerate servers predating the build check (IDEA-157). */
+  build?: CheckResult;
 }
 
 export const fetchStatus = async (): Promise<StatusState> => {

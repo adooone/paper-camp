@@ -13,7 +13,15 @@ import {
 } from '../services/git-api';
 import { fetchAgentAuthStatus, fetchCapabilities } from '../services/system';
 
-export type StatusClientState = Omit<StatusBarCoreProps, 'onOpenSetup'>;
+// Extends (doesn't modify) StatusBarCoreProps — the desk's StatusBarCore only
+// destructures its own known props, so extra fields here are invisible to it;
+// TypeScript's excess-property check only fires on object literals, not on a
+// value passed through a variable/spread.
+export type StatusClientState = Omit<StatusBarCoreProps, 'onOpenSetup'> & {
+  suggesting: boolean;
+  suggestCommit: () => Promise<{ title: string; message: string } | null>;
+  commitWithTitle: (title: string, message?: string) => Promise<boolean>;
+};
 
 type GitAction = 'push' | 'sync' | 'pull';
 
@@ -32,6 +40,7 @@ export function useStatusClient(): StatusClientState {
   const [capabilityGapCount, setCapabilityGapCount] = useState(0);
   const [commitInFlight, setCommitInFlight] = useState(false);
   const [gitAction, setGitAction] = useState<GitAction | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
 
   const changedFilesRef = useRef<string[]>([]);
   const gitActionRef = useRef<GitAction | null>(null);
@@ -158,6 +167,50 @@ export function useStatusClient(): StatusClientState {
     })();
   }, [loadGitStatus]);
 
+  // Split out of onQuickCommit for a compose flow (edit-before-commit): the
+  // embed has no store, so — like onQuickCommit — this reads the same
+  // changedFilesRef rather than taking a files argument from the caller.
+  const suggestCommit = useCallback(async () => {
+    const files = changedFilesRef.current;
+    if (files.length === 0) return null;
+    setSuggesting(true);
+    try {
+      return await suggestCommitMessage(files);
+    } catch {
+      return null;
+    } finally {
+      setSuggesting(false);
+    }
+  }, []);
+
+  const commitWithTitle = useCallback(
+    async (title: string, message?: string) => {
+      const files = changedFilesRef.current;
+      const trimmedTitle = title.trim();
+      if (
+        commitInFlightRef.current ||
+        gitActionRef.current ||
+        files.length === 0 ||
+        !trimmedTitle
+      ) {
+        return false;
+      }
+      commitInFlightRef.current = true;
+      setCommitInFlight(true);
+      try {
+        await commitChanges(files, trimmedTitle, message?.trim() || undefined);
+        await loadGitStatus();
+        return true;
+      } catch {
+        return false;
+      } finally {
+        commitInFlightRef.current = false;
+        setCommitInFlight(false);
+      }
+    },
+    [loadGitStatus],
+  );
+
   return {
     gitBranch,
     gitAhead,
@@ -173,9 +226,12 @@ export function useStatusClient(): StatusClientState {
     pushing: gitAction === 'push',
     syncing: gitAction === 'sync',
     pulling: gitAction === 'pull',
+    suggesting,
     onSync,
     onPush,
     onPull,
     onQuickCommit,
+    suggestCommit,
+    commitWithTitle,
   };
 }

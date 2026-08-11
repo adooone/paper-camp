@@ -152,3 +152,5 @@
 | IDEA-149 | Feedback fixes start running at once | feat | idea | agents, plans, app |
 | IDEA-150 | Route plans and ideas by id | refactor | idea | app, routing |
 | IDEA-151 | Manual commits become phase rows | feat | idea | app, plans, git |
+| IDEA-157 | Build check in the status manager | feat | in-progress | integration, app, checks |
+| IDEA-158 | Build command in the desk Stack panel | feat | idea | app, checks |

@@ -26,6 +26,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
   }, []);
 
   const deskUrl = focusPlan ? `${route}/plans/${encodeURIComponent(focusPlan.title)}` : route;
+  const changesUrl = `${route}/diff`;
 
   return (
     <ScoutTrigger>
@@ -35,6 +36,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
         openQuestions={scout.openQuestions}
         onRefreshScout={scout.refresh}
         deskUrl={deskUrl}
+        changesUrl={changesUrl}
       />
     </ScoutTrigger>
   );

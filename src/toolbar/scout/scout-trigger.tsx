@@ -71,7 +71,10 @@ const scoutCss = `
   left: auto;
   z-index: auto;
   height: 30rem;
-  padding: 0.75rem;
+  /* No padding on the section itself — the branch banner needs to sit flush
+     against every edge. scout-card.tsx puts padding on its own wrapper,
+     below the banner, instead of here. */
+  padding: 0;
   box-sizing: border-box;
 }
 @media (prefers-reduced-motion: reduce) {

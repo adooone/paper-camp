@@ -594,6 +594,11 @@ export interface PaperCampConfig {
   integration?: IntegrationConfig;
   /** Dev-loop desk manifest (IDEA-119) — declared services, checks, and CI/release sources per project. */
   desk?: DeskConfig;
+  /** Project-declared commands the desk/embed can run on demand (IDEA-157). */
+  commands?: {
+    /** Manual build for the Stack's Build action; no universal default. */
+    build?: string;
+  };
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';
@@ -604,7 +609,7 @@ export interface CheckResult {
   output: string;
 }
 
-export type CheckName = 'lint' | 'format' | 'test' | 'consistency';
+export type CheckName = 'lint' | 'format' | 'test' | 'consistency' | 'build';
 
 export type CapabilityStatus = 'ok' | 'warn' | 'missing';
 
