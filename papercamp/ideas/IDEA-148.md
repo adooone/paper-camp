@@ -2,7 +2,7 @@
 id: IDEA-148
 title: Bare mount URL white-screens the desk
 type: fix
-status: in-progress
+status: review
 created: 2026-08-07
 updated: 2026-08-11
 tags:
@@ -46,8 +46,9 @@ The fix is at the server, not in every caller:
 - [x] Add the trailing slash to the island's desk link
       Point the toolbar's "Open full desk" link at `/paper-camp/` directly.
       run: 1m13s · 5.7k in · 2.6k out · sonnet-5
-- [ ] Cover the bare path in the pack smoke test
+- [x] Cover the bare path in the pack smoke test
       Request `/paper-camp` and assert the 308 redirect to the slash form.
+      run: 52s · 367 in · 1.8k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-07 [decision] Redirect at the serving layer is the fix; fixing only the link would leave every other slash-less entry broken. Smoke coverage must include the bare path.
