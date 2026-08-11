@@ -26,7 +26,10 @@ version instead, using plumbing that already exists.
    last output, the same content `fixPrompt` already builds today.
    Docs findings are a different kind of issue (a findings list, not a
    pass/fail run) and stay out of this — they keep their existing
-   inline expand/browse behavior in the checks row.
+   inline expand/browse behavior in the checks row. The check's name is
+   the fix's stable key — a repeat failure for the same check replaces
+   that entry's command and output in place rather than appending a
+   duplicate.
 
 2. **The Commit button becomes a Fix button while any of Quality/Tests/
    Consistency is failing.** Same slot, same size, in
@@ -35,8 +38,10 @@ version instead, using plumbing that already exists.
    checks are clean.
 
 3. **Fix launches immediately**, the same pattern as [[IDEA-149]]: the
-   fix entries land in the file and `launchRunAll(plan.id)` fires in the
-   same action, no separate confirmation step.
+   fix entries are written to the file first — `launchRunAll(plan.id)`
+   reloads the plan from disk, so the write must land before it fires —
+   then the launch happens in the same action, no separate confirmation
+   step.
 
 4. **Reverts on its own.** Once the run lands and checks re-report
    clean, the button reads Commit again automatically — driven by the
