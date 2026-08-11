@@ -4,10 +4,12 @@ title: Route plans and ideas by id
 type: refactor
 status: idea
 created: 2026-08-10
+updated: 2026-08-11
 tags:
   - app
   - routing
 subject: App UI
+order: 4
 ---
 
 Plan and idea URLs are unreadable — `/plans/Deliver%20lives%20in%20the%20idea%20view`
@@ -45,6 +47,12 @@ for a case that no longer happens.
       Confirm a legacy entry with no `id:` resolves through the fallback exactly as before.
       run: 3m3s · 379 in · 5.2k out · sonnet-5
 - [ ] Run quality and type checks
+- [ ] Strip ID prefix from route params
+      Routes use the bare numeric id (/plans/150, /ideas/150) instead of the full id string (IDEA-150) — update the two resolver hooks to match on the numeric part, and update every link builder to emit the bare number instead of the prefixed id.
 
 ### Thread
 - [x] 2026-08-10 [decision] Id is the primary route key, title the fallback only for id-less entries — not a dual always-both scheme. No legacy-URL redirect.
+- [x] 2026-08-11 [chat] I want the route to be simpler /plans/:id - like this - host/plans/150
+- [x] 2026-08-11 [chat] [agent] Got it — id is primary, title only fills in when there's no id, no dual-write and no redirect table for old URLs. That matches phase 1's routing logic already in place.
+- [x] 2026-08-11 [chat] what title, currently we have plans/IDEA-150 - what I want is /plans/150 (without IDEA!!!)
+- [x] 2026-08-11 [chat] [agent] Got it — numeric only, so /plans/150 not /plans/IDEA-150. That's a change to the routing already built in phases 1-3, so I've added it as a new phase to strip the prefix in both the route params and the link builders.
