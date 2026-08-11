@@ -2,9 +2,9 @@
 id: IDEA-147
 title: Scout panel replaces the sidesheet
 type: feat
-status: review
+status: in-progress
 created: 2026-08-07
-updated: 2026-08-10
+updated: 2026-08-11
 tags:
   - integration
   - app
@@ -60,8 +60,12 @@ trigger ([[IDEA-140]]) — made slightly larger, a single Scout panel.
 - [x] Enlarge panel further and wrap glance column in a textured Card
       Increase the Scout panel's overall size beyond the current enlargement. Wrap the left glance column in a paper-ui Card with canvas texture. Reduce the glance column's footprint so the chat thread on the right gets more visible history.
       run: 1m24s · 5.8k in · 4.7k out · sonnet-5
+- [ ] Fix panel sizing and padding
+      Make the panel height static (no longer content-driven). Set the left glance Card to 40% of the panel width and full height. Reduce the panel's horizontal padding so it matches the vertical padding (equal x/y).
 
 ### Thread
 - [x] 2026-08-07 [decision] The island is named Scout, after the agent. One panel from the logo trigger holds everything — git stripe on top, glance column left, chat dominant right, desk link out; the chat sidesheet is removed entirely.
 - [x] 2026-08-10 [chat] panel should be bigger and left section should be put inside Card with canvas texture. There should be more space available for viewing chat history.
 - [x] 2026-08-10 [chat] [agent] Added that as a fix here — bigger panel, left glance column wrapped in a Card with canvas texture, and more breathing room for the chat history. (reopened this idea to re-run)
+- [x] 2026-08-11 [chat] height of the panel should be static. And left card with idea info should be 40% of the panel width and also have full height. And we should decrease side paddings of the panel, so y and x paddings to be equal.
+- [x] 2026-08-11 [chat] [agent] Added that as a fix here — static panel height, left card at 40% width with full height, and equal x/y panel padding. (reopened this idea to re-run)
