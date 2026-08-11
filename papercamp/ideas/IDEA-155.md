@@ -2,7 +2,7 @@
 id: IDEA-155
 title: Only the page container scrolls
 type: fix
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -43,8 +43,9 @@ Two settled fixes:
 - [x] Zero the desktop `--pc-content-pad-bottom`, leave the mobile 96px value
       Edit only the desktop declaration in `utilities.css`.
       run: 21s · 239 in · 921 out · sonnet-5
-- [ ] Confirm header, toolbar, and sidebar chrome stay outside the scroll container
+- [x] Confirm header, toolbar, and sidebar chrome stay outside the scroll container
       Codify the no-chrome-scrolls invariant against the current layout.
+      run: 1m59s · 392 in · 8.2k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-11 [decision] Bottom-padding removal is desktop-only — mobile's reserve is load-bearing (clears the fixed bottom nav), not decorative, and stays untouched.
