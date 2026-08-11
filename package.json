@@ -75,7 +75,6 @@
     }
   },
   "dependencies": {
-    "@dendelion/paper-ui": "^0.15.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@tanstack/react-router": "^1.58.3",
     "commander": "^12.0.0",
@@ -91,6 +90,7 @@
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@dendelion/paper-camp": "0.16.0",
+    "@dendelion/paper-ui": "^0.16.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
