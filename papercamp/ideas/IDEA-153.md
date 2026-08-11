@@ -49,8 +49,9 @@ move it out of the nav menu into the toolbar.
 - [x] Extend the notification model with the two new kinds and a read flag
       Add agent-completed and new-reply notifications alongside parked questions, each carrying its owning idea and a read/unread flag.
       run: 5m32s · 17.8k in · 30.3k out · sonnet-5
-- [ ] Emit the new notifications from task and feedback events
+- [x] Emit the new notifications from task and feedback events
       Create a completed notification when a task reaches done/error, and a reply notification when an agent posts a non-blocking feedback thread entry.
+      run: 8m33s · 4.8k in · 23.8k out · sonnet-5
 - [ ] Render all three kinds in one age-ordered feed
       Replace the Inbox page's questions-only list; keep the parked-question reply flow unchanged.
 - [ ] Mark viewed notifications read and count unread for the badge

@@ -1110,6 +1110,62 @@ process.exit(1)
   });
 });
 
+describe('notification log', () => {
+  // The write is fire-and-forget off setStatus(), so it can land slightly after
+  // getStatus() already reports settled — poll instead of reading once.
+  async function pollNotifications(root: string) {
+    const logPath = join(root, 'papercamp', 'notifications.log');
+    const start = Date.now();
+    let raw = '';
+    while (Date.now() - start < 2000) {
+      try {
+        raw = await readFile(logPath, 'utf-8');
+        if (raw.trim()) break;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    return raw
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+  }
+
+  it('appends an unread completed notification when a task finishes', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    const taskId = currentStatus(manager)?.id;
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    const [entry] = await pollNotifications(root);
+    expect(entry).toMatchObject({
+      id: taskId,
+      kind: 'completed',
+      entityId: 'IDEA-1',
+      entityTitle: 'Test plan',
+      read: false,
+      outcome: 'done',
+    });
+  });
+
+  it('carries an error outcome when the agent exits nonzero', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(3)';
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    const [entry] = await pollNotifications(root);
+    expect(entry.outcome).toBe('error');
+  });
+});
+
 describe('startFixReview', () => {
   const THREADS: ReviewThread[] = [
     { id: 'PRRT_one', path: 'src/a.ts', body: 'first comment' },

@@ -36,7 +36,8 @@ import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
-import { logTaskCompletion } from './task-log';
+import { appendNotification } from './notification-log';
+import { UNLOGGED_TASK_KINDS, logTaskCompletion } from './task-log';
 
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -46,6 +47,10 @@ const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
 
 function isAuthError(text: string): boolean {
   return text.includes(AUTH_ERROR_MARKER);
+}
+
+function humanizeTaskKind(kind: TaskKind): string {
+  return kind.replace(/-/g, ' ');
 }
 
 // Lets the phase or fix-pass agent short-circuit straight to escalation when
@@ -374,6 +379,21 @@ export function createAgentManager(
     if (status === 'done' || status === 'error' || status === 'superseded') {
       void logTaskCompletion(root, task, status);
       pruneCompletedTasks();
+    }
+    const entityId = task.planId ?? task.ideaId;
+    if (
+      (status === 'done' || status === 'error') &&
+      entityId &&
+      !UNLOGGED_TASK_KINDS.has(task.taskKind)
+    ) {
+      void appendNotification(root, {
+        id: task.id,
+        kind: 'completed',
+        entityId,
+        entityTitle: task.planTitle,
+        text: `${humanizeTaskKind(task.taskKind)} ${status === 'done' ? 'finished' : 'failed'}`,
+        outcome: status,
+      });
     }
   }
 

@@ -1,4 +1,5 @@
-import { appendFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import { parseNotificationLog } from '@/core/parse';
 import type { StoredNotification, StoredNotificationKind } from '@/types/index';
 import { campFile, readMaybe } from './helpers';
@@ -26,11 +27,13 @@ export function appendNotification(root: string, notification: NewNotification):
       date: new Date().toISOString(),
       read: false,
     };
-    await appendFile(notificationLogPath(root), `${JSON.stringify(entry)}\n`, 'utf-8').catch(
-      (err) => {
-        console.error(`papercamp: could not append notification ${notification.id}:`, err);
-      },
-    );
+    const path = notificationLogPath(root);
+    try {
+      await mkdir(dirname(path), { recursive: true });
+      await appendFile(path, `${JSON.stringify(entry)}\n`, 'utf-8');
+    } catch (err) {
+      console.error(`papercamp: could not append notification ${notification.id}:`, err);
+    }
   });
   notificationChain = run.catch(() => undefined);
   return run;
@@ -45,11 +48,12 @@ export function markNotificationRead(root: string, id: string): Promise<void> {
     const path = notificationLogPath(root);
     const entries = parseNotificationLog(await readMaybe(path));
     const next = entries.map((e) => (e.id === id ? { ...e, read: true } : e));
-    await writeFile(path, next.map((e) => `${JSON.stringify(e)}\n`).join(''), 'utf-8').catch(
-      (err) => {
-        console.error(`papercamp: could not mark notification ${id} read:`, err);
-      },
-    );
+    try {
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(path, next.map((e) => `${JSON.stringify(e)}\n`).join(''), 'utf-8');
+    } catch (err) {
+      console.error(`papercamp: could not mark notification ${id} read:`, err);
+    }
   });
   notificationChain = run.catch(() => undefined);
   return run;
