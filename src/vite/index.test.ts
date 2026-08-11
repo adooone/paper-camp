@@ -52,7 +52,7 @@ describe('paperCamp', () => {
     await configureServer({}, { config: { root }, middlewares: { use } });
 
     expect(use).toHaveBeenCalledWith(CAMP_ROUTE, expect.any(Function));
-    const middleware = use.mock.calls[0][1] as (req: unknown, res: unknown) => void;
+    const middleware = use.mock.calls[1][1] as (req: unknown, res: unknown) => void;
     const req = {};
     const res = {};
     middleware(req, res);
@@ -64,11 +64,66 @@ describe('paperCamp', () => {
     const use = vi.fn();
     await configureServer({ port: 9999 }, { config: { root }, middlewares: { use } });
 
-    const middleware = use.mock.calls[0][1] as (req: unknown, res: unknown) => void;
+    const middleware = use.mock.calls[1][1] as (req: unknown, res: unknown) => void;
     const req = {};
     const res = {};
     middleware(req, res);
     expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 9999, mount: CAMP_ROUTE });
+  });
+
+  it('redirects the bare mount path to the slash form with a 308', async () => {
+    const root = await makeRoot({ port: 4242 });
+    const use = vi.fn();
+    await configureServer({}, { config: { root }, middlewares: { use } });
+
+    const redirect = use.mock.calls[0][0] as (
+      req: { url: string },
+      res: {
+        statusCode: number;
+        setHeader: ReturnType<typeof vi.fn>;
+        end: ReturnType<typeof vi.fn>;
+      },
+      next: ReturnType<typeof vi.fn>,
+    ) => void;
+    const res = { statusCode: 200, setHeader: vi.fn(), end: vi.fn() };
+    redirect({ url: CAMP_ROUTE }, res, vi.fn());
+    expect(res.statusCode).toBe(308);
+    expect(res.setHeader).toHaveBeenCalledWith('Location', `${CAMP_ROUTE}/`);
+    expect(res.end).toHaveBeenCalled();
+  });
+
+  it('preserves the query string when redirecting the bare mount path', async () => {
+    const root = await makeRoot({ port: 4242 });
+    const use = vi.fn();
+    await configureServer({}, { config: { root }, middlewares: { use } });
+
+    const redirect = use.mock.calls[0][0] as (
+      req: { url: string },
+      res: {
+        statusCode: number;
+        setHeader: ReturnType<typeof vi.fn>;
+        end: ReturnType<typeof vi.fn>;
+      },
+      next: ReturnType<typeof vi.fn>,
+    ) => void;
+    const res = { statusCode: 200, setHeader: vi.fn(), end: vi.fn() };
+    redirect({ url: `${CAMP_ROUTE}?foo=bar` }, res, vi.fn());
+    expect(res.setHeader).toHaveBeenCalledWith('Location', `${CAMP_ROUTE}/?foo=bar`);
+  });
+
+  it('passes through to the next middleware for non-bare paths', async () => {
+    const root = await makeRoot({ port: 4242 });
+    const use = vi.fn();
+    await configureServer({}, { config: { root }, middlewares: { use } });
+
+    const redirect = use.mock.calls[0][0] as (
+      req: { url: string },
+      res: unknown,
+      next: ReturnType<typeof vi.fn>,
+    ) => void;
+    const next = vi.fn();
+    redirect({ url: `${CAMP_ROUTE}/toolbar.js` }, {}, next);
+    expect(next).toHaveBeenCalled();
   });
 
   it('skips the proxy middleware and script injection when integration.toolbar.enabled is false', async () => {

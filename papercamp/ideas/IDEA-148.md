@@ -36,15 +36,16 @@ The fix is at the server, not in every caller:
 3. **The pack smoke test requests the bare path too** and asserts the
    redirect — the green-while-broken gap this shipped through.
 
-### Thread
-- [x] 2026-08-07 [decision] Redirect at the serving layer is the fix; fixing only the link would leave every other slash-less entry broken. Smoke coverage must include the bare path.
-
 ### Phases
-- [ ] Redirect the bare mount path in the Vite plugin
+- [x] Redirect the bare mount path in the Vite plugin
       Serve a 308 from `/paper-camp` to `/paper-camp/` before the in-place HTML handler.
+      run: 3m45s · 9.6k in · 8.5k out · sonnet-5
 - [ ] Redirect the bare mount path in the CLI middleware
       Mirror the plugin's 308 so packed/standalone serving lands on the slash form too.
 - [ ] Add the trailing slash to the island's desk link
       Point the toolbar's "Open full desk" link at `/paper-camp/` directly.
 - [ ] Cover the bare path in the pack smoke test
       Request `/paper-camp` and assert the 308 redirect to the slash form.
+
+### Thread
+- [x] 2026-08-07 [decision] Redirect at the serving layer is the fix; fixing only the link would leave every other slash-less entry broken. Smoke coverage must include the bare path.
