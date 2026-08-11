@@ -1,37 +1,34 @@
 import type { OpenQuestionGroup } from '@/app/features/plans/helpers';
 import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
 import type { PlanEntry, ThreadMessage } from '@/types/index';
-import { Button, Card, Divider, Spinner, Stamp, Textarea } from '@dendelion/paper-ui';
+import { Button, Card, Spinner, Stamp, Textarea } from '@dendelion/paper-ui';
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { ScoutPlanCard } from './scout-plan-card';
 
 const rootStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
+  gap: '0.5rem',
   height: '100%',
   minHeight: 0,
 };
 
 const questionCountStyle: CSSProperties = {
-  padding: '0.25rem 1rem 0',
   opacity: 0.6,
   fontSize: '0.75rem',
   flexShrink: 0,
 };
 
 const threadStyle: CSSProperties = {
-  flex: 1,
+  flex: '1 1 auto',
   minHeight: 0,
   overflowY: 'auto',
-  padding: '0.75rem 1rem',
   display: 'flex',
   flexDirection: 'column',
   gap: '0.5rem',
 };
 
 const emptyThreadStyle: CSSProperties = {
-  margin: 'auto',
   opacity: 0.6,
   fontSize: '0.75rem',
 };
@@ -59,22 +56,16 @@ const bubbleMetaStyle: CSSProperties = {
   opacity: 0.6,
 };
 
-const composerStyle: CSSProperties = {
-  flexShrink: 0,
-  padding: '0.75rem 1rem 1rem',
-};
-
 const footerRowStyle: CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  marginTop: '0.5rem',
   gap: '0.5rem',
 };
 
-const mutedStyle: CSSProperties = { opacity: 0.6, fontSize: '0.75rem' };
+const replyBoxStyle: CSSProperties = { flexShrink: 0 };
 const errorRowStyle: CSSProperties = { marginTop: '0.375rem' };
-const emptyStateStyle: CSSProperties = { padding: '1rem', opacity: 0.6, fontSize: '0.75rem' };
+const emptyStateStyle: CSSProperties = { opacity: 0.6, fontSize: '0.75rem' };
 
 const noopReload = async () => {};
 
@@ -100,16 +91,12 @@ const ThreadMessages = ({ messages }: { messages: ThreadMessage[] }) => {
             style={bubbleColumnStyle(fromAgent)}
           >
             <div style={bubbleWrapStyle}>
-              <Card surface="chalkboard" size="small">
+              <Card size="small">
                 <span style={bubbleTextStyle}>{message.text}</span>
               </Card>
             </div>
             <div style={bubbleMetaStyle}>
-              {fromAgent && (
-                <Stamp size="small" surface="chalkboard">
-                  agent
-                </Stamp>
-              )}
+              {fromAgent && <Stamp size="small">agent</Stamp>}
               {message.date && <span>{message.date}</span>}
             </div>
           </div>
@@ -148,9 +135,8 @@ const ReplyBox = ({
   };
 
   return (
-    <div style={composerStyle}>
+    <div style={replyBoxStyle}>
       <Textarea
-        surface="chalkboard"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         aria-label={`Reply to ${plan.title}`}
@@ -159,19 +145,14 @@ const ReplyBox = ({
         disabled={sending}
       />
       <div style={footerRowStyle}>
-        {sending ? <Spinner size="small" surface="chalkboard" label="Scout replying…" /> : <span />}
-        <Button
-          size="small"
-          surface="chalkboard"
-          onClick={handleSend}
-          disabled={sending || !input.trim()}
-        >
+        {sending ? <Spinner size="small" label="Scout replying…" /> : <span />}
+        <Button size="small" onClick={handleSend} disabled={sending || !input.trim()}>
           Send
         </Button>
       </div>
       {error && (
         <div style={errorRowStyle}>
-          <Stamp size="small" surface="chalkboard" variant="error">
+          <Stamp size="small" variant="error">
             {error}
           </Stamp>
         </div>
@@ -180,24 +161,13 @@ const ReplyBox = ({
   );
 };
 
-export interface ScoutPanelProps {
+export interface ScoutThreadProps {
   focusPlan: PlanEntry | null;
   openQuestions: OpenQuestionGroup[];
-  onOpenIdea: (plan: PlanEntry) => void;
   onRefresh: () => void;
 }
 
-// Toolbar-safe Scout mount (IDEA-130 phase 6, thread-primary per IDEA-138 phase 3):
-// the oldest project-wide open question's idea takes the thread first — replying
-// resumes its parked run — falling back to the focused idea's thread once the
-// inbox is empty. One plan-row card on top (mirroring the desk Plans table row),
-// then the chat; everything deeper deep-links into the desk.
-export const ScoutPanel = ({
-  focusPlan,
-  openQuestions,
-  onOpenIdea,
-  onRefresh,
-}: ScoutPanelProps) => {
+export const ScoutThread = ({ focusPlan, openQuestions, onRefresh }: ScoutThreadProps) => {
   const [oldest] = openQuestions;
   const activePlan = oldest?.plan ?? focusPlan;
 
@@ -215,16 +185,12 @@ export const ScoutPanel = ({
 
   return (
     <div style={rootStyle}>
-      <ScoutPlanCard plan={activePlan} onOpenDesk={() => onOpenIdea(activePlan)} />
       {remainingQuestionCount > 0 && (
-        <div style={questionCountStyle}>
-          <span style={mutedStyle}>{remainingQuestionCount} more open question(s)</span>
-        </div>
+        <span style={questionCountStyle}>{remainingQuestionCount} more open question(s)</span>
       )}
       <div style={threadStyle}>
         <ThreadMessages messages={activePlan.thread ?? []} />
       </div>
-      <Divider surface="chalkboard" />
       <ReplyBox
         plan={activePlan}
         placeholder={

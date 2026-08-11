@@ -29,5 +29,12 @@ export default defineConfig({
       '@cli': resolve(__dirname, './src/cli'),
       '@types': resolve(__dirname, './src/types'),
     },
+    // A locally-linked peer dependency (e.g. `pnpm add link:../paper-ui` while
+    // testing an unreleased paper-ui change) resolves react/react-dom from its
+    // OWN node_modules — a different real path than this package's copy, even
+    // at the same version. Vite/Rollup dedupe by resolved path, not package
+    // identity, so without this the bundle silently doubled both packages
+    // (507kB → 708kB observed). dedupe forces one canonical resolution.
+    dedupe: ['react', 'react-dom'],
   },
 });

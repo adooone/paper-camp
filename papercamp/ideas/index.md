@@ -146,9 +146,11 @@
 | IDEA-143 | One title style for all ideas | chore | done | format, docs, git |
 | IDEA-144 | Minimal island — branch banner, one glance row, single Stack button | fix | done | integration, app, ux |
 | IDEA-145 | Changes page in Plans style | fix | done | app, ui, git |
-| IDEA-146 | Deliver lives in the idea view | feat | review | app, ui, stack, git |
-| IDEA-147 | Scout panel replaces the sidesheet | feat | planned | integration, app, ux, chat |
+| IDEA-146 | Deliver lives in the idea view | feat | done | app, ui, stack, git |
+| IDEA-147 | Scout panel replaces the sidesheet | feat | in-progress | integration, app, ux, chat |
 | IDEA-148 | Bare mount URL white-screens the desk | fix | planned | integration, cli, app |
 | IDEA-149 | Feedback fixes start running at once | feat | idea | agents, plans, app |
 | IDEA-150 | Route plans and ideas by id | refactor | idea | app, routing |
 | IDEA-151 | Manual commits become phase rows | feat | idea | app, plans, git |
+| IDEA-157 | Build check in the status manager | feat | in-progress | integration, app, checks |
+| IDEA-158 | Build command in the desk Stack panel | feat | idea | app, checks |

@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { PaperLogo } from './paper-logo';
-import { useIslandReveal } from './use-island-reveal';
+import { useScoutReveal } from './use-scout-reveal';
 
 const SPRING = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
 
@@ -55,36 +55,44 @@ const cardLayerStyle = (open: boolean): CSSProperties => ({
     : 'transform 0.26s ease, opacity 0.2s ease, visibility 0s 0.26s',
 });
 
-// paper-ui's Island fixes its own position/transform through a hashed class we
-// can't target by name; this scoped child-selector rule (higher specificity)
-// neutralises that so the card flows inside the grow-from-trigger layer we animate.
-const islandCss = `
-.pc-island-trigger:hover {
+// paper-ui's Island fixes its own position/transform/size through a hashed
+// class we can't target by name; this scoped child-selector rule (higher
+// specificity) neutralises that so the card flows inside the grow-from-trigger
+// layer we animate, and gets a static height and equal x/y padding instead of
+// the island's own content-driven size.
+const scoutCss = `
+.pc-scout-trigger:hover {
   border-color: rgba(61, 53, 43, 0.5);
 }
-.pc-island-card > section {
+.pc-scout-card > section {
   position: static;
   transform: none;
   bottom: auto;
   left: auto;
   z-index: auto;
+  height: 30rem;
+  /* No padding on the section itself — the branch banner needs to sit flush
+     against every edge. scout-card.tsx puts padding on its own wrapper,
+     below the banner, instead of here. */
+  padding: 0;
+  box-sizing: border-box;
 }
 @media (prefers-reduced-motion: reduce) {
-  .pc-island-card, .pc-island-trigger {
+  .pc-scout-card, .pc-scout-trigger {
     transition: none !important;
   }
 }`;
 
-export const IslandTrigger = ({ children }: { children?: ReactNode }) => {
-  const { open, rootRef, rootProps, triggerProps } = useIslandReveal();
+export const ScoutTrigger = ({ children }: { children?: ReactNode }) => {
+  const { open, rootRef, rootProps, triggerProps } = useScoutReveal();
 
   return (
     <div style={dockStyle}>
-      <style>{islandCss}</style>
+      <style>{scoutCss}</style>
       <div ref={rootRef} style={rootStyle} {...rootProps}>
         <button
           type="button"
-          className="pc-island-trigger"
+          className="pc-scout-trigger"
           aria-label="Open paper camp"
           style={triggerStyle(open)}
           aria-expanded={open}
@@ -92,7 +100,7 @@ export const IslandTrigger = ({ children }: { children?: ReactNode }) => {
         >
           <PaperLogo size={22} />
         </button>
-        <div className="pc-island-card" style={cardLayerStyle(open)} aria-hidden={!open}>
+        <div className="pc-scout-card" style={cardLayerStyle(open)} aria-hidden={!open}>
           {children}
         </div>
       </div>

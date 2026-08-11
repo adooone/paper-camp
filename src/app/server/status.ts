@@ -10,15 +10,29 @@ interface StatusSnapshot {
   format: CheckResult;
   test: CheckResult;
   consistency: CheckResult;
+  build: CheckResult;
 }
 
-const CHECK_COMMANDS: Record<CheckName, string> = {
+const CHECK_COMMANDS: Record<Exclude<CheckName, 'build'>, string> = {
   lint: 'npx biome lint .',
   format: 'npx biome format .',
   test: 'npx vitest run --passWithNoTests',
   // Codebase consistency — mirrors the CI "Consistency" job (dead code + architecture).
   consistency: 'pnpm run consistency',
 };
+
+/** Build has no sensible universal default — the project declares its own
+ * command as `commands.build` in papercamp/config.json. Read fresh per run so
+ * config edits apply without a server restart. */
+function readBuildCommand(root: string): string | null {
+  try {
+    const config = JSON.parse(readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8'));
+    const command = config?.commands?.build;
+    return typeof command === 'string' && command.trim() !== '' ? command : null;
+  } catch {
+    return null;
+  }
+}
 
 function repoHasVitest(root: string): boolean {
   try {
@@ -49,6 +63,7 @@ export function createEmptyStatusState(): StatusManagerState {
       format: { status: 'stale', lastRun: null, output: '' },
       test: { status: 'stale', lastRun: null, output: '' },
       consistency: { status: 'stale', lastRun: null, output: '' },
+      build: { status: 'stale', lastRun: null, output: '' },
     },
     running: new Set<CheckName>(),
     queued: new Set<CheckName>(),
@@ -95,6 +110,15 @@ export function createStatusManager(
       setResult('test', 'pass', 'No test framework configured — nothing to run.');
       return;
     }
+    const buildCommand = name === 'build' ? readBuildCommand(root) : null;
+    if (name === 'build' && !buildCommand) {
+      setResult(
+        'build',
+        'fail',
+        'No build command configured — set commands.build in papercamp/config.json.',
+      );
+      return;
+    }
     if (running.has(name)) {
       queued.add(name);
       return;
@@ -102,7 +126,7 @@ export function createStatusManager(
     running.add(name);
     setResult(name, 'running', '');
 
-    const cmd = CHECK_COMMANDS[name];
+    const cmd = name === 'build' ? (buildCommand as string) : CHECK_COMMANDS[name];
     const proc = spawn(cmd, {
       cwd: root,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -178,8 +202,9 @@ export function createStatusManager(
   function runChecksAndWait(): Promise<CheckName[]> {
     return new Promise<CheckName[]>((resolve) => {
       const runChecks = () => {
-        // consistency (knip/depcruise) is a manual/dashboard check, not part of this gate.
-        const names: CheckName[] = ['lint', 'format', 'test'];
+        // consistency (knip/depcruise) and build (manual, config-driven) are
+        // dashboard actions, not part of this gate.
+        const names: Exclude<CheckName, 'build'>[] = ['lint', 'format', 'test'];
         const passed = new Map<CheckName, boolean>();
         const finished = new Set<CheckName>();
         let pending = names.length;
@@ -217,6 +242,8 @@ export function createStatusManager(
         format: { ...snapshot.format },
         test: { ...snapshot.test },
         consistency: { ...snapshot.consistency },
+        // Fallback for a hot-reloaded state object created before `build` existed.
+        build: { ...(snapshot.build ?? { status: 'stale', lastRun: null, output: '' }) },
       };
     },
     getState: (): StatusManagerState => state,
@@ -225,7 +252,7 @@ export function createStatusManager(
     runQualityFix,
     subscribe(res: ServerResponse) {
       clients.add(res);
-      for (const name of ['lint', 'format', 'test', 'consistency'] as CheckName[]) {
+      for (const name of ['lint', 'format', 'test', 'consistency', 'build'] as CheckName[]) {
         const result = snapshot[name];
         if (result.status !== 'stale') {
           res.write(

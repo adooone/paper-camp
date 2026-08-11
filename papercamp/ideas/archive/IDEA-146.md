@@ -2,7 +2,7 @@
 id: IDEA-146
 title: Deliver lives in the idea view
 type: feat
-status: review
+status: done
 created: 2026-08-07
 updated: 2026-08-10
 tags:

@@ -172,6 +172,38 @@ directly on `main`. A draft PR is auto-created on first push.
   (no branch-name lint). It is a convention agents are expected to follow,
   enforced by code review.
 
+## Multiple worktrees / parallel checkouts
+
+`nextId.idea` in `papercamp/config.json` is **local to whatever checkout you
+allocate from** — it does not coordinate across `git worktree`s or across
+someone else's checkout of this repo. Two checkouts that both branched from
+the same base commit will independently hand out the *same* next id to
+*different* ideas; nothing detects this until the branches are compared, and
+by then both sides may already have committed work under the colliding id.
+This happened for real: an agent created a worktree off the owner's active
+branch to work IDEA-152/153, while the owner was independently running their
+own session on the original checkout that *also* filed IDEA-152 through
+IDEA-156 — on entirely different topics. Caught only because nothing had been
+committed yet; fixed by renumbering the worktree's ideas to 157/158, past the
+other side's allocation.
+
+- **Before creating a new worktree or branch in this repo, ask the owner
+  first** — check whether they're already working here (`git worktree list`,
+  and ask directly; don't assume a single checkout is the only active one).
+  This applies even when the new work looks unrelated to what they're doing.
+- **Before allocating a new idea id, check `nextId.idea` in every checkout
+  you know about**, not just your own — if you can't enumerate them all
+  (e.g. the owner's own session, invisible to you), ask rather than assume
+  your local counter is authoritative.
+- If a collision is later discovered (matching `IDEA-N` with different
+  content across checkouts), the fix is to renumber the *less-advanced* side
+  (fewer commits, more recently created) forward past the other's current
+  `nextId.idea` — rename the file, update its own `id:` frontmatter, its
+  `index.md` row, and every `[[IDEA-N]]`/bare `IDEA-N` cross-reference in
+  both directions (the renumbered idea's own body may reference the *other*
+  colliding idea's old number too — grep for both old numbers after the
+  rename, not just one).
+
 ## Commit messages
 
 Format: `<type>(<scope>): <description>`. This governs every commit an agent

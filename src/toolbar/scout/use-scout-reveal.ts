@@ -3,7 +3,7 @@ import { type FocusEvent, useCallback, useEffect, useRef, useState } from 'react
 const HOVER_INTENT_MS = 120;
 const DISMISS_GRACE_MS = 250;
 
-export const useIslandReveal = () => {
+export const useScoutReveal = () => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const openTimer = useRef<number | null>(null);
