@@ -40,8 +40,9 @@ Two settled fixes:
 - [x] Add `scrollbar-gutter: stable` to the content scroll container
       Set it on the `overflow-y-auto` div at `router.tsx:272`.
       run: 32s · 5.6k in · 1.1k out · sonnet-5
-- [ ] Zero the desktop `--pc-content-pad-bottom`, leave the mobile 96px value
+- [x] Zero the desktop `--pc-content-pad-bottom`, leave the mobile 96px value
       Edit only the desktop declaration in `utilities.css`.
+      run: 21s · 239 in · 921 out · sonnet-5
 - [ ] Confirm header, toolbar, and sidebar chrome stay outside the scroll container
       Codify the no-chrome-scrolls invariant against the current layout.
 
