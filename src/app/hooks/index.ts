@@ -1,7 +1,7 @@
 export { useProjectIdentity } from './use-project-identity';
 export {
-  useActiveIdeaTitle,
-  useActivePlanTitle,
+  useActiveIdea,
+  useActivePlan,
   useActiveSettingsSection,
   useResolvedDocSection,
 } from './use-route-selection';
