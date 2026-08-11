@@ -9,16 +9,19 @@ const rootStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '0.5rem',
+  height: '100%',
   minHeight: 0,
 };
 
 const questionCountStyle: CSSProperties = {
   opacity: 0.6,
   fontSize: '0.75rem',
+  flexShrink: 0,
 };
 
 const threadStyle: CSSProperties = {
-  maxHeight: '22rem',
+  flex: '1 1 auto',
+  minHeight: 0,
   overflowY: 'auto',
   display: 'flex',
   flexDirection: 'column',
@@ -60,6 +63,7 @@ const footerRowStyle: CSSProperties = {
   gap: '0.5rem',
 };
 
+const replyBoxStyle: CSSProperties = { flexShrink: 0 };
 const errorRowStyle: CSSProperties = { marginTop: '0.375rem' };
 const emptyStateStyle: CSSProperties = { opacity: 0.6, fontSize: '0.75rem' };
 
@@ -131,7 +135,7 @@ const ReplyBox = ({
   };
 
   return (
-    <div>
+    <div style={replyBoxStyle}>
       <Textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}

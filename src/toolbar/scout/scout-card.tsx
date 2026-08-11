@@ -12,16 +12,20 @@ const bodyStyle: CSSProperties = {
   flexDirection: 'column',
   gap: '0.625rem',
   width: 'min(34rem, calc(100vw - 2rem))',
+  height: '100%',
+  minHeight: 0,
+  overflow: 'hidden',
 };
 
-// Bleeds across the Island's own padding (0.75rem 1.25rem) so the darker
+// Bleeds across the Island's own padding (0.75rem, equal x/y) so the darker
 // paper strip runs edge to edge; top radius nests inside the card's 28px.
 const bannerStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: '0.5rem',
-  margin: '-0.75rem -1.25rem 0',
-  padding: '0.5rem 1.25rem',
+  flexShrink: 0,
+  margin: '-0.75rem -0.75rem 0',
+  padding: '0.5rem 0.75rem',
   background: 'rgba(61, 53, 43, 0.08)',
   borderBottom: '1px solid rgba(61, 53, 43, 0.12)',
   borderRadius: '27px 27px 0 0',
@@ -45,27 +49,32 @@ const mutedStyle: CSSProperties = {
 
 const columnsStyle: CSSProperties = {
   display: 'flex',
-  alignItems: 'flex-start',
+  alignItems: 'stretch',
   gap: '0.75rem',
+  flex: '1 1 auto',
+  minHeight: 0,
 };
 
 const glanceColumnStyle: CSSProperties = {
-  flex: '0 1 9rem',
+  flex: '0 0 40%',
   display: 'flex',
   flexDirection: 'column',
-  gap: '0.5rem',
   minWidth: 0,
 };
 
 const glanceCardBodyStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
+  justifyContent: 'space-between',
   gap: '0.5rem',
+  height: '100%',
 };
 
 const chatColumnStyle: CSSProperties = {
   flex: '1 1 0%',
   minWidth: 0,
+  minHeight: 0,
+  overflow: 'hidden',
 };
 
 const stampRowStyle: CSSProperties = {
@@ -100,6 +109,13 @@ const deskLinkStyle: CSSProperties = {
   color: 'var(--pui-text-primary)',
 };
 
+// Card sets no height of its own; this fills the glance column so it matches
+// the chat column's stretched full-panel height.
+const glanceCardCss = `
+.pc-scout-glance-card {
+  height: 100%;
+}`;
+
 export interface ScoutCardProps {
   status: StatusClientState;
   focusPlan: PlanEntry | null;
@@ -121,6 +137,7 @@ export const ScoutCard = ({
 
   return (
     <Island surface="paper" label="Paper camp">
+      <style>{glanceCardCss}</style>
       <div style={bodyStyle}>
         <div style={bannerStyle}>
           <code style={branchStyle} title={branch}>
@@ -134,7 +151,7 @@ export const ScoutCard = ({
 
         <div style={columnsStyle}>
           <div style={glanceColumnStyle}>
-            <Card size="small" texture="canvas">
+            <Card size="small" texture="canvas" className="pc-scout-glance-card">
               <div style={glanceCardBodyStyle}>
                 {focusPlan ? (
                   <>
