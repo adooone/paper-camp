@@ -48,5 +48,17 @@ version instead, using plumbing that already exists.
    same live check state the row already renders reactively, no new
    state to track.
 
+### Phases
+- [ ] Build fix entries from failing checks
+      Map each failing Quality/Tests/Consistency check to one `PlanEntry.fixes` entry using its `fixPrompt` content, keyed by check name; Docs excluded.
+- [ ] Upsert repeat failures by check name
+      A repeat failure for the same check replaces that entry's command and output in place instead of appending a duplicate.
+- [ ] Swap Commit for Fix while checks fail
+      In `DeliverCommitButton`, render Fix in the same slot whenever any of the three checks is failing.
+- [ ] Wire the Fix action to write-then-launch
+      Write the fix entries to the plan file first, then `launchRunAll(plan.id)` once the write lands (IDEA-149 pattern).
+- [ ] Confirm the auto-revert to Commit
+      Verify the button reads Commit again from live check state with no new state added.
+
 ### Thread
 - [x] 2026-08-11 [decision] Reuses the existing `fixes`/"Run fixes" mechanism rather than inventing a new phase kind or launch path — one fix entry per failing check, Docs findings excluded (different shape, already has its own browse flow).

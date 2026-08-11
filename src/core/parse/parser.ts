@@ -12,6 +12,7 @@ import type {
   PhaseItem,
   PlanEntry,
   RawEntry,
+  StoredNotification,
   SuggestionEntry,
   TaskLogEntry,
 } from '../../types/index';
@@ -410,6 +411,18 @@ export function parseTaskLog(raw: string): TaskLogEntry[] {
     if (!trimmed) continue;
     try {
       entries.push(JSON.parse(trimmed) as TaskLogEntry);
+    } catch {}
+  }
+  return entries;
+}
+
+export function parseNotificationLog(raw: string): StoredNotification[] {
+  const entries: StoredNotification[] = [];
+  for (const line of raw.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      entries.push(JSON.parse(trimmed) as StoredNotification);
     } catch {}
   }
   return entries;

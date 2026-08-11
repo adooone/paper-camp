@@ -45,5 +45,20 @@ move it out of the nav menu into the toolbar.
    generalized to the unread total) lives in the toolbar instead,
    alongside [[IDEA-154]]'s git icon.
 
+### Phases
+- [x] Extend the notification model with the two new kinds and a read flag
+      Add agent-completed and new-reply notifications alongside parked questions, each carrying its owning idea and a read/unread flag.
+      run: 5m32s · 17.8k in · 30.3k out · sonnet-5
+- [ ] Emit the new notifications from task and feedback events
+      Create a completed notification when a task reaches done/error, and a reply notification when an agent posts a non-blocking feedback thread entry.
+- [ ] Render all three kinds in one age-ordered feed
+      Replace the Inbox page's questions-only list; keep the parked-question reply flow unchanged.
+- [ ] Mark viewed notifications read and count unread for the badge
+      Set the read flag on view for the two new kinds, and generalise the badge stamp from parked-question count to total unread.
+- [ ] Fire Notification-API pushes off the SSE stream
+      Push agent-completed and new-reply while the tab is open but unfocused, gated on granted permission, degrading silently otherwise.
+- [ ] Move the entry from the nav menu to the toolbar
+      Remove the `router.tsx` navItems Inbox entry and add a toolbar icon button with the unread badge.
+
 ### Thread
 - [x] 2026-08-11 [decision] Push notifications are tab-open-but-unfocused only, via the Notification API off the existing SSE stream — no service worker, no closed-tab delivery. Read/unread is new for the two added kinds; parked questions keep their existing resolve-by-reply model unchanged.
