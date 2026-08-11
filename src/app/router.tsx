@@ -266,7 +266,7 @@ const RootLayout = () => {
               // breakpoint, clearing the fixed .phone-bottom-nav that replaces the header
               // nav there. 32px mirrors paper-ui `.content`'s padding, which the strip
               // and scroller bleed back out of.
-              className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto -mt-8 -ml-8 -mr-8 pt-0 pl-8 pr-8 pb-[var(--pc-content-pad-bottom,32px)]"
+              className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto [scrollbar-gutter:stable] -mt-8 -ml-8 -mr-8 pt-0 pl-8 pr-8 pb-[var(--pc-content-pad-bottom,32px)]"
             >
               {/* --pc-sidebar-h: the sticky sidebar can't size off this group (it's as
                   tall as the page). lg only — below that it's a full-height drawer. */}

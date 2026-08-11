@@ -36,5 +36,14 @@ Two settled fixes:
    bottom nav bar (`router.tsx:350-353`) that replaces the header nav
    at phone widths, and removing it would hide content behind that bar.
 
+### Phases
+- [x] Add `scrollbar-gutter: stable` to the content scroll container
+      Set it on the `overflow-y-auto` div at `router.tsx:272`.
+      run: 32s · 5.6k in · 1.1k out · sonnet-5
+- [ ] Zero the desktop `--pc-content-pad-bottom`, leave the mobile 96px value
+      Edit only the desktop declaration in `utilities.css`.
+- [ ] Confirm header, toolbar, and sidebar chrome stay outside the scroll container
+      Codify the no-chrome-scrolls invariant against the current layout.
+
 ### Thread
 - [x] 2026-08-11 [decision] Bottom-padding removal is desktop-only — mobile's reserve is load-bearing (clears the fixed bottom nav), not decorative, and stays untouched.
