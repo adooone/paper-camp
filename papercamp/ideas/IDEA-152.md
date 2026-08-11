@@ -51,8 +51,9 @@ re-skin.
 - [x] Snap the Tailwind-animated UI
       Remove the mobile drawer slide, chevron rotate, and agent-start opacity transition so they toggle instantly.
       run: 54s · 364 in · 2.6k out · sonnet-5
-- [ ] Remove the refresh spin and its keyframe
+- [x] Remove the refresh spin and its keyframe
       Strip the spin in `refresh-button.tsx` and the `pc-spin` entry in `tailwind.config.ts`.
+      run: 50s · 234 in · 1.7k out · sonnet-5
 - [ ] Sweep out orphaned useReducedMotion checks
 
 ### Thread
