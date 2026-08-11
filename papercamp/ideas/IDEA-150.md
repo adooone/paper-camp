@@ -50,6 +50,7 @@ for a case that no longer happens.
       run: 3m19s · 5.7k in · 2.2k out · sonnet-5
 - [x] Strip ID prefix from route params
       Routes use the bare numeric id (/plans/150, /ideas/150) instead of the full id string (IDEA-150) — update the two resolver hooks to match on the numeric part, and update every link builder to emit the bare number instead of the prefixed id.
+      run: 5m29s · 1.2k in · 15.5k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-10 [decision] Id is the primary route key, title the fallback only for id-less entries — not a dual always-both scheme. No legacy-URL redirect.
