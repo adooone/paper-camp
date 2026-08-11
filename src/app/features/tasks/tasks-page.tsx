@@ -163,7 +163,7 @@ const TaskRow = ({ entry, highlighted }: { entry: TaskLogEntry; highlighted: boo
         <Card size="small" texture="canvas" className="plan-row-card">
           <div className={TASK_ROWS_GRID_CLASS}>
             <span className="inline-flex items-center opacity-50">
-              <ChevronRightIcon className="transition-transform duration-150 ease-out group-aria-expanded:rotate-90" />
+              <ChevronRightIcon className="group-aria-expanded:rotate-90" />
             </span>
             <span className="font-semibold whitespace-nowrap overflow-hidden">
               {TASK_KIND_LABELS[entry.taskKind] ?? entry.taskKind}

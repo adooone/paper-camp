@@ -47,7 +47,7 @@ export const AgentStartButton = ({ planId, phaseIndex, disabled }: AgentStartBut
       label={label}
       onClick={handleStart}
       disabled={disabled || launching || !planId || !hasAgent}
-      className="transition-opacity text-ink-500"
+      className="text-ink-500"
     />
   );
 };

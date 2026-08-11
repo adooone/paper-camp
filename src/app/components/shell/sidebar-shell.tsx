@@ -1,5 +1,3 @@
-import { crossfadeTransition, crossfadeVariants } from '@/app/styles/motion';
-import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 
 interface SidebarShellProps {
@@ -15,7 +13,6 @@ export const SidebarShell = ({
   mobileOpen,
   onMobileClose,
 }: SidebarShellProps) => {
-  const shouldReduceMotion = useReducedMotion();
   const asideRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -58,7 +55,7 @@ export const SidebarShell = ({
         aria-modal={mobileOpen || undefined}
         aria-label="Sidebar navigation"
         tabIndex={-1}
-        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 flex flex-col overflow-hidden transition-transform duration-300 ease-out lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:translate-x-0 h-[var(--pc-sidebar-h,100%)] ${
+        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 flex flex-col overflow-hidden lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:translate-x-0 h-[var(--pc-sidebar-h,100%)] ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } ${
           mobileOpen
@@ -67,13 +64,7 @@ export const SidebarShell = ({
         }`}
       >
         <div className="flex-1 overflow-y-auto pt-5 relative">
-          <motion.div
-            key={routeKey}
-            {...crossfadeVariants(shouldReduceMotion, { x: -8 })}
-            transition={crossfadeTransition(shouldReduceMotion, 0.08)}
-          >
-            {children}
-          </motion.div>
+          <div key={routeKey}>{children}</div>
         </div>
       </aside>
     </>

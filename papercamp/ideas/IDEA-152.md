@@ -2,7 +2,7 @@
 id: IDEA-152
 title: Strip animations to a static baseline
 type: refactor
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -37,6 +37,25 @@ re-skin.
 
 4. **Not in scope**: paper-ui's own internal motion (button wobble,
    toast slide-in, etc.) — this idea is paper-camp's app layer only.
+
+### Phases
+- [x] Drop framer-motion from the routed page and sidebar
+      Remove the crossfade in `router.tsx` and the route-change fade/slide in `sidebar-shell.tsx`.
+      run: 1m14s · 5.9k in · 4.1k out · sonnet-5
+- [x] Drop framer-motion from the Stack panel
+      Remove the reopen tab's fade/slide and the panel's open/close drawer slide in `stack-panel.tsx`.
+      run: 1m10s · 230 in · 4.7k out · sonnet-5
+- [x] Delete the crossfade helpers and the framer-motion dependency
+      Remove `styles/motion.ts` and drop `framer-motion` from package.json once nothing imports it.
+      run: 1m4s · 240 in · 1.9k out · sonnet-5
+- [x] Snap the Tailwind-animated UI
+      Remove the mobile drawer slide, chevron rotate, and agent-start opacity transition so they toggle instantly.
+      run: 54s · 364 in · 2.6k out · sonnet-5
+- [x] Remove the refresh spin and its keyframe
+      Strip the spin in `refresh-button.tsx` and the `pc-spin` entry in `tailwind.config.ts`.
+      run: 50s · 234 in · 1.7k out · sonnet-5
+- [x] Sweep out orphaned useReducedMotion checks
+      run: 1m2s · 374 in · 2.8k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-11 [decision] Full removal, not tuning — a clean baseline to design motion back onto deliberately later, not a pass that keeps some animations and cuts others.

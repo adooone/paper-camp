@@ -18,10 +18,8 @@ import {
   useNavigate,
   useRouterState,
 } from '@tanstack/react-router';
-import { motion, useReducedMotion } from 'framer-motion';
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { useAppStore } from './stores/app-store';
-import { crossfadeTransition, crossfadeVariants } from './styles/motion';
 
 const DocsPage = lazy(() =>
   import('@/app/features/docs/index').then((m) => ({ default: m.DocsPage })),
@@ -163,7 +161,6 @@ const RootLayout = () => {
           : 'diff';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const shouldReduceMotion = useReducedMotion();
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
   const firstRunChecked = useRef(false);
 
@@ -311,12 +308,7 @@ const RootLayout = () => {
                 <div
                   className={`flex flex-col min-w-0 ${isLarge ? 'flex-[1_1_0%]' : 'flex-[0_1_800px]'}`}
                 >
-                  <motion.div
-                    key={pathname}
-                    {...crossfadeVariants(shouldReduceMotion)}
-                    transition={crossfadeTransition(shouldReduceMotion)}
-                    className="flex flex-col flex-1 min-w-0"
-                  >
+                  <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
                     <Page
@@ -328,7 +320,7 @@ const RootLayout = () => {
                         <Outlet />
                       </Suspense>
                     </Page>
-                  </motion.div>
+                  </div>
                 </div>
               </div>
             </div>

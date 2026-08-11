@@ -30,3 +30,15 @@ project that hasn't configured one gets a clear failure message; not part
 of the commit gate. This idea is just the surfacing — same data, desk UI.
 
 Owner will refine scope/phases later; deliberately left undrafted.
+
+### Phases
+- [ ] Expose the build check state to the desk
+      Surface the `build` check's status and last-built time, kept out of the commit-gate check stamps.
+- [ ] Add a Build control to the Stack panel's desk section
+      A trigger button plus the last-built timestamp, living under `src/app/components/stack-panel/`.
+- [ ] Wire the trigger to the build route
+      Call `/api/status/check?name=build`, reflect the running state, and refresh on completion.
+- [ ] Handle the unconfigured case
+      Show a clear message when `commands.build` is absent, distinct from a failed build.
+- [ ] Refresh last-built off the activity stream
+      Update the timestamp from the SSE status tick so it stays live without a manual reload.
