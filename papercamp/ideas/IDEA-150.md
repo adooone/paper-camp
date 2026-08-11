@@ -46,7 +46,8 @@ for a case that no longer happens.
 - [x] Verify id-less entries still route by title
       Confirm a legacy entry with no `id:` resolves through the fallback exactly as before.
       run: 3m3s · 379 in · 5.2k out · sonnet-5
-- [ ] Run quality and type checks
+- [x] Run quality and type checks
+      run: 3m19s · 5.7k in · 2.2k out · sonnet-5
 - [ ] Strip ID prefix from route params
       Routes use the bare numeric id (/plans/150, /ideas/150) instead of the full id string (IDEA-150) — update the two resolver hooks to match on the numeric part, and update every link builder to emit the bare number instead of the prefixed id.
 
