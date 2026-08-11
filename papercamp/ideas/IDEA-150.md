@@ -41,8 +41,9 @@ for a case that no longer happens.
 - [x] Emit id in every link builder
       Update the 8 call sites — inbox, Plans page, Roadmap, Deliver, both idea-creation modals — to pass the id, falling back to `encodeURIComponent(title)` only when id is absent.
       run: 4m50s · 934 in · 15.3k out · sonnet-5
-- [ ] Verify id-less entries still route by title
+- [x] Verify id-less entries still route by title
       Confirm a legacy entry with no `id:` resolves through the fallback exactly as before.
+      run: 3m3s · 379 in · 5.2k out · sonnet-5
 - [ ] Run quality and type checks
 
 ### Thread

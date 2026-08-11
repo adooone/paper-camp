@@ -10,7 +10,7 @@ export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 // id is the routing key; an id-less entry (the legacy case its optional type
 // still allows) falls back to matching by title, exactly as before ids existed.
-function resolveByIdOrTitle<T extends { id?: string | null; title: string }>(
+export function resolveByIdOrTitle<T extends { id?: string | null; title: string }>(
   entries: T[],
   routeParam: string,
 ): T | null {
