@@ -2,7 +2,7 @@
 id: IDEA-152
 title: Strip animations to a static baseline
 type: refactor
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -54,7 +54,8 @@ re-skin.
 - [x] Remove the refresh spin and its keyframe
       Strip the spin in `refresh-button.tsx` and the `pc-spin` entry in `tailwind.config.ts`.
       run: 50s · 234 in · 1.7k out · sonnet-5
-- [ ] Sweep out orphaned useReducedMotion checks
+- [x] Sweep out orphaned useReducedMotion checks
+      run: 1m2s · 374 in · 2.8k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-11 [decision] Full removal, not tuning — a clean baseline to design motion back onto deliberately later, not a pass that keeps some animations and cuts others.

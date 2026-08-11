@@ -176,8 +176,8 @@ header[class*="layout-module__header___"] {
  * The Stack panel's closed-state reopen tab (stack-panel.tsx) defaults to
  * vertical-center via `top: 50%`; nudged down toward one-handed thumb reach at
  * phone width. Stays a global CSS variable (not a per-element class) because
- * framer-motion owns the element's `transform` property for its x animation
- * and would clobber a class-based translateY.
+ * the element's inline `style` already owns its `transform` for translateY
+ * and would clobber a class-based one.
  */
 :root {
   --pc-stack-toggle-top: 50%;
