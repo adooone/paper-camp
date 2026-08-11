@@ -38,5 +38,19 @@ re-skin.
 4. **Not in scope**: paper-ui's own internal motion (button wobble,
    toast slide-in, etc.) — this idea is paper-camp's app layer only.
 
+### Phases
+- [x] Drop framer-motion from the routed page and sidebar
+      Remove the crossfade in `router.tsx` and the route-change fade/slide in `sidebar-shell.tsx`.
+      run: 1m14s · 5.9k in · 4.1k out · sonnet-5
+- [ ] Drop framer-motion from the Stack panel
+      Remove the reopen tab's fade/slide and the panel's open/close drawer slide in `stack-panel.tsx`.
+- [ ] Delete the crossfade helpers and the framer-motion dependency
+      Remove `styles/motion.ts` and drop `framer-motion` from package.json once nothing imports it.
+- [ ] Snap the Tailwind-animated UI
+      Remove the mobile drawer slide, chevron rotate, and agent-start opacity transition so they toggle instantly.
+- [ ] Remove the refresh spin and its keyframe
+      Strip the spin in `refresh-button.tsx` and the `pc-spin` entry in `tailwind.config.ts`.
+- [ ] Sweep out orphaned useReducedMotion checks
+
 ### Thread
 - [x] 2026-08-11 [decision] Full removal, not tuning — a clean baseline to design motion back onto deliberately later, not a pass that keeps some animations and cuts others.

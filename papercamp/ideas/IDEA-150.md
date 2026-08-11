@@ -34,5 +34,14 @@ for a case that no longer happens.
    this ships will 404; this is a single-user dev tool, not a public site,
    so a redirect table isn't worth the complexity.
 
+### Phases
+- [ ] Resolve routes by id in the two hooks
+      Switch `useActivePlanTitle`/`useActiveIdeaTitle` from title-match to id-match, keep title as the id-less fallback, and rename them to reflect what they resolve.
+- [ ] Emit id in every link builder
+      Update the 8 call sites — inbox, Plans page, Roadmap, Deliver, both idea-creation modals — to pass the id, falling back to `encodeURIComponent(title)` only when id is absent.
+- [ ] Verify id-less entries still route by title
+      Confirm a legacy entry with no `id:` resolves through the fallback exactly as before.
+- [ ] Run quality and type checks
+
 ### Thread
 - [x] 2026-08-10 [decision] Id is the primary route key, title the fallback only for id-less entries — not a dual always-both scheme. No legacy-URL redirect.
