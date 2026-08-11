@@ -152,10 +152,10 @@
 | IDEA-149 | Feedback fixes start running at once | feat | idea | agents, plans, app |
 | IDEA-150 | Route plans and ideas by id | refactor | idea | app, routing |
 | IDEA-151 | Manual commits become phase rows | feat | idea | app, plans, git |
-| IDEA-152 | Strip animations to a static baseline | refactor | dropped | app, ui |
+| IDEA-152 | Strip animations to a static baseline | refactor | idea | app, ui |
 | IDEA-153 | Notifications view replaces the Inbox | feat | idea | app, notifications, ux |
 | IDEA-154 | Git view replaces the toolbar's four actions | feat | idea | app, git, ux |
 | IDEA-155 | Only the page container scrolls | fix | idea | app, ui, layout |
 | IDEA-156 | Fix button replaces Commit when checks fail | feat | idea | app, plans, agents |
-| IDEA-157 | Build check in the status manager | feat | planned | integration, app, checks |
+| IDEA-157 | Build check in the status manager | feat | review | integration, app, checks |
 | IDEA-158 | Build command in the desk Stack panel | feat | idea | app, checks |

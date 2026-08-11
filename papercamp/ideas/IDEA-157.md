@@ -2,7 +2,7 @@
 id: IDEA-157
 title: Build check in the status manager
 type: feat
-status: in-progress
+status: review
 created: 2026-08-09
 tags:
   - integration
@@ -49,3 +49,4 @@ typing, which stay as shared infrastructure for whatever surfaces it next.
 
 ### Thread
 - [x] 2026-08-11 [decision] Owner correction: Scout's glance card should only carry idea-scoped data and actions — no git actions, no Build. Both removed from the embed. The Build *feature* itself is still wanted, just surfaced from the desk's own Stack panel instead — filed as [[IDEA-158]], left unplanned for the owner to refine.
+- [x] 2026-08-11 [log] [agent] Status corrected from `in-progress` to `review`: all 3 remaining actionable phases are done and merged (#136); the 2 unchecked phases are deliberately reverted and redirected to [[IDEA-158]], not pending work on this idea. `index.md` had also drifted to a stale `planned` — resynced to match.
