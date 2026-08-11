@@ -2,8 +2,9 @@
 id: IDEA-148
 title: Bare mount URL white-screens the desk
 type: fix
-status: idea
+status: review
 created: 2026-08-07
+updated: 2026-08-11
 tags:
   - integration
   - cli
@@ -36,15 +37,19 @@ The fix is at the server, not in every caller:
 3. **The pack smoke test requests the bare path too** and asserts the
    redirect — the green-while-broken gap this shipped through.
 
+### Phases
+- [x] Redirect the bare mount path in the Vite plugin
+      Serve a 308 from `/paper-camp` to `/paper-camp/` before the in-place HTML handler.
+      run: 3m45s · 9.6k in · 8.5k out · sonnet-5
+- [x] Redirect the bare mount path in the CLI middleware
+      Mirror the plugin's 308 so packed/standalone serving lands on the slash form too.
+- [x] Add the trailing slash to the island's desk link
+      Point the toolbar's "Open full desk" link at `/paper-camp/` directly.
+      run: 1m13s · 5.7k in · 2.6k out · sonnet-5
+- [x] Cover the bare path in the pack smoke test
+      Request `/paper-camp` and assert the 308 redirect to the slash form.
+      run: 52s · 367 in · 1.8k out · sonnet-5
+
 ### Thread
 - [x] 2026-08-07 [decision] Redirect at the serving layer is the fix; fixing only the link would leave every other slash-less entry broken. Smoke coverage must include the bare path.
-
-### Phases
-- [ ] Redirect the bare mount path in the Vite plugin
-      Serve a 308 from `/paper-camp` to `/paper-camp/` before the in-place HTML handler.
-- [ ] Redirect the bare mount path in the CLI middleware
-      Mirror the plugin's 308 so packed/standalone serving lands on the slash form too.
-- [ ] Add the trailing slash to the island's desk link
-      Point the toolbar's "Open full desk" link at `/paper-camp/` directly.
-- [ ] Cover the bare path in the pack smoke test
-      Request `/paper-camp` and assert the 308 redirect to the slash form.
+- [ ] 2026-08-11 [question] [agent] Run-all parked on phase 2 ("Redirect the bare mount path in the CLI middleware") — the agent needs a decision: For phase 2 ("mirror the plugin's 308 in the CLI middleware"), what mount prefix should `dev-server.ts` redirect from/to, and how does it learn it — a new `--route`/config option (making the standalone server mount-aware for the first time, a bigger change than a redirect), or is there a different server/entry point you intend by "CLI middleware" that I'm missing?

@@ -25,7 +25,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     });
   }, []);
 
-  const deskUrl = focusPlan ? `${route}/plans/${encodeURIComponent(focusPlan.title)}` : route;
+  const deskUrl = focusPlan ? `${route}/plans/${encodeURIComponent(focusPlan.title)}` : `${route}/`;
   const changesUrl = `${route}/diff`;
 
   return (

@@ -109,6 +109,20 @@ async function main() {
     }
 
     console.log('/paper-camp/toolbar.js served as JavaScript through a packed tarball.');
+
+    const bareResponse = await fetch(`http://localhost:${hostPort}/paper-camp`, {
+      redirect: 'manual',
+    });
+    if (bareResponse.status !== 308) {
+      throw new Error(`/paper-camp responded with status ${bareResponse.status}, expected 308`);
+    }
+    if (bareResponse.headers.get('location') !== '/paper-camp/') {
+      throw new Error(
+        `/paper-camp redirected to "${bareResponse.headers.get('location')}", expected "/paper-camp/"`,
+      );
+    }
+
+    console.log('/paper-camp redirected to /paper-camp/ with a 308.');
   } finally {
     if (viteServer) await viteServer.close();
     await stopProcess(campServer);

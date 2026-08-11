@@ -151,7 +151,7 @@
 | IDEA-147 | Scout panel replaces the sidesheet | feat | done | integration, app, ux, chat |
 | IDEA-148 | Bare mount URL white-screens the desk | fix | planned | integration, cli, app |
 | IDEA-149 | Feedback fixes start running at once | feat | idea | agents, plans, app |
-| IDEA-150 | Route plans and ideas by id | refactor | planned | app, routing |
+| IDEA-150 | Route plans and ideas by id | refactor | done | app, routing |
 | IDEA-151 | Manual commits become phase rows | feat | planned | app, plans, git |
 | IDEA-152 | Strip animations to a static baseline | refactor | done | app, ui |
 | IDEA-153 | Notifications view replaces the Inbox | feat | idea | app, notifications, ux |

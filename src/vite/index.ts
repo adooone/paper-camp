@@ -27,6 +27,16 @@ export function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
       route = integration?.route ?? CAMP_ROUTE;
       if (!enabled) return;
       const port = resolvedPort;
+      server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+        const [path, query] = (req.url ?? '').split('?', 2);
+        if (path !== route) {
+          next();
+          return;
+        }
+        res.statusCode = 308;
+        res.setHeader('Location', query ? `${route}/?${query}` : `${route}/`);
+        res.end();
+      });
       server.middlewares.use(route, (req: IncomingMessage, res: ServerResponse) => {
         proxyToCampServer(req, res, { port, mount: route });
       });
