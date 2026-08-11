@@ -45,8 +45,9 @@ re-skin.
 - [x] Drop framer-motion from the Stack panel
       Remove the reopen tab's fade/slide and the panel's open/close drawer slide in `stack-panel.tsx`.
       run: 1m10s · 230 in · 4.7k out · sonnet-5
-- [ ] Delete the crossfade helpers and the framer-motion dependency
+- [x] Delete the crossfade helpers and the framer-motion dependency
       Remove `styles/motion.ts` and drop `framer-motion` from package.json once nothing imports it.
+      run: 1m4s · 240 in · 1.9k out · sonnet-5
 - [ ] Snap the Tailwind-animated UI
       Remove the mobile drawer slide, chevron rotate, and agent-start opacity transition so they toggle instantly.
 - [ ] Remove the refresh spin and its keyframe
