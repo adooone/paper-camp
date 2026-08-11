@@ -2,7 +2,7 @@
 id: IDEA-155
 title: Only the page container scrolls
 type: fix
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -35,6 +35,17 @@ Two settled fixes:
    The mobile value (96px) stays exactly as-is — it clears the fixed
    bottom nav bar (`router.tsx:350-353`) that replaces the header nav
    at phone widths, and removing it would hide content behind that bar.
+
+### Phases
+- [x] Add `scrollbar-gutter: stable` to the content scroll container
+      Set it on the `overflow-y-auto` div at `router.tsx:272`.
+      run: 32s · 5.6k in · 1.1k out · sonnet-5
+- [x] Zero the desktop `--pc-content-pad-bottom`, leave the mobile 96px value
+      Edit only the desktop declaration in `utilities.css`.
+      run: 21s · 239 in · 921 out · sonnet-5
+- [x] Confirm header, toolbar, and sidebar chrome stay outside the scroll container
+      Codify the no-chrome-scrolls invariant against the current layout.
+      run: 1m59s · 392 in · 8.2k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-11 [decision] Bottom-padding removal is desktop-only — mobile's reserve is load-bearing (clears the fixed bottom nav), not decorative, and stays untouched.

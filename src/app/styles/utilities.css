@@ -163,7 +163,7 @@ header[class*="layout-module__header___"] {
  * a per-element Tailwind class; widened at phone width to clear that fixed bar.
  */
 :root {
-  --pc-content-pad-bottom: 32px;
+  --pc-content-pad-bottom: 0px;
 }
 @media (max-width: 480px) {
   :root {
