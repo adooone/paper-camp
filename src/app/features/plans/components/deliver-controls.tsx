@@ -1,4 +1,5 @@
 import { MergeIcon, PullIcon, PushIcon, WandIcon } from '@/app/components/icons';
+import { entityRouteParam } from '@/app/hooks';
 import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
@@ -171,7 +172,7 @@ export const DeliverChecksRow = () => {
                         navigate({
                           to: '/plans/$planId',
                           params: {
-                            planId: encodeURIComponent(linkedPlan.id ?? linkedPlan.title),
+                            planId: entityRouteParam(linkedPlan.id, linkedPlan.title),
                           },
                         })
                       }

@@ -1,6 +1,6 @@
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
-import { resolveByIdOrTitle } from './use-route-selection';
+import { entityRouteParam, resolveByIdOrTitle } from './use-route-selection';
 
 const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
   title: 'Untitled',
@@ -45,5 +45,22 @@ describe('resolveByIdOrTitle', () => {
   it('returns null when nothing matches', () => {
     const entries = [plan({ id: '146', title: 'Route plans and ideas by id' })];
     expect(resolveByIdOrTitle(entries, '999')).toBeNull();
+  });
+
+  it('matches the bare numeric id against a prefixed id like IDEA-146', () => {
+    const entries = [plan({ id: 'IDEA-146', title: 'Route plans and ideas by id' })];
+    expect(resolveByIdOrTitle(entries, '146')?.title).toBe('Route plans and ideas by id');
+  });
+});
+
+describe('entityRouteParam', () => {
+  it('emits the bare numeric id when present', () => {
+    expect(entityRouteParam('IDEA-146', 'Route plans and ideas by id')).toBe('146');
+  });
+
+  it('falls back to the URL-encoded title when id is absent', () => {
+    expect(entityRouteParam(undefined, 'Deliver lives in the idea view')).toBe(
+      encodeURIComponent('Deliver lives in the idea view'),
+    );
   });
 });

@@ -1,5 +1,6 @@
 export { useProjectIdentity } from './use-project-identity';
 export {
+  entityRouteParam,
   useActiveIdea,
   useActivePlan,
   useActiveSettingsSection,

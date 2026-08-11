@@ -2,6 +2,7 @@ import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
 import { PrBadge } from '@/app/features/plans/components/pr-badge';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
+import { entityRouteParam } from '@/app/hooks';
 import { addRoadmapCandidate } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import type {
@@ -184,7 +185,7 @@ const RoadmapItemRow = ({
   onPromote: () => void;
   onPromoteCandidate: (candidateName: string) => void;
   onAddCandidate: (name: string) => Promise<void>;
-  onOpenGraduated: (idOrTitle: string) => void;
+  onOpenGraduated: (id: string | undefined, title: string) => void;
 }) => {
   const [expanded, setExpanded] = useState(highlighted);
   const { shipped, queued } = graduationCounts(graduated);
@@ -241,7 +242,7 @@ const RoadmapItemRow = ({
               idea={idea}
               onOpen={
                 idea.planTitle
-                  ? () => onOpenGraduated(idea.planId ?? (idea.planTitle as string))
+                  ? () => onOpenGraduated(idea.planId, idea.planTitle as string)
                   : undefined
               }
             />
@@ -389,10 +390,10 @@ export const RoadmapPage = () => {
                         setPromoting({ horizonTitle: horizon.title, item, candidateName })
                       }
                       onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
-                      onOpenGraduated={(idOrTitle) =>
+                      onOpenGraduated={(id, title) =>
                         navigate({
                           to: '/plans/$planId',
-                          params: { planId: encodeURIComponent(idOrTitle) },
+                          params: { planId: entityRouteParam(id, title) },
                         })
                       }
                     />

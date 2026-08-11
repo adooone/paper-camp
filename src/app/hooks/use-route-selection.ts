@@ -8,6 +8,11 @@ type DocSection = (typeof DOC_SECTIONS)[number];
 const SETTINGS_SECTIONS = ['subjects', 'setup', 'merge-policy'] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
+// Routes carry the bare numeric id (/plans/150), not the full IDEA-150 string.
+export function bareId(id: string | null | undefined): string | null {
+  return id?.match(/\d+$/)?.[0] ?? null;
+}
+
 // id is the routing key; an id-less entry (the legacy case its optional type
 // still allows) falls back to matching by title, exactly as before ids existed.
 export function resolveByIdOrTitle<T extends { id?: string | null; title: string }>(
@@ -15,10 +20,16 @@ export function resolveByIdOrTitle<T extends { id?: string | null; title: string
   routeParam: string,
 ): T | null {
   return (
-    entries.find((entry) => entry.id === routeParam) ??
+    entries.find((entry) => bareId(entry.id) === routeParam) ??
     entries.find((entry) => !entry.id && entry.title === routeParam) ??
     null
   );
+}
+
+// Link builders' counterpart to resolveByIdOrTitle: bare numeric id when present,
+// URL-encoded title as the id-less fallback.
+export function entityRouteParam(id: string | null | undefined, title: string): string {
+  return bareId(id) ?? encodeURIComponent(title);
 }
 
 export function useActivePlan(): PlanEntry | null {

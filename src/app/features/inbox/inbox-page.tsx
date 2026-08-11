@@ -1,5 +1,6 @@
 import { PageTitle } from '@/app/components/page-title';
 import { PlanIdStamp } from '@/app/features/plans/components';
+import { entityRouteParam } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
@@ -25,9 +26,9 @@ export const InboxPage = () => {
 
   const openEntity = (id: string, title: string) => {
     if (plans?.entries.some((p) => p.id === id || p.title === title)) {
-      navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(id) } });
+      navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(id, title) } });
     } else {
-      navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(id) } });
+      navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
     }
   };
 

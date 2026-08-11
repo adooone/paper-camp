@@ -1,7 +1,7 @@
 import { DraftPlanButton } from '@/app/features/plans/actions/draft-plan-button';
 import { PlanIdStamp } from '@/app/features/plans/components/plan-id-stamp';
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
-import { useSimilarIdeas } from '@/app/hooks';
+import { entityRouteParam, useSimilarIdeas } from '@/app/hooks';
 import { checkIdeaOverlap } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
@@ -67,7 +67,7 @@ export const AddIdeaModal = ({ open, onClose, onAdd }: AddIdeaModalProps) => {
     onClose();
     navigate({
       to: '/plans/$planId',
-      params: { planId: encodeURIComponent(matchId ?? matchTitle) },
+      params: { planId: entityRouteParam(matchId, matchTitle) },
     });
   };
 

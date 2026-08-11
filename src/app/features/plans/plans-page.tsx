@@ -1,5 +1,5 @@
 import { PageTitle } from '@/app/components/page-title';
-import { useActiveIdea, useActivePlan } from '@/app/hooks';
+import { entityRouteParam, useActiveIdea, useActivePlan } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { SuggestionEntry } from '@/types/index';
 import { Breadcrumb, Card, useToast } from '@dendelion/paper-ui';
@@ -51,12 +51,12 @@ export const PlansPage = () => {
 
   const handleOpenPlan = (title: string) => {
     const id = plans?.entries.find((p) => p.title === title)?.id;
-    navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(id ?? title) } });
+    navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(id, title) } });
   };
 
   const handleOpenIdea = (title: string) => {
     const id = ideaEntries.find((idea) => idea.title === title)?.id;
-    navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(id ?? title) } });
+    navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
   };
 
   const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);
