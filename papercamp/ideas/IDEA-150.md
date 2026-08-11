@@ -38,8 +38,9 @@ for a case that no longer happens.
 - [x] Resolve routes by id in the two hooks
       Switch `useActivePlanTitle`/`useActiveIdeaTitle` from title-match to id-match, keep title as the id-less fallback, and rename them to reflect what they resolve.
       run: 7m43s · 6.4k in · 18.3k out · sonnet-5
-- [ ] Emit id in every link builder
+- [x] Emit id in every link builder
       Update the 8 call sites — inbox, Plans page, Roadmap, Deliver, both idea-creation modals — to pass the id, falling back to `encodeURIComponent(title)` only when id is absent.
+      run: 4m50s · 934 in · 15.3k out · sonnet-5
 - [ ] Verify id-less entries still route by title
       Confirm a legacy entry with no `id:` resolves through the fallback exactly as before.
 - [ ] Run quality and type checks

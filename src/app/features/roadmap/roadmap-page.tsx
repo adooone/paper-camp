@@ -104,6 +104,7 @@ interface MergedIdea {
   label: string;
   status: PlanStatus;
   pr?: PrInfo;
+  planId?: string;
   planTitle?: string;
 }
 
@@ -117,6 +118,7 @@ const mergeIdeas = (links: RoadmapLink[], graduated: PlanEntry[]): MergedIdea[] 
       label: plan.title,
       status: plan.status,
       pr: plan.pr,
+      planId: plan.id,
       planTitle: plan.title,
     };
   });
@@ -182,7 +184,7 @@ const RoadmapItemRow = ({
   onPromote: () => void;
   onPromoteCandidate: (candidateName: string) => void;
   onAddCandidate: (name: string) => Promise<void>;
-  onOpenGraduated: (title: string) => void;
+  onOpenGraduated: (idOrTitle: string) => void;
 }) => {
   const [expanded, setExpanded] = useState(highlighted);
   const { shipped, queued } = graduationCounts(graduated);
@@ -237,7 +239,11 @@ const RoadmapItemRow = ({
             <IdeaRow
               key={idea.key}
               idea={idea}
-              onOpen={idea.planTitle ? () => onOpenGraduated(idea.planTitle as string) : undefined}
+              onOpen={
+                idea.planTitle
+                  ? () => onOpenGraduated(idea.planId ?? (idea.planTitle as string))
+                  : undefined
+              }
             />
           ))}
           {item.candidates.map((candidateName) => (
@@ -383,10 +389,10 @@ export const RoadmapPage = () => {
                         setPromoting({ horizonTitle: horizon.title, item, candidateName })
                       }
                       onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
-                      onOpenGraduated={(title) =>
+                      onOpenGraduated={(idOrTitle) =>
                         navigate({
                           to: '/plans/$planId',
-                          params: { planId: encodeURIComponent(title) },
+                          params: { planId: encodeURIComponent(idOrTitle) },
                         })
                       }
                     />

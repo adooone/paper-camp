@@ -50,11 +50,13 @@ export const PlansPage = () => {
   };
 
   const handleOpenPlan = (title: string) => {
-    navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(title) } });
+    const id = plans?.entries.find((p) => p.title === title)?.id;
+    navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(id ?? title) } });
   };
 
   const handleOpenIdea = (title: string) => {
-    navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(title) } });
+    const id = ideaEntries.find((idea) => idea.title === title)?.id;
+    navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(id ?? title) } });
   };
 
   const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);

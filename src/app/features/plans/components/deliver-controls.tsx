@@ -170,7 +170,9 @@ export const DeliverChecksRow = () => {
                       onClick={() =>
                         navigate({
                           to: '/plans/$planId',
-                          params: { planId: encodeURIComponent(linkedPlan.title) },
+                          params: {
+                            planId: encodeURIComponent(linkedPlan.id ?? linkedPlan.title),
+                          },
                         })
                       }
                       className="bg-none bg-transparent border-none p-0 underline cursor-pointer [font:inherit] text-left"

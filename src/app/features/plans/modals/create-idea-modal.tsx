@@ -55,9 +55,12 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
     }
   }, [open, initialContent]);
 
-  const handleOpenSimilar = (matchTitle: string) => {
+  const handleOpenSimilar = (matchId: string | undefined, matchTitle: string) => {
     onClose();
-    navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(matchTitle) } });
+    navigate({
+      to: '/plans/$planId',
+      params: { planId: encodeURIComponent(matchId ?? matchTitle) },
+    });
   };
 
   const handleCheckOverlap = async () => {
@@ -83,7 +86,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
 
   const handleOpenVerdictTarget = (targetId: string) => {
     const match = planEntries.find((p) => p.id === targetId);
-    if (match) handleOpenSimilar(match.title);
+    if (match) handleOpenSimilar(match.id, match.title);
   };
 
   const handleExtendSimilar = async (
@@ -162,7 +165,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
                         type="button"
                         variant="ghost"
                         size="small"
-                        onClick={() => handleOpenSimilar(candidate.title)}
+                        onClick={() => handleOpenSimilar(candidate.id, candidate.title)}
                       >
                         Open it
                       </Button>

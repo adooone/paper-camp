@@ -23,11 +23,11 @@ export const InboxPage = () => {
     await Promise.all([loadPlans(), loadParkedQuestions()]);
   };
 
-  const openEntity = (title: string) => {
-    if (plans?.entries.some((p) => p.title === title)) {
-      navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(title) } });
+  const openEntity = (id: string, title: string) => {
+    if (plans?.entries.some((p) => p.id === id || p.title === title)) {
+      navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(id) } });
     } else {
-      navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(title) } });
+      navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(id) } });
     }
   };
 
@@ -55,7 +55,7 @@ export const InboxPage = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => openEntity(q.entityTitle)}
+                    onClick={() => openEntity(q.entityId, q.entityTitle)}
                     aria-label={`Open ${q.entityTitle}`}
                     className="bg-transparent border-none p-0 cursor-pointer"
                   >
@@ -75,7 +75,7 @@ export const InboxPage = () => {
                 plan={plan}
                 expanded={expandedKey === key}
                 onToggle={() => setExpandedKey((cur) => (cur === key ? null : key))}
-                onOpen={() => openEntity(q.entityTitle)}
+                onOpen={() => openEntity(q.entityId, q.entityTitle)}
                 reload={reload}
               />
             );
