@@ -2,6 +2,7 @@ import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
 import { PrBadge } from '@/app/features/plans/components/pr-badge';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
+import { entityRouteParam } from '@/app/hooks';
 import { addRoadmapCandidate } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import type {
@@ -104,6 +105,7 @@ interface MergedIdea {
   label: string;
   status: PlanStatus;
   pr?: PrInfo;
+  planId?: string;
   planTitle?: string;
 }
 
@@ -117,6 +119,7 @@ const mergeIdeas = (links: RoadmapLink[], graduated: PlanEntry[]): MergedIdea[] 
       label: plan.title,
       status: plan.status,
       pr: plan.pr,
+      planId: plan.id,
       planTitle: plan.title,
     };
   });
@@ -182,7 +185,7 @@ const RoadmapItemRow = ({
   onPromote: () => void;
   onPromoteCandidate: (candidateName: string) => void;
   onAddCandidate: (name: string) => Promise<void>;
-  onOpenGraduated: (title: string) => void;
+  onOpenGraduated: (id: string | undefined, title: string) => void;
 }) => {
   const [expanded, setExpanded] = useState(highlighted);
   const { shipped, queued } = graduationCounts(graduated);
@@ -237,7 +240,11 @@ const RoadmapItemRow = ({
             <IdeaRow
               key={idea.key}
               idea={idea}
-              onOpen={idea.planTitle ? () => onOpenGraduated(idea.planTitle as string) : undefined}
+              onOpen={
+                idea.planTitle
+                  ? () => onOpenGraduated(idea.planId, idea.planTitle as string)
+                  : undefined
+              }
             />
           ))}
           {item.candidates.map((candidateName) => (
@@ -383,10 +390,10 @@ export const RoadmapPage = () => {
                         setPromoting({ horizonTitle: horizon.title, item, candidateName })
                       }
                       onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
-                      onOpenGraduated={(title) =>
+                      onOpenGraduated={(id, title) =>
                         navigate({
                           to: '/plans/$planId',
-                          params: { planId: encodeURIComponent(title) },
+                          params: { planId: entityRouteParam(id, title) },
                         })
                       }
                     />

@@ -1,5 +1,5 @@
 import { selectPlanRows } from '@/app/features/plans/helpers';
-import { useActivePlanTitle } from '@/app/hooks';
+import { useActivePlan } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanStatus } from '@/types/index';
 import { Input, ListItem } from '@dendelion/paper-ui';
@@ -19,14 +19,14 @@ const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase te
 
 export const PlanFilterColumn = () => {
   const plans = useAppStore((s) => s.plans);
-  const activePlanTitle = useActivePlanTitle();
+  const activePlan = useActivePlan();
   const filters = useAppStore((s) => s.planFilters);
   const togglePlanStatus = useAppStore((s) => s.togglePlanStatus);
   const setPlanSearch = useAppStore((s) => s.setPlanSearch);
   const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
   const navigate = useNavigate();
 
-  if (!plans || activePlanTitle) return null;
+  if (!plans || activePlan) return null;
 
   const { statusCounts } = selectPlanRows(plans.entries, filters);
   const activeStatuses = new Set(filters.statuses);

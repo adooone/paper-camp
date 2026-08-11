@@ -4,6 +4,7 @@ title: Build check in the status manager
 type: feat
 status: done
 created: 2026-08-09
+updated: 2026-08-11
 tags:
   - integration
   - app

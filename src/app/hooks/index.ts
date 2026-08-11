@@ -1,7 +1,8 @@
 export { useProjectIdentity } from './use-project-identity';
 export {
-  useActiveIdeaTitle,
-  useActivePlanTitle,
+  entityRouteParam,
+  useActiveIdea,
+  useActivePlan,
   useActiveSettingsSection,
   useResolvedDocSection,
 } from './use-route-selection';

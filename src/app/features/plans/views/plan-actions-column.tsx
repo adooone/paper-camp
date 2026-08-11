@@ -1,5 +1,5 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
-import { useActivePlanTitle, useSubjectVocabulary } from '@/app/hooks';
+import { useActivePlan, useSubjectVocabulary } from '@/app/hooks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { Breadcrumb, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -14,8 +14,7 @@ const NO_SUBJECT = '__no-subject__';
 const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300';
 
 export const PlanActionsColumn = () => {
-  const plans = useAppStore((s) => s.plans);
-  const activePlanTitle = useActivePlanTitle();
+  const plan = useActivePlan();
   const agentBusy = useAppStore(selectAgentBusy);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
@@ -26,7 +25,6 @@ export const PlanActionsColumn = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const plan = activePlanTitle ? plans?.entries.find((p) => p.title === activePlanTitle) : null;
   const [orderInput, setOrderInput] = useState('');
   const [archiving, setArchiving] = useState(false);
   useEffect(() => {

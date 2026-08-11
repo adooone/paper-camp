@@ -1,5 +1,6 @@
 import { PageTitle } from '@/app/components/page-title';
 import { PlanIdStamp } from '@/app/features/plans/components';
+import { entityRouteParam } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
@@ -23,11 +24,11 @@ export const InboxPage = () => {
     await Promise.all([loadPlans(), loadParkedQuestions()]);
   };
 
-  const openEntity = (title: string) => {
-    if (plans?.entries.some((p) => p.title === title)) {
-      navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(title) } });
+  const openEntity = (id: string, title: string) => {
+    if (plans?.entries.some((p) => p.id === id || p.title === title)) {
+      navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(id, title) } });
     } else {
-      navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(title) } });
+      navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
     }
   };
 
@@ -55,7 +56,7 @@ export const InboxPage = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => openEntity(q.entityTitle)}
+                    onClick={() => openEntity(q.entityId, q.entityTitle)}
                     aria-label={`Open ${q.entityTitle}`}
                     className="bg-transparent border-none p-0 cursor-pointer"
                   >
@@ -75,7 +76,7 @@ export const InboxPage = () => {
                 plan={plan}
                 expanded={expandedKey === key}
                 onToggle={() => setExpandedKey((cur) => (cur === key ? null : key))}
-                onOpen={() => openEntity(q.entityTitle)}
+                onOpen={() => openEntity(q.entityId, q.entityTitle)}
                 reload={reload}
               />
             );

@@ -1,9 +1,9 @@
 import { PageTitle } from '@/app/components/page-title';
-import { useActiveIdeaTitle, useActivePlanTitle } from '@/app/hooks';
+import { entityRouteParam, useActiveIdea, useActivePlan } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { SuggestionEntry } from '@/types/index';
 import { Breadcrumb, Card, useToast } from '@dendelion/paper-ui';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { selectWorklistRows } from './helpers';
 import { PromoteSuggestionModal } from './modals';
@@ -27,8 +27,9 @@ export const PlansPage = () => {
   const setDetailView = useAppStore((s) => s.setDetailView);
   const planFilters = useAppStore((s) => s.planFilters);
   const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
-  const activePlanTitle = useActivePlanTitle();
-  const activeIdeaTitle = useActiveIdeaTitle();
+  const activePlan = useActivePlan();
+  const activeIdea = useActiveIdea();
+  const { planId, ideaId } = useParams({ strict: false });
   const dismissSuggestion = useAppStore((s) => s.dismissSuggestion);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -39,21 +40,23 @@ export const PlansPage = () => {
   }, [subjectParam, setSubjectFilter]);
 
   // Opening a different plan/idea always lands on Details, never a stale Feedback view.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the titles are the reset trigger, not read in the body.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the active entities are the reset trigger, not read in the body.
   useEffect(() => {
     setDetailView('details');
-  }, [activePlanTitle, activeIdeaTitle, setDetailView]);
+  }, [activePlan, activeIdea, setDetailView]);
 
   const handleBack = () => {
     navigate({ to: '/' });
   };
 
   const handleOpenPlan = (title: string) => {
-    navigate({ to: '/plans/$planId', params: { planId: encodeURIComponent(title) } });
+    const id = plans?.entries.find((p) => p.title === title)?.id;
+    navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(id, title) } });
   };
 
   const handleOpenIdea = (title: string) => {
-    navigate({ to: '/ideas/$ideaId', params: { ideaId: encodeURIComponent(title) } });
+    const id = ideaEntries.find((idea) => idea.title === title)?.id;
+    navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
   };
 
   const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);
@@ -69,14 +72,6 @@ export const PlansPage = () => {
       });
     }
   };
-
-  const activePlan = activePlanTitle
-    ? plans?.entries.find((p) => p.title === activePlanTitle)
-    : null;
-
-  const activeIdea = activeIdeaTitle
-    ? ideaEntries.find((idea) => idea.title === activeIdeaTitle)
-    : null;
 
   if (plansError) {
     return (
@@ -95,7 +90,7 @@ export const PlansPage = () => {
     // the worklist skeleton (table rows, search bar) reads as a mismatched
     // flash of the wrong page rather than a loading state for the detail
     // view about to render, so it's scoped to the actual worklist case.
-    if (activePlanTitle || activeIdeaTitle) {
+    if (planId || ideaId) {
       return (
         <div>
           <output aria-live="polite" className="sr-only">
@@ -166,7 +161,7 @@ export const PlansPage = () => {
             <ListView
               plans={plans.entries}
               rows={rows}
-              activePlanTitle={activePlanTitle}
+              activePlanTitle={null}
               onOpenPlan={handleOpenPlan}
               onOpenIdea={handleOpenIdea}
             />

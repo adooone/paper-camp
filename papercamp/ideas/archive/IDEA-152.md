@@ -2,8 +2,9 @@
 id: IDEA-152
 title: Strip animations to a static baseline
 type: refactor
-status: review
+status: done
 created: 2026-08-11
+updated: 2026-08-11
 tags:
   - app
   - ui

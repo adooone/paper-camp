@@ -2,8 +2,9 @@
 id: IDEA-155
 title: Only the page container scrolls
 type: fix
-status: review
+status: done
 created: 2026-08-11
+updated: 2026-08-11
 tags:
   - app
   - ui

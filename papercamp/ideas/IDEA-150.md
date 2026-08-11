@@ -2,12 +2,14 @@
 id: IDEA-150
 title: Route plans and ideas by id
 type: refactor
-status: idea
+status: review
 created: 2026-08-10
+updated: 2026-08-11
 tags:
   - app
   - routing
 subject: App UI
+order: 4
 ---
 
 Plan and idea URLs are unreadable — `/plans/Deliver%20lives%20in%20the%20idea%20view`
@@ -35,13 +37,24 @@ for a case that no longer happens.
    so a redirect table isn't worth the complexity.
 
 ### Phases
-- [ ] Resolve routes by id in the two hooks
+- [x] Resolve routes by id in the two hooks
       Switch `useActivePlanTitle`/`useActiveIdeaTitle` from title-match to id-match, keep title as the id-less fallback, and rename them to reflect what they resolve.
-- [ ] Emit id in every link builder
+      run: 7m43s · 6.4k in · 18.3k out · sonnet-5
+- [x] Emit id in every link builder
       Update the 8 call sites — inbox, Plans page, Roadmap, Deliver, both idea-creation modals — to pass the id, falling back to `encodeURIComponent(title)` only when id is absent.
-- [ ] Verify id-less entries still route by title
+      run: 4m50s · 934 in · 15.3k out · sonnet-5
+- [x] Verify id-less entries still route by title
       Confirm a legacy entry with no `id:` resolves through the fallback exactly as before.
-- [ ] Run quality and type checks
+      run: 3m3s · 379 in · 5.2k out · sonnet-5
+- [x] Run quality and type checks
+      run: 3m19s · 5.7k in · 2.2k out · sonnet-5
+- [x] Strip ID prefix from route params
+      Routes use the bare numeric id (/plans/150, /ideas/150) instead of the full id string (IDEA-150) — update the two resolver hooks to match on the numeric part, and update every link builder to emit the bare number instead of the prefixed id.
+      run: 5m29s · 1.2k in · 15.5k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-10 [decision] Id is the primary route key, title the fallback only for id-less entries — not a dual always-both scheme. No legacy-URL redirect.
+- [x] 2026-08-11 [chat] I want the route to be simpler /plans/:id - like this - host/plans/150
+- [x] 2026-08-11 [chat] [agent] Got it — id is primary, title only fills in when there's no id, no dual-write and no redirect table for old URLs. That matches phase 1's routing logic already in place.
+- [x] 2026-08-11 [chat] what title, currently we have plans/IDEA-150 - what I want is /plans/150 (without IDEA!!!)
+- [x] 2026-08-11 [chat] [agent] Got it — numeric only, so /plans/150 not /plans/IDEA-150. That's a change to the routing already built in phases 1-3, so I've added it as a new phase to strip the prefix in both the route params and the link builders.
