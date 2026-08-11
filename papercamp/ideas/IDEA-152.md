@@ -48,8 +48,9 @@ re-skin.
 - [x] Delete the crossfade helpers and the framer-motion dependency
       Remove `styles/motion.ts` and drop `framer-motion` from package.json once nothing imports it.
       run: 1m4s · 240 in · 1.9k out · sonnet-5
-- [ ] Snap the Tailwind-animated UI
+- [x] Snap the Tailwind-animated UI
       Remove the mobile drawer slide, chevron rotate, and agent-start opacity transition so they toggle instantly.
+      run: 54s · 364 in · 2.6k out · sonnet-5
 - [ ] Remove the refresh spin and its keyframe
       Strip the spin in `refresh-button.tsx` and the `pc-spin` entry in `tailwind.config.ts`.
 - [ ] Sweep out orphaned useReducedMotion checks

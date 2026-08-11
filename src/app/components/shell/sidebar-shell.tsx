@@ -55,7 +55,7 @@ export const SidebarShell = ({
         aria-modal={mobileOpen || undefined}
         aria-label="Sidebar navigation"
         tabIndex={-1}
-        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 flex flex-col overflow-hidden transition-transform duration-300 ease-out lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:translate-x-0 h-[var(--pc-sidebar-h,100%)] ${
+        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 flex flex-col overflow-hidden lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:translate-x-0 h-[var(--pc-sidebar-h,100%)] ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } ${
           mobileOpen
