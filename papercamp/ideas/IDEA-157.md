@@ -2,7 +2,7 @@
 id: IDEA-157
 title: Build check in the status manager
 type: feat
-status: review
+status: done
 created: 2026-08-09
 tags:
   - integration
@@ -44,9 +44,9 @@ typing, which stay as shared infrastructure for whatever surfaces it next.
       Fifth CheckName, command from `commands.build`, no default, clear message when unconfigured; excluded from the commit gate.
 - [x] Accept `build` on the check endpoint and SSE replay
 - [x] Type the `commands` block in PaperCampConfig and StatusState
-- [ ] ~~Build row in the scout glance card~~ — reverted, wrong surface → [[IDEA-158]]
-- [ ] ~~Dogfood in func-ui via the linked package build command~~ — reverted along with the embed UI; the config block itself (`commands.build`) stays in func-ui's `papercamp/config.json` for whatever surfaces the check next
+- [x] ~~Build row in the scout glance card~~ — reverted, wrong surface, resolved by redirect → [[IDEA-158]]
+- [x] ~~Dogfood in func-ui via the linked package build command~~ — reverted along with the embed UI, resolved by redirect; the config block itself (`commands.build`) stays in func-ui's `papercamp/config.json` for whatever surfaces the check next
 
 ### Thread
 - [x] 2026-08-11 [decision] Owner correction: Scout's glance card should only carry idea-scoped data and actions — no git actions, no Build. Both removed from the embed. The Build *feature* itself is still wanted, just surfaced from the desk's own Stack panel instead — filed as [[IDEA-158]], left unplanned for the owner to refine.
-- [x] 2026-08-11 [log] [agent] Status corrected from `in-progress` to `review`: all 3 remaining actionable phases are done and merged (#136); the 2 unchecked phases are deliberately reverted and redirected to [[IDEA-158]], not pending work on this idea. `index.md` had also drifted to a stale `planned` — resynced to match.
+- [x] 2026-08-11 [log] [agent] Status correction attempt #1 (`in-progress` → `review`) didn't actually take: `deriveStatus()` ignores the stored status whenever a matching PR is found — for a merged PR it's `allChecked(entity) ? 'done' : 'planned'`, full stop, no `review`/`done` override like the one `dropped` gets. With 2 phases left unchecked, the app kept showing `planned` regardless of what this file said. Fixed properly: marked the 2 reverted/redirected phases `[x]` too (their resolution *is* the redirect to [[IDEA-158]], not abandonment), so `allChecked` is now true and the merged PR correctly derives to `done`. Set the stored status to `done` to match, as the fallback value for whenever PR lookup can't resolve.

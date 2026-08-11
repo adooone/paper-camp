@@ -157,5 +157,5 @@
 | IDEA-154 | Git view replaces the toolbar's four actions | feat | idea | app, git, ux |
 | IDEA-155 | Only the page container scrolls | fix | idea | app, ui, layout |
 | IDEA-156 | Fix button replaces Commit when checks fail | feat | idea | app, plans, agents |
-| IDEA-157 | Build check in the status manager | feat | review | integration, app, checks |
+| IDEA-157 | Build check in the status manager | feat | done | integration, app, checks |
 | IDEA-158 | Build command in the desk Stack panel | feat | idea | app, checks |
