@@ -37,8 +37,8 @@ const COMMIT_SCOPES = [
   'repo',
 ];
 
-function deriveSuggestedCommit(plan: PlanEntry): { title: string } {
-  if (plan.phases.length > 0 && plan.phases.every((phase) => phase.done)) {
+function deriveSuggestedCommit(plan: PlanEntry | undefined): { title: string } {
+  if (!plan || (plan.phases.length > 0 && plan.phases.every((phase) => phase.done))) {
     return { title: '' };
   }
   const scope = plan.tags?.find((t) => COMMIT_SCOPES.includes(t)) ?? 'repo';
@@ -199,7 +199,7 @@ export const DeliverChangedFiles = ({ count }: { count: number }) => {
     // Raw <button>: paper-ui Button has no inline-underlined link style.
     <button
       type="button"
-      onClick={() => navigate({ to: '/diff' })}
+      onClick={() => navigate({ to: '/git' })}
       className="bg-none bg-transparent border-none p-0 font-handwritten text-xs opacity-[0.6] underline cursor-pointer"
     >
       {count} file{count === 1 ? '' : 's'} changed
@@ -209,7 +209,7 @@ export const DeliverChangedFiles = ({ count }: { count: number }) => {
 
 /** Shared state/handlers for the split commit input row (left column) and
  *  Commit button (right column) — both need the same title/in-flight state. */
-export const useDeliverCommitForm = (plan: PlanEntry, files: string[]) => {
+export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[]) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
@@ -231,6 +231,7 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: string[]) => {
   const staleSuggestionIds = useRef<Set<string> | null>(null);
   const appliedSuggestionId = useRef<string | null>(null);
   useEffect(() => {
+    if (!plan) return;
     if (staleSuggestionIds.current === null) {
       if (agentStatus.length === 0) return;
       staleSuggestionIds.current = new Set(
@@ -244,7 +245,7 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: string[]) => {
     appliedSuggestionId.current = task.id;
     setCommitTitle(task.suggestedCommit.title);
     setCommitMessage(task.suggestedCommit.message);
-  }, [agentStatus, plan.id]);
+  }, [agentStatus, plan]);
 
   const handleCommit = useCallback(async () => {
     if (!commitTitle.trim() || commitInFlight) return;

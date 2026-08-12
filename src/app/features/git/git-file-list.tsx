@@ -21,7 +21,7 @@ const scrollToFile = (path: string) => {
     ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
-export const DiffFileList = () => {
+export const GitFileList = () => {
   const files = useAppStore((s) => s.diffFiles);
   const activePath = useAppStore((s) => s.activeDiffPath);
 

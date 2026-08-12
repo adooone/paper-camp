@@ -1,4 +1,4 @@
-import { Button, IconButton, Stamp } from '@dendelion/paper-ui';
+import { IconButton, Stamp } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { StatusBarCore, type StatusBarCoreProps } from './status-bar-core';
@@ -11,18 +11,9 @@ const baseProps: StatusBarCoreProps = {
   activeTaskStatus: undefined,
   agentNotSignedIn: false,
   capabilityGapCount: 0,
-  gitBranchHygiene: null,
-  commitInFlight: false,
-  gitActionBusy: false,
-  pushing: false,
-  syncing: false,
-  pulling: false,
   unreadNotificationCount: 0,
-  onSync: () => {},
-  onPush: () => {},
-  onPull: () => {},
-  onQuickCommit: () => {},
   onOpenSetup: () => {},
+  onOpenGit: () => {},
   onOpenNotifications: () => {},
 };
 
@@ -48,14 +39,6 @@ const textOf = (node: unknown): string => {
   if (isElementish(node)) return textOf(node.props.children as ReactNode);
   return '';
 };
-
-const buttons = (props: StatusBarCoreProps) =>
-  collect(StatusBarCore(props), (el) => el.type === Button);
-
-const findButton = (props: StatusBarCoreProps, iconName: string) =>
-  buttons(props).find(
-    (btn) => ((btn.props.icon as Elementish)?.type as { name?: string })?.name === iconName,
-  );
 
 describe('StatusBarCore', () => {
   it('shows the branch name and "clean" when nothing changed', () => {
@@ -132,84 +115,19 @@ describe('StatusBarCore', () => {
   it('opens notifications when the bell button is clicked', () => {
     const onOpenNotifications = vi.fn();
     const tree = StatusBarCore({ ...baseProps, onOpenNotifications });
-    const bell = collect(tree, (el) => el.type === IconButton)[0];
+    const bell = collect(
+      tree,
+      (el) => el.type === IconButton && el.props.label === 'Notifications',
+    )[0];
     (bell?.props.onClick as () => void)?.();
     expect(onOpenNotifications).toHaveBeenCalledTimes(1);
   });
 
-  it('disables Sync when the repo is already clean on main', () => {
-    const clean = findButton({ ...baseProps, gitBranchHygiene: 'clean-on-main' }, 'MergeIcon');
-    expect(clean?.props.disabled).toBe(true);
-
-    const dirty = findButton({ ...baseProps, gitBranchHygiene: null }, 'MergeIcon');
-    expect(dirty?.props.disabled).toBe(false);
-  });
-
-  it('disables Push when there is nothing to push and labels it with the ahead count', () => {
-    const nothingToPush = findButton(baseProps, 'PushIcon');
-    expect(nothingToPush?.props.disabled).toBe(true);
-    expect(textOf(nothingToPush?.props.children as ReactNode)).toBe('Push');
-
-    const withCommits = findButton({ ...baseProps, gitAhead: 4 }, 'PushIcon');
-    expect(withCommits?.props.disabled).toBe(false);
-    expect(textOf(withCommits?.props.children as ReactNode)).toBe('Push (4)');
-  });
-
-  it('disables git action buttons while another git action is in flight', () => {
-    const busy = { ...baseProps, gitActionBusy: true, gitAhead: 1 };
-    expect(findButton(busy, 'MergeIcon')?.props.disabled).toBe(true);
-    expect(findButton(busy, 'PushIcon')?.props.disabled).toBe(true);
-    expect(findButton(busy, 'PullIcon')?.props.disabled).toBe(true);
-  });
-
-  it('labels git action buttons with their in-flight state', () => {
-    const inFlight = { ...baseProps, syncing: true, pushing: true, pulling: true, gitAhead: 1 };
-    expect(textOf(findButton(inFlight, 'MergeIcon')?.props.children as ReactNode)).toBe('Syncing…');
-    expect(textOf(findButton(inFlight, 'PushIcon')?.props.children as ReactNode)).toBe('Pushing…');
-    expect(textOf(findButton(inFlight, 'PullIcon')?.props.children as ReactNode)).toBe('Pulling…');
-  });
-
-  it('disables Commit when there is nothing to commit or a commit is already running', () => {
-    const clean = findButton(baseProps, 'CommitIcon');
-    expect(clean?.props.disabled).toBe(true);
-    expect(textOf(clean?.props.children as ReactNode)).toBe('Commit');
-
-    const dirty = findButton({ ...baseProps, changedFileCount: 5 }, 'CommitIcon');
-    expect(dirty?.props.disabled).toBe(false);
-    expect(textOf(dirty?.props.children as ReactNode)).toBe('Commit (5)');
-
-    const inFlight = findButton(
-      { ...baseProps, changedFileCount: 5, commitInFlight: true },
-      'CommitIcon',
-    );
-    expect(inFlight?.props.disabled).toBe(true);
-    expect(textOf(inFlight?.props.children as ReactNode)).toBe('Committing…');
-  });
-
-  it('wires each action button to its callback', () => {
-    const onSync = vi.fn();
-    const onPush = vi.fn();
-    const onPull = vi.fn();
-    const onQuickCommit = vi.fn();
-    const props = {
-      ...baseProps,
-      gitAhead: 1,
-      changedFileCount: 1,
-      onSync,
-      onPush,
-      onPull,
-      onQuickCommit,
-    };
-
-    const click = (btn?: Elementish) => (btn?.props.onClick as (() => void) | undefined)?.();
-    click(findButton(props, 'MergeIcon'));
-    click(findButton(props, 'PushIcon'));
-    click(findButton(props, 'PullIcon'));
-    click(findButton(props, 'CommitIcon'));
-
-    expect(onSync).toHaveBeenCalledTimes(1);
-    expect(onPush).toHaveBeenCalledTimes(1);
-    expect(onPull).toHaveBeenCalledTimes(1);
-    expect(onQuickCommit).toHaveBeenCalledTimes(1);
+  it('opens `/git` when the git button is clicked', () => {
+    const onOpenGit = vi.fn();
+    const tree = StatusBarCore({ ...baseProps, onOpenGit });
+    const gitButton = collect(tree, (el) => el.type === IconButton && el.props.label === 'Git')[0];
+    (gitButton?.props.onClick as () => void)?.();
+    expect(onOpenGit).toHaveBeenCalledTimes(1);
   });
 });

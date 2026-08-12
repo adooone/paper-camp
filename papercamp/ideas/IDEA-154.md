@@ -2,7 +2,7 @@
 id: IDEA-154
 title: Git view replaces the toolbar's four actions
 type: feat
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -40,17 +40,23 @@ Both move into one new page.
    not a replacement for it.
 
 ### Phases
-- [ ] Add the `/git` route and page shell
+- [x] Add the `/git` route and page shell
       Register the route and a nav entry; empty two-column layout matching the diff page.
-- [ ] Fold the diff content into `/git` and retire `/diff`
+      run: 3m27s · 10.9k in · 16.7k out · sonnet-5
+- [x] Fold the diff content into `/git` and retire `/diff`
       Move the file-list sidebar and hunk page in; redirect or drop the old `/diff` route.
-- [ ] Add the repo-wide commit form to `/git`
+      run: 1m52s · 658 in · 7.7k out · sonnet-5
+- [x] Add the repo-wide commit form to `/git`
       Reuse the Deliver panel shape (title + suggest-from-diff + Commit), scoped to the whole working tree.
-- [ ] Move Sync/Push/Pull actions onto `/git`
-- [ ] Strip the four actions from `StatusBarCore`
+      run: 2m35s · 529 in · 10.2k out · sonnet-5
+- [x] Move Sync/Push/Pull actions onto `/git`
+      run: 1m48s · 384 in · 5k out · sonnet-5
+- [x] Strip the four actions from `StatusBarCore`
       Leave branch name and changed-file count as plain status text.
-- [ ] Add the toolbar icon button that opens `/git`
+      run: 4m38s · 4.4k in · 14.3k out · sonnet-5
+- [x] Add the toolbar icon button that opens `/git`
       Match [[IDEA-153]]'s notification icon.
+      run: 3m22s · 3k in · 7.5k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-11 [decision] One new page absorbs both the toolbar's four action buttons and the orphaned `/diff` route; the toolbar becomes status-only. Per-idea Deliver keeps its own separate commit flow — this is the repo-wide surface, not a merge of the two.

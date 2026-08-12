@@ -2,8 +2,9 @@
 id: IDEA-153
 title: Notifications view replaces the Inbox
 type: feat
-status: review
+status: done
 created: 2026-08-11
+updated: 2026-08-12
 tags:
   - app
   - notifications

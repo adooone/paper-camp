@@ -1,8 +1,8 @@
 import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
-import type { AgentTaskStatus, BranchHygieneStatus, RateLimitSnapshot } from '@/types/index';
-import { Button, IconButton, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
+import type { AgentTaskStatus, RateLimitSnapshot } from '@/types/index';
+import { IconButton, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
 import type { CSSProperties, ReactNode } from 'react';
-import { BellIcon, CommitIcon, MergeIcon, PullIcon, PushIcon } from '../icons';
+import { BellIcon, GitBranchIcon } from '../icons';
 
 function capacityTooltip(snapshot: RateLimitSnapshot): string {
   const parts = [`Claude usage: ${snapshot.status}`];
@@ -46,7 +46,6 @@ const rightGroupStyle: CSSProperties = {
   gap: '0.5rem',
   flexShrink: 0,
 };
-const buttonTextStyle: CSSProperties = { fontSize: '0.75rem' };
 const stampTriggerStyle: CSSProperties = {
   background: 'none',
   backgroundColor: 'transparent',
@@ -71,23 +70,14 @@ export interface StatusBarCoreProps {
   agentNotSignedIn: boolean;
   capabilityGapCount: number;
   rateLimit?: RateLimitSnapshot | null;
-  gitBranchHygiene: BranchHygieneStatus | null;
-  commitInFlight: boolean;
-  gitActionBusy: boolean;
-  pushing: boolean;
-  syncing: boolean;
-  pulling: boolean;
   unreadNotificationCount: number;
-  onSync: () => void;
-  onPush: () => void;
-  onPull: () => void;
-  onQuickCommit: () => void;
   onOpenSetup: () => void;
+  onOpenGit: () => void;
   onOpenNotifications: () => void;
   trailing?: ReactNode;
 }
 
-// Ambient status + immediate quick actions; the Stack panel remains the full control surface.
+// Ambient status only; Sync/Push/Pull/Commit live on `/git`, the Stack panel on task control.
 export const StatusBarCore = ({
   gitBranch,
   gitAhead,
@@ -97,18 +87,9 @@ export const StatusBarCore = ({
   agentNotSignedIn,
   capabilityGapCount,
   rateLimit,
-  gitBranchHygiene,
-  commitInFlight,
-  gitActionBusy,
-  pushing,
-  syncing,
-  pulling,
   unreadNotificationCount,
-  onSync,
-  onPush,
-  onPull,
-  onQuickCommit,
   onOpenSetup,
+  onOpenGit,
   onOpenNotifications,
   trailing,
 }: StatusBarCoreProps) => {
@@ -163,6 +144,15 @@ export const StatusBarCore = ({
       {trailing && <div style={rightGroupStyle}>{trailing}</div>}
 
       <div style={rightGroupStyle}>
+        <Tooltip content="Git">
+          <IconButton
+            variant="ghost"
+            size="small"
+            icon={<GitBranchIcon />}
+            label="Git"
+            onClick={onOpenGit}
+          />
+        </Tooltip>
         <Tooltip content="Notifications">
           <span style={notificationButtonStyle}>
             <IconButton
@@ -180,60 +170,6 @@ export const StatusBarCore = ({
               </span>
             )}
           </span>
-        </Tooltip>
-        <Tooltip
-          content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : 'Sync to main'}
-        >
-          <Button
-            variant="ghost"
-            size="small"
-            icon={<MergeIcon />}
-            style={buttonTextStyle}
-            disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
-            onClick={onSync}
-          >
-            {syncing ? 'Syncing…' : 'Sync to main'}
-          </Button>
-        </Tooltip>
-        <Tooltip content="Push commits to origin">
-          <Button
-            variant="ghost"
-            size="small"
-            icon={<PushIcon />}
-            style={buttonTextStyle}
-            disabled={gitActionBusy || gitAhead === 0}
-            onClick={onPush}
-          >
-            {pushing ? 'Pushing…' : gitAhead > 0 ? `Push (${gitAhead})` : 'Push'}
-          </Button>
-        </Tooltip>
-        <Tooltip content="Fast-forward the current branch from origin">
-          <Button
-            variant="ghost"
-            size="small"
-            icon={<PullIcon />}
-            style={buttonTextStyle}
-            disabled={gitActionBusy}
-            onClick={onPull}
-          >
-            {pulling ? 'Pulling…' : 'Pull'}
-          </Button>
-        </Tooltip>
-        <Tooltip content="Commit all changes with an auto-suggested message">
-          <Button
-            variant="ghost"
-            size="small"
-            icon={<CommitIcon />}
-            style={buttonTextStyle}
-            disabled={commitInFlight || changedFileCount === 0}
-            onClick={onQuickCommit}
-          >
-            {commitInFlight
-              ? 'Committing…'
-              : changedFileCount > 0
-                ? `Commit (${changedFileCount})`
-                : 'Commit'}
-          </Button>
         </Tooltip>
       </div>
     </div>

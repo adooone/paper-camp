@@ -1,6 +1,5 @@
-import type { AgentTaskStatus, RateLimitSnapshot } from '@/types/index';
+import type { AgentTaskStatus, BranchHygieneStatus, RateLimitSnapshot } from '@/types/index';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { StatusBarCoreProps } from '../components/shell/status-bar-core';
 import { fetchAgentStatus } from '../services/agent-api';
 import { apiUrl } from '../services/api-base';
 import {
@@ -13,15 +12,29 @@ import {
 } from '../services/git-api';
 import { fetchAgentAuthStatus, fetchCapabilities } from '../services/system';
 
-// Extends (doesn't modify) StatusBarCoreProps — the desk's StatusBarCore only
-// destructures its own known props, so extra fields here are invisible to it;
-// TypeScript's excess-property check only fires on object literals, not on a
-// value passed through a variable/spread.
-export type StatusClientState = Omit<
-  StatusBarCoreProps,
-  'onOpenSetup' | 'unreadNotificationCount' | 'onOpenNotifications'
-> & {
+// The embed has no store of its own — this is the Scout panel's independent
+// poll-and-mutate client for its git banner, distinct from the desk's
+// StatusBarCore/useAppStore path.
+export type StatusClientState = {
+  gitBranch: string | null;
+  gitAhead: number;
+  changedFileCount: number;
+  agentActive: boolean;
+  activeTaskStatus?: AgentTaskStatus;
+  agentNotSignedIn: boolean;
+  capabilityGapCount: number;
+  rateLimit: RateLimitSnapshot | null;
+  gitBranchHygiene: BranchHygieneStatus | null;
+  commitInFlight: boolean;
+  gitActionBusy: boolean;
+  pushing: boolean;
+  syncing: boolean;
+  pulling: boolean;
   suggesting: boolean;
+  onSync: () => void;
+  onPush: () => void;
+  onPull: () => void;
+  onQuickCommit: () => void;
   suggestCommit: () => Promise<{ title: string; message: string } | null>;
   commitWithTitle: (title: string, message?: string) => Promise<boolean>;
 };
@@ -34,8 +47,7 @@ export function useStatusClient(): StatusClientState {
   const [gitBranch, setGitBranch] = useState<string | null>(null);
   const [gitAhead, setGitAhead] = useState(0);
   const [changedFileCount, setChangedFileCount] = useState(0);
-  const [gitBranchHygiene, setGitBranchHygiene] =
-    useState<StatusBarCoreProps['gitBranchHygiene']>(null);
+  const [gitBranchHygiene, setGitBranchHygiene] = useState<BranchHygieneStatus | null>(null);
   const [agentActive, setAgentActive] = useState(false);
   const [activeTaskStatus, setActiveTaskStatus] = useState<AgentTaskStatus | undefined>(undefined);
   const [rateLimit, setRateLimit] = useState<RateLimitSnapshot | null>(null);
