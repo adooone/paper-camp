@@ -46,8 +46,9 @@ action.
 - [x] Widen `PhaseItem.source` to accept `'manual'`
       Add the value to the zod `source` literal and the type, alongside `'review'`.
       run: 1m1s · 5.9k in · 2.4k out · sonnet-5
-- [ ] Round-trip the `[manual]` prefix in sections
+- [x] Round-trip the `[manual]` prefix in sections
       Parse and serialize `manual` the same way `review` is handled in the phase reader/writer.
+      run: 36s · 236 in · 1.6k out · sonnet-5
 - [ ] Add a title-stripping helper
       Strip a leading `type(scope): ` prefix, inverting `deriveSuggestedCommit`'s assembly.
 - [ ] Append the phase inside `handleCommit`

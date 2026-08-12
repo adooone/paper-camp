@@ -11,7 +11,7 @@ import { formatRunLine, parseRunLine } from './phase-run';
 
 const SUB_HEADING_RE = /^#{2,3}\s+/;
 const CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.*)$/;
-const PHASE_SOURCE_RE = /^\[review\]\s+(.*)$/;
+const PHASE_SOURCE_RE = /^\[(review|manual)\]\s+(.*)$/;
 const RUN_LINE_RE = /^run:\s*(.+)$/;
 const DATED_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
 const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(?:\[(decision|question)\]\s+)?(.*)$/;
@@ -28,8 +28,8 @@ function parsePhaseEntries(lines: string[], start: number, end: number): PhaseIt
       const done = match[1].toLowerCase() === 'x';
       const rawText = match[2].trim();
       const sourceMatch = rawText.match(PHASE_SOURCE_RE);
-      const text = sourceMatch ? sourceMatch[1].trim() : rawText;
-      const source = sourceMatch ? ('review' as const) : undefined;
+      const text = sourceMatch ? sourceMatch[2].trim() : rawText;
+      const source = sourceMatch ? (sourceMatch[1] as PhaseItem['source']) : undefined;
       const descriptionLines: string[] = [];
       let run: PhaseItem['run'];
       i++;
@@ -74,7 +74,7 @@ function parseDatedEntries(lines: string[], start: number, end: number): LogEntr
 function formatPhaseLines(heading: string, phases: PhaseItem[]): string[] {
   const lines = [heading];
   for (const phase of phases) {
-    const text = phase.source === 'review' ? `[review] ${phase.text}` : phase.text;
+    const text = phase.source ? `[${phase.source}] ${phase.text}` : phase.text;
     lines.push(`- [${phase.done ? 'x' : ' '}] ${text}`);
     if (phase.description) {
       for (const descLine of phase.description.split('\n')) lines.push(`      ${descLine}`);
