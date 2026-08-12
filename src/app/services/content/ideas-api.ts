@@ -8,8 +8,12 @@ export interface PrioritiseResult {
   why: string;
 }
 
+const IDEAS_TIMEOUT_MS = 45_000;
+
 export const fetchIdeas = async (): Promise<ParseResult<IdeaEntry>> => {
-  const response = await fetch(apiUrl('/api/ideas'));
+  const response = await fetch(apiUrl('/api/ideas'), {
+    signal: AbortSignal.timeout(IDEAS_TIMEOUT_MS),
+  });
   return response.json();
 };
 
