@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.18.1](https://github.com/adooone/paper-camp/compare/v0.18.0...v0.18.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* **app:** Git actions time out instead of hanging ([976feed](https://github.com/adooone/paper-camp/commit/976feed59913da2322d11355c09b04455ba83f37))
+* **app:** Git actions time out instead of hanging (IDEA-159) ([#145](https://github.com/adooone/paper-camp/issues/145)) ([981ccb3](https://github.com/adooone/paper-camp/commit/981ccb33b3df009494782db5402f9f4d959f95ab))
+* **app:** One activity stream for the whole app ([d3c5fae](https://github.com/adooone/paper-camp/commit/d3c5faed4edb977e0d2bfa2938f4a12f65fd14d0))
+* **app:** One activity stream for the whole app (IDEA-160) ([#146](https://github.com/adooone/paper-camp/issues/146)) ([b955218](https://github.com/adooone/paper-camp/commit/b9552183214eaeeb352e08f5dee8033f5d35bd0f))
+
 ## [0.18.0](https://github.com/adooone/paper-camp/compare/v0.17.1...v0.18.0) (2026-08-12)
 
 
