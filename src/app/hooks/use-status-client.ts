@@ -1,7 +1,7 @@
 import type { AgentTaskStatus, BranchHygieneStatus, RateLimitSnapshot } from '@/types/index';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { subscribeToActivityStream } from '../services/activity-stream';
 import { fetchAgentStatus } from '../services/agent-api';
-import { apiUrl } from '../services/api-base';
 import {
   commitChanges,
   fetchGitStatus,
@@ -92,19 +92,12 @@ export function useStatusClient(): StatusClientState {
   }, [loadGitStatus, loadAgentStatus]);
 
   useEffect(() => {
-    const source = new EventSource(apiUrl('/api/activity/stream'));
     const timers: Record<string, ReturnType<typeof setTimeout> | undefined> = {};
     const schedule = (key: string, run: () => void, ms: number) => {
       if (timers[key]) clearTimeout(timers[key]);
       timers[key] = setTimeout(run, ms);
     };
-    source.onmessage = (event) => {
-      let payload: { message?: string; type?: string };
-      try {
-        payload = JSON.parse(event.data);
-      } catch {
-        return;
-      }
+    const unsubscribe = subscribeToActivityStream((payload) => {
       if (payload.type === 'status') {
         schedule('git', () => loadGitStatus(), 80);
         return;
@@ -122,10 +115,10 @@ export function useStatusClient(): StatusClientState {
         },
         250,
       );
-    };
+    });
     return () => {
       for (const timer of Object.values(timers)) if (timer) clearTimeout(timer);
-      source.close();
+      unsubscribe();
     };
   }, [loadGitStatus, loadAgentStatus]);
 

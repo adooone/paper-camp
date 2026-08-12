@@ -1,6 +1,6 @@
 import type { DeskCheckState } from '@/types/index';
 import { useCallback, useEffect, useState } from 'react';
-import { apiUrl } from '../services/api-base';
+import { subscribeToActivityStream } from '../services/activity-stream';
 import { fetchChecks, runDeskCheck } from '../services/checks-api';
 
 export interface DeskChecksClient {
@@ -23,24 +23,17 @@ export function useDeskChecks(): DeskChecksClient {
   }, [refresh]);
 
   useEffect(() => {
-    const source = new EventSource(apiUrl('/api/activity/stream'));
     let timer: ReturnType<typeof setTimeout> | undefined;
     const schedule = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(refresh, 80);
     };
-    source.onmessage = (event) => {
-      let payload: { message?: string; type?: string };
-      try {
-        payload = JSON.parse(event.data);
-      } catch {
-        return;
-      }
+    const unsubscribe = subscribeToActivityStream((payload) => {
       if (payload.type === 'check' || payload.message === 'changed') schedule();
-    };
+    });
     return () => {
       if (timer) clearTimeout(timer);
-      source.close();
+      unsubscribe();
     };
   }, [refresh]);
 

@@ -1,5 +1,5 @@
 import { type OpenQuestionGroup, collectOpenQuestions } from '@/app/features/plans/helpers';
-import { apiUrl } from '@/app/services/api-base';
+import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { fetchPlans } from '@/app/services/content';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -26,22 +26,15 @@ export function useScoutClient(): ScoutClientState {
   }, [load]);
 
   useEffect(() => {
-    const source = new EventSource(apiUrl('/api/activity/stream'));
     let timer: ReturnType<typeof setTimeout> | undefined;
-    source.onmessage = (event) => {
-      let payload: { message?: string };
-      try {
-        payload = JSON.parse(event.data);
-      } catch {
-        return;
-      }
+    const unsubscribe = subscribeToActivityStream((payload) => {
       if (payload.message !== 'changed') return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(load, 250);
-    };
+    });
     return () => {
       if (timer) clearTimeout(timer);
-      source.close();
+      unsubscribe();
     };
   }, [load]);
 
