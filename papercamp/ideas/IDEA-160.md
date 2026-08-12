@@ -60,8 +60,9 @@ socket exhaustion is what has to be removed for the actions to work.
 - [x] Build the shared ref-counted stream module
       One module-level `EventSource` with `subscribe(listener)`; opens on the first subscriber, closes on the last unsubscribe.
       run: 54s · 235 in · 3.1k out · sonnet-5
-- [ ] Move reconnect and backoff into the shared stream
+- [x] Move reconnect and backoff into the shared stream
       A single reconnect loop for all subscribers so a dev-server restart re-establishes one connection.
+      run: 39s · 224 in · 2.9k out · sonnet-5
 - [ ] Migrate every call site to subscribe
       Replace each hook's own EventSource with a subscription, keeping its client-side filter unchanged.
 - [ ] Verify the Git page with Stack open
