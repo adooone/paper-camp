@@ -86,6 +86,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     return entries;
   }
 
+  const GIT_TIMEOUT_MS = 30_000;
+
   function runGit(args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
       // quotepath=off: non-ASCII paths stay raw UTF-8 instead of octal-escaped,
@@ -93,9 +95,16 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       const proc = spawn('git', ['-c', 'core.quotepath=off', ...args], {
         cwd: root,
         stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
       });
       let stdout = '';
       let stderr = '';
+      let settled = false;
+      const timer = setTimeout(() => {
+        settled = true;
+        proc.kill();
+        reject(new Error(`git ${args[0]} timed out after ${GIT_TIMEOUT_MS / 1000}s`));
+      }, GIT_TIMEOUT_MS);
       proc.stdout?.on('data', (d: Buffer) => {
         stdout += d.toString();
       });
@@ -103,13 +112,19 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         stderr += d.toString();
       });
       proc.on('close', (code) => {
+        if (settled) return;
+        clearTimeout(timer);
         if (code === 0) {
           resolve(stdout);
         } else {
           reject(new Error(stderr || stdout || `git ${args[0]} exited with code ${code}`));
         }
       });
-      proc.on('error', reject);
+      proc.on('error', (err) => {
+        if (settled) return;
+        clearTimeout(timer);
+        reject(err);
+      });
     });
   }
 

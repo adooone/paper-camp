@@ -9,8 +9,12 @@ import type {
 } from '@/types/index';
 import { apiUrl } from '../api-base';
 
+const PLANS_TIMEOUT_MS = 45_000;
+
 export const fetchPlans = async (): Promise<ParseResult<PlanEntry>> => {
-  const response = await fetch(apiUrl('/api/plans'));
+  const response = await fetch(apiUrl('/api/plans'), {
+    signal: AbortSignal.timeout(PLANS_TIMEOUT_MS),
+  });
   return response.json();
 };
 
