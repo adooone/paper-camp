@@ -57,8 +57,9 @@ socket exhaustion is what has to be removed for the actions to work.
 - [x] Inventory the nine EventSource call sites
       List each hook that opens its own `/api/activity/stream` connection and the message(s) it filters for.
       run: 1m6s · 10.7k in · 4.9k out · sonnet-5
-- [ ] Build the shared ref-counted stream module
+- [x] Build the shared ref-counted stream module
       One module-level `EventSource` with `subscribe(listener)`; opens on the first subscriber, closes on the last unsubscribe.
+      run: 54s · 235 in · 3.1k out · sonnet-5
 - [ ] Move reconnect and backoff into the shared stream
       A single reconnect loop for all subscribers so a dev-server restart re-establishes one connection.
 - [ ] Migrate every call site to subscribe
