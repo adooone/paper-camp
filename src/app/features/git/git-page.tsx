@@ -1,8 +1,13 @@
+import {
+  DeliverCommitButton,
+  DeliverCommitInputRow,
+  useDeliverCommitForm,
+} from '@/app/features/plans/components/deliver-controls';
 import { apiUrl } from '@/app/services/api-base';
 import { useAppStore } from '@/app/stores/app-store';
 import { Breadcrumb, Divider } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { Fragment, useEffect, useRef } from 'react';
+import { Fragment, useEffect, useMemo, useRef } from 'react';
 import { FileDiffSection } from './file-diff-section';
 
 export const GitPage = () => {
@@ -12,6 +17,8 @@ export const GitPage = () => {
   const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
   const setActiveDiffPath = useAppStore((s) => s.setActiveDiffPath);
   const sectionsRef = useRef<HTMLDivElement>(null);
+  const commitFiles = useMemo(() => files?.map((entry) => entry.path) ?? [], [files]);
+  const commitForm = useDeliverCommitForm(undefined, commitFiles);
 
   useEffect(() => {
     loadDiffFiles();
@@ -105,14 +112,22 @@ export const GitPage = () => {
           <p className="opacity-50">No changed files.</p>
         </div>
       ) : (
-        <div ref={sectionsRef} className={`flex min-w-0 flex-col gap-6 ${contentClass}`}>
-          {files.map((entry, idx) => (
-            <Fragment key={entry.path}>
-              {idx > 0 && <Divider />}
-              <FileDiffSection entry={entry} />
-            </Fragment>
-          ))}
-        </div>
+        <>
+          <div className="mb-6 flex items-start gap-2">
+            <div className="flex-1">
+              <DeliverCommitInputRow state={commitForm} filesEmpty={false} />
+            </div>
+            <DeliverCommitButton state={commitForm} filesEmpty={false} />
+          </div>
+          <div ref={sectionsRef} className={`flex min-w-0 flex-col gap-6 ${contentClass}`}>
+            {files.map((entry, idx) => (
+              <Fragment key={entry.path}>
+                {idx > 0 && <Divider />}
+                <FileDiffSection entry={entry} />
+              </Fragment>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

@@ -46,8 +46,9 @@ Both move into one new page.
 - [x] Fold the diff content into `/git` and retire `/diff`
       Move the file-list sidebar and hunk page in; redirect or drop the old `/diff` route.
       run: 1m52s · 658 in · 7.7k out · sonnet-5
-- [ ] Add the repo-wide commit form to `/git`
+- [x] Add the repo-wide commit form to `/git`
       Reuse the Deliver panel shape (title + suggest-from-diff + Commit), scoped to the whole working tree.
+      run: 2m35s · 529 in · 10.2k out · sonnet-5
 - [ ] Move Sync/Push/Pull actions onto `/git`
 - [ ] Strip the four actions from `StatusBarCore`
       Leave branch name and changed-file count as plain status text.
