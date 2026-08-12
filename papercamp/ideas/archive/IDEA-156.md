@@ -2,8 +2,9 @@
 id: IDEA-156
 title: Fix button replaces Commit when checks fail
 type: feat
-status: review
+status: done
 created: 2026-08-11
+updated: 2026-08-12
 tags:
   - app
   - plans

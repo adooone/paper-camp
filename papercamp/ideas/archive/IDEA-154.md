@@ -2,8 +2,9 @@
 id: IDEA-154
 title: Git view replaces the toolbar's four actions
 type: feat
-status: review
+status: done
 created: 2026-08-11
+updated: 2026-08-12
 tags:
   - app
   - git

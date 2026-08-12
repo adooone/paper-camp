@@ -155,8 +155,10 @@
 | IDEA-151 | Manual commits become phase rows | feat | planned | app, plans, git |
 | IDEA-152 | Strip animations to a static baseline | refactor | done | app, ui |
 | IDEA-153 | Notifications view replaces the Inbox | feat | done | app, notifications, ux |
-| IDEA-154 | Git view replaces the toolbar's four actions | feat | planned | app, git, ux |
+| IDEA-154 | Git view replaces the toolbar's four actions | feat | done | app, git, ux |
 | IDEA-155 | Only the page container scrolls | fix | done | app, ui, layout |
-| IDEA-156 | Fix button replaces Commit when checks fail | feat | planned | app, plans, agents |
+| IDEA-156 | Fix button replaces Commit when checks fail | feat | done | app, plans, agents |
 | IDEA-157 | Build check in the status manager | feat | done | integration, app, checks |
 | IDEA-158 | Build command in the desk Stack panel | feat | planned | app, checks |
+| IDEA-159 | Git actions time out instead of hanging | fix | idea | app, git, ux |
+| IDEA-160 | One activity stream for the whole app | fix | idea | app, ux, performance |
