@@ -49,8 +49,9 @@ action.
 - [x] Round-trip the `[manual]` prefix in sections
       Parse and serialize `manual` the same way `review` is handled in the phase reader/writer.
       run: 36s · 236 in · 1.6k out · sonnet-5
-- [ ] Add a title-stripping helper
+- [x] Add a title-stripping helper
       Strip a leading `type(scope): ` prefix, inverting `deriveSuggestedCommit`'s assembly.
+      run: 40s · 230 in · 2.2k out · sonnet-5
 - [ ] Append the phase inside `handleCommit`
       On a successful Deliver-form commit, persist `{ done: true, text: stripped, source: 'manual' }` to the plan's `phases`.
 - [ ] Render the `manual` stamp in the phase row

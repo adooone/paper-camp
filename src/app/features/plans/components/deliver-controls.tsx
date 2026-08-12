@@ -48,6 +48,12 @@ function deriveSuggestedCommit(plan: PlanEntry | undefined): { title: string } {
   return { title: `${kind}(${scope}): ${plan.title}` };
 }
 
+const COMMIT_PREFIX_RE = /^[a-z]+\([a-z-]+\):\s+/;
+
+function stripCommitPrefix(title: string): string {
+  return title.replace(COMMIT_PREFIX_RE, '');
+}
+
 const CHECK_VARIANT: Record<CheckStatus, StampVariant> = {
   pass: 'success',
   fail: 'error',
