@@ -49,7 +49,8 @@ Both move into one new page.
 - [x] Add the repo-wide commit form to `/git`
       Reuse the Deliver panel shape (title + suggest-from-diff + Commit), scoped to the whole working tree.
       run: 2m35s · 529 in · 10.2k out · sonnet-5
-- [ ] Move Sync/Push/Pull actions onto `/git`
+- [x] Move Sync/Push/Pull actions onto `/git`
+      run: 1m48s · 384 in · 5k out · sonnet-5
 - [ ] Strip the four actions from `StatusBarCore`
       Leave branch name and changed-file count as plain status text.
 - [ ] Add the toolbar icon button that opens `/git`

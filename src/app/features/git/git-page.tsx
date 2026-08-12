@@ -1,14 +1,54 @@
+import { MergeIcon, PullIcon, PushIcon } from '@/app/components/icons';
 import {
   DeliverCommitButton,
   DeliverCommitInputRow,
   useDeliverCommitForm,
 } from '@/app/features/plans/components/deliver-controls';
+import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import { apiUrl } from '@/app/services/api-base';
 import { useAppStore } from '@/app/stores/app-store';
-import { Breadcrumb, Divider } from '@dendelion/paper-ui';
+import { Breadcrumb, Button, Divider, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { Fragment, useEffect, useMemo, useRef } from 'react';
 import { FileDiffSection } from './file-diff-section';
+
+const GitActionsRow = () => {
+  const gitAhead = useAppStore((s) => s.gitAhead);
+  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
+  const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
+    useBranchSync();
+
+  return (
+    <div className="mb-4 flex items-center gap-2">
+      <Tooltip content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined}>
+        <Button
+          size="small"
+          icon={<MergeIcon size={14} />}
+          disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
+          onClick={handleSync}
+        >
+          {syncing ? 'Syncing…' : 'Sync to main'}
+        </Button>
+      </Tooltip>
+      <Button
+        size="small"
+        icon={<PushIcon size={14} />}
+        disabled={gitActionBusy || gitAhead === 0}
+        onClick={handlePush}
+      >
+        {pushing ? 'Pushing…' : gitAhead > 0 ? `Push (${gitAhead})` : 'Push'}
+      </Button>
+      <Button
+        size="small"
+        icon={<PullIcon size={14} />}
+        disabled={gitActionBusy}
+        onClick={handlePull}
+      >
+        {pulling ? 'Pulling…' : 'Pull'}
+      </Button>
+    </div>
+  );
+};
 
 export const GitPage = () => {
   const navigate = useNavigate();
@@ -86,6 +126,7 @@ export const GitPage = () => {
     return (
       <div>
         {breadcrumb}
+        <GitActionsRow />
         <div className={contentClass}>
           <p className="opacity-50">Couldn't load the working-tree diff.</p>
         </div>
@@ -97,6 +138,7 @@ export const GitPage = () => {
     return (
       <div>
         {breadcrumb}
+        <GitActionsRow />
         <div className={contentClass}>
           <p className="opacity-50">Loading…</p>
         </div>
@@ -107,6 +149,7 @@ export const GitPage = () => {
   return (
     <div>
       {breadcrumb}
+      <GitActionsRow />
       {files.length === 0 ? (
         <div className={contentClass}>
           <p className="opacity-50">No changed files.</p>
