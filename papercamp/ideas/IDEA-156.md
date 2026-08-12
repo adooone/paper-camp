@@ -49,8 +49,9 @@ version instead, using plumbing that already exists.
    state to track.
 
 ### Phases
-- [ ] Build fix entries from failing checks
+- [x] Build fix entries from failing checks
       Map each failing Quality/Tests/Consistency check to one `PlanEntry.fixes` entry using its `fixPrompt` content, keyed by check name; Docs excluded.
+      run: 6m43s · 23.3k in · 33.3k out · sonnet-5
 - [ ] Upsert repeat failures by check name
       A repeat failure for the same check replaces that entry's command and output in place instead of appending a duplicate.
 - [ ] Swap Commit for Fix while checks fail
