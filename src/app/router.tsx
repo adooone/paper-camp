@@ -134,7 +134,10 @@ const RootLayout = () => {
   const loadCapabilities = useAppStore((s) => s.loadCapabilities);
   const loadAgentAuthStatus = useAppStore((s) => s.loadAgentAuthStatus);
   const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
-  const parkedQuestionCount = useAppStore((s) => s.parkedQuestions?.length ?? 0);
+  const loadNotifications = useAppStore((s) => s.loadNotifications);
+  const unreadCount = useAppStore(
+    (s) => s.notifications?.filter((n) => n.kind === 'question' || !n.read).length ?? 0,
+  );
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
@@ -171,6 +174,7 @@ const RootLayout = () => {
     loadCapabilities();
     loadAgentAuthStatus();
     loadParkedQuestions();
+    loadNotifications();
   }, [
     loadPlans,
     loadIdeas,
@@ -178,6 +182,7 @@ const RootLayout = () => {
     loadCapabilities,
     loadAgentAuthStatus,
     loadParkedQuestions,
+    loadNotifications,
   ]);
 
   // Land fresh installs (or any install with an incomplete capability) on Setup
@@ -248,7 +253,7 @@ const RootLayout = () => {
                     onClick={() => navigate({ to: item.path })}
                     aria-current={item.id === activeId ? 'page' : undefined}
                   >
-                    <NavLabel item={item} count={parkedQuestionCount} />
+                    <NavLabel item={item} count={unreadCount} />
                   </Button>
                 ))}
               </nav>
@@ -363,7 +368,7 @@ const RootLayout = () => {
             aria-current={item.id === activeId ? 'page' : undefined}
             className="min-h-11"
           >
-            <NavLabel item={item} count={parkedQuestionCount} />
+            <NavLabel item={item} count={unreadCount} />
           </Button>
         ))}
       </nav>

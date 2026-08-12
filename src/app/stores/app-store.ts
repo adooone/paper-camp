@@ -3,6 +3,7 @@ import { type AgentSlice, createAgentSlice } from './slices/agent-slice';
 import { type DiffSlice, createDiffSlice } from './slices/diff-slice';
 import { type DocsSlice, createDocsSlice } from './slices/docs-slice';
 import { type IdeasSlice, createIdeasSlice } from './slices/ideas-slice';
+import { type NotificationsSlice, createNotificationsSlice } from './slices/notifications-slice';
 import {
   type ParkedQuestionsSlice,
   createParkedQuestionsSlice,
@@ -24,7 +25,8 @@ export type AppStore = PlansSlice &
   StatusSlice &
   AgentSlice &
   DiffSlice &
-  ParkedQuestionsSlice;
+  ParkedQuestionsSlice &
+  NotificationsSlice;
 
 export const useAppStore = create<AppStore>()((set, get) => ({
   ...createPlansSlice(set, get),
@@ -37,6 +39,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   ...createAgentSlice(set, get),
   ...createDiffSlice(set, get),
   ...createParkedQuestionsSlice(set),
+  ...createNotificationsSlice(set, get),
 }));
 
 export const selectAgentBusy = (s: AppStore) =>

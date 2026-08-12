@@ -52,10 +52,11 @@ move it out of the nav menu into the toolbar.
 - [x] Emit the new notifications from task and feedback events
       Create a completed notification when a task reaches done/error, and a reply notification when an agent posts a non-blocking feedback thread entry.
       run: 8m33s · 4.8k in · 23.8k out · sonnet-5
-- [ ] Render all three kinds in one age-ordered feed
+- [x] Render all three kinds in one age-ordered feed
       Replace the Inbox page's questions-only list; keep the parked-question reply flow unchanged.
-- [ ] Mark viewed notifications read and count unread for the badge
+- [x] Mark viewed notifications read and count unread for the badge
       Set the read flag on view for the two new kinds, and generalise the badge stamp from parked-question count to total unread.
+      run: 4m44s · 10.7k in · 12.7k out · sonnet-5
 - [ ] Fire Notification-API pushes off the SSE stream
       Push agent-completed and new-reply while the tab is open but unfocused, gated on granted permission, degrading silently otherwise.
 - [ ] Move the entry from the nav menu to the toolbar

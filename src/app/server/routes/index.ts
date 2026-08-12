@@ -4,6 +4,7 @@ import { checkRoutes } from './checks';
 import { ciRoutes } from './ci';
 import { ideaRoutes, planRoutes } from './content';
 import { gitRoutes } from './git';
+import { notificationRoutes } from './notifications';
 import { releaseNotesRoutes } from './release-notes';
 import { serviceRoutes } from './services';
 import { statusRoutes } from './status';
@@ -28,6 +29,7 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...ciRoutes(ctx),
     ...agentRoutes(ctx),
     ...taskRoutes(ctx),
+    ...notificationRoutes(ctx),
     ...configRoutes(ctx),
     ...envRoutes(ctx),
     ...mergePolicyRoutes(ctx),
