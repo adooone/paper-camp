@@ -30,6 +30,8 @@ export const StatusBar = () => {
   const handleOpenSetup = () =>
     navigate({ to: '/settings/$section', params: { section: 'setup' } });
 
+  const handleOpenGit = () => navigate({ to: '/git' });
+
   const handleOpenNotifications = () => navigate({ to: '/inbox' });
 
   return (
@@ -44,6 +46,7 @@ export const StatusBar = () => {
       rateLimit={rateLimit}
       unreadNotificationCount={unreadNotificationCount}
       onOpenSetup={handleOpenSetup}
+      onOpenGit={handleOpenGit}
       onOpenNotifications={handleOpenNotifications}
     />
   );

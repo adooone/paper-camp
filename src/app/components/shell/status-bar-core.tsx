@@ -2,7 +2,7 @@ import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
 import type { AgentTaskStatus, RateLimitSnapshot } from '@/types/index';
 import { IconButton, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
 import type { CSSProperties, ReactNode } from 'react';
-import { BellIcon } from '../icons';
+import { BellIcon, GitBranchIcon } from '../icons';
 
 function capacityTooltip(snapshot: RateLimitSnapshot): string {
   const parts = [`Claude usage: ${snapshot.status}`];
@@ -72,6 +72,7 @@ export interface StatusBarCoreProps {
   rateLimit?: RateLimitSnapshot | null;
   unreadNotificationCount: number;
   onOpenSetup: () => void;
+  onOpenGit: () => void;
   onOpenNotifications: () => void;
   trailing?: ReactNode;
 }
@@ -88,6 +89,7 @@ export const StatusBarCore = ({
   rateLimit,
   unreadNotificationCount,
   onOpenSetup,
+  onOpenGit,
   onOpenNotifications,
   trailing,
 }: StatusBarCoreProps) => {
@@ -142,6 +144,15 @@ export const StatusBarCore = ({
       {trailing && <div style={rightGroupStyle}>{trailing}</div>}
 
       <div style={rightGroupStyle}>
+        <Tooltip content="Git">
+          <IconButton
+            variant="ghost"
+            size="small"
+            icon={<GitBranchIcon />}
+            label="Git"
+            onClick={onOpenGit}
+          />
+        </Tooltip>
         <Tooltip content="Notifications">
           <span style={notificationButtonStyle}>
             <IconButton

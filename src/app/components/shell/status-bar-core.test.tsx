@@ -13,6 +13,7 @@ const baseProps: StatusBarCoreProps = {
   capabilityGapCount: 0,
   unreadNotificationCount: 0,
   onOpenSetup: () => {},
+  onOpenGit: () => {},
   onOpenNotifications: () => {},
 };
 
@@ -114,8 +115,19 @@ describe('StatusBarCore', () => {
   it('opens notifications when the bell button is clicked', () => {
     const onOpenNotifications = vi.fn();
     const tree = StatusBarCore({ ...baseProps, onOpenNotifications });
-    const bell = collect(tree, (el) => el.type === IconButton)[0];
+    const bell = collect(
+      tree,
+      (el) => el.type === IconButton && el.props.label === 'Notifications',
+    )[0];
     (bell?.props.onClick as () => void)?.();
     expect(onOpenNotifications).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens `/git` when the git button is clicked', () => {
+    const onOpenGit = vi.fn();
+    const tree = StatusBarCore({ ...baseProps, onOpenGit });
+    const gitButton = collect(tree, (el) => el.type === IconButton && el.props.label === 'Git')[0];
+    (gitButton?.props.onClick as () => void)?.();
+    expect(onOpenGit).toHaveBeenCalledTimes(1);
   });
 });

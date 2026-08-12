@@ -2,7 +2,7 @@
 id: IDEA-154
 title: Git view replaces the toolbar's four actions
 type: feat
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -54,8 +54,9 @@ Both move into one new page.
 - [x] Strip the four actions from `StatusBarCore`
       Leave branch name and changed-file count as plain status text.
       run: 4m38s · 4.4k in · 14.3k out · sonnet-5
-- [ ] Add the toolbar icon button that opens `/git`
+- [x] Add the toolbar icon button that opens `/git`
       Match [[IDEA-153]]'s notification icon.
+      run: 3m22s · 3k in · 7.5k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-11 [decision] One new page absorbs both the toolbar's four action buttons and the orphaned `/diff` route; the toolbar becomes status-only. Per-idea Deliver keeps its own separate commit flow — this is the repo-wide surface, not a merge of the two.

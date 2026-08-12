@@ -62,7 +62,6 @@ const navItems = [
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'tasks', label: 'Tasks', path: '/tasks' },
   { id: 'stats', label: 'Stats', path: '/stats' },
-  { id: 'git', label: 'Git', path: '/git' },
   { id: 'settings', label: 'Settings', path: '/settings' },
 ];
 
