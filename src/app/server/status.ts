@@ -59,11 +59,11 @@ export interface StatusManagerState {
 export function createEmptyStatusState(): StatusManagerState {
   return {
     snapshot: {
-      lint: { status: 'stale', lastRun: null, output: '' },
-      format: { status: 'stale', lastRun: null, output: '' },
-      test: { status: 'stale', lastRun: null, output: '' },
-      consistency: { status: 'stale', lastRun: null, output: '' },
-      build: { status: 'stale', lastRun: null, output: '' },
+      lint: { status: 'stale', cmd: CHECK_COMMANDS.lint, lastRun: null, output: '' },
+      format: { status: 'stale', cmd: CHECK_COMMANDS.format, lastRun: null, output: '' },
+      test: { status: 'stale', cmd: CHECK_COMMANDS.test, lastRun: null, output: '' },
+      consistency: { status: 'stale', cmd: CHECK_COMMANDS.consistency, lastRun: null, output: '' },
+      build: { status: 'stale', cmd: '', lastRun: null, output: '' },
     },
     running: new Set<CheckName>(),
     queued: new Set<CheckName>(),
@@ -93,8 +93,13 @@ export function createStatusManager(
     }
   }
 
-  function setResult(name: CheckName, status: CheckStatus, output: string) {
-    snapshot[name] = { status, lastRun: new Date().toISOString(), output };
+  function setResult(name: CheckName, status: CheckStatus, output: string, cmd?: string) {
+    snapshot[name] = {
+      status,
+      cmd: cmd ?? snapshot[name].cmd,
+      lastRun: new Date().toISOString(),
+      output,
+    };
     broadcast({
       message: `${name}: ${status}`,
       timestamp: snapshot[name].lastRun!,
@@ -124,9 +129,9 @@ export function createStatusManager(
       return;
     }
     running.add(name);
-    setResult(name, 'running', '');
-
     const cmd = name === 'build' ? (buildCommand as string) : CHECK_COMMANDS[name];
+    setResult(name, 'running', '', cmd);
+
     const proc = spawn(cmd, {
       cwd: root,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -243,7 +248,7 @@ export function createStatusManager(
         test: { ...snapshot.test },
         consistency: { ...snapshot.consistency },
         // Fallback for a hot-reloaded state object created before `build` existed.
-        build: { ...(snapshot.build ?? { status: 'stale', lastRun: null, output: '' }) },
+        build: { ...(snapshot.build ?? { status: 'stale', cmd: '', lastRun: null, output: '' }) },
       };
     },
     getState: (): StatusManagerState => state,

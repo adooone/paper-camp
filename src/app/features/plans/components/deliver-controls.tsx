@@ -2,7 +2,7 @@ import { MergeIcon, PullIcon, PushIcon, WandIcon } from '@/app/components/icons'
 import { entityRouteParam } from '@/app/hooks';
 import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
-import { useAppStore } from '@/app/stores/app-store';
+import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
@@ -18,6 +18,8 @@ import {
 } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { upsertCheckFixes } from '../helpers';
+import { usePlanStatusPatch } from '../hooks';
 
 const COMMIT_SCOPES = [
   'core',
@@ -214,6 +216,10 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const setCommitInFlight = useAppStore((s) => s.setCommitInFlight);
+  const status = useAppStore((s) => s.status);
+  const agentBusy = useAppStore(selectAgentBusy);
+  const launchRunAll = useAppStore((s) => s.launchRunAll);
+  const { patch: patchByTitle } = usePlanStatusPatch();
   const { toast } = useToast();
 
   const [commitTitle, setCommitTitle] = useState('');
@@ -221,6 +227,7 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
   const [committing, setCommitting] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
+  const [fixing, setFixing] = useState(false);
 
   const { title: suggestedTitle } = useMemo(() => deriveSuggestedCommit(plan), [plan]);
 
@@ -284,6 +291,20 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     }
   }, [files]);
 
+  const canFix = Boolean(plan?.id) && !agentBusy;
+
+  const handleFix = useCallback(async () => {
+    if (!plan?.id || !status || fixing || agentBusy) return;
+    setFixing(true);
+    try {
+      const nextFixes = upsertCheckFixes(plan.fixes ?? [], status);
+      const wrote = await patchByTitle(plan.title, { fixes: nextFixes });
+      if (wrote) await launchRunAll(plan.id);
+    } finally {
+      setFixing(false);
+    }
+  }, [plan, fixing, agentBusy, status, patchByTitle, launchRunAll]);
+
   return {
     commitTitle,
     setCommitTitle,
@@ -294,6 +315,9 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     setSuggestError,
     handleCommit,
     handleSuggestFromChanges,
+    canFix,
+    fixing,
+    handleFix,
   };
 };
 
@@ -334,22 +358,41 @@ export const DeliverCommitInputRow = ({
   </div>
 );
 
-/** Right column, under "N files changed": the Commit action itself. */
+/** Right column, under "N files changed": the Commit action itself — becomes a
+ *  Fix action while any of Quality/Tests/Consistency is failing (IDEA-156). */
 export const DeliverCommitButton = ({
   state,
   filesEmpty,
 }: {
   state: DeliverCommitFormState;
   filesEmpty: boolean;
-}) => (
-  <Button
-    size="small"
-    disabled={filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight}
-    onClick={state.handleCommit}
-  >
-    {state.committing || state.commitInFlight ? 'Committing…' : 'Commit'}
-  </Button>
-);
+}) => {
+  const status = useAppStore((s) => s.status);
+  const { qualityStatus, testStatus, consistencyStatus } = useMemo(
+    () => deriveCheckStatuses(status),
+    [status],
+  );
+  const checksFailing =
+    qualityStatus === 'fail' || testStatus === 'fail' || consistencyStatus === 'fail';
+
+  if (checksFailing) {
+    return (
+      <Button size="small" disabled={!state.canFix || state.fixing} onClick={state.handleFix}>
+        {state.fixing ? 'Fixing…' : 'Fix'}
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      size="small"
+      disabled={filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight}
+      onClick={state.handleCommit}
+    >
+      {state.committing || state.commitInFlight ? 'Committing…' : 'Commit'}
+    </Button>
+  );
+};
 
 export const DeliverEmptyState = () => {
   const gitAhead = useAppStore((s) => s.gitAhead);

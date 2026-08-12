@@ -2,7 +2,7 @@
 id: IDEA-156
 title: Fix button replaces Commit when checks fail
 type: feat
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -49,16 +49,21 @@ version instead, using plumbing that already exists.
    state to track.
 
 ### Phases
-- [ ] Build fix entries from failing checks
+- [x] Build fix entries from failing checks
       Map each failing Quality/Tests/Consistency check to one `PlanEntry.fixes` entry using its `fixPrompt` content, keyed by check name; Docs excluded.
-- [ ] Upsert repeat failures by check name
+      run: 6m43s · 23.3k in · 33.3k out · sonnet-5
+- [x] Upsert repeat failures by check name
       A repeat failure for the same check replaces that entry's command and output in place instead of appending a duplicate.
-- [ ] Swap Commit for Fix while checks fail
+      run: 3m21s · 687 in · 6.7k out · sonnet-5
+- [x] Swap Commit for Fix while checks fail
       In `DeliverCommitButton`, render Fix in the same slot whenever any of the three checks is failing.
-- [ ] Wire the Fix action to write-then-launch
+      run: 2m45s · 373 in · 5.3k out · sonnet-5
+- [x] Wire the Fix action to write-then-launch
       Write the fix entries to the plan file first, then `launchRunAll(plan.id)` once the write lands (IDEA-149 pattern).
-- [ ] Confirm the auto-revert to Commit
+      run: 5m12s · 4.3k in · 15.4k out · sonnet-5
+- [x] Confirm the auto-revert to Commit
       Verify the button reads Commit again from live check state with no new state added.
+      run: 3m15s · 657 in · 6.1k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-11 [decision] Reuses the existing `fixes`/"Run fixes" mechanism rather than inventing a new phase kind or launch path — one fix entry per failing check, Docs findings excluded (different shape, already has its own browse flow).

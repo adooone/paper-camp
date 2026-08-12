@@ -627,6 +627,8 @@ export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';
 
 export interface CheckResult {
   status: CheckStatus;
+  /** The shell command this check runs — empty until a build command is configured. */
+  cmd: string;
   lastRun: string | null;
   output: string;
 }
