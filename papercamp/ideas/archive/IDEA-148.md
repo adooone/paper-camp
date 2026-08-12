@@ -2,9 +2,9 @@
 id: IDEA-148
 title: Bare mount URL white-screens the desk
 type: fix
-status: review
+status: done
 created: 2026-08-07
-updated: 2026-08-11
+updated: 2026-08-12
 tags:
   - integration
   - cli

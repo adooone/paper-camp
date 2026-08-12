@@ -2,9 +2,9 @@
 id: IDEA-150
 title: Route plans and ideas by id
 type: refactor
-status: review
+status: done
 created: 2026-08-10
-updated: 2026-08-11
+updated: 2026-08-12
 tags:
   - app
   - routing
