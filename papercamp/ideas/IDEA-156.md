@@ -58,8 +58,9 @@ version instead, using plumbing that already exists.
 - [x] Swap Commit for Fix while checks fail
       In `DeliverCommitButton`, render Fix in the same slot whenever any of the three checks is failing.
       run: 2m45s · 373 in · 5.3k out · sonnet-5
-- [ ] Wire the Fix action to write-then-launch
+- [x] Wire the Fix action to write-then-launch
       Write the fix entries to the plan file first, then `launchRunAll(plan.id)` once the write lands (IDEA-149 pattern).
+      run: 5m12s · 4.3k in · 15.4k out · sonnet-5
 - [ ] Confirm the auto-revert to Commit
       Verify the button reads Commit again from live check state with no new state added.
 
