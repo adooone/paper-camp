@@ -63,8 +63,9 @@ push, pull and sync — got neither.
 - [x] Bound every `runGit` spawn with a 30s cap
       Kill the child on expiry, reject with a command-named error, and put `GIT_TERMINAL_PROMPT: '0'` in the spawn env.
       run: 1m14s · 5.7k in · 2.6k out · sonnet-5
-- [ ] Add a 45s `AbortSignal.timeout` to deterministic `git-api.ts` calls
+- [x] Add a 45s `AbortSignal.timeout` to deterministic `git-api.ts` calls
       Cover status, commit, branch, diff, push, pull, sync, fix-divergence; leave `suggestCommitMessage` uncapped.
+      run: 1m12s · 388 in · 3.9k out · sonnet-5
 - [ ] Cap the post-sync refresh loaders inside `handleSync`
       Apply the same timeout to the status/plans/ideas re-read so a stalled refresh reports itself and still releases `activeGitAction`.
 - [ ] Confirm a timeout surfaces via the existing failure toast and frees the lock

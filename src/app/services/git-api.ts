@@ -1,6 +1,11 @@
 import type { FileDiffEntry, GitStatusResponse } from '@/types/index';
 import { apiUrl } from './api-base';
 
+// Sits above the server's own 30s cap so the server's command-named timeout
+// error is what wins whenever a call stalls; this only covers a response
+// that never arrives at all.
+const GIT_TIMEOUT_MS = 45_000;
+
 async function throwIfNotOk(response: Response, fallbackError: string): Promise<void> {
   if (response.ok) return;
   const err = await response.json().catch(() => ({ error: fallbackError }));
@@ -8,13 +13,17 @@ async function throwIfNotOk(response: Response, fallbackError: string): Promise<
 }
 
 export const fetchGitStatus = async (): Promise<GitStatusResponse> => {
-  const response = await fetch(apiUrl('/api/git/status'));
+  const response = await fetch(apiUrl('/api/git/status'), {
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
   await throwIfNotOk(response, 'Failed to load git status');
   return response.json();
 };
 
 export const fetchFileDiffs = async (): Promise<FileDiffEntry[]> => {
-  const response = await fetch(apiUrl('/api/git/diff'));
+  const response = await fetch(apiUrl('/api/git/diff'), {
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
   await throwIfNotOk(response, 'Failed to load diff');
   const data = await response.json();
   return data.files;
@@ -29,12 +38,16 @@ export const commitChanges = async (
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ files, title, message }),
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
   await throwIfNotOk(response, 'Commit failed');
 };
 
 export const pushChanges = async (): Promise<void> => {
-  const response = await fetch(apiUrl('/api/git/push'), { method: 'POST' });
+  const response = await fetch(apiUrl('/api/git/push'), {
+    method: 'POST',
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
   await throwIfNotOk(response, 'Push failed');
 };
 
@@ -60,7 +73,10 @@ export type SyncResult =
   | { ok: false; recovering: false; conflictPrompt: string; message: string };
 
 export const syncToMain = async (): Promise<SyncResult> => {
-  const response = await fetch(apiUrl('/api/git/sync'), { method: 'POST' });
+  const response = await fetch(apiUrl('/api/git/sync'), {
+    method: 'POST',
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
   if (response.status === 202) {
     const data = await response.json();
     return data.conflictPrompt
@@ -73,14 +89,20 @@ export const syncToMain = async (): Promise<SyncResult> => {
 
 // Fast-forward the current branch from origin in place (no branch switch).
 export const pullFromOrigin = async (): Promise<void> => {
-  const response = await fetch(apiUrl('/api/git/pull'), { method: 'POST' });
+  const response = await fetch(apiUrl('/api/git/pull'), {
+    method: 'POST',
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
   await throwIfNotOk(response, 'Pull failed');
 };
 
 // Rebase the current branch onto its diverged remote; on conflict the server
 // hands off to a recovery agent instead of throwing (see SyncResult).
 export const fixGitDivergence = async (): Promise<SyncResult> => {
-  const response = await fetch(apiUrl('/api/git/fix-divergence'), { method: 'POST' });
+  const response = await fetch(apiUrl('/api/git/fix-divergence'), {
+    method: 'POST',
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
   if (response.status === 202) {
     const data = await response.json();
     return data.conflictPrompt
@@ -111,6 +133,7 @@ export const createPlanBranch = async (planId: string): Promise<string> => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Failed to create branch');
