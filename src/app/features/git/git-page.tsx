@@ -6,7 +6,7 @@ import {
   useDeliverCommitForm,
 } from '@/app/features/plans/components/deliver-controls';
 import { useBranchSync } from '@/app/hooks/use-branch-sync';
-import { apiUrl } from '@/app/services/api-base';
+import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
 import { Breadcrumb, Button, Divider, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -65,25 +65,18 @@ export const GitPage = () => {
   }, [loadDiffFiles]);
 
   useEffect(() => {
-    const source = new EventSource(apiUrl('/api/activity/stream'));
     let timer: ReturnType<typeof setTimeout> | undefined;
-    source.onmessage = (event) => {
-      let payload: { message?: string };
-      try {
-        payload = JSON.parse(event.data);
-      } catch {
-        return;
-      }
+    const unsubscribe = subscribeToActivityStream((payload) => {
       if (payload.message !== 'changed') return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(loadDiffFiles, 250);
-    };
+    });
     const onFocus = () => loadDiffFiles();
     window.addEventListener('focus', onFocus);
     return () => {
       if (timer) clearTimeout(timer);
       window.removeEventListener('focus', onFocus);
-      source.close();
+      unsubscribe();
     };
   }, [loadDiffFiles]);
 

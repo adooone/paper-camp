@@ -1,3 +1,4 @@
+import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { Divider, IconButton, Spinner } from '@dendelion/paper-ui';
@@ -69,7 +70,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
   }, []);
 
   useEffect(() => {
-    const es = new EventSource('/api/activity/stream');
     // One timer per event type: an agent streaming a line per log row must not keep
     // pushing a pending check refresh out of reach.
     const timers: Record<string, ReturnType<typeof setTimeout> | undefined> = {};
@@ -77,12 +77,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       if (timers[key]) clearTimeout(timers[key]);
       timers[key] = setTimeout(run, ms);
     };
-    es.onmessage = (event) => {
-      const payload = JSON.parse(event.data) as {
-        message?: string;
-        type?: string;
-        taskId?: string;
-      };
+    const unsubscribe = subscribeToActivityStream((payload) => {
       // Check stamps (Quality/Tests/Consistency) live entirely off these — the
       // 'running' tick IS the loading state, so it must reach loadStatus.
       if (payload.type === 'status') {
@@ -111,10 +106,10 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         },
         250,
       );
-    };
+    });
     return () => {
       for (const timer of Object.values(timers)) if (timer) clearTimeout(timer);
-      es.close();
+      unsubscribe();
     };
   }, []);
 

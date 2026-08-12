@@ -1,4 +1,4 @@
-import { apiUrl } from '@/app/services/api-base';
+import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
 import { useEffect, useRef } from 'react';
 import { newlyArrived, pushableNotifications } from './notification-push';
@@ -27,22 +27,15 @@ export function useNotificationPush(): void {
   }, [notifications]);
 
   useEffect(() => {
-    const source = new EventSource(apiUrl('/api/activity/stream'));
     let timer: ReturnType<typeof setTimeout> | undefined;
-    source.onmessage = (event) => {
-      let payload: { message?: string };
-      try {
-        payload = JSON.parse(event.data);
-      } catch {
-        return;
-      }
+    const unsubscribe = subscribeToActivityStream((payload) => {
       if (payload.message !== 'changed') return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(loadNotifications, 250);
-    };
+    });
     return () => {
       if (timer) clearTimeout(timer);
-      source.close();
+      unsubscribe();
     };
   }, [loadNotifications]);
 }
