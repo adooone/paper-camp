@@ -43,8 +43,9 @@ action.
    instead of reconstructing it after.
 
 ### Phases
-- [ ] Widen `PhaseItem.source` to accept `'manual'`
+- [x] Widen `PhaseItem.source` to accept `'manual'`
       Add the value to the zod `source` literal and the type, alongside `'review'`.
+      run: 1m1s · 5.9k in · 2.4k out · sonnet-5
 - [ ] Round-trip the `[manual]` prefix in sections
       Parse and serialize `manual` the same way `review` is handled in the phase reader/writer.
 - [ ] Add a title-stripping helper

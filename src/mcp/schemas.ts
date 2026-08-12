@@ -13,7 +13,7 @@ const phaseItemSchema = z.object({
   done: z.boolean(),
   text: z.string(),
   description: z.string().optional(),
-  source: z.literal('review').optional(),
+  source: z.enum(['review', 'manual']).optional(),
 });
 
 export const planEntrySchema = z.object({
