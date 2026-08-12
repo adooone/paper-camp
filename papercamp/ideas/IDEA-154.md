@@ -39,5 +39,18 @@ Both move into one new page.
    complement for git actions and changes with no specific idea open,
    not a replacement for it.
 
+### Phases
+- [ ] Add the `/git` route and page shell
+      Register the route and a nav entry; empty two-column layout matching the diff page.
+- [ ] Fold the diff content into `/git` and retire `/diff`
+      Move the file-list sidebar and hunk page in; redirect or drop the old `/diff` route.
+- [ ] Add the repo-wide commit form to `/git`
+      Reuse the Deliver panel shape (title + suggest-from-diff + Commit), scoped to the whole working tree.
+- [ ] Move Sync/Push/Pull actions onto `/git`
+- [ ] Strip the four actions from `StatusBarCore`
+      Leave branch name and changed-file count as plain status text.
+- [ ] Add the toolbar icon button that opens `/git`
+      Match [[IDEA-153]]'s notification icon.
+
 ### Thread
 - [x] 2026-08-11 [decision] One new page absorbs both the toolbar's four action buttons and the orphaned `/diff` route; the toolbar becomes status-only. Per-idea Deliver keeps its own separate commit flow — this is the repo-wide surface, not a merge of the two.

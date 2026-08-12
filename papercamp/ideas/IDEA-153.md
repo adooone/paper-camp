@@ -2,7 +2,7 @@
 id: IDEA-153
 title: Notifications view replaces the Inbox
 type: feat
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -44,6 +44,25 @@ move it out of the nav menu into the toolbar.
    same unread-count badge (today's `parkedQuestionCount` stamp,
    generalized to the unread total) lives in the toolbar instead,
    alongside [[IDEA-154]]'s git icon.
+
+### Phases
+- [x] Extend the notification model with the two new kinds and a read flag
+      Add agent-completed and new-reply notifications alongside parked questions, each carrying its owning idea and a read/unread flag.
+      run: 5m32s · 17.8k in · 30.3k out · sonnet-5
+- [x] Emit the new notifications from task and feedback events
+      Create a completed notification when a task reaches done/error, and a reply notification when an agent posts a non-blocking feedback thread entry.
+      run: 8m33s · 4.8k in · 23.8k out · sonnet-5
+- [x] Render all three kinds in one age-ordered feed
+      Replace the Inbox page's questions-only list; keep the parked-question reply flow unchanged.
+- [x] Mark viewed notifications read and count unread for the badge
+      Set the read flag on view for the two new kinds, and generalise the badge stamp from parked-question count to total unread.
+      run: 4m44s · 10.7k in · 12.7k out · sonnet-5
+- [x] Fire Notification-API pushes off the SSE stream
+      Push agent-completed and new-reply while the tab is open but unfocused, gated on granted permission, degrading silently otherwise.
+      run: 4m18s · 1.8k in · 12.3k out · sonnet-5
+- [x] Move the entry from the nav menu to the toolbar
+      Remove the `router.tsx` navItems Inbox entry and add a toolbar icon button with the unread badge.
+      run: 5m32s · 8.8k in · 16.5k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-11 [decision] Push notifications are tab-open-but-unfocused only, via the Notification API off the existing SSE stream — no service worker, no closed-tab delivery. Read/unread is new for the two added kinds; parked questions keep their existing resolve-by-reply model unchanged.

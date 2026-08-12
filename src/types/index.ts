@@ -228,6 +228,28 @@ export interface ParkedQuestion {
   ageDays: number;
 }
 
+/** The two event-sourced notification kinds (IDEA-153) — 'completed' when a task
+ * reaches done/error, 'reply' when an agent posts a non-blocking feedback thread
+ * entry. Unlike ParkedQuestion (derived live from thread state), these are stored
+ * as discrete events on read, so a since-resolved source can't erase them. */
+export type StoredNotificationKind = 'completed' | 'reply';
+
+export interface StoredNotification {
+  id: string;
+  kind: StoredNotificationKind;
+  entityId: string;
+  entityTitle: string;
+  text: string;
+  date: string;
+  read: boolean;
+  /** Only set for 'completed' — the task outcome that triggered it. */
+  outcome?: 'done' | 'error';
+}
+
+/** One unified feed entry (IDEA-153) — a parked question (open→resolved, always
+ * unread while it's shown at all) alongside the two stored, read/unread kinds. */
+export type Notification = (ParkedQuestion & { kind: 'question' }) | StoredNotification;
+
 export type ConsistencyIssueKind = 'orphan-subject' | 'title-style';
 
 export interface ConsistencyIssue {

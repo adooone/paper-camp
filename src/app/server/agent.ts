@@ -36,7 +36,8 @@ import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
-import { logTaskCompletion } from './task-log';
+import { appendNotification } from './notification-log';
+import { UNLOGGED_TASK_KINDS, logTaskCompletion } from './task-log';
 
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -46,6 +47,10 @@ const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
 
 function isAuthError(text: string): boolean {
   return text.includes(AUTH_ERROR_MARKER);
+}
+
+function humanizeTaskKind(kind: TaskKind): string {
+  return kind.replace(/-/g, ' ');
 }
 
 // Lets the phase or fix-pass agent short-circuit straight to escalation when
@@ -61,6 +66,9 @@ export interface AgentTask {
   id: string;
   taskKind: TaskKind;
   planTitle: string;
+  /** Idea title for idea-scoped tasks (draft/extend), where `planTitle` is an
+   * action label like "Draft plan for IDEA-1" rather than the entity's name. */
+  notificationTitle?: string;
   planId?: string;
   startedAt: string;
   phaseIndex?: number;
@@ -375,6 +383,21 @@ export function createAgentManager(
       void logTaskCompletion(root, task, status);
       pruneCompletedTasks();
     }
+    const entityId = task.planId ?? task.ideaId;
+    if (
+      (status === 'done' || status === 'error') &&
+      entityId &&
+      !UNLOGGED_TASK_KINDS.has(task.taskKind)
+    ) {
+      void appendNotification(root, {
+        id: task.id,
+        kind: 'completed',
+        entityId,
+        entityTitle: task.notificationTitle ?? task.planTitle,
+        text: `${humanizeTaskKind(task.taskKind)} ${status === 'done' ? 'finished' : 'failed'}`,
+        outcome: status,
+      });
+    }
   }
 
   // Finalizes a task preempted by a newer exclusive-kind launch: loud and honest,
@@ -659,7 +682,12 @@ export function createAgentManager(
   // Synchronous, no `await` between the admit() check and registering the task,
   // so two colliding launches can't both pass the gate.
   function launch(
-    identity: { planTitle: string; planId?: string; agentOverride?: AgentId },
+    identity: {
+      planTitle: string;
+      notificationTitle?: string;
+      planId?: string;
+      agentOverride?: AgentId;
+    },
     prompt: string,
     scope: Pick<
       AgentTask,
@@ -689,6 +717,7 @@ export function createAgentManager(
     const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
     const task = newTask({
       planTitle: identity.planTitle,
+      notificationTitle: identity.notificationTitle,
       planId: identity.planId,
       agentId,
       adapter,
@@ -749,17 +778,18 @@ export function createAgentManager(
     if (!idea.id) {
       return { ok: false, error: 'Idea has no id to link a drafted plan back to' };
     }
-    return launch({ planTitle: `Draft plan for ${idea.id}` }, prompt, {
-      taskKind: 'draft',
-      ideaId: idea.id,
-    });
+    return launch(
+      { planTitle: `Draft plan for ${idea.id}`, notificationTitle: idea.title },
+      prompt,
+      { taskKind: 'draft', ideaId: idea.id },
+    );
   }
 
   function startForIdeaExtend(idea: IdeaEntry, prompt: string): Result {
     if (!idea.id) {
       return { ok: false, error: 'Idea has no id to extend' };
     }
-    return launch({ planTitle: `Extend ${idea.id}` }, prompt, {
+    return launch({ planTitle: `Extend ${idea.id}`, notificationTitle: idea.title }, prompt, {
       taskKind: 'extend',
       ideaId: idea.id,
       ideaLogBaseline: idea.log?.length ?? 0,

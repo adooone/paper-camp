@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
@@ -27,6 +28,7 @@ import {
 } from '../helpers';
 import { readBody, sendJson } from '../http';
 import { getCurrentLoginRelay, startClaudeLoginRelay } from '../login-relay';
+import { appendNotification } from '../notification-log';
 import type { Route, RouteContext } from './types';
 
 async function resolveEntityFilePath(root: string, entityId: string): Promise<string | null> {
@@ -457,6 +459,13 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
               ...(reopen ? { status: 'in-progress' } : {}),
             }),
           );
+          void appendNotification(root, {
+            id: randomUUID(),
+            kind: 'reply',
+            entityId: entity.id,
+            entityTitle: entity.title,
+            text: replyText,
+          });
 
           // Resolving an open question is exactly the confirmation cue a run-all
           // parked on it (IDEA-125) is waiting for — re-enter it now instead of

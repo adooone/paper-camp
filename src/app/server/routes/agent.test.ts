@@ -137,3 +137,44 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
     );
   });
 });
+
+describe('POST /api/agent/feedback-message reply notification', () => {
+  it('appends an unread reply notification carrying the agent reply text', async () => {
+    const root = await makeRoot();
+    const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Noted, thanks.' }));
+
+    const { res, status } = fakeRes();
+    await route(root, '/api/agent/feedback-message', {
+      agent: { runFeedbackReply } as unknown as RouteContext['agent'],
+      status: {} as unknown as RouteContext['status'],
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Just an aside.' })), res);
+
+    expect(status()).toBe(200);
+
+    const logPath = join(root, 'papercamp', 'notifications.log');
+    const start = Date.now();
+    let entries: { kind?: string; entityId?: string; text?: string; read?: boolean }[] = [];
+    while (Date.now() - start < 2000) {
+      try {
+        const raw = await readFile(logPath, 'utf-8');
+        entries = raw
+          .trim()
+          .split('\n')
+          .filter(Boolean)
+          .map((line) => JSON.parse(line));
+        if (entries.length) break;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      kind: 'reply',
+      entityId: 'IDEA-1',
+      entityTitle: 'Test plan',
+      text: 'Noted, thanks.',
+      read: false,
+    });
+  });
+});

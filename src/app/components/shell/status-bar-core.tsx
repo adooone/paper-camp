@@ -1,8 +1,8 @@
 import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
 import type { AgentTaskStatus, BranchHygieneStatus, RateLimitSnapshot } from '@/types/index';
-import { Button, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
+import { Button, IconButton, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
 import type { CSSProperties, ReactNode } from 'react';
-import { CommitIcon, MergeIcon, PullIcon, PushIcon } from '../icons';
+import { BellIcon, CommitIcon, MergeIcon, PullIcon, PushIcon } from '../icons';
 
 function capacityTooltip(snapshot: RateLimitSnapshot): string {
   const parts = [`Claude usage: ${snapshot.status}`];
@@ -54,6 +54,13 @@ const stampTriggerStyle: CSSProperties = {
   padding: 0,
   cursor: 'pointer',
 };
+const notificationButtonStyle: CSSProperties = { position: 'relative', display: 'inline-flex' };
+const notificationBadgeStyle: CSSProperties = {
+  position: 'absolute',
+  top: '-0.25rem',
+  right: '-0.25rem',
+  pointerEvents: 'none',
+};
 
 export interface StatusBarCoreProps {
   gitBranch: string | null;
@@ -70,11 +77,13 @@ export interface StatusBarCoreProps {
   pushing: boolean;
   syncing: boolean;
   pulling: boolean;
+  unreadNotificationCount: number;
   onSync: () => void;
   onPush: () => void;
   onPull: () => void;
   onQuickCommit: () => void;
   onOpenSetup: () => void;
+  onOpenNotifications: () => void;
   trailing?: ReactNode;
 }
 
@@ -94,11 +103,13 @@ export const StatusBarCore = ({
   pushing,
   syncing,
   pulling,
+  unreadNotificationCount,
   onSync,
   onPush,
   onPull,
   onQuickCommit,
   onOpenSetup,
+  onOpenNotifications,
   trailing,
 }: StatusBarCoreProps) => {
   return (
@@ -152,6 +163,24 @@ export const StatusBarCore = ({
       {trailing && <div style={rightGroupStyle}>{trailing}</div>}
 
       <div style={rightGroupStyle}>
+        <Tooltip content="Notifications">
+          <span style={notificationButtonStyle}>
+            <IconButton
+              variant="ghost"
+              size="small"
+              icon={<BellIcon />}
+              label="Notifications"
+              onClick={onOpenNotifications}
+            />
+            {unreadNotificationCount > 0 && (
+              <span style={notificationBadgeStyle}>
+                <Stamp size="small" variant="warning">
+                  {unreadNotificationCount}
+                </Stamp>
+              </span>
+            )}
+          </span>
+        </Tooltip>
         <Tooltip
           content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : 'Sync to main'}
         >

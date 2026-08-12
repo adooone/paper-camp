@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { describeFindings, runDoctor } from '@/core/doctor';
+import { mergeNotifications } from '@/core/notifications';
 import { readParkedQuestions } from '@/core/parked-questions';
 import {
   deskConfigSchema,
@@ -14,6 +15,7 @@ import { resolveReleaseRanges } from '@/core/trail';
 import { DEFAULT_AGENTS, type ProjectStats, coerceAgentConfig } from '@/types/index';
 import { cached } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
+import { readNotifications } from '../notification-log';
 import { listConfigFiles } from './system';
 import type { ReadRoute } from './types';
 
@@ -64,6 +66,16 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/parked-questions',
     handler: async (root) => readParkedQuestions(campFile(root, 'ideas')),
+  },
+  {
+    path: '/api/notifications',
+    handler: async (root) => {
+      const [parked, stored] = await Promise.all([
+        readParkedQuestions(campFile(root, 'ideas')),
+        readNotifications(root),
+      ]);
+      return mergeNotifications(parked, stored);
+    },
   },
   {
     path: '/api/consistency',

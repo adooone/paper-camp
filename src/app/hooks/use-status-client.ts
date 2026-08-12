@@ -17,7 +17,10 @@ import { fetchAgentAuthStatus, fetchCapabilities } from '../services/system';
 // destructures its own known props, so extra fields here are invisible to it;
 // TypeScript's excess-property check only fires on object literals, not on a
 // value passed through a variable/spread.
-export type StatusClientState = Omit<StatusBarCoreProps, 'onOpenSetup'> & {
+export type StatusClientState = Omit<
+  StatusBarCoreProps,
+  'onOpenSetup' | 'unreadNotificationCount' | 'onOpenNotifications'
+> & {
   suggesting: boolean;
   suggestCommit: () => Promise<{ title: string; message: string } | null>;
   commitWithTitle: (title: string, message?: string) => Promise<boolean>;

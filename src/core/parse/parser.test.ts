@@ -6,6 +6,7 @@ import {
   findConsistencyIssues,
   parseEntityFile,
   parseIdeas,
+  parseNotificationLog,
   parsePlans,
   parseSuggestions,
   parseTaskLog,
@@ -673,6 +674,73 @@ describe('parseTaskLog', () => {
 
   it('returns an empty array for an empty file', () => {
     expect(parseTaskLog('')).toEqual([]);
+  });
+});
+
+describe('parseNotificationLog', () => {
+  it('parses one entry per JSON line', () => {
+    const entryA = {
+      id: 'notif-1',
+      kind: 'completed',
+      entityId: 'IDEA-1',
+      entityTitle: 'First',
+      text: 'run-all finished',
+      date: '2026-07-15T10:05:00.000Z',
+      read: false,
+      outcome: 'done',
+    };
+    const entryB = {
+      id: 'notif-2',
+      kind: 'reply',
+      entityId: 'IDEA-2',
+      entityTitle: 'Second',
+      text: 'Answered your question',
+      date: '2026-07-15T10:06:00.000Z',
+      read: true,
+    };
+    const jsonl = `${JSON.stringify(entryA)}\n${JSON.stringify(entryB)}\n`;
+    expect(parseNotificationLog(jsonl)).toEqual([entryA, entryB]);
+  });
+
+  it('skips malformed lines and blank lines rather than failing the whole read', () => {
+    const entry = {
+      id: 'notif-1',
+      kind: 'completed',
+      entityId: 'IDEA-1',
+      entityTitle: 'First',
+      text: 'run-all finished',
+      date: '2026-07-15T10:05:00.000Z',
+      read: false,
+    };
+    const jsonl = `${JSON.stringify(entry)}\n\nnot json\n`;
+    expect(parseNotificationLog(jsonl)).toEqual([entry]);
+  });
+
+  it('returns an empty array for an empty file', () => {
+    expect(parseNotificationLog('')).toEqual([]);
+  });
+
+  it('skips syntactically valid but schema-invalid lines', () => {
+    const valid = {
+      id: 'notif-1',
+      kind: 'completed',
+      entityId: 'IDEA-1',
+      entityTitle: 'First',
+      text: 'run-all finished',
+      date: '2026-07-15T10:05:00.000Z',
+      read: false,
+    };
+    const missingFields = { id: 'notif-2', kind: 'completed' };
+    const invalidKind = { ...valid, id: 'notif-3', kind: 'unexpected' };
+    const invalidOutcome = { ...valid, id: 'notif-4', outcome: 'pending' };
+    const jsonl = [
+      JSON.stringify(valid),
+      'null',
+      JSON.stringify(missingFields),
+      JSON.stringify(invalidKind),
+      JSON.stringify(invalidOutcome),
+    ].join('\n');
+    expect(parseNotificationLog(jsonl)).toEqual([valid]);
   });
 });
 

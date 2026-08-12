@@ -2,26 +2,36 @@ import { PageTitle } from '@/app/components/page-title';
 import { PlanIdStamp } from '@/app/features/plans/components';
 import { entityRouteParam } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
+import { notificationAgeDays } from '@/core/notifications';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { formatAge } from './helpers';
+import { NotificationRow } from './notification-row';
 import { QuestionRow } from './question-row';
 
 export const InboxPage = () => {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
-  const questions = useAppStore((s) => s.parkedQuestions);
-  const loadFailed = useAppStore((s) => s.parkedQuestionsError !== null);
+  const notifications = useAppStore((s) => s.notifications);
+  const loadFailed = useAppStore((s) => s.notificationsError !== null);
   const plans = useAppStore((s) => s.plans);
   const loadPlans = useAppStore((s) => s.loadPlans);
-  const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
+  const loadNotifications = useAppStore((s) => s.loadNotifications);
+  const markRead = useAppStore((s) => s.markRead);
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadParkedQuestions();
-  }, [loadParkedQuestions]);
+    loadNotifications();
+  }, [loadNotifications]);
+
+  useEffect(() => {
+    if (!notifications) return;
+    for (const n of notifications) {
+      if (n.kind !== 'question' && !n.read) markRead(n.id);
+    }
+  }, [notifications, markRead]);
 
   const reload = async () => {
-    await Promise.all([loadPlans(), loadParkedQuestions()]);
+    await Promise.all([loadPlans(), loadNotifications()]);
   };
 
   const openEntity = (id: string, title: string) => {
@@ -36,18 +46,31 @@ export const InboxPage = () => {
     <div>
       <PageTitle>Inbox</PageTitle>
       <p className="opacity-50 mb-6">
-        Every open agent question, oldest first — parked decisions waiting on a human.
+        Every parked question, completed run, and agent reply, oldest first.
       </p>
-      {loadFailed && <p className="opacity-50">Couldn't load parked questions.</p>}
-      {!loadFailed && !questions && <p className="opacity-50">Loading…</p>}
-      {questions && questions.length === 0 && (
-        <p className="opacity-50">Nothing parked — every agent question has an answer.</p>
+      {loadFailed && <p className="opacity-50">Couldn't load notifications.</p>}
+      {!loadFailed && !notifications && <p className="opacity-50">Loading…</p>}
+      {notifications && notifications.length === 0 && (
+        <p className="opacity-50">Nothing here — no parked questions or recent activity.</p>
       )}
-      {questions && questions.length > 0 && (
+      {notifications && notifications.length > 0 && (
         <div className="flex flex-col">
-          {questions.map((q, i) => {
-            const key = `${q.entityId}-${i}`;
-            const plan = plans?.entries.find((p) => p.id === q.entityId);
+          {notifications.map((n, i) => {
+            const key = `${n.entityId}-${n.kind}-${i}`;
+            const onOpen = () => openEntity(n.entityId, n.entityTitle);
+
+            if (n.kind !== 'question') {
+              return (
+                <NotificationRow
+                  key={key}
+                  notification={n}
+                  ageDays={notificationAgeDays(n)}
+                  onOpen={onOpen}
+                />
+              );
+            }
+
+            const plan = plans?.entries.find((p) => p.id === n.entityId);
             if (!plan) {
               return (
                 <div
@@ -56,15 +79,15 @@ export const InboxPage = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => openEntity(q.entityId, q.entityTitle)}
-                    aria-label={`Open ${q.entityTitle}`}
+                    onClick={onOpen}
+                    aria-label={`Open ${n.entityTitle}`}
                     className="bg-transparent border-none p-0 cursor-pointer"
                   >
-                    <PlanIdStamp id={q.entityId} />
+                    <PlanIdStamp id={n.entityId} />
                   </button>
-                  <span className="flex-1 min-w-0 truncate">{q.text}</span>
+                  <span className="flex-1 min-w-0 truncate">{n.text}</span>
                   <span className="opacity-50 text-xs whitespace-nowrap">
-                    {formatAge(q.ageDays)}
+                    {formatAge(n.ageDays)}
                   </span>
                 </div>
               );
@@ -72,11 +95,11 @@ export const InboxPage = () => {
             return (
               <QuestionRow
                 key={key}
-                question={q}
+                question={n}
                 plan={plan}
                 expanded={expandedKey === key}
                 onToggle={() => setExpandedKey((cur) => (cur === key ? null : key))}
-                onOpen={() => openEntity(q.entityId, q.entityTitle)}
+                onOpen={onOpen}
                 reload={reload}
               />
             );
