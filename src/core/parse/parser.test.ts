@@ -250,6 +250,26 @@ Body.
       { done: false, text: 'Fix off-by-one in pagination', source: 'review' },
     ]);
   });
+
+  it('parses the [manual] inline tag as phase.source', () => {
+    const md = `## Short title
+
+**Status:** in-progress
+**Created:** 2026-06-18
+
+Body.
+
+### Phases
+- [x] Decide on storage format
+- [x] [manual] Smaller toolbar button text
+`;
+    const { entries, warnings } = parsePlans(md);
+    expect(warnings).toEqual([]);
+    expect(entries[0].phases).toEqual([
+      { done: true, text: 'Decide on storage format' },
+      { done: true, text: 'Smaller toolbar button text', source: 'manual' },
+    ]);
+  });
 });
 
 describe('findConsistencyIssues', () => {

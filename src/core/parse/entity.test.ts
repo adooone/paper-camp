@@ -216,6 +216,7 @@ describe('formatEntityFile round-trip', () => {
       phases: [
         { text: 'First phase', done: true, description: 'Details.' },
         { text: 'Review-found phase', done: false, source: 'review' as const },
+        { text: 'Manually committed phase', done: true, source: 'manual' as const },
       ],
       thread: [
         { kind: 'clarification' as const, date: '2026-07-05', text: 'scope confirmed' },
@@ -240,8 +241,9 @@ describe('formatEntityFile round-trip', () => {
     expect(e.subject).toBe('Core infra');
     expect(e.order).toBe(0);
     expect(e.body).toBe(input.body);
-    expect(e.phases).toHaveLength(2);
+    expect(e.phases).toHaveLength(3);
     expect(e.phases[1].source).toBe('review');
+    expect(e.phases[2].source).toBe('manual');
     expect(logFromThread(e.thread)).toEqual([{ date: '2026-07-05', text: 'drafted' }]);
     expect(clarificationsFromThread(e.thread)).toEqual([
       { date: '2026-07-05', text: 'scope confirmed' },

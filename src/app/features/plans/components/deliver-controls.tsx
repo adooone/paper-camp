@@ -5,7 +5,7 @@ import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type { CheckStatus, ConsistencyIssue, PhaseItem, PlanEntry } from '@/types/index';
+import type { CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
 import {
   Alert,
   Button,
@@ -18,7 +18,7 @@ import {
 } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { upsertCheckFixes } from '../helpers';
+import { appendManualPhase, upsertCheckFixes } from '../helpers';
 import { usePlanStatusPatch } from '../hooks';
 
 const COMMIT_SCOPES = [
@@ -46,12 +46,6 @@ function deriveSuggestedCommit(plan: PlanEntry | undefined): { title: string } {
   const scope = plan.tags?.find((t) => COMMIT_SCOPES.includes(t)) ?? 'repo';
   const kind = plan.kind ?? 'feat';
   return { title: `${kind}(${scope}): ${plan.title}` };
-}
-
-const COMMIT_PREFIX_RE = /^[a-z]+\([a-z-]+\):\s+/;
-
-function stripCommitPrefix(title: string): string {
-  return title.replace(COMMIT_PREFIX_RE, '');
 }
 
 const CHECK_VARIANT: Record<CheckStatus, StampVariant> = {
@@ -267,12 +261,9 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     try {
       await commitChanges(files, commitTitle.trim(), commitMessage.trim() || undefined);
       if (plan) {
-        const phase: PhaseItem = {
-          done: true,
-          text: stripCommitPrefix(commitTitle.trim()),
-          source: 'manual',
-        };
-        await patchByTitle(plan.title, { phases: [...plan.phases, phase] });
+        await patchByTitle(plan.title, {
+          phases: appendManualPhase(plan.phases, commitTitle.trim()),
+        });
       }
       setCommitTitle('');
       setCommitMessage('');
