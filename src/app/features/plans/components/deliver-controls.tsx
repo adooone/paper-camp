@@ -199,7 +199,7 @@ export const DeliverChangedFiles = ({ count }: { count: number }) => {
     // Raw <button>: paper-ui Button has no inline-underlined link style.
     <button
       type="button"
-      onClick={() => navigate({ to: '/diff' })}
+      onClick={() => navigate({ to: '/git' })}
       className="bg-none bg-transparent border-none p-0 font-handwritten text-xs opacity-[0.6] underline cursor-pointer"
     >
       {count} file{count === 1 ? '' : 's'} changed

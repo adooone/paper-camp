@@ -43,12 +43,6 @@ const RoadmapPage = lazy(() =>
 const RoadmapSidebar = lazy(() =>
   import('@/app/features/roadmap/index').then((m) => ({ default: m.RoadmapSidebar })),
 );
-const DiffPage = lazy(() =>
-  import('@/app/features/diff/index').then((m) => ({ default: m.DiffPage })),
-);
-const DiffFileList = lazy(() =>
-  import('@/app/features/diff/index').then((m) => ({ default: m.DiffFileList })),
-);
 const StatsPage = lazy(() =>
   import('@/app/features/stats/index').then((m) => ({ default: m.StatsPage })),
 );
@@ -141,7 +135,6 @@ const RootLayout = () => {
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
   const isRoadmapArea = pathname === '/roadmap';
-  const isDiffArea = pathname === '/diff';
   const isGitArea = pathname === '/git';
   const activeId = isPlansArea
     ? 'plans'
@@ -150,8 +143,7 @@ const RootLayout = () => {
       : isSettingsArea
         ? 'settings'
         : navItems.find((item) => item.path === pathname)?.id;
-  const hasSidebar =
-    isPlansArea || isDocsArea || isSettingsArea || isRoadmapArea || isDiffArea || isGitArea;
+  const hasSidebar = isPlansArea || isDocsArea || isSettingsArea || isRoadmapArea || isGitArea;
   const sidebarAreaKey = isPlansArea
     ? 'plans'
     : isDocsArea
@@ -160,9 +152,7 @@ const RootLayout = () => {
         ? 'settings'
         : isRoadmapArea
           ? 'roadmap'
-          : isDiffArea
-            ? 'diff'
-            : 'git';
+          : 'git';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
@@ -306,11 +296,6 @@ const RootLayout = () => {
                         <RoadmapSidebar />
                       </Suspense>
                     )}
-                    {isDiffArea && (
-                      <Suspense fallback={null}>
-                        <DiffFileList />
-                      </Suspense>
-                    )}
                     {isGitArea && (
                       <Suspense fallback={null}>
                         <GitFileList />
@@ -435,12 +420,6 @@ const roadmapRoute = createRoute({
   }),
 });
 
-const diffRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/diff',
-  component: DiffPage,
-});
-
 const inboxRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/inbox',
@@ -478,7 +457,6 @@ const routeTree = rootRoute.addChildren([
   settingsSectionRoute,
   tasksRoute,
   roadmapRoute,
-  diffRoute,
   statsRoute,
   inboxRoute,
   gitRoute,
