@@ -1,2 +1,2 @@
-export { GitPage } from './git-page';
-export { GitFileList } from './git-file-list';
+export { GitPage } from '@/app/features/git/git-page';
+export { GitFileList } from '@/app/features/git/git-file-list';

@@ -1,4 +1,5 @@
 import { MergeIcon, PullIcon, PushIcon } from '@/app/components/icons';
+import { FileDiffSection } from '@/app/features/git/file-diff-section';
 import {
   DeliverCommitButton,
   DeliverCommitInputRow,
@@ -10,7 +11,6 @@ import { useAppStore } from '@/app/stores/app-store';
 import { Breadcrumb, Button, Divider, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { Fragment, useEffect, useMemo, useRef } from 'react';
-import { FileDiffSection } from './file-diff-section';
 
 const GitActionsRow = () => {
   const gitAhead = useAppStore((s) => s.gitAhead);
