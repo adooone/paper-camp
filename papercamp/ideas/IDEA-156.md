@@ -2,7 +2,7 @@
 id: IDEA-156
 title: Fix button replaces Commit when checks fail
 type: feat
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -61,8 +61,9 @@ version instead, using plumbing that already exists.
 - [x] Wire the Fix action to write-then-launch
       Write the fix entries to the plan file first, then `launchRunAll(plan.id)` once the write lands (IDEA-149 pattern).
       run: 5m12s · 4.3k in · 15.4k out · sonnet-5
-- [ ] Confirm the auto-revert to Commit
+- [x] Confirm the auto-revert to Commit
       Verify the button reads Commit again from live check state with no new state added.
+      run: 3m15s · 657 in · 6.1k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-11 [decision] Reuses the existing `fixes`/"Run fixes" mechanism rather than inventing a new phase kind or launch path — one fix entry per failing check, Docs findings excluded (different shape, already has its own browse flow).
