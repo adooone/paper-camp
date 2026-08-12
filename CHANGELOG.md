@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.18.0](https://github.com/adooone/paper-camp/compare/v0.17.1...v0.18.0) (2026-08-12)
+
+
+### Features
+
+* **app:** Build check in the status manager (IDEA-157) ([#136](https://github.com/adooone/paper-camp/issues/136)) ([0318cfc](https://github.com/adooone/paper-camp/commit/0318cfc1dbe846017312bb9f144bedd20b425587))
+* **app:** Deliver lives in the idea view (IDEA-146) ([#133](https://github.com/adooone/paper-camp/issues/133)) ([46fa40e](https://github.com/adooone/paper-camp/commit/46fa40eced97db83371bb9f49da7f7006a3d6afb))
+* **app:** Fix button replaces Commit when checks fail (IDEA-156) ([#143](https://github.com/adooone/paper-camp/issues/143)) ([6ab6c85](https://github.com/adooone/paper-camp/commit/6ab6c850952103a1175e51d25872cd8f521f49b9))
+* **app:** Git view replaces the toolbar's four actions (IDEA-154) ([#142](https://github.com/adooone/paper-camp/issues/142)) ([154a5cc](https://github.com/adooone/paper-camp/commit/154a5cc1fe4db589797f77702debfa74ba55eb7c))
+* **app:** Notifications view replaces the Inbox (IDEA-153) ([#141](https://github.com/adooone/paper-camp/issues/141)) ([ecba0cd](https://github.com/adooone/paper-camp/commit/ecba0cdfdca1d04170ee3b06bed580431fd95a9b))
+* **app:** Run & monitor on the desk (IDEA-119) ([#130](https://github.com/adooone/paper-camp/issues/130)) ([25f9172](https://github.com/adooone/paper-camp/commit/25f917204a739c4f7b6293abf661955b4d0bac42))
+* **app:** Scout panel replaces the sidesheet (IDEA-147) ([#134](https://github.com/adooone/paper-camp/issues/134)) ([733299e](https://github.com/adooone/paper-camp/commit/733299efda59ae3f40bcf9a4fc02d4b7b7dc1878))
+* **cli:** paper-camp doctor (IDEA-121) ([#131](https://github.com/adooone/paper-camp/issues/131)) ([c0838db](https://github.com/adooone/paper-camp/commit/c0838dbed450ae1c983c84c6f68aa1f6b95eee28))
+* **repo:** MCP as the primary write path (IDEA-122) ([#128](https://github.com/adooone/paper-camp/issues/128)) ([7c3ae99](https://github.com/adooone/paper-camp/commit/7c3ae99c1758e2327e5a785ecdfb3be2ab9390e4))
+
+
+### Bug Fixes
+
+* **app:** Changes page in Plans style (IDEA-145) ([#132](https://github.com/adooone/paper-camp/issues/132)) ([ad00fd2](https://github.com/adooone/paper-camp/commit/ad00fd203b085e4beb199d670331ee9da1184d60))
+* **app:** Only the page container scrolls (IDEA-155) ([#138](https://github.com/adooone/paper-camp/issues/138)) ([91b2033](https://github.com/adooone/paper-camp/commit/91b2033aa06834a0b3491c0395a76f3bab263152))
+* **cli:** Bare mount URL white-screens the desk (IDEA-148) ([#140](https://github.com/adooone/paper-camp/issues/140)) ([0077acd](https://github.com/adooone/paper-camp/commit/0077acda51763f50cca575a3de3f39b542727d70))
+
 ## [0.17.1](https://github.com/adooone/paper-camp/compare/v0.17.0...v0.17.1) (2026-08-08)
 
 
