@@ -55,8 +55,9 @@ action.
 - [x] Append the phase inside `handleCommit`
       On a successful Deliver-form commit, persist `{ done: true, text: stripped, source: 'manual' }` to the plan's `phases`.
       run: 43s · 367 in · 2.4k out · sonnet-5
-- [ ] Render the `manual` stamp in the phase row
+- [x] Render the `manual` stamp in the phase row
       Add a `source === 'manual'` branch beside the existing `review` stamp in entity-detail.
+      run: 1m10s · 235 in · 2.4k out · sonnet-5
 - [ ] Cover the strip, round-trip, and append with tests
 
 ### Thread
