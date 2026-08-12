@@ -472,20 +472,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             text: replyText,
           });
 
-          // Same path the "Run fixes" button uses — the fix phase already landed in
-          // the file above, so this starts implementing it as the reply posts. Busy
-          // agents are already turned away by startRunAllPhases's own admit() guard.
-          if (reopen) {
-            const reopenedPlan = entityToPlan({
-              ...entity,
-              thread,
-              updated: todayDateString(),
-              ...overrides,
-              status: 'in-progress',
-            });
-            agent.startRunAllPhases(reopenedPlan, () => status.runChecksAndWait());
-          }
-
           // Resolving an open question is exactly the confirmation cue a run-all
           // parked on it (IDEA-125) is waiting for — re-enter it now instead of
           // leaving it failed until someone notices and relaunches by hand.
@@ -494,7 +480,9 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           }
 
           // Only a plan edit needs an Undo — commit it on its own so a revert can't
-          // also sweep in unrelated dirty files elsewhere in the working tree.
+          // also sweep in unrelated dirty files elsewhere in the working tree. Committed
+          // before the auto-launch below so the run's worker never writes phase-run
+          // changes into a commit still being staged for this feedback edit.
           if (overrides.phases || overrides.fixes || overrides.body) {
             const relFile = relative(root, targetFile);
             await git.commit(
@@ -504,6 +492,25 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
               { noVerify: true },
             );
             undo = { commitSha: await git.getHeadSha() };
+          }
+
+          // Same path the "Run fixes" button uses — the fix phase already landed in
+          // the file above (and is now committed), so this starts implementing it as
+          // the reply posts. Guarded the same way the button's resolvePlan is: a branch
+          // conflict here is rejected instead of auto-launching into it. Busy agents are
+          // already turned away by startRunAllPhases's own admit() guard.
+          if (reopen) {
+            const conflict = await checkBranchConflictForPlan(root, git, entity.id);
+            if (!conflict) {
+              const reopenedPlan = entityToPlan({
+                ...entity,
+                thread,
+                updated: todayDateString(),
+                ...overrides,
+                status: 'in-progress',
+              });
+              agent.startRunAllPhases(reopenedPlan, () => status.runChecksAndWait());
+            }
           }
         } catch (err) {
           error = (err as Error).message;

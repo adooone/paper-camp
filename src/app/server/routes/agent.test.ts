@@ -51,10 +51,13 @@ async function makeRoot(): Promise<string> {
   return root;
 }
 
-function fakeGit(): RouteContext['git'] {
+function fakeGit(overrides: Partial<RouteContext['git']> = {}): RouteContext['git'] {
   return {
     commit: vi.fn(async () => {}),
     getHeadSha: vi.fn(async () => 'abc123'),
+    getFeatureBranchPlanId: vi.fn(() => null),
+    getBranchHygieneStatus: vi.fn(async () => 'clean-on-main'),
+    ...overrides,
   } as unknown as RouteContext['git'];
 }
 
@@ -314,5 +317,66 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), 'utf-8');
     expect(planFile).toContain('Fix the typo');
     expect(planFile).toContain('status: in-progress');
+  });
+
+  it('does not auto-launch when another plan owns the current branch', async () => {
+    const root = await makeRoot();
+    const runFeedbackReply = vi.fn(async () =>
+      JSON.stringify({
+        reply: 'Fixed the typo.',
+        edit: { phases: [{ op: 'add', text: 'Fix the typo' }] },
+      }),
+    );
+    const startRunAllPhases = vi.fn(
+      (_plan: PlanEntry, _runProjectChecks?: () => Promise<CheckName[]>) => ({ ok: true }) as const,
+    );
+
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/agent/feedback-message', {
+      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      status: {
+        runChecksAndWait: vi.fn(async () => [] as CheckName[]),
+      } as unknown as RouteContext['status'],
+      git: fakeGit({ getFeatureBranchPlanId: vi.fn(() => 'IDEA-1') }),
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
+
+    expect(status()).toBe(200);
+    expect(json()).toMatchObject({ ok: true });
+    expect(startRunAllPhases).not.toHaveBeenCalled();
+  });
+
+  it('commits the feedback edit before launching the fixes run', async () => {
+    const root = await makeRoot();
+    const runFeedbackReply = vi.fn(async () =>
+      JSON.stringify({
+        reply: 'Fixed the typo.',
+        edit: { phases: [{ op: 'add', text: 'Fix the typo' }] },
+      }),
+    );
+    const callOrder: string[] = [];
+    const commit = vi.fn(async () => {
+      callOrder.push('commit');
+    });
+    const startRunAllPhases = vi.fn(
+      (_plan: PlanEntry, _runProjectChecks?: () => Promise<CheckName[]>) => {
+        callOrder.push('launch');
+        return { ok: true } as const;
+      },
+    );
+
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/agent/feedback-message', {
+      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      status: {
+        runChecksAndWait: vi.fn(async () => [] as CheckName[]),
+      } as unknown as RouteContext['status'],
+      git: fakeGit({ commit }),
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
+
+    expect(status()).toBe(200);
+    expect(json()).toMatchObject({ ok: true });
+    expect(commit).toHaveBeenCalledOnce();
+    expect(startRunAllPhases).toHaveBeenCalledOnce();
+    expect(callOrder).toEqual(['commit', 'launch']);
   });
 });
