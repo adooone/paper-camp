@@ -57,5 +57,6 @@ export function subscribeToActivityStream(listener: ActivityListener): () => voi
       source.close();
       source = null;
     }
+    reconnectDelay = MIN_RECONNECT_DELAY_MS;
   };
 }
