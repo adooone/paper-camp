@@ -44,8 +44,9 @@ fixes". The suggestion was the instruction; the press is ceremony.
 - [x] Guard on a busy agent
       Skip the auto-launch when an agent is already working that plan; the open fix stays queued and the manual button remains the fallback.
       run: 4m9s · 387 in · 16.9k out · sonnet-5
-- [ ] Keep the launch loop-free
+- [x] Keep the launch loop-free
       Confirm a fixes run's own thread posts never re-enter the feedback path, and leave parked-question resume untouched.
+      run: 1m17s · 226 in · 5.4k out · sonnet-5
 - [ ] Cover with tests
       Add feedback-message route tests for auto-launch, the busy-agent guard, and the no-re-trigger case.
 
