@@ -41,8 +41,9 @@ fixes". The suggestion was the instruction; the press is ceremony.
 - [x] Fire the fixes run after the fix lands
       Once the reopened entity is written, call the same startRunAllPhases path the "Run fixes" button uses so implementation starts as the reply posts.
       run: 1m21s · 372 in · 5k out · sonnet-5
-- [ ] Guard on a busy agent
+- [x] Guard on a busy agent
       Skip the auto-launch when an agent is already working that plan; the open fix stays queued and the manual button remains the fallback.
+      run: 4m9s · 387 in · 16.9k out · sonnet-5
 - [ ] Keep the launch loop-free
       Confirm a fixes run's own thread posts never re-enter the feedback path, and leave parked-question resume untouched.
 - [ ] Cover with tests
