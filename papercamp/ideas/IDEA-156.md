@@ -52,8 +52,9 @@ version instead, using plumbing that already exists.
 - [x] Build fix entries from failing checks
       Map each failing Quality/Tests/Consistency check to one `PlanEntry.fixes` entry using its `fixPrompt` content, keyed by check name; Docs excluded.
       run: 6m43s · 23.3k in · 33.3k out · sonnet-5
-- [ ] Upsert repeat failures by check name
+- [x] Upsert repeat failures by check name
       A repeat failure for the same check replaces that entry's command and output in place instead of appending a duplicate.
+      run: 3m21s · 687 in · 6.7k out · sonnet-5
 - [ ] Swap Commit for Fix while checks fail
       In `DeliverCommitButton`, render Fix in the same slot whenever any of the three checks is failing.
 - [ ] Wire the Fix action to write-then-launch
