@@ -6,6 +6,7 @@ import {
   StatusBar,
 } from '@/app/components';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
+import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { mountPrefix } from '@/app/services/mount';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
@@ -166,6 +167,8 @@ const RootLayout = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
   const firstRunChecked = useRef(false);
+
+  useNotificationPush();
 
   useEffect(() => {
     loadPlans();

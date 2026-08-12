@@ -57,8 +57,9 @@ move it out of the nav menu into the toolbar.
 - [x] Mark viewed notifications read and count unread for the badge
       Set the read flag on view for the two new kinds, and generalise the badge stamp from parked-question count to total unread.
       run: 4m44s · 10.7k in · 12.7k out · sonnet-5
-- [ ] Fire Notification-API pushes off the SSE stream
+- [x] Fire Notification-API pushes off the SSE stream
       Push agent-completed and new-reply while the tab is open but unfocused, gated on granted permission, degrading silently otherwise.
+      run: 4m18s · 1.8k in · 12.3k out · sonnet-5
 - [ ] Move the entry from the nav menu to the toolbar
       Remove the `router.tsx` navItems Inbox entry and add a toolbar icon button with the unread badge.
 
