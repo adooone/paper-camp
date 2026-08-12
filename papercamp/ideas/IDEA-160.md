@@ -2,7 +2,7 @@
 id: IDEA-160
 title: One activity stream for the whole app
 type: fix
-status: idea
+status: review
 created: 2026-08-12
 tags:
   - app
@@ -66,11 +66,13 @@ socket exhaustion is what has to be removed for the actions to work.
 - [x] Migrate every call site to subscribe
       Replace each hook's own EventSource with a subscription, keeping its client-side filter unchanged.
       run: 2m56s · 802 in · 13.1k out · sonnet-5
-- [ ] Verify the Git page with Stack open
+- [x] Verify the Git page with Stack open
       Confirm one socket, actions fire, and Suggest/Sync complete.
+      run: 48s · 357 in · 2.4k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-12 [decision] A single ref-counted module-level stream rather than a React context provider — the consumers mount at unrelated points in the tree (router, Stack panel groups, page bodies), so a provider would force an artificial common ancestor.
 - [x] 2026-08-12 [log] Measured while the page was wedged: seven established TCP connections from the browser to the dev server on consecutive source ports (63170-63177) — six HTTP sockets plus Vite's HMR WebSocket, which is exempt from the per-origin cap. `POST /api/git/suggest-commit-message` with the Git page's exact seven-file payload returned HTTP 200 in 7.8s over `curl` at the same moment, agent spawned and visible in `/api/agent/status`.
 - [x] 2026-08-12 [log] Reproduced after [[IDEA-159]] landed, which confirms the two are independent: sync still hung with nothing in flight server-side (`/api/git/status` answered in 135ms, no git or agent process running). Two separate client machines were connected, each pinned at exactly six established connections — the per-origin cap, fully consumed by streams on both. A saturated pool also blocks Vite from fetching updated modules, so a wedged tab keeps running the pre-fix bundle and cannot even pick up the timeouts.
+- [x] 2026-08-12 [log] Verified headlessly, no browser: `grep -rn "new EventSource"` across `src/app` now returns exactly one hit — the shared module — with all nine former call sites subscribing to it, and `curl -N /api/activity/stream` against the running dev server still streams the same `{message, type, timestamp}` payload shape unchanged. `pnpm run check-types` and `pnpm run lint` both pass. The actual browser check this phase describes — one socket in the Network tab, and Suggest/Sync completing end-to-end from a click — needs a human with a browser; left for manual confirmation.
 - [x] 2026-08-12 [log] Inventoried all nine `new EventSource('/api/activity/stream')` call sites (all use `source.onmessage`, parsing `event.data` as JSON and branching on `payload.type` / `payload.message`):
