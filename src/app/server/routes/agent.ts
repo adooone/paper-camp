@@ -472,6 +472,20 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             text: replyText,
           });
 
+          // Same path the "Run fixes" button uses — the fix phase already landed in
+          // the file above, so this starts implementing it as the reply posts. Busy
+          // agents are already turned away by startRunAllPhases's own admit() guard.
+          if (reopen) {
+            const reopenedPlan = entityToPlan({
+              ...entity,
+              thread,
+              updated: todayDateString(),
+              ...overrides,
+              status: 'in-progress',
+            });
+            agent.startRunAllPhases(reopenedPlan, () => status.runChecksAndWait());
+          }
+
           // Resolving an open question is exactly the confirmation cue a run-all
           // parked on it (IDEA-125) is waiting for — re-enter it now instead of
           // leaving it failed until someone notices and relaunches by hand.

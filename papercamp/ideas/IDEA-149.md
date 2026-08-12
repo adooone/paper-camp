@@ -38,8 +38,9 @@ fixes". The suggestion was the instruction; the press is ceremony.
 - [x] Use the recorded-fix detection as the launch trigger
       Reuse the feedback-message route's existing new-open-fix check (the priorFixCount slice) so only a feedback run that added an open fix arms the launch.
       run: 2m30s · 5.9k in · 10.8k out · sonnet-5
-- [ ] Fire the fixes run after the fix lands
+- [x] Fire the fixes run after the fix lands
       Once the reopened entity is written, call the same startRunAllPhases path the "Run fixes" button uses so implementation starts as the reply posts.
+      run: 1m21s · 372 in · 5k out · sonnet-5
 - [ ] Guard on a busy agent
       Skip the auto-launch when an agent is already working that plan; the open fix stays queued and the manual button remains the fallback.
 - [ ] Keep the launch loop-free
