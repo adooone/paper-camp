@@ -51,8 +51,9 @@ Both move into one new page.
       run: 2m35s · 529 in · 10.2k out · sonnet-5
 - [x] Move Sync/Push/Pull actions onto `/git`
       run: 1m48s · 384 in · 5k out · sonnet-5
-- [ ] Strip the four actions from `StatusBarCore`
+- [x] Strip the four actions from `StatusBarCore`
       Leave branch name and changed-file count as plain status text.
+      run: 4m38s · 4.4k in · 14.3k out · sonnet-5
 - [ ] Add the toolbar icon button that opens `/git`
       Match [[IDEA-153]]'s notification icon.
 
