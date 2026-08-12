@@ -60,8 +60,9 @@ push, pull and sync — got neither.
    sufficient — no new recovery state, no manual unstick.
 
 ### Phases
-- [ ] Bound every `runGit` spawn with a 30s cap
+- [x] Bound every `runGit` spawn with a 30s cap
       Kill the child on expiry, reject with a command-named error, and put `GIT_TERMINAL_PROMPT: '0'` in the spawn env.
+      run: 1m14s · 5.7k in · 2.6k out · sonnet-5
 - [ ] Add a 45s `AbortSignal.timeout` to deterministic `git-api.ts` calls
       Cover status, commit, branch, diff, push, pull, sync, fix-divergence; leave `suggestCommitMessage` uncapped.
 - [ ] Cap the post-sync refresh loaders inside `handleSync`
