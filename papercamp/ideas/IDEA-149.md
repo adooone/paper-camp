@@ -2,7 +2,7 @@
 id: IDEA-149
 title: Feedback fixes start running at once
 type: feat
-status: idea
+status: review
 created: 2026-08-10
 tags:
   - agents
@@ -47,8 +47,9 @@ fixes". The suggestion was the instruction; the press is ceremony.
 - [x] Keep the launch loop-free
       Confirm a fixes run's own thread posts never re-enter the feedback path, and leave parked-question resume untouched.
       run: 1m17s · 226 in · 5.4k out · sonnet-5
-- [ ] Cover with tests
+- [x] Cover with tests
       Add feedback-message route tests for auto-launch, the busy-agent guard, and the no-re-trigger case.
+      run: 3m6s · 4.4k in · 9.6k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-10 [decision] Auto-run replaces the manual press as the default; the button survives as the fallback for the busy-agent case. The recorded phase stays the source of truth the run executes from.
