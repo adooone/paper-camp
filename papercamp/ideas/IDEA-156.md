@@ -55,8 +55,9 @@ version instead, using plumbing that already exists.
 - [x] Upsert repeat failures by check name
       A repeat failure for the same check replaces that entry's command and output in place instead of appending a duplicate.
       run: 3m21s · 687 in · 6.7k out · sonnet-5
-- [ ] Swap Commit for Fix while checks fail
+- [x] Swap Commit for Fix while checks fail
       In `DeliverCommitButton`, render Fix in the same slot whenever any of the three checks is failing.
+      run: 2m45s · 373 in · 5.3k out · sonnet-5
 - [ ] Wire the Fix action to write-then-launch
       Write the fix entries to the plan file first, then `launchRunAll(plan.id)` once the write lands (IDEA-149 pattern).
 - [ ] Confirm the auto-revert to Commit

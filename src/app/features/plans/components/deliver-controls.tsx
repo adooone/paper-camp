@@ -334,22 +334,41 @@ export const DeliverCommitInputRow = ({
   </div>
 );
 
-/** Right column, under "N files changed": the Commit action itself. */
+/** Right column, under "N files changed": the Commit action itself — becomes a
+ *  Fix action while any of Quality/Tests/Consistency is failing (IDEA-156). */
 export const DeliverCommitButton = ({
   state,
   filesEmpty,
 }: {
   state: DeliverCommitFormState;
   filesEmpty: boolean;
-}) => (
-  <Button
-    size="small"
-    disabled={filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight}
-    onClick={state.handleCommit}
-  >
-    {state.committing || state.commitInFlight ? 'Committing…' : 'Commit'}
-  </Button>
-);
+}) => {
+  const status = useAppStore((s) => s.status);
+  const { qualityStatus, testStatus, consistencyStatus } = useMemo(
+    () => deriveCheckStatuses(status),
+    [status],
+  );
+  const checksFailing =
+    qualityStatus === 'fail' || testStatus === 'fail' || consistencyStatus === 'fail';
+
+  if (checksFailing) {
+    return (
+      <Button size="small" disabled>
+        Fix
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      size="small"
+      disabled={filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight}
+      onClick={state.handleCommit}
+    >
+      {state.committing || state.commitInFlight ? 'Committing…' : 'Commit'}
+    </Button>
+  );
+};
 
 export const DeliverEmptyState = () => {
   const gitAhead = useAppStore((s) => s.gitAhead);
