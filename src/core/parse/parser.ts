@@ -32,6 +32,7 @@ import {
   ideaFrontmatterSchema,
   planFieldsSchema,
   planFrontmatterSchema,
+  storedNotificationSchema,
 } from './schemas';
 
 const HEADING_RE = /^##\s+(.+?)\s*$/;
@@ -422,7 +423,8 @@ export function parseNotificationLog(raw: string): StoredNotification[] {
     const trimmed = line.trim();
     if (!trimmed) continue;
     try {
-      entries.push(JSON.parse(trimmed) as StoredNotification);
+      const result = storedNotificationSchema.safeParse(JSON.parse(trimmed));
+      if (result.success) entries.push(result.data);
     } catch {}
   }
   return entries;

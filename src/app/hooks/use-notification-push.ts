@@ -1,6 +1,6 @@
+import { apiUrl } from '@/app/services/api-base';
+import { useAppStore } from '@/app/stores/app-store';
 import { useEffect, useRef } from 'react';
-import { apiUrl } from '../services/api-base';
-import { useAppStore } from '../stores/app-store';
 import { newlyArrived, pushableNotifications } from './notification-push';
 
 // Tab-open-but-unfocused only (IDEA-153) — no service worker, no closed-tab delivery.

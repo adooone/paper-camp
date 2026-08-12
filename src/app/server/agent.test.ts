@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { parseEntityFile } from '@/core/parse';
-import { entityToPlan } from '@/core/readers';
+import { entityToIdea, entityToPlan } from '@/core/readers';
 import type { PhaseItem, PlanEntry, ReviewThread } from '@/types/index';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAgentPrompt, createAgentManager } from './agent';
@@ -1151,6 +1151,42 @@ describe('notification log', () => {
       read: false,
       outcome: 'done',
     });
+  });
+
+  const IDEA_FOR_NOTIFICATION = `---
+id: IDEA-1
+title: Real idea title
+type: feat
+status: idea
+created: 2026-07-01
+---
+Idea body.
+`;
+
+  it('uses the idea title, not the task action label, for a draft notification', async () => {
+    const { root } = await makeRoot(IDEA_FOR_NOTIFICATION);
+    const idea = entityToIdea(parseEntityFile(IDEA_FOR_NOTIFICATION).entries[0]);
+    agentScript.current = 'process.exit(0)';
+    const manager = createAgentManager(root);
+
+    manager.startForIdea(idea, 'draft prompt');
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    const [entry] = await pollNotifications(root);
+    expect(entry).toMatchObject({ entityId: 'IDEA-1', entityTitle: 'Real idea title' });
+  });
+
+  it('uses the idea title, not the task action label, for an extend notification', async () => {
+    const { root } = await makeRoot(IDEA_FOR_NOTIFICATION);
+    const idea = entityToIdea(parseEntityFile(IDEA_FOR_NOTIFICATION).entries[0]);
+    agentScript.current = 'process.exit(0)';
+    const manager = createAgentManager(root);
+
+    manager.startForIdeaExtend(idea, 'extend prompt');
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    const [entry] = await pollNotifications(root);
+    expect(entry).toMatchObject({ entityId: 'IDEA-1', entityTitle: 'Real idea title' });
   });
 
   it('carries an error outcome when the agent exits nonzero', async () => {

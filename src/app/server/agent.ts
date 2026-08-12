@@ -66,6 +66,9 @@ export interface AgentTask {
   id: string;
   taskKind: TaskKind;
   planTitle: string;
+  /** Idea title for idea-scoped tasks (draft/extend), where `planTitle` is an
+   * action label like "Draft plan for IDEA-1" rather than the entity's name. */
+  notificationTitle?: string;
   planId?: string;
   startedAt: string;
   phaseIndex?: number;
@@ -390,7 +393,7 @@ export function createAgentManager(
         id: task.id,
         kind: 'completed',
         entityId,
-        entityTitle: task.planTitle,
+        entityTitle: task.notificationTitle ?? task.planTitle,
         text: `${humanizeTaskKind(task.taskKind)} ${status === 'done' ? 'finished' : 'failed'}`,
         outcome: status,
       });
@@ -679,7 +682,12 @@ export function createAgentManager(
   // Synchronous, no `await` between the admit() check and registering the task,
   // so two colliding launches can't both pass the gate.
   function launch(
-    identity: { planTitle: string; planId?: string; agentOverride?: AgentId },
+    identity: {
+      planTitle: string;
+      notificationTitle?: string;
+      planId?: string;
+      agentOverride?: AgentId;
+    },
     prompt: string,
     scope: Pick<
       AgentTask,
@@ -709,6 +717,7 @@ export function createAgentManager(
     const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
     const task = newTask({
       planTitle: identity.planTitle,
+      notificationTitle: identity.notificationTitle,
       planId: identity.planId,
       agentId,
       adapter,
@@ -769,17 +778,18 @@ export function createAgentManager(
     if (!idea.id) {
       return { ok: false, error: 'Idea has no id to link a drafted plan back to' };
     }
-    return launch({ planTitle: `Draft plan for ${idea.id}` }, prompt, {
-      taskKind: 'draft',
-      ideaId: idea.id,
-    });
+    return launch(
+      { planTitle: `Draft plan for ${idea.id}`, notificationTitle: idea.title },
+      prompt,
+      { taskKind: 'draft', ideaId: idea.id },
+    );
   }
 
   function startForIdeaExtend(idea: IdeaEntry, prompt: string): Result {
     if (!idea.id) {
       return { ok: false, error: 'Idea has no id to extend' };
     }
-    return launch({ planTitle: `Extend ${idea.id}` }, prompt, {
+    return launch({ planTitle: `Extend ${idea.id}`, notificationTitle: idea.title }, prompt, {
       taskKind: 'extend',
       ideaId: idea.id,
       ideaLogBaseline: idea.log?.length ?? 0,

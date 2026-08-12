@@ -31,7 +31,11 @@ export function createNotificationsSlice(set: SetState, get: GetState): Notifica
           n.kind !== 'question' && n.id === id ? { ...n, read: true } : n,
         ),
       });
-      await markNotificationRead(id);
+      try {
+        await markNotificationRead(id);
+      } catch (err) {
+        set({ notifications: current, notificationsError: String(err) });
+      }
     },
   };
 }

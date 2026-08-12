@@ -719,6 +719,29 @@ describe('parseNotificationLog', () => {
   it('returns an empty array for an empty file', () => {
     expect(parseNotificationLog('')).toEqual([]);
   });
+
+  it('skips syntactically valid but schema-invalid lines', () => {
+    const valid = {
+      id: 'notif-1',
+      kind: 'completed',
+      entityId: 'IDEA-1',
+      entityTitle: 'First',
+      text: 'run-all finished',
+      date: '2026-07-15T10:05:00.000Z',
+      read: false,
+    };
+    const missingFields = { id: 'notif-2', kind: 'completed' };
+    const invalidKind = { ...valid, id: 'notif-3', kind: 'unexpected' };
+    const invalidOutcome = { ...valid, id: 'notif-4', outcome: 'pending' };
+    const jsonl = [
+      JSON.stringify(valid),
+      'null',
+      JSON.stringify(missingFields),
+      JSON.stringify(invalidKind),
+      JSON.stringify(invalidOutcome),
+    ].join('\n');
+    expect(parseNotificationLog(jsonl)).toEqual([valid]);
+  });
 });
 
 describe('parseSuggestions', () => {

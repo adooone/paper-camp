@@ -1,5 +1,5 @@
+import { apiUrl } from '@/app/services/api-base';
 import type { Notification } from '@/types/index';
-import { apiUrl } from '../api-base';
 
 export const fetchNotifications = async () => {
   const res = await fetch(apiUrl('/api/notifications'));

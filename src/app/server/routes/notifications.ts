@@ -8,8 +8,14 @@ export function notificationRoutes({ root }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/notifications/mark-read',
       handle: async (req, res) => {
-        const { id } = JSON.parse(await readBody(req)) as { id?: string };
-        if (!id) {
+        let id: unknown;
+        try {
+          ({ id } = JSON.parse(await readBody(req)) as { id?: unknown });
+        } catch {
+          sendJson(res, 400, { error: 'invalid JSON body' });
+          return;
+        }
+        if (typeof id !== 'string' || !id.trim()) {
           sendJson(res, 400, { error: 'id is required' });
           return;
         }

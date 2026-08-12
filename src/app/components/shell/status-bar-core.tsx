@@ -59,6 +59,7 @@ const notificationBadgeStyle: CSSProperties = {
   position: 'absolute',
   top: '-0.25rem',
   right: '-0.25rem',
+  pointerEvents: 'none',
 };
 
 export interface StatusBarCoreProps {

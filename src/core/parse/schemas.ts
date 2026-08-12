@@ -186,6 +186,19 @@ export const paperCampConfigSchema = z.object({
   desk: deskConfigSchema.optional(),
 });
 
+// notifications.log entries — JSON Lines, so a corrupt or half-written line must
+// fail validation and be skipped rather than reach the inbox as a broken row.
+export const storedNotificationSchema = z.object({
+  id: z.string(),
+  kind: z.enum(['completed', 'reply']),
+  entityId: z.string(),
+  entityTitle: z.string(),
+  text: z.string(),
+  date: z.string(),
+  read: z.boolean(),
+  outcome: z.enum(['done', 'error']).optional(),
+});
+
 export type PlanFields = z.infer<typeof planFieldsSchema>;
 export type PlanFrontmatter = z.infer<typeof planFrontmatterSchema>;
 export type IdeaFrontmatter = z.infer<typeof ideaFrontmatterSchema>;

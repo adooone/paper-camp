@@ -53,6 +53,7 @@ export function markNotificationRead(root: string, id: string): Promise<void> {
       await writeFile(path, next.map((e) => `${JSON.stringify(e)}\n`).join(''), 'utf-8');
     } catch (err) {
       console.error(`papercamp: could not mark notification ${id} read:`, err);
+      throw err;
     }
   });
   notificationChain = run.catch(() => undefined);
