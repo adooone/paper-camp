@@ -5,7 +5,7 @@ import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type { CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
+import type { CheckStatus, ConsistencyIssue, PhaseItem, PlanEntry } from '@/types/index';
 import {
   Alert,
   Button,
@@ -266,6 +266,14 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     setCommitInFlight(true);
     try {
       await commitChanges(files, commitTitle.trim(), commitMessage.trim() || undefined);
+      if (plan) {
+        const phase: PhaseItem = {
+          done: true,
+          text: stripCommitPrefix(commitTitle.trim()),
+          source: 'manual',
+        };
+        await patchByTitle(plan.title, { phases: [...plan.phases, phase] });
+      }
       setCommitTitle('');
       setCommitMessage('');
       await loadGitStatus();
@@ -280,7 +288,17 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
       setCommitting(false);
       setCommitInFlight(false);
     }
-  }, [commitTitle, commitMessage, files, loadGitStatus, commitInFlight, setCommitInFlight, toast]);
+  }, [
+    commitTitle,
+    commitMessage,
+    files,
+    loadGitStatus,
+    commitInFlight,
+    setCommitInFlight,
+    toast,
+    plan,
+    patchByTitle,
+  ]);
 
   const handleSuggestFromChanges = useCallback(async () => {
     if (files.length === 0) return;

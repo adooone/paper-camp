@@ -52,8 +52,9 @@ action.
 - [x] Add a title-stripping helper
       Strip a leading `type(scope): ` prefix, inverting `deriveSuggestedCommit`'s assembly.
       run: 40s · 230 in · 2.2k out · sonnet-5
-- [ ] Append the phase inside `handleCommit`
+- [x] Append the phase inside `handleCommit`
       On a successful Deliver-form commit, persist `{ done: true, text: stripped, source: 'manual' }` to the plan's `phases`.
+      run: 43s · 367 in · 2.4k out · sonnet-5
 - [ ] Render the `manual` stamp in the phase row
       Add a `source === 'manual'` branch beside the existing `review` stamp in entity-detail.
 - [ ] Cover the strip, round-trip, and append with tests
