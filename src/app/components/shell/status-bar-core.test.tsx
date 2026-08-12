@@ -1,4 +1,4 @@
-import { Button, Stamp } from '@dendelion/paper-ui';
+import { Button, IconButton, Stamp } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { StatusBarCore, type StatusBarCoreProps } from './status-bar-core';
@@ -17,11 +17,13 @@ const baseProps: StatusBarCoreProps = {
   pushing: false,
   syncing: false,
   pulling: false,
+  unreadNotificationCount: 0,
   onSync: () => {},
   onPush: () => {},
   onPull: () => {},
   onQuickCommit: () => {},
   onOpenSetup: () => {},
+  onOpenNotifications: () => {},
 };
 
 type Elementish = { type: unknown; props: Record<string, unknown> };
@@ -114,6 +116,25 @@ describe('StatusBarCore', () => {
   it('omits the not-signed-in and setup stamps when there is nothing to report', () => {
     const stamps = collect(StatusBarCore(baseProps), (el) => el.type === Stamp);
     expect(stamps).toHaveLength(0);
+  });
+
+  it('omits the notification badge when there is nothing unread', () => {
+    const stamps = collect(StatusBarCore(baseProps), (el) => el.type === Stamp);
+    expect(stamps).toHaveLength(0);
+  });
+
+  it('shows the unread count on the notification badge', () => {
+    const tree = StatusBarCore({ ...baseProps, unreadNotificationCount: 3 });
+    const stamps = collect(tree, (el) => el.type === Stamp);
+    expect(textOf(stamps[0]?.props.children as ReactNode)).toBe('3');
+  });
+
+  it('opens notifications when the bell button is clicked', () => {
+    const onOpenNotifications = vi.fn();
+    const tree = StatusBarCore({ ...baseProps, onOpenNotifications });
+    const bell = collect(tree, (el) => el.type === IconButton)[0];
+    (bell?.props.onClick as () => void)?.();
+    expect(onOpenNotifications).toHaveBeenCalledTimes(1);
   });
 
   it('disables Sync when the repo is already clean on main', () => {

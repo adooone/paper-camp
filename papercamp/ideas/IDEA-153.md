@@ -2,7 +2,7 @@
 id: IDEA-153
 title: Notifications view replaces the Inbox
 type: feat
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -60,8 +60,9 @@ move it out of the nav menu into the toolbar.
 - [x] Fire Notification-API pushes off the SSE stream
       Push agent-completed and new-reply while the tab is open but unfocused, gated on granted permission, degrading silently otherwise.
       run: 4m18s · 1.8k in · 12.3k out · sonnet-5
-- [ ] Move the entry from the nav menu to the toolbar
+- [x] Move the entry from the nav menu to the toolbar
       Remove the `router.tsx` navItems Inbox entry and add a toolbar icon button with the unread badge.
+      run: 5m32s · 8.8k in · 16.5k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-11 [decision] Push notifications are tab-open-but-unfocused only, via the Notification API off the existing SSE stream — no service worker, no closed-tab delivery. Read/unread is new for the two added kinds; parked questions keep their existing resolve-by-reply model unchanged.

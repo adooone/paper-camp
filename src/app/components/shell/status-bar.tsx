@@ -20,6 +20,9 @@ export const StatusBar = () => {
   const capabilityGapCount = useAppStore(selectCapabilityGapCount);
   const agentNotSignedIn = useAppStore(selectAgentNotSignedIn);
   const rateLimit = useAppStore(selectLatestRateLimit);
+  const unreadNotificationCount = useAppStore(
+    (s) => s.notifications?.filter((n) => n.kind === 'question' || !n.read).length ?? 0,
+  );
   const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
     useBranchSync();
   const { toast } = useToast();
@@ -49,6 +52,8 @@ export const StatusBar = () => {
   const handleOpenSetup = () =>
     navigate({ to: '/settings/$section', params: { section: 'setup' } });
 
+  const handleOpenNotifications = () => navigate({ to: '/inbox' });
+
   return (
     <StatusBarCore
       gitBranch={gitBranch}
@@ -65,11 +70,13 @@ export const StatusBar = () => {
       pushing={pushing}
       syncing={syncing}
       pulling={pulling}
+      unreadNotificationCount={unreadNotificationCount}
       onSync={handleSync}
       onPush={handlePush}
       onPull={handlePull}
       onQuickCommit={handleQuickCommit}
       onOpenSetup={handleOpenSetup}
+      onOpenNotifications={handleOpenNotifications}
     />
   );
 };

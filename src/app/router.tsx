@@ -10,7 +10,7 @@ import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { mountPrefix } from '@/app/services/mount';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
-import { Button, IconButton, Layout, Page, Stamp, ToastProvider } from '@dendelion/paper-ui';
+import { Button, IconButton, Layout, Page, ToastProvider } from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -58,7 +58,6 @@ const InboxPage = lazy(() =>
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
-  { id: 'inbox', label: 'Inbox', path: '/inbox' },
   { id: 'roadmap', label: 'Roadmap', path: '/roadmap' },
   { id: 'docs', label: 'Docs', path: '/docs' },
   { id: 'tasks', label: 'Tasks', path: '/tasks' },
@@ -66,15 +65,8 @@ const navItems = [
   { id: 'settings', label: 'Settings', path: '/settings' },
 ];
 
-const NavLabel = ({ item, count }: { item: (typeof navItems)[number]; count: number }) => (
-  <span className="inline-flex items-center gap-1.5">
-    {item.label}
-    {item.id === 'inbox' && count > 0 && (
-      <Stamp size="small" variant="warning">
-        {count}
-      </Stamp>
-    )}
-  </span>
+const NavLabel = ({ item }: { item: (typeof navItems)[number] }) => (
+  <span className="inline-flex items-center gap-1.5">{item.label}</span>
 );
 
 const SidebarToggleIcon = () => (
@@ -136,9 +128,6 @@ const RootLayout = () => {
   const loadAgentAuthStatus = useAppStore((s) => s.loadAgentAuthStatus);
   const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
   const loadNotifications = useAppStore((s) => s.loadNotifications);
-  const unreadCount = useAppStore(
-    (s) => s.notifications?.filter((n) => n.kind === 'question' || !n.read).length ?? 0,
-  );
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
@@ -256,7 +245,7 @@ const RootLayout = () => {
                     onClick={() => navigate({ to: item.path })}
                     aria-current={item.id === activeId ? 'page' : undefined}
                   >
-                    <NavLabel item={item} count={unreadCount} />
+                    <NavLabel item={item} />
                   </Button>
                 ))}
               </nav>
@@ -371,7 +360,7 @@ const RootLayout = () => {
             aria-current={item.id === activeId ? 'page' : undefined}
             className="min-h-11"
           >
-            <NavLabel item={item} count={unreadCount} />
+            <NavLabel item={item} />
           </Button>
         ))}
       </nav>
