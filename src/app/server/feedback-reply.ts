@@ -147,3 +147,14 @@ export function applyFeedbackEdit(
   if (edit.body) overrides.body = edit.body;
   return overrides;
 }
+
+// True when applyFeedbackEdit's `fixes` override appended a new, still-open Fix —
+// the signal that a feedback run turned into real work (IDEA-149), used both to
+// reopen an already-finished plan and to arm the fixes run's auto-launch.
+export function addsOpenFix(
+  priorFixes: PhaseItem[] | undefined,
+  fixes: PhaseItem[] | undefined,
+): boolean {
+  const priorFixCount = priorFixes?.length ?? 0;
+  return (fixes ?? []).slice(priorFixCount).some((p) => !p.done);
+}

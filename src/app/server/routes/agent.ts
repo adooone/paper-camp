@@ -17,7 +17,12 @@ import type {
 import { readDefaultAgentIds } from '../agent';
 import { resolveAgent } from '../agents';
 import { probeAgentAuthStatus } from '../capabilities';
-import { applyFeedbackEdit, replyToFeedback, summarizeFeedback } from '../feedback-reply';
+import {
+  addsOpenFix,
+  applyFeedbackEdit,
+  replyToFeedback,
+  summarizeFeedback,
+} from '../feedback-reply';
 import {
   campFile,
   checkBranchConflictForPlan,
@@ -444,9 +449,9 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
           // A feedback edit that adds an undone Fix to an already-finished plan is new
           // work: reopen it so it re-enters the run-order queue and run-all implements it —
-          // otherwise the edit lands on a closed plan and nothing ever runs (or shows).
-          const priorFixCount = entity.fixes?.length ?? 0;
-          const reopen = (overrides.fixes ?? []).slice(priorFixCount).some((p) => !p.done);
+          // otherwise the edit lands on a closed plan and nothing ever runs (or shows). The
+          // same signal arms the fixes run's auto-launch (IDEA-149).
+          const reopen = addsOpenFix(entity.fixes, overrides.fixes);
           if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
 
           thread = [...answeredThread, agentThreadMessage(replyText, 'chat')];
