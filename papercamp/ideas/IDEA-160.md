@@ -53,7 +53,21 @@ The timeouts in [[IDEA-159]] are the companion fix, not a substitute:
 they would turn this silence into a visible "timed out" error, but the
 socket exhaustion is what has to be removed for the actions to work.
 
+### Phases
+- [x] Inventory the nine EventSource call sites
+      List each hook that opens its own `/api/activity/stream` connection and the message(s) it filters for.
+      run: 1m6s · 10.7k in · 4.9k out · sonnet-5
+- [ ] Build the shared ref-counted stream module
+      One module-level `EventSource` with `subscribe(listener)`; opens on the first subscriber, closes on the last unsubscribe.
+- [ ] Move reconnect and backoff into the shared stream
+      A single reconnect loop for all subscribers so a dev-server restart re-establishes one connection.
+- [ ] Migrate every call site to subscribe
+      Replace each hook's own EventSource with a subscription, keeping its client-side filter unchanged.
+- [ ] Verify the Git page with Stack open
+      Confirm one socket, actions fire, and Suggest/Sync complete.
+
 ### Thread
 - [x] 2026-08-12 [decision] A single ref-counted module-level stream rather than a React context provider — the consumers mount at unrelated points in the tree (router, Stack panel groups, page bodies), so a provider would force an artificial common ancestor.
 - [x] 2026-08-12 [log] Measured while the page was wedged: seven established TCP connections from the browser to the dev server on consecutive source ports (63170-63177) — six HTTP sockets plus Vite's HMR WebSocket, which is exempt from the per-origin cap. `POST /api/git/suggest-commit-message` with the Git page's exact seven-file payload returned HTTP 200 in 7.8s over `curl` at the same moment, agent spawned and visible in `/api/agent/status`.
 - [x] 2026-08-12 [log] Reproduced after [[IDEA-159]] landed, which confirms the two are independent: sync still hung with nothing in flight server-side (`/api/git/status` answered in 135ms, no git or agent process running). Two separate client machines were connected, each pinned at exactly six established connections — the per-origin cap, fully consumed by streams on both. A saturated pool also blocks Vite from fetching updated modules, so a wedged tab keeps running the pre-fix bundle and cannot even pick up the timeouts.
+- [x] 2026-08-12 [log] Inventoried all nine `new EventSource('/api/activity/stream')` call sites (all use `source.onmessage`, parsing `event.data` as JSON and branching on `payload.type` / `payload.message`):
