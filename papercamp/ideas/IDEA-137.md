@@ -45,8 +45,9 @@ make any stash pop conflict-prone. Two fixes close it:
 - [x] Commit the corpus before phase 1 of run-all
       Call the helper in `startRunAllPhases` after branch setup and before the first phase agent runs, so the drafted plan and any last-minute edits are durable.
       run: 2m6s · 670 in · 7.2k out · sonnet-5
-- [ ] Ban destructive git over pre-existing state in phase prompts
+- [x] Ban destructive git over pre-existing state in phase prompts
       Add the rule to `buildAgentPrompt`, `buildFixPassPrompt`, and `buildFixItemPrompt`: never `git stash`/`reset`/`checkout` over working-tree state the agent did not create; compare against a clean baseline with read-only `git diff`/`git show HEAD:<file>`.
+      run: 1m9s · 375 in · 3k out · sonnet-5
 - [ ] Cover both fixes with tests
       Assert the corpus is committed before the first phase agent launches and that the phase prompt carries the destructive-git ban.
 
