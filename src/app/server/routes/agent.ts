@@ -334,6 +334,17 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     ),
 
+    // No branch-conflict guard: drafting only edits idea markdown, not code.
+    planActionRoute(
+      '/api/agent/launch-draft-all',
+      (raw) => {
+        const { ids } = JSON.parse(raw) as { ids?: string[] };
+        return ids && ids.length > 0 ? { ids } : null;
+      },
+      'ids is required',
+      ({ ids }) => agent.startBatchDraft(ids),
+    ),
+
     planActionRoute(
       '/api/agent/launch-run-all',
       (raw) => {

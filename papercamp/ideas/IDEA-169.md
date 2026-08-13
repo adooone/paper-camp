@@ -77,10 +77,11 @@ phases; that is what Reconcile all is for.
       ids calling `runPhaseProcess` with `buildPlanDraftPrompt(idea, otherPlans)`,
       pushing per-entity progress lines and drafted/skipped/failed counters.
       run: 2m40s · 667 in · 10.2k out · sonnet-5
-- [ ] Wire the launch route
+- [x] Wire the launch route
       Add `POST /api/agent/launch-draft-all` in `routes/agent.ts` taking the
       selected ids, plus the `launchBatchDraft` store action feeding the Plans
       slice, alongside the existing launch actions.
+      run: 1m17s · 498 in · 3.9k out · sonnet-5
 - [ ] Fold the task into the status poll
       Have `agent-slice.ts` join `batch-draft` to the `batch-reconcile` case it
       already special-cases, and add its `taskSubtitle` label in

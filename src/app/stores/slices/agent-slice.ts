@@ -12,6 +12,7 @@ import {
   fetchLoginRelayStatus,
   fetchReconcileQueue,
   launchAgent as launchAgentApi,
+  launchBatchDraft as launchBatchDraftApi,
   launchBatchReconcile as launchBatchReconcileApi,
   launchFixReview as launchFixReviewApi,
   launchIdeaExtend as launchIdeaExtendApi,
@@ -57,6 +58,7 @@ export type AgentSlice = {
   launchPlanDraft: (ideaId: string, prompt: string) => Promise<void>;
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
   launchBatchReconcile: () => Promise<void>;
+  launchBatchDraft: (ids: string[]) => Promise<void>;
   launchSuggestIdeas: (prompt: string) => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
   launchFixReview: (planId: string) => Promise<void>;
@@ -186,6 +188,7 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
       set({ batchReconcileConsumed: false });
       await launchBatchReconcileApi();
     }),
+    launchBatchDraft: withAgentPoll(get, launchBatchDraftApi),
     launchSuggestIdeas: withAgentPoll(get, launchSuggestIdeasApi),
     launchRunAll: withAgentPoll(get, launchRunAllApi),
     launchFixReview: withAgentPoll(get, launchFixReviewApi),
