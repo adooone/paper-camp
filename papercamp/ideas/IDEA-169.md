@@ -2,7 +2,7 @@
 id: IDEA-169
 title: Draft all ideas at once
 type: feat
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-13
 tags:
@@ -86,9 +86,10 @@ phases; that is what Reconcile all is for.
       already special-cases, and add its `taskSubtitle` label in
       `agent-section.tsx` (and `humanizeTaskKind`).
       run: 1m33s · 2.5k in · 5.4k out · sonnet-5
-- [ ] Menu item and candidate confirm modal
+- [x] Menu item and candidate confirm modal
       Add **Draft all** to `worklist-actions-menu.tsx`; it opens a `Modal`
       listing candidates (`kind !== 'note'`, no `### Phases`, status not
       `done`/`dropped`) as checkboxes all checked by default with the count, and
       passes the checked ids to the route.
+      run: 4m47s · 1.5k in · 18.7k out · sonnet-5
 - [x] [manual] Draft all ideas at once

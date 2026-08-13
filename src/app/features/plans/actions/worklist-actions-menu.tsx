@@ -1,15 +1,17 @@
-import { MoreIcon, ShuffleIcon, WandIcon } from '@/app/components/icons';
+import { MoreIcon, NoteIcon, ShuffleIcon, WandIcon } from '@/app/components/icons';
 import { selectAgentBusy, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { CheckIcon, IconButton, Menu, type MenuEntry, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
+import { DraftAllModal } from '../modals/draft-all-modal';
 import { buildSuggestIdeasPrompt } from '../prompts';
 
-type RunningAction = 'suggest' | 'reconcile' | 'prioritise' | null;
+type RunningAction = 'suggest' | 'reconcile' | 'draft-all' | 'prioritise' | null;
 
 export const WorklistActionsMenu = () => {
   const launchSuggestIdeas = useAppStore((s) => s.launchSuggestIdeas);
   const launchBatchReconcile = useAppStore((s) => s.launchBatchReconcile);
+  const launchBatchDraft = useAppStore((s) => s.launchBatchDraft);
   const launchPrioritise = useAppStore((s) => s.launchPrioritise);
   const ideaEntries = useAppStore((s) => s.ideaEntries);
   const suggestions = useAppStore((s) => s.suggestions);
@@ -17,6 +19,7 @@ export const WorklistActionsMenu = () => {
   const hasAgent = useAppStore(selectHasAnyAgent);
   const { toast } = useToast();
   const [running, setRunning] = useState<RunningAction>(null);
+  const [draftAllOpen, setDraftAllOpen] = useState(false);
 
   const handleSuggestIdeas = async () => {
     setRunning('suggest');
@@ -43,6 +46,15 @@ export const WorklistActionsMenu = () => {
         description: oneLineErrorSummary((err as Error).message),
         variant: 'error',
       });
+    } finally {
+      setRunning(null);
+    }
+  };
+
+  const handleDraftAll = async (ids: string[]) => {
+    setRunning('draft-all');
+    try {
+      await launchBatchDraft(ids);
     } finally {
       setRunning(null);
     }
@@ -86,6 +98,13 @@ export const WorklistActionsMenu = () => {
       onSelect: handleReconcileAll,
     },
     {
+      id: 'draft-all',
+      label: 'Draft all',
+      icon: <NoteIcon size={16} />,
+      disabled: busy || !hasAgent,
+      onSelect: () => setDraftAllOpen(true),
+    },
+    {
       id: 'prioritise',
       label: running === 'prioritise' ? 'Prioritising…' : 'Prioritise queue',
       icon: <ShuffleIcon size={16} />,
@@ -95,17 +114,24 @@ export const WorklistActionsMenu = () => {
   ];
 
   return (
-    <Menu
-      align="end"
-      trigger={
-        <IconButton
-          icon={<MoreIcon size={16} />}
-          label="More actions"
-          size="small"
-          variant="ghost"
-        />
-      }
-      items={items}
-    />
+    <>
+      <Menu
+        align="end"
+        trigger={
+          <IconButton
+            icon={<MoreIcon size={16} />}
+            label="More actions"
+            size="small"
+            variant="ghost"
+          />
+        }
+        items={items}
+      />
+      <DraftAllModal
+        open={draftAllOpen}
+        onClose={() => setDraftAllOpen(false)}
+        onConfirm={handleDraftAll}
+      />
+    </>
   );
 };
