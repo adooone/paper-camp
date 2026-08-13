@@ -17,3 +17,13 @@ What the switcher unlocks is cross-project views: everything-in-review across pr
 Engineering note: the hub will meet corpora written by different paper-camp versions — the corpus format needs explicit versioning and tolerant parsing (pairs with the doctor, [[IDEA-121]]).
 
 Companion captures: [[IDEA-118]] (decisions inbox), [[IDEA-123]] (cross-corpus links).
+
+### Phases
+- [ ] Register and discover projects
+      Add folders explicitly and auto-discover by scanning for `papercamp/`; persist the registry locally.
+- [ ] Read each corpus with tolerant parsing
+      Consume corpora across paper-camp versions, degrading gracefully on unknown fields.
+- [ ] Build the project switcher
+- [ ] Ship cross-project views
+      Everything-in-review, overnight agent activity, and global idea search across registered projects.
+- [ ] Keep per-repo `paper-camp dev` working alongside the hub

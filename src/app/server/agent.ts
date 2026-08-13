@@ -5,10 +5,15 @@ import { readFile, stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { buildReconcilePrompt } from '@/app/features/plans/prompts';
+import { buildPlanDraftPrompt, buildReconcilePrompt } from '@/app/features/plans/prompts';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { advanceAnchor } from '@/core/phase-progress';
-import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
+import {
+  entityToIdea,
+  entityToPlan,
+  readEntities,
+  readEntitiesWithDerivedStatus,
+} from '@/core/readers';
 import { agentThreadMessage, computePlanContentHash } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
 import {
@@ -18,6 +23,7 @@ import {
   type CheckName,
   DEFAULT_AGENTS,
   type DefaultAgentsMap,
+  type EntityEntry,
   type FixReviewResult,
   type IdeaEntry,
   type PaperCampConfig,
@@ -632,6 +638,7 @@ export function createAgentManager(
     'audit',
     'reconcile',
     'batch-reconcile',
+    'batch-draft',
     'draft',
     'extend',
   ]);
@@ -646,7 +653,8 @@ export function createAgentManager(
     if (READONLY_KINDS.has(taskKind)) return { scope: 'none' };
     if (EXCLUSIVE_KINDS.has(taskKind)) return { scope: 'worktree' };
     if (taskKind === 'suggest') return { scope: 'suggestions' };
-    if (taskKind === 'batch-reconcile') return { scope: 'entities', ids: 'all' };
+    if (taskKind === 'batch-reconcile' || taskKind === 'batch-draft')
+      return { scope: 'entities', ids: 'all' };
     if (ENTITY_WRITER_KINDS.has(taskKind)) {
       // No id (shouldn't happen in practice): fail closed to worktree-wide.
       return entityId ? { scope: 'entities', ids: [entityId] } : { scope: 'worktree' };
@@ -960,6 +968,124 @@ export function createAgentManager(
         setStatus(task, failed > 0 ? 'error' : 'done');
       } catch (err) {
         pushLine(task, `Batch reconcile failed: ${(err as Error).message}`);
+        setStatus(task, 'error');
+      }
+    })();
+
+    return { ok: true };
+  }
+
+  function startBatchDraft(ids: string[]): Result {
+    const blocked = admit('batch-draft');
+    if (blocked) return blocked;
+    const defaultAgents = readDefaultAgentIds(root);
+    const { id: agentId, adapter } = resolveAgent({ defaultAgents, taskKind: 'draft' });
+
+    // Stub proc — replaced per entity in the loop.
+    const stubProc = spawn('sh', ['-c', 'exit 0'], {
+      cwd: root,
+      stdio: 'ignore',
+    });
+    const task = registerAndStart(
+      newTask({
+        taskKind: 'batch-draft',
+        planTitle: 'Batch draft',
+        agentId,
+        adapter,
+        proc: stubProc,
+      }),
+    );
+
+    (async () => {
+      try {
+        const { entries } = await readEntitiesWithDerivedStatus(join(root, 'papercamp', 'ideas'));
+        const allPlans = entries.map((e) => entityToPlan(e));
+        const isDraftEligible = (e: EntityEntry) =>
+          e.kind !== 'note' && e.phases.length === 0 && e.status === 'idea';
+        const candidates = [...new Set(ids)]
+          .map((id) => entries.find((e) => e.id === id))
+          .filter((e): e is EntityEntry => e !== undefined && isDraftEligible(e));
+
+        if (candidates.length === 0) {
+          pushLine(task, 'No ideas selected to draft.');
+          setStatus(task, 'done');
+          return;
+        }
+
+        pushLine(task, `Drafting ${candidates.length} idea${candidates.length === 1 ? '' : 's'}…`);
+        let drafted = 0;
+        let skipped = 0;
+        let failed = 0;
+        const total = candidates.length;
+
+        for (const [index, entity] of candidates.entries()) {
+          if (task.status === 'stopping') break;
+          if (!entity.id) {
+            skipped++;
+            continue;
+          }
+
+          pushLine(task, `[draft] ${entity.id} ${entity.title} (${index + 1}/${total})`);
+          const {
+            adapter: entAdapter,
+            model,
+            effort,
+          } = resolveAgent({ agentId: entity.agent, defaultAgents, taskKind: 'draft' });
+          const idea = entityToIdea(entity);
+          const otherPlans = allPlans.filter((p) => p.id !== entity.id);
+          const prompt = buildPlanDraftPrompt(idea, otherPlans);
+          const {
+            ok: success,
+            timedOut,
+            stderr,
+          } = await runPhaseProcess(task, entAdapter, prompt, model, effort);
+
+          if (timedOut) {
+            failed++;
+            pushLine(
+              task,
+              `[timeout] ${entity.id} — no progress for ${PHASE_TIMEOUT_MS / 60000}min`,
+            );
+            continue;
+          }
+
+          if (success) {
+            let hasPhases = false;
+            try {
+              const planFile = await findBatchPlanFile(join(root, 'papercamp', 'ideas'), entity.id);
+              if (planFile) {
+                const rawAfter = await readFile(planFile, 'utf-8');
+                hasPhases = (parseEntityFile(rawAfter).entries[0]?.phases.length ?? 0) > 0;
+              }
+            } catch {}
+            if (hasPhases) {
+              drafted++;
+              pushLine(task, `[done] ${entity.id} — drafted`);
+            } else {
+              failed++;
+              pushLine(task, `[fail] ${entity.id} — agent exited but added no phases`);
+            }
+          } else {
+            failed++;
+            if (stderr.trim()) pushLine(task, stderr.trim());
+            pushLine(
+              task,
+              task.errorReason
+                ? `[fail] ${entity.id} — ${task.errorReason}`
+                : `[fail] ${entity.id} — agent error`,
+            );
+          }
+        }
+
+        if (task.status === 'stopping') {
+          setStatus(task, 'done');
+          return;
+        }
+
+        pushLine(task, `Draft complete — ${drafted} drafted, ${skipped} skipped, ${failed} failed`);
+        setStatus(task, failed > 0 ? 'error' : 'done');
+      } catch (err) {
+        pushLine(task, `Batch draft failed: ${(err as Error).message}`);
         setStatus(task, 'error');
       }
     })();
@@ -1590,6 +1716,7 @@ export function createAgentManager(
     startForIdea,
     startForIdeaExtend,
     startBatchReconcile,
+    startBatchDraft,
     startRunAllPhases,
     resumeAuthParkedTasks,
     resumeQuestionParkedTasks,
@@ -1660,6 +1787,7 @@ export interface AgentManager {
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchReconcile: () => Result;
+  startBatchDraft: (ids: string[]) => Result;
   startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<CheckName[]>) => Result;
   resumeAuthParkedTasks: (
     runProjectChecks?: () => Promise<CheckName[]>,

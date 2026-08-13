@@ -12,6 +12,7 @@ import {
   fetchLoginRelayStatus,
   fetchReconcileQueue,
   launchAgent as launchAgentApi,
+  launchBatchDraft as launchBatchDraftApi,
   launchBatchReconcile as launchBatchReconcileApi,
   launchFixReview as launchFixReviewApi,
   launchIdeaExtend as launchIdeaExtendApi,
@@ -57,6 +58,7 @@ export type AgentSlice = {
   launchPlanDraft: (ideaId: string, prompt: string) => Promise<void>;
   launchIdeaExtend: (ideaId: string, prompt: string) => Promise<void>;
   launchBatchReconcile: () => Promise<void>;
+  launchBatchDraft: (ids: string[]) => Promise<void>;
   launchSuggestIdeas: (prompt: string) => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
   launchFixReview: (planId: string) => Promise<void>;
@@ -129,21 +131,31 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
           }
         }
 
-        const batchTask = data.find((t) => t.taskKind === 'batch-reconcile');
-        if (batchTask?.status === 'done' && !get().batchReconcileConsumed) {
-          const results = await fetchReconcileQueue();
-          if (results && results.length > 0) {
+        const batchTask = data.find(
+          (t) => t.taskKind === 'batch-reconcile' || t.taskKind === 'batch-draft',
+        );
+        const batchTerminal =
+          batchTask?.taskKind === 'batch-draft'
+            ? batchTask.status === 'done' || batchTask.status === 'error'
+            : batchTask?.status === 'done';
+        if (batchTask && batchTerminal && !get().batchReconcileConsumed) {
+          if (batchTask.taskKind === 'batch-reconcile') {
+            const results = await fetchReconcileQueue();
+            if (results && results.length > 0) {
+              await get().loadPlans();
+              set((s) => ({
+                reconcileQueue: [
+                  ...s.reconcileQueue,
+                  ...results.map((r) => ({
+                    planId: r.planId,
+                    before: r.before,
+                    previewId: nextPreviewId(),
+                  })),
+                ],
+              }));
+            }
+          } else {
             await get().loadPlans();
-            set((s) => ({
-              reconcileQueue: [
-                ...s.reconcileQueue,
-                ...results.map((r) => ({
-                  planId: r.planId,
-                  before: r.before,
-                  previewId: nextPreviewId(),
-                })),
-              ],
-            }));
           }
           // Set only after the fetch+append succeeds, so a throw here leaves it false and retries.
           set({ batchReconcileConsumed: true });
@@ -185,6 +197,11 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
       // Reset here, not by polling for a non-'done' status — a fast poll can miss it.
       set({ batchReconcileConsumed: false });
       await launchBatchReconcileApi();
+    }),
+    launchBatchDraft: withAgentPoll(get, async (ids: string[]) => {
+      // Reset here, not by polling for a non-'done' status — a fast poll can miss it.
+      set({ batchReconcileConsumed: false });
+      await launchBatchDraftApi(ids);
     }),
     launchSuggestIdeas: withAgentPoll(get, launchSuggestIdeasApi),
     launchRunAll: withAgentPoll(get, launchRunAllApi),

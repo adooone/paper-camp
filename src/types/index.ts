@@ -767,6 +767,7 @@ export type TaskKind =
   | 'phase'
   | 'audit'
   | 'batch-reconcile'
+  | 'batch-draft'
   | 'run-all'
   | 'draft'
   | 'extend'

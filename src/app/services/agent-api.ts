@@ -85,6 +85,15 @@ export const launchBatchReconcile = async (): Promise<void> => {
   await handleAgentResponse(response);
 };
 
+export const launchBatchDraft = async (ids: string[]): Promise<void> => {
+  const response = await fetch(apiUrl('/api/agent/launch-draft-all'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  });
+  await handleAgentResponse(response);
+};
+
 export const launchRunAll = async (planId: string): Promise<void> => {
   const response = await fetch(apiUrl('/api/agent/launch-run-all'), {
     method: 'POST',

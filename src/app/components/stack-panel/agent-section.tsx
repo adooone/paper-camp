@@ -18,6 +18,8 @@ const taskSubtitle = (task: AgentTaskState): string => {
       return ' — audit';
     case 'batch-reconcile':
       return ' — batch reconcile';
+    case 'batch-draft':
+      return ' — batch draft';
     case 'reconcile':
       return ' — reconcile';
     case 'fix-review':
