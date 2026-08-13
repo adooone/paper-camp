@@ -41,3 +41,13 @@ panel pops in after the config fetch. Render the section shell immediately and
 vary its contents, per UX_PRINCIPLES §1. When `desk` is absent from
 `papercamp/config.json` entirely, the section says so and points at the config
 key rather than silently rendering nothing.
+
+### Phases
+- [ ] Give Desk its own scroller
+      Add `overflow-y-auto` to the Desk wrapper so it scrolls within the panel while the "Stack" header and Agent's reserved height stay put.
+- [ ] Verify clipped content is reachable
+      Confirm the released-version line, Release PR link, and "Open Actions" are scrollable at 768px and below.
+- [ ] Render the shell during load
+      Return the section shell immediately while `useDeskManifest` is in flight instead of `null`, varying only the contents.
+- [ ] Handle a missing `desk` config key
+      When `desk` is absent from `papercamp/config.json`, state so and point at the config key.

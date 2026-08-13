@@ -1000,9 +1000,11 @@ export function createAgentManager(
       try {
         const { entries } = await readEntitiesWithDerivedStatus(join(root, 'papercamp', 'ideas'));
         const allPlans = entries.map((e) => entityToPlan(e));
-        const candidates = ids
+        const isDraftEligible = (e: EntityEntry) =>
+          e.kind !== 'note' && e.phases.length === 0 && e.status === 'idea';
+        const candidates = [...new Set(ids)]
           .map((id) => entries.find((e) => e.id === id))
-          .filter((e): e is EntityEntry => e !== undefined);
+          .filter((e): e is EntityEntry => e !== undefined && isDraftEligible(e));
 
         if (candidates.length === 0) {
           pushLine(task, 'No ideas selected to draft.');
@@ -1048,8 +1050,21 @@ export function createAgentManager(
           }
 
           if (success) {
-            drafted++;
-            pushLine(task, `[done] ${entity.id} — drafted`);
+            let hasPhases = false;
+            try {
+              const planFile = await findBatchPlanFile(join(root, 'papercamp', 'ideas'), entity.id);
+              if (planFile) {
+                const rawAfter = await readFile(planFile, 'utf-8');
+                hasPhases = (parseEntityFile(rawAfter).entries[0]?.phases.length ?? 0) > 0;
+              }
+            } catch {}
+            if (hasPhases) {
+              drafted++;
+              pushLine(task, `[done] ${entity.id} — drafted`);
+            } else {
+              failed++;
+              pushLine(task, `[fail] ${entity.id} — agent exited but added no phases`);
+            }
           } else {
             failed++;
             if (stderr.trim()) pushLine(task, stderr.trim());

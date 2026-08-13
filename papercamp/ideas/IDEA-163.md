@@ -88,3 +88,18 @@ Code organisation, same files and same pass:
   before registering its cleanup.
 - No tests cover these 822 lines, the app's declared control surface. Only two
   source-text guard tests touch the file at all.
+
+### Phases
+- [ ] Give stale stamps a resting treatment and consolidate the stamp code
+      Add the outlined chalk resting state, extract one `StampButton`, hoist `statusFill`/`statusText` to module scope, and drop `shared.ts`'s hardcoded hex for the `chalk.*` tokens.
+- [ ] Fix and surface service state
+      Probe the healthcheck regardless of who owns the process in `desk-services.ts`, then give the row an unambiguous run icon and a real expand chevron.
+- [ ] Make the panel accessible
+      Mark it `inert` while closed, turn it into a labelled `complementary` landmark with real headings and dot labels, and add Escape-to-close.
+- [ ] Repair the agent card and task list
+      Drop the redundant subtitle, give the agent label a non-truncating slot, show each task's start time, and replace the silent slice with a "+N more" link to `/tasks`.
+- [ ] Settle the presentation
+      Left-align the column, use the body font for the group labels, and shrink the `h-20` header.
+- [ ] Clear the dead and duplicated code
+      Replace `refreshRef` with `useAppStore.getState()`, drop the unused `useDeskChecks().refresh`, and fix `ServiceLog`'s cleanup so its `cancelled` guard registers.
+- [ ] Cover the panel with tests

@@ -84,3 +84,17 @@ The git page's entire commit interaction lives in
 another feature, and this idea pushes the two surfaces further apart: the git
 page needs staging and a body, the idea view needs the Fix action. Split the
 shared form into something both own instead of growing the conditional.
+
+### Phases
+- [ ] Add stage/unstage routes
+      `POST /api/git/stage` and `POST /api/git/unstage`, each taking a path, running `git add` / `git restore --staged` against the index.
+- [ ] Wire real staging into the changed-files checkbox
+      Checkbox calls the routes; the `staged` field drives the Stamp; a partially-staged file (`MM`) renders as an indeterminate checkbox.
+- [ ] Commit the index instead of a client list
+      `commitChanges` stops passing a file array once anything is staged; the button reads "Commit N staged" and keeps commit-everything when nothing is staged.
+- [ ] Add the collapsible commit body field
+      Return `commitMessage` from `useDeliverCommitForm` and render a collapsible body `Textarea` beneath the title; the wand fills both.
+- [ ] Drop Fix from the git page
+      Never render the plan-scoped Fix action without a plan; surface a failing check as a warning beside Commit rather than by disabling the button.
+- [ ] Extract the shared Sync/Push/Pull row and split the form
+      Reconcile `GitActionsRow` and `DeliverEmptyState` into one row, and split the deliver form so the git page and idea view each own their variant.

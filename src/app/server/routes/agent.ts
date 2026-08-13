@@ -338,8 +338,15 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
     planActionRoute(
       '/api/agent/launch-draft-all',
       (raw) => {
-        const { ids } = JSON.parse(raw) as { ids?: string[] };
-        return ids && ids.length > 0 ? { ids } : null;
+        const { ids } = JSON.parse(raw) as { ids?: unknown };
+        if (
+          !Array.isArray(ids) ||
+          ids.length === 0 ||
+          !ids.every((id) => typeof id === 'string' && id.trim().length > 0)
+        ) {
+          return null;
+        }
+        return { ids };
       },
       'ids is required',
       ({ ids }) => agent.startBatchDraft(ids),

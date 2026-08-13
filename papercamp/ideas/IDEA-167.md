@@ -58,3 +58,16 @@ thirteen and narrow the allowlist entry to the texture alone.
 
 **Loading and failure states are bare paragraphs.** "Couldn't load the
 working-tree diff." offers no retry.
+
+### Phases
+- [ ] Carry `status` through the diff model onto `FileDiffEntry`
+      Thread git's two-character code from `/api/git/status` into the entry the diff model builds.
+- [ ] Render a per-file status marker in the sidebar and diff header
+      Use git's own A/M/D/?? letter vocabulary, matching the `renameSource` treatment already in place.
+- [ ] Add page and per-file headings plus a labelled nav list
+      An `h1` for the page, a heading one level down per file section, and the changed-files sidebar as a navigation landmark.
+- [ ] Replace the breadcrumb with a page title
+- [ ] Re-weight the action buttons: Push primary, Sync and Pull secondary
+- [ ] Fix the status-bar branch glyph and migrate the inline styles
+      Swap `⌥` for `GitBranchIcon`, move the thirteen static layout styles to Tailwind, and narrow the guard allowlist to the texture alone.
+- [ ] Give loading and failure states a retry affordance

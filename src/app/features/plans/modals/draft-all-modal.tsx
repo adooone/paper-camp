@@ -1,7 +1,7 @@
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { Button, Checkbox, Modal } from '@dendelion/paper-ui';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface DraftAllModalProps {
   open: boolean;
@@ -9,24 +9,25 @@ interface DraftAllModalProps {
   onConfirm: (ids: string[]) => Promise<void>;
 }
 
+type DraftCandidate = PlanEntry & { id: string };
+
 export const DraftAllModal = ({ open, onClose, onConfirm }: DraftAllModalProps) => {
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
-  const candidates = planEntries.filter(
-    (p): p is PlanEntry & { id: string } =>
-      !!p.id && p.phases.length === 0 && p.status !== 'done' && p.status !== 'dropped',
-  );
+  const [candidates, setCandidates] = useState<DraftCandidate[]>([]);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Read via ref, not a dependency: candidates should only be re-snapshotted when the
-  // modal opens, not on every worklist refresh while it's open and the user is picking.
-  const candidatesRef = useRef(candidates);
-  candidatesRef.current = candidates;
-
+  // Snapshotted only when the modal opens, not on every worklist refresh while it's
+  // open and the user is picking — see IDEA-169's "You pick which".
+  // biome-ignore lint/correctness/useExhaustiveDependencies: planEntries is read as of the open transition, not tracked continuously.
   useEffect(() => {
     if (open) {
-      setChecked(new Set(candidatesRef.current.map((c) => c.id)));
+      const snapshot = planEntries.filter(
+        (p): p is DraftCandidate => !!p.id && p.phases.length === 0 && p.status === 'idea',
+      );
+      setCandidates(snapshot);
+      setChecked(new Set(snapshot.map((c) => c.id)));
       setLoading(false);
       setError(null);
     }

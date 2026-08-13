@@ -69,3 +69,17 @@ different versions. And it pairs with the doctor, which already exists.
 
 Out of scope: the hub itself, cross-corpus links ([[IDEA-123]]), and any
 migration tooling beyond a single doctor-driven bump.
+
+### Phases
+- [ ] Preserve unknown frontmatter keys on read
+      Add passthrough to the Zod frontmatter schemas so unrecognised keys survive parse.
+- [ ] Emit preserved keys on write
+      Change serializer.ts to write carried-through keys alongside known ones in a stable order.
+- [ ] Define the format version, separate from the package version
+      Introduce a format-version constant and repurpose config.version to declare it, stamped honestly on write.
+- [ ] Refuse lossy writes against a newer corpus
+      Compare the corpus format version to the running one; keep reads tolerant, refuse writes when the corpus is newer.
+- [ ] Surface the mismatch in the doctor
+      Report a newer-than-supported corpus as a doctor finding on load.
+- [ ] Add the doctor-driven format bump
+      Make migration an explicit, reviewable action that produces a git diff rather than an implicit rewrite.

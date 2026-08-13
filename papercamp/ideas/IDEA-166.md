@@ -49,3 +49,16 @@ the directory rather than the name. Same fix in the diff section's own
 
 **`CountBadge` is defined twice**, identically, in `git-file-list.tsx` and
 `file-diff-section.tsx`, differing only by a `shrink-0`. Extract it.
+
+### Phases
+- [ ] Set a code line-height on the diff `<pre>`
+      Add a `leading-*` class so mono text stops inheriting body prose leading.
+- [ ] Add old/new line-number gutters
+      Dimmed and non-selectable so copied hunks stay valid patch text.
+- [ ] Make each `FileDiffSection` collapsible
+      Collapsible header, files past a size threshold start collapsed, scroll-spy expands a file on jump.
+- [ ] Stick the commit row under the page chrome
+      Carry the staged count from [[IDEA-165]].
+- [ ] Fix path truncation in the sidebar and `FileHeader`
+      Full-weight basename, dimmed directory ahead of it, truncate the directory not the name.
+- [ ] Extract the shared `CountBadge` component

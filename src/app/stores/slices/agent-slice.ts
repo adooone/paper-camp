@@ -134,7 +134,11 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
         const batchTask = data.find(
           (t) => t.taskKind === 'batch-reconcile' || t.taskKind === 'batch-draft',
         );
-        if (batchTask?.status === 'done' && !get().batchReconcileConsumed) {
+        const batchTerminal =
+          batchTask?.taskKind === 'batch-draft'
+            ? batchTask.status === 'done' || batchTask.status === 'error'
+            : batchTask?.status === 'done';
+        if (batchTask && batchTerminal && !get().batchReconcileConsumed) {
           if (batchTask.taskKind === 'batch-reconcile') {
             const results = await fetchReconcileQueue();
             if (results && results.length > 0) {

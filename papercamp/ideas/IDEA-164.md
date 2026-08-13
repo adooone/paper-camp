@@ -107,3 +107,17 @@ Screenshot capture or storage, diffing a surface against its previous run, and
 any scheduled or CI-triggered audit — this is a manual, on-demand pass.
 Accessibility auditing rides along in the prompt's standards rather than
 becoming a separate tool integration.
+
+### Phases
+- [ ] Add a `browser` run option to the agent layer
+      `AgentRunOptions` gains `browser?: boolean`; `claude-code.ts` `buildArgs` keeps `--strict-mcp-config` and the `WebFetch`/`WebSearch` disallow, and passes `--mcp-config` naming the browser server only when set.
+- [ ] Probe the browser MCP server in `capabilities.ts`
+      Detect a configured browser server the way `gh` and the agent CLIs are probed, so the launcher can gate on it.
+- [ ] Read `desk.audits` from `papercamp/config.json`
+      Parse the hand-declared `name`/`path`/`intent` list; `intent` is required.
+- [ ] Add the audit task kind and prompt
+      Reuse `launch-suggest`/`buildSuggestIdeasPrompt` with the target `path`, `intent`, resolved base URL, `UX_PRINCIPLES.md`/`CODE_STYLE.md`, and existing ideas + suggestions; refuse to launch when the backing service healthcheck is down.
+- [ ] Fan audits out one task per target
+      Route through the existing run-all machinery so each finding stays traceable and a sweep can stop partway.
+- [ ] Add the Audits group to the Stack panel's Desk section
+      One row per target showing its last run, plus a run-all control, disabled with a reason when no browser is configured or the service is down.
