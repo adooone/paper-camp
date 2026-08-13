@@ -51,8 +51,9 @@ Owner will refine scope/phases later; deliberately left undrafted.
       run: 47s · 229 in · 2.9k out · sonnet-5
 
 ### Fixes
-- [ ] Compress the desk section layout around the Build control
+- [x] Compress the desk section layout around the Build control
       The Build control currently sits in its own card in the Stack panel's desk section, shifting the rest of the layout. Integrate it into the desk section's existing control grouping (alongside git actions etc.) instead of a standalone card, so the section stays visually compact and organized.
+      run: 1m33s · 5.7k in · 6.8k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-13 [chat] the layout of the Stack panel is shifted because of new card with build. Think on how we can improve and compress the UI. To have all elements in Desk section naturally organised
