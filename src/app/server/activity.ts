@@ -6,8 +6,8 @@ import { readWorkEntries } from '@/core/readers';
 import { invalidateCorpusCache } from './corpus-cache';
 import { runRunOrderPass } from './run-order-pass';
 
-// The only consumer (stack-panel.tsx) ignores the event payload and treats every
-// tick as a generic "something changed, reload everything" signal.
+// Consumers route on `payload.type`; a bare `changed` message is the generic
+// "something on disk moved, reload broadly" signal.
 export type ActivityManager = ReturnType<typeof createActivityManager>;
 
 // A PR merging on GitHub touches nothing on disk, so the fs watcher below never fires for it.

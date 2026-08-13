@@ -158,6 +158,9 @@
 | IDEA-155 | Only the page container scrolls | fix | done | app, ui, layout |
 | IDEA-156 | Fix button replaces Commit when checks fail | feat | done | app, plans, agents |
 | IDEA-157 | Build check in the status manager | feat | done | integration, app, checks |
-| IDEA-158 | Build command in the desk Stack panel | feat | in-progress | app, checks |
+| IDEA-158 | Build command in the desk Stack panel | feat | done | app, checks |
 | IDEA-159 | Git actions time out instead of hanging | fix | done | app, git, ux |
 | IDEA-160 | One activity stream for the whole app | fix | done | app, ux, performance |
+| IDEA-161 | Desk section clips its own content | fix | idea | app, stack, layout |
+| IDEA-162 | One source of truth for checks | refactor | idea | app, stack, status |
+| IDEA-163 | Stack panel affordance and a11y pass | fix | idea | app, stack, ux |

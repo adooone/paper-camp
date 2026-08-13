@@ -2,13 +2,14 @@
 id: IDEA-158
 title: Build command in the desk Stack panel
 type: feat
-status: review
+status: done
 created: 2026-08-11
 updated: 2026-08-13
 tags:
   - app
   - checks
 subject: In-app dev toolbar
+order: 1
 ---
 
 Follow-up [[IDEA-157]] flagged but didn't build: a manual **Build** action —
