@@ -38,8 +38,9 @@ Owner will refine scope/phases later; deliberately left undrafted.
 - [x] Add a Build control to the Stack panel's desk section
       A trigger button plus the last-built timestamp, living under `src/app/components/stack-panel/`.
       run: 2m38s · 515 in · 11.7k out · sonnet-5
-- [ ] Wire the trigger to the build route
+- [x] Wire the trigger to the build route
       Call `/api/status/check?name=build`, reflect the running state, and refresh on completion.
+      run: 1m55s · 233 in · 8.7k out · sonnet-5
 - [ ] Handle the unconfigured case
       Show a clear message when `commands.build` is absent, distinct from a failed build.
 - [ ] Refresh last-built off the activity stream
