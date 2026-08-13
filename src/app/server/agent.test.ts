@@ -7,7 +7,12 @@ import { parseEntityFile } from '@/core/parse';
 import { entityToIdea, entityToPlan } from '@/core/readers';
 import type { PhaseItem, PlanEntry, ReviewThread } from '@/types/index';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildAgentPrompt, createAgentManager } from './agent';
+import {
+  buildAgentPrompt,
+  buildFixItemPrompt,
+  buildFixPassPrompt,
+  createAgentManager,
+} from './agent';
 
 // The manager is exercised with a fake adapter whose "agent" is a short `node -e`
 // script — the real spawn/readline/verification machinery runs, only the AI CLI is
@@ -174,6 +179,40 @@ describe('buildAgentPrompt', () => {
     const phase: PhaseItem = { done: false, text: 'With detail', description: 'Detailed steps.' };
     expect(buildAgentPrompt(plan, phase, 0)).toContain('Detailed steps.');
   });
+
+  it('bans destructive git over pre-existing working-tree state', () => {
+    // IDEA-137: a headless phase agent once stashed a dirty tree to check a clean
+    // baseline and swept away the freshly drafted plan with it.
+    const prompt = buildAgentPrompt(plan, plan.phases[0], 0);
+    expect(prompt).toContain('git stash');
+    expect(prompt).toContain('git reset');
+    expect(prompt).toContain('git checkout');
+    expect(prompt).toContain('git diff');
+  });
+});
+
+describe('buildFixPassPrompt', () => {
+  const plan = entityToPlan(parseEntityFile(PLAN_TWO_PHASES).entries[0]);
+
+  it('bans destructive git over pre-existing working-tree state', () => {
+    const prompt = buildFixPassPrompt(plan, 'phase 1', 'First phase', []);
+    expect(prompt).toContain('git stash');
+    expect(prompt).toContain('git reset');
+    expect(prompt).toContain('git checkout');
+    expect(prompt).toContain('git diff');
+  });
+});
+
+describe('buildFixItemPrompt', () => {
+  const plan = entityToPlan(parseEntityFile(PLAN_TWO_PHASES).entries[0]);
+
+  it('bans destructive git over pre-existing working-tree state', () => {
+    const prompt = buildFixItemPrompt(plan, plan.phases[0], 0);
+    expect(prompt).toContain('git stash');
+    expect(prompt).toContain('git reset');
+    expect(prompt).toContain('git checkout');
+    expect(prompt).toContain('git diff');
+  });
 });
 
 describe('startRunAllPhases', () => {
@@ -205,6 +244,34 @@ describe('startRunAllPhases', () => {
       await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
     );
     expect(after.entries[0].phases.every((phase) => phase.done)).toBe(true);
+  });
+
+  it('commits the corpus via onRunStart before the first phase agent launches (IDEA-137)', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const order: string[] = [];
+    const runProjectChecks = vi.fn(async () => {
+      order.push('checks');
+      return [];
+    });
+    const onRunStart = vi.fn(async () => {
+      order.push('onRunStart');
+    });
+    const manager = createAgentManager(
+      root,
+      undefined,
+      async () => {
+        order.push('commitPhase');
+      },
+      undefined,
+      onRunStart,
+    );
+
+    expect(manager.startRunAllPhases(plan, runProjectChecks)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(onRunStart).toHaveBeenCalledWith(expect.objectContaining({ id: 'IDEA-1' }));
+    expect(order[0]).toBe('onRunStart');
+    expect(order.indexOf('onRunStart')).toBeLessThan(order.indexOf('commitPhase'));
   });
 
   it('only runs phases that are still unchecked', async () => {

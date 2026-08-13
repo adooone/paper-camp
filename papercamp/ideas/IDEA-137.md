@@ -2,7 +2,7 @@
 id: IDEA-137
 title: Durable drafted plans
 type: fix
-status: idea
+status: review
 created: 2026-08-06
 tags:
   - agents
@@ -48,8 +48,9 @@ make any stash pop conflict-prone. Two fixes close it:
 - [x] Ban destructive git over pre-existing state in phase prompts
       Add the rule to `buildAgentPrompt`, `buildFixPassPrompt`, and `buildFixItemPrompt`: never `git stash`/`reset`/`checkout` over working-tree state the agent did not create; compare against a clean baseline with read-only `git diff`/`git show HEAD:<file>`.
       run: 1m9s · 375 in · 3k out · sonnet-5
-- [ ] Cover both fixes with tests
+- [x] Cover both fixes with tests
       Assert the corpus is committed before the first phase agent launches and that the phase prompt carries the destructive-git ban.
+      run: 2m34s · 512 in · 5.9k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-06 [decision] Durability comes from run-all committing pending papercamp/ changes at branch setup, not from draft-plan committing at draft time — drafts stay editable until the run starts, and the guard also covers manual plan edits. Phase prompts additionally forbid stash/reset/checkout over pre-existing state.
