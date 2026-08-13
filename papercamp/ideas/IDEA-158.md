@@ -2,7 +2,7 @@
 id: IDEA-158
 title: Build command in the desk Stack panel
 type: feat
-status: in-progress
+status: review
 created: 2026-08-11
 updated: 2026-08-13
 tags:
