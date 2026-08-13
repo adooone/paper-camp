@@ -40,3 +40,13 @@ make any stash pop conflict-prone. Two fixes close it:
 
 ### Thread
 - [x] 2026-08-06 [decision] Durability comes from run-all committing pending papercamp/ changes at branch setup, not from draft-plan committing at draft time — drafts stay editable until the run starts, and the guard also covers manual plan edits. Phase prompts additionally forbid stash/reset/checkout over pre-existing state.
+
+### Phases
+- [ ] Add a corpus-commit helper to the git manager
+      Stage every pending `papercamp/` change and commit it as `docs(ideas): <title> — plan` with a `Refs: <id>` trailer, no-op when the corpus is clean.
+- [ ] Commit the corpus before phase 1 of run-all
+      Call the helper in `startRunAllPhases` after branch setup and before the first phase agent runs, so the drafted plan and any last-minute edits are durable.
+- [ ] Ban destructive git over pre-existing state in phase prompts
+      Add the rule to `buildAgentPrompt`, `buildFixPassPrompt`, and `buildFixItemPrompt`: never `git stash`/`reset`/`checkout` over working-tree state the agent did not create; compare against a clean baseline with read-only `git diff`/`git show HEAD:<file>`.
+- [ ] Cover both fixes with tests
+      Assert the corpus is committed before the first phase agent launches and that the phase prompt carries the destructive-git ban.

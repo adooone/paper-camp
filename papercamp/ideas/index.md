@@ -120,7 +120,7 @@
 | IDEA-117 | Multi-project hub | feat | idea | multi-project, app |
 | IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | done | multi-project, agents, app |
 | IDEA-119 | Run & monitor on the desk | feat | done | app, monitoring |
-| IDEA-120 | Flow profiles | feat | idea | status, planning-surface |
+| IDEA-120 | Flow profiles | feat | dropped | status, planning-surface |
 | IDEA-121 | paper-camp doctor | feat | done | format, cli |
 | IDEA-122 | MCP as the primary write path | feat | done | format, mcp, agents |
 | IDEA-123 | Cross-corpus idea links | feat | idea | multi-project, format |
@@ -137,7 +137,7 @@
 | IDEA-134 | Plans page decluttering | fix | done | app, ui, plans, stack |
 | IDEA-135 | Run analytics | feat | done | agent, stats, server, ui |
 | IDEA-136 | Roadmap page redesign | fix | done | app, ui, roadmap |
-| IDEA-137 | Durable drafted plans | fix | idea | agents, plans, git |
+| IDEA-137 | Durable drafted plans | fix | planned | agents, plans, git |
 | IDEA-138 | Single-bar toolbar with a Stack-style chat sidebar | feat | done | integration, app, ux, chat |
 | IDEA-139 | Desk is broken under the mount — router basepath, API base, and a friendlier route | fix | done | integration, app, cli |
 | IDEA-140 | Bottom-center island | feat | done | integration, app, ux, motion |
@@ -164,3 +164,9 @@
 | IDEA-161 | Desk section clips its own content | fix | idea | app, stack, layout |
 | IDEA-162 | One source of truth for checks | refactor | idea | app, stack, status |
 | IDEA-163 | Stack panel affordance and a11y pass | fix | idea | app, stack, ux |
+| IDEA-164 | Browser-driven page audits | feat | idea | app, agent, stack |
+| IDEA-165 | Stage files, write the message | feat | idea | app, git, ux |
+| IDEA-166 | Readable diffs on the git page | feat | idea | app, git, ui |
+| IDEA-167 | Git status vocabulary and chrome | fix | idea | app, git, ux |
+| IDEA-168 | Version the corpus format | feat | idea | format, core |
+| IDEA-169 | Draft all ideas at once | feat | idea | app, plans, agent |

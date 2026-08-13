@@ -11,6 +11,7 @@ const TASK_KIND_LABELS: Record<TaskKind, string> = {
   phase: 'Phase run',
   audit: 'Audit',
   'batch-reconcile': 'Batch reconcile',
+  'batch-draft': 'Batch draft',
   'run-all': 'Run all phases',
   draft: 'Draft',
   extend: 'Extend',

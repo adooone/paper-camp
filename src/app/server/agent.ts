@@ -632,6 +632,7 @@ export function createAgentManager(
     'audit',
     'reconcile',
     'batch-reconcile',
+    'batch-draft',
     'draft',
     'extend',
   ]);
@@ -646,7 +647,8 @@ export function createAgentManager(
     if (READONLY_KINDS.has(taskKind)) return { scope: 'none' };
     if (EXCLUSIVE_KINDS.has(taskKind)) return { scope: 'worktree' };
     if (taskKind === 'suggest') return { scope: 'suggestions' };
-    if (taskKind === 'batch-reconcile') return { scope: 'entities', ids: 'all' };
+    if (taskKind === 'batch-reconcile' || taskKind === 'batch-draft')
+      return { scope: 'entities', ids: 'all' };
     if (ENTITY_WRITER_KINDS.has(taskKind)) {
       // No id (shouldn't happen in practice): fail closed to worktree-wide.
       return entityId ? { scope: 'entities', ids: [entityId] } : { scope: 'worktree' };
