@@ -18,7 +18,12 @@ import {
 } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { appendManualPhase, upsertCheckFixes } from '../helpers';
+import {
+  appendManualPhase,
+  isCorpusOnlyCommit,
+  planEntityPath,
+  upsertCheckFixes,
+} from '../helpers';
 import { usePlanStatusPatch } from '../hooks';
 
 const COMMIT_SCOPES = [
@@ -258,17 +263,26 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     if (!commitTitle.trim() || commitInFlight) return;
     setCommitting(true);
     setCommitInFlight(true);
+    // Written before the commit and committed with it: appended afterwards it would
+    // leave the entity file dirty, and committing that appends another row, forever.
+    const recordsPhase = Boolean(plan?.id) && !isCorpusOnlyCommit(files);
+    let phaseRecorded = false;
     try {
-      await commitChanges(files, commitTitle.trim(), commitMessage.trim() || undefined);
-      if (plan) {
-        await patchByTitle(plan.title, {
+      if (recordsPhase && plan) {
+        phaseRecorded = await patchByTitle(plan.title, {
           phases: appendManualPhase(plan.phases, commitTitle.trim()),
         });
       }
+      const entityPath = plan?.id ? planEntityPath(plan.id) : undefined;
+      const commitFiles =
+        phaseRecorded && entityPath && !files.includes(entityPath) ? [...files, entityPath] : files;
+      await commitChanges(commitFiles, commitTitle.trim(), commitMessage.trim() || undefined);
       setCommitTitle('');
       setCommitMessage('');
       await loadGitStatus();
     } catch (err) {
+      // Leaving it would record a phase for a commit that never landed.
+      if (phaseRecorded && plan) await patchByTitle(plan.title, { phases: plan.phases });
       toast({
         title: 'Commit failed',
         description: oneLineErrorSummary((err as Error).message),
