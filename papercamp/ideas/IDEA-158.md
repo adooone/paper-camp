@@ -2,12 +2,14 @@
 id: IDEA-158
 title: Build command in the desk Stack panel
 type: feat
-status: review
+status: in-progress
 created: 2026-08-11
+updated: 2026-08-13
 tags:
   - app
   - checks
 subject: In-app dev toolbar
+order: 1
 ---
 
 Follow-up [[IDEA-157]] flagged but didn't build: a manual **Build** action —
@@ -47,3 +49,11 @@ Owner will refine scope/phases later; deliberately left undrafted.
 - [x] Refresh last-built off the activity stream
       Update the timestamp from the SSE status tick so it stays live without a manual reload.
       run: 47s · 229 in · 2.9k out · sonnet-5
+
+### Fixes
+- [ ] Compress the desk section layout around the Build control
+      The Build control currently sits in its own card in the Stack panel's desk section, shifting the rest of the layout. Integrate it into the desk section's existing control grouping (alongside git actions etc.) instead of a standalone card, so the section stays visually compact and organized.
+
+### Thread
+- [x] 2026-08-13 [chat] the layout of the Stack panel is shifted because of new card with build. Think on how we can improve and compress the UI. To have all elements in Desk section naturally organised
+- [x] 2026-08-13 [chat] [agent] Makes sense — the Build row landed as its own card and threw off spacing. I'll fold it into the desk's existing controls instead of keeping it a separate block, so the section reads as one organized group rather than a stack of cards. Added it as a fix here. (reopened this idea to re-run)
