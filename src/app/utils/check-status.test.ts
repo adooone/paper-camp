@@ -1,7 +1,7 @@
 import type { StatusState } from '@/app/services/status-api';
 import type { CheckResult } from '@/types/index';
 import { describe, expect, it } from 'vitest';
-import { deriveCheckStatuses } from './check-status';
+import { deriveBuildStatus, deriveCheckStatuses } from './check-status';
 
 const result = (status: CheckResult['status']): CheckResult => ({
   status,
@@ -76,5 +76,34 @@ describe('deriveCheckStatuses', () => {
       testStatus: 'stale',
       consistencyStatus: 'stale',
     });
+  });
+
+  it('does not fold build into the commit-gate statuses', () => {
+    expect(
+      deriveCheckStatuses(
+        status({ build: { status: 'fail', cmd: '', lastRun: null, output: '' } }),
+      ),
+    ).toEqual({
+      qualityStatus: 'pass',
+      testStatus: 'pass',
+      consistencyStatus: 'pass',
+    });
+  });
+});
+
+describe('deriveBuildStatus', () => {
+  it('reports the build check status and last-built time', () => {
+    expect(
+      deriveBuildStatus(
+        status({
+          build: { status: 'pass', cmd: 'pnpm build', lastRun: '2026-08-13T00:00:00Z', output: '' },
+        }),
+      ),
+    ).toEqual({ buildStatus: 'pass', lastBuilt: '2026-08-13T00:00:00Z' });
+  });
+
+  it('falls back to stale/null when status is null or build is missing', () => {
+    expect(deriveBuildStatus(null)).toEqual({ buildStatus: 'stale', lastBuilt: null });
+    expect(deriveBuildStatus(status({}))).toEqual({ buildStatus: 'stale', lastBuilt: null });
   });
 });

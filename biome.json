@@ -45,6 +45,7 @@
       "coverage",
       "*.config.js",
       "*.config.ts",
+      "*.timestamp-*.mjs",
       "package.json",
       "papercamp/**"
     ]

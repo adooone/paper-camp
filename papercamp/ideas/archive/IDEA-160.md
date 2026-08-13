@@ -2,8 +2,9 @@
 id: IDEA-160
 title: One activity stream for the whole app
 type: fix
-status: review
+status: done
 created: 2026-08-12
+updated: 2026-08-13
 tags:
   - app
   - ux
