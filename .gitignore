@@ -2,6 +2,7 @@ node_modules
 dist
 coverage
 *.tsbuildinfo
+*.timestamp-*.mjs
 papercamp/.task-logs/
 papercamp/tasks.log
 papercamp/notifications.log

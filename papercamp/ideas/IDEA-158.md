@@ -9,7 +9,6 @@ tags:
   - app
   - checks
 subject: In-app dev toolbar
-order: 1
 ---
 
 Follow-up [[IDEA-157]] flagged but didn't build: a manual **Build** action —
@@ -54,7 +53,11 @@ Owner will refine scope/phases later; deliberately left undrafted.
 - [x] Compress the desk section layout around the Build control
       The Build control currently sits in its own card in the Stack panel's desk section, shifting the rest of the layout. Integrate it into the desk section's existing control grouping (alongside git actions etc.) instead of a standalone card, so the section stays visually compact and organized.
       run: 1m33s · 5.7k in · 6.8k out · sonnet-5
+- [x] Fix the failing "Quality" check
+      Fix the failing "Quality" check in this repo.
+      run: 1m41s · 6k in · 4.2k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-13 [chat] the layout of the Stack panel is shifted because of new card with build. Think on how we can improve and compress the UI. To have all elements in Desk section naturally organised
 - [x] 2026-08-13 [chat] [agent] Makes sense — the Build row landed as its own card and threw off spacing. I'll fold it into the desk's existing controls instead of keeping it a separate block, so the section reads as one organized group rather than a stack of cards. Added it as a fix here. (reopened this idea to re-run)
+- [x] 2026-08-13 [log] [agent] IDEA-158 was reopened to fold the standalone Build card into the desk's existing controls, compressing the Stack panel layout.
