@@ -71,11 +71,12 @@ phases; that is what Reconcile all is for.
       `ENTITY_WRITER_KINDS` returning `{scope: 'entities', ids: 'all'}`, exactly
       as `batch-reconcile` does.
       run: 1m50s · 5.9k in · 3.3k out · sonnet-5
-- [ ] Build `startBatchDraft` in the agent manager
+- [x] Build `startBatchDraft` in the agent manager
       Mirror `startBatchReconcile` in `src/app/server/agent.ts`: one admitted
       task, a stub proc replaced per entity, a sequential loop over the selected
       ids calling `runPhaseProcess` with `buildPlanDraftPrompt(idea, otherPlans)`,
       pushing per-entity progress lines and drafted/skipped/failed counters.
+      run: 2m40s · 667 in · 10.2k out · sonnet-5
 - [ ] Wire the launch route
       Add `POST /api/agent/launch-draft-all` in `routes/agent.ts` taking the
       selected ids, plus the `launchBatchDraft` store action feeding the Plans
