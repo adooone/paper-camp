@@ -131,21 +131,27 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
           }
         }
 
-        const batchTask = data.find((t) => t.taskKind === 'batch-reconcile');
+        const batchTask = data.find(
+          (t) => t.taskKind === 'batch-reconcile' || t.taskKind === 'batch-draft',
+        );
         if (batchTask?.status === 'done' && !get().batchReconcileConsumed) {
-          const results = await fetchReconcileQueue();
-          if (results && results.length > 0) {
+          if (batchTask.taskKind === 'batch-reconcile') {
+            const results = await fetchReconcileQueue();
+            if (results && results.length > 0) {
+              await get().loadPlans();
+              set((s) => ({
+                reconcileQueue: [
+                  ...s.reconcileQueue,
+                  ...results.map((r) => ({
+                    planId: r.planId,
+                    before: r.before,
+                    previewId: nextPreviewId(),
+                  })),
+                ],
+              }));
+            }
+          } else {
             await get().loadPlans();
-            set((s) => ({
-              reconcileQueue: [
-                ...s.reconcileQueue,
-                ...results.map((r) => ({
-                  planId: r.planId,
-                  before: r.before,
-                  previewId: nextPreviewId(),
-                })),
-              ],
-            }));
           }
           // Set only after the fetch+append succeeds, so a throw here leaves it false and retries.
           set({ batchReconcileConsumed: true });
@@ -188,7 +194,11 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
       set({ batchReconcileConsumed: false });
       await launchBatchReconcileApi();
     }),
-    launchBatchDraft: withAgentPoll(get, launchBatchDraftApi),
+    launchBatchDraft: withAgentPoll(get, async (ids: string[]) => {
+      // Reset here, not by polling for a non-'done' status — a fast poll can miss it.
+      set({ batchReconcileConsumed: false });
+      await launchBatchDraftApi(ids);
+    }),
     launchSuggestIdeas: withAgentPoll(get, launchSuggestIdeasApi),
     launchRunAll: withAgentPoll(get, launchRunAllApi),
     launchFixReview: withAgentPoll(get, launchFixReviewApi),
