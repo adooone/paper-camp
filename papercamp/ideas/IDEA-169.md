@@ -81,13 +81,14 @@ phases; that is what Reconcile all is for.
       Add `POST /api/agent/launch-draft-all` in `routes/agent.ts` taking the
       selected ids, plus the `launchBatchDraft` store action feeding the Plans
       slice, alongside the existing launch actions.
-      run: 1m17s · 498 in · 3.9k out · sonnet-5
-- [ ] Fold the task into the status poll
+- [x] Fold the task into the status poll
       Have `agent-slice.ts` join `batch-draft` to the `batch-reconcile` case it
       already special-cases, and add its `taskSubtitle` label in
       `agent-section.tsx` (and `humanizeTaskKind`).
+      run: 1m33s · 2.5k in · 5.4k out · sonnet-5
 - [ ] Menu item and candidate confirm modal
       Add **Draft all** to `worklist-actions-menu.tsx`; it opens a `Modal`
       listing candidates (`kind !== 'note'`, no `### Phases`, status not
       `done`/`dropped`) as checkboxes all checked by default with the count, and
       passes the checked ids to the route.
+- [x] [manual] Draft all ideas at once

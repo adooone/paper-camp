@@ -162,11 +162,11 @@
 | IDEA-159 | Git actions time out instead of hanging | fix | done | app, git, ux |
 | IDEA-160 | One activity stream for the whole app | fix | done | app, ux, performance |
 | IDEA-161 | Desk section clips its own content | fix | idea | app, stack, layout |
-| IDEA-162 | One source of truth for checks | refactor | idea | app, stack, status |
+| IDEA-162 | One source of truth for checks | refactor | planned | app, stack, status |
 | IDEA-163 | Stack panel affordance and a11y pass | fix | idea | app, stack, ux |
 | IDEA-164 | Browser-driven page audits | feat | idea | app, agent, stack |
 | IDEA-165 | Stage files, write the message | feat | idea | app, git, ux |
 | IDEA-166 | Readable diffs on the git page | feat | idea | app, git, ui |
 | IDEA-167 | Git status vocabulary and chrome | fix | idea | app, git, ux |
 | IDEA-168 | Version the corpus format | feat | idea | format, core |
-| IDEA-169 | Draft all ideas at once | feat | idea | app, plans, agent |
+| IDEA-169 | Draft all ideas at once | feat | planned | app, plans, agent |
