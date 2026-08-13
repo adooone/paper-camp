@@ -2,7 +2,7 @@
 id: IDEA-158
 title: Build command in the desk Stack panel
 type: feat
-status: idea
+status: review
 created: 2026-08-11
 tags:
   - app
@@ -44,5 +44,6 @@ Owner will refine scope/phases later; deliberately left undrafted.
 - [x] Handle the unconfigured case
       Show a clear message when `commands.build` is absent, distinct from a failed build.
       run: 1m27s · 363 in · 6.4k out · sonnet-5
-- [ ] Refresh last-built off the activity stream
+- [x] Refresh last-built off the activity stream
       Update the timestamp from the SSE status tick so it stays live without a manual reload.
+      run: 47s · 229 in · 2.9k out · sonnet-5
