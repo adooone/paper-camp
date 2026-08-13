@@ -35,8 +35,9 @@ Owner will refine scope/phases later; deliberately left undrafted.
 - [x] Expose the build check state to the desk
       Surface the `build` check's status and last-built time, kept out of the commit-gate check stamps.
       run: 2m5s · 6.1k in · 7.3k out · sonnet-5
-- [ ] Add a Build control to the Stack panel's desk section
+- [x] Add a Build control to the Stack panel's desk section
       A trigger button plus the last-built timestamp, living under `src/app/components/stack-panel/`.
+      run: 2m38s · 515 in · 11.7k out · sonnet-5
 - [ ] Wire the trigger to the build route
       Call `/api/status/check?name=build`, reflect the running state, and refresh on completion.
 - [ ] Handle the unconfigured case
