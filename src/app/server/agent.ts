@@ -264,6 +264,7 @@ export function createAgentManager(
     run?: { usage: RunUsage; kind: 'phase' | 'fix' },
   ) => Promise<void>,
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
+  onRunStart?: (plan: PlanEntry) => Promise<void>,
   state: AgentManagerState = createEmptyAgentState(),
 ) {
   // `tasks`/`clients` are the same Map/Set a hot-reloaded replacement instance
@@ -1374,6 +1375,12 @@ export function createAgentManager(
 
     (async () => {
       try {
+        if (onRunStart) await onRunStart(plan);
+        if (isSuperseded(task)) {
+          finalizeSuperseded(task);
+          return;
+        }
+
         // Checks already red before this run — pre-existing or known-flaky
         // breakage this run didn't cause, so the fix loop never owns it.
         let toleratedRed = new Set<CheckName>(runProjectChecks ? await runProjectChecks() : []);

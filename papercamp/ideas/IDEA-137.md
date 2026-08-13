@@ -42,8 +42,9 @@ make any stash pop conflict-prone. Two fixes close it:
 - [x] Add a corpus-commit helper to the git manager
       Stage every pending `papercamp/` change and commit it as `docs(ideas): <title> — plan` with a `Refs: <id>` trailer, no-op when the corpus is clean.
       run: 1m1s · 5.7k in · 3.3k out · sonnet-5
-- [ ] Commit the corpus before phase 1 of run-all
+- [x] Commit the corpus before phase 1 of run-all
       Call the helper in `startRunAllPhases` after branch setup and before the first phase agent runs, so the drafted plan and any last-minute edits are durable.
+      run: 2m6s · 670 in · 7.2k out · sonnet-5
 - [ ] Ban destructive git over pre-existing state in phase prompts
       Add the rule to `buildAgentPrompt`, `buildFixPassPrompt`, and `buildFixItemPrompt`: never `git stash`/`reset`/`checkout` over working-tree state the agent did not create; compare against a clean baseline with read-only `git diff`/`git show HEAD:<file>`.
 - [ ] Cover both fixes with tests
