@@ -2,8 +2,9 @@
 id: IDEA-159
 title: Git actions time out instead of hanging
 type: fix
-status: review
+status: done
 created: 2026-08-12
+updated: 2026-08-13
 tags:
   - app
   - git

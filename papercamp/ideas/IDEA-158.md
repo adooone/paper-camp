@@ -32,8 +32,9 @@ of the commit gate. This idea is just the surfacing — same data, desk UI.
 Owner will refine scope/phases later; deliberately left undrafted.
 
 ### Phases
-- [ ] Expose the build check state to the desk
+- [x] Expose the build check state to the desk
       Surface the `build` check's status and last-built time, kept out of the commit-gate check stamps.
+      run: 2m5s · 6.1k in · 7.3k out · sonnet-5
 - [ ] Add a Build control to the Stack panel's desk section
       A trigger button plus the last-built timestamp, living under `src/app/components/stack-panel/`.
 - [ ] Wire the trigger to the build route

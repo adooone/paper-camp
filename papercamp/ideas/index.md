@@ -134,7 +134,6 @@
 | IDEA-131 | Faster agent runs and chat replies | refactor | done | agent, server, performance |
 | IDEA-132 | Published toolbar is dead on arrival — v0.14.0 embed fails end-to-end | fix | done | integration, app, cli |
 | IDEA-133 | Toolbar is an extended StatusBar — top, full-width, always visible, in layout | feat | done | integration, app, ux |
-| IDEA-134 | Plans page decluttering | fix | planned | app, ui, plans, stack |
 | IDEA-134 | Plans page decluttering | fix | done | app, ui, plans, stack |
 | IDEA-135 | Run analytics | feat | done | agent, stats, server, ui |
 | IDEA-136 | Roadmap page redesign | fix | done | app, ui, roadmap |
@@ -150,9 +149,9 @@
 | IDEA-146 | Deliver lives in the idea view | feat | done | app, ui, stack, git |
 | IDEA-147 | Scout panel replaces the sidesheet | feat | done | integration, app, ux, chat |
 | IDEA-148 | Bare mount URL white-screens the desk | fix | done | integration, cli, app |
-| IDEA-149 | Feedback fixes start running at once | feat | idea | agents, plans, app |
+| IDEA-149 | Feedback fixes start running at once | feat | done | agents, plans, app |
 | IDEA-150 | Route plans and ideas by id | refactor | done | app, routing |
-| IDEA-151 | Manual commits become phase rows | feat | planned | app, plans, git |
+| IDEA-151 | Manual commits become phase rows | feat | done | app, plans, git |
 | IDEA-152 | Strip animations to a static baseline | refactor | done | app, ui |
 | IDEA-153 | Notifications view replaces the Inbox | feat | done | app, notifications, ux |
 | IDEA-154 | Git view replaces the toolbar's four actions | feat | done | app, git, ux |
@@ -160,5 +159,5 @@
 | IDEA-156 | Fix button replaces Commit when checks fail | feat | done | app, plans, agents |
 | IDEA-157 | Build check in the status manager | feat | done | integration, app, checks |
 | IDEA-158 | Build command in the desk Stack panel | feat | planned | app, checks |
-| IDEA-159 | Git actions time out instead of hanging | fix | idea | app, git, ux |
-| IDEA-160 | One activity stream for the whole app | fix | idea | app, ux, performance |
+| IDEA-159 | Git actions time out instead of hanging | fix | done | app, git, ux |
+| IDEA-160 | One activity stream for the whole app | fix | done | app, ux, performance |

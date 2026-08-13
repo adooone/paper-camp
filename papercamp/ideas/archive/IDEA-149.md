@@ -2,8 +2,9 @@
 id: IDEA-149
 title: Feedback fixes start running at once
 type: feat
-status: review
+status: done
 created: 2026-08-10
+updated: 2026-08-13
 tags:
   - agents
   - plans

@@ -2,8 +2,9 @@
 id: IDEA-151
 title: Manual commits become phase rows
 type: feat
-status: review
+status: done
 created: 2026-08-10
+updated: 2026-08-13
 tags:
   - app
   - plans
