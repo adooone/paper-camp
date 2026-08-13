@@ -93,3 +93,4 @@ phases; that is what Reconcile all is for.
       passes the checked ids to the route.
       run: 4m47s · 1.5k in · 18.7k out · sonnet-5
 - [x] [manual] Draft all ideas at once
+- [x] [manual] Add phase checklists to IDEA-117 through IDEA-168

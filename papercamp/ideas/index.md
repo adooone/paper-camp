@@ -117,13 +117,13 @@
 | IDEA-113 | Feedback as a single chat thread | feat | done | app, ui, agent, plans |
 | IDEA-115 | npm package is broken on Linux — bundled node-pty can't load | fix | done | cli, packaging |
 | IDEA-116 | Direct-to-main work can never reach review/done in derived status | feat | done | app, status |
-| IDEA-117 | Multi-project hub | feat | idea | multi-project, app |
+| IDEA-117 | Multi-project hub | feat | planned | multi-project, app |
 | IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | done | multi-project, agents, app |
 | IDEA-119 | Run & monitor on the desk | feat | done | app, monitoring |
 | IDEA-120 | Flow profiles | feat | dropped | status, planning-surface |
 | IDEA-121 | paper-camp doctor | feat | done | format, cli |
 | IDEA-122 | MCP as the primary write path | feat | done | format, mcp, agents |
-| IDEA-123 | Cross-corpus idea links | feat | idea | multi-project, format |
+| IDEA-123 | Cross-corpus idea links | feat | planned | multi-project, format |
 | IDEA-124 | Tie ideas to releases — release notes grouped by idea | feat | done | status, releases |
 | IDEA-125 | Headless runs die as bare "error" when the agent hits a permission ask | fix | done | agents, tasks |
 | IDEA-126 | Read-only helper tasks silently supersede a running run-all | fix | done | agents, tasks |
@@ -161,12 +161,12 @@
 | IDEA-158 | Build command in the desk Stack panel | feat | done | app, checks |
 | IDEA-159 | Git actions time out instead of hanging | fix | done | app, git, ux |
 | IDEA-160 | One activity stream for the whole app | fix | done | app, ux, performance |
-| IDEA-161 | Desk section clips its own content | fix | idea | app, stack, layout |
+| IDEA-161 | Desk section clips its own content | fix | planned | app, stack, layout |
 | IDEA-162 | One source of truth for checks | refactor | planned | app, stack, status |
-| IDEA-163 | Stack panel affordance and a11y pass | fix | idea | app, stack, ux |
-| IDEA-164 | Browser-driven page audits | feat | idea | app, agent, stack |
-| IDEA-165 | Stage files, write the message | feat | idea | app, git, ux |
-| IDEA-166 | Readable diffs on the git page | feat | idea | app, git, ui |
-| IDEA-167 | Git status vocabulary and chrome | fix | idea | app, git, ux |
-| IDEA-168 | Version the corpus format | feat | idea | format, core |
-| IDEA-169 | Draft all ideas at once | feat | planned | app, plans, agent |
+| IDEA-163 | Stack panel affordance and a11y pass | fix | planned | app, stack, ux |
+| IDEA-164 | Browser-driven page audits | feat | planned | app, agent, stack |
+| IDEA-165 | Stage files, write the message | feat | planned | app, git, ux |
+| IDEA-166 | Readable diffs on the git page | feat | planned | app, git, ui |
+| IDEA-167 | Git status vocabulary and chrome | fix | planned | app, git, ux |
+| IDEA-168 | Version the corpus format | feat | planned | format, core |
+| IDEA-169 | Draft all ideas at once | feat | review | app, plans, agent |
