@@ -18,7 +18,7 @@ import {
 } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { upsertCheckFixes } from '../helpers';
+import { appendManualPhase, upsertCheckFixes } from '../helpers';
 import { usePlanStatusPatch } from '../hooks';
 
 const COMMIT_SCOPES = [
@@ -260,6 +260,11 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     setCommitInFlight(true);
     try {
       await commitChanges(files, commitTitle.trim(), commitMessage.trim() || undefined);
+      if (plan) {
+        await patchByTitle(plan.title, {
+          phases: appendManualPhase(plan.phases, commitTitle.trim()),
+        });
+      }
       setCommitTitle('');
       setCommitMessage('');
       await loadGitStatus();
@@ -274,7 +279,17 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
       setCommitting(false);
       setCommitInFlight(false);
     }
-  }, [commitTitle, commitMessage, files, loadGitStatus, commitInFlight, setCommitInFlight, toast]);
+  }, [
+    commitTitle,
+    commitMessage,
+    files,
+    loadGitStatus,
+    commitInFlight,
+    setCommitInFlight,
+    toast,
+    plan,
+    patchByTitle,
+  ]);
 
   const handleSuggestFromChanges = useCallback(async () => {
     if (files.length === 0) return;

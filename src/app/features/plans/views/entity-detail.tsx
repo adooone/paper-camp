@@ -197,6 +197,11 @@ const PhasesSection = ({
                     review
                   </Stamp>
                 )}
+                {row.kind === 'phase' && row.item.source === 'manual' && (
+                  <Stamp size="small" variant="neutral">
+                    manual
+                  </Stamp>
+                )}
                 {row.kind === 'fix' && (
                   <Stamp size="small" variant="warning">
                     fix

@@ -39,7 +39,7 @@ export interface PhaseItem {
   done: boolean;
   text: string;
   description?: string;
-  source?: 'review';
+  source?: 'review' | 'manual';
   run?: PhaseRun;
 }
 

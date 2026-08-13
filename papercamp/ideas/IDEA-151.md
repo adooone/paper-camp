@@ -2,7 +2,7 @@
 id: IDEA-151
 title: Manual commits become phase rows
 type: feat
-status: idea
+status: review
 created: 2026-08-10
 tags:
   - app
@@ -43,17 +43,23 @@ action.
    instead of reconstructing it after.
 
 ### Phases
-- [ ] Widen `PhaseItem.source` to accept `'manual'`
+- [x] Widen `PhaseItem.source` to accept `'manual'`
       Add the value to the zod `source` literal and the type, alongside `'review'`.
-- [ ] Round-trip the `[manual]` prefix in sections
+      run: 1m1s · 5.9k in · 2.4k out · sonnet-5
+- [x] Round-trip the `[manual]` prefix in sections
       Parse and serialize `manual` the same way `review` is handled in the phase reader/writer.
-- [ ] Add a title-stripping helper
+      run: 36s · 236 in · 1.6k out · sonnet-5
+- [x] Add a title-stripping helper
       Strip a leading `type(scope): ` prefix, inverting `deriveSuggestedCommit`'s assembly.
-- [ ] Append the phase inside `handleCommit`
+      run: 40s · 230 in · 2.2k out · sonnet-5
+- [x] Append the phase inside `handleCommit`
       On a successful Deliver-form commit, persist `{ done: true, text: stripped, source: 'manual' }` to the plan's `phases`.
-- [ ] Render the `manual` stamp in the phase row
+      run: 43s · 367 in · 2.4k out · sonnet-5
+- [x] Render the `manual` stamp in the phase row
       Add a `source === 'manual'` branch beside the existing `review` stamp in entity-detail.
-- [ ] Cover the strip, round-trip, and append with tests
+      run: 1m10s · 235 in · 2.4k out · sonnet-5
+- [x] Cover the strip, round-trip, and append with tests
+      run: 2m15s · 670 in · 8.6k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-10 [decision] Persisted at commit time (appended to `phases` by the commit action itself), not derived/virtual rows computed from git log — the commit action already knows the fact with certainty; reconstructing it later would need a new commit-SHA field plus fuzzy title matching. Scoped to commits made through the Deliver form; terminal commits are an accepted, stated gap.
