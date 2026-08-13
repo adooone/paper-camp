@@ -41,7 +41,8 @@ Owner will refine scope/phases later; deliberately left undrafted.
 - [x] Wire the trigger to the build route
       Call `/api/status/check?name=build`, reflect the running state, and refresh on completion.
       run: 1m55s · 233 in · 8.7k out · sonnet-5
-- [ ] Handle the unconfigured case
+- [x] Handle the unconfigured case
       Show a clear message when `commands.build` is absent, distinct from a failed build.
+      run: 1m27s · 363 in · 6.4k out · sonnet-5
 - [ ] Refresh last-built off the activity stream
       Update the timestamp from the SSE status tick so it stays live without a manual reload.
