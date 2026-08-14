@@ -75,3 +75,13 @@ This one is the safety net for the times it still happens.
 
 Stash management (apply/drop/pop). Stashes created outside paper-camp are listed
 but never flagged — a human WIP stash is not a problem to solve.
+
+### Phases
+- [ ] Parse stashes in the git status endpoint
+      Add a `stashes` array (index, branch, message, age) to `GET /api/git/status`, parsed from `git stash list`.
+- [ ] Flag paper-camp's own entries
+      Mark entries with a `papercamp-sync` / `sync-…` prefix so the UI can escalate them from informational to warning.
+- [ ] Render the stash surface beside branch hygiene
+      Show it on the `/git` page and in the Deliver section, resting-informational and sorted newest first.
+- [ ] Offer per-entry inspection and recovery guidance
+      Wire `git stash show -p stash@{N}` per entry and name the recovery that works when the surface is in warning state.

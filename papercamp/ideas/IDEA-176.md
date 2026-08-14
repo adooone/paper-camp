@@ -66,3 +66,12 @@ and have the message name the recovery that actually works
 The `resolve-conflict` agent task and `git-sync-recovery.ts`, which exist for
 this and either did not fire or did not finish — worth its own look, but this
 idea is about not creating the conflict in the first place.
+
+### Phases
+- [ ] Commit the corpus before stashing in `runGitSync`
+      Call `commitCorpus` with a sync-appropriate subject ahead of `stash push`.
+- [ ] Confirm only source changes reach the stash
+      Verify the commit is a no-op on a clean corpus and `papercamp/` never enters the stash.
+- [ ] Make `stashPending` durable instead of one-shot
+- [ ] Rewrite the recovery message to name the working recovery
+      Point at `git restore --source=origin/main --staged --worktree .` then `git merge --ff-only`.

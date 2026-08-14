@@ -2,7 +2,7 @@
 id: IDEA-174
 title: Show a running PR review in the UI
 type: feat
-status: review
+status: done
 created: 2026-08-14
 updated: 2026-08-14
 tags:

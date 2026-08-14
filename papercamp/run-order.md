@@ -10,3 +10,7 @@ IDEA-167 — Git status vocabulary and chrome
 IDEA-168 — Version the corpus format
 IDEA-171 — Run-all redoes work from a stale base
 IDEA-172 — Persist drafts and UI choices
+IDEA-176 — Sync stops stashing over the corpus
+IDEA-177 — Surface dangling stashes
+IDEA-178 — Rate limits must not rewrite status
+IDEA-179 — Prioritise lies about what it did
