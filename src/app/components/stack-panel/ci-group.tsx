@@ -3,6 +3,8 @@ import type { CiRun, CiRunStatus } from '@/types/index';
 import { Card } from '@dendelion/paper-ui';
 import { groupLabelClassName } from './shared';
 
+export const CI_GROUP_LABEL = 'CI & release';
+
 const runDotClass: Record<CiRunStatus, string> = {
   success: 'bg-chalk-pass-text',
   failure: 'bg-chalk-fail-text',
@@ -92,7 +94,7 @@ export const CiGroup = () => {
 
   return (
     <div>
-      <div className={groupLabelClassName}>CI &amp; release</div>
+      <div className={groupLabelClassName}>{CI_GROUP_LABEL}</div>
       {body()}
     </div>
   );

@@ -8,6 +8,8 @@ import { groupLabelClassName } from './shared';
 
 const LOG_POLL_MS = 1500;
 
+export const SERVICES_GROUP_LABEL = 'Services';
+
 const dotClass = (service: ServiceState): string => {
   if (service.status === 'crashed') return 'bg-chalk-fail-text';
   if (service.status === 'running') {
@@ -134,7 +136,7 @@ export const ServicesGroup = () => {
 
   return (
     <div>
-      <div className={groupLabelClassName}>Services</div>
+      <div className={groupLabelClassName}>{SERVICES_GROUP_LABEL}</div>
       <div className="flex flex-col gap-2">
         {services.length > 0 ? (
           services.map((service) => (

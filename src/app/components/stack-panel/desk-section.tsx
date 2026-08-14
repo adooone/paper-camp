@@ -1,12 +1,12 @@
 import { useDeskManifest } from '@/app/hooks/use-desk-manifest';
 import { Divider, Skeleton } from '@dendelion/paper-ui';
-import { BuildGroup } from './build-group';
-import { ChecksGroup } from './checks-group';
-import { CiGroup } from './ci-group';
-import { ServicesGroup } from './services-group';
+import { BUILD_GROUP_LABEL, BuildGroup } from './build-group';
+import { CHECKS_GROUP_LABEL, ChecksGroup } from './checks-group';
+import { CI_GROUP_LABEL, CiGroup } from './ci-group';
+import { SERVICES_GROUP_LABEL, ServicesGroup } from './services-group';
 import { groupLabelClassName, sectionLabelClassName } from './shared';
 
-const GROUP_LABELS = ['Services', 'Checks', 'Build', 'CI & release'];
+const GROUP_LABELS = [SERVICES_GROUP_LABEL, CHECKS_GROUP_LABEL, BUILD_GROUP_LABEL, CI_GROUP_LABEL];
 
 const DeskSectionSkeleton = () => (
   <div className="flex flex-col gap-4" aria-hidden="true">
