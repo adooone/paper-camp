@@ -43,8 +43,9 @@ vary its contents, per UX_PRINCIPLES §1. When `desk` is absent from
 key rather than silently rendering nothing.
 
 ### Phases
-- [ ] Give Desk its own scroller
+- [x] Give Desk its own scroller
       Add `overflow-y-auto` to the Desk wrapper so it scrolls within the panel while the "Stack" header and Agent's reserved height stay put.
+      run: 35s · 5.7k in · 1.5k out · sonnet-5
 - [ ] Verify clipped content is reachable
       Confirm the released-version line, Release PR link, and "Open Actions" are scrollable at 768px and below.
 - [ ] Render the shell during load
