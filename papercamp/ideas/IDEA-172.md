@@ -2,7 +2,7 @@
 id: IDEA-172
 title: Persist drafts and UI choices
 type: fix
-status: in-progress
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -109,8 +109,9 @@ and a failed persist must degrade to in-memory rather than break the form.
 - [x] Persist the remaining draft inputs
       Feedback chat, add-review-phases, and inbox question reply, each through the helper.
       run: 4m9s · 1.1k in · 11.6k out · sonnet-5
-- [ ] Persist the UI-choice toggles
+- [x] Persist the UI-choice toggles
       Persist `planFilters` and `detailView` to localStorage. The Plans list/board `view` toggle no longer exists (removed in IDEA-136, commit 89ca57f) — dropped from scope.
+      run: 1m53s · 6.9k in · 7.1k out · sonnet-5
 
 ### Fixes
 - [ ] Fix the failing "Quality" check
