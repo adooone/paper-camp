@@ -47,8 +47,9 @@ finished review appearing on GitHub minutes later.
 page.
 
 ### Phases
-- [ ] Subtitle a running review in the Stack panel
+- [x] Subtitle a running review in the Stack panel
       Add the `pr-review` case to `taskSubtitle` in `agent-section.tsx`, reading the PR number off the task.
+      run: 2m24s · 6k in · 5.5k out · sonnet-5
 - [ ] Detect a review running for the current entity
       Match an in-flight `pr-review` task from `/api/agent/status` to the idea `pr-badge.tsx` renders on.
 - [ ] Add a reviewing state to `pr-badge.tsx`

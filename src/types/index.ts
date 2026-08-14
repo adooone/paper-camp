@@ -896,6 +896,8 @@ export interface AgentTaskState {
   lastStreamAt?: number;
   // fix-review only: prefills the commit form once the agent has reported.
   suggestedCommit?: { title: string; message: string };
+  // pr-review only: the PR being reviewed, e.g. https://github.com/o/r/pull/7.
+  prReviewUrl?: string;
   errorKind?: 'auth' | 'question';
   rateLimit?: RateLimitSnapshot;
 }

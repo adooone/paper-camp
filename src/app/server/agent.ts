@@ -1717,6 +1717,7 @@ export function createAgentManager(
       ...(task.anchorEnteredAt !== undefined ? { anchorEnteredAt: task.anchorEnteredAt } : {}),
       ...(task.lastStreamAt !== undefined ? { lastStreamAt: task.lastStreamAt } : {}),
       ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
+      ...(task.prReviewUrl ? { prReviewUrl: task.prReviewUrl } : {}),
       ...(task.errorKind ? { errorKind: task.errorKind } : {}),
       ...(task.rateLimit ? { rateLimit: task.rateLimit } : {}),
     }));

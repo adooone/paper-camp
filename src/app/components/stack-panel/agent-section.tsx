@@ -38,6 +38,10 @@ const taskSubtitle = (task: AgentTaskState): string => {
       return ' — resolving conflict';
     case 'run-all':
       return ' — run all phases';
+    case 'pr-review': {
+      const prNumber = task.prReviewUrl?.match(/\/pull\/(\d+)/)?.[1];
+      return prNumber ? ` — reviewing PR #${prNumber}` : ' — reviewing PR';
+    }
     default:
       return '';
   }
