@@ -114,7 +114,7 @@ and a failed persist must degrade to in-memory rather than break the form.
       run: 1m53s · 6.9k in · 7.1k out · sonnet-5
 
 ### Fixes
-- [ ] Fix the failing "Quality" check
+- [x] Fix the failing "Quality" check
       Fix the failing "Quality" check in this repo.
 
 ### Thread
