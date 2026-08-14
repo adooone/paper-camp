@@ -10,6 +10,7 @@ tags:
   - ui
   - ux
 subject: App UI
+order: 10
 ---
 
 Typed and agent-suggested commit text is lost the moment you navigate away from
@@ -114,37 +115,9 @@ and a failed persist must degrade to in-memory rather than break the form.
 ### Fixes
 - [ ] Fix the failing "Quality" check
       Fix the failing "Quality" check in this repo.
-      
-      The command was `npx biome format .`.
-      
-      Output from the last run:
-      
-      Checked 391 files in 671ms. No fixes applied.
-      Found 1 error.
-      ./src/app/features/plans/actions/add-review-phases-button.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      
-        × Formatter would have printed the following content:
-        
-           11  11 │   }
-           12  12 │   
-           13     │ - export·const·AddReviewPhasesButton·=·({·onAdd,·disabled,·entityId·}:·AddReviewPhasesButtonProps)·=>·{
-               13 │ + export·const·AddReviewPhasesButton·=·({
-               14 │ + ··onAdd,
-               15 │ + ··disabled,
-               16 │ + ··entityId,
-               17 │ + }:·AddReviewPhasesButtonProps)·=>·{
-           14  18 │     const [open, setOpen] = useState(false);
-           15  19 │     const [input, setInput] = useState('');
-        
-      
-      format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      
-        × Some errors were emitted while running checks.
-        
-      
-      
 
 ### Thread
 - [ ] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Persist the UI-choice toggles") — the agent needs a decision: Phase 5 says to persist "the Plans `view` toggle (list/board)," but no such toggle exists anywhere in the current codebase — the only list/board view-mode state was on the *Roadmap* page, and it was deliberately deleted in commit `89ca57f` ("Delete Board and Timeline views and the view-mode state", IDEA-136, 2026-08-08) in favor of full-width rows only, six days before this plan was written. Should I skip persisting a `view` toggle entirely (since it no longer exists) and persist only `planFilters` + `detailView`, or does "Plans `view`" refer to something else you have in mind that I'm not finding?
 - [x] 2026-08-14 [log] [agent] Phase 1 is already built: `src/app/utils/local-draft-store.ts` exists with the `StoredEntry` timestamp and the 14-day `STALENESS_CAP_MS` this idea specifies, and drops an entry past the cap on read. It has zero consumers, so knip will report it as dead code until the wiring phases run — start from phase 2, do not rebuild the helper.
 - [ ] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Persist the UI-choice toggles") — the agent needs a decision: Phase 5 says to persist "the Plans `view` toggle (list/board)," but no such state exists anywhere in the current codebase — the only list/board view-mode state was on the Roadmap page and was deliberately deleted in commit 89ca57f (IDEA-136) six days before this plan was written. Should I persist only `planFilters` + `detailView` and drop the `view` toggle from this phase's scope, or did you mean something else by "Plans `view`"?
+- [ ] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Persist the UI-choice toggles") — the agent needs a decision: Phase 5 says to persist "the Plans `view` toggle (list/board)," but no such state exists in the codebase — it was deliberately deleted in commit 89ca57f (IDEA-136, 2026-08-08). Only `planFilters` and `detailView` currently exist. Should I persist just those two and drop the `view` toggle from scope, or did you mean something else by "Plans `view`"?
