@@ -507,7 +507,9 @@ export function createAgentManager(
       void recordReviewedSha(root, task.planId, task.prReviewSha);
       const result = parsePrReviewResult(task.lines);
       if (result && task.prReviewUrl) {
-        postPrReview(root, task.planId, task.prReviewUrl, result, (text) => pushLine(task, text));
+        postPrReview(root, task.planId, task.prReviewUrl, task.prReviewSha, result, (text) =>
+          pushLine(task, text),
+        );
       } else {
         pushLine(task, 'pr-review agent exited without a parseable verdict — nothing posted');
       }

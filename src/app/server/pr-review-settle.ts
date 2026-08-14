@@ -54,6 +54,43 @@ export function parsePrReviewResult(taskLines: string[]): PrReviewResult | undef
   return undefined;
 }
 
+const VERDICT_LABELS: Record<PrReviewVerdict, string> = {
+  approve: 'Approves',
+  comment: 'Comments',
+  'request-changes': 'Requests changes',
+};
+
+function findingsPhrase(n: number): string {
+  return `${n} finding${n === 1 ? '' : 's'}`;
+}
+
+export function renderReviewGithubBody(
+  result: PrReviewResult,
+  footer: { ideaId: string; sha: string; droppedFindings?: number },
+): string {
+  const lines = [
+    `**${VERDICT_LABELS[result.verdict]}** · ${findingsPhrase(result.findings.length)}`,
+    '',
+    result.assessment,
+  ];
+  if (result.concerns.length > 0) {
+    lines.push('', '**Concerns**', ...result.concerns.map((c) => `- ${c}`));
+  }
+  if (footer.droppedFindings) {
+    lines.push(
+      '',
+      `_${findingsPhrase(footer.droppedFindings)} omitted to fit the review's size limit._`,
+    );
+  }
+  lines.push('', `<sub>Paper Scout · ${footer.ideaId} · ${footer.sha.slice(0, 7)}</sub>`);
+  return lines.join('\n');
+}
+
+export function renderReviewThreadMessage(result: PrReviewResult): string {
+  const label = VERDICT_LABELS[result.verdict];
+  return `${label} · ${findingsPhrase(result.findings.length)} — ${result.assessment}`;
+}
+
 async function appendReviewThreadMessage(root: string, entityId: string, summary: string) {
   const ideasDir = campFile(root, 'ideas');
   const primaryFile = join(ideasDir, `${entityId}.md`);
@@ -82,21 +119,24 @@ export function postPrReview(
   root: string,
   entityId: string,
   prUrl: string,
+  sha: string,
   result: PrReviewResult,
   onLine: (text: string) => void,
 ): void {
   void (async () => {
     const [posted, logged] = await Promise.all([
       createPrReview(root, prUrl, {
-        body: result.assessment,
+        body: renderReviewGithubBody(result, { ideaId: entityId, sha }),
         event: 'COMMENT',
         comments: result.findings,
       }).catch(() => false),
-      appendReviewThreadMessage(root, entityId, result.assessment).catch(() => false),
+      appendReviewThreadMessage(root, entityId, renderReviewThreadMessage(result)).catch(
+        () => false,
+      ),
     ]);
-    const n = result.findings.length;
-    const findingsText = `${n} finding${n === 1 ? '' : 's'}`;
-    const postPart = posted ? `posted to GitHub (${findingsText})` : 'GitHub post failed';
+    const postPart = posted
+      ? `posted to GitHub (${findingsPhrase(result.findings.length)})`
+      : 'GitHub post failed';
     const logPart = logged ? 'recorded on the idea' : 'could not record on the idea';
     onLine(`Review ${postPart}, ${logPart}`);
   })();

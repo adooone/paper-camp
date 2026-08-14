@@ -1,5 +1,10 @@
+import type { PrReviewResult } from '@/types/index';
 import { describe, expect, it } from 'vitest';
-import { parsePrReviewResult } from './pr-review-settle';
+import {
+  parsePrReviewResult,
+  renderReviewGithubBody,
+  renderReviewThreadMessage,
+} from './pr-review-settle';
 
 describe('parsePrReviewResult', () => {
   it('parses a clean verdict with findings', () => {
@@ -89,5 +94,88 @@ describe('parsePrReviewResult', () => {
       findings: [{ path: 'src/a.ts', line: 0, body: 'bad line' }],
     });
     expect(parsePrReviewResult([badLine])).toBeUndefined();
+  });
+});
+
+describe('renderReviewGithubBody', () => {
+  const base: PrReviewResult = {
+    verdict: 'request-changes',
+    assessment: 'Spec conformance is solid. The trigger adds a gate the spec never listed.',
+    concerns: [
+      'A computed review is lost permanently if the post fails',
+      'The verdict parser only handles single-line JSON',
+    ],
+    findings: [
+      { path: 'a.ts', line: 1, body: 'x' },
+      { path: 'b.ts', line: 2, body: 'y' },
+      { path: 'c.ts', line: 3, body: 'z' },
+    ],
+  };
+
+  it('renders the verdict line, assessment, concerns, and footer', () => {
+    const body = renderReviewGithubBody(base, { ideaId: 'IDEA-170', sha: '8e63279abc' });
+    expect(body).toBe(
+      [
+        '**Requests changes** · 3 findings',
+        '',
+        base.assessment,
+        '',
+        '**Concerns**',
+        '- A computed review is lost permanently if the post fails',
+        '- The verdict parser only handles single-line JSON',
+        '',
+        '<sub>Paper Scout · IDEA-170 · 8e63279</sub>',
+      ].join('\n'),
+    );
+  });
+
+  it('omits the Concerns heading entirely for a clean diff', () => {
+    const clean: PrReviewResult = { ...base, verdict: 'approve', concerns: [], findings: [] };
+    const body = renderReviewGithubBody(clean, { ideaId: 'IDEA-170', sha: '8e63279' });
+    expect(body).not.toContain('Concerns');
+    expect(body).toBe(
+      [
+        '**Approves** · 0 findings',
+        '',
+        clean.assessment,
+        '',
+        '<sub>Paper Scout · IDEA-170 · 8e63279</sub>',
+      ].join('\n'),
+    );
+  });
+
+  it('notes dropped findings without truncating silently', () => {
+    const body = renderReviewGithubBody(
+      { ...base, concerns: [] },
+      { ideaId: 'IDEA-170', sha: '8e63279', droppedFindings: 2 },
+    );
+    expect(body).toContain("_2 findings omitted to fit the review's size limit._");
+  });
+
+  it('uses singular "finding" for a single finding and a single dropped finding', () => {
+    const one: PrReviewResult = { ...base, concerns: [], findings: [base.findings[0]] };
+    const body = renderReviewGithubBody(one, {
+      ideaId: 'IDEA-170',
+      sha: '8e63279',
+      droppedFindings: 1,
+    });
+    expect(body).toContain('· 1 finding\n');
+    expect(body).toContain('_1 finding omitted');
+  });
+});
+
+describe('renderReviewThreadMessage', () => {
+  it('is a single line with verdict, count, and assessment — no bullets, no footer', () => {
+    const result: PrReviewResult = {
+      verdict: 'comment',
+      assessment: 'Looks good, one nit.',
+      concerns: ['Something worth flagging'],
+      findings: [{ path: 'a.ts', line: 1, body: 'x' }],
+    };
+    const message = renderReviewThreadMessage(result);
+    expect(message).toBe('Comments · 1 finding — Looks good, one nit.');
+    expect(message).not.toContain('\n');
+    expect(message).not.toContain('<sub>');
+    expect(message).not.toContain('- ');
   });
 });

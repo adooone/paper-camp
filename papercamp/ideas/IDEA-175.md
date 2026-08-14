@@ -113,10 +113,11 @@ anything other than reviews.
       Replace `PrReviewResult.summary` with the four fields and update the model
       schema and prompt so it returns JSON only, never markdown.
       run: 6m7s · 6.2k in · 9.1k out · sonnet-5
-- [ ] Render the review per destination
+- [x] Render the review per destination
       Format the sectioned GitHub body (verdict line, assessment, optional
       Concerns, footer) and the one-line `[review]` thread message; note dropped
       findings in the rendered summary.
+      run: 4m50s · 4.3k in · 10.8k out · sonnet-5
 - [ ] Post through a repository dispatch with a fallback
       Make `postPrReview` dispatch `paper-camp-review` with everything nested
       under `client_payload.review` and capped, falling back to the direct
