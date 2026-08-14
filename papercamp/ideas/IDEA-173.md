@@ -88,3 +88,7 @@ The review prompt and what the reviewer checks. The trigger gates
 - [x] Degrade a 422-rejected review
       Retry `createPrReview` without the offending comments, or fall back to a summary-only review, so one bad line number costs one finding, not the whole review.
       run: 6m13s · 4.3k in · 17.5k out · sonnet-5
+- [x] [manual] Await ledger writes before finishing a pr-review task
+
+### Thread
+- [x] 2026-08-14 [review] [agent] Comments · 2 findings — The diff delivers all five phases: it threads a structured PrReviewDelivery (with the response body) through createPrReview/dispatchPrReview, makes postPrReview awaitable and outcome-returning, gates recordReviewedSha on real delivery, caps consecutive delivery failures per SHA, and degrades a 422 to a summary-only post. The re-entrancy guard (task.finishing) is added consistently across the line/close/error handlers, and the tests are thorough and match the implemented behavior. Two soft points are worth noting but neither contradicts the spec.

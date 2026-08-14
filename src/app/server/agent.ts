@@ -534,11 +534,11 @@ export function createAgentManager(
           setStatus(task, 'error');
           return;
         }
-        void recordReviewedSha(root, task.planId, task.prReviewSha);
-        void clearDeliveryFailures(root, task.planId);
+        await recordReviewedSha(root, task.planId, task.prReviewSha);
+        await clearDeliveryFailures(root, task.planId);
       } else {
-        void recordReviewedSha(root, task.planId, task.prReviewSha);
-        void clearDeliveryFailures(root, task.planId);
+        await recordReviewedSha(root, task.planId, task.prReviewSha);
+        await clearDeliveryFailures(root, task.planId);
         pushLine(task, 'pr-review agent exited without a parseable verdict — nothing posted');
       }
     }
