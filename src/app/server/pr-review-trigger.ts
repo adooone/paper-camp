@@ -47,6 +47,6 @@ export async function triggerPrReviews(
     if (!diff) continue;
 
     const prompt = buildPrReviewPrompt(plan, diff);
-    agent.startPrReview(plan, prompt, pr.headSha);
+    agent.startPrReview(plan, prompt, pr.headSha, pr.url);
   }
 }

@@ -43,6 +43,7 @@ import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 import { appendNotification } from './notification-log';
+import { parsePrReviewResult, postPrReview } from './pr-review-settle';
 import { recordReviewedSha } from './pr-review-state';
 import { UNLOGGED_TASK_KINDS, logTaskCompletion } from './task-log';
 
@@ -99,6 +100,7 @@ export interface AgentTask {
   // The PR head SHA this review is scoped to — recorded once the task finishes,
   // so the trigger never re-reviews the same commit (IDEA-170).
   prReviewSha?: string;
+  prReviewUrl?: string;
   reconcileResults?: ReconcileQueueItem[];
   status: AgentTaskStatus;
   agentId: AgentId;
@@ -498,9 +500,17 @@ export function createAgentManager(
       }
     }
     // Recorded on completion, not launch — a killed/never-run task must stay
-    // unreviewed so the next poll retries it.
+    // unreviewed so the next poll retries it. Recorded regardless of whether a
+    // parseable verdict follows: a garbled response still consumed the SHA's one
+    // review attempt, and must not spin the same broken prompt every poll.
     if (task.taskKind === 'pr-review' && task.planId && task.prReviewSha) {
       void recordReviewedSha(root, task.planId, task.prReviewSha);
+      const result = parsePrReviewResult(task.lines);
+      if (result && task.prReviewUrl) {
+        postPrReview(root, task.planId, task.prReviewUrl, result, (text) => pushLine(task, text));
+      } else {
+        pushLine(task, 'pr-review agent exited without a parseable verdict — nothing posted');
+      }
     }
     didTaskProgress(task).then((progressed) => {
       if (progressed === false) {
@@ -735,6 +745,7 @@ export function createAgentManager(
       | 'suggestBaseline'
       | 'fixReviewThreads'
       | 'prReviewSha'
+      | 'prReviewUrl'
     >,
   ): Result {
     const blocked = admit(scope.taskKind, identity.planId ?? scope.ideaId);
@@ -812,10 +823,11 @@ export function createAgentManager(
 
   // Launched by the PR-poll trigger, never by a human — see pr-review-trigger.ts
   // for the ready/green/unreviewed-SHA gate that decides when this fires.
-  function startPrReview(plan: PlanEntry, prompt: string, headSha: string): Result {
+  function startPrReview(plan: PlanEntry, prompt: string, headSha: string, prUrl: string): Result {
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
       taskKind: 'pr-review',
       prReviewSha: headSha,
+      prReviewUrl: prUrl,
     });
   }
 
@@ -1826,7 +1838,7 @@ export interface AgentManager {
   start: (plan: PlanEntry, phaseIndex: number) => Result;
   startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
   startFixReview: (plan: PlanEntry, prompt: string, threads: ReviewThread[]) => Result;
-  startPrReview: (plan: PlanEntry, prompt: string, headSha: string) => Result;
+  startPrReview: (plan: PlanEntry, prompt: string, headSha: string, prUrl: string) => Result;
   getFixReviewResult: () => FixReviewResult | null;
   consumeFixReviewResult: () => void;
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;
