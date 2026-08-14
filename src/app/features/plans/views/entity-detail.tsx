@@ -48,6 +48,7 @@ import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import {
   effectiveStatus,
+  latestReviewNote,
   relativeDate,
   rollupProgress,
   runningPrReviewForPlan,
@@ -426,17 +427,24 @@ const TrailSection = ({
   planId,
   released,
   reviewing,
+  reviewNote,
 }: {
   planId: string | undefined;
   released?: string;
   reviewing?: boolean;
+  reviewNote?: string;
 }) => {
   const trail = useTrail(planId);
   if (!planId) return null;
   return (
     <div className="mb-3 text-xs opacity-80">
       {trail ? (
-        <ProvenanceTrailPanel trail={trail} released={released} reviewing={reviewing} />
+        <ProvenanceTrailPanel
+          trail={trail}
+          released={released}
+          reviewing={reviewing}
+          reviewNote={reviewNote}
+        />
       ) : (
         // Reserves the real row's height (4 small stamps + arrows) so the
         // trail fetch resolving doesn't push the header content below it
@@ -579,6 +587,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const loadTaskLog = useAppStore((s) => s.loadTaskLog);
   const planTask = runningTaskForPlan(plan.id, agentStatus);
   const reviewing = Boolean(runningPrReviewForPlan(plan.id, agentStatus));
+  const reviewNote = latestReviewNote(plan.thread);
   const runningFill = useRunningPhaseFill(planTask, taskLog);
   const usageRollup = useMemo(() => rollupUsage(taskLog, plan.id), [taskLog, plan.id]);
   const auditRunning = planTask?.taskKind === 'audit';
@@ -670,7 +679,12 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         </div>
       </div>
 
-      <TrailSection planId={plan.id} released={plan.released} reviewing={reviewing} />
+      <TrailSection
+        planId={plan.id}
+        released={plan.released}
+        reviewing={reviewing}
+        reviewNote={reviewNote}
+      />
 
       {showFeedback ? (
         <FeedbackSection

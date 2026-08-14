@@ -52,6 +52,9 @@ export const runningPrReviewForPlan = (
   return task?.taskKind === 'pr-review' ? task : undefined;
 };
 
+export const latestReviewNote = (thread: ThreadMessage[] | undefined): string | undefined =>
+  [...(thread ?? [])].reverse().find((m) => m.kind === 'review')?.text;
+
 /** Overlays a live agent task onto the stored/derived status for display only —
  * frontmatter and the derived status used for filtering/sorting stay untouched. */
 export const effectiveStatus = (

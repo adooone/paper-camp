@@ -2,7 +2,7 @@
 id: IDEA-174
 title: Show a running PR review in the UI
 type: feat
-status: idea
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -56,5 +56,6 @@ page.
 - [x] Add a reviewing state to `pr-badge.tsx`
       Show it alongside the existing draft/open/merged states while a review is in flight.
       run: 4m29s · 883 in · 9k out · sonnet-5
-- [ ] Reflect a landed review on the badge
+- [x] Reflect a landed review on the badge
       After the task settles, surface it from the `[review]` thread message and the PR's review count.
+      run: 3m22s · 801 in · 12.8k out · sonnet-5
