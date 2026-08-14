@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   clearPrCache,
   computePrTitle,
+  createPrReview,
   derivePrLabels,
   fetchUnresolvedThreads,
   isConventionalPrTitle,
@@ -260,6 +261,55 @@ describe('fetchUnresolvedThreads', () => {
     const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
     process.env.PATH = `${root}:${originalPath}`;
     expect(await fetchUnresolvedThreads(root, 'https://github.com/o/r/pull/2')).toEqual([]);
+  });
+});
+
+describe('createPrReview', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  it('POSTs to the reviews endpoint with the review payload as JSON stdin', async () => {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-review-'));
+    const argsFile = join(fixtureDir, 'args');
+    const stdinFile = join(fixtureDir, 'stdin');
+    const { root } = installFakeGh(`echo "$@" > "${argsFile}"\ncat > "${stdinFile}"`);
+    process.env.PATH = `${root}:${originalPath}`;
+
+    const ok = await createPrReview(root, 'https://github.com/o/r/pull/7', {
+      body: 'Looks good overall.',
+      event: 'COMMENT',
+      comments: [{ path: 'a.ts', line: 12, body: 'consider a guard here' }],
+    });
+
+    expect(ok).toBe(true);
+    expect(readFileSync(argsFile, 'utf-8').trim()).toBe(
+      'api repos/o/r/pulls/7/reviews -X POST --input -',
+    );
+    expect(JSON.parse(readFileSync(stdinFile, 'utf-8'))).toEqual({
+      body: 'Looks good overall.',
+      event: 'COMMENT',
+      comments: [{ path: 'a.ts', line: 12, body: 'consider a guard here' }],
+    });
+  });
+
+  it('resolves false when the url is not a GitHub PR url', async () => {
+    expect(
+      await createPrReview('/tmp', 'not-a-pr-url', { body: '', event: 'COMMENT', comments: [] }),
+    ).toBe(false);
+  });
+
+  it('resolves false when gh fails', async () => {
+    const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(
+      await createPrReview(root, 'https://github.com/o/r/pull/1', {
+        body: '',
+        event: 'COMMENT',
+        comments: [],
+      }),
+    ).toBe(false);
   });
 });
 

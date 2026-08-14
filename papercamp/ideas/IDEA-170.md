@@ -106,8 +106,9 @@ repo; run both until this earns the slot.
 - [x] Add `codeReview` to `defaultAgents` and Settings
       Configure it independently of the four existing tasks and enforce a model different from the code's author.
       run: 6m17s · 10.4k in · 19.9k out · sonnet-5
-- [ ] Add the create-review GitHub write op
+- [x] Add the create-review GitHub write op
       Wrap `POST /repos/{owner}/{repo}/pulls/{n}/reviews` alongside the existing read/reply/resolve ops.
+      run: 3m51s · 4.5k in · 8.1k out · sonnet-5
 - [ ] Build the `pr-review` task kind and review prompt
       Assemble the diff, idea body, phases and thread; withhold the authoring run's transcript and log.
 - [ ] Wire the PR-poll trigger

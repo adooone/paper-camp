@@ -17,7 +17,10 @@ import { COMMIT_SCOPES, resolvePrimaryScope } from './scopes';
 
 export {
   clearPrCache,
+  createPrReview,
   fetchUnresolvedThreads,
+  type PrReviewComment,
+  type PrReviewInput,
   replyToReviewThread,
   resolvePrsByEntity,
   resolveReviewThread,
