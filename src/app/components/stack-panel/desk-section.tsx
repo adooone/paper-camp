@@ -19,25 +19,33 @@ const DeskSectionSkeleton = () => (
   </div>
 );
 
+const DeskSectionEmpty = () => (
+  <div className="flex flex-1 items-center justify-center">
+    <p className="m-0 text-center text-xs text-desk-text-muted">
+      Desk isn't configured — add <code>desk</code> to <code>papercamp/config.json</code>.
+    </p>
+  </div>
+);
+
 export const DeskSection = () => {
   const { desk, loading } = useDeskManifest();
-
-  if (!loading && !desk) return null;
 
   return (
     <>
       <Divider surface="chalkboard" />
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
         <div className={sectionLabelClassName}>Desk</div>
         {loading ? (
           <DeskSectionSkeleton />
-        ) : (
+        ) : desk ? (
           <div className="flex flex-col gap-4">
             <ServicesGroup />
             <ChecksGroup />
             <BuildGroup />
             <CiGroup />
           </div>
+        ) : (
+          <DeskSectionEmpty />
         )}
       </div>
     </>

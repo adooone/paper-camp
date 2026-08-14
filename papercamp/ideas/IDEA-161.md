@@ -2,7 +2,7 @@
 id: IDEA-161
 title: Desk section clips its own content
 type: fix
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-13
 tags:
@@ -52,5 +52,6 @@ key rather than silently rendering nothing.
 - [x] Render the shell during load
       Return the section shell immediately while `useDeskManifest` is in flight instead of `null`, varying only the contents.
       run: 2m23s · 1.4k in · 4.7k out · sonnet-5
-- [ ] Handle a missing `desk` config key
+- [x] Handle a missing `desk` config key
       When `desk` is absent from `papercamp/config.json`, state so and point at the config key.
+      run: 52s · 225 in · 3.1k out · sonnet-5
