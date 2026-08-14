@@ -5,6 +5,7 @@ import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
 import {
   Alert,
@@ -214,7 +215,7 @@ export const DeliverChangedFiles = ({ count }: { count: number }) => {
   );
 };
 
-const GIT_PAGE_SUGGESTION_KEY = '__git__';
+const GIT_PAGE_KEY = '__git__';
 
 // Module-level, not component state: must survive the unmount that happens
 // when the user navigates away while a commit-suggestion task is running, so
@@ -223,11 +224,20 @@ const lastClearedAt = new Map<string, number>();
 const appliedSuggestionIds = new Map<string, Set<string>>();
 
 function suggestionKeyFor(plan: PlanEntry | undefined): string {
-  return plan?.id ?? GIT_PAGE_SUGGESTION_KEY;
+  return plan?.id ?? GIT_PAGE_KEY;
 }
 
 function markSuggestionFormCleared(plan: PlanEntry | undefined): void {
   lastClearedAt.set(suggestionKeyFor(plan), Date.now());
+}
+
+interface CommitDraft {
+  title: string;
+  message: string;
+}
+
+function commitDraftKeyFor(plan: PlanEntry | undefined): string {
+  return `commit-draft:${plan?.id ?? GIT_PAGE_KEY}`;
 }
 
 /** Shared state/handlers for the split commit input row (left column) and
@@ -255,6 +265,20 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
   useEffect(() => {
     if (suggestedTitle && !commitTitle) setCommitTitle(suggestedTitle);
   }, [suggestedTitle, commitTitle]);
+
+  const draftKey = commitDraftKeyFor(plan);
+
+  useEffect(() => {
+    const draft = readLocalDraft<CommitDraft>(draftKey);
+    if (!draft) return;
+    setCommitTitle(draft.title);
+    setCommitMessage(draft.message);
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!commitTitle && !commitMessage) return;
+    writeLocalDraft<CommitDraft>(draftKey, { title: commitTitle, message: commitMessage });
+  }, [draftKey, commitTitle, commitMessage]);
 
   useEffect(() => {
     const key = suggestionKeyFor(plan);
@@ -296,6 +320,7 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
       setCommitTitle('');
       setCommitMessage('');
       markSuggestionFormCleared(plan);
+      removeLocalDraft(commitDraftKeyFor(plan));
       await loadGitStatus();
     } catch (err) {
       // Leaving it would record a phase for a commit that never landed.

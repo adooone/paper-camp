@@ -102,8 +102,9 @@ and a failed persist must degrade to in-memory rather than break the form.
 - [x] Fix the commit-suggestion recovery
       Discriminate on whether the suggestion is newer than the form's last clear instead of snapshotting stale IDs at mount, and drop the `!plan` early return so `/git` recovers too.
       run: 4m4s · 656 in · 11.3k out · sonnet-5
-- [ ] Persist the commit draft per entity
+- [x] Persist the commit draft per entity
       Key on `commit-draft:<ID>` plus the plan-less `/git` key, restore on mount, and clear the stored copy where the form already resets on a successful commit.
+      run: 4m3s · 375 in · 12.3k out · sonnet-5
 - [ ] Persist the remaining draft inputs
       Feedback chat, add-review-phases, and inbox question reply, each through the helper.
 - [ ] Persist the UI-choice toggles
