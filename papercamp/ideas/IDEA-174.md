@@ -2,7 +2,7 @@
 id: IDEA-174
 title: Show a running PR review in the UI
 type: feat
-status: review
+status: in-progress
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -61,7 +61,17 @@ page.
       run: 3m22s · 801 in · 12.8k out · sonnet-5
 - [x] [manual] Dedupe review badge and fix concurrent-task review detection
 
+### Fixes
+- [ ] Guard `startPrReview` with `admit()`
+      It is the only launcher that skips the collision gate, so nothing stops concurrent pr-review tasks — PR #156 got three reviews of commit b2fa8781 from three agent runs. `pr-review` is already in `EXCLUSIVE_KINDS`, so the gate works correctly once it is actually called.
+- [ ] Trigger the PR review by hand, not by poll
+      Drop the `triggerPrReviews` call from `pollOpenPrs` (the poll itself stays — derived status needs fresh PR state) along with its branch/CI/SHA gates. Add `POST /api/agent/launch-pr-review` taking `planId` and building the prompt server-side like `launch-fix-review`, plus a "Review PR" `ListItem` in `PlanActionsColumn` beside `FixReviewButton`, enabled on an open PR + authenticated `gh` + a configured agent.
+- [ ] Demote the reviewed-SHA ledger to a label
+      With no poller there is no relaunch to prevent, so `pr-reviews.json` stops gating and only labels the action — "Review PR", or "Review again — last reviewed at abc1234" when the head SHA already has one. CI-green and ready-for-review become advisory too: show the state next to the button rather than disabling it.
+
 ### Thread
 - [x] 2026-08-14 [review] [agent] Comments · 2 findings — The diff delivers all four phases: the Stack-panel subtitle reads the PR number off a new `prReviewUrl` task field (plumbed through `agent.ts` and the `AgentTaskState` type), `pr-badge.tsx` gains a spinner reviewing state, and the trail surfaces the landed signal via `latestReviewNote` and `ReviewSignalBadge`. The core behavior matches the spec and the tests are solid. The main issue is that the landed-review badge is now rendered in two places on the same entity view, producing a visible duplicate.
 - [x] 2026-08-14 [review] [agent] Comments · 2 findings — The UI wiring is clean and delivers the badge reviewing state, the landed-review signal, and the Stack subtitle case, with solid helper tests. The main gap is that the new `prReviewUrl` field is read in two places but never populated anywhere in the diff, so the PR number that phase 1 promises to carry into the Stack subtitle will never actually render — it always degrades to the numberless fallback. Detection and the badge itself work regardless since they key off `taskKind`/`planId`, so the feature is largely functional.
 - [x] 2026-08-14 [review] [agent] Comments · 2 findings — The UI wiring is clean and delivers the badge reviewing state, the landed-review signal, and the Stack subtitle case, with solid helper tests. The main gap is that the new `prReviewUrl` field is read in two places but never populated anywhere in the diff, so the PR number that phase 1 promises to carry into the Stack subtitle will never actually render — it always degrades to the numberless fallback. Detection and the badge itself work regardless since they key off `taskKind`/`planId`, so the feature is largely functional.
+- [x] 2026-08-14 [review] [agent] Approves · 0 findings — The diff cleanly delivers all five phases: the Stack subtitle reads the PR number off prReviewUrl (which is already populated server-side by startPrReview, contrary to the earlier review threads that saw only the diff), pr-badge gains a spinner reviewing state, and the landed-review signal is deduped by removing ReviewSignalBadge from BranchRow and rendering it once in the provenance trail. Detection keys off taskKind/planId and correctly suppresses the landed badge while a review is in flight. Logic and tests are solid and spec-conformant.
+- [x] 2026-08-14 [review] [agent] Approves · 0 findings — The diff cleanly delivers all five phases: the Stack subtitle reads the PR number off prReviewUrl (which is already populated server-side by startPrReview, contrary to the earlier review threads that saw only the diff), pr-badge gains a spinner reviewing state, and the landed-review signal is deduped by removing ReviewSignalBadge from BranchRow and rendering it once in the provenance trail. Detection keys off taskKind/planId and correctly suppresses the landed badge while a review is in flight. Logic and tests are solid and spec-conformant.
