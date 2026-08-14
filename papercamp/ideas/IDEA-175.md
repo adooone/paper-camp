@@ -10,6 +10,7 @@ tags:
   - github
   - ui
 subject: Richer review loop
+order: 15
 ---
 
 Reviews currently post from the repo owner's own account with a one-string
@@ -138,3 +139,5 @@ anything other than reviews.
 - [x] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Record the reviewed SHA from the poller") — the agent needs a decision: IDEA-173 (the gate this phase depends on for retry-capping / not-recording transient failures) hasn't landed — its phases are all unchecked. Should I implement phase 5 anyway on the current record-on-completion behavior, implement the minimal pieces of IDEA-173 needed as a prerequisite within this run, or hold this phase until IDEA-173 lands separately?
 - [x] 2026-08-14 [clarification] implement 5 phase
 - [x] 2026-08-14 [chat] [agent] Got it — implementing phase 5 now on the current record-on-completion behavior, without pulling in IDEA-173's prerequisite changes. Phase 5 is already queued and unchecked, so run-all will pick it up as-is.
+- [x] 2026-08-14 [review] [agent] Comments · 2 findings — The restructure into verdict/assessment/concerns/findings, the per-destination rendering, the dispatch-with-fallback, the workflow, and the poller-observes-the-footer recording all match the spec and are well covered by tests. The one substantive risk is that a dispatch returning 204 is treated as a delivered review even though the workflow may never fire (not yet on main, missing Scout secrets, CI failure), and with IDEA-173's retry cap not landed this can re-review the same SHA every poll forever — a spec-acknowledged consequence of shipping phase 5 ahead of IDEA-173.
+- [x] 2026-08-14 [review] [agent] The restructure into verdict/assessment/concerns, the per-destination rendering, the dispatch-with-fallback, the Scout workflow, and the poller-observed SHA recording are all present and well-tested. Two things are worth a human's attention before merge: dispatch success detection may misread the dispatches endpoint's empty 204 as a failure, and because IDEA-173's retry cap was deliberately not landed (per the settled clarification), an undelivered/unobserved review re-dispatches and re-appends a [review] thread message on every 60s poll.
