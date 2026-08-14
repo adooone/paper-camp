@@ -96,8 +96,9 @@ Every write goes through one small helper with the `try`/`catch` the existing
 and a failed persist must degrade to in-memory rather than break the form.
 
 ### Phases
-- [ ] Build the localStorage persistence helper
+- [x] Build the localStorage persistence helper
       One module wrapping read/write/remove in the `stack-open` try/catch, stamping each draft with a timestamp and dropping entries past the staleness cap on read.
+      run: 1m48s · 6k in · 6.7k out · sonnet-5
 - [ ] Fix the commit-suggestion recovery
       Discriminate on whether the suggestion is newer than the form's last clear instead of snapshotting stale IDs at mount, and drop the `!plan` early return so `/git` recovers too.
 - [ ] Persist the commit draft per entity
