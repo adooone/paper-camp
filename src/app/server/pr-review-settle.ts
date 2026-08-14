@@ -1,11 +1,20 @@
 import { join } from 'node:path';
-import { createPrReview, dispatchPrReview, scoutReviewFooter } from '@/core/git-pr';
+import {
+  type PrReviewDelivery,
+  createPrReview,
+  dispatchPrReview,
+  scoutReviewFooter,
+} from '@/core/git-pr';
 import { readEntities } from '@/core/readers';
 import { agentThreadMessage } from '@/core/serialize';
 import type { PrReviewFinding, PrReviewResult, PrReviewVerdict } from '@/types/index';
 import { campFile, entityFileInput, fileExists, writeEntityFile } from './helpers';
 
 const VERDICTS: PrReviewVerdict[] = ['approve', 'comment', 'request-changes'];
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
 
 function validatePrReviewVerdict(candidate: string): PrReviewResult | undefined {
   try {
@@ -139,26 +148,26 @@ export function postPrReview(
       body: renderReviewGithubBody(result, { ideaId: entityId, sha, droppedFindings: dropped }),
       event: 'COMMENT',
       comments: kept,
-    }).catch(() => false);
+    }).catch((err): PrReviewDelivery => ({ delivered: false, body: errorMessage(err) }));
 
     const [posted, logged] = await Promise.all([
-      dispatched
-        ? Promise.resolve(true)
+      dispatched.delivered
+        ? Promise.resolve<PrReviewDelivery>({ delivered: true })
         : createPrReview(root, prUrl, {
             body: renderReviewGithubBody(result, { ideaId: entityId, sha }),
             event: 'COMMENT',
             comments: result.findings,
-          }).catch(() => false),
+          }).catch((err): PrReviewDelivery => ({ delivered: false, body: errorMessage(err) })),
       appendReviewThreadMessage(root, entityId, renderReviewThreadMessage(result)).catch(
         () => false,
       ),
     ]);
 
-    const postPart = dispatched
+    const postPart = dispatched.delivered
       ? `dispatched to the Scout review workflow (${findingsPhrase(kept.length)}${dropped ? `, ${dropped} dropped` : ''})`
-      : posted
+      : posted.delivered
         ? `posted directly to GitHub, dispatch unavailable (${findingsPhrase(result.findings.length)})`
-        : 'GitHub post failed';
+        : `GitHub post failed${posted.body ? `: ${posted.body}` : ''}`;
     const logPart = logged ? 'recorded on the idea' : 'could not record on the idea';
     onLine(`Review ${postPart}, ${logPart}`);
   })();

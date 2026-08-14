@@ -73,8 +73,9 @@ The review prompt and what the reviewer checks. The trigger gates
 ([[IDEA-170]]).
 
 ### Phases
-- [ ] Capture the delivery outcome and response body
+- [x] Capture the delivery outcome and response body
       Replace the two `.catch(() => false)` halves of `postPrReview` so each returns whether it delivered and, on failure, the GitHub response body.
+      run: 4m36s · 9.6k in · 14.8k out · sonnet-5
 - [ ] End a failed delivery in an error status
       A good verdict that reached neither destination finishes the task as `error` with the reason attached, not `done` with a missing line.
 - [ ] Gate `recordReviewedSha` on the outcome

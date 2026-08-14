@@ -21,6 +21,7 @@ export {
   dispatchPrReview,
   fetchUnresolvedThreads,
   type PrReviewComment,
+  type PrReviewDelivery,
   type PrReviewInput,
   replyToReviewThread,
   resolvePrsByEntity,

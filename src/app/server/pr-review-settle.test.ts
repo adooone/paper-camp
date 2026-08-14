@@ -220,7 +220,7 @@ describe('postPrReview', () => {
   };
 
   it('reports the dispatch path and skips the direct post when the dispatch succeeds', async () => {
-    gitPr.dispatchPrReview.mockResolvedValue(true);
+    gitPr.dispatchPrReview.mockResolvedValue({ delivered: true });
     const root = await makeRoot();
     const lines: string[] = [];
 
@@ -236,8 +236,8 @@ describe('postPrReview', () => {
   });
 
   it('falls back to a direct post and says so when the dispatch fails', async () => {
-    gitPr.dispatchPrReview.mockResolvedValue(false);
-    gitPr.createPrReview.mockResolvedValue(true);
+    gitPr.dispatchPrReview.mockResolvedValue({ delivered: false });
+    gitPr.createPrReview.mockResolvedValue({ delivered: true });
     const root = await makeRoot();
     const lines: string[] = [];
 
@@ -251,8 +251,11 @@ describe('postPrReview', () => {
   });
 
   it('reports the post as failed when both the dispatch and the direct post fail', async () => {
-    gitPr.dispatchPrReview.mockResolvedValue(false);
-    gitPr.createPrReview.mockResolvedValue(false);
+    gitPr.dispatchPrReview.mockResolvedValue({ delivered: false });
+    gitPr.createPrReview.mockResolvedValue({
+      delivered: false,
+      body: '{"message":"Unprocessable Entity"}',
+    });
     const root = await makeRoot();
     const lines: string[] = [];
 
@@ -262,6 +265,7 @@ describe('postPrReview', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(lines[0]).toContain('GitHub post failed');
+    expect(lines[0]).toContain('Unprocessable Entity');
   });
 
   it('caps findings sent in the dispatch and notes the drop in the rendered body, but sends every finding on the direct-post fallback', async () => {
@@ -272,7 +276,7 @@ describe('postPrReview', () => {
     }));
     const many: PrReviewResult = { ...result, findings: manyFindings };
 
-    gitPr.dispatchPrReview.mockResolvedValue(true);
+    gitPr.dispatchPrReview.mockResolvedValue({ delivered: true });
     const root = await makeRoot();
     postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', many, () => {});
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -282,8 +286,8 @@ describe('postPrReview', () => {
     expect(dispatchCall.body).toContain("5 findings omitted to fit the review's size limit.");
 
     gitPr.dispatchPrReview.mockReset();
-    gitPr.dispatchPrReview.mockResolvedValue(false);
-    gitPr.createPrReview.mockResolvedValue(true);
+    gitPr.dispatchPrReview.mockResolvedValue({ delivered: false });
+    gitPr.createPrReview.mockResolvedValue({ delivered: true });
     const root2 = await makeRoot();
     postPrReview(root2, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', many, () => {});
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -294,7 +298,7 @@ describe('postPrReview', () => {
   });
 
   it('records the rendered thread message on the idea file', async () => {
-    gitPr.dispatchPrReview.mockResolvedValue(true);
+    gitPr.dispatchPrReview.mockResolvedValue({ delivered: true });
     const root = await makeRoot();
 
     postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, () => {});

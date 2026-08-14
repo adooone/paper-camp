@@ -353,13 +353,13 @@ describe('createPrReview', () => {
     const { root } = installFakeGh(`echo "$@" > "${argsFile}"\ncat > "${stdinFile}"`);
     process.env.PATH = `${root}:${originalPath}`;
 
-    const ok = await createPrReview(root, 'https://github.com/o/r/pull/7', {
+    const delivery = await createPrReview(root, 'https://github.com/o/r/pull/7', {
       body: 'Looks good overall.',
       event: 'COMMENT',
       comments: [{ path: 'a.ts', line: 12, body: 'consider a guard here' }],
     });
 
-    expect(ok).toBe(true);
+    expect(delivery).toEqual({ delivered: true });
     expect(readFileSync(argsFile, 'utf-8').trim()).toBe(
       'api repos/o/r/pulls/7/reviews -X POST --input -',
     );
@@ -370,13 +370,13 @@ describe('createPrReview', () => {
     });
   });
 
-  it('resolves false when the url is not a GitHub PR url', async () => {
+  it('resolves not-delivered when the url is not a GitHub PR url', async () => {
     expect(
       await createPrReview('/tmp', 'not-a-pr-url', { body: '', event: 'COMMENT', comments: [] }),
-    ).toBe(false);
+    ).toEqual({ delivered: false });
   });
 
-  it('resolves false when gh fails', async () => {
+  it('resolves not-delivered with the response body when gh fails', async () => {
     const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
     process.env.PATH = `${root}:${originalPath}`;
     expect(
@@ -385,7 +385,7 @@ describe('createPrReview', () => {
         event: 'COMMENT',
         comments: [],
       }),
-    ).toBe(false);
+    ).toEqual({ delivered: false, body: 'boom' });
   });
 });
 
@@ -402,13 +402,13 @@ describe('dispatchPrReview', () => {
     const { root } = installFakeGh(`echo "$@" > "${argsFile}"\ncat > "${stdinFile}"`);
     process.env.PATH = `${root}:${originalPath}`;
 
-    const ok = await dispatchPrReview(root, 'https://github.com/o/r/pull/7', {
+    const delivery = await dispatchPrReview(root, 'https://github.com/o/r/pull/7', {
       body: 'Looks good overall.',
       event: 'COMMENT',
       comments: [{ path: 'a.ts', line: 12, body: 'consider a guard here' }],
     });
 
-    expect(ok).toBe(true);
+    expect(delivery).toEqual({ delivered: true });
     expect(readFileSync(argsFile, 'utf-8').trim()).toBe(
       'api repos/o/r/dispatches -X POST --input -',
     );
@@ -425,13 +425,13 @@ describe('dispatchPrReview', () => {
     });
   });
 
-  it('resolves false when the url is not a GitHub PR url', async () => {
+  it('resolves not-delivered when the url is not a GitHub PR url', async () => {
     expect(
       await dispatchPrReview('/tmp', 'not-a-pr-url', { body: '', event: 'COMMENT', comments: [] }),
-    ).toBe(false);
+    ).toEqual({ delivered: false });
   });
 
-  it('resolves false when gh fails — no Actions, a fork, or offline', async () => {
+  it('resolves not-delivered with the response body when gh fails — no Actions, a fork, or offline', async () => {
     const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
     process.env.PATH = `${root}:${originalPath}`;
     expect(
@@ -440,7 +440,7 @@ describe('dispatchPrReview', () => {
         event: 'COMMENT',
         comments: [],
       }),
-    ).toBe(false);
+    ).toEqual({ delivered: false, body: 'boom' });
   });
 });
 
