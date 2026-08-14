@@ -1,4 +1,3 @@
-IDEA-161 — Desk section clips its own content
 IDEA-117 — Multi-project hub
 IDEA-123 — Cross-corpus idea links
 IDEA-162 — One source of truth for checks
