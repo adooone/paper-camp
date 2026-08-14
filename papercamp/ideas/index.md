@@ -180,4 +180,3 @@
 | IDEA-177 | Surface dangling stashes | feat | idea | app, git, ux |
 | IDEA-178 | Rate limits must not rewrite status | fix | idea | core, github, plans |
 | IDEA-179 | Prioritise lies about what it did | fix | idea | app, server, plans |
-| IDEA-180 | Request a PR review by hand | feat | idea | app, agent, github |
