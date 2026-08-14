@@ -851,8 +851,7 @@ export function createAgentManager(
     });
   }
 
-  // Launched by the PR-poll trigger, never by a human — see pr-review-trigger.ts
-  // for the ready/green/unreviewed-SHA gate that decides when this fires.
+  // Launched by the "Review PR" action in routes/agent.ts, not by any poll.
   function startPrReview(plan: PlanEntry, prompt: string, headSha: string, prUrl: string): Result {
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
       taskKind: 'pr-review',

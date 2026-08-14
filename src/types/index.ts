@@ -196,7 +196,7 @@ export interface PrInfo {
   headSha?: string;
   headBranch?: string;
   /** A posted review's footer names this entity and `headSha` — set once the poll
-   * observes it, so `triggerPrReviews` can record the SHA reviewed (IDEA-175). */
+   * observes it (IDEA-175). */
   scoutReviewObserved?: boolean;
 }
 

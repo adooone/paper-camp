@@ -62,8 +62,9 @@ page.
 - [x] [manual] Dedupe review badge and fix concurrent-task review detection
 
 ### Fixes
-- [ ] Trigger the PR review by hand, not by poll
+- [x] Trigger the PR review by hand, not by poll
       Drop the `triggerPrReviews` call from `pollOpenPrs` (the poll itself stays — derived status needs fresh PR state) along with its branch/CI/SHA gates. Add `POST /api/agent/launch-pr-review` taking `planId` and building the prompt server-side like `launch-fix-review`, plus a "Review PR" `ListItem` in `PlanActionsColumn` beside `FixReviewButton`, enabled on an open PR + authenticated `gh` + a configured agent.
+      run: 7m31s · 7k in · 20.7k out · sonnet-5
 - [ ] Demote the reviewed-SHA ledger to a label
       With no poller there is no relaunch to prevent, so `pr-reviews.json` stops gating and only labels the action — "Review PR", or "Review again — last reviewed at abc1234" when the head SHA already has one. CI-green and ready-for-review become advisory too: show the state next to the button rather than disabling it.
 

@@ -3,10 +3,7 @@ import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { resolvePrsByEntity } from '@/core/git-pr';
 import { readWorkEntries } from '@/core/readers';
-import type { AgentManager } from './agent';
 import { invalidateCorpusCache } from './corpus-cache';
-import type { GitManager } from './git';
-import { triggerPrReviews } from './pr-review-trigger';
 import { runRunOrderPass } from './run-order-pass';
 
 // Consumers route on `payload.type`; a bare `changed` message is the generic
@@ -16,11 +13,7 @@ export type ActivityManager = ReturnType<typeof createActivityManager>;
 // A PR merging on GitHub touches nothing on disk, so the fs watcher below never fires for it.
 const PR_POLL_INTERVAL_MS = 60_000;
 
-export function createActivityManager(
-  root: string,
-  git: Pick<GitManager, 'getCurrentBranch'>,
-  agent: Pick<AgentManager, 'startPrReview'>,
-) {
+export function createActivityManager(root: string) {
   const clients = new Set<ServerResponse>();
   let timer: ReturnType<typeof setTimeout> | null = null;
   let inFlight: Promise<void> | null = null;
@@ -100,8 +93,6 @@ export function createActivityManager(
         invalidateCorpusCache();
         scheduleRunPass();
       }
-
-      await triggerPrReviews(root, git, agent, watched, fresh);
     } catch (err) {
       console.error('PR poll failed:', err);
     }

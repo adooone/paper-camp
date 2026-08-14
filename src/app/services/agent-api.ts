@@ -112,6 +112,15 @@ export const launchFixReview = async (planId: string): Promise<void> => {
   await handleAgentResponse(response);
 };
 
+export const launchPrReview = async (planId: string): Promise<void> => {
+  const response = await fetch(apiUrl('/api/agent/launch-pr-review'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId }),
+  });
+  await handleAgentResponse(response);
+};
+
 export const postFeedbackMessage = async (
   planId: string,
   text: string,

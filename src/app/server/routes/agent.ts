@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import { buildFixReviewPrompt } from '@/app/features/plans/prompts';
-import { fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
+import { buildFixReviewPrompt, buildPrReviewPrompt } from '@/app/features/plans/prompts';
+import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
 import { agentThreadMessage, todayDateString } from '@/core/serialize';
 import { chatSinceLastLog, logFromThread, promoteThreadMessage } from '@/core/thread';
@@ -388,6 +388,29 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         // Same `threads` array the prompt numbered, so the agent's 1-based verdicts
         // map back to the right thread ids.
         return agent.startFixReview(plan, prompt, threads);
+      },
+    ),
+
+    planActionRoute(
+      '/api/agent/launch-pr-review',
+      (raw) => {
+        const { planId } = JSON.parse(raw) as { planId?: string };
+        return planId ? { planId } : null;
+      },
+      'planId is required',
+      async ({ planId }) => {
+        const resolved = await resolvePlan(planId);
+        if (!resolved.ok) return resolved;
+        const { plan } = resolved;
+        const prs = await resolvePrsByEntity(root);
+        const pr = prs?.get(planId);
+        if (!pr || pr.state !== 'open' || !pr.headSha) {
+          return { ok: false, status: 404, error: 'No open PR found for this plan' };
+        }
+        const diff = await fetchPrDiff(root, String(pr.number));
+        if (!diff) return { ok: false, error: 'Could not fetch the PR diff' };
+        const prompt = buildPrReviewPrompt(plan, diff);
+        return agent.startPrReview(plan, prompt, pr.headSha, pr.url);
       },
     ),
 

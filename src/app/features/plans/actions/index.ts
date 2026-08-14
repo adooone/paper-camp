@@ -6,6 +6,7 @@ export * from './draft-plan-button';
 export * from './extend-idea-button';
 export * from './fix-review-button';
 export * from './new-idea-button';
+export * from './pr-review-button';
 export * from './reconcile-button';
 export * from './refresh-button';
 export * from './run-all-phases-button';

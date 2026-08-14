@@ -19,6 +19,7 @@ import {
   launchPlanAudit as launchPlanAuditApi,
   launchPlanDraft as launchPlanDraftApi,
   launchPlanReconcile as launchPlanReconcileApi,
+  launchPrReview as launchPrReviewApi,
   launchRunAll as launchRunAllApi,
   launchSuggestIdeas as launchSuggestIdeasApi,
   startLoginRelay as startLoginRelayApi,
@@ -62,6 +63,7 @@ export type AgentSlice = {
   launchSuggestIdeas: (prompt: string) => Promise<void>;
   launchRunAll: (planId: string) => Promise<void>;
   launchFixReview: (planId: string) => Promise<void>;
+  launchPrReview: (planId: string) => Promise<void>;
   stopAgent: (taskId?: string) => Promise<void>;
 
   // null when no relay has been started this session, or once it's cancelled/consumed.
@@ -206,6 +208,7 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
     launchSuggestIdeas: withAgentPoll(get, launchSuggestIdeasApi),
     launchRunAll: withAgentPoll(get, launchRunAllApi),
     launchFixReview: withAgentPoll(get, launchFixReviewApi),
+    launchPrReview: withAgentPoll(get, launchPrReviewApi),
     stopAgent: async (taskId) => {
       try {
         await stopAgentApi(taskId);
