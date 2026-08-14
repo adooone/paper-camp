@@ -314,6 +314,7 @@ function runGhApiPostJson(root: string, path: string, payload: unknown): Promise
       resolve(code === 0 ? { delivered: true } : { delivered: false, body: stderr.trim() }),
     );
     proc.on('error', (err) => resolve({ delivered: false, body: err.message }));
+    proc.stdin?.on('error', () => {});
     proc.stdin?.end(JSON.stringify(payload));
   });
 }
