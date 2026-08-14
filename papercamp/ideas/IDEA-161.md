@@ -49,7 +49,8 @@ key rather than silently rendering nothing.
 - [x] Verify clipped content is reachable
       Confirm the released-version line, Release PR link, and "Open Actions" are scrollable at 768px and below.
       run: 43s · 91 in · 2.9k out · sonnet-5
-- [ ] Render the shell during load
+- [x] Render the shell during load
       Return the section shell immediately while `useDeskManifest` is in flight instead of `null`, varying only the contents.
+      run: 2m23s · 1.4k in · 4.7k out · sonnet-5
 - [ ] Handle a missing `desk` config key
       When `desk` is absent from `papercamp/config.json`, state so and point at the config key.
