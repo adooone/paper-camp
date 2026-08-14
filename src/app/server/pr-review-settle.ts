@@ -130,45 +130,52 @@ async function appendReviewThreadMessage(root: string, entityId: string, summary
   return true;
 }
 
+/** Whether the verdict reached at least one destination — a GitHub post or the
+ * idea thread message — and, if it reached neither, why. */
+export interface PostPrReviewOutcome {
+  delivered: boolean;
+  reason?: string;
+}
+
 // Posts the GitHub review (each finding becomes a resolvable thread — exactly
 // what fetchUnresolvedThreads already consumes, so the Fix-review button picks
 // them up unchanged) and lands the verdict as a [review] thread message on the
 // idea, so it's in the corpus and travels with the entity (IDEA-170).
-export function postPrReview(
+export async function postPrReview(
   root: string,
   entityId: string,
   prUrl: string,
   sha: string,
   result: PrReviewResult,
   onLine: (text: string) => void,
-): void {
-  void (async () => {
-    const { kept, dropped } = capFindings(result.findings);
-    const dispatched = await dispatchPrReview(root, prUrl, {
-      body: renderReviewGithubBody(result, { ideaId: entityId, sha, droppedFindings: dropped }),
-      event: 'COMMENT',
-      comments: kept,
-    }).catch((err): PrReviewDelivery => ({ delivered: false, body: errorMessage(err) }));
+): Promise<PostPrReviewOutcome> {
+  const { kept, dropped } = capFindings(result.findings);
+  const dispatched = await dispatchPrReview(root, prUrl, {
+    body: renderReviewGithubBody(result, { ideaId: entityId, sha, droppedFindings: dropped }),
+    event: 'COMMENT',
+    comments: kept,
+  }).catch((err): PrReviewDelivery => ({ delivered: false, body: errorMessage(err) }));
 
-    const [posted, logged] = await Promise.all([
-      dispatched.delivered
-        ? Promise.resolve<PrReviewDelivery>({ delivered: true })
-        : createPrReview(root, prUrl, {
-            body: renderReviewGithubBody(result, { ideaId: entityId, sha }),
-            event: 'COMMENT',
-            comments: result.findings,
-          }).catch((err): PrReviewDelivery => ({ delivered: false, body: errorMessage(err) })),
-      appendReviewThreadMessage(root, entityId, renderReviewThreadMessage(result)).catch(
-        () => false,
-      ),
-    ]);
+  const [posted, logged] = await Promise.all([
+    dispatched.delivered
+      ? Promise.resolve<PrReviewDelivery>({ delivered: true })
+      : createPrReview(root, prUrl, {
+          body: renderReviewGithubBody(result, { ideaId: entityId, sha }),
+          event: 'COMMENT',
+          comments: result.findings,
+        }).catch((err): PrReviewDelivery => ({ delivered: false, body: errorMessage(err) })),
+    appendReviewThreadMessage(root, entityId, renderReviewThreadMessage(result)).catch(() => false),
+  ]);
 
-    const postPart = dispatched.delivered
-      ? `dispatched to the Scout review workflow (${findingsPhrase(kept.length)}${dropped ? `, ${dropped} dropped` : ''})`
-      : posted.delivered
-        ? `posted directly to GitHub, dispatch unavailable (${findingsPhrase(result.findings.length)})`
-        : `GitHub post failed${posted.body ? `: ${posted.body}` : ''}`;
-    const logPart = logged ? 'recorded on the idea' : 'could not record on the idea';
-    onLine(`Review ${postPart}, ${logPart}`);
-  })();
+  const githubPosted = dispatched.delivered || posted.delivered;
+  const postPart = dispatched.delivered
+    ? `dispatched to the Scout review workflow (${findingsPhrase(kept.length)}${dropped ? `, ${dropped} dropped` : ''})`
+    : posted.delivered
+      ? `posted directly to GitHub, dispatch unavailable (${findingsPhrase(result.findings.length)})`
+      : `GitHub post failed${posted.body ? `: ${posted.body}` : ''}`;
+  const logPart = logged ? 'recorded on the idea' : 'could not record on the idea';
+  onLine(`Review ${postPart}, ${logPart}`);
+
+  if (githubPosted || logged) return { delivered: true };
+  return { delivered: false, reason: `${postPart}, ${logPart}` };
 }

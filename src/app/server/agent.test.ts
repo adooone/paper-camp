@@ -1519,6 +1519,25 @@ describe('startPrReview', () => {
     expect(raw).toContain('[review]');
   });
 
+  it('ends the task as error when a good verdict reaches neither GitHub nor the idea', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    await rm(join(root, 'papercamp', 'ideas', `${plan.id}.md`));
+    agentScript.current = reportScript({
+      verdict: 'comment',
+      assessment: 'Looks good, one nit.',
+      concerns: [],
+      findings: [{ path: 'src/a.ts', line: 3, body: 'consider a guard here' }],
+    });
+    const manager = createAgentManager(root);
+
+    manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('GitHub post failed');
+
+    const { readReviewedShas } = await import('./pr-review-state');
+    expect(await readReviewedShas(root)).toEqual({});
+  });
+
   it('blocks a second launch while one is running (exclusive, worktree-touching)', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
     agentScript.current = 'setTimeout(() => process.exit(0), 400)';
