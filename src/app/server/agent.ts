@@ -44,12 +44,13 @@ import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 import { appendNotification } from './notification-log';
 import { parsePrReviewResult, postPrReview } from './pr-review-settle';
-import { recordReviewedSha } from './pr-review-state';
+import { clearDeliveryFailures, recordDeliveryFailure, recordReviewedSha } from './pr-review-state';
 import { UNLOGGED_TASK_KINDS, logTaskCompletion } from './task-log';
 
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
 const FIX_ATTEMPT_CAP = 2;
+const PR_REVIEW_DELIVERY_FAILURE_CAP = 3;
 const AUTH_ERROR_MARKER = 'Not logged in · Please run /login';
 const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
 const DESTRUCTIVE_GIT_BAN =
@@ -520,13 +521,24 @@ export function createAgentManager(
           (text) => pushLine(task, text),
         );
         if (!outcome.delivered) {
+          const failures = await recordDeliveryFailure(root, task.planId, task.prReviewSha);
+          if (failures >= PR_REVIEW_DELIVERY_FAILURE_CAP) {
+            await recordReviewedSha(root, task.planId, task.prReviewSha);
+            await clearDeliveryFailures(root, task.planId);
+            pushLine(
+              task,
+              `Giving up after ${failures} consecutive delivery failures on this SHA — recording it as reviewed`,
+            );
+          }
           task.errorReason = outcome.reason;
           setStatus(task, 'error');
           return;
         }
         void recordReviewedSha(root, task.planId, task.prReviewSha);
+        void clearDeliveryFailures(root, task.planId);
       } else {
         void recordReviewedSha(root, task.planId, task.prReviewSha);
+        void clearDeliveryFailures(root, task.planId);
         pushLine(task, 'pr-review agent exited without a parseable verdict — nothing posted');
       }
     }

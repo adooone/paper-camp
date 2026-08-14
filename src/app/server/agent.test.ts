@@ -1541,6 +1541,33 @@ describe('startPrReview', () => {
     expect(await readReviewedShas(root)).toEqual({});
   });
 
+  it('gives up and records the SHA after repeated delivery failures on it', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    await rm(join(root, 'papercamp', 'ideas', `${plan.id}.md`));
+    agentScript.current = reportScript({
+      verdict: 'comment',
+      assessment: 'Looks good, one nit.',
+      concerns: [],
+      findings: [{ path: 'src/a.ts', line: 3, body: 'consider a guard here' }],
+    });
+    const manager = createAgentManager(root);
+    const { readReviewedShas } = await import('./pr-review-state');
+
+    for (let i = 0; i < 2; i++) {
+      manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+      expect(await waitForStatus(manager, settled)).toBe('error');
+      expect(currentStatus(manager)?.lines.join('\n')).not.toContain('Giving up');
+      expect(await readReviewedShas(root)).toEqual({});
+    }
+
+    manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain(
+      'Giving up after 3 consecutive delivery failures',
+    );
+    expect(await readReviewedShas(root)).toEqual({ [plan.id ?? '']: 'sha-abc' });
+  });
+
   it('blocks a second launch while one is running (exclusive, worktree-touching)', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
     agentScript.current = 'setTimeout(() => process.exit(0), 400)';

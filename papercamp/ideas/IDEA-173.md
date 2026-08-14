@@ -82,7 +82,8 @@ The review prompt and what the reviewer checks. The trigger gates
 - [x] Gate `recordReviewedSha` on the outcome
       Record on a successful post or thread message and on an unparseable verdict; skip recording for a transient delivery failure so the next poll retries.
       run: 4m10s · 377 in · 10.5k out · sonnet-5
-- [ ] Cap consecutive delivery failures per SHA
+- [x] Cap consecutive delivery failures per SHA
       Track failures on one SHA and, after a small number, record it and surface the give-up so a permanently failing post stops re-reviewing every poll.
+      run: 4m38s · 520 in · 9.6k out · sonnet-5
 - [ ] Degrade a 422-rejected review
       Retry `createPrReview` without the offending comments, or fall back to a summary-only review, so one bad line number costs one finding, not the whole review.

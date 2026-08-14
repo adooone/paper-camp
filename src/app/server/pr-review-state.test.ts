@@ -3,7 +3,12 @@ import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { readReviewedShas, recordReviewedSha } from './pr-review-state';
+import {
+  clearDeliveryFailures,
+  readReviewedShas,
+  recordDeliveryFailure,
+  recordReviewedSha,
+} from './pr-review-state';
 
 const roots: string[] = [];
 
@@ -44,5 +49,42 @@ describe('recordReviewedSha', () => {
     await recordReviewedSha(root, 'IDEA-2', 'def456');
     await recordReviewedSha(root, 'IDEA-1', 'newsha');
     expect(await readReviewedShas(root)).toEqual({ 'IDEA-1': 'newsha', 'IDEA-2': 'def456' });
+  });
+});
+
+describe('recordDeliveryFailure', () => {
+  it('counts consecutive failures on the same SHA', async () => {
+    const root = makeRoot();
+    expect(await recordDeliveryFailure(root, 'IDEA-1', 'sha-1')).toBe(1);
+    expect(await recordDeliveryFailure(root, 'IDEA-1', 'sha-1')).toBe(2);
+    expect(await recordDeliveryFailure(root, 'IDEA-1', 'sha-1')).toBe(3);
+  });
+
+  it('resets the count when the SHA changes', async () => {
+    const root = makeRoot();
+    await recordDeliveryFailure(root, 'IDEA-1', 'sha-1');
+    await recordDeliveryFailure(root, 'IDEA-1', 'sha-1');
+    expect(await recordDeliveryFailure(root, 'IDEA-1', 'sha-2')).toBe(1);
+  });
+
+  it('tracks separate entities independently', async () => {
+    const root = makeRoot();
+    await recordDeliveryFailure(root, 'IDEA-1', 'sha-1');
+    expect(await recordDeliveryFailure(root, 'IDEA-2', 'sha-2')).toBe(1);
+  });
+});
+
+describe('clearDeliveryFailures', () => {
+  it('resets the count for that entity back to a fresh failure', async () => {
+    const root = makeRoot();
+    await recordDeliveryFailure(root, 'IDEA-1', 'sha-1');
+    await recordDeliveryFailure(root, 'IDEA-1', 'sha-1');
+    await clearDeliveryFailures(root, 'IDEA-1');
+    expect(await recordDeliveryFailure(root, 'IDEA-1', 'sha-1')).toBe(1);
+  });
+
+  it('does nothing when the entity has no tracked failures', async () => {
+    const root = makeRoot();
+    await expect(clearDeliveryFailures(root, 'IDEA-1')).resolves.toBeUndefined();
   });
 });
