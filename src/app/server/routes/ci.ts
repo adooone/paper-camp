@@ -6,7 +6,7 @@ import type { DeskCi } from '@/types/index';
 import { sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
-function loadManifestCi(root: string): DeskCi | null {
+export function loadManifestCi(root: string): DeskCi | null {
   let raw: string;
   try {
     raw = readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8');

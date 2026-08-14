@@ -43,6 +43,8 @@ import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 import { appendNotification } from './notification-log';
+import { parsePrReviewResult, postPrReview } from './pr-review-settle';
+import { recordReviewedSha } from './pr-review-state';
 import { UNLOGGED_TASK_KINDS, logTaskCompletion } from './task-log';
 
 const MAX_LINES = 50;
@@ -95,6 +97,10 @@ export interface AgentTask {
   // Kept in prompt-numbered order so the agent's 1-based verdicts map to thread ids.
   fixReviewThreads?: ReviewThread[];
   fixReviewResult?: FixReviewResult;
+  // The PR head SHA this review is scoped to — recorded once the task finishes,
+  // so the trigger never re-reviews the same commit (IDEA-170).
+  prReviewSha?: string;
+  prReviewUrl?: string;
   reconcileResults?: ReconcileQueueItem[];
   status: AgentTaskStatus;
   agentId: AgentId;
@@ -125,6 +131,9 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         feedback: rawAgents.feedback
           ? coerceAgentConfig(rawAgents.feedback)
           : DEFAULT_AGENTS.feedback,
+        codeReview: rawAgents.codeReview
+          ? coerceAgentConfig(rawAgents.codeReview)
+          : DEFAULT_AGENTS.codeReview,
       };
     }
     if (config.defaultAgent) {
@@ -135,6 +144,7 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         ideaExtend: { agent: id },
         commitSuggest: { agent: id },
         feedback: { agent: id },
+        codeReview: { agent: id },
       };
     }
     return DEFAULT_AGENTS;
@@ -434,6 +444,10 @@ export function createAgentManager(
       if (task.taskKind === 'fix-review') {
         return task.fixReviewResult !== undefined;
       }
+      // Read-only: no corpus write to check readiness against — done means progressed.
+      if (task.taskKind === 'pr-review') {
+        return true;
+      }
       if (task.taskKind === 'reconcile') {
         const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
         const plan = entries.find((e) => e.id === task.planId && e.kind !== 'note');
@@ -483,6 +497,19 @@ export function createAgentManager(
       if (task.fixReviewResult) {
         state.pendingFixReviewResult = task.fixReviewResult;
         settleReviewThreads(root, task.fixReviewResult, (text) => pushLine(task, text));
+      }
+    }
+    // Recorded on completion, not launch — a killed/never-run task must stay
+    // unreviewed so the next poll retries it. Recorded regardless of whether a
+    // parseable verdict follows: a garbled response still consumed the SHA's one
+    // review attempt, and must not spin the same broken prompt every poll.
+    if (task.taskKind === 'pr-review' && task.planId && task.prReviewSha) {
+      void recordReviewedSha(root, task.planId, task.prReviewSha);
+      const result = parsePrReviewResult(task.lines);
+      if (result && task.prReviewUrl) {
+        postPrReview(root, task.planId, task.prReviewUrl, result, (text) => pushLine(task, text));
+      } else {
+        pushLine(task, 'pr-review agent exited without a parseable verdict — nothing posted');
       }
     }
     didTaskProgress(task).then((progressed) => {
@@ -642,6 +669,7 @@ export function createAgentManager(
     'fix-review',
     'sync',
     'resolve-conflict',
+    'pr-review',
   ]);
   const ENTITY_WRITER_KINDS = new Set<TaskKind>([
     'audit',
@@ -716,6 +744,8 @@ export function createAgentManager(
       | 'reconcileBaseline'
       | 'suggestBaseline'
       | 'fixReviewThreads'
+      | 'prReviewSha'
+      | 'prReviewUrl'
     >,
   ): Result {
     const blocked = admit(scope.taskKind, identity.planId ?? scope.ideaId);
@@ -788,6 +818,16 @@ export function createAgentManager(
     return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
       taskKind: 'fix-review',
       fixReviewThreads: threads,
+    });
+  }
+
+  // Launched by the PR-poll trigger, never by a human — see pr-review-trigger.ts
+  // for the ready/green/unreviewed-SHA gate that decides when this fires.
+  function startPrReview(plan: PlanEntry, prompt: string, headSha: string, prUrl: string): Result {
+    return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
+      taskKind: 'pr-review',
+      prReviewSha: headSha,
+      prReviewUrl: prUrl,
     });
   }
 
@@ -1726,6 +1766,7 @@ export function createAgentManager(
     start,
     startForPlan,
     startFixReview,
+    startPrReview,
     getFixReviewResult,
     consumeFixReviewResult,
     startForIdea,
@@ -1797,6 +1838,7 @@ export interface AgentManager {
   start: (plan: PlanEntry, phaseIndex: number) => Result;
   startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
   startFixReview: (plan: PlanEntry, prompt: string, threads: ReviewThread[]) => Result;
+  startPrReview: (plan: PlanEntry, prompt: string, headSha: string, prUrl: string) => Result;
   getFixReviewResult: () => FixReviewResult | null;
   consumeFixReviewResult: () => void;
   startForIdea: (idea: IdeaEntry, prompt: string) => Result;

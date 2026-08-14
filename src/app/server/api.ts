@@ -109,7 +109,6 @@ export function createApiMiddleware(
   serviceState?: DeskServiceManagerState,
   checkState?: DeskCheckManagerState,
 ): ApiMiddleware {
-  const activity = createActivityManager(root);
   const git = createGitManager(root);
   const status = createStatusManager(root, statusState);
   const services = createDeskServiceManager(root, serviceState);
@@ -123,6 +122,7 @@ export function createApiMiddleware(
     hooks.commitCorpus,
     agentState,
   );
+  const activity = createActivityManager(root, git, agent);
 
   const routes = buildRoutes({ root, activity, agent, git, status, services, checks });
 

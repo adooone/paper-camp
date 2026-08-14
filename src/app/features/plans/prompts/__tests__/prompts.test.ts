@@ -9,6 +9,7 @@ import {
   buildIdeaExtendPrompt,
   buildOverlapCheckPrompt,
   buildPlanDraftPrompt,
+  buildPrReviewPrompt,
   buildReconcilePrompt,
 } from '../prompts';
 
@@ -152,6 +153,46 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).toContain('no unresolved review threads were found');
     expect(prompt).toContain('do not edit, commit, or push anything');
     expect(prompt).not.toContain('"addressed"');
+  });
+});
+
+// This is the producer end of the pipeline IDEA-57 already built on the
+// consuming side: fetchUnresolvedThreads → buildFixReviewPrompt reads what
+// this writes (per-line PR comments), once phase 5 posts them.
+describe('buildPrReviewPrompt', () => {
+  const diff = '--- a/src/foo.ts\n+++ b/src/foo.ts\n@@ -1,1 +1,2 @@\n line one\n+line two\n';
+
+  it('assembles the diff, idea body, phases, and settled thread entries', () => {
+    const planWithThread: PlanEntry = {
+      ...plan,
+      thread: [
+        { kind: 'decision', text: 'Use REST, not GraphQL, for this call.', date: '2026-06-01' },
+        { kind: 'chat', text: 'idle chit-chat', date: '2026-06-02' },
+      ] as ThreadMessage[],
+    };
+    const prompt = buildPrReviewPrompt(planWithThread, diff);
+    expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
+    expect(prompt).toContain('Plan body prose.');
+    expect(prompt).toContain('Do the thing');
+    expect(prompt).toContain(diff);
+    expect(prompt).toContain('Use REST, not GraphQL, for this call.');
+    // Only decision/note/clarification kinds are "settled" — a stray chat message isn't.
+    expect(prompt).not.toContain('idle chit-chat');
+  });
+
+  it('handles a plan with no thread and no phases', () => {
+    const bare: PlanEntry = { ...plan, phases: [], thread: undefined };
+    const prompt = buildPrReviewPrompt(bare, diff);
+    expect(prompt).toContain('(no phases)');
+    expect(prompt).toContain('(none)');
+  });
+
+  it("is read-only and never given the authoring run's transcript or log", () => {
+    const prompt = buildPrReviewPrompt(plan, diff);
+    expect(prompt).toContain('Do not use any write tools');
+    expect(prompt).toContain("not the authoring run's transcript or log");
+    expect(prompt).toContain('"findings"');
+    expect(prompt).toContain('"summary"');
   });
 });
 

@@ -138,6 +138,20 @@ export interface FixReviewResult {
   skipped: { threadId: string; why: string }[];
 }
 
+export interface PrReviewFinding {
+  path: string;
+  line: number;
+  body: string;
+}
+
+// Parsed from the JSON object a pr-review agent's prompt requires as its final
+// line — see buildPrReviewPrompt. findings become per-line PR review comments,
+// summary lands as a [review] thread message on the idea (IDEA-170).
+export interface PrReviewResult {
+  summary: string;
+  findings: PrReviewFinding[];
+}
+
 export interface FeedbackPhaseEdit {
   op: 'add' | 'reword';
   /** 1-based position in the plan's current phase list; required for "reword", ignored for "add". */
@@ -174,6 +188,9 @@ export interface PrInfo {
   unresolvedThreadCount?: number;
   /** Whether a comment or review landed after the PR's last commit — a proxy for "since the last agent pass" (a pass ends with a push). Only fetched for open/draft PRs. */
   hasNewCommentsSincePush?: boolean;
+  /** Full SHA of the PR's current head commit — what a pr-review is scoped to (IDEA-170). */
+  headSha?: string;
+  headBranch?: string;
 }
 
 export interface PlanEntry {
@@ -489,6 +506,7 @@ export interface DefaultAgentsMap {
   ideaExtend: AgentConfig;
   commitSuggest: AgentConfig;
   feedback: AgentConfig;
+  codeReview: AgentConfig;
 }
 
 export const DEFAULT_AGENTS: DefaultAgentsMap = {
@@ -497,7 +515,13 @@ export const DEFAULT_AGENTS: DefaultAgentsMap = {
   ideaExtend: { agent: 'claude-code' },
   commitSuggest: { agent: 'claude-code' },
   feedback: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
+  codeReview: { agent: 'claude-code', model: 'opus', effort: 'high' },
 };
+
+/** A reviewer must not use the same model as the task that wrote the code (IDEA-170) — self-review rubber-stamps. */
+export function agentConfigsEqual(a: AgentConfig, b: AgentConfig): boolean {
+  return a.agent === b.agent && (a.model ?? '') === (b.model ?? '');
+}
 
 /** Toolbar segments, left to right (IDEA-128/IDEA-133); trimmed per project via `IntegrationConfig.toolbar.segments`. */
 export const TOOLBAR_SEGMENT_IDS = ['focus', 'scout', 'desk'] as const;
@@ -779,7 +803,8 @@ export type TaskKind =
   | 'reconcile'
   | 'fix-review'
   | 'resolve-conflict'
-  | 'feedback';
+  | 'feedback'
+  | 'pr-review';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
 // unlike the in-memory task registry.

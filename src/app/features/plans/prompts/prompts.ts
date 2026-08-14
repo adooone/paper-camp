@@ -231,6 +231,54 @@ Rules:
 - If a comment needs a decision only a human can make, skip it and say so in its \`why\` instead of guessing.`;
 }
 
+// Runs read-only against an open PR's diff, replacing CodeRabbit as the producer
+// end of the review pipeline IDEA-57 already built (fetchUnresolvedThreads →
+// buildFixReviewPrompt consumes what this produces). Deliberately given only the
+// idea's own record — diff, body, phases, thread — never the authoring 'phase'
+// run's transcript or task-log entry, so it can't inherit that run's blind spots.
+export function buildPrReviewPrompt(plan: PlanEntry, diff: string): string {
+  const phaseList = plan.phases.length
+    ? plan.phases
+        .map((phase, i) => `${i + 1}. [${phase.done ? 'x' : ' '}] ${phase.text}`)
+        .join('\n')
+    : '(no phases)';
+
+  const settled = (plan.thread ?? []).filter(
+    (m) => m.kind === 'decision' || m.kind === 'note' || m.kind === 'clarification',
+  );
+  const settledList = settled.length
+    ? settled.map((m) => `- [${m.kind}] ${m.text}`).join('\n')
+    : '(none)';
+
+  return `You are reviewing the open PR for the idea "${plan.title}" (${plan.id ?? 'no id'}), stored as a single file at papercamp/ideas/${plan.id ?? '<ID>'}.md. You are a different agent from the one that wrote this code, seeing only the diff and this idea's own record below — not the authoring run's transcript or log — so review with fresh eyes rather than inheriting its reasoning. Do not use any write tools, do not edit, commit, or push anything: this is a read-only review, your only output is the JSON described below.
+
+Idea body, the spec this PR is supposed to deliver:
+${plan.body}
+
+Phases this PR claims to complete:
+${phaseList}
+
+Decisions, notes, and clarifications already settled on this idea's thread — treat these as settled, do not relitigate them:
+${settledList}
+
+Diff under review:
+${diff}
+
+Task: review the diff against two things:
+1. Spec conformance — does the diff actually deliver what the body and phases above specify? Are the phases it claims complete actually complete? Does it contradict a settled decision listed above?
+2. Ordinary code quality — correctness bugs, security issues, and edge cases the diff introduces.
+
+For each genuine issue you find, note the file path and the line it belongs to (as it appears in the diff above) and write a comment explaining it the way a human reviewer would — not restating the diff back. Skip nitpicks and stylistic preferences unless they violate a rule visible in the code you read.
+
+Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
+{"summary": "one or two sentences: the overall verdict", "findings": [{"path": "src/foo.ts", "line": 42, "body": "one comment"}]}
+
+Rules:
+- "findings" must be empty when the diff is clean — never invent an issue just to have something to say.
+- Every "line" must be a line that appears in the diff above for that "path".
+- Do not use tools to explore beyond what's needed to judge a finding — this review is scoped to the diff above, not a full audit of the repo.`;
+}
+
 // Formats whatever a mount fed (IDEA-130 phase 5) into a block Scout reads
 // silently — never surfaced to the user, so an absent field is simply omitted.
 function formatMountContext(context?: MountContext): string {

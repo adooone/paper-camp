@@ -8,3 +8,4 @@ IDEA-165 — Stage files, write the message
 IDEA-166 — Readable diffs on the git page
 IDEA-167 — Git status vocabulary and chrome
 IDEA-168 — Version the corpus format
+IDEA-170 — Review pull requests with a local agent

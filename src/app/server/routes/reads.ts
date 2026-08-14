@@ -115,6 +115,9 @@ export const readRoutes: ReadRoute[] = [
           feedback: config.defaultAgents.feedback
             ? coerceAgentConfig(config.defaultAgents.feedback)
             : DEFAULT_AGENTS.feedback,
+          codeReview: config.defaultAgents.codeReview
+            ? coerceAgentConfig(config.defaultAgents.codeReview)
+            : DEFAULT_AGENTS.codeReview,
         };
       }
       // A malformed desk manifest (IDEA-119) is dropped rather than crashing the page,

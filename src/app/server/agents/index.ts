@@ -51,6 +51,7 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   'overlap-check': 'commitSuggest',
   prioritise: 'commitSuggest',
   feedback: 'feedback',
+  'pr-review': 'codeReview',
 };
 
 export function resolveAgent(opts: {

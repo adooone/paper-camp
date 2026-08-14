@@ -24,6 +24,7 @@ const TASK_KIND_LABELS: Record<TaskKind, string> = {
   'fix-review': 'Fix review',
   'resolve-conflict': 'Resolve conflict',
   feedback: 'Feedback reply',
+  'pr-review': 'PR review',
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');

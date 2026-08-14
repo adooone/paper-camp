@@ -1447,6 +1447,93 @@ describe('startFixReview', () => {
   });
 });
 
+describe('startPrReview', () => {
+  const PR_URL = 'https://github.com/o/r/pull/7';
+
+  const reportScript = (result: unknown) =>
+    `console.log(${JSON.stringify(JSON.stringify(result))});`;
+
+  it('launches a pr-review-kind task and, on completion, durably records the SHA it reviewed', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(0)';
+    const manager = createAgentManager(root);
+
+    expect(manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL)).toEqual({
+      ok: true,
+    });
+    expect(currentStatus(manager)).toMatchObject({ taskKind: 'pr-review', status: 'running' });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    const { readReviewedShas } = await import('./pr-review-state');
+    // Recording races the same task-completion callback that flips status to
+    // 'done', so give the fire-and-forget write a tick to land.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(await readReviewedShas(root)).toEqual({ [plan.id ?? '']: 'sha-abc' });
+  });
+
+  it('never records the SHA when the agent errors', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(1)';
+    const manager = createAgentManager(root);
+
+    manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    const { readReviewedShas } = await import('./pr-review-state');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(await readReviewedShas(root)).toEqual({});
+  });
+
+  it('records the SHA even when the agent never reports a parseable verdict', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(0)';
+    const manager = createAgentManager(root);
+
+    manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const { readReviewedShas } = await import('./pr-review-state');
+    expect(await readReviewedShas(root)).toEqual({ [plan.id ?? '']: 'sha-abc' });
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('without a parseable verdict');
+  });
+
+  it('appends the verdict summary as a [review] thread message on the idea', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = reportScript({
+      summary: 'Looks good, one nit.',
+      findings: [{ path: 'src/a.ts', line: 3, body: 'consider a guard here' }],
+    });
+    const manager = createAgentManager(root);
+
+    manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    const { readFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    const raw = await readFile(join(root, 'papercamp', 'ideas', `${plan.id}.md`), 'utf-8');
+    expect(raw).toContain('Looks good, one nit.');
+    expect(raw).toContain('[review]');
+  });
+
+  it('blocks a second launch while one is running (exclusive, worktree-touching)', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
+    const manager = createAgentManager(root);
+
+    expect(manager.startPrReview(plan, 'review this diff', 'sha-1', PR_URL)).toEqual({
+      ok: true,
+    });
+    expect(manager.startPrReview(plan, 'review this diff', 'sha-2', PR_URL)).toEqual({
+      ok: false,
+      error: 'An agent task is already running',
+    });
+
+    await waitForStatus(manager, settled);
+  });
+});
+
 describe('stop and getStatus', () => {
   it('reports an error when nothing is running', async () => {
     const { root } = await makeRoot(PLAN_TWO_PHASES);

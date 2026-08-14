@@ -17,7 +17,10 @@ import { COMMIT_SCOPES, resolvePrimaryScope } from './scopes';
 
 export {
   clearPrCache,
+  createPrReview,
   fetchUnresolvedThreads,
+  type PrReviewComment,
+  type PrReviewInput,
   replyToReviewThread,
   resolvePrsByEntity,
   resolveReviewThread,
@@ -65,6 +68,38 @@ function runGhPrView(root: string, ref: string): Promise<GhPrViewRow | undefined
       } catch {
         resolve(undefined);
       }
+    });
+    proc.on('error', () => resolve(undefined));
+  });
+}
+
+const PR_DIFF_MAX_CHARS = 60_000;
+
+/** `gh pr diff <ref>` — the unified diff of the PR's changes, capped so a huge
+ * diff can't blow the review prompt's budget. Resolves `undefined` on any
+ * spawn/exit failure, never throws. */
+export function fetchPrDiff(
+  root: string,
+  ref: string,
+  maxChars = PR_DIFF_MAX_CHARS,
+): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['pr', 'diff', ref], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    proc.stdout?.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+    proc.stderr?.on('data', () => {});
+    proc.on('close', (code) => {
+      if (code !== 0) {
+        resolve(undefined);
+        return;
+      }
+      resolve(
+        stdout.length > maxChars
+          ? `${stdout.slice(0, maxChars)}\n... (diff truncated, exceeds size cap)`
+          : stdout,
+      );
     });
     proc.on('error', () => resolve(undefined));
   });

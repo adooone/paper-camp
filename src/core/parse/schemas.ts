@@ -181,6 +181,7 @@ export const paperCampConfigSchema = z.object({
       ideaExtend: agentConfigSchema,
       commitSuggest: agentConfigSchema,
       feedback: agentConfigSchema,
+      codeReview: agentConfigSchema,
     })
     .optional(),
   desk: deskConfigSchema.optional(),

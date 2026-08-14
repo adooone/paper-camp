@@ -2,7 +2,7 @@
 id: IDEA-170
 title: Review pull requests with a local agent
 type: feat
-status: idea
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -101,3 +101,20 @@ A CI-side trigger and any API-key path. Reviewing anything but a PR (no
 review-on-commit, no review-on-branch). Auto-approving or merging on a clean
 review — this posts findings, a human decides. Removing CodeRabbit from the
 repo; run both until this earns the slot.
+
+### Phases
+- [x] Add `codeReview` to `defaultAgents` and Settings
+      Configure it independently of the four existing tasks and enforce a model different from the code's author.
+      run: 6m17s · 10.4k in · 19.9k out · sonnet-5
+- [x] Add the create-review GitHub write op
+      Wrap `POST /repos/{owner}/{repo}/pulls/{n}/reviews` alongside the existing read/reply/resolve ops.
+      run: 3m51s · 4.5k in · 8.1k out · sonnet-5
+- [x] Build the `pr-review` task kind and review prompt
+      Assemble the diff, idea body, phases and thread; withhold the authoring run's transcript and log.
+      run: 7m4s · 4.5k in · 22.4k out · sonnet-5
+- [x] Wire the PR-poll trigger
+      Fire only when the PR is open (non-draft), CI is green, and the head SHA is unreviewed; durably record the reviewed SHA and sweep on boot.
+      run: 15m46s · 2k in · 57.5k out · sonnet-5
+- [x] Post the review and corpus summary
+      Emit per-line comments as resolvable threads and land the verdict as a `[review]` thread message on the idea.
+      run: 6m32s · 1.4k in · 19.6k out · sonnet-5
