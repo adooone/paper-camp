@@ -59,9 +59,10 @@ function parseReleaseCommit(line: string): { hash: string; url: string } | undef
 interface ProvenanceTrailPanelProps {
   trail: ProvenanceTrail;
   released?: string;
+  reviewing?: boolean;
 }
 
-export const ProvenanceTrailPanel = ({ trail, released }: ProvenanceTrailPanelProps) => {
+export const ProvenanceTrailPanel = ({ trail, released, reviewing }: ProvenanceTrailPanelProps) => {
   const { taskRuns, commits, pr, releaseLine } = trail;
   const releaseCommit = releaseLine.data ? parseReleaseCommit(releaseLine.data) : undefined;
   const releaseLabel = released
@@ -84,7 +85,11 @@ export const ProvenanceTrailPanel = ({ trail, released }: ProvenanceTrailPanelPr
         tooltip={commits.data?.join('\n')}
       />
       <TrailArrow />
-      {pr.data ? <PrBadge pr={pr.data} /> : <TrailNode reached={false} label="PR" />}
+      {pr.data ? (
+        <PrBadge pr={pr.data} reviewing={reviewing} />
+      ) : (
+        <TrailNode reached={false} label="PR" />
+      )}
       <TrailArrow />
       <TrailNode
         reached={releaseLine.reached || Boolean(released)}

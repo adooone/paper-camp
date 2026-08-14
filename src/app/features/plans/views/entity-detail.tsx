@@ -46,7 +46,13 @@ import { ProgressBar } from '../components';
 import { ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
-import { effectiveStatus, relativeDate, rollupProgress, runningTaskForPlan } from '../helpers';
+import {
+  effectiveStatus,
+  relativeDate,
+  rollupProgress,
+  runningPrReviewForPlan,
+  runningTaskForPlan,
+} from '../helpers';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
 
 interface EntityDetailProps {
@@ -416,13 +422,21 @@ const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
   );
 };
 
-const TrailSection = ({ planId, released }: { planId: string | undefined; released?: string }) => {
+const TrailSection = ({
+  planId,
+  released,
+  reviewing,
+}: {
+  planId: string | undefined;
+  released?: string;
+  reviewing?: boolean;
+}) => {
   const trail = useTrail(planId);
   if (!planId) return null;
   return (
     <div className="mb-3 text-xs opacity-80">
       {trail ? (
-        <ProvenanceTrailPanel trail={trail} released={released} />
+        <ProvenanceTrailPanel trail={trail} released={released} reviewing={reviewing} />
       ) : (
         // Reserves the real row's height (4 small stamps + arrows) so the
         // trail fetch resolving doesn't push the header content below it
@@ -564,6 +578,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const taskLog = useAppStore((s) => s.taskLog);
   const loadTaskLog = useAppStore((s) => s.loadTaskLog);
   const planTask = runningTaskForPlan(plan.id, agentStatus);
+  const reviewing = Boolean(runningPrReviewForPlan(plan.id, agentStatus));
   const runningFill = useRunningPhaseFill(planTask, taskLog);
   const usageRollup = useMemo(() => rollupUsage(taskLog, plan.id), [taskLog, plan.id]);
   const auditRunning = planTask?.taskKind === 'audit';
@@ -655,7 +670,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         </div>
       </div>
 
-      <TrailSection planId={plan.id} released={plan.released} />
+      <TrailSection planId={plan.id} released={plan.released} reviewing={reviewing} />
 
       {showFeedback ? (
         <FeedbackSection

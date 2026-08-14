@@ -53,7 +53,8 @@ page.
 - [x] Detect a review running for the current entity
       Match an in-flight `pr-review` task from `/api/agent/status` to the idea `pr-badge.tsx` renders on.
       run: 1m41s · 516 in · 4.9k out · sonnet-5
-- [ ] Add a reviewing state to `pr-badge.tsx`
+- [x] Add a reviewing state to `pr-badge.tsx`
       Show it alongside the existing draft/open/merged states while a review is in flight.
+      run: 4m29s · 883 in · 9k out · sonnet-5
 - [ ] Reflect a landed review on the badge
       After the task settles, surface it from the `[review]` thread message and the PR's review count.
