@@ -7,6 +7,7 @@ import {
   computePrTitle,
   createPrReview,
   derivePrLabels,
+  fetchPrDiff,
   fetchUnresolvedThreads,
   isConventionalPrTitle,
   renderConsistencyComment,
@@ -261,6 +262,35 @@ describe('fetchUnresolvedThreads', () => {
     const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
     process.env.PATH = `${root}:${originalPath}`;
     expect(await fetchUnresolvedThreads(root, 'https://github.com/o/r/pull/2')).toEqual([]);
+  });
+});
+
+describe('fetchPrDiff', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  it('returns the unified diff from gh pr diff', async () => {
+    const diff = '--- a/f.ts\n+++ b/f.ts\n@@ -1 +1 @@\n-old\n+new\n';
+    const { root } = installFakeGh(`printf '%s' '${diff}'`);
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await fetchPrDiff(root, '5')).toBe(diff);
+  });
+
+  it('truncates a diff past the size cap', async () => {
+    const longDiff = 'x'.repeat(200);
+    const { root } = installFakeGh(`printf '%s' '${longDiff}'`);
+    process.env.PATH = `${root}:${originalPath}`;
+    const result = await fetchPrDiff(root, '5', 100);
+    expect(result?.length).toBeLessThan(200);
+    expect(result).toContain('(diff truncated, exceeds size cap)');
+  });
+
+  it('resolves undefined when gh fails', async () => {
+    const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await fetchPrDiff(root, '5')).toBeUndefined();
   });
 });
 

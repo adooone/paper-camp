@@ -138,6 +138,20 @@ export interface FixReviewResult {
   skipped: { threadId: string; why: string }[];
 }
 
+export interface PrReviewFinding {
+  path: string;
+  line: number;
+  body: string;
+}
+
+// Parsed from the JSON object a pr-review agent's prompt requires as its final
+// line — see buildPrReviewPrompt. findings become per-line PR review comments,
+// summary lands as a [review] thread message on the idea (IDEA-170).
+export interface PrReviewResult {
+  summary: string;
+  findings: PrReviewFinding[];
+}
+
 export interface FeedbackPhaseEdit {
   op: 'add' | 'reword';
   /** 1-based position in the plan's current phase list; required for "reword", ignored for "add". */
@@ -786,7 +800,8 @@ export type TaskKind =
   | 'reconcile'
   | 'fix-review'
   | 'resolve-conflict'
-  | 'feedback';
+  | 'feedback'
+  | 'pr-review';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
 // unlike the in-memory task registry.

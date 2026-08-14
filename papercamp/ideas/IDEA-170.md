@@ -109,8 +109,9 @@ repo; run both until this earns the slot.
 - [x] Add the create-review GitHub write op
       Wrap `POST /repos/{owner}/{repo}/pulls/{n}/reviews` alongside the existing read/reply/resolve ops.
       run: 3m51s · 4.5k in · 8.1k out · sonnet-5
-- [ ] Build the `pr-review` task kind and review prompt
+- [x] Build the `pr-review` task kind and review prompt
       Assemble the diff, idea body, phases and thread; withhold the authoring run's transcript and log.
+      run: 7m4s · 4.5k in · 22.4k out · sonnet-5
 - [ ] Wire the PR-poll trigger
       Fire only when the PR is open (non-draft), CI is green, and the head SHA is unreviewed; durably record the reviewed SHA and sweep on boot.
 - [ ] Post the review and corpus summary
