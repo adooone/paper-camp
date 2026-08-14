@@ -10,6 +10,7 @@ tags:
   - stack
   - layout
 subject: App UI
+order: 3
 ---
 
 The Stack panel's Desk section has no scroll container, so everything past the
@@ -55,3 +56,6 @@ key rather than silently rendering nothing.
 - [x] Handle a missing `desk` config key
       When `desk` is absent from `papercamp/config.json`, state so and point at the config key.
       run: 52s · 225 in · 3.1k out · sonnet-5
+
+### Thread
+- [x] 2026-08-14 [review] [agent] Approves · 1 finding — The core change to desk-section.tsx cleanly delivers the spec: the Desk wrapper gets its own overflow-y-auto scroller, the section shell renders immediately with a skeleton during load instead of returning null, and a missing desk config key now shows an explanatory empty state pointing at papercamp/config.json. The imports (groupLabelClassName, Skeleton) and the text-desk-text-muted token are consistent with existing shared.ts usage, so the change is correct and on-spec. The rest of the diff is corpus bookkeeping (idea archiving, phase stamps, index/run-order updates) unrelated to the code change.
