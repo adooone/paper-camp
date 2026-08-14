@@ -47,10 +47,16 @@ export const runningTaskForPlan = (
 export const runningPrReviewForPlan = (
   planId: string | undefined,
   agentStatus: AgentTaskState[],
-): AgentTaskState | undefined => {
-  const task = runningTaskForPlan(planId, agentStatus);
-  return task?.taskKind === 'pr-review' ? task : undefined;
-};
+): AgentTaskState | undefined =>
+  planId
+    ? agentStatus.find(
+        (t) =>
+          t.planId === planId &&
+          t.taskKind === 'pr-review' &&
+          t.status !== 'done' &&
+          t.status !== 'error',
+      )
+    : undefined;
 
 export const latestReviewNote = (thread: ThreadMessage[] | undefined): string | undefined =>
   [...(thread ?? [])].reverse().find((m) => m.kind === 'review')?.text;

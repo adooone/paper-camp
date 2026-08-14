@@ -43,7 +43,6 @@ import {
 import { FeedbackThread, type PromoteTarget } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
-import { ReviewSignalBadge } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_STAMP } from '../constants';
 import {
@@ -291,7 +290,7 @@ const BranchRow = ({
 }) => {
   const showBranchRow =
     plan.status === 'planned' || plan.status === 'in-progress' || plan.status === 'review';
-  if (!showBranchRow && !plan.pr) return null;
+  if (!showBranchRow) return null;
 
   return (
     <div className="flex items-center gap-3 flex-wrap mb-3 min-h-8">
@@ -320,7 +319,6 @@ const BranchRow = ({
           </span>
         </Card>
       )}
-      {plan.pr && <ReviewSignalBadge pr={plan.pr} />}
     </div>
   );
 };
