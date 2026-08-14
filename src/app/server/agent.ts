@@ -50,6 +50,8 @@ const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
 const FIX_ATTEMPT_CAP = 2;
 const AUTH_ERROR_MARKER = 'Not logged in · Please run /login';
 const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
+const DESTRUCTIVE_GIT_BAN =
+  "Never run `git stash`, `git reset`, or `git checkout` over working-tree state you did not create yourself — it may be someone else's pending work. To compare against a clean baseline, use read-only `git diff` or `git show HEAD:<file>` instead.";
 
 function isAuthError(text: string): boolean {
   return text.includes(AUTH_ERROR_MARKER);
@@ -160,6 +162,8 @@ ${toleratedNote}${details}Plan context: ${plan.body}
 
 Do only this phase — do not start any other phase, even if it looks quick.
 
+${DESTRUCTIVE_GIT_BAN}
+
 Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
 You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`) — never open the app, navigate to a URL, or take screenshots, even if the phase describes a visual check; note in the commit message that it's left to a human instead.
@@ -187,6 +191,8 @@ export function buildFixPassPrompt(
 
 Only make the failing checks pass — change nothing else: no new features, no refactors, no unrelated cleanup, no edits outside what the failures require, and do not touch the plan file.
 
+${DESTRUCTIVE_GIT_BAN}
+
 Run \`pnpm run check-types\`, \`npx biome check . --write\`, and \`npx vitest run\` to see what's red, fix exactly that, then stop.
 
 If the failure requires a decision you can't make on your own — not just a fix you haven't found yet — output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop.`;
@@ -210,6 +216,8 @@ export function buildFixItemPrompt(
 ${toleratedNote}${details}Plan context: ${plan.body}
 
 Do only this fix — do not start any other fix or phase, even if it looks quick.
+
+${DESTRUCTIVE_GIT_BAN}
 
 Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
@@ -264,6 +272,7 @@ export function createAgentManager(
     run?: { usage: RunUsage; kind: 'phase' | 'fix' },
   ) => Promise<void>,
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
+  onRunStart?: (plan: PlanEntry) => Promise<void>,
   state: AgentManagerState = createEmptyAgentState(),
 ) {
   // `tasks`/`clients` are the same Map/Set a hot-reloaded replacement instance
@@ -1374,6 +1383,12 @@ export function createAgentManager(
 
     (async () => {
       try {
+        if (onRunStart) await onRunStart(plan);
+        if (isSuperseded(task)) {
+          finalizeSuperseded(task);
+          return;
+        }
+
         // Checks already red before this run — pre-existing or known-flaky
         // breakage this run didn't cause, so the fix loop never owns it.
         let toleratedRed = new Set<CheckName>(runProjectChecks ? await runProjectChecks() : []);

@@ -120,6 +120,7 @@ export function createApiMiddleware(
     hooks.stampAuditDate,
     hooks.commitPhase,
     hooks.setRunReview,
+    hooks.commitCorpus,
     agentState,
   );
 

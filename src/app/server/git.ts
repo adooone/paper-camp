@@ -175,6 +175,16 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await runGit(args);
   }
 
+  // Called right after branch setup so a run can never erase the drafted plan it is
+  // about to execute — see IDEA-137. Scoped to papercamp/ only: unrelated dirty state
+  // outside the corpus is left for the run's own commit steps.
+  async function commitCorpus(title: string, id: string): Promise<void> {
+    const status = await runGitStatus();
+    const files = status.filter((entry) => entry.path.startsWith('papercamp/')).map((e) => e.path);
+    if (files.length === 0) return;
+    await commit(files, `docs(ideas): ${title} — plan`, `Refs: ${id}`, { noVerify: true });
+  }
+
   function ensureBranch(plan: PlanEntry): void {
     const branch = branchName(plan.id, plan.kind, plan.title);
     if (!branch) return;
@@ -790,6 +800,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     },
     getCurrentBranch,
     commit,
+    commitCorpus,
     stageAll,
     getHeadSha,
     getLastCommitFor,

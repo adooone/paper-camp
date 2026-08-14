@@ -99,5 +99,10 @@ export function createAgentHooks(root: string, git: GitManager) {
     });
   }
 
-  return { stampAuditDate, commitPhase, setRunReview };
+  async function commitCorpus(plan: PlanEntry): Promise<void> {
+    if (!plan.id) return;
+    await git.commitCorpus(plan.title, plan.id);
+  }
+
+  return { stampAuditDate, commitPhase, setRunReview, commitCorpus };
 }
