@@ -110,7 +110,7 @@ and a failed persist must degrade to in-memory rather than break the form.
       Feedback chat, add-review-phases, and inbox question reply, each through the helper.
       run: 4m9s · 1.1k in · 11.6k out · sonnet-5
 - [ ] Persist the UI-choice toggles
-      Plans `view`, `planFilters`, and `detailView`; leave `docSearchQuery` and server-derived state alone.
+      Persist `planFilters` and `detailView` to localStorage. The Plans list/board `view` toggle no longer exists (removed in IDEA-136, commit 89ca57f) — dropped from scope.
 
 ### Fixes
 - [ ] Fix the failing "Quality" check
@@ -122,3 +122,6 @@ and a failed persist must degrade to in-memory rather than break the form.
 - [ ] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Persist the UI-choice toggles") — the agent needs a decision: Phase 5 says to persist "the Plans `view` toggle (list/board)," but no such state exists anywhere in the current codebase — the only list/board view-mode state was on the Roadmap page and was deliberately deleted in commit 89ca57f (IDEA-136) six days before this plan was written. Should I persist only `planFilters` + `detailView` and drop the `view` toggle from this phase's scope, or did you mean something else by "Plans `view`"?
 - [ ] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Persist the UI-choice toggles") — the agent needs a decision: Phase 5 says to persist "the Plans `view` toggle (list/board)," but no such state exists in the codebase — it was deliberately deleted in commit 89ca57f (IDEA-136, 2026-08-08). Only `planFilters` and `detailView` currently exist. Should I persist just those two and drop the `view` toggle from scope, or did you mean something else by "Plans `view`"?
 - [ ] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Persist the UI-choice toggles") — the agent needs a decision: Phase 5 says to persist "the Plans `view` toggle (list/board)," but no such state exists in the codebase — it was deliberately deleted in commit 89ca57f (IDEA-136, 2026-08-08). Only `planFilters` and `detailView` currently exist. Should I persist just those two and drop the `view` toggle from scope, or did you mean something else by "Plans `view`"?
+- [ ] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Persist the UI-choice toggles") — the agent needs a decision: Phase 5 says to persist "the Plans `view` toggle (list/board)," but no such state exists in the codebase — it was deliberately deleted in commit 89ca57f (IDEA-136, 2026-08-08). Only `planFilters` and `detailView` currently exist. Should I persist just those two and drop the `view` toggle from scope, or did you mean something else by "Plans `view`"?
+- [x] 2026-08-14 [chat] drop it from scope
+- [x] 2026-08-14 [chat] [agent] Fair enough — I'll drop the `view` toggle from scope and just persist `planFilters` and `detailView`.
