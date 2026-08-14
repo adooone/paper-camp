@@ -2,6 +2,7 @@ import type {
   AgentTaskState,
   LoginRelayState,
   MountContext,
+  PrReviewStatus,
   ReconcileQueueItem,
 } from '@/types/index';
 import { apiUrl } from './api-base';
@@ -119,6 +120,18 @@ export const launchPrReview = async (planId: string): Promise<void> => {
     body: JSON.stringify({ planId }),
   });
   await handleAgentResponse(response);
+};
+
+export const fetchPrReviewStatus = async (planId: string): Promise<PrReviewStatus | null> => {
+  try {
+    const response = await fetch(
+      apiUrl(`/api/agent/pr-review-status?planId=${encodeURIComponent(planId)}`),
+    );
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
 };
 
 export const postFeedbackMessage = async (

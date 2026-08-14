@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { buildFixReviewPrompt, buildPrReviewPrompt } from '@/app/features/plans/prompts';
+import { fetchCiReleaseState } from '@/core/ci';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
 import { agentThreadMessage, todayDateString } from '@/core/serialize';
@@ -12,6 +13,7 @@ import type {
   IdeaStatus,
   MountContext,
   PlanEntry,
+  PrReviewStatus,
   ThreadMessage,
 } from '@/types/index';
 import { readDefaultAgentIds } from '../agent';
@@ -31,9 +33,11 @@ import {
   regenerateIndexes,
   writeEntityFile,
 } from '../helpers';
-import { readBody, sendJson } from '../http';
+import { readBody, requestUrl, sendJson } from '../http';
 import { getCurrentLoginRelay, startClaudeLoginRelay } from '../login-relay';
 import { appendNotification } from '../notification-log';
+import { readReviewedShas } from '../pr-review-state';
+import { loadManifestCi } from './ci';
 import type { Route, RouteContext } from './types';
 
 async function resolveEntityFilePath(root: string, entityId: string): Promise<string | null> {
@@ -404,7 +408,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         const { plan } = resolved;
         const prs = await resolvePrsByEntity(root);
         const pr = prs?.get(planId);
-        if (!pr || pr.state !== 'open' || !pr.headSha) {
+        if (!pr || (pr.state !== 'open' && pr.state !== 'draft') || !pr.headSha) {
           return { ok: false, status: 404, error: 'No open PR found for this plan' };
         }
         const diff = await fetchPrDiff(root, String(pr.number));
@@ -413,6 +417,37 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         return agent.startPrReview(plan, prompt, pr.headSha, pr.url);
       },
     ),
+
+    {
+      method: 'GET',
+      path: '/api/agent/pr-review-status',
+      handle: async (req, res) => {
+        const planId = requestUrl(req).searchParams.get('planId');
+        if (!planId) {
+          sendJson(res, 400, { error: 'planId is required' });
+          return;
+        }
+        const prs = await resolvePrsByEntity(root);
+        const pr = prs?.get(planId);
+        const reviewed = await readReviewedShas(root);
+        const ci = loadManifestCi(root);
+        let ciGreen: boolean | null = null;
+        if (ci && pr?.headBranch) {
+          const ciState = await fetchCiReleaseState({ ...ci, branch: pr.headBranch });
+          ciGreen =
+            ciState.available &&
+            ciState.runs.length > 0 &&
+            ciState.runs.every((r) => r.status === 'success');
+        }
+        const result: PrReviewStatus = {
+          ready: pr?.state === 'open',
+          headSha: pr?.headSha ?? null,
+          lastReviewedSha: reviewed[planId] ?? null,
+          ciGreen,
+        };
+        sendJson(res, 200, result);
+      },
+    },
 
     {
       method: 'POST',

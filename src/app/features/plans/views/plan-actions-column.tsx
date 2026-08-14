@@ -45,7 +45,7 @@ export const PlanActionsColumn = () => {
       (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
       plan.pr.unresolvedThreadCount,
   );
-  const canReviewPr = plan.pr?.state === 'open';
+  const canReviewPr = plan.pr?.state === 'open' || plan.pr?.state === 'draft';
   const orphanSubject =
     subjectsAvailable && plan.subject && !subjects.includes(plan.subject)
       ? plan.subject

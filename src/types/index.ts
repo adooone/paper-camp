@@ -200,6 +200,16 @@ export interface PrInfo {
   scoutReviewObserved?: boolean;
 }
 
+/** Advisory info for the "Review PR" action — nothing here gates the button,
+ * it only labels it (IDEA-174 fix 2). */
+export interface PrReviewStatus {
+  ready: boolean;
+  headSha: string | null;
+  lastReviewedSha: string | null;
+  /** null when no CI is configured, or the PR's branch has no runs yet. */
+  ciGreen: boolean | null;
+}
+
 export interface PlanEntry {
   title: string;
   status: PlanStatus;

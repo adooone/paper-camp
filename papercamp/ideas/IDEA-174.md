@@ -65,8 +65,9 @@ page.
 - [x] Trigger the PR review by hand, not by poll
       Drop the `triggerPrReviews` call from `pollOpenPrs` (the poll itself stays — derived status needs fresh PR state) along with its branch/CI/SHA gates. Add `POST /api/agent/launch-pr-review` taking `planId` and building the prompt server-side like `launch-fix-review`, plus a "Review PR" `ListItem` in `PlanActionsColumn` beside `FixReviewButton`, enabled on an open PR + authenticated `gh` + a configured agent.
       run: 7m31s · 7k in · 20.7k out · sonnet-5
-- [ ] Demote the reviewed-SHA ledger to a label
+- [x] Demote the reviewed-SHA ledger to a label
       With no poller there is no relaunch to prevent, so `pr-reviews.json` stops gating and only labels the action — "Review PR", or "Review again — last reviewed at abc1234" when the head SHA already has one. CI-green and ready-for-review become advisory too: show the state next to the button rather than disabling it.
+      run: 7m37s · 5.1k in · 22.3k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-14 [review] [agent] Comments · 2 findings — The diff delivers all four phases: the Stack-panel subtitle reads the PR number off a new `prReviewUrl` task field (plumbed through `agent.ts` and the `AgentTaskState` type), `pr-badge.tsx` gains a spinner reviewing state, and the trail surfaces the landed signal via `latestReviewNote` and `ReviewSignalBadge`. The core behavior matches the spec and the tests are solid. The main issue is that the landed-review badge is now rendered in two places on the same entity view, producing a visible duplicate.

@@ -1,3 +1,4 @@
+import { usePrReviewStatus } from '@/app/hooks/use-pr-review-status';
 import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { ListItem, Tooltip } from '@dendelion/paper-ui';
@@ -15,6 +16,7 @@ export const PrReviewButton = ({ plan, disabled }: PrReviewButtonProps) => {
   const hasAgent = useAppStore(selectHasAnyAgent);
   const ghOk = useAppStore(selectGhOk);
   const [launching, setLaunching] = useState(false);
+  const status = usePrReviewStatus(plan.id);
 
   const handleClick = async () => {
     if (!plan.id) return;
@@ -37,18 +39,38 @@ export const PrReviewButton = ({ plan, disabled }: PrReviewButtonProps) => {
         ? 'No agent CLI found — set up in Settings'
         : undefined;
 
+  // Nothing here gates the button — a reviewed SHA, a draft PR, or red CI are
+  // all still worth a manual re-review, so they're surfaced as a label, not a block.
+  const alreadyReviewed = Boolean(
+    status?.lastReviewedSha && status.headSha && status.lastReviewedSha === status.headSha,
+  );
+  const label = launching
+    ? 'Starting…'
+    : alreadyReviewed
+      ? `Review again — last reviewed at ${(status?.lastReviewedSha ?? '').slice(0, 7)}`
+      : 'Review PR';
+  const advisories = [
+    status && !status.ready && 'draft',
+    status?.ciGreen === false && 'CI not green',
+  ].filter(Boolean);
+
   return (
-    <Tooltip content={hint}>
-      <ListItem
-        size="small"
-        // paper-ui has no eye/magnifier icon — raw span is a deliberate fallback, not an oversight.
-        icon={<span className="text-watercolor-blue-dark">◎</span>}
-        onClick={handleClick}
-        disabled={isDisabled}
-        className={`text-xs leading-4 py-2 ${isDisabled ? 'opacity-50' : ''}`}
-      >
-        {launching ? 'Starting…' : 'Review PR'}
-      </ListItem>
-    </Tooltip>
+    <div className="flex flex-col gap-0.5">
+      <Tooltip content={hint}>
+        <ListItem
+          size="small"
+          // paper-ui has no eye/magnifier icon — raw span is a deliberate fallback, not an oversight.
+          icon={<span className="text-watercolor-blue-dark">◎</span>}
+          onClick={handleClick}
+          disabled={isDisabled}
+          className={`text-xs leading-4 py-2 ${isDisabled ? 'opacity-50' : ''}`}
+        >
+          {label}
+        </ListItem>
+      </Tooltip>
+      {advisories.length > 0 && (
+        <div className="text-2xs text-ink-300 px-2">{advisories.join(' · ')}</div>
+      )}
+    </div>
   );
 };
