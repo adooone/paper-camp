@@ -502,12 +502,12 @@ export function createAgentManager(
         settleReviewThreads(root, task.fixReviewResult, (text) => pushLine(task, text));
       }
     }
-    // A killed/never-run task must stay unreviewed so the next poll retries it. A
-    // parseable verdict is dispatched but posts asynchronously in CI, so this task
-    // can't know whether it landed — the poller records the SHA once it observes
-    // the posted review (see pr-review-trigger.ts). An unparseable verdict is
-    // recorded immediately instead: a garbled response still consumed the SHA's
-    // one review attempt, and must not spin the same broken prompt every poll.
+    // A killed/never-run task must stay unreviewed so the next poll retries it.
+    // Record only when the GitHub post or the idea thread message landed — a
+    // verdict that reached neither is a transient delivery failure and the next
+    // poll should retry it. An unparseable verdict is recorded immediately
+    // instead: a garbled response still consumed the SHA's one review attempt,
+    // and must not spin the same broken prompt every poll.
     if (task.taskKind === 'pr-review' && task.planId && task.prReviewSha) {
       const result = parsePrReviewResult(task.lines);
       if (result && task.prReviewUrl) {
@@ -524,6 +524,7 @@ export function createAgentManager(
           setStatus(task, 'error');
           return;
         }
+        void recordReviewedSha(root, task.planId, task.prReviewSha);
       } else {
         void recordReviewedSha(root, task.planId, task.prReviewSha);
         pushLine(task, 'pr-review agent exited without a parseable verdict — nothing posted');

@@ -79,8 +79,9 @@ The review prompt and what the reviewer checks. The trigger gates
 - [x] End a failed delivery in an error status
       A good verdict that reached neither destination finishes the task as `error` with the reason attached, not `done` with a missing line.
       run: 6m12s · 811 in · 18.9k out · sonnet-5
-- [ ] Gate `recordReviewedSha` on the outcome
+- [x] Gate `recordReviewedSha` on the outcome
       Record on a successful post or thread message and on an unparseable verdict; skip recording for a transient delivery failure so the next poll retries.
+      run: 4m10s · 377 in · 10.5k out · sonnet-5
 - [ ] Cap consecutive delivery failures per SHA
       Track failures on one SHA and, after a small number, record it and surface the give-up so a permanently failing post stops re-reviewing every poll.
 - [ ] Degrade a 422-rejected review

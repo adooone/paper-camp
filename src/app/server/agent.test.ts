@@ -1517,6 +1517,9 @@ describe('startPrReview', () => {
     const raw = await readFile(join(root, 'papercamp', 'ideas', `${plan.id}.md`), 'utf-8');
     expect(raw).toContain('Looks good, one nit.');
     expect(raw).toContain('[review]');
+
+    const { readReviewedShas } = await import('./pr-review-state');
+    expect(await readReviewedShas(root)).toEqual({ [plan.id ?? '']: 'sha-abc' });
   });
 
   it('ends the task as error when a good verdict reaches neither GitHub nor the idea', async () => {
