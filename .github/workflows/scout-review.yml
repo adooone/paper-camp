@@ -1,0 +1,31 @@
+name: Scout Review
+
+on:
+  repository_dispatch:
+    types: [paper-camp-review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  scout-review:
+    name: Scout Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Scout app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.SCOUT_APP_ID }}
+          private-key: ${{ secrets.SCOUT_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
+
+      - name: Post the review
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          REVIEW: ${{ toJSON(github.event.client_payload.review) }}
+        run: |
+          NUMBER=$(echo "$REVIEW" | jq -r '.number')
+          echo "$REVIEW" | jq 'del(.number)' | gh api "repos/${{ github.repository }}/pulls/${NUMBER}/reviews" -X POST --input -

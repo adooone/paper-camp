@@ -1,17 +1,26 @@
 import { join } from 'node:path';
-import { createPrReview } from '@/core/git-pr';
+import { createPrReview, dispatchPrReview, scoutReviewFooter } from '@/core/git-pr';
 import { readEntities } from '@/core/readers';
 import { agentThreadMessage } from '@/core/serialize';
-import type { PrReviewFinding, PrReviewResult } from '@/types/index';
+import type { PrReviewFinding, PrReviewResult, PrReviewVerdict } from '@/types/index';
 import { campFile, entityFileInput, fileExists, writeEntityFile } from './helpers';
+
+const VERDICTS: PrReviewVerdict[] = ['approve', 'comment', 'request-changes'];
 
 function validatePrReviewVerdict(candidate: string): PrReviewResult | undefined {
   try {
     const parsed = JSON.parse(candidate) as {
-      summary?: string;
+      verdict?: string;
+      assessment?: string;
+      concerns?: string[];
       findings?: { path?: string; line?: number; body?: string }[];
     };
-    if (!parsed.summary) return undefined;
+    if (!parsed.verdict || !VERDICTS.includes(parsed.verdict as PrReviewVerdict)) return undefined;
+    if (!parsed.assessment) return undefined;
+    const rawConcerns = parsed.concerns ?? [];
+    if (!Array.isArray(rawConcerns) || rawConcerns.some((c) => typeof c !== 'string')) {
+      return undefined;
+    }
     const rawFindings = parsed.findings ?? [];
     if (!Array.isArray(rawFindings)) return undefined;
     const findings: PrReviewFinding[] = [];
@@ -21,7 +30,12 @@ function validatePrReviewVerdict(candidate: string): PrReviewResult | undefined 
       if (typeof f.body !== 'string' || !f.body) return undefined;
       findings.push({ path: f.path, line: f.line, body: f.body });
     }
-    return { summary: parsed.summary, findings };
+    return {
+      verdict: parsed.verdict as PrReviewVerdict,
+      assessment: parsed.assessment,
+      concerns: rawConcerns,
+      findings,
+    };
   } catch {
     return undefined;
   }
@@ -38,6 +52,53 @@ export function parsePrReviewResult(taskLines: string[]): PrReviewResult | undef
     if (result) return result;
   }
   return undefined;
+}
+
+const VERDICT_LABELS: Record<PrReviewVerdict, string> = {
+  approve: 'Approves',
+  comment: 'Comments',
+  'request-changes': 'Requests changes',
+};
+
+function findingsPhrase(n: number): string {
+  return `${n} finding${n === 1 ? '' : 's'}`;
+}
+
+const MAX_DISPATCH_FINDINGS = 20;
+
+function capFindings(findings: PrReviewFinding[]): { kept: PrReviewFinding[]; dropped: number } {
+  if (findings.length <= MAX_DISPATCH_FINDINGS) return { kept: findings, dropped: 0 };
+  return {
+    kept: findings.slice(0, MAX_DISPATCH_FINDINGS),
+    dropped: findings.length - MAX_DISPATCH_FINDINGS,
+  };
+}
+
+export function renderReviewGithubBody(
+  result: PrReviewResult,
+  footer: { ideaId: string; sha: string; droppedFindings?: number },
+): string {
+  const lines = [
+    `**${VERDICT_LABELS[result.verdict]}** · ${findingsPhrase(result.findings.length)}`,
+    '',
+    result.assessment,
+  ];
+  if (result.concerns.length > 0) {
+    lines.push('', '**Concerns**', ...result.concerns.map((c) => `- ${c}`));
+  }
+  if (footer.droppedFindings) {
+    lines.push(
+      '',
+      `_${findingsPhrase(footer.droppedFindings)} omitted to fit the review's size limit._`,
+    );
+  }
+  lines.push('', `<sub>${scoutReviewFooter(footer.ideaId, footer.sha)}</sub>`);
+  return lines.join('\n');
+}
+
+export function renderReviewThreadMessage(result: PrReviewResult): string {
+  const label = VERDICT_LABELS[result.verdict];
+  return `${label} · ${findingsPhrase(result.findings.length)} — ${result.assessment}`;
 }
 
 async function appendReviewThreadMessage(root: string, entityId: string, summary: string) {
@@ -68,21 +129,36 @@ export function postPrReview(
   root: string,
   entityId: string,
   prUrl: string,
+  sha: string,
   result: PrReviewResult,
   onLine: (text: string) => void,
 ): void {
   void (async () => {
+    const { kept, dropped } = capFindings(result.findings);
+    const dispatched = await dispatchPrReview(root, prUrl, {
+      body: renderReviewGithubBody(result, { ideaId: entityId, sha, droppedFindings: dropped }),
+      event: 'COMMENT',
+      comments: kept,
+    }).catch(() => false);
+
     const [posted, logged] = await Promise.all([
-      createPrReview(root, prUrl, {
-        body: result.summary,
-        event: 'COMMENT',
-        comments: result.findings,
-      }).catch(() => false),
-      appendReviewThreadMessage(root, entityId, result.summary).catch(() => false),
+      dispatched
+        ? Promise.resolve(true)
+        : createPrReview(root, prUrl, {
+            body: renderReviewGithubBody(result, { ideaId: entityId, sha }),
+            event: 'COMMENT',
+            comments: result.findings,
+          }).catch(() => false),
+      appendReviewThreadMessage(root, entityId, renderReviewThreadMessage(result)).catch(
+        () => false,
+      ),
     ]);
-    const n = result.findings.length;
-    const findingsText = `${n} finding${n === 1 ? '' : 's'}`;
-    const postPart = posted ? `posted to GitHub (${findingsText})` : 'GitHub post failed';
+
+    const postPart = dispatched
+      ? `dispatched to the Scout review workflow (${findingsPhrase(kept.length)}${dropped ? `, ${dropped} dropped` : ''})`
+      : posted
+        ? `posted directly to GitHub, dispatch unavailable (${findingsPhrase(result.findings.length)})`
+        : 'GitHub post failed';
     const logPart = logged ? 'recorded on the idea' : 'could not record on the idea';
     onLine(`Review ${postPart}, ${logPart}`);
   })();

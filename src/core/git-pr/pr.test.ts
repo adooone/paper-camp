@@ -7,6 +7,7 @@ import {
   computePrTitle,
   createPrReview,
   derivePrLabels,
+  dispatchPrReview,
   fetchPrDiff,
   fetchUnresolvedThreads,
   isConventionalPrTitle,
@@ -14,6 +15,7 @@ import {
   renderPlanPhasesIntoBody,
   resolvePlanForPrRef,
   resolvePrsByEntity,
+  scoutReviewFooter,
   syncConsistencyCommentToPr,
   syncPlanPhasesToPr,
   syncPrLabelsToPr,
@@ -53,6 +55,7 @@ interface Row {
   state: string;
   isDraft: boolean;
   headRefName: string;
+  headRefOid: string;
   body: string;
   reviewDecision: string;
 }
@@ -62,6 +65,7 @@ const row = (o: Partial<Row>): Row => ({
   state: 'OPEN',
   isDraft: false,
   headRefName: '',
+  headRefOid: '',
   body: '',
   reviewDecision: '',
   ...o,
@@ -208,6 +212,48 @@ describe('resolvePrsByEntity', () => {
     expect(info?.hasNewCommentsSincePush).toBe(false);
   });
 
+  it('observes a Scout review by its footer, matching this entity and head SHA', async () => {
+    const apiScript = `echo '{"data":{"repository":{"pullRequest":{
+      "reviewThreads":{"nodes":[]},
+      "commits":{"nodes":[]},
+      "comments":{"nodes":[]},
+      "reviews":{"nodes":[{"createdAt":"2026-07-01T00:00:00Z","body":"${scoutReviewFooter('IDEA-10', 'abcdef1234567890')}"}]}
+    }}}}'`;
+    const { root } = withGh(
+      [
+        row({
+          url: 'https://github.com/o/r/pull/10',
+          body: '**Plan:** `IDEA-10`',
+          headRefOid: 'abcdef1234567890',
+        }),
+      ],
+      apiScript,
+    );
+    const prs = await resolvePrsByEntity(root);
+    expect(prs?.get('IDEA-10')?.scoutReviewObserved).toBe(true);
+  });
+
+  it('does not observe a review whose footer names a different head SHA', async () => {
+    const apiScript = `echo '{"data":{"repository":{"pullRequest":{
+      "reviewThreads":{"nodes":[]},
+      "commits":{"nodes":[]},
+      "comments":{"nodes":[]},
+      "reviews":{"nodes":[{"createdAt":"2026-07-01T00:00:00Z","body":"${scoutReviewFooter('IDEA-11', 'stale-sha-000000')}"}]}
+    }}}}'`;
+    const { root } = withGh(
+      [
+        row({
+          url: 'https://github.com/o/r/pull/11',
+          body: '**Plan:** `IDEA-11`',
+          headRefOid: 'fresh-sha-1111111',
+        }),
+      ],
+      apiScript,
+    );
+    const prs = await resolvePrsByEntity(root);
+    expect(prs?.get('IDEA-11')?.scoutReviewObserved).toBeUndefined();
+  });
+
   it('does not fetch review-thread signal for merged/closed PRs', async () => {
     const { root, callCount } = withGh(
       [row({ url: 'https://github.com/o/r/pull/6', state: 'MERGED', body: '**Plan:** `IDEA-6`' })],
@@ -335,6 +381,61 @@ describe('createPrReview', () => {
     process.env.PATH = `${root}:${originalPath}`;
     expect(
       await createPrReview(root, 'https://github.com/o/r/pull/1', {
+        body: '',
+        event: 'COMMENT',
+        comments: [],
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('dispatchPrReview', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  it('POSTs a repository_dispatch nesting the review under client_payload.review', async () => {
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-dispatch-'));
+    const argsFile = join(fixtureDir, 'args');
+    const stdinFile = join(fixtureDir, 'stdin');
+    const { root } = installFakeGh(`echo "$@" > "${argsFile}"\ncat > "${stdinFile}"`);
+    process.env.PATH = `${root}:${originalPath}`;
+
+    const ok = await dispatchPrReview(root, 'https://github.com/o/r/pull/7', {
+      body: 'Looks good overall.',
+      event: 'COMMENT',
+      comments: [{ path: 'a.ts', line: 12, body: 'consider a guard here' }],
+    });
+
+    expect(ok).toBe(true);
+    expect(readFileSync(argsFile, 'utf-8').trim()).toBe(
+      'api repos/o/r/dispatches -X POST --input -',
+    );
+    expect(JSON.parse(readFileSync(stdinFile, 'utf-8'))).toEqual({
+      event_type: 'paper-camp-review',
+      client_payload: {
+        review: {
+          number: 7,
+          body: 'Looks good overall.',
+          event: 'COMMENT',
+          comments: [{ path: 'a.ts', line: 12, body: 'consider a guard here' }],
+        },
+      },
+    });
+  });
+
+  it('resolves false when the url is not a GitHub PR url', async () => {
+    expect(
+      await dispatchPrReview('/tmp', 'not-a-pr-url', { body: '', event: 'COMMENT', comments: [] }),
+    ).toBe(false);
+  });
+
+  it('resolves false when gh fails — no Actions, a fork, or offline', async () => {
+    const { root } = installFakeGh(`echo 'boom' >&2\nexit 1`);
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(
+      await dispatchPrReview(root, 'https://github.com/o/r/pull/1', {
         body: '',
         event: 'COMMENT',
         comments: [],

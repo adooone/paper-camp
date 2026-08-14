@@ -2,7 +2,7 @@
 id: IDEA-170
 title: Review pull requests with a local agent
 type: feat
-status: review
+status: done
 created: 2026-08-14
 updated: 2026-08-14
 tags:

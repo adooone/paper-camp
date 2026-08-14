@@ -18,12 +18,14 @@ import { COMMIT_SCOPES, resolvePrimaryScope } from './scopes';
 export {
   clearPrCache,
   createPrReview,
+  dispatchPrReview,
   fetchUnresolvedThreads,
   type PrReviewComment,
   type PrReviewInput,
   replyToReviewThread,
   resolvePrsByEntity,
   resolveReviewThread,
+  scoutReviewFooter,
 } from './pr-lookup';
 
 interface GhPrCommentRow {

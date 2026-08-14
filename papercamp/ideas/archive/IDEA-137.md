@@ -2,8 +2,9 @@
 id: IDEA-137
 title: Durable drafted plans
 type: fix
-status: review
+status: done
 created: 2026-08-06
+updated: 2026-08-14
 tags:
   - agents
   - plans

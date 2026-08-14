@@ -68,3 +68,14 @@ Auto-rebasing the branch or auto-reconciling a diverged `main` — this detects
 and refuses, the human chooses the fix ([[IDEA-108]] owns surfacing divergence).
 Detecting duplicate work already committed under two different SHAs after the
 fact; this is a pre-flight guard only.
+
+### Phases
+- [ ] Read phase state at a git ref
+      Add a helper that runs `git show <ref>:papercamp/ideas/<ID>.md` and returns the checked/unchecked count, tolerating a missing entity at that ref.
+- [ ] Compare current branch against main and origin/main
+      Flag staleness when either ref shows phases checked that the current branch shows unchecked; return the offending ref and its count for the message.
+- [ ] Refuse run-all on a stale base
+      Run the comparison before run-all starts and abort with the "already N/N complete on main — rebase or switch branches" message.
+- [ ] Warn on ensureBranch when HEAD is behind
+      Run the same comparison before creating a plan's branch and warn while the branch does not yet exist.
+- [ ] Cover the guard with tests

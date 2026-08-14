@@ -192,7 +192,8 @@ describe('buildPrReviewPrompt', () => {
     expect(prompt).toContain('Do not use any write tools');
     expect(prompt).toContain("not the authoring run's transcript or log");
     expect(prompt).toContain('"findings"');
-    expect(prompt).toContain('"summary"');
+    expect(prompt).toContain('"verdict"');
+    expect(prompt).toContain('"assessment"');
   });
 });
 

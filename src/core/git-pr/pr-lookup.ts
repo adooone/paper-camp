@@ -63,6 +63,7 @@ export function resolveEntityIdFromPrRef(
 interface ReviewSignal {
   unresolvedThreadCount: number;
   hasNewCommentsSincePush: boolean;
+  reviewBodies: string[];
 }
 
 const REVIEW_THREADS_QUERY = `
@@ -72,7 +73,7 @@ query($owner: String!, $repo: String!, $number: Int!) {
       reviewThreads(first: 100) { nodes { isResolved } }
       commits(last: 1) { nodes { commit { committedDate } } }
       comments(last: 1) { nodes { createdAt } }
-      reviews(last: 1) { nodes { createdAt } }
+      reviews(last: 20) { nodes { createdAt body } }
     }
   }
 }`;
@@ -81,7 +82,15 @@ interface GraphqlPullRequest {
   reviewThreads: { nodes: { isResolved: boolean }[] };
   commits: { nodes: { commit: { committedDate: string } }[] };
   comments: { nodes: { createdAt: string }[] };
-  reviews: { nodes: { createdAt: string }[] };
+  reviews: { nodes: { createdAt: string; body: string }[] };
+}
+
+/** Rendered into the GitHub review body's footer by `renderReviewGithubBody` — the
+ * one marker that ties a posted review back to the SHA `triggerPrReviews` is
+ * waiting to observe, regardless of whether it arrived via the Scout dispatch or
+ * the direct-post fallback. */
+export function scoutReviewFooter(entityId: string, sha: string): string {
+  return `Paper Scout · ${entityId} · ${sha.slice(0, 7)}`;
 }
 
 export function parsePrUrl(url: string): { owner: string; repo: string; number: string } | null {
@@ -179,12 +188,13 @@ async function fetchReviewSignal(root: string, url: string): Promise<ReviewSigna
   if (!pr) return undefined;
   const unresolvedThreadCount = pr.reviewThreads.nodes.filter((n) => !n.isResolved).length;
   const pushedAt = pr.commits.nodes[0]?.commit.committedDate;
-  const latestActivity = [pr.comments.nodes[0]?.createdAt, pr.reviews.nodes[0]?.createdAt]
+  const latestActivity = [pr.comments.nodes[0]?.createdAt, pr.reviews.nodes.at(-1)?.createdAt]
     .filter((d): d is string => Boolean(d))
     .sort()
     .at(-1);
   const hasNewCommentsSincePush = Boolean(pushedAt && latestActivity && latestActivity > pushedAt);
-  return { unresolvedThreadCount, hasNewCommentsSincePush };
+  const reviewBodies = pr.reviews.nodes.map((n) => n.body);
+  return { unresolvedThreadCount, hasNewCommentsSincePush, reviewBodies };
 }
 
 const REVIEW_THREAD_COMMENTS_QUERY = `
@@ -311,6 +321,22 @@ export async function createPrReview(
   );
 }
 
+/** Best-effort, like `createPrReview`: `false` on any failure — including no
+ * `SCOUT_APP_ID`/`SCOUT_PRIVATE_KEY` wired up, offline, or a fork with no
+ * Actions access to this repo. Callers fall back to `createPrReview`. */
+export async function dispatchPrReview(
+  root: string,
+  url: string,
+  review: PrReviewInput,
+): Promise<boolean> {
+  const parsed = parsePrUrl(url);
+  if (!parsed) return false;
+  return runGhApiPostJson(root, `repos/${parsed.owner}/${parsed.repo}/dispatches`, {
+    event_type: 'paper-camp-review',
+    client_payload: { review: { number: Number(parsed.number), ...review } },
+  });
+}
+
 async function enrichWithReviewSignal(root: string, byId: Map<string, PrInfo>): Promise<void> {
   const active = [...byId.entries()].filter(
     ([, info]) => info.state === 'open' || info.state === 'draft',
@@ -318,7 +344,12 @@ async function enrichWithReviewSignal(root: string, byId: Map<string, PrInfo>): 
   const signals = await Promise.all(active.map(([, info]) => fetchReviewSignal(root, info.url)));
   active.forEach(([id, info], i) => {
     const signal = signals[i];
-    if (signal) byId.set(id, { ...info, ...signal });
+    if (!signal) return;
+    const { reviewBodies, ...rest } = signal;
+    const scoutReviewObserved =
+      Boolean(info.headSha) &&
+      reviewBodies.some((body) => body.includes(scoutReviewFooter(id, info.headSha as string)));
+    byId.set(id, { ...info, ...rest, ...(scoutReviewObserved && { scoutReviewObserved }) });
   });
 }
 

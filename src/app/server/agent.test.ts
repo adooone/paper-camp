@@ -1501,14 +1501,16 @@ describe('startPrReview', () => {
   it('appends the verdict summary as a [review] thread message on the idea', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
     agentScript.current = reportScript({
-      summary: 'Looks good, one nit.',
+      verdict: 'comment',
+      assessment: 'Looks good, one nit.',
+      concerns: [],
       findings: [{ path: 'src/a.ts', line: 3, body: 'consider a guard here' }],
     });
     const manager = createAgentManager(root);
 
     manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
     expect(await waitForStatus(manager, settled)).toBe('done');
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const { readFile } = await import('node:fs/promises');
     const { join } = await import('node:path');
