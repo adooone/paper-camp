@@ -112,7 +112,8 @@ repo; run both until this earns the slot.
 - [x] Build the `pr-review` task kind and review prompt
       Assemble the diff, idea body, phases and thread; withhold the authoring run's transcript and log.
       run: 7m4s · 4.5k in · 22.4k out · sonnet-5
-- [ ] Wire the PR-poll trigger
+- [x] Wire the PR-poll trigger
       Fire only when the PR is open (non-draft), CI is green, and the head SHA is unreviewed; durably record the reviewed SHA and sweep on boot.
+      run: 15m46s · 2k in · 57.5k out · sonnet-5
 - [ ] Post the review and corpus summary
       Emit per-line comments as resolvable threads and land the verdict as a `[review]` thread message on the idea.

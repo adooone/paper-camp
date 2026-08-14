@@ -188,6 +188,9 @@ export interface PrInfo {
   unresolvedThreadCount?: number;
   /** Whether a comment or review landed after the PR's last commit — a proxy for "since the last agent pass" (a pass ends with a push). Only fetched for open/draft PRs. */
   hasNewCommentsSincePush?: boolean;
+  /** Full SHA of the PR's current head commit — what a pr-review is scoped to (IDEA-170). */
+  headSha?: string;
+  headBranch?: string;
 }
 
 export interface PlanEntry {

@@ -17,6 +17,7 @@ interface GhPrRow {
   state: string;
   isDraft: boolean;
   headRefName: string;
+  headRefOid: string;
   body: string;
   reviewDecision: string;
 }
@@ -37,7 +38,14 @@ function toPrInfo(row: GhPrRow): PrInfo {
           ? 'draft'
           : 'open';
   const reviewDecision = REVIEW_DECISION[row.reviewDecision];
-  return { number: row.number, url: row.url, state, ...(reviewDecision && { reviewDecision }) };
+  return {
+    number: row.number,
+    url: row.url,
+    state,
+    ...(reviewDecision && { reviewDecision }),
+    ...(row.headRefOid && { headSha: row.headRefOid }),
+    ...(row.headRefName && { headBranch: row.headRefName }),
+  };
 }
 
 const STATE_RANK: Record<PrInfo['state'], number> = { merged: 4, open: 3, draft: 2, closed: 1 };
@@ -326,7 +334,7 @@ async function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undef
     '--limit',
     '2000',
     '--json',
-    'number,url,state,isDraft,headRefName,body,reviewDecision',
+    'number,url,state,isDraft,headRefName,headRefOid,body,reviewDecision',
   ]);
   if (!rows) return undefined;
 
