@@ -103,8 +103,9 @@ review — this posts findings, a human decides. Removing CodeRabbit from the
 repo; run both until this earns the slot.
 
 ### Phases
-- [ ] Add `codeReview` to `defaultAgents` and Settings
+- [x] Add `codeReview` to `defaultAgents` and Settings
       Configure it independently of the four existing tasks and enforce a model different from the code's author.
+      run: 6m17s · 10.4k in · 19.9k out · sonnet-5
 - [ ] Add the create-review GitHub write op
       Wrap `POST /repos/{owner}/{repo}/pulls/{n}/reviews` alongside the existing read/reply/resolve ops.
 - [ ] Build the `pr-review` task kind and review prompt

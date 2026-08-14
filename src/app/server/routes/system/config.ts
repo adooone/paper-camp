@@ -8,6 +8,7 @@ import {
   type PaperCampConfig,
   TOOLBAR_SEGMENT_IDS,
   type ToolbarSegmentId,
+  agentConfigsEqual,
   coerceAgentConfig,
 } from '@/types/index';
 import { readMaybe } from '../../helpers';
@@ -94,6 +95,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
             'ideaExtend',
             'commitSuggest',
             'feedback',
+            'codeReview',
           ] as const) {
             const val = rawDefaultAgents[key];
             const agentId =
@@ -102,6 +104,14 @@ export function configRoutes({ root }: RouteContext): Route[] {
               sendJson(res, 400, { error: `defaultAgents.${key} must be a known agent id` });
               return;
             }
+          }
+          const newPhase = coerceAgentConfig(rawDefaultAgents.phase);
+          const newCodeReview = coerceAgentConfig(rawDefaultAgents.codeReview);
+          if (agentConfigsEqual(newCodeReview, newPhase)) {
+            sendJson(res, 400, {
+              error: 'defaultAgents.codeReview must use a different model than defaultAgents.phase',
+            });
+            return;
           }
         }
         if (integration !== undefined && !isPlainObject(integration)) {
@@ -153,6 +163,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
               ideaExtend: coerceAgentConfig(rawDefaultAgents.ideaExtend),
               commitSuggest: coerceAgentConfig(rawDefaultAgents.commitSuggest),
               feedback: coerceAgentConfig(rawDefaultAgents.feedback),
+              codeReview: coerceAgentConfig(rawDefaultAgents.codeReview),
             }
           : undefined;
         const resolvedDefaultAgents: DefaultAgentsMap | undefined =
@@ -164,6 +175,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
                 ideaExtend: { agent: defaultAgent },
                 commitSuggest: { agent: defaultAgent },
                 feedback: { agent: defaultAgent },
+                codeReview: { agent: defaultAgent },
               }
             : undefined);
         const configWithOld = config as PaperCampConfig & { defaultAgent?: AgentId };

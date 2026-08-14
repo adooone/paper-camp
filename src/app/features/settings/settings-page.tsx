@@ -11,6 +11,7 @@ import {
   DEFAULT_AGENTS,
   type DefaultAgentsMap,
   type PaperCampConfig,
+  agentConfigsEqual,
 } from '@/types/index';
 import { Alert, Button, Card, Divider, Input, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useRef, useState } from 'react';
@@ -18,7 +19,14 @@ import { MergePolicySection } from './components/merge-policy-section';
 import { SetupSection } from './components/setup-section';
 import { SubjectsSection } from './components/subjects-section';
 
-const TASK_TYPE_KEYS = ['phase', 'planDraft', 'ideaExtend', 'commitSuggest', 'feedback'] as const;
+const TASK_TYPE_KEYS = [
+  'phase',
+  'planDraft',
+  'ideaExtend',
+  'commitSuggest',
+  'feedback',
+  'codeReview',
+] as const;
 type TaskTypeKey = (typeof TASK_TYPE_KEYS)[number];
 
 const TASK_TYPE_LABELS: Record<TaskTypeKey, string> = {
@@ -27,6 +35,7 @@ const TASK_TYPE_LABELS: Record<TaskTypeKey, string> = {
   ideaExtend: 'Idea extend',
   commitSuggest: 'Commit suggest',
   feedback: 'Scout chat',
+  codeReview: 'Code review',
 };
 
 interface AgentTaskRowProps {
@@ -34,6 +43,8 @@ interface AgentTaskRowProps {
   agentConfig: AgentConfig;
   isLast: boolean;
   onSave: (key: TaskTypeKey, config: AgentConfig) => Promise<void>;
+  /** The code-authoring task's config — codeReview's model must never match it (IDEA-170). */
+  authorConfig?: AgentConfig;
 }
 
 const TASK_COLUMN_WIDTH = 110;
@@ -50,10 +61,23 @@ const AgentTaskRowHeader = () => (
   </div>
 );
 
-const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave }: AgentTaskRowProps) => {
+const AgentTaskRow = ({
+  taskKey,
+  agentConfig,
+  isLast,
+  onSave,
+  authorConfig,
+}: AgentTaskRowProps) => {
   // Fall back if the config carries an unknown agent id — never white-screen the page.
   const opts = AGENT_OPTIONS[agentConfig.agent] ?? AGENT_OPTIONS['claude-code'];
-  const modelOpts = opts.model;
+  // Only the author's model is excluded, and only while both rows share the same agent id.
+  const excludedModel =
+    authorConfig && authorConfig.agent === agentConfig.agent
+      ? (authorConfig.model ?? '')
+      : undefined;
+  const modelOpts = Array.isArray(opts.model)
+    ? opts.model.filter((m) => m !== excludedModel)
+    : opts.model;
   const effortOpts = opts.effort;
   const [localModel, setLocalModel] = useState(agentConfig.model ?? '');
 
@@ -109,7 +133,7 @@ const AgentTaskRow = ({ taskKey, agentConfig, isLast, onSave }: AgentTaskRowProp
             value={agentConfig.model ?? ''}
             onChange={handleModelSelectChange}
             options={[
-              { value: '', label: 'Default' },
+              ...(excludedModel === '' ? [] : [{ value: '', label: 'Default' }]),
               ...modelOpts.map((m) => ({ value: m, label: m })),
             ]}
           />
@@ -170,8 +194,17 @@ const GeneralSection = () => {
       ideaExtend: current?.ideaExtend ?? DEFAULT_AGENTS.ideaExtend,
       commitSuggest: current?.commitSuggest ?? DEFAULT_AGENTS.commitSuggest,
       feedback: current?.feedback ?? DEFAULT_AGENTS.feedback,
+      codeReview: current?.codeReview ?? DEFAULT_AGENTS.codeReview,
       [key]: newEntry,
     };
+    if (key === 'codeReview' && agentConfigsEqual(newEntry, updated.phase)) {
+      toast({
+        title: 'Failed to save',
+        description: 'Code review must use a different model than Phase run.',
+        variant: 'error',
+      });
+      return;
+    }
     const { ok, error } = await saveConfig({ defaultAgents: updated });
     if (ok) {
       setConfig((prev) => (prev ? { ...prev, defaultAgents: updated } : prev));
@@ -336,6 +369,11 @@ const GeneralSection = () => {
               agentConfig={config.defaultAgents?.[key] ?? DEFAULT_AGENTS[key]}
               isLast={idx === TASK_TYPE_KEYS.length - 1}
               onSave={handleSaveAgentConfig}
+              authorConfig={
+                key === 'codeReview'
+                  ? (config.defaultAgents?.phase ?? DEFAULT_AGENTS.phase)
+                  : undefined
+              }
             />
           ))}
         </Card>

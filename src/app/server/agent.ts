@@ -125,6 +125,9 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         feedback: rawAgents.feedback
           ? coerceAgentConfig(rawAgents.feedback)
           : DEFAULT_AGENTS.feedback,
+        codeReview: rawAgents.codeReview
+          ? coerceAgentConfig(rawAgents.codeReview)
+          : DEFAULT_AGENTS.codeReview,
       };
     }
     if (config.defaultAgent) {
@@ -135,6 +138,7 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         ideaExtend: { agent: id },
         commitSuggest: { agent: id },
         feedback: { agent: id },
+        codeReview: { agent: id },
       };
     }
     return DEFAULT_AGENTS;

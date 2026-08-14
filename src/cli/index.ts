@@ -418,6 +418,9 @@ program
           feedback: rawAgents.feedback
             ? coerceAgentConfig(rawAgents.feedback)
             : DEFAULT_AGENTS.feedback,
+          codeReview: rawAgents.codeReview
+            ? coerceAgentConfig(rawAgents.codeReview)
+            : DEFAULT_AGENTS.codeReview,
         }
       : DEFAULT_AGENTS;
     const { adapter, model, effort } = resolveAgent({ defaultAgents, taskKind: 'audit' });

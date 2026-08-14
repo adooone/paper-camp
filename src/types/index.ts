@@ -489,6 +489,7 @@ export interface DefaultAgentsMap {
   ideaExtend: AgentConfig;
   commitSuggest: AgentConfig;
   feedback: AgentConfig;
+  codeReview: AgentConfig;
 }
 
 export const DEFAULT_AGENTS: DefaultAgentsMap = {
@@ -497,7 +498,13 @@ export const DEFAULT_AGENTS: DefaultAgentsMap = {
   ideaExtend: { agent: 'claude-code' },
   commitSuggest: { agent: 'claude-code' },
   feedback: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
+  codeReview: { agent: 'claude-code', model: 'opus', effort: 'high' },
 };
+
+/** A reviewer must not use the same model as the task that wrote the code (IDEA-170) — self-review rubber-stamps. */
+export function agentConfigsEqual(a: AgentConfig, b: AgentConfig): boolean {
+  return a.agent === b.agent && (a.model ?? '') === (b.model ?? '');
+}
 
 /** Toolbar segments, left to right (IDEA-128/IDEA-133); trimmed per project via `IntegrationConfig.toolbar.segments`. */
 export const TOOLBAR_SEGMENT_IDS = ['focus', 'scout', 'desk'] as const;
