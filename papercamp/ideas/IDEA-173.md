@@ -2,7 +2,7 @@
 id: IDEA-173
 title: Never lose a computed PR review
 type: fix
-status: idea
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -85,5 +85,6 @@ The review prompt and what the reviewer checks. The trigger gates
 - [x] Cap consecutive delivery failures per SHA
       Track failures on one SHA and, after a small number, record it and surface the give-up so a permanently failing post stops re-reviewing every poll.
       run: 4m38s · 520 in · 9.6k out · sonnet-5
-- [ ] Degrade a 422-rejected review
+- [x] Degrade a 422-rejected review
       Retry `createPrReview` without the offending comments, or fall back to a summary-only review, so one bad line number costs one finding, not the whole review.
+      run: 6m13s · 4.3k in · 17.5k out · sonnet-5

@@ -297,6 +297,47 @@ describe('postPrReview', () => {
     expect(directCall.body).not.toContain('omitted');
   });
 
+  it('degrades to a summary-only post when GitHub rejects a comment line with a 422', async () => {
+    gitPr.dispatchPrReview.mockResolvedValue({ delivered: false });
+    gitPr.createPrReview
+      .mockResolvedValueOnce({
+        delivered: false,
+        body: 'gh: Validation Failed (HTTP 422)\nline must be part of the diff',
+      })
+      .mockResolvedValueOnce({ delivered: true });
+    const root = await makeRoot();
+    const lines: string[] = [];
+
+    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, (line) =>
+      lines.push(line),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(gitPr.createPrReview).toHaveBeenCalledTimes(2);
+    const [firstCall, secondCall] = gitPr.createPrReview.mock.calls;
+    expect(firstCall[2].comments).toHaveLength(1);
+    expect(secondCall[2].comments).toEqual([]);
+    expect(secondCall[2].body).toContain('1 finding omitted — GitHub rejected the line');
+    expect(lines[0]).toContain(
+      'posted directly to GitHub, dispatch unavailable (0 findings, 1 dropped — invalid line)',
+    );
+  });
+
+  it('does not retry a direct-post failure that is not a 422', async () => {
+    gitPr.dispatchPrReview.mockResolvedValue({ delivered: false });
+    gitPr.createPrReview.mockResolvedValue({ delivered: false, body: 'gh: connection reset' });
+    const root = await makeRoot();
+    const lines: string[] = [];
+
+    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, (line) =>
+      lines.push(line),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(gitPr.createPrReview).toHaveBeenCalledTimes(1);
+    expect(lines[0]).toContain('GitHub post failed');
+  });
+
   it('records the rendered thread message on the idea file', async () => {
     gitPr.dispatchPrReview.mockResolvedValue({ delivered: true });
     const root = await makeRoot();
