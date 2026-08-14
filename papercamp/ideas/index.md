@@ -137,7 +137,7 @@
 | IDEA-134 | Plans page decluttering | fix | done | app, ui, plans, stack |
 | IDEA-135 | Run analytics | feat | done | agent, stats, server, ui |
 | IDEA-136 | Roadmap page redesign | fix | done | app, ui, roadmap |
-| IDEA-137 | Durable drafted plans | fix | planned | agents, plans, git |
+| IDEA-137 | Durable drafted plans | fix | done | agents, plans, git |
 | IDEA-138 | Single-bar toolbar with a Stack-style chat sidebar | feat | done | integration, app, ux, chat |
 | IDEA-139 | Desk is broken under the mount — router basepath, API base, and a friendlier route | fix | done | integration, app, cli |
 | IDEA-140 | Bottom-center island | feat | done | integration, app, ux, motion |
@@ -169,4 +169,6 @@
 | IDEA-166 | Readable diffs on the git page | feat | planned | app, git, ui |
 | IDEA-167 | Git status vocabulary and chrome | fix | planned | app, git, ux |
 | IDEA-168 | Version the corpus format | feat | planned | format, core |
-| IDEA-169 | Draft all ideas at once | feat | review | app, plans, agent |
+| IDEA-169 | Draft all ideas at once | feat | done | app, plans, agent |
+| IDEA-170 | Review pull requests with a local agent | feat | idea | app, agent, github |
+| IDEA-171 | Run-all redoes work from a stale base | fix | idea | agent, plans, git |
