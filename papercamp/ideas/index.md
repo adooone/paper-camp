@@ -172,3 +172,4 @@
 | IDEA-169 | Draft all ideas at once | feat | done | app, plans, agent |
 | IDEA-170 | Review pull requests with a local agent | feat | idea | app, agent, github |
 | IDEA-171 | Run-all redoes work from a stale base | fix | idea | agent, plans, git |
+| IDEA-172 | Persist drafts and UI choices | fix | idea | app, ui, ux |
