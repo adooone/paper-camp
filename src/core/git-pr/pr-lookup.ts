@@ -311,6 +311,22 @@ export async function createPrReview(
   );
 }
 
+/** Best-effort, like `createPrReview`: `false` on any failure — including no
+ * `SCOUT_APP_ID`/`SCOUT_PRIVATE_KEY` wired up, offline, or a fork with no
+ * Actions access to this repo. Callers fall back to `createPrReview`. */
+export async function dispatchPrReview(
+  root: string,
+  url: string,
+  review: PrReviewInput,
+): Promise<boolean> {
+  const parsed = parsePrUrl(url);
+  if (!parsed) return false;
+  return runGhApiPostJson(root, `repos/${parsed.owner}/${parsed.repo}/dispatches`, {
+    event_type: 'paper-camp-review',
+    client_payload: { review: { number: Number(parsed.number), ...review } },
+  });
+}
+
 async function enrichWithReviewSignal(root: string, byId: Map<string, PrInfo>): Promise<void> {
   const active = [...byId.entries()].filter(
     ([, info]) => info.state === 'open' || info.state === 'draft',

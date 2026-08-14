@@ -1510,7 +1510,7 @@ describe('startPrReview', () => {
 
     manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
     expect(await waitForStatus(manager, settled)).toBe('done');
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const { readFile } = await import('node:fs/promises');
     const { join } = await import('node:path');

@@ -1,10 +1,20 @@
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { PrReviewResult } from '@/types/index';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   parsePrReviewResult,
+  postPrReview,
   renderReviewGithubBody,
   renderReviewThreadMessage,
 } from './pr-review-settle';
+
+const gitPr = vi.hoisted(() => ({
+  dispatchPrReview: vi.fn(),
+  createPrReview: vi.fn(),
+}));
+vi.mock('@/core/git-pr', () => gitPr);
 
 describe('parsePrReviewResult', () => {
   it('parses a clean verdict with findings', () => {
@@ -177,5 +187,118 @@ describe('renderReviewThreadMessage', () => {
     expect(message).not.toContain('\n');
     expect(message).not.toContain('<sub>');
     expect(message).not.toContain('- ');
+  });
+});
+
+describe('postPrReview', () => {
+  const roots: string[] = [];
+
+  afterEach(async () => {
+    gitPr.dispatchPrReview.mockReset();
+    gitPr.createPrReview.mockReset();
+    await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
+  });
+
+  async function makeRoot() {
+    const root = await mkdtemp(join(tmpdir(), 'papercamp-pr-review-settle-'));
+    roots.push(root);
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(
+      join(root, 'papercamp', 'ideas', 'IDEA-170.md'),
+      '---\nid: IDEA-170\ntitle: Test idea\ntype: feat\nstatus: in-progress\ncreated: 2026-07-01\n---\nBody.\n',
+    );
+    return root;
+  }
+
+  const result: PrReviewResult = {
+    verdict: 'comment',
+    assessment: 'Looks fine.',
+    concerns: [],
+    findings: [{ path: 'a.ts', line: 1, body: 'x' }],
+  };
+
+  it('reports the dispatch path and skips the direct post when the dispatch succeeds', async () => {
+    gitPr.dispatchPrReview.mockResolvedValue(true);
+    const root = await makeRoot();
+    const lines: string[] = [];
+
+    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, (line) =>
+      lines.push(line),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(gitPr.dispatchPrReview).toHaveBeenCalledTimes(1);
+    expect(gitPr.createPrReview).not.toHaveBeenCalled();
+    expect(lines[0]).toContain('dispatched to the Scout review workflow (1 finding)');
+    expect(lines[0]).toContain('recorded on the idea');
+  });
+
+  it('falls back to a direct post and says so when the dispatch fails', async () => {
+    gitPr.dispatchPrReview.mockResolvedValue(false);
+    gitPr.createPrReview.mockResolvedValue(true);
+    const root = await makeRoot();
+    const lines: string[] = [];
+
+    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, (line) =>
+      lines.push(line),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(gitPr.createPrReview).toHaveBeenCalledTimes(1);
+    expect(lines[0]).toContain('posted directly to GitHub, dispatch unavailable (1 finding)');
+  });
+
+  it('reports the post as failed when both the dispatch and the direct post fail', async () => {
+    gitPr.dispatchPrReview.mockResolvedValue(false);
+    gitPr.createPrReview.mockResolvedValue(false);
+    const root = await makeRoot();
+    const lines: string[] = [];
+
+    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, (line) =>
+      lines.push(line),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(lines[0]).toContain('GitHub post failed');
+  });
+
+  it('caps findings sent in the dispatch and notes the drop in the rendered body, but sends every finding on the direct-post fallback', async () => {
+    const manyFindings = Array.from({ length: 25 }, (_, i) => ({
+      path: `f${i}.ts`,
+      line: i + 1,
+      body: `finding ${i}`,
+    }));
+    const many: PrReviewResult = { ...result, findings: manyFindings };
+
+    gitPr.dispatchPrReview.mockResolvedValue(true);
+    const root = await makeRoot();
+    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', many, () => {});
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const dispatchCall = gitPr.dispatchPrReview.mock.calls[0][2];
+    expect(dispatchCall.comments).toHaveLength(20);
+    expect(dispatchCall.body).toContain("5 findings omitted to fit the review's size limit.");
+
+    gitPr.dispatchPrReview.mockReset();
+    gitPr.dispatchPrReview.mockResolvedValue(false);
+    gitPr.createPrReview.mockResolvedValue(true);
+    const root2 = await makeRoot();
+    postPrReview(root2, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', many, () => {});
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const directCall = gitPr.createPrReview.mock.calls[0][2];
+    expect(directCall.comments).toHaveLength(25);
+    expect(directCall.body).not.toContain('omitted');
+  });
+
+  it('records the rendered thread message on the idea file', async () => {
+    gitPr.dispatchPrReview.mockResolvedValue(true);
+    const root = await makeRoot();
+
+    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, () => {});
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const raw = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-170.md'), 'utf-8');
+    expect(raw).toContain(renderReviewThreadMessage(result));
   });
 });

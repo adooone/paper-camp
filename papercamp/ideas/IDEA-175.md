@@ -118,10 +118,11 @@ anything other than reviews.
       Concerns, footer) and the one-line `[review]` thread message; note dropped
       findings in the rendered summary.
       run: 4m50s · 4.3k in · 10.8k out · sonnet-5
-- [ ] Post through a repository dispatch with a fallback
+- [x] Post through a repository dispatch with a fallback
       Make `postPrReview` dispatch `paper-camp-review` with everything nested
       under `client_payload.review` and capped, falling back to the direct
       user post and reporting the path taken in the task line.
+      run: 8m29s · 954 in · 21.7k out · sonnet-5
 - [ ] Add the scout-review workflow
       New `.github/workflows/scout-review.yml` on `repository_dispatch` that
       mints the Scout token as `draft-pr.yml` does and posts the review; must

@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { createPrReview } from '@/core/git-pr';
+import { createPrReview, dispatchPrReview } from '@/core/git-pr';
 import { readEntities } from '@/core/readers';
 import { agentThreadMessage } from '@/core/serialize';
 import type { PrReviewFinding, PrReviewResult, PrReviewVerdict } from '@/types/index';
@@ -64,6 +64,16 @@ function findingsPhrase(n: number): string {
   return `${n} finding${n === 1 ? '' : 's'}`;
 }
 
+const MAX_DISPATCH_FINDINGS = 20;
+
+function capFindings(findings: PrReviewFinding[]): { kept: PrReviewFinding[]; dropped: number } {
+  if (findings.length <= MAX_DISPATCH_FINDINGS) return { kept: findings, dropped: 0 };
+  return {
+    kept: findings.slice(0, MAX_DISPATCH_FINDINGS),
+    dropped: findings.length - MAX_DISPATCH_FINDINGS,
+  };
+}
+
 export function renderReviewGithubBody(
   result: PrReviewResult,
   footer: { ideaId: string; sha: string; droppedFindings?: number },
@@ -124,19 +134,31 @@ export function postPrReview(
   onLine: (text: string) => void,
 ): void {
   void (async () => {
+    const { kept, dropped } = capFindings(result.findings);
+    const dispatched = await dispatchPrReview(root, prUrl, {
+      body: renderReviewGithubBody(result, { ideaId: entityId, sha, droppedFindings: dropped }),
+      event: 'COMMENT',
+      comments: kept,
+    }).catch(() => false);
+
     const [posted, logged] = await Promise.all([
-      createPrReview(root, prUrl, {
-        body: renderReviewGithubBody(result, { ideaId: entityId, sha }),
-        event: 'COMMENT',
-        comments: result.findings,
-      }).catch(() => false),
+      dispatched
+        ? Promise.resolve(true)
+        : createPrReview(root, prUrl, {
+            body: renderReviewGithubBody(result, { ideaId: entityId, sha }),
+            event: 'COMMENT',
+            comments: result.findings,
+          }).catch(() => false),
       appendReviewThreadMessage(root, entityId, renderReviewThreadMessage(result)).catch(
         () => false,
       ),
     ]);
-    const postPart = posted
-      ? `posted to GitHub (${findingsPhrase(result.findings.length)})`
-      : 'GitHub post failed';
+
+    const postPart = dispatched
+      ? `dispatched to the Scout review workflow (${findingsPhrase(kept.length)}${dropped ? `, ${dropped} dropped` : ''})`
+      : posted
+        ? `posted directly to GitHub, dispatch unavailable (${findingsPhrase(result.findings.length)})`
+        : 'GitHub post failed';
     const logPart = logged ? 'recorded on the idea' : 'could not record on the idea';
     onLine(`Review ${postPart}, ${logPart}`);
   })();
