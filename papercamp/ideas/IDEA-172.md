@@ -99,8 +99,9 @@ and a failed persist must degrade to in-memory rather than break the form.
 - [x] Build the localStorage persistence helper
       One module wrapping read/write/remove in the `stack-open` try/catch, stamping each draft with a timestamp and dropping entries past the staleness cap on read.
       run: 1m48s · 6k in · 6.7k out · sonnet-5
-- [ ] Fix the commit-suggestion recovery
+- [x] Fix the commit-suggestion recovery
       Discriminate on whether the suggestion is newer than the form's last clear instead of snapshotting stale IDs at mount, and drop the `!plan` early return so `/git` recovers too.
+      run: 4m4s · 656 in · 11.3k out · sonnet-5
 - [ ] Persist the commit draft per entity
       Key on `commit-draft:<ID>` plus the plan-less `/git` key, restore on mount, and clear the stored copy where the form already resets on a successful commit.
 - [ ] Persist the remaining draft inputs
