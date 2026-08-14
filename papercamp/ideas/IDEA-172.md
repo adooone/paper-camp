@@ -94,3 +94,15 @@ with hundreds of ideas doesn't leave hundreds of dead keys behind.
 Every write goes through one small helper with the `try`/`catch` the existing
 `stack-open` code already models — `localStorage` throws in private browsing,
 and a failed persist must degrade to in-memory rather than break the form.
+
+### Phases
+- [ ] Build the localStorage persistence helper
+      One module wrapping read/write/remove in the `stack-open` try/catch, stamping each draft with a timestamp and dropping entries past the staleness cap on read.
+- [ ] Fix the commit-suggestion recovery
+      Discriminate on whether the suggestion is newer than the form's last clear instead of snapshotting stale IDs at mount, and drop the `!plan` early return so `/git` recovers too.
+- [ ] Persist the commit draft per entity
+      Key on `commit-draft:<ID>` plus the plan-less `/git` key, restore on mount, and clear the stored copy where the form already resets on a successful commit.
+- [ ] Persist the remaining draft inputs
+      Feedback chat, add-review-phases, and inbox question reply, each through the helper.
+- [ ] Persist the UI-choice toggles
+      Plans `view`, `planFilters`, and `detailView`; leave `docSearchQuery` and server-derived state alone.

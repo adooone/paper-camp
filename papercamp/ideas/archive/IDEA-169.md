@@ -2,9 +2,9 @@
 id: IDEA-169
 title: Draft all ideas at once
 type: feat
-status: review
+status: done
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-14
 tags:
   - app
   - plans
