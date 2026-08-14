@@ -123,10 +123,11 @@ anything other than reviews.
       under `client_payload.review` and capped, falling back to the direct
       user post and reporting the path taken in the task line.
       run: 8m29s · 954 in · 21.7k out · sonnet-5
-- [ ] Add the scout-review workflow
+- [x] Add the scout-review workflow
       New `.github/workflows/scout-review.yml` on `repository_dispatch` that
       mints the Scout token as `draft-pr.yml` does and posts the review; must
       merge to `main` before it can fire.
+      run: 1m6s · 361 in · 3.7k out · sonnet-5
 - [ ] Record the reviewed SHA from the poller
       Land on [[IDEA-173]], then mark a head SHA reviewed only when a later poll
       observes a Scout review present for it, keeping unobserved SHAs retryable.
