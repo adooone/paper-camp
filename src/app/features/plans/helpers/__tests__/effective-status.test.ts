@@ -1,6 +1,6 @@
 import type { AgentTaskState, PlanEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
-import { effectiveStatus, runningTaskForPlan } from '../helpers';
+import { effectiveStatus, runningPrReviewForPlan, runningTaskForPlan } from '../helpers';
 
 const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
   title: 'Untitled',
@@ -35,6 +35,23 @@ describe('runningTaskForPlan', () => {
 
   it('returns undefined without a plan id', () => {
     expect(runningTaskForPlan(undefined, [task({ planId: 'IDEA-1' })])).toBeUndefined();
+  });
+});
+
+describe('runningPrReviewForPlan', () => {
+  it('finds a running pr-review task matching the plan id', () => {
+    const tasks = [task({ planId: 'IDEA-1', taskKind: 'pr-review' })];
+    expect(runningPrReviewForPlan('IDEA-1', tasks)).toBe(tasks[0]);
+  });
+
+  it('ignores a running task of a different kind', () => {
+    const tasks = [task({ planId: 'IDEA-1', taskKind: 'phase' })];
+    expect(runningPrReviewForPlan('IDEA-1', tasks)).toBeUndefined();
+  });
+
+  it('ignores a done pr-review task', () => {
+    const tasks = [task({ planId: 'IDEA-1', taskKind: 'pr-review', status: 'done' })];
+    expect(runningPrReviewForPlan('IDEA-1', tasks)).toBeUndefined();
   });
 });
 

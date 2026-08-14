@@ -50,8 +50,9 @@ page.
 - [x] Subtitle a running review in the Stack panel
       Add the `pr-review` case to `taskSubtitle` in `agent-section.tsx`, reading the PR number off the task.
       run: 2m24s · 6k in · 5.5k out · sonnet-5
-- [ ] Detect a review running for the current entity
+- [x] Detect a review running for the current entity
       Match an in-flight `pr-review` task from `/api/agent/status` to the idea `pr-badge.tsx` renders on.
+      run: 1m41s · 516 in · 4.9k out · sonnet-5
 - [ ] Add a reviewing state to `pr-badge.tsx`
       Show it alongside the existing draft/open/merged states while a review is in flight.
 - [ ] Reflect a landed review on the badge

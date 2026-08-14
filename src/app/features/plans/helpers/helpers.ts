@@ -44,6 +44,14 @@ export const runningTaskForPlan = (
     ? agentStatus.find((t) => t.planId === planId && t.status !== 'done' && t.status !== 'error')
     : undefined;
 
+export const runningPrReviewForPlan = (
+  planId: string | undefined,
+  agentStatus: AgentTaskState[],
+): AgentTaskState | undefined => {
+  const task = runningTaskForPlan(planId, agentStatus);
+  return task?.taskKind === 'pr-review' ? task : undefined;
+};
+
 /** Overlays a live agent task onto the stored/derived status for display only —
  * frontmatter and the derived status used for filtering/sorting stay untouched. */
 export const effectiveStatus = (
