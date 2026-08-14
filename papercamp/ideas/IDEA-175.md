@@ -2,7 +2,7 @@
 id: IDEA-175
 title: Scout posts a formatted review
 type: feat
-status: in-progress
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -10,7 +10,6 @@ tags:
   - github
   - ui
 subject: Richer review loop
-order: 15
 ---
 
 Reviews currently post from the repo owner's own account with a one-string
@@ -129,9 +128,10 @@ anything other than reviews.
       mints the Scout token as `draft-pr.yml` does and posts the review; must
       merge to `main` before it can fire.
       run: 1m6s · 361 in · 3.7k out · sonnet-5
-- [ ] Record the reviewed SHA from the poller
+- [x] Record the reviewed SHA from the poller
       Land on [[IDEA-173]], then mark a head SHA reviewed only when a later poll
       observes a Scout review present for it, keeping unobserved SHAs retryable.
+- [x] [manual] Scout posts a formatted review
 
 ### Thread
 - [x] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Record the reviewed SHA from the poller") — the agent needs a decision: IDEA-173 (the gate this phase depends on for retry-capping / not-recording transient failures) hasn't landed — its phases are all unchecked. Should I implement phase 5 anyway on the current record-on-completion behavior, implement the minimal pieces of IDEA-173 needed as a prerequisite within this run, or hold this phase until IDEA-173 lands separately?

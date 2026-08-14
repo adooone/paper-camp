@@ -4,7 +4,7 @@ import { branchName, fetchPrDiff } from '@/core/git-pr';
 import type { CiReleaseState, PlanEntry, PrInfo } from '@/types/index';
 import type { AgentManager } from './agent';
 import type { GitManager } from './git';
-import { readReviewedShas } from './pr-review-state';
+import { readReviewedShas, recordReviewedSha } from './pr-review-state';
 import { loadManifestCi } from './routes/ci';
 
 function isCiGreen(state: CiReleaseState): boolean {
@@ -36,6 +36,14 @@ export async function triggerPrReviews(
     const pr = fresh.get(id);
     if (!pr || pr.state !== 'open' || !pr.headSha) continue;
     if (reviewed[id] === pr.headSha) continue;
+
+    // A dispatched review posts asynchronously in CI, so the task that computed it
+    // can't know whether it landed (IDEA-175) — record the SHA only once a later
+    // poll observes the posted review's footer, keeping it retryable until then.
+    if (pr.scoutReviewObserved) {
+      await recordReviewedSha(root, id, pr.headSha);
+      continue;
+    }
 
     const branch = pr.headBranch ?? branchName(id, plan.kind, plan.title);
     if (!branch || branch !== currentBranch) continue;

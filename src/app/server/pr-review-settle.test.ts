@@ -13,6 +13,8 @@ import {
 const gitPr = vi.hoisted(() => ({
   dispatchPrReview: vi.fn(),
   createPrReview: vi.fn(),
+  scoutReviewFooter: (entityId: string, sha: string) =>
+    `Paper Scout · ${entityId} · ${sha.slice(0, 7)}`,
 }));
 vi.mock('@/core/git-pr', () => gitPr);
 

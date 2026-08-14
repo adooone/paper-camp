@@ -25,6 +25,7 @@ export {
   replyToReviewThread,
   resolvePrsByEntity,
   resolveReviewThread,
+  scoutReviewFooter,
 } from './pr-lookup';
 
 interface GhPrCommentRow {

@@ -158,6 +158,40 @@ describe('triggerPrReviews', () => {
     expect(await readReviewedShas(root)).toEqual({ 'IDEA-1': 'sha-1' });
   });
 
+  it('records the SHA once the poll observes a posted Scout review, without launching a task', async () => {
+    const root = makeRoot();
+    const { root: ghRoot } = installFakeGh({});
+    process.env.PATH = `${ghRoot}:${originalPath}`;
+
+    const startPrReview = vi.fn();
+    await triggerPrReviews(
+      root,
+      { getCurrentBranch: () => BRANCH },
+      { startPrReview },
+      [plan()],
+      new Map([['IDEA-1', pr({ scoutReviewObserved: true })]]),
+    );
+    expect(startPrReview).not.toHaveBeenCalled();
+    expect(await readReviewedShas(root)).toEqual({ 'IDEA-1': 'sha-1' });
+  });
+
+  it('keeps retrying an unobserved SHA — a computed review may still be in flight', async () => {
+    const root = makeRoot();
+    const { root: ghRoot } = installFakeGh({});
+    process.env.PATH = `${ghRoot}:${originalPath}`;
+
+    const startPrReview = vi.fn().mockReturnValue({ ok: true });
+    await triggerPrReviews(
+      root,
+      { getCurrentBranch: () => BRANCH },
+      { startPrReview },
+      [plan()],
+      new Map([['IDEA-1', pr()]]),
+    );
+    expect(startPrReview).toHaveBeenCalledTimes(1);
+    expect(await readReviewedShas(root)).toEqual({});
+  });
+
   it('fires again once a new commit changes the head SHA', async () => {
     const root = makeRoot();
     const { root: ghRoot } = installFakeGh({});

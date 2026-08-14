@@ -195,6 +195,9 @@ export interface PrInfo {
   /** Full SHA of the PR's current head commit — what a pr-review is scoped to (IDEA-170). */
   headSha?: string;
   headBranch?: string;
+  /** A posted review's footer names this entity and `headSha` — set once the poll
+   * observes it, so `triggerPrReviews` can record the SHA reviewed (IDEA-175). */
+  scoutReviewObserved?: boolean;
 }
 
 export interface PlanEntry {

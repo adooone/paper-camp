@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { createPrReview, dispatchPrReview } from '@/core/git-pr';
+import { createPrReview, dispatchPrReview, scoutReviewFooter } from '@/core/git-pr';
 import { readEntities } from '@/core/readers';
 import { agentThreadMessage } from '@/core/serialize';
 import type { PrReviewFinding, PrReviewResult, PrReviewVerdict } from '@/types/index';
@@ -92,7 +92,7 @@ export function renderReviewGithubBody(
       `_${findingsPhrase(footer.droppedFindings)} omitted to fit the review's size limit._`,
     );
   }
-  lines.push('', `<sub>Paper Scout · ${footer.ideaId} · ${footer.sha.slice(0, 7)}</sub>`);
+  lines.push('', `<sub>${scoutReviewFooter(footer.ideaId, footer.sha)}</sub>`);
   return lines.join('\n');
 }
 

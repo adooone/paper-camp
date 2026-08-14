@@ -15,6 +15,7 @@ import {
   renderPlanPhasesIntoBody,
   resolvePlanForPrRef,
   resolvePrsByEntity,
+  scoutReviewFooter,
   syncConsistencyCommentToPr,
   syncPlanPhasesToPr,
   syncPrLabelsToPr,
@@ -54,6 +55,7 @@ interface Row {
   state: string;
   isDraft: boolean;
   headRefName: string;
+  headRefOid: string;
   body: string;
   reviewDecision: string;
 }
@@ -63,6 +65,7 @@ const row = (o: Partial<Row>): Row => ({
   state: 'OPEN',
   isDraft: false,
   headRefName: '',
+  headRefOid: '',
   body: '',
   reviewDecision: '',
   ...o,
@@ -207,6 +210,48 @@ describe('resolvePrsByEntity', () => {
     const info = prs?.get('IDEA-5');
     expect(info?.unresolvedThreadCount).toBe(0);
     expect(info?.hasNewCommentsSincePush).toBe(false);
+  });
+
+  it('observes a Scout review by its footer, matching this entity and head SHA', async () => {
+    const apiScript = `echo '{"data":{"repository":{"pullRequest":{
+      "reviewThreads":{"nodes":[]},
+      "commits":{"nodes":[]},
+      "comments":{"nodes":[]},
+      "reviews":{"nodes":[{"createdAt":"2026-07-01T00:00:00Z","body":"${scoutReviewFooter('IDEA-10', 'abcdef1234567890')}"}]}
+    }}}}'`;
+    const { root } = withGh(
+      [
+        row({
+          url: 'https://github.com/o/r/pull/10',
+          body: '**Plan:** `IDEA-10`',
+          headRefOid: 'abcdef1234567890',
+        }),
+      ],
+      apiScript,
+    );
+    const prs = await resolvePrsByEntity(root);
+    expect(prs?.get('IDEA-10')?.scoutReviewObserved).toBe(true);
+  });
+
+  it('does not observe a review whose footer names a different head SHA', async () => {
+    const apiScript = `echo '{"data":{"repository":{"pullRequest":{
+      "reviewThreads":{"nodes":[]},
+      "commits":{"nodes":[]},
+      "comments":{"nodes":[]},
+      "reviews":{"nodes":[{"createdAt":"2026-07-01T00:00:00Z","body":"${scoutReviewFooter('IDEA-11', 'stale-sha-000000')}"}]}
+    }}}}'`;
+    const { root } = withGh(
+      [
+        row({
+          url: 'https://github.com/o/r/pull/11',
+          body: '**Plan:** `IDEA-11`',
+          headRefOid: 'fresh-sha-1111111',
+        }),
+      ],
+      apiScript,
+    );
+    const prs = await resolvePrsByEntity(root);
+    expect(prs?.get('IDEA-11')?.scoutReviewObserved).toBeUndefined();
   });
 
   it('does not fetch review-thread signal for merged/closed PRs', async () => {
