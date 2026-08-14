@@ -2,7 +2,7 @@
 id: IDEA-172
 title: Persist drafts and UI choices
 type: fix
-status: idea
+status: in-progress
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -110,3 +110,39 @@ and a failed persist must degrade to in-memory rather than break the form.
       run: 4m9s · 1.1k in · 11.6k out · sonnet-5
 - [ ] Persist the UI-choice toggles
       Plans `view`, `planFilters`, and `detailView`; leave `docSearchQuery` and server-derived state alone.
+
+### Fixes
+- [ ] Fix the failing "Quality" check
+      Fix the failing "Quality" check in this repo.
+      
+      The command was `npx biome format .`.
+      
+      Output from the last run:
+      
+      Checked 391 files in 671ms. No fixes applied.
+      Found 1 error.
+      ./src/app/features/plans/actions/add-review-phases-button.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+        × Formatter would have printed the following content:
+        
+           11  11 │   }
+           12  12 │   
+           13     │ - export·const·AddReviewPhasesButton·=·({·onAdd,·disabled,·entityId·}:·AddReviewPhasesButtonProps)·=>·{
+               13 │ + export·const·AddReviewPhasesButton·=·({
+               14 │ + ··onAdd,
+               15 │ + ··disabled,
+               16 │ + ··entityId,
+               17 │ + }:·AddReviewPhasesButtonProps)·=>·{
+           14  18 │     const [open, setOpen] = useState(false);
+           15  19 │     const [input, setInput] = useState('');
+        
+      
+      format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+        × Some errors were emitted while running checks.
+        
+      
+      
+
+### Thread
+- [ ] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Persist the UI-choice toggles") — the agent needs a decision: Phase 5 says to persist "the Plans `view` toggle (list/board)," but no such toggle exists anywhere in the current codebase — the only list/board view-mode state was on the *Roadmap* page, and it was deliberately deleted in commit `89ca57f` ("Delete Board and Timeline views and the view-mode state", IDEA-136, 2026-08-08) in favor of full-width rows only, six days before this plan was written. Should I skip persisting a `view` toggle entirely (since it no longer exists) and persist only `planFilters` + `detailView`, or does "Plans `view`" refer to something else you have in mind that I'm not finding?
