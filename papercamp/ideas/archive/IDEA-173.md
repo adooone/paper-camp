@@ -2,7 +2,7 @@
 id: IDEA-173
 title: Never lose a computed PR review
 type: fix
-status: review
+status: done
 created: 2026-08-14
 updated: 2026-08-14
 tags:

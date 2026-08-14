@@ -3,6 +3,8 @@ import type { CheckStatus, DeskCheckState } from '@/types/index';
 import { Card, CopyButton, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { chalkStatusFill, chalkStatusText, groupLabelClassName } from './shared';
 
+export const CHECKS_GROUP_LABEL = 'Checks';
+
 const statusFill: Record<CheckStatus, string> = { ...chalkStatusFill, stale: 'transparent' };
 const statusText: Record<CheckStatus, string | undefined> = {
   ...chalkStatusText,
@@ -51,7 +53,7 @@ export const ChecksGroup = () => {
 
   return (
     <div>
-      <div className={groupLabelClassName}>Checks</div>
+      <div className={groupLabelClassName}>{CHECKS_GROUP_LABEL}</div>
       {checks.length > 0 ? (
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-2">

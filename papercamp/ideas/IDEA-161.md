@@ -2,9 +2,9 @@
 id: IDEA-161
 title: Desk section clips its own content
 type: fix
-status: idea
+status: review
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-14
 tags:
   - app
   - stack
@@ -43,11 +43,20 @@ vary its contents, per UX_PRINCIPLES §1. When `desk` is absent from
 key rather than silently rendering nothing.
 
 ### Phases
-- [ ] Give Desk its own scroller
+- [x] Give Desk its own scroller
       Add `overflow-y-auto` to the Desk wrapper so it scrolls within the panel while the "Stack" header and Agent's reserved height stay put.
-- [ ] Verify clipped content is reachable
+      run: 35s · 5.7k in · 1.5k out · sonnet-5
+- [x] Verify clipped content is reachable
       Confirm the released-version line, Release PR link, and "Open Actions" are scrollable at 768px and below.
-- [ ] Render the shell during load
+      run: 43s · 91 in · 2.9k out · sonnet-5
+- [x] Render the shell during load
       Return the section shell immediately while `useDeskManifest` is in flight instead of `null`, varying only the contents.
-- [ ] Handle a missing `desk` config key
+      run: 2m23s · 1.4k in · 4.7k out · sonnet-5
+- [x] Handle a missing `desk` config key
       When `desk` is absent from `papercamp/config.json`, state so and point at the config key.
+      run: 52s · 225 in · 3.1k out · sonnet-5
+- [x] [manual] Export shared group label constants
+
+### Thread
+- [x] 2026-08-14 [review] [agent] Approves · 1 finding — The core change to desk-section.tsx cleanly delivers the spec: the Desk wrapper gets its own overflow-y-auto scroller, the section shell renders immediately with a skeleton during load instead of returning null, and a missing desk config key now shows an explanatory empty state pointing at papercamp/config.json. The imports (groupLabelClassName, Skeleton) and the text-desk-text-muted token are consistent with existing shared.ts usage, so the change is correct and on-spec. The rest of the diff is corpus bookkeeping (idea archiving, phase stamps, index/run-order updates) unrelated to the code change.
+- [x] 2026-08-14 [review] [agent] Approves · 0 findings — The core change to desk-section.tsx delivers the spec cleanly: the Desk wrapper gains its own overflow-y-auto scroller, the section shell (Divider + label) now renders immediately with an aria-hidden skeleton during load instead of returning null, and a missing desk config key shows an explanatory empty state pointing at papercamp/config.json. The Agent section and the fixed panel header are left untouched, matching the IDEA-109 constraint, and the new imports and text token follow existing shared.ts conventions. The remainder of the diff is unrelated corpus bookkeeping (archiving, phase stamps, index/run-order edits).

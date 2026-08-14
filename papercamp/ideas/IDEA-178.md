@@ -105,3 +105,15 @@ is open.
 
 The review trigger's gates ([[IDEA-170]]) and the reviewed-SHA ledger
 ([[IDEA-173]]).
+
+### Phases
+- [ ] Treat archive location as closed in status derivation
+      Carry `archived` into `StatusDerivationInput` and return `done` for an archived entity unless a stored `dropped` overrides.
+- [ ] Degrade to the last good PR map instead of nothing
+      Serve `resolvePrsByEntity`'s last successful resolution marked stale on a failed lookup; keep hard-unresolved only for a cold start with no cache.
+- [ ] Stop caching degraded reads
+      Refuse to store a corpus-cache result computed while `prLookupResolved` was false so a transient outage cannot outlive itself.
+- [ ] Surface fallback status in the UI
+      Mark the worklist status column and run-order queue when a status is a guess rather than derived from resolved PR state.
+- [ ] Back off PR polling on low quota
+      Widen the interval when no PR is open and throttle from the rate-limit headers as the remaining budget drops.

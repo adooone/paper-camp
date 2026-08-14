@@ -3,6 +3,8 @@ import { deriveBuildStatus } from '@/app/utils/check-status';
 import { Stamp, Tooltip } from '@dendelion/paper-ui';
 import { chalkStatusFill, chalkStatusText, groupLabelClassName } from './shared';
 
+export const BUILD_GROUP_LABEL = 'Build';
+
 const statusFill = { ...chalkStatusFill, stale: 'transparent' };
 const statusText = { ...chalkStatusText, stale: undefined };
 
@@ -21,7 +23,7 @@ export const BuildGroup = () => {
 
   return (
     <div>
-      <div className={groupLabelClassName}>Build</div>
+      <div className={groupLabelClassName}>{BUILD_GROUP_LABEL}</div>
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-2">
           <Tooltip
