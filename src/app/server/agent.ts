@@ -44,12 +44,13 @@ import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 import { appendNotification } from './notification-log';
 import { parsePrReviewResult, postPrReview } from './pr-review-settle';
-import { recordReviewedSha } from './pr-review-state';
+import { clearDeliveryFailures, recordDeliveryFailure, recordReviewedSha } from './pr-review-state';
 import { UNLOGGED_TASK_KINDS, logTaskCompletion } from './task-log';
 
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
 const FIX_ATTEMPT_CAP = 2;
+const PR_REVIEW_DELIVERY_FAILURE_CAP = 3;
 const AUTH_ERROR_MARKER = 'Not logged in · Please run /login';
 const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
 const DESTRUCTIVE_GIT_BAN =
@@ -112,6 +113,7 @@ export interface AgentTask {
   lastStreamAt?: number;
   errorKind?: 'auth' | 'question';
   errorReason?: string;
+  finishing?: boolean;
   runUsage?: RunUsage;
   rateLimit?: RateLimitSnapshot;
   phaseRuns?: PhaseRunRecord[];
@@ -487,7 +489,9 @@ export function createAgentManager(
     }
   }
 
-  function finishTask(task: AgentTask, error: boolean) {
+  async function finishTask(task: AgentTask, error: boolean): Promise<void> {
+    if (task.finishing) return;
+    task.finishing = true;
     if (error) {
       setStatus(task, 'error');
       return;
@@ -499,20 +503,42 @@ export function createAgentManager(
         settleReviewThreads(root, task.fixReviewResult, (text) => pushLine(task, text));
       }
     }
-    // A killed/never-run task must stay unreviewed so the next poll retries it. A
-    // parseable verdict is dispatched but posts asynchronously in CI, so this task
-    // can't know whether it landed — the poller records the SHA once it observes
-    // the posted review (see pr-review-trigger.ts). An unparseable verdict is
-    // recorded immediately instead: a garbled response still consumed the SHA's
-    // one review attempt, and must not spin the same broken prompt every poll.
+    // A killed/never-run task must stay unreviewed so the next poll retries it.
+    // Record only when the GitHub post or the idea thread message landed — a
+    // verdict that reached neither is a transient delivery failure and the next
+    // poll should retry it. An unparseable verdict is recorded immediately
+    // instead: a garbled response still consumed the SHA's one review attempt,
+    // and must not spin the same broken prompt every poll.
     if (task.taskKind === 'pr-review' && task.planId && task.prReviewSha) {
       const result = parsePrReviewResult(task.lines);
       if (result && task.prReviewUrl) {
-        postPrReview(root, task.planId, task.prReviewUrl, task.prReviewSha, result, (text) =>
-          pushLine(task, text),
+        const outcome = await postPrReview(
+          root,
+          task.planId,
+          task.prReviewUrl,
+          task.prReviewSha,
+          result,
+          (text) => pushLine(task, text),
         );
+        if (!outcome.delivered) {
+          const failures = await recordDeliveryFailure(root, task.planId, task.prReviewSha);
+          if (failures >= PR_REVIEW_DELIVERY_FAILURE_CAP) {
+            await recordReviewedSha(root, task.planId, task.prReviewSha);
+            await clearDeliveryFailures(root, task.planId);
+            pushLine(
+              task,
+              `Giving up after ${failures} consecutive delivery failures on this SHA — recording it as reviewed`,
+            );
+          }
+          task.errorReason = outcome.reason;
+          setStatus(task, 'error');
+          return;
+        }
+        await recordReviewedSha(root, task.planId, task.prReviewSha);
+        await clearDeliveryFailures(root, task.planId);
       } else {
-        void recordReviewedSha(root, task.planId, task.prReviewSha);
+        await recordReviewedSha(root, task.planId, task.prReviewSha);
+        await clearDeliveryFailures(root, task.planId);
         pushLine(task, 'pr-review agent exited without a parseable verdict — nothing posted');
       }
     }
@@ -544,7 +570,7 @@ export function createAgentManager(
     task.lastStreamAt = Date.now();
     const rl = createInterface({ input: task.proc.stdout });
     rl.on('line', (line) => {
-      if (isTaskDone(task) || !line.trim()) return;
+      if (isTaskDone(task) || task.finishing || !line.trim()) return;
       task.lastStreamAt = Date.now();
       const parsed = task.adapter.parseLine(line);
       if (!parsed) return;
@@ -554,7 +580,7 @@ export function createAgentManager(
       if (parsed.usage) task.runUsage = parsed.usage;
       if (parsed.text) pushLine(task, parsed.text);
       if (parsed.done) {
-        finishTask(task, Boolean(parsed.error));
+        void finishTask(task, Boolean(parsed.error));
       }
     });
 
@@ -564,19 +590,19 @@ export function createAgentManager(
     });
 
     task.proc.on('close', (code) => {
-      if (isTaskDone(task)) return;
+      if (isTaskDone(task) || task.finishing) return;
       if (task.status === 'starting' || task.status === 'running') {
         // Plain-text CLI failures (e.g. an auth error) never reach parseLine's JSON
         // parser, so this is the only place they surface in the task's own output.
         if (code !== 0 && stderr.trim()) pushLine(task, stderr.trim());
-        finishTask(task, code !== 0);
+        void finishTask(task, code !== 0);
       } else if (task.status === 'stopping') {
         setStatus(task, 'done');
       }
     });
 
     task.proc.on('error', (err) => {
-      if (isTaskDone(task)) return;
+      if (isTaskDone(task) || task.finishing) return;
       pushLine(task, `Failed to spawn agent: ${err.message}`);
       setStatus(task, 'error');
     });

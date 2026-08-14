@@ -2,7 +2,7 @@
 id: IDEA-173
 title: Never lose a computed PR review
 type: fix
-status: idea
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -73,13 +73,22 @@ The review prompt and what the reviewer checks. The trigger gates
 ([[IDEA-170]]).
 
 ### Phases
-- [ ] Capture the delivery outcome and response body
+- [x] Capture the delivery outcome and response body
       Replace the two `.catch(() => false)` halves of `postPrReview` so each returns whether it delivered and, on failure, the GitHub response body.
-- [ ] End a failed delivery in an error status
+      run: 4m36s · 9.6k in · 14.8k out · sonnet-5
+- [x] End a failed delivery in an error status
       A good verdict that reached neither destination finishes the task as `error` with the reason attached, not `done` with a missing line.
-- [ ] Gate `recordReviewedSha` on the outcome
+      run: 6m12s · 811 in · 18.9k out · sonnet-5
+- [x] Gate `recordReviewedSha` on the outcome
       Record on a successful post or thread message and on an unparseable verdict; skip recording for a transient delivery failure so the next poll retries.
-- [ ] Cap consecutive delivery failures per SHA
+      run: 4m10s · 377 in · 10.5k out · sonnet-5
+- [x] Cap consecutive delivery failures per SHA
       Track failures on one SHA and, after a small number, record it and surface the give-up so a permanently failing post stops re-reviewing every poll.
-- [ ] Degrade a 422-rejected review
+      run: 4m38s · 520 in · 9.6k out · sonnet-5
+- [x] Degrade a 422-rejected review
       Retry `createPrReview` without the offending comments, or fall back to a summary-only review, so one bad line number costs one finding, not the whole review.
+      run: 6m13s · 4.3k in · 17.5k out · sonnet-5
+- [x] [manual] Await ledger writes before finishing a pr-review task
+
+### Thread
+- [x] 2026-08-14 [review] [agent] Comments · 2 findings — The diff delivers all five phases: it threads a structured PrReviewDelivery (with the response body) through createPrReview/dispatchPrReview, makes postPrReview awaitable and outcome-returning, gates recordReviewedSha on real delivery, caps consecutive delivery failures per SHA, and degrades a 422 to a summary-only post. The re-entrancy guard (task.finishing) is added consistently across the line/close/error handlers, and the tests are thorough and match the implemented behavior. Two soft points are worth noting but neither contradicts the spec.

@@ -291,29 +291,42 @@ export interface PrReviewInput {
   comments: PrReviewComment[];
 }
 
+/** `delivered` is false on any failure; `body` carries the GitHub response body
+ * for that failure (e.g. a 422 naming the offending comment), unset on success. */
+export interface PrReviewDelivery {
+  delivered: boolean;
+  body?: string;
+}
+
 /** `gh api` has no subcommand for review creation, so this drops to the raw REST
  * POST — the one GitHub write op paper-camp lacked; read, reply and resolve already existed. */
-function runGhApiPostJson(root: string, path: string, payload: unknown): Promise<boolean> {
+function runGhApiPostJson(root: string, path: string, payload: unknown): Promise<PrReviewDelivery> {
   return new Promise((resolve) => {
     const proc = spawn('gh', ['api', path, '-X', 'POST', '--input', '-'], {
       cwd: root,
       stdio: ['pipe', 'ignore', 'pipe'],
     });
-    proc.stderr?.on('data', () => {});
-    proc.on('close', (code) => resolve(code === 0));
-    proc.on('error', () => resolve(false));
+    let stderr = '';
+    proc.stderr?.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    proc.on('close', (code) =>
+      resolve(code === 0 ? { delivered: true } : { delivered: false, body: stderr.trim() }),
+    );
+    proc.on('error', (err) => resolve({ delivered: false, body: err.message }));
     proc.stdin?.end(JSON.stringify(payload));
   });
 }
 
-/** Best-effort: returns `false` on any failure — a failed review post must not crash the poller that triggered it. */
+/** `delivered` is false on any failure, including a rejected `gh` post — a
+ * failed review post must not crash the poller that triggered it. */
 export async function createPrReview(
   root: string,
   url: string,
   review: PrReviewInput,
-): Promise<boolean> {
+): Promise<PrReviewDelivery> {
   const parsed = parsePrUrl(url);
-  if (!parsed) return false;
+  if (!parsed) return { delivered: false };
   return runGhApiPostJson(
     root,
     `repos/${parsed.owner}/${parsed.repo}/pulls/${parsed.number}/reviews`,
@@ -321,16 +334,16 @@ export async function createPrReview(
   );
 }
 
-/** Best-effort, like `createPrReview`: `false` on any failure — including no
+/** Best-effort, like `createPrReview`: not delivered on any failure — including no
  * `SCOUT_APP_ID`/`SCOUT_PRIVATE_KEY` wired up, offline, or a fork with no
  * Actions access to this repo. Callers fall back to `createPrReview`. */
 export async function dispatchPrReview(
   root: string,
   url: string,
   review: PrReviewInput,
-): Promise<boolean> {
+): Promise<PrReviewDelivery> {
   const parsed = parsePrUrl(url);
-  if (!parsed) return false;
+  if (!parsed) return { delivered: false };
   return runGhApiPostJson(root, `repos/${parsed.owner}/${parsed.repo}/dispatches`, {
     event_type: 'paper-camp-review',
     client_payload: { review: { number: Number(parsed.number), ...review } },

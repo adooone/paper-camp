@@ -173,8 +173,10 @@
 | IDEA-170 | Review pull requests with a local agent | feat | done | app, agent, github |
 | IDEA-171 | Run-all redoes work from a stale base | fix | planned | agent, plans, git |
 | IDEA-172 | Persist drafts and UI choices | fix | planned | app, ui, ux |
-| IDEA-173 | Never lose a computed PR review | fix | planned | app, agent, github |
+| IDEA-173 | Never lose a computed PR review | fix | review | app, agent, github |
 | IDEA-174 | Show a running PR review in the UI | feat | planned | app, ui, agent |
-| IDEA-175 | Scout posts a formatted review | feat | review | app, github, ui |
+| IDEA-175 | Scout posts a formatted review | feat | done | app, github, ui |
 | IDEA-176 | Sync stops stashing over the corpus | fix | idea | server, git, plans |
 | IDEA-177 | Surface dangling stashes | feat | idea | app, git, ux |
+| IDEA-178 | Rate limits must not rewrite status | fix | idea | core, github, plans |
+| IDEA-179 | Prioritise lies about what it did | fix | idea | app, server, plans |

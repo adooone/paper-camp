@@ -2,7 +2,7 @@
 id: IDEA-175
 title: Scout posts a formatted review
 type: feat
-status: review
+status: done
 created: 2026-08-14
 updated: 2026-08-14
 tags:
