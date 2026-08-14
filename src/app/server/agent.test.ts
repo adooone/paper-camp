@@ -1501,7 +1501,9 @@ describe('startPrReview', () => {
   it('appends the verdict summary as a [review] thread message on the idea', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
     agentScript.current = reportScript({
-      summary: 'Looks good, one nit.',
+      verdict: 'comment',
+      assessment: 'Looks good, one nit.',
+      concerns: [],
       findings: [{ path: 'src/a.ts', line: 3, body: 'consider a guard here' }],
     });
     const manager = createAgentManager(root);

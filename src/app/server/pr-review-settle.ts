@@ -2,16 +2,25 @@ import { join } from 'node:path';
 import { createPrReview } from '@/core/git-pr';
 import { readEntities } from '@/core/readers';
 import { agentThreadMessage } from '@/core/serialize';
-import type { PrReviewFinding, PrReviewResult } from '@/types/index';
+import type { PrReviewFinding, PrReviewResult, PrReviewVerdict } from '@/types/index';
 import { campFile, entityFileInput, fileExists, writeEntityFile } from './helpers';
+
+const VERDICTS: PrReviewVerdict[] = ['approve', 'comment', 'request-changes'];
 
 function validatePrReviewVerdict(candidate: string): PrReviewResult | undefined {
   try {
     const parsed = JSON.parse(candidate) as {
-      summary?: string;
+      verdict?: string;
+      assessment?: string;
+      concerns?: string[];
       findings?: { path?: string; line?: number; body?: string }[];
     };
-    if (!parsed.summary) return undefined;
+    if (!parsed.verdict || !VERDICTS.includes(parsed.verdict as PrReviewVerdict)) return undefined;
+    if (!parsed.assessment) return undefined;
+    const rawConcerns = parsed.concerns ?? [];
+    if (!Array.isArray(rawConcerns) || rawConcerns.some((c) => typeof c !== 'string')) {
+      return undefined;
+    }
     const rawFindings = parsed.findings ?? [];
     if (!Array.isArray(rawFindings)) return undefined;
     const findings: PrReviewFinding[] = [];
@@ -21,7 +30,12 @@ function validatePrReviewVerdict(candidate: string): PrReviewResult | undefined 
       if (typeof f.body !== 'string' || !f.body) return undefined;
       findings.push({ path: f.path, line: f.line, body: f.body });
     }
-    return { summary: parsed.summary, findings };
+    return {
+      verdict: parsed.verdict as PrReviewVerdict,
+      assessment: parsed.assessment,
+      concerns: rawConcerns,
+      findings,
+    };
   } catch {
     return undefined;
   }
@@ -74,11 +88,11 @@ export function postPrReview(
   void (async () => {
     const [posted, logged] = await Promise.all([
       createPrReview(root, prUrl, {
-        body: result.summary,
+        body: result.assessment,
         event: 'COMMENT',
         comments: result.findings,
       }).catch(() => false),
-      appendReviewThreadMessage(root, entityId, result.summary).catch(() => false),
+      appendReviewThreadMessage(root, entityId, result.assessment).catch(() => false),
     ]);
     const n = result.findings.length;
     const findingsText = `${n} finding${n === 1 ? '' : 's'}`;

@@ -144,11 +144,15 @@ export interface PrReviewFinding {
   body: string;
 }
 
+export type PrReviewVerdict = 'approve' | 'comment' | 'request-changes';
+
 // Parsed from the JSON object a pr-review agent's prompt requires as its final
-// line — see buildPrReviewPrompt. findings become per-line PR review comments,
-// summary lands as a [review] thread message on the idea (IDEA-170).
+// line — see buildPrReviewPrompt. findings become per-line PR review comments;
+// the other fields are rendered per destination (IDEA-170, IDEA-175).
 export interface PrReviewResult {
-  summary: string;
+  verdict: PrReviewVerdict;
+  assessment: string;
+  concerns: string[];
   findings: PrReviewFinding[];
 }
 

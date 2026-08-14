@@ -271,9 +271,12 @@ Task: review the diff against two things:
 For each genuine issue you find, note the file path and the line it belongs to (as it appears in the diff above) and write a comment explaining it the way a human reviewer would — not restating the diff back. Skip nitpicks and stylistic preferences unless they violate a rule visible in the code you read.
 
 Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
-{"summary": "one or two sentences: the overall verdict", "findings": [{"path": "src/foo.ts", "line": 42, "body": "one comment"}]}
+{"verdict": "approve" | "comment" | "request-changes", "assessment": "two or three sentences on the overall diff", "concerns": ["short bullet", "short bullet"], "findings": [{"path": "src/foo.ts", "line": 42, "body": "one comment"}]}
 
 Rules:
+- "verdict" reflects your judgment but never blocks the merge — a human always decides; pick "request-changes" only when the diff contradicts the spec or a settled decision above.
+- "assessment" is plain prose, two or three sentences, no markdown formatting.
+- "concerns" is a list of short plain-text bullets for issues worth flagging that aren't tied to a specific line; leave it empty when there are none.
 - "findings" must be empty when the diff is clean — never invent an issue just to have something to say.
 - Every "line" must be a line that appears in the diff above for that "path".
 - Do not use tools to explore beyond what's needed to judge a finding — this review is scoped to the diff above, not a full audit of the repo.`;

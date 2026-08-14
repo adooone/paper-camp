@@ -109,9 +109,10 @@ What the reviewer checks, and the trigger gates ([[IDEA-170]]). Scout posting
 anything other than reviews.
 
 ### Phases
-- [ ] Restructure the review result into verdict/assessment/concerns/findings
+- [x] Restructure the review result into verdict/assessment/concerns/findings
       Replace `PrReviewResult.summary` with the four fields and update the model
       schema and prompt so it returns JSON only, never markdown.
+      run: 6m7s · 6.2k in · 9.1k out · sonnet-5
 - [ ] Render the review per destination
       Format the sectioned GitHub body (verdict line, assessment, optional
       Concerns, footer) and the one-line `[review]` thread message; note dropped
