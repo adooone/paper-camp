@@ -2,7 +2,7 @@
 id: IDEA-175
 title: Scout posts a formatted review
 type: feat
-status: idea
+status: in-progress
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -10,6 +10,7 @@ tags:
   - github
   - ui
 subject: Richer review loop
+order: 15
 ---
 
 Reviews currently post from the repo owner's own account with a one-string
@@ -131,3 +132,8 @@ anything other than reviews.
 - [ ] Record the reviewed SHA from the poller
       Land on [[IDEA-173]], then mark a head SHA reviewed only when a later poll
       observes a Scout review present for it, keeping unobserved SHAs retryable.
+
+### Thread
+- [x] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Record the reviewed SHA from the poller") — the agent needs a decision: IDEA-173 (the gate this phase depends on for retry-capping / not-recording transient failures) hasn't landed — its phases are all unchecked. Should I implement phase 5 anyway on the current record-on-completion behavior, implement the minimal pieces of IDEA-173 needed as a prerequisite within this run, or hold this phase until IDEA-173 lands separately?
+- [x] 2026-08-14 [clarification] implement 5 phase
+- [x] 2026-08-14 [chat] [agent] Got it — implementing phase 5 now on the current record-on-completion behavior, without pulling in IDEA-173's prerequisite changes. Phase 5 is already queued and unchecked, so run-all will pick it up as-is.
