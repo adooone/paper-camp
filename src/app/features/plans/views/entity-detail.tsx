@@ -12,6 +12,7 @@ import {
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import { type UsageRollup, formatDuration, formatTokens, rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
@@ -142,7 +143,11 @@ const PhasesSection = ({
                 <AuditPhasesButton plan={plan} />
               )}
               {plan.status !== 'done' && <ReconcileButton plan={plan} />}
-              <AddReviewPhasesButton onAdd={onAddReviewPhases} disabled={updating} />
+              <AddReviewPhasesButton
+                onAdd={onAddReviewPhases}
+                disabled={updating}
+                entityId={plan.id ?? plan.title}
+              />
               {plan.id && hasOpenFix && (
                 <Tooltip content="Run the open fixes with an agent">
                   <Button
@@ -456,6 +461,10 @@ const TrailSection = ({
   );
 };
 
+function feedbackDraftKeyFor(plan: PlanEntry): string {
+  return `feedback-draft:${plan.id ?? plan.title}`;
+}
+
 const FeedbackSection = ({
   plan,
   updating,
@@ -478,12 +487,28 @@ const FeedbackSection = ({
   const { promotingIndex, promoteToDurable, promoteToIdea } = usePromoteThreadMessage(plan);
   useFeedbackQuietSummary(plan, true);
 
+  const draftKey = feedbackDraftKeyFor(plan);
+
+  useEffect(() => {
+    const draft = readLocalDraft<string>(draftKey);
+    if (draft) setInput(draft);
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!input) return;
+    writeLocalDraft(draftKey, input);
+  }, [draftKey, input]);
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text) return;
     setPending(text);
     setInput('');
-    if (!(await onSend(text))) setInput((current) => current || text);
+    if (await onSend(text)) {
+      removeLocalDraft(draftKey);
+    } else {
+      setInput((current) => current || text);
+    }
     setPending(null);
   };
 

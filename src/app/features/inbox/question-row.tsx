@@ -1,8 +1,9 @@
 import { FeedbackThread, PlanIdStamp } from '@/app/features/plans/components';
 import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
+import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { ParkedQuestion, PlanEntry } from '@/types/index';
 import { Button, Spinner, Textarea, useToast } from '@dendelion/paper-ui';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { formatAge } from './helpers';
 
 interface QuestionRowProps {
@@ -29,9 +30,24 @@ export const QuestionRow = ({
     notify: toast,
   });
 
+  const draftKey = `question-reply:${question.entityId}`;
+
+  useEffect(() => {
+    const draft = readLocalDraft<string>(draftKey);
+    if (draft) setInput(draft);
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!input) return;
+    writeLocalDraft(draftKey, input);
+  }, [draftKey, input]);
+
   const handleSend = async () => {
     if (!input.trim()) return;
-    if (await send(input.trim())) setInput('');
+    if (await send(input.trim())) {
+      setInput('');
+      removeLocalDraft(draftKey);
+    }
   };
 
   return (
