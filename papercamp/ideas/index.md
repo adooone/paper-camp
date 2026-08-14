@@ -41,8 +41,8 @@
 | IDEA-37 | Fable capability-window tasks | note | done |  |
 | IDEA-38 | Densify the plans worklist | feat | done | app, ui, plans, ideas |
 | IDEA-39 | Build the focus cockpit | feat | done | app, ui, plans, stack |
-| IDEA-40 | Make sub-views real routes | feat | done | app, ui, routing, navigation |
-| IDEA-41 | Settings and affordance polish | fix | done | app, ui, settings |
+| IDEA-40 | Make sub-views real routes | feat | planned | app, ui, routing, navigation |
+| IDEA-41 | Settings and affordance polish | fix | planned | app, ui, settings |
 | IDEA-42 | Filter and sort the plans list | feat | done | app, ui, plans |
 | IDEA-43 | Unify the ideas and plans worklist | feat | done | app, ideas, plans, core |
 | IDEA-44 | Check idea overlap at capture | feat | done | app, ideas, agent |
@@ -56,7 +56,7 @@
 | IDEA-52 | Build Settings page | feat | done | app, settings |
 | IDEA-53 | Fix Review status bugs | fix | done | app, plans, core |
 | IDEA-54 | Default font and Stack panel cleanup | refactor | done | app, ui, paper-ui |
-| IDEA-55 | Actualise all ideas at once | feat | done | app, plans, agent |
+| IDEA-55 | Actualise all ideas at once | feat | planned | app, plans, agent |
 | IDEA-56 | Derive status from git and PR state | feat | dropped | app, github, plans, core |
 | IDEA-57 | Drive PR review fixes from the app | feat | done | app, github, plans, agent |
 | IDEA-58 | Simplify and de-dupe the codebase | refactor | done | app, refactor, core |
@@ -117,13 +117,13 @@
 | IDEA-113 | Feedback as a single chat thread | feat | done | app, ui, agent, plans |
 | IDEA-115 | npm package is broken on Linux — bundled node-pty can't load | fix | done | cli, packaging |
 | IDEA-116 | Direct-to-main work can never reach review/done in derived status | feat | done | app, status |
-| IDEA-117 | Multi-project hub | feat | planned | multi-project, app |
+| IDEA-117 | Multi-project hub | feat | idea | multi-project, app |
 | IDEA-118 | Parked-decisions inbox — every agent question awaiting a human, one queue | feat | done | multi-project, agents, app |
 | IDEA-119 | Run & monitor on the desk | feat | done | app, monitoring |
 | IDEA-120 | Flow profiles | feat | dropped | status, planning-surface |
 | IDEA-121 | paper-camp doctor | feat | done | format, cli |
 | IDEA-122 | MCP as the primary write path | feat | done | format, mcp, agents |
-| IDEA-123 | Cross-corpus idea links | feat | planned | multi-project, format |
+| IDEA-123 | Cross-corpus idea links | feat | idea | multi-project, format |
 | IDEA-124 | Tie ideas to releases — release notes grouped by idea | feat | done | status, releases |
 | IDEA-125 | Headless runs die as bare "error" when the agent hits a permission ask | fix | done | agents, tasks |
 | IDEA-126 | Read-only helper tasks silently supersede a running run-all | fix | done | agents, tasks |
@@ -161,18 +161,18 @@
 | IDEA-158 | Build command in the desk Stack panel | feat | done | app, checks |
 | IDEA-159 | Git actions time out instead of hanging | fix | done | app, git, ux |
 | IDEA-160 | One activity stream for the whole app | fix | done | app, ux, performance |
-| IDEA-161 | Desk section clips its own content | fix | planned | app, stack, layout |
-| IDEA-162 | One source of truth for checks | refactor | planned | app, stack, status |
-| IDEA-163 | Stack panel affordance and a11y pass | fix | planned | app, stack, ux |
-| IDEA-164 | Browser-driven page audits | feat | planned | app, agent, stack |
-| IDEA-165 | Stage files, write the message | feat | planned | app, git, ux |
-| IDEA-166 | Readable diffs on the git page | feat | planned | app, git, ui |
-| IDEA-167 | Git status vocabulary and chrome | fix | planned | app, git, ux |
-| IDEA-168 | Version the corpus format | feat | planned | format, core |
+| IDEA-161 | Desk section clips its own content | fix | review | app, stack, layout |
+| IDEA-162 | One source of truth for checks | refactor | idea | app, stack, status |
+| IDEA-163 | Stack panel affordance and a11y pass | fix | idea | app, stack, ux |
+| IDEA-164 | Browser-driven page audits | feat | idea | app, agent, stack |
+| IDEA-165 | Stage files, write the message | feat | idea | app, git, ux |
+| IDEA-166 | Readable diffs on the git page | feat | idea | app, git, ui |
+| IDEA-167 | Git status vocabulary and chrome | fix | idea | app, git, ux |
+| IDEA-168 | Version the corpus format | feat | idea | format, core |
 | IDEA-169 | Draft all ideas at once | feat | done | app, plans, agent |
 | IDEA-170 | Review pull requests with a local agent | feat | done | app, agent, github |
-| IDEA-171 | Run-all redoes work from a stale base | fix | planned | agent, plans, git |
-| IDEA-172 | Persist drafts and UI choices | fix | planned | app, ui, ux |
+| IDEA-171 | Run-all redoes work from a stale base | fix | idea | agent, plans, git |
+| IDEA-172 | Persist drafts and UI choices | fix | idea | app, ui, ux |
 | IDEA-173 | Never lose a computed PR review | fix | done | app, agent, github |
 | IDEA-174 | Show a running PR review in the UI | feat | done | app, ui, agent |
 | IDEA-175 | Scout posts a formatted review | feat | done | app, github, ui |

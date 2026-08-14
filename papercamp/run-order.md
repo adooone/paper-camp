@@ -1,6 +1,6 @@
+IDEA-161 — Desk section clips its own content
 IDEA-117 — Multi-project hub
 IDEA-123 — Cross-corpus idea links
-IDEA-161 — Desk section clips its own content
 IDEA-162 — One source of truth for checks
 IDEA-163 — Stack panel affordance and a11y pass
 IDEA-164 — Browser-driven page audits
