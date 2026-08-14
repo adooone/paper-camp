@@ -10,5 +10,4 @@ IDEA-167 — Git status vocabulary and chrome
 IDEA-168 — Version the corpus format
 IDEA-171 — Run-all redoes work from a stale base
 IDEA-172 — Persist drafts and UI choices
-IDEA-173 — Never lose a computed PR review
 IDEA-174 — Show a running PR review in the UI

@@ -1,6 +1,7 @@
 import type { ProvenanceTrail } from '@/types/index';
 import { Stamp, Tooltip } from '@dendelion/paper-ui';
 import { PrBadge } from './pr-badge';
+import { ReviewSignalBadge } from './review-signal-badge';
 
 const REACHED_STAMP = { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' };
 const UNREACHED_STAMP = { fill: 'rgba(0, 0, 0, 0.05)', text: 'rgba(0, 0, 0, 0.35)' };
@@ -59,9 +60,16 @@ function parseReleaseCommit(line: string): { hash: string; url: string } | undef
 interface ProvenanceTrailPanelProps {
   trail: ProvenanceTrail;
   released?: string;
+  reviewing?: boolean;
+  reviewNote?: string;
 }
 
-export const ProvenanceTrailPanel = ({ trail, released }: ProvenanceTrailPanelProps) => {
+export const ProvenanceTrailPanel = ({
+  trail,
+  released,
+  reviewing,
+  reviewNote,
+}: ProvenanceTrailPanelProps) => {
   const { taskRuns, commits, pr, releaseLine } = trail;
   const releaseCommit = releaseLine.data ? parseReleaseCommit(releaseLine.data) : undefined;
   const releaseLabel = released
@@ -84,7 +92,23 @@ export const ProvenanceTrailPanel = ({ trail, released }: ProvenanceTrailPanelPr
         tooltip={commits.data?.join('\n')}
       />
       <TrailArrow />
-      {pr.data ? <PrBadge pr={pr.data} /> : <TrailNode reached={false} label="PR" />}
+      {pr.data ? (
+        reviewNote && !reviewing ? (
+          <Tooltip content={reviewNote}>
+            <span className="inline-flex items-center gap-2">
+              <PrBadge pr={pr.data} reviewing={reviewing} />
+              <ReviewSignalBadge pr={pr.data} />
+            </span>
+          </Tooltip>
+        ) : (
+          <>
+            <PrBadge pr={pr.data} reviewing={reviewing} />
+            {!reviewing && <ReviewSignalBadge pr={pr.data} />}
+          </>
+        )
+      ) : (
+        <TrailNode reached={false} label="PR" />
+      )}
       <TrailArrow />
       <TrailNode
         reached={releaseLine.reached || Boolean(released)}

@@ -6,6 +6,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
 import { FixReviewButton } from '../actions';
+import { PrReviewButton } from '../actions';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { canMarkPlanDone, effectiveStatus } from '../helpers';
 
@@ -44,6 +45,7 @@ export const PlanActionsColumn = () => {
       (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
       plan.pr.unresolvedThreadCount,
   );
+  const canReviewPr = plan.pr?.state === 'open' || plan.pr?.state === 'draft';
   const orphanSubject =
     subjectsAvailable && plan.subject && !subjects.includes(plan.subject)
       ? plan.subject
@@ -163,6 +165,7 @@ export const PlanActionsColumn = () => {
         <div className="flex flex-col gap-1">
           {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
           {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
+          {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
 
           {underReview && (
             // Offline fallback: sticks only once the live PR lookup can't resolve

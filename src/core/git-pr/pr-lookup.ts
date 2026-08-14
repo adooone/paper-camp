@@ -86,9 +86,9 @@ interface GraphqlPullRequest {
 }
 
 /** Rendered into the GitHub review body's footer by `renderReviewGithubBody` — the
- * one marker that ties a posted review back to the SHA `triggerPrReviews` is
- * waiting to observe, regardless of whether it arrived via the Scout dispatch or
- * the direct-post fallback. */
+ * one marker that ties a posted review back to the SHA the poll is waiting to
+ * observe, regardless of whether it arrived via the Scout dispatch or the
+ * direct-post fallback. */
 export function scoutReviewFooter(entityId: string, sha: string): string {
   return `Paper Scout · ${entityId} · ${sha.slice(0, 7)}`;
 }
@@ -314,6 +314,7 @@ function runGhApiPostJson(root: string, path: string, payload: unknown): Promise
       resolve(code === 0 ? { delivered: true } : { delivered: false, body: stderr.trim() }),
     );
     proc.on('error', (err) => resolve({ delivered: false, body: err.message }));
+    proc.stdin?.on('error', () => {});
     proc.stdin?.end(JSON.stringify(payload));
   });
 }

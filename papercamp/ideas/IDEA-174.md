@@ -2,7 +2,7 @@
 id: IDEA-174
 title: Show a running PR review in the UI
 type: feat
-status: idea
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -47,11 +47,38 @@ finished review appearing on GitHub minutes later.
 page.
 
 ### Phases
-- [ ] Subtitle a running review in the Stack panel
+- [x] Subtitle a running review in the Stack panel
       Add the `pr-review` case to `taskSubtitle` in `agent-section.tsx`, reading the PR number off the task.
-- [ ] Detect a review running for the current entity
+      run: 2m24s · 6k in · 5.5k out · sonnet-5
+- [x] Detect a review running for the current entity
       Match an in-flight `pr-review` task from `/api/agent/status` to the idea `pr-badge.tsx` renders on.
-- [ ] Add a reviewing state to `pr-badge.tsx`
+      run: 1m41s · 516 in · 4.9k out · sonnet-5
+- [x] Add a reviewing state to `pr-badge.tsx`
       Show it alongside the existing draft/open/merged states while a review is in flight.
-- [ ] Reflect a landed review on the badge
+      run: 4m29s · 883 in · 9k out · sonnet-5
+- [x] Reflect a landed review on the badge
       After the task settles, surface it from the `[review]` thread message and the PR's review count.
+      run: 3m22s · 801 in · 12.8k out · sonnet-5
+- [x] [manual] Dedupe review badge and fix concurrent-task review detection
+
+### Fixes
+- [x] Trigger the PR review by hand, not by poll
+      Drop the `triggerPrReviews` call from `pollOpenPrs` (the poll itself stays — derived status needs fresh PR state) along with its branch/CI/SHA gates. Add `POST /api/agent/launch-pr-review` taking `planId` and building the prompt server-side like `launch-fix-review`, plus a "Review PR" `ListItem` in `PlanActionsColumn` beside `FixReviewButton`, enabled on an open PR + authenticated `gh` + a configured agent.
+      run: 7m31s · 7k in · 20.7k out · sonnet-5
+- [x] Demote the reviewed-SHA ledger to a label
+      With no poller there is no relaunch to prevent, so `pr-reviews.json` stops gating and only labels the action — "Review PR", or "Review again — last reviewed at abc1234" when the head SHA already has one. CI-green and ready-for-review become advisory too: show the state next to the button rather than disabling it.
+      run: 7m37s · 5.1k in · 22.3k out · sonnet-5
+- [x] Fix the failing "Tests" check
+      Fix the failing "Tests" check in this repo.
+      run: 7m41s · 5.9k in · 4.3k out · sonnet-5
+
+### Thread
+- [x] 2026-08-14 [review] [agent] Comments · 2 findings — The diff delivers all four phases: the Stack-panel subtitle reads the PR number off a new `prReviewUrl` task field (plumbed through `agent.ts` and the `AgentTaskState` type), `pr-badge.tsx` gains a spinner reviewing state, and the trail surfaces the landed signal via `latestReviewNote` and `ReviewSignalBadge`. The core behavior matches the spec and the tests are solid. The main issue is that the landed-review badge is now rendered in two places on the same entity view, producing a visible duplicate.
+- [x] 2026-08-14 [review] [agent] Comments · 2 findings — The UI wiring is clean and delivers the badge reviewing state, the landed-review signal, and the Stack subtitle case, with solid helper tests. The main gap is that the new `prReviewUrl` field is read in two places but never populated anywhere in the diff, so the PR number that phase 1 promises to carry into the Stack subtitle will never actually render — it always degrades to the numberless fallback. Detection and the badge itself work regardless since they key off `taskKind`/`planId`, so the feature is largely functional.
+- [x] 2026-08-14 [review] [agent] Comments · 2 findings — The UI wiring is clean and delivers the badge reviewing state, the landed-review signal, and the Stack subtitle case, with solid helper tests. The main gap is that the new `prReviewUrl` field is read in two places but never populated anywhere in the diff, so the PR number that phase 1 promises to carry into the Stack subtitle will never actually render — it always degrades to the numberless fallback. Detection and the badge itself work regardless since they key off `taskKind`/`planId`, so the feature is largely functional.
+- [x] 2026-08-14 [review] [agent] Approves · 0 findings — The diff cleanly delivers all five phases: the Stack subtitle reads the PR number off prReviewUrl (which is already populated server-side by startPrReview, contrary to the earlier review threads that saw only the diff), pr-badge gains a spinner reviewing state, and the landed-review signal is deduped by removing ReviewSignalBadge from BranchRow and rendering it once in the provenance trail. Detection keys off taskKind/planId and correctly suppresses the landed badge while a review is in flight. Logic and tests are solid and spec-conformant.
+- [x] 2026-08-14 [review] [agent] Approves · 0 findings — The diff cleanly delivers all five phases: the Stack subtitle reads the PR number off prReviewUrl (which is already populated server-side by startPrReview, contrary to the earlier review threads that saw only the diff), pr-badge gains a spinner reviewing state, and the landed-review signal is deduped by removing ReviewSignalBadge from BranchRow and rendering it once in the provenance trail. Detection keys off taskKind/planId and correctly suppresses the landed badge while a review is in flight. Logic and tests are solid and spec-conformant.
+- [x] 2026-08-14 [question] [agent] Run-all parked on fix 1 ("Guard `startPrReview` with `admit()`") — the agent needs a decision: `startPrReview` already goes through `launch()`, which unconditionally calls `admit()` before spawning (src/app/server/agent.ts:781), and there's already a passing test for exactly this collision (`agent.test.ts:1571`, "blocks a second launch while one is running"). I can't find any code path where `startPrReview` bypasses the gate. Should I mark this fix's checkbox as done since the guard is already in place, or is there a different bypass you have in mind that I'm missing?
+- [x] 2026-08-14 [clarification] You are right and the fix was wrong — dropped. `launch()` calls `admit(scope.taskKind, planId)` unconditionally at agent.ts:781, so `startPrReview` is gated like every other launcher; the explicit `admit()` calls in `startBatchReconcile`/`startSuggest` are redundant belt-and-braces, not the only gate. The three reviews on PR #156 were not concurrent: tasks.log shows 14:31:38→14:33:16 then 14:33:22→14:34:42, so the gate had nothing to block. The poll simply relaunched after each task finished, because the reviewed-SHA ledger only records once a posted Scout review is observed. The remaining two fixes cover it.
+- [x] 2026-08-14 [review] [agent] Comments · 1 finding — The diff cleanly delivers all five phases plus the two settled fixes: the Stack subtitle reads the PR number off the now-surfaced prReviewUrl task field, pr-badge gains a spinner reviewing state, the landed-review signal is deduped down to a single ReviewSignalBadge in the provenance trail, and the auto-poll trigger is replaced by a manual Review PR button with the ledger demoted to an advisory label — matching the idea's amended Fixes section and not contradicting any settled decision. Logic and helper tests are solid and the prReviewUrl population the earlier threads worried about is real (agent.ts:859). One behavioral side-effect and a couple of now-stale references are worth a human glance but nothing blocks merge.
+- [x] 2026-08-14 [review] [agent] Comments · 1 finding — The diff delivers all five phases plus both settled fixes: the Stack subtitle reads the PR number off the now-populated prReviewUrl task field, pr-badge gains a spinner reviewing state, the landed-review signal is deduped to a single ReviewSignalBadge in the provenance trail, and the auto-poll trigger is replaced by a manual Review PR button with the reviewed-SHA ledger demoted to an advisory label — none of which contradicts the settled decision that the admit() gate was already sufficient. The logic and helper tests are solid and the earlier threads' worry about prReviewUrl never being populated is resolved in the final state. One behavioral side-effect of the dedup is worth a human glance but nothing blocks merge.

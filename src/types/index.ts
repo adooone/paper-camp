@@ -196,8 +196,18 @@ export interface PrInfo {
   headSha?: string;
   headBranch?: string;
   /** A posted review's footer names this entity and `headSha` — set once the poll
-   * observes it, so `triggerPrReviews` can record the SHA reviewed (IDEA-175). */
+   * observes it (IDEA-175). */
   scoutReviewObserved?: boolean;
+}
+
+/** Advisory info for the "Review PR" action — nothing here gates the button,
+ * it only labels it (IDEA-174 fix 2). */
+export interface PrReviewStatus {
+  ready: boolean;
+  headSha: string | null;
+  lastReviewedSha: string | null;
+  /** null when no CI is configured, or the PR's branch has no runs yet. */
+  ciGreen: boolean | null;
 }
 
 export interface PlanEntry {
@@ -896,6 +906,8 @@ export interface AgentTaskState {
   lastStreamAt?: number;
   // fix-review only: prefills the commit form once the agent has reported.
   suggestedCommit?: { title: string; message: string };
+  // pr-review only: the PR being reviewed, e.g. https://github.com/o/r/pull/7.
+  prReviewUrl?: string;
   errorKind?: 'auth' | 'question';
   rateLimit?: RateLimitSnapshot;
 }

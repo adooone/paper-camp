@@ -44,6 +44,23 @@ export const runningTaskForPlan = (
     ? agentStatus.find((t) => t.planId === planId && t.status !== 'done' && t.status !== 'error')
     : undefined;
 
+export const runningPrReviewForPlan = (
+  planId: string | undefined,
+  agentStatus: AgentTaskState[],
+): AgentTaskState | undefined =>
+  planId
+    ? agentStatus.find(
+        (t) =>
+          t.planId === planId &&
+          t.taskKind === 'pr-review' &&
+          t.status !== 'done' &&
+          t.status !== 'error',
+      )
+    : undefined;
+
+export const latestReviewNote = (thread: ThreadMessage[] | undefined): string | undefined =>
+  [...(thread ?? [])].reverse().find((m) => m.kind === 'review')?.text;
+
 /** Overlays a live agent task onto the stored/derived status for display only —
  * frontmatter and the derived status used for filtering/sorting stay untouched. */
 export const effectiveStatus = (

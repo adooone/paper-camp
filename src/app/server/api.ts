@@ -122,7 +122,7 @@ export function createApiMiddleware(
     hooks.commitCorpus,
     agentState,
   );
-  const activity = createActivityManager(root, git, agent);
+  const activity = createActivityManager(root);
 
   const routes = buildRoutes({ root, activity, agent, git, status, services, checks });
 
