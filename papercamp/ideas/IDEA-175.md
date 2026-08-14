@@ -131,6 +131,7 @@ anything other than reviews.
 - [x] Record the reviewed SHA from the poller
       Land on [[IDEA-173]], then mark a head SHA reviewed only when a later poll
       observes a Scout review present for it, keeping unobserved SHAs retryable.
+      run: 8m44s · 10.5k in · 26.4k out · sonnet-5
 - [x] [manual] Scout posts a formatted review
 
 ### Thread

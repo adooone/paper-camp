@@ -175,6 +175,6 @@
 | IDEA-172 | Persist drafts and UI choices | fix | planned | app, ui, ux |
 | IDEA-173 | Never lose a computed PR review | fix | planned | app, agent, github |
 | IDEA-174 | Show a running PR review in the UI | feat | planned | app, ui, agent |
-| IDEA-175 | Scout posts a formatted review | feat | planned | app, github, ui |
+| IDEA-175 | Scout posts a formatted review | feat | review | app, github, ui |
 | IDEA-176 | Sync stops stashing over the corpus | fix | idea | server, git, plans |
 | IDEA-177 | Surface dangling stashes | feat | idea | app, git, ux |
