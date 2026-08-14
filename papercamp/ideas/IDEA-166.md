@@ -4,7 +4,7 @@ title: Readable diffs on the git page
 type: feat
 status: idea
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-14
 tags:
   - app
   - git
@@ -49,6 +49,8 @@ the directory rather than the name. Same fix in the diff section's own
 
 **`CountBadge` is defined twice**, identically, in `git-file-list.tsx` and
 `file-diff-section.tsx`, differing only by a `shrink-0`. Extract it.
+
+One of three slices over `features/git/`, shippable in this order: **[[IDEA-166]] (this) → [[IDEA-167]] → [[IDEA-165]]**. This one first because the line-height fix is a single class that makes every later change to the page reviewable; 167 then adds the status vocabulary that 165's partial-staging display depends on.
 
 ### Phases
 - [ ] Set a code line-height on the diff `<pre>`

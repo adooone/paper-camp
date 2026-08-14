@@ -123,7 +123,7 @@
 | IDEA-120 | Flow profiles | feat | dropped | status, planning-surface |
 | IDEA-121 | paper-camp doctor | feat | done | format, cli |
 | IDEA-122 | MCP as the primary write path | feat | done | format, mcp, agents |
-| IDEA-123 | Cross-corpus idea links | feat | planned | multi-project, format |
+| IDEA-123 | Cross-corpus idea links | feat | dropped | multi-project, format |
 | IDEA-124 | Tie ideas to releases — release notes grouped by idea | feat | done | status, releases |
 | IDEA-125 | Headless runs die as bare "error" when the agent hits a permission ask | fix | done | agents, tasks |
 | IDEA-126 | Read-only helper tasks silently supersede a running run-all | fix | done | agents, tasks |
@@ -177,6 +177,7 @@
 | IDEA-174 | Show a running PR review in the UI | feat | done | app, ui, agent |
 | IDEA-175 | Scout posts a formatted review | feat | done | app, github, ui |
 | IDEA-176 | Sync stops stashing over the corpus | fix | planned | server, git, plans |
-| IDEA-177 | Surface dangling stashes | feat | planned | app, git, ux |
+| IDEA-177 | Surface dangling stashes | feat | dropped | app, git, ux |
 | IDEA-178 | Rate limits must not rewrite status | fix | planned | core, github, plans |
 | IDEA-179 | Prioritise lies about what it did | fix | planned | app, server, plans |
+| IDEA-180 | Say what each idea is for | feat | idea | app, plans, format |

@@ -4,7 +4,7 @@ title: Stage files, write the message
 type: feat
 status: idea
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-14
 tags:
   - app
   - git
@@ -84,6 +84,8 @@ The git page's entire commit interaction lives in
 another feature, and this idea pushes the two surfaces further apart: the git
 page needs staging and a body, the idea view needs the Fix action. Split the
 shared form into something both own instead of growing the conditional.
+
+One of three slices over `features/git/`: [[IDEA-166]] → [[IDEA-167]] → **[[IDEA-165]] (this)**. Last because the indeterminate-checkbox state for a partially-staged file needs the `status` field [[IDEA-167]] adds.
 
 ### Phases
 - [ ] Add stage/unstage routes
