@@ -1,7 +1,7 @@
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import type { CheckStatus, DeskCheckState } from '@/types/index';
 import { Card, CopyButton, Stamp, Tooltip } from '@dendelion/paper-ui';
-import { chalkStatusFill, chalkStatusText, groupLabelClassName } from './shared';
+import { chalkStatusFill, chalkStatusText, formatLastRun, groupLabelClassName } from './shared';
 
 export const CHECKS_GROUP_LABEL = 'Checks';
 
@@ -22,28 +22,34 @@ const CheckStamp = ({
   onRun: (name: string) => void;
 }) => {
   const running = check.status === 'running';
+  const lastRun = formatLastRun(check.lastRun);
   return (
-    <Tooltip content={`${check.cmd} — click to run.`} surface="chalkboard">
-      {/* Raw <button>: the clickable target is a Stamp, which has no button surface of its own. */}
-      <button
-        type="button"
-        className={`inline-flex border-none bg-transparent bg-none p-0 ${running ? 'cursor-not-allowed' : 'cursor-pointer enabled:hover:-translate-y-px enabled:hover:brightness-[1.15]'}`}
-        onClick={() => {
-          if (!running) onRun(check.name);
-        }}
-        disabled={running}
-      >
-        <Stamp
-          surface="chalkboard"
-          size="small"
-          fillColor={statusFill[check.status]}
-          textColor={statusText[check.status]}
+    <div className="flex items-center justify-between gap-2">
+      <Tooltip content={`${check.cmd} — click to run.`} surface="chalkboard">
+        {/* Raw <button>: the clickable target is a Stamp, which has no button surface of its own. */}
+        <button
+          type="button"
+          className={`inline-flex border-none bg-transparent bg-none p-0 ${running ? 'cursor-not-allowed' : 'cursor-pointer enabled:hover:-translate-y-px enabled:hover:brightness-[1.15]'}`}
+          onClick={() => {
+            if (!running) onRun(check.name);
+          }}
+          disabled={running}
         >
-          {check.name}
-          <span className={running ? 'visible' : 'invisible'}>…</span>
-        </Stamp>
-      </button>
-    </Tooltip>
+          <Stamp
+            surface="chalkboard"
+            size="small"
+            fillColor={statusFill[check.status]}
+            textColor={statusText[check.status]}
+          >
+            {check.name}
+            <span className={running ? 'visible' : 'invisible'}>…</span>
+          </Stamp>
+        </button>
+      </Tooltip>
+      {lastRun && (
+        <span className="shrink-0 font-mono text-2xs text-desk-text-muted">{lastRun}</span>
+      )}
+    </div>
   );
 };
 
@@ -56,7 +62,7 @@ export const ChecksGroup = () => {
       <div className={groupLabelClassName}>{CHECKS_GROUP_LABEL}</div>
       {checks.length > 0 ? (
         <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2">
             {checks.map((check) => (
               <CheckStamp key={check.name} check={check} onRun={run} />
             ))}

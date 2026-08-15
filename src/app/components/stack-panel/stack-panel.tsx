@@ -1,10 +1,11 @@
+import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
-import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { Divider, IconButton, Spinner } from '@dendelion/paper-ui';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { AgentSection } from './agent-section';
 import { DeskSection } from './desk-section';
+import { HealthSection } from './health-section';
 
 interface StackPanelProps {
   open: boolean;
@@ -16,7 +17,6 @@ interface StackPanelProps {
 export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) => {
   const isOpen = open || pinned;
   const loadPlans = useAppStore((s) => s.loadPlans);
-  const statusData = useAppStore((s) => s.status);
   const loadStatus = useAppStore((s) => s.loadStatus);
   const consistency = useAppStore((s) => s.consistency);
   const loadConsistency = useAppStore((s) => s.loadConsistency);
@@ -78,8 +78,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       timers[key] = setTimeout(run, ms);
     };
     const unsubscribe = subscribeToActivityStream((payload) => {
-      // Check stamps (Quality/Tests/Consistency) live entirely off these — the
-      // 'running' tick IS the loading state, so it must reach loadStatus.
+      // Keeps the commit gate's consistency check warm for other pages (e.g. deliver-controls)
+      // even while this panel — which no longer renders it — is what's mounted.
       if (payload.type === 'status') {
         schedule('status', () => refreshRef.current.loadStatus(), 80);
         return;
@@ -113,19 +113,12 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     };
   }, []);
 
-  const { qualityStatus, testStatus, consistencyStatus } = useMemo(
-    () => deriveCheckStatuses(statusData),
-    [statusData],
-  );
+  const { checks: deskChecks } = useDeskChecks();
   // Plan *document* consistency (orphan subjects) — a separate concern from the
   // code-consistency check, surfaced in its own "Docs" stamp.
   const hasDocIssues = consistency.length > 0;
   const anyChecksFailing =
-    qualityStatus === 'fail' ||
-    testStatus === 'fail' ||
-    consistencyStatus === 'fail' ||
-    hasDocIssues ||
-    doctor.errorCount > 0;
+    deskChecks.some((check) => check.status === 'fail') || hasDocIssues || doctor.errorCount > 0;
   const agentActive = agentStatus.some(
     (t) => t.status === 'running' || t.status === 'starting' || t.status === 'stopping',
   );
@@ -195,6 +188,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         <div className="flex min-h-0 flex-1 flex-col">
           <AgentSection />
           <DeskSection />
+          <HealthSection />
         </div>
       </div>
     </>

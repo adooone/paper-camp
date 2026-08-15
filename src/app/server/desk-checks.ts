@@ -27,7 +27,7 @@ export function createEmptyCheckState(): DeskCheckManagerState {
 
 export type DeskCheckManager = ReturnType<typeof createDeskCheckManager>;
 
-function loadManifestChecks(root: string): DeskCheck[] {
+export function loadManifestChecks(root: string): DeskCheck[] {
   let raw: string;
   try {
     raw = readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8');

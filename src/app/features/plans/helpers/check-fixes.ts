@@ -1,24 +1,34 @@
 import type { StatusState } from '@/app/services/status-api';
-import type { CheckResult, PhaseItem } from '@/types/index';
+import type { CheckResult, DeskCheckState, PhaseItem } from '@/types/index';
 
 const checkFixKey = (name: string) => `Fix the failing "${name}" check`;
 
-const CHECK_GROUPS: { name: string; keys: ('lint' | 'format' | 'test' | 'consistency')[] }[] = [
-  { name: 'Quality', keys: ['lint', 'format'] },
-  { name: 'Tests', keys: ['test'] },
-  { name: 'Consistency', keys: ['consistency'] },
-];
-
 const formatCheckDetail = ({ cmd, output }: CheckResult): string =>
   `The command was \`${cmd}\`.\n\nOutput from the last run:\n\n${output || '(no output captured)'}`;
+
+// Quality/Tests come from `desk.checks` (IDEA-162); Consistency is the commit
+// gate's own check, kept on `/api/status`.
+const checkGroups = (
+  status: StatusState,
+  deskChecks: DeskCheckState[],
+): { name: string; results: CheckResult[] }[] => {
+  const deskCheck = (checkName: string) => deskChecks.find((c) => c.name === checkName);
+  const lint = deskCheck('lint');
+  const test = deskCheck('test');
+  return [
+    { name: 'Quality', results: lint ? [lint] : [] },
+    { name: 'Tests', results: test ? [test] : [] },
+    { name: 'Consistency', results: [status.consistency] },
+  ];
+};
 
 /** Maps each failing Quality/Tests/Consistency check to one `PlanEntry.fixes` entry,
  * carrying the same command + last-output content the Stack panel's `fixPrompt`
  * copy-paste flow already builds. Docs findings keep their own browse flow and are
  * excluded (IDEA-156). */
-export const buildCheckFixes = (status: StatusState): PhaseItem[] =>
-  CHECK_GROUPS.flatMap(({ name, keys }) => {
-    const failing = keys.map((key) => status[key]).filter((result) => result.status === 'fail');
+export const buildCheckFixes = (status: StatusState, deskChecks: DeskCheckState[]): PhaseItem[] =>
+  checkGroups(status, deskChecks).flatMap(({ name, results }) => {
+    const failing = results.filter((result) => result.status === 'fail');
     if (failing.length === 0) return [];
     const details = failing.map(formatCheckDetail).join('\n\n');
     return [
@@ -34,8 +44,12 @@ export const buildCheckFixes = (status: StatusState): PhaseItem[] =>
  * name (`text`): a repeat failure replaces that entry's command/output in place,
  * preserving its position, instead of appending a duplicate. A newly-failing check
  * with no prior entry is appended. */
-export const upsertCheckFixes = (existingFixes: PhaseItem[], status: StatusState): PhaseItem[] => {
-  const nextByKey = new Map(buildCheckFixes(status).map((fix) => [fix.text, fix]));
+export const upsertCheckFixes = (
+  existingFixes: PhaseItem[],
+  status: StatusState,
+  deskChecks: DeskCheckState[],
+): PhaseItem[] => {
+  const nextByKey = new Map(buildCheckFixes(status, deskChecks).map((fix) => [fix.text, fix]));
   const merged = existingFixes.map((fix) => {
     const next = nextByKey.get(fix.text);
     if (!next) return fix;

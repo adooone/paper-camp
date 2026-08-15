@@ -41,26 +41,11 @@ export function statusRoutes({
       path: '/api/status/check',
       handle: (req, res) => {
         const name = requestUrl(req).searchParams.get('name');
-        if (
-          name !== 'lint' &&
-          name !== 'format' &&
-          name !== 'test' &&
-          name !== 'consistency' &&
-          name !== 'build'
-        ) {
-          sendJson(res, 400, { error: 'name must be lint, format, test, consistency, or build' });
+        if (name !== 'consistency') {
+          sendJson(res, 400, { error: 'name must be consistency' });
           return;
         }
         status.runCheck(name);
-        sendJson(res, 202, { ok: true });
-      },
-    },
-
-    {
-      method: 'POST',
-      path: '/api/status/fix',
-      handle: (_req, res) => {
-        status.runQualityFix();
         sendJson(res, 202, { ok: true });
       },
     },

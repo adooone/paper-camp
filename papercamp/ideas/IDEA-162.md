@@ -2,7 +2,7 @@
 id: IDEA-162
 title: One source of truth for checks
 type: refactor
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-13
 tags:
@@ -10,6 +10,7 @@ tags:
   - stack
   - status
 subject: Run & monitor
+order: 2
 ---
 
 The Stack panel reads two independent check backends and renders both at once.
@@ -62,12 +63,20 @@ the dot, and the panel gains a place to show them, rather than being dropped
 from the dot.
 
 ### Phases
-- [ ] Make desk.checks the single check source in status.ts
+- [x] Make desk.checks the single check source in status.ts
       Drop the hardcoded `CHECK_COMMANDS` and `commands.build`; `/api/status` keeps only the commit gate's `consistency`.
-- [ ] Fold the Build group into Checks as an ordinary check
+      run: 13m43s · 13.4k in · 63.9k out · sonnet-5
+- [x] Fold the Build group into Checks as an ordinary check
       `build` renders once from `desk.checks[name=build]`, carrying its own `lastRun`.
-- [ ] Show lastRun on every check stamp
+      run: 3m18s · 4k in · 7.6k out · sonnet-5
+- [x] Show lastRun on every check stamp
       `formatLastBuilt` includes a date when the run isn't from today, and renders no timestamp for a run that produced nothing.
-- [ ] Render doctor and plan-consistency findings in the panel
-- [ ] Drive the collapsed tab's dot only from what the panel renders
+      run: 3m17s · 4k in · 8.3k out · sonnet-5
+- [x] Render doctor and plan-consistency findings in the panel
+      run: 4m59s · 6.4k in · 17.5k out · sonnet-5
+- [x] Drive the collapsed tab's dot only from what the panel renders
       Retire the unused `deriveCheckStatuses` coupling so the dot reports only explainable state.
+      run: 3m20s · 3.7k in · 8.2k out · sonnet-5
+
+### Thread
+- [x] 2026-08-15 [review] [agent] Comments · 0 findings — This is a clean, well-executed refactor that delivers all five phases: /api/status is stripped to just the commit-gate consistency check, the Build group is folded into Checks as an ordinary desk check with its own lastRun, every stamp shows a date-aware last-run time, doctor and plan-doc findings now render in a new Health section, and the collapsed tab's dot is driven only from desk-check failures, doc issues, and doctor errors — all of which the open panel can now explain. Type-checks pass, the check-fixes and check-status tests were faithfully rewritten around the new desk-check inputs, and no dangling references to the removed runCheck/fixQuality/BuildGroup/deriveBuildStatus symbols remain. One behavior change (auto-run-on-save loss) is worth flagging but isn't a spec violation.

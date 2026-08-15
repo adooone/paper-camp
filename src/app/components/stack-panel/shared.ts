@@ -15,3 +15,15 @@ export const chalkStatusText = {
   fail: '#d6a0a0',
   running: '#d6c4a0',
 } as const;
+
+const isSameDay = (a: Date, b: Date): boolean =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+export const formatLastRun = (lastRun: string | null): string => {
+  if (!lastRun) return '';
+  const date = new Date(lastRun);
+  const time = date.toLocaleTimeString();
+  return isSameDay(date, new Date()) ? time : `${date.toLocaleDateString()} ${time}`;
+};

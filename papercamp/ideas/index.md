@@ -172,7 +172,7 @@
 | IDEA-169 | Draft all ideas at once | feat | done | app, plans, agent |
 | IDEA-170 | Review pull requests with a local agent | feat | done | app, agent, github |
 | IDEA-171 | Run-all redoes work from a stale base | fix | planned | agent, plans, git |
-| IDEA-172 | Persist drafts and UI choices | fix | planned | app, ui, ux |
+| IDEA-172 | Persist drafts and UI choices | fix | done | app, ui, ux |
 | IDEA-173 | Never lose a computed PR review | fix | done | app, agent, github |
 | IDEA-174 | Show a running PR review in the UI | feat | done | app, ui, agent |
 | IDEA-175 | Scout posts a formatted review | feat | done | app, github, ui |

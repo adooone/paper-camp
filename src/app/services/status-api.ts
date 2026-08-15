@@ -1,13 +1,10 @@
-import type { CheckName, CheckResult } from '@/types/index';
+import type { CheckResult } from '@/types/index';
 import { apiUrl } from './api-base';
 
 export interface StatusState {
-  lint: CheckResult;
-  format: CheckResult;
-  test: CheckResult;
+  // The commit gate's own check — not a desk check, so it isn't sourced from
+  // `desk.checks` (IDEA-162). Quality/Tests/Build come from `/api/checks` instead.
   consistency: CheckResult;
-  /** Optional so clients tolerate servers predating the build check (IDEA-157). */
-  build?: CheckResult;
 }
 
 export const fetchStatus = async (): Promise<StatusState> => {
@@ -15,12 +12,8 @@ export const fetchStatus = async (): Promise<StatusState> => {
   return response.json();
 };
 
-export const triggerCheck = async (name: CheckName): Promise<void> => {
-  await fetch(apiUrl(`/api/status/check?name=${name}`), { method: 'POST' });
-};
-
-export const triggerQualityFix = async (): Promise<void> => {
-  await fetch(apiUrl('/api/status/fix'), { method: 'POST' });
+export const triggerConsistencyCheck = async (): Promise<void> => {
+  await fetch(apiUrl('/api/status/check?name=consistency'), { method: 'POST' });
 };
 
 // Drops the server's resolved-PR cache so the reads that follow re-fetch review

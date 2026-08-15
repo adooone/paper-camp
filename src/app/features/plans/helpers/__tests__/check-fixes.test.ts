@@ -1,5 +1,5 @@
 import type { StatusState } from '@/app/services/status-api';
-import type { CheckResult, PhaseItem } from '@/types/index';
+import type { CheckResult, DeskCheckState, PhaseItem } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import { buildCheckFixes, upsertCheckFixes } from '../check-fixes';
 
@@ -18,22 +18,25 @@ const fail = (cmd: string, output: string): CheckResult => ({
 });
 
 const baseStatus: StatusState = {
-  lint: pass('npx biome lint .'),
-  format: pass('npx biome format .'),
-  test: pass('npx vitest run --passWithNoTests'),
   consistency: pass('pnpm run consistency'),
 };
 
+const baseDeskChecks: DeskCheckState[] = [
+  { name: 'lint', ...pass('npx biome lint .') },
+  { name: 'test', ...pass('npx vitest run --passWithNoTests') },
+];
+
 describe('buildCheckFixes', () => {
   it('returns no fixes when everything passes', () => {
-    expect(buildCheckFixes(baseStatus)).toEqual([]);
+    expect(buildCheckFixes(baseStatus, baseDeskChecks)).toEqual([]);
   });
 
   it('builds one fix entry for a failing single-command check', () => {
-    const fixes = buildCheckFixes({
-      ...baseStatus,
-      test: fail('npx vitest run --passWithNoTests', 'FAIL src/foo.test.ts'),
-    });
+    const deskChecks = [
+      { name: 'lint', ...pass('npx biome lint .') },
+      { name: 'test', ...fail('npx vitest run --passWithNoTests', 'FAIL src/foo.test.ts') },
+    ];
+    const fixes = buildCheckFixes(baseStatus, deskChecks);
     expect(fixes).toEqual([
       {
         done: false,
@@ -46,54 +49,64 @@ describe('buildCheckFixes', () => {
     ]);
   });
 
-  it('combines lint and format into one "Quality" entry when both fail', () => {
-    const fixes = buildCheckFixes({
-      ...baseStatus,
-      lint: fail('npx biome lint .', 'lint error'),
-      format: fail('npx biome format .', 'format error'),
-    });
+  it('builds one "Quality" entry when the desk "lint" check fails', () => {
+    const deskChecks = [
+      { name: 'lint', ...fail('npx biome lint .', 'lint error') },
+      { name: 'test', ...pass('npx vitest run --passWithNoTests') },
+    ];
+    const fixes = buildCheckFixes(baseStatus, deskChecks);
     expect(fixes).toEqual([
       {
         done: false,
         text: 'Fix the failing "Quality" check',
         description:
           'Fix the failing "Quality" check in this repo.\n\n' +
-          'The command was `npx biome lint .`.\n\nOutput from the last run:\n\nlint error\n\n' +
-          'The command was `npx biome format .`.\n\nOutput from the last run:\n\nformat error',
+          'The command was `npx biome lint .`.\n\nOutput from the last run:\n\nlint error',
       },
     ]);
   });
 
   it('falls back to a placeholder when output is empty', () => {
-    const fixes = buildCheckFixes({
-      ...baseStatus,
-      consistency: fail('pnpm run consistency', ''),
-    });
+    const fixes = buildCheckFixes(
+      { consistency: fail('pnpm run consistency', '') },
+      baseDeskChecks,
+    );
     expect(fixes[0]?.description).toContain('(no output captured)');
   });
 
   it('builds one entry per failing check, in Quality/Tests/Consistency order', () => {
-    const fixes = buildCheckFixes({
-      lint: fail('npx biome lint .', 'lint error'),
-      format: pass('npx biome format .'),
-      test: fail('npx vitest run --passWithNoTests', 'test error'),
-      consistency: fail('pnpm run consistency', 'consistency error'),
-    });
+    const deskChecks = [
+      { name: 'lint', ...fail('npx biome lint .', 'lint error') },
+      { name: 'test', ...fail('npx vitest run --passWithNoTests', 'test error') },
+    ];
+    const fixes = buildCheckFixes(
+      { consistency: fail('pnpm run consistency', 'consistency error') },
+      deskChecks,
+    );
     expect(fixes.map((f) => f.text)).toEqual([
       'Fix the failing "Quality" check',
       'Fix the failing "Tests" check',
       'Fix the failing "Consistency" check',
     ]);
   });
+
+  it('skips a group whose desk check is not declared', () => {
+    const fixes = buildCheckFixes(baseStatus, [
+      { name: 'lint', ...fail('npx biome lint .', 'lint error') },
+    ]);
+    expect(fixes.map((f) => f.text)).toEqual(['Fix the failing "Quality" check']);
+  });
 });
 
 describe('upsertCheckFixes', () => {
   it('appends a fix entry for a check with no prior entry', () => {
-    const status = {
-      ...baseStatus,
-      test: fail('npx vitest run --passWithNoTests', 'FAIL src/foo.test.ts'),
-    };
-    expect(upsertCheckFixes([], status)).toEqual(buildCheckFixes(status));
+    const deskChecks = [
+      { name: 'lint', ...pass('npx biome lint .') },
+      { name: 'test', ...fail('npx vitest run --passWithNoTests', 'FAIL src/foo.test.ts') },
+    ];
+    expect(upsertCheckFixes([], baseStatus, deskChecks)).toEqual(
+      buildCheckFixes(baseStatus, deskChecks),
+    );
   });
 
   it('replaces a repeat failure in place instead of appending a duplicate', () => {
@@ -104,10 +117,11 @@ describe('upsertCheckFixes', () => {
         description: 'stale description from a previous run',
       },
     ];
-    const merged = upsertCheckFixes(existing, {
-      ...baseStatus,
-      test: fail('npx vitest run --passWithNoTests', 'still failing'),
-    });
+    const deskChecks = [
+      { name: 'lint', ...pass('npx biome lint .') },
+      { name: 'test', ...fail('npx vitest run --passWithNoTests', 'still failing') },
+    ];
+    const merged = upsertCheckFixes(existing, baseStatus, deskChecks);
     expect(merged).toHaveLength(1);
     expect(merged[0]).toEqual({
       done: false,
@@ -125,10 +139,11 @@ describe('upsertCheckFixes', () => {
       { done: false, text: 'Fix the failing "Quality" check', description: 'old' },
       { done: false, text: 'Some other open fix' },
     ];
-    const merged = upsertCheckFixes(existing, {
-      ...baseStatus,
-      lint: fail('npx biome lint .', 'lint error'),
-    });
+    const deskChecks = [
+      { name: 'lint', ...fail('npx biome lint .', 'lint error') },
+      { name: 'test', ...pass('npx vitest run --passWithNoTests') },
+    ];
+    const merged = upsertCheckFixes(existing, baseStatus, deskChecks);
     expect(merged.map((f) => f.text)).toEqual([
       'Some unrelated done phase',
       'Fix the failing "Quality" check',
@@ -141,17 +156,21 @@ describe('upsertCheckFixes', () => {
     const existing: PhaseItem[] = [
       { done: true, text: 'Fix the failing "Tests" check', description: 'already fixed' },
     ];
-    const merged = upsertCheckFixes(existing, baseStatus);
+    const merged = upsertCheckFixes(existing, baseStatus, baseDeskChecks);
     expect(merged).toEqual(existing);
   });
 
   it('appends new failures after existing entries, without disturbing prior ones', () => {
     const existing: PhaseItem[] = [{ done: false, text: 'Fix the failing "Tests" check' }];
-    const merged = upsertCheckFixes(existing, {
-      ...baseStatus,
-      test: fail('npx vitest run --passWithNoTests', 'test error'),
-      consistency: fail('pnpm run consistency', 'consistency error'),
-    });
+    const deskChecks = [
+      { name: 'lint', ...pass('npx biome lint .') },
+      { name: 'test', ...fail('npx vitest run --passWithNoTests', 'test error') },
+    ];
+    const merged = upsertCheckFixes(
+      existing,
+      { consistency: fail('pnpm run consistency', 'consistency error') },
+      deskChecks,
+    );
     expect(merged.map((f) => f.text)).toEqual([
       'Fix the failing "Tests" check',
       'Fix the failing "Consistency" check',
