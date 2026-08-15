@@ -4,12 +4,14 @@ import { lstat, readFile } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { branchName, resolvePrsByEntity } from '@/core/git-pr';
+import { parseEntityFile } from '@/core/parse/parser';
 import type {
   BranchHygieneStatus,
   FileDiffEntry,
   GitLiveState,
   GitStatusEntry,
   GitSyncResult,
+  PhaseState,
   PlanEntry,
 } from '../../types';
 import { buildGitSyncRecoveryPrompt } from './git-sync-recovery';
@@ -342,6 +344,23 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     if (Date.now() - lastOriginMainFetch < 60_000) return;
     lastOriginMainFetch = Date.now();
     void runGit(['fetch', 'origin', 'main']).catch(() => {});
+  }
+
+  // Entity files are branch-local, so a ref's phase state can only be read from that
+  // ref's own tree — a working-tree read would show the current branch's state instead.
+  async function getPhaseStateAtRef(id: string, ref: string): Promise<PhaseState> {
+    let content: string;
+    try {
+      content = await runGit(['show', `${ref}:papercamp/ideas/${id}.md`]);
+    } catch {
+      return null;
+    }
+    const entity = parseEntityFile(content).entries[0];
+    if (!entity) return null;
+    return {
+      done: entity.phases.filter((phase) => phase.done).length,
+      total: entity.phases.length,
+    };
   }
 
   async function isMergedIntoMain(): Promise<boolean> {
@@ -823,6 +842,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     diff,
     getWorkingDiff,
     ensureBranch,
+    getPhaseStateAtRef,
     getFeatureBranchPlanId,
     getAheadCount,
     getBehindCount,

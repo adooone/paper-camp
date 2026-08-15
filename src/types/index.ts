@@ -778,6 +778,9 @@ export interface GitLiveState {
   dirtyCount: number;
 }
 
+// null means the entity file doesn't exist at that ref (never drafted there yet, or archived).
+export type PhaseState = { done: number; total: number } | null;
+
 export interface GitSyncFailure {
   ok: false;
   stage: 'reconcile' | 'stash-pop' | 'conflicted';

@@ -70,8 +70,9 @@ Detecting duplicate work already committed under two different SHAs after the
 fact; this is a pre-flight guard only.
 
 ### Phases
-- [ ] Read phase state at a git ref
+- [x] Read phase state at a git ref
       Add a helper that runs `git show <ref>:papercamp/ideas/<ID>.md` and returns the checked/unchecked count, tolerating a missing entity at that ref.
+      run: 2m23s · 13.4k in · 13.1k out · sonnet-5
 - [ ] Compare current branch against main and origin/main
       Flag staleness when either ref shows phases checked that the current branch shows unchecked; return the offending ref and its count for the message.
 - [ ] Refuse run-all on a stale base
