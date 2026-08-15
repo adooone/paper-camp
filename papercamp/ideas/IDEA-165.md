@@ -91,8 +91,9 @@ One of three slices over `features/git/`: [[IDEA-166]] → [[IDEA-167]] → **[[
 - [x] Add stage/unstage routes
       `POST /api/git/stage` and `POST /api/git/unstage`, each taking a path, running `git add` / `git restore --staged` against the index.
       run: 2m50s · 6k in · 4.5k out · sonnet-5
-- [ ] Wire real staging into the changed-files checkbox
+- [x] Wire real staging into the changed-files checkbox
       Checkbox calls the routes; the `staged` field drives the Stamp; a partially-staged file (`MM`) renders as an indeterminate checkbox.
+      run: 8m59s · 1.1k in · 26.6k out · sonnet-5
 - [ ] Commit the index instead of a client list
       `commitChanges` stops passing a file array once anything is staged; the button reads "Commit N staged" and keeps commit-everything when nothing is staged.
 - [ ] Add the collapsible commit body field

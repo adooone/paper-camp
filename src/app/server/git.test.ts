@@ -820,6 +820,7 @@ describe('getWorkingDiff', () => {
     const [entry] = await manager.getWorkingDiff();
     expect(entry.path).toBe('file.txt');
     expect(entry.staged).toBe(true);
+    expect(entry.status).toBe('MM');
     expect(entry.patch).toContain('-v1');
     expect(entry.patch).toContain('+v3');
   });
