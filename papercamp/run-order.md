@@ -1,6 +1,4 @@
-IDEA-161 — Desk section clips its own content
 IDEA-117 — Multi-project hub
-IDEA-123 — Cross-corpus idea links
 IDEA-162 — One source of truth for checks
 IDEA-163 — Stack panel affordance and a11y pass
 IDEA-164 — Browser-driven page audits
@@ -11,6 +9,5 @@ IDEA-168 — Version the corpus format
 IDEA-171 — Run-all redoes work from a stale base
 IDEA-172 — Persist drafts and UI choices
 IDEA-176 — Sync stops stashing over the corpus
-IDEA-177 — Surface dangling stashes
 IDEA-178 — Rate limits must not rewrite status
 IDEA-179 — Prioritise lies about what it did

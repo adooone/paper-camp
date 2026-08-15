@@ -3,12 +3,29 @@ import {
   type PlanListFilters,
   type PlanSortKey,
 } from '@/app/features/plans/helpers';
+import { readLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { IdeaStatus, ParseResult, PlanEntry, PlanStatus } from '@/types/index';
 import { fetchPlans } from '../../services/content';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 
 export type DetailView = 'details' | 'feedback';
+
+const PLAN_FILTERS_KEY = 'plan-filters';
+const DETAIL_VIEW_KEY = 'detail-view';
+
+function readStoredPlanFilters(): PlanListFilters {
+  return readLocalDraft<PlanListFilters>(PLAN_FILTERS_KEY) ?? DEFAULT_PLAN_LIST_FILTERS;
+}
+
+function readStoredDetailView(): DetailView {
+  return readLocalDraft<DetailView>(DETAIL_VIEW_KEY) ?? 'details';
+}
+
+function storePlanFilters(filters: PlanListFilters): PlanListFilters {
+  writeLocalDraft(PLAN_FILTERS_KEY, filters);
+  return filters;
+}
 
 export type PlansSlice = {
   plans: ParseResult<PlanEntry> | null;
@@ -45,46 +62,52 @@ export function createPlansSlice(set: SetState, _get: GetState): PlansSlice {
       'plansLoading',
     ),
 
-    planFilters: DEFAULT_PLAN_LIST_FILTERS,
+    planFilters: readStoredPlanFilters(),
     togglePlanStatus: (status) =>
       set((s) => ({
-        planFilters: {
+        planFilters: storePlanFilters({
           ...s.planFilters,
           statuses: s.planFilters.statuses.includes(status)
             ? s.planFilters.statuses.filter((x) => x !== status)
             : [...s.planFilters.statuses, status],
-        },
+        }),
       })),
     togglePlanTag: (tag) =>
       set((s) => ({
-        planFilters: {
+        planFilters: storePlanFilters({
           ...s.planFilters,
           tags: s.planFilters.tags.includes(tag)
             ? s.planFilters.tags.filter((x) => x !== tag)
             : [...s.planFilters.tags, tag],
-        },
+        }),
       })),
     toggleNoteStatus: (status) =>
       set((s) => ({
-        planFilters: {
+        planFilters: storePlanFilters({
           ...s.planFilters,
           noteStatuses: s.planFilters.noteStatuses.includes(status)
             ? s.planFilters.noteStatuses.filter((x) => x !== status)
             : [...s.planFilters.noteStatuses, status],
-        },
+        }),
       })),
-    setPlanSearch: (search) => set((s) => ({ planFilters: { ...s.planFilters, search } })),
-    setSubjectFilter: (subject) => set((s) => ({ planFilters: { ...s.planFilters, subject } })),
-    setPlanSortKey: (sortKey) => set((s) => ({ planFilters: { ...s.planFilters, sortKey } })),
+    setPlanSearch: (search) =>
+      set((s) => ({ planFilters: storePlanFilters({ ...s.planFilters, search }) })),
+    setSubjectFilter: (subject) =>
+      set((s) => ({ planFilters: storePlanFilters({ ...s.planFilters, subject }) })),
+    setPlanSortKey: (sortKey) =>
+      set((s) => ({ planFilters: storePlanFilters({ ...s.planFilters, sortKey }) })),
     togglePlanSortDirection: () =>
       set((s) => ({
-        planFilters: {
+        planFilters: storePlanFilters({
           ...s.planFilters,
           sortDirection: s.planFilters.sortDirection === 'asc' ? 'desc' : 'asc',
-        },
+        }),
       })),
 
-    detailView: 'details',
-    setDetailView: (view) => set({ detailView: view }),
+    detailView: readStoredDetailView(),
+    setDetailView: (view) => {
+      writeLocalDraft(DETAIL_VIEW_KEY, view);
+      set({ detailView: view });
+    },
   };
 }

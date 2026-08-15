@@ -2,7 +2,7 @@
 id: IDEA-177
 title: Surface dangling stashes
 type: feat
-status: idea
+status: dropped
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -85,3 +85,6 @@ but never flagged — a human WIP stash is not a problem to solve.
       Show it on the `/git` page and in the Deliver section, resting-informational and sorted newest first.
 - [ ] Offer per-entry inspection and recovery guidance
       Wire `git stash show -p stash@{N}` per entry and name the recovery that works when the surface is in warning state.
+
+### Thread
+- [x] 2026-08-14 [decision] [agent] Merged into [[IDEA-176]], which now covers both halves: stopping sync from putting the corpus in a stash, and surfacing the stashes that still accumulate. Same file, same bug — and this detection UI largely existed to catch what 176's prevention removes, so shipping them apart would mean building a warning for a state the other idea deletes. All four phases carried over verbatim.

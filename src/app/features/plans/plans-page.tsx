@@ -4,7 +4,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import type { SuggestionEntry } from '@/types/index';
 import { Breadcrumb, Card, useToast } from '@dendelion/paper-ui';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { selectWorklistRows } from './helpers';
 import { PromoteSuggestionModal } from './modals';
 import { ReconcileQueueReview } from './views';
@@ -39,11 +39,17 @@ export const PlansPage = () => {
     setSubjectFilter(subjectParam ?? null);
   }, [subjectParam, setSubjectFilter]);
 
-  // Opening a different plan/idea always lands on Details, never a stale Feedback view.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the active entities are the reset trigger, not read in the body.
+  // Switching to a different plan/idea always lands on Details, never a stale Feedback
+  // view — but the initial mount (a reload landing on an already-open entity) must not
+  // stomp the detailView restored from storage, so the reset only fires on an actual change.
+  const entityKey = planId ?? ideaId;
+  const previousEntityKey = useRef(entityKey);
   useEffect(() => {
-    setDetailView('details');
-  }, [activePlan, activeIdea, setDetailView]);
+    if (previousEntityKey.current !== entityKey) {
+      setDetailView('details');
+    }
+    previousEntityKey.current = entityKey;
+  }, [entityKey, setDetailView]);
 
   const handleBack = () => {
     navigate({ to: '/' });

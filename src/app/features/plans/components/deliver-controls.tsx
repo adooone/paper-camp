@@ -5,6 +5,7 @@ import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
 import {
   Alert,
@@ -17,7 +18,7 @@ import {
   useToast,
 } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   appendManualPhase,
   isCorpusOnlyCommit,
@@ -214,6 +215,31 @@ export const DeliverChangedFiles = ({ count }: { count: number }) => {
   );
 };
 
+const GIT_PAGE_KEY = '__git__';
+
+// Module-level, not component state: must survive the unmount that happens
+// when the user navigates away while a commit-suggestion task is running, so
+// the task's result can still be recognized as fresh when they come back.
+const lastClearedAt = new Map<string, number>();
+const appliedSuggestionIds = new Map<string, Set<string>>();
+
+function suggestionKeyFor(plan: PlanEntry | undefined): string {
+  return plan?.id ?? GIT_PAGE_KEY;
+}
+
+function markSuggestionFormCleared(plan: PlanEntry | undefined): void {
+  lastClearedAt.set(suggestionKeyFor(plan), Date.now());
+}
+
+interface CommitDraft {
+  title: string;
+  message: string;
+}
+
+function commitDraftKeyFor(plan: PlanEntry | undefined): string {
+  return `commit-draft:${plan?.id ?? GIT_PAGE_KEY}`;
+}
+
 /** Shared state/handlers for the split commit input row (left column) and
  *  Commit button (right column) — both need the same title/in-flight state. */
 export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[]) => {
@@ -240,21 +266,34 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     if (suggestedTitle && !commitTitle) setCommitTitle(suggestedTitle);
   }, [suggestedTitle, commitTitle]);
 
-  const staleSuggestionIds = useRef<Set<string> | null>(null);
-  const appliedSuggestionId = useRef<string | null>(null);
+  const draftKey = commitDraftKeyFor(plan);
+
   useEffect(() => {
-    if (!plan) return;
-    if (staleSuggestionIds.current === null) {
-      if (agentStatus.length === 0) return;
-      staleSuggestionIds.current = new Set(
-        agentStatus.filter((t) => t.suggestedCommit).map((t) => t.id),
-      );
-    }
+    const draft = readLocalDraft<CommitDraft>(draftKey);
+    setCommitTitle(draft?.title ?? '');
+    setCommitMessage(draft?.message ?? '');
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!commitTitle && !commitMessage) return;
+    writeLocalDraft<CommitDraft>(draftKey, { title: commitTitle, message: commitMessage });
+  }, [draftKey, commitTitle, commitMessage]);
+
+  useEffect(() => {
+    const key = suggestionKeyFor(plan);
+    const clearedAt = lastClearedAt.get(key) ?? Date.now();
+    lastClearedAt.set(key, clearedAt);
+    const applied = appliedSuggestionIds.get(key) ?? new Set<string>();
     const task = agentStatus.find(
-      (t) => t.planId === plan.id && t.suggestedCommit && !staleSuggestionIds.current?.has(t.id),
+      (t) =>
+        (plan ? t.planId === plan.id : true) &&
+        t.suggestedCommit &&
+        !applied.has(t.id) &&
+        (t.lastStreamAt ?? 0) > clearedAt,
     );
-    if (!task?.suggestedCommit || appliedSuggestionId.current === task.id) return;
-    appliedSuggestionId.current = task.id;
+    if (!task?.suggestedCommit) return;
+    applied.add(task.id);
+    appliedSuggestionIds.set(key, applied);
     setCommitTitle(task.suggestedCommit.title);
     setCommitMessage(task.suggestedCommit.message);
   }, [agentStatus, plan]);
@@ -279,6 +318,8 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
       await commitChanges(commitFiles, commitTitle.trim(), commitMessage.trim() || undefined);
       setCommitTitle('');
       setCommitMessage('');
+      markSuggestionFormCleared(plan);
+      removeLocalDraft(commitDraftKeyFor(plan));
       await loadGitStatus();
     } catch (err) {
       // Leaving it would record a phase for a commit that never landed.

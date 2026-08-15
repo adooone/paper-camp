@@ -4,7 +4,7 @@ title: Git status vocabulary and chrome
 type: fix
 status: idea
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-14
 tags:
   - app
   - git
@@ -58,6 +58,8 @@ thirteen and narrow the allowlist entry to the texture alone.
 
 **Loading and failure states are bare paragraphs.** "Couldn't load the
 working-tree diff." offers no retry.
+
+One of three slices over `features/git/`: [[IDEA-166]] → **[[IDEA-167]] (this)** → [[IDEA-165]]. Carrying `status` onto `FileDiffEntry` here is what lets [[IDEA-165]] render a partially-staged file, so this lands before it.
 
 ### Phases
 - [ ] Carry `status` through the diff model onto `FileDiffEntry`

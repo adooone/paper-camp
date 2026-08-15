@@ -67,6 +67,26 @@ The `resolve-conflict` agent task and `git-sync-recovery.ts`, which exist for
 this and either did not fire or did not finish — worth its own look, but this
 idea is about not creating the conflict in the first place.
 
+### And a safety net for when it still happens
+
+Prevention is not enough on its own: a source-only pop can still conflict, and
+paper-camp has quietly created four stashes across this project's history —
+three `papercamp-sync` and one `sync-idea-66`, the oldest dating to
+`fix/idea-83` — without ever mentioning them.
+
+Sync already detects the failure and returns `stashPending: true` with a
+recovery prompt, but that lives only in the sync call's response: navigate away
+and nothing remembers. `GET /api/git/status` gains a `stashes` array (index,
+branch, message, age from `git stash list`), rendered beside `branchHygiene` on
+`/git` and in the Deliver section. Informational at rest, escalating to a
+warning when an entry is paper-camp's own — those mean a pop failed and work is
+parked, rather than a human deliberately setting something aside.
+
+Read-only: no apply, pop, or drop from the UI. Popping a stash is how this mess
+gets made; the app surfaces the state and the human chooses. Age matters more
+than count, so entries show their age and sort newest first. Stashes created
+outside paper-camp are listed but never flagged.
+
 ### Phases
 - [ ] Commit the corpus before stashing in `runGitSync`
       Call `commitCorpus` with a sync-appropriate subject ahead of `stash push`.
@@ -75,3 +95,11 @@ idea is about not creating the conflict in the first place.
 - [ ] Make `stashPending` durable instead of one-shot
 - [ ] Rewrite the recovery message to name the working recovery
       Point at `git restore --source=origin/main --staged --worktree .` then `git merge --ff-only`.
+- [ ] Parse stashes in the git status endpoint
+      Add a `stashes` array (index, branch, message, age) to `GET /api/git/status`, parsed from `git stash list`.
+- [ ] Flag paper-camp's own entries
+      Mark entries with a `papercamp-sync` / `sync-…` prefix so the UI can escalate them from informational to warning.
+- [ ] Render the stash surface beside branch hygiene
+      Show it on the `/git` page and in the Deliver section, resting-informational and sorted newest first.
+- [ ] Offer per-entry inspection and recovery guidance
+      Wire `git stash show -p stash@{N}` per entry and name the recovery that works when the surface is in warning state.

@@ -1,23 +1,41 @@
 import { parseReviewFindings } from '@/app/features/plans/helpers';
+import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { PhaseItem } from '@/types/index';
 import { Alert, Button, IconButton, Modal, PlusIcon, Textarea, Tooltip } from '@dendelion/paper-ui';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface AddReviewPhasesButtonProps {
   onAdd: (phases: PhaseItem[]) => Promise<void>;
   disabled?: boolean;
+  entityId: string;
 }
 
-export const AddReviewPhasesButton = ({ onAdd, disabled }: AddReviewPhasesButtonProps) => {
+export const AddReviewPhasesButton = ({
+  onAdd,
+  disabled,
+  entityId,
+}: AddReviewPhasesButtonProps) => {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const draftKey = `review-phases-draft:${entityId}`;
+
+  useEffect(() => {
+    setInput(readLocalDraft<string>(draftKey) ?? '');
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!input) return;
+    writeLocalDraft(draftKey, input);
+  }, [draftKey, input]);
+
   const handleClose = () => {
     setOpen(false);
     setInput('');
     setError(null);
+    removeLocalDraft(draftKey);
   };
 
   const handleSubmit = async () => {
