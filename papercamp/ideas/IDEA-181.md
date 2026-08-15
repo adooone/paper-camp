@@ -2,7 +2,7 @@
 id: IDEA-181
 title: Fetch from GitHub only when asked
 type: feat
-status: idea
+status: review
 created: 2026-08-15
 updated: 2026-08-15
 tags:
@@ -93,5 +93,6 @@ unaffected.
 - [x] Fetch CI on mount and explicit refresh only
       use-ci-release drops its activity-stream subscription so corpus writes no longer trigger a GitHub call.
       run: 4m10s · 393 in · 9.9k out · sonnet-5
-- [ ] Confirm the manual refresh path re-reads every GitHub-backed slice
+- [x] Confirm the manual refresh path re-reads every GitHub-backed slice
       Exercise RefreshButton → /api/refresh end to end after the auto-callers are gone.
+      run: 3m43s · 528 in · 7.2k out · sonnet-5

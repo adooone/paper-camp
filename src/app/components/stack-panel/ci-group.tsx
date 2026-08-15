@@ -1,6 +1,8 @@
 import { useCiRelease } from '@/app/hooks/use-ci-release';
+import { useAppStore } from '@/app/stores/app-store';
 import type { CiRun, CiRunStatus } from '@/types/index';
 import { Card } from '@dendelion/paper-ui';
+import { useEffect, useRef } from 'react';
 import { groupLabelClassName } from './shared';
 
 export const CI_GROUP_LABEL = 'CI & release';
@@ -39,7 +41,14 @@ const RunRow = ({ run }: { run: CiRun }) => {
 };
 
 export const CiGroup = () => {
-  const { ci, loading } = useCiRelease();
+  const { ci, loading, refresh } = useCiRelease();
+  const refreshing = useAppStore((s) => s.refreshing);
+  const wasRefreshing = useRef(false);
+
+  useEffect(() => {
+    if (wasRefreshing.current && !refreshing) refresh();
+    wasRefreshing.current = refreshing;
+  }, [refreshing, refresh]);
 
   const body = () => {
     if (!ci) {
