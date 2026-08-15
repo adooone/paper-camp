@@ -3,11 +3,8 @@ import { apiUrl } from './api-base';
 
 export interface StatusState {
   // The commit gate's own check — not a desk check, so it isn't sourced from
-  // `desk.checks` (IDEA-162). Quality/Tests come from `/api/checks` instead.
+  // `desk.checks` (IDEA-162). Quality/Tests/Build come from `/api/checks` instead.
   consistency: CheckResult;
-  /** No longer populated by the server (IDEA-162) — optional so callers built
-   * against the old snapshot shape keep compiling until they move to `/api/checks`. */
-  build?: CheckResult;
 }
 
 export const fetchStatus = async (): Promise<StatusState> => {

@@ -65,8 +65,9 @@ from the dot.
 - [x] Make desk.checks the single check source in status.ts
       Drop the hardcoded `CHECK_COMMANDS` and `commands.build`; `/api/status` keeps only the commit gate's `consistency`.
       run: 13m43s · 13.4k in · 63.9k out · sonnet-5
-- [ ] Fold the Build group into Checks as an ordinary check
+- [x] Fold the Build group into Checks as an ordinary check
       `build` renders once from `desk.checks[name=build]`, carrying its own `lastRun`.
+      run: 3m18s · 4k in · 7.6k out · sonnet-5
 - [ ] Show lastRun on every check stamp
       `formatLastBuilt` includes a date when the run isn't from today, and renders no timestamp for a run that produced nothing.
 - [ ] Render doctor and plan-consistency findings in the panel

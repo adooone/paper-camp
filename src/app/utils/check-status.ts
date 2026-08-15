@@ -22,17 +22,3 @@ export function deriveCheckStatuses(
     consistencyStatus: status?.consistency?.status ?? 'stale',
   };
 }
-
-export interface DerivedBuildStatus {
-  buildStatus: CheckStatus;
-  lastBuilt: string | null;
-}
-
-// Separate from deriveCheckStatuses: build is a manual desk action, not part of
-// the commit-gate stamps (Quality/Tests/Consistency).
-export function deriveBuildStatus(status: StatusState | null | undefined): DerivedBuildStatus {
-  return {
-    buildStatus: status?.build?.status ?? 'stale',
-    lastBuilt: status?.build?.lastRun ?? null,
-  };
-}
