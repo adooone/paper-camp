@@ -814,14 +814,25 @@ describe('commit', () => {
 });
 
 describe('commitCorpus', () => {
-  it('commits pending papercamp/ changes with a plan-scoped message and Refs trailer', async () => {
+  it('commits pending papercamp/ changes with the given subject and Refs trailer', async () => {
     const root = await initRepo();
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'draft\n');
     const manager = gitManager(root);
-    await manager.commitCorpus('Some plan', 'IDEA-1');
+    await manager.commitCorpus('docs(ideas): Some plan — plan', 'IDEA-1');
     expect(git(root, 'log', '-1', '--format=%s')).toBe('docs(ideas): Some plan — plan');
     expect(git(root, 'log', '-1', '--format=%B')).toContain('Refs: IDEA-1');
+    expect(await manager.getStatus()).toEqual([]);
+  });
+
+  it('commits without a Refs trailer when no id is given', async () => {
+    const root = await initRepo();
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'draft\n');
+    const manager = gitManager(root);
+    await manager.commitCorpus('docs(ideas): sync corpus');
+    expect(git(root, 'log', '-1', '--format=%s')).toBe('docs(ideas): sync corpus');
+    expect(git(root, 'log', '-1', '--format=%B')).not.toContain('Refs:');
     expect(await manager.getStatus()).toEqual([]);
   });
 
@@ -831,7 +842,7 @@ describe('commitCorpus', () => {
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'draft\n');
     await writeFile(join(root, 'src.ts'), 'code\n');
     const manager = gitManager(root);
-    await manager.commitCorpus('Some plan', 'IDEA-1');
+    await manager.commitCorpus('docs(ideas): Some plan — plan', 'IDEA-1');
     const entries = await manager.getStatus();
     expect(entries).toEqual([expect.objectContaining({ path: 'src.ts' })]);
   });
@@ -840,7 +851,7 @@ describe('commitCorpus', () => {
     const root = await initRepo();
     const manager = gitManager(root);
     const before = git(root, 'rev-parse', 'HEAD');
-    await manager.commitCorpus('Some plan', 'IDEA-1');
+    await manager.commitCorpus('docs(ideas): Some plan — plan', 'IDEA-1');
     expect(git(root, 'rev-parse', 'HEAD')).toBe(before);
   });
 });

@@ -88,8 +88,9 @@ than count, so entries show their age and sort newest first. Stashes created
 outside paper-camp are listed but never flagged.
 
 ### Phases
-- [ ] Commit the corpus before stashing in `runGitSync`
+- [x] Commit the corpus before stashing in `runGitSync`
       Call `commitCorpus` with a sync-appropriate subject ahead of `stash push`.
+      run: 10m57s · 6.2k in · 37.7k out · sonnet-5
 - [ ] Confirm only source changes reach the stash
       Verify the commit is a no-op on a clean corpus and `papercamp/` never enters the stash.
 - [ ] Make `stashPending` durable instead of one-shot

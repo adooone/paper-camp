@@ -101,7 +101,7 @@ export function createAgentHooks(root: string, git: GitManager) {
 
   async function commitCorpus(plan: PlanEntry): Promise<void> {
     if (!plan.id) return;
-    await git.commitCorpus(plan.title, plan.id);
+    await git.commitCorpus(`docs(ideas): ${plan.title} — plan`, plan.id);
   }
 
   return { stampAuditDate, commitPhase, setRunReview, commitCorpus };
