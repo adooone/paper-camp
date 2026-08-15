@@ -2,9 +2,9 @@
 id: IDEA-165
 title: Stage files, write the message
 type: feat
-status: idea
+status: review
 created: 2026-08-13
-updated: 2026-08-14
+updated: 2026-08-15
 tags:
   - app
   - git
@@ -88,15 +88,25 @@ shared form into something both own instead of growing the conditional.
 One of three slices over `features/git/`: [[IDEA-166]] → [[IDEA-167]] → **[[IDEA-165]] (this)**. Last because the indeterminate-checkbox state for a partially-staged file needs the `status` field [[IDEA-167]] adds.
 
 ### Phases
-- [ ] Add stage/unstage routes
+- [x] Add stage/unstage routes
       `POST /api/git/stage` and `POST /api/git/unstage`, each taking a path, running `git add` / `git restore --staged` against the index.
-- [ ] Wire real staging into the changed-files checkbox
+      run: 2m50s · 6k in · 4.5k out · sonnet-5
+- [x] Wire real staging into the changed-files checkbox
       Checkbox calls the routes; the `staged` field drives the Stamp; a partially-staged file (`MM`) renders as an indeterminate checkbox.
-- [ ] Commit the index instead of a client list
+      run: 8m59s · 1.1k in · 26.6k out · sonnet-5
+- [x] Commit the index instead of a client list
       `commitChanges` stops passing a file array once anything is staged; the button reads "Commit N staged" and keeps commit-everything when nothing is staged.
-- [ ] Add the collapsible commit body field
+      run: 4m59s · 521 in · 18.1k out · sonnet-5
+- [x] Add the collapsible commit body field
       Return `commitMessage` from `useDeliverCommitForm` and render a collapsible body `Textarea` beneath the title; the wand fills both.
-- [ ] Drop Fix from the git page
+      run: 2m59s · 500 in · 6.7k out · sonnet-5
+- [x] Drop Fix from the git page
       Never render the plan-scoped Fix action without a plan; surface a failing check as a warning beside Commit rather than by disabling the button.
-- [ ] Extract the shared Sync/Push/Pull row and split the form
+      run: 3m5s · 369 in · 7.3k out · sonnet-5
+- [x] Extract the shared Sync/Push/Pull row and split the form
       Reconcile `GitActionsRow` and `DeliverEmptyState` into one row, and split the deliver form so the git page and idea view each own their variant.
+      run: 12m58s · 1.2k in · 53.9k out · sonnet-5
+- [x] [manual] Stabilize matchesSuggestionTask identity in commit forms
+
+### Thread
+- [x] 2026-08-15 [review] [agent] Comments · 1 finding — The diff delivers all six phases: real stage/unstage routes and server methods with tests, a persistent staging checkbox with an indeterminate state for partially-staged files, index-based commits with a "Commit N staged" button, a collapsible body field, removal of Fix from the git page in favor of a warning stamp, and a shared GitSyncActions row plus a split commit form. The refactor is clean and the extracted useCommitForm hook faithfully preserves the prior draft/suggestion behavior. A couple of edge behaviors around index-based commits on the plan/deliver surface and missing server-level test coverage for the empty-array commit path are worth confirming, but nothing contradicts the spec.

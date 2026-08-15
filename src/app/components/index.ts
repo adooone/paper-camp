@@ -1,3 +1,6 @@
+export { CommitMessageFields } from './commit-message-fields';
+export type { CommitMessageFieldsState } from './commit-message-fields';
+export { GitSyncActions } from './git-sync-actions';
 export { LinkButton } from './link-button';
 export { Markdown } from './markdown';
 export { StackPanel } from './stack-panel';

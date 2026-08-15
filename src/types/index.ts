@@ -753,6 +753,7 @@ export interface GitStatusResponse {
 export interface FileDiffEntry {
   path: string;
   renameSource?: string;
+  status: string;
   staged: boolean;
   binary: boolean;
   additions: number;

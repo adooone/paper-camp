@@ -478,6 +478,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         if (!stats || stats.isSymbolicLink()) {
           results.push({
             path: entry.path,
+            status: entry.status,
             staged: false,
             binary: true,
             additions: 0,
@@ -490,6 +491,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         if (stats.size > maxCharsPerFile) {
           results.push({
             path: entry.path,
+            status: entry.status,
             staged: false,
             binary: false,
             additions: 0,
@@ -503,6 +505,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         if (content === null) {
           results.push({
             path: entry.path,
+            status: entry.status,
             staged: false,
             binary: true,
             additions: 0,
@@ -514,6 +517,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         }
         results.push({
           path: entry.path,
+          status: entry.status,
           staged: false,
           binary: false,
           additions: content === '' ? 0 : content.split('\n').length,
@@ -569,6 +573,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       results.push({
         path: entry.path,
         renameSource: entry.renameSource,
+        status: entry.status,
         staged: entry.staged,
         binary,
         additions,
@@ -583,6 +588,14 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
 
   async function stageAll(): Promise<void> {
     await runGit(['add', '-A']);
+  }
+
+  async function stagePath(path: string): Promise<void> {
+    await runGit(['add', '--', toLiteralPathspec(path)]);
+  }
+
+  async function unstagePath(path: string): Promise<void> {
+    await runGit(['restore', '--staged', '--', toLiteralPathspec(path)]);
   }
 
   async function getHeadSha(): Promise<string> {
@@ -802,6 +815,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     commit,
     commitCorpus,
     stageAll,
+    stagePath,
+    unstagePath,
     getHeadSha,
     getLastCommitFor,
     revert,

@@ -542,6 +542,34 @@ describe('getStatus', () => {
   });
 });
 
+describe('stagePath', () => {
+  it('stages a modified file into the index', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'README.md'), 'modified\n');
+    const manager = gitManager(root);
+    await manager.stagePath('README.md');
+    const entries = await manager.getStatus();
+    expect(entries).toContainEqual(
+      expect.objectContaining({ path: 'README.md', status: 'M ', staged: true }),
+    );
+  });
+});
+
+describe('unstagePath', () => {
+  it('unstages a file without discarding its working-tree change', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'README.md'), 'modified\n');
+    git(root, 'add', '--', 'README.md');
+    const manager = gitManager(root);
+    await manager.unstagePath('README.md');
+    const entries = await manager.getStatus();
+    expect(entries).toContainEqual(
+      expect.objectContaining({ path: 'README.md', status: ' M', staged: false }),
+    );
+    expect(await readFile(join(root, 'README.md'), 'utf-8')).toBe('modified\n');
+  });
+});
+
 describe('commit', () => {
   it('commits only the selected files, leaving other changes untouched', async () => {
     const root = await initRepo();
@@ -792,6 +820,7 @@ describe('getWorkingDiff', () => {
     const [entry] = await manager.getWorkingDiff();
     expect(entry.path).toBe('file.txt');
     expect(entry.staged).toBe(true);
+    expect(entry.status).toBe('MM');
     expect(entry.patch).toContain('-v1');
     expect(entry.patch).toContain('+v3');
   });
