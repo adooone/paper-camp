@@ -2,7 +2,7 @@
 id: IDEA-172
 title: Persist drafts and UI choices
 type: fix
-status: review
+status: done
 created: 2026-08-14
 updated: 2026-08-15
 tags:

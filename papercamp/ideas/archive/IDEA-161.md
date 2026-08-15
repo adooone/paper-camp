@@ -2,9 +2,9 @@
 id: IDEA-161
 title: Desk section clips its own content
 type: fix
-status: review
+status: done
 created: 2026-08-13
-updated: 2026-08-14
+updated: 2026-08-15
 tags:
   - app
   - stack
