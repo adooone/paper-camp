@@ -2,7 +2,7 @@
 id: IDEA-162
 title: One source of truth for checks
 type: refactor
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-13
 tags:
@@ -73,5 +73,6 @@ from the dot.
       run: 3m17s · 4k in · 8.3k out · sonnet-5
 - [x] Render doctor and plan-consistency findings in the panel
       run: 4m59s · 6.4k in · 17.5k out · sonnet-5
-- [ ] Drive the collapsed tab's dot only from what the panel renders
+- [x] Drive the collapsed tab's dot only from what the panel renders
       Retire the unused `deriveCheckStatuses` coupling so the dot reports only explainable state.
+      run: 3m20s · 3.7k in · 8.2k out · sonnet-5
