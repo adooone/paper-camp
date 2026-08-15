@@ -20,6 +20,7 @@ export {
   createPrReview,
   dispatchPrReview,
   fetchUnresolvedThreads,
+  getPrMapFetchedAt,
   type PrReviewComment,
   type PrReviewDelivery,
   type PrReviewInput,

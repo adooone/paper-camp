@@ -466,6 +466,20 @@ export async function resolvePrsByEntity(
   return cached?.prs;
 }
 
+/** Reads the timestamp of the last successful GitHub fetch without triggering one
+ * — falls back to the on-disk map if nothing's cached in memory yet. */
+export async function getPrMapFetchedAt(root: string): Promise<number | null> {
+  let cached = cache.get(root);
+  if (!cached) {
+    const loaded = await loadPersistedPrMap(root);
+    if (loaded) {
+      cache.set(root, loaded);
+      cached = loaded;
+    }
+  }
+  return cached?.fetchedAt ?? null;
+}
+
 export function clearPrCache(): void {
   cache.clear();
 }

@@ -12,6 +12,19 @@ export const relativeDate = (dateStr: string): string => {
   return `${Math.floor(days / 365)}y ago`;
 };
 
+// Time-only when the fetch was today (GitHub data is read on demand — "as of
+// 14:32" is how stale a PR-derived status is allowed to look before refreshing).
+export const formatFetchedAt = (fetchedAt: number): string => {
+  const date = new Date(fetchedAt);
+  const now = new Date();
+  const sameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return sameDay ? `as of ${time}` : `as of ${date.toLocaleDateString()} ${time}`;
+};
+
 const itemProgress = (items: PhaseItem[]) => {
   if (items.length === 0) return null;
   const done = items.filter((p) => p.done).length;
