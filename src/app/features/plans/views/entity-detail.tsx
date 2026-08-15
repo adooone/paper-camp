@@ -1,3 +1,4 @@
+import { CommitMessageFields } from '@/app/components';
 import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import {
@@ -37,7 +38,6 @@ import {
   DeliverChangedFiles,
   DeliverChecksRow,
   DeliverCommitButton,
-  DeliverCommitInputRow,
   DeliverEmptyState,
   useDeliverCommitForm,
 } from '../components';
@@ -412,7 +412,7 @@ const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
     <div className="grid grid-cols-1 items-start gap-x-6 gap-y-2 md:grid-cols-[minmax(0,1fr)_auto_16rem]">
       <div className="flex flex-col gap-2">
         <DeliverChecksRow />
-        {hasChanges && <DeliverCommitInputRow state={commitForm} filesEmpty={!hasChanges} />}
+        {hasChanges && <CommitMessageFields state={commitForm} filesEmpty={!hasChanges} />}
       </div>
       <Divider orientation="vertical" className="hidden md:block" />
       <div className="flex flex-col gap-2">

@@ -2,7 +2,7 @@
 id: IDEA-165
 title: Stage files, write the message
 type: feat
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-14
 tags:
@@ -103,5 +103,6 @@ One of three slices over `features/git/`: [[IDEA-166]] → [[IDEA-167]] → **[[
 - [x] Drop Fix from the git page
       Never render the plan-scoped Fix action without a plan; surface a failing check as a warning beside Commit rather than by disabling the button.
       run: 3m5s · 369 in · 7.3k out · sonnet-5
-- [ ] Extract the shared Sync/Push/Pull row and split the form
+- [x] Extract the shared Sync/Push/Pull row and split the form
       Reconcile `GitActionsRow` and `DeliverEmptyState` into one row, and split the deliver form so the git page and idea view each own their variant.
+      run: 12m58s · 1.2k in · 53.9k out · sonnet-5

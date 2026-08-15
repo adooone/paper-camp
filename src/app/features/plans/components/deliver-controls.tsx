@@ -1,26 +1,13 @@
-import { MergeIcon, PullIcon, PushIcon, WandIcon } from '@/app/components/icons';
+import { GitSyncActions } from '@/app/components';
 import { entityRouteParam } from '@/app/hooks';
-import { useBranchSync } from '@/app/hooks/use-branch-sync';
+import { type CommitFormFile, useCommitForm } from '@/app/hooks/use-commit-form';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
-import { commitChanges, stagePath, suggestCommitMessage } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
-import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
-import {
-  Alert,
-  Button,
-  IconButton,
-  Input,
-  Stamp,
-  type StampVariant,
-  Textarea,
-  Tooltip,
-  useToast,
-} from '@dendelion/paper-ui';
+import { Button, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   appendManualPhase,
   isCorpusOnlyCommit,
@@ -47,8 +34,8 @@ const COMMIT_SCOPES = [
   'repo',
 ];
 
-function deriveSuggestedCommit(plan: PlanEntry | undefined): { title: string } {
-  if (!plan || (plan.phases.length > 0 && plan.phases.every((phase) => phase.done))) {
+function deriveSuggestedCommit(plan: PlanEntry): { title: string } {
+  if (plan.phases.length > 0 && plan.phases.every((phase) => phase.done)) {
     return { title: '' };
   }
   const scope = plan.tags?.find((t) => COMMIT_SCOPES.includes(t)) ?? 'repo';
@@ -215,199 +202,63 @@ export const DeliverChangedFiles = ({ count }: { count: number }) => {
   );
 };
 
-const GIT_PAGE_KEY = '__git__';
-
-// Module-level, not component state: must survive the unmount that happens
-// when the user navigates away while a commit-suggestion task is running, so
-// the task's result can still be recognized as fresh when they come back.
-const lastClearedAt = new Map<string, number>();
-const appliedSuggestionIds = new Map<string, Set<string>>();
-
-function suggestionKeyFor(plan: PlanEntry | undefined): string {
-  return plan?.id ?? GIT_PAGE_KEY;
-}
-
-function markSuggestionFormCleared(plan: PlanEntry | undefined): void {
-  lastClearedAt.set(suggestionKeyFor(plan), Date.now());
-}
-
-interface CommitDraft {
-  title: string;
-  message: string;
-}
-
-function commitDraftKeyFor(plan: PlanEntry | undefined): string {
-  return `commit-draft:${plan?.id ?? GIT_PAGE_KEY}`;
-}
-
-export interface DeliverCommitFile {
-  path: string;
-  staged: boolean;
-}
-
-/** Shared state/handlers for the split commit input row (left column) and
- *  Commit button (right column) — both need the same title/in-flight state. */
-export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: DeliverCommitFile[]) => {
-  const agentStatus = useAppStore((s) => s.agentStatus);
-  const loadGitStatus = useAppStore((s) => s.loadGitStatus);
-  const commitInFlight = useAppStore((s) => s.commitInFlight);
-  const setCommitInFlight = useAppStore((s) => s.setCommitInFlight);
+// Layers phase-recording and Fix on the shared commit mechanics — git page's useGitCommitForm has neither.
+export const useDeliverCommitForm = (plan: PlanEntry, files: CommitFormFile[]) => {
   const status = useAppStore((s) => s.status);
   const { checks: deskChecks } = useDeskChecks();
   const agentBusy = useAppStore(selectAgentBusy);
   const launchRunAll = useAppStore((s) => s.launchRunAll);
   const { patch: patchByTitle } = usePlanStatusPatch();
-  const { toast } = useToast();
-
-  const [commitTitle, setCommitTitle] = useState('');
-  const [commitMessage, setCommitMessage] = useState('');
-  const [committing, setCommitting] = useState(false);
-  const [suggesting, setSuggesting] = useState(false);
-  const [suggestError, setSuggestError] = useState<string | null>(null);
   const [fixing, setFixing] = useState(false);
 
   const { title: suggestedTitle } = useMemo(() => deriveSuggestedCommit(plan), [plan]);
   const filePaths = useMemo(() => files.map((f) => f.path), [files]);
-  const stagedCount = useMemo(() => files.filter((f) => f.staged).length, [files]);
 
-  useEffect(() => {
-    if (suggestedTitle && !commitTitle) setCommitTitle(suggestedTitle);
-  }, [suggestedTitle, commitTitle]);
-
-  const draftKey = commitDraftKeyFor(plan);
-
-  useEffect(() => {
-    const draft = readLocalDraft<CommitDraft>(draftKey);
-    setCommitTitle(draft?.title ?? '');
-    setCommitMessage(draft?.message ?? '');
-  }, [draftKey]);
-
-  useEffect(() => {
-    if (!commitTitle && !commitMessage) return;
-    writeLocalDraft<CommitDraft>(draftKey, { title: commitTitle, message: commitMessage });
-  }, [draftKey, commitTitle, commitMessage]);
-
-  useEffect(() => {
-    const key = suggestionKeyFor(plan);
-    const clearedAt = lastClearedAt.get(key) ?? Date.now();
-    lastClearedAt.set(key, clearedAt);
-    const applied = appliedSuggestionIds.get(key) ?? new Set<string>();
-    const task = agentStatus.find(
-      (t) =>
-        (plan ? t.planId === plan.id : true) &&
-        t.suggestedCommit &&
-        !applied.has(t.id) &&
-        (t.lastStreamAt ?? 0) > clearedAt,
-    );
-    if (!task?.suggestedCommit) return;
-    applied.add(task.id);
-    appliedSuggestionIds.set(key, applied);
-    setCommitTitle(task.suggestedCommit.title);
-    setCommitMessage(task.suggestedCommit.message);
-  }, [agentStatus, plan]);
-
-  const handleCommit = useCallback(async () => {
-    if (!commitTitle.trim() || commitInFlight) return;
-    setCommitting(true);
-    setCommitInFlight(true);
-    // Written before the commit and committed with it: appended afterwards it would
-    // leave the entity file dirty, and committing that appends another row, forever.
-    const recordsPhase = Boolean(plan?.id) && !isCorpusOnlyCommit(filePaths);
-    let phaseRecorded = false;
-    try {
-      if (recordsPhase && plan) {
-        phaseRecorded = await patchByTitle(plan.title, {
-          phases: appendManualPhase(plan.phases, commitTitle.trim()),
-        });
-      }
-      const entityPath = plan?.id ? planEntityPath(plan.id) : undefined;
-      if (stagedCount > 0) {
-        // Committing the index respects a partially-staged file's split, so the
-        // phase record can't ride along in the pathspec — stage it explicitly instead.
-        if (phaseRecorded && entityPath) await stagePath(entityPath);
-        await commitChanges([], commitTitle.trim(), commitMessage.trim() || undefined);
-      } else {
-        const commitFiles =
-          phaseRecorded && entityPath && !filePaths.includes(entityPath)
-            ? [...filePaths, entityPath]
-            : filePaths;
-        await commitChanges(commitFiles, commitTitle.trim(), commitMessage.trim() || undefined);
-      }
-      setCommitTitle('');
-      setCommitMessage('');
-      markSuggestionFormCleared(plan);
-      removeLocalDraft(commitDraftKeyFor(plan));
-      await loadGitStatus();
-    } catch (err) {
-      // Leaving it would record a phase for a commit that never landed.
-      if (phaseRecorded && plan) await patchByTitle(plan.title, { phases: plan.phases });
-      toast({
-        title: 'Commit failed',
-        description: oneLineErrorSummary((err as Error).message),
-        variant: 'error',
+  const beforeCommit = useCallback(
+    async (title: string) => {
+      // Written before the commit and committed with it: appended afterwards it would
+      // leave the entity file dirty, and committing that appends another row, forever.
+      if (!plan.id || isCorpusOnlyCommit(filePaths)) return {};
+      const planId = plan.id;
+      const phaseRecorded = await patchByTitle(plan.title, {
+        phases: appendManualPhase(plan.phases, title),
       });
-      await loadGitStatus();
-    } finally {
-      setCommitting(false);
-      setCommitInFlight(false);
-    }
-  }, [
-    commitTitle,
-    commitMessage,
-    filePaths,
-    stagedCount,
-    loadGitStatus,
-    commitInFlight,
-    setCommitInFlight,
-    toast,
-    plan,
-    patchByTitle,
-  ]);
+      if (!phaseRecorded) return {};
+      return {
+        extraPath: planEntityPath(planId),
+        // Leaving it would record a phase for a commit that never landed.
+        onFailure: async () => {
+          await patchByTitle(plan.title, { phases: plan.phases });
+        },
+      };
+    },
+    [plan, filePaths, patchByTitle],
+  );
 
-  const handleSuggestFromChanges = useCallback(async () => {
-    if (filePaths.length === 0) return;
-    setSuggesting(true);
-    setSuggestError(null);
-    try {
-      const result = await suggestCommitMessage(filePaths);
-      setCommitTitle(result.title);
-      setCommitMessage(result.message);
-    } catch (err) {
-      setSuggestError((err as Error).message);
-    } finally {
-      setSuggesting(false);
-    }
-  }, [filePaths]);
+  const base = useCommitForm(files, {
+    formKey: plan.id ?? '__plan-draft__',
+    suggestedTitle,
+    matchesSuggestionTask: (t) => t.planId === plan.id,
+    beforeCommit,
+  });
 
-  const hasPlan = Boolean(plan?.id);
-  const canFix = hasPlan && !agentBusy;
+  const canFix = Boolean(plan.id) && !agentBusy;
 
   const handleFix = useCallback(async () => {
-    if (!plan?.id || !status || fixing || agentBusy) return;
+    if (!plan.id || !status || fixing || agentBusy) return;
+    const planId = plan.id;
     setFixing(true);
     try {
       const nextFixes = upsertCheckFixes(plan.fixes ?? [], status, deskChecks);
       const wrote = await patchByTitle(plan.title, { fixes: nextFixes });
-      if (wrote) await launchRunAll(plan.id);
+      if (wrote) await launchRunAll(planId);
     } finally {
       setFixing(false);
     }
   }, [plan, fixing, agentBusy, status, deskChecks, patchByTitle, launchRunAll]);
 
   return {
-    commitTitle,
-    setCommitTitle,
-    commitMessage,
-    setCommitMessage,
-    committing,
-    commitInFlight,
-    stagedCount,
-    suggesting,
-    suggestError,
-    setSuggestError,
-    handleCommit,
-    handleSuggestFromChanges,
-    hasPlan,
+    ...base,
     canFix,
     fixing,
     handleFix,
@@ -416,71 +267,7 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: Deliver
 
 export type DeliverCommitFormState = ReturnType<typeof useDeliverCommitForm>;
 
-/** Left column, under the check stamps: title input + suggest-from-diff, with
- *  the commit body collapsed beneath it until there's something to show. */
-export const DeliverCommitInputRow = ({
-  state,
-  filesEmpty,
-}: {
-  state: DeliverCommitFormState;
-  filesEmpty: boolean;
-}) => {
-  const [bodyExpanded, setBodyExpanded] = useState(Boolean(state.commitMessage));
-
-  useEffect(() => {
-    if (state.commitMessage) setBodyExpanded(true);
-  }, [state.commitMessage]);
-
-  return (
-    <div className="flex flex-col gap-2">
-      {state.suggestError && (
-        <Alert dismissible onDismiss={() => state.setSuggestError(null)}>
-          {state.suggestError}
-        </Alert>
-      )}
-      <div className="flex gap-2 items-center">
-        <div className="flex-1">
-          <Input
-            size="small"
-            placeholder="Commit title"
-            value={state.commitTitle}
-            onChange={(e) => state.setCommitTitle(e.currentTarget.value)}
-          />
-        </div>
-        <IconButton
-          icon={<WandIcon size={16} />}
-          size="small"
-          label="Suggest title and message from the diff"
-          disabled={filesEmpty || state.suggesting}
-          onClick={state.handleSuggestFromChanges}
-          wobble={state.suggesting ? 1 : 0}
-        />
-      </div>
-      {bodyExpanded ? (
-        <Textarea
-          size="small"
-          placeholder="Commit message (optional)"
-          value={state.commitMessage}
-          onChange={(e) => state.setCommitMessage(e.currentTarget.value)}
-        />
-      ) : (
-        // Raw <button>: paper-ui's Button has no bare text-link variant.
-        <button
-          type="button"
-          onClick={() => setBodyExpanded(true)}
-          className="self-start bg-none bg-transparent border-none p-0 [font:inherit] text-2xs opacity-60 cursor-pointer underline"
-        >
-          Add a message
-        </button>
-      )}
-    </div>
-  );
-};
-
-/** Right column, under "N files changed": the Commit action itself — becomes a
- *  Fix action when a check fails and there's a plan to write `fixes` onto
- *  (IDEA-156). Fix is plan-scoped and meaningless without one, so with no plan
- *  a failing check surfaces as a warning beside Commit instead (IDEA-165). */
+// Becomes Fix on a failing check — a plan always exists here, unlike the git page's GitCommitButton.
 export const DeliverCommitButton = ({
   state,
   filesEmpty,
@@ -494,13 +281,10 @@ export const DeliverCommitButton = ({
     () => deriveCheckStatuses(status, deskChecks),
     [status, deskChecks],
   );
-  const failingChecks = [
-    qualityStatus === 'fail' && 'Quality',
-    testStatus === 'fail' && 'Tests',
-    consistencyStatus === 'fail' && 'Consistency',
-  ].filter((label): label is Exclude<typeof label, false> => label !== false);
+  const checksFailing =
+    qualityStatus === 'fail' || testStatus === 'fail' || consistencyStatus === 'fail';
 
-  if (failingChecks.length > 0 && state.hasPlan) {
+  if (checksFailing) {
     return (
       <Button size="small" disabled={!state.canFix || state.fixing} onClick={state.handleFix}>
         {state.fixing ? 'Fixing…' : 'Fix'}
@@ -508,7 +292,7 @@ export const DeliverCommitButton = ({
     );
   }
 
-  const commitButton = (
+  return (
     <Button
       size="small"
       disabled={filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight}
@@ -521,70 +305,19 @@ export const DeliverCommitButton = ({
           : 'Commit'}
     </Button>
   );
-
-  if (failingChecks.length === 0) return commitButton;
-
-  return (
-    <div className="flex items-center gap-2">
-      <Tooltip content={`${failingChecks.join(', ')} failing`}>
-        <Stamp size="small" variant="warning">
-          !
-        </Stamp>
-      </Tooltip>
-      {commitButton}
-    </div>
-  );
 };
 
 export const DeliverEmptyState = () => {
   const gitAhead = useAppStore((s) => s.gitAhead);
-  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
-  const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
-    useBranchSync();
-
-  if (gitAhead > 0) {
-    return (
-      <div className="flex flex-col items-start gap-3">
-        <p className="m-0 text-xs opacity-50">
-          All changes committed — {gitAhead} commit{gitAhead === 1 ? '' : 's'} ready to push.
-        </p>
-        <Button
-          size="small"
-          icon={<PushIcon size={14} />}
-          disabled={gitActionBusy}
-          onClick={handlePush}
-        >
-          {pushing ? 'Pushing…' : `Push ${gitAhead} commit${gitAhead === 1 ? '' : 's'}`}
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col items-start gap-3">
-      <p className="m-0 text-xs opacity-50">No changed files.</p>
-      <div className="flex items-center gap-2">
-        <Tooltip
-          content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined}
-        >
-          <Button
-            size="small"
-            icon={<MergeIcon size={14} />}
-            disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
-            onClick={handleSync}
-          >
-            {syncing ? 'Syncing…' : 'Sync to main'}
-          </Button>
-        </Tooltip>
-        <Button
-          size="small"
-          icon={<PullIcon size={14} />}
-          disabled={gitActionBusy}
-          onClick={handlePull}
-        >
-          {pulling ? 'Pulling…' : 'Pull'}
-        </Button>
-      </div>
+      <p className="m-0 text-xs opacity-50">
+        {gitAhead > 0
+          ? `All changes committed — ${gitAhead} commit${gitAhead === 1 ? '' : 's'} ready to push.`
+          : 'No changed files.'}
+      </p>
+      <GitSyncActions />
     </div>
   );
 };

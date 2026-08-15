@@ -1,54 +1,11 @@
-import { MergeIcon, PullIcon, PushIcon } from '@/app/components/icons';
+import { CommitMessageFields, GitSyncActions } from '@/app/components';
 import { FileDiffSection } from '@/app/features/git/file-diff-section';
-import {
-  DeliverCommitButton,
-  DeliverCommitInputRow,
-  useDeliverCommitForm,
-} from '@/app/features/plans/components/deliver-controls';
-import { useBranchSync } from '@/app/hooks/use-branch-sync';
+import { GitCommitButton, useGitCommitForm } from '@/app/features/git/git-commit-controls';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
-import { Breadcrumb, Button, Divider, Tooltip } from '@dendelion/paper-ui';
+import { Breadcrumb, Divider } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { Fragment, useEffect, useMemo, useRef } from 'react';
-
-const GitActionsRow = () => {
-  const gitAhead = useAppStore((s) => s.gitAhead);
-  const gitBranchHygiene = useAppStore((s) => s.gitBranchHygiene);
-  const { pushing, syncing, pulling, gitActionBusy, handlePush, handleSync, handlePull } =
-    useBranchSync();
-
-  return (
-    <div className="mb-4 flex items-center gap-2">
-      <Tooltip content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined}>
-        <Button
-          size="small"
-          icon={<MergeIcon size={14} />}
-          disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
-          onClick={handleSync}
-        >
-          {syncing ? 'Syncing…' : 'Sync to main'}
-        </Button>
-      </Tooltip>
-      <Button
-        size="small"
-        icon={<PushIcon size={14} />}
-        disabled={gitActionBusy || gitAhead === 0}
-        onClick={handlePush}
-      >
-        {pushing ? 'Pushing…' : gitAhead > 0 ? `Push (${gitAhead})` : 'Push'}
-      </Button>
-      <Button
-        size="small"
-        icon={<PullIcon size={14} />}
-        disabled={gitActionBusy}
-        onClick={handlePull}
-      >
-        {pulling ? 'Pulling…' : 'Pull'}
-      </Button>
-    </div>
-  );
-};
 
 export const GitPage = () => {
   const navigate = useNavigate();
@@ -61,7 +18,7 @@ export const GitPage = () => {
     () => files?.map((entry) => ({ path: entry.path, staged: entry.staged })) ?? [],
     [files],
   );
-  const commitForm = useDeliverCommitForm(undefined, commitFiles);
+  const commitForm = useGitCommitForm(commitFiles);
 
   useEffect(() => {
     loadDiffFiles();
@@ -122,7 +79,9 @@ export const GitPage = () => {
     return (
       <div>
         {breadcrumb}
-        <GitActionsRow />
+        <div className="mb-4">
+          <GitSyncActions />
+        </div>
         <div className={contentClass}>
           <p className="opacity-50">Couldn't load the working-tree diff.</p>
         </div>
@@ -134,7 +93,9 @@ export const GitPage = () => {
     return (
       <div>
         {breadcrumb}
-        <GitActionsRow />
+        <div className="mb-4">
+          <GitSyncActions />
+        </div>
         <div className={contentClass}>
           <p className="opacity-50">Loading…</p>
         </div>
@@ -145,7 +106,9 @@ export const GitPage = () => {
   return (
     <div>
       {breadcrumb}
-      <GitActionsRow />
+      <div className="mb-4">
+        <GitSyncActions />
+      </div>
       {files.length === 0 ? (
         <div className={contentClass}>
           <p className="opacity-50">No changed files.</p>
@@ -154,9 +117,9 @@ export const GitPage = () => {
         <>
           <div className="mb-6 flex items-start gap-2">
             <div className="flex-1">
-              <DeliverCommitInputRow state={commitForm} filesEmpty={false} />
+              <CommitMessageFields state={commitForm} filesEmpty={false} />
             </div>
-            <DeliverCommitButton state={commitForm} filesEmpty={false} />
+            <GitCommitButton state={commitForm} filesEmpty={false} />
           </div>
           <div ref={sectionsRef} className={`flex min-w-0 flex-col gap-6 ${contentClass}`}>
             {files.map((entry, idx) => (
