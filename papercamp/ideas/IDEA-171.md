@@ -10,6 +10,7 @@ tags:
   - plans
   - git
 subject: Run & monitor
+order: 7
 ---
 
 A plan's completion state lives in its entity file, which is branch-local. So
@@ -84,3 +85,6 @@ fact; this is a pre-flight guard only.
       run: 4m10s · 4.3k in · 11.5k out · sonnet-5
 - [x] Cover the guard with tests
       run: 5m29s · 663 in · 17.2k out · sonnet-5
+
+### Thread
+- [x] 2026-08-15 [review] [agent] Comments · 1 finding — The core run-all guard (getPhaseStateAtRef → findStaleBaseRef → checkStaleBaseForRunAll wired into /api/agent/launch-run-all) is correct, matches the spec's refuse-not-warn intent, and is well covered by tests including the origin/main-ahead case. The ensureBranch warning delivers phase 4 mechanically but its message contradicts how the branch is actually created, and an unrelated run-order edit is bundled in. Nothing here contradicts a settled decision, so this is comment-level.
