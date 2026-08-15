@@ -1,7 +1,6 @@
 IDEA-117 — Multi-project hub
 IDEA-163 — Stack panel affordance and a11y pass
 IDEA-164 — Browser-driven page audits
-IDEA-165 — Stage files, write the message
 IDEA-166 — Readable diffs on the git page
 IDEA-167 — Git status vocabulary and chrome
 IDEA-168 — Version the corpus format
