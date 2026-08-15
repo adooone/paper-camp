@@ -7,7 +7,7 @@ import {
   parseRunOrderFile,
 } from '@/core/run-order-file';
 import { formatEntitiesIndex, formatEntityFile } from '@/core/serialize';
-import type { BranchHygieneStatus, EntityEntry } from '@/types/index';
+import type { BranchHygieneStatus, EntityEntry, StaleBaseRef } from '@/types/index';
 
 export async function readMaybe(path: string): Promise<string> {
   try {
@@ -123,4 +123,16 @@ export async function checkBranchConflictForPlan(
   const activePlan = entries.find((e) => e.id === activePlanId && e.kind !== 'note');
   if (!activePlan || activePlan.status === 'done' || activePlan.status === 'dropped') return null;
   return `Finish \`${activePlanId}\` — ${activePlan.title} — before starting another plan`;
+}
+
+// See IDEA-171: a branch forked before another ref finished this plan's phases would
+// otherwise redo that work invisibly. Refuse rather than warn — the failure is silent
+// and expensive to clean up by hand.
+export async function checkStaleBaseForRunAll(
+  git: { findStaleBaseRef: (id: string) => Promise<StaleBaseRef | null> },
+  planId: string,
+): Promise<string | null> {
+  const stale = await git.findStaleBaseRef(planId);
+  if (!stale) return null;
+  return `${planId} already has ${stale.done}/${stale.total} phases complete on ${stale.ref}. This branch is forked from before that work — rebase or switch branches.`;
 }

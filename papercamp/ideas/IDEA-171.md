@@ -76,8 +76,9 @@ fact; this is a pre-flight guard only.
 - [x] Compare current branch against main and origin/main
       Flag staleness when either ref shows phases checked that the current branch shows unchecked; return the offending ref and its count for the message.
       run: 1m46s · 242 in · 5.4k out · sonnet-5
-- [ ] Refuse run-all on a stale base
+- [x] Refuse run-all on a stale base
       Run the comparison before run-all starts and abort with the "already N/N complete on main — rebase or switch branches" message.
+      run: 3m11s · 647 in · 6.5k out · sonnet-5
 - [ ] Warn on ensureBranch when HEAD is behind
       Run the same comparison before creating a plan's branch and warn while the branch does not yet exist.
 - [ ] Cover the guard with tests
