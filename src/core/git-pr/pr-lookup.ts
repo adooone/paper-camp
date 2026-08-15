@@ -1,4 +1,6 @@
 import { spawn } from 'node:child_process';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import type { PrInfo, ReviewDecision, ReviewThread } from '../../types/index';
 
 interface PrMapCacheEntry {
@@ -10,6 +12,42 @@ interface PrMapCacheEntry {
 const cache = new Map<string, PrMapCacheEntry>();
 
 const PR_CACHE_TTL_MS = 5 * 60 * 1000;
+
+const prMapPath = (root: string) => join(root, 'papercamp', 'pr-map.json');
+
+interface PersistedPrMap {
+  fetchedAt: number;
+  prs: Record<string, PrInfo>;
+}
+
+/** Best-effort: a write failure must not fail the fetch that triggered it — worst
+ * case the next restart loses this snapshot and starts from the one before it. */
+async function persistPrMap(
+  root: string,
+  prs: Map<string, PrInfo>,
+  fetchedAt: number,
+): Promise<void> {
+  const path = prMapPath(root);
+  try {
+    const payload: PersistedPrMap = { fetchedAt, prs: Object.fromEntries(prs) };
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, `${JSON.stringify(payload, null, 2)}\n`, 'utf-8');
+  } catch (err) {
+    console.error(`papercamp: could not persist PR map for ${root}:`, err);
+  }
+}
+
+/** A merged PR never un-merges, so a disk-loaded map is safe to serve as-is:
+ * stale, never wrong. Resolves `undefined` on any missing/corrupt file. */
+async function loadPersistedPrMap(root: string): Promise<PrMapCacheEntry | undefined> {
+  try {
+    const raw = await readFile(prMapPath(root), 'utf-8');
+    const parsed = JSON.parse(raw) as PersistedPrMap;
+    return { prs: new Map(Object.entries(parsed.prs)), fetchedAt: parsed.fetchedAt };
+  } catch {
+    return undefined;
+  }
+}
 
 interface GhPrRow {
   number: number;
@@ -397,18 +435,35 @@ async function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undef
   return byId;
 }
 
-/** `undefined` means the lookup couldn't resolve at all; callers fall back to stored status. */
+/** `undefined` means the lookup couldn't resolve at all and nothing persisted
+ * exists to fall back on either; callers fall back to stored status. */
 export async function resolvePrsByEntity(
   root: string,
   ttlMs = PR_CACHE_TTL_MS,
 ): Promise<Map<string, PrInfo> | undefined> {
-  const cached = cache.get(root);
+  let cached = cache.get(root);
+  if (!cached) {
+    // First read since process start for this root — load whatever was last
+    // written to disk so a restart never resets to the phases-only guess.
+    const loaded = await loadPersistedPrMap(root);
+    if (loaded) {
+      cache.set(root, loaded);
+      cached = loaded;
+    }
+  }
   if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.prs;
   const prs = await runGhPrListAll(root);
-  // Only cache a successful resolution — caching `undefined` would pin the whole
-  // worklist to stored status for the full TTL instead of retrying on the next read.
-  if (prs !== undefined) cache.set(root, { prs, fetchedAt: Date.now() });
-  return prs;
+  // Only cache/persist a successful resolution — caching `undefined` would pin the
+  // whole worklist to stored status for the full TTL instead of retrying next read.
+  if (prs !== undefined) {
+    const fetchedAt = Date.now();
+    cache.set(root, { prs, fetchedAt });
+    await persistPrMap(root, prs, fetchedAt);
+    return prs;
+  }
+  // Live fetch failed (offline, rate-limited): fall back to whatever's cached,
+  // even if stale — a stale map is behind, never wrong.
+  return cached?.prs;
 }
 
 export function clearPrCache(): void {

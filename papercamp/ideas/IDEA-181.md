@@ -84,8 +84,9 @@ automatic. Local git reads (`git status`, branch, diff) are not GitHub and are
 unaffected.
 
 ### Phases
-- [ ] Persist the PR map to disk, load it at boot
+- [x] Persist the PR map to disk, load it at boot
       resolvePrsByEntity's in-memory Map is written to a gitignored file and reloaded on start so the degraded phases-only guess is never the resting state.
+      run: 7m25s · 10.1k in · 16.2k out · sonnet-5
 - [ ] Stop pollOpenPrs from auto-fetching
       Delete the boot sweep and the 60s setInterval; nothing schedules the `gh pr list` sweep anymore.
 - [ ] Fetch CI on mount and explicit refresh only
