@@ -71,6 +71,7 @@ from the dot.
 - [x] Show lastRun on every check stamp
       `formatLastBuilt` includes a date when the run isn't from today, and renders no timestamp for a run that produced nothing.
       run: 3m17s · 4k in · 8.3k out · sonnet-5
-- [ ] Render doctor and plan-consistency findings in the panel
+- [x] Render doctor and plan-consistency findings in the panel
+      run: 4m59s · 6.4k in · 17.5k out · sonnet-5
 - [ ] Drive the collapsed tab's dot only from what the panel renders
       Retire the unused `deriveCheckStatuses` coupling so the dot reports only explainable state.
