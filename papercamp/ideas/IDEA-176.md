@@ -105,7 +105,8 @@ outside paper-camp are listed but never flagged.
 - [x] Flag paper-camp's own entries
       Mark entries with a `papercamp-sync` / `sync-…` prefix so the UI can escalate them from informational to warning.
       run: 3m4s · 370 in · 4.6k out · sonnet-5
-- [ ] Render the stash surface beside branch hygiene
+- [x] Render the stash surface beside branch hygiene
       Show it on the `/git` page and in the Deliver section, resting-informational and sorted newest first.
+      run: 6m55s · 9k in · 24.7k out · sonnet-5
 - [ ] Offer per-entry inspection and recovery guidance
       Wire `git stash show -p stash@{N}` per entry and name the recovery that works when the surface is in warning state.

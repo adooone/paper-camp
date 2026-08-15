@@ -1,4 +1,4 @@
-import { GitSyncActions } from '@/app/components';
+import { GitStashSurface, GitSyncActions } from '@/app/components';
 import { entityRouteParam } from '@/app/hooks';
 import { type CommitFormFile, useCommitForm } from '@/app/hooks/use-commit-form';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
@@ -184,6 +184,7 @@ export const DeliverChecksRow = () => {
           </div>
         )}
       </div>
+      <GitStashSurface />
     </div>
   );
 };
