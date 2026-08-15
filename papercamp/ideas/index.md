@@ -176,9 +176,9 @@
 | IDEA-173 | Never lose a computed PR review | fix | done | app, agent, github |
 | IDEA-174 | Show a running PR review in the UI | feat | done | app, ui, agent |
 | IDEA-175 | Scout posts a formatted review | feat | done | app, github, ui |
-| IDEA-176 | Sync stops stashing over the corpus | fix | review | server, git, plans |
+| IDEA-176 | Sync stops stashing over the corpus | fix | done | server, git, plans |
 | IDEA-177 | Surface dangling stashes | feat | dropped | app, git, ux |
 | IDEA-178 | Rate limits must not rewrite status | fix | planned | core, github, plans |
 | IDEA-179 | Prioritise lies about what it did | fix | planned | app, server, plans |
 | IDEA-180 | Say what each idea is for | feat | idea | app, plans, format |
-| IDEA-181 | Fetch from GitHub only when asked | feat | idea | server, github, core |
+| IDEA-181 | Fetch from GitHub only when asked | feat | in-progress | server, github, core |
