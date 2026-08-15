@@ -90,7 +90,8 @@ unaffected.
 - [x] Stop pollOpenPrs from auto-fetching
       Delete the boot sweep and the 60s setInterval; nothing schedules the `gh pr list` sweep anymore.
       run: 5m54s · 647 in · 4.2k out · sonnet-5
-- [ ] Fetch CI on mount and explicit refresh only
+- [x] Fetch CI on mount and explicit refresh only
       use-ci-release drops its activity-stream subscription so corpus writes no longer trigger a GitHub call.
+      run: 4m10s · 393 in · 9.9k out · sonnet-5
 - [ ] Confirm the manual refresh path re-reads every GitHub-backed slice
       Exercise RefreshButton → /api/refresh end to end after the auto-callers are gone.
