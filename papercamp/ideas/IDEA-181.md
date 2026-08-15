@@ -82,3 +82,13 @@ lives longer, so it has to be visible and it must not be cached.
 The local activity stream and file watching — those are cheap, local, and stay
 automatic. Local git reads (`git status`, branch, diff) are not GitHub and are
 unaffected.
+
+### Phases
+- [ ] Persist the PR map to disk, load it at boot
+      resolvePrsByEntity's in-memory Map is written to a gitignored file and reloaded on start so the degraded phases-only guess is never the resting state.
+- [ ] Stop pollOpenPrs from auto-fetching
+      Delete the boot sweep and the 60s setInterval; nothing schedules the `gh pr list` sweep anymore.
+- [ ] Fetch CI on mount and explicit refresh only
+      use-ci-release drops its activity-stream subscription so corpus writes no longer trigger a GitHub call.
+- [ ] Confirm the manual refresh path re-reads every GitHub-backed slice
+      Exercise RefreshButton → /api/refresh end to end after the auto-callers are gone.
