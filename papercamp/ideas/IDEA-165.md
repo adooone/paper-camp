@@ -4,7 +4,7 @@ title: Stage files, write the message
 type: feat
 status: review
 created: 2026-08-13
-updated: 2026-08-14
+updated: 2026-08-15
 tags:
   - app
   - git
@@ -106,3 +106,7 @@ One of three slices over `features/git/`: [[IDEA-166]] → [[IDEA-167]] → **[[
 - [x] Extract the shared Sync/Push/Pull row and split the form
       Reconcile `GitActionsRow` and `DeliverEmptyState` into one row, and split the deliver form so the git page and idea view each own their variant.
       run: 12m58s · 1.2k in · 53.9k out · sonnet-5
+- [x] [manual] Stabilize matchesSuggestionTask identity in commit forms
+
+### Thread
+- [x] 2026-08-15 [review] [agent] Comments · 1 finding — The diff delivers all six phases: real stage/unstage routes and server methods with tests, a persistent staging checkbox with an indeterminate state for partially-staged files, index-based commits with a "Commit N staged" button, a collapsible body field, removal of Fix from the git page in favor of a warning stamp, and a shared GitSyncActions row plus a split commit form. The refactor is clean and the extracted useCommitForm hook faithfully preserves the prior draft/suggestion behavior. A couple of edge behaviors around index-based commits on the plan/deliver surface and missing server-level test coverage for the empty-array commit path are worth confirming, but nothing contradicts the spec.

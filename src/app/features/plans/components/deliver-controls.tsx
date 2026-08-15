@@ -4,7 +4,7 @@ import { type CommitFormFile, useCommitForm } from '@/app/hooks/use-commit-form'
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
-import type { CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
+import type { AgentTaskState, CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
 import { Button, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -235,10 +235,12 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: CommitFormFile[]) =
     [plan, filePaths, patchByTitle],
   );
 
+  const matchesSuggestionTask = useCallback((t: AgentTaskState) => t.planId === plan.id, [plan.id]);
+
   const base = useCommitForm(files, {
     formKey: plan.id ?? '__plan-draft__',
     suggestedTitle,
-    matchesSuggestionTask: (t) => t.planId === plan.id,
+    matchesSuggestionTask,
     beforeCommit,
   });
 
