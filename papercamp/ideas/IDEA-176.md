@@ -10,6 +10,7 @@ tags:
   - git
   - plans
 subject: Run & monitor
+order: 7
 ---
 
 `runGitSync` stashes the whole dirty tree — corpus included — then pops it back
@@ -111,3 +112,6 @@ outside paper-camp are listed but never flagged.
 - [x] Offer per-entry inspection and recovery guidance
       Wire `git stash show -p stash@{N}` per entry and name the recovery that works when the surface is in warning state.
       run: 6m6s · 957 in · 15.6k out · sonnet-5
+
+### Thread
+- [x] 2026-08-15 [review] [agent] Comments · 2 findings — The diff delivers all eight phases: the corpus is committed (via the generalized `commitCorpus`) ahead of the stash, `stashPending` is made durable through `hasPendingSyncStash`, the recovery message names the working recovery, and the stash surface is parsed, flagged, and rendered with read-only per-entry diffs. The implementation is well-tested and I found no correctness bugs that break the happy path, but the cherry-pick strategy leaves a side effect worth a second look and an unrelated corpus edit slipped into the PR.
