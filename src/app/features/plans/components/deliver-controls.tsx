@@ -270,9 +270,8 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
 
   useEffect(() => {
     const draft = readLocalDraft<CommitDraft>(draftKey);
-    if (!draft) return;
-    setCommitTitle(draft.title);
-    setCommitMessage(draft.message);
+    setCommitTitle(draft?.title ?? '');
+    setCommitMessage(draft?.message ?? '');
   }, [draftKey]);
 
   useEffect(() => {

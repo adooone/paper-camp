@@ -23,8 +23,7 @@ export const AddReviewPhasesButton = ({
   const draftKey = `review-phases-draft:${entityId}`;
 
   useEffect(() => {
-    const draft = readLocalDraft<string>(draftKey);
-    if (draft) setInput(draft);
+    setInput(readLocalDraft<string>(draftKey) ?? '');
   }, [draftKey]);
 
   useEffect(() => {

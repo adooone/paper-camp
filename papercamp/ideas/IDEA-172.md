@@ -4,13 +4,12 @@ title: Persist drafts and UI choices
 type: fix
 status: review
 created: 2026-08-14
-updated: 2026-08-14
+updated: 2026-08-15
 tags:
   - app
   - ui
   - ux
 subject: App UI
-order: 10
 ---
 
 Typed and agent-suggested commit text is lost the moment you navigate away from
@@ -112,6 +111,7 @@ and a failed persist must degrade to in-memory rather than break the form.
 - [x] Persist the UI-choice toggles
       Persist `planFilters` and `detailView` to localStorage. The Plans list/board `view` toggle no longer exists (removed in IDEA-136, commit 89ca57f) — dropped from scope.
       run: 1m53s · 6.9k in · 7.1k out · sonnet-5
+- [x] [manual] Fix draft reset and detailView persistence bugs
 
 ### Fixes
 - [x] Fix the failing "Quality" check
@@ -126,3 +126,4 @@ and a failed persist must degrade to in-memory rather than break the form.
 - [ ] 2026-08-14 [question] [agent] Run-all parked on phase 5 ("Persist the UI-choice toggles") — the agent needs a decision: Phase 5 says to persist "the Plans `view` toggle (list/board)," but no such state exists in the codebase — it was deliberately deleted in commit 89ca57f (IDEA-136, 2026-08-08). Only `planFilters` and `detailView` currently exist. Should I persist just those two and drop the `view` toggle from scope, or did you mean something else by "Plans `view`"?
 - [x] 2026-08-14 [chat] drop it from scope
 - [x] 2026-08-14 [chat] [agent] Fair enough — I'll drop the `view` toggle from scope and just persist `planFilters` and `detailView`.
+- [x] 2026-08-15 [review] [agent] Requests changes · 2 findings — The persistence helper and the commit-suggestion recovery rewrite are well-built and match the spec, with a good test for the helper. However two problems undercut the claimed-complete phases: the draft-restore effects don't reset their field when navigating to an entity that has no stored draft, so within a session the previous entity's in-memory draft leaks into the next entity's form and gets re-persisted under the wrong key; and the detailView persistence is silently overridden on load by the existing 'always land on Details' reset in plans-page.tsx, so phase 5's detailView persistence effectively does nothing.
