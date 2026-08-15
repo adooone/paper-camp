@@ -537,6 +537,7 @@ describe('getStashes', () => {
       index: 0,
       branch: 'feat/feat-16-stash-parse',
       message: 'papercamp-sync',
+      own: true,
     });
     expect(stashes[0].ageDays).toBe(0);
   });
@@ -555,6 +556,29 @@ describe('getStashes', () => {
     expect(stashes[0].index).toBe(0);
     expect(stashes[0].branch).toBe('feat/feat-17-wip-stash');
     expect(stashes[0].message).toContain('initial commit');
+    expect(stashes[0].own).toBe(false);
+  });
+
+  it('flags a papercamp-sync stash but not a lookalike or a human WIP stash', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', 'a.txt');
+    git(root, 'stash', 'push', '-m', 'papercamp-sync');
+    await writeFile(join(root, 'b.txt'), 'b\n');
+    git(root, 'add', 'b.txt');
+    git(root, 'stash', 'push', '-m', 'sync-idea-66: uncommitted work before switching to main');
+    await writeFile(join(root, 'c.txt'), 'c\n');
+    git(root, 'add', 'c.txt');
+    git(root, 'stash', 'push', '-m', 'unrelated-pre-existing-stash');
+    const manager = gitManager(root);
+
+    const stashes = await manager.getStashes();
+
+    expect(stashes.map((s) => ({ message: s.message, own: s.own }))).toEqual([
+      { message: 'unrelated-pre-existing-stash', own: false },
+      { message: 'sync-idea-66: uncommitted work before switching to main', own: true },
+      { message: 'papercamp-sync', own: true },
+    ]);
   });
 
   it('lists multiple stashes newest first, matching `git stash list`', async () => {

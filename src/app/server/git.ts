@@ -839,6 +839,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   const STASH_REFLOG_SUBJECT = /^(?:WIP on|On) ([^:]+): ?(.*)$/;
+  const PAPERCAMP_STASH_MESSAGE = /^(?:papercamp-sync|sync-)/;
 
   async function getStashes(): Promise<GitStashEntry[]> {
     const output = await runGit(['stash', 'list', '--format=%gd%x09%ci%x09%gs']).catch(() => '');
@@ -849,11 +850,13 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         const [selector, date, subject] = line.split('\t');
         const index = Number.parseInt(/stash@\{(\d+)\}/.exec(selector ?? '')?.[1] ?? '0', 10);
         const subjectMatch = STASH_REFLOG_SUBJECT.exec(subject ?? '');
+        const message = subjectMatch?.[2] ?? subject ?? '';
         return {
           index,
           branch: subjectMatch?.[1] ?? '',
-          message: subjectMatch?.[2] ?? subject ?? '',
+          message,
           ageDays: Math.floor((Date.now() - Date.parse(date ?? '')) / 86_400_000),
+          own: PAPERCAMP_STASH_MESSAGE.test(message),
         };
       });
   }

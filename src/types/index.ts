@@ -746,6 +746,7 @@ export interface GitStashEntry {
   branch: string;
   message: string;
   ageDays: number;
+  own: boolean;
 }
 
 export interface GitStatusResponse {
