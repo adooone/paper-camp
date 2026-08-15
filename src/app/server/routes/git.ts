@@ -122,6 +122,44 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
 
     {
       method: 'POST',
+      path: '/api/git/stage',
+      handle: async (req, res) => {
+        try {
+          const body = await readBody(req);
+          const { path } = JSON.parse(body) as { path?: string };
+          if (!path) {
+            sendJson(res, 400, { error: 'path is required' });
+            return;
+          }
+          await git.stagePath(path);
+          sendJson(res, 200, { ok: true });
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
+        }
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/git/unstage',
+      handle: async (req, res) => {
+        try {
+          const body = await readBody(req);
+          const { path } = JSON.parse(body) as { path?: string };
+          if (!path) {
+            sendJson(res, 400, { error: 'path is required' });
+            return;
+          }
+          await git.unstagePath(path);
+          sendJson(res, 200, { ok: true });
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
+        }
+      },
+    },
+
+    {
+      method: 'POST',
       path: '/api/git/sync',
       handle: async (_req, res) => {
         try {

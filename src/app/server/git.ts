@@ -585,6 +585,14 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await runGit(['add', '-A']);
   }
 
+  async function stagePath(path: string): Promise<void> {
+    await runGit(['add', '--', toLiteralPathspec(path)]);
+  }
+
+  async function unstagePath(path: string): Promise<void> {
+    await runGit(['restore', '--staged', '--', toLiteralPathspec(path)]);
+  }
+
   async function getHeadSha(): Promise<string> {
     return (await runGit(['rev-parse', 'HEAD'])).trim();
   }
@@ -802,6 +810,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     commit,
     commitCorpus,
     stageAll,
+    stagePath,
+    unstagePath,
     getHeadSha,
     getLastCommitFor,
     revert,

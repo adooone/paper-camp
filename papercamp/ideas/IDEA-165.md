@@ -88,8 +88,9 @@ shared form into something both own instead of growing the conditional.
 One of three slices over `features/git/`: [[IDEA-166]] → [[IDEA-167]] → **[[IDEA-165]] (this)**. Last because the indeterminate-checkbox state for a partially-staged file needs the `status` field [[IDEA-167]] adds.
 
 ### Phases
-- [ ] Add stage/unstage routes
+- [x] Add stage/unstage routes
       `POST /api/git/stage` and `POST /api/git/unstage`, each taking a path, running `git add` / `git restore --staged` against the index.
+      run: 2m50s · 6k in · 4.5k out · sonnet-5
 - [ ] Wire real staging into the changed-files checkbox
       Checkbox calls the routes; the `staged` field drives the Stamp; a partially-staged file (`MM`) renders as an indeterminate checkbox.
 - [ ] Commit the index instead of a client list
