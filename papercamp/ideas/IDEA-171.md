@@ -2,7 +2,7 @@
 id: IDEA-171
 title: Run-all redoes work from a stale base
 type: fix
-status: idea
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -82,4 +82,5 @@ fact; this is a pre-flight guard only.
 - [x] Warn on ensureBranch when HEAD is behind
       Run the same comparison before creating a plan's branch and warn while the branch does not yet exist.
       run: 4m10s · 4.3k in · 11.5k out · sonnet-5
-- [ ] Cover the guard with tests
+- [x] Cover the guard with tests
+      run: 5m29s · 663 in · 17.2k out · sonnet-5

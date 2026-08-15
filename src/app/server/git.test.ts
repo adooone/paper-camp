@@ -59,6 +59,25 @@ async function addOrigin(root: string): Promise<string> {
   return remote;
 }
 
+/** Writes and commits a minimal entity file with the given phase-done states, mirroring
+ * the papercamp/ideas/<ID>.md grammar `getPhaseStateAtRef` reads. */
+async function commitEntityPhases(root: string, id: string, done: boolean[]) {
+  const phaseLines = done.map((d, i) => `- [${d ? 'x' : ' '}] Phase ${i + 1}`).join('\n');
+  const content = `---
+id: ${id}
+title: Test entity
+created: 2026-01-01
+---
+
+Body.
+
+### Phases
+${phaseLines}
+`;
+  await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+  await commitFile(root, join('papercamp', 'ideas', `${id}.md`), content, `add ${id}`);
+}
+
 const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
   title: 'Some plan',
   status: 'planned',
@@ -202,6 +221,86 @@ describe('isMergedIntoMain', () => {
     await commitFile(root, 'feature.txt', 'new\n', 'add feature');
     const manager = gitManager(root);
     expect(await manager.isMergedIntoMain()).toBe(false);
+  });
+});
+
+describe('getPhaseStateAtRef', () => {
+  it('returns null when the entity does not exist at that ref', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    expect(await manager.getPhaseStateAtRef('IDEA-1', 'HEAD')).toBeNull();
+  });
+
+  it('returns the checked/unchecked count for an entity committed at that ref', async () => {
+    const root = await initRepo();
+    await commitEntityPhases(root, 'IDEA-1', [true, true, false]);
+    const manager = gitManager(root);
+    expect(await manager.getPhaseStateAtRef('IDEA-1', 'HEAD')).toEqual({ done: 2, total: 3 });
+  });
+
+  it('reads a ref other than HEAD, not the working tree', async () => {
+    const root = await initRepo();
+    await commitEntityPhases(root, 'IDEA-1', [true, false]);
+    const mainSha = git(root, 'rev-parse', 'HEAD');
+    git(root, 'checkout', '-b', 'feat/idea-1-work');
+    await commitEntityPhases(root, 'IDEA-1', [true, true]);
+    const manager = gitManager(root);
+    expect(await manager.getPhaseStateAtRef('IDEA-1', mainSha)).toEqual({ done: 1, total: 2 });
+    expect(await manager.getPhaseStateAtRef('IDEA-1', 'HEAD')).toEqual({ done: 2, total: 2 });
+  });
+});
+
+describe('findStaleBaseRef', () => {
+  it('returns null when HEAD matches main', async () => {
+    const root = await initRepo();
+    await commitEntityPhases(root, 'IDEA-1', [true, false]);
+    const manager = gitManager(root);
+    expect(await manager.findStaleBaseRef('IDEA-1')).toBeNull();
+  });
+
+  it('returns null when the entity was never drafted on HEAD', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    expect(await manager.findStaleBaseRef('IDEA-1')).toBeNull();
+  });
+
+  it('flags main when it has phases checked that HEAD still shows unchecked', async () => {
+    // The IDEA-137 scenario: a branch forked before main's run-all landed its checkmarks.
+    const root = await initRepo();
+    await commitEntityPhases(root, 'IDEA-1', [false, false]);
+    git(root, 'checkout', '-b', 'fix/idea-1-work');
+    git(root, 'checkout', 'main');
+    await commitEntityPhases(root, 'IDEA-1', [true, true]);
+    git(root, 'checkout', 'fix/idea-1-work');
+    const manager = gitManager(root);
+    expect(await manager.findStaleBaseRef('IDEA-1')).toEqual({ ref: 'main', done: 2, total: 2 });
+  });
+
+  it('flags origin/main when local main lags but origin/main is ahead', async () => {
+    const root = await initRepo();
+    await commitEntityPhases(root, 'IDEA-1', [false]);
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'fix/idea-1-work');
+    git(root, 'checkout', 'main');
+    await commitEntityPhases(root, 'IDEA-1', [true]);
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    git(root, 'checkout', 'fix/idea-1-work');
+    const manager = gitManager(root);
+    expect(await manager.findStaleBaseRef('IDEA-1')).toEqual({
+      ref: 'origin/main',
+      done: 1,
+      total: 1,
+    });
+  });
+
+  it('returns null when HEAD is ahead of main, not behind', async () => {
+    const root = await initRepo();
+    await commitEntityPhases(root, 'IDEA-1', [false, false]);
+    git(root, 'checkout', '-b', 'fix/idea-1-work');
+    await commitEntityPhases(root, 'IDEA-1', [true, false]);
+    const manager = gitManager(root);
+    expect(await manager.findStaleBaseRef('IDEA-1')).toBeNull();
   });
 });
 
@@ -484,6 +583,49 @@ describe('ensureBranch', () => {
     const manager = gitManager(root);
     await manager.ensureBranch(plan({ id: 'IDEA-9', title: 'Untyped work' }));
     expect(manager.getCurrentBranch()).toBe('feat/idea-9-untyped-work');
+  });
+
+  it('returns no warning when creating a branch with no divergence', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    const warning = await manager.ensureBranch(
+      plan({ kind: 'feat', id: 'IDEA-50', title: 'Fresh work' }),
+    );
+    expect(warning).toBeUndefined();
+  });
+
+  it('warns when creating a branch while HEAD is behind local main for this entity', async () => {
+    // The IDEA-171 guard: HEAD is about to hand off its stale corpus state to a brand
+    // new branch, so this is the cheapest moment to catch it, before the branch exists.
+    const root = await initRepo();
+    await commitEntityPhases(root, 'IDEA-1', [false, false]);
+    git(root, 'checkout', '-b', 'other-branch');
+    git(root, 'checkout', 'main');
+    await commitEntityPhases(root, 'IDEA-1', [true, true]);
+    git(root, 'checkout', 'other-branch');
+    const manager = gitManager(root);
+    const warning = await manager.ensureBranch(
+      plan({ kind: 'fix', id: 'IDEA-1', title: 'Different work' }),
+    );
+    expect(manager.getCurrentBranch()).toBe('fix/idea-1-different-work');
+    expect(warning).toContain('IDEA-1');
+    expect(warning).toContain('2/2');
+    expect(warning).toContain('main');
+  });
+
+  it('does not warn when checking out an already-existing branch', async () => {
+    const root = await initRepo();
+    await commitEntityPhases(root, 'IDEA-2', [false]);
+    git(root, 'checkout', '-b', 'fix/idea-2-existing');
+    await commitFile(root, 'work.txt', 'work\n', 'branch work');
+    git(root, 'checkout', 'main');
+    await commitEntityPhases(root, 'IDEA-2', [true]);
+    const manager = gitManager(root);
+    const warning = await manager.ensureBranch(
+      plan({ kind: 'fix', id: 'IDEA-2', title: 'Existing' }),
+    );
+    expect(manager.getCurrentBranch()).toBe('fix/idea-2-existing');
+    expect(warning).toBeUndefined();
   });
 });
 
