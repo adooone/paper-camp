@@ -379,7 +379,8 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: Deliver
     }
   }, [filePaths]);
 
-  const canFix = Boolean(plan?.id) && !agentBusy;
+  const hasPlan = Boolean(plan?.id);
+  const canFix = hasPlan && !agentBusy;
 
   const handleFix = useCallback(async () => {
     if (!plan?.id || !status || fixing || agentBusy) return;
@@ -406,6 +407,7 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: Deliver
     setSuggestError,
     handleCommit,
     handleSuggestFromChanges,
+    hasPlan,
     canFix,
     fixing,
     handleFix,
@@ -476,7 +478,9 @@ export const DeliverCommitInputRow = ({
 };
 
 /** Right column, under "N files changed": the Commit action itself — becomes a
- *  Fix action while any of Quality/Tests/Consistency is failing (IDEA-156). */
+ *  Fix action when a check fails and there's a plan to write `fixes` onto
+ *  (IDEA-156). Fix is plan-scoped and meaningless without one, so with no plan
+ *  a failing check surfaces as a warning beside Commit instead (IDEA-165). */
 export const DeliverCommitButton = ({
   state,
   filesEmpty,
@@ -490,10 +494,13 @@ export const DeliverCommitButton = ({
     () => deriveCheckStatuses(status, deskChecks),
     [status, deskChecks],
   );
-  const checksFailing =
-    qualityStatus === 'fail' || testStatus === 'fail' || consistencyStatus === 'fail';
+  const failingChecks = [
+    qualityStatus === 'fail' && 'Quality',
+    testStatus === 'fail' && 'Tests',
+    consistencyStatus === 'fail' && 'Consistency',
+  ].filter((label): label is Exclude<typeof label, false> => label !== false);
 
-  if (checksFailing) {
+  if (failingChecks.length > 0 && state.hasPlan) {
     return (
       <Button size="small" disabled={!state.canFix || state.fixing} onClick={state.handleFix}>
         {state.fixing ? 'Fixing…' : 'Fix'}
@@ -501,7 +508,7 @@ export const DeliverCommitButton = ({
     );
   }
 
-  return (
+  const commitButton = (
     <Button
       size="small"
       disabled={filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight}
@@ -513,6 +520,19 @@ export const DeliverCommitButton = ({
           ? `Commit ${state.stagedCount} staged`
           : 'Commit'}
     </Button>
+  );
+
+  if (failingChecks.length === 0) return commitButton;
+
+  return (
+    <div className="flex items-center gap-2">
+      <Tooltip content={`${failingChecks.join(', ')} failing`}>
+        <Stamp size="small" variant="warning">
+          !
+        </Stamp>
+      </Tooltip>
+      {commitButton}
+    </div>
   );
 };
 

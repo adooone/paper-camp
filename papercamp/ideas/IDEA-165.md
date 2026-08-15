@@ -100,7 +100,8 @@ One of three slices over `features/git/`: [[IDEA-166]] → [[IDEA-167]] → **[[
 - [x] Add the collapsible commit body field
       Return `commitMessage` from `useDeliverCommitForm` and render a collapsible body `Textarea` beneath the title; the wand fills both.
       run: 2m59s · 500 in · 6.7k out · sonnet-5
-- [ ] Drop Fix from the git page
+- [x] Drop Fix from the git page
       Never render the plan-scoped Fix action without a plan; surface a failing check as a warning beside Commit rather than by disabling the button.
+      run: 3m5s · 369 in · 7.3k out · sonnet-5
 - [ ] Extract the shared Sync/Push/Pull row and split the form
       Reconcile `GitActionsRow` and `DeliverEmptyState` into one row, and split the deliver form so the git page and idea view each own their variant.
