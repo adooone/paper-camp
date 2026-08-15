@@ -28,6 +28,7 @@ import {
 import {
   campFile,
   checkBranchConflictForPlan,
+  checkStaleBaseForRunAll,
   entityFileInput,
   fileExists,
   regenerateIndexes,
@@ -366,6 +367,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       async ({ planId }) => {
         const resolved = await resolvePlan(planId);
         if (!resolved.ok) return resolved;
+        const staleBase = await checkStaleBaseForRunAll(git, planId);
+        if (staleBase) return { ok: false, error: staleBase };
         return agent.startRunAllPhases(resolved.plan, () => status.runChecksAndWait());
       },
     ),

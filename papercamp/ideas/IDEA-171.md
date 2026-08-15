@@ -2,7 +2,7 @@
 id: IDEA-171
 title: Run-all redoes work from a stale base
 type: fix
-status: idea
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -10,6 +10,7 @@ tags:
   - plans
   - git
 subject: Run & monitor
+order: 7
 ---
 
 A plan's completion state lives in its entity file, which is branch-local. So
@@ -70,12 +71,20 @@ Detecting duplicate work already committed under two different SHAs after the
 fact; this is a pre-flight guard only.
 
 ### Phases
-- [ ] Read phase state at a git ref
+- [x] Read phase state at a git ref
       Add a helper that runs `git show <ref>:papercamp/ideas/<ID>.md` and returns the checked/unchecked count, tolerating a missing entity at that ref.
-- [ ] Compare current branch against main and origin/main
+      run: 2m23s · 13.4k in · 13.1k out · sonnet-5
+- [x] Compare current branch against main and origin/main
       Flag staleness when either ref shows phases checked that the current branch shows unchecked; return the offending ref and its count for the message.
-- [ ] Refuse run-all on a stale base
+      run: 1m46s · 242 in · 5.4k out · sonnet-5
+- [x] Refuse run-all on a stale base
       Run the comparison before run-all starts and abort with the "already N/N complete on main — rebase or switch branches" message.
-- [ ] Warn on ensureBranch when HEAD is behind
+      run: 3m11s · 647 in · 6.5k out · sonnet-5
+- [x] Warn on ensureBranch when HEAD is behind
       Run the same comparison before creating a plan's branch and warn while the branch does not yet exist.
-- [ ] Cover the guard with tests
+      run: 4m10s · 4.3k in · 11.5k out · sonnet-5
+- [x] Cover the guard with tests
+      run: 5m29s · 663 in · 17.2k out · sonnet-5
+
+### Thread
+- [x] 2026-08-15 [review] [agent] Comments · 1 finding — The core run-all guard (getPhaseStateAtRef → findStaleBaseRef → checkStaleBaseForRunAll wired into /api/agent/launch-run-all) is correct, matches the spec's refuse-not-warn intent, and is well covered by tests including the origin/main-ahead case. The ensureBranch warning delivers phase 4 mechanically but its message contradicts how the branch is actually created, and an unrelated run-order edit is bundled in. Nothing here contradicts a settled decision, so this is comment-level.

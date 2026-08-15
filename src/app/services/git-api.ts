@@ -148,7 +148,9 @@ export const resolveConflict = async (prompt: string): Promise<{ ok: boolean; er
   }
 };
 
-export const createPlanBranch = async (planId: string): Promise<string> => {
+export const createPlanBranch = async (
+  planId: string,
+): Promise<{ branch: string; warning?: string }> => {
   const response = await fetch(apiUrl('/api/git/branch'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -157,5 +159,5 @@ export const createPlanBranch = async (planId: string): Promise<string> => {
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Failed to create branch');
-  return data.branch as string;
+  return { branch: data.branch as string, warning: data.warning as string | undefined };
 };

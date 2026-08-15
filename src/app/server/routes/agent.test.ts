@@ -380,3 +380,42 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
     expect(callOrder).toEqual(['commit', 'launch']);
   });
 });
+
+describe('POST /api/agent/launch-run-all', () => {
+  it('refuses to start when the current branch is behind main for this plan', async () => {
+    const root = await makeRoot();
+    const startRunAllPhases = vi.fn(() => ({ ok: true }) as const);
+    const findStaleBaseRef = vi.fn(async () => ({ ref: 'main', done: 4, total: 4 }));
+
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/agent/launch-run-all', {
+      agent: { startRunAllPhases } as unknown as RouteContext['agent'],
+      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      git: fakeGit({ findStaleBaseRef }),
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2' })), res);
+
+    expect(findStaleBaseRef).toHaveBeenCalledWith('IDEA-2');
+    expect(startRunAllPhases).not.toHaveBeenCalled();
+    expect(status()).toBe(409);
+    expect(json()).toMatchObject({
+      error: expect.stringContaining('IDEA-2 already has 4/4 phases complete on main'),
+    });
+  });
+
+  it('starts run-all when the current branch is not stale', async () => {
+    const root = await makeRoot();
+    const startRunAllPhases = vi.fn(() => ({ ok: true }) as const);
+    const findStaleBaseRef = vi.fn(async () => null);
+
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/agent/launch-run-all', {
+      agent: { startRunAllPhases } as unknown as RouteContext['agent'],
+      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      git: fakeGit({ findStaleBaseRef }),
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2' })), res);
+
+    expect(startRunAllPhases).toHaveBeenCalledOnce();
+    expect(status()).toBe(202);
+    expect(json()).toMatchObject({ ok: true });
+  });
+});
