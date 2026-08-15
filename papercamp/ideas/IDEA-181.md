@@ -98,7 +98,8 @@ unaffected.
       run: 3m43s · 528 in · 7.2k out · sonnet-5
 
 ### Fixes
-- [ ] Promote the refresh out of the idea view
+- [x] Promote the refresh out of the idea view
       The only manual GitHub fetch in the app is an unlabelled `IconButton` in `entity-detail.tsx`'s header, beside the `updated <date>` text — nothing outside that file calls `refreshAll`/`dropServerCaches`, so on the Plans list, the git page or Settings there is no way to fetch at all. With polling removed this button is the sole path to GitHub data and has to live on a surface present on every page: the Stack panel's Desk section, labelled as fetching from GitHub rather than reloading a view. The in-idea one stays.
+      run: 1m28s · 6k in · 5.7k out · sonnet-5
 - [ ] Show when GitHub data was last fetched
       `papercamp/pr-map.json` already stores `fetchedAt`, and with on-demand fetching "as of 14:32" is load-bearing information that nothing displays. Surface it next to the refresh control and on the PR badge, so a stale PR state is legible where it is actually read rather than silently presented as current.

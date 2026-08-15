@@ -2,9 +2,19 @@ import { RefreshIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import { IconButton, useToast } from '@dendelion/paper-ui';
 
+interface RefreshButtonProps {
+  label?: string;
+  refreshingLabel?: string;
+  surface?: 'paper' | 'chalkboard';
+}
+
 /** Only re-reads what's already there — distinct from `WorklistActionsMenu`'s
  * "Reconcile all", which launches a reconcile agent that rewrites entities. */
-export const RefreshButton = () => {
+export const RefreshButton = ({
+  label = 'Refresh data',
+  refreshingLabel = 'Refreshing…',
+  surface,
+}: RefreshButtonProps = {}) => {
   const refreshAll = useAppStore((s) => s.refreshAll);
   const refreshing = useAppStore((s) => s.refreshing);
   const { toast } = useToast();
@@ -34,9 +44,10 @@ export const RefreshButton = () => {
           <RefreshIcon size={16} />
         </span>
       }
-      label={refreshing ? 'Refreshing…' : 'Refresh data'}
+      label={refreshing ? refreshingLabel : label}
       size="small"
       variant="ghost"
+      surface={surface}
       disabled={refreshing}
       onClick={handleClick}
     />
