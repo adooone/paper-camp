@@ -188,9 +188,10 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await commit(files, `docs(ideas): ${title} — plan`, `Refs: ${id}`, { noVerify: true });
   }
 
-  function ensureBranch(plan: PlanEntry): void {
-    const branch = branchName(plan.id, plan.kind, plan.title);
-    if (!branch) return;
+  async function ensureBranch(plan: PlanEntry): Promise<string | undefined> {
+    const planId = plan.id;
+    const branch = branchName(planId, plan.kind, plan.title);
+    if (!branch || !planId) return undefined;
 
     const currentResult = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: root });
     if (currentResult.status !== 0) {
@@ -199,7 +200,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       );
     }
     const currentBranch = currentResult.stdout.toString().trim();
-    if (currentBranch === branch) return;
+    if (currentBranch === branch) return undefined;
 
     // Whether the branch already exists decides create-vs-checkout — never infer it
     // from a `checkout -b` failure, which also fires for a dirty/blocked worktree and
@@ -213,7 +214,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       if (checkoutResult.status !== 0) {
         throw new Error(checkoutResult.stderr.toString().trim() || `Unable to check out ${branch}`);
       }
-      return;
+      return undefined;
     }
 
     // Branch off the freshest main: refresh origin/main and prefer it over stale local
@@ -230,6 +231,14 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         ? 'origin/main'
         : 'main';
 
+    // Read before the checkout below moves HEAD — this is the cheap moment to catch a
+    // stale fork (IDEA-171): the new branch is about to inherit whatever corpus state
+    // HEAD carries, so warn now rather than after run-all silently redoes the work.
+    const stale = await findStaleBaseRef(planId);
+    const warning = stale
+      ? `${planId} already has ${stale.done}/${stale.total} phases complete on ${stale.ref} — this new branch forks from before that work, so it will inherit the stale corpus state. Rebase onto ${stale.ref} once created.`
+      : undefined;
+
     // --no-track: off a remote ref, git would set upstream to origin/main, then refuse
     // `git push` because the upstream name doesn't match the branch name.
     const result = spawnSync('git', ['checkout', '-b', branch, '--no-track', base], { cwd: root });
@@ -238,6 +247,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       // not a fabricated "branch exists" fallback.
       throw new Error(result.stderr.toString().trim() || `Unable to create branch ${branch}`);
     }
+    return warning;
   }
 
   async function refresh() {

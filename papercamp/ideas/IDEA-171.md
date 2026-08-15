@@ -79,6 +79,7 @@ fact; this is a pre-flight guard only.
 - [x] Refuse run-all on a stale base
       Run the comparison before run-all starts and abort with the "already N/N complete on main — rebase or switch branches" message.
       run: 3m11s · 647 in · 6.5k out · sonnet-5
-- [ ] Warn on ensureBranch when HEAD is behind
+- [x] Warn on ensureBranch when HEAD is behind
       Run the same comparison before creating a plan's branch and warn while the branch does not yet exist.
+      run: 4m10s · 4.3k in · 11.5k out · sonnet-5
 - [ ] Cover the guard with tests

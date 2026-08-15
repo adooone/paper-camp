@@ -76,8 +76,8 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             sendJson(res, 404, { error: 'entity not found' });
             return;
           }
-          git.ensureBranch(entityToPlan(entity));
-          sendJson(res, 200, { ok: true, branch: git.getCurrentBranch() });
+          const warning = await git.ensureBranch(entityToPlan(entity));
+          sendJson(res, 200, { ok: true, branch: git.getCurrentBranch(), warning });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
         }

@@ -637,8 +637,9 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     if (!plan.id) return;
     setBranching(true);
     try {
-      const branch = await createPlanBranch(plan.id);
+      const { branch, warning } = await createPlanBranch(plan.id);
       toast({ title: 'Branch ready', description: `Now on ${branch}`, variant: 'success' });
+      if (warning) toast({ title: 'Stale fork', description: warning, variant: 'warning' });
       await loadGitStatus();
     } catch (err) {
       toast({
