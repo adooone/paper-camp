@@ -91,8 +91,9 @@ outside paper-camp are listed but never flagged.
 - [x] Commit the corpus before stashing in `runGitSync`
       Call `commitCorpus` with a sync-appropriate subject ahead of `stash push`.
       run: 10m57s · 6.2k in · 37.7k out · sonnet-5
-- [ ] Confirm only source changes reach the stash
+- [x] Confirm only source changes reach the stash
       Verify the commit is a no-op on a clean corpus and `papercamp/` never enters the stash.
+      run: 3m5s · 238 in · 6.6k out · sonnet-5
 - [ ] Make `stashPending` durable instead of one-shot
 - [ ] Rewrite the recovery message to name the working recovery
       Point at `git restore --source=origin/main --staged --worktree .` then `git merge --ff-only`.

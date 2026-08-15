@@ -421,6 +421,52 @@ describe('runGitSync', () => {
     expect(manager.getCurrentBranch()).toBe('main');
     expect(git(root, 'stash', 'list')).toContain('papercamp-sync');
   });
+
+  it('keeps the corpus out of the stash, committing it separately even when the source pop conflicts', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-12-corpus-stash');
+    // Same conflicting-upstream setup as the pop-conflict test above, plus a
+    // dirty corpus file that must be committed instead of joining the stash.
+    git(root, 'checkout', 'main');
+    await commitFile(root, 'README.md', 'upstream\n', 'upstream change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    git(root, 'checkout', 'feat/feat-12-corpus-stash');
+    await writeFile(join(root, 'README.md'), 'local edit\n');
+    await mkdir(join(root, 'papercamp'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'config.json'), '{"nextId":{"idea":5}}\n');
+    const manager = gitManager(root);
+
+    const result = await manager.runGitSync();
+
+    expect(result).toMatchObject({ ok: false, stage: 'stash-pop', stashPending: true });
+    expect(git(root, 'log', '-1', '--format=%s')).toBe('docs(ideas): sync corpus');
+    expect(await readFile(join(root, 'papercamp', 'config.json'), 'utf-8')).toBe(
+      '{"nextId":{"idea":5}}\n',
+    );
+    const stashDiff = git(root, 'stash', 'show', '-p', '--include-untracked', 'stash@{0}');
+    expect(stashDiff).not.toContain('papercamp/');
+    expect(stashDiff).toContain('README.md');
+  });
+
+  it('does not create a corpus commit when papercamp/ is already clean', async () => {
+    const root = await initRepo();
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-1 — first\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'add run-order');
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-13-clean-corpus');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    const manager = gitManager(root);
+    const before = git(root, 'rev-list', '--count', 'HEAD');
+
+    await manager.runGitSync();
+
+    expect(git(root, 'log', 'main', '--format=%s')).not.toContain('sync corpus');
+    expect(git(root, 'rev-list', '--count', 'main')).toBe(before);
+  });
 });
 
 describe('fixDivergence', () => {
