@@ -97,8 +97,9 @@ One of three slices over `features/git/`: [[IDEA-166]] → [[IDEA-167]] → **[[
 - [x] Commit the index instead of a client list
       `commitChanges` stops passing a file array once anything is staged; the button reads "Commit N staged" and keeps commit-everything when nothing is staged.
       run: 4m59s · 521 in · 18.1k out · sonnet-5
-- [ ] Add the collapsible commit body field
+- [x] Add the collapsible commit body field
       Return `commitMessage` from `useDeliverCommitForm` and render a collapsible body `Textarea` beneath the title; the wand fills both.
+      run: 2m59s · 500 in · 6.7k out · sonnet-5
 - [ ] Drop Fix from the git page
       Never render the plan-scoped Fix action without a plan; surface a failing check as a warning beside Commit rather than by disabling the button.
 - [ ] Extract the shared Sync/Push/Pull row and split the form

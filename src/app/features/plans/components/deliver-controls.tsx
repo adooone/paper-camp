@@ -15,6 +15,7 @@ import {
   Input,
   Stamp,
   type StampVariant,
+  Textarea,
   Tooltip,
   useToast,
 } from '@dendelion/paper-ui';
@@ -395,6 +396,8 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: Deliver
   return {
     commitTitle,
     setCommitTitle,
+    commitMessage,
+    setCommitMessage,
     committing,
     commitInFlight,
     stagedCount,
@@ -411,40 +414,66 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: Deliver
 
 export type DeliverCommitFormState = ReturnType<typeof useDeliverCommitForm>;
 
-/** Left column, under the check stamps: title input + suggest-from-diff. */
+/** Left column, under the check stamps: title input + suggest-from-diff, with
+ *  the commit body collapsed beneath it until there's something to show. */
 export const DeliverCommitInputRow = ({
   state,
   filesEmpty,
 }: {
   state: DeliverCommitFormState;
   filesEmpty: boolean;
-}) => (
-  <div className="flex flex-col gap-2">
-    {state.suggestError && (
-      <Alert dismissible onDismiss={() => state.setSuggestError(null)}>
-        {state.suggestError}
-      </Alert>
-    )}
-    <div className="flex gap-2 items-center">
-      <div className="flex-1">
-        <Input
+}) => {
+  const [bodyExpanded, setBodyExpanded] = useState(Boolean(state.commitMessage));
+
+  useEffect(() => {
+    if (state.commitMessage) setBodyExpanded(true);
+  }, [state.commitMessage]);
+
+  return (
+    <div className="flex flex-col gap-2">
+      {state.suggestError && (
+        <Alert dismissible onDismiss={() => state.setSuggestError(null)}>
+          {state.suggestError}
+        </Alert>
+      )}
+      <div className="flex gap-2 items-center">
+        <div className="flex-1">
+          <Input
+            size="small"
+            placeholder="Commit title"
+            value={state.commitTitle}
+            onChange={(e) => state.setCommitTitle(e.currentTarget.value)}
+          />
+        </div>
+        <IconButton
+          icon={<WandIcon size={16} />}
           size="small"
-          placeholder="Commit title"
-          value={state.commitTitle}
-          onChange={(e) => state.setCommitTitle(e.currentTarget.value)}
+          label="Suggest title and message from the diff"
+          disabled={filesEmpty || state.suggesting}
+          onClick={state.handleSuggestFromChanges}
+          wobble={state.suggesting ? 1 : 0}
         />
       </div>
-      <IconButton
-        icon={<WandIcon size={16} />}
-        size="small"
-        label="Suggest title and message from the diff"
-        disabled={filesEmpty || state.suggesting}
-        onClick={state.handleSuggestFromChanges}
-        wobble={state.suggesting ? 1 : 0}
-      />
+      {bodyExpanded ? (
+        <Textarea
+          size="small"
+          placeholder="Commit message (optional)"
+          value={state.commitMessage}
+          onChange={(e) => state.setCommitMessage(e.currentTarget.value)}
+        />
+      ) : (
+        // Raw <button>: paper-ui's Button has no bare text-link variant.
+        <button
+          type="button"
+          onClick={() => setBodyExpanded(true)}
+          className="self-start bg-none bg-transparent border-none p-0 [font:inherit] text-2xs opacity-60 cursor-pointer underline"
+        >
+          Add a message
+        </button>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 /** Right column, under "N files changed": the Commit action itself — becomes a
  *  Fix action while any of Quality/Tests/Consistency is failing (IDEA-156). */
