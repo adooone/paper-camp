@@ -748,6 +748,7 @@ export interface GitStatusResponse {
   behind: number;
   diverged: boolean;
   branchHygiene: BranchHygieneStatus;
+  stashPending: boolean;
 }
 
 export interface FileDiffEntry {

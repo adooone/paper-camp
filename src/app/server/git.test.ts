@@ -469,6 +469,48 @@ describe('runGitSync', () => {
   });
 });
 
+describe('hasPendingSyncStash', () => {
+  it('is true once a sync pop conflict leaves work stranded in the stash', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-14-stash-durable');
+    git(root, 'checkout', 'main');
+    await commitFile(root, 'README.md', 'upstream\n', 'upstream change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    git(root, 'checkout', 'feat/feat-14-stash-durable');
+    await writeFile(join(root, 'README.md'), 'local edit\n');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(await manager.hasPendingSyncStash()).toBe(true);
+  });
+
+  it('is false when there is no stash, and stays false for an unrelated one', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    expect(await manager.hasPendingSyncStash()).toBe(false);
+
+    await writeFile(join(root, 'notes.txt'), 'wip\n');
+    git(root, 'add', 'notes.txt');
+    git(root, 'stash', 'push', '-m', 'unrelated-wip');
+    expect(await manager.hasPendingSyncStash()).toBe(false);
+  });
+
+  it('is false again once the sync succeeds and the stash pops cleanly', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-15-stash-clears');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(await manager.hasPendingSyncStash()).toBe(false);
+  });
+});
+
 describe('fixDivergence', () => {
   it('rebases a diverged branch onto its remote instead of failing', async () => {
     const root = await initRepo();

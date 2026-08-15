@@ -94,7 +94,8 @@ outside paper-camp are listed but never flagged.
 - [x] Confirm only source changes reach the stash
       Verify the commit is a no-op on a clean corpus and `papercamp/` never enters the stash.
       run: 3m5s · 238 in · 6.6k out · sonnet-5
-- [ ] Make `stashPending` durable instead of one-shot
+- [x] Make `stashPending` durable instead of one-shot
+      run: 4m44s · 800 in · 12.4k out · sonnet-5
 - [ ] Rewrite the recovery message to name the working recovery
       Point at `git restore --source=origin/main --staged --worktree .` then `git merge --ff-only`.
 - [ ] Parse stashes in the git status endpoint

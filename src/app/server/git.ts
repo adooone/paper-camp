@@ -832,6 +832,11 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     return { ok: true };
   }
 
+  async function hasPendingSyncStash(): Promise<boolean> {
+    const list = await runGit(['stash', 'list']).catch(() => '');
+    return list.split('\n').some((line) => line.includes('papercamp-sync'));
+  }
+
   // Reconcile the current branch: fast-forward if behind, else rebase local commits
   // onto the remote so a diverged branch is repaired instead of failing loudly.
   async function runGitPull(): Promise<void> {
@@ -895,6 +900,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     push,
     isMergedIntoMain,
     getBranchHygieneStatus,
+    hasPendingSyncStash,
     runGitSync,
     runGitPull,
     fixDivergence,
