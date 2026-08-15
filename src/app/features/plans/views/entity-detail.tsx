@@ -402,7 +402,10 @@ const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] 
 // pops in only once there happens to be a change to commit.
 const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
   const gitStatus = useAppStore((s) => s.gitStatus);
-  const files = useMemo(() => gitStatus?.map((entry) => entry.path) ?? [], [gitStatus]);
+  const files = useMemo(
+    () => gitStatus?.map((entry) => ({ path: entry.path, staged: entry.staged })) ?? [],
+    [gitStatus],
+  );
   const commitForm = useDeliverCommitForm(plan, files);
   const hasChanges = files.length > 0;
   return (

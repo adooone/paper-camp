@@ -94,8 +94,9 @@ One of three slices over `features/git/`: [[IDEA-166]] → [[IDEA-167]] → **[[
 - [x] Wire real staging into the changed-files checkbox
       Checkbox calls the routes; the `staged` field drives the Stamp; a partially-staged file (`MM`) renders as an indeterminate checkbox.
       run: 8m59s · 1.1k in · 26.6k out · sonnet-5
-- [ ] Commit the index instead of a client list
+- [x] Commit the index instead of a client list
       `commitChanges` stops passing a file array once anything is staged; the button reads "Commit N staged" and keeps commit-everything when nothing is staged.
+      run: 4m59s · 521 in · 18.1k out · sonnet-5
 - [ ] Add the collapsible commit body field
       Return `commitMessage` from `useDeliverCommitForm` and render a collapsible body `Textarea` beneath the title; the wand fills both.
 - [ ] Drop Fix from the git page

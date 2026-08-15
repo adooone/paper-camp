@@ -57,7 +57,10 @@ export const GitPage = () => {
   const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
   const setActiveDiffPath = useAppStore((s) => s.setActiveDiffPath);
   const sectionsRef = useRef<HTMLDivElement>(null);
-  const commitFiles = useMemo(() => files?.map((entry) => entry.path) ?? [], [files]);
+  const commitFiles = useMemo(
+    () => files?.map((entry) => ({ path: entry.path, staged: entry.staged })) ?? [],
+    [files],
+  );
   const commitForm = useDeliverCommitForm(undefined, commitFiles);
 
   useEffect(() => {

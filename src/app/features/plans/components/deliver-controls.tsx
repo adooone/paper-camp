@@ -2,7 +2,7 @@ import { MergeIcon, PullIcon, PushIcon, WandIcon } from '@/app/components/icons'
 import { entityRouteParam } from '@/app/hooks';
 import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
-import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
+import { commitChanges, stagePath, suggestCommitMessage } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
@@ -239,9 +239,14 @@ function commitDraftKeyFor(plan: PlanEntry | undefined): string {
   return `commit-draft:${plan?.id ?? GIT_PAGE_KEY}`;
 }
 
+export interface DeliverCommitFile {
+  path: string;
+  staged: boolean;
+}
+
 /** Shared state/handlers for the split commit input row (left column) and
  *  Commit button (right column) — both need the same title/in-flight state. */
-export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[]) => {
+export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: DeliverCommitFile[]) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
@@ -261,6 +266,8 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
   const [fixing, setFixing] = useState(false);
 
   const { title: suggestedTitle } = useMemo(() => deriveSuggestedCommit(plan), [plan]);
+  const filePaths = useMemo(() => files.map((f) => f.path), [files]);
+  const stagedCount = useMemo(() => files.filter((f) => f.staged).length, [files]);
 
   useEffect(() => {
     if (suggestedTitle && !commitTitle) setCommitTitle(suggestedTitle);
@@ -304,7 +311,7 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     setCommitInFlight(true);
     // Written before the commit and committed with it: appended afterwards it would
     // leave the entity file dirty, and committing that appends another row, forever.
-    const recordsPhase = Boolean(plan?.id) && !isCorpusOnlyCommit(files);
+    const recordsPhase = Boolean(plan?.id) && !isCorpusOnlyCommit(filePaths);
     let phaseRecorded = false;
     try {
       if (recordsPhase && plan) {
@@ -313,9 +320,18 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
         });
       }
       const entityPath = plan?.id ? planEntityPath(plan.id) : undefined;
-      const commitFiles =
-        phaseRecorded && entityPath && !files.includes(entityPath) ? [...files, entityPath] : files;
-      await commitChanges(commitFiles, commitTitle.trim(), commitMessage.trim() || undefined);
+      if (stagedCount > 0) {
+        // Committing the index respects a partially-staged file's split, so the
+        // phase record can't ride along in the pathspec — stage it explicitly instead.
+        if (phaseRecorded && entityPath) await stagePath(entityPath);
+        await commitChanges([], commitTitle.trim(), commitMessage.trim() || undefined);
+      } else {
+        const commitFiles =
+          phaseRecorded && entityPath && !filePaths.includes(entityPath)
+            ? [...filePaths, entityPath]
+            : filePaths;
+        await commitChanges(commitFiles, commitTitle.trim(), commitMessage.trim() || undefined);
+      }
       setCommitTitle('');
       setCommitMessage('');
       markSuggestionFormCleared(plan);
@@ -337,7 +353,8 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
   }, [
     commitTitle,
     commitMessage,
-    files,
+    filePaths,
+    stagedCount,
     loadGitStatus,
     commitInFlight,
     setCommitInFlight,
@@ -347,11 +364,11 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
   ]);
 
   const handleSuggestFromChanges = useCallback(async () => {
-    if (files.length === 0) return;
+    if (filePaths.length === 0) return;
     setSuggesting(true);
     setSuggestError(null);
     try {
-      const result = await suggestCommitMessage(files);
+      const result = await suggestCommitMessage(filePaths);
       setCommitTitle(result.title);
       setCommitMessage(result.message);
     } catch (err) {
@@ -359,7 +376,7 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     } finally {
       setSuggesting(false);
     }
-  }, [files]);
+  }, [filePaths]);
 
   const canFix = Boolean(plan?.id) && !agentBusy;
 
@@ -380,6 +397,7 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     setCommitTitle,
     committing,
     commitInFlight,
+    stagedCount,
     suggesting,
     suggestError,
     setSuggestError,
@@ -460,7 +478,11 @@ export const DeliverCommitButton = ({
       disabled={filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight}
       onClick={state.handleCommit}
     >
-      {state.committing || state.commitInFlight ? 'Committing…' : 'Commit'}
+      {state.committing || state.commitInFlight
+        ? 'Committing…'
+        : state.stagedCount > 0
+          ? `Commit ${state.stagedCount} staged`
+          : 'Commit'}
     </Button>
   );
 };
