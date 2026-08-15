@@ -68,8 +68,9 @@ from the dot.
 - [x] Fold the Build group into Checks as an ordinary check
       `build` renders once from `desk.checks[name=build]`, carrying its own `lastRun`.
       run: 3m18s · 4k in · 7.6k out · sonnet-5
-- [ ] Show lastRun on every check stamp
+- [x] Show lastRun on every check stamp
       `formatLastBuilt` includes a date when the run isn't from today, and renders no timestamp for a run that produced nothing.
+      run: 3m17s · 4k in · 8.3k out · sonnet-5
 - [ ] Render doctor and plan-consistency findings in the panel
 - [ ] Drive the collapsed tab's dot only from what the panel renders
       Retire the unused `deriveCheckStatuses` coupling so the dot reports only explainable state.
