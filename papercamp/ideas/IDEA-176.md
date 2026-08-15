@@ -96,8 +96,9 @@ outside paper-camp are listed but never flagged.
       run: 3m5s · 238 in · 6.6k out · sonnet-5
 - [x] Make `stashPending` durable instead of one-shot
       run: 4m44s · 800 in · 12.4k out · sonnet-5
-- [ ] Rewrite the recovery message to name the working recovery
+- [x] Rewrite the recovery message to name the working recovery
       Point at `git restore --source=origin/main --staged --worktree .` then `git merge --ff-only`.
+      run: 3m2s · 288 in · 3.1k out · sonnet-5
 - [ ] Parse stashes in the git status endpoint
       Add a `stashes` array (index, branch, message, age) to `GET /api/git/status`, parsed from `git stash list`.
 - [ ] Flag paper-camp's own entries

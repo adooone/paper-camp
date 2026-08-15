@@ -797,7 +797,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     if (stashPending && !syncError) {
       const stage = 'stash-pop' as const;
       const message =
-        'Synced to main, but restoring your changes hit a conflict — resolve the markers in the working tree; the originals are still in `git stash`';
+        'Synced to main, but restoring your changes hit a conflict. Recover with `git restore --source=origin/main --staged --worktree .` then `git merge --ff-only` — the originals are still in `git stash` if that leaves anything to redo.';
       return {
         ok: false,
         stage,

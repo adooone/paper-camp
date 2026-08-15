@@ -417,6 +417,10 @@ describe('runGitSync', () => {
 
     const result = await manager.runGitSync();
     expect(result).toMatchObject({ ok: false, stage: 'stash-pop', stashPending: true });
+    expect((result as { message: string }).message).toContain(
+      'git restore --source=origin/main --staged --worktree .',
+    );
+    expect((result as { message: string }).message).toContain('git merge --ff-only');
     expect((result as { message: string }).message).toMatch(/git stash/);
     expect(manager.getCurrentBranch()).toBe('main');
     expect(git(root, 'stash', 'list')).toContain('papercamp-sync');
