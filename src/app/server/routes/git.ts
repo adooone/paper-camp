@@ -4,7 +4,7 @@ import type { GitSyncFailure } from '@/types/index';
 import type { AgentManager } from '../agent';
 import { suggestCommitMessage } from '../commit-suggest';
 import { campFile } from '../helpers';
-import { readBody, sendJson } from '../http';
+import { readBody, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 // A genuine content conflict needs domain judgement, so it's never auto-escalated —
@@ -42,10 +42,12 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
         // getStatus and getBranchHygieneStatus both run `git status`, which races on
         // .git/index.lock if run concurrently; getAheadCount/getBehindCount's `git
         // rev-list` doesn't.
-        const [entries, ahead, behind] = await Promise.all([
+        const [entries, ahead, behind, stashPending, stashes] = await Promise.all([
           git.getStatus(),
           git.getAheadCount(),
           git.getBehindCount(),
+          git.hasPendingSyncStash(),
+          git.getStashes(),
         ]);
         const branchHygiene = await git.getBranchHygieneStatus();
         sendJson(res, 200, {
@@ -55,6 +57,8 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
           behind,
           diverged: ahead > 0 && behind > 0,
           branchHygiene,
+          stashPending,
+          stashes,
         });
       },
     },
@@ -237,6 +241,24 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         const files = await git.getWorkingDiff();
         sendJson(res, 200, { files });
+      },
+    },
+
+    {
+      method: 'GET',
+      path: '/api/git/stash-diff',
+      handle: async (req, res) => {
+        const index = Number.parseInt(requestUrl(req).searchParams.get('index') ?? '', 10);
+        if (Number.isNaN(index)) {
+          sendJson(res, 400, { error: 'index is required' });
+          return;
+        }
+        try {
+          const patch = await git.showStash(index);
+          sendJson(res, 200, { patch });
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
+        }
       },
     },
 

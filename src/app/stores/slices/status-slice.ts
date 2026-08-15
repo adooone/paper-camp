@@ -4,6 +4,7 @@ import type {
   BranchHygieneStatus,
   CapabilityResult,
   ConsistencyIssue,
+  GitStashEntry,
   GitStatusEntry,
 } from '@/types/index';
 import { fetchConsistency, fetchDoctor } from '../../services/content';
@@ -40,6 +41,7 @@ export type StatusSlice = {
   gitBehind: number;
   gitDiverged: boolean;
   gitBranchHygiene: BranchHygieneStatus | null;
+  gitStashes: GitStashEntry[];
   // Resolves false on failure (state left stale) so callers like quickCommit can tell.
   loadGitStatus: () => Promise<boolean>;
 
@@ -127,9 +129,11 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
     gitBehind: 0,
     gitDiverged: false,
     gitBranchHygiene: null,
+    gitStashes: [],
     loadGitStatus: async () => {
       try {
-        const { branch, entries, ahead, behind, diverged, branchHygiene } = await fetchGitStatus();
+        const { branch, entries, ahead, behind, diverged, branchHygiene, stashes } =
+          await fetchGitStatus();
         set({
           gitStatus: entries,
           gitBranch: branch,
@@ -137,6 +141,7 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
           gitBehind: behind,
           gitDiverged: diverged,
           gitBranchHygiene: branchHygiene,
+          gitStashes: stashes,
         });
         return true;
       } catch {

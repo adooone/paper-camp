@@ -9,6 +9,7 @@ import type {
   BranchHygieneStatus,
   FileDiffEntry,
   GitLiveState,
+  GitStashEntry,
   GitStatusEntry,
   GitSyncResult,
   PhaseState,
@@ -179,13 +180,14 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
   }
 
   // Called right after branch setup so a run can never erase the drafted plan it is
-  // about to execute — see IDEA-137. Scoped to papercamp/ only: unrelated dirty state
-  // outside the corpus is left for the run's own commit steps.
-  async function commitCorpus(title: string, id: string): Promise<void> {
+  // about to execute — see IDEA-137, and by runGitSync before stashing — see IDEA-176.
+  // Scoped to papercamp/ only: unrelated dirty state outside the corpus is left for
+  // the caller's own commit steps.
+  async function commitCorpus(subject: string, refsId?: string): Promise<void> {
     const status = await runGitStatus();
     const files = status.filter((entry) => entry.path.startsWith('papercamp/')).map((e) => e.path);
     if (files.length === 0) return;
-    await commit(files, `docs(ideas): ${title} — plan`, `Refs: ${id}`, { noVerify: true });
+    await commit(files, subject, refsId ? `Refs: ${refsId}` : undefined, { noVerify: true });
   }
 
   async function ensureBranch(plan: PlanEntry): Promise<string | undefined> {
@@ -759,6 +761,14 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await runGit(['fetch', '--prune']).catch(() => {});
     await dropDisposableLocalChanges().catch(() => {});
 
+    // Committed here, ahead of the stash below, so papercamp/ never enters it — see
+    // IDEA-176. A commit made on a branch other than main doesn't travel with a plain
+    // `checkout main`, so its sha is captured to cherry-pick across below.
+    const startBranch = getCurrentBranch();
+    const headBeforeCorpus = await getHeadSha();
+    await commitCorpus('docs(ideas): sync corpus');
+    const corpusCommit = (await getHeadSha()) !== headBeforeCorpus ? await getHeadSha() : undefined;
+
     const dirty = (await runGitStatus()).length > 0;
     if (dirty) {
       await runGit(['stash', 'push', '--include-untracked', '-m', 'papercamp-sync']);
@@ -766,6 +776,14 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     let syncError: unknown;
     try {
       await runGit(['checkout', 'main']);
+      if (corpusCommit && startBranch !== 'main') {
+        try {
+          await runGit(['cherry-pick', corpusCommit]);
+        } catch (err) {
+          await runGit(['cherry-pick', '--abort']).catch(() => {});
+          throw err;
+        }
+      }
       await reconcileOnto('origin/main');
     } catch (err) {
       syncError = err;
@@ -780,7 +798,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     if (stashPending && !syncError) {
       const stage = 'stash-pop' as const;
       const message =
-        'Synced to main, but restoring your changes hit a conflict — resolve the markers in the working tree; the originals are still in `git stash`';
+        'Synced to main, but restoring your changes hit a conflict. Recover with `git restore --source=origin/main --staged --worktree .` then `git merge --ff-only` — the originals are still in `git stash` if that leaves anything to redo.';
       return {
         ok: false,
         stage,
@@ -813,6 +831,43 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       };
     }
     return { ok: true };
+  }
+
+  async function hasPendingSyncStash(): Promise<boolean> {
+    const list = await runGit(['stash', 'list']).catch(() => '');
+    return list.split('\n').some((line) => line.includes('papercamp-sync'));
+  }
+
+  const STASH_REFLOG_SUBJECT = /^(?:WIP on|On) ([^:]+): ?(.*)$/;
+  const PAPERCAMP_STASH_MESSAGE = /^(?:papercamp-sync|sync-)/;
+
+  async function getStashes(): Promise<GitStashEntry[]> {
+    const output = await runGit(['stash', 'list', '--format=%gd%x09%ci%x09%gs']).catch(() => '');
+    return output
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => {
+        const [selector, date, subject] = line.split('\t');
+        const index = Number.parseInt(/stash@\{(\d+)\}/.exec(selector ?? '')?.[1] ?? '0', 10);
+        const subjectMatch = STASH_REFLOG_SUBJECT.exec(subject ?? '');
+        const message = subjectMatch?.[2] ?? subject ?? '';
+        return {
+          index,
+          branch: subjectMatch?.[1] ?? '',
+          message,
+          ageDays: Math.floor((Date.now() - Date.parse(date ?? '')) / 86_400_000),
+          own: PAPERCAMP_STASH_MESSAGE.test(message),
+        };
+      });
+  }
+
+  const STASH_DIFF_MAX_CHARS = 20000;
+
+  async function showStash(index: number): Promise<string> {
+    const patch = await runGit(['stash', 'show', '-p', '--include-untracked', `stash@{${index}}`]);
+    return patch.length > STASH_DIFF_MAX_CHARS
+      ? `${patch.slice(0, STASH_DIFF_MAX_CHARS)}\n... (truncated)`
+      : patch;
   }
 
   // Reconcile the current branch: fast-forward if behind, else rebase local commits
@@ -878,6 +933,9 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     push,
     isMergedIntoMain,
     getBranchHygieneStatus,
+    hasPendingSyncStash,
+    getStashes,
+    showStash,
     runGitSync,
     runGitPull,
     fixDivergence,

@@ -1,4 +1,4 @@
-import { CommitMessageFields, GitSyncActions } from '@/app/components';
+import { CommitMessageFields, GitStashSurface, GitSyncActions } from '@/app/components';
 import { FileDiffSection } from '@/app/features/git/file-diff-section';
 import { GitCommitButton, useGitCommitForm } from '@/app/features/git/git-commit-controls';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
@@ -79,8 +79,9 @@ export const GitPage = () => {
     return (
       <div>
         {breadcrumb}
-        <div className="mb-4">
+        <div className="mb-4 flex items-center gap-2">
           <GitSyncActions />
+          <GitStashSurface />
         </div>
         <div className={contentClass}>
           <p className="opacity-50">Couldn't load the working-tree diff.</p>
@@ -93,8 +94,9 @@ export const GitPage = () => {
     return (
       <div>
         {breadcrumb}
-        <div className="mb-4">
+        <div className="mb-4 flex items-center gap-2">
           <GitSyncActions />
+          <GitStashSurface />
         </div>
         <div className={contentClass}>
           <p className="opacity-50">Loading…</p>
@@ -106,8 +108,9 @@ export const GitPage = () => {
   return (
     <div>
       {breadcrumb}
-      <div className="mb-4">
+      <div className="mb-4 flex items-center gap-2">
         <GitSyncActions />
+        <GitStashSurface />
       </div>
       {files.length === 0 ? (
         <div className={contentClass}>

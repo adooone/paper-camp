@@ -165,19 +165,20 @@
 | IDEA-162 | One source of truth for checks | refactor | done | app, stack, status |
 | IDEA-163 | Stack panel affordance and a11y pass | fix | planned | app, stack, ux |
 | IDEA-164 | Browser-driven page audits | feat | planned | app, agent, stack |
-| IDEA-165 | Stage files, write the message | feat | review | app, git, ux |
+| IDEA-165 | Stage files, write the message | feat | done | app, git, ux |
 | IDEA-166 | Readable diffs on the git page | feat | planned | app, git, ui |
 | IDEA-167 | Git status vocabulary and chrome | fix | planned | app, git, ux |
 | IDEA-168 | Version the corpus format | feat | planned | format, core |
 | IDEA-169 | Draft all ideas at once | feat | done | app, plans, agent |
 | IDEA-170 | Review pull requests with a local agent | feat | done | app, agent, github |
-| IDEA-171 | Run-all redoes work from a stale base | fix | planned | agent, plans, git |
+| IDEA-171 | Run-all redoes work from a stale base | fix | done | agent, plans, git |
 | IDEA-172 | Persist drafts and UI choices | fix | done | app, ui, ux |
 | IDEA-173 | Never lose a computed PR review | fix | done | app, agent, github |
 | IDEA-174 | Show a running PR review in the UI | feat | done | app, ui, agent |
 | IDEA-175 | Scout posts a formatted review | feat | done | app, github, ui |
-| IDEA-176 | Sync stops stashing over the corpus | fix | planned | server, git, plans |
+| IDEA-176 | Sync stops stashing over the corpus | fix | review | server, git, plans |
 | IDEA-177 | Surface dangling stashes | feat | dropped | app, git, ux |
 | IDEA-178 | Rate limits must not rewrite status | fix | planned | core, github, plans |
 | IDEA-179 | Prioritise lies about what it did | fix | planned | app, server, plans |
 | IDEA-180 | Say what each idea is for | feat | idea | app, plans, format |
+| IDEA-181 | Fetch from GitHub only when asked | feat | idea | server, github, core |

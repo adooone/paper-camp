@@ -741,6 +741,14 @@ export interface GitStatusEntry {
   renameSource?: string;
 }
 
+export interface GitStashEntry {
+  index: number;
+  branch: string;
+  message: string;
+  ageDays: number;
+  own: boolean;
+}
+
 export interface GitStatusResponse {
   branch: string;
   entries: GitStatusEntry[];
@@ -748,6 +756,8 @@ export interface GitStatusResponse {
   behind: number;
   diverged: boolean;
   branchHygiene: BranchHygieneStatus;
+  stashPending: boolean;
+  stashes: GitStashEntry[];
 }
 
 export interface FileDiffEntry {

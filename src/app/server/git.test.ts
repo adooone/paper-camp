@@ -417,9 +417,221 @@ describe('runGitSync', () => {
 
     const result = await manager.runGitSync();
     expect(result).toMatchObject({ ok: false, stage: 'stash-pop', stashPending: true });
+    expect((result as { message: string }).message).toContain(
+      'git restore --source=origin/main --staged --worktree .',
+    );
+    expect((result as { message: string }).message).toContain('git merge --ff-only');
     expect((result as { message: string }).message).toMatch(/git stash/);
     expect(manager.getCurrentBranch()).toBe('main');
     expect(git(root, 'stash', 'list')).toContain('papercamp-sync');
+  });
+
+  it('keeps the corpus out of the stash, committing it separately even when the source pop conflicts', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-12-corpus-stash');
+    // Same conflicting-upstream setup as the pop-conflict test above, plus a
+    // dirty corpus file that must be committed instead of joining the stash.
+    git(root, 'checkout', 'main');
+    await commitFile(root, 'README.md', 'upstream\n', 'upstream change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    git(root, 'checkout', 'feat/feat-12-corpus-stash');
+    await writeFile(join(root, 'README.md'), 'local edit\n');
+    await mkdir(join(root, 'papercamp'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'config.json'), '{"nextId":{"idea":5}}\n');
+    const manager = gitManager(root);
+
+    const result = await manager.runGitSync();
+
+    expect(result).toMatchObject({ ok: false, stage: 'stash-pop', stashPending: true });
+    expect(git(root, 'log', '-1', '--format=%s')).toBe('docs(ideas): sync corpus');
+    expect(await readFile(join(root, 'papercamp', 'config.json'), 'utf-8')).toBe(
+      '{"nextId":{"idea":5}}\n',
+    );
+    const stashDiff = git(root, 'stash', 'show', '-p', '--include-untracked', 'stash@{0}');
+    expect(stashDiff).not.toContain('papercamp/');
+    expect(stashDiff).toContain('README.md');
+  });
+
+  it('does not create a corpus commit when papercamp/ is already clean', async () => {
+    const root = await initRepo();
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-1 — first\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'add run-order');
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-13-clean-corpus');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    const manager = gitManager(root);
+    const before = git(root, 'rev-list', '--count', 'HEAD');
+
+    await manager.runGitSync();
+
+    expect(git(root, 'log', 'main', '--format=%s')).not.toContain('sync corpus');
+    expect(git(root, 'rev-list', '--count', 'main')).toBe(before);
+  });
+});
+
+describe('hasPendingSyncStash', () => {
+  it('is true once a sync pop conflict leaves work stranded in the stash', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-14-stash-durable');
+    git(root, 'checkout', 'main');
+    await commitFile(root, 'README.md', 'upstream\n', 'upstream change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    git(root, 'checkout', 'feat/feat-14-stash-durable');
+    await writeFile(join(root, 'README.md'), 'local edit\n');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(await manager.hasPendingSyncStash()).toBe(true);
+  });
+
+  it('is false when there is no stash, and stays false for an unrelated one', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    expect(await manager.hasPendingSyncStash()).toBe(false);
+
+    await writeFile(join(root, 'notes.txt'), 'wip\n');
+    git(root, 'add', 'notes.txt');
+    git(root, 'stash', 'push', '-m', 'unrelated-wip');
+    expect(await manager.hasPendingSyncStash()).toBe(false);
+  });
+
+  it('is false again once the sync succeeds and the stash pops cleanly', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/feat-15-stash-clears');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    const manager = gitManager(root);
+
+    await manager.runGitSync();
+
+    expect(await manager.hasPendingSyncStash()).toBe(false);
+  });
+});
+
+describe('getStashes', () => {
+  it('returns an empty array when there is no stash', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    expect(await manager.getStashes()).toEqual([]);
+  });
+
+  it('parses index, branch, message, and age from a message-carrying stash', async () => {
+    const root = await initRepo();
+    git(root, 'checkout', '-b', 'feat/feat-16-stash-parse');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    git(root, 'add', 'README.md');
+    git(root, 'stash', 'push', '-m', 'papercamp-sync');
+    const manager = gitManager(root);
+
+    const stashes = await manager.getStashes();
+
+    expect(stashes).toHaveLength(1);
+    expect(stashes[0]).toMatchObject({
+      index: 0,
+      branch: 'feat/feat-16-stash-parse',
+      message: 'papercamp-sync',
+      own: true,
+    });
+    expect(stashes[0].ageDays).toBe(0);
+  });
+
+  it('parses a plain WIP stash created without an explicit message', async () => {
+    const root = await initRepo();
+    git(root, 'checkout', '-b', 'feat/feat-17-wip-stash');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    git(root, 'add', 'README.md');
+    git(root, 'stash', 'push');
+    const manager = gitManager(root);
+
+    const stashes = await manager.getStashes();
+
+    expect(stashes).toHaveLength(1);
+    expect(stashes[0].index).toBe(0);
+    expect(stashes[0].branch).toBe('feat/feat-17-wip-stash');
+    expect(stashes[0].message).toContain('initial commit');
+    expect(stashes[0].own).toBe(false);
+  });
+
+  it('flags a papercamp-sync stash but not a lookalike or a human WIP stash', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', 'a.txt');
+    git(root, 'stash', 'push', '-m', 'papercamp-sync');
+    await writeFile(join(root, 'b.txt'), 'b\n');
+    git(root, 'add', 'b.txt');
+    git(root, 'stash', 'push', '-m', 'sync-idea-66: uncommitted work before switching to main');
+    await writeFile(join(root, 'c.txt'), 'c\n');
+    git(root, 'add', 'c.txt');
+    git(root, 'stash', 'push', '-m', 'unrelated-pre-existing-stash');
+    const manager = gitManager(root);
+
+    const stashes = await manager.getStashes();
+
+    expect(stashes.map((s) => ({ message: s.message, own: s.own }))).toEqual([
+      { message: 'unrelated-pre-existing-stash', own: false },
+      { message: 'sync-idea-66: uncommitted work before switching to main', own: true },
+      { message: 'papercamp-sync', own: true },
+    ]);
+  });
+
+  it('lists multiple stashes newest first, matching `git stash list`', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', 'a.txt');
+    git(root, 'stash', 'push', '-m', 'first');
+    await writeFile(join(root, 'b.txt'), 'b\n');
+    git(root, 'add', 'b.txt');
+    git(root, 'stash', 'push', '-m', 'second');
+    const manager = gitManager(root);
+
+    const stashes = await manager.getStashes();
+
+    expect(stashes.map((s) => [s.index, s.message])).toEqual([
+      [0, 'second'],
+      [1, 'first'],
+    ]);
+  });
+});
+
+describe('showStash', () => {
+  it('returns the patch for the given stash index, read-only', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    git(root, 'add', 'README.md');
+    git(root, 'stash', 'push', '-m', 'papercamp-sync');
+    const manager = gitManager(root);
+
+    const patch = await manager.showStash(0);
+
+    expect(patch).toContain('README.md');
+    expect(patch).toContain('-hello');
+    expect(patch).toContain('+edited');
+    expect(git(root, 'stash', 'list')).toContain('papercamp-sync');
+  });
+
+  it('includes untracked files carried in the stash', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'notes.txt'), 'wip\n');
+    git(root, 'stash', 'push', '--include-untracked', '-m', 'papercamp-sync');
+    const manager = gitManager(root);
+
+    const patch = await manager.showStash(0);
+
+    expect(patch).toContain('notes.txt');
+  });
+
+  it('rejects an out-of-range index instead of returning garbage', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+
+    await expect(manager.showStash(0)).rejects.toThrow();
   });
 });
 
@@ -814,14 +1026,25 @@ describe('commit', () => {
 });
 
 describe('commitCorpus', () => {
-  it('commits pending papercamp/ changes with a plan-scoped message and Refs trailer', async () => {
+  it('commits pending papercamp/ changes with the given subject and Refs trailer', async () => {
     const root = await initRepo();
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'draft\n');
     const manager = gitManager(root);
-    await manager.commitCorpus('Some plan', 'IDEA-1');
+    await manager.commitCorpus('docs(ideas): Some plan — plan', 'IDEA-1');
     expect(git(root, 'log', '-1', '--format=%s')).toBe('docs(ideas): Some plan — plan');
     expect(git(root, 'log', '-1', '--format=%B')).toContain('Refs: IDEA-1');
+    expect(await manager.getStatus()).toEqual([]);
+  });
+
+  it('commits without a Refs trailer when no id is given', async () => {
+    const root = await initRepo();
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'draft\n');
+    const manager = gitManager(root);
+    await manager.commitCorpus('docs(ideas): sync corpus');
+    expect(git(root, 'log', '-1', '--format=%s')).toBe('docs(ideas): sync corpus');
+    expect(git(root, 'log', '-1', '--format=%B')).not.toContain('Refs:');
     expect(await manager.getStatus()).toEqual([]);
   });
 
@@ -831,7 +1054,7 @@ describe('commitCorpus', () => {
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'draft\n');
     await writeFile(join(root, 'src.ts'), 'code\n');
     const manager = gitManager(root);
-    await manager.commitCorpus('Some plan', 'IDEA-1');
+    await manager.commitCorpus('docs(ideas): Some plan — plan', 'IDEA-1');
     const entries = await manager.getStatus();
     expect(entries).toEqual([expect.objectContaining({ path: 'src.ts' })]);
   });
@@ -840,7 +1063,7 @@ describe('commitCorpus', () => {
     const root = await initRepo();
     const manager = gitManager(root);
     const before = git(root, 'rev-parse', 'HEAD');
-    await manager.commitCorpus('Some plan', 'IDEA-1');
+    await manager.commitCorpus('docs(ideas): Some plan — plan', 'IDEA-1');
     expect(git(root, 'rev-parse', 'HEAD')).toBe(before);
   });
 });

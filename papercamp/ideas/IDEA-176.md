@@ -2,7 +2,7 @@
 id: IDEA-176
 title: Sync stops stashing over the corpus
 type: fix
-status: idea
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -10,6 +10,7 @@ tags:
   - git
   - plans
 subject: Run & monitor
+order: 7
 ---
 
 `runGitSync` stashes the whole dirty tree — corpus included — then pops it back
@@ -88,18 +89,29 @@ than count, so entries show their age and sort newest first. Stashes created
 outside paper-camp are listed but never flagged.
 
 ### Phases
-- [ ] Commit the corpus before stashing in `runGitSync`
+- [x] Commit the corpus before stashing in `runGitSync`
       Call `commitCorpus` with a sync-appropriate subject ahead of `stash push`.
-- [ ] Confirm only source changes reach the stash
+      run: 10m57s · 6.2k in · 37.7k out · sonnet-5
+- [x] Confirm only source changes reach the stash
       Verify the commit is a no-op on a clean corpus and `papercamp/` never enters the stash.
-- [ ] Make `stashPending` durable instead of one-shot
-- [ ] Rewrite the recovery message to name the working recovery
+      run: 3m5s · 238 in · 6.6k out · sonnet-5
+- [x] Make `stashPending` durable instead of one-shot
+      run: 4m44s · 800 in · 12.4k out · sonnet-5
+- [x] Rewrite the recovery message to name the working recovery
       Point at `git restore --source=origin/main --staged --worktree .` then `git merge --ff-only`.
-- [ ] Parse stashes in the git status endpoint
+      run: 3m2s · 288 in · 3.1k out · sonnet-5
+- [x] Parse stashes in the git status endpoint
       Add a `stashes` array (index, branch, message, age) to `GET /api/git/status`, parsed from `git stash list`.
-- [ ] Flag paper-camp's own entries
+      run: 4m25s · 4.3k in · 9.8k out · sonnet-5
+- [x] Flag paper-camp's own entries
       Mark entries with a `papercamp-sync` / `sync-…` prefix so the UI can escalate them from informational to warning.
-- [ ] Render the stash surface beside branch hygiene
+      run: 3m4s · 370 in · 4.6k out · sonnet-5
+- [x] Render the stash surface beside branch hygiene
       Show it on the `/git` page and in the Deliver section, resting-informational and sorted newest first.
-- [ ] Offer per-entry inspection and recovery guidance
+      run: 6m55s · 9k in · 24.7k out · sonnet-5
+- [x] Offer per-entry inspection and recovery guidance
       Wire `git stash show -p stash@{N}` per entry and name the recovery that works when the surface is in warning state.
+      run: 6m6s · 957 in · 15.6k out · sonnet-5
+
+### Thread
+- [x] 2026-08-15 [review] [agent] Comments · 2 findings — The diff delivers all eight phases: the corpus is committed (via the generalized `commitCorpus`) ahead of the stash, `stashPending` is made durable through `hasPendingSyncStash`, the recovery message names the working recovery, and the stash surface is parsed, flagged, and rendered with read-only per-entry diffs. The implementation is well-tested and I found no correctness bugs that break the happy path, but the cherry-pick strategy leaves a side effect worth a second look and an unrelated corpus edit slipped into the PR.

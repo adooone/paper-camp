@@ -29,6 +29,15 @@ export const fetchFileDiffs = async (): Promise<FileDiffEntry[]> => {
   return data.files;
 };
 
+export const fetchStashDiff = async (index: number): Promise<string> => {
+  const response = await fetch(apiUrl(`/api/git/stash-diff?index=${index}`), {
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
+  await throwIfNotOk(response, 'Failed to load stash diff');
+  const data = await response.json();
+  return data.patch;
+};
+
 export const commitChanges = async (
   files: string[],
   title: string,
