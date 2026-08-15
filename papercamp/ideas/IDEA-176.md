@@ -2,7 +2,7 @@
 id: IDEA-176
 title: Sync stops stashing over the corpus
 type: fix
-status: idea
+status: review
 created: 2026-08-14
 updated: 2026-08-14
 tags:
@@ -108,5 +108,6 @@ outside paper-camp are listed but never flagged.
 - [x] Render the stash surface beside branch hygiene
       Show it on the `/git` page and in the Deliver section, resting-informational and sorted newest first.
       run: 6m55s · 9k in · 24.7k out · sonnet-5
-- [ ] Offer per-entry inspection and recovery guidance
+- [x] Offer per-entry inspection and recovery guidance
       Wire `git stash show -p stash@{N}` per entry and name the recovery that works when the surface is in warning state.
+      run: 6m6s · 957 in · 15.6k out · sonnet-5

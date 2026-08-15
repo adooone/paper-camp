@@ -861,6 +861,15 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       });
   }
 
+  const STASH_DIFF_MAX_CHARS = 20000;
+
+  async function showStash(index: number): Promise<string> {
+    const patch = await runGit(['stash', 'show', '-p', '--include-untracked', `stash@{${index}}`]);
+    return patch.length > STASH_DIFF_MAX_CHARS
+      ? `${patch.slice(0, STASH_DIFF_MAX_CHARS)}\n... (truncated)`
+      : patch;
+  }
+
   // Reconcile the current branch: fast-forward if behind, else rebase local commits
   // onto the remote so a diverged branch is repaired instead of failing loudly.
   async function runGitPull(): Promise<void> {
@@ -926,6 +935,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     getBranchHygieneStatus,
     hasPendingSyncStash,
     getStashes,
+    showStash,
     runGitSync,
     runGitPull,
     fixDivergence,

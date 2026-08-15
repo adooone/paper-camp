@@ -600,6 +600,41 @@ describe('getStashes', () => {
   });
 });
 
+describe('showStash', () => {
+  it('returns the patch for the given stash index, read-only', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    git(root, 'add', 'README.md');
+    git(root, 'stash', 'push', '-m', 'papercamp-sync');
+    const manager = gitManager(root);
+
+    const patch = await manager.showStash(0);
+
+    expect(patch).toContain('README.md');
+    expect(patch).toContain('-hello');
+    expect(patch).toContain('+edited');
+    expect(git(root, 'stash', 'list')).toContain('papercamp-sync');
+  });
+
+  it('includes untracked files carried in the stash', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'notes.txt'), 'wip\n');
+    git(root, 'stash', 'push', '--include-untracked', '-m', 'papercamp-sync');
+    const manager = gitManager(root);
+
+    const patch = await manager.showStash(0);
+
+    expect(patch).toContain('notes.txt');
+  });
+
+  it('rejects an out-of-range index instead of returning garbage', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+
+    await expect(manager.showStash(0)).rejects.toThrow();
+  });
+});
+
 describe('fixDivergence', () => {
   it('rebases a diverged branch onto its remote instead of failing', async () => {
     const root = await initRepo();
