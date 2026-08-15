@@ -3,19 +3,13 @@ import type { DoctorFindingSummary } from '@/core/doctor';
 import type {
   BranchHygieneStatus,
   CapabilityResult,
-  CheckName,
   ConsistencyIssue,
   GitStatusEntry,
 } from '@/types/index';
 import { fetchConsistency, fetchDoctor } from '../../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../../services/git-api';
 import type { StatusState } from '../../services/status-api';
-import {
-  dropServerCaches,
-  fetchStatus,
-  triggerCheck,
-  triggerQualityFix,
-} from '../../services/status-api';
+import { dropServerCaches, fetchStatus, triggerConsistencyCheck } from '../../services/status-api';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 
@@ -24,8 +18,7 @@ export type StatusSlice = {
   loadStatus: () => Promise<void>;
   refreshAll: () => Promise<{ ok: boolean; error?: string }>;
   refreshing: boolean;
-  runCheck: (name: CheckName) => Promise<void>;
-  fixQuality: () => Promise<void>;
+  runConsistencyCheck: () => Promise<void>;
   quickCommit: () => Promise<{ ok: boolean; title?: string; error?: string; warning?: string }>;
   // Shared by the status bar and the Stack panel so the two commit flows can't race.
   commitInFlight: boolean;
@@ -83,14 +76,9 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
         set({ refreshing: false });
       }
     },
-    runCheck: async (name) => {
+    runConsistencyCheck: async () => {
       try {
-        await triggerCheck(name);
-      } catch {}
-    },
-    fixQuality: async () => {
-      try {
-        await triggerQualityFix();
+        await triggerConsistencyCheck();
       } catch {}
     },
 

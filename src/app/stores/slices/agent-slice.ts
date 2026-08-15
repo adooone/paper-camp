@@ -1,11 +1,5 @@
 import { fetchAgentAuthStatus } from '@/app/services/system';
-import type {
-  AgentAuthStatus,
-  AgentTaskState,
-  CheckName,
-  LoginRelayState,
-  PlanEntry,
-} from '@/types/index';
+import type { AgentAuthStatus, AgentTaskState, LoginRelayState, PlanEntry } from '@/types/index';
 import {
   cancelLoginRelay as cancelLoginRelayApi,
   fetchAgentStatus,
@@ -25,6 +19,7 @@ import {
   startLoginRelay as startLoginRelayApi,
   stopAgent as stopAgentApi,
 } from '../../services/agent-api';
+import { runDeskCheck } from '../../services/checks-api';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice, withAgentPoll } from './slice-helpers';
 
@@ -110,9 +105,9 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
           return true;
         });
         if (completedRun) {
-          const { runCheck } = get();
-          for (const name of ['lint', 'format', 'test', 'consistency'] as CheckName[]) {
-            runCheck(name);
+          get().runConsistencyCheck();
+          for (const name of ['lint', 'test']) {
+            runDeskCheck(name).catch(() => {});
           }
         }
 

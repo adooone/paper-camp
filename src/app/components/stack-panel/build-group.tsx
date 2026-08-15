@@ -1,5 +1,4 @@
-import { useAppStore } from '@/app/stores/app-store';
-import { deriveBuildStatus } from '@/app/utils/check-status';
+import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { Stamp, Tooltip } from '@dendelion/paper-ui';
 import { chalkStatusFill, chalkStatusText, groupLabelClassName } from './shared';
 
@@ -11,15 +10,14 @@ const statusText = { ...chalkStatusText, stale: undefined };
 const formatLastBuilt = (lastBuilt: string | null): string =>
   lastBuilt ? `Last built ${new Date(lastBuilt).toLocaleTimeString()}` : 'Never built';
 
+// Sourced from `desk.checks[name=build]` (IDEA-162) — the same manifest entry the
+// Checks group reads, not a separately tracked `/api/status` field.
 export const BuildGroup = () => {
-  const statusData = useAppStore((s) => s.status);
-  const runCheck = useAppStore((s) => s.runCheck);
-  const { buildStatus, lastBuilt } = deriveBuildStatus(statusData);
+  const { checks, run } = useDeskChecks();
+  const build = checks.find((c) => c.name === 'build');
+  const buildStatus = build?.status ?? 'stale';
   const running = buildStatus === 'running';
-  const cmd = statusData?.build?.cmd;
-  // A build that never had a command configured looks identical to a failed run
-  // (status: 'fail') except cmd stays empty — the signal the server never spawned anything.
-  const unconfigured = buildStatus === 'fail' && !cmd;
+  const unconfigured = !build;
 
   return (
     <div>
@@ -29,19 +27,19 @@ export const BuildGroup = () => {
           <Tooltip
             content={
               unconfigured
-                ? 'Set commands.build in papercamp/config.json — click to check again.'
-                : `${cmd} — click to run.`
+                ? 'Declare a "build" check in papercamp/config.json — desk.checks.'
+                : `${build.cmd} — click to run.`
             }
             surface="chalkboard"
           >
             {/* Raw <button>: the clickable target is a Stamp, which has no button surface of its own. */}
             <button
               type="button"
-              className={`inline-flex border-none bg-transparent bg-none p-0 ${running ? 'cursor-not-allowed' : 'cursor-pointer enabled:hover:-translate-y-px enabled:hover:brightness-[1.15]'}`}
+              className={`inline-flex border-none bg-transparent bg-none p-0 ${running || unconfigured ? 'cursor-not-allowed' : 'cursor-pointer enabled:hover:-translate-y-px enabled:hover:brightness-[1.15]'}`}
               onClick={() => {
-                if (!running) runCheck('build');
+                if (!running && !unconfigured) run('build');
               }}
-              disabled={running}
+              disabled={running || unconfigured}
             >
               <Stamp
                 surface="chalkboard"
@@ -55,12 +53,12 @@ export const BuildGroup = () => {
             </button>
           </Tooltip>
           <span className="shrink-0 font-mono text-2xs text-desk-text-muted">
-            {formatLastBuilt(lastBuilt)}
+            {formatLastBuilt(build?.lastRun ?? null)}
           </span>
         </div>
         {unconfigured && (
           <p className="m-0 text-center text-2xs text-desk-text-muted">
-            No build command configured — set <code>commands.build</code> in{' '}
+            No <code>build</code> check declared — add one to <code>desk.checks</code> in{' '}
             <code>papercamp/config.json</code>.
           </p>
         )}

@@ -62,8 +62,9 @@ the dot, and the panel gains a place to show them, rather than being dropped
 from the dot.
 
 ### Phases
-- [ ] Make desk.checks the single check source in status.ts
+- [x] Make desk.checks the single check source in status.ts
       Drop the hardcoded `CHECK_COMMANDS` and `commands.build`; `/api/status` keeps only the commit gate's `consistency`.
+      run: 13m43s · 13.4k in · 63.9k out · sonnet-5
 - [ ] Fold the Build group into Checks as an ordinary check
       `build` renders once from `desk.checks[name=build]`, carrying its own `lastRun`.
 - [ ] Show lastRun on every check stamp

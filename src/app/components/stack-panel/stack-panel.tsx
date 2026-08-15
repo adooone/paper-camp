@@ -1,3 +1,4 @@
+import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
@@ -113,9 +114,10 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     };
   }, []);
 
+  const { checks: deskChecks } = useDeskChecks();
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
-    () => deriveCheckStatuses(statusData),
-    [statusData],
+    () => deriveCheckStatuses(statusData, deskChecks),
+    [statusData, deskChecks],
   );
   // Plan *document* consistency (orphan subjects) — a separate concern from the
   // code-consistency check, surfaced in its own "Docs" stamp.

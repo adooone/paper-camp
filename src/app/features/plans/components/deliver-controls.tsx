@@ -1,6 +1,7 @@
 import { MergeIcon, PullIcon, PushIcon, WandIcon } from '@/app/components/icons';
 import { entityRouteParam } from '@/app/hooks';
 import { useBranchSync } from '@/app/hooks/use-branch-sync';
+import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { commitChanges, suggestCommitMessage } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
@@ -94,15 +95,16 @@ const CheckStamp = ({
 
 export const DeliverChecksRow = () => {
   const status = useAppStore((s) => s.status);
-  const runCheck = useAppStore((s) => s.runCheck);
+  const runConsistencyCheck = useAppStore((s) => s.runConsistencyCheck);
+  const { checks: deskChecks, run: runDeskCheck } = useDeskChecks();
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
   const navigate = useNavigate();
   const [docsExpanded, setDocsExpanded] = useState(false);
 
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
-    () => deriveCheckStatuses(status),
-    [status],
+    () => deriveCheckStatuses(status, deskChecks),
+    [status, deskChecks],
   );
   const anyRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
@@ -121,24 +123,21 @@ export const DeliverChecksRow = () => {
         status={qualityStatus}
         title="Code style & formatting (Biome lint + format). Click to run."
         anyRunning={anyRunning}
-        onClick={() => {
-          runCheck('lint');
-          runCheck('format');
-        }}
+        onClick={() => runDeskCheck('lint')}
       />
       <CheckStamp
         label="Tests"
         status={testStatus}
         title="Unit tests (Vitest). Click to run."
         anyRunning={anyRunning}
-        onClick={() => runCheck('test')}
+        onClick={() => runDeskCheck('test')}
       />
       <CheckStamp
         label="Consistency"
         status={consistencyStatus}
         title="Dead code & architecture (Knip + dependency-cruiser). Click to run."
         anyRunning={anyRunning}
-        onClick={() => runCheck('consistency')}
+        onClick={() => runConsistencyCheck()}
       />
       <div>
         <Tooltip
@@ -248,6 +247,7 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const setCommitInFlight = useAppStore((s) => s.setCommitInFlight);
   const status = useAppStore((s) => s.status);
+  const { checks: deskChecks } = useDeskChecks();
   const agentBusy = useAppStore(selectAgentBusy);
   const launchRunAll = useAppStore((s) => s.launchRunAll);
   const { patch: patchByTitle } = usePlanStatusPatch();
@@ -367,13 +367,13 @@ export const useDeliverCommitForm = (plan: PlanEntry | undefined, files: string[
     if (!plan?.id || !status || fixing || agentBusy) return;
     setFixing(true);
     try {
-      const nextFixes = upsertCheckFixes(plan.fixes ?? [], status);
+      const nextFixes = upsertCheckFixes(plan.fixes ?? [], status, deskChecks);
       const wrote = await patchByTitle(plan.title, { fixes: nextFixes });
       if (wrote) await launchRunAll(plan.id);
     } finally {
       setFixing(false);
     }
-  }, [plan, fixing, agentBusy, status, patchByTitle, launchRunAll]);
+  }, [plan, fixing, agentBusy, status, deskChecks, patchByTitle, launchRunAll]);
 
   return {
     commitTitle,
@@ -438,9 +438,10 @@ export const DeliverCommitButton = ({
   filesEmpty: boolean;
 }) => {
   const status = useAppStore((s) => s.status);
+  const { checks: deskChecks } = useDeskChecks();
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
-    () => deriveCheckStatuses(status),
-    [status],
+    () => deriveCheckStatuses(status, deskChecks),
+    [status, deskChecks],
   );
   const checksFailing =
     qualityStatus === 'fail' || testStatus === 'fail' || consistencyStatus === 'fail';

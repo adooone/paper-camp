@@ -1,38 +1,18 @@
 import { spawn } from 'node:child_process';
-import { readFileSync, watch } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import type { CheckName, CheckResult, CheckStatus } from '../../types';
 import { BIOME_FIX_COMMAND } from './biome-fix';
+import { loadManifestChecks } from './desk-checks';
 
 interface StatusSnapshot {
-  lint: CheckResult;
-  format: CheckResult;
-  test: CheckResult;
+  // Codebase consistency (knip + depcruise) — mirrors the CI "Consistency" job.
+  // Not a desk check: it gates commits, not the dev-loop dashboard.
   consistency: CheckResult;
-  build: CheckResult;
 }
 
-const CHECK_COMMANDS: Record<Exclude<CheckName, 'build'>, string> = {
-  lint: 'npx biome lint .',
-  format: 'npx biome format .',
-  test: 'npx vitest run --passWithNoTests',
-  // Codebase consistency — mirrors the CI "Consistency" job (dead code + architecture).
-  consistency: 'pnpm run consistency',
-};
-
-/** Build has no sensible universal default — the project declares its own
- * command as `commands.build` in papercamp/config.json. Read fresh per run so
- * config edits apply without a server restart. */
-function readBuildCommand(root: string): string | null {
-  try {
-    const config = JSON.parse(readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8'));
-    const command = config?.commands?.build;
-    return typeof command === 'string' && command.trim() !== '' ? command : null;
-  } catch {
-    return null;
-  }
-}
+const CONSISTENCY_COMMAND = 'pnpm run consistency';
 
 function repoHasVitest(root: string): boolean {
   try {
@@ -49,8 +29,8 @@ export type StatusManager = ReturnType<typeof createStatusManager>;
 export interface StatusManagerState {
   snapshot: StatusSnapshot;
   // The in-flight guard. Must outlive a hot reload: a fresh Set would forget the
-  // child processes a previous instance spawned, so every server-file edit would
-  // let another full lint/test stack on top of the ones still running.
+  // child process a previous instance spawned, so every server-file edit would
+  // let another consistency run stack on top of the one still running.
   running: Set<CheckName>;
   queued: Set<CheckName>;
   clients: Set<ServerResponse>;
@@ -59,11 +39,7 @@ export interface StatusManagerState {
 export function createEmptyStatusState(): StatusManagerState {
   return {
     snapshot: {
-      lint: { status: 'stale', cmd: CHECK_COMMANDS.lint, lastRun: null, output: '' },
-      format: { status: 'stale', cmd: CHECK_COMMANDS.format, lastRun: null, output: '' },
-      test: { status: 'stale', cmd: CHECK_COMMANDS.test, lastRun: null, output: '' },
-      consistency: { status: 'stale', cmd: CHECK_COMMANDS.consistency, lastRun: null, output: '' },
-      build: { status: 'stale', cmd: '', lastRun: null, output: '' },
+      consistency: { status: 'stale', cmd: CONSISTENCY_COMMAND, lastRun: null, output: '' },
     },
     running: new Set<CheckName>(),
     queued: new Set<CheckName>(),
@@ -93,7 +69,7 @@ export function createStatusManager(
     }
   }
 
-  function setResult(name: CheckName, status: CheckStatus, output: string, cmd?: string) {
+  function setResult(name: 'consistency', status: CheckStatus, output: string, cmd?: string) {
     snapshot[name] = {
       status,
       cmd: cmd ?? snapshot[name].cmd,
@@ -110,29 +86,15 @@ export function createStatusManager(
     }
   }
 
-  function runCheck(name: CheckName) {
-    if (name === 'test' && !repoHasVitest(root)) {
-      setResult('test', 'pass', 'No test framework configured — nothing to run.');
-      return;
-    }
-    const buildCommand = name === 'build' ? readBuildCommand(root) : null;
-    if (name === 'build' && !buildCommand) {
-      setResult(
-        'build',
-        'fail',
-        'No build command configured — set commands.build in papercamp/config.json.',
-      );
-      return;
-    }
+  function runCheck(name: 'consistency') {
     if (running.has(name)) {
       queued.add(name);
       return;
     }
     running.add(name);
-    const cmd = name === 'build' ? (buildCommand as string) : CHECK_COMMANDS[name];
-    setResult(name, 'running', '', cmd);
+    setResult(name, 'running', '', CONSISTENCY_COMMAND);
 
-    const proc = spawn(cmd, {
+    const proc = spawn(CONSISTENCY_COMMAND, {
       cwd: root,
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: true,
@@ -163,56 +125,26 @@ export function createStatusManager(
     });
   }
 
-  function runQualityFix() {
-    if (running.has('lint') || running.has('format')) return;
-    setResult('lint', 'running', 'Applying automatic fixes…');
-    setResult('format', 'running', 'Applying automatic fixes…');
-
-    const proc = spawn(BIOME_FIX_COMMAND, {
-      cwd: root,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      shell: true,
-    });
-
-    proc.on('close', () => {
-      runCheck('lint');
-      runCheck('format');
-    });
-
-    proc.on('error', (err) => {
-      const message = `Failed to spawn fix process: ${err.message}`;
-      setResult('lint', 'fail', message);
-      setResult('format', 'fail', message);
-    });
-  }
-
-  const srcDir = join(root, 'src');
-  let srcTimer: ReturnType<typeof setTimeout> | null = null;
-  try {
-    watch(srcDir, { recursive: true }, () => {
-      if (srcTimer) clearTimeout(srcTimer);
-      srcTimer = setTimeout(() => {
-        runCheck('lint');
-        runCheck('format');
-      }, 1000);
-    });
-  } catch {
-    // watcher not available (src/ doesn't exist or platform doesn't support recursive)
-  }
-
   // Bypasses the queue for a result reflecting the live tree; runs the auto-fixer
-  // first so pre-existing formatting nits can't hard-fail an autonomous run-all phase — only real lint/test failures do.
+  // first so pre-existing formatting nits can't hard-fail an autonomous run-all phase — only
+  // real lint/test failures do. Sources commands from the desk manifest (IDEA-162) rather than
+  // a hardcoded list, so it stays in sync with whatever the project actually declares.
   // Resolves with the names of checks still red, so callers can tell which
   // checks a change actually broke apart from checks that were already red.
   function runChecksAndWait(): Promise<CheckName[]> {
     return new Promise<CheckName[]>((resolve) => {
       const runChecks = () => {
-        // consistency (knip/depcruise) and build (manual, config-driven) are
-        // dashboard actions, not part of this gate.
-        const names: Exclude<CheckName, 'build'>[] = ['lint', 'format', 'test'];
+        const manifestChecks = loadManifestChecks(root);
+        const names = (['lint', 'test'] as const).filter((n) =>
+          manifestChecks.some((c) => c.name === n),
+        );
         const passed = new Map<CheckName, boolean>();
         const finished = new Set<CheckName>();
         let pending = names.length;
+        if (pending === 0) {
+          resolve([]);
+          return;
+        }
 
         function onDone(name: CheckName, ok: boolean) {
           if (finished.has(name)) return;
@@ -228,7 +160,8 @@ export function createStatusManager(
             onDone(name, true);
             continue;
           }
-          const proc = spawn(CHECK_COMMANDS[name], { cwd: root, stdio: 'ignore', shell: true });
+          const cmd = manifestChecks.find((c) => c.name === name)!.cmd;
+          const proc = spawn(cmd, { cwd: root, stdio: 'ignore', shell: true });
           proc.on('close', (code) => onDone(name, code === 0));
           proc.on('error', () => onDone(name, false));
         }
@@ -243,27 +176,19 @@ export function createStatusManager(
   return {
     getStatus(): StatusSnapshot {
       return {
-        lint: { ...snapshot.lint },
-        format: { ...snapshot.format },
-        test: { ...snapshot.test },
         consistency: { ...snapshot.consistency },
-        // Fallback for a hot-reloaded state object created before `build` existed.
-        build: { ...(snapshot.build ?? { status: 'stale', cmd: '', lastRun: null, output: '' }) },
       };
     },
     getState: (): StatusManagerState => state,
     runCheck,
     runChecksAndWait,
-    runQualityFix,
     subscribe(res: ServerResponse) {
       clients.add(res);
-      for (const name of ['lint', 'format', 'test', 'consistency', 'build'] as CheckName[]) {
-        const result = snapshot[name];
-        if (result.status !== 'stale') {
-          res.write(
-            `data: ${JSON.stringify({ message: `${name}: ${result.status}`, timestamp: result.lastRun, type: 'status' })}\n\n`,
-          );
-        }
+      const result = snapshot.consistency;
+      if (result.status !== 'stale') {
+        res.write(
+          `data: ${JSON.stringify({ message: `consistency: ${result.status}`, timestamp: result.lastRun, type: 'status' })}\n\n`,
+        );
       }
       res.on('close', () => clients.delete(res));
     },

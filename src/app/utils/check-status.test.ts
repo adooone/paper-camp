@@ -1,5 +1,5 @@
 import type { StatusState } from '@/app/services/status-api';
-import type { CheckResult } from '@/types/index';
+import type { CheckResult, DeskCheckState } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import { deriveBuildStatus, deriveCheckStatuses } from './check-status';
 
@@ -11,67 +11,75 @@ const result = (status: CheckResult['status']): CheckResult => ({
 });
 
 const status = (overrides: Partial<StatusState>): StatusState => ({
-  lint: result('pass'),
-  format: result('pass'),
-  test: result('pass'),
   consistency: result('pass'),
   ...overrides,
 });
 
+const deskCheck = (name: string, status: CheckResult['status']): DeskCheckState => ({
+  name,
+  cmd: '',
+  status,
+  lastRun: null,
+  output: '',
+});
+
+const deskChecks = (overrides: Partial<Record<'lint' | 'test', CheckResult['status']>>) =>
+  [
+    deskCheck('lint', overrides.lint ?? 'pass'),
+    deskCheck('test', overrides.test ?? 'pass'),
+  ] as DeskCheckState[];
+
 describe('deriveCheckStatuses', () => {
   it('reports pass across the board when nothing is failing', () => {
-    expect(deriveCheckStatuses(status({}))).toEqual({
+    expect(deriveCheckStatuses(status({}), deskChecks({}))).toEqual({
       qualityStatus: 'pass',
       testStatus: 'pass',
       consistencyStatus: 'pass',
     });
   });
 
-  it('reports quality failing when either lint or format fails', () => {
-    expect(
-      deriveCheckStatuses(status({ lint: result('fail'), format: result('pass') })).qualityStatus,
-    ).toBe('fail');
-    expect(
-      deriveCheckStatuses(status({ lint: result('pass'), format: result('fail') })).qualityStatus,
-    ).toBe('fail');
+  it('reports quality failing when the desk "lint" check fails', () => {
+    expect(deriveCheckStatuses(status({}), deskChecks({ lint: 'fail' })).qualityStatus).toBe(
+      'fail',
+    );
   });
 
-  it('reverts quality to pass once both lint and format pass again', () => {
-    const stillFailing = status({ lint: result('fail'), format: result('pass') });
-    expect(deriveCheckStatuses(stillFailing).qualityStatus).toBe('fail');
-
-    const fixed = status({ lint: result('pass'), format: result('pass') });
-    expect(deriveCheckStatuses(fixed).qualityStatus).toBe('pass');
+  it('reverts quality to pass once the desk "lint" check passes again', () => {
+    expect(deriveCheckStatuses(status({}), deskChecks({ lint: 'fail' })).qualityStatus).toBe(
+      'fail',
+    );
+    expect(deriveCheckStatuses(status({}), deskChecks({ lint: 'pass' })).qualityStatus).toBe(
+      'pass',
+    );
   });
 
   it('reverts tests and consistency to pass once their checks re-report clean', () => {
-    const failing = status({ test: result('fail'), consistency: result('fail') });
-    expect(deriveCheckStatuses(failing)).toMatchObject({
+    const failing = status({ consistency: result('fail') });
+    expect(deriveCheckStatuses(failing, deskChecks({ test: 'fail' }))).toMatchObject({
       testStatus: 'fail',
       consistencyStatus: 'fail',
     });
 
-    const fixed = status({ test: result('pass'), consistency: result('pass') });
-    expect(deriveCheckStatuses(fixed)).toMatchObject({
+    const fixed = status({ consistency: result('pass') });
+    expect(deriveCheckStatuses(fixed, deskChecks({ test: 'pass' }))).toMatchObject({
       testStatus: 'pass',
       consistencyStatus: 'pass',
     });
   });
 
-  it('treats a running sub-check as running even if another already failed', () => {
-    expect(
-      deriveCheckStatuses(status({ lint: result('fail'), format: result('running') }))
-        .qualityStatus,
-    ).toBe('running');
+  it('treats a running desk check as running', () => {
+    expect(deriveCheckStatuses(status({}), deskChecks({ lint: 'running' })).qualityStatus).toBe(
+      'running',
+    );
   });
 
-  it('falls back to stale fields when status is null or missing checks', () => {
-    expect(deriveCheckStatuses(null)).toEqual({
+  it('falls back to stale fields when status or desk checks are missing', () => {
+    expect(deriveCheckStatuses(null, [])).toEqual({
       qualityStatus: 'stale',
       testStatus: 'stale',
       consistencyStatus: 'stale',
     });
-    expect(deriveCheckStatuses(undefined)).toEqual({
+    expect(deriveCheckStatuses(undefined, [])).toEqual({
       qualityStatus: 'stale',
       testStatus: 'stale',
       consistencyStatus: 'stale',
@@ -80,9 +88,7 @@ describe('deriveCheckStatuses', () => {
 
   it('does not fold build into the commit-gate statuses', () => {
     expect(
-      deriveCheckStatuses(
-        status({ build: { status: 'fail', cmd: '', lastRun: null, output: '' } }),
-      ),
+      deriveCheckStatuses(status({}), [...deskChecks({}), deskCheck('build', 'fail')]),
     ).toEqual({
       qualityStatus: 'pass',
       testStatus: 'pass',
