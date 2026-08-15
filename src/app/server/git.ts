@@ -9,6 +9,7 @@ import type {
   BranchHygieneStatus,
   FileDiffEntry,
   GitLiveState,
+  GitStashEntry,
   GitStatusEntry,
   GitSyncResult,
   PhaseState,
@@ -837,6 +838,26 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     return list.split('\n').some((line) => line.includes('papercamp-sync'));
   }
 
+  const STASH_REFLOG_SUBJECT = /^(?:WIP on|On) ([^:]+): ?(.*)$/;
+
+  async function getStashes(): Promise<GitStashEntry[]> {
+    const output = await runGit(['stash', 'list', '--format=%gd%x09%ci%x09%gs']).catch(() => '');
+    return output
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => {
+        const [selector, date, subject] = line.split('\t');
+        const index = Number.parseInt(/stash@\{(\d+)\}/.exec(selector ?? '')?.[1] ?? '0', 10);
+        const subjectMatch = STASH_REFLOG_SUBJECT.exec(subject ?? '');
+        return {
+          index,
+          branch: subjectMatch?.[1] ?? '',
+          message: subjectMatch?.[2] ?? subject ?? '',
+          ageDays: Math.floor((Date.now() - Date.parse(date ?? '')) / 86_400_000),
+        };
+      });
+  }
+
   // Reconcile the current branch: fast-forward if behind, else rebase local commits
   // onto the remote so a diverged branch is repaired instead of failing loudly.
   async function runGitPull(): Promise<void> {
@@ -901,6 +922,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     isMergedIntoMain,
     getBranchHygieneStatus,
     hasPendingSyncStash,
+    getStashes,
     runGitSync,
     runGitPull,
     fixDivergence,

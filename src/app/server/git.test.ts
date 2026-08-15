@@ -515,6 +515,67 @@ describe('hasPendingSyncStash', () => {
   });
 });
 
+describe('getStashes', () => {
+  it('returns an empty array when there is no stash', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    expect(await manager.getStashes()).toEqual([]);
+  });
+
+  it('parses index, branch, message, and age from a message-carrying stash', async () => {
+    const root = await initRepo();
+    git(root, 'checkout', '-b', 'feat/feat-16-stash-parse');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    git(root, 'add', 'README.md');
+    git(root, 'stash', 'push', '-m', 'papercamp-sync');
+    const manager = gitManager(root);
+
+    const stashes = await manager.getStashes();
+
+    expect(stashes).toHaveLength(1);
+    expect(stashes[0]).toMatchObject({
+      index: 0,
+      branch: 'feat/feat-16-stash-parse',
+      message: 'papercamp-sync',
+    });
+    expect(stashes[0].ageDays).toBe(0);
+  });
+
+  it('parses a plain WIP stash created without an explicit message', async () => {
+    const root = await initRepo();
+    git(root, 'checkout', '-b', 'feat/feat-17-wip-stash');
+    await writeFile(join(root, 'README.md'), 'edited\n');
+    git(root, 'add', 'README.md');
+    git(root, 'stash', 'push');
+    const manager = gitManager(root);
+
+    const stashes = await manager.getStashes();
+
+    expect(stashes).toHaveLength(1);
+    expect(stashes[0].index).toBe(0);
+    expect(stashes[0].branch).toBe('feat/feat-17-wip-stash');
+    expect(stashes[0].message).toContain('initial commit');
+  });
+
+  it('lists multiple stashes newest first, matching `git stash list`', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', 'a.txt');
+    git(root, 'stash', 'push', '-m', 'first');
+    await writeFile(join(root, 'b.txt'), 'b\n');
+    git(root, 'add', 'b.txt');
+    git(root, 'stash', 'push', '-m', 'second');
+    const manager = gitManager(root);
+
+    const stashes = await manager.getStashes();
+
+    expect(stashes.map((s) => [s.index, s.message])).toEqual([
+      [0, 'second'],
+      [1, 'first'],
+    ]);
+  });
+});
+
 describe('fixDivergence', () => {
   it('rebases a diverged branch onto its remote instead of failing', async () => {
     const root = await initRepo();

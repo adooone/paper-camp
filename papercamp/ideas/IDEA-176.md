@@ -99,8 +99,9 @@ outside paper-camp are listed but never flagged.
 - [x] Rewrite the recovery message to name the working recovery
       Point at `git restore --source=origin/main --staged --worktree .` then `git merge --ff-only`.
       run: 3m2s · 288 in · 3.1k out · sonnet-5
-- [ ] Parse stashes in the git status endpoint
+- [x] Parse stashes in the git status endpoint
       Add a `stashes` array (index, branch, message, age) to `GET /api/git/status`, parsed from `git stash list`.
+      run: 4m25s · 4.3k in · 9.8k out · sonnet-5
 - [ ] Flag paper-camp's own entries
       Mark entries with a `papercamp-sync` / `sync-…` prefix so the UI can escalate them from informational to warning.
 - [ ] Render the stash surface beside branch hygiene
