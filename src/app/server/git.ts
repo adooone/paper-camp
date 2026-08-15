@@ -13,6 +13,7 @@ import type {
   GitSyncResult,
   PhaseState,
   PlanEntry,
+  StaleBaseRef,
 } from '../../types';
 import { buildGitSyncRecoveryPrompt } from './git-sync-recovery';
 import { buildResolveConflictPrompt } from './resolve-conflict-prompt';
@@ -361,6 +362,22 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       done: entity.phases.filter((phase) => phase.done).length,
       total: entity.phases.length,
     };
+  }
+
+  // Refuses a stale fork: main or origin/main already has phases checked that HEAD (the
+  // branch about to run) still shows unchecked — the IDEA-137 bug class. Compares total
+  // done counts, not per-phase identity: a ref simply further along than HEAD is enough
+  // to flag, regardless of which specific phases moved.
+  async function findStaleBaseRef(id: string): Promise<StaleBaseRef | null> {
+    const current = await getPhaseStateAtRef(id, 'HEAD');
+    if (!current) return null;
+    for (const ref of ['main', 'origin/main']) {
+      const state = await getPhaseStateAtRef(id, ref);
+      if (state && state.done > current.done) {
+        return { ref, done: state.done, total: state.total };
+      }
+    }
+    return null;
   }
 
   async function isMergedIntoMain(): Promise<boolean> {
@@ -843,6 +860,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     getWorkingDiff,
     ensureBranch,
     getPhaseStateAtRef,
+    findStaleBaseRef,
     getFeatureBranchPlanId,
     getAheadCount,
     getBehindCount,
