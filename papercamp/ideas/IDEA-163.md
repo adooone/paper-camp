@@ -2,7 +2,7 @@
 id: IDEA-163
 title: Stack panel affordance and a11y pass
 type: fix
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-13
 tags:
@@ -108,4 +108,5 @@ Code organisation, same files and same pass:
 - [x] Clear the dead and duplicated code
       Replace `refreshRef` with `useAppStore.getState()`, drop the unused `useDeskChecks().refresh`, and fix `ServiceLog`'s cleanup so its `cancelled` guard registers.
       run: 3m27s · 383 in · 7.8k out · sonnet-5
-- [ ] Cover the panel with tests
+- [x] Cover the panel with tests
+      run: 4m32s · 2.3k in · 11.1k out · sonnet-5

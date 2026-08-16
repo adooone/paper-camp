@@ -10,7 +10,7 @@ const LOG_POLL_MS = 1500;
 
 export const SERVICES_GROUP_LABEL = 'Services';
 
-const dotClass = (service: ServiceState): string => {
+export const dotClass = (service: ServiceState): string => {
   if (service.status === 'crashed') return 'bg-chalk-fail-text';
   if (service.status === 'running') {
     return service.health === 'up' ? 'bg-chalk-pass-text' : 'bg-chalk-running-text';

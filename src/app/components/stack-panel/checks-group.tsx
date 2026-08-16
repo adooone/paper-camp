@@ -21,7 +21,7 @@ const statusText: Record<CheckStatus, string | undefined> = {
   stale: undefined,
 };
 
-const fixPrompt = (check: DeskCheckState): string =>
+export const fixPrompt = (check: DeskCheckState): string =>
   `Fix the failing "${check.name}" check in this repo. The command was \`${check.cmd}\`.\n\nOutput from the last run:\n\n${check.output || '(no output captured)'}`;
 
 const CheckStamp = ({

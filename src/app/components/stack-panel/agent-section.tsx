@@ -10,7 +10,7 @@ const MAX_VISIBLE_TASKS = 3;
 // empty state doesn't shrink the panel when tasks finish and clear.
 const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[9.25rem]';
 
-const taskKindLabel = (task: AgentTaskState): string => {
+export const taskKindLabel = (task: AgentTaskState): string => {
   switch (task.taskKind) {
     case 'phase':
       return task.phaseIndex !== undefined ? `phase ${task.phaseIndex + 1}` : '';
@@ -47,7 +47,7 @@ const taskKindLabel = (task: AgentTaskState): string => {
   }
 };
 
-const taskSubtitle = (task: AgentTaskState): string => {
+export const taskSubtitle = (task: AgentTaskState): string => {
   const label = taskKindLabel(task);
   if (!label || label.toLowerCase() === task.planTitle.trim().toLowerCase()) return '';
   return ` — ${label}`;
