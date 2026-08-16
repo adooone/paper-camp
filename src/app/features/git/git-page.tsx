@@ -4,7 +4,7 @@ import { FileDiffSection } from '@/app/features/git/file-diff-section';
 import { GitCommitButton, useGitCommitForm } from '@/app/features/git/git-commit-controls';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
-import { Divider } from '@dendelion/paper-ui';
+import { Button, Divider, Spinner } from '@dendelion/paper-ui';
 import { Fragment, useEffect, useMemo, useRef } from 'react';
 
 export const GitPage = () => {
@@ -71,8 +71,11 @@ export const GitPage = () => {
           <GitSyncActions />
           <GitStashSurface />
         </div>
-        <div className={contentClass}>
-          <p className="opacity-50">Couldn't load the working-tree diff.</p>
+        <div className={`${contentClass} flex flex-col items-start gap-3`}>
+          <p className="opacity-50 m-0">Couldn't load the working-tree diff.</p>
+          <Button variant="secondary" size="small" onClick={loadDiffFiles}>
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -87,7 +90,7 @@ export const GitPage = () => {
           <GitStashSurface />
         </div>
         <div className={contentClass}>
-          <p className="opacity-50">Loading…</p>
+          <Spinner label="Loading the working-tree diff…" />
         </div>
       </div>
     );

@@ -2,7 +2,7 @@
 id: IDEA-167
 title: Git status vocabulary and chrome
 type: fix
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-14
 tags:
@@ -78,4 +78,5 @@ One of three slices over `features/git/`: [[IDEA-166]] → **[[IDEA-167]] (this)
 - [x] Fix the status-bar branch glyph and migrate the inline styles
       Swap `⌥` for `GitBranchIcon`, move the thirteen static layout styles to Tailwind, and narrow the guard allowlist to the texture alone.
       run: 2m16s · 522 in · 10.5k out · sonnet-5
-- [ ] Give loading and failure states a retry affordance
+- [x] Give loading and failure states a retry affordance
+      run: 1m27s · 383 in · 5.3k out · sonnet-5
