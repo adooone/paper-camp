@@ -352,10 +352,10 @@ describe('runGitSync', () => {
     expect(git(root, 'stash', 'list')).toContain('unrelated-pre-existing-stash');
   });
 
-  it('keeps a local run-order.md edit that differs from origin/main, unlike the generated ideas index', async () => {
-    // run-order.md is intent (a chosen queue), so it must survive sync like any other
-    // hand-edited file — unlike ideas/index.md, which is derived output safe to drop
-    // and rebuild from the merged entities.
+  it('keeps local corpus edits that differ from origin/main, with no generated-file exception', async () => {
+    // Both files are gitignored in a real corpus and never reach runGitStatus at all.
+    // Here they are tracked, which pins the remaining rule: differing from origin/main
+    // is the only thing that decides survival — there is no disposable-by-name list.
     const root = await initRepo();
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
     await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-1 — first\n');
@@ -374,7 +374,7 @@ describe('runGitSync', () => {
       'IDEA-2 — second\nIDEA-1 — first\n',
     );
     expect(await readFile(join(root, 'papercamp', 'ideas', 'index.md'), 'utf-8')).toBe(
-      'stale index\n',
+      'locally edited index\n',
     );
   });
 

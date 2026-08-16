@@ -665,23 +665,16 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
-  // Regenerated from the entity files on every corpus mutation, so a local edit is never
-  // the source of truth. papercamp/run-order.md must NOT join this list — it is intent
-  // (the chosen queue), not derived output, so a differing local copy must survive sync.
-  const GENERATED_CORPUS_FILES = ['papercamp/ideas/index.md'];
-
-  // The watcher rewrites generated files and re-normalizes `order:`, often with the same
-  // change an incoming commit carries; those edits survive the stash but collide on pop,
-  // silently blocking sync. Drop the disposable ones: identical-to-origin/main loses
-  // nothing, generated files are rebuilt from the merged entities.
+  // `papercamp/ideas/index.md` and `papercamp/run-order.md` used to be listed here as
+  // disposable; both are gitignored now, so they never reach `runGitStatus()` at all.
+  //
+  // The watcher rewrites files and re-normalizes `order:`, often with the same change an
+  // incoming commit carries; those edits survive the stash but collide on pop, silently
+  // blocking sync. Drop the disposable ones: identical-to-origin/main loses nothing.
   async function dropDisposableLocalChanges(): Promise<void> {
     const tracked = (await runGitStatus()).filter((entry) => !entry.status.startsWith('?'));
     const disposable: string[] = [];
     for (const entry of tracked) {
-      if (GENERATED_CORPUS_FILES.includes(entry.path)) {
-        disposable.push(entry.path);
-        continue;
-      }
       try {
         await runGit(['diff', '--quiet', 'origin/main', '--', toLiteralPathspec(entry.path)]);
         disposable.push(entry.path);

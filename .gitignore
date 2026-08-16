@@ -8,3 +8,8 @@ papercamp/tasks.log
 papercamp/notifications.log
 papercamp/pr-reviews.json
 papercamp/pr-map.json
+# Regenerated from the entity files on every corpus write; never read as a source.
+papercamp/ideas/index.md
+# Local queue order. Untracked by choice: a clone rebuilds membership but not the
+# ordering, which nothing can re-derive.
+papercamp/run-order.md

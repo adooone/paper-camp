@@ -118,7 +118,7 @@ export const GitPage = () => {
         </div>
       ) : (
         <>
-          <div className="mb-6 flex items-start gap-2">
+          <div className="sticky top-0 z-10 mb-6 flex items-start gap-2 bg-[var(--pui-bg-base)] py-3 shadow-paper-sm">
             <div className="flex-1">
               <CommitMessageFields state={commitForm} filesEmpty={false} />
             </div>

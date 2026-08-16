@@ -2,9 +2,9 @@
 id: IDEA-166
 title: Readable diffs on the git page
 type: feat
-status: idea
+status: review
 created: 2026-08-13
-updated: 2026-08-14
+updated: 2026-08-16
 tags:
   - app
   - git
@@ -53,14 +53,24 @@ the directory rather than the name. Same fix in the diff section's own
 One of three slices over `features/git/`, shippable in this order: **[[IDEA-166]] (this) → [[IDEA-167]] → [[IDEA-165]]**. This one first because the line-height fix is a single class that makes every later change to the page reviewable; 167 then adds the status vocabulary that 165's partial-staging display depends on.
 
 ### Phases
-- [ ] Set a code line-height on the diff `<pre>`
+- [x] Set a code line-height on the diff `<pre>`
       Add a `leading-*` class so mono text stops inheriting body prose leading.
-- [ ] Add old/new line-number gutters
+      run: 28s · 5.6k in · 999 out · sonnet-5
+- [x] Add old/new line-number gutters
       Dimmed and non-selectable so copied hunks stay valid patch text.
-- [ ] Make each `FileDiffSection` collapsible
+      run: 3m5s · 1.1k in · 5.1k out · sonnet-5
+- [x] Make each `FileDiffSection` collapsible
       Collapsible header, files past a size threshold start collapsed, scroll-spy expands a file on jump.
-- [ ] Stick the commit row under the page chrome
+      run: 4m7s · 663 in · 13k out · sonnet-5
+- [x] Stick the commit row under the page chrome
       Carry the staged count from [[IDEA-165]].
-- [ ] Fix path truncation in the sidebar and `FileHeader`
+      run: 3m22s · 517 in · 7.6k out · sonnet-5
+- [x] Fix path truncation in the sidebar and `FileHeader`
       Full-weight basename, dimmed directory ahead of it, truncate the directory not the name.
-- [ ] Extract the shared `CountBadge` component
+      run: 3m46s · 792 in · 9.2k out · sonnet-5
+- [x] Extract the shared `CountBadge` component
+      run: 2m22s · 502 in · 3.5k out · sonnet-5
+- [x] [manual] Fix diff line numbers and path truncation edge cases
+
+### Thread
+- [x] 2026-08-16 [review] [agent] Comments · 2 findings — The core IDEA-166 work is well-executed and delivers all six phases: the line-height class, old/new gutters with non-selectable dimmed columns, collapsible sections with a size threshold and scroll-spy expand, a sticky commit row, the basename/directory split, and the extracted CountBadge. Two small edge-case/visual issues are worth a look, and the PR also bundles a chunk of unrelated IDEA-182 (dropped) plumbing that seems out of scope for a readable-diffs slice.

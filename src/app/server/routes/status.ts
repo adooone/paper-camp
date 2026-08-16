@@ -1,10 +1,11 @@
 import { clearCiCache } from '@/core/ci';
-import { clearPrCache } from '@/core/git-pr';
+import { clearPrCache, resolvePrsByEntity } from '@/core/git-pr';
 import { invalidateCorpusCache } from '../corpus-cache';
 import { requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 export function statusRoutes({
+  root,
   activity,
   agent,
   git,
@@ -21,17 +22,20 @@ export function statusRoutes({
       },
     },
 
-    // Drops the resolved-PR cache so the next worklist read re-shells out to `gh`
-    // instead of serving up to PR_CACHE_TTL_MS-old review state.
+    // The one place that fetches GitHub on demand, now that nothing polls (IDEA-181).
     {
       method: 'POST',
       path: '/api/refresh',
-      handle: (_req, res) => {
+      handle: async (_req, res) => {
         clearPrCache();
         clearCiCache();
         // The corpus cache bakes PR state into each entry and is only invalidated by
         // the file watcher, so a PR appearing on GitHub alone wouldn't refresh it.
         invalidateCorpusCache();
+        // Clearing memory alone isn't enough: the next read reloads pr-map.json with its
+        // original `fetchedAt`, which re-arms the TTL and serves stale. ttl 0 forces the
+        // live fetch, which re-persists on success and keeps the old map on failure.
+        await resolvePrsByEntity(root, 0);
         sendJson(res, 200, { ok: true });
       },
     },

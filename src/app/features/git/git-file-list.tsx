@@ -1,3 +1,5 @@
+import { CountBadge } from '@/app/features/git/count-badge';
+import { FilePath } from '@/app/features/git/file-path';
 import { stagePath, unstagePath } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
@@ -7,22 +9,13 @@ import { useState } from 'react';
 
 const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300 mb-2';
 
-interface CountBadgeProps {
-  additions: number;
-  deletions: number;
-}
-
-const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
-  <span className="inline-flex gap-2 font-mono text-2xs">
-    <span className="text-watercolor-green-dark">+{additions}</span>
-    <span className="text-watercolor-rose-dark">-{deletions}</span>
-  </span>
-);
-
-const scrollToFile = (path: string) => {
-  document
-    .querySelector(`[data-diff-path="${CSS.escape(path)}"]`)
-    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+const scrollToFile = (path: string, expandDiffPath: (path: string) => void) => {
+  expandDiffPath(path);
+  requestAnimationFrame(() => {
+    document
+      .querySelector(`[data-diff-path="${CSS.escape(path)}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 };
 
 // Both status characters set (and neither '?', which pairs up for untracked) means
@@ -36,6 +29,7 @@ export const GitFileList = () => {
   const files = useAppStore((s) => s.diffFiles);
   const activePath = useAppStore((s) => s.activeDiffPath);
   const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
+  const expandDiffPath = useAppStore((s) => s.expandDiffPath);
   const [pending, setPending] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
@@ -78,7 +72,7 @@ export const GitFileList = () => {
               <ListItem
                 size="small"
                 active={entry.path === activePath}
-                onClick={() => scrollToFile(entry.path)}
+                onClick={() => scrollToFile(entry.path, expandDiffPath)}
                 className="flex-1"
                 action={
                   <span className="flex items-center gap-2">
@@ -89,9 +83,7 @@ export const GitFileList = () => {
                   </span>
                 }
               >
-                <span className="block overflow-hidden text-ellipsis whitespace-nowrap font-mono text-2xs">
-                  {entry.path}
-                </span>
+                <FilePath path={entry.path} className="text-2xs" />
               </ListItem>
             </div>
           ))}
