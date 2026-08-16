@@ -68,8 +68,9 @@ One of three slices over `features/git/`: [[IDEA-166]] → **[[IDEA-167]] (this)
 - [x] Render a per-file status marker in the sidebar and diff header
       Use git's own A/M/D/?? letter vocabulary, matching the `renameSource` treatment already in place.
       run: 2m11s · 520 in · 8.1k out · sonnet-5
-- [ ] Add page and per-file headings plus a labelled nav list
+- [x] Add page and per-file headings plus a labelled nav list
       An `h1` for the page, a heading one level down per file section, and the changed-files sidebar as a navigation landmark.
+      run: 2m59s · 528 in · 14.5k out · sonnet-5
 - [ ] Replace the breadcrumb with a page title
 - [ ] Re-weight the action buttons: Push primary, Sync and Pull secondary
 - [ ] Fix the status-bar branch glyph and migrate the inline styles

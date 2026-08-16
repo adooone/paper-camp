@@ -1,4 +1,5 @@
 import { CommitMessageFields, GitStashSurface, GitSyncActions } from '@/app/components';
+import { PageTitle } from '@/app/components/page-title';
 import { FileDiffSection } from '@/app/features/git/file-diff-section';
 import { GitCommitButton, useGitCommitForm } from '@/app/features/git/git-commit-controls';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
@@ -79,6 +80,7 @@ export const GitPage = () => {
     return (
       <div>
         {breadcrumb}
+        <PageTitle>Git</PageTitle>
         <div className="mb-4 flex items-center gap-2">
           <GitSyncActions />
           <GitStashSurface />
@@ -94,6 +96,7 @@ export const GitPage = () => {
     return (
       <div>
         {breadcrumb}
+        <PageTitle>Git</PageTitle>
         <div className="mb-4 flex items-center gap-2">
           <GitSyncActions />
           <GitStashSurface />
@@ -108,6 +111,7 @@ export const GitPage = () => {
   return (
     <div>
       {breadcrumb}
+      <PageTitle>Git</PageTitle>
       <div className="mb-4 flex items-center gap-2">
         <GitSyncActions />
         <GitStashSurface />

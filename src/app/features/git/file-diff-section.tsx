@@ -101,8 +101,11 @@ export const FileDiffSection = ({ entry }: FileDiffSectionProps) => {
     manuallyCollapsed ||
     (!manuallyExpanded && entry.additions + entry.deletions > COLLAPSE_LINE_THRESHOLD);
 
+  const headingText = entry.renameSource ? `${entry.renameSource} → ${entry.path}` : entry.path;
+
   return (
     <div data-diff-path={entry.path} className="min-w-0 max-w-full scroll-mt-4">
+      <h2 className="sr-only">{headingText}</h2>
       <Accordion
         title={<FileHeader entry={entry} />}
         expanded={!collapsed}
