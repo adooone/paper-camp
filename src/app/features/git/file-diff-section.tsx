@@ -2,6 +2,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { type DiffLineType, parsePatch, rawContentHunks } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
 import { Accordion, Stamp } from '@dendelion/paper-ui';
+import { CountBadge } from './count-badge';
 import { FilePath } from './file-path';
 
 const COLLAPSE_LINE_THRESHOLD = 60;
@@ -13,18 +14,6 @@ const LINE_CLASS: Record<DiffLineType, string> = {
 };
 
 const LINE_PREFIX: Record<DiffLineType, string> = { add: '+', remove: '-', context: ' ' };
-
-interface CountBadgeProps {
-  additions: number;
-  deletions: number;
-}
-
-const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
-  <span className="inline-flex shrink-0 gap-2 font-mono text-2xs">
-    <span className="text-watercolor-green-dark">+{additions}</span>
-    <span className="text-watercolor-rose-dark">-{deletions}</span>
-  </span>
-);
 
 interface FileHeaderProps {
   entry: FileDiffEntry;

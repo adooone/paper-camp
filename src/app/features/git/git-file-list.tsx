@@ -1,3 +1,4 @@
+import { CountBadge } from '@/app/features/git/count-badge';
 import { FilePath } from '@/app/features/git/file-path';
 import { stagePath, unstagePath } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
@@ -7,18 +8,6 @@ import { Checkbox, ListItem, Stamp, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300 mb-2';
-
-interface CountBadgeProps {
-  additions: number;
-  deletions: number;
-}
-
-const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
-  <span className="inline-flex gap-2 font-mono text-2xs">
-    <span className="text-watercolor-green-dark">+{additions}</span>
-    <span className="text-watercolor-rose-dark">-{deletions}</span>
-  </span>
-);
 
 const scrollToFile = (path: string, expandDiffPath: (path: string) => void) => {
   expandDiffPath(path);

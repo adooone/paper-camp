@@ -2,7 +2,7 @@
 id: IDEA-166
 title: Readable diffs on the git page
 type: feat
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-14
 tags:
@@ -68,4 +68,5 @@ One of three slices over `features/git/`, shippable in this order: **[[IDEA-166]
 - [x] Fix path truncation in the sidebar and `FileHeader`
       Full-weight basename, dimmed directory ahead of it, truncate the directory not the name.
       run: 3m46s · 792 in · 9.2k out · sonnet-5
-- [ ] Extract the shared `CountBadge` component
+- [x] Extract the shared `CountBadge` component
+      run: 2m22s · 502 in · 3.5k out · sonnet-5
