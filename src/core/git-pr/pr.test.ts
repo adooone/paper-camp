@@ -150,6 +150,18 @@ describe('resolvePrsByEntity', () => {
     expect(callCount()).toBe(2);
   });
 
+  it('reloads a persisted map from disk after a restart, instead of guessing', async () => {
+    const { root } = withGh([row({ number: 4, state: 'MERGED', body: '**Plan:** `IDEA-4`' })]);
+    expect((await resolvePrsByEntity(root))?.get('IDEA-4')?.state).toBe('merged');
+
+    // Simulate a process restart: memory is gone, but the disk file survives.
+    clearPrCache();
+    process.env.PATH = originalPath;
+
+    const prs = await resolvePrsByEntity(root);
+    expect(prs?.get('IDEA-4')?.state).toBe('merged');
+  });
+
   it('maps reviewDecision straight from the list pass, no gh api call needed', async () => {
     const { root, callCount } = withGh(
       [

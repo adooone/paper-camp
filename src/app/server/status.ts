@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
+import { getPrMapFetchedAt } from '@/core/git-pr';
 import type { CheckName, CheckResult, CheckStatus } from '../../types';
 import { BIOME_FIX_COMMAND } from './biome-fix';
 import { loadManifestChecks } from './desk-checks';
@@ -10,6 +11,10 @@ interface StatusSnapshot {
   // Codebase consistency (knip + depcruise) — mirrors the CI "Consistency" job.
   // Not a desk check: it gates commits, not the dev-loop dashboard.
   consistency: CheckResult;
+}
+
+export interface StatusPayload extends StatusSnapshot {
+  prFetchedAt: number | null;
 }
 
 const CONSISTENCY_COMMAND = 'pnpm run consistency';
@@ -174,9 +179,10 @@ export function createStatusManager(
   }
 
   return {
-    getStatus(): StatusSnapshot {
+    async getStatus(): Promise<StatusPayload> {
       return {
         consistency: { ...snapshot.consistency },
+        prFetchedAt: await getPrMapFetchedAt(root),
       };
     },
     getState: (): StatusManagerState => state,

@@ -19,6 +19,7 @@ const fail = (cmd: string, output: string): CheckResult => ({
 
 const baseStatus: StatusState = {
   consistency: pass('pnpm run consistency'),
+  prFetchedAt: null,
 };
 
 const baseDeskChecks: DeskCheckState[] = [
@@ -68,7 +69,7 @@ describe('buildCheckFixes', () => {
 
   it('falls back to a placeholder when output is empty', () => {
     const fixes = buildCheckFixes(
-      { consistency: fail('pnpm run consistency', '') },
+      { consistency: fail('pnpm run consistency', ''), prFetchedAt: null },
       baseDeskChecks,
     );
     expect(fixes[0]?.description).toContain('(no output captured)');
@@ -80,7 +81,7 @@ describe('buildCheckFixes', () => {
       { name: 'test', ...fail('npx vitest run --passWithNoTests', 'test error') },
     ];
     const fixes = buildCheckFixes(
-      { consistency: fail('pnpm run consistency', 'consistency error') },
+      { consistency: fail('pnpm run consistency', 'consistency error'), prFetchedAt: null },
       deskChecks,
     );
     expect(fixes.map((f) => f.text)).toEqual([
@@ -168,7 +169,7 @@ describe('upsertCheckFixes', () => {
     ];
     const merged = upsertCheckFixes(
       existing,
-      { consistency: fail('pnpm run consistency', 'consistency error') },
+      { consistency: fail('pnpm run consistency', 'consistency error'), prFetchedAt: null },
       deskChecks,
     );
     expect(merged.map((f) => f.text)).toEqual([

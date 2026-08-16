@@ -1,17 +1,12 @@
 import { watch } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
-import { resolvePrsByEntity } from '@/core/git-pr';
-import { readWorkEntries } from '@/core/readers';
 import { invalidateCorpusCache } from './corpus-cache';
 import { runRunOrderPass } from './run-order-pass';
 
 // Consumers route on `payload.type`; a bare `changed` message is the generic
 // "something on disk moved, reload broadly" signal.
 export type ActivityManager = ReturnType<typeof createActivityManager>;
-
-// A PR merging on GitHub touches nothing on disk, so the fs watcher below never fires for it.
-const PR_POLL_INTERVAL_MS = 60_000;
 
 export function createActivityManager(root: string) {
   const clients = new Set<ServerResponse>();
@@ -76,31 +71,6 @@ export function createActivityManager(root: string) {
   } catch {
     // papercamp/ doesn't exist yet (uninitialized project) — nothing to watch.
   }
-
-  // Only shells out to `gh` when there's something worth watching — an idle repo
-  // with no plan awaiting review never pays for a poll.
-  async function pollOpenPrs() {
-    try {
-      const { entries } = await readWorkEntries(join(root, 'papercamp', 'ideas'));
-      const watched = entries.filter((e) => e.status === 'review');
-      if (watched.length === 0) return;
-
-      const fresh = await resolvePrsByEntity(root, 0);
-      if (!fresh) return;
-
-      const changed = watched.some((e) => fresh.get(e.id ?? '')?.state !== e.pr?.state);
-      if (changed) {
-        invalidateCorpusCache();
-        scheduleRunPass();
-      }
-    } catch (err) {
-      console.error('PR poll failed:', err);
-    }
-  }
-  // Boot sweep, then the recurring 60s poll — a restart must not wait a full
-  // interval to catch a PR that went ready+green while paper-camp was down.
-  void pollOpenPrs();
-  setInterval(pollOpenPrs, PR_POLL_INTERVAL_MS);
 
   return {
     subscribe(res: ServerResponse) {

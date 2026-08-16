@@ -5,6 +5,9 @@ export interface StatusState {
   // The commit gate's own check — not a desk check, so it isn't sourced from
   // `desk.checks` (IDEA-162). Quality/Tests/Build come from `/api/checks` instead.
   consistency: CheckResult;
+  // When the on-disk PR map was last written by a GitHub fetch — null until the
+  // first successful fetch this install has ever made.
+  prFetchedAt: number | null;
 }
 
 export const fetchStatus = async (): Promise<StatusState> => {

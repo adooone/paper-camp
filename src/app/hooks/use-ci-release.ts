@@ -1,6 +1,5 @@
 import type { CiReleaseState } from '@/types/index';
 import { useCallback, useEffect, useState } from 'react';
-import { subscribeToActivityStream } from '../services/activity-stream';
 import { fetchCiRelease } from '../services/ci-api';
 
 export interface CiReleaseClient {
@@ -23,22 +22,6 @@ export function useCiRelease(): CiReleaseClient {
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const unsubscribe = subscribeToActivityStream((payload) => {
-      if (payload.message !== 'changed') return;
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(refresh, 250);
-    });
-    const onFocus = () => refresh();
-    window.addEventListener('focus', onFocus);
-    return () => {
-      if (timer) clearTimeout(timer);
-      window.removeEventListener('focus', onFocus);
-      unsubscribe();
-    };
   }, [refresh]);
 
   return { ci, loading, refresh };

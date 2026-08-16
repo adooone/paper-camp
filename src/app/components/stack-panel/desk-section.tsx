@@ -1,3 +1,6 @@
+// Specific file, not the `actions` barrel: the barrel pulls in the whole plans
+// graph and loops back to components/index.ts, which depcruise fails as a cycle.
+import { RefreshButton } from '@/app/features/plans/actions/refresh-button';
 import { useDeskManifest } from '@/app/hooks/use-desk-manifest';
 import { Divider, Skeleton } from '@dendelion/paper-ui';
 import { CHECKS_GROUP_LABEL, ChecksGroup } from './checks-group';
@@ -33,7 +36,14 @@ export const DeskSection = () => {
     <>
       <Divider surface="chalkboard" />
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
-        <div className={sectionLabelClassName}>Desk</div>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className={`${sectionLabelClassName} mb-0`}>Desk</div>
+          <RefreshButton
+            label="Fetch from GitHub"
+            refreshingLabel="Fetching…"
+            surface="chalkboard"
+          />
+        </div>
         {loading ? (
           <DeskSectionSkeleton />
         ) : desk ? (

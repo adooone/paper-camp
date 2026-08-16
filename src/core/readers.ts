@@ -131,11 +131,11 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
   };
 }
 
-async function readEntitiesAndPrs(ideasDir: string) {
+async function readEntitiesAndPrs(ideasDir: string, ttlMs?: number) {
   const { entries, warnings } = await readEntities(ideasDir);
   const root = join(ideasDir, '..', '..');
   const [prs, mainActivityIds] = await Promise.all([
-    resolvePrsByEntity(root),
+    resolvePrsByEntity(root, ttlMs),
     resolveIdsWithMainActivity(root),
   ]);
   return { entries, warnings, prs, resolved: prs !== undefined, mainActivityIds };
@@ -155,8 +155,14 @@ export async function readEntitiesWithDerivedStatus(
   return { entries: derived, warnings };
 }
 
-export async function readWorkEntries(ideasDir: string): Promise<ParseResult<PlanEntry>> {
-  const { entries, warnings, prs, resolved, mainActivityIds } = await readEntitiesAndPrs(ideasDir);
+export async function readWorkEntries(
+  ideasDir: string,
+  ttlMs?: number,
+): Promise<ParseResult<PlanEntry>> {
+  const { entries, warnings, prs, resolved, mainActivityIds } = await readEntitiesAndPrs(
+    ideasDir,
+    ttlMs,
+  );
   return {
     entries: entries
       .filter((e) => e.kind !== 'note')

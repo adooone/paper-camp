@@ -12,6 +12,7 @@ const result = (status: CheckResult['status']): CheckResult => ({
 
 const status = (overrides: Partial<StatusState>): StatusState => ({
   consistency: result('pass'),
+  prFetchedAt: null,
   ...overrides,
 });
 

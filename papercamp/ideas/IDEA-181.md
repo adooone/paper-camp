@@ -2,9 +2,9 @@
 id: IDEA-181
 title: Fetch from GitHub only when asked
 type: feat
-status: idea
+status: review
 created: 2026-08-15
-updated: 2026-08-15
+updated: 2026-08-16
 tags:
   - server
   - github
@@ -82,3 +82,31 @@ lives longer, so it has to be visible and it must not be cached.
 The local activity stream and file watching — those are cheap, local, and stay
 automatic. Local git reads (`git status`, branch, diff) are not GitHub and are
 unaffected.
+
+### Phases
+- [x] Persist the PR map to disk, load it at boot
+      resolvePrsByEntity's in-memory Map is written to a gitignored file and reloaded on start so the degraded phases-only guess is never the resting state.
+      run: 7m25s · 10.1k in · 16.2k out · sonnet-5
+- [x] Stop pollOpenPrs from auto-fetching
+      Delete the boot sweep and the 60s setInterval; nothing schedules the `gh pr list` sweep anymore.
+      run: 5m54s · 647 in · 4.2k out · sonnet-5
+- [x] Fetch CI on mount and explicit refresh only
+      use-ci-release drops its activity-stream subscription so corpus writes no longer trigger a GitHub call.
+      run: 4m10s · 393 in · 9.9k out · sonnet-5
+- [x] Confirm the manual refresh path re-reads every GitHub-backed slice
+      Exercise RefreshButton → /api/refresh end to end after the auto-callers are gone.
+      run: 3m43s · 528 in · 7.2k out · sonnet-5
+- [x] [manual] Stop run-order pass from live-fetching PRs
+- [x] [manual] Move IDEA-162 back to planned with the Fixes phase
+- [x] [manual] Fix a plans-actions barrel import cycle in desk-section
+
+### Fixes
+- [x] Promote the refresh out of the idea view
+      The only manual GitHub fetch in the app is an unlabelled `IconButton` in `entity-detail.tsx`'s header, beside the `updated <date>` text — nothing outside that file calls `refreshAll`/`dropServerCaches`, so on the Plans list, the git page or Settings there is no way to fetch at all. With polling removed this button is the sole path to GitHub data and has to live on a surface present on every page: the Stack panel's Desk section, labelled as fetching from GitHub rather than reloading a view. The in-idea one stays.
+      run: 1m28s · 6k in · 5.7k out · sonnet-5
+- [x] Show when GitHub data was last fetched
+      `papercamp/pr-map.json` already stores `fetchedAt`, and with on-demand fetching "as of 14:32" is load-bearing information that nothing displays. Surface it next to the refresh control and on the PR badge, so a stale PR state is legible where it is actually read rather than silently presented as current.
+      run: 6m51s · 1.9k in · 19k out · sonnet-5
+
+### Thread
+- [x] 2026-08-16 [review] [agent] Requests changes · 1 finding — The disk-persistence, CI-subscription removal, and last-fetched UI surfacing are well-built and match the spec's mechanics. But the PR only deletes the setInterval poll; the shared resolvePrsByEntity still performs a live GitHub fetch whenever its cache/persisted map is older than the 5-minute TTL, and that function is reached automatically from the papercamp/ file watcher via runRunOrderPass → readWorkEntries. So local file activity during an agent run still triggers `gh pr list` roughly every 5 minutes, which is exactly the 'fetches triggered by local file activity' the idea says must stop.

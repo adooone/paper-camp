@@ -16,8 +16,8 @@ export function statusRoutes({
     {
       method: 'GET',
       path: '/api/status',
-      handle: (_req, res) => {
-        sendJson(res, 200, status.getStatus());
+      handle: async (_req, res) => {
+        sendJson(res, 200, await status.getStatus());
       },
     },
 

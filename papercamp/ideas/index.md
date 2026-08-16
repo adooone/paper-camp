@@ -162,7 +162,7 @@
 | IDEA-159 | Git actions time out instead of hanging | fix | done | app, git, ux |
 | IDEA-160 | One activity stream for the whole app | fix | done | app, ux, performance |
 | IDEA-161 | Desk section clips its own content | fix | done | app, stack, layout |
-| IDEA-162 | One source of truth for checks | refactor | done | app, stack, status |
+| IDEA-162 | One source of truth for checks | refactor | planned | app, stack, status |
 | IDEA-163 | Stack panel affordance and a11y pass | fix | planned | app, stack, ux |
 | IDEA-164 | Browser-driven page audits | feat | planned | app, agent, stack |
 | IDEA-165 | Stage files, write the message | feat | done | app, git, ux |
@@ -176,9 +176,9 @@
 | IDEA-173 | Never lose a computed PR review | fix | done | app, agent, github |
 | IDEA-174 | Show a running PR review in the UI | feat | done | app, ui, agent |
 | IDEA-175 | Scout posts a formatted review | feat | done | app, github, ui |
-| IDEA-176 | Sync stops stashing over the corpus | fix | review | server, git, plans |
+| IDEA-176 | Sync stops stashing over the corpus | fix | done | server, git, plans |
 | IDEA-177 | Surface dangling stashes | feat | dropped | app, git, ux |
 | IDEA-178 | Rate limits must not rewrite status | fix | planned | core, github, plans |
 | IDEA-179 | Prioritise lies about what it did | fix | planned | app, server, plans |
 | IDEA-180 | Say what each idea is for | feat | idea | app, plans, format |
-| IDEA-181 | Fetch from GitHub only when asked | feat | idea | server, github, core |
+| IDEA-181 | Fetch from GitHub only when asked | feat | review | server, github, core |
