@@ -2,10 +2,10 @@ import { entityRouteParam } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { DoctorFindingSummary, DoctorFindingWithSeverity } from '@/core/doctor';
 import type { ConsistencyIssue, PlanEntry } from '@/types/index';
-import { Divider, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { Divider } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useState } from 'react';
-import { chalkStatusFill, chalkStatusText, sectionLabelClassName } from './shared';
+import { StampButton, chalkStatusFill, chalkStatusText, sectionLabelClassName } from './shared';
 
 const severityKey = (summary: DoctorFindingSummary): 'pass' | 'fail' | 'running' =>
   summary.errorCount > 0 ? 'fail' : summary.warningCount > 0 ? 'running' : 'pass';
@@ -25,27 +25,17 @@ const HealthStamp = ({
   onToggle: () => void;
   tooltip: string;
 }) => (
-  <Tooltip content={tooltip} surface="chalkboard">
-    {/* Raw <button>: the clickable target is a Stamp, which has no button surface of its own. */}
-    <button
-      type="button"
-      className={`inline-flex border-none bg-transparent bg-none p-0 ${hasFindings ? 'cursor-pointer enabled:hover:-translate-y-px enabled:hover:brightness-[1.15]' : 'cursor-default'}`}
-      onClick={() => {
-        if (hasFindings) onToggle();
-      }}
-      disabled={!hasFindings}
-      aria-expanded={hasFindings ? expanded : undefined}
-    >
-      <Stamp
-        surface="chalkboard"
-        size="small"
-        fillColor={chalkStatusFill[fillKey]}
-        textColor={chalkStatusText[fillKey]}
-      >
-        {label}
-      </Stamp>
-    </button>
-  </Tooltip>
+  <StampButton
+    tooltip={tooltip}
+    onClick={onToggle}
+    disabled={!hasFindings}
+    disabledCursor="default"
+    ariaExpanded={hasFindings ? expanded : undefined}
+    fillColor={chalkStatusFill[fillKey]}
+    textColor={chalkStatusText[fillKey]}
+  >
+    {label}
+  </StampButton>
 );
 
 const DoctorFindingRow = ({ finding }: { finding: DoctorFindingWithSeverity }) => (

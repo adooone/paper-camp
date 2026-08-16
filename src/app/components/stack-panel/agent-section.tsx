@@ -47,6 +47,23 @@ const taskSubtitle = (task: AgentTaskState): string => {
   }
 };
 
+const statusFill: Record<AgentTaskStatus, string> = {
+  starting: chalkStatusFill.running,
+  running: chalkStatusFill.running,
+  stopping: chalkStatusFill.running,
+  done: chalkStatusFill.pass,
+  error: chalkStatusFill.fail,
+  superseded: chalkStatusFill.running,
+};
+const statusText: Record<AgentTaskStatus, string> = {
+  starting: chalkStatusText.running,
+  running: chalkStatusText.running,
+  stopping: chalkStatusText.running,
+  done: chalkStatusText.pass,
+  error: chalkStatusText.fail,
+  superseded: chalkStatusText.running,
+};
+
 const AgentTaskCard = ({
   task,
   onStop,
@@ -69,23 +86,6 @@ const AgentTaskCard = ({
         variant: 'error',
       });
     }
-  };
-
-  const statusFill: Record<AgentTaskStatus, string> = {
-    starting: chalkStatusFill.running,
-    running: chalkStatusFill.running,
-    stopping: chalkStatusFill.running,
-    done: chalkStatusFill.pass,
-    error: chalkStatusFill.fail,
-    superseded: chalkStatusFill.running,
-  };
-  const statusText: Record<AgentTaskStatus, string> = {
-    starting: chalkStatusText.running,
-    running: chalkStatusText.running,
-    stopping: chalkStatusText.running,
-    done: chalkStatusText.pass,
-    error: chalkStatusText.fail,
-    superseded: chalkStatusText.running,
   };
 
   return (

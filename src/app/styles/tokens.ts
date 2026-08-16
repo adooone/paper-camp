@@ -23,4 +23,10 @@ export const color = {
   deskChalk: '#d4e8cb',
   diffAddedBg: 'rgba(143, 185, 150, 0.18)',
   diffRemovedBg: 'rgba(201, 139, 139, 0.18)',
+  chalkPass: '#2d5a3b',
+  chalkPassText: '#b5d6b5',
+  chalkFail: '#5a2d2d',
+  chalkFailText: '#d6a0a0',
+  chalkRunning: '#5a4a2d',
+  chalkRunningText: '#d6c4a0',
 } as const;
