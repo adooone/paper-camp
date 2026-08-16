@@ -37,7 +37,7 @@ export const DeskSection = () => {
       <Divider surface="chalkboard" />
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
         <div className="flex items-center justify-between gap-2 mb-3">
-          <div className={`${sectionLabelClassName} mb-0`}>Desk</div>
+          <h3 className={`${sectionLabelClassName} m-0`}>Desk</h3>
           <RefreshButton
             label="Fetch from GitHub"
             refreshingLabel="Fetching…"

@@ -60,7 +60,7 @@ export const ChecksGroup = () => {
 
   return (
     <div>
-      <div className={groupLabelClassName}>{CHECKS_GROUP_LABEL}</div>
+      <h4 className={`${groupLabelClassName} m-0`}>{CHECKS_GROUP_LABEL}</h4>
       {checks.length > 0 ? (
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-2">

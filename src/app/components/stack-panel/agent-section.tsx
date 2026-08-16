@@ -163,7 +163,7 @@ export const AgentSection = () => {
 
   return (
     <div className="flex min-h-0 flex-none flex-col p-6">
-      <div className={sectionLabelClassName}>Agent</div>
+      <h3 className={`${sectionLabelClassName} m-0`}>Agent</h3>
       <div
         className={`flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto ${TASK_STACK_MIN_HEIGHT_CLASS} ${
           visibleTasks.length > 0 ? 'justify-start' : 'justify-center'

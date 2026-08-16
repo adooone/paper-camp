@@ -16,6 +16,21 @@ interface StackPanelProps {
 
 export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) => {
   const isOpen = open || pinned;
+  const panelRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (panelRef.current) panelRef.current.inert = !isOpen;
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || pinned) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onToggle();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, pinned, onToggle]);
+
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadStatus = useAppStore((s) => s.loadStatus);
   const consistency = useAppStore((s) => s.consistency);
@@ -165,14 +180,16 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           />
         </div>
       )}
-      <div
+      <aside
+        ref={panelRef}
         // Below the phone breakpoint the fixed 480px would overflow the viewport itself.
         // Above the Layout header (z-200) — the panel owns the full right edge.
+        aria-label="Stack"
         className="fixed inset-y-0 right-0 z-[300] flex w-[min(480px,100vw)] flex-col overflow-hidden border-l-4 border-paper-950/[12%] text-desk-text bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]"
         style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
       >
         <div className="flex h-20 shrink-0 items-center justify-between px-6">
-          <span className="font-display-luminari text-base font-bold text-desk-chalk">Stack</span>
+          <h2 className="m-0 font-display-luminari text-base font-bold text-desk-chalk">Stack</h2>
           {!pinned && (
             <IconButton
               icon={<span className="text-sm leading-none">&times;</span>}
@@ -190,7 +207,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           <DeskSection />
           <HealthSection />
         </div>
-      </div>
+      </aside>
     </>
   );
 };

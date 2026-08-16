@@ -96,8 +96,9 @@ Code organisation, same files and same pass:
 - [x] Fix and surface service state
       Probe the healthcheck regardless of who owns the process in `desk-services.ts`, then give the row an unambiguous run icon and a real expand chevron.
       run: 5m9s · 804 in · 15k out · sonnet-5
-- [ ] Make the panel accessible
+- [x] Make the panel accessible
       Mark it `inert` while closed, turn it into a labelled `complementary` landmark with real headings and dot labels, and add Escape-to-close.
+      run: 6m25s · 679 in · 20.8k out · sonnet-5
 - [ ] Repair the agent card and task list
       Drop the redundant subtitle, give the agent label a non-truncating slot, show each task's start time, and replace the silent slice with a "+N more" link to `/tasks`.
 - [ ] Settle the presentation

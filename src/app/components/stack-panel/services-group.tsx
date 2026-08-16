@@ -19,13 +19,17 @@ const dotClass = (service: ServiceState): string => {
   return 'bg-desk-text-muted';
 };
 
-const StatusDot = ({ service }: { service: ServiceState }) => (
-  <span
-    aria-hidden="true"
-    className={`h-2 w-2 shrink-0 rounded-full ${dotClass(service)}`}
-    title={service.status === 'running' ? `running · ${service.health}` : service.status}
-  />
-);
+const StatusDot = ({ service }: { service: ServiceState }) => {
+  const label = service.status === 'running' ? `running · ${service.health}` : service.status;
+  return (
+    <span
+      role="img"
+      aria-label={label}
+      className={`h-2 w-2 shrink-0 rounded-full ${dotClass(service)}`}
+      title={label}
+    />
+  );
+};
 
 const ServiceLog = ({ name, running }: { name: string; running: boolean }) => {
   const [log, setLog] = useState('');
@@ -143,7 +147,7 @@ export const ServicesGroup = () => {
 
   return (
     <div>
-      <div className={groupLabelClassName}>{SERVICES_GROUP_LABEL}</div>
+      <h4 className={`${groupLabelClassName} m-0`}>{SERVICES_GROUP_LABEL}</h4>
       <div className="flex flex-col gap-2">
         {services.length > 0 ? (
           services.map((service) => (

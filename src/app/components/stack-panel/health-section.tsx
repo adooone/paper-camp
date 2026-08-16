@@ -89,7 +89,7 @@ export const HealthSection = () => {
     <>
       <Divider surface="chalkboard" />
       <div className="flex flex-none flex-col gap-3 p-6">
-        <div className={sectionLabelClassName}>Health</div>
+        <h3 className={`${sectionLabelClassName} m-0`}>Health</h3>
         <div className="flex flex-wrap gap-2">
           <HealthStamp
             label="doctor"

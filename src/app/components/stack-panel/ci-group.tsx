@@ -103,7 +103,7 @@ export const CiGroup = () => {
 
   return (
     <div>
-      <div className={groupLabelClassName}>{CI_GROUP_LABEL}</div>
+      <h4 className={`${groupLabelClassName} m-0`}>{CI_GROUP_LABEL}</h4>
       {body()}
     </div>
   );
