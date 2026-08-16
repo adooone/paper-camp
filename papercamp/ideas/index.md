@@ -183,3 +183,6 @@
 | IDEA-180 | Say what each idea is for | feat | idea | app, plans, format |
 | IDEA-181 | Fetch from GitHub only when asked | feat | planned | server, github, core |
 | IDEA-182 | Finish corpus writes before committing | fix | dropped | server, agent, git |
+| IDEA-183 | Filters and sort tell the truth | fix | idea | app, plans, ux |
+| IDEA-184 | One row treatment on the Plans page | fix | idea | app, plans, ui |
+| IDEA-185 | Delete the idea-group machinery | refactor | idea | app, plans, refactor |
