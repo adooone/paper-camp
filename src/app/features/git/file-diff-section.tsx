@@ -69,7 +69,7 @@ const DiffBody = ({ entry }: DiffBodyProps) => {
         <div key={`${hunk.header}-${i}`} className="min-w-0 max-w-full">
           {hunk.header && <div className="mb-1 font-mono text-2xs opacity-50">{hunk.header}</div>}
           {/* paper-ui's CodeBlock has no per-line add/remove styling. */}
-          <pre className="m-0 min-w-0 max-w-full overflow-x-auto font-mono text-2xs">
+          <pre className="m-0 min-w-0 max-w-full overflow-x-auto font-mono text-2xs leading-normal">
             {hunk.lines.map((line, j) => (
               <span key={`${line.type}-${j}`} className={`block ${LINE_CLASS[line.type]}`}>
                 {LINE_PREFIX[line.type]}

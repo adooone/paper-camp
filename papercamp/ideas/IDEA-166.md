@@ -53,8 +53,9 @@ the directory rather than the name. Same fix in the diff section's own
 One of three slices over `features/git/`, shippable in this order: **[[IDEA-166]] (this) → [[IDEA-167]] → [[IDEA-165]]**. This one first because the line-height fix is a single class that makes every later change to the page reviewable; 167 then adds the status vocabulary that 165's partial-staging display depends on.
 
 ### Phases
-- [ ] Set a code line-height on the diff `<pre>`
+- [x] Set a code line-height on the diff `<pre>`
       Add a `leading-*` class so mono text stops inheriting body prose leading.
+      run: 28s · 5.6k in · 999 out · sonnet-5
 - [ ] Add old/new line-number gutters
       Dimmed and non-selectable so copied hunks stay valid patch text.
 - [ ] Make each `FileDiffSection` collapsible
