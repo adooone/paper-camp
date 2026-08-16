@@ -4,7 +4,7 @@ title: Fetch from GitHub only when asked
 type: feat
 status: review
 created: 2026-08-15
-updated: 2026-08-15
+updated: 2026-08-16
 tags:
   - server
   - github
@@ -96,6 +96,7 @@ unaffected.
 - [x] Confirm the manual refresh path re-reads every GitHub-backed slice
       Exercise RefreshButton → /api/refresh end to end after the auto-callers are gone.
       run: 3m43s · 528 in · 7.2k out · sonnet-5
+- [x] [manual] Stop run-order pass from live-fetching PRs
 
 ### Fixes
 - [x] Promote the refresh out of the idea view
@@ -104,3 +105,6 @@ unaffected.
 - [x] Show when GitHub data was last fetched
       `papercamp/pr-map.json` already stores `fetchedAt`, and with on-demand fetching "as of 14:32" is load-bearing information that nothing displays. Surface it next to the refresh control and on the PR badge, so a stale PR state is legible where it is actually read rather than silently presented as current.
       run: 6m51s · 1.9k in · 19k out · sonnet-5
+
+### Thread
+- [x] 2026-08-16 [review] [agent] Requests changes · 1 finding — The disk-persistence, CI-subscription removal, and last-fetched UI surfacing are well-built and match the spec's mechanics. But the PR only deletes the setInterval poll; the shared resolvePrsByEntity still performs a live GitHub fetch whenever its cache/persisted map is older than the 5-minute TTL, and that function is reached automatically from the papercamp/ file watcher via runRunOrderPass → readWorkEntries. So local file activity during an agent run still triggers `gh pr list` roughly every 5 minutes, which is exactly the 'fetches triggered by local file activity' the idea says must stop.

@@ -24,7 +24,8 @@ function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): st
 export async function runRunOrderPass(root: string): Promise<string[]> {
   const ideasDir = campFile(root, 'ideas');
   const { entries } = await readEntities(ideasDir);
-  const { entries: work } = await readWorkEntries(ideasDir);
+  // File-watcher-triggered, not a human ask: serve cache/disk only, never a live `gh` call.
+  const { entries: work } = await readWorkEntries(ideasDir, Number.POSITIVE_INFINITY);
   const classified = classifyRunOrderEntries(entries, work);
 
   return withRunOrderLock(async () => {

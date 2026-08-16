@@ -452,6 +452,9 @@ export async function resolvePrsByEntity(
     }
   }
   if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.prs;
+  // An infinite TTL means "never fetch live" (file-watcher-driven callers) — serve
+  // whatever's cached/persisted, even stale, rather than shelling out to `gh`.
+  if (!Number.isFinite(ttlMs)) return cached?.prs;
   const prs = await runGhPrListAll(root);
   // Only cache/persist a successful resolution — caching `undefined` would pin the
   // whole worklist to stored status for the full TTL instead of retrying next read.
