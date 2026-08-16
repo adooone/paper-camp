@@ -1,6 +1,7 @@
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import type { CheckStatus, DeskCheckState } from '@/types/index';
 import { Card, CopyButton, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { useState } from 'react';
 import { chalkStatusFill, chalkStatusText, formatLastRun, groupLabelClassName } from './shared';
 
 export const CHECKS_GROUP_LABEL = 'Checks';
@@ -56,6 +57,7 @@ const CheckStamp = ({
 export const ChecksGroup = () => {
   const { checks, run } = useDeskChecks();
   const failing = checks.find((check) => check.status === 'fail');
+  const [outputExpanded, setOutputExpanded] = useState(false);
 
   return (
     <div>
@@ -72,7 +74,25 @@ export const ChecksGroup = () => {
               <span className="text-desk-text-muted">The {failing.name} check failed.</span>
               <span className="text-desk-chalk">
                 Suggested fix: <CopyButton text={fixPrompt(failing)} surface="chalkboard" />
+                {failing.output && (
+                  <>
+                    {' · '}
+                    <button
+                      type="button"
+                      onClick={() => setOutputExpanded((prev) => !prev)}
+                      className="bg-none bg-transparent border-none p-0 underline cursor-pointer [font:inherit] text-desk-chalk"
+                      aria-expanded={outputExpanded}
+                    >
+                      {outputExpanded ? 'Hide output' : 'Show output'}
+                    </button>
+                  </>
+                )}
               </span>
+              {outputExpanded && failing.output && (
+                <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap text-left font-mono text-2xs opacity-70">
+                  {failing.output}
+                </pre>
+              )}
             </div>
           )}
         </div>
