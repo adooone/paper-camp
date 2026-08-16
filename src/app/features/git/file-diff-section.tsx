@@ -2,6 +2,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { type DiffLineType, parsePatch, rawContentHunks } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
 import { Accordion, Stamp } from '@dendelion/paper-ui';
+import { FilePath } from './file-path';
 
 const COLLAPSE_LINE_THRESHOLD = 60;
 
@@ -31,9 +32,11 @@ interface FileHeaderProps {
 
 const FileHeader = ({ entry }: FileHeaderProps) => (
   <div className="flex w-full min-w-0 items-center justify-between gap-3">
-    <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs">
-      {entry.renameSource ? `${entry.renameSource} → ${entry.path}` : entry.path}
-    </span>
+    <FilePath
+      path={entry.path}
+      prefix={entry.renameSource ? `${entry.renameSource} → ` : undefined}
+      className="text-xs"
+    />
     <span className="flex shrink-0 items-center gap-2">
       {entry.staged && <Stamp size="small">staged</Stamp>}
       {!entry.binary && <CountBadge additions={entry.additions} deletions={entry.deletions} />}

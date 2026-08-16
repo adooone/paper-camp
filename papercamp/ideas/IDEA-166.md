@@ -65,6 +65,7 @@ One of three slices over `features/git/`, shippable in this order: **[[IDEA-166]
 - [x] Stick the commit row under the page chrome
       Carry the staged count from [[IDEA-165]].
       run: 3m22s · 517 in · 7.6k out · sonnet-5
-- [ ] Fix path truncation in the sidebar and `FileHeader`
+- [x] Fix path truncation in the sidebar and `FileHeader`
       Full-weight basename, dimmed directory ahead of it, truncate the directory not the name.
+      run: 3m46s · 792 in · 9.2k out · sonnet-5
 - [ ] Extract the shared `CountBadge` component

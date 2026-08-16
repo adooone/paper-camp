@@ -1,3 +1,4 @@
+import { FilePath } from '@/app/features/git/file-path';
 import { stagePath, unstagePath } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
@@ -93,9 +94,7 @@ export const GitFileList = () => {
                   </span>
                 }
               >
-                <span className="block overflow-hidden text-ellipsis whitespace-nowrap font-mono text-2xs">
-                  {entry.path}
-                </span>
+                <FilePath path={entry.path} className="text-2xs" />
               </ListItem>
             </div>
           ))}
