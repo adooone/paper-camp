@@ -31,54 +31,32 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, pinned, onToggle]);
 
-  const loadPlans = useAppStore((s) => s.loadPlans);
-  const loadStatus = useAppStore((s) => s.loadStatus);
   const consistency = useAppStore((s) => s.consistency);
-  const loadConsistency = useAppStore((s) => s.loadConsistency);
   const doctor = useAppStore((s) => s.doctor);
-  const loadDoctor = useAppStore((s) => s.loadDoctor);
-  const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const loadAgentStatus = useAppStore((s) => s.loadAgentStatus);
-  const loadSuggestions = useAppStore((s) => s.loadSuggestions);
-  const loadArchivableIdeas = useAppStore((s) => s.loadArchivableIdeas);
-  const refreshRef = useRef({
-    loadPlans,
-    loadStatus,
-    loadConsistency,
-    loadDoctor,
-    loadGitStatus,
-    loadAgentStatus,
-    loadSuggestions,
-    loadArchivableIdeas,
-  });
+
   useEffect(() => {
-    refreshRef.current = {
-      loadPlans,
+    const {
       loadStatus,
       loadConsistency,
       loadDoctor,
       loadGitStatus,
       loadAgentStatus,
-      loadSuggestions,
       loadArchivableIdeas,
-    };
-  });
-
-  useEffect(() => {
-    refreshRef.current.loadStatus();
-    refreshRef.current.loadConsistency();
-    refreshRef.current.loadDoctor();
-    refreshRef.current.loadGitStatus();
-    refreshRef.current.loadAgentStatus();
-    refreshRef.current.loadArchivableIdeas();
+    } = useAppStore.getState();
+    loadStatus();
+    loadConsistency();
+    loadDoctor();
+    loadGitStatus();
+    loadAgentStatus();
+    loadArchivableIdeas();
   }, []);
 
   // Catches remote changes (a PR merged on GitHub) faster than the server's own poll.
   useEffect(() => {
     const handleFocus = () => {
-      refreshRef.current.loadPlans();
-      refreshRef.current.loadGitStatus();
+      useAppStore.getState().loadPlans();
+      useAppStore.getState().loadGitStatus();
     };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
@@ -96,12 +74,12 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       // Keeps the commit gate's consistency check warm for other pages (e.g. deliver-controls)
       // even while this panel — which no longer renders it — is what's mounted.
       if (payload.type === 'status') {
-        schedule('status', () => refreshRef.current.loadStatus(), 80);
+        schedule('status', () => useAppStore.getState().loadStatus(), 80);
         return;
       }
       // Agent progress, including the one-shot commit-suggest run.
       if (payload.type === 'agent') {
-        schedule('agent', () => refreshRef.current.loadAgentStatus(), 120);
+        schedule('agent', () => useAppStore.getState().loadAgentStatus(), 120);
         return;
       }
       // A file actually changed on disk: the only tick broad enough to reload everything.
@@ -110,14 +88,24 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       schedule(
         'activity',
         () => {
-          refreshRef.current.loadPlans();
-          refreshRef.current.loadSuggestions();
-          refreshRef.current.loadStatus();
-          refreshRef.current.loadConsistency();
-          refreshRef.current.loadDoctor();
-          refreshRef.current.loadGitStatus();
-          refreshRef.current.loadAgentStatus();
-          refreshRef.current.loadArchivableIdeas();
+          const {
+            loadPlans,
+            loadSuggestions,
+            loadStatus,
+            loadConsistency,
+            loadDoctor,
+            loadGitStatus,
+            loadAgentStatus,
+            loadArchivableIdeas,
+          } = useAppStore.getState();
+          loadPlans();
+          loadSuggestions();
+          loadStatus();
+          loadConsistency();
+          loadDoctor();
+          loadGitStatus();
+          loadAgentStatus();
+          loadArchivableIdeas();
         },
         250,
       );

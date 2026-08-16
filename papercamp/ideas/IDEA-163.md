@@ -105,6 +105,7 @@ Code organisation, same files and same pass:
 - [x] Settle the presentation
       Left-align the column, use the body font for the group labels, and shrink the `h-20` header.
       run: 3m35s · 378 in · 7.2k out · sonnet-5
-- [ ] Clear the dead and duplicated code
+- [x] Clear the dead and duplicated code
       Replace `refreshRef` with `useAppStore.getState()`, drop the unused `useDeskChecks().refresh`, and fix `ServiceLog`'s cleanup so its `cancelled` guard registers.
+      run: 3m27s · 383 in · 7.8k out · sonnet-5
 - [ ] Cover the panel with tests

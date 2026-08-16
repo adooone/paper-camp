@@ -42,11 +42,10 @@ const ServiceLog = ({ name, running }: { name: string; running: boolean }) => {
       if (!cancelled) setLog(next);
     };
     load();
-    if (!running) return;
-    const timer = setInterval(load, LOG_POLL_MS);
+    const timer = running ? setInterval(load, LOG_POLL_MS) : undefined;
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      if (timer) clearInterval(timer);
     };
   }, [name, running]);
 
