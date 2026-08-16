@@ -1,5 +1,6 @@
 import { CountBadge } from '@/app/features/git/count-badge';
 import { FilePath } from '@/app/features/git/file-path';
+import { GitStatusMarker } from '@/app/features/git/git-status-marker';
 import { stagePath, unstagePath } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
@@ -56,12 +57,12 @@ export const GitFileList = () => {
   };
 
   return (
-    <div className="flex flex-col gap-8 -mt-5">
+    <nav aria-label="Changed files" className="flex flex-col gap-8 -mt-5">
       <div>
         <div className={sectionLabelClass}>Changed files</div>
-        <div className="flex flex-col gap-1">
+        <ul className="m-0 flex list-none flex-col gap-1 p-0">
           {files.map((entry) => (
-            <div key={entry.path} className="flex items-center gap-2">
+            <li key={entry.path} className="flex items-center gap-2">
               <Checkbox
                 checked={entry.staged}
                 indeterminate={isPartiallyStaged(entry.status)}
@@ -69,6 +70,7 @@ export const GitFileList = () => {
                 onChange={(e) => toggleStaged(entry, e.target.checked)}
                 aria-label={entry.staged ? `Unstage ${entry.path}` : `Stage ${entry.path}`}
               />
+              <GitStatusMarker status={entry.status} />
               <ListItem
                 size="small"
                 active={entry.path === activePath}
@@ -85,10 +87,10 @@ export const GitFileList = () => {
               >
                 <FilePath path={entry.path} className="text-2xs" />
               </ListItem>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
-    </div>
+    </nav>
   );
 };

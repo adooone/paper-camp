@@ -4,6 +4,7 @@ import type { FileDiffEntry } from '@/types/index';
 import { Accordion, Stamp } from '@dendelion/paper-ui';
 import { CountBadge } from './count-badge';
 import { FilePath } from './file-path';
+import { GitStatusMarker } from './git-status-marker';
 
 const COLLAPSE_LINE_THRESHOLD = 60;
 
@@ -20,11 +21,12 @@ interface FileHeaderProps {
 }
 
 const FileHeader = ({ entry }: FileHeaderProps) => (
-  <div className="flex w-full min-w-0 items-center justify-between gap-3">
+  <div className="flex w-full min-w-0 items-center gap-3">
+    <GitStatusMarker status={entry.status} />
     <FilePath
       path={entry.path}
       prefix={entry.renameSource ? `${entry.renameSource} → ` : undefined}
-      className="text-xs"
+      className="min-w-0 flex-1 text-xs"
     />
     <span className="flex shrink-0 items-center gap-2">
       {entry.staged && <Stamp size="small">staged</Stamp>}
@@ -99,8 +101,11 @@ export const FileDiffSection = ({ entry }: FileDiffSectionProps) => {
     manuallyCollapsed ||
     (!manuallyExpanded && entry.additions + entry.deletions > COLLAPSE_LINE_THRESHOLD);
 
+  const headingText = entry.renameSource ? `${entry.renameSource} → ${entry.path}` : entry.path;
+
   return (
     <div data-diff-path={entry.path} className="min-w-0 max-w-full scroll-mt-4">
+      <h2 className="sr-only">{headingText}</h2>
       <Accordion
         title={<FileHeader entry={entry} />}
         expanded={!collapsed}

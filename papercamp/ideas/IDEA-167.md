@@ -2,7 +2,7 @@
 id: IDEA-167
 title: Git status vocabulary and chrome
 type: fix
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-14
 tags:
@@ -10,6 +10,7 @@ tags:
   - git
   - ux
 subject: App UI
+order: 4
 ---
 
 The git page never says what happened to a file, and the chrome around it
@@ -62,14 +63,24 @@ working-tree diff." offers no retry.
 One of three slices over `features/git/`: [[IDEA-166]] → **[[IDEA-167]] (this)** → [[IDEA-165]]. Carrying `status` onto `FileDiffEntry` here is what lets [[IDEA-165]] render a partially-staged file, so this lands before it.
 
 ### Phases
-- [ ] Carry `status` through the diff model onto `FileDiffEntry`
+- [x] Carry `status` through the diff model onto `FileDiffEntry`
       Thread git's two-character code from `/api/git/status` into the entry the diff model builds.
-- [ ] Render a per-file status marker in the sidebar and diff header
+      run: 55s · 5.7k in · 3.1k out · sonnet-5
+- [x] Render a per-file status marker in the sidebar and diff header
       Use git's own A/M/D/?? letter vocabulary, matching the `renameSource` treatment already in place.
-- [ ] Add page and per-file headings plus a labelled nav list
+      run: 2m11s · 520 in · 8.1k out · sonnet-5
+- [x] Add page and per-file headings plus a labelled nav list
       An `h1` for the page, a heading one level down per file section, and the changed-files sidebar as a navigation landmark.
-- [ ] Replace the breadcrumb with a page title
-- [ ] Re-weight the action buttons: Push primary, Sync and Pull secondary
-- [ ] Fix the status-bar branch glyph and migrate the inline styles
+      run: 2m59s · 528 in · 14.5k out · sonnet-5
+- [x] Replace the breadcrumb with a page title
+      run: 40s · 236 in · 2.1k out · sonnet-5
+- [x] Re-weight the action buttons: Push primary, Sync and Pull secondary
+      run: 31s · 240 in · 1.6k out · sonnet-5
+- [x] Fix the status-bar branch glyph and migrate the inline styles
       Swap `⌥` for `GitBranchIcon`, move the thirteen static layout styles to Tailwind, and narrow the guard allowlist to the texture alone.
-- [ ] Give loading and failure states a retry affordance
+      run: 2m16s · 522 in · 10.5k out · sonnet-5
+- [x] Give loading and failure states a retry affordance
+      run: 1m27s · 383 in · 5.3k out · sonnet-5
+
+### Thread
+- [x] 2026-08-16 [review] [agent] Comments · 1 finding — Phases 2–7 are delivered cleanly: the status marker, semantic headings/nav, dropped breadcrumb, re-weighted buttons, branch-glyph fix, inline-style migration, and retry affordances all match the spec, and tsc plus the inline-styles guard test pass. Phase 1 ("Carry status through the diff model onto FileDiffEntry") is a no-op box-check — its commit changed only the idea markdown because FileDiffEntry.status already existed on main (added upstream by IDEA-165 #160) and getWorkingDiff already populated it. Nothing is broken; the marker reads a field that is genuinely present and populated.
