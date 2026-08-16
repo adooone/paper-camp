@@ -1,4 +1,6 @@
-import { RefreshButton } from '@/app/features/plans/actions';
+// Specific file, not the `actions` barrel: the barrel pulls in the whole plans
+// graph and loops back to components/index.ts, which depcruise fails as a cycle.
+import { RefreshButton } from '@/app/features/plans/actions/refresh-button';
 import { useDeskManifest } from '@/app/hooks/use-desk-manifest';
 import { Divider, Skeleton } from '@dendelion/paper-ui';
 import { CHECKS_GROUP_LABEL, ChecksGroup } from './checks-group';

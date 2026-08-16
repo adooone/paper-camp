@@ -2,15 +2,14 @@
 id: IDEA-162
 title: One source of truth for checks
 type: refactor
-status: done
+status: in-progress
 created: 2026-08-13
-updated: 2026-08-15
+updated: 2026-08-16
 tags:
   - app
   - stack
   - status
 subject: Run & monitor
-order: 2
 ---
 
 The Stack panel reads two independent check backends and renders both at once.
@@ -77,6 +76,10 @@ from the dot.
 - [x] Drive the collapsed tab's dot only from what the panel renders
       Retire the unused `deriveCheckStatuses` coupling so the dot reports only explainable state.
       run: 3m20s · 3.7k in · 8.2k out · sonnet-5
+
+### Fixes
+- [ ] Render a failing check's captured output in the panel
+      `DeskCheckState.output` is only ever used to build the copyable fix prompt (`checks-group.tsx:15`); nothing renders it for a human, so a red stamp says a check failed but never why. Today's Consistency failure named the exact nine-module import cycle and that text sat in `output` the whole time, reachable only by copying a prompt meant for an agent. Phase 4 established that findings belong in the panel — this is the one class of finding it left out. Show the failing check's output inline, collapsed by default, beside the existing fix prompt.
 
 ### Thread
 - [x] 2026-08-15 [review] [agent] Comments · 0 findings — This is a clean, well-executed refactor that delivers all five phases: /api/status is stripped to just the commit-gate consistency check, the Build group is folded into Checks as an ordinary desk check with its own lastRun, every stamp shows a date-aware last-run time, doctor and plan-doc findings now render in a new Health section, and the collapsed tab's dot is driven only from desk-check failures, doc issues, and doctor errors — all of which the open panel can now explain. Type-checks pass, the check-fixes and check-status tests were faithfully rewritten around the new desk-check inputs, and no dangling references to the removed runCheck/fixQuality/BuildGroup/deriveBuildStatus symbols remain. One behavior change (auto-run-on-save loss) is worth flagging but isn't a spec violation.
