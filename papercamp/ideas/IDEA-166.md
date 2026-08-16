@@ -56,8 +56,9 @@ One of three slices over `features/git/`, shippable in this order: **[[IDEA-166]
 - [x] Set a code line-height on the diff `<pre>`
       Add a `leading-*` class so mono text stops inheriting body prose leading.
       run: 28s · 5.6k in · 999 out · sonnet-5
-- [ ] Add old/new line-number gutters
+- [x] Add old/new line-number gutters
       Dimmed and non-selectable so copied hunks stay valid patch text.
+      run: 3m5s · 1.1k in · 5.1k out · sonnet-5
 - [ ] Make each `FileDiffSection` collapsible
       Collapsible header, files past a size threshold start collapsed, scroll-spy expands a file on jump.
 - [ ] Stick the commit row under the page chrome

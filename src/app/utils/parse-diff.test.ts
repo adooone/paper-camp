@@ -23,9 +23,9 @@ describe('parsePatch', () => {
       {
         header: '@@ -1,3 +1,3 @@',
         lines: [
-          { type: 'context', text: 'kept line' },
-          { type: 'remove', text: 'removed line' },
-          { type: 'add', text: 'added line' },
+          { type: 'context', text: 'kept line', oldLine: 1, newLine: 1 },
+          { type: 'remove', text: 'removed line', oldLine: 2, newLine: null },
+          { type: 'add', text: 'added line', oldLine: null, newLine: 2 },
         ],
       },
     ]);
@@ -75,9 +75,9 @@ describe('rawContentHunks', () => {
       {
         header: '',
         lines: [
-          { type: 'add', text: 'line one' },
-          { type: 'add', text: '@@ -1,1 +1,1 @@' },
-          { type: 'add', text: 'line two' },
+          { type: 'add', text: 'line one', oldLine: null, newLine: 1 },
+          { type: 'add', text: '@@ -1,1 +1,1 @@', oldLine: null, newLine: 2 },
+          { type: 'add', text: 'line two', oldLine: null, newLine: 3 },
         ],
       },
     ]);
