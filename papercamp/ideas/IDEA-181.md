@@ -97,6 +97,7 @@ unaffected.
       Exercise RefreshButton → /api/refresh end to end after the auto-callers are gone.
       run: 3m43s · 528 in · 7.2k out · sonnet-5
 - [x] [manual] Stop run-order pass from live-fetching PRs
+- [x] [manual] Move IDEA-162 back to planned with the Fixes phase
 
 ### Fixes
 - [x] Promote the refresh out of the idea view
