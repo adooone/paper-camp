@@ -71,7 +71,8 @@ One of three slices over `features/git/`: [[IDEA-166]] → **[[IDEA-167]] (this)
 - [x] Add page and per-file headings plus a labelled nav list
       An `h1` for the page, a heading one level down per file section, and the changed-files sidebar as a navigation landmark.
       run: 2m59s · 528 in · 14.5k out · sonnet-5
-- [ ] Replace the breadcrumb with a page title
+- [x] Replace the breadcrumb with a page title
+      run: 40s · 236 in · 2.1k out · sonnet-5
 - [ ] Re-weight the action buttons: Push primary, Sync and Pull secondary
 - [ ] Fix the status-bar branch glyph and migrate the inline styles
       Swap `⌥` for `GitBranchIcon`, move the thirteen static layout styles to Tailwind, and narrow the guard allowlist to the texture alone.

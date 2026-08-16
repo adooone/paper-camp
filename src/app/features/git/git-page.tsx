@@ -4,12 +4,10 @@ import { FileDiffSection } from '@/app/features/git/file-diff-section';
 import { GitCommitButton, useGitCommitForm } from '@/app/features/git/git-commit-controls';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
-import { Breadcrumb, Divider } from '@dendelion/paper-ui';
-import { useNavigate } from '@tanstack/react-router';
+import { Divider } from '@dendelion/paper-ui';
 import { Fragment, useEffect, useMemo, useRef } from 'react';
 
 export const GitPage = () => {
-  const navigate = useNavigate();
   const files = useAppStore((s) => s.diffFiles);
   const loadFailed = useAppStore((s) => s.diffLoadFailed);
   const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
@@ -63,23 +61,11 @@ export const GitPage = () => {
     return () => observer.disconnect();
   }, [files, setActiveDiffPath]);
 
-  const breadcrumb = (
-    <div className="mb-4">
-      <Breadcrumb
-        items={[
-          { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
-          { id: 'git', label: 'Git' },
-        ]}
-      />
-    </div>
-  );
-
   const contentClass = 'min-h-page';
 
   if (loadFailed) {
     return (
       <div>
-        {breadcrumb}
         <PageTitle>Git</PageTitle>
         <div className="mb-4 flex items-center gap-2">
           <GitSyncActions />
@@ -95,7 +81,6 @@ export const GitPage = () => {
   if (!files) {
     return (
       <div>
-        {breadcrumb}
         <PageTitle>Git</PageTitle>
         <div className="mb-4 flex items-center gap-2">
           <GitSyncActions />
@@ -110,7 +95,6 @@ export const GitPage = () => {
 
   return (
     <div>
-      {breadcrumb}
       <PageTitle>Git</PageTitle>
       <div className="mb-4 flex items-center gap-2">
         <GitSyncActions />
