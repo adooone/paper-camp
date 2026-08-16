@@ -166,7 +166,7 @@
 | IDEA-163 | Stack panel affordance and a11y pass | fix | planned | app, stack, ux |
 | IDEA-164 | Browser-driven page audits | feat | planned | app, agent, stack |
 | IDEA-165 | Stage files, write the message | feat | done | app, git, ux |
-| IDEA-166 | Readable diffs on the git page | feat | planned | app, git, ui |
+| IDEA-166 | Readable diffs on the git page | feat | review | app, git, ui |
 | IDEA-167 | Git status vocabulary and chrome | fix | planned | app, git, ux |
 | IDEA-168 | Version the corpus format | feat | planned | format, core |
 | IDEA-169 | Draft all ideas at once | feat | done | app, plans, agent |
@@ -181,5 +181,5 @@
 | IDEA-178 | Rate limits must not rewrite status | fix | planned | core, github, plans |
 | IDEA-179 | Prioritise lies about what it did | fix | planned | app, server, plans |
 | IDEA-180 | Say what each idea is for | feat | idea | app, plans, format |
-| IDEA-181 | Fetch from GitHub only when asked | feat | done | server, github, core |
+| IDEA-181 | Fetch from GitHub only when asked | feat | planned | server, github, core |
 | IDEA-182 | Finish corpus writes before committing | fix | dropped | server, agent, git |

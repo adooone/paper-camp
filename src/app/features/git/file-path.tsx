@@ -12,7 +12,7 @@ export const FilePath = ({ path, prefix, className = '' }: FilePathProps) => {
   return (
     <span className={`flex min-w-0 items-center font-mono ${className}`}>
       {dimmed && (
-        <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap opacity-50">
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap opacity-50">
           {dimmed}
         </span>
       )}

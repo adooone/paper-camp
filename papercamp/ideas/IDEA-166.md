@@ -4,7 +4,7 @@ title: Readable diffs on the git page
 type: feat
 status: review
 created: 2026-08-13
-updated: 2026-08-14
+updated: 2026-08-16
 tags:
   - app
   - git
@@ -70,3 +70,7 @@ One of three slices over `features/git/`, shippable in this order: **[[IDEA-166]
       run: 3m46s · 792 in · 9.2k out · sonnet-5
 - [x] Extract the shared `CountBadge` component
       run: 2m22s · 502 in · 3.5k out · sonnet-5
+- [x] [manual] Fix diff line numbers and path truncation edge cases
+
+### Thread
+- [x] 2026-08-16 [review] [agent] Comments · 2 findings — The core IDEA-166 work is well-executed and delivers all six phases: the line-height class, old/new gutters with non-selectable dimmed columns, collapsible sections with a size threshold and scroll-spy expand, a sticky commit row, the basename/directory split, and the extracted CountBadge. Two small edge-case/visual issues are worth a look, and the PR also bundles a chunk of unrelated IDEA-182 (dropped) plumbing that seems out of scope for a readable-diffs slice.

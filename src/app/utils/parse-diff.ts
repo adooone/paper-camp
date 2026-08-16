@@ -34,6 +34,7 @@ export function parsePatch(patch: string): DiffHunk[] {
       continue;
     }
     if (!current) continue; // preamble: diff --git / index / --- / +++
+    if (line.startsWith('\\')) continue; // "\ No newline at end of file"
     if (line.startsWith('+')) {
       current.lines.push({ type: 'add', text: line.slice(1), oldLine: null, newLine });
       newLine++;
