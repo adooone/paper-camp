@@ -1,6 +1,9 @@
+import { useAppStore } from '@/app/stores/app-store';
 import { type DiffLineType, parsePatch, rawContentHunks } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
-import { Stamp } from '@dendelion/paper-ui';
+import { Accordion, Stamp } from '@dendelion/paper-ui';
+
+const COLLAPSE_LINE_THRESHOLD = 60;
 
 const LINE_CLASS: Record<DiffLineType, string> = {
   add: 'bg-watercolor-green/[18%] text-watercolor-green-dark',
@@ -96,11 +99,23 @@ interface FileDiffSectionProps {
   entry: FileDiffEntry;
 }
 
-export const FileDiffSection = ({ entry }: FileDiffSectionProps) => (
-  <div data-diff-path={entry.path} className="min-w-0 max-w-full scroll-mt-4">
-    <div className="mb-3">
-      <FileHeader entry={entry} />
+export const FileDiffSection = ({ entry }: FileDiffSectionProps) => {
+  const manuallyExpanded = useAppStore((s) => s.manuallyExpandedDiffPaths.has(entry.path));
+  const manuallyCollapsed = useAppStore((s) => s.manuallyCollapsedDiffPaths.has(entry.path));
+  const setDiffCollapsed = useAppStore((s) => s.setDiffCollapsed);
+  const collapsed =
+    manuallyCollapsed ||
+    (!manuallyExpanded && entry.additions + entry.deletions > COLLAPSE_LINE_THRESHOLD);
+
+  return (
+    <div data-diff-path={entry.path} className="min-w-0 max-w-full scroll-mt-4">
+      <Accordion
+        title={<FileHeader entry={entry} />}
+        expanded={!collapsed}
+        onToggle={() => setDiffCollapsed(entry.path, !collapsed)}
+      >
+        <DiffBody entry={entry} />
+      </Accordion>
     </div>
-    <DiffBody entry={entry} />
-  </div>
-);
+  );
+};

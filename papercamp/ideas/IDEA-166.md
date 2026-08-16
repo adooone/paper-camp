@@ -59,8 +59,9 @@ One of three slices over `features/git/`, shippable in this order: **[[IDEA-166]
 - [x] Add old/new line-number gutters
       Dimmed and non-selectable so copied hunks stay valid patch text.
       run: 3m5s · 1.1k in · 5.1k out · sonnet-5
-- [ ] Make each `FileDiffSection` collapsible
+- [x] Make each `FileDiffSection` collapsible
       Collapsible header, files past a size threshold start collapsed, scroll-spy expands a file on jump.
+      run: 4m7s · 663 in · 13k out · sonnet-5
 - [ ] Stick the commit row under the page chrome
       Carry the staged count from [[IDEA-165]].
 - [ ] Fix path truncation in the sidebar and `FileHeader`

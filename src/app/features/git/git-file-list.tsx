@@ -19,10 +19,13 @@ const CountBadge = ({ additions, deletions }: CountBadgeProps) => (
   </span>
 );
 
-const scrollToFile = (path: string) => {
-  document
-    .querySelector(`[data-diff-path="${CSS.escape(path)}"]`)
-    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+const scrollToFile = (path: string, expandDiffPath: (path: string) => void) => {
+  expandDiffPath(path);
+  requestAnimationFrame(() => {
+    document
+      .querySelector(`[data-diff-path="${CSS.escape(path)}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 };
 
 // Both status characters set (and neither '?', which pairs up for untracked) means
@@ -36,6 +39,7 @@ export const GitFileList = () => {
   const files = useAppStore((s) => s.diffFiles);
   const activePath = useAppStore((s) => s.activeDiffPath);
   const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
+  const expandDiffPath = useAppStore((s) => s.expandDiffPath);
   const [pending, setPending] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
@@ -78,7 +82,7 @@ export const GitFileList = () => {
               <ListItem
                 size="small"
                 active={entry.path === activePath}
-                onClick={() => scrollToFile(entry.path)}
+                onClick={() => scrollToFile(entry.path, expandDiffPath)}
                 className="flex-1"
                 action={
                   <span className="flex items-center gap-2">
