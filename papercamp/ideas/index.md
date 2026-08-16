@@ -181,4 +181,4 @@
 | IDEA-178 | Rate limits must not rewrite status | fix | planned | core, github, plans |
 | IDEA-179 | Prioritise lies about what it did | fix | planned | app, server, plans |
 | IDEA-180 | Say what each idea is for | feat | idea | app, plans, format |
-| IDEA-181 | Fetch from GitHub only when asked | feat | in-progress | server, github, core |
+| IDEA-181 | Fetch from GitHub only when asked | feat | review | server, github, core |
