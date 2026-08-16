@@ -1,4 +1,3 @@
-IDEA-181 — Fetch from GitHub only when asked
 IDEA-117 — Multi-project hub
 IDEA-163 — Stack panel affordance and a11y pass
 IDEA-164 — Browser-driven page audits
