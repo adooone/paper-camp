@@ -62,8 +62,9 @@ working-tree diff." offers no retry.
 One of three slices over `features/git/`: [[IDEA-166]] → **[[IDEA-167]] (this)** → [[IDEA-165]]. Carrying `status` onto `FileDiffEntry` here is what lets [[IDEA-165]] render a partially-staged file, so this lands before it.
 
 ### Phases
-- [ ] Carry `status` through the diff model onto `FileDiffEntry`
+- [x] Carry `status` through the diff model onto `FileDiffEntry`
       Thread git's two-character code from `/api/git/status` into the entry the diff model builds.
+      run: 55s · 5.7k in · 3.1k out · sonnet-5
 - [ ] Render a per-file status marker in the sidebar and diff header
       Use git's own A/M/D/?? letter vocabulary, matching the `renameSource` treatment already in place.
 - [ ] Add page and per-file headings plus a labelled nav list
