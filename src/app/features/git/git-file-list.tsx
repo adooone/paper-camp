@@ -1,5 +1,6 @@
 import { CountBadge } from '@/app/features/git/count-badge';
 import { FilePath } from '@/app/features/git/file-path';
+import { GitStatusMarker } from '@/app/features/git/git-status-marker';
 import { stagePath, unstagePath } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
@@ -69,6 +70,7 @@ export const GitFileList = () => {
                 onChange={(e) => toggleStaged(entry, e.target.checked)}
                 aria-label={entry.staged ? `Unstage ${entry.path}` : `Stage ${entry.path}`}
               />
+              <GitStatusMarker status={entry.status} />
               <ListItem
                 size="small"
                 active={entry.path === activePath}

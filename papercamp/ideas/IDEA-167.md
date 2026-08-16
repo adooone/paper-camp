@@ -65,8 +65,9 @@ One of three slices over `features/git/`: [[IDEA-166]] → **[[IDEA-167]] (this)
 - [x] Carry `status` through the diff model onto `FileDiffEntry`
       Thread git's two-character code from `/api/git/status` into the entry the diff model builds.
       run: 55s · 5.7k in · 3.1k out · sonnet-5
-- [ ] Render a per-file status marker in the sidebar and diff header
+- [x] Render a per-file status marker in the sidebar and diff header
       Use git's own A/M/D/?? letter vocabulary, matching the `renameSource` treatment already in place.
+      run: 2m11s · 520 in · 8.1k out · sonnet-5
 - [ ] Add page and per-file headings plus a labelled nav list
       An `h1` for the page, a heading one level down per file section, and the changed-files sidebar as a navigation landmark.
 - [ ] Replace the breadcrumb with a page title
