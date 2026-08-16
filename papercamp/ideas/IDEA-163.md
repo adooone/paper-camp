@@ -93,8 +93,9 @@ Code organisation, same files and same pass:
 - [x] Give stale stamps a resting treatment and consolidate the stamp code
       Add the outlined chalk resting state, extract one `StampButton`, hoist `statusFill`/`statusText` to module scope, and drop `shared.ts`'s hardcoded hex for the `chalk.*` tokens.
       run: 6m53s · 9.3k in · 17.7k out · sonnet-5
-- [ ] Fix and surface service state
+- [x] Fix and surface service state
       Probe the healthcheck regardless of who owns the process in `desk-services.ts`, then give the row an unambiguous run icon and a real expand chevron.
+      run: 5m9s · 804 in · 15k out · sonnet-5
 - [ ] Make the panel accessible
       Mark it `inert` while closed, turn it into a labelled `complementary` landmark with real headings and dot labels, and add Escape-to-close.
 - [ ] Repair the agent card and task list

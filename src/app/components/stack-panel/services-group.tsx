@@ -3,7 +3,7 @@ import { fetchServiceLog } from '@/app/services/services-api';
 import type { ServiceState } from '@/types/index';
 import { Card, IconButton, Spinner, useToast } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RunIcon, StopIcon } from '../icons';
+import { ChevronRightIcon, RunIcon, StopIcon } from '../icons';
 import { groupLabelClassName } from './shared';
 
 const LOG_POLL_MS = 1500;
@@ -74,6 +74,7 @@ const ServiceRow = ({
   const [busy, setBusy] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const isRunning = service.status === 'running' || service.status === 'stopping';
+  const owned = service.pid !== null;
 
   const toggleRun = async () => {
     if (busy) return;
@@ -97,8 +98,14 @@ const ServiceRow = ({
         <button
           type="button"
           onClick={() => setShowLog((v) => !v)}
+          aria-expanded={showLog}
           className="flex min-w-0 cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left"
         >
+          <span
+            className={`shrink-0 text-desk-text-muted transition-transform ${showLog ? 'rotate-90' : ''}`}
+          >
+            <ChevronRightIcon />
+          </span>
           <StatusDot service={service} />
           <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm font-semibold text-desk-chalk">
             {service.name}
@@ -112,7 +119,7 @@ const ServiceRow = ({
         <div className="flex shrink-0 items-center gap-1">
           {busy ? (
             <Spinner size="small" surface="chalkboard" label="Working" />
-          ) : (
+          ) : !isRunning || owned ? (
             <IconButton
               icon={isRunning ? <StopIcon /> : <RunIcon />}
               surface="chalkboard"
@@ -121,7 +128,7 @@ const ServiceRow = ({
               label={isRunning ? `Stop ${service.name}` : `Start ${service.name}`}
               onClick={toggleRun}
             />
-          )}
+          ) : null}
         </div>
       </div>
       {showLog && <ServiceLog name={service.name} running={isRunning} />}

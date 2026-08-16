@@ -6,8 +6,8 @@ export function serviceRoutes({ services }: RouteContext): Route[] {
     {
       method: 'GET',
       path: '/api/services',
-      handle: (_req, res) => {
-        sendJson(res, 200, { services: services.getStatus() });
+      handle: async (_req, res) => {
+        sendJson(res, 200, { services: await services.getStatus() });
       },
     },
 

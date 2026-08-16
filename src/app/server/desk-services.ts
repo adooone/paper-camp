@@ -115,23 +115,26 @@ export function createDeskServiceManager(
     }
   }
 
+  async function probeHealthcheck(url: string): Promise<ServiceHealth> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      return res.ok ? 'up' : 'down';
+    } catch {
+      return 'down';
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   function startHealthPolling(name: string, service: DeskService, runtime: RunningService) {
     if (!service.healthcheck) return;
     stopHealthPolling(runtime);
     const url = service.healthcheck;
     const poll = async () => {
       if (runtime.status !== 'running') return;
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
-      let next: ServiceHealth;
-      try {
-        const res = await fetch(url, { signal: controller.signal });
-        next = res.ok ? 'up' : 'down';
-      } catch {
-        next = 'down';
-      } finally {
-        clearTimeout(timeout);
-      }
+      const next = await probeHealthcheck(url);
       if (runtime.status === 'running' && runtime.health !== next) {
         runtime.health = next;
         broadcast(name);
@@ -235,8 +238,19 @@ export function createDeskServiceManager(
     };
   }
 
-  function getStatus(): ServiceState[] {
-    return loadManifestServices(root).map((service) => toState(service, runtimeFor(service.name)));
+  async function getStatus(): Promise<ServiceState[]> {
+    return Promise.all(
+      loadManifestServices(root).map(async (service) => {
+        const runtime = runtimeFor(service.name);
+        if (runtime.status !== 'stopped' || !service.healthcheck) {
+          return toState(service, runtime);
+        }
+        const health = await probeHealthcheck(service.healthcheck);
+        return health === 'up'
+          ? { ...toState(service, runtime), status: 'running' as const, health }
+          : toState(service, runtime);
+      }),
+    );
   }
 
   function getLog(name: string): string | null {
