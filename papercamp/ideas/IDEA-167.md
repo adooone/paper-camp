@@ -10,6 +10,7 @@ tags:
   - git
   - ux
 subject: App UI
+order: 4
 ---
 
 The git page never says what happened to a file, and the chrome around it
@@ -80,3 +81,6 @@ One of three slices over `features/git/`: [[IDEA-166]] → **[[IDEA-167]] (this)
       run: 2m16s · 522 in · 10.5k out · sonnet-5
 - [x] Give loading and failure states a retry affordance
       run: 1m27s · 383 in · 5.3k out · sonnet-5
+
+### Thread
+- [x] 2026-08-16 [review] [agent] Comments · 1 finding — Phases 2–7 are delivered cleanly: the status marker, semantic headings/nav, dropped breadcrumb, re-weighted buttons, branch-glyph fix, inline-style migration, and retry affordances all match the spec, and tsc plus the inline-styles guard test pass. Phase 1 ("Carry status through the diff model onto FileDiffEntry") is a no-op box-check — its commit changed only the idea markdown because FileDiffEntry.status already existed on main (added upstream by IDEA-165 #160) and getWorkingDiff already populated it. Nothing is broken; the marker reads a field that is genuinely present and populated.
