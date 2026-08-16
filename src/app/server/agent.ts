@@ -1704,6 +1704,7 @@ export function createAgentManager(
       status: task.status,
       taskKind: task.taskKind,
       planTitle: task.planTitle,
+      startedAt: task.startedAt,
       planId: task.planId,
       phaseIndex: task.phaseIndex,
       ...(task.fixAttempt !== undefined

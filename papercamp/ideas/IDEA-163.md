@@ -99,8 +99,9 @@ Code organisation, same files and same pass:
 - [x] Make the panel accessible
       Mark it `inert` while closed, turn it into a labelled `complementary` landmark with real headings and dot labels, and add Escape-to-close.
       run: 6m25s · 679 in · 20.8k out · sonnet-5
-- [ ] Repair the agent card and task list
+- [x] Repair the agent card and task list
       Drop the redundant subtitle, give the agent label a non-truncating slot, show each task's start time, and replace the silent slice with a "+N more" link to `/tasks`.
+      run: 5m13s · 936 in · 15.3k out · sonnet-5
 - [ ] Settle the presentation
       Left-align the column, use the body font for the group labels, and shrink the `h-20` header.
 - [ ] Clear the dead and duplicated code
