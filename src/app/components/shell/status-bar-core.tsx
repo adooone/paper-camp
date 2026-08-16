@@ -1,7 +1,7 @@
 import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
 import type { AgentTaskStatus, RateLimitSnapshot } from '@/types/index';
 import { IconButton, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { BellIcon, GitBranchIcon } from '../icons';
 
 function capacityTooltip(snapshot: RateLimitSnapshot): string {
@@ -13,53 +13,18 @@ function capacityTooltip(snapshot: RateLimitSnapshot): string {
   return parts.join(' · ');
 }
 
-const barStyle: CSSProperties = {
-  ...getTextureStyles('kraft'),
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.75rem',
-  height: '2rem',
-  paddingLeft: '1rem',
-  paddingRight: '1rem',
-  borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-  fontSize: '0.75rem',
-  flexShrink: 0,
-  boxSizing: 'border-box',
-  overflowX: 'auto',
-  overflowY: 'hidden',
-  whiteSpace: 'nowrap',
-};
-const leftGroupStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.75rem',
-  flexShrink: 0,
-};
-const branchStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: '0.25rem' };
-const mutedStyle: CSSProperties = { opacity: 0.5 };
-const branchNameStyle: CSSProperties = { color: 'var(--pui-text-primary)' };
-const secondaryStyle: CSSProperties = { opacity: 0.6 };
-const spacerStyle: CSSProperties = { flex: 1 };
-const rightGroupStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  flexShrink: 0,
-};
-const stampTriggerStyle: CSSProperties = {
-  background: 'none',
-  backgroundColor: 'transparent',
-  border: 'none',
-  padding: 0,
-  cursor: 'pointer',
-};
-const notificationButtonStyle: CSSProperties = { position: 'relative', display: 'inline-flex' };
-const notificationBadgeStyle: CSSProperties = {
-  position: 'absolute',
-  top: '-0.25rem',
-  right: '-0.25rem',
-  pointerEvents: 'none',
-};
+const barClass =
+  'flex items-center gap-3 h-8 px-4 border-b border-black/[0.08] text-xs shrink-0 box-border overflow-x-auto overflow-y-hidden whitespace-nowrap';
+const leftGroupClass = 'flex items-center gap-3 shrink-0';
+const branchClass = 'flex items-center gap-1';
+const mutedClass = 'opacity-50';
+const branchNameClass = 'text-[var(--pui-text-primary)]';
+const secondaryClass = 'opacity-60';
+const spacerClass = 'flex-1';
+const rightGroupClass = 'flex items-center gap-2 shrink-0';
+const stampTriggerClass = 'bg-transparent border-none p-0 cursor-pointer';
+const notificationButtonClass = 'relative inline-flex';
+const notificationBadgeClass = 'absolute -top-1 -right-1 pointer-events-none';
 
 export interface StatusBarCoreProps {
   gitBranch: string | null;
@@ -94,21 +59,23 @@ export const StatusBarCore = ({
   trailing,
 }: StatusBarCoreProps) => {
   return (
-    <div style={barStyle}>
-      <div style={leftGroupStyle}>
-        <span style={branchStyle}>
-          <span style={mutedStyle}>⌥</span>
-          <code style={branchNameStyle}>{gitBranch ?? 'no branch'}</code>
+    <div className={barClass} style={getTextureStyles('kraft')}>
+      <div className={leftGroupClass}>
+        <span className={branchClass}>
+          <span className={mutedClass}>
+            <GitBranchIcon size={12} />
+          </span>
+          <code className={branchNameClass}>{gitBranch ?? 'no branch'}</code>
         </span>
-        {gitAhead > 0 && <span style={secondaryStyle}>↑{gitAhead}</span>}
-        <span style={secondaryStyle}>
+        {gitAhead > 0 && <span className={secondaryClass}>↑{gitAhead}</span>}
+        <span className={secondaryClass}>
           {changedFileCount > 0 ? `${changedFileCount} changed` : 'clean'}
         </span>
         {agentActive && <Spinner size="small" label={`Agent ${activeTaskStatus}…`} />}
         {agentNotSignedIn && (
           <Tooltip content="Sign in from Settings → Connections so agent tasks can run">
             {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}
-            <button type="button" onClick={onOpenSetup} style={stampTriggerStyle}>
+            <button type="button" onClick={onOpenSetup} className={stampTriggerClass}>
               <Stamp size="small" variant="warning">
                 Agent not signed in
               </Stamp>
@@ -118,7 +85,7 @@ export const StatusBarCore = ({
         {capabilityGapCount > 0 && (
           <Tooltip content="Some features are disabled — open Setup to fix">
             {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}
-            <button type="button" onClick={onOpenSetup} style={stampTriggerStyle}>
+            <button type="button" onClick={onOpenSetup} className={stampTriggerClass}>
               <Stamp size="small" variant="warning">
                 Setup ({capabilityGapCount})
               </Stamp>
@@ -139,11 +106,11 @@ export const StatusBarCore = ({
         )}
       </div>
 
-      <div style={spacerStyle} />
+      <div className={spacerClass} />
 
-      {trailing && <div style={rightGroupStyle}>{trailing}</div>}
+      {trailing && <div className={rightGroupClass}>{trailing}</div>}
 
-      <div style={rightGroupStyle}>
+      <div className={rightGroupClass}>
         <Tooltip content="Git">
           <IconButton
             variant="ghost"
@@ -154,7 +121,7 @@ export const StatusBarCore = ({
           />
         </Tooltip>
         <Tooltip content="Notifications">
-          <span style={notificationButtonStyle}>
+          <span className={notificationButtonClass}>
             <IconButton
               variant="ghost"
               size="small"
@@ -163,7 +130,7 @@ export const StatusBarCore = ({
               onClick={onOpenNotifications}
             />
             {unreadNotificationCount > 0 && (
-              <span style={notificationBadgeStyle}>
+              <span className={notificationBadgeClass}>
                 <Stamp size="small" variant="warning">
                   {unreadNotificationCount}
                 </Stamp>
