@@ -15,6 +15,7 @@ export const GitSyncActions = () => {
       <Tooltip content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined}>
         <Button
           size="small"
+          variant="secondary"
           icon={<MergeIcon size={14} />}
           disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
           onClick={handleSync}
@@ -32,6 +33,7 @@ export const GitSyncActions = () => {
       </Button>
       <Button
         size="small"
+        variant="secondary"
         icon={<PullIcon size={14} />}
         disabled={gitActionBusy}
         onClick={handlePull}

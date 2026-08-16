@@ -73,7 +73,8 @@ One of three slices over `features/git/`: [[IDEA-166]] → **[[IDEA-167]] (this)
       run: 2m59s · 528 in · 14.5k out · sonnet-5
 - [x] Replace the breadcrumb with a page title
       run: 40s · 236 in · 2.1k out · sonnet-5
-- [ ] Re-weight the action buttons: Push primary, Sync and Pull secondary
+- [x] Re-weight the action buttons: Push primary, Sync and Pull secondary
+      run: 31s · 240 in · 1.6k out · sonnet-5
 - [ ] Fix the status-bar branch glyph and migrate the inline styles
       Swap `⌥` for `GitBranchIcon`, move the thirteen static layout styles to Tailwind, and narrow the guard allowlist to the texture alone.
 - [ ] Give loading and failure states a retry affordance
