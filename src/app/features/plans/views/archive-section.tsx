@@ -14,9 +14,15 @@ interface ArchiveSectionProps {
 export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
   const archivableIdeas = useAppStore((s) => s.archivableIdeas);
   const archiveIdeas = useAppStore((s) => s.archiveIdeas);
+  const search = useAppStore((s) => s.planFilters.search);
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [archivingAll, setArchivingAll] = useState(false);
   const { toast } = useToast();
+
+  const needle = search.trim().toLowerCase();
+  const visibleIdeas = needle
+    ? archivableIdeas.filter((idea) => idea.title.toLowerCase().includes(needle))
+    : archivableIdeas;
 
   const handleArchive = useCallback(
     async (ids: string[]) => {
@@ -44,18 +50,18 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
   const handleArchiveAll = useCallback(async () => {
     setArchivingAll(true);
     try {
-      await handleArchive(archivableIdeas.map((idea) => idea.id));
+      await handleArchive(visibleIdeas.map((idea) => idea.id));
     } finally {
       setArchivingAll(false);
     }
-  }, [handleArchive, archivableIdeas]);
+  }, [handleArchive, visibleIdeas]);
 
-  if (archivableIdeas.length === 0) return null;
+  if (visibleIdeas.length === 0) return null;
 
   return (
     <div className="mt-5">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <h2 className="text-sm m-0 opacity-60">Ready to archive ({archivableIdeas.length})</h2>
+        <h2 className="text-sm m-0 opacity-60">Ready to archive ({visibleIdeas.length})</h2>
         <Button
           variant="ghost"
           size="small"
@@ -66,7 +72,7 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
         </Button>
       </div>
       <div className="flex flex-col gap-1">
-        {archivableIdeas.map((idea) => (
+        {visibleIdeas.map((idea) => (
           <div key={idea.id} className="flex items-center">
             <RowMarker done />
             <div

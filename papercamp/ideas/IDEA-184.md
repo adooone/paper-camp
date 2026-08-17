@@ -67,8 +67,9 @@ The create modals' own fields, and the status-filter and sort behaviour
 - [x] Preserve the done texture within the grid
       Keep the distinct archive-row look while the five columns line up with the worklist header.
       run: 1m6s · 368 in · 3.8k out · sonnet-5
-- [ ] Filter the archive section with the search
+- [x] Filter the archive section with the search
       Run the archive rows through the same filter and drop the whole section when nothing matches.
+      run: 1m13s · 507 in · 4.5k out · sonnet-5
 - [ ] Decide whether both create actions stay
       Settle whether the second entry point earns its place before touching either button.
 - [ ] Give the surviving create action(s) matching affordance
