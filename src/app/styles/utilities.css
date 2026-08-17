@@ -109,6 +109,45 @@ header[class*="layout-module__header___"] {
 }
 
 /*
+ * The phase table's title column (entity-detail.tsx) takes the row's
+ * flexible width; the actions column next to it is fixed to fit its content
+ * instead of stretching. The token count alone is the default, and the full
+ * `tokens · duration · model` triplet only shows once the actions column
+ * (the `[container-type:inline-size]` wrapper, entity-detail.tsx) is wide
+ * enough to hold it — 190px, the width the triplet used to start shedding
+ * at. No intermediate states between those two.
+ */
+.run-meta-full {
+  display: none;
+}
+@container (min-width: 190px) {
+  .run-meta-full {
+    display: inline;
+  }
+}
+
+/*
+ * The Deliver row (entity-detail.tsx) gives the commit title input flex
+ * priority over the Commit/Fix button, so the button is what yields when the
+ * row is tight. Below a floor its full-label `Button` collapses to an
+ * icon-only `IconButton` carrying the same label as its native title
+ * tooltip, via a container query scoped to the button's own
+ * `[container-type:inline-size]` wrapper — a `Button` alone can't shrink
+ * past its label's min-content width, but swapping to an icon can.
+ */
+.commit-btn-compact {
+  display: none;
+}
+@container (max-width: 140px) {
+  .commit-btn-full {
+    display: none;
+  }
+  .commit-btn-compact {
+    display: inline-flex;
+  }
+}
+
+/*
  * A running phase row fills left-to-right like a loading line: the fraction is
  * published as --phase-fill on the Phases wrapper (entity-detail.tsx) and read
  * here, since paper-ui's Table exposes only rowClassName (a static class), no
@@ -169,6 +208,32 @@ header[class*="layout-module__header___"] {
   :root {
     /* clears the fixed 64px bottom bar (router.tsx) plus its own padding/safe-area */
     --pc-content-pad-bottom: 96px;
+  }
+}
+
+/*
+ * The Stack panel's docked width (stack-panel.tsx) and the root wrapper's
+ * `pr` reservation (router.tsx) must agree or the panel either gaps from or
+ * overlaps the page edge — one variable both read instead of the 480px
+ * literal duplicated across files. A continuous clamp here meant the width
+ * was never the same twice, so it never settled; three fixed steps instead.
+ * Below the phone breakpoint (480px) the panel is a full-screen overlay.
+ * Below THREE_COLUMN_BREAKPOINT (1199px, router.tsx) it isn't docked but is
+ * still an overlay, at 60% of the full width (288px). Above that it's
+ * docked, but stays at 288 until there's enough viewport to grow to the
+ * full 480 without taking it from the page: 1199 + (480 - 288) = 1391px.
+ */
+:root {
+  --pc-stack-width: 288px;
+}
+@media (max-width: 480px) {
+  :root {
+    --pc-stack-width: 100vw;
+  }
+}
+@media (min-width: 1391px) {
+  :root {
+    --pc-stack-width: 480px;
   }
 }
 

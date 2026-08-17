@@ -101,8 +101,13 @@ function writeStoredStackOpen(value: boolean): void {
   }
 }
 
-// Keep in sync with the min-[1440px]:pr-[480px] wrapper (Tailwind needs a literal).
-const LARGE_SCREEN_QUERY = '(min-width: 1440px)';
+const SIDEBAR_WIDTH = 224;
+const STACK_WIDTH = 480;
+const MIN_READABLE_PAGE_WIDTH = 495;
+const THREE_COLUMN_BREAKPOINT = SIDEBAR_WIDTH + MIN_READABLE_PAGE_WIDTH + STACK_WIDTH;
+
+// Keep in sync with the min-[1199px]:pr-[var(--pc-stack-width)] wrapper (Tailwind needs a literal).
+const LARGE_SCREEN_QUERY = `(min-width: ${THREE_COLUMN_BREAKPOINT}px)`;
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() =>
@@ -208,7 +213,7 @@ const RootLayout = () => {
 
   return (
     <ToastProvider position="bottom-left">
-      <div className="h-screen box-border min-[1440px]:pr-[480px] flex flex-col">
+      <div className="h-screen box-border min-[1199px]:pr-[var(--pc-stack-width)] flex flex-col">
         <ServerReloadBanner />
         <StatusBar />
         <Layout
@@ -261,9 +266,8 @@ const RootLayout = () => {
               // off the edge — re-adding it here stacked two grid cells of dead space.
               // paddingBottom uses var() so utilities.css can widen it below the phone
               // breakpoint, clearing the fixed .phone-bottom-nav that replaces the header
-              // nav there. 32px mirrors paper-ui `.content`'s padding, which the strip
-              // and scroller bleed back out of.
-              className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto [scrollbar-gutter:stable] -mt-8 -ml-8 -mr-8 pt-0 pl-8 pr-8 pb-[var(--pc-content-pad-bottom,32px)]"
+              // nav there.
+              className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto [scrollbar-gutter:stable] -mt-8 -ml-8 -mr-8 pt-0 pl-8 pr-8 pb-[var(--pc-content-pad-bottom)]"
             >
               {/* --pc-sidebar-h: the sticky sidebar can't size off this group (it's as
                   tall as the page). lg only — below that it's a full-height drawer. */}
@@ -302,16 +306,14 @@ const RootLayout = () => {
                     )}
                   </SidebarShell>
                 )}
-                <div
-                  className={`flex flex-col min-w-0 ${isLarge ? 'flex-[1_1_0%]' : 'flex-[0_1_800px]'}`}
-                >
+                <div className="flex flex-col min-w-0 flex-[1_1_0%]">
                   <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
                     <Page
                       texture={{ texture: 'parchment' }}
                       outline
-                      className={`min-h-[calc(100vh-160px)] w-full ${isLarge ? 'max-w-none' : ''}`}
+                      className="min-h-screen w-full max-w-none"
                     >
                       <Suspense fallback={null}>
                         <Outlet />

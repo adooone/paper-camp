@@ -79,3 +79,15 @@ than as a nested child card, so nothing IdeaGroupRowCard did comes back — but
 the field it keyed off is about to carry real weight.
 
 Run this idea before [[IDEA-187]], with that carve-out explicit in the removal.
+
+### Phases
+- [ ] Confirm shared call sites survive
+      Verify `DraftPlanButton` and `ExtendIdeaButton` are mounted elsewhere before deleting the group card.
+- [ ] Collapse the selector partition
+      Drop the `ideaParents` loop and `childrenByIdea`/`orphanPlans` split in `plan-list-selector.ts`; every plan becomes a plain row.
+- [ ] Remove the group card and its state
+      Delete `IdeaGroupRowCard`, the `IdeaGroupRow` type, `DONE_COLLAPSE_THRESHOLD`, `expandedDone`, `toggleExpanded`, and the "+N done" toggle.
+- [ ] Fold the three duplicate/dead-code cleanups
+      Share `PLAN_ROWS_GRID_CLASS` from `plan-rows`, resolve `ROW_MARKER_WIDTH`, and drop the dead `showHeader` branch in `PlanRows`.
+- [ ] Verify identical output and run checks
+      Confirm the worklist renders the same before and after, keeping `idea:` in the schema; run quality, tests, and consistency checks.

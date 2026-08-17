@@ -2,14 +2,15 @@
 id: IDEA-181
 title: Fetch from GitHub only when asked
 type: feat
-status: in-progress
+status: planned
 created: 2026-08-15
-updated: 2026-08-16
+updated: 2026-08-17
 tags:
   - server
   - github
   - core
 subject: Run & monitor
+order: 6
 ---
 
 GitHub is read when the human asks for it, and at no other time. No timers, no

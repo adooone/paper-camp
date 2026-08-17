@@ -1,11 +1,12 @@
 import { GitStashSurface, GitSyncActions } from '@/app/components';
+import { CommitIcon } from '@/app/components/icons';
 import { entityRouteParam } from '@/app/hooks';
 import { type CommitFormFile, useCommitForm } from '@/app/hooks/use-commit-form';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import type { AgentTaskState, CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
-import { Button, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
+import { Button, IconButton, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -87,7 +88,9 @@ export const DeliverChecksRow = () => {
   const { checks: deskChecks, run: runDeskCheck } = useDeskChecks();
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
+  const gitStashes = useAppStore((s) => s.gitStashes);
   const navigate = useNavigate();
+  const [healthExpanded, setHealthExpanded] = useState(false);
   const [docsExpanded, setDocsExpanded] = useState(false);
 
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
@@ -97,6 +100,29 @@ export const DeliverChecksRow = () => {
   const anyRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
   const hasDocIssues = consistency.length > 0;
+  const hasStashWarning = gitStashes.some((s) => s.own);
+
+  const failingCount =
+    [qualityStatus, testStatus, consistencyStatus].filter((s) => s === 'fail').length +
+    (hasDocIssues ? 1 : 0);
+  const healthStatus: CheckStatus = anyRunning
+    ? 'running'
+    : failingCount > 0 || hasStashWarning
+      ? 'fail'
+      : 'pass';
+  const healthLabel =
+    failingCount > 0
+      ? `Health · ${failingCount} failing`
+      : hasStashWarning
+        ? 'Health · stash needs recovery'
+        : 'Health';
+  const healthTooltip = anyRunning
+    ? 'A check is running…'
+    : failingCount > 0
+      ? `${failingCount} check${failingCount === 1 ? '' : 's'} need attention. Click to show.`
+      : hasStashWarning
+        ? 'A sync pop failed and left work stashed. Click to show.'
+        : 'Quality, tests, consistency & docs — all clear. Click to show.';
 
   const linkedPlanFor = useCallback(
     (issue: ConsistencyIssue) =>
@@ -105,86 +131,104 @@ export const DeliverChecksRow = () => {
   );
 
   return (
-    <div className="flex flex-wrap items-start gap-2">
-      <CheckStamp
-        label="Quality"
-        status={qualityStatus}
-        title="Code style & formatting (Biome lint + format). Click to run."
-        anyRunning={anyRunning}
-        onClick={() => runDeskCheck('lint')}
-      />
-      <CheckStamp
-        label="Tests"
-        status={testStatus}
-        title="Unit tests (Vitest). Click to run."
-        anyRunning={anyRunning}
-        onClick={() => runDeskCheck('test')}
-      />
-      <CheckStamp
-        label="Consistency"
-        status={consistencyStatus}
-        title="Dead code & architecture (Knip + dependency-cruiser). Click to run."
-        anyRunning={anyRunning}
-        onClick={() => runConsistencyCheck()}
-      />
-      <div>
-        <Tooltip
-          content={
-            hasDocIssues
-              ? 'Plan/idea doc findings — orphan subjects, title style & stale references. Click to show.'
-              : 'Plan/idea docs — no findings (orphan subjects, title style, stale references).'
-          }
+    <div className="flex flex-col items-start gap-2">
+      <Tooltip content={healthTooltip}>
+        {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
+        <button
+          type="button"
+          className="inline-flex bg-none bg-transparent border-none p-0 cursor-pointer enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95]"
+          onClick={() => setHealthExpanded((prev) => !prev)}
+          aria-expanded={healthExpanded}
         >
-          {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
-          <button
-            type="button"
-            className={`inline-flex bg-none bg-transparent border-none p-0 ${hasDocIssues ? 'enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] cursor-pointer' : 'cursor-default'}`}
-            disabled={!hasDocIssues}
-            aria-expanded={hasDocIssues ? docsExpanded : undefined}
-            aria-controls="deliver-doc-findings"
-            onClick={() => {
-              if (hasDocIssues) setDocsExpanded((prev) => !prev);
-            }}
-          >
-            <Stamp size="small" variant={hasDocIssues ? 'error' : 'success'}>
-              Docs
-            </Stamp>
-          </button>
-        </Tooltip>
-        {docsExpanded && hasDocIssues && (
-          <div id="deliver-doc-findings" className="mt-2 flex flex-col gap-2">
-            {consistency.map((issue, i) => {
-              const linkedPlan = linkedPlanFor(issue);
-              return (
-                <div
-                  key={`${issue.kind}-${issue.title}-${i}`}
-                  className="font-mono text-2xs opacity-70"
-                >
-                  {linkedPlan ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate({
-                          to: '/plans/$planId',
-                          params: {
-                            planId: entityRouteParam(linkedPlan.id, linkedPlan.title),
-                          },
-                        })
-                      }
-                      className="bg-none bg-transparent border-none p-0 underline cursor-pointer [font:inherit] text-left"
+          <Stamp size="small" variant={CHECK_VARIANT[healthStatus]}>
+            {healthLabel}
+            <span className={anyRunning ? 'visible' : 'invisible'}>…</span>
+          </Stamp>
+        </button>
+      </Tooltip>
+      {healthExpanded && (
+        <div className="flex flex-wrap items-start gap-2">
+          <CheckStamp
+            label="Quality"
+            status={qualityStatus}
+            title="Code style & formatting (Biome lint + format). Click to run."
+            anyRunning={anyRunning}
+            onClick={() => runDeskCheck('lint')}
+          />
+          <CheckStamp
+            label="Tests"
+            status={testStatus}
+            title="Unit tests (Vitest). Click to run."
+            anyRunning={anyRunning}
+            onClick={() => runDeskCheck('test')}
+          />
+          <CheckStamp
+            label="Consistency"
+            status={consistencyStatus}
+            title="Dead code & architecture (Knip + dependency-cruiser). Click to run."
+            anyRunning={anyRunning}
+            onClick={() => runConsistencyCheck()}
+          />
+          <div>
+            <Tooltip
+              content={
+                hasDocIssues
+                  ? 'Plan/idea doc findings — orphan subjects, title style & stale references. Click to show.'
+                  : 'Plan/idea docs — no findings (orphan subjects, title style, stale references).'
+              }
+            >
+              {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
+              <button
+                type="button"
+                className={`inline-flex bg-none bg-transparent border-none p-0 ${hasDocIssues ? 'enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] cursor-pointer' : 'cursor-default'}`}
+                disabled={!hasDocIssues}
+                aria-expanded={hasDocIssues ? docsExpanded : undefined}
+                aria-controls="deliver-doc-findings"
+                onClick={() => {
+                  if (hasDocIssues) setDocsExpanded((prev) => !prev);
+                }}
+              >
+                <Stamp size="small" variant={hasDocIssues ? 'error' : 'success'}>
+                  Docs
+                </Stamp>
+              </button>
+            </Tooltip>
+            {docsExpanded && hasDocIssues && (
+              <div id="deliver-doc-findings" className="mt-2 flex flex-col gap-2">
+                {consistency.map((issue, i) => {
+                  const linkedPlan = linkedPlanFor(issue);
+                  return (
+                    <div
+                      key={`${issue.kind}-${issue.title}-${i}`}
+                      className="font-mono text-2xs opacity-70"
                     >
-                      {issue.message}
-                    </button>
-                  ) : (
-                    <span className="text-left">{issue.message}</span>
-                  )}
-                </div>
-              );
-            })}
+                      {linkedPlan ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate({
+                              to: '/plans/$planId',
+                              params: {
+                                planId: entityRouteParam(linkedPlan.id, linkedPlan.title),
+                              },
+                            })
+                          }
+                          className="bg-none bg-transparent border-none p-0 underline cursor-pointer [font:inherit] text-left"
+                        >
+                          {issue.message}
+                        </button>
+                      ) : (
+                        <span className="text-left">{issue.message}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
-      <GitStashSurface />
+          <GitStashSurface />
+        </div>
+      )}
     </div>
   );
 };
@@ -288,25 +332,58 @@ export const DeliverCommitButton = ({
     qualityStatus === 'fail' || testStatus === 'fail' || consistencyStatus === 'fail';
 
   if (checksFailing) {
+    const label = state.fixing ? 'Fixing…' : 'Fix';
+    const disabled = !state.canFix || state.fixing;
     return (
-      <Button size="small" disabled={!state.canFix || state.fixing} onClick={state.handleFix}>
-        {state.fixing ? 'Fixing…' : 'Fix'}
-      </Button>
+      <div className="[container-type:inline-size]">
+        <Button
+          className="commit-btn-full"
+          size="small"
+          disabled={disabled}
+          onClick={state.handleFix}
+        >
+          {label}
+        </Button>
+        <IconButton
+          className="commit-btn-compact"
+          icon={<CommitIcon size={14} />}
+          size="small"
+          label={label}
+          disabled={disabled}
+          onClick={state.handleFix}
+        />
+      </div>
     );
   }
 
+  const label =
+    state.committing || state.commitInFlight
+      ? 'Committing…'
+      : state.stagedCount > 0
+        ? `Commit ${state.stagedCount} staged`
+        : 'Commit';
+  const disabled =
+    filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight;
+
   return (
-    <Button
-      size="small"
-      disabled={filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight}
-      onClick={state.handleCommit}
-    >
-      {state.committing || state.commitInFlight
-        ? 'Committing…'
-        : state.stagedCount > 0
-          ? `Commit ${state.stagedCount} staged`
-          : 'Commit'}
-    </Button>
+    <div className="[container-type:inline-size]">
+      <Button
+        className="commit-btn-full"
+        size="small"
+        disabled={disabled}
+        onClick={state.handleCommit}
+      >
+        {label}
+      </Button>
+      <IconButton
+        className="commit-btn-compact"
+        icon={<CommitIcon size={14} />}
+        size="small"
+        label={label}
+        disabled={disabled}
+        onClick={state.handleCommit}
+      />
+    </div>
   );
 };
 

@@ -99,3 +99,17 @@ parent/child *rendering* goes. Run 185 first, with that carve-out explicit.
 Migrating the four already-reopened ideas — they shipped, and rewriting their
 history buys nothing. Fixes on notes, which never carry plans. Any change to how
 `type` is used.
+
+### Phases
+- [ ] Keep the `idea:` parent field alive through IDEA-185
+      185's group-machinery deletion removes only the nested parent/child rendering, not the `idea:` field itself.
+- [ ] Add `fix` to the `kind` enum
+      Extend `entityFrontmatterSchema` so a fix derives status from its own phases and PR, and refine that `kind: fix` requires an `idea:` link to a done/archived parent.
+- [ ] Spawn a fix entity from a closed idea instead of reopening
+      A done/archived idea raises a new `IDEA-N` fix file with its parent link and a short 1–3 phase list; drop the reopen action from the UI.
+- [ ] Enforce the boundary rule by parent status
+      Open ideas keep the inline `### Fixes` list; only done/archived ideas can spawn a fix entity, decided by status so there is no judgement call.
+- [ ] Render fixes as their own worklist row
+      A distinct minimal row grouped under the parent's inherited subject, parent id and its own marker visible, not nested under the closed parent.
+- [ ] Cross-link fix and parent in their detail views
+      The parent view lists every linked fix with its status; the fix view links back to its parent idea.

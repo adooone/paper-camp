@@ -5,7 +5,6 @@ import { Divider, IconButton, Spinner } from '@dendelion/paper-ui';
 import { useEffect, useRef } from 'react';
 import { AgentSection } from './agent-section';
 import { DeskSection } from './desk-section';
-import { HealthSection } from './health-section';
 
 interface StackPanelProps {
   open: boolean;
@@ -170,10 +169,10 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       )}
       <aside
         ref={panelRef}
-        // Below the phone breakpoint the fixed 480px would overflow the viewport itself.
+        // Below the phone breakpoint the docked width would overflow the viewport itself.
         // Above the Layout header (z-200) — the panel owns the full right edge.
         aria-label="Stack"
-        className="fixed inset-y-0 right-0 z-[300] flex w-[min(480px,100vw)] flex-col overflow-hidden border-l-4 border-paper-950/[12%] text-desk-text bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]"
+        className="fixed inset-y-0 right-0 z-[300] flex w-[min(var(--pc-stack-width),100vw)] flex-col overflow-hidden border-l-4 border-paper-950/[12%] text-desk-text bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]"
         style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
       >
         <div className="flex h-14 shrink-0 items-center justify-between px-6">
@@ -190,10 +189,9 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           )}
         </div>
         <Divider surface="chalkboard" />
-        <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <AgentSection />
           <DeskSection />
-          <HealthSection />
         </div>
       </aside>
     </>

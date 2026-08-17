@@ -72,6 +72,10 @@ const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity
 // (`.fix-row`) so they read as part of the same list, distinct only by colour.
 type WorkRow = { kind: 'phase' | 'fix'; item: PhaseItem; index: number };
 
+function formatRunSummary(run: NonNullable<PhaseItem['run']>): string {
+  return `${formatTokens(run.inputTokens + run.outputTokens)} tokens · ${formatDuration(run.durationMs)}${run.attempts > 1 ? ` ×${run.attempts}` : ''}${run.model ? ` · ${run.model}` : ''}`;
+}
+
 const RunCostSummary = ({ rollup }: { rollup: UsageRollup }) => {
   if (rollup.runs === 0) return null;
   return (
@@ -225,22 +229,27 @@ const PhasesSection = ({
             key: 'actions',
             header: '',
             align: 'end',
+            width: 6,
             cell: (row: WorkRow) => {
               if (isRunningRow(row)) return null;
               if (row.item.done) {
-                if (!row.item.run) return null;
+                const run = row.item.run;
+                if (!run) return null;
                 return (
-                  <div className="flex justify-end">
+                  <div className="flex w-full justify-end [container-type:inline-size]">
                     <Stamp
                       size="small"
                       fillColor="var(--pui-texture-shade, rgba(0,0,0,0.06))"
                       textColor="inherit"
                     >
                       <span className="whitespace-nowrap font-mono text-3xs font-normal opacity-[0.7]">
-                        {formatTokens(row.item.run.inputTokens + row.item.run.outputTokens)} tokens
-                        · {formatDuration(row.item.run.durationMs)}
-                        {row.item.run.attempts > 1 && ` ×${row.item.run.attempts}`}
-                        {row.item.run.model && ` · ${row.item.run.model}`}
+                        <span>{formatTokens(run.inputTokens + run.outputTokens)} tokens</span>
+                        <span className="run-meta-full">
+                          {' '}
+                          · {formatDuration(run.durationMs)}
+                          {run.attempts > 1 && ` ×${run.attempts}`}
+                          {run.model && ` · ${run.model}`}
+                        </span>
                       </span>
                     </Stamp>
                   </div>
@@ -253,11 +262,21 @@ const PhasesSection = ({
                 </div>
               );
             },
-            width: 5,
           },
         ]}
         expandable={{
-          render: (row: WorkRow) => row.item.description || null,
+          render: (row: WorkRow) => {
+            const runSummary = row.item.run ? formatRunSummary(row.item.run) : null;
+            if (!row.item.description && !runSummary) return null;
+            return (
+              <div className="flex flex-col gap-1">
+                {row.item.description && <span>{row.item.description}</span>}
+                {runSummary && (
+                  <span className="font-mono text-3xs opacity-[0.7]">{runSummary}</span>
+                )}
+              </div>
+            );
+          },
         }}
         hideHeader
         density="compact"
@@ -409,13 +428,13 @@ const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
   const commitForm = useDeliverCommitForm(plan, files);
   const hasChanges = files.length > 0;
   return (
-    <div className="grid grid-cols-1 items-start gap-x-6 gap-y-2 md:grid-cols-[minmax(0,1fr)_auto_16rem]">
-      <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 md:flex-row md:items-start md:gap-x-6">
+      <div className="flex flex-1 flex-col gap-2">
         <DeliverChecksRow />
         {hasChanges && <CommitMessageFields state={commitForm} filesEmpty={!hasChanges} />}
       </div>
       <Divider orientation="vertical" className="hidden md:block" />
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-1 flex-col gap-2">
         {hasChanges ? (
           <>
             <DeliverChangedFiles count={files.length} />
@@ -690,16 +709,15 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-3 mb-2 flex-wrap">
+      <div className="flex items-baseline justify-between gap-3 mb-2">
         <h2 className={`${detailHeadingClassName} m-0 flex items-center gap-3 min-w-0 flex-wrap`}>
           <PlanIdStamp id={plan.id} />
           {plan.title}
         </h2>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-sm opacity-[0.45] whitespace-nowrap">
-            {plan.updated
-              ? `updated ${relativeDate(plan.updated)}`
-              : `created ${relativeDate(plan.created)}`}
+            <span className="max-[480px]:hidden">{plan.updated ? 'updated ' : 'created '}</span>
+            {relativeDate(plan.updated ?? plan.created)}
           </span>
           <RefreshButton />
         </div>

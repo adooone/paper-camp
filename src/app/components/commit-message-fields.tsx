@@ -1,5 +1,4 @@
-import { Alert, IconButton, Input, Textarea } from '@dendelion/paper-ui';
-import { useEffect, useState } from 'react';
+import { Alert, IconButton, Input } from '@dendelion/paper-ui';
 import { WandIcon } from './icons';
 
 export interface CommitMessageFieldsState {
@@ -21,12 +20,6 @@ export const CommitMessageFields = ({
   state: CommitMessageFieldsState;
   filesEmpty: boolean;
 }) => {
-  const [bodyExpanded, setBodyExpanded] = useState(Boolean(state.commitMessage));
-
-  useEffect(() => {
-    if (state.commitMessage) setBodyExpanded(true);
-  }, [state.commitMessage]);
-
   return (
     <div className="flex flex-col gap-2">
       {state.suggestError && (
@@ -35,7 +28,7 @@ export const CommitMessageFields = ({
         </Alert>
       )}
       <div className="flex gap-2 items-center">
-        <div className="flex-1">
+        <div className="flex-1 min-w-[140px]">
           <Input
             size="small"
             placeholder="Commit title"
@@ -52,23 +45,6 @@ export const CommitMessageFields = ({
           wobble={state.suggesting ? 1 : 0}
         />
       </div>
-      {bodyExpanded ? (
-        <Textarea
-          size="small"
-          placeholder="Commit message (optional)"
-          value={state.commitMessage}
-          onChange={(e) => state.setCommitMessage(e.currentTarget.value)}
-        />
-      ) : (
-        // Raw <button>: paper-ui's Button has no bare text-link variant.
-        <button
-          type="button"
-          onClick={() => setBodyExpanded(true)}
-          className="self-start bg-none bg-transparent border-none p-0 [font:inherit] text-2xs opacity-60 cursor-pointer underline"
-        >
-          Add a message
-        </button>
-      )}
     </div>
   );
 };
