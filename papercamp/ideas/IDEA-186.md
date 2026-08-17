@@ -110,8 +110,9 @@ sidebar contains per route. This is the shell's column geometry only.
 - [x] Stop the idea-view header wrapping
       Refresh sits top-right at a wide viewport and drops to a second line at a narrow one, moving a control whose position the user has learned. The header row never wraps: labels shorten, then collapse to icons, then the least-used actions move behind the existing overflow menu.
       run: 3m6s · 302 in · 13.6k out · sonnet-5
-- [ ] Collapse the Deliver checks into one Health stamp
+- [x] Collapse the Deliver checks into one Health stamp
       Quality, Tests, Consistency, Docs, a stash count and a commit state render as separate stamps that wrap across rows at a 407px page width, growing the section downward while almost always saying 'everything is fine'. One Health stamp: green when all pass, carrying the failing count when not, expanding to the individual checks on click so detail is one interaction away. Matches the Stack panel's own Health section, so the two surfaces stop disagreeing.
+      run: 4m43s · 433 in · 16.6k out · sonnet-5
 - [ ] Give the Stack three widths, not a continuous clamp
       The scale fix landed `--pc-stack-width: clamp(320px, 100vw - 879px, 480px)` in `utilities.css`, so the panel resizes on every pixel of viewport change — the width is never the same twice and nothing settles. Replace it with three discrete steps: full width below the phone breakpoint, 60% of today's 480px (288px) at medium, and 480px at large. Derive the large threshold the way phase 1 derived the three-column breakpoint rather than picking a round number. At 1200px this gives sidebar 282 + Stack 288, leaving the page ~630 instead of 407.
 - [ ] Show only tokens in a phase row below large
