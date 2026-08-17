@@ -76,3 +76,17 @@ their content.
 
 The Stack panel, the page's own content, and the three-column widths
 ([[IDEA-186]]). This is the shell's surfaces and the sidebar's interior.
+
+### Phases
+- [ ] Move ProjectIdentityHeader to the top of the sidebar column
+      It renders on the same speckled grid as the sidebar beneath it, one surface.
+- [ ] Swap nav into the navigationIsland slot and drop showHeader
+      Nav buttons move from headerActions to the island; remove the shared header band.
+- [ ] Start the Page at the top of the centre column
+      Parchment runs continuous from the first pixel to the existing bleed.
+- [ ] Give sidebar section labels real hierarchy
+      Replace the uniform sectionLabelClass so headers step above the controls.
+- [ ] Set Actions apart as the interactive block
+      Group and weight PlanActionsColumn so it no longer reads like the static stamps.
+- [ ] Tighten sidebar density and prune redundant labels
+      Settle rhythm and which sections read from content without a label.
