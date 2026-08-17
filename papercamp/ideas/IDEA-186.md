@@ -119,8 +119,9 @@ sidebar contains per route. This is the shell's column geometry only.
 - [x] Show only tokens in a phase row below large
       Refines the shed order already shipped: instead of dropping duration then model as space tightens, show the full `15.4k tokens · 2m7s · sonnet-5` triplet only at the largest width and just the token count at small and medium. One rule, one breakpoint, no intermediate states to reason about.
       run: 1m26s · 159 in · 5.9k out · sonnet-5
-- [ ] Make agent rows a fixed two-line card
+- [x] Make agent rows a fixed two-line card
       Measured in Chrome — the broken card is the agent row, and the cause is inverted shrink priority. IDEA-163's 'non-truncating slot' for the agent label made the metadata unshrinkable, so the plan title absorbs 100% of the loss: at a 316px panel the title box is 21px holding 259px of overflow, and on the running row it measures 0px wide while `· Claude Code` keeps 82px and the timestamp 61px. Even at a 476px panel the title still overflows by 74-144px. Card heights differ too — 57/48/48 at 316px — because content drives height. Fix: the title gets the flexible width with a real minimum and the metadata shrinks first, per the UX_PRINCIPLES §1 rule that priority goes to what the user reads. Every row is the same fixed height at every width: line one the title, line two agent, time and status, in a denser size. `MAX_VISIBLE_TASKS` stays 3. Remove the `+N more` link.
+      run: 3m53s · 435 in · 13.3k out · sonnet-5
 - [ ] Fold Health into the checks, inline
       The panel carries two separate check surfaces: the Desk's CHECKS group (types/lint/test/build) and a 153-line `health-section.tsx` mounted as its own top-level section with an `h3` and doctor/docs stamps. Two labelled sections for one question — is anything wrong — and neither says what it is for. Render them as one inline row of stamps within Desk, drop the standalone Health section and its heading, and keep the expand-on-click detail.
 

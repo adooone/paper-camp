@@ -6,9 +6,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { chalkStatusFill, chalkStatusText, formatLastRun, sectionLabelClassName } from './shared';
 
 const MAX_VISIBLE_TASKS = 3;
-// 9.25rem = 3 cards * 2.75rem card height + 2 gaps * 0.5rem, reserved so the
+// Fixed so every card is the same height regardless of how much its title or
+// metadata truncates — content no longer drives card height.
+const TASK_CARD_HEIGHT_CLASS = 'h-[3.25rem]';
+// 10.75rem = 3 cards * 3.25rem card height + 2 gaps * 0.5rem, reserved so the
 // empty state doesn't shrink the panel when tasks finish and clear.
-const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[9.25rem]';
+const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[10.75rem]';
 
 export const taskKindLabel = (task: AgentTaskState): string => {
   switch (task.taskKind) {
@@ -95,7 +98,7 @@ const AgentTaskCard = ({
   };
 
   return (
-    <Card surface="chalkboard" size="small" className="stack-task-card">
+    <Card surface="chalkboard" size="small" className={`stack-task-card ${TASK_CARD_HEIGHT_CLASS}`}>
       {/* biome-ignore lint/a11y/useSemanticElements: the Stop IconButton nests inside, and a native <button> can't contain another button. */}
       <div
         role="button"
@@ -108,62 +111,59 @@ const AgentTaskCard = ({
             openTaskPage();
           }
         }}
-        className="flex cursor-pointer items-center justify-between gap-2 rounded-[10px]"
+        className="flex h-full min-w-0 cursor-pointer flex-col justify-center gap-1 rounded-[10px]"
       >
-        <div className="flex min-w-0 flex-1 items-baseline gap-1">
-          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm font-semibold text-desk-chalk">
-            {task.planTitle}
-            {taskSubtitle(task)}
+        <span className="block min-w-[6ch] overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm font-semibold text-desk-chalk">
+          {task.planTitle}
+          {taskSubtitle(task)}
+        </span>
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-2xs text-desk-text-muted">
+            {AGENT_LABELS[task.agentId]} · {formatLastRun(task.startedAt)}
           </span>
-          <span className="shrink-0 text-xs text-desk-text-muted">
-            · {AGENT_LABELS[task.agentId]}
-          </span>
-          <span className="shrink-0 font-mono text-2xs text-desk-text-muted">
-            {formatLastRun(task.startedAt)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {task.status === 'error' && task.errorKind === 'auth' ? (
-            // paper-ui has no clickable Stamp variant, so a raw button wraps it (see docs/CODE_STYLE.md §1)
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate({ to: '/settings/$section', params: { section: 'setup' } });
-              }}
-              className="bg-none bg-transparent border-none p-0 cursor-pointer"
-            >
+          <div className="flex shrink-0 items-center gap-2">
+            {task.status === 'error' && task.errorKind === 'auth' ? (
+              // paper-ui has no clickable Stamp variant, so a raw button wraps it (see docs/CODE_STYLE.md §1)
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate({ to: '/settings/$section', params: { section: 'setup' } });
+                }}
+                className="bg-none bg-transparent border-none p-0 cursor-pointer"
+              >
+                <Stamp
+                  surface="chalkboard"
+                  size="small"
+                  fillColor={statusFill.error}
+                  textColor={statusText.error}
+                >
+                  stopped — agent signed out
+                </Stamp>
+              </button>
+            ) : (
               <Stamp
                 surface="chalkboard"
                 size="small"
-                fillColor={statusFill.error}
-                textColor={statusText.error}
+                fillColor={statusFill[task.status]}
+                textColor={statusText[task.status]}
               >
-                stopped — agent signed out
+                {task.status}
               </Stamp>
-            </button>
-          ) : (
-            <Stamp
-              surface="chalkboard"
-              size="small"
-              fillColor={statusFill[task.status]}
-              textColor={statusText[task.status]}
-            >
-              {task.status}
-            </Stamp>
-          )}
-          {(task.status === 'running' ||
-            task.status === 'starting' ||
-            task.status === 'stopping') && (
-            <IconButton
-              icon={<CloseIcon />}
-              variant="ghost"
-              size="small"
-              label="Stop agent"
-              onClick={handleStop}
-              disabled={task.status === 'stopping'}
-            />
-          )}
+            )}
+            {(task.status === 'running' ||
+              task.status === 'starting' ||
+              task.status === 'stopping') && (
+              <IconButton
+                icon={<CloseIcon />}
+                variant="ghost"
+                size="small"
+                label="Stop agent"
+                onClick={handleStop}
+                disabled={task.status === 'stopping'}
+              />
+            )}
+          </div>
         </div>
       </div>
     </Card>
@@ -173,9 +173,7 @@ const AgentTaskCard = ({
 export const AgentSection = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
-  const navigate = useNavigate();
   const visibleTasks = agentStatus.slice(0, MAX_VISIBLE_TASKS);
-  const hiddenCount = agentStatus.length - visibleTasks.length;
 
   return (
     <div className="flex min-h-0 flex-none flex-col p-6">
@@ -186,20 +184,9 @@ export const AgentSection = () => {
         }`}
       >
         {visibleTasks.length > 0 ? (
-          <>
-            {visibleTasks.map((task) => (
-              <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
-            ))}
-            {hiddenCount > 0 && (
-              <button
-                type="button"
-                onClick={() => navigate({ to: '/tasks' })}
-                className="bg-none bg-transparent border-none p-0 self-center underline cursor-pointer text-xs text-desk-chalk"
-              >
-                +{hiddenCount} more
-              </button>
-            )}
-          </>
+          visibleTasks.map((task) => (
+            <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
+          ))
         ) : (
           <Card surface="chalkboard" size="small">
             <p className="m-0 text-center text-xs opacity-50">No agent running.</p>
