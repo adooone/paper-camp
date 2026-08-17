@@ -5,7 +5,6 @@ import { Divider, IconButton, Spinner } from '@dendelion/paper-ui';
 import { useEffect, useRef } from 'react';
 import { AgentSection } from './agent-section';
 import { DeskSection } from './desk-section';
-import { HealthSection } from './health-section';
 
 interface StackPanelProps {
   open: boolean;
@@ -193,7 +192,6 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         <div className="flex min-h-0 flex-1 flex-col">
           <AgentSection />
           <DeskSection />
-          <HealthSection />
         </div>
       </aside>
     </>
