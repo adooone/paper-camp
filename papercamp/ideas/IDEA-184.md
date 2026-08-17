@@ -71,8 +71,9 @@ The create modals' own fields, and the status-filter and sort behaviour
 - [x] Filter the archive section with the search
       Run the archive rows through the same filter and drop the whole section when nothing matches.
       run: 1m13s · 507 in · 4.5k out · sonnet-5
-- [ ] Decide whether both create actions stay
+- [x] Decide whether both create actions stay
       Settle whether the second entry point earns its place before touching either button.
+      run: 26s · 5.6k in · 1.3k out · sonnet-5
 - [ ] Remove the Quick plan action, keep New Idea as the single create entry point
       Delete AddToBacklogButton and its POST /api/plans creation path; every new entity is created as a plain idea (idea/note kind) via NewIdeaButton and gets typed later when drafted into a plan.
 
