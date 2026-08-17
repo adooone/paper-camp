@@ -1,7 +1,7 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlan, useSubjectVocabulary } from '@/app/hooks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { Breadcrumb, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
+import { Breadcrumb, Card, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
@@ -162,69 +162,71 @@ export const PlanActionsColumn = () => {
 
       <div>
         <div className={`${sectionLabelClass} mb-1.5`}>Actions</div>
-        <div className="flex flex-col gap-1">
-          {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
-          {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
-          {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
+        <Card size="small">
+          <div className="flex flex-col gap-1">
+            {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
+            {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
+            {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
 
-          {underReview && (
-            // Offline fallback: sticks only once the live PR lookup can't resolve
-            // a merge either way (done normally derives from the PR merging).
-            <ListItem
-              size="small"
-              // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
-              icon={<span className="text-watercolor-green-dark">✓</span>}
-              onClick={() => patch({ status: 'done' })}
-              disabled={updating}
-              className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
-            >
-              Approve &amp; close
-            </ListItem>
-          )}
+            {underReview && (
+              // Offline fallback: sticks only once the live PR lookup can't resolve
+              // a merge either way (done normally derives from the PR merging).
+              <ListItem
+                size="small"
+                // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
+                icon={<span className="text-watercolor-green-dark">✓</span>}
+                onClick={() => patch({ status: 'done' })}
+                disabled={updating}
+                className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
+              >
+                Approve &amp; close
+              </ListItem>
+            )}
 
-          {done && (
-            <ListItem
-              size="small"
-              icon={<span className="text-ink-300">▣</span>}
-              onClick={handleArchive}
-              disabled={archiving || !plan.id}
-              className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
-            >
-              {archiving ? 'Archiving…' : 'Archive'}
-            </ListItem>
-          )}
+            {done && (
+              <ListItem
+                size="small"
+                icon={<span className="text-ink-300">▣</span>}
+                onClick={handleArchive}
+                disabled={archiving || !plan.id}
+                className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
+              >
+                {archiving ? 'Archiving…' : 'Archive'}
+              </ListItem>
+            )}
 
-          {canMarkDone && (
-            <ListItem
-              size="small"
-              // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
-              icon={<span className="text-watercolor-green-dark">✓</span>}
-              onClick={handleArchive}
-              disabled={archiving || !plan.id}
-              className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
-            >
-              {archiving ? 'Marking done…' : 'Mark done'}
-            </ListItem>
-          )}
+            {canMarkDone && (
+              <ListItem
+                size="small"
+                // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
+                icon={<span className="text-watercolor-green-dark">✓</span>}
+                onClick={handleArchive}
+                disabled={archiving || !plan.id}
+                className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
+              >
+                {archiving ? 'Marking done…' : 'Mark done'}
+              </ListItem>
+            )}
 
-          {!done && (
-            <ListItem
-              size="small"
-              icon={
-                <span
-                  className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
-                >
-                  {dropped ? '↺' : '⊘'}
-                </span>
-              }
-              onClick={() => patch({ status: dropped ? null : 'dropped' })}
-              disabled={updating}
-              className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
-            >
-              {dropped ? 'Reopen plan' : 'Mark dropped'}
-            </ListItem>
-          )}
-        </div>
+            {!done && (
+              <ListItem
+                size="small"
+                icon={
+                  <span
+                    className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
+                  >
+                    {dropped ? '↺' : '⊘'}
+                  </span>
+                }
+                onClick={() => patch({ status: dropped ? null : 'dropped' })}
+                disabled={updating}
+                className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
+              >
+                {dropped ? 'Reopen plan' : 'Mark dropped'}
+              </ListItem>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );

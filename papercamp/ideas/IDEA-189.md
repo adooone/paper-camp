@@ -94,8 +94,10 @@ The Stack panel, the page's own content, and the three-column widths
       Replace the uniform sectionLabelClass so headers step above the controls.
       run: bumped `sectionLabelClass` in `plan-actions-column.tsx` and `plan-filter-column.tsx` from `text-2xs`/`text-ink-300` (smaller than the `text-xs` control text below it, and washed-out) to `text-xs`/`text-ink-700` — labels now sit at or above the controls' size and read with real contrast. Left Roadmap's and Git's identical-looking labels untouched — out of this idea's Plans-page scope. Verified with `pnpm run check-types` and `pnpm biome check`; no browser available to confirm visually.
       run: 1m50s · 245 in · 7k out · sonnet-5
-- [ ] Set Actions apart as the interactive block
+- [x] Set Actions apart as the interactive block
       Group and weight PlanActionsColumn so it no longer reads like the static stamps.
+      run: wrapped the Actions list in paper-ui's `Card` (`size="small"`, default parchment texture) in `plan-actions-column.tsx` — its own bordered, textured surface distinct from the plain-list Show/Status/Subject/Order sections above it, so the interactive block reads as a raised block rather than another stack of `ListItem`s. Verified with `pnpm run check-types` and `pnpm biome check`; no browser available to confirm visually.
+      run: 2m17s · 509 in · 9.1k out · sonnet-5
 - [ ] Tighten sidebar density and prune redundant labels
       Settle rhythm and which sections read from content without a label.
 
