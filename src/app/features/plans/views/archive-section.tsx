@@ -108,6 +108,7 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
                       e.stopPropagation();
                       handleArchiveOne(idea);
                     }}
+                    onKeyDown={(e) => e.stopPropagation()}
                   >
                     {archivingId === idea.id ? 'Archiving…' : 'Archive'}
                   </Button>

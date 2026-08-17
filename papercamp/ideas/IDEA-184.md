@@ -10,7 +10,6 @@ tags:
   - plans
   - ui
 subject: App UI
-order: 9
 ---
 
 The Plans page renders the same entities two different ways and offers two
@@ -77,6 +76,7 @@ The create modals' own fields, and the status-filter and sort behaviour
 - [x] Remove the Quick plan action, keep New Idea as the single create entry point
       Delete AddToBacklogButton and its POST /api/plans creation path; every new entity is created as a plain idea (idea/note kind) via NewIdeaButton and gets typed later when drafted into a plan.
       run: 1m54s · 658 in · 6.9k out · sonnet-5
+- [x] [manual] stop keydown bubbling from archive row button
 
 ### Fixes
 - [x] Match done row height to regular card height
@@ -97,3 +97,4 @@ The create modals' own fields, and the status-filter and sort behaviour
 - [x] 2026-08-17 [chat] [agent] Added both here as fixes: match the done row's height to a regular card, and pin in-progress ideas to the top of the sort order. (reopened this idea to re-run)
 - [x] 2026-08-17 [chat] Ok, I mean active idea, it can be not only in progress, but also review. So the trigger to show idea on top is active - current branch
 - [x] 2026-08-17 [chat] [agent] Added that here — active includes review, not just in-progress, so the top-of-list pin now covers both. (reopened this idea to re-run)
+- [x] 2026-08-17 [review] [agent] Comments · 1 finding — The diff delivers the spec cleanly: archive rows now adopt PLAN_ROWS_GRID_CLASS with the row marker and an Archive-in-Status-slot layout, the archive section is filtered by search and dropped when empty, and the second create action (AddToBacklogButton + POST /api/plans + AddIdeaModal) is fully removed in line with the settled decision that every entity starts as a plain idea. The active-pin sort fix correctly covers both in-progress and review. The one substantive issue is a keyboard/a11y regression from nesting the Archive button inside the newly clickable row region.
