@@ -2,7 +2,7 @@
 id: IDEA-184
 title: One row treatment on the Plans page
 type: fix
-status: review
+status: in-progress
 created: 2026-08-16
 updated: 2026-08-17
 tags:
@@ -78,7 +78,15 @@ The create modals' own fields, and the status-filter and sort behaviour
       Delete AddToBacklogButton and its POST /api/plans creation path; every new entity is created as a plain idea (idea/note kind) via NewIdeaButton and gets typed later when drafted into a plan.
       run: 1m54s · 658 in · 6.9k out · sonnet-5
 
+### Fixes
+- [ ] Match done row height to regular card height
+      Archive/done rows in the worklist currently render shorter than a normal idea card. Align their height (padding/line-height) with the standard row so done items don't visually shrink.
+- [ ] Always sort in-progress ideas to the top
+      Regardless of the active sort column, ideas with status in-progress should be pinned first in the list ordering.
+
 ### Thread
 - [x] 2026-08-17 [question] [agent] Run-all parked on phase 4 ("Decide whether both create actions stay") — the agent needs a decision: Does the "Quick plan" entry point (`AddToBacklogButton` → `POST /api/plans`, letting you pick a typed `kind`: feat/fix/chore/docs/refactor at creation) still need to exist as a separate one-step action, or should every new entity start as a plain idea via `NewIdeaButton` (→ `POST /api/ideas`, kind idea/note only) and get typed later when it's drafted into a plan? This determines whether phase 5 gives matching affordance to two buttons or removes one — it's a scope call on the creation workflow, not something I can infer from the code.
 - [x] 2026-08-17 [clarification] every new entity start as a plain idea
 - [x] 2026-08-17 [chat] [agent] Locked in — every new entity starts as a plain idea via New Idea. That means Quick plan / AddToBacklogButton goes away, so phase 5 becomes: remove the Quick plan action and give New Idea its full treatment.
+- [x] 2026-08-17 [chat] height of the done item is not the same as regular idea card in the list. Also while we here - make in progress ideas always on top
+- [x] 2026-08-17 [chat] [agent] Added both here as fixes: match the done row's height to a regular card, and pin in-progress ideas to the top of the sort order. (reopened this idea to re-run)
