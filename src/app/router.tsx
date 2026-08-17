@@ -101,6 +101,11 @@ function writeStoredStackOpen(value: boolean): void {
   }
 }
 
+const SIDEBAR_WIDTH = 224;
+const STACK_WIDTH = 480;
+const MIN_READABLE_PAGE_WIDTH = 495;
+const THREE_COLUMN_BREAKPOINT = SIDEBAR_WIDTH + MIN_READABLE_PAGE_WIDTH + STACK_WIDTH;
+
 // Keep in sync with the min-[1440px]:pr-[480px] wrapper (Tailwind needs a literal).
 const LARGE_SCREEN_QUERY = '(min-width: 1440px)';
 

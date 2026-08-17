@@ -77,9 +77,10 @@ The Stack panel's own internals ([[IDEA-163]]), the nav island, and what the
 sidebar contains per route. This is the shell's column geometry only.
 
 ### Phases
-- [ ] Derive the three-column breakpoint from real widths
+- [x] Derive the three-column breakpoint from real widths
       sidebar + minimum readable page + Stack, landing near 1200 — a named
       constant, not a round number.
+      run: 2m7s · 6.8k in · 8.6k out · sonnet-5
 - [ ] Lower `isLarge` to that threshold in `router.tsx`
 - [ ] Make the docked three-column layout unconditional
       Drop the `flex-[0_1_800px]` basis and un-gate `max-w-none` and
