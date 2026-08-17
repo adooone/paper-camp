@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.19.0](https://github.com/adooone/paper-camp/compare/v0.18.1...v0.19.0) (2026-08-17)
+
+
+### Features
+
+* **app:** Build command in the desk Stack panel (IDEA-158) ([#150](https://github.com/adooone/paper-camp/issues/150)) ([53772d0](https://github.com/adooone/paper-camp/commit/53772d045495207786272154cfd60eb01a6d1dc9))
+* **app:** Draft all ideas at once (IDEA-169) ([#151](https://github.com/adooone/paper-camp/issues/151)) ([3d2b0af](https://github.com/adooone/paper-camp/commit/3d2b0afb777fe2bce1b3a6d758b9b187662e1e58))
+* **app:** Manual commits become phase rows (IDEA-151) ([#149](https://github.com/adooone/paper-camp/issues/149)) ([36bda5e](https://github.com/adooone/paper-camp/commit/36bda5eebcfc24d665d70e5c8c266cc8a8054b14))
+* **app:** Readable diffs on the git page (IDEA-166) ([#164](https://github.com/adooone/paper-camp/issues/164)) ([7775a07](https://github.com/adooone/paper-camp/commit/7775a074985afd8631d1318df54614b10bbd641b))
+* **app:** Review pull requests with a local agent (IDEA-170) ([#153](https://github.com/adooone/paper-camp/issues/153)) ([e2d7649](https://github.com/adooone/paper-camp/commit/e2d764937dc12b8f029b78bcd1ad2c875360ef7a))
+* **app:** Scout posts a formatted review (IDEA-175) ([#154](https://github.com/adooone/paper-camp/issues/154)) ([7f7f7eb](https://github.com/adooone/paper-camp/commit/7f7f7ebb543eb208419ab65c2133ee9cf39b1c39))
+* **app:** Show a running PR review in the UI (IDEA-174) ([#156](https://github.com/adooone/paper-camp/issues/156)) ([f9e2101](https://github.com/adooone/paper-camp/commit/f9e2101abece7c6e11e6e7c98d0e73b2613951ba))
+* **app:** Stage files, write the message (IDEA-165) ([#160](https://github.com/adooone/paper-camp/issues/160)) ([6a38bc7](https://github.com/adooone/paper-camp/commit/6a38bc77bd769acff4d291b08d6eaf8f4985f227))
+* **plans:** Feedback fixes start running at once (IDEA-149) ([#147](https://github.com/adooone/paper-camp/issues/147)) ([05e5ee7](https://github.com/adooone/paper-camp/commit/05e5ee77732051dd44cc82821468db17849ea152))
+* **server:** Fetch from GitHub only when asked (IDEA-181) ([#163](https://github.com/adooone/paper-camp/issues/163)) ([e8b0631](https://github.com/adooone/paper-camp/commit/e8b06317e31d064a1433975d4a667c700a00f0a6))
+
+
+### Bug Fixes
+
+* **agent:** Run-all redoes work from a stale base (IDEA-171) ([#161](https://github.com/adooone/paper-camp/issues/161)) ([e1aad95](https://github.com/adooone/paper-camp/commit/e1aad95c7facbe633785f1081813ac24b6c68ca4))
+* **app:** Desk section clips its own content (IDEA-161) ([#157](https://github.com/adooone/paper-camp/issues/157)) ([77a5ed6](https://github.com/adooone/paper-camp/commit/77a5ed65ae0c4873ef73c73c81441d5520db7d18))
+* **app:** Git status vocabulary and chrome (IDEA-167) ([#165](https://github.com/adooone/paper-camp/issues/165)) ([c0603c9](https://github.com/adooone/paper-camp/commit/c0603c9d3a6ebe582976b4ff52cbbc974c8b62ae))
+* **app:** Never lose a computed PR review (IDEA-173) ([#155](https://github.com/adooone/paper-camp/issues/155)) ([63c07c6](https://github.com/adooone/paper-camp/commit/63c07c6c714098d9d6ce5dec2b994eaa5b275964))
+* **app:** Persist drafts and UI choices (IDEA-172) ([#158](https://github.com/adooone/paper-camp/issues/158)) ([1147975](https://github.com/adooone/paper-camp/commit/114797563c3b5b85db26709ae05636c5580c5dab))
+* **app:** Stack panel affordance and a11y pass (IDEA-163) ([#166](https://github.com/adooone/paper-camp/issues/166)) ([414f768](https://github.com/adooone/paper-camp/commit/414f7682557cfdff9e34597b02faf6f249f4bdbd))
+* **plans:** Durable drafted plans (IDEA-137) ([#152](https://github.com/adooone/paper-camp/issues/152)) ([b899564](https://github.com/adooone/paper-camp/commit/b89956441fae5609baef0f1052d890b4aaa4dd75))
+* **plans:** Manual commit phase rows no longer regress ([2bbd974](https://github.com/adooone/paper-camp/commit/2bbd9746d1e7d88b6068fdef0819de5ff4b6bf3a))
+* **server:** Sync stops stashing over the corpus (IDEA-176) ([#162](https://github.com/adooone/paper-camp/issues/162)) ([97601cb](https://github.com/adooone/paper-camp/commit/97601cbdde4863b1d73099c24da733fc49571d90))
+
 ## [0.18.1](https://github.com/adooone/paper-camp/compare/v0.18.0...v0.18.1) (2026-08-12)
 
 
