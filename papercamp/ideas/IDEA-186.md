@@ -134,8 +134,9 @@ sidebar contains per route. This is the shell's column geometry only.
 - [x] Split the Deliver section strictly 50/50
       `entity-detail.tsx`'s DeliverSection is `md:flex-row` with a left column at `flex-1` and a right column carrying no flex at all, so the right sizes to its content and the divider lands wherever that content happens to end — the split changes with the button label, the file count and the empty state. Give both columns an equal basis so the divider sits at the midpoint at every width and in every state.
       run: 32s · 145 in · 1.1k out · sonnet-5
-- [ ] Remove the commit message field and its Add-a-message toggle
+- [x] Remove the commit message field and its Add-a-message toggle
       `components/commit-message-fields.tsx` renders a `Textarea` behind an `Add a message` toggle (`bodyExpanded`). This came out of [[IDEA-165]], which proposed it after I found `commitMessage` was held in state but never rendered — it was my inference, not a request. Remove the toggle and the body field; the commit title stays. `commitMessage` itself can stay in the form state for the agent-suggested path to populate, but nothing renders it and nothing asks for it by hand. Deliberate removal: do not reinstate it as a fix for an 'uneditable commit body'.
+      run: 40s · 280 in · 2k out · sonnet-5
 - [ ] Close the gap between a phase title and its usage
       The Phases table gives the title column `width: 6` against a `width: 1` checkbox and an end-aligned actions column, so the title cell is far wider than its text and the run metadata is pushed hard right — leaving a large dead gap mid-row that makes the two read as unrelated. Size the title to its content and let the usage sit next to it rather than at the far edge, so the row reads as one line.
 
