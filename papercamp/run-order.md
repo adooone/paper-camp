@@ -8,5 +8,4 @@ IDEA-180 — Say what each idea is for
 IDEA-183 — Filters and sort tell the truth
 IDEA-184 — One row treatment on the Plans page
 IDEA-185 — Delete the idea-group machinery
-IDEA-186 — Use the whole width
 IDEA-187 — Fixes are their own entity
