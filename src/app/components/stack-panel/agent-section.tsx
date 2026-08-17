@@ -7,11 +7,16 @@ import { chalkStatusFill, chalkStatusText, formatLastRun, sectionLabelClassName 
 
 const MAX_VISIBLE_TASKS = 3;
 // Fixed so every card is the same height regardless of how much its title or
-// metadata truncates — content no longer drives card height.
-const TASK_CARD_HEIGHT_CLASS = 'h-[3.25rem]';
-// 10.75rem = 3 cards * 3.25rem card height + 2 gaps * 0.5rem, reserved so the
+// metadata truncates — content no longer drives card height. 4.625rem = 74px:
+// Card size="small" padding (2 * 12px) + gap-1 (4px) between the title and
+// metadata rows + the two rows themselves (title row + the taller of the
+// metadata text and the Stamp it sits beside, 58px combined) — the minimum
+// the two-line layout needs, so the border layer's overflow-y: hidden never
+// clips a row.
+const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
+// 14.875rem = 3 cards * 4.625rem card height + 2 gaps * 0.5rem, reserved so the
 // empty state doesn't shrink the panel when tasks finish and clear.
-const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[10.75rem]';
+const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[14.875rem]';
 
 export const taskKindLabel = (task: AgentTaskState): string => {
   switch (task.taskKind) {

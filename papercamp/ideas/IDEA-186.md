@@ -125,8 +125,9 @@ sidebar contains per route. This is the shell's column geometry only.
 - [x] Fold Health into the checks, inline
       The panel carries two separate check surfaces: the Desk's CHECKS group (types/lint/test/build) and a 153-line `health-section.tsx` mounted as its own top-level section with an `h3` and doctor/docs stamps. Two labelled sections for one question — is anything wrong — and neither says what it is for. Render them as one inline row of stamps within Desk, drop the standalone Health section and its heading, and keep the expand-on-click detail.
       run: 3m28s · 4.1k in · 14.4k out · sonnet-5
-- [ ] Size the agent card to its two-line content
+- [x] Size the agent card to its two-line content
       The fixed-height card is 55px but its content needs 74px, and the Card's border layer is `overflow-y: hidden`, so 19px is cut and unreachable. Measured inside one card: the metadata line `Claude Code · 15:18:51` runs from y=42 to y=57 and the `done` stamp from y=38 to y=61, against an inner box ending at 55 — both are clipped, which is why the stamp reads as overlapping the metadata. Uniform height is right; the number is wrong. Derive it from the two-line content plus padding rather than picking one, and never let the card clip its own rows.
+      run: 2m9s · 5.8k in · 8k out · sonnet-5
 - [ ] Give the panel one scroll region, not a nested Desk scroller
       The panel body is split into a `flex-none` Agent block (272px, fixed) and a `flex-1 overflow-y-auto` Desk block (508px visible, 572px content) — so the Desk scrolls independently inside a panel that already sits in a scrolling page. Agent and Desk scroll together as one region below the fixed Stack header instead. Note this revises [[IDEA-161]], which added `overflow-y-auto` to the Desk wrapper because content was being clipped and unreachable — the answer is to move the scroll up, not to remove it and go back to clipping. With the width, token and health compaction already queued, 572px should fall under the available height at most sizes so it rarely scrolls at all.
 - [ ] Split the Deliver section strictly 50/50
