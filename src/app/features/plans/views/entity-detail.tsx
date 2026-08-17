@@ -434,7 +434,7 @@ const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
         {hasChanges && <CommitMessageFields state={commitForm} filesEmpty={!hasChanges} />}
       </div>
       <Divider orientation="vertical" className="hidden md:block" />
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-1 flex-col gap-2">
         {hasChanges ? (
           <>
             <DeliverChangedFiles count={files.length} />

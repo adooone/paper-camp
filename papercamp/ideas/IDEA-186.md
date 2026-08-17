@@ -131,8 +131,9 @@ sidebar contains per route. This is the shell's column geometry only.
 - [x] Give the panel one scroll region, not a nested Desk scroller
       The panel body is split into a `flex-none` Agent block (272px, fixed) and a `flex-1 overflow-y-auto` Desk block (508px visible, 572px content) — so the Desk scrolls independently inside a panel that already sits in a scrolling page. Agent and Desk scroll together as one region below the fixed Stack header instead. Note this revises [[IDEA-161]], which added `overflow-y-auto` to the Desk wrapper because content was being clipped and unreachable — the answer is to move the scroll up, not to remove it and go back to clipping. With the width, token and health compaction already queued, 572px should fall under the available height at most sizes so it rarely scrolls at all.
       run: 47s · 149 in · 2.4k out · sonnet-5
-- [ ] Split the Deliver section strictly 50/50
+- [x] Split the Deliver section strictly 50/50
       `entity-detail.tsx`'s DeliverSection is `md:flex-row` with a left column at `flex-1` and a right column carrying no flex at all, so the right sizes to its content and the divider lands wherever that content happens to end — the split changes with the button label, the file count and the empty state. Give both columns an equal basis so the divider sits at the midpoint at every width and in every state.
+      run: 32s · 145 in · 1.1k out · sonnet-5
 - [ ] Remove the commit message field and its Add-a-message toggle
       `components/commit-message-fields.tsx` renders a `Textarea` behind an `Add a message` toggle (`bodyExpanded`). This came out of [[IDEA-165]], which proposed it after I found `commitMessage` was held in state but never rendered — it was my inference, not a request. Remove the toggle and the body field; the commit title stays. `commitMessage` itself can stay in the form state for the agent-suggested path to populate, but nothing renders it and nothing asks for it by hand. Deliberate removal: do not reinstate it as a fix for an 'uneditable commit body'.
 - [ ] Close the gap between a phase title and its usage
