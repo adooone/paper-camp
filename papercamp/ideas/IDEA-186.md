@@ -2,7 +2,7 @@
 id: IDEA-186
 title: Use the whole width
 type: feat
-status: in-progress
+status: review
 created: 2026-08-17
 updated: 2026-08-17
 tags:
