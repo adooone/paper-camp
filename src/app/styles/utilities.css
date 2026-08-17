@@ -109,10 +109,9 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * The phase table's title column (entity-detail.tsx) has a fixed floor width
- * so it can't be squeezed by the run-metadata Stamp in the actions column
- * next to it; the actions column has no width of its own and shrinks first
- * instead. One rule: the token count alone is the default, and the full
+ * The phase table's title column (entity-detail.tsx) takes the row's
+ * flexible width; the actions column next to it is fixed to fit its content
+ * instead of stretching. The token count alone is the default, and the full
  * `tokens · duration · model` triplet only shows once the actions column
  * (the `[container-type:inline-size]` wrapper, entity-detail.tsx) is wide
  * enough to hold it — 190px, the width the triplet used to start shedding

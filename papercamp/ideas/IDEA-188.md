@@ -43,6 +43,15 @@ changed rather than a dozen restating fix titles.
 Only the call site changes; `commitPhase` itself is untouched and still serves
 phases.
 
+### The single row that replaces the dozen
+
+[[IDEA-151]] already turns a Deliver-form commit into a `source: manual` phase
+row. That is the other half of this: once the fix queue stops committing, the
+accumulated work is committed once — commit-suggest for the title, one manual
+commit — and IDEA-151 records it as **one** row. So the dozen fix commits and
+their dozen entries collapse into a single line describing what actually
+changed. Nothing new is needed for that half; it already works.
+
 ### The accepted risk
 
 Uncommitted source across a fix pass is exposed to the destructive-git class of
