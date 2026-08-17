@@ -90,8 +90,10 @@ The Stack panel, the page's own content, and the three-column widths
       Parchment runs continuous from the first pixel to the existing bleed.
       run: no code change needed — dropping `showHeader` in the prior phase already removed the 48px header band, and the scroll container's existing padding-cancelling (`-mt-8`/`pt-0`, nothing re-adds top) plus `Page`'s own zero top margin mean it already renders flush from row 0. Verified by tracing the CSS cascade and `pnpm run check-types`; no browser available to confirm visually.
       run: 4m35s · 366 in · 21.9k out · sonnet-5
-- [ ] Give sidebar section labels real hierarchy
+- [x] Give sidebar section labels real hierarchy
       Replace the uniform sectionLabelClass so headers step above the controls.
+      run: bumped `sectionLabelClass` in `plan-actions-column.tsx` and `plan-filter-column.tsx` from `text-2xs`/`text-ink-300` (smaller than the `text-xs` control text below it, and washed-out) to `text-xs`/`text-ink-700` — labels now sit at or above the controls' size and read with real contrast. Left Roadmap's and Git's identical-looking labels untouched — out of this idea's Plans-page scope. Verified with `pnpm run check-types` and `pnpm biome check`; no browser available to confirm visually.
+      run: 1m50s · 245 in · 7k out · sonnet-5
 - [ ] Set Actions apart as the interactive block
       Group and weight PlanActionsColumn so it no longer reads like the static stamps.
 - [ ] Tighten sidebar density and prune redundant labels

@@ -15,7 +15,7 @@ const STATUS_CHIP_ORDER: PlanStatus[] = [
   'dropped',
 ];
 
-const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300 mb-2';
+const sectionLabelClass = 'text-xs font-semibold tracking-[0.08em] uppercase text-ink-700 mb-2';
 
 export const PlanFilterColumn = () => {
   const plans = useAppStore((s) => s.plans);

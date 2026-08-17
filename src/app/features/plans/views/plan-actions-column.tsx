@@ -12,7 +12,7 @@ import { canMarkPlanDone, effectiveStatus } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
 
-const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300';
+const sectionLabelClass = 'text-xs font-semibold tracking-[0.08em] uppercase text-ink-700';
 
 export const PlanActionsColumn = () => {
   const plan = useActivePlan();
