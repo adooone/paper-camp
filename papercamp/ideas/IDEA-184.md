@@ -61,8 +61,9 @@ The create modals' own fields, and the status-filter and sort behaviour
 ([[IDEA-183]]).
 
 ### Phases
-- [ ] Grid-align the archive rows
+- [x] Grid-align the archive rows
       Give archive rows PLAN_ROWS_GRID_CLASS and the row-marker gutter, with Archive in the Status column slot.
+      run: 1m12s · 5.7k in · 5.1k out · sonnet-5
 - [ ] Preserve the done texture within the grid
       Keep the distinct archive-row look while the five columns line up with the worklist header.
 - [ ] Filter the archive section with the search
