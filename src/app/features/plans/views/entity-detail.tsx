@@ -239,21 +239,17 @@ const PhasesSection = ({
                   <div className="flex w-full justify-end [container-type:inline-size]">
                     <Stamp
                       size="small"
-                      className="run-meta-stamp"
                       fillColor="var(--pui-texture-shade, rgba(0,0,0,0.06))"
                       textColor="inherit"
                     >
                       <span className="whitespace-nowrap font-mono text-3xs font-normal opacity-[0.7]">
-                        <span className="run-meta-tokens">
-                          {formatTokens(run.inputTokens + run.outputTokens)} tokens{' '}
-                        </span>
-                        <span className="run-meta-tokens">· </span>
-                        <span className="run-meta-duration">
-                          {formatDuration(run.durationMs)}
+                        <span>{formatTokens(run.inputTokens + run.outputTokens)} tokens</span>
+                        <span className="run-meta-full">
+                          {' '}
+                          · {formatDuration(run.durationMs)}
                           {run.attempts > 1 && ` ×${run.attempts}`}
+                          {run.model && ` · ${run.model}`}
                         </span>
-                        {run.model && <span className="run-meta-duration"> · </span>}
-                        {run.model && <span>{run.model}</span>}
                       </span>
                     </Stamp>
                   </div>

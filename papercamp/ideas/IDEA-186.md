@@ -116,8 +116,9 @@ sidebar contains per route. This is the shell's column geometry only.
 - [x] Give the Stack three widths, not a continuous clamp
       The scale fix landed `--pc-stack-width: clamp(320px, 100vw - 879px, 480px)` in `utilities.css`, so the panel resizes on every pixel of viewport change — the width is never the same twice and nothing settles. Replace it with three discrete steps: full width below the phone breakpoint, 60% of today's 480px (288px) at medium, and 480px at large. Derive the large threshold the way phase 1 derived the three-column breakpoint rather than picking a round number. At 1200px this gives sidebar 282 + Stack 288, leaving the page ~630 instead of 407.
       run: 3m52s · 5.8k in · 20.1k out · sonnet-5
-- [ ] Show only tokens in a phase row below large
+- [x] Show only tokens in a phase row below large
       Refines the shed order already shipped: instead of dropping duration then model as space tightens, show the full `15.4k tokens · 2m7s · sonnet-5` triplet only at the largest width and just the token count at small and medium. One rule, one breakpoint, no intermediate states to reason about.
+      run: 1m26s · 159 in · 5.9k out · sonnet-5
 - [ ] Make agent rows a fixed two-line card
       Measured in Chrome — the broken card is the agent row, and the cause is inverted shrink priority. IDEA-163's 'non-truncating slot' for the agent label made the metadata unshrinkable, so the plan title absorbs 100% of the loss: at a 316px panel the title box is 21px holding 259px of overflow, and on the running row it measures 0px wide while `· Claude Code` keeps 82px and the timestamp 61px. Even at a 476px panel the title still overflows by 74-144px. Card heights differ too — 57/48/48 at 316px — because content drives height. Fix: the title gets the flexible width with a real minimum and the metadata shrinks first, per the UX_PRINCIPLES §1 rule that priority goes to what the user reads. Every row is the same fixed height at every width: line one the title, line two agent, time and status, in a denser size. `MAX_VISIBLE_TASKS` stays 3. Remove the `+N more` link.
 - [ ] Fold Health into the checks, inline
