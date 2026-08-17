@@ -81,7 +81,8 @@ sidebar contains per route. This is the shell's column geometry only.
       sidebar + minimum readable page + Stack, landing near 1200 — a named
       constant, not a round number.
       run: 2m7s · 6.8k in · 8.6k out · sonnet-5
-- [ ] Lower `isLarge` to that threshold in `router.tsx`
+- [x] Lower `isLarge` to that threshold in `router.tsx`
+      run: 46s · 238 in · 1.9k out · sonnet-5
 - [ ] Make the docked three-column layout unconditional
       Drop the `flex-[0_1_800px]` basis and un-gate `max-w-none` and
       `flex-[1_1_0%]`; keep the narrow-width drawer fallback.

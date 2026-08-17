@@ -106,8 +106,8 @@ const STACK_WIDTH = 480;
 const MIN_READABLE_PAGE_WIDTH = 495;
 const THREE_COLUMN_BREAKPOINT = SIDEBAR_WIDTH + MIN_READABLE_PAGE_WIDTH + STACK_WIDTH;
 
-// Keep in sync with the min-[1440px]:pr-[480px] wrapper (Tailwind needs a literal).
-const LARGE_SCREEN_QUERY = '(min-width: 1440px)';
+// Keep in sync with the min-[1199px]:pr-[480px] wrapper (Tailwind needs a literal).
+const LARGE_SCREEN_QUERY = `(min-width: ${THREE_COLUMN_BREAKPOINT}px)`;
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() =>
@@ -213,7 +213,7 @@ const RootLayout = () => {
 
   return (
     <ToastProvider position="bottom-left">
-      <div className="h-screen box-border min-[1440px]:pr-[480px] flex flex-col">
+      <div className="h-screen box-border min-[1199px]:pr-[480px] flex flex-col">
         <ServerReloadBanner />
         <StatusBar />
         <Layout
