@@ -188,7 +188,7 @@ const PhasesSection = ({
           {
             key: 'title',
             header: 'Title',
-            width: 6,
+            width: 3,
             cell: (row: WorkRow) => (
               <span
                 className={`inline-flex min-w-0 max-w-full items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
@@ -229,14 +229,13 @@ const PhasesSection = ({
           {
             key: 'actions',
             header: '',
-            align: 'end',
             cell: (row: WorkRow) => {
               if (isRunningRow(row)) return null;
               if (row.item.done) {
                 const run = row.item.run;
                 if (!run) return null;
                 return (
-                  <div className="flex w-full justify-end [container-type:inline-size]">
+                  <div className="flex w-full justify-start [container-type:inline-size]">
                     <Stamp
                       size="small"
                       fillColor="var(--pui-texture-shade, rgba(0,0,0,0.06))"
@@ -257,7 +256,7 @@ const PhasesSection = ({
               }
               if (row.kind !== 'phase') return null;
               return (
-                <div className="flex justify-end">
+                <div className="flex justify-start">
                   <AgentStartButton planId={plan.id} phaseIndex={row.index} disabled={agentBusy} />
                 </div>
               );

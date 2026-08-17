@@ -137,8 +137,9 @@ sidebar contains per route. This is the shell's column geometry only.
 - [x] Remove the commit message field and its Add-a-message toggle
       `components/commit-message-fields.tsx` renders a `Textarea` behind an `Add a message` toggle (`bodyExpanded`). This came out of [[IDEA-165]], which proposed it after I found `commitMessage` was held in state but never rendered — it was my inference, not a request. Remove the toggle and the body field; the commit title stays. `commitMessage` itself can stay in the form state for the agent-suggested path to populate, but nothing renders it and nothing asks for it by hand. Deliberate removal: do not reinstate it as a fix for an 'uneditable commit body'.
       run: 40s · 280 in · 2k out · sonnet-5
-- [ ] Close the gap between a phase title and its usage
+- [x] Close the gap between a phase title and its usage
       The Phases table gives the title column `width: 6` against a `width: 1` checkbox and an end-aligned actions column, so the title cell is far wider than its text and the run metadata is pushed hard right — leaving a large dead gap mid-row that makes the two read as unrelated. Size the title to its content and let the usage sit next to it rather than at the far edge, so the row reads as one line.
+      run: 2m51s · 159 in · 12.7k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-17 [review] [agent] Approves · 0 findings — The diff faithfully implements the idea: it derives a three-column breakpoint (224+495+480=1199) from named constants, lowers the media query and the paired Tailwind literal to it, un-gates `flex-[1_1_0%]`/`max-w-none` and drops the 800px basis, and relaxes both bleed knobs (Page min-height and the scroller's bottom padding). All five phases are actually reflected in the code, and nothing contradicts the spec. The `isLarge` variable remains in use for the docked sidebar, so removing its two style ternaries leaves no dead references.
