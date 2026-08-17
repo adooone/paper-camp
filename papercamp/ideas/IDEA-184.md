@@ -82,8 +82,9 @@ The create modals' own fields, and the status-filter and sort behaviour
 - [x] Match done row height to regular card height
       Archive/done rows in the worklist currently render shorter than a normal idea card. Align their height (padding/line-height) with the standard row so done items don't visually shrink.
       run: 3m17s · 5.9k in · 13.8k out · sonnet-5
-- [ ] Always sort in-progress ideas to the top
+- [x] Always sort in-progress ideas to the top
       Regardless of the active sort column, ideas with status in-progress should be pinned first in the list ordering.
+      run: 1m28s · 288 in · 5.3k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-17 [question] [agent] Run-all parked on phase 4 ("Decide whether both create actions stay") — the agent needs a decision: Does the "Quick plan" entry point (`AddToBacklogButton` → `POST /api/plans`, letting you pick a typed `kind`: feat/fix/chore/docs/refactor at creation) still need to exist as a separate one-step action, or should every new entity start as a plain idea via `NewIdeaButton` (→ `POST /api/ideas`, kind idea/note only) and get typed later when it's drafted into a plan? This determines whether phase 5 gives matching affordance to two buttons or removes one — it's a scope call on the creation workflow, not something I can infer from the code.
