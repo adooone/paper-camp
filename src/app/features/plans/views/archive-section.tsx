@@ -102,6 +102,7 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
                   <Button
                     variant="ghost"
                     size="small"
+                    className="archive-row-action"
                     disabled={archivingId === idea.id || archivingAll}
                     onClick={(e) => {
                       e.stopPropagation();

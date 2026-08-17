@@ -79,8 +79,9 @@ The create modals' own fields, and the status-filter and sort behaviour
       run: 1m54s · 658 in · 6.9k out · sonnet-5
 
 ### Fixes
-- [ ] Match done row height to regular card height
+- [x] Match done row height to regular card height
       Archive/done rows in the worklist currently render shorter than a normal idea card. Align their height (padding/line-height) with the standard row so done items don't visually shrink.
+      run: 3m17s · 5.9k in · 13.8k out · sonnet-5
 - [ ] Always sort in-progress ideas to the top
       Regardless of the active sort column, ideas with status in-progress should be pinned first in the list ordering.
 

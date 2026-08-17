@@ -184,7 +184,7 @@
 | IDEA-181 | Fetch from GitHub only when asked | feat | planned | server, github, core |
 | IDEA-182 | Finish corpus writes before committing | fix | dropped | server, agent, git |
 | IDEA-183 | Filters and sort tell the truth | fix | planned | app, plans, ux |
-| IDEA-184 | One row treatment on the Plans page | fix | planned | app, plans, ui |
+| IDEA-184 | One row treatment on the Plans page | fix | in-progress | app, plans, ui |
 | IDEA-185 | Delete the idea-group machinery | refactor | planned | app, plans, refactor |
 | IDEA-186 | Use the whole width | feat | done | app, ui, layout |
 | IDEA-187 | Fixes are their own entity | feat | planned | format, plans, app |
