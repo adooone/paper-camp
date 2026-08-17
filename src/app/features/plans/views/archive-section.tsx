@@ -85,7 +85,7 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
               }
               className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0`}
             >
-              <Card size="small" texture="canvas" className="plan-row-card">
+              <Card size="small" texture="canvas" shade className="plan-row-card">
                 <div className={PLAN_ROWS_GRID_CLASS}>
                   <PlanIdStamp id={idea.id} />
                   <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
