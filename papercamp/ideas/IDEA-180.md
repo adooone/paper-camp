@@ -53,3 +53,14 @@ happens; `index.md` is the file-level mirror of it.
 Any new frontmatter field. Summarising with an agent — the opening sentence is
 already the author's own summary, and an agent pass would cost a run per idea to
 restate what is written. Changing the title rules ([[IDEA-143]] stands).
+
+### Phases
+- [ ] Derive the purpose line from the body
+      A helper that pulls the first sentence of the body, strips markdown and
+      wikilinks, and trims it to a single line.
+- [ ] Render the line in index.md
+      Emit it beside the existing columns inside `regenerateIndexes`.
+- [ ] Show the line in the worklist row
+      Dimmed, single-line with ellipsis, under the title in the Plans list.
+- [ ] Handle bodies with no usable opening sentence
+      Fall back cleanly when the first sentence is empty or degenerate.

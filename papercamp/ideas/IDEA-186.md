@@ -75,3 +75,17 @@ padding — it clears the fixed bottom nav and is load-bearing there.
 
 The Stack panel's own internals ([[IDEA-163]]), the nav island, and what the
 sidebar contains per route. This is the shell's column geometry only.
+
+### Phases
+- [ ] Derive the three-column breakpoint from real widths
+      sidebar + minimum readable page + Stack, landing near 1200 — a named
+      constant, not a round number.
+- [ ] Lower `isLarge` to that threshold in `router.tsx`
+- [ ] Make the docked three-column layout unconditional
+      Drop the `flex-[0_1_800px]` basis and un-gate `max-w-none` and
+      `flex-[1_1_0%]`; keep the narrow-width drawer fallback.
+- [ ] Bleed the sheet past the bottom edge
+      Relax `Page`'s `min-h-[calc(100vh-160px)]` and the scroller's
+      `pb` so short and long pages both run under the fold, preserving the
+      phone-breakpoint bottom padding.
+- [ ] Confirm the scroll and alignment guards still pass

@@ -59,3 +59,15 @@ goes, the asymmetry goes with it.
 
 The create modals' own fields, and the status-filter and sort behaviour
 ([[IDEA-183]]).
+
+### Phases
+- [ ] Grid-align the archive rows
+      Give archive rows PLAN_ROWS_GRID_CLASS and the row-marker gutter, with Archive in the Status column slot.
+- [ ] Preserve the done texture within the grid
+      Keep the distinct archive-row look while the five columns line up with the worklist header.
+- [ ] Filter the archive section with the search
+      Run the archive rows through the same filter and drop the whole section when nothing matches.
+- [ ] Decide whether both create actions stay
+      Settle whether the second entry point earns its place before touching either button.
+- [ ] Give the surviving create action(s) matching affordance
+      Either label both or make both icons with labels in an overflow, following the decision above.
