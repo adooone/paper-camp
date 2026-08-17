@@ -81,7 +81,7 @@ export const PlanActionsColumn = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 -mt-5">
+    <div className="flex flex-col gap-3 -mt-5">
       <Breadcrumb
         items={[
           { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
@@ -89,7 +89,7 @@ export const PlanActionsColumn = () => {
         ]}
       />
       <div>
-        <div className={`${sectionLabelClass} mb-1.5`}>Show</div>
+        <div className={`${sectionLabelClass} mb-1`}>Show</div>
         <div className="flex flex-col gap-1">
           <ListItem
             size="small"
@@ -110,21 +110,18 @@ export const PlanActionsColumn = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className={sectionLabelClass}>Status</div>
-        {/* Read-only: the dropped/reopen override lives in Actions below since
-            abandonment leaves no branch or PR to derive status from. */}
-        <Stamp
-          size="small"
-          fillColor={STATUS_STAMP[displayStatus].fill}
-          textColor={STATUS_STAMP[displayStatus].text}
-        >
-          {STATUS_LABEL[displayStatus]}
-        </Stamp>
-      </div>
+      {/* Read-only: the dropped/reopen override lives in Actions below since
+          abandonment leaves no branch or PR to derive status from. */}
+      <Stamp
+        size="small"
+        fillColor={STATUS_STAMP[displayStatus].fill}
+        textColor={STATUS_STAMP[displayStatus].text}
+      >
+        {STATUS_LABEL[displayStatus]}
+      </Stamp>
 
       <div>
-        <div className={`${sectionLabelClass} mb-1.5`}>Subject</div>
+        <div className={`${sectionLabelClass} mb-1`}>Subject</div>
         <Select
           size="small"
           value={plan.subject ?? NO_SUBJECT}
@@ -160,74 +157,71 @@ export const PlanActionsColumn = () => {
         </div>
       )}
 
-      <div>
-        <div className={`${sectionLabelClass} mb-1.5`}>Actions</div>
-        <Card size="small">
-          <div className="flex flex-col gap-1">
-            {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
-            {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
-            {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
+      <Card size="small">
+        <div className="flex flex-col gap-1">
+          {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
+          {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
+          {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
 
-            {underReview && (
-              // Offline fallback: sticks only once the live PR lookup can't resolve
-              // a merge either way (done normally derives from the PR merging).
-              <ListItem
-                size="small"
-                // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
-                icon={<span className="text-watercolor-green-dark">✓</span>}
-                onClick={() => patch({ status: 'done' })}
-                disabled={updating}
-                className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
-              >
-                Approve &amp; close
-              </ListItem>
-            )}
+          {underReview && (
+            // Offline fallback: sticks only once the live PR lookup can't resolve
+            // a merge either way (done normally derives from the PR merging).
+            <ListItem
+              size="small"
+              // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
+              icon={<span className="text-watercolor-green-dark">✓</span>}
+              onClick={() => patch({ status: 'done' })}
+              disabled={updating}
+              className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
+            >
+              Approve &amp; close
+            </ListItem>
+          )}
 
-            {done && (
-              <ListItem
-                size="small"
-                icon={<span className="text-ink-300">▣</span>}
-                onClick={handleArchive}
-                disabled={archiving || !plan.id}
-                className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
-              >
-                {archiving ? 'Archiving…' : 'Archive'}
-              </ListItem>
-            )}
+          {done && (
+            <ListItem
+              size="small"
+              icon={<span className="text-ink-300">▣</span>}
+              onClick={handleArchive}
+              disabled={archiving || !plan.id}
+              className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
+            >
+              {archiving ? 'Archiving…' : 'Archive'}
+            </ListItem>
+          )}
 
-            {canMarkDone && (
-              <ListItem
-                size="small"
-                // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
-                icon={<span className="text-watercolor-green-dark">✓</span>}
-                onClick={handleArchive}
-                disabled={archiving || !plan.id}
-                className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
-              >
-                {archiving ? 'Marking done…' : 'Mark done'}
-              </ListItem>
-            )}
+          {canMarkDone && (
+            <ListItem
+              size="small"
+              // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
+              icon={<span className="text-watercolor-green-dark">✓</span>}
+              onClick={handleArchive}
+              disabled={archiving || !plan.id}
+              className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
+            >
+              {archiving ? 'Marking done…' : 'Mark done'}
+            </ListItem>
+          )}
 
-            {!done && (
-              <ListItem
-                size="small"
-                icon={
-                  <span
-                    className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
-                  >
-                    {dropped ? '↺' : '⊘'}
-                  </span>
-                }
-                onClick={() => patch({ status: dropped ? null : 'dropped' })}
-                disabled={updating}
-                className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
-              >
-                {dropped ? 'Reopen plan' : 'Mark dropped'}
-              </ListItem>
-            )}
-          </div>
-        </Card>
-      </div>
+          {!done && (
+            <ListItem
+              size="small"
+              icon={
+                <span
+                  className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
+                >
+                  {dropped ? '↺' : '⊘'}
+                </span>
+              }
+              onClick={() => patch({ status: dropped ? null : 'dropped' })}
+              disabled={updating}
+              className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
+            >
+              {dropped ? 'Reopen plan' : 'Mark dropped'}
+            </ListItem>
+          )}
+        </div>
+      </Card>
     </div>
   );
 };

@@ -15,7 +15,7 @@ const STATUS_CHIP_ORDER: PlanStatus[] = [
   'dropped',
 ];
 
-const sectionLabelClass = 'text-xs font-semibold tracking-[0.08em] uppercase text-ink-700 mb-2';
+const sectionLabelClass = 'text-xs font-semibold tracking-[0.08em] uppercase text-ink-700 mb-1';
 
 export const PlanFilterColumn = () => {
   const plans = useAppStore((s) => s.plans);
@@ -39,7 +39,7 @@ export const PlanFilterColumn = () => {
   );
 
   return (
-    <div className="flex flex-col gap-8 -mt-5">
+    <div className="flex flex-col gap-3 -mt-5">
       <Input
         type="search"
         size="small"
