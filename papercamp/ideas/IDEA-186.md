@@ -10,6 +10,7 @@ tags:
   - ui
   - layout
 subject: App UI
+order: 11
 ---
 
 The shell wastes horizontal space at every width below 1440px, and the page stops
@@ -143,3 +144,4 @@ sidebar contains per route. This is the shell's column geometry only.
 
 ### Thread
 - [x] 2026-08-17 [review] [agent] Approves · 0 findings — The diff faithfully implements the idea: it derives a three-column breakpoint (224+495+480=1199) from named constants, lowers the media query and the paired Tailwind literal to it, un-gates `flex-[1_1_0%]`/`max-w-none` and drops the 800px basis, and relaxes both bleed knobs (Page min-height and the scroller's bottom padding). All five phases are actually reflected in the code, and nothing contradicts the spec. The `isLarge` variable remains in use for the docked sidebar, so removing its two style ternaries leaves no dead references.
+- [x] 2026-08-17 [review] [agent] Comments · 0 findings — The visible changes — collapsing the two check surfaces into one inline Desk row, deleting health-section.tsx, giving the agent card a fixed two-line height, moving the panel to a single scroll region, and removing the commit-message body toggle — are internally coherent and read as a faithful execution of the logged Fixes. The core column-geometry changes the phases actually claim (breakpoint derivation in router.tsx, the Stack-width steps in utilities.css) fall outside the truncated portion I can see, but nothing in the visible diff contradicts the spec or a settled decision. No correctness bugs surfaced in the reviewed hunks.
