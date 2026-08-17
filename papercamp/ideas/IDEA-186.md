@@ -83,9 +83,10 @@ sidebar contains per route. This is the shell's column geometry only.
       run: 2m7s · 6.8k in · 8.6k out · sonnet-5
 - [x] Lower `isLarge` to that threshold in `router.tsx`
       run: 46s · 238 in · 1.9k out · sonnet-5
-- [ ] Make the docked three-column layout unconditional
+- [x] Make the docked three-column layout unconditional
       Drop the `flex-[0_1_800px]` basis and un-gate `max-w-none` and
       `flex-[1_1_0%]`; keep the narrow-width drawer fallback.
+      run: 40s · 355 in · 2k out · sonnet-5
 - [ ] Bleed the sheet past the bottom edge
       Relax `Page`'s `min-h-[calc(100vh-160px)]` and the scroller's
       `pb` so short and long pages both run under the fold, preserving the

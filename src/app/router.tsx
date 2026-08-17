@@ -307,16 +307,14 @@ const RootLayout = () => {
                     )}
                   </SidebarShell>
                 )}
-                <div
-                  className={`flex flex-col min-w-0 ${isLarge ? 'flex-[1_1_0%]' : 'flex-[0_1_800px]'}`}
-                >
+                <div className="flex flex-col min-w-0 flex-[1_1_0%]">
                   <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
                     <Page
                       texture={{ texture: 'parchment' }}
                       outline
-                      className={`min-h-[calc(100vh-160px)] w-full ${isLarge ? 'max-w-none' : ''}`}
+                      className="min-h-[calc(100vh-160px)] w-full max-w-none"
                     >
                       <Suspense fallback={null}>
                         <Outlet />
