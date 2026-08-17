@@ -6,6 +6,5 @@ IDEA-179 — Prioritise lies about what it did
 IDEA-181 — Fetch from GitHub only when asked
 IDEA-180 — Say what each idea is for
 IDEA-183 — Filters and sort tell the truth
-IDEA-184 — One row treatment on the Plans page
 IDEA-185 — Delete the idea-group machinery
 IDEA-187 — Fixes are their own entity
