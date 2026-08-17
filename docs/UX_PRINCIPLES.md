@@ -12,6 +12,26 @@ has the "why"/"when".
 Dense, state-driven panels (the Stack panel and anything like it) are where
 layout-jump complaints come from. Rules, in priority order:
 
+- **Never wrap a control row to a second line. Degrade instead.** This is the
+  strict one. A toolbar, header, or action row must occupy exactly the number of
+  lines it occupies at every viewport width — a button that sits top-right at
+  1400px must still be top-right at 1100px, not pushed onto a new line where
+  nobody looks for it. When the space runs out, in this order: shorten the label,
+  drop the label for an icon, or move the least-important controls behind an
+  overflow menu. Never `flex-wrap` a row of controls, and never let a grid column
+  collapse until its contents overlap. If the only way to fit everything is to
+  wrap, something in that row does not belong at that width — hide it.
+
+  Two failures this prevents, both observed at a 1200px viewport: a 26px-wide
+  commit input beside a 272px commit button, and a phase title whose text ran
+  63px past the run-metadata beside it, rendering one on top of the other. Both
+  came from a flexible column being allowed to shrink without a floor.
+
+  Give every flexible cell a `min-width` floor, and decide explicitly what
+  disappears first when the floor is hit. **Priority goes to what the user reads
+  or types, not to what they click** — a commit title the user is composing
+  outranks the Commit button beside it, because the button still works at icon
+  size and the input does not work at 26px.
 - **Reserve space for content that changes, don't conditionally mount it.** A
   status indicator that sometimes shows a suffix (e.g. a `…` running marker) or
   a message that sometimes appears (e.g. a fail message + suggested fix) should

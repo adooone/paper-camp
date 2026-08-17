@@ -98,8 +98,9 @@ sidebar contains per route. This is the shell's column geometry only.
 ### Fixes
 - [x] [manual] Add the no-wrap rule to UX_PRINCIPLES §1
       Control rows never wrap to a second line — shorten the label, drop to an icon, then move to an overflow. Priority goes to what the user reads or types, not what they click.
-- [ ] Scale the Stack width with the viewport
+- [x] Scale the Stack width with the viewport
       At a 1200px viewport the columns measure sidebar 282 / page 407 / Stack 480 — the ambient panel is wider than the work. Replace the fixed `w-[min(480px,100vw)]` with a clamped width that keeps 480 where there is room and yields first when width is scarce, so the page takes the surplus. The literal is stated three times (the panel's class, the root wrapper's `min-[1199px]:pr-[480px]`, and the comment tying them together); a scaling width needs one definition both read or they will drift.
+      run: 3m29s · 5.8k in · 16k out · sonnet-5
 - [ ] Stop the phases table overlapping itself
       A phase title's right edge sits 63px past where its run-metadata begins — `Derive the three-column breakp…` ends at x=477 while `15.4k tokens · 2m7s · sonnet-5` starts at x=414, so the two render on top of each other. The title cell is 113px holding text needing ~180. Give the title a min-width floor and shed the metadata in a defined order — tokens, then duration, then model — moving it behind the row's disclosure below a floor.
 - [ ] Give the commit input priority over the button

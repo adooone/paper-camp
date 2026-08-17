@@ -173,6 +173,20 @@ header[class*="layout-module__header___"] {
 }
 
 /*
+ * The Stack panel's docked width (stack-panel.tsx) and the root wrapper's
+ * `pr` reservation (router.tsx) must agree or the panel either gaps from or
+ * overlaps the page edge — one variable both read instead of the 480px
+ * literal duplicated across files. Below THREE_COLUMN_BREAKPOINT (1199px,
+ * router.tsx) the panel isn't docked at all. From there it scales up from a
+ * 320px floor — 1199 - 320 = 879 — reaching the full 480px at 1359px
+ * (879 + 480), so a scarce viewport yields panel width to the page instead
+ * of holding it at 480 regardless of room.
+ */
+:root {
+  --pc-stack-width: clamp(320px, 100vw - 879px, 480px);
+}
+
+/*
  * The Stack panel's closed-state reopen tab (stack-panel.tsx) defaults to
  * vertical-center via `top: 50%`; nudged down toward one-handed thumb reach at
  * phone width. Stays a global CSS variable (not a per-element class) because
