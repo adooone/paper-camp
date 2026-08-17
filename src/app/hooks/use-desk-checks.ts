@@ -6,7 +6,6 @@ import { fetchChecks, runDeskCheck } from '../services/checks-api';
 export interface DeskChecksClient {
   checks: DeskCheckState[];
   run: (name: string) => Promise<void>;
-  refresh: () => Promise<void>;
 }
 
 export function useDeskChecks(): DeskChecksClient {
@@ -45,5 +44,5 @@ export function useDeskChecks(): DeskChecksClient {
     [refresh],
   );
 
-  return { checks, run, refresh };
+  return { checks, run };
 }

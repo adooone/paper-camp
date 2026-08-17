@@ -3,48 +3,71 @@ import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { AGENT_LABELS, type AgentTaskState, type AgentTaskStatus } from '@/types/index';
 import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { chalkStatusFill, chalkStatusText, sectionLabelClassName } from './shared';
+import { chalkStatusFill, chalkStatusText, formatLastRun, sectionLabelClassName } from './shared';
 
 const MAX_VISIBLE_TASKS = 3;
 // 9.25rem = 3 cards * 2.75rem card height + 2 gaps * 0.5rem, reserved so the
 // empty state doesn't shrink the panel when tasks finish and clear.
 const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[9.25rem]';
 
-const taskSubtitle = (task: AgentTaskState): string => {
+export const taskKindLabel = (task: AgentTaskState): string => {
   switch (task.taskKind) {
     case 'phase':
-      return task.phaseIndex !== undefined ? ` — phase ${task.phaseIndex + 1}` : '';
+      return task.phaseIndex !== undefined ? `phase ${task.phaseIndex + 1}` : '';
     case 'audit':
-      return ' — audit';
+      return 'audit';
     case 'batch-reconcile':
-      return ' — batch reconcile';
+      return 'batch reconcile';
     case 'batch-draft':
-      return ' — batch draft';
+      return 'batch draft';
     case 'reconcile':
-      return ' — reconcile';
+      return 'reconcile';
     case 'fix-review':
-      return ' — fixing review comments';
+      return 'fixing review comments';
     case 'draft':
-      return ' — drafting';
+      return 'drafting';
     case 'extend':
-      return ' — extending';
+      return 'extending';
     case 'commit-suggest':
-      return ' — suggesting commit message';
+      return 'suggesting commit message';
     case 'overlap-check':
-      return ' — checking overlap';
+      return 'checking overlap';
     case 'sync':
-      return ' — syncing to main';
+      return 'syncing to main';
     case 'resolve-conflict':
-      return ' — resolving conflict';
+      return 'resolving conflict';
     case 'run-all':
-      return ' — run all phases';
+      return 'run all phases';
     case 'pr-review': {
       const prNumber = task.prReviewUrl?.match(/\/pull\/(\d+)/)?.[1];
-      return prNumber ? ` — reviewing PR #${prNumber}` : ' — reviewing PR';
+      return prNumber ? `reviewing PR #${prNumber}` : 'reviewing PR';
     }
     default:
       return '';
   }
+};
+
+export const taskSubtitle = (task: AgentTaskState): string => {
+  const label = taskKindLabel(task);
+  if (!label || label.toLowerCase() === task.planTitle.trim().toLowerCase()) return '';
+  return ` — ${label}`;
+};
+
+const statusFill: Record<AgentTaskStatus, string> = {
+  starting: chalkStatusFill.running,
+  running: chalkStatusFill.running,
+  stopping: chalkStatusFill.running,
+  done: chalkStatusFill.pass,
+  error: chalkStatusFill.fail,
+  superseded: chalkStatusFill.running,
+};
+const statusText: Record<AgentTaskStatus, string> = {
+  starting: chalkStatusText.running,
+  running: chalkStatusText.running,
+  stopping: chalkStatusText.running,
+  done: chalkStatusText.pass,
+  error: chalkStatusText.fail,
+  superseded: chalkStatusText.running,
 };
 
 const AgentTaskCard = ({
@@ -71,23 +94,6 @@ const AgentTaskCard = ({
     }
   };
 
-  const statusFill: Record<AgentTaskStatus, string> = {
-    starting: chalkStatusFill.running,
-    running: chalkStatusFill.running,
-    stopping: chalkStatusFill.running,
-    done: chalkStatusFill.pass,
-    error: chalkStatusFill.fail,
-    superseded: chalkStatusFill.running,
-  };
-  const statusText: Record<AgentTaskStatus, string> = {
-    starting: chalkStatusText.running,
-    running: chalkStatusText.running,
-    stopping: chalkStatusText.running,
-    done: chalkStatusText.pass,
-    error: chalkStatusText.fail,
-    superseded: chalkStatusText.running,
-  };
-
   return (
     <Card surface="chalkboard" size="small" className="stack-task-card">
       {/* biome-ignore lint/a11y/useSemanticElements: the Stop IconButton nests inside, and a native <button> can't contain another button. */}
@@ -104,10 +110,18 @@ const AgentTaskCard = ({
         }}
         className="flex cursor-pointer items-center justify-between gap-2 rounded-[10px]"
       >
-        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm font-semibold text-desk-chalk">
-          {task.planTitle}
-          {taskSubtitle(task)} · {AGENT_LABELS[task.agentId]}
-        </span>
+        <div className="flex min-w-0 flex-1 items-baseline gap-1">
+          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm font-semibold text-desk-chalk">
+            {task.planTitle}
+            {taskSubtitle(task)}
+          </span>
+          <span className="shrink-0 text-xs text-desk-text-muted">
+            · {AGENT_LABELS[task.agentId]}
+          </span>
+          <span className="shrink-0 font-mono text-2xs text-desk-text-muted">
+            {formatLastRun(task.startedAt)}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           {task.status === 'error' && task.errorKind === 'auth' ? (
             // paper-ui has no clickable Stamp variant, so a raw button wraps it (see docs/CODE_STYLE.md §1)
@@ -159,20 +173,33 @@ const AgentTaskCard = ({
 export const AgentSection = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
+  const navigate = useNavigate();
   const visibleTasks = agentStatus.slice(0, MAX_VISIBLE_TASKS);
+  const hiddenCount = agentStatus.length - visibleTasks.length;
 
   return (
     <div className="flex min-h-0 flex-none flex-col p-6">
-      <div className={sectionLabelClassName}>Agent</div>
+      <h3 className={`${sectionLabelClassName} m-0`}>Agent</h3>
       <div
         className={`flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto ${TASK_STACK_MIN_HEIGHT_CLASS} ${
           visibleTasks.length > 0 ? 'justify-start' : 'justify-center'
         }`}
       >
         {visibleTasks.length > 0 ? (
-          visibleTasks.map((task) => (
-            <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
-          ))
+          <>
+            {visibleTasks.map((task) => (
+              <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
+            ))}
+            {hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={() => navigate({ to: '/tasks' })}
+                className="bg-none bg-transparent border-none p-0 self-center underline cursor-pointer text-xs text-desk-chalk"
+              >
+                +{hiddenCount} more
+              </button>
+            )}
+          </>
         ) : (
           <Card surface="chalkboard" size="small">
             <p className="m-0 text-center text-xs opacity-50">No agent running.</p>

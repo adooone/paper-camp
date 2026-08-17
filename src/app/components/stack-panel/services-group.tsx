@@ -3,14 +3,14 @@ import { fetchServiceLog } from '@/app/services/services-api';
 import type { ServiceState } from '@/types/index';
 import { Card, IconButton, Spinner, useToast } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RunIcon, StopIcon } from '../icons';
+import { ChevronRightIcon, RunIcon, StopIcon } from '../icons';
 import { groupLabelClassName } from './shared';
 
 const LOG_POLL_MS = 1500;
 
 export const SERVICES_GROUP_LABEL = 'Services';
 
-const dotClass = (service: ServiceState): string => {
+export const dotClass = (service: ServiceState): string => {
   if (service.status === 'crashed') return 'bg-chalk-fail-text';
   if (service.status === 'running') {
     return service.health === 'up' ? 'bg-chalk-pass-text' : 'bg-chalk-running-text';
@@ -19,13 +19,17 @@ const dotClass = (service: ServiceState): string => {
   return 'bg-desk-text-muted';
 };
 
-const StatusDot = ({ service }: { service: ServiceState }) => (
-  <span
-    aria-hidden="true"
-    className={`h-2 w-2 shrink-0 rounded-full ${dotClass(service)}`}
-    title={service.status === 'running' ? `running · ${service.health}` : service.status}
-  />
-);
+const StatusDot = ({ service }: { service: ServiceState }) => {
+  const label = service.status === 'running' ? `running · ${service.health}` : service.status;
+  return (
+    <span
+      role="img"
+      aria-label={label}
+      className={`h-2 w-2 shrink-0 rounded-full ${dotClass(service)}`}
+      title={label}
+    />
+  );
+};
 
 const ServiceLog = ({ name, running }: { name: string; running: boolean }) => {
   const [log, setLog] = useState('');
@@ -38,11 +42,10 @@ const ServiceLog = ({ name, running }: { name: string; running: boolean }) => {
       if (!cancelled) setLog(next);
     };
     load();
-    if (!running) return;
-    const timer = setInterval(load, LOG_POLL_MS);
+    const timer = running ? setInterval(load, LOG_POLL_MS) : undefined;
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      if (timer) clearInterval(timer);
     };
   }, [name, running]);
 
@@ -74,6 +77,7 @@ const ServiceRow = ({
   const [busy, setBusy] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const isRunning = service.status === 'running' || service.status === 'stopping';
+  const owned = service.pid !== null;
 
   const toggleRun = async () => {
     if (busy) return;
@@ -97,8 +101,14 @@ const ServiceRow = ({
         <button
           type="button"
           onClick={() => setShowLog((v) => !v)}
+          aria-expanded={showLog}
           className="flex min-w-0 cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left"
         >
+          <span
+            className={`shrink-0 text-desk-text-muted transition-transform ${showLog ? 'rotate-90' : ''}`}
+          >
+            <ChevronRightIcon />
+          </span>
           <StatusDot service={service} />
           <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm font-semibold text-desk-chalk">
             {service.name}
@@ -112,7 +122,7 @@ const ServiceRow = ({
         <div className="flex shrink-0 items-center gap-1">
           {busy ? (
             <Spinner size="small" surface="chalkboard" label="Working" />
-          ) : (
+          ) : !isRunning || owned ? (
             <IconButton
               icon={isRunning ? <StopIcon /> : <RunIcon />}
               surface="chalkboard"
@@ -121,7 +131,7 @@ const ServiceRow = ({
               label={isRunning ? `Stop ${service.name}` : `Start ${service.name}`}
               onClick={toggleRun}
             />
-          )}
+          ) : null}
         </div>
       </div>
       {showLog && <ServiceLog name={service.name} running={isRunning} />}
@@ -136,7 +146,7 @@ export const ServicesGroup = () => {
 
   return (
     <div>
-      <div className={groupLabelClassName}>{SERVICES_GROUP_LABEL}</div>
+      <h4 className={`${groupLabelClassName} m-0`}>{SERVICES_GROUP_LABEL}</h4>
       <div className="flex flex-col gap-2">
         {services.length > 0 ? (
           services.map((service) => (

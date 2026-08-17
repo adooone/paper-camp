@@ -22,6 +22,7 @@ const task = (overrides: Partial<AgentTaskState>): AgentTaskState => ({
   status: 'running',
   taskKind: 'phase',
   planTitle: 'Untitled',
+  startedAt: '2024-01-01T00:00:00.000Z',
   agentId: 'claude-code',
   lines: [],
   ...overrides,

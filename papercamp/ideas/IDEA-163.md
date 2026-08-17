@@ -2,9 +2,9 @@
 id: IDEA-163
 title: Stack panel affordance and a11y pass
 type: fix
-status: idea
+status: review
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-17
 tags:
   - app
   - stack
@@ -90,16 +90,27 @@ Code organisation, same files and same pass:
   source-text guard tests touch the file at all.
 
 ### Phases
-- [ ] Give stale stamps a resting treatment and consolidate the stamp code
+- [x] Give stale stamps a resting treatment and consolidate the stamp code
       Add the outlined chalk resting state, extract one `StampButton`, hoist `statusFill`/`statusText` to module scope, and drop `shared.ts`'s hardcoded hex for the `chalk.*` tokens.
-- [ ] Fix and surface service state
+      run: 6m53s · 9.3k in · 17.7k out · sonnet-5
+- [x] Fix and surface service state
       Probe the healthcheck regardless of who owns the process in `desk-services.ts`, then give the row an unambiguous run icon and a real expand chevron.
-- [ ] Make the panel accessible
+      run: 5m9s · 804 in · 15k out · sonnet-5
+- [x] Make the panel accessible
       Mark it `inert` while closed, turn it into a labelled `complementary` landmark with real headings and dot labels, and add Escape-to-close.
-- [ ] Repair the agent card and task list
+      run: 6m25s · 679 in · 20.8k out · sonnet-5
+- [x] Repair the agent card and task list
       Drop the redundant subtitle, give the agent label a non-truncating slot, show each task's start time, and replace the silent slice with a "+N more" link to `/tasks`.
-- [ ] Settle the presentation
+      run: 5m13s · 936 in · 15.3k out · sonnet-5
+- [x] Settle the presentation
       Left-align the column, use the body font for the group labels, and shrink the `h-20` header.
-- [ ] Clear the dead and duplicated code
+      run: 3m35s · 378 in · 7.2k out · sonnet-5
+- [x] Clear the dead and duplicated code
       Replace `refreshRef` with `useAppStore.getState()`, drop the unused `useDeskChecks().refresh`, and fix `ServiceLog`'s cleanup so its `cancelled` guard registers.
-- [ ] Cover the panel with tests
+      run: 3m27s · 383 in · 7.8k out · sonnet-5
+- [x] Cover the panel with tests
+      run: 4m32s · 2.3k in · 11.1k out · sonnet-5
+- [x] [manual] Pass entities to ArchiveSection instead of titles
+
+### Thread
+- [x] 2026-08-17 [review] [agent] Approves · 1 finding — The diff delivers all seven phases cleanly: stale stamps get a neutral outlined variant, the reset-button pattern is consolidated into one StampButton, service state is probed via healthcheck regardless of ownership and the run/stop control is correctly gated, the panel becomes an inert-while-closed complementary landmark with real heading levels and labelled dots, the agent card gets a non-truncating agent slot plus start time and a +N-more link, and new unit tests cover the extracted pure helpers. I verified the new required AgentTaskState.startedAt field typechecks across the repo and the async getStatus change is fully contained to its one route caller. No correctness bugs found; the service-control gating logic is right for the owned/detected/stopped cases.

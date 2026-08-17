@@ -132,6 +132,22 @@ export const StopIcon = ({ size = 12 }: IconProps) => (
   </svg>
 );
 
+export const ChevronRightIcon = ({ size = 12 }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="m7 4 6 6-6 6" />
+  </svg>
+);
+
 export const CommitIcon = ({ size = 12 }: IconProps) => (
   <svg
     width={size}

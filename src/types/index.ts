@@ -915,6 +915,7 @@ export interface AgentTaskState {
   status: AgentTaskStatus;
   taskKind: TaskKind;
   planTitle: string;
+  startedAt: string;
   planId?: string;
   phaseIndex?: number;
   fixAttempt?: number;

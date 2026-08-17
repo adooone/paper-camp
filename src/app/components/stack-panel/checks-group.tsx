@@ -1,18 +1,27 @@
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import type { CheckStatus, DeskCheckState } from '@/types/index';
-import { Card, CopyButton, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { Card, CopyButton } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { chalkStatusFill, chalkStatusText, formatLastRun, groupLabelClassName } from './shared';
+import {
+  StampButton,
+  chalkStatusFill,
+  chalkStatusText,
+  formatLastRun,
+  groupLabelClassName,
+} from './shared';
 
 export const CHECKS_GROUP_LABEL = 'Checks';
 
-const statusFill: Record<CheckStatus, string> = { ...chalkStatusFill, stale: 'transparent' };
+const statusFill: Record<CheckStatus, string | undefined> = {
+  ...chalkStatusFill,
+  stale: undefined,
+};
 const statusText: Record<CheckStatus, string | undefined> = {
   ...chalkStatusText,
   stale: undefined,
 };
 
-const fixPrompt = (check: DeskCheckState): string =>
+export const fixPrompt = (check: DeskCheckState): string =>
   `Fix the failing "${check.name}" check in this repo. The command was \`${check.cmd}\`.\n\nOutput from the last run:\n\n${check.output || '(no output captured)'}`;
 
 const CheckStamp = ({
@@ -26,27 +35,17 @@ const CheckStamp = ({
   const lastRun = formatLastRun(check.lastRun);
   return (
     <div className="flex items-center justify-between gap-2">
-      <Tooltip content={`${check.cmd} — click to run.`} surface="chalkboard">
-        {/* Raw <button>: the clickable target is a Stamp, which has no button surface of its own. */}
-        <button
-          type="button"
-          className={`inline-flex border-none bg-transparent bg-none p-0 ${running ? 'cursor-not-allowed' : 'cursor-pointer enabled:hover:-translate-y-px enabled:hover:brightness-[1.15]'}`}
-          onClick={() => {
-            if (!running) onRun(check.name);
-          }}
-          disabled={running}
-        >
-          <Stamp
-            surface="chalkboard"
-            size="small"
-            fillColor={statusFill[check.status]}
-            textColor={statusText[check.status]}
-          >
-            {check.name}
-            <span className={running ? 'visible' : 'invisible'}>…</span>
-          </Stamp>
-        </button>
-      </Tooltip>
+      <StampButton
+        tooltip={`${check.cmd} — click to run.`}
+        onClick={() => onRun(check.name)}
+        disabled={running}
+        fillColor={statusFill[check.status]}
+        textColor={statusText[check.status]}
+        variant={check.status === 'stale' ? 'neutral' : undefined}
+      >
+        {check.name}
+        <span className={running ? 'visible' : 'invisible'}>…</span>
+      </StampButton>
       {lastRun && (
         <span className="shrink-0 font-mono text-2xs text-desk-text-muted">{lastRun}</span>
       )}
@@ -61,7 +60,7 @@ export const ChecksGroup = () => {
 
   return (
     <div>
-      <div className={groupLabelClassName}>{CHECKS_GROUP_LABEL}</div>
+      <h4 className={`${groupLabelClassName} m-0`}>{CHECKS_GROUP_LABEL}</h4>
       {checks.length > 0 ? (
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-2">

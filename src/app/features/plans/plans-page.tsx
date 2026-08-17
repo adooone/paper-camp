@@ -1,7 +1,7 @@
 import { PageTitle } from '@/app/components/page-title';
 import { entityRouteParam, useActiveIdea, useActivePlan } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import type { SuggestionEntry } from '@/types/index';
+import type { ArchivableIdea, SuggestionEntry } from '@/types/index';
 import { Breadcrumb, Card, useToast } from '@dendelion/paper-ui';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
@@ -63,6 +63,12 @@ export const PlansPage = () => {
   const handleOpenIdea = (title: string) => {
     const id = ideaEntries.find((idea) => idea.title === title)?.id;
     navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
+  };
+
+  // Archivable entities are work entities, so they route to /plans and their id is
+  // already to hand — `ideaEntries` holds only notes and would never resolve them.
+  const handleOpenArchivable = (idea: ArchivableIdea) => {
+    navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(idea.id, idea.title) } });
   };
 
   const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);
@@ -173,7 +179,7 @@ export const PlansPage = () => {
             />
           )}
 
-          <ArchiveSection onOpenIdea={handleOpenIdea} />
+          <ArchiveSection onOpen={handleOpenArchivable} />
 
           <SuggestionsSection
             suggestions={suggestions}

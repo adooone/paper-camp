@@ -47,7 +47,7 @@ describe('GET /api/services', () => {
       exitCode: null,
     };
     const { res, status, json } = fakeRes();
-    await route('/api/services', 'GET', { getStatus: () => [state] }).handle(
+    await route('/api/services', 'GET', { getStatus: async () => [state] }).handle(
       fakeReq('/api/services'),
       res,
     );

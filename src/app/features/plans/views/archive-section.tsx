@@ -5,10 +5,12 @@ import { useCallback, useState } from 'react';
 import { PlanIdStamp } from '../components';
 
 interface ArchiveSectionProps {
-  onOpenIdea?: (title: string) => void;
+  /** Takes the entity, not its title: these are work entities whose id is already
+   * known here, and a title round-trip resolves against the notes-only idea list. */
+  onOpen?: (idea: ArchivableIdea) => void;
 }
 
-export const ArchiveSection = ({ onOpenIdea }: ArchiveSectionProps) => {
+export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
   const archivableIdeas = useAppStore((s) => s.archivableIdeas);
   const archiveIdeas = useAppStore((s) => s.archiveIdeas);
   const [archivingId, setArchivingId] = useState<string | null>(null);
@@ -68,20 +70,20 @@ export const ArchiveSection = ({ onOpenIdea }: ArchiveSectionProps) => {
             <Card size="small" texture="canvas" className="plan-row-card">
               <div className="flex items-center gap-2">
                 <div
-                  role={onOpenIdea ? 'button' : undefined}
-                  tabIndex={onOpenIdea ? 0 : undefined}
-                  onClick={onOpenIdea ? () => onOpenIdea(idea.title) : undefined}
+                  role={onOpen ? 'button' : undefined}
+                  tabIndex={onOpen ? 0 : undefined}
+                  onClick={onOpen ? () => onOpen(idea) : undefined}
                   onKeyDown={
-                    onOpenIdea
+                    onOpen
                       ? (e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            onOpenIdea(idea.title);
+                            onOpen(idea);
                           }
                         }
                       : undefined
                   }
-                  className={`flex items-center gap-2 flex-1 min-w-0 ${onOpenIdea ? 'cursor-pointer' : ''}`}
+                  className={`flex items-center gap-2 flex-1 min-w-0 ${onOpen ? 'cursor-pointer' : ''}`}
                 >
                   <PlanIdStamp id={idea.id} />
                   <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">

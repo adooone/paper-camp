@@ -163,11 +163,11 @@
 | IDEA-160 | One activity stream for the whole app | fix | done | app, ux, performance |
 | IDEA-161 | Desk section clips its own content | fix | done | app, stack, layout |
 | IDEA-162 | One source of truth for checks | refactor | done | app, stack, status |
-| IDEA-163 | Stack panel affordance and a11y pass | fix | planned | app, stack, ux |
+| IDEA-163 | Stack panel affordance and a11y pass | fix | review | app, stack, ux |
 | IDEA-164 | Browser-driven page audits | feat | planned | app, agent, stack |
 | IDEA-165 | Stage files, write the message | feat | done | app, git, ux |
-| IDEA-166 | Readable diffs on the git page | feat | review | app, git, ui |
-| IDEA-167 | Git status vocabulary and chrome | fix | planned | app, git, ux |
+| IDEA-166 | Readable diffs on the git page | feat | done | app, git, ui |
+| IDEA-167 | Git status vocabulary and chrome | fix | done | app, git, ux |
 | IDEA-168 | Version the corpus format | feat | planned | format, core |
 | IDEA-169 | Draft all ideas at once | feat | done | app, plans, agent |
 | IDEA-170 | Review pull requests with a local agent | feat | done | app, agent, github |
@@ -186,3 +186,5 @@
 | IDEA-183 | Filters and sort tell the truth | fix | idea | app, plans, ux |
 | IDEA-184 | One row treatment on the Plans page | fix | idea | app, plans, ui |
 | IDEA-185 | Delete the idea-group machinery | refactor | idea | app, plans, refactor |
+| IDEA-186 | Use the whole width | feat | idea | app, ui, layout |
+| IDEA-187 | Fixes are their own entity | feat | idea | format, plans, app |
