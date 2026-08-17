@@ -82,8 +82,10 @@ The Stack panel, the page's own content, and the three-column widths
 - [x] Move ProjectIdentityHeader to the top of the sidebar column
       It renders on the same speckled grid as the sidebar beneath it, one surface.
       run: 2m17s · 5.9k in · 10.2k out · sonnet-5
-- [ ] Place paper-ui's Island component with our own top-right positioning
+- [x] Place paper-ui's Island component with our own top-right positioning
       Use paper-ui's Island component (not the navigationIsland slot, which is hardcoded to fixed bottom-center), but override its positioning in our app so it sits top-right on the parchment instead of paper-ui's default fixed bottom-center placement.
+      run: verified with `pnpm run check-types` and `pnpm biome check` only (headless agent, no browser) — visual placement needs human confirmation.
+      run: 4m10s · 15.9k in · 26.3k out · sonnet-5
 - [ ] Start the Page at the top of the centre column
       Parchment runs continuous from the first pixel to the existing bleed.
 - [ ] Give sidebar section labels real hierarchy

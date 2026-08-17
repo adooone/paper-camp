@@ -4,7 +4,7 @@ import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { mountPrefix } from '@/app/services/mount';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
-import { Button, IconButton, Layout, Page, ToastProvider } from '@dendelion/paper-ui';
+import { Button, IconButton, Island, Layout, Page, ToastProvider } from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -213,50 +213,18 @@ const RootLayout = () => {
         <Layout
           style={{ flex: '1 1 0%', minHeight: 0, height: 'auto' }}
           background={{ texture: 'speckle', ruledType: 'grid', ruledColor: 'blue' }}
-          showHeader
           showSidebar={false}
           showPage={false}
           bleedBottom
-          headerActions={
-            <>
-              {hasSidebar && (
-                <IconButton
-                  variant="ghost"
-                  size="small"
-                  className="lg:hidden max-[480px]:hidden"
-                  label="Open sidebar"
-                  onClick={() => setMobileSidebarOpen(true)}
-                  icon={<SidebarToggleIcon />}
-                />
-              )}
-              <div className="flex-1" />
-              <nav
-                aria-label="Main navigation"
-                className="flex items-center gap-1 max-[480px]:hidden"
-              >
-                {navItems.map((item) => (
-                  <Button
-                    key={item.id}
-                    variant="ghost"
-                    size="small"
-                    isActive={item.id === activeId}
-                    onClick={() => navigate({ to: item.path })}
-                    aria-current={item.id === activeId ? 'page' : undefined}
-                  >
-                    <NavLabel item={item} />
-                  </Button>
-                ))}
-              </nav>
-            </>
-          }
         >
           <div className="flex flex-col h-full min-h-0">
             {/* Bled out of `.content`'s padding: the scrollbar renders at this box's
-                edge, and content should pass under the header/strip, not stop short. */}
+                edge, so content isn't inset by a strip that no longer exists. */}
             <div
-              // No top inset: the header no longer paints a background, so the page
-              // should meet it directly. Page's own 2rem padding still holds the text
-              // off the edge — re-adding it here stacked two grid cells of dead space.
+              // No top inset: there's no header band above the columns anymore, so the
+              // page should meet the top of the viewport directly. Page's own 2rem padding
+              // still holds the text off the edge — re-adding it here would stack two grid
+              // cells of dead space.
               // paddingBottom uses var() so utilities.css can widen it below the phone
               // breakpoint, clearing the fixed .phone-bottom-nav that replaces the header
               // nav there.
@@ -299,7 +267,36 @@ const RootLayout = () => {
                     )}
                   </SidebarShell>
                 )}
-                <div className="flex flex-col min-w-0 flex-[1_1_0%]">
+                <div className="relative flex flex-col min-w-0 flex-[1_1_0%]">
+                  <Island
+                    label="Main navigation"
+                    className="!absolute !left-auto !top-4 !right-4 !bottom-auto !translate-x-0 z-20 max-[480px]:hidden"
+                  >
+                    {hasSidebar && (
+                      <IconButton
+                        variant="ghost"
+                        size="small"
+                        className="lg:hidden"
+                        label="Open sidebar"
+                        onClick={() => setMobileSidebarOpen(true)}
+                        icon={<SidebarToggleIcon />}
+                      />
+                    )}
+                    <div className="flex items-center gap-1">
+                      {navItems.map((item) => (
+                        <Button
+                          key={item.id}
+                          variant="ghost"
+                          size="small"
+                          isActive={item.id === activeId}
+                          onClick={() => navigate({ to: item.path })}
+                          aria-current={item.id === activeId ? 'page' : undefined}
+                        >
+                          <NavLabel item={item} />
+                        </Button>
+                      ))}
+                    </div>
+                  </Island>
                   <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
