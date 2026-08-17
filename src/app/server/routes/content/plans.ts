@@ -1,27 +1,20 @@
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readEntities, readWorkEntries } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
-import {
-  archiveEntityFile,
-  assignEntityId,
-  formatEntityFile,
-  todayDateString,
-} from '@/core/serialize';
+import { archiveEntityFile, todayDateString } from '@/core/serialize';
 import { replaceThreadKinds } from '@/core/thread';
 import {
   AGENT_IDS,
   type AgentId,
   type EntityEntry,
   type LogEntry,
-  PLAN_KINDS,
   type PhaseItem,
   type PlanStatus,
   type ThreadMessage,
 } from '@/types/index';
 import {
   campFile,
-  checkBranchConflictForPlan,
   entityFileInput,
   fileExists,
   readMaybe,
@@ -70,55 +63,6 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         await unlink(filePath);
         await regenerateIndexes(root);
         sendJson(res, 200, { ok: true });
-      },
-    },
-
-    {
-      method: 'POST',
-      path: '/api/plans',
-      handle: async (req, res) => {
-        const body = await readBody(req);
-        const { title, content, kind } = JSON.parse(body) as {
-          title: string;
-          content?: string;
-          kind?: string;
-        };
-        if (!title?.trim()) {
-          sendJson(res, 400, { error: 'title is required' });
-          return;
-        }
-        // The UI disables this client-side, but a stale-branch request must not
-        // create an entity by bypassing that check.
-        const conflict = await checkBranchConflictForPlan(root, git);
-        if (conflict) {
-          sendJson(res, 409, { error: conflict });
-          return;
-        }
-        const type =
-          kind && PLAN_KINDS.includes(kind as (typeof PLAN_KINDS)[number]) ? kind : 'feat';
-
-        const configPath = join(root, 'papercamp', 'config.json');
-        const id = await assignEntityId(configPath);
-
-        if (!id) {
-          sendJson(res, 500, { error: 'could not assign entity ID' });
-          return;
-        }
-
-        const ideasDir = campFile(root, 'ideas');
-        await mkdir(ideasDir, { recursive: true });
-
-        const entityContent = formatEntityFile({
-          id,
-          title: title.trim(),
-          type,
-          status: 'idea',
-          created: todayDateString(),
-          body: content?.trim(),
-        });
-        await writeFile(join(ideasDir, `${id}.md`), `${entityContent}\n`, 'utf-8');
-        await regenerateIndexes(root);
-        sendJson(res, 201, { ok: true, id });
       },
     },
 

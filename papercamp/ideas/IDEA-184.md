@@ -2,7 +2,7 @@
 id: IDEA-184
 title: One row treatment on the Plans page
 type: fix
-status: in-progress
+status: review
 created: 2026-08-16
 updated: 2026-08-17
 tags:
@@ -74,8 +74,9 @@ The create modals' own fields, and the status-filter and sort behaviour
 - [x] Decide whether both create actions stay
       Settle whether the second entry point earns its place before touching either button.
       run: 26s · 5.6k in · 1.3k out · sonnet-5
-- [ ] Remove the Quick plan action, keep New Idea as the single create entry point
+- [x] Remove the Quick plan action, keep New Idea as the single create entry point
       Delete AddToBacklogButton and its POST /api/plans creation path; every new entity is created as a plain idea (idea/note kind) via NewIdeaButton and gets typed later when drafted into a plan.
+      run: 1m54s · 658 in · 6.9k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-17 [question] [agent] Run-all parked on phase 4 ("Decide whether both create actions stay") — the agent needs a decision: Does the "Quick plan" entry point (`AddToBacklogButton` → `POST /api/plans`, letting you pick a typed `kind`: feat/fix/chore/docs/refactor at creation) still need to exist as a separate one-step action, or should every new entity start as a plain idea via `NewIdeaButton` (→ `POST /api/ideas`, kind idea/note only) and get typed later when it's drafted into a plan? This determines whether phase 5 gives matching affordance to two buttons or removes one — it's a scope call on the creation workflow, not something I can infer from the code.

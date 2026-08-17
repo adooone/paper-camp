@@ -1,4 +1,4 @@
-import { AddToBacklogButton, NewIdeaButton, WorklistActionsMenu } from '../actions';
+import { NewIdeaButton, WorklistActionsMenu } from '../actions';
 
 export const PlansHeader = () => {
   return (
@@ -8,7 +8,6 @@ export const PlansHeader = () => {
       </h1>
 
       <NewIdeaButton />
-      <AddToBacklogButton />
       <WorklistActionsMenu />
     </div>
   );

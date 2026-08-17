@@ -18,18 +18,6 @@ export const fetchPlans = async (): Promise<ParseResult<PlanEntry>> => {
   return response.json();
 };
 
-export const createPlan = async (idea: {
-  title: string;
-  content?: string;
-  kind?: string;
-}): Promise<void> => {
-  await fetch(apiUrl('/api/plans'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(idea),
-  });
-};
-
 export const updatePlan = async (
   title: string,
   updates: {
