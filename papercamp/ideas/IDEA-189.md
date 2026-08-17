@@ -78,8 +78,9 @@ The Stack panel, the page's own content, and the three-column widths
 ([[IDEA-186]]). This is the shell's surfaces and the sidebar's interior.
 
 ### Phases
-- [ ] Move ProjectIdentityHeader to the top of the sidebar column
+- [x] Move ProjectIdentityHeader to the top of the sidebar column
       It renders on the same speckled grid as the sidebar beneath it, one surface.
+      run: 2m17s · 5.9k in · 10.2k out · sonnet-5
 - [ ] Swap nav into the navigationIsland slot and drop showHeader
       Nav buttons move from headerActions to the island; remove the shared header band.
 - [ ] Start the Page at the top of the centre column

@@ -1,10 +1,4 @@
-import {
-  ProjectIdentityHeader,
-  ServerReloadBanner,
-  SidebarShell,
-  StackPanel,
-  StatusBar,
-} from '@/app/components';
+import { ServerReloadBanner, SidebarShell, StackPanel, StatusBar } from '@/app/components';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
@@ -235,7 +229,6 @@ const RootLayout = () => {
                   icon={<SidebarToggleIcon />}
                 />
               )}
-              <ProjectIdentityHeader size="sm" />
               <div className="flex-1" />
               <nav
                 aria-label="Main navigation"

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { ProjectIdentityHeader } from './project-identity-header';
 
 interface SidebarShellProps {
   routeKey: string;
@@ -63,6 +64,9 @@ export const SidebarShell = ({
             : 'bg-transparent'
         }`}
       >
+        <div className="shrink-0 pt-4 pb-3">
+          <ProjectIdentityHeader size="sm" />
+        </div>
         <div className="flex-1 overflow-y-auto pt-5 relative">
           <div key={routeKey}>{children}</div>
         </div>
