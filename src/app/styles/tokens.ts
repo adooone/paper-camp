@@ -23,6 +23,7 @@ export const color = {
   deskChalk: '#d4e8cb',
   diffAddedBg: 'rgba(143, 185, 150, 0.18)',
   diffRemovedBg: 'rgba(201, 139, 139, 0.18)',
+  // Duplicated in tailwind.config.ts colors.chalk (Stamp needs a runtime string, not a Tailwind class) — keep both in sync.
   chalkPass: '#2d5a3b',
   chalkPassText: '#b5d6b5',
   chalkFail: '#5a2d2d',

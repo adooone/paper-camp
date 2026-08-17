@@ -4,7 +4,7 @@ title: Delete the idea-group machinery
 type: refactor
 status: idea
 created: 2026-08-16
-updated: 2026-08-16
+updated: 2026-08-17
 tags:
   - app
   - plans
@@ -66,3 +66,16 @@ before removing the group card that also mounts them.
 Anything that changes what the worklist shows. This is a removal: the rendered
 output must be identical before and after, which is what makes it safe to do in
 one pass.
+
+### Carve-out: the `idea:` field survives
+
+[[IDEA-187]] makes the `idea:` backlink load-bearing — it is how a fix entity
+points at the idea it fixes. So the evidence above ("zero entities carry that
+field") is true today and stops being true once 187 ships.
+
+Delete the parent/child **rendering** only. `idea:` stays in the schema and in
+`EntityEntry`, untouched. A fix renders as its own row in the worklist rather
+than as a nested child card, so nothing IdeaGroupRowCard did comes back — but
+the field it keyed off is about to carry real weight.
+
+Run this idea before [[IDEA-187]], with that carve-out explicit in the removal.

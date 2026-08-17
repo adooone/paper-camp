@@ -4,7 +4,7 @@ title: Stack panel affordance and a11y pass
 type: fix
 status: review
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-17
 tags:
   - app
   - stack
@@ -110,3 +110,7 @@ Code organisation, same files and same pass:
       run: 3m27s · 383 in · 7.8k out · sonnet-5
 - [x] Cover the panel with tests
       run: 4m32s · 2.3k in · 11.1k out · sonnet-5
+- [x] [manual] Pass entities to ArchiveSection instead of titles
+
+### Thread
+- [x] 2026-08-17 [review] [agent] Approves · 1 finding — The diff delivers all seven phases cleanly: stale stamps get a neutral outlined variant, the reset-button pattern is consolidated into one StampButton, service state is probed via healthcheck regardless of ownership and the run/stop control is correctly gated, the panel becomes an inert-while-closed complementary landmark with real heading levels and labelled dots, the agent card gets a non-truncating agent slot plus start time and a +N-more link, and new unit tests cover the extracted pure helpers. I verified the new required AgentTaskState.startedAt field typechecks across the repo and the async getStatus change is fully contained to its one route caller. No correctness bugs found; the service-control gating logic is right for the owned/detected/stopped cases.
