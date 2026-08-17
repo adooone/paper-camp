@@ -86,8 +86,10 @@ The Stack panel, the page's own content, and the three-column widths
       Use paper-ui's Island component (not the navigationIsland slot, which is hardcoded to fixed bottom-center), but override its positioning in our app so it sits top-right on the parchment instead of paper-ui's default fixed bottom-center placement.
       run: verified with `pnpm run check-types` and `pnpm biome check` only (headless agent, no browser) — visual placement needs human confirmation.
       run: 4m10s · 15.9k in · 26.3k out · sonnet-5
-- [ ] Start the Page at the top of the centre column
+- [x] Start the Page at the top of the centre column
       Parchment runs continuous from the first pixel to the existing bleed.
+      run: no code change needed — dropping `showHeader` in the prior phase already removed the 48px header band, and the scroll container's existing padding-cancelling (`-mt-8`/`pt-0`, nothing re-adds top) plus `Page`'s own zero top margin mean it already renders flush from row 0. Verified by tracing the CSS cascade and `pnpm run check-types`; no browser available to confirm visually.
+      run: 4m35s · 366 in · 21.9k out · sonnet-5
 - [ ] Give sidebar section labels real hierarchy
       Replace the uniform sectionLabelClass so headers step above the controls.
 - [ ] Set Actions apart as the interactive block
