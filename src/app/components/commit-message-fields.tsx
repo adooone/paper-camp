@@ -35,7 +35,7 @@ export const CommitMessageFields = ({
         </Alert>
       )}
       <div className="flex gap-2 items-center">
-        <div className="flex-1">
+        <div className="flex-1 min-w-[140px]">
           <Input
             size="small"
             placeholder="Commit title"

@@ -432,8 +432,8 @@ const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
   const commitForm = useDeliverCommitForm(plan, files);
   const hasChanges = files.length > 0;
   return (
-    <div className="grid grid-cols-1 items-start gap-x-6 gap-y-2 md:grid-cols-[minmax(0,1fr)_auto_16rem]">
-      <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 md:flex-row md:items-start md:gap-x-6">
+      <div className="flex flex-1 flex-col gap-2">
         <DeliverChecksRow />
         {hasChanges && <CommitMessageFields state={commitForm} filesEmpty={!hasChanges} />}
       </div>

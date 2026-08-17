@@ -1,11 +1,12 @@
 import { GitStashSurface, GitSyncActions } from '@/app/components';
+import { CommitIcon } from '@/app/components/icons';
 import { entityRouteParam } from '@/app/hooks';
 import { type CommitFormFile, useCommitForm } from '@/app/hooks/use-commit-form';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import type { AgentTaskState, CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
-import { Button, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
+import { Button, IconButton, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -288,25 +289,58 @@ export const DeliverCommitButton = ({
     qualityStatus === 'fail' || testStatus === 'fail' || consistencyStatus === 'fail';
 
   if (checksFailing) {
+    const label = state.fixing ? 'Fixing…' : 'Fix';
+    const disabled = !state.canFix || state.fixing;
     return (
-      <Button size="small" disabled={!state.canFix || state.fixing} onClick={state.handleFix}>
-        {state.fixing ? 'Fixing…' : 'Fix'}
-      </Button>
+      <div className="[container-type:inline-size]">
+        <Button
+          className="commit-btn-full"
+          size="small"
+          disabled={disabled}
+          onClick={state.handleFix}
+        >
+          {label}
+        </Button>
+        <IconButton
+          className="commit-btn-compact"
+          icon={<CommitIcon size={14} />}
+          size="small"
+          label={label}
+          disabled={disabled}
+          onClick={state.handleFix}
+        />
+      </div>
     );
   }
 
+  const label =
+    state.committing || state.commitInFlight
+      ? 'Committing…'
+      : state.stagedCount > 0
+        ? `Commit ${state.stagedCount} staged`
+        : 'Commit';
+  const disabled =
+    filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight;
+
   return (
-    <Button
-      size="small"
-      disabled={filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight}
-      onClick={state.handleCommit}
-    >
-      {state.committing || state.commitInFlight
-        ? 'Committing…'
-        : state.stagedCount > 0
-          ? `Commit ${state.stagedCount} staged`
-          : 'Commit'}
-    </Button>
+    <div className="[container-type:inline-size]">
+      <Button
+        className="commit-btn-full"
+        size="small"
+        disabled={disabled}
+        onClick={state.handleCommit}
+      >
+        {label}
+      </Button>
+      <IconButton
+        className="commit-btn-compact"
+        icon={<CommitIcon size={14} />}
+        size="small"
+        label={label}
+        disabled={disabled}
+        onClick={state.handleCommit}
+      />
+    </div>
   );
 };
 
