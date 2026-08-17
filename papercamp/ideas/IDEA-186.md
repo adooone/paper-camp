@@ -87,8 +87,9 @@ sidebar contains per route. This is the shell's column geometry only.
       Drop the `flex-[0_1_800px]` basis and un-gate `max-w-none` and
       `flex-[1_1_0%]`; keep the narrow-width drawer fallback.
       run: 40s · 355 in · 2k out · sonnet-5
-- [ ] Bleed the sheet past the bottom edge
+- [x] Bleed the sheet past the bottom edge
       Relax `Page`'s `min-h-[calc(100vh-160px)]` and the scroller's
       `pb` so short and long pages both run under the fold, preserving the
       phone-breakpoint bottom padding.
+      run: 2m36s · 388 in · 11.5k out · sonnet-5
 - [ ] Confirm the scroll and alignment guards still pass
