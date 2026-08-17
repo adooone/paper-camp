@@ -713,16 +713,15 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-3 mb-2 flex-wrap">
+      <div className="flex items-baseline justify-between gap-3 mb-2">
         <h2 className={`${detailHeadingClassName} m-0 flex items-center gap-3 min-w-0 flex-wrap`}>
           <PlanIdStamp id={plan.id} />
           {plan.title}
         </h2>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-sm opacity-[0.45] whitespace-nowrap">
-            {plan.updated
-              ? `updated ${relativeDate(plan.updated)}`
-              : `created ${relativeDate(plan.created)}`}
+            <span className="max-[480px]:hidden">{plan.updated ? 'updated ' : 'created '}</span>
+            {relativeDate(plan.updated ?? plan.created)}
           </span>
           <RefreshButton />
         </div>
