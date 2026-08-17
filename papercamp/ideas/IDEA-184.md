@@ -2,7 +2,7 @@
 id: IDEA-184
 title: One row treatment on the Plans page
 type: fix
-status: in-progress
+status: review
 created: 2026-08-16
 updated: 2026-08-17
 tags:
