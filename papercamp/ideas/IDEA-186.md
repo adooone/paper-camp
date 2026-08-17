@@ -2,7 +2,7 @@
 id: IDEA-186
 title: Use the whole width
 type: feat
-status: idea
+status: review
 created: 2026-08-17
 updated: 2026-08-17
 tags:
@@ -92,4 +92,5 @@ sidebar contains per route. This is the shell's column geometry only.
       `pb` so short and long pages both run under the fold, preserving the
       phone-breakpoint bottom padding.
       run: 2m36s · 388 in · 11.5k out · sonnet-5
-- [ ] Confirm the scroll and alignment guards still pass
+- [x] Confirm the scroll and alignment guards still pass
+      run: 2m15s · 362 in · 1.5k out · sonnet-5
