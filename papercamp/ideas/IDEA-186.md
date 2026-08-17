@@ -2,7 +2,7 @@
 id: IDEA-186
 title: Use the whole width
 type: feat
-status: review
+status: in-progress
 created: 2026-08-17
 updated: 2026-08-17
 tags:
@@ -94,3 +94,20 @@ sidebar contains per route. This is the shell's column geometry only.
       run: 2m36s · 388 in · 11.5k out · sonnet-5
 - [x] Confirm the scroll and alignment guards still pass
       run: 2m15s · 362 in · 1.5k out · sonnet-5
+
+### Fixes
+- [x] [manual] Add the no-wrap rule to UX_PRINCIPLES §1
+      Control rows never wrap to a second line — shorten the label, drop to an icon, then move to an overflow. Priority goes to what the user reads or types, not what they click.
+- [ ] Scale the Stack width with the viewport
+      At a 1200px viewport the columns measure sidebar 282 / page 407 / Stack 480 — the ambient panel is wider than the work. Replace the fixed `w-[min(480px,100vw)]` with a clamped width that keeps 480 where there is room and yields first when width is scarce, so the page takes the surplus. The literal is stated three times (the panel's class, the root wrapper's `min-[1199px]:pr-[480px]`, and the comment tying them together); a scaling width needs one definition both read or they will drift.
+- [ ] Stop the phases table overlapping itself
+      A phase title's right edge sits 63px past where its run-metadata begins — `Derive the three-column breakp…` ends at x=477 while `15.4k tokens · 2m7s · sonnet-5` starts at x=414, so the two render on top of each other. The title cell is 113px holding text needing ~180. Give the title a min-width floor and shed the metadata in a defined order — tokens, then duration, then model — moving it behind the row's disclosure below a floor.
+- [ ] Give the commit input priority over the button
+      Measured at 1200px: the commit title input is 26px wide beside a 272px Commit button, a ratio of 10.5×. The input takes the row's flexible width with a real minimum; the button sizes to its content and becomes an icon button with its label in the tooltip below a floor. A commit title you cannot read produces a worse commit message than a button you cannot read a label on.
+- [ ] Stop the idea-view header wrapping
+      Refresh sits top-right at a wide viewport and drops to a second line at a narrow one, moving a control whose position the user has learned. The header row never wraps: labels shorten, then collapse to icons, then the least-used actions move behind the existing overflow menu.
+- [ ] Collapse the Deliver checks into one Health stamp
+      Quality, Tests, Consistency, Docs, a stash count and a commit state render as separate stamps that wrap across rows at a 407px page width, growing the section downward while almost always saying 'everything is fine'. One Health stamp: green when all pass, carrying the failing count when not, expanding to the individual checks on click so detail is one interaction away. Matches the Stack panel's own Health section, so the two surfaces stop disagreeing.
+
+### Thread
+- [x] 2026-08-17 [review] [agent] Approves · 0 findings — The diff faithfully implements the idea: it derives a three-column breakpoint (224+495+480=1199) from named constants, lowers the media query and the paired Tailwind literal to it, un-gates `flex-[1_1_0%]`/`max-w-none` and drops the 800px basis, and relaxes both bleed knobs (Page min-height and the scroller's bottom padding). All five phases are actually reflected in the code, and nothing contradicts the spec. The `isLarge` variable remains in use for the docked sidebar, so removing its two style ternaries leaves no dead references.
