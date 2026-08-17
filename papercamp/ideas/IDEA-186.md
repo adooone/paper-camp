@@ -2,7 +2,7 @@
 id: IDEA-186
 title: Use the whole width
 type: feat
-status: review
+status: in-progress
 created: 2026-08-17
 updated: 2026-08-17
 tags:
@@ -137,9 +137,8 @@ sidebar contains per route. This is the shell's column geometry only.
 - [x] Remove the commit message field and its Add-a-message toggle
       `components/commit-message-fields.tsx` renders a `Textarea` behind an `Add a message` toggle (`bodyExpanded`). This came out of [[IDEA-165]], which proposed it after I found `commitMessage` was held in state but never rendered — it was my inference, not a request. Remove the toggle and the body field; the commit title stays. `commitMessage` itself can stay in the form state for the agent-suggested path to populate, but nothing renders it and nothing asks for it by hand. Deliberate removal: do not reinstate it as a fix for an 'uneditable commit body'.
       run: 40s · 280 in · 2k out · sonnet-5
-- [x] Close the gap between a phase title and its usage
-      The Phases table gives the title column `width: 6` against a `width: 1` checkbox and an end-aligned actions column, so the title cell is far wider than its text and the run metadata is pushed hard right — leaving a large dead gap mid-row that makes the two read as unrelated. Size the title to its content and let the usage sit next to it rather than at the far edge, so the row reads as one line.
-      run: 2m51s · 159 in · 12.7k out · sonnet-5
+- [ ] Fix the Phases table column proportions
+      Superseding my own earlier fix, which said 'size the title to its content' and made this worse — the title was never the element at fault. Measured on a 617px table: the three `<col>` widths are checkbox 32px, title **96px**, usage **489px**. The title span is 62px holding text that needs 340px, so a 34-character phase name renders as `Derive …`, `A.`, `S.`. The usage column holds 84px of content in 489px — 79% of the row for the least important cell — and the metadata sits left of centre inside it with 376px dead to its right, despite the column being declared `align: 'end'`. State the rule once instead of nudging a side again: the title takes the row's flexible width and the usage cell is sized to its content, right-aligned, with the checkbox fixed. Three passes have now over-corrected each other here (overlap by 63px, then a floor, then a collapse to five characters) because each tuned one side without a stated proportion for the row.
 
 ### Thread
 - [x] 2026-08-17 [review] [agent] Approves · 0 findings — The diff faithfully implements the idea: it derives a three-column breakpoint (224+495+480=1199) from named constants, lowers the media query and the paired Tailwind literal to it, un-gates `flex-[1_1_0%]`/`max-w-none` and drops the 800px basis, and relaxes both bleed knobs (Page min-height and the scroller's bottom padding). All five phases are actually reflected in the code, and nothing contradicts the spec. The `isLarge` variable remains in use for the docked sidebar, so removing its two style ternaries leaves no dead references.

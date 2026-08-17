@@ -188,3 +188,4 @@
 | IDEA-185 | Delete the idea-group machinery | refactor | planned | app, plans, refactor |
 | IDEA-186 | Use the whole width | feat | in-progress | app, ui, layout |
 | IDEA-187 | Fixes are their own entity | feat | planned | format, plans, app |
+| IDEA-188 | Fixes accumulate into one commit | feat | idea | agent, server, git |
