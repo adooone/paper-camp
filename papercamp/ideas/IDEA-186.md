@@ -101,8 +101,9 @@ sidebar contains per route. This is the shell's column geometry only.
 - [x] Scale the Stack width with the viewport
       At a 1200px viewport the columns measure sidebar 282 / page 407 / Stack 480 — the ambient panel is wider than the work. Replace the fixed `w-[min(480px,100vw)]` with a clamped width that keeps 480 where there is room and yields first when width is scarce, so the page takes the surplus. The literal is stated three times (the panel's class, the root wrapper's `min-[1199px]:pr-[480px]`, and the comment tying them together); a scaling width needs one definition both read or they will drift.
       run: 3m29s · 5.8k in · 16k out · sonnet-5
-- [ ] Stop the phases table overlapping itself
+- [x] Stop the phases table overlapping itself
       A phase title's right edge sits 63px past where its run-metadata begins — `Derive the three-column breakp…` ends at x=477 while `15.4k tokens · 2m7s · sonnet-5` starts at x=414, so the two render on top of each other. The title cell is 113px holding text needing ~180. Give the title a min-width floor and shed the metadata in a defined order — tokens, then duration, then model — moving it behind the row's disclosure below a floor.
+      run: 8m54s · 1k in · 31.5k out · sonnet-5
 - [ ] Give the commit input priority over the button
       Measured at 1200px: the commit title input is 26px wide beside a 272px Commit button, a ratio of 10.5×. The input takes the row's flexible width with a real minimum; the button sizes to its content and becomes an icon button with its label in the tooltip below a floor. A commit title you cannot read produces a worse commit message than a button you cannot read a label on.
 - [ ] Stop the idea-view header wrapping

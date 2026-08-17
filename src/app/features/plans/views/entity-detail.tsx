@@ -72,6 +72,10 @@ const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity
 // (`.fix-row`) so they read as part of the same list, distinct only by colour.
 type WorkRow = { kind: 'phase' | 'fix'; item: PhaseItem; index: number };
 
+function formatRunSummary(run: NonNullable<PhaseItem['run']>): string {
+  return `${formatTokens(run.inputTokens + run.outputTokens)} tokens · ${formatDuration(run.durationMs)}${run.attempts > 1 ? ` ×${run.attempts}` : ''}${run.model ? ` · ${run.model}` : ''}`;
+}
+
 const RunCostSummary = ({ rollup }: { rollup: UsageRollup }) => {
   if (rollup.runs === 0) return null;
   return (
@@ -184,6 +188,7 @@ const PhasesSection = ({
           {
             key: 'title',
             header: 'Title',
+            width: 6,
             cell: (row: WorkRow) => (
               <span
                 className={`inline-flex min-w-0 max-w-full items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
@@ -228,19 +233,27 @@ const PhasesSection = ({
             cell: (row: WorkRow) => {
               if (isRunningRow(row)) return null;
               if (row.item.done) {
-                if (!row.item.run) return null;
+                const run = row.item.run;
+                if (!run) return null;
                 return (
-                  <div className="flex justify-end">
+                  <div className="flex w-full justify-end [container-type:inline-size]">
                     <Stamp
                       size="small"
+                      className="run-meta-stamp"
                       fillColor="var(--pui-texture-shade, rgba(0,0,0,0.06))"
                       textColor="inherit"
                     >
                       <span className="whitespace-nowrap font-mono text-3xs font-normal opacity-[0.7]">
-                        {formatTokens(row.item.run.inputTokens + row.item.run.outputTokens)} tokens
-                        · {formatDuration(row.item.run.durationMs)}
-                        {row.item.run.attempts > 1 && ` ×${row.item.run.attempts}`}
-                        {row.item.run.model && ` · ${row.item.run.model}`}
+                        <span className="run-meta-tokens">
+                          {formatTokens(run.inputTokens + run.outputTokens)} tokens{' '}
+                        </span>
+                        <span className="run-meta-tokens">· </span>
+                        <span className="run-meta-duration">
+                          {formatDuration(run.durationMs)}
+                          {run.attempts > 1 && ` ×${run.attempts}`}
+                        </span>
+                        {run.model && <span className="run-meta-duration"> · </span>}
+                        {run.model && <span>{run.model}</span>}
                       </span>
                     </Stamp>
                   </div>
@@ -253,11 +266,21 @@ const PhasesSection = ({
                 </div>
               );
             },
-            width: 5,
           },
         ]}
         expandable={{
-          render: (row: WorkRow) => row.item.description || null,
+          render: (row: WorkRow) => {
+            const runSummary = row.item.run ? formatRunSummary(row.item.run) : null;
+            if (!row.item.description && !runSummary) return null;
+            return (
+              <div className="flex flex-col gap-1">
+                {row.item.description && <span>{row.item.description}</span>}
+                {runSummary && (
+                  <span className="font-mono text-3xs opacity-[0.7]">{runSummary}</span>
+                )}
+              </div>
+            );
+          },
         }}
         hideHeader
         density="compact"
