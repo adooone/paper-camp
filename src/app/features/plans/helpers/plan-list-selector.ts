@@ -77,14 +77,20 @@ const matchesTags = (plan: PlanEntry, tags: Set<string>): boolean => {
 const matchesSubject = (subject: string | undefined, filterSubject: string | null): boolean =>
   filterSubject === null || subject === filterSubject;
 
+const activeRank = (plan: PlanEntry): number =>
+  plan.status === 'in-progress' || plan.status === 'review' ? 0 : 1;
+
 /** `sortDirection` flips the sign rather than redefining "natural" per key, except
- * for `order`, where unordered rows must stay last regardless of direction. */
+ * for `order`, where unordered rows must stay last regardless of direction, and for
+ * the active pin below, which stays first regardless of key or direction. */
 const comparePlans = (
   a: PlanEntry,
   b: PlanEntry,
   key: PlanSortKey,
   direction: SortDirection = 'asc',
 ): number => {
+  const pinDiff = activeRank(a) - activeRank(b);
+  if (pinDiff !== 0) return pinDiff;
   if (key === 'order') {
     if (a.order !== undefined && b.order !== undefined) {
       const dirMul = direction === 'desc' ? -1 : 1;

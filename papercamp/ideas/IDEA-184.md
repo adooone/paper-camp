@@ -2,9 +2,9 @@
 id: IDEA-184
 title: One row treatment on the Plans page
 type: fix
-status: idea
+status: review
 created: 2026-08-16
-updated: 2026-08-16
+updated: 2026-08-17
 tags:
   - app
   - plans
@@ -61,13 +61,40 @@ The create modals' own fields, and the status-filter and sort behaviour
 ([[IDEA-183]]).
 
 ### Phases
-- [ ] Grid-align the archive rows
+- [x] Grid-align the archive rows
       Give archive rows PLAN_ROWS_GRID_CLASS and the row-marker gutter, with Archive in the Status column slot.
-- [ ] Preserve the done texture within the grid
+      run: 1m12s · 5.7k in · 5.1k out · sonnet-5
+- [x] Preserve the done texture within the grid
       Keep the distinct archive-row look while the five columns line up with the worklist header.
-- [ ] Filter the archive section with the search
+      run: 1m6s · 368 in · 3.8k out · sonnet-5
+- [x] Filter the archive section with the search
       Run the archive rows through the same filter and drop the whole section when nothing matches.
-- [ ] Decide whether both create actions stay
+      run: 1m13s · 507 in · 4.5k out · sonnet-5
+- [x] Decide whether both create actions stay
       Settle whether the second entry point earns its place before touching either button.
-- [ ] Give the surviving create action(s) matching affordance
-      Either label both or make both icons with labels in an overflow, following the decision above.
+      run: 26s · 5.6k in · 1.3k out · sonnet-5
+- [x] Remove the Quick plan action, keep New Idea as the single create entry point
+      Delete AddToBacklogButton and its POST /api/plans creation path; every new entity is created as a plain idea (idea/note kind) via NewIdeaButton and gets typed later when drafted into a plan.
+      run: 1m54s · 658 in · 6.9k out · sonnet-5
+- [x] [manual] stop keydown bubbling from archive row button
+
+### Fixes
+- [x] Match done row height to regular card height
+      Archive/done rows in the worklist currently render shorter than a normal idea card. Align their height (padding/line-height) with the standard row so done items don't visually shrink.
+      run: 3m17s · 5.9k in · 13.8k out · sonnet-5
+- [x] Always sort in-progress ideas to the top
+      Regardless of the active sort column, ideas with status in-progress should be pinned first in the list ordering.
+      run: 1m28s · 288 in · 5.3k out · sonnet-5
+- [x] Pin active (in-progress or review) ideas to the top, not just in-progress
+      The sort's 'active goes first' rule should trigger on current branch status broadly — in-progress and review — not only in-progress.
+      run: 57s · 5.8k in · 2.9k out · sonnet-5
+
+### Thread
+- [x] 2026-08-17 [question] [agent] Run-all parked on phase 4 ("Decide whether both create actions stay") — the agent needs a decision: Does the "Quick plan" entry point (`AddToBacklogButton` → `POST /api/plans`, letting you pick a typed `kind`: feat/fix/chore/docs/refactor at creation) still need to exist as a separate one-step action, or should every new entity start as a plain idea via `NewIdeaButton` (→ `POST /api/ideas`, kind idea/note only) and get typed later when it's drafted into a plan? This determines whether phase 5 gives matching affordance to two buttons or removes one — it's a scope call on the creation workflow, not something I can infer from the code.
+- [x] 2026-08-17 [clarification] every new entity start as a plain idea
+- [x] 2026-08-17 [chat] [agent] Locked in — every new entity starts as a plain idea via New Idea. That means Quick plan / AddToBacklogButton goes away, so phase 5 becomes: remove the Quick plan action and give New Idea its full treatment.
+- [x] 2026-08-17 [chat] height of the done item is not the same as regular idea card in the list. Also while we here - make in progress ideas always on top
+- [x] 2026-08-17 [chat] [agent] Added both here as fixes: match the done row's height to a regular card, and pin in-progress ideas to the top of the sort order. (reopened this idea to re-run)
+- [x] 2026-08-17 [chat] Ok, I mean active idea, it can be not only in progress, but also review. So the trigger to show idea on top is active - current branch
+- [x] 2026-08-17 [chat] [agent] Added that here — active includes review, not just in-progress, so the top-of-list pin now covers both. (reopened this idea to re-run)
+- [x] 2026-08-17 [review] [agent] Comments · 1 finding — The diff delivers the spec cleanly: archive rows now adopt PLAN_ROWS_GRID_CLASS with the row marker and an Archive-in-Status-slot layout, the archive section is filtered by search and dropped when empty, and the second create action (AddToBacklogButton + POST /api/plans + AddIdeaModal) is fully removed in line with the settled decision that every entity starts as a plain idea. The active-pin sort fix correctly covers both in-progress and review. The one substantive issue is a keyboard/a11y regression from nesting the Archive button inside the newly clickable row region.

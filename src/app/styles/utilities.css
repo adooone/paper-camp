@@ -127,6 +127,17 @@ header[class*="layout-module__header___"] {
 }
 
 /*
+ * The archive row's ghost Button sits in the worklist grid's Status column,
+ * next to Stamp everywhere else that column appears (plan/note rows). Button's
+ * own `small` padding (space-2/space-4) runs taller than Stamp's (space-1/
+ * space-3) at the same font size, so the row it's in grows past the standard
+ * card height. Borrowing Stamp's padding here matches that height exactly.
+ */
+.archive-row-action {
+  padding: 0.25rem 0.75rem;
+}
+
+/*
  * The Deliver row (entity-detail.tsx) gives the commit title input flex
  * priority over the Commit/Fix button, so the button is what yields when the
  * row is tight. Below a floor its full-label `Button` collapses to an
