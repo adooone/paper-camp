@@ -85,9 +85,10 @@ splitting commits that already absorbed unrelated files.
 - [x] Snapshot the working tree before each phase runs
       Record `git status --porcelain` before `runPhaseProcess` and thread that
       start snapshot to the phase-commit hook.
-- [ ] Reduce the two snapshots to the phase's changed paths
+- [x] Reduce the two snapshots to the phase's changed paths
       In `commitPhase`, take only the paths added or changed since the start
       snapshot, carrying each staged rename's source alongside its destination.
+      run: 9m29s · 6.6k in · 28.6k out · sonnet-5
 - [ ] Commit only those paths through the existing pathspec path
       Replace `stageAll()` + `commit([])` with a scoped stage and the file-list
       commit that already skips fully-staged files.

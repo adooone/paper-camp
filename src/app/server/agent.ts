@@ -25,6 +25,7 @@ import {
   type DefaultAgentsMap,
   type EntityEntry,
   type FixReviewResult,
+  type GitStatusEntry,
   type IdeaEntry,
   type PaperCampConfig,
   type PhaseItem,
@@ -281,6 +282,7 @@ export function createAgentManager(
     plan: PlanEntry,
     phase: PhaseItem,
     phaseIndex: number,
+    startSnapshot: GitStatusEntry[],
     run?: { usage: RunUsage; kind: 'phase' | 'fix' },
   ) => Promise<void>,
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
@@ -290,6 +292,7 @@ export function createAgentManager(
     fixIndex: number,
     run: { usage: RunUsage; kind: 'fix' },
   ) => Promise<void>,
+  snapshotWorkingTree?: () => Promise<GitStatusEntry[]>,
   state: AgentManagerState = createEmptyAgentState(),
 ) {
   // `tasks`/`clients` are the same Map/Set a hot-reloaded replacement instance
@@ -1246,6 +1249,8 @@ export function createAgentManager(
         kind === 'phase'
           ? buildAgentPrompt(plan, item, i, [...toleratedRed])
           : buildFixItemPrompt(plan, item, i, [...toleratedRed]);
+      const startSnapshot: GitStatusEntry[] =
+        kind === 'phase' && snapshotWorkingTree ? await snapshotWorkingTree() : [];
       const {
         ok: exitedOk,
         timedOut,
@@ -1405,7 +1410,13 @@ export function createAgentManager(
       }
       if (kind === 'phase' && onPhaseCommit) {
         pushLine(task, `[commit] ${kind} ${i + 1} — ${item.text}`);
-        await onPhaseCommit(plan, item, i, phaseUsage ? { usage: phaseUsage, kind } : undefined);
+        await onPhaseCommit(
+          plan,
+          item,
+          i,
+          startSnapshot,
+          phaseUsage ? { usage: phaseUsage, kind } : undefined,
+        );
       } else if (kind === 'fix' && onFixRun && phaseUsage && plan.id) {
         await onFixRun(plan.id, i, { usage: phaseUsage, kind });
       }

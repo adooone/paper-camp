@@ -4,7 +4,7 @@ import { parseEntityFile } from '@/core/parse';
 import { mergeRun } from '@/core/phase-run';
 import { computePlanContentHash } from '@/core/serialize';
 import { todayDateString } from '@/core/serialize';
-import type { PhaseItem, PlanEntry, RunUsage } from '@/types/index';
+import type { GitStatusEntry, PhaseItem, PlanEntry, RunUsage } from '@/types/index';
 import { runBiomeFix } from './biome-fix';
 import type { GitManager } from './git';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
@@ -57,10 +57,23 @@ export function createAgentHooks(root: string, git: GitManager) {
     await writeEntityFile(planFile, entityFileInput(entry));
   }
 
+  function snapshotWorkingTree(): Promise<GitStatusEntry[]> {
+    return git.getStatus();
+  }
+
+  function changedSince(start: GitStatusEntry[], end: GitStatusEntry[]): string[] {
+    const startStatusByPath = new Map(start.map((entry) => [entry.path, entry.status]));
+    const changed = end.filter((entry) => startStatusByPath.get(entry.path) !== entry.status);
+    return changed.flatMap((entry) =>
+      entry.renameSource ? [entry.renameSource, entry.path] : [entry.path],
+    );
+  }
+
   async function commitPhase(
     plan: PlanEntry,
     phase: PhaseItem,
     phaseIndex: number,
+    startSnapshot: GitStatusEntry[],
     run?: { usage: RunUsage; kind: 'phase' | 'fix' },
   ): Promise<void> {
     if (run && plan.id) await annotatePhaseRun(plan.id, phaseIndex, run);
@@ -68,6 +81,7 @@ export function createAgentHooks(root: string, git: GitManager) {
     const title = `${plan.kind ?? 'feat'}(${area}): ${phase.text}`;
     const refs = plan.id ? `Refs: ${plan.id}` : undefined;
     await runBiomeFix(root);
+    const _files = changedSince(startSnapshot, await git.getStatus());
     await git.stageAll();
     // noVerify: this is a machine-generated commit; the message is valid by
     // construction, so the commit-msg hook must not block an unattended run.
@@ -110,5 +124,6 @@ export function createAgentHooks(root: string, git: GitManager) {
     setRunReview,
     commitCorpus,
     annotateFixRun: annotatePhaseRun,
+    snapshotWorkingTree,
   };
 }
