@@ -80,3 +80,17 @@ overlap.
 The `--no-verify` decision above. Manual commits from the Deliver form and the
 git page, which already take an explicit file list from the user. Retroactively
 splitting commits that already absorbed unrelated files.
+
+### Phases
+- [ ] Snapshot the working tree before each phase runs
+      Record `git status --porcelain` before `runPhaseProcess` and thread that
+      start snapshot to the phase-commit hook.
+- [ ] Reduce the two snapshots to the phase's changed paths
+      In `commitPhase`, take only the paths added or changed since the start
+      snapshot, carrying each staged rename's source alongside its destination.
+- [ ] Commit only those paths through the existing pathspec path
+      Replace `stageAll()` + `commit([])` with a scoped stage and the file-list
+      commit that already skips fully-staged files.
+- [ ] Cover the scoping with tests
+      Assert an unrelated edit sitting in the tree before a phase stays
+      uncommitted while the phase's own edits land.

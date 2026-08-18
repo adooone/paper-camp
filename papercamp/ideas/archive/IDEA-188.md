@@ -2,9 +2,9 @@
 id: IDEA-188
 title: Fixes accumulate into one commit
 type: feat
-status: review
+status: done
 created: 2026-08-17
-updated: 2026-08-17
+updated: 2026-08-18
 tags:
   - agent
   - server

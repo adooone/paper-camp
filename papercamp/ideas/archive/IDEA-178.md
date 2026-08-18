@@ -2,9 +2,9 @@
 id: IDEA-178
 title: Rate limits must not rewrite status
 type: fix
-status: review
+status: done
 created: 2026-08-14
-updated: 2026-08-15
+updated: 2026-08-18
 tags:
   - core
   - github
