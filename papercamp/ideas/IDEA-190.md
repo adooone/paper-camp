@@ -2,7 +2,7 @@
 id: IDEA-190
 title: Agents commit only what they wrote
 type: fix
-status: idea
+status: review
 created: 2026-08-18
 updated: 2026-08-18
 tags:
@@ -93,6 +93,7 @@ splitting commits that already absorbed unrelated files.
       Replace `stageAll()` + `commit([])` with a scoped stage and the file-list
       commit that already skips fully-staged files.
       run: 1m32s · 366 in · 3.2k out · sonnet-5
-- [ ] Cover the scoping with tests
+- [x] Cover the scoping with tests
       Assert an unrelated edit sitting in the tree before a phase stays
       uncommitted while the phase's own edits land.
+      run: 1m58s · 368 in · 3.8k out · sonnet-5
