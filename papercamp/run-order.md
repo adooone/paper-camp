@@ -7,3 +7,4 @@ IDEA-180 — Say what each idea is for
 IDEA-183 — Filters and sort tell the truth
 IDEA-185 — Delete the idea-group machinery
 IDEA-187 — Fixes are their own entity
+IDEA-188 — Fixes accumulate into one commit

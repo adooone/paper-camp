@@ -75,3 +75,12 @@ work commits. Out of scope here; noted so the two are not confused.
 
 Phase commits, the commit-message format, and the run-all queue's clean-tree
 requirement between phases.
+
+### Phases
+- [ ] Gate the per-item commit on queue kind
+      In `runQueue`, only call `onPhaseCommit` when `QueueKind === 'phase'`; the fix queue skips it and leaves work in the tree.
+- [ ] Keep the fix checkbox and run stamps persisting without a commit
+      Verify the corpus write that flips the checkbox and appends run stamps still happens for fixes when no commit follows.
+- [ ] Confirm the Deliver-form manual commit collapses a fix pass into one row
+      Run a multi-fix pass and check IDEA-151 records the single manual commit as one `source: manual` row.
+- [ ] Verify a fix pass leaves one accumulated diff and no per-fix commits
