@@ -359,13 +359,13 @@ describe('runGitSync', () => {
     const root = await initRepo();
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
     await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-1 — first\n');
-    await writeFile(join(root, 'papercamp', 'ideas', 'index.md'), 'stale index\n');
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'stale entity\n');
     git(root, 'add', '.');
-    git(root, 'commit', '-m', 'add run-order and ideas index');
+    git(root, 'commit', '-m', 'add run-order and an entity');
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-11-runorder');
     await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-2 — second\nIDEA-1 — first\n');
-    await writeFile(join(root, 'papercamp', 'ideas', 'index.md'), 'locally edited index\n');
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'locally edited entity\n');
     const manager = gitManager(root);
 
     await manager.runGitSync();
@@ -373,8 +373,8 @@ describe('runGitSync', () => {
     expect(await readFile(join(root, 'papercamp', 'run-order.md'), 'utf-8')).toBe(
       'IDEA-2 — second\nIDEA-1 — first\n',
     );
-    expect(await readFile(join(root, 'papercamp', 'ideas', 'index.md'), 'utf-8')).toBe(
-      'locally edited index\n',
+    expect(await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8')).toBe(
+      'locally edited entity\n',
     );
   });
 

@@ -19,7 +19,6 @@ import {
   fileExists,
   readMaybe,
   readRunOrderFile,
-  regenerateIndexes,
   withRunOrderLock,
   writeEntityFile,
   writeRunOrderFile,
@@ -61,7 +60,6 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           return;
         }
         await unlink(filePath);
-        await regenerateIndexes(root);
         sendJson(res, 200, { ok: true });
       },
     },
@@ -192,8 +190,6 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
             await writeRunOrderFile(root, normalizeRunOrder(list, classified, moved));
           });
         }
-
-        await regenerateIndexes(root);
 
         // `done` is derived from a merged PR and needs no archiving; `dropped` has no
         // such signal, so it's the one status that still archives on write.

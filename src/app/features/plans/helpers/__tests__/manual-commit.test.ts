@@ -37,7 +37,7 @@ describe('appendManualPhase', () => {
 
 describe('isCorpusOnlyCommit', () => {
   it('is true when every path is under papercamp/', () => {
-    expect(isCorpusOnlyCommit(['papercamp/ideas/IDEA-1.md', 'papercamp/ideas/index.md'])).toBe(
+    expect(isCorpusOnlyCommit(['papercamp/ideas/IDEA-1.md', 'papercamp/ideas/IDEA-2.md'])).toBe(
       true,
     );
   });

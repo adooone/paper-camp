@@ -31,7 +31,6 @@ import {
   checkStaleBaseForRunAll,
   entityFileInput,
   fileExists,
-  regenerateIndexes,
   writeEntityFile,
 } from '../helpers';
 import { readBody, requestUrl, sendJson } from '../http';
@@ -595,7 +594,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           error = (err as Error).message;
         }
 
-        await regenerateIndexes(root);
         sendJson(res, 200, { ok: true, ...(error ? { error } : {}), ...(undo ? { undo } : {}) });
       },
     },
@@ -637,7 +635,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           return;
         }
 
-        await regenerateIndexes(root);
         sendJson(res, 200, { ok: true });
       },
     },
@@ -682,7 +679,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             updated: todayDateString(),
           }),
         );
-        await regenerateIndexes(root);
         sendJson(res, 200, { ok: true });
       },
     },
@@ -722,7 +718,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             targetFile,
             entityFileInput(entity, { thread, updated: todayDateString() }),
           );
-          await regenerateIndexes(root);
           sendJson(res, 200, { ok: true, summary });
         } catch (err) {
           sendJson(res, 500, { error: (err as Error).message });

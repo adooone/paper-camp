@@ -16,14 +16,7 @@ import {
   todayDateString,
 } from '@/core/serialize';
 import type { RoadmapItem, SuggestionEntry } from '@/types/index';
-import {
-  campFile,
-  entityFileInput,
-  fileExists,
-  readMaybe,
-  regenerateIndexes,
-  writeEntityFile,
-} from '../../helpers';
+import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from '../../helpers';
 import { readBody, sendJson } from '../../http';
 import { checkIdeaOverlap } from '../../overlap-check';
 import { applyPrioritiseVerdict, getPrioritiseVerdict } from '../../prioritise';
@@ -63,7 +56,6 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           body: content?.trim(),
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
-        await regenerateIndexes(root);
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -104,7 +96,6 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         await writeFile(suggestionsPath, updated, 'utf-8');
-        await regenerateIndexes(root);
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -170,7 +161,6 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           : raw;
         const updated = linkRoadmapItem(withoutCandidate, horizonTitle, item.name, newId);
         await writeFile(roadmapPath, updated, 'utf-8');
-        await regenerateIndexes(root);
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -293,7 +283,6 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           archived.push(id);
         }
 
-        await regenerateIndexes(root);
         sendJson(res, 200, { ok: true, archived });
       },
     },

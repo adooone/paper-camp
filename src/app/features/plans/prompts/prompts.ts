@@ -429,7 +429,7 @@ Task:
 
 Rules:
 - Append only — never modify, reorder, or delete any existing line in suggestions.md.
-- Never create papercamp/ideas/ files or touch ideas/index.md — a suggestion is not an idea until a human promotes it.
+- Never create papercamp/ideas/ files — a suggestion is not an idea until a human promotes it.
 - Never touch any other file in the repo.`;
 }
 

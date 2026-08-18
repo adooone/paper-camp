@@ -6,7 +6,7 @@ import {
   formatRunOrderFile,
   parseRunOrderFile,
 } from '@/core/run-order-file';
-import { formatEntitiesIndex, formatEntityFile } from '@/core/serialize';
+import { formatEntityFile } from '@/core/serialize';
 import type { BranchHygieneStatus, EntityEntry, StaleBaseRef } from '@/types/index';
 
 export async function readMaybe(path: string): Promise<string> {
@@ -90,13 +90,6 @@ export function withRunOrderLock<T>(fn: () => Promise<T>): Promise<T> {
     () => undefined,
   );
   return result;
-}
-
-export async function regenerateIndexes(root: string): Promise<void> {
-  const ideasDir = campFile(root, 'ideas');
-  const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
-  await mkdir(ideasDir, { recursive: true });
-  await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries));
 }
 
 export async function checkBranchConflictForPlan(

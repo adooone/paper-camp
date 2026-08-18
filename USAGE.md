@@ -13,7 +13,6 @@ Everything lives under `papercamp/` in your repo:
 |---|---|
 | `ideas/IDEA-N.md` | One entity per file: frontmatter (status, subject, order, tags) + body + `### Phases` checklist + `### Log` comments |
 | `ideas/archive/` | Finished (done/dropped) entities, moved here on archive |
-| `ideas/index.md` | Generated overview table — never hand-edit |
 | `config.json` | Project config: id counters, subjects, per-task agent defaults |
 | `decisions.md`, `open-questions.md` | Settled calls and unresolved questions, written mostly by agents |
 | `progress.md` | Append-only changelog — every phase an agent finishes gets a dated entry |
