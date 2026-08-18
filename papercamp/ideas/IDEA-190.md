@@ -97,4 +97,4 @@ splitting commits that already absorbed unrelated files.
 - [x] Cover the scoping with tests
       Assert an unrelated edit sitting in the tree before a phase stays
       uncommitted while the phase's own edits land.
-      run: 1m58s · 368 in · 3.8k out · sonnet-5
+      run: 2m32s · 507 in · 4.8k out · sonnet-5 · ×2
