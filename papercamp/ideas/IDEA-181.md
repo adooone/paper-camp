@@ -2,9 +2,9 @@
 id: IDEA-181
 title: Fetch from GitHub only when asked
 type: feat
-status: planned
+status: review
 created: 2026-08-15
-updated: 2026-08-17
+updated: 2026-08-18
 tags:
   - server
   - github
