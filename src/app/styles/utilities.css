@@ -322,7 +322,7 @@ header[class*="layout-module__header___"] {
   padding-left: 2rem;
   padding-right: 2rem;
   border-left: 1px solid var(--pui-sketch-stroke);
-  /* border-bottom: 1px solid var(--pui-sketch-stroke); */
+  border-bottom: 1px solid var(--pui-sketch-stroke);
 }
 @media (min-width: 1199px) {
   .pc-page-header {

@@ -10,6 +10,7 @@ tags:
   - github
   - plans
 subject: Planning surface
+order: 4
 ---
 
 When PR state cannot be resolved, every entity's status silently becomes a guess
@@ -107,3 +108,6 @@ The review trigger's gates ([[IDEA-170]]) and the reviewed-SHA ledger
 - [x] Surface fallback status in the UI
       Mark the worklist status column and run-order queue when a status is a guess rather than derived from resolved PR state.
       run: 8m32s · 9.8k in · 23.4k out · sonnet-5
+
+### Thread
+- [x] 2026-08-18 [review] [agent] Comments · 3 findings — The three in-scope phases are delivered cleanly and correctly: archived entities now derive to `done` (with `dropped` still overriding), the corpus cache refuses to retain a read where PR lookup didn't resolve, and `isStatusFallback` faithfully mirrors deriveStatus's guards to surface the guess in the worklist. My only real concern is that the PR bundles three changes that have nothing to do with rate limits or status derivation — the Stack panel's visible-task count, the page-header shade, and a commented-out header border.
