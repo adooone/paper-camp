@@ -85,6 +85,7 @@ splitting commits that already absorbed unrelated files.
 - [x] Snapshot the working tree before each phase runs
       Record `git status --porcelain` before `runPhaseProcess` and thread that
       start snapshot to the phase-commit hook.
+      run: 9m47s · 6.8k in · 21.8k out · sonnet-5
 - [x] Reduce the two snapshots to the phase's changed paths
       In `commitPhase`, take only the paths added or changed since the start
       snapshot, carrying each staged rename's source alongside its destination.
