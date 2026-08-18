@@ -80,8 +80,9 @@ requirement between phases.
 - [x] Gate the per-item commit on queue kind
       In `runQueue`, only call `onPhaseCommit` when `QueueKind === 'phase'`; the fix queue skips it and leaves work in the tree.
       run: 46s · 5.7k in · 1.5k out · sonnet-5
-- [ ] Keep the fix checkbox and run stamps persisting without a commit
+- [x] Keep the fix checkbox and run stamps persisting without a commit
       Verify the corpus write that flips the checkbox and appends run stamps still happens for fixes when no commit follows.
+      run: 5m48s · 6.2k in · 5.2k out · sonnet-5
 - [ ] Confirm the Deliver-form manual commit collapses a fix pass into one row
       Run a multi-fix pass and check IDEA-151 records the single manual commit as one `source: manual` row.
 - [ ] Verify a fix pass leaves one accumulated diff and no per-fix commits

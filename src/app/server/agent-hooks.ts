@@ -63,10 +63,10 @@ export function createAgentHooks(root: string, git: GitManager) {
     phaseIndex: number,
     run?: { usage: RunUsage; kind: 'phase' | 'fix' },
   ): Promise<void> {
+    if (run && plan.id) await annotatePhaseRun(plan.id, phaseIndex, run);
     const area = resolveCommitScope(plan);
     const title = `${plan.kind ?? 'feat'}(${area}): ${phase.text}`;
     const refs = plan.id ? `Refs: ${plan.id}` : undefined;
-    if (run && plan.id) await annotatePhaseRun(plan.id, phaseIndex, run);
     await runBiomeFix(root);
     await git.stageAll();
     // noVerify: this is a machine-generated commit; the message is valid by
@@ -104,5 +104,11 @@ export function createAgentHooks(root: string, git: GitManager) {
     await git.commitCorpus(`docs(ideas): ${plan.title} — plan`, plan.id);
   }
 
-  return { stampAuditDate, commitPhase, setRunReview, commitCorpus };
+  return {
+    stampAuditDate,
+    commitPhase,
+    setRunReview,
+    commitCorpus,
+    annotateFixRun: annotatePhaseRun,
+  };
 }
