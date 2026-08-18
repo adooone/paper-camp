@@ -63,14 +63,22 @@ export const GitPage = () => {
 
   const contentClass = 'min-h-page';
 
+  // Title and repo actions share a row: stacked, they cost three bands of vertical
+  // space before any diff shows.
+  const header = (
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <PageTitle className="!mb-0">Git</PageTitle>
+      <div className="flex items-center gap-2">
+        <GitSyncActions />
+        <GitStashSurface />
+      </div>
+    </div>
+  );
+
   if (loadFailed) {
     return (
       <div>
-        <PageTitle>Git</PageTitle>
-        <div className="mb-4 flex items-center gap-2">
-          <GitSyncActions />
-          <GitStashSurface />
-        </div>
+        {header}
         <div className={`${contentClass} flex flex-col items-start gap-3`}>
           <p className="opacity-50 m-0">Couldn't load the working-tree diff.</p>
           <Button variant="secondary" size="small" onClick={loadDiffFiles}>
@@ -84,11 +92,7 @@ export const GitPage = () => {
   if (!files) {
     return (
       <div>
-        <PageTitle>Git</PageTitle>
-        <div className="mb-4 flex items-center gap-2">
-          <GitSyncActions />
-          <GitStashSurface />
-        </div>
+        {header}
         <div className={contentClass}>
           <Spinner label="Loading the working-tree diff…" />
         </div>
@@ -98,18 +102,14 @@ export const GitPage = () => {
 
   return (
     <div>
-      <PageTitle>Git</PageTitle>
-      <div className="mb-4 flex items-center gap-2">
-        <GitSyncActions />
-        <GitStashSurface />
-      </div>
+      {header}
       {files.length === 0 ? (
         <div className={contentClass}>
           <p className="opacity-50">No changed files.</p>
         </div>
       ) : (
         <>
-          <div className="sticky top-0 z-10 mb-6 flex items-start gap-2 py-3">
+          <div className="sticky top-0 z-10 mb-4 flex items-center gap-2 py-2">
             <div className="flex-1">
               <CommitMessageFields state={commitForm} filesEmpty={false} />
             </div>
