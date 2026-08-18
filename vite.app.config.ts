@@ -233,6 +233,11 @@ export default defineConfig({
     },
   },
   resolve: {
+    // A linked ../paper-ui resolves react from its own node_modules, so hooks run
+    // against a second React instance and every render throws "Cannot read
+    // properties of null (reading 'useState')". Harmless when paper-ui comes from
+    // the registry; required whenever it is linked for local development.
+    dedupe: ['react', 'react-dom'],
     alias: {
       '@': resolve(__dirname, './src'),
       '@core': resolve(__dirname, './src/core'),

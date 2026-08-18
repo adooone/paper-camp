@@ -89,7 +89,7 @@
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@dendelion/paper-camp": "0.16.0",
-    "@dendelion/paper-ui": "^0.16.0",
+    "@dendelion/paper-ui": "^0.17.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",

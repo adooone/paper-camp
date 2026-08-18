@@ -37,6 +37,16 @@ const config: Config = {
         chalkboard: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.15 0 0 0 0 0.28 0 0 0 0 0.20 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)' opacity='1'/%3E%3C/svg%3E"), linear-gradient(135deg, #264a3a 0%, #1e3a2d 60%)`,
       },
       colors: {
+        // Mapped onto the --pui-btn-* variables utilities.css declares, so the values
+        // have one home and `bg-btn-primary` and paper-ui's Button agree by construction.
+        btn: {
+          primary: 'var(--pui-btn-primary)',
+          'primary-hover': 'var(--pui-btn-primary-hover)',
+          'primary-active': 'var(--pui-btn-primary-active)',
+          secondary: 'var(--pui-btn-secondary)',
+          'secondary-hover': 'var(--pui-btn-secondary-hover)',
+          'secondary-active': 'var(--pui-btn-secondary-active)',
+        },
         desk: {
           bg: '#1e3a2d',
           light: '#264a3a',

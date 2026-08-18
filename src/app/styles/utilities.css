@@ -7,11 +7,16 @@
  */
 :root {
   --paper-font-default: "Cormorant Garamond", Georgia, serif;
-  /* Brand primary = the exact green of the active nav item in the header
-     (paper-ui's $ghost-active-strong / -hover: accent green at 25%/30%). */
+  /* Button palette. Washes, never opaque paint — the paper grain has to read
+     through. Declared here rather than in tailwind.config.ts because paper-ui
+     consumes them as CSS variables and this app emits no `@tailwind base` layer;
+     tailwind.config.ts maps theme.colors.btn onto these so utility classes work. */
   --pui-btn-primary: rgba(143, 185, 150, 0.25);
   --pui-btn-primary-hover: rgba(143, 185, 150, 0.3);
   --pui-btn-primary-active: rgba(143, 185, 150, 0.3);
+  --pui-btn-secondary: rgba(61, 53, 43, 0.1);
+  --pui-btn-secondary-hover: rgba(61, 53, 43, 0.14);
+  --pui-btn-secondary-active: rgba(61, 53, 43, 0.18);
 }
 
 /*
