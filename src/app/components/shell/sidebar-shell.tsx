@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { ProjectIdentityHeader } from './project-identity-header';
 
 interface SidebarShellProps {
   routeKey: string;
@@ -63,7 +64,13 @@ export const SidebarShell = ({
             : 'bg-transparent'
         }`}
       >
-        <div className="flex-1 overflow-y-auto pt-5 relative">
+        {/* 66px, not a padding pair: the ruled background's 32px lines start 2px below
+            this aside, so a two-cell header lands the column's first row exactly on a
+            grid line. Rows below are 32px each and stay on it. */}
+        <div className="shrink-0 h-[66px] flex items-center">
+          <ProjectIdentityHeader size="sm" />
+        </div>
+        <div className="flex-1 overflow-y-auto relative">
           <div key={routeKey}>{children}</div>
         </div>
       </aside>

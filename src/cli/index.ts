@@ -27,12 +27,7 @@ import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
 import { formatReleaseNotesMarkdown, resolveReleaseNotes } from '../core/release-notes';
 import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
 import { computePlanContentHash } from '../core/serialize';
-import {
-  assignEntityId,
-  formatEntitiesIndex,
-  formatEntityFile,
-  todayDateString,
-} from '../core/serialize';
+import { assignEntityId, formatEntityFile, todayDateString } from '../core/serialize';
 import { threadFromLegacy } from '../core/thread';
 import { resolveIdeasForRelease, resolveReleaseRanges } from '../core/trail';
 import { startMcpServer } from '../mcp/server';
@@ -138,16 +133,14 @@ program
 program
   .command('init [project-name]')
   .description('Initialize Paper Camp in the current directory')
-  .option('-i, --intent <text>', 'one-line description of what you are building')
-  .action(async (projectName: string | undefined, opts: { intent?: string }) => {
+  .action(async (projectName: string | undefined) => {
     const targetDir = process.cwd();
     const name = projectName ?? basename(targetDir);
     try {
-      await initProject(targetDir, { projectName: name, intent: opts.intent });
+      await initProject(targetDir, { projectName: name });
       console.log(`Initialized Paper Camp in ${targetDir}`);
       console.log('  papercamp/config.json');
       console.log('  papercamp/ideas/          (one file per idea, plan as a section)');
-      console.log('  papercamp/ideas/index.md');
       console.log('  papercamp/ideas/archive/');
       console.log('  .claude/skills/paper-camp/SKILL.md');
       console.log('  .claude/settings.json     (SessionStart hook)');
@@ -221,9 +214,6 @@ program
       created: todayDateString(),
     });
     await writeFile(join(ideasDir, `${id}.md`), `${entityContent}\n`, 'utf-8');
-
-    const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
-    await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries), 'utf-8');
 
     console.log(`Added "${name}" (${id}) to papercamp/ideas/${id}.md`);
   });
@@ -361,9 +351,6 @@ program
         thread: threadFromLegacy(plan.log, plan.clarifications, plan.notes, plan.review),
       });
     }
-
-    const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
-    await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries), 'utf-8');
 
     console.log(
       `Migrated ${written} entities into papercamp/ideas/ (${orphans.length} orphan plans minted fresh ids).`,
@@ -561,12 +548,6 @@ program
         await writeFile(join(root, action.path), action.content, 'utf-8');
         console.log(`  [fixed]  ${action.path}`);
       }
-    }
-
-    if (plan.actions.length > 0) {
-      const ideasDir = join(paperCampDir, 'ideas');
-      const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
-      await writeFile(join(ideasDir, 'index.md'), formatEntitiesIndex(entries), 'utf-8');
     }
 
     const manual = [...plan.unfixable, ...plan.rejected];

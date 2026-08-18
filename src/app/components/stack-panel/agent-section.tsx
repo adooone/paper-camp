@@ -181,7 +181,7 @@ export const AgentSection = () => {
   const visibleTasks = agentStatus.slice(0, MAX_VISIBLE_TASKS);
 
   return (
-    <div className="flex min-h-0 flex-none flex-col p-6">
+    <div className="flex min-h-0 flex-none flex-col p-[var(--pc-stack-pad)]">
       <h3 className={`${sectionLabelClassName} m-0`}>Agent</h3>
       <div
         className={`flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto ${TASK_STACK_MIN_HEIGHT_CLASS} ${

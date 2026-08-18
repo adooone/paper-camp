@@ -10,7 +10,6 @@ import {
   entityFileInput,
   fileExists,
   readRunOrderFile,
-  regenerateIndexes,
   withRunOrderLock,
   writeEntityFile,
   writeRunOrderFile,
@@ -136,13 +135,11 @@ export async function applyPrioritiseVerdict(
       );
       applied.push(id);
     } catch (err) {
-      await regenerateIndexes(root);
       throw new Error(
         `Prioritise partially applied (${applied.length}/${moved.length} ideas updated) before failing on ${id}: ${(err as Error).message}`,
       );
     }
   }
 
-  await regenerateIndexes(root);
   return applied;
 }

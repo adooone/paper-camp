@@ -15,7 +15,7 @@ Use this instead of exploring from scratch — it is kept current like the code.
 - `src/mcp/` — the MCP server exposing the corpus.
 - `src/toolbar/` — the in-app dev toolbar web component, mounted inside the target application.
 - `src/types/index.ts` — every shared type.
-- `papercamp/` — the corpus itself: `ideas/<ID>.md` (one file per idea, plan included), `ideas/index.md`, `config.json` (id counters, default agents, subjects), `run-order.md`, `suggestions.md`.
+- `papercamp/` — the corpus itself: `ideas/<ID>.md` (one file per idea, plan included), `config.json` (id counters, default agents, subjects), `run-order.md`, `suggestions.md`.
 
 Verify with: `pnpm run check-types`, `npx biome check . --write`, and `npx vitest run` (plain — `pnpm test` adds coverage and is much slower).
 
@@ -198,8 +198,8 @@ other side's allocation.
 - If a collision is later discovered (matching `IDEA-N` with different
   content across checkouts), the fix is to renumber the *less-advanced* side
   (fewer commits, more recently created) forward past the other's current
-  `nextId.idea` — rename the file, update its own `id:` frontmatter, its
-  `index.md` row, and every `[[IDEA-N]]`/bare `IDEA-N` cross-reference in
+  `nextId.idea` — rename the file, update its own `id:` frontmatter and
+  every `[[IDEA-N]]`/bare `IDEA-N` cross-reference in
   both directions (the renumbered idea's own body may reference the *other*
   colliding idea's old number too — grep for both old numbers after the
   rename, not just one).

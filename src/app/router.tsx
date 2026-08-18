@@ -10,7 +10,14 @@ import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { mountPrefix } from '@/app/services/mount';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
-import { Button, IconButton, Layout, Page, ToastProvider } from '@dendelion/paper-ui';
+import {
+  Button,
+  IconButton,
+  Layout,
+  Page,
+  ToastProvider,
+  getSurfaceStyles,
+} from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -67,6 +74,20 @@ const navItems = [
 
 const NavLabel = ({ item }: { item: (typeof navItems)[number] }) => (
   <span className="inline-flex items-center gap-1.5">{item.label}</span>
+);
+
+const BackIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 20 20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    aria-hidden="true"
+  >
+    <path d="M12 4l-5 6 5 6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
 );
 
 const SidebarToggleIcon = () => (
@@ -136,6 +157,8 @@ const RootLayout = () => {
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
+  // Detail views replace the sidebar breadcrumb that used to carry the way back.
+  const isPlanDetail = pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
   const isRoadmapArea = pathname === '/roadmap';
@@ -213,57 +236,31 @@ const RootLayout = () => {
 
   return (
     <ToastProvider position="bottom-left">
-      <div className="h-screen box-border min-[1199px]:pr-[var(--pc-stack-width)] flex flex-col">
-        <ServerReloadBanner />
-        <StatusBar />
+      <div className="h-screen box-border flex flex-col">
+        {/* Only the toolbar reserves the Stack's width — the columns below run full
+            width so the parchment passes under the panel instead of stopping at it. */}
+        <div className="shrink-0 min-[1199px]:pr-[var(--pc-stack-width)]">
+          <ServerReloadBanner />
+          <StatusBar />
+        </div>
         <Layout
           style={{ flex: '1 1 0%', minHeight: 0, height: 'auto' }}
           background={{ texture: 'speckle', ruledType: 'grid', ruledColor: 'blue' }}
-          showHeader
+          // Explicit false: paper-ui defaults it to true, and an empty header still
+          // renders a 64px band that pushes the parchment down.
+          showHeader={false}
           showSidebar={false}
           showPage={false}
           bleedBottom
-          headerActions={
-            <>
-              {hasSidebar && (
-                <IconButton
-                  variant="ghost"
-                  size="small"
-                  className="lg:hidden max-[480px]:hidden"
-                  label="Open sidebar"
-                  onClick={() => setMobileSidebarOpen(true)}
-                  icon={<SidebarToggleIcon />}
-                />
-              )}
-              <ProjectIdentityHeader size="sm" />
-              <div className="flex-1" />
-              <nav
-                aria-label="Main navigation"
-                className="flex items-center gap-1 max-[480px]:hidden"
-              >
-                {navItems.map((item) => (
-                  <Button
-                    key={item.id}
-                    variant="ghost"
-                    size="small"
-                    isActive={item.id === activeId}
-                    onClick={() => navigate({ to: item.path })}
-                    aria-current={item.id === activeId ? 'page' : undefined}
-                  >
-                    <NavLabel item={item} />
-                  </Button>
-                ))}
-              </nav>
-            </>
-          }
         >
           <div className="flex flex-col h-full min-h-0">
             {/* Bled out of `.content`'s padding: the scrollbar renders at this box's
-                edge, and content should pass under the header/strip, not stop short. */}
+                edge, so content isn't inset by a strip that no longer exists. */}
             <div
-              // No top inset: the header no longer paints a background, so the page
-              // should meet it directly. Page's own 2rem padding still holds the text
-              // off the edge — re-adding it here stacked two grid cells of dead space.
+              // No top inset: there's no header band above the columns anymore, so the
+              // page should meet the top of the viewport directly. Page's own 2rem padding
+              // still holds the text off the edge — re-adding it here would stack two grid
+              // cells of dead space.
               // paddingBottom uses var() so utilities.css can widen it below the phone
               // breakpoint, clearing the fixed .phone-bottom-nav that replaces the header
               // nav there.
@@ -306,14 +303,60 @@ const RootLayout = () => {
                     )}
                   </SidebarShell>
                 )}
-                <div className="flex flex-col min-w-0 flex-[1_1_0%]">
+                <div className="relative flex flex-col min-w-0 flex-[1_1_0%]">
+                  {/* Its own band above the sheet rather than a pill floating on it. `shade`
+                      is the same parchment grain one step darker, so the seam reads as a
+                      fold in one surface instead of a different material. */}
+                  <header
+                    className="pc-page-header sticky top-0 z-20 shrink-0 flex items-center gap-3 h-[var(--pc-header-h)] max-[480px]:hidden"
+                    style={getSurfaceStyles({ texture: 'parchment', shade: true })}
+                  >
+                    {hasSidebar ? (
+                      <IconButton
+                        variant="ghost"
+                        size="small"
+                        className="lg:hidden"
+                        label="Open sidebar"
+                        onClick={() => setMobileSidebarOpen(true)}
+                        icon={<SidebarToggleIcon />}
+                      />
+                    ) : (
+                      // Routes without a sidebar have no grid column to carry the identity.
+                      <ProjectIdentityHeader size="sm" />
+                    )}
+                    {isPlanDetail && (
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        icon={<BackIcon />}
+                        onClick={() => navigate({ to: '/' })}
+                        className="font-handwritten !text-sm opacity-70"
+                      >
+                        Back to plans
+                      </Button>
+                    )}
+                    <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
+                      {navItems.map((item) => (
+                        <Button
+                          key={item.id}
+                          variant="ghost"
+                          size="small"
+                          isActive={item.id === activeId}
+                          onClick={() => navigate({ to: item.path })}
+                          aria-current={item.id === activeId ? 'page' : undefined}
+                        >
+                          <NavLabel item={item} />
+                        </Button>
+                      ))}
+                    </nav>
+                  </header>
                   <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
                     <Page
                       texture={{ texture: 'parchment' }}
-                      outline
-                      className="min-h-screen w-full max-w-none"
+                      rounded="none"
+                      className="pc-page min-h-screen w-full max-w-none"
                     >
                       <Suspense fallback={null}>
                         <Outlet />

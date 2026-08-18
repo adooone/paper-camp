@@ -26,7 +26,6 @@ const MONOLITHIC_FILES = ['suggestions.md'];
 
 export interface InitOptions {
   projectName: string;
-  intent?: string;
 }
 
 export async function initProject(targetDir: string, options: InitOptions): Promise<void> {
@@ -51,13 +50,6 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
   await mkdir(ideasDir, { recursive: true });
   const entityArchiveDir = join(ideasDir, 'archive');
   await mkdir(entityArchiveDir, { recursive: true });
-  const ideasIndex = join(ideasDir, 'index.md');
-  if (!(await exists(ideasIndex))) {
-    const ideasBody = options.intent
-      ? `# ${options.projectName}\n\n${options.intent}\n`
-      : `# ${options.projectName}\n\nWhat are you building, and why?\n`;
-    await writeFile(ideasIndex, ideasBody, 'utf-8');
-  }
   const exampleIdeaPath = join(ideasDir, 'IDEA-1.md');
   if (!(await exists(exampleIdeaPath))) {
     const exampleIdea = formatEntityFile({

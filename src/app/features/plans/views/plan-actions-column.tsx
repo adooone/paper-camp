@@ -1,8 +1,7 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlan, useSubjectVocabulary } from '@/app/hooks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { Breadcrumb, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
-import { useNavigate } from '@tanstack/react-router';
+import { Card, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
 import { FixReviewButton } from '../actions';
@@ -12,7 +11,8 @@ import { canMarkPlanDone, effectiveStatus } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
 
-const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300';
+// Matches SidebarSection (Docs/Settings sidebars) — the caps were this column's own.
+const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none opacity-[0.45]';
 
 export const PlanActionsColumn = () => {
   const plan = useActivePlan();
@@ -24,7 +24,6 @@ export const PlanActionsColumn = () => {
   const setDetailView = useAppStore((s) => s.setDetailView);
   const archiveIdeas = useAppStore((s) => s.archiveIdeas);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const [orderInput, setOrderInput] = useState('');
   const [archiving, setArchiving] = useState(false);
@@ -81,21 +80,14 @@ export const PlanActionsColumn = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 -mt-5">
-      <Breadcrumb
-        items={[
-          { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
-          { id: 'plan', label: plan.title },
-        ]}
-      />
+    <div className="flex flex-col">
       <div>
-        <div className={`${sectionLabelClass} mb-1.5`}>Show</div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col">
           <ListItem
             size="small"
             active={detailView === 'details'}
             onClick={() => setDetailView('details')}
-            className="text-xs leading-4 py-2"
+            className="text-xs leading-4 h-[32px] py-0"
           >
             Details
           </ListItem>
@@ -103,17 +95,16 @@ export const PlanActionsColumn = () => {
             size="small"
             active={detailView === 'feedback'}
             onClick={() => setDetailView('feedback')}
-            className="text-xs leading-4 py-2"
+            className="text-xs leading-4 h-[32px] py-0"
           >
             Feedback
           </ListItem>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className={sectionLabelClass}>Status</div>
-        {/* Read-only: the dropped/reopen override lives in Actions below since
-            abandonment leaves no branch or PR to derive status from. */}
+      {/* Read-only: the dropped/reopen override lives in Actions below since
+          abandonment leaves no branch or PR to derive status from. */}
+      <div className="h-[64px] flex items-center">
         <Stamp
           size="small"
           fillColor={STATUS_STAMP[displayStatus].fill}
@@ -124,27 +115,30 @@ export const PlanActionsColumn = () => {
       </div>
 
       <div>
-        <div className={`${sectionLabelClass} mb-1.5`}>Subject</div>
-        <Select
-          size="small"
-          value={plan.subject ?? NO_SUBJECT}
-          onChange={(value) => patch({ subject: value === NO_SUBJECT ? null : value })}
-          disabled={updating || !subjectsAvailable}
-          options={[
-            { value: NO_SUBJECT, label: 'No subject' },
-            ...(orphanSubject
-              ? [{ value: orphanSubject, label: `${orphanSubject} (orphan)` }]
-              : []),
-            ...(!subjectsAvailable && plan.subject && !orphanSubject
-              ? [{ value: plan.subject, label: plan.subject }]
-              : []),
-            ...subjects.map((s) => ({ value: s, label: s })),
-          ]}
-        />
+        <div className={`${sectionLabelClass} h-[32px] flex items-end pb-1`}>Subject</div>
+        <div className="h-[32px] flex items-center">
+          <Select
+            className="w-full"
+            size="small"
+            value={plan.subject ?? NO_SUBJECT}
+            onChange={(value) => patch({ subject: value === NO_SUBJECT ? null : value })}
+            disabled={updating || !subjectsAvailable}
+            options={[
+              { value: NO_SUBJECT, label: 'No subject' },
+              ...(orphanSubject
+                ? [{ value: orphanSubject, label: `${orphanSubject} (orphan)` }]
+                : []),
+              ...(!subjectsAvailable && plan.subject && !orphanSubject
+                ? [{ value: plan.subject, label: plan.subject }]
+                : []),
+              ...subjects.map((s) => ({ value: s, label: s })),
+            ]}
+          />
+        </div>
       </div>
 
       {hasRunOrder && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between h-[64px]">
           <div className={sectionLabelClass}>Order</div>
           <Input
             type="number"
@@ -160,9 +154,8 @@ export const PlanActionsColumn = () => {
         </div>
       )}
 
-      <div>
-        <div className={`${sectionLabelClass} mb-1.5`}>Actions</div>
-        <div className="flex flex-col gap-1">
+      <Card size="small">
+        <div className="flex flex-col">
           {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
           {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
           {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
@@ -176,7 +169,7 @@ export const PlanActionsColumn = () => {
               icon={<span className="text-watercolor-green-dark">✓</span>}
               onClick={() => patch({ status: 'done' })}
               disabled={updating}
-              className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
+              className={`text-xs leading-4 h-[32px] py-0 ${updating ? 'opacity-50' : ''}`}
             >
               Approve &amp; close
             </ListItem>
@@ -188,7 +181,7 @@ export const PlanActionsColumn = () => {
               icon={<span className="text-ink-300">▣</span>}
               onClick={handleArchive}
               disabled={archiving || !plan.id}
-              className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
+              className={`text-xs leading-4 h-[32px] py-0 ${archiving || !plan.id ? 'opacity-50' : ''}`}
             >
               {archiving ? 'Archiving…' : 'Archive'}
             </ListItem>
@@ -201,7 +194,7 @@ export const PlanActionsColumn = () => {
               icon={<span className="text-watercolor-green-dark">✓</span>}
               onClick={handleArchive}
               disabled={archiving || !plan.id}
-              className={`text-xs leading-4 py-2 ${archiving || !plan.id ? 'opacity-50' : ''}`}
+              className={`text-xs leading-4 h-[32px] py-0 ${archiving || !plan.id ? 'opacity-50' : ''}`}
             >
               {archiving ? 'Marking done…' : 'Mark done'}
             </ListItem>
@@ -219,13 +212,13 @@ export const PlanActionsColumn = () => {
               }
               onClick={() => patch({ status: dropped ? null : 'dropped' })}
               disabled={updating}
-              className={`text-xs leading-4 py-2 ${updating ? 'opacity-50' : ''}`}
+              className={`text-xs leading-4 h-[32px] py-0 ${updating ? 'opacity-50' : ''}`}
             >
               {dropped ? 'Reopen plan' : 'Mark dropped'}
             </ListItem>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

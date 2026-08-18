@@ -665,8 +665,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
-  // `papercamp/ideas/index.md` and `papercamp/run-order.md` used to be listed here as
-  // disposable; both are gitignored now, so they never reach `runGitStatus()` at all.
+  // `papercamp/run-order.md` used to be listed here as disposable; it's gitignored
+  // now, so it never reaches `runGitStatus()` at all.
   //
   // The watcher rewrites files and re-normalizes `order:`, often with the same change an
   // incoming commit carries; those edits survive the stash but collide on pop, silently

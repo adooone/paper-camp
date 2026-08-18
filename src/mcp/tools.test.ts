@@ -108,7 +108,7 @@ describe('read tools', () => {
 });
 
 describe('write tools', () => {
-  it('add_idea allocates the next id, writes the file, and regenerates the index', async () => {
+  it('add_idea allocates the next id and writes the file', async () => {
     const root = await makeRoot();
     await writeFile(
       join(root, 'papercamp', 'ideas', 'IDEA-1.md'),
@@ -131,12 +131,9 @@ describe('write tools', () => {
     const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), 'utf-8');
     expect(written).toContain('title: New idea');
     expect(written).toContain('Some body.');
-
-    const index = await readFile(join(root, 'papercamp', 'ideas', 'index.md'), 'utf-8');
-    expect(index).toContain('IDEA-2');
   });
 
-  it('draft_plan assigns the next id for its kind, writes the file, and regenerates the index', async () => {
+  it('draft_plan assigns the next id for its kind and writes the file', async () => {
     const root = await makeRoot();
     const client = await connect(root, createGitManager(root, { watch: false }));
 
@@ -150,12 +147,9 @@ describe('write tools', () => {
     const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(written).toContain('title: Brand new plan');
     expect(written).toContain('status: idea');
-
-    const index = await readFile(join(root, 'papercamp', 'ideas', 'index.md'), 'utf-8');
-    expect(index).toContain('IDEA-1');
   });
 
-  it('update_phase toggles the phase by index and regenerates the index', async () => {
+  it('update_phase toggles the phase by index', async () => {
     const root = await makeRoot();
     await writePlan(
       root,
@@ -299,7 +293,7 @@ describe('branch-conflict guard', () => {
 });
 
 describe('edit_idea', () => {
-  it('edits title, body, tags, and type, and regenerates the index', async () => {
+  it('edits title, body, tags, and type', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'Old title' }));
     const client = await connect(root, createGitManager(root, { watch: false }));
@@ -323,9 +317,6 @@ describe('edit_idea', () => {
     expect(written).toContain('- format');
     expect(written).toContain('Rewritten body.');
     expect(written).not.toContain('Body of IDEA-1.');
-
-    const index = await readFile(join(root, 'papercamp', 'ideas', 'index.md'), 'utf-8');
-    expect(index).toContain('New title');
   });
 
   it('leaves omitted fields untouched', async () => {

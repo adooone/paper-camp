@@ -23,9 +23,9 @@ only the mechanism changes.
 
 Read, in this order, whatever exists:
 
-1. \`papercamp/ideas/index.md\` — every entity's id/title/type/status/tags, at
-   a glance. Ideas and plans are one thing: an entity is an *idea* for its
-   whole life, and its plan is a \`### Phases\` section inside the same file.
+1. \`papercamp/ideas/\` — one file per entity, named by id. Ideas and plans are
+   one thing: an entity is an *idea* for its whole life, and its plan is a
+   \`### Phases\` section inside the same file.
 2. The specific entity file at \`papercamp/ideas/<ID>.md\` (e.g. \`IDEA-43.md\`)
    for the work you're about to do — YAML frontmatter (\`id\`, \`title\`,
    \`type\`, \`status\`, \`tags\`, ...) plus prose rationale, then optionally a

@@ -15,7 +15,8 @@ const STATUS_CHIP_ORDER: PlanStatus[] = [
   'dropped',
 ];
 
-const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300 mb-2';
+// Matches SidebarSection (Docs/Settings sidebars) — the caps were this column's own.
+const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none opacity-[0.45]';
 
 export const PlanFilterColumn = () => {
   const plans = useAppStore((s) => s.plans);
@@ -39,18 +40,20 @@ export const PlanFilterColumn = () => {
   );
 
   return (
-    <div className="flex flex-col gap-8 -mt-5">
-      <Input
-        type="search"
-        size="small"
-        placeholder="Search plans…"
-        aria-label="Search plans"
-        value={filters.search}
-        onChange={(event) => setPlanSearch(event.target.value)}
-      />
+    <div className="flex flex-col">
+      <div className="h-[64px] flex items-center">
+        <Input
+          type="search"
+          size="small"
+          placeholder="Search plans…"
+          aria-label="Search plans"
+          value={filters.search}
+          onChange={(event) => setPlanSearch(event.target.value)}
+        />
+      </div>
 
       {filters.subject !== null && (
-        <div className="flex items-center gap-2" data-testid="subject-filter-chip">
+        <div className="flex items-center gap-2 h-[32px]" data-testid="subject-filter-chip">
           <span className="text-2xs opacity-70">Subject: {filters.subject}</span>
           <button
             type="button"
@@ -66,8 +69,7 @@ export const PlanFilterColumn = () => {
       )}
 
       <div>
-        <div className={sectionLabelClass}>Status</div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col">
           {visibleStatuses.map((status) => {
             const isActive = activeStatuses.has(status);
             return (
@@ -76,7 +78,7 @@ export const PlanFilterColumn = () => {
                 size="small"
                 active={isActive}
                 onClick={() => togglePlanStatus(status)}
-                className="text-xs leading-4 py-2"
+                className="text-xs leading-4 h-[32px] py-0"
                 icon={
                   <span
                     className="w-[9px] h-[9px] rounded-full shrink-0"
