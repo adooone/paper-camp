@@ -45,10 +45,12 @@ export function useBranchSync() {
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
+  const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
   const gitActionBusy = useAppStore((s) => s.activeGitAction !== null);
   const { toast, dismiss } = useToast();
   // Sync/pull can bring upstream commits, so refresh plans/ideas too — git-status alone would leave them stale.
-  const refreshAfterUpstream = () => Promise.all([loadGitStatus(), loadPlans(), loadIdeas()]);
+  const refreshAfterUpstream = () =>
+    Promise.all([loadGitStatus(), loadPlans(), loadIdeas(), loadDiffFiles()]);
 
   const [pushing, runPush] = useTrackedAction('push', 'Push failed');
   const [syncing, runSync] = useTrackedAction('sync', 'Sync failed');
@@ -112,7 +114,7 @@ export function useBranchSync() {
   const handlePush = () =>
     runPush(async () => {
       await pushChanges();
-      await loadGitStatus();
+      await Promise.all([loadGitStatus(), loadDiffFiles()]);
     });
   const handleSync = () =>
     runSync(async () => {

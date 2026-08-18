@@ -240,3 +240,20 @@ export const NoteIcon = ({ size = 14 }: IconProps) => (
     <path d="M15 3v6h6" />
   </svg>
 );
+
+export const CheckAllIcon = ({ size = 14 }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="m3 12 4 4 7-8" />
+    <path d="m11 15 2 2 8-9" />
+  </svg>
+);

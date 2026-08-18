@@ -15,7 +15,8 @@ const STATUS_CHIP_ORDER: PlanStatus[] = [
   'dropped',
 ];
 
-const sectionLabelClass = 'text-2xs font-semibold tracking-[0.08em] uppercase text-ink-300 mb-2';
+// Matches SidebarSection — handwritten, no caps, one grid cell.
+const sectionLabelClass = 'pc-row-label font-handwritten text-xs font-semibold opacity-[0.45]';
 
 export const RoadmapSidebar = () => {
   const roadmap = useAppStore((s) => s.roadmap);
@@ -36,27 +37,29 @@ export const RoadmapSidebar = () => {
   );
 
   return (
-    <div className="flex flex-col gap-8 -mt-5">
-      <Button
-        type="button"
-        variant="primary"
-        size="small"
-        onClick={() => setAddOpen(true)}
-        disabled={horizonTitles.length === 0}
-      >
-        + Add item
-      </Button>
+    <div className="flex flex-col">
+      <div className="flex h-[64px] items-center">
+        <Button
+          type="button"
+          variant="primary"
+          size="small"
+          onClick={() => setAddOpen(true)}
+          disabled={horizonTitles.length === 0}
+        >
+          + Add item
+        </Button>
+      </div>
 
       <div>
         <div className={sectionLabelClass}>Horizon</div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col">
           {horizonTitles.map((title) => (
             <ListItem
               key={title}
               size="small"
               active={activeHorizons.has(title)}
               onClick={() => toggleRoadmapHorizon(title)}
-              className="text-xs leading-4 py-2"
+              className="pc-row text-xs"
               action={<span className="text-2xs text-ink-500">{horizonCounts[title] ?? 0}</span>}
             >
               {title}
@@ -67,7 +70,7 @@ export const RoadmapSidebar = () => {
 
       <div>
         <div className={sectionLabelClass}>Status</div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col">
           {visibleStatuses.length === 0 && (
             <span className="opacity-50 text-2xs">No linked ideas</span>
           )}
@@ -77,7 +80,7 @@ export const RoadmapSidebar = () => {
               size="small"
               active={activeStatuses.has(status)}
               onClick={() => toggleRoadmapStatus(status)}
-              className="text-xs leading-4 py-2"
+              className="pc-row text-xs"
               icon={
                 <span
                   className="w-[9px] h-[9px] rounded-full shrink-0"

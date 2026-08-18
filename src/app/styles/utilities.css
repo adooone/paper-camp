@@ -335,3 +335,43 @@ header[class*="layout-module__header___"] {
   border-left: 1px solid var(--pui-sketch-stroke);
   filter: none;
 }
+
+/*
+ * paper-ui's Checkbox reserves a fixed 40x40 touch target — more than a 32px dense
+ * row can give, and here it was costing the filename its width. Scoped to the git
+ * file list so every other checkbox keeps the full target; the substring match on
+ * the CSS-module class survives its hash changing between builds.
+ */
+.pc-git-file-row [class*="boxWrapper"] {
+  width: 24px;
+  height: 24px;
+  /* Cancels the row's pb-1 for the box alone: bottom-aligning a 24px square against a
+     14px line of text leaves it reading high, so it drops to sit on the rule itself,
+     which puts its centre level with the text's. */
+  margin-bottom: -4px;
+}
+
+/*
+ * Sidebar rows are written on the ruled background: one 32px cell each, with the text
+ * resting just above the rule rather than floating mid-cell. line-height is explicit
+ * because an inherited tall one fills the cell and leaves flex-end nothing to push.
+ * On a paper-ui ListItem this also has to beat its own align-items:center — it does,
+ * on source order, since utilities.css is imported after the library's stylesheet.
+ */
+.pc-row {
+  display: flex;
+  align-items: flex-end;
+  height: 32px;
+  padding-top: 0;
+  padding-bottom: 4px;
+  line-height: 1;
+}
+
+/* The label that heads a sidebar group — same cell, same rule. */
+.pc-row-label {
+  display: flex;
+  align-items: flex-end;
+  height: 32px;
+  padding-bottom: 4px;
+  line-height: 1;
+}

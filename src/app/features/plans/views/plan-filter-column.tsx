@@ -16,7 +16,7 @@ const STATUS_CHIP_ORDER: PlanStatus[] = [
 ];
 
 // Matches SidebarSection (Docs/Settings sidebars) — the caps were this column's own.
-const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none opacity-[0.45]';
+const sectionLabelClass = 'pc-row-label font-handwritten text-xs font-semibold opacity-[0.45]';
 
 export const PlanFilterColumn = () => {
   const plans = useAppStore((s) => s.plans);
@@ -78,7 +78,7 @@ export const PlanFilterColumn = () => {
                 size="small"
                 active={isActive}
                 onClick={() => togglePlanStatus(status)}
-                className="text-xs leading-4 h-[32px] py-0"
+                className="pc-row text-xs"
                 icon={
                   <span
                     className="w-[9px] h-[9px] rounded-full shrink-0"

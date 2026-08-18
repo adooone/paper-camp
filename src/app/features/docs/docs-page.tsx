@@ -16,7 +16,6 @@ export const DocsPage = () => {
 
   const handleBackToDocs = () => navigate({ to: '/docs' });
 
-
   if (docSearchQuery.trim()) {
     return (
       <div>

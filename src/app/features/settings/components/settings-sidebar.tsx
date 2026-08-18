@@ -12,6 +12,7 @@ export const SettingsSidebar = () => {
       <SidebarSection label="General">
         <ListItem
           size="small"
+          className="pc-row text-xs"
           active={section === null}
           onClick={() => navigate({ to: '/settings' })}
         >
@@ -19,6 +20,7 @@ export const SettingsSidebar = () => {
         </ListItem>
         <ListItem
           size="small"
+          className="pc-row text-xs"
           active={section === 'setup'}
           onClick={() => navigate({ to: '/settings/$section', params: { section: 'setup' } })}
         >
@@ -26,6 +28,7 @@ export const SettingsSidebar = () => {
         </ListItem>
         <ListItem
           size="small"
+          className="pc-row text-xs"
           active={section === 'merge-policy'}
           onClick={() =>
             navigate({ to: '/settings/$section', params: { section: 'merge-policy' } })
@@ -37,6 +40,7 @@ export const SettingsSidebar = () => {
       <SidebarSection label="Ideas">
         <ListItem
           size="small"
+          className="pc-row text-xs"
           active={section === 'subjects'}
           onClick={() => navigate({ to: '/settings/$section', params: { section: 'subjects' } })}
         >

@@ -38,7 +38,7 @@ export const DocsSidebar = () => {
 
   return (
     <>
-      <div className="mb-4">
+      <div className="flex h-[64px] items-center">
         <Input
           size="small"
           aria-label="Search docs"
@@ -56,6 +56,7 @@ export const DocsSidebar = () => {
             <ListItem
               key={f.name}
               size="small"
+              className="pc-row text-xs"
               active={activeDocSection === 'repo-docs' && activeDocTitle === f.name}
               onClick={() => {
                 navigate({ to: '/docs/$section', params: { section: 'repo-docs' } });
@@ -78,6 +79,7 @@ export const DocsSidebar = () => {
             <ListItem
               key={version}
               size="small"
+              className="pc-row text-xs"
               active={activeDocSection === 'release-notes' && activeReleaseVersion === version}
               onClick={() => {
                 navigate({ to: '/docs/$section', params: { section: 'release-notes' } });

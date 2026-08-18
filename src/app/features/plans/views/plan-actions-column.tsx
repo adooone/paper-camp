@@ -12,7 +12,7 @@ import { canMarkPlanDone, effectiveStatus } from '../helpers';
 const NO_SUBJECT = '__no-subject__';
 
 // Matches SidebarSection (Docs/Settings sidebars) — the caps were this column's own.
-const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none opacity-[0.45]';
+const sectionLabelClass = 'pc-row-label font-handwritten text-xs font-semibold opacity-[0.45]';
 
 export const PlanActionsColumn = () => {
   const plan = useActivePlan();
@@ -87,7 +87,7 @@ export const PlanActionsColumn = () => {
             size="small"
             active={detailView === 'details'}
             onClick={() => setDetailView('details')}
-            className="text-xs leading-4 h-[32px] py-0"
+            className="pc-row text-xs"
           >
             Details
           </ListItem>
@@ -95,7 +95,7 @@ export const PlanActionsColumn = () => {
             size="small"
             active={detailView === 'feedback'}
             onClick={() => setDetailView('feedback')}
-            className="text-xs leading-4 h-[32px] py-0"
+            className="pc-row text-xs"
           >
             Feedback
           </ListItem>
@@ -115,7 +115,7 @@ export const PlanActionsColumn = () => {
       </div>
 
       <div>
-        <div className={`${sectionLabelClass} h-[32px] flex items-end pb-1`}>Subject</div>
+        <div className={sectionLabelClass}>Subject</div>
         <div className="h-[32px] flex items-center">
           <Select
             className="w-full"
@@ -169,7 +169,7 @@ export const PlanActionsColumn = () => {
               icon={<span className="text-watercolor-green-dark">✓</span>}
               onClick={() => patch({ status: 'done' })}
               disabled={updating}
-              className={`text-xs leading-4 h-[32px] py-0 ${updating ? 'opacity-50' : ''}`}
+              className={`pc-row text-xs ${updating ? 'opacity-50' : ''}`}
             >
               Approve &amp; close
             </ListItem>
@@ -181,7 +181,7 @@ export const PlanActionsColumn = () => {
               icon={<span className="text-ink-300">▣</span>}
               onClick={handleArchive}
               disabled={archiving || !plan.id}
-              className={`text-xs leading-4 h-[32px] py-0 ${archiving || !plan.id ? 'opacity-50' : ''}`}
+              className={`pc-row text-xs ${archiving || !plan.id ? 'opacity-50' : ''}`}
             >
               {archiving ? 'Archiving…' : 'Archive'}
             </ListItem>
@@ -194,7 +194,7 @@ export const PlanActionsColumn = () => {
               icon={<span className="text-watercolor-green-dark">✓</span>}
               onClick={handleArchive}
               disabled={archiving || !plan.id}
-              className={`text-xs leading-4 h-[32px] py-0 ${archiving || !plan.id ? 'opacity-50' : ''}`}
+              className={`pc-row text-xs ${archiving || !plan.id ? 'opacity-50' : ''}`}
             >
               {archiving ? 'Marking done…' : 'Mark done'}
             </ListItem>
@@ -212,7 +212,7 @@ export const PlanActionsColumn = () => {
               }
               onClick={() => patch({ status: dropped ? null : 'dropped' })}
               disabled={updating}
-              className={`text-xs leading-4 h-[32px] py-0 ${updating ? 'opacity-50' : ''}`}
+              className={`pc-row text-xs ${updating ? 'opacity-50' : ''}`}
             >
               {dropped ? 'Reopen plan' : 'Mark dropped'}
             </ListItem>

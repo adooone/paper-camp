@@ -6,6 +6,16 @@ interface StatusInfo {
   variant: StampVariant;
 }
 
+// Compact rows can't spare the ~39px a Stamp's blob costs for one letter; the colour
+// alone carries the same meaning in a fraction of the width.
+const COMPACT_COLOR: Record<StampVariant, string> = {
+  success: 'text-watercolor-green-dark',
+  info: 'text-watercolor-blue-dark',
+  error: 'text-watercolor-rose-dark',
+  warning: 'text-watercolor-amber-dark',
+  neutral: 'text-watercolor-slate-dark',
+};
+
 const STATUS_INFO: Record<string, StatusInfo> = {
   A: { letter: 'A', label: 'Added', variant: 'success' },
   M: { letter: 'M', label: 'Modified', variant: 'info' },
@@ -26,10 +36,21 @@ export const gitStatusInfo = (status: string): StatusInfo => {
 
 interface GitStatusMarkerProps {
   status: string;
+  compact?: boolean;
 }
 
-export const GitStatusMarker = ({ status }: GitStatusMarkerProps) => {
+export const GitStatusMarker = ({ status, compact = false }: GitStatusMarkerProps) => {
   const info = gitStatusInfo(status);
+  if (compact) {
+    return (
+      <span
+        title={info.label}
+        className={`w-4 shrink-0 text-center font-mono text-3xs font-semibold leading-none ${COMPACT_COLOR[info.variant] ?? ''}`}
+      >
+        {info.letter}
+      </span>
+    );
+  }
   return (
     <span title={info.label}>
       <Stamp size="small" variant={info.variant}>
