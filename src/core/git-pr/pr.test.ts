@@ -162,6 +162,28 @@ describe('resolvePrsByEntity', () => {
     expect(prs?.get('IDEA-4')?.state).toBe('merged');
   });
 
+  it('clearPrCache(root) invalidates the persisted map, forcing the next default-ttl read to fetch live', async () => {
+    const { root, callCount } = withGh([
+      row({ number: 4, state: 'MERGED', body: '**Plan:** `IDEA-4`' }),
+    ]);
+    await resolvePrsByEntity(root);
+    expect(callCount()).toBe(1);
+
+    await clearPrCache(root);
+    const prs = await resolvePrsByEntity(root);
+    expect(callCount()).toBe(2);
+    expect(prs?.get('IDEA-4')?.state).toBe('merged');
+  });
+
+  it('clearPrCache(root) zeroes fetchedAt in the persisted file, not just memory', async () => {
+    const { root } = withGh([row({ number: 4, state: 'MERGED', body: '**Plan:** `IDEA-4`' })]);
+    await resolvePrsByEntity(root);
+
+    await clearPrCache(root);
+    const persisted = JSON.parse(readFileSync(join(root, 'papercamp', 'pr-map.json'), 'utf-8'));
+    expect(persisted.fetchedAt).toBe(0);
+  });
+
   it('maps reviewDecision straight from the list pass, no gh api call needed', async () => {
     const { root, callCount } = withGh(
       [

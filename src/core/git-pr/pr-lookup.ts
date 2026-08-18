@@ -483,6 +483,27 @@ export async function getPrMapFetchedAt(root: string): Promise<number | null> {
   return cached?.fetchedAt ?? null;
 }
 
-export function clearPrCache(): void {
-  cache.clear();
+/** Zeroing rather than removing the persisted `fetchedAt` (both in memory and on
+ * disk) means the next read for `root` fails its TTL check and fetches live,
+ * while the map itself survives as the fallback if that fetch errors. Called
+ * with no `root`, it drops the whole in-memory cache instead — used by tests to
+ * simulate a process restart, where the persisted file must stay untouched. */
+export async function clearPrCache(root?: string): Promise<void> {
+  if (root === undefined) {
+    cache.clear();
+    return;
+  }
+  const cached = cache.get(root);
+  if (cached) {
+    cache.set(root, { ...cached, fetchedAt: 0 });
+  }
+  const path = prMapPath(root);
+  try {
+    const raw = await readFile(path, 'utf-8');
+    const parsed = JSON.parse(raw) as PersistedPrMap;
+    parsed.fetchedAt = 0;
+    await writeFile(path, `${JSON.stringify(parsed, null, 2)}\n`, 'utf-8');
+  } catch {
+    // No persisted file yet (or unreadable) — nothing to invalidate.
+  }
 }

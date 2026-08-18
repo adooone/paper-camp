@@ -108,8 +108,9 @@ unaffected.
 - [x] Show when GitHub data was last fetched
       `papercamp/pr-map.json` already stores `fetchedAt`, and with on-demand fetching "as of 14:32" is load-bearing information that nothing displays. Surface it next to the refresh control and on the PR badge, so a stale PR state is legible where it is actually read rather than silently presented as current.
       run: 6m51s · 1.9k in · 19k out · sonnet-5
-- [ ] Make `clearPrCache` invalidate the persisted map
+- [x] Make `clearPrCache` invalidate the persisted map
       `clearPrCache()` is still just `cache.clear()`, written when the cache was memory-only. This idea added disk persistence, so the next read reloads `pr-map.json` carrying its original `fetchedAt`, the 5-minute `PR_CACHE_TTL_MS` still holds, and Refresh never shells out to `gh` — the button reports success having reloaded every slice from a stale map. Observed with a map fetched 3.9 minutes earlier: 137 entries, no IDEA-166, so its open PR #164 could not be picked up and the entity fell back to stored `review`. Zero the persisted `fetchedAt` rather than deleting the file, so the next read fails its TTL check and fetches live while the map survives as the fallback if that fetch errors.
+      run: 5m37s · 6k in · 19.5k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-16 [review] [agent] Requests changes · 1 finding — The disk-persistence, CI-subscription removal, and last-fetched UI surfacing are well-built and match the spec's mechanics. But the PR only deletes the setInterval poll; the shared resolvePrsByEntity still performs a live GitHub fetch whenever its cache/persisted map is older than the 5-minute TTL, and that function is reached automatically from the papercamp/ file watcher via runRunOrderPass → readWorkEntries. So local file activity during an agent run still triggers `gh pr list` roughly every 5 minutes, which is exactly the 'fetches triggered by local file activity' the idea says must stop.

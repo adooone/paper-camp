@@ -268,7 +268,7 @@ const RootLayout = () => {
             >
               {/* --pc-sidebar-h: the sticky sidebar can't size off this group (it's as
                   tall as the page). lg only — below that it's a full-height drawer. */}
-              <div className="flex min-w-0 justify-center lg:[--pc-sidebar-h:calc(100vh-160px)] gap-6 w-full">
+              <div className="flex min-w-0 justify-center lg:[--pc-sidebar-h:calc(100vh-160px)] gap-6 w-full min-h-full">
                 {hasSidebar && (
                   <SidebarShell
                     routeKey={sidebarAreaKey}
@@ -356,7 +356,7 @@ const RootLayout = () => {
                     <Page
                       texture={{ texture: 'parchment' }}
                       rounded="none"
-                      className="pc-page min-h-screen w-full max-w-none"
+                      className="pc-page w-full max-w-none"
                     >
                       <Suspense fallback={null}>
                         <Outlet />

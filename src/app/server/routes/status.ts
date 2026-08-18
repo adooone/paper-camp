@@ -27,15 +27,14 @@ export function statusRoutes({
       method: 'POST',
       path: '/api/refresh',
       handle: async (_req, res) => {
-        clearPrCache();
+        await clearPrCache(root);
         clearCiCache();
         // The corpus cache bakes PR state into each entry and is only invalidated by
         // the file watcher, so a PR appearing on GitHub alone wouldn't refresh it.
         invalidateCorpusCache();
-        // Clearing memory alone isn't enough: the next read reloads pr-map.json with its
-        // original `fetchedAt`, which re-arms the TTL and serves stale. ttl 0 forces the
-        // live fetch, which re-persists on success and keeps the old map on failure.
-        await resolvePrsByEntity(root, 0);
+        // clearPrCache already zeroed the persisted fetchedAt, so this fetches live
+        // regardless of TTL, re-persisting on success and keeping the old map on failure.
+        await resolvePrsByEntity(root);
         sendJson(res, 200, { ok: true });
       },
     },
