@@ -81,11 +81,11 @@ export function createAgentHooks(root: string, git: GitManager) {
     const title = `${plan.kind ?? 'feat'}(${area}): ${phase.text}`;
     const refs = plan.id ? `Refs: ${plan.id}` : undefined;
     await runBiomeFix(root);
-    const _files = changedSince(startSnapshot, await git.getStatus());
-    await git.stageAll();
+    const files = changedSince(startSnapshot, await git.getStatus());
+    if (files.length === 0) return;
     // noVerify: this is a machine-generated commit; the message is valid by
     // construction, so the commit-msg hook must not block an unattended run.
-    await git.commit([], title, refs, { noVerify: true });
+    await git.commit(files, title, refs, { noVerify: true });
   }
 
   async function setRunReview(plan: PlanEntry): Promise<void> {

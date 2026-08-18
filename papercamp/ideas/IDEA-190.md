@@ -89,9 +89,10 @@ splitting commits that already absorbed unrelated files.
       In `commitPhase`, take only the paths added or changed since the start
       snapshot, carrying each staged rename's source alongside its destination.
       run: 9m29s · 6.6k in · 28.6k out · sonnet-5
-- [ ] Commit only those paths through the existing pathspec path
+- [x] Commit only those paths through the existing pathspec path
       Replace `stageAll()` + `commit([])` with a scoped stage and the file-list
       commit that already skips fully-staged files.
+      run: 1m32s · 366 in · 3.2k out · sonnet-5
 - [ ] Cover the scoping with tests
       Assert an unrelated edit sitting in the tree before a phase stays
       uncommitted while the phase's own edits land.
