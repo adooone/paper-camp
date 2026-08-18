@@ -82,7 +82,7 @@ git page, which already take an explicit file list from the user. Retroactively
 splitting commits that already absorbed unrelated files.
 
 ### Phases
-- [ ] Snapshot the working tree before each phase runs
+- [x] Snapshot the working tree before each phase runs
       Record `git status --porcelain` before `runPhaseProcess` and thread that
       start snapshot to the phase-commit hook.
 - [ ] Reduce the two snapshots to the phase's changed paths
