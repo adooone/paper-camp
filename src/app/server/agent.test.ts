@@ -622,7 +622,7 @@ Plan body.
 - [ ] Second fix
 `;
 
-    it('runs open Fixes after the phases are done, committing after each, then completes the run', async () => {
+    it('runs open Fixes after the phases are done without committing, then completes the run', async () => {
       const { root, plan } = await makeRoot(PLAN_PHASES_DONE_TWO_FIXES);
       agentScript.current = FLIP_NEXT_CHECKBOX;
       const commits: string[] = [];
@@ -638,7 +638,7 @@ Plan body.
 
       expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
       expect(await waitForStatus(manager, settled)).toBe('done');
-      expect(commits).toEqual(['First fix', 'Second fix']);
+      expect(commits).toEqual([]);
       expect(onRunComplete).toHaveBeenCalledOnce();
 
       const after = parseEntityFile(

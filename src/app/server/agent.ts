@@ -1398,7 +1398,7 @@ export function createAgentManager(
         task.phaseRuns ??= [];
         task.phaseRuns.push({ kind, index: i, usage: phaseUsage });
       }
-      if (onPhaseCommit) {
+      if (onPhaseCommit && kind === 'phase') {
         pushLine(task, `[commit] ${kind} ${i + 1} — ${item.text}`);
         await onPhaseCommit(plan, item, i, phaseUsage ? { usage: phaseUsage, kind } : undefined);
       }
