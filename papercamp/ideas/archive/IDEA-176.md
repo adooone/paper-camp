@@ -2,9 +2,9 @@
 id: IDEA-176
 title: Sync stops stashing over the corpus
 type: fix
-status: review
+status: done
 created: 2026-08-14
-updated: 2026-08-14
+updated: 2026-08-18
 tags:
   - server
   - git

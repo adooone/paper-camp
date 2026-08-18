@@ -2,7 +2,7 @@
 id: IDEA-189
 title: Page texture fills the centre column
 type: feat
-status: review
+status: done
 created: 2026-08-17
 updated: 2026-08-18
 tags:

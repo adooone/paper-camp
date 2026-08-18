@@ -2,9 +2,9 @@
 id: IDEA-167
 title: Git status vocabulary and chrome
 type: fix
-status: review
+status: done
 created: 2026-08-13
-updated: 2026-08-14
+updated: 2026-08-18
 tags:
   - app
   - git

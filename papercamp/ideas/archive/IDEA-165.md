@@ -2,9 +2,9 @@
 id: IDEA-165
 title: Stage files, write the message
 type: feat
-status: review
+status: done
 created: 2026-08-13
-updated: 2026-08-15
+updated: 2026-08-18
 tags:
   - app
   - git

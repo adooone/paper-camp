@@ -2,9 +2,9 @@
 id: IDEA-186
 title: Use the whole width
 type: feat
-status: review
+status: done
 created: 2026-08-17
-updated: 2026-08-17
+updated: 2026-08-18
 tags:
   - app
   - ui

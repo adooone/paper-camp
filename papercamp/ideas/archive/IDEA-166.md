@@ -2,9 +2,9 @@
 id: IDEA-166
 title: Readable diffs on the git page
 type: feat
-status: review
+status: done
 created: 2026-08-13
-updated: 2026-08-16
+updated: 2026-08-18
 tags:
   - app
   - git

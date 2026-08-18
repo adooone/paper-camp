@@ -2,9 +2,9 @@
 id: IDEA-171
 title: Run-all redoes work from a stale base
 type: fix
-status: review
+status: done
 created: 2026-08-14
-updated: 2026-08-14
+updated: 2026-08-18
 tags:
   - agent
   - plans

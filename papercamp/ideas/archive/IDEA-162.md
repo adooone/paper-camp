@@ -2,9 +2,9 @@
 id: IDEA-162
 title: One source of truth for checks
 type: refactor
-status: review
+status: done
 created: 2026-08-13
-updated: 2026-08-16
+updated: 2026-08-18
 tags:
   - app
   - stack

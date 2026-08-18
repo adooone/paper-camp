@@ -2,9 +2,9 @@
 id: IDEA-163
 title: Stack panel affordance and a11y pass
 type: fix
-status: review
+status: done
 created: 2026-08-13
-updated: 2026-08-17
+updated: 2026-08-18
 tags:
   - app
   - stack
