@@ -93,7 +93,7 @@ splitting commits that already absorbed unrelated files.
 - [x] Commit only those paths through the existing pathspec path
       Replace `stageAll()` + `commit([])` with a scoped stage and the file-list
       commit that already skips fully-staged files.
-      run: 1m32s · 366 in · 3.2k out · sonnet-5
+      run: 1m55s · 374 in · 3.9k out · sonnet-5 · ×2
 - [x] Cover the scoping with tests
       Assert an unrelated edit sitting in the tree before a phase stays
       uncommitted while the phase's own edits land.
