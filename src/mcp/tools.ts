@@ -8,7 +8,6 @@ import {
   checkBranchConflictForPlan,
   entityFileInput,
   readMaybe,
-  regenerateIndexes,
   writeEntityFile,
 } from '../app/server/helpers';
 import { parseEntityFile, parseSuggestions } from '../core/parse';
@@ -120,7 +119,6 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       body: input.content?.trim(),
     });
     await writeFile(join(ideasDir, `${id}.md`), `${content}\n`, 'utf-8');
-    await regenerateIndexes(root);
     return id;
   }
 
@@ -216,7 +214,6 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         if (status === 'dropped') {
           await archiveEntityFile(root, target.id);
         }
-        await regenerateIndexes(root);
 
         return json({ ok: true });
       }),
@@ -263,7 +260,6 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
 
         const updatedEntry = { ...entry, updated: todayDateString() };
         await writeEntityFile(targetFile, entityFileInput(updatedEntry, overrides));
-        await regenerateIndexes(root);
 
         return json({ ok: true });
       }),
@@ -298,7 +294,6 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       targetFile,
       entityFileInput({ ...entry, thread, updated: todayDateString() }),
     );
-    await regenerateIndexes(root);
   }
 
   function registerAppendTool(
@@ -472,7 +467,6 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
             updated: todayDateString(),
           }),
         );
-        await regenerateIndexes(root);
         return json({ ok: true });
       }),
   );
@@ -507,7 +501,6 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
           entityFileInput(entry, { status: 'dropped', updated: todayDateString() }),
         );
         await archiveEntityFile(root, target.id);
-        await regenerateIndexes(root);
         return json({ ok: true });
       }),
   );

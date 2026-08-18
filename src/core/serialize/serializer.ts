@@ -339,21 +339,3 @@ export function removeSuggestionLine(markdown: string, target: SuggestionEntry):
   });
   return removed ? lines.join('\n') : markdown;
 }
-
-export function formatEntitiesIndex(entities: EntityEntry[]): string {
-  if (entities.length === 0) return '# Ideas\n\nNo ideas yet.\n';
-
-  const sorted = [...entities].sort((a, b) => {
-    const aNum = Number.parseInt(a.id.replace(/^[A-Z]+-/, ''), 10);
-    const bNum = Number.parseInt(b.id.replace(/^[A-Z]+-/, ''), 10);
-    if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
-    return a.title.localeCompare(b.title);
-  });
-
-  const rows = sorted.map(
-    (e) =>
-      `| ${e.id} | ${e.title.replace(/\|/g, '\\|')} | ${e.type ?? (e.kind === 'note' ? 'note' : '—')} | ${e.status} | ${(e.tags ?? []).join(', ')} |`,
-  );
-
-  return `# Ideas\n\n| Id | Title | Type | Status | Tags |\n|----|-------|------|--------|------|\n${rows.join('\n')}\n`;
-}
