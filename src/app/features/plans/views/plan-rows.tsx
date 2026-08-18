@@ -26,11 +26,14 @@ export const RowMarker = ({
   done,
   running,
   status,
+  fallback,
 }: {
   order?: number;
   done?: boolean;
   running?: boolean;
   status?: string;
+  /** Queue position was computed from a status guess (GitHub unreachable) — see plan.statusFallback. */
+  fallback?: boolean;
 }) => (
   <span className="flex-[0_0_36px] flex items-center justify-center">
     {running ? (
@@ -40,9 +43,17 @@ export const RowMarker = ({
         ✓
       </span>
     ) : order !== undefined ? (
-      <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
-        <span className="font-handwritten text-xs leading-none">{order}</span>
-      </Stamp>
+      fallback ? (
+        <Tooltip content="Queue position based on a status guess — GitHub's PR state couldn't be resolved">
+          <Stamp size="small" variant="warning" dot>
+            <span className="font-handwritten text-xs leading-none">{order}</span>
+          </Stamp>
+        </Tooltip>
+      ) : (
+        <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
+          <span className="font-handwritten text-xs leading-none">{order}</span>
+        </Stamp>
+      )
     ) : status === 'idea' ? (
       // Run order only covers planned/in-progress/review, so a backlog idea has no
       // number to show — mark it as unplanned rather than leaving the gutter blank.
@@ -90,6 +101,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
               done={plan.status === 'done'}
               status={plan.status}
               running={Boolean(runningTaskForPlan(plan.id, agentStatus))}
+              fallback={plan.statusFallback}
             />
             <div
               role={onOpen ? 'button' : undefined}
@@ -136,6 +148,13 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
                     >
                       {STATUS_LABEL[status]}
                     </Stamp>
+                    {plan.statusFallback && (
+                      <Tooltip content="GitHub's PR state couldn't be resolved — this status is a guess from local data">
+                        <Stamp size="small" variant="warning" dot>
+                          Guess
+                        </Stamp>
+                      </Tooltip>
+                    )}
                     {plan.pr?.state === 'merged' && (
                       <Tooltip content={`Merged in #${plan.pr.number}`}>
                         <span className="inline-flex text-[#7B5E9E]">

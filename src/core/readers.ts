@@ -15,7 +15,7 @@ import { resolveIdsWithMainActivity } from './git-log';
 import { resolvePrsByEntity } from './git-pr/pr-lookup';
 import { parseEntityFile } from './parse/parser';
 import { parseRunOrderFile } from './run-order-file';
-import { deriveStatus, isArchivable } from './status';
+import { deriveStatus, isArchivable, isStatusFallback } from './status';
 import {
   clarificationsFromThread,
   logFromThread,
@@ -93,6 +93,7 @@ export function entityToPlan(
     title: e.title,
     // Non-note entities can't carry the note-only 'open' (schema-enforced).
     status: deriveStatus(e, pr, prLookupResolved, hasMainActivity) as PlanStatus,
+    statusFallback: isStatusFallback(e, pr, prLookupResolved),
     kind: e.type,
     id: e.id,
     agent: e.agent,

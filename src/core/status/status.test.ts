@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PrInfo } from '../../types/index';
-import { deriveStatus, isArchivable } from './status';
+import { deriveStatus, isArchivable, isStatusFallback } from './status';
 
 const phase = (done: boolean) => ({ done, text: 'phase' });
 const pr = (state: PrInfo['state']): PrInfo => ({ number: 1, url: 'u', state });
@@ -155,5 +155,34 @@ describe('isArchivable', () => {
     expect(
       isArchivable({ phases: [phase(true), phase(false)], status: 'done' }, pr('merged')),
     ).toBe(false);
+  });
+});
+
+describe('isStatusFallback', () => {
+  it('is true when GitHub is unreachable and there is no PR', () => {
+    expect(isStatusFallback({ phases: [phase(false)] }, undefined, false)).toBe(true);
+    expect(isStatusFallback({ phases: [phase(false)], status: 'review' }, undefined, false)).toBe(
+      true,
+    );
+  });
+
+  it('is false once PR lookup resolves', () => {
+    expect(isStatusFallback({ phases: [phase(false)] }, undefined, true)).toBe(false);
+  });
+
+  it('is false when a PR was found, even if lookup as a whole did not fully resolve', () => {
+    expect(isStatusFallback({ phases: [phase(false)] }, pr('open'), false)).toBe(false);
+  });
+
+  it('is false for an archived entity — its status is derived, not guessed', () => {
+    expect(isStatusFallback({ phases: [], archived: true }, undefined, false)).toBe(false);
+  });
+
+  it('is false for a stored dropped — it always wins regardless of PR lookup', () => {
+    expect(isStatusFallback({ phases: [], status: 'dropped' }, undefined, false)).toBe(false);
+  });
+
+  it('is false for a note — notes never derive from PR state', () => {
+    expect(isStatusFallback({ kind: 'note', phases: [] }, undefined, false)).toBe(false);
   });
 });

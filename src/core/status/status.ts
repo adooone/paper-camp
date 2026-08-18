@@ -47,6 +47,21 @@ export function deriveStatus(
   return entity.phases.length > 0 ? 'planned' : 'idea';
 }
 
+// Mirrors deriveStatus's guards up to its `!prLookupResolved` branch: true exactly when
+// that branch is the one producing the status, i.e. GitHub was unreachable and nothing
+// derivable (archived/dropped/a resolved PR) overrode the guess.
+export function isStatusFallback(
+  entity: StatusDerivationInput,
+  pr: PrInfo | undefined,
+  prLookupResolved: boolean,
+): boolean {
+  if (entity.kind === 'note') return false;
+  if (entity.status === 'dropped') return false;
+  if (entity.archived) return false;
+  if (pr) return false;
+  return !prLookupResolved;
+}
+
 // A merged PR can still derive to `dropped` (a stored override wins over the PR — see
 // deriveStatus), so this re-derives rather than trusting `pr.state === 'merged'` alone.
 export function isArchivable(entity: ArchivabilityInput, pr: PrInfo | undefined): boolean {
