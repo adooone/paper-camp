@@ -15,7 +15,7 @@ import { resolveIdsWithMainActivity } from './git-log';
 import { resolvePrsByEntity } from './git-pr/pr-lookup';
 import { parseEntityFile } from './parse/parser';
 import { parseRunOrderFile } from './run-order-file';
-import { deriveStatus, isArchivable } from './status';
+import { deriveStatus, isArchivable, isStatusFallback } from './status';
 import {
   clarificationsFromThread,
   logFromThread,
@@ -93,6 +93,7 @@ export function entityToPlan(
     title: e.title,
     // Non-note entities can't carry the note-only 'open' (schema-enforced).
     status: deriveStatus(e, pr, prLookupResolved, hasMainActivity) as PlanStatus,
+    statusFallback: isStatusFallback(e, pr, prLookupResolved),
     kind: e.type,
     id: e.id,
     agent: e.agent,
@@ -158,7 +159,7 @@ export async function readEntitiesWithDerivedStatus(
 export async function readWorkEntries(
   ideasDir: string,
   ttlMs?: number,
-): Promise<ParseResult<PlanEntry>> {
+): Promise<ParseResult<PlanEntry> & { resolved: boolean }> {
   const { entries, warnings, prs, resolved, mainActivityIds } = await readEntitiesAndPrs(
     ideasDir,
     ttlMs,
@@ -168,17 +169,23 @@ export async function readWorkEntries(
       .filter((e) => e.kind !== 'note')
       .map((e) => entityToPlan(e, prs?.get(e.id), resolved, mainActivityIds.has(e.id))),
     warnings,
+    resolved,
   };
 }
 
 // Merged PR + review/done status + file still in ideasDir (not ideas/archive/): the
 // human promotion (archive + status: done) is overdue but nothing writes it automatically.
-export async function findArchivableIdeas(ideasDir: string): Promise<ArchivableIdea[]> {
-  const { entries, prs } = await readEntitiesAndPrs(ideasDir);
-  return entries.flatMap((e) => {
-    const pr = prs?.get(e.id);
-    return pr && isArchivable(e, pr) ? [{ id: e.id, title: e.title, pr }] : [];
-  });
+export async function findArchivableIdeas(
+  ideasDir: string,
+): Promise<{ entries: ArchivableIdea[]; resolved: boolean }> {
+  const { entries, prs, resolved } = await readEntitiesAndPrs(ideasDir);
+  return {
+    entries: entries.flatMap((e) => {
+      const pr = prs?.get(e.id);
+      return pr && isArchivable(e, pr) ? [{ id: e.id, title: e.title, pr }] : [];
+    }),
+    resolved,
+  };
 }
 
 export async function readNoteEntries(ideasDir: string): Promise<ParseResult<IdeaEntry>> {

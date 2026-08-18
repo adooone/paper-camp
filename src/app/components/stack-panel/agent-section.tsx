@@ -5,7 +5,7 @@ import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-u
 import { useNavigate } from '@tanstack/react-router';
 import { chalkStatusFill, chalkStatusText, formatLastRun, sectionLabelClassName } from './shared';
 
-const MAX_VISIBLE_TASKS = 3;
+const MAX_VISIBLE_TASKS = 1;
 // Fixed so every card is the same height regardless of how much its title or
 // metadata truncates — content no longer drives card height. 4.625rem = 74px:
 // Card size="small" padding (2 * 12px) + gap-1 (4px) between the title and
@@ -14,9 +14,9 @@ const MAX_VISIBLE_TASKS = 3;
 // the two-line layout needs, so the border layer's overflow-y: hidden never
 // clips a row.
 const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
-// 14.875rem = 3 cards * 4.625rem card height + 2 gaps * 0.5rem, reserved so the
-// empty state doesn't shrink the panel when tasks finish and clear.
-const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[14.875rem]';
+// One card plus the "N more" row, reserved so the empty state doesn't shrink the
+// panel when tasks finish and clear.
+const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[6.625rem]';
 
 export const taskKindLabel = (task: AgentTaskState): string => {
   switch (task.taskKind) {
@@ -178,7 +178,9 @@ const AgentTaskCard = ({
 export const AgentSection = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
+  const navigate = useNavigate();
   const visibleTasks = agentStatus.slice(0, MAX_VISIBLE_TASKS);
+  const hiddenCount = agentStatus.length - visibleTasks.length;
 
   return (
     <div className="flex min-h-0 flex-none flex-col p-[var(--pc-stack-pad)]">
@@ -196,6 +198,15 @@ export const AgentSection = () => {
           <Card surface="chalkboard" size="small">
             <p className="m-0 text-center text-xs opacity-50">No agent running.</p>
           </Card>
+        )}
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            onClick={() => navigate({ to: '/tasks' })}
+            className="shrink-0 cursor-pointer border-none bg-transparent p-0 text-left text-xs text-desk-text-muted underline"
+          >
+            {hiddenCount} more…
+          </button>
         )}
       </div>
     </div>

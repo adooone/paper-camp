@@ -243,6 +243,10 @@ export interface PlanEntry {
   /** Set by readEntities from which dir the file came from — see EntityEntry.archived. */
   archived?: boolean;
   pr?: PrInfo;
+  /** True when `status` is a phase-count/stored-override guess because GitHub's PR
+   * state couldn't be resolved, rather than derived from a resolved PR — see
+   * isStatusFallback. */
+  statusFallback?: boolean;
 }
 
 export interface ArchivableIdea {

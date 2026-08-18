@@ -2,7 +2,7 @@
 id: IDEA-178
 title: Rate limits must not rewrite status
 type: fix
-status: idea
+status: review
 created: 2026-08-14
 updated: 2026-08-15
 tags:
@@ -10,6 +10,7 @@ tags:
   - github
   - plans
 subject: Planning surface
+order: 4
 ---
 
 When PR state cannot be resolved, every entity's status silently becomes a guess
@@ -98,9 +99,15 @@ The review trigger's gates ([[IDEA-170]]) and the reviewed-SHA ledger
 ([[IDEA-173]]).
 
 ### Phases
-- [ ] Treat archive location as closed in status derivation
+- [x] Treat archive location as closed in status derivation
       Carry `archived` into `StatusDerivationInput` and return `done` for an archived entity unless a stored `dropped` overrides.
-- [ ] Stop caching degraded reads
+      run: 2m51s · 5.9k in · 3.3k out · sonnet-5
+- [x] Stop caching degraded reads
       Refuse to store a corpus-cache result computed while `prLookupResolved` was false, so a transient failure cannot outlive itself.
-- [ ] Surface fallback status in the UI
+      run: 4m24s · 796 in · 11.4k out · sonnet-5
+- [x] Surface fallback status in the UI
       Mark the worklist status column and run-order queue when a status is a guess rather than derived from resolved PR state.
+      run: 8m32s · 9.8k in · 23.4k out · sonnet-5
+
+### Thread
+- [x] 2026-08-18 [review] [agent] Comments · 3 findings — The three in-scope phases are delivered cleanly and correctly: archived entities now derive to `done` (with `dropped` still overriding), the corpus cache refuses to retain a read where PR lookup didn't resolve, and `isStatusFallback` faithfully mirrors deriveStatus's guards to surface the guess in the worklist. My only real concern is that the PR bundles three changes that have nothing to do with rate limits or status derivation — the Stack panel's visible-task count, the page-header shade, and a commented-out header border.
