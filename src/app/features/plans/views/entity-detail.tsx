@@ -76,26 +76,29 @@ function formatRunSummary(run: NonNullable<PhaseItem['run']>): string {
   return `${formatTokens(run.inputTokens + run.outputTokens)} tokens · ${formatDuration(run.durationMs)}${run.attempts > 1 ? ` ×${run.attempts}` : ''}${run.model ? ` · ${run.model}` : ''}`;
 }
 
+// Same stamp as a phase row's run cost, and the same three-item shape — the
+// rollup swaps the phase's single model for a run count.
 const RunCostSummary = ({ rollup }: { rollup: UsageRollup }) => {
   if (rollup.runs === 0) return null;
   return (
-    <div className="flex items-center gap-2 text-xs opacity-[0.55] flex-wrap flex-shrink-0 ml-auto">
-      <span className="font-semibold opacity-[0.85]">Run cost</span>
-      <span aria-hidden>·</span>
-      <span>
-        {rollup.runs} {rollup.runs === 1 ? 'run' : 'runs'}
-      </span>
-      <span aria-hidden>·</span>
-      <span>{formatDuration(rollup.durationMs)}</span>
-      <span aria-hidden>·</span>
+    // shrink-0: the stamp sets its own width from nowrap text, so letting flex
+    // squeeze it just pushes the text past the sheet's edge.
+    <span className="shrink-0">
       <Tooltip
-        content={`Cache: ${formatTokens(rollup.cacheCreationTokens)} write · ${formatTokens(rollup.cacheReadTokens)} read`}
+        content={`${formatTokens(rollup.inputTokens)} in · ${formatTokens(rollup.outputTokens)} out · cache ${formatTokens(rollup.cacheCreationTokens)} write · ${formatTokens(rollup.cacheReadTokens)} read`}
       >
-        <span>
-          {formatTokens(rollup.inputTokens)} in · {formatTokens(rollup.outputTokens)} out
-        </span>
+        <Stamp
+          size="small"
+          fillColor="var(--pui-texture-shade, rgba(0,0,0,0.06))"
+          textColor="inherit"
+        >
+          <span className="whitespace-nowrap font-mono text-3xs font-normal opacity-[0.7]">
+            {formatTokens(rollup.inputTokens + rollup.outputTokens)} tokens ·{' '}
+            {formatDuration(rollup.durationMs)} · {rollup.runs} {rollup.runs === 1 ? 'run' : 'runs'}
+          </span>
+        </Stamp>
       </Tooltip>
-    </div>
+    </span>
   );
 };
 
@@ -358,13 +361,18 @@ const PlanProgressRow = ({
 }) => {
   if (progress === null && rollup.runs === 0) return null;
   return (
-    <div className="flex items-center gap-3 mb-3 flex-wrap">
+    // min-w-min, not a fixed rem: the cost stamp's width depends on its numbers, so
+    // only min-content knows when the bar has hit its floor and the strip must wrap.
+    // A guessed rem value either wraps too eagerly or lets the stamp overflow.
+    <div className="flex items-center gap-3 flex-1 min-w-min">
       {progress !== null && (
         <>
-          <div className="flex-1 min-w-24">
+          <div className="flex-1 min-w-16">
             <ProgressBar pct={progress.pct} color={barColor} />
           </div>
-          <span className="text-sm opacity-50 flex-shrink-0">{Math.round(progress.pct)}%</span>
+          <span className="text-sm opacity-50 flex-shrink-0 font-handwritten">
+            {Math.round(progress.pct)}%
+          </span>
         </>
       )}
       <RunCostSummary rollup={rollup} />
@@ -462,7 +470,7 @@ const TrailSection = ({
   const trail = useTrail(planId);
   if (!planId) return null;
   return (
-    <div className="mb-3 text-xs opacity-80">
+    <div className="text-xs opacity-80 shrink-0">
       {trail ? (
         <ProvenanceTrailPanel
           trail={trail}
@@ -714,7 +722,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
           <PlanIdStamp id={plan.id} />
           {plan.title}
         </h2>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 font-handwritten">
           <span className="text-sm opacity-[0.45] whitespace-nowrap">
             <span className="max-[480px]:hidden">{plan.updated ? 'updated ' : 'created '}</span>
             {relativeDate(plan.updated ?? plan.created)}
@@ -723,12 +731,24 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         </div>
       </div>
 
-      <TrailSection
-        planId={plan.id}
-        released={plan.released}
-        reviewing={reviewing}
-        reviewNote={reviewNote}
-      />
+      {/* One strip: pipeline position, progress and cost all answer "where is this
+          and what has it cost", and each was claiming a full-width band of its own.
+          Wraps back to stacked rows when the column is too narrow to hold them. */}
+      <div className="flex items-center gap-x-4 gap-y-1 flex-wrap mb-3">
+        <TrailSection
+          planId={plan.id}
+          released={plan.released}
+          reviewing={reviewing}
+          reviewNote={reviewNote}
+        />
+        {!showFeedback && (
+          <PlanProgressRow
+            progress={progress}
+            color={STATUS_COLOR[effectiveStatus(plan, agentStatus)]}
+            rollup={usageRollup}
+          />
+        )}
+      </div>
 
       {showFeedback ? (
         <FeedbackSection
@@ -747,12 +767,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             onOwnBranch={onOwnBranch}
             branching={branching}
             onCreateBranch={handleCreateBranch}
-          />
-
-          <PlanProgressRow
-            progress={progress}
-            color={STATUS_COLOR[effectiveStatus(plan, agentStatus)]}
-            rollup={usageRollup}
           />
 
           <PlanBodySection plan={plan} />

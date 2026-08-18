@@ -4,13 +4,12 @@ title: Page texture fills the centre column
 type: feat
 status: review
 created: 2026-08-17
-updated: 2026-08-17
+updated: 2026-08-18
 tags:
   - app
   - ui
   - layout
 subject: App UI
-order: 11
 ---
 
 The page texture runs the full height of the centre column, navigation included.
@@ -102,6 +101,7 @@ The Stack panel, the page's own content, and the three-column widths
       Settle rhythm and which sections read from content without a label.
       run: in `plan-actions-column.tsx`, tightened the column rhythm (`gap-4`→`gap-3`, label `mb-1.5`→`mb-1`) and dropped the "Status" and "Actions" labels — the Stamp's own text already reads as a status, and the new Card (phase 5) already sets Actions apart visually, so both labels were pure duplication. Kept Show/Subject/Order, whose bare Select/Input/toggle values don't self-explain the field. Matched the same rhythm tightening (`gap-8`→`gap-3`, `mb-2`→`mb-1`) in `plan-filter-column.tsx` for a consistent density across both sidebar states; kept its "Status" label since a filter-chip list needs the context a lone value wouldn't. Verified with `pnpm run check-types` and `pnpm biome check`; no browser available to confirm visually.
       run: 2m37s · 4k in · 10.2k out · sonnet-5
+- [x] [manual] Unify plan progress, cost, and status stamps on grid
 
 ### Thread
 - [x] 2026-08-17 [question] [agent] Run-all parked on phase 2 ("Swap nav into the navigationIsland slot and drop showHeader") — the agent needs a decision: The plan says the nav should become "an island sitting on that parchment, top-right," and asserts paper-ui's `navigationIsland` slot needs no new component work. But I checked the actual paper-ui source (`~/dev/paper-ui/src/components/layout/layout.tsx` and `island.module.scss`): `navigationIsland` renders in `.navIslandFixed` (`position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%)`), and `Island` itself is also hardcoded `position: fixed; bottom: 1.5rem; left: 50%`. It's a viewport-fixed bottom-center floating dock, not a top-right element anchored to the page — there's no built-in way to place it top-right without overriding paper-ui's own fixed positioning. Should I (a) use the slot as-is and accept a bottom-center floating nav dock instead of the top-right placement described in the idea, or (b) build a custom top-right-positioned nav element outside the `navigationIsland` slot to match the idea's stated design?

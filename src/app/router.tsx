@@ -1,4 +1,10 @@
-import { ServerReloadBanner, SidebarShell, StackPanel, StatusBar } from '@/app/components';
+import {
+  ProjectIdentityHeader,
+  ServerReloadBanner,
+  SidebarShell,
+  StackPanel,
+  StatusBar,
+} from '@/app/components';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
@@ -61,6 +67,20 @@ const navItems = [
 
 const NavLabel = ({ item }: { item: (typeof navItems)[number] }) => (
   <span className="inline-flex items-center gap-1.5">{item.label}</span>
+);
+
+const BackIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 20 20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    aria-hidden="true"
+  >
+    <path d="M12 4l-5 6 5 6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
 );
 
 const SidebarToggleIcon = () => (
@@ -130,6 +150,8 @@ const RootLayout = () => {
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
+  // Detail views replace the sidebar breadcrumb that used to carry the way back.
+  const isPlanDetail = pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
   const isRoadmapArea = pathname === '/roadmap';
@@ -207,12 +229,19 @@ const RootLayout = () => {
 
   return (
     <ToastProvider position="bottom-left">
-      <div className="h-screen box-border min-[1199px]:pr-[var(--pc-stack-width)] flex flex-col">
-        <ServerReloadBanner />
-        <StatusBar />
+      <div className="h-screen box-border flex flex-col">
+        {/* Only the toolbar reserves the Stack's width — the columns below run full
+            width so the parchment passes under the panel instead of stopping at it. */}
+        <div className="shrink-0 min-[1199px]:pr-[var(--pc-stack-width)]">
+          <ServerReloadBanner />
+          <StatusBar />
+        </div>
         <Layout
           style={{ flex: '1 1 0%', minHeight: 0, height: 'auto' }}
           background={{ texture: 'speckle', ruledType: 'grid', ruledColor: 'blue' }}
+          // Explicit false: paper-ui defaults it to true, and an empty header still
+          // renders a 64px band that pushes the parchment down.
+          showHeader={false}
           showSidebar={false}
           showPage={false}
           bleedBottom
@@ -268,42 +297,67 @@ const RootLayout = () => {
                   </SidebarShell>
                 )}
                 <div className="relative flex flex-col min-w-0 flex-[1_1_0%]">
-                  <Island
-                    label="Main navigation"
-                    className="!absolute !left-auto !top-4 !right-4 !bottom-auto !translate-x-0 z-20 max-[480px]:hidden"
-                  >
-                    {hasSidebar && (
-                      <IconButton
-                        variant="ghost"
-                        size="small"
-                        className="lg:hidden"
-                        label="Open sidebar"
-                        onClick={() => setMobileSidebarOpen(true)}
-                        icon={<SidebarToggleIcon />}
-                      />
-                    )}
-                    <div className="flex items-center gap-1">
-                      {navItems.map((item) => (
+                  {/* Zero-height sticky row: the island floats over the parchment without
+                      displacing it, and stays put instead of scrolling away with the page. */}
+                  {/* pr clears the Stack: the column runs under the panel now, so plain
+                      right-alignment would park the island behind it. Same values as the
+                      sheet's own right padding, so the island lines up with the content. */}
+                  <div className="sticky top-4 z-20 flex h-0 items-start justify-end pl-8 pr-8 min-[1199px]:pr-[var(--pc-stack-width)] max-[480px]:hidden">
+                    {/* mr-auto rather than justify-between: the nav stays right when there's
+                        no back button to balance it. */}
+                    {isPlanDetail && (
+                      // No Island: a bare ghost link, centred against the nav island's
+                      // height so the two read as one row.
+                      <div className="mr-auto flex h-[var(--pc-island-h)] items-center">
                         <Button
-                          key={item.id}
                           variant="ghost"
                           size="small"
-                          isActive={item.id === activeId}
-                          onClick={() => navigate({ to: item.path })}
-                          aria-current={item.id === activeId ? 'page' : undefined}
+                          icon={<BackIcon />}
+                          onClick={() => navigate({ to: '/' })}
+                          className="font-handwritten !text-sm opacity-70"
                         >
-                          <NavLabel item={item} />
+                          Back to plans
                         </Button>
-                      ))}
-                    </div>
-                  </Island>
+                      </div>
+                    )}
+                    {/* Unlabelled, so the <nav> inside is the landmark rather than the island. */}
+                    <Island className="!static !translate-x-0 !gap-2 !px-3 !py-1">
+                      {hasSidebar ? (
+                        <IconButton
+                          variant="ghost"
+                          size="small"
+                          className="lg:hidden"
+                          label="Open sidebar"
+                          onClick={() => setMobileSidebarOpen(true)}
+                          icon={<SidebarToggleIcon />}
+                        />
+                      ) : (
+                        // Routes without a sidebar have no grid column to carry the identity.
+                        <ProjectIdentityHeader size="sm" />
+                      )}
+                      <nav aria-label="Main navigation" className="flex items-center gap-1">
+                        {navItems.map((item) => (
+                          <Button
+                            key={item.id}
+                            variant="ghost"
+                            size="small"
+                            isActive={item.id === activeId}
+                            onClick={() => navigate({ to: item.path })}
+                            aria-current={item.id === activeId ? 'page' : undefined}
+                          >
+                            <NavLabel item={item} />
+                          </Button>
+                        ))}
+                      </nav>
+                    </Island>
+                  </div>
                   <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
                     <Page
                       texture={{ texture: 'parchment' }}
-                      outline
-                      className="min-h-screen w-full max-w-none"
+                      rounded="none"
+                      className="pc-page min-h-screen w-full max-w-none"
                     >
                       <Suspense fallback={null}>
                         <Outlet />
