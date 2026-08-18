@@ -5,11 +5,10 @@ export interface StatusDerivationInput {
   status?: EntityStatus;
   phases: PhaseItem[];
   fixes?: PhaseItem[];
-}
-
-export interface ArchivabilityInput extends StatusDerivationInput {
   archived?: boolean;
 }
+
+export type ArchivabilityInput = StatusDerivationInput;
 
 function allChecked(entity: StatusDerivationInput): boolean {
   const phasesDone = entity.phases.length > 0 && entity.phases.every((p) => p.done);
@@ -28,6 +27,8 @@ export function deriveStatus(
   if (entity.kind === 'note') return entity.status;
   // `dropped` can't be derived (abandonment leaves no trace), so a stored one always wins.
   if (entity.status === 'dropped') return entity.status;
+  // An entity in archive/ is closed by definition, regardless of PR lookup state.
+  if (entity.archived) return 'done';
   if (pr) {
     if (pr.state === 'merged') return allChecked(entity) ? 'done' : 'planned';
     if (pr.state === 'closed') return 'dropped';

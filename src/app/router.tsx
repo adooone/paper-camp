@@ -309,7 +309,7 @@ const RootLayout = () => {
                       fold in one surface instead of a different material. */}
                   <header
                     className="pc-page-header sticky top-0 z-20 shrink-0 flex items-center gap-3 h-[var(--pc-header-h)] max-[480px]:hidden"
-                    style={getSurfaceStyles({ texture: 'parchment', shade: true })}
+                    style={getSurfaceStyles({ texture: 'parchment' })}
                   >
                     {hasSidebar ? (
                       <IconButton

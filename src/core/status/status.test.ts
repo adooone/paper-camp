@@ -106,6 +106,17 @@ describe('deriveStatus', () => {
     );
   });
 
+  it('treats an archived entity as done, regardless of PR lookup state', () => {
+    expect(deriveStatus({ phases: [phase(false)], archived: true }, undefined, false)).toBe('done');
+    expect(deriveStatus({ phases: [], archived: true }, undefined, true)).toBe('done');
+  });
+
+  it('lets a stored dropped override an archived entity', () => {
+    expect(deriveStatus({ phases: [], archived: true, status: 'dropped' }, undefined, true)).toBe(
+      'dropped',
+    );
+  });
+
   it('passes note status through unchanged, ignoring phases and PR', () => {
     expect(deriveStatus({ kind: 'note', status: 'open', phases: [] }, pr('open'), true)).toBe(
       'open',
