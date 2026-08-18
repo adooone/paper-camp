@@ -285,6 +285,11 @@ export function createAgentManager(
   ) => Promise<void>,
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
   onRunStart?: (plan: PlanEntry) => Promise<void>,
+  onFixRun?: (
+    planId: string,
+    fixIndex: number,
+    run: { usage: RunUsage; kind: 'fix' },
+  ) => Promise<void>,
   state: AgentManagerState = createEmptyAgentState(),
 ) {
   // `tasks`/`clients` are the same Map/Set a hot-reloaded replacement instance
@@ -1398,9 +1403,11 @@ export function createAgentManager(
         task.phaseRuns ??= [];
         task.phaseRuns.push({ kind, index: i, usage: phaseUsage });
       }
-      if (onPhaseCommit) {
+      if (kind === 'phase' && onPhaseCommit) {
         pushLine(task, `[commit] ${kind} ${i + 1} — ${item.text}`);
         await onPhaseCommit(plan, item, i, phaseUsage ? { usage: phaseUsage, kind } : undefined);
+      } else if (kind === 'fix' && onFixRun && phaseUsage && plan.id) {
+        await onFixRun(plan.id, i, { usage: phaseUsage, kind });
       }
     }
 
