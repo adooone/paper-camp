@@ -13,6 +13,8 @@ import {
   buildFixPassPrompt,
   createAgentManager,
 } from './agent';
+import { createAgentHooks } from './agent-hooks';
+import { createGitManager } from './git';
 
 // The manager is exercised with a fake adapter whose "agent" is a short `node -e`
 // script — the real spawn/readline/verification machinery runs, only the AI CLI is
@@ -640,6 +642,36 @@ Plan body.
       expect(await waitForStatus(manager, settled)).toBe('done');
       expect(commits).toEqual([]);
       expect(onRunComplete).toHaveBeenCalledOnce();
+
+      const after = parseEntityFile(
+        await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
+      );
+      expect(after.entries[0].fixes?.every((fix) => fix.done)).toBe(true);
+    });
+
+    it('leaves the fix pass as one accumulated diff with no per-fix commits', async () => {
+      const { root, plan } = await makeGitRoot(PLAN_PHASES_DONE_TWO_FIXES);
+      agentScript.current = FLIP_NEXT_CHECKBOX;
+      const git = createGitManager(root);
+      const hooks = createAgentHooks(root, git);
+      const onRunComplete = vi.fn(async () => {});
+      const manager = createAgentManager(
+        root,
+        undefined,
+        hooks.commitPhase,
+        onRunComplete,
+        undefined,
+        hooks.annotateFixRun,
+      );
+
+      expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+      expect(await waitForStatus(manager, settled)).toBe('done');
+
+      const { stdout: log } = await run('git', ['log', '--oneline'], { cwd: root });
+      expect(log.trim().split('\n')).toHaveLength(1);
+
+      const { stdout: status } = await run('git', ['status', '--porcelain'], { cwd: root });
+      expect(status.trim()).not.toBe('');
 
       const after = parseEntityFile(
         await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),

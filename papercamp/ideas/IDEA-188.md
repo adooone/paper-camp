@@ -2,7 +2,7 @@
 id: IDEA-188
 title: Fixes accumulate into one commit
 type: feat
-status: in-progress
+status: review
 created: 2026-08-17
 updated: 2026-08-17
 tags:
@@ -87,7 +87,8 @@ requirement between phases.
 - [x] Confirm the Deliver-form manual commit collapses a fix pass into one row
       Run a multi-fix pass and check IDEA-151 records the single manual commit as one `source: manual` row.
       run: 1m24s · 294 in · 5.3k out · sonnet-5
-- [ ] Verify a fix pass leaves one accumulated diff and no per-fix commits
+- [x] Verify a fix pass leaves one accumulated diff and no per-fix commits
+      run: 4m7s · 534 in · 7k out · sonnet-5
 
 ### Thread
 - [ ] 2026-08-18 [question] [agent] Run-all parked on phase 2 ("Keep the fix checkbox and run stamps persisting without a commit") — project checks (test) are still failing after 2 fix attempt(s). Reply here with guidance to unblock and resume.
