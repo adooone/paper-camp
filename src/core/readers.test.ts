@@ -461,7 +461,8 @@ describe('findArchivableIdeas', () => {
       body: 'x',
     });
 
-    const archivable = await findArchivableIdeas(dir);
+    const { entries: archivable, resolved } = await findArchivableIdeas(dir);
+    expect(resolved).toBe(true);
     expect(archivable).toEqual([
       {
         id: 'IDEA-12',

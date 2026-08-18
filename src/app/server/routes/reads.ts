@@ -21,7 +21,11 @@ import type { ReadRoute } from './types';
 
 /** Cached readWorkEntries — shared by /api/plans and /api/consistency, one root per key. */
 const cachedWorkEntries = (root: string) =>
-  cached(`work:${root}`, () => readWorkEntries(campFile(root, 'ideas')));
+  cached(
+    `work:${root}`,
+    () => readWorkEntries(campFile(root, 'ideas')),
+    (result) => result.resolved,
+  );
 
 export const readRoutes: ReadRoute[] = [
   {
@@ -39,7 +43,10 @@ export const readRoutes: ReadRoute[] = [
   },
   {
     path: '/api/plans',
-    handler: async (root) => cachedWorkEntries(root),
+    handler: async (root) => {
+      const { entries, warnings } = await cachedWorkEntries(root);
+      return { entries, warnings };
+    },
   },
   {
     path: '/api/suggestions',
@@ -60,8 +67,14 @@ export const readRoutes: ReadRoute[] = [
   },
   {
     path: '/api/archivable-ideas',
-    handler: async (root) =>
-      cached(`archivable:${root}`, () => findArchivableIdeas(campFile(root, 'ideas'))),
+    handler: async (root) => {
+      const { entries } = await cached(
+        `archivable:${root}`,
+        () => findArchivableIdeas(campFile(root, 'ideas')),
+        (result) => result.resolved,
+      );
+      return entries;
+    },
   },
   {
     path: '/api/parked-questions',

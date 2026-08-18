@@ -101,7 +101,8 @@ The review trigger's gates ([[IDEA-170]]) and the reviewed-SHA ledger
 - [x] Treat archive location as closed in status derivation
       Carry `archived` into `StatusDerivationInput` and return `done` for an archived entity unless a stored `dropped` overrides.
       run: 2m51s · 5.9k in · 3.3k out · sonnet-5
-- [ ] Stop caching degraded reads
+- [x] Stop caching degraded reads
       Refuse to store a corpus-cache result computed while `prLookupResolved` was false, so a transient failure cannot outlive itself.
+      run: 4m24s · 796 in · 11.4k out · sonnet-5
 - [ ] Surface fallback status in the UI
       Mark the worklist status column and run-order queue when a status is a guess rather than derived from resolved PR state.

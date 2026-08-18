@@ -39,4 +39,25 @@ describe('corpus-cache', () => {
     expect(await cached('a', async () => 'A')).toBe('A');
     expect(await cached('b', async () => 'B')).toBe('B');
   });
+
+  it('does not cache a result the caller marks uncacheable, so the next call retries', async () => {
+    let calls = 0;
+    const load = async () => {
+      calls++;
+      return calls;
+    };
+    expect(await cached('k4', load, (value) => value > 1)).toBe(1);
+    expect(await cached('k4', load, (value) => value > 1)).toBe(2);
+  });
+
+  it('caches a result once it is marked cacheable', async () => {
+    let calls = 0;
+    const load = async () => {
+      calls++;
+      return calls;
+    };
+    expect(await cached('k5', load, () => true)).toBe(1);
+    expect(await cached('k5', load, () => true)).toBe(1);
+    expect(calls).toBe(1);
+  });
 });
