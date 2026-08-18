@@ -87,11 +87,7 @@ const RunCostSummary = ({ rollup }: { rollup: UsageRollup }) => {
       <Tooltip
         content={`${formatTokens(rollup.inputTokens)} in · ${formatTokens(rollup.outputTokens)} out · cache ${formatTokens(rollup.cacheCreationTokens)} write · ${formatTokens(rollup.cacheReadTokens)} read`}
       >
-        <Stamp
-          size="small"
-          fillColor="var(--pui-texture-shade, rgba(0,0,0,0.06))"
-          textColor="inherit"
-        >
+        <Stamp size="small" fillColor="var(--pui-texture-shade)" textColor="inherit">
           <span className="whitespace-nowrap font-mono text-3xs font-normal opacity-[0.7]">
             {formatTokens(rollup.inputTokens + rollup.outputTokens)} tokens ·{' '}
             {formatDuration(rollup.durationMs)} · {rollup.runs} {rollup.runs === 1 ? 'run' : 'runs'}
@@ -240,11 +236,7 @@ const PhasesSection = ({
                 if (!run) return null;
                 return (
                   <div className="flex w-full justify-end [container-type:inline-size]">
-                    <Stamp
-                      size="small"
-                      fillColor="var(--pui-texture-shade, rgba(0,0,0,0.06))"
-                      textColor="inherit"
-                    >
+                    <Stamp size="small" fillColor="var(--pui-texture-shade)" textColor="inherit">
                       <span className="whitespace-nowrap font-mono text-3xs font-normal opacity-[0.7]">
                         <span>{formatTokens(run.inputTokens + run.outputTokens)} tokens</span>
                         <span className="run-meta-full">

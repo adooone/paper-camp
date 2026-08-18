@@ -35,7 +35,7 @@ export const DeskSection = () => {
   return (
     <>
       <Divider surface="chalkboard" />
-      <div className="flex flex-1 flex-col p-6">
+      <div className="flex flex-1 flex-col p-[var(--pc-stack-pad)]">
         <div className="flex items-center justify-between gap-2 mb-3">
           <h3 className={`${sectionLabelClassName} m-0`}>Desk</h3>
           <RefreshButton

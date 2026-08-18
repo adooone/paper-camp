@@ -10,7 +10,14 @@ import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { mountPrefix } from '@/app/services/mount';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
-import { Button, IconButton, Island, Layout, Page, ToastProvider } from '@dendelion/paper-ui';
+import {
+  Button,
+  IconButton,
+  Layout,
+  Page,
+  ToastProvider,
+  getSurfaceStyles,
+} from '@dendelion/paper-ui';
 import {
   Outlet,
   createRootRoute,
@@ -297,60 +304,52 @@ const RootLayout = () => {
                   </SidebarShell>
                 )}
                 <div className="relative flex flex-col min-w-0 flex-[1_1_0%]">
-                  {/* Zero-height sticky row: the island floats over the parchment without
-                      displacing it, and stays put instead of scrolling away with the page. */}
-                  {/* pr clears the Stack: the column runs under the panel now, so plain
-                      right-alignment would park the island behind it. Same values as the
-                      sheet's own right padding, so the island lines up with the content. */}
-                  <div className="sticky top-4 z-20 flex h-0 items-start justify-end pl-8 pr-8 min-[1199px]:pr-[var(--pc-stack-width)] max-[480px]:hidden">
-                    {/* mr-auto rather than justify-between: the nav stays right when there's
-                        no back button to balance it. */}
-                    {isPlanDetail && (
-                      // No Island: a bare ghost link, centred against the nav island's
-                      // height so the two read as one row.
-                      <div className="mr-auto flex h-[var(--pc-island-h)] items-center">
-                        <Button
-                          variant="ghost"
-                          size="small"
-                          icon={<BackIcon />}
-                          onClick={() => navigate({ to: '/' })}
-                          className="font-handwritten !text-sm opacity-70"
-                        >
-                          Back to plans
-                        </Button>
-                      </div>
+                  {/* Its own band above the sheet rather than a pill floating on it. `shade`
+                      is the same parchment grain one step darker, so the seam reads as a
+                      fold in one surface instead of a different material. */}
+                  <header
+                    className="pc-page-header sticky top-0 z-20 shrink-0 flex items-center gap-3 h-[var(--pc-header-h)] max-[480px]:hidden"
+                    style={getSurfaceStyles({ texture: 'parchment', shade: true })}
+                  >
+                    {hasSidebar ? (
+                      <IconButton
+                        variant="ghost"
+                        size="small"
+                        className="lg:hidden"
+                        label="Open sidebar"
+                        onClick={() => setMobileSidebarOpen(true)}
+                        icon={<SidebarToggleIcon />}
+                      />
+                    ) : (
+                      // Routes without a sidebar have no grid column to carry the identity.
+                      <ProjectIdentityHeader size="sm" />
                     )}
-                    {/* Unlabelled, so the <nav> inside is the landmark rather than the island. */}
-                    <Island className="!static !translate-x-0 !gap-2 !px-3 !py-1">
-                      {hasSidebar ? (
-                        <IconButton
+                    {isPlanDetail && (
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        icon={<BackIcon />}
+                        onClick={() => navigate({ to: '/' })}
+                        className="font-handwritten !text-sm opacity-70"
+                      >
+                        Back to plans
+                      </Button>
+                    )}
+                    <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
+                      {navItems.map((item) => (
+                        <Button
+                          key={item.id}
                           variant="ghost"
                           size="small"
-                          className="lg:hidden"
-                          label="Open sidebar"
-                          onClick={() => setMobileSidebarOpen(true)}
-                          icon={<SidebarToggleIcon />}
-                        />
-                      ) : (
-                        // Routes without a sidebar have no grid column to carry the identity.
-                        <ProjectIdentityHeader size="sm" />
-                      )}
-                      <nav aria-label="Main navigation" className="flex items-center gap-1">
-                        {navItems.map((item) => (
-                          <Button
-                            key={item.id}
-                            variant="ghost"
-                            size="small"
-                            isActive={item.id === activeId}
-                            onClick={() => navigate({ to: item.path })}
-                            aria-current={item.id === activeId ? 'page' : undefined}
-                          >
-                            <NavLabel item={item} />
-                          </Button>
-                        ))}
-                      </nav>
-                    </Island>
-                  </div>
+                          isActive={item.id === activeId}
+                          onClick={() => navigate({ to: item.path })}
+                          aria-current={item.id === activeId ? 'page' : undefined}
+                        >
+                          <NavLabel item={item} />
+                        </Button>
+                      ))}
+                    </nav>
+                  </header>
                   <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}

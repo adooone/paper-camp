@@ -236,6 +236,10 @@ header[class*="layout-module__header___"] {
  */
 :root {
   --pc-stack-width: 288px;
+  /* Section padding rides the same breakpoint: at 288px the panel can't spare
+     2×1.5rem, so its sections tighten to 16px and hand the difference back to
+     content. It relaxes only once the panel widens to 480. */
+  --pc-stack-pad: 16px;
 }
 @media (max-width: 480px) {
   :root {
@@ -245,6 +249,7 @@ header[class*="layout-module__header___"] {
 @media (min-width: 1391px) {
   :root {
     --pc-stack-width: 480px;
+    --pc-stack-pad: 1.5rem;
   }
 }
 
@@ -265,15 +270,16 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * The nav island (router.tsx) floats over the parchment at the top-right of the
- * centre column, so the page's own content has to start below it or the island
- * covers it. The band is the island's height plus its `top-4` offset and a gap;
- * a variable because the padding lives on paper-ui's inner surface, which we can
- * only reach through the scoped rule below.
+ * The nav header band (router.tsx) sits above the sheet, so it needs the same left
+ * and right gutters as the sheet's own content or the nav won't line up with it.
+ * A variable because the sheet's padding lives on paper-ui's inner surface, which
+ * we can only reach through the scoped rule below.
  */
 :root {
-  --pc-island-h: 50px;
-  --pc-island-band: calc(var(--pc-island-h) + 10px);
+  /* Two 32px grid cells, plus the 2px the centre column starts above the ruled
+     background's origin — the same correction SidebarShell's identity block makes,
+     so the two land on the same line. */
+  --pc-header-h: 66px;
 }
 
 /*
@@ -288,8 +294,7 @@ header[class*="layout-module__header___"] {
      the clip path both survive it. */
   border-radius: 0;
   clip-path: none;
-  /* Clears the floating island. */
-  padding-top: calc(2rem + var(--pc-island-band));
+  padding-top: 2rem;
 }
 
 /*
@@ -300,6 +305,22 @@ header[class*="layout-module__header___"] {
  */
 @media (min-width: 1199px) {
   .pc-page.pc-page > div {
+    padding-right: var(--pc-stack-width);
+  }
+}
+
+/*
+ * The header band shares the sheet's gutters so the nav aligns with page content,
+ * and its left border continues the sheet's so the column edge reads as one line.
+ */
+.pc-page-header {
+  padding-left: 2rem;
+  padding-right: 2rem;
+  border-left: 1px solid var(--pui-sketch-stroke);
+  border-bottom: 1px solid var(--pui-sketch-stroke);
+}
+@media (min-width: 1199px) {
+  .pc-page-header {
     padding-right: var(--pc-stack-width);
   }
 }

@@ -175,7 +175,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         className="fixed inset-y-0 right-0 z-[300] flex w-[min(var(--pc-stack-width),100vw)] flex-col overflow-hidden border-l-4 border-paper-950/[12%] text-desk-text bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]"
         style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
       >
-        <div className="flex h-14 shrink-0 items-center justify-between px-6">
+        <div className="flex h-14 shrink-0 items-center justify-between px-[var(--pc-stack-pad)]">
           <h2 className="m-0 font-display-luminari text-base font-bold text-desk-chalk">Stack</h2>
           {!pinned && (
             <IconButton
