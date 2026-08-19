@@ -2,14 +2,15 @@
 id: IDEA-183
 title: Filters and sort tell the truth
 type: fix
-status: review
+status: in-progress
 created: 2026-08-16
-updated: 2026-08-16
+updated: 2026-08-19
 tags:
   - app
   - plans
   - ux
 subject: Planning surface
+order: 5
 ---
 
 The Plans worklist's two controls both misreport: the status filter deletes
@@ -80,3 +81,11 @@ archive section's own filtering ([[IDEA-184]]).
 - [x] Set `aria-sort` only when rows reflect it
       Emit `aria-sort` on the `#` column only while grouping is off and the gutter is truly sorted.
       run: 1m3s · 238 in · 3.4k out · sonnet-5
+
+### Fixes
+- [ ] Move grouping toggle above the list with handwritten styling
+      The subject-grouping toggle currently sits inline in the column-header row next to the sort titles, which reads as a stray control. Move it above the list (its own row, not mixed with column headers) and style it with the app's handwritten font treatment instead of a plain button.
+
+### Thread
+- [x] 2026-08-19 [chat] why this awful button placed directly into list header with column titles. It should be above the list and with handwritten font
+- [x] 2026-08-19 [chat] [agent] Added that as a fix here — moving the subject-grouping toggle above the list (out of the column-header row) and styling it with the handwritten font instead of a plain button in the header. (reopened this idea to re-run)
