@@ -10,6 +10,7 @@ tags:
   - git
   - server
 subject: Run & monitor
+order: 9
 ---
 
 A phase commit contains the files that phase edited. Whatever else is sitting
@@ -98,3 +99,6 @@ splitting commits that already absorbed unrelated files.
       Assert an unrelated edit sitting in the tree before a phase stays
       uncommitted while the phase's own edits land.
       run: 2m32s · 507 in · 4.8k out · sonnet-5 · ×2
+
+### Thread
+- [x] 2026-08-18 [review] [agent] Approves · 0 findings — The diff faithfully delivers the spec: it snapshots the working tree per phase, threads the start snapshot through commitPhase, reduces the two snapshots to the changed paths (carrying rename sources), and commits only those through the existing pathspec path with a test proving an unrelated dirty file is left untouched. All four claimed phases are actually implemented, the getStatus call correctly happens after annotatePhaseRun so the plan-file update is captured, and the optional-hook fallback preserves the old commit-everything behavior when no snapshotter is wired. No contradictions with the idea body or any settled decision.

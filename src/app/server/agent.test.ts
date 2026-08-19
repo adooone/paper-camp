@@ -777,7 +777,10 @@ fs.writeFileSync('touched.ts', 'export const touched = true;\\n');
 
     const { stdout: status } = await run('git', ['status', '--porcelain'], { cwd: root });
     expect(status).toContain('unrelated.txt');
-  });
+    // 20s, not vitest's default 5s: waitForStatus alone budgets 10s for the run, and
+    // this test adds a git init/clone/push plus two more shell-outs around it. It fits
+    // in 5s on a warm local machine and does not on a loaded CI runner.
+  }, 20_000);
 });
 
 describe('write-set collision gate', () => {
