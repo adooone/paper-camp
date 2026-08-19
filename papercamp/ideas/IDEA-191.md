@@ -105,7 +105,7 @@ The runner configuration is already correct and stays: the `forks` pool beats
 nor a global `testTimeout` is part of this.
 
 ### Phases
-- [ ] Export CLI command bodies as callable functions
+- [x] Export CLI command bodies as callable functions
       Split argv parsing and exit codes from each command's work so tests can call the function directly.
 - [ ] Move the CLI tests in-process
       Rewrite `stamp-release`, `audit`, and `release-notes` tests to call the exported functions; keep one real `bun` invocation as the sole process-boundary test.
