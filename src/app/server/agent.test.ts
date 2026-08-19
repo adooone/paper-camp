@@ -727,6 +727,62 @@ Plan body.
   });
 });
 
+describe('commitPhase scoping (IDEA-190)', () => {
+  const PLAN_ONE_PHASE = `---
+id: IDEA-1
+title: Test plan
+type: feat
+status: in-progress
+created: 2026-07-01
+---
+Plan body.
+
+### Phases
+- [ ] First phase
+`;
+
+  const FLIP_AND_TOUCH_SRC = `
+const fs = require('node:fs');
+const p = 'papercamp/ideas/IDEA-1.md';
+fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('- [ ]', '- [x]'));
+fs.writeFileSync('touched.ts', 'export const touched = true;\\n');
+`;
+
+  it('commits only the paths the phase changed, leaving other dirty files untouched', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_ONE_PHASE);
+    await writeFile(join(root, 'unrelated.txt'), 'work in progress\n');
+
+    agentScript.current = FLIP_AND_TOUCH_SRC;
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+    const manager = createAgentManager(
+      root,
+      undefined,
+      hooks.commitPhase,
+      undefined,
+      undefined,
+      undefined,
+      hooks.snapshotWorkingTree,
+    );
+
+    expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    const { stdout: shown } = await run('git', ['show', '--stat', '--format=', 'HEAD'], {
+      cwd: root,
+    });
+    expect(shown).toContain('touched.ts');
+    expect(shown).toContain('IDEA-1.md');
+    expect(shown).not.toContain('unrelated.txt');
+
+    const { stdout: status } = await run('git', ['status', '--porcelain'], { cwd: root });
+    expect(status).toContain('unrelated.txt');
+    // 20s, not vitest's default 5s: waitForStatus alone budgets 10s for the run, and
+    // this test adds a git init/clone/push plus two more shell-outs around it. It fits
+    // in 5s on a warm local machine and does not on a loaded CI runner.
+  }, 20_000);
+});
+
 describe('write-set collision gate', () => {
   it('admits a disjoint entity-writer while one is running, but rejects same-entity and exclusive launches', async () => {
     const { root, plan: plan1 } = await makeRoot(PLAN_TWO_PHASES);

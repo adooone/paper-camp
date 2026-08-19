@@ -121,6 +121,7 @@ export function createApiMiddleware(
     hooks.setRunReview,
     hooks.commitCorpus,
     hooks.annotateFixRun,
+    hooks.snapshotWorkingTree,
     agentState,
   );
   const activity = createActivityManager(root);
