@@ -37,6 +37,13 @@ export const DOCTOR_RULES = [
       'An entity id is greater than or equal to config.nextId.idea, so the next mint collides with an existing file.',
   },
   {
+    id: 'corpus-format-too-new',
+    category: 'metadata',
+    severity: 'error',
+    summary:
+      'config.version is newer than the format this paper-camp understands; reads stay tolerant but writes are refused until it upgrades.',
+  },
+  {
     id: 'phases-list-split',
     category: 'structural',
     severity: 'error',

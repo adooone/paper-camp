@@ -83,7 +83,8 @@ migration tooling beyond a single doctor-driven bump.
 - [x] Refuse lossy writes against a newer corpus
       Compare the corpus format version to the running one; keep reads tolerant, refuse writes when the corpus is newer.
       run: 7m57s · 4.4k in · 18.6k out · sonnet-5
-- [ ] Surface the mismatch in the doctor
+- [x] Surface the mismatch in the doctor
       Report a newer-than-supported corpus as a doctor finding on load.
+      run: 3m50s · 1.2k in · 6.3k out · sonnet-5
 - [ ] Add the doctor-driven format bump
       Make migration an explicit, reviewable action that produces a git diff rather than an implicit rewrite.

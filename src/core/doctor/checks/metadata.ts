@@ -1,4 +1,5 @@
 import { parse as parseYaml } from 'yaml';
+import { CORPUS_FORMAT_VERSION } from '../../corpus-format';
 import { entityFrontmatterSchema } from '../../parse/schemas';
 import type { DoctorCheck, DoctorEntityFile } from '../doctor';
 import type { DoctorFinding } from '../finding';
@@ -141,9 +142,23 @@ const checkIdCounter: DoctorCheck = ({ files, config }) => {
   });
 };
 
+const checkCorpusFormatVersion: DoctorCheck = ({ config }) => {
+  const version = config?.version;
+  if (typeof version !== 'number' || version <= CORPUS_FORMAT_VERSION) return [];
+  return [
+    {
+      file: 'papercamp/config.json',
+      line: 1,
+      rule: 'corpus-format-too-new',
+      message: `config.version ${version} is newer than the format version ${CORPUS_FORMAT_VERSION} this paper-camp understands; writes are refused until it's upgraded`,
+    },
+  ];
+};
+
 export const metadataChecks: DoctorCheck[] = [
   checkFrontmatterSchema,
   checkFilenameId,
   checkDuplicateId,
   checkIdCounter,
+  checkCorpusFormatVersion,
 ];
