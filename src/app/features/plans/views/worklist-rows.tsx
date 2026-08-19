@@ -120,6 +120,7 @@ export const WorklistRows = ({
     subjectsLoading || !subjectsAvailable ? undefined : validSubjects,
   );
   const showSubjectHeaders = groupBySubject && groups.length > 1;
+  const sortReflectsRows = !showSubjectHeaders;
 
   return (
     <div className="flex flex-col gap-1">
@@ -129,7 +130,11 @@ export const WorklistRows = ({
           role="columnheader"
           className="flex-[0_0_36px] flex justify-center"
           aria-sort={
-            sortKey === 'order' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined
+            sortReflectsRows && sortKey === 'order'
+              ? sortDirection === 'asc'
+                ? 'ascending'
+                : 'descending'
+              : undefined
           }
         >
           <button
@@ -153,7 +158,11 @@ export const WorklistRows = ({
                     role="columnheader"
                     className={key === 'updated' ? 'max-lg:hidden' : undefined}
                     aria-sort={
-                      active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined
+                      sortReflectsRows && active
+                        ? sortDirection === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : undefined
                     }
                   >
                     <button

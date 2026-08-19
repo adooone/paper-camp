@@ -2,7 +2,7 @@
 id: IDEA-183
 title: Filters and sort tell the truth
 type: fix
-status: idea
+status: review
 created: 2026-08-16
 updated: 2026-08-16
 tags:
@@ -77,5 +77,6 @@ archive section's own filtering ([[IDEA-184]]).
 - [x] Turn grouping off when a sort column is chosen
       Selecting a sortable header disables grouping so rendered order matches the header.
       run: 1m40s · 229 in · 2.8k out · sonnet-5
-- [ ] Set `aria-sort` only when rows reflect it
+- [x] Set `aria-sort` only when rows reflect it
       Emit `aria-sort` on the `#` column only while grouping is off and the gutter is truly sorted.
+      run: 1m3s · 238 in · 3.4k out · sonnet-5
