@@ -2,7 +2,7 @@
 id: IDEA-191
 title: Tests run in-process and fast
 type: refactor
-status: review
+status: done
 created: 2026-08-19
 updated: 2026-08-19
 tags:

@@ -2,9 +2,9 @@
 id: IDEA-190
 title: Agents commit only what they wrote
 type: fix
-status: review
+status: done
 created: 2026-08-18
-updated: 2026-08-18
+updated: 2026-08-19
 tags:
   - agent
   - git

@@ -2,7 +2,7 @@
 id: IDEA-183
 title: Filters and sort tell the truth
 type: fix
-status: review
+status: done
 created: 2026-08-16
 updated: 2026-08-19
 tags:
