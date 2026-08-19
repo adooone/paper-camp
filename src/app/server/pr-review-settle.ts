@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 import {
   type PrReviewDelivery,
   createPrReview,
@@ -116,16 +116,33 @@ export function renderReviewThreadMessage(result: PrReviewResult): string {
   return `${label} · ${findingsPhrase(result.findings.length)} — ${result.assessment}`;
 }
 
-async function appendReviewThreadMessage(root: string, entityId: string, summary: string) {
+/** Closed by status or by living in ideas/archive/ — the same two signals
+ *  `deriveStatus` treats as closed. */
+function isClosedEntity(entry: { status?: string }, file: string): boolean {
+  if (entry.status === 'done' || entry.status === 'dropped') return true;
+  return file.includes(`${sep}archive${sep}`);
+}
+
+type ThreadWriteOutcome = 'written' | 'closed' | 'failed';
+
+async function appendReviewThreadMessage(
+  root: string,
+  entityId: string,
+  summary: string,
+): Promise<ThreadWriteOutcome> {
   const ideasDir = campFile(root, 'ideas');
   const primaryFile = join(ideasDir, `${entityId}.md`);
   const archivedFile = join(ideasDir, 'archive', `${entityId}.md`);
   const file = (await fileExists(primaryFile)) ? primaryFile : archivedFile;
-  if (!(await fileExists(file))) return false;
+  if (!(await fileExists(file))) return 'failed';
 
   const { entries } = await readEntities(ideasDir);
   const entry = entries.find((e) => e.id === entityId);
-  if (!entry) return false;
+  if (!entry) return 'failed';
+  // A review can land long after the PR merged and the entity closed — waiting on
+  // GitHub means the result arrives whenever it arrives. Writing it then reopens a
+  // settled file for a verdict nothing can act on, so a closed entity is left alone.
+  if (isClosedEntity(entry, file)) return 'closed';
 
   await writeEntityFile(
     root,
@@ -134,7 +151,7 @@ async function appendReviewThreadMessage(root: string, entityId: string, summary
       thread: [...(entry.thread ?? []), agentThreadMessage(summary, 'review')],
     }),
   );
-  return true;
+  return 'written';
 }
 
 /** Whether the verdict reached at least one destination — a GitHub post or the
@@ -197,7 +214,9 @@ export async function postPrReview(
     dispatched.delivered
       ? Promise.resolve({ delivery: { delivered: true } as PrReviewDelivery, dropped: 0 })
       : createPrReviewDegraded(root, prUrl, result, entityId, sha),
-    appendReviewThreadMessage(root, entityId, renderReviewThreadMessage(result)).catch(() => false),
+    appendReviewThreadMessage(root, entityId, renderReviewThreadMessage(result)).catch(
+      (): ThreadWriteOutcome => 'failed',
+    ),
   ]);
   const posted = direct.delivery;
 
@@ -207,9 +226,16 @@ export async function postPrReview(
     : posted.delivered
       ? `posted directly to GitHub, dispatch unavailable (${findingsPhrase(result.findings.length - direct.dropped)}${direct.dropped ? `, ${direct.dropped} dropped — invalid line` : ''})`
       : `GitHub post failed${posted.body ? `: ${posted.body}` : ''}`;
-  const logPart = logged ? 'recorded on the idea' : 'could not record on the idea';
+  const logPart =
+    logged === 'written'
+      ? 'recorded on the idea'
+      : logged === 'closed'
+        ? 'idea already closed, not recorded'
+        : 'could not record on the idea';
   onLine(`Review ${postPart}, ${logPart}`);
 
-  if (githubPosted || logged) return { delivered: true };
+  // A skipped write on a closed idea is not a delivery failure: the verdict still
+  // reached GitHub, which is the only place it can still be acted on.
+  if (githubPosted || logged === 'written') return { delivered: true };
   return { delivered: false, reason: `${postPart}, ${logPart}` };
 }

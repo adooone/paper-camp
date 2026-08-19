@@ -212,6 +212,17 @@ describe('postPrReview', () => {
     return root;
   }
 
+  async function makeClosedRoot(status: string) {
+    const root = await mkdtemp(join(tmpdir(), 'papercamp-pr-review-settle-'));
+    roots.push(root);
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(
+      join(root, 'papercamp', 'ideas', 'IDEA-170.md'),
+      `---\nid: IDEA-170\ntitle: Test idea\ntype: feat\nstatus: ${status}\ncreated: 2026-07-01\n---\nBody.\n`,
+    );
+    return root;
+  }
+
   const result: PrReviewResult = {
     verdict: 'comment',
     assessment: 'Looks fine.',
@@ -238,6 +249,30 @@ describe('postPrReview', () => {
     expect(lines[0]).toContain('dispatched to the Scout review workflow (1 finding)');
     expect(lines[0]).toContain('recorded on the idea');
   });
+
+  it.each(['done', 'dropped'])(
+    'leaves a %s idea untouched — the review still reaches GitHub',
+    async (status) => {
+      gitPr.dispatchPrReview.mockResolvedValue({ delivered: true });
+      const root = await makeClosedRoot(status);
+      const before = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-170.md'), 'utf-8');
+      const lines: string[] = [];
+
+      const outcome = await postPrReview(
+        root,
+        'IDEA-170',
+        'https://github.com/o/r/pull/7',
+        'sha1234',
+        result,
+        (line) => lines.push(line),
+      );
+
+      const after = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-170.md'), 'utf-8');
+      expect(after).toBe(before);
+      expect(outcome.delivered).toBe(true);
+      expect(lines[0]).toContain('idea already closed, not recorded');
+    },
+  );
 
   it('falls back to a direct post and says so when the dispatch fails', async () => {
     gitPr.dispatchPrReview.mockResolvedValue({ delivered: false });

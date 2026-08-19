@@ -78,25 +78,61 @@ serves and run from there, alongside the `papercamp/` corpus it reads. Nothing t
 provision, nothing to sign up for, and a repo that carries its own tooling stays
 reproducible on any machine that clones it.
 
-### The user's machine keeps the code and the model
+### Execution stays on the user's machine, on the user's plan
 
-The runtime staying local is the point, not an implementation detail. The agent
-CLI is already authenticated on that machine, so the hosted side never holds the
-user's code or their model credentials. Hosted execution would require both, and
-that is the difference between a lens over someone's repos and a company with a
-security posture.
+Settled, and it is the constraint that costs the most. The agent CLI is already
+authenticated on that machine and already paid for, so the runtime spawns it and
+nothing leaves. No hosted side ever holds the user's code or their model
+credentials.
 
-### Reachability is the user's to provide
+The alternative was real and was rejected: a workflow in the user's own repo
+could check out, run the agent and push, with no reachability problem at all
+because the client would only ever talk to GitHub. It fails this constraint —
+CI cannot use a Claude subscription, only a metered API key in repo secrets —
+and it cannot answer a parked question mid-run. Worth revisiting only if the
+transport below proves unworkable.
 
-With no relay, a client reaches a runtime only over a network path the user
-already has. On the same machine that is the loopback address. Across devices it
-is a LAN address, a VPN, or a tunnel the user runs — this project is developed
-today with the desk open over a Tailscale address, which is the pattern working
-by hand.
+### What a browser will actually allow
 
-The product does not solve this and should not pretend to. What it owes the user
-is being explicit about which clients can reach which runtimes, and degrading
-clearly when one cannot.
+Measured on 2026-08-19 rather than reasoned about, because two confident
+predictions about browser behaviour turned out to be wrong.
+
+**A hosted https client cannot reach a plain-http runtime.** From an https page,
+a request to an http origin never left the browser — the target's access log
+stayed empty even with `mode: 'no-cors'`, which bypasses CORS entirely. Mixed
+content blocks it before the network. This is the wall, and no server-side change
+moves it.
+
+**Cross-origin between two http origins works, and CORS is a small fix.** The
+same request from an http page arrived and was answered; the browser only hid the
+response. The cause is narrow: the preflight already returns
+`Access-Control-Allow-Origin: *` (Vite's dev middleware answers it) while the
+API's own responses carry no CORS headers at all. A handful of lines.
+
+**The localhost carve-out is still unverified.** Mixed content exempts localhost,
+which is the entire basis for a hosted client reaching a local runtime — but it
+could not be tested here, because the browser and the runtime were on different
+machines and every `localhost` probe resolved to the browser's own machine where
+nothing listens. It has to be measured where the two genuinely coexist, and given
+the record above it should not be assumed.
+
+### The shortlist that survives
+
+Tailscale is out: it is one developer's setup, not something a user can be asked
+to install. With no relay and no certificate authority within reach, three
+options remain.
+
+- **Localhost only.** Minimal effort — open the site, run one command — and
+  desktop-only by construction. Depends entirely on the unverified carve-out.
+- **Browser extension.** Has the privileges to ignore these rules, at the cost of
+  install friction and a build per browser.
+- **Native desktop app.** No browser rules apply at all, but the client becomes a
+  download rather than a URL.
+
+Cross-device from a phone browser is not among them. A phone reaching a LAN
+address from an https page is blocked the same way, and the only fixes are a
+relay or a certificate — both excluded. The phone needs a native client or it
+waits.
 
 ### Degrading when the runtime is away
 
@@ -112,15 +148,17 @@ if reading a corpus from a phone matters.
 
 ### Out of scope
 
-Providing reachability — no relay, no tunnel, no hosted broker. Accounts and
-identity, which have nowhere to live. Any integration that requires a webhook
-receiver.
+Providing reachability — no relay, no tunnel, no hosted broker. Requiring a VPN.
+Running the agent in CI. Accounts and identity, which have nowhere to live. Any
+integration that requires a webhook receiver.
 
 ### Thread
-- [ ] 2026-08-19 [question] [human] How does a static page reach the runtime — a
-      fixed loopback address, or a URL the user supplies for LAN/VPN/tunnel access?
-      A page served over https calling http loopback is allowed in Chrome, which
-      treats localhost as trustworthy, but the other browsers are less consistent.
+- [ ] 2026-08-19 [question] [human] Does the localhost carve-out hold? Run the
+      measurement on a machine where the browser and the runtime coexist: an https
+      page fetching `http://localhost:PORT`, checking the server's log for arrival
+      rather than trusting the JS error. Everything else waits on this — if it
+      fails, the hosted front door is impossible and only an extension or a native
+      app remain.
 - [ ] 2026-08-19 [question] [human] One runtime per repo, or one runtime managing
       many? "Installed into the repository" implies per-repo, but [[IDEA-117]]
       wants the hub precisely to avoid "N dev servers on N ports". Both cannot
