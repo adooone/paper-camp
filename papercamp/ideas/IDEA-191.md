@@ -122,6 +122,7 @@ nor a global `testTimeout` is part of this.
 - [x] [manual] Mark the Tests-check fix as done in IDEA-191
 - [x] [manual] Fix deliver footer sizing and git action label wrapping
 - [x] [manual] Wrap git actions and collapse empty deliver footer split
+- [x] [manual] Show all deliver checks and center commit footer layout
 
 ### Fixes
 - [x] Fix the failing "Tests" check

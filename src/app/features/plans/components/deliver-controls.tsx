@@ -88,9 +88,7 @@ export const DeliverChecksRow = () => {
   const { checks: deskChecks, run: runDeskCheck } = useDeskChecks();
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
-  const gitStashes = useAppStore((s) => s.gitStashes);
   const navigate = useNavigate();
-  const [healthExpanded, setHealthExpanded] = useState(false);
   const [docsExpanded, setDocsExpanded] = useState(false);
 
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
@@ -100,29 +98,6 @@ export const DeliverChecksRow = () => {
   const anyRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
   const hasDocIssues = consistency.length > 0;
-  const hasStashWarning = gitStashes.some((s) => s.own);
-
-  const failingCount =
-    [qualityStatus, testStatus, consistencyStatus].filter((s) => s === 'fail').length +
-    (hasDocIssues ? 1 : 0);
-  const healthStatus: CheckStatus = anyRunning
-    ? 'running'
-    : failingCount > 0 || hasStashWarning
-      ? 'fail'
-      : 'pass';
-  const healthLabel =
-    failingCount > 0
-      ? `Health · ${failingCount} failing`
-      : hasStashWarning
-        ? 'Health · stash needs recovery'
-        : 'Health';
-  const healthTooltip = anyRunning
-    ? 'A check is running…'
-    : failingCount > 0
-      ? `${failingCount} check${failingCount === 1 ? '' : 's'} need attention. Click to show.`
-      : hasStashWarning
-        ? 'A sync pop failed and left work stashed. Click to show.'
-        : 'Quality, tests, consistency & docs — all clear. Click to show.';
 
   const linkedPlanFor = useCallback(
     (issue: ConsistencyIssue) =>
@@ -131,23 +106,11 @@ export const DeliverChecksRow = () => {
   );
 
   return (
-    <div className="flex flex-col items-start gap-2">
-      <Tooltip content={healthTooltip}>
-        {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
-        <button
-          type="button"
-          className="inline-flex bg-none bg-transparent border-none p-0 cursor-pointer enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95]"
-          onClick={() => setHealthExpanded((prev) => !prev)}
-          aria-expanded={healthExpanded}
-        >
-          <Stamp size="small" variant={CHECK_VARIANT[healthStatus]}>
-            {healthLabel}
-            <span className={anyRunning ? 'visible' : 'invisible'}>…</span>
-          </Stamp>
-        </button>
-      </Tooltip>
-      {healthExpanded && (
-        <div className="flex flex-wrap items-start gap-2">
+    <div className="flex flex-col items-center gap-2">
+      {
+        // Every check stamp is shown. A single "Health" summary hid the one thing
+        // worth reading at a glance — which check is red.
+        <div className="flex flex-wrap items-start justify-center gap-2">
           <CheckStamp
             label="Quality"
             status={qualityStatus}
@@ -228,7 +191,7 @@ export const DeliverChecksRow = () => {
           </div>
           <GitStashSurface />
         </div>
-      )}
+      }
     </div>
   );
 };

@@ -20,7 +20,6 @@ import {
   Button,
   Card,
   Checkbox,
-  Divider,
   Skeleton,
   Spinner,
   Stamp,
@@ -440,29 +439,24 @@ const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
   const commitForm = useDeliverCommitForm(plan, files);
   const hasChanges = files.length > 0;
   return (
-    // min-h keeps the footer from resizing between states. Splitting in two is only
-    // worth it when there is something to commit — with a clean tree the left half
-    // holds one stamp, so an even split strands it beside an over-stuffed right half.
+    // One centred column in both states. min-h keeps the footer from resizing as it
+    // switches between them.
     <div className="flex min-h-[7rem] flex-col items-center justify-center gap-3">
+      <DeliverChecksRow />
       {hasChanges ? (
-        <div className="flex w-full flex-col gap-2 md:flex-row md:items-stretch md:gap-x-6">
-          {/* min-w-0: without it a half cannot shrink below its content and steals
-              width from the other, so flex-1 stops meaning an even split. */}
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
-            <DeliverChecksRow />
+        <>
+          {/* Bounded width: the commit input would otherwise stretch the full sheet
+              and stop reading as one centred group with the row below it. */}
+          <div className="w-full max-w-md">
             <CommitMessageFields state={commitForm} filesEmpty={false} />
           </div>
-          <Divider orientation="vertical" className="hidden md:block" />
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <DeliverChangedFiles count={files.length} />
             <DeliverCommitButton state={commitForm} filesEmpty={false} />
           </div>
-        </div>
-      ) : (
-        <>
-          <DeliverChecksRow />
-          <DeliverEmptyState />
         </>
+      ) : (
+        <DeliverEmptyState />
       )}
     </div>
   );
