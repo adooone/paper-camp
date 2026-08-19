@@ -11,6 +11,7 @@ tags:
   - agent
   - cli
 subject: Testing
+order: 9
 ---
 
 The suite exercises behaviour in-process. Spawning a real subprocess is a
@@ -128,3 +129,6 @@ nor a global `testTimeout` is part of this.
 - [x] Fix the failing "Tests" check
       Fix the failing "Tests" check in this repo.
       run: 5m9s · 5.8k in · 4.5k out · sonnet-5
+
+### Thread
+- [x] 2026-08-19 [review] [agent] Comments · 2 findings — This is a well-executed refactor that lands the measurable win the idea targets: the deliberate wall-clock sleeps (5000ms/400ms/600ms) are gone, waitForStatus's redundant timeout budgeting and the explicit 20_000 are removed, the git fixture is built once per distinct plan body and copied, and the CLI audit path is now a callable exported function tested in-process. The git watcher error-handler and the awaited postPrReview cleanups are sensible correctness improvements. Two things are worth flagging: agent.test.ts still drives its fake agent through node subprocesses rather than the fully in-process fake the idea's body describes, and the new template-cache scheme depends on fixture dirs outliving per-test cleanup.
