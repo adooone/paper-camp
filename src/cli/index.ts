@@ -8,6 +8,7 @@ import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { entityFileInput, writeEntityFile } from '../app/server/helpers';
+import { bumpCorpusFormat } from '../core/corpus-format';
 import {
   collectDoctorContext,
   planDoctorFixes,
@@ -531,9 +532,26 @@ program
     '--fix',
     'apply the automatic fixes doctor knows how to migrate (currently: archive placement)',
   )
-  .action(async (opts: { fix?: boolean }) => {
+  .option(
+    '--bump-format',
+    'stamp papercamp/config.json with the corpus format version this paper-camp writes, for review as a git diff before committing',
+  )
+  .action(async (opts: { fix?: boolean; bumpFormat?: boolean }) => {
     const root = process.cwd();
     const paperCampDir = resolve(root, 'papercamp');
+
+    if (opts.bumpFormat) {
+      const bump = await bumpCorpusFormat(join(paperCampDir, 'config.json'));
+      if (!bump) {
+        console.log('papercamp/config.json is already at the current corpus format version.');
+        return;
+      }
+      console.log(
+        `Bumped corpus format version ${bump.from ?? '(unstamped)'} -> ${bump.to} in papercamp/config.json. Review with \`git diff\` before committing.`,
+      );
+      return;
+    }
+
     const context = await collectDoctorContext(paperCampDir);
     const findings = runDoctorChecks(context);
 

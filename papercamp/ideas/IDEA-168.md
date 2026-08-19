@@ -2,7 +2,7 @@
 id: IDEA-168
 title: Version the corpus format
 type: feat
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-13
 tags:
@@ -86,5 +86,6 @@ migration tooling beyond a single doctor-driven bump.
 - [x] Surface the mismatch in the doctor
       Report a newer-than-supported corpus as a doctor finding on load.
       run: 3m50s · 1.2k in · 6.3k out · sonnet-5
-- [ ] Add the doctor-driven format bump
+- [x] Add the doctor-driven format bump
       Make migration an explicit, reviewable action that produces a git diff rather than an implicit rewrite.
+      run: 4m29s · 867 in · 10.9k out · sonnet-5
