@@ -149,7 +149,7 @@ export const PlansPage = () => {
         </div>
       ) : (
         <div>
-          <PlansHeader />
+          <PlansHeader showGroupingToggle={plans.entries.length > 0} />
 
           {plans.warnings.length > 0 && (
             <Card size="small" accent accentColor="amber">

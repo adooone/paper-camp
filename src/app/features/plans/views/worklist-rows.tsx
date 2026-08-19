@@ -5,7 +5,7 @@ import { useRoadmapItemNames } from '@/app/features/roadmap';
 import { useSubjectVocabulary } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { Card, Stamp } from '@dendelion/paper-ui';
+import { Card, Stamp, Switch } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton } from '../actions';
@@ -33,6 +33,8 @@ const PLAN_ROWS_GRID_CLASS =
 const subjectHeaderClass =
   'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
 
+const groupToggleLabelClass = 'font-handwritten text-xs font-semibold opacity-55 leading-none';
+
 const headerButtonClass = `${headerLabelClass} bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left`;
 
 const SORT_COLUMNS: { key: PlanSortKey; label: string }[] = [
@@ -47,6 +49,23 @@ const titleButtonClass =
   'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit font-semibold';
 
 const titleTextClass = 'overflow-hidden text-ellipsis whitespace-nowrap';
+
+export const GroupBySubjectToggle = () => {
+  const groupBySubject = useAppStore((s) => s.planFilters.groupBySubject);
+  const toggleGroupBySubject = useAppStore((s) => s.toggleGroupBySubject);
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className={groupToggleLabelClass}>Group by subject</span>
+      <Switch
+        size="small"
+        checked={groupBySubject}
+        onChange={toggleGroupBySubject}
+        aria-label="Group by subject"
+      />
+    </div>
+  );
+};
 
 export const WorklistRows = ({
   rows,
@@ -66,6 +85,7 @@ export const WorklistRows = ({
   const gridClass = PLAN_ROWS_GRID_CLASS;
   const sortKey = useAppStore((s) => s.planFilters.sortKey);
   const sortDirection = useAppStore((s) => s.planFilters.sortDirection);
+  const groupBySubject = useAppStore((s) => s.planFilters.groupBySubject);
   const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);
   const togglePlanSortDirection = useAppStore((s) => s.togglePlanSortDirection);
 
@@ -117,17 +137,22 @@ export const WorklistRows = ({
     sortDirection,
     subjectsLoading || !subjectsAvailable ? undefined : validSubjects,
   );
-  const showSubjectHeaders = groups.length > 1;
+  const showSubjectHeaders = groupBySubject && groups.length > 1;
+  const sortReflectsRows = !showSubjectHeaders;
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
         {/* biome-ignore lint/a11y/useSemanticElements: this gutter sits outside the row grid, not inside a <table>; a real <th> would need a <tr>/<table> ancestor. */}
         <span
           role="columnheader"
           className="flex-[0_0_36px] flex justify-center"
           aria-sort={
-            sortKey === 'order' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined
+            sortReflectsRows && sortKey === 'order'
+              ? sortDirection === 'asc'
+                ? 'ascending'
+                : 'descending'
+              : undefined
           }
         >
           <button
@@ -151,7 +176,11 @@ export const WorklistRows = ({
                     role="columnheader"
                     className={key === 'updated' ? 'max-lg:hidden' : undefined}
                     aria-sort={
-                      active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined
+                      sortReflectsRows && active
+                        ? sortDirection === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : undefined
                     }
                   >
                     <button
