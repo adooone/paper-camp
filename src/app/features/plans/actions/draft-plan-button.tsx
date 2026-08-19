@@ -8,9 +8,11 @@ import { buildPlanDraftPrompt } from '../prompts';
 interface DraftPlanButtonProps {
   idea: IdeaEntry;
   otherPlans: PlanEntry[];
+  /** Extra classes for call sites that need it as a link rather than a button. */
+  className?: string;
 }
 
-export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
+export const DraftPlanButton = ({ idea, otherPlans, className = '' }: DraftPlanButtonProps) => {
   const launchPlanDraft = useAppStore((s) => s.launchPlanDraft);
   const hasAgent = useAppStore(selectHasAnyAgent);
   const { state, errorMessage, run } = useActionFeedback();
@@ -59,7 +61,7 @@ export const DraftPlanButton = ({ idea, otherPlans }: DraftPlanButtonProps) => {
         size="small"
         onClick={handleClick}
         disabled={state === 'loading' || !idea.id || !hasAgent}
-        className={state === 'error' ? 'text-watercolor-rose-dark' : 'text-ink-500'}
+        className={`${state === 'error' ? 'text-watercolor-rose-dark' : 'text-ink-500'} ${className}`}
       >
         {label}
       </Button>

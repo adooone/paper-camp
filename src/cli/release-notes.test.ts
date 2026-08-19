@@ -2,12 +2,8 @@ import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
-
-// Exercises `paper-camp release-notes` as a real subprocess (via bun, matching the "cli"
-// script) against a real git repo, so the CHANGELOG range lookup, commit-to-idea join, and
-// markdown rendering are verified end to end — not just the extracted `release-notes.ts` logic.
-const CLI_ENTRY = join(__dirname, 'index.ts');
+import { afterAll, describe, expect, it, vi } from 'vitest';
+import { runReleaseNotes } from './index';
 
 const dirs: string[] = [];
 
@@ -61,29 +57,51 @@ async function makeReleasedProject(): Promise<{ root: string }> {
   return { root };
 }
 
-function runReleaseNotes(root: string, version: string) {
-  return spawnSync('bun', [CLI_ENTRY, 'release-notes', version], {
-    cwd: root,
-    encoding: 'utf-8',
+function captureLogs() {
+  const lines: string[] = [];
+  const errors: string[] = [];
+  const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) => {
+    lines.push(args.join(' '));
   });
+  const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args) => {
+    errors.push(args.join(' '));
+  });
+  return {
+    get output() {
+      return lines.join('\n');
+    },
+    get errorOutput() {
+      return errors.join('\n');
+    },
+    restore() {
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+    },
+  };
 }
 
-describe('paper-camp release-notes (CLI)', () => {
+describe('runReleaseNotes', () => {
   it('prints release notes grouped by idea', async () => {
     const { root } = await makeReleasedProject();
 
-    const result = runReleaseNotes(root, 'v0.2.0');
+    const logs = captureLogs();
+    const ok = await runReleaseNotes(root, 'v0.2.0');
+    logs.restore();
 
-    expect(result.stdout).toBe(
-      ['## v0.2.0', '', '### Features', '', '- Do the thing (IDEA-1)', ''].join('\n'),
+    expect(ok).toBe(true);
+    expect(logs.output).toBe(
+      ['## v0.2.0', '', '### Features', '', '- Do the thing (IDEA-1)'].join('\n'),
     );
   });
 
   it('fails when the CHANGELOG has no range for the requested version', async () => {
     const { root } = await makeReleasedProject();
 
-    const result = runReleaseNotes(root, 'v9.9.9');
+    const logs = captureLogs();
+    const ok = await runReleaseNotes(root, 'v9.9.9');
+    logs.restore();
 
-    expect(result.stderr).toContain('No release range for "v9.9.9"');
+    expect(ok).toBe(false);
+    expect(logs.errorOutput).toContain('No release range for "v9.9.9"');
   });
 });

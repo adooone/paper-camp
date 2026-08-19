@@ -224,10 +224,14 @@ describe('postPrReview', () => {
     const root = await makeRoot();
     const lines: string[] = [];
 
-    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, (line) =>
-      lines.push(line),
+    await postPrReview(
+      root,
+      'IDEA-170',
+      'https://github.com/o/r/pull/7',
+      'sha1234',
+      result,
+      (line) => lines.push(line),
     );
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(gitPr.dispatchPrReview).toHaveBeenCalledTimes(1);
     expect(gitPr.createPrReview).not.toHaveBeenCalled();
@@ -241,10 +245,14 @@ describe('postPrReview', () => {
     const root = await makeRoot();
     const lines: string[] = [];
 
-    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, (line) =>
-      lines.push(line),
+    await postPrReview(
+      root,
+      'IDEA-170',
+      'https://github.com/o/r/pull/7',
+      'sha1234',
+      result,
+      (line) => lines.push(line),
     );
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(gitPr.createPrReview).toHaveBeenCalledTimes(1);
     expect(lines[0]).toContain('posted directly to GitHub, dispatch unavailable (1 finding)');
@@ -259,10 +267,14 @@ describe('postPrReview', () => {
     const root = await makeRoot();
     const lines: string[] = [];
 
-    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, (line) =>
-      lines.push(line),
+    await postPrReview(
+      root,
+      'IDEA-170',
+      'https://github.com/o/r/pull/7',
+      'sha1234',
+      result,
+      (line) => lines.push(line),
     );
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(lines[0]).toContain('GitHub post failed');
     expect(lines[0]).toContain('Unprocessable Entity');
@@ -278,8 +290,14 @@ describe('postPrReview', () => {
 
     gitPr.dispatchPrReview.mockResolvedValue({ delivered: true });
     const root = await makeRoot();
-    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', many, () => {});
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await postPrReview(
+      root,
+      'IDEA-170',
+      'https://github.com/o/r/pull/7',
+      'sha1234',
+      many,
+      () => {},
+    );
 
     const dispatchCall = gitPr.dispatchPrReview.mock.calls[0][2];
     expect(dispatchCall.comments).toHaveLength(20);
@@ -289,8 +307,14 @@ describe('postPrReview', () => {
     gitPr.dispatchPrReview.mockResolvedValue({ delivered: false });
     gitPr.createPrReview.mockResolvedValue({ delivered: true });
     const root2 = await makeRoot();
-    postPrReview(root2, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', many, () => {});
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await postPrReview(
+      root2,
+      'IDEA-170',
+      'https://github.com/o/r/pull/7',
+      'sha1234',
+      many,
+      () => {},
+    );
 
     const directCall = gitPr.createPrReview.mock.calls[0][2];
     expect(directCall.comments).toHaveLength(25);
@@ -308,10 +332,14 @@ describe('postPrReview', () => {
     const root = await makeRoot();
     const lines: string[] = [];
 
-    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, (line) =>
-      lines.push(line),
+    await postPrReview(
+      root,
+      'IDEA-170',
+      'https://github.com/o/r/pull/7',
+      'sha1234',
+      result,
+      (line) => lines.push(line),
     );
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(gitPr.createPrReview).toHaveBeenCalledTimes(2);
     const [firstCall, secondCall] = gitPr.createPrReview.mock.calls;
@@ -329,10 +357,14 @@ describe('postPrReview', () => {
     const root = await makeRoot();
     const lines: string[] = [];
 
-    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, (line) =>
-      lines.push(line),
+    await postPrReview(
+      root,
+      'IDEA-170',
+      'https://github.com/o/r/pull/7',
+      'sha1234',
+      result,
+      (line) => lines.push(line),
     );
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(gitPr.createPrReview).toHaveBeenCalledTimes(1);
     expect(lines[0]).toContain('GitHub post failed');
@@ -342,8 +374,14 @@ describe('postPrReview', () => {
     gitPr.dispatchPrReview.mockResolvedValue({ delivered: true });
     const root = await makeRoot();
 
-    postPrReview(root, 'IDEA-170', 'https://github.com/o/r/pull/7', 'sha1234', result, () => {});
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await postPrReview(
+      root,
+      'IDEA-170',
+      'https://github.com/o/r/pull/7',
+      'sha1234',
+      result,
+      () => {},
+    );
 
     const raw = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-170.md'), 'utf-8');
     expect(raw).toContain(renderReviewThreadMessage(result));

@@ -266,21 +266,23 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     const gitDir = join(root, '.git');
     let timer: ReturnType<typeof setTimeout> | null = null;
     try {
-      watch(gitDir, { recursive: true }, (eventType, filename) => {
+      const gitWatcher = watch(gitDir, { recursive: true }, (eventType, filename) => {
         if (filename === 'index') {
           if (timer) clearTimeout(timer);
           timer = setTimeout(refresh, 500);
         }
       });
+      gitWatcher.on('error', () => {});
     } catch {}
 
     const srcDir = join(root, 'src');
     let srcTimer: ReturnType<typeof setTimeout> | null = null;
     try {
-      watch(srcDir, { recursive: true }, () => {
+      const srcWatcher = watch(srcDir, { recursive: true }, () => {
         if (srcTimer) clearTimeout(srcTimer);
         srcTimer = setTimeout(refresh, 500);
       });
+      srcWatcher.on('error', () => {});
     } catch {}
   }
 

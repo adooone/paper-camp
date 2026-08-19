@@ -2,12 +2,10 @@ import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { parseEntityFile } from '../core/parse';
+import { runStampRelease } from './index';
 
-// Exercises `paper-camp stamp-release` as a real subprocess (via bun, matching the "cli"
-// script) against a real git repo, so the CHANGELOG range lookup, commit-to-idea join, and
-// frontmatter rewrite are verified end to end — not just the extracted `trail.ts` logic.
 const CLI_ENTRY = join(__dirname, 'index.ts');
 
 const dirs: string[] = [];
@@ -71,21 +69,43 @@ async function makeReleasedProject(): Promise<{ root: string; ideaFile: string }
   return { root, ideaFile };
 }
 
-function runStampRelease(root: string, version: string) {
-  return spawnSync('bun', [CLI_ENTRY, 'stamp-release', version], {
-    cwd: root,
-    encoding: 'utf-8',
+function captureLogs() {
+  const lines: string[] = [];
+  const errors: string[] = [];
+  const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) => {
+    lines.push(args.join(' '));
   });
+  const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args) => {
+    errors.push(args.join(' '));
+  });
+  return {
+    get output() {
+      return lines.join('\n');
+    },
+    get errorOutput() {
+      return errors.join('\n');
+    },
+    restore() {
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+    },
+  };
 }
 
 describe('paper-camp stamp-release (CLI)', () => {
-  it('stamps released: <version> onto every idea the release shipped', async () => {
+  // The sole process-boundary test in the CLI suite: proves argument parsing, exit codes,
+  // and the exported function all wire together through a real `bun` invocation.
+  it('stamps released: <version> onto every idea the release shipped, run as a real subprocess', async () => {
     const { root, ideaFile } = await makeReleasedProject();
 
-    const result = runStampRelease(root, 'v0.2.0');
+    const result = spawnSync('bun', [CLI_ENTRY, 'stamp-release', 'v0.2.0'], {
+      cwd: root,
+      encoding: 'utf-8',
+    });
 
     expect(result.stdout).toContain('[stamped]  IDEA-1 -> v0.2.0');
     expect(result.stdout).toContain('Stamped 1 of 1 idea(s)');
+    expect(result.status).toBe(0);
 
     const after = parseEntityFile(await readFile(ideaFile, 'utf-8')).entries[0];
     expect(after.released).toBe('v0.2.0');
@@ -95,17 +115,24 @@ describe('paper-camp stamp-release (CLI)', () => {
 
   it('is idempotent — skips an idea already stamped with that version', async () => {
     const { root } = await makeReleasedProject();
-    runStampRelease(root, 'v0.2.0');
+    const setupLogs = captureLogs();
+    await runStampRelease(root, 'v0.2.0');
+    setupLogs.restore();
 
-    const result = runStampRelease(root, 'v0.2.0');
+    const logs = captureLogs();
+    const ok = await runStampRelease(root, 'v0.2.0');
+    logs.restore();
 
-    expect(result.stdout).toContain('[skip]     IDEA-1 — already stamped v0.2.0');
-    expect(result.stdout).toContain('Stamped 0 of 1 idea(s)');
+    expect(ok).toBe(true);
+    expect(logs.output).toContain('[skip]     IDEA-1 — already stamped v0.2.0');
+    expect(logs.output).toContain('Stamped 0 of 1 idea(s)');
   });
 
   it('never overwrites an existing stamp with a later version a follow-up commit shipped in', async () => {
     const { root, ideaFile } = await makeReleasedProject();
-    runStampRelease(root, 'v0.2.0');
+    const setupLogs = captureLogs();
+    await runStampRelease(root, 'v0.2.0');
+    setupLogs.restore();
 
     await writeFile(join(root, 'b.txt'), 'b\n');
     git(root, 'add', '.');
@@ -117,10 +144,13 @@ describe('paper-camp stamp-release (CLI)', () => {
       { flag: 'a' },
     );
 
-    const result = runStampRelease(root, 'v0.3.0');
+    const logs = captureLogs();
+    const ok = await runStampRelease(root, 'v0.3.0');
+    logs.restore();
 
-    expect(result.stdout).toContain('[skip]     IDEA-1 — already stamped v0.2.0');
-    expect(result.stdout).toContain('Stamped 0 of 1 idea(s)');
+    expect(ok).toBe(true);
+    expect(logs.output).toContain('[skip]     IDEA-1 — already stamped v0.2.0');
+    expect(logs.output).toContain('Stamped 0 of 1 idea(s)');
     const after = parseEntityFile(await readFile(ideaFile, 'utf-8')).entries[0];
     expect(after.released).toBe('v0.2.0');
   });
@@ -129,10 +159,13 @@ describe('paper-camp stamp-release (CLI)', () => {
     const { root, ideaFile } = await makeReleasedProject();
     await writeFile(ideaFile, IDEA_1.replace('status: done', 'status: dropped'));
 
-    const result = runStampRelease(root, 'v0.2.0');
+    const logs = captureLogs();
+    const ok = await runStampRelease(root, 'v0.2.0');
+    logs.restore();
 
-    expect(result.stdout).toContain('[skip]     IDEA-1 — dropped');
-    expect(result.stdout).toContain('Stamped 0 of 1 idea(s)');
+    expect(ok).toBe(true);
+    expect(logs.output).toContain('[skip]     IDEA-1 — dropped');
+    expect(logs.output).toContain('Stamped 0 of 1 idea(s)');
     const after = parseEntityFile(await readFile(ideaFile, 'utf-8')).entries[0];
     expect(after.released).toBeUndefined();
   });
@@ -140,8 +173,11 @@ describe('paper-camp stamp-release (CLI)', () => {
   it('fails when the CHANGELOG has no range for the requested version', async () => {
     const { root } = await makeReleasedProject();
 
-    const result = runStampRelease(root, 'v9.9.9');
+    const logs = captureLogs();
+    const ok = await runStampRelease(root, 'v9.9.9');
+    logs.restore();
 
-    expect(result.stderr).toContain('No release range for "v9.9.9"');
+    expect(ok).toBe(false);
+    expect(logs.errorOutput).toContain('No release range for "v9.9.9"');
   });
 });
