@@ -111,7 +111,7 @@ nor a global `testTimeout` is part of this.
       Rewrite `stamp-release`, `audit`, and `release-notes` tests to call the exported functions; keep one real `bun` invocation as the sole process-boundary test.
 - [x] Give the fake agent adapter a test-controlled completion signal
       Replace the `node -e` stub and the wall-clock sleeps in `agent.test.ts` with a signal the test resolves itself.
-- [ ] Share one git fixture across the repo-dependent tests
+- [x] Share one git fixture across the repo-dependent tests
       Build the `makeGitRoot` repo once and reuse it instead of running eight git subprocesses per test.
 - [ ] Drop the spawn-driven timeouts, keep one real end-to-end agent run
       Remove `waitForStatus`'s timeout budgeting and the explicit `20_000`; leave a single real spawn/readline/exit test as the one legitimate timeout.
