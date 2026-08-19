@@ -17,11 +17,9 @@ import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/l
 import { type UsageRollup, formatDuration, formatTokens, rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
-  Accordion,
   Button,
   Card,
   Checkbox,
-  Divider,
   Skeleton,
   Spinner,
   Stamp,
@@ -107,6 +105,8 @@ const PhasesSection = ({
   onTogglePhase,
   onToggleFix,
   onAddReviewPhases,
+  ideaView,
+  otherPlans,
 }: {
   plan: PlanEntry;
   auditRunning: boolean;
@@ -116,6 +116,8 @@ const PhasesSection = ({
   onTogglePhase: (index: number) => void;
   onToggleFix: (index: number) => void;
   onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
+  ideaView: IdeaEntry;
+  otherPlans: PlanEntry[];
 }) => {
   const launchRunAll = useAppStore((s) => s.launchRunAll);
   const fixes = plan.fixes ?? [];
@@ -142,15 +144,20 @@ const PhasesSection = ({
           actions: (
             <>
               {auditRunning && <Spinner size="small" label="Audit running…" />}
-              {(plan.status === 'review' || plan.status === 'done') && (
+              {/* Undrafted: the only sensible action is extending the idea. Auditing,
+                  reconciling and adding review phases all presuppose phases to act on. */}
+              {rows.length === 0 && <ExtendIdeaButton idea={ideaView} />}
+              {rows.length > 0 && (plan.status === 'review' || plan.status === 'done') && (
                 <AuditPhasesButton plan={plan} />
               )}
-              {plan.status !== 'done' && <ReconcileButton plan={plan} />}
-              <AddReviewPhasesButton
-                onAdd={onAddReviewPhases}
-                disabled={updating}
-                entityId={plan.id ?? plan.title}
-              />
+              {rows.length > 0 && plan.status !== 'done' && <ReconcileButton plan={plan} />}
+              {rows.length > 0 && (
+                <AddReviewPhasesButton
+                  onAdd={onAddReviewPhases}
+                  disabled={updating}
+                  entityId={plan.id ?? plan.title}
+                />
+              )}
               {plan.id && hasOpenFix && (
                 <Tooltip content="Run the open fixes with an agent">
                   <Button
@@ -165,7 +172,21 @@ const PhasesSection = ({
             </>
           ),
         }}
-        panelFooter={<DeliverSection plan={plan} />}
+        panelFooter={
+          rows.length === 0 ? (
+            // Table has no empty-body slot, so the invitation rides in the footer —
+            // with no rows above it, it lands directly under the header either way.
+            <div className="flex justify-center py-6">
+              <DraftPlanButton
+                idea={ideaView}
+                otherPlans={otherPlans}
+                className="font-handwritten !text-base underline"
+              />
+            </div>
+          ) : (
+            <DeliverSection plan={plan} />
+          )
+        }
         columns={[
           {
             key: 'checkbox',
@@ -373,23 +394,13 @@ const PlanProgressRow = ({
 };
 
 const PlanBodySection = ({ plan }: { plan: PlanEntry }) => {
-  const [expanded, setExpanded] = useState(false);
-  // Collapse again when the active plan changes, instead of carrying an open
-  // description over onto a different idea.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the id/title pair is the reset trigger, not read
-  useEffect(() => setExpanded(false), [plan.id, plan.title]);
   if (!plan.body) return null;
   return (
     <div className="mb-4">
-      <Accordion
-        title={<span className={sectionHeadingClass}>Description</span>}
-        expanded={expanded}
-        onToggle={() => setExpanded((v) => !v)}
-      >
-        <div className="opacity-[0.85]">
-          <Markdown>{plan.body}</Markdown>
-        </div>
-      </Accordion>
+      <h3 className={`${sectionHeadingClass} mb-2`}>Description</h3>
+      <div className="opacity-[0.85]">
+        <Markdown>{plan.body}</Markdown>
+      </div>
     </div>
   );
 };
@@ -428,22 +439,25 @@ const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
   const commitForm = useDeliverCommitForm(plan, files);
   const hasChanges = files.length > 0;
   return (
-    <div className="flex flex-col gap-2 md:flex-row md:items-start md:gap-x-6">
-      <div className="flex flex-1 flex-col gap-2">
-        <DeliverChecksRow />
-        {hasChanges && <CommitMessageFields state={commitForm} filesEmpty={!hasChanges} />}
-      </div>
-      <Divider orientation="vertical" className="hidden md:block" />
-      <div className="flex flex-1 flex-col gap-2">
-        {hasChanges ? (
-          <>
+    // One centred column in both states. min-h keeps the footer from resizing as it
+    // switches between them.
+    <div className="flex min-h-[7rem] flex-col items-center justify-center gap-3">
+      <DeliverChecksRow />
+      {hasChanges ? (
+        <>
+          {/* Bounded width: the commit input would otherwise stretch the full sheet
+              and stop reading as one centred group with the row below it. */}
+          <div className="w-full max-w-md">
+            <CommitMessageFields state={commitForm} filesEmpty={false} />
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <DeliverChangedFiles count={files.length} />
-            <DeliverCommitButton state={commitForm} filesEmpty={!hasChanges} />
-          </>
-        ) : (
-          <DeliverEmptyState />
-        )}
-      </div>
+            <DeliverCommitButton state={commitForm} filesEmpty={false} />
+          </div>
+        </>
+      ) : (
+        <DeliverEmptyState />
+      )}
     </div>
   );
 };
@@ -761,31 +775,22 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             onCreateBranch={handleCreateBranch}
           />
 
-          <PlanBodySection plan={plan} />
+          <PhasesSection
+            plan={plan}
+            auditRunning={auditRunning}
+            agentBusy={agentBusy}
+            runningFill={runningFill}
+            updating={updating}
+            onTogglePhase={handleTogglePhase}
+            onToggleFix={handleToggleFix}
+            onAddReviewPhases={handleAddReviewPhases}
+            ideaView={ideaView}
+            otherPlans={otherPlans}
+          />
 
           <ClarificationsSection clarifications={plan.clarifications ?? []} />
 
-          {!hasPhases && (
-            <div className="flex items-center gap-3 mb-8">
-              <DraftPlanButton idea={ideaView} otherPlans={otherPlans} />
-              <ExtendIdeaButton idea={ideaView} />
-            </div>
-          )}
-
-          {!hasPhases && <DeliverSection plan={plan} />}
-
-          {hasPhases && (
-            <PhasesSection
-              plan={plan}
-              auditRunning={auditRunning}
-              agentBusy={agentBusy}
-              runningFill={runningFill}
-              updating={updating}
-              onTogglePhase={handleTogglePhase}
-              onToggleFix={handleToggleFix}
-              onAddReviewPhases={handleAddReviewPhases}
-            />
-          )}
+          <PlanBodySection plan={plan} />
         </>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -15,6 +15,13 @@ import {
 } from './agent';
 import { createAgentHooks } from './agent-hooks';
 import { createGitManager } from './git';
+
+// These are IDEA-191's sanctioned end-to-end tests: they spawn a real agent process
+// and drive a real git repo, which is the point of keeping them. vitest's 5s default
+// is a local-machine number — CI runs the same work under `--coverage` on a loaded
+// 2-core runner, where the slowest of them (~2.2s here) has no headroom left. Set once
+// for the file rather than scattered per test, so a new end-to-end case inherits it.
+vi.setConfig({ testTimeout: 20_000 });
 
 // The manager is exercised with a fake adapter whose "agent" is a short `node -e`
 // script — the real spawn/readline/verification machinery runs, only the AI CLI is
@@ -57,6 +64,30 @@ const p = 'papercamp/ideas/IDEA-1.md';
 fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('- [ ]', '- [x]'));
 `;
 
+// A handful of concurrency tests need an agent that is still "in flight" while
+// the test drives other work, then finishes exactly when the test says so —
+// not after a wall-clock guess. The script polls for a file the test creates
+// on demand instead of sleeping a fixed number of milliseconds.
+function waitForSignalScript(signalPath: string, thenRun = ''): string {
+  return `
+const fs = require('node:fs');
+const path = ${JSON.stringify(signalPath)};
+const check = () => {
+  if (fs.existsSync(path)) {
+    ${thenRun}
+    process.exit(0);
+    return;
+  }
+  setTimeout(check, 2);
+};
+check();
+`;
+}
+
+async function releaseSignal(signalPath: string): Promise<void> {
+  await writeFile(signalPath, '');
+}
+
 const PLAN_TWO_PHASES = `---
 id: IDEA-1
 title: Test plan
@@ -89,11 +120,11 @@ beforeEach(() => {
 
 const run = promisify(execFile);
 
-/** Like makeRoot, but also inits a real git repo with one commit and a bare remote
- * tracked as upstream — startFixReview needs an actual HEAD to snapshot/compare, and
- * isHeadPushed needs a real `@{u}` to check the commit actually landed remotely. */
-async function makeGitRoot(planMd: string): Promise<{ root: string; plan: PlanEntry }> {
-  const { root, plan } = await makeRoot(planMd);
+/** Builds the real git repo + bare remote that makeGitRoot copies from, once per
+ * distinct plan body — the eight git subprocesses only run the first time a given
+ * planMd is requested. */
+async function buildGitRootTemplate(planMd: string): Promise<{ root: string; remote: string }> {
+  const { root } = await makeRoot(planMd);
   const remote = await mkdtemp(join(tmpdir(), 'papercamp-agent-test-remote-'));
   roots.push(remote);
   await run('git', ['init', '-q', '--bare', remote]);
@@ -104,6 +135,36 @@ async function makeGitRoot(planMd: string): Promise<{ root: string; plan: PlanEn
   await run('git', ['commit', '-q', '-m', 'initial'], { cwd: root });
   await run('git', ['remote', 'add', 'origin', remote], { cwd: root });
   await run('git', ['push', '-q', '-u', 'origin', 'HEAD'], { cwd: root });
+  return { root, remote };
+}
+
+const gitRootTemplates = new Map<string, Promise<{ root: string; remote: string }>>();
+
+/** Like makeRoot, but also gives each test a real git repo with one commit and a bare
+ * remote tracked as upstream — startFixReview needs an actual HEAD to snapshot/compare,
+ * and isHeadPushed needs a real `@{u}` to check the commit actually landed remotely.
+ * Copies a cached template instead of spawning git for every call. */
+async function makeGitRoot(planMd: string): Promise<{ root: string; plan: PlanEntry }> {
+  let templatePromise = gitRootTemplates.get(planMd);
+  if (!templatePromise) {
+    templatePromise = buildGitRootTemplate(planMd);
+    gitRootTemplates.set(planMd, templatePromise);
+  }
+  const template = await templatePromise;
+
+  const root = await mkdtemp(join(tmpdir(), 'papercamp-agent-test-'));
+  roots.push(root);
+  await cp(template.root, root, { recursive: true });
+
+  const remote = await mkdtemp(join(tmpdir(), 'papercamp-agent-test-remote-'));
+  roots.push(remote);
+  await cp(template.remote, remote, { recursive: true });
+
+  const configPath = join(root, '.git', 'config');
+  const config = await readFile(configPath, 'utf-8');
+  await writeFile(configPath, config.split(template.remote).join(remote));
+
+  const plan = entityToPlan(parseEntityFile(planMd).entries[0]);
   return { root, plan };
 }
 
@@ -124,20 +185,10 @@ function currentStatus(manager: Manager) {
   return manager.getStatus()[0];
 }
 
-async function waitForStatus(
-  manager: Manager,
-  done: (status: string) => boolean,
-  timeoutMs = 10_000,
-): Promise<string> {
-  const start = Date.now();
+async function waitForStatus(manager: Manager, done: (status: string) => boolean): Promise<string> {
   for (;;) {
     const status = currentStatus(manager)?.status;
     if (status && done(status)) return status;
-    if (Date.now() - start > timeoutMs) {
-      throw new Error(
-        `timed out waiting; last status: ${status}, lines: ${currentStatus(manager)?.lines.join(' | ')}`,
-      );
-    }
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
 }
@@ -150,17 +201,10 @@ async function waitForTaskStatus(
   manager: Manager,
   id: string,
   done: (status: string) => boolean,
-  timeoutMs = 10_000,
 ): Promise<string> {
-  const start = Date.now();
   for (;;) {
     const task = manager.getStatus().find((t) => t.id === id);
     if (task && done(task.status)) return task.status;
-    if (Date.now() - start > timeoutMs) {
-      throw new Error(
-        `timed out waiting for ${id}; last status: ${task?.status}, lines: ${task?.lines.join(' | ')}`,
-      );
-    }
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
 }
@@ -535,7 +579,6 @@ process.exit(1)
 
   it('rejects concurrent starts while a run is in flight', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = 'setTimeout(() => process.exit(0), 5000)';
     const manager = createAgentManager(root);
 
     expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
@@ -554,7 +597,6 @@ process.exit(1)
 
   it('winds down as done when stopped mid-run, without finishing the run', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = 'setTimeout(() => process.exit(0), 5000)';
     const onRunComplete = vi.fn(async () => {});
     const manager = createAgentManager(root, undefined, undefined, onRunComplete);
 
@@ -566,9 +608,10 @@ process.exit(1)
 
   it('completes untouched when read-only board helpers launch mid-run (IDEA-126)', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    // A slow-flipping phase agent, so the run-all is still mid-checkpoint when
-    // the read-only helpers below register their tasks.
-    agentScript.current = `${FLIP_NEXT_CHECKBOX}\nsetTimeout(() => process.exit(0), 150);`;
+    // A phase agent that waits for the test's go-ahead, so the run-all is
+    // still mid-checkpoint when the read-only helpers below register their tasks.
+    const signalPath = join(root, '.agent-signal');
+    agentScript.current = waitForSignalScript(signalPath, FLIP_NEXT_CHECKBOX);
     const commits: number[] = [];
     const onRunComplete = vi.fn(async () => {});
     const manager = createAgentManager(
@@ -591,6 +634,10 @@ process.exit(1)
       manager.runCommitSuggest('prompt'),
       manager.runFeedbackReply('prompt', 'Feedback'),
     ]);
+
+    // Let every phase (and the board-pressure helpers, which share the same
+    // fake adapter) finish once they've all had a chance to register.
+    await releaseSignal(signalPath);
 
     const finalStatus = await waitForTaskStatus(
       manager,
@@ -652,7 +699,7 @@ Plan body.
     it('leaves the fix pass as one accumulated diff with no per-fix commits', async () => {
       const { root, plan } = await makeGitRoot(PLAN_PHASES_DONE_TWO_FIXES);
       agentScript.current = FLIP_NEXT_CHECKBOX;
-      const git = createGitManager(root);
+      const git = createGitManager(root, { watch: false });
       const hooks = createAgentHooks(root, git);
       const onRunComplete = vi.fn(async () => {});
       const manager = createAgentManager(
@@ -753,7 +800,7 @@ fs.writeFileSync('touched.ts', 'export const touched = true;\\n');
     await writeFile(join(root, 'unrelated.txt'), 'work in progress\n');
 
     agentScript.current = FLIP_AND_TOUCH_SRC;
-    const git = createGitManager(root);
+    const git = createGitManager(root, { watch: false });
     const hooks = createAgentHooks(root, git);
     const manager = createAgentManager(
       root,
@@ -777,10 +824,7 @@ fs.writeFileSync('touched.ts', 'export const touched = true;\\n');
 
     const { stdout: status } = await run('git', ['status', '--porcelain'], { cwd: root });
     expect(status).toContain('unrelated.txt');
-    // 20s, not vitest's default 5s: waitForStatus alone budgets 10s for the run, and
-    // this test adds a git init/clone/push plus two more shell-outs around it. It fits
-    // in 5s on a warm local machine and does not on a loaded CI runner.
-  }, 20_000);
+  });
 });
 
 describe('write-set collision gate', () => {
@@ -790,7 +834,6 @@ describe('write-set collision gate', () => {
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), plan2Md);
     const plan2 = entityToPlan(parseEntityFile(plan2Md).entries[0]);
 
-    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
     const manager = createAgentManager(root);
 
     expect(manager.startForPlan(plan1, 'prompt', 'reconcile')).toEqual({ ok: true });
@@ -807,9 +850,6 @@ describe('write-set collision gate', () => {
       ok: false,
       error: 'An agent task is already running',
     });
-
-    // Let both spawned children exit on their own before the test ends.
-    await new Promise((resolve) => setTimeout(resolve, 600));
   });
 
   it('rejects a launch colliding with an older running task, not just the most recently launched one', async () => {
@@ -818,7 +858,6 @@ describe('write-set collision gate', () => {
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), plan2Md);
     const plan2 = entityToPlan(parseEntityFile(plan2Md).entries[0]);
 
-    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
     const manager = createAgentManager(root);
 
     // Two disjoint entity-writers running at once: IDEA-1 (launched first) and
@@ -832,14 +871,10 @@ describe('write-set collision gate', () => {
       ok: false,
       error: 'An agent task is already running',
     });
-
-    // Let both spawned children exit on their own before the test ends.
-    await new Promise((resolve) => setTimeout(resolve, 600));
   });
 
   it('rejects a suggest-ideas launch while an exclusive task is running', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
     const manager = createAgentManager(root);
 
     expect(manager.start(plan, 0)).toEqual({ ok: true });
@@ -876,7 +911,6 @@ describe('write-set collision gate', () => {
 describe('startGitSyncRecovery', () => {
   it('launches a sync-kind task carrying the recovery prompt, and blocks a second launch while it runs', async () => {
     const { root } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
     const manager = createAgentManager(root);
 
     expect(manager.startGitSyncRecovery('resolve the conflict')).toEqual({ ok: true });
@@ -896,7 +930,6 @@ describe('startGitSyncRecovery', () => {
 describe('startResolveConflict', () => {
   it('launches a resolve-conflict-kind task carrying the prompt, and blocks a second launch while it runs', async () => {
     const { root } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
     const manager = createAgentManager(root);
 
     expect(manager.startResolveConflict('resolve the rebase conflict')).toEqual({ ok: true });
@@ -923,8 +956,6 @@ describe('start (single phase)', () => {
 
     expect(manager.start(plan, 0)).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    // The post-run verification is async; give it a beat before asserting no warning.
-    await new Promise((resolve) => setTimeout(resolve, 200));
     expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
   });
 
@@ -1083,14 +1114,11 @@ describe('resumeAuthParkedTasks', () => {
 
     // Both plans use the exclusive 'worktree' write-set scope, so relaunching the
     // first blocks the second's relaunch within the same resumeAuthParkedTasks pass.
-    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
     const { resumed } = await manager.resumeAuthParkedTasks();
     expect(resumed).toEqual([plan1.id]);
     // The blocked task must stay 'auth'-tagged so a later pass can still pick it up.
     expect(byPlan(plan2.id)?.errorKind).toBe('auth');
     expect(byPlan(plan2.id)?.status).toBe('error');
-
-    await new Promise((resolve) => setTimeout(resolve, 600));
   });
 });
 
@@ -1381,7 +1409,6 @@ describe('startFixReview', () => {
     const result = manager.startFixReview(plan, 'fix these comments', THREADS);
     expect(result).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    await new Promise((resolve) => setTimeout(resolve, 200));
     expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
     // 1-based verdicts resolve against the thread list the prompt numbered.
     expect(manager.getFixReviewResult()).toEqual({
@@ -1406,7 +1433,6 @@ describe('startFixReview', () => {
 
     manager.startFixReview(plan, 'fix these comments', THREADS);
     expect(await waitForStatus(manager, settled)).toBe('done');
-    await new Promise((resolve) => setTimeout(resolve, 200));
     expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
     expect(manager.getFixReviewResult()).toEqual({
       commit: VERDICT.commit,
@@ -1429,7 +1455,6 @@ describe('startFixReview', () => {
 
     manager.startFixReview(plan, 'fix these comments', THREADS);
     expect(await waitForStatus(manager, settled)).toBe('done');
-    await new Promise((resolve) => setTimeout(resolve, 200));
     // Evaluating every comment and correctly rejecting them all IS the job done.
     expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
     expect(manager.getFixReviewResult()?.addressed).toEqual([]);
@@ -1521,7 +1546,6 @@ describe('startFixReview', () => {
 
   it('rejects concurrent starts while another agent task is running', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
-    agentScript.current = 'setTimeout(() => process.exit(0), 5000)';
     const manager = createAgentManager(root);
 
     expect(manager.start(plan, 0)).toEqual({ ok: true });
@@ -1552,10 +1576,9 @@ describe('startPrReview', () => {
     expect(currentStatus(manager)).toMatchObject({ taskKind: 'pr-review', status: 'running' });
     expect(await waitForStatus(manager, settled)).toBe('done');
 
+    // finishTask awaits recordReviewedSha before flipping status to 'done', so
+    // the write is already on disk by the time waitForStatus resolves.
     const { readReviewedShas } = await import('./pr-review-state');
-    // Recording races the same task-completion callback that flips status to
-    // 'done', so give the fire-and-forget write a tick to land.
-    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(await readReviewedShas(root)).toEqual({ [plan.id ?? '']: 'sha-abc' });
   });
 
@@ -1568,7 +1591,6 @@ describe('startPrReview', () => {
     expect(await waitForStatus(manager, settled)).toBe('error');
 
     const { readReviewedShas } = await import('./pr-review-state');
-    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(await readReviewedShas(root)).toEqual({});
   });
 
@@ -1579,7 +1601,6 @@ describe('startPrReview', () => {
 
     manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
     expect(await waitForStatus(manager, settled)).toBe('done');
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     const { readReviewedShas } = await import('./pr-review-state');
     expect(await readReviewedShas(root)).toEqual({ [plan.id ?? '']: 'sha-abc' });
@@ -1598,7 +1619,6 @@ describe('startPrReview', () => {
 
     manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
     expect(await waitForStatus(manager, settled)).toBe('done');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const { readFile } = await import('node:fs/promises');
     const { join } = await import('node:path');
@@ -1658,7 +1678,6 @@ describe('startPrReview', () => {
 
   it('blocks a second launch while one is running (exclusive, worktree-touching)', async () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
-    agentScript.current = 'setTimeout(() => process.exit(0), 400)';
     const manager = createAgentManager(root);
 
     expect(manager.startPrReview(plan, 'review this diff', 'sha-1', PR_URL)).toEqual({

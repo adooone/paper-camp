@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { mkdir, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
+import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
@@ -360,160 +361,165 @@ program
     );
   });
 
+export async function runAudit(root: string): Promise<boolean> {
+  const ideasDir = resolve(root, 'papercamp', 'ideas');
+
+  const { entries: allEntities, warnings } = await readEntitiesWithDerivedStatus(ideasDir);
+
+  for (const warning of warnings) {
+    console.warn(`  warning: ${warning.title}: ${warning.message}`);
+  }
+
+  const candidates = allEntities
+    .filter((e) => e.kind !== 'note' && (e.status === 'review' || e.status === 'done'))
+    .map((e) => entityToPlan(e));
+
+  if (candidates.length === 0) {
+    console.log('No plans with status "review" or "done" found.');
+    return true;
+  }
+
+  const configRaw = await readFile(join(root, 'papercamp', 'config.json'), 'utf-8').catch(
+    () => '{}',
+  );
+  let config: {
+    defaultAgents?: Record<string, unknown>;
+    defaultAgent?: string;
+  };
+  try {
+    config = JSON.parse(configRaw) as typeof config;
+  } catch {
+    console.error('Invalid papercamp/config.json');
+    return false;
+  }
+  const rawAgents = config.defaultAgents;
+  const defaultAgents = rawAgents
+    ? {
+        phase: coerceAgentConfig(rawAgents.phase),
+        planDraft: coerceAgentConfig(rawAgents.planDraft),
+        ideaExtend: coerceAgentConfig(rawAgents.ideaExtend),
+        commitSuggest: coerceAgentConfig(rawAgents.commitSuggest),
+        feedback: rawAgents.feedback
+          ? coerceAgentConfig(rawAgents.feedback)
+          : DEFAULT_AGENTS.feedback,
+        codeReview: rawAgents.codeReview
+          ? coerceAgentConfig(rawAgents.codeReview)
+          : DEFAULT_AGENTS.codeReview,
+      }
+    : DEFAULT_AGENTS;
+  const { adapter, model, effort } = resolveAgent({ defaultAgents, taskKind: 'audit' });
+
+  console.log(`Auditing ${candidates.length} plan(s):\n`);
+
+  interface AuditResult {
+    id: string;
+    title: string;
+    status: 'audited' | 'skipped' | 'failed';
+    gapPhases?: number;
+    skipReason?: string;
+  }
+
+  const results: AuditResult[] = [];
+  let ok = true;
+
+  for (const plan of candidates) {
+    const id = plan.id ?? '(no id)';
+    const label = id.padEnd(14);
+
+    if (!plan.id) {
+      console.log(`  [skip]  ${label} ${plan.title} — no id`);
+      results.push({ id, title: plan.title, status: 'skipped', skipReason: 'no id' });
+      continue;
+    }
+
+    const planFile = await findPlanFile(ideasDir, plan.id);
+    if (!planFile) {
+      console.log(`  [skip]  ${label} ${plan.title} — file not found`);
+      results.push({ id, title: plan.title, status: 'skipped', skipReason: 'file not found' });
+      continue;
+    }
+
+    if (plan.audited && plan.auditedHash) {
+      const contentHash = computePlanContentHash({ body: plan.body, phases: plan.phases });
+      if (contentHash === plan.auditedHash) {
+        console.log(`  [skip]  ${label} ${plan.title} — audited ${plan.audited}, unchanged since`);
+        results.push({
+          id,
+          title: plan.title,
+          status: 'skipped',
+          skipReason: `audited ${plan.audited}, unchanged`,
+        });
+        continue;
+      }
+    }
+
+    const phasesBefore = plan.phases.length;
+
+    console.log(`  [audit] ${label} ${plan.title}`);
+    const success = await runPlanAudit(root, plan, adapter, { model, effort });
+
+    if (success) {
+      try {
+        await stampCliAuditDate(planFile, plan.id);
+      } catch (err) {
+        console.log(`  [fail]  ${label} ${plan.title} — ${(err as Error).message}`);
+        ok = false;
+        results.push({ id, title: plan.title, status: 'failed' });
+        continue;
+      }
+
+      const afterRaw = await readFile(planFile, 'utf-8').catch(() => '');
+      const afterParsed = parsePlanFile(afterRaw);
+      const phasesAfter = afterParsed.entries[0]?.phases.length ?? phasesBefore;
+      const gapPhases = Math.max(0, phasesAfter - phasesBefore);
+
+      console.log(`  [done]  ${label} ${plan.title}`);
+      results.push({ id, title: plan.title, status: 'audited', gapPhases });
+    } else {
+      console.log(`  [fail]  ${label} ${plan.title} — agent exited with error`);
+      ok = false;
+      results.push({ id, title: plan.title, status: 'failed' });
+    }
+  }
+
+  const audited = results.filter((r) => r.status === 'audited');
+  const skipped = results.filter((r) => r.status === 'skipped');
+  const failed = results.filter((r) => r.status === 'failed');
+  const totalGaps = audited.reduce((sum, r) => sum + (r.gapPhases ?? 0), 0);
+  const bar = '─'.repeat(43);
+
+  console.log(`\n${bar}`);
+  console.log('Audit summary');
+  console.log(
+    `  Audited : ${audited.length}   Skipped : ${skipped.length}   Failed : ${failed.length}`,
+  );
+  if (audited.length > 0) {
+    if (totalGaps > 0) {
+      console.log(`  Gap phases appended: ${totalGaps} total`);
+      for (const r of audited.filter((r) => (r.gapPhases ?? 0) > 0)) {
+        console.log(`    ${r.id.padEnd(14)} +${r.gapPhases} phase(s)`);
+      }
+    } else {
+      console.log('  No gap phases appended — all audited plans are complete.');
+    }
+  }
+  if (skipped.length > 0) {
+    console.log('  Skipped:');
+    for (const r of skipped) {
+      console.log(`    ${r.id.padEnd(14)} ${r.skipReason}`);
+    }
+  }
+  console.log(bar);
+
+  return ok;
+}
+
 program
   .command('audit')
   .description('Audit all review/done plans for missing phases')
   .action(async () => {
-    const root = process.cwd();
-    const ideasDir = resolve(root, 'papercamp', 'ideas');
-
-    const { entries: allEntities, warnings } = await readEntitiesWithDerivedStatus(ideasDir);
-
-    for (const warning of warnings) {
-      console.warn(`  warning: ${warning.title}: ${warning.message}`);
-    }
-
-    const candidates = allEntities
-      .filter((e) => e.kind !== 'note' && (e.status === 'review' || e.status === 'done'))
-      .map((e) => entityToPlan(e));
-
-    if (candidates.length === 0) {
-      console.log('No plans with status "review" or "done" found.');
-      return;
-    }
-
-    const configRaw = await readFile(join(root, 'papercamp', 'config.json'), 'utf-8').catch(
-      () => '{}',
-    );
-    let config: {
-      defaultAgents?: Record<string, unknown>;
-      defaultAgent?: string;
-    };
-    try {
-      config = JSON.parse(configRaw) as typeof config;
-    } catch {
-      fail('Invalid papercamp/config.json');
-      return;
-    }
-    const rawAgents = config.defaultAgents;
-    const defaultAgents = rawAgents
-      ? {
-          phase: coerceAgentConfig(rawAgents.phase),
-          planDraft: coerceAgentConfig(rawAgents.planDraft),
-          ideaExtend: coerceAgentConfig(rawAgents.ideaExtend),
-          commitSuggest: coerceAgentConfig(rawAgents.commitSuggest),
-          feedback: rawAgents.feedback
-            ? coerceAgentConfig(rawAgents.feedback)
-            : DEFAULT_AGENTS.feedback,
-          codeReview: rawAgents.codeReview
-            ? coerceAgentConfig(rawAgents.codeReview)
-            : DEFAULT_AGENTS.codeReview,
-        }
-      : DEFAULT_AGENTS;
-    const { adapter, model, effort } = resolveAgent({ defaultAgents, taskKind: 'audit' });
-
-    console.log(`Auditing ${candidates.length} plan(s):\n`);
-
-    interface AuditResult {
-      id: string;
-      title: string;
-      status: 'audited' | 'skipped' | 'failed';
-      gapPhases?: number;
-      skipReason?: string;
-    }
-
-    const results: AuditResult[] = [];
-
-    for (const plan of candidates) {
-      const id = plan.id ?? '(no id)';
-      const label = id.padEnd(14);
-
-      if (!plan.id) {
-        console.log(`  [skip]  ${label} ${plan.title} — no id`);
-        results.push({ id, title: plan.title, status: 'skipped', skipReason: 'no id' });
-        continue;
-      }
-
-      const planFile = await findPlanFile(ideasDir, plan.id);
-      if (!planFile) {
-        console.log(`  [skip]  ${label} ${plan.title} — file not found`);
-        results.push({ id, title: plan.title, status: 'skipped', skipReason: 'file not found' });
-        continue;
-      }
-
-      if (plan.audited && plan.auditedHash) {
-        const contentHash = computePlanContentHash({ body: plan.body, phases: plan.phases });
-        if (contentHash === plan.auditedHash) {
-          console.log(
-            `  [skip]  ${label} ${plan.title} — audited ${plan.audited}, unchanged since`,
-          );
-          results.push({
-            id,
-            title: plan.title,
-            status: 'skipped',
-            skipReason: `audited ${plan.audited}, unchanged`,
-          });
-          continue;
-        }
-      }
-
-      const phasesBefore = plan.phases.length;
-
-      console.log(`  [audit] ${label} ${plan.title}`);
-      const success = await runPlanAudit(root, plan, adapter, { model, effort });
-
-      if (success) {
-        try {
-          await stampCliAuditDate(planFile, plan.id);
-        } catch (err) {
-          console.log(`  [fail]  ${label} ${plan.title} — ${(err as Error).message}`);
-          process.exitCode = 1;
-          results.push({ id, title: plan.title, status: 'failed' });
-          continue;
-        }
-
-        const afterRaw = await readFile(planFile, 'utf-8').catch(() => '');
-        const afterParsed = parsePlanFile(afterRaw);
-        const phasesAfter = afterParsed.entries[0]?.phases.length ?? phasesBefore;
-        const gapPhases = Math.max(0, phasesAfter - phasesBefore);
-
-        console.log(`  [done]  ${label} ${plan.title}`);
-        results.push({ id, title: plan.title, status: 'audited', gapPhases });
-      } else {
-        console.log(`  [fail]  ${label} ${plan.title} — agent exited with error`);
-        process.exitCode = 1;
-        results.push({ id, title: plan.title, status: 'failed' });
-      }
-    }
-
-    const audited = results.filter((r) => r.status === 'audited');
-    const skipped = results.filter((r) => r.status === 'skipped');
-    const failed = results.filter((r) => r.status === 'failed');
-    const totalGaps = audited.reduce((sum, r) => sum + (r.gapPhases ?? 0), 0);
-    const bar = '─'.repeat(43);
-
-    console.log(`\n${bar}`);
-    console.log('Audit summary');
-    console.log(
-      `  Audited : ${audited.length}   Skipped : ${skipped.length}   Failed : ${failed.length}`,
-    );
-    if (audited.length > 0) {
-      if (totalGaps > 0) {
-        console.log(`  Gap phases appended: ${totalGaps} total`);
-        for (const r of audited.filter((r) => (r.gapPhases ?? 0) > 0)) {
-          console.log(`    ${r.id.padEnd(14)} +${r.gapPhases} phase(s)`);
-        }
-      } else {
-        console.log('  No gap phases appended — all audited plans are complete.');
-      }
-    }
-    if (skipped.length > 0) {
-      console.log('  Skipped:');
-      for (const r of skipped) {
-        console.log(`    ${r.id.padEnd(14)} ${r.skipReason}`);
-      }
-    }
-    console.log(bar);
+    const ok = await runAudit(process.cwd());
+    if (!ok) process.exitCode = 1;
   });
 
 program
@@ -565,6 +571,50 @@ program
     if (remaining.errorCount > 0) process.exitCode = 1;
   });
 
+export async function runStampRelease(root: string, version: string): Promise<boolean> {
+  const ideasDir = resolve(root, 'papercamp', 'ideas');
+
+  const changelog = await readFile(join(root, 'CHANGELOG.md'), 'utf-8').catch(() => '');
+  const release = resolveReleaseRanges(changelog).find((r) => r.version === version);
+  if (!release) {
+    console.error(`No release range for "${version}" found in CHANGELOG.md`);
+    return false;
+  }
+
+  const ideas = await resolveIdeasForRelease(root, release.range);
+  if (ideas.size === 0) {
+    console.log(`No ideas resolved for ${version} (${release.range}).`);
+    return true;
+  }
+
+  let stamped = 0;
+  for (const id of ideas.keys()) {
+    const planFile = await findPlanFile(ideasDir, id);
+    if (!planFile) {
+      console.log(`  [skip]     ${id} — file not found`);
+      continue;
+    }
+    const entry = parseEntityFile(await readFile(planFile, 'utf-8')).entries[0];
+    if (!entry) {
+      console.log(`  [skip]     ${id} — could not parse`);
+      continue;
+    }
+    if (entry.status === 'dropped') {
+      console.log(`  [skip]     ${id} — dropped`);
+      continue;
+    }
+    if (entry.released) {
+      console.log(`  [skip]     ${id} — already stamped ${entry.released}`);
+      continue;
+    }
+    await writeEntityFile(planFile, entityFileInput(entry, { released: version }));
+    console.log(`  [stamped]  ${id} -> ${version}`);
+    stamped++;
+  }
+  console.log(`Stamped ${stamped} of ${ideas.size} idea(s) with released: ${version}`);
+  return true;
+}
+
 program
   .command('stamp-release <version>')
   .description(
@@ -572,48 +622,19 @@ program
       'range from the CHANGELOG compare link, then joins each commit to an idea via trailers/branch names',
   )
   .action(async (version: string) => {
-    const root = process.cwd();
-    const ideasDir = resolve(root, 'papercamp', 'ideas');
-
-    const changelog = await readFile(join(root, 'CHANGELOG.md'), 'utf-8').catch(() => '');
-    const release = resolveReleaseRanges(changelog).find((r) => r.version === version);
-    if (!release) {
-      fail(`No release range for "${version}" found in CHANGELOG.md`);
-      return;
-    }
-
-    const ideas = await resolveIdeasForRelease(root, release.range);
-    if (ideas.size === 0) {
-      console.log(`No ideas resolved for ${version} (${release.range}).`);
-      return;
-    }
-
-    let stamped = 0;
-    for (const id of ideas.keys()) {
-      const planFile = await findPlanFile(ideasDir, id);
-      if (!planFile) {
-        console.log(`  [skip]     ${id} — file not found`);
-        continue;
-      }
-      const entry = parseEntityFile(await readFile(planFile, 'utf-8')).entries[0];
-      if (!entry) {
-        console.log(`  [skip]     ${id} — could not parse`);
-        continue;
-      }
-      if (entry.status === 'dropped') {
-        console.log(`  [skip]     ${id} — dropped`);
-        continue;
-      }
-      if (entry.released) {
-        console.log(`  [skip]     ${id} — already stamped ${entry.released}`);
-        continue;
-      }
-      await writeEntityFile(planFile, entityFileInput(entry, { released: version }));
-      console.log(`  [stamped]  ${id} -> ${version}`);
-      stamped++;
-    }
-    console.log(`Stamped ${stamped} of ${ideas.size} idea(s) with released: ${version}`);
+    const ok = await runStampRelease(process.cwd(), version);
+    if (!ok) process.exitCode = 1;
   });
+
+export async function runReleaseNotes(root: string, version: string): Promise<boolean> {
+  const sections = await resolveReleaseNotes(root, version);
+  if (!sections) {
+    console.error(`No release range for "${version}" found in CHANGELOG.md`);
+    return false;
+  }
+  console.log(formatReleaseNotesMarkdown(version, sections));
+  return true;
+}
 
 program
   .command('release-notes <version>')
@@ -622,13 +643,8 @@ program
       'idea (its title, not the commit subject), sectioned the same as the CHANGELOG',
   )
   .action(async (version: string) => {
-    const root = process.cwd();
-    const sections = await resolveReleaseNotes(root, version);
-    if (!sections) {
-      fail(`No release range for "${version}" found in CHANGELOG.md`);
-      return;
-    }
-    console.log(formatReleaseNotesMarkdown(version, sections));
+    const ok = await runReleaseNotes(process.cwd(), version);
+    if (!ok) process.exitCode = 1;
   });
 
 program
@@ -749,4 +765,6 @@ program
     );
   });
 
-program.parseAsync(process.argv);
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+  program.parseAsync(process.argv);
+}

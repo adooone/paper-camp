@@ -2,7 +2,7 @@
 id: IDEA-191
 title: Tests run in-process and fast
 type: refactor
-status: idea
+status: review
 created: 2026-08-19
 updated: 2026-08-19
 tags:
@@ -103,3 +103,32 @@ problem in its own right and easier to chase once these files are smaller.
 The runner configuration is already correct and stays: the `forks` pool beats
 `threads` here by a wide margin (88s vs 106s on 2 cores), so neither the pool
 nor a global `testTimeout` is part of this.
+
+### Phases
+- [x] Export CLI command bodies as callable functions
+      Split argv parsing and exit codes from each command's work so tests can call the function directly.
+- [x] Move the CLI tests in-process
+      Rewrite `stamp-release`, `audit`, and `release-notes` tests to call the exported functions; keep one real `bun` invocation as the sole process-boundary test.
+- [x] Give the fake agent adapter a test-controlled completion signal
+      Replace the `node -e` stub and the wall-clock sleeps in `agent.test.ts` with a signal the test resolves itself.
+- [x] Share one git fixture across the repo-dependent tests
+      Build the `makeGitRoot` repo once and reuse it instead of running eight git subprocesses per test.
+- [x] Drop the spawn-driven timeouts, keep one real end-to-end agent run
+      Remove `waitForStatus`'s timeout budgeting and the explicit `20_000`; leave a single real spawn/readline/exit test as the one legitimate timeout.
+      run: 4m10s · 6k in · 11.1k out · sonnet-5
+- [x] Sweep the remaining `child_process` importers
+      Audit the other test files that spawn and convert any whose behaviour a direct call already covers.
+      run: 1m25s · 382 in · 5.1k out · sonnet-5
+- [x] [manual] Mark the Tests-check fix as done in IDEA-191
+- [x] [manual] Fix deliver footer sizing and git action label wrapping
+- [x] [manual] Wrap git actions and collapse empty deliver footer split
+- [x] [manual] Show all deliver checks and center commit footer layout
+- [x] [manual] Bump agent.test.ts timeout for CI-loaded runners
+
+### Fixes
+- [x] Fix the failing "Tests" check
+      Fix the failing "Tests" check in this repo.
+      run: 5m9s · 5.8k in · 4.5k out · sonnet-5
+
+### Thread
+- [x] 2026-08-19 [review] [agent] Comments · 2 findings — This is a well-executed refactor that lands the measurable win the idea targets: the deliberate wall-clock sleeps (5000ms/400ms/600ms) are gone, waitForStatus's redundant timeout budgeting and the explicit 20_000 are removed, the git fixture is built once per distinct plan body and copied, and the CLI audit path is now a callable exported function tested in-process. The git watcher error-handler and the awaited postPrReview cleanups are sensible correctness improvements. Two things are worth flagging: agent.test.ts still drives its fake agent through node subprocesses rather than the fully in-process fake the idea's body describes, and the new template-cache scheme depends on fixture dirs outliving per-test cleanup.
