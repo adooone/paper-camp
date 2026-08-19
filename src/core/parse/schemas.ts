@@ -28,26 +28,30 @@ export const planFieldsSchema = z.object({
 // YAML frontmatter schemas: the per-file plan/idea format, `---`-delimited YAML
 // metadata plus a markdown body. Field-based schemas above exist only until the
 // monolithic-file format is fully migrated away.
-export const planFrontmatterSchema = z.object({
-  id: z.string().describe('Permanent plan ID, e.g. FEAT-24'),
-  title: z.string().describe('Human-readable plan name, e.g. "Plan storage architecture"'),
-  kind: z
-    .enum(['feat', 'fix', 'chore', 'docs', 'refactor'])
-    .describe('Plan kind matching Conventional Commits types'),
-  status: z
-    .enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped'])
-    .describe('Current lifecycle status'),
-  idea: z.string().optional().describe('IDEA-N backlink if this plan grew out of an idea'),
-  agent: z.enum(AGENT_IDS).optional().describe('Per-plan agent override'),
-  created: dateString.describe('Creation date (YYYY-MM-DD)'),
-  updated: dateString.optional().describe('Last significant update date (YYYY-MM-DD)'),
-  audited: dateString.optional().describe('Date of last successful convergence audit (YYYY-MM-DD)'),
-  'audited-hash': z
-    .string()
-    .optional()
-    .describe('Content hash of the plan at last audit, used to detect edits regardless of mtime'),
-  tags: z.array(z.string()).optional().describe('Tagging categories'),
-});
+export const planFrontmatterSchema = z
+  .object({
+    id: z.string().describe('Permanent plan ID, e.g. FEAT-24'),
+    title: z.string().describe('Human-readable plan name, e.g. "Plan storage architecture"'),
+    kind: z
+      .enum(['feat', 'fix', 'chore', 'docs', 'refactor'])
+      .describe('Plan kind matching Conventional Commits types'),
+    status: z
+      .enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped'])
+      .describe('Current lifecycle status'),
+    idea: z.string().optional().describe('IDEA-N backlink if this plan grew out of an idea'),
+    agent: z.enum(AGENT_IDS).optional().describe('Per-plan agent override'),
+    created: dateString.describe('Creation date (YYYY-MM-DD)'),
+    updated: dateString.optional().describe('Last significant update date (YYYY-MM-DD)'),
+    audited: dateString
+      .optional()
+      .describe('Date of last successful convergence audit (YYYY-MM-DD)'),
+    'audited-hash': z
+      .string()
+      .optional()
+      .describe('Content hash of the plan at last audit, used to detect edits regardless of mtime'),
+    tags: z.array(z.string()).optional().describe('Tagging categories'),
+  })
+  .passthrough();
 
 export const ideaFrontmatterSchema = z
   .object({
@@ -62,6 +66,7 @@ export const ideaFrontmatterSchema = z
       .optional()
       .describe('Manual lifecycle, valid only on notes — plan-bearing ideas carry no status'),
   })
+  .passthrough()
   .refine((data) => data.status === undefined || data.kind === 'note', {
     message: 'status is only valid on ideas with kind: note',
     path: ['status'],
@@ -118,6 +123,7 @@ export const entityFrontmatterSchema = z
       .optional()
       .describe('Run order; absent means unordered, sorting after ordered entries'),
   })
+  .passthrough()
   .refine(
     (data) =>
       data.kind !== 'note' ||

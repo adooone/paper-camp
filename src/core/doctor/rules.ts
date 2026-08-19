@@ -15,7 +15,7 @@ export const DOCTOR_RULES = [
     category: 'metadata',
     severity: 'error',
     summary:
-      'Frontmatter fails entityFrontmatterSchema — missing required field, unknown key, bad enum, malformed date, or a violated note/status refinement.',
+      'Frontmatter fails entityFrontmatterSchema — missing required field, bad enum, malformed date, or a violated note/status refinement.',
   },
   {
     id: 'filename-id-mismatch',

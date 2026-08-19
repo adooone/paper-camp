@@ -71,8 +71,9 @@ Out of scope: the hub itself, cross-corpus links ([[IDEA-123]]), and any
 migration tooling beyond a single doctor-driven bump.
 
 ### Phases
-- [ ] Preserve unknown frontmatter keys on read
+- [x] Preserve unknown frontmatter keys on read
       Add passthrough to the Zod frontmatter schemas so unrecognised keys survive parse.
+      run: 6m9s · 6.3k in · 8.6k out · sonnet-5
 - [ ] Emit preserved keys on write
       Change serializer.ts to write carried-through keys alongside known ones in a stable order.
 - [ ] Define the format version, separate from the package version
