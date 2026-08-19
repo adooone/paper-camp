@@ -648,7 +648,9 @@ export interface CiReleaseState {
 }
 
 export interface PaperCampConfig {
-  version: string;
+  /** Corpus format version (see CORPUS_FORMAT_VERSION) — the shape this file and the
+   * entity frontmatter it sits alongside conform to, not the npm package version. */
+  version: number;
   projectName: string;
   initializedAt: string;
   /** The unified-entity `idea` counter; the per-kind plan counters are legacy, present only in pre-migration configs. */

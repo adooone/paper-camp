@@ -77,8 +77,9 @@ migration tooling beyond a single doctor-driven bump.
 - [x] Emit preserved keys on write
       Change serializer.ts to write carried-through keys alongside known ones in a stable order.
       run: 7m44s · 1.4k in · 12.9k out · sonnet-5
-- [ ] Define the format version, separate from the package version
+- [x] Define the format version, separate from the package version
       Introduce a format-version constant and repurpose config.version to declare it, stamped honestly on write.
+      run: 4m52s · 793 in · 12.3k out · sonnet-5
 - [ ] Refuse lossy writes against a newer corpus
       Compare the corpus format version to the running one; keep reads tolerant, refuse writes when the corpus is newer.
 - [ ] Surface the mismatch in the doctor

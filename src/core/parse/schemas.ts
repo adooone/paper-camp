@@ -173,7 +173,10 @@ export const deskConfigSchema = z.object({
 });
 
 export const paperCampConfigSchema = z.object({
-  version: z.string(),
+  version: z
+    .number()
+    .int()
+    .describe('Corpus format version (see CORPUS_FORMAT_VERSION), not the package version'),
   projectName: z.string(),
   initializedAt: z.string(),
   nextId: z
