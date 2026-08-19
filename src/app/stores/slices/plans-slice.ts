@@ -42,6 +42,7 @@ export type PlansSlice = {
   setSubjectFilter: (subject: string | null) => void;
   setPlanSortKey: (sortKey: PlanSortKey) => void;
   togglePlanSortDirection: () => void;
+  toggleGroupBySubject: () => void;
 
   // Which detail view the open plan shows; lifted so the sidebar switcher and
   // the content agree. Reset to 'details' when the open plan changes.
@@ -101,6 +102,13 @@ export function createPlansSlice(set: SetState, _get: GetState): PlansSlice {
         planFilters: storePlanFilters({
           ...s.planFilters,
           sortDirection: s.planFilters.sortDirection === 'asc' ? 'desc' : 'asc',
+        }),
+      })),
+    toggleGroupBySubject: () =>
+      set((s) => ({
+        planFilters: storePlanFilters({
+          ...s.planFilters,
+          groupBySubject: !s.planFilters.groupBySubject,
         }),
       })),
 

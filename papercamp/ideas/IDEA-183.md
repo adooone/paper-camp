@@ -71,8 +71,9 @@ archive section's own filtering ([[IDEA-184]]).
 - [x] Gate whole-corpus hiding on the unfiltered total
       If a genuinely empty status should still hide, key it off the pre-search corpus count, never the filtered count.
       run: 55s · 239 in · 3.9k out · sonnet-5
-- [ ] Make subject grouping an explicit toggle
+- [x] Make subject grouping an explicit toggle
       Replace the implicit `showSubjectHeaders = groups.length > 1` with a user-controlled toggle.
+      run: 1m48s · 517 in · 7.1k out · sonnet-5
 - [ ] Turn grouping off when a sort column is chosen
       Selecting a sortable header disables grouping so rendered order matches the header.
 - [ ] Set `aria-sort` only when rows reflect it

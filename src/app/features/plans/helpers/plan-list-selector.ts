@@ -15,6 +15,7 @@ export interface PlanListFilters {
   noteStatuses: IdeaStatus[];
   /** Set by a roadmap item's "N in queue" link; null means unfiltered. */
   subject: string | null;
+  groupBySubject: boolean;
 }
 
 /** Excludes done/dropped so 40+ closed plans stay out of first paint until a chip reveals them. */
@@ -31,6 +32,7 @@ export const DEFAULT_PLAN_LIST_FILTERS: PlanListFilters = {
   sortDirection: 'asc',
   noteStatuses: DEFAULT_VISIBLE_NOTE_STATUSES,
   subject: null,
+  groupBySubject: true,
 };
 
 const STATUS_ORDER: Record<PlanStatus, number> = {

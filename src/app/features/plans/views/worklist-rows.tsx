@@ -5,7 +5,7 @@ import { useRoadmapItemNames } from '@/app/features/roadmap';
 import { useSubjectVocabulary } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { Card, Stamp } from '@dendelion/paper-ui';
+import { Card, Stamp, Switch } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton } from '../actions';
@@ -66,8 +66,10 @@ export const WorklistRows = ({
   const gridClass = PLAN_ROWS_GRID_CLASS;
   const sortKey = useAppStore((s) => s.planFilters.sortKey);
   const sortDirection = useAppStore((s) => s.planFilters.sortDirection);
+  const groupBySubject = useAppStore((s) => s.planFilters.groupBySubject);
   const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);
   const togglePlanSortDirection = useAppStore((s) => s.togglePlanSortDirection);
+  const toggleGroupBySubject = useAppStore((s) => s.toggleGroupBySubject);
 
   const handleSort = (key: PlanSortKey) => {
     if (key === sortKey) togglePlanSortDirection();
@@ -117,11 +119,11 @@ export const WorklistRows = ({
     sortDirection,
     subjectsLoading || !subjectsAvailable ? undefined : validSubjects,
   );
-  const showSubjectHeaders = groups.length > 1;
+  const showSubjectHeaders = groupBySubject && groups.length > 1;
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
         {/* biome-ignore lint/a11y/useSemanticElements: this gutter sits outside the row grid, not inside a <table>; a real <th> would need a <tr>/<table> ancestor. */}
         <span
           role="columnheader"
@@ -168,6 +170,13 @@ export const WorklistRows = ({
             </div>
           </Card>
         </div>
+        <Switch
+          size="small"
+          label="Group by subject"
+          labelPosition="left"
+          checked={groupBySubject}
+          onChange={toggleGroupBySubject}
+        />
       </div>
       {showSubjectHeaders
         ? groups.map((group) => {
