@@ -74,7 +74,7 @@ export const ideaFrontmatterSchema = z
 
 // Unified entity schema: one file per entity, with the plan as an optional
 // `### Phases` body section. Replaces the legacy pair above once migration lands.
-export const entityFrontmatterSchema = z
+const entityFrontmatterObjectSchema = z
   .object({
     id: z.string().describe('Permanent lifetime entity ID, e.g. IDEA-45 — never changes'),
     title: z.string().describe('Human-readable entity name'),
@@ -123,7 +123,16 @@ export const entityFrontmatterSchema = z
       .optional()
       .describe('Run order; absent means unordered, sorting after ordered entries'),
   })
-  .passthrough()
+  .passthrough();
+
+// Frontmatter keys the schema above assigns explicit meaning to — everything else
+// parses through untouched so an older paper-camp can carry a newer field it
+// doesn't understand instead of dropping it on the next write.
+export const entityFrontmatterKnownKeys: ReadonlySet<string> = new Set(
+  Object.keys(entityFrontmatterObjectSchema.shape),
+);
+
+export const entityFrontmatterSchema = entityFrontmatterObjectSchema
   .refine(
     (data) =>
       data.kind !== 'note' ||

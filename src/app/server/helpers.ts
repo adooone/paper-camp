@@ -60,6 +60,7 @@ export function entityFileInput(
     phases: entry.phases,
     fixes: entry.fixes,
     thread: entry.thread,
+    unknownFrontmatter: entry.unknownFrontmatter,
     ...overrides,
   };
 }

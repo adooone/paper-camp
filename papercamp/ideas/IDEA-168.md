@@ -74,8 +74,9 @@ migration tooling beyond a single doctor-driven bump.
 - [x] Preserve unknown frontmatter keys on read
       Add passthrough to the Zod frontmatter schemas so unrecognised keys survive parse.
       run: 6m9s · 6.3k in · 8.6k out · sonnet-5
-- [ ] Emit preserved keys on write
+- [x] Emit preserved keys on write
       Change serializer.ts to write carried-through keys alongside known ones in a stable order.
+      run: 7m44s · 1.4k in · 12.9k out · sonnet-5
 - [ ] Define the format version, separate from the package version
       Introduce a format-version constant and repurpose config.version to declare it, stamped honestly on write.
 - [ ] Refuse lossy writes against a newer corpus

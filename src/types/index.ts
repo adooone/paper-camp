@@ -406,6 +406,9 @@ export interface EntityEntry {
   thread?: ThreadMessage[];
   /** Set by readEntities from which of the two scanned dirs the file came from, not the frontmatter. */
   archived?: boolean;
+  /** Frontmatter keys this paper-camp doesn't recognise, carried through verbatim so a
+   * write never drops a field a newer version wrote — see entityFrontmatterKnownKeys. */
+  unknownFrontmatter?: Record<string, unknown>;
 }
 
 // No `id`/`status`: it only becomes a real idea if a human promotes it.
