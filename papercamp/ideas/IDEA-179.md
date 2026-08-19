@@ -106,7 +106,8 @@ What the prioritise agent weighs, and the run-order classification itself.
 - [x] Relax the `why` line-count contract
       Accept an otherwise-valid ordering whose `why` line count mismatches by falling back to a generic per-id reason.
       run: 2m28s · 362 in · 3.7k out · sonnet-5
-- [ ] Retry the agent once on a malformed verdict
+- [x] Retry the agent once on a malformed verdict
       Feed the validation failure back to the agent for one retry before giving up, matching the fix-review and pr-review paths.
+      run: 3m6s · 381 in · 5.4k out · sonnet-5
 - [ ] Refresh the UI after a partial apply
       Have `handlePrioritise`'s catch reload so the new order shows instead of the stale one.

@@ -81,13 +81,34 @@ const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
 });
 
 describe('getPrioritiseVerdict', () => {
-  it('rejects malformed JSON, naming the JSON problem', async () => {
+  it('retries once with the validation failure fed back, then gives up', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
-    const runPrompt = async () => '{not json}';
+    const prompts: string[] = [];
+    const runPrompt = async (prompt: string) => {
+      prompts.push(prompt);
+      return '{not json}';
+    };
 
     await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
       'was not valid JSON',
     );
+    expect(prompts).toHaveLength(2);
+    expect(prompts[1]).toContain('Your previous response was invalid');
+    expect(prompts[1]).toContain('was not valid JSON');
+  });
+
+  it('accepts a corrected verdict on the retry', async () => {
+    const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
+    let call = 0;
+    const runPrompt = async () => {
+      call += 1;
+      if (call === 1) return '{not json}';
+      return JSON.stringify({ order: ['IDEA-2', 'IDEA-1'], why: 'a\nb' });
+    };
+
+    const verdict = await getPrioritiseVerdict(worklist, '', runPrompt);
+    expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: 'a\nb' });
+    expect(call).toBe(2);
   });
 
   it('rejects a verdict missing the order/why shape', async () => {

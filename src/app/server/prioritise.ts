@@ -64,19 +64,28 @@ export async function getPrioritiseVerdict(
     throw new Error('No planned/in-progress/review ideas to prioritise');
   }
 
+  const attempt = async (prompt: string): Promise<PrioritiseVerdict> => {
+    const output = await runPrompt(prompt);
+
+    let resultText = output;
+    try {
+      const parsed = JSON.parse(output) as { result?: string };
+      if (typeof parsed.result === 'string') resultText = parsed.result;
+    } catch {}
+
+    const match = resultText.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Agent did not return a parseable prioritise verdict');
+
+    return validatePrioritiseVerdict(match[0], activeIds);
+  };
+
   const prompt = buildPrioritisePrompt(worklist, roadmapText);
-  const output = await runPrompt(prompt);
-
-  let resultText = output;
   try {
-    const parsed = JSON.parse(output) as { result?: string };
-    if (typeof parsed.result === 'string') resultText = parsed.result;
-  } catch {}
-
-  const match = resultText.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('Agent did not return a parseable prioritise verdict');
-
-  return validatePrioritiseVerdict(match[0], activeIds);
+    return await attempt(prompt);
+  } catch (err) {
+    const retryPrompt = `${prompt}\n\nYour previous response was invalid: ${(err as Error).message}\n\nRespond again with ONLY the corrected JSON object, following the rules exactly.`;
+    return await attempt(retryPrompt);
+  }
 }
 
 function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): string[] {
