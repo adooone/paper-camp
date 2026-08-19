@@ -81,3 +81,17 @@ on the first pass.
 
 Any change to the Inbox. The task log page itself, which keeps its route and its
 current shape. Notifications for issues — the page is pulled, not pushed.
+
+### Phases
+- [ ] Define the issue model and its four collectors
+      One issue shape fed by failed agent runs, red checks, PR change-requests, and rebase/sync failures — deduped by source so a repeat failure continues an existing issue.
+- [ ] Derive open/closed state from the world
+      Close an issue when its check goes green, its rerun succeeds, or its promoted fix ships; never a mark-read button.
+- [ ] Swap the nav slot: Issues in, Tasks out
+      Move the task log behind the Stack panel's Agent section and its "N more…" link; keep the log route and shape unchanged.
+- [ ] Build the Issues page as expandable Inbox-shaped rows
+      Compact row per issue, oldest first, opening in place into a thread of what failed, the reason, and the last output lines.
+- [ ] Add "fix it here" to launch a fix agent from an issue
+      Carry the issue's context into the agent and record the attempt and result back in the thread.
+- [ ] Add "promote to a fix entity" per [[IDEA-187]]
+      Create the fix entity, point the issue at it, and stop the issue carrying the work.
