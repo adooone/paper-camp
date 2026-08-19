@@ -2,7 +2,7 @@
 id: IDEA-191
 title: Tests run in-process and fast
 type: refactor
-status: idea
+status: review
 created: 2026-08-19
 updated: 2026-08-19
 tags:
@@ -116,5 +116,6 @@ nor a global `testTimeout` is part of this.
 - [x] Drop the spawn-driven timeouts, keep one real end-to-end agent run
       Remove `waitForStatus`'s timeout budgeting and the explicit `20_000`; leave a single real spawn/readline/exit test as the one legitimate timeout.
       run: 4m10s · 6k in · 11.1k out · sonnet-5
-- [ ] Sweep the remaining `child_process` importers
+- [x] Sweep the remaining `child_process` importers
       Audit the other test files that spawn and convert any whose behaviour a direct call already covers.
+      run: 1m25s · 382 in · 5.1k out · sonnet-5
