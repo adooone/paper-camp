@@ -44,13 +44,6 @@ function validatePrioritiseVerdict(candidate: string, activeIds: string[]): Prio
   if (missing) {
     throw new Error(`Agent verdict is missing active id "${missing}"`);
   }
-  // One non-empty reason per ordered id, same index, per the prompt's contract.
-  const whyLines = parsed.why.split('\n').filter((line) => line.trim().length > 0);
-  if (whyLines.length !== parsed.order.length) {
-    throw new Error(
-      `Agent verdict's "why" had ${whyLines.length} line(s) but the order has ${parsed.order.length} ids`,
-    );
-  }
   return { order: parsed.order, why: parsed.why };
 }
 

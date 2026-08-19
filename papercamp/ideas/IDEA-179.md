@@ -103,8 +103,9 @@ What the prioritise agent weighs, and the run-order classification itself.
 - [x] Give each validation cause its own message
       Split the four `validatePrioritiseVerdict` failures into distinct messages that name the offending id or line count.
       run: 2m49s · 235 in · 7.4k out · sonnet-5
-- [ ] Relax the `why` line-count contract
+- [x] Relax the `why` line-count contract
       Accept an otherwise-valid ordering whose `why` line count mismatches by falling back to a generic per-id reason.
+      run: 2m28s · 362 in · 3.7k out · sonnet-5
 - [ ] Retry the agent once on a malformed verdict
       Feed the validation failure back to the agent for one retry before giving up, matching the fix-review and pr-review paths.
 - [ ] Refresh the UI after a partial apply

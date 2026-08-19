@@ -126,14 +126,13 @@ describe('getPrioritiseVerdict', () => {
     );
   });
 
-  it('rejects a `why` whose line count does not match the order, naming both counts', async () => {
+  it('accepts an otherwise-valid ordering whose `why` line count does not match', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
     const runPrompt = async () =>
       JSON.stringify({ order: ['IDEA-1', 'IDEA-2'], why: 'only one reason' });
 
-    await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
-      'why" had 1 line(s) but the order has 2 ids',
-    );
+    const verdict = await getPrioritiseVerdict(worklist, '', runPrompt);
+    expect(verdict).toEqual({ order: ['IDEA-1', 'IDEA-2'], why: 'only one reason' });
   });
 
   it('accepts a full permutation of the active ids', async () => {
@@ -179,6 +178,37 @@ describe('applyPrioritiseVerdict', () => {
     expect(readRunOrder(root)).toEqual(['IDEA-2 — Second', 'IDEA-1 — First']);
     expect(readLog(root, 'IDEA-2')).toEqual([expect.stringContaining('unblocks IDEA-1')]);
     expect(readLog(root, 'IDEA-1')).toEqual([expect.stringContaining('waits on IDEA-2')]);
+  });
+
+  it('falls back to a generic reason for ids without a matching why line', async () => {
+    const root = tmpRoot();
+    write(root, {
+      id: 'IDEA-1',
+      title: 'First',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-01',
+    });
+    write(root, {
+      id: 'IDEA-2',
+      title: 'Second',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-02',
+    });
+    writeRunOrder(root, ['IDEA-1 — First', 'IDEA-2 — Second']);
+
+    const result = await applyPrioritiseVerdict(root, {
+      order: ['IDEA-2', 'IDEA-1'],
+      why: 'only one reason',
+    });
+
+    expect(result.moved.sort()).toEqual(['IDEA-1', 'IDEA-2']);
+    expect(result.annotated.sort()).toEqual(['IDEA-1', 'IDEA-2']);
+    expect(readLog(root, 'IDEA-2')).toEqual([expect.stringContaining('only one reason')]);
+    expect(readLog(root, 'IDEA-1')).toEqual([
+      expect.stringContaining('Reprioritised by the shuffle agent.'),
+    ]);
   });
 
   it('leaves an already-matching order untouched, with no log writes', async () => {
