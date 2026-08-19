@@ -35,10 +35,6 @@ export const PlanFilterColumn = () => {
   const linkClass =
     'bg-none bg-transparent border-none p-0 cursor-pointer opacity-70 underline text-2xs';
 
-  const visibleStatuses = STATUS_CHIP_ORDER.filter(
-    (status) => statusCounts[status] > 0 || activeStatuses.has(status),
-  );
-
   return (
     <div className="flex flex-col">
       <div className="h-[64px] flex items-center">
@@ -70,7 +66,7 @@ export const PlanFilterColumn = () => {
 
       <div>
         <div className="flex flex-col">
-          {visibleStatuses.map((status) => {
+          {STATUS_CHIP_ORDER.map((status) => {
             const isActive = activeStatuses.has(status);
             return (
               <ListItem
