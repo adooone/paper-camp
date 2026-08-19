@@ -124,6 +124,15 @@ export const WorklistRows = ({
 
   return (
     <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-end gap-2">
+        <span className={subjectHeaderClass}>Group by subject</span>
+        <Switch
+          size="small"
+          checked={groupBySubject}
+          onChange={toggleGroupBySubject}
+          aria-label="Group by subject"
+        />
+      </div>
       <div className="flex items-center gap-2">
         {/* biome-ignore lint/a11y/useSemanticElements: this gutter sits outside the row grid, not inside a <table>; a real <th> would need a <tr>/<table> ancestor. */}
         <span
@@ -179,13 +188,6 @@ export const WorklistRows = ({
             </div>
           </Card>
         </div>
-        <Switch
-          size="small"
-          label="Group by subject"
-          labelPosition="left"
-          checked={groupBySubject}
-          onChange={toggleGroupBySubject}
-        />
       </div>
       {showSubjectHeaders
         ? groups.map((group) => {
