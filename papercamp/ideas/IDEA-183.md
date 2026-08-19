@@ -68,8 +68,9 @@ archive section's own filtering ([[IDEA-184]]).
 - [x] Show zero counts as clickable `0` chips
       Keep unselected zero-count chips enabled so selecting one reveals the empty result.
       run: 30s · 228 in · 1.6k out · sonnet-5
-- [ ] Gate whole-corpus hiding on the unfiltered total
+- [x] Gate whole-corpus hiding on the unfiltered total
       If a genuinely empty status should still hide, key it off the pre-search corpus count, never the filtered count.
+      run: 55s · 239 in · 3.9k out · sonnet-5
 - [ ] Make subject grouping an explicit toggle
       Replace the implicit `showSubjectHeaders = groups.length > 1` with a user-controlled toggle.
 - [ ] Turn grouping off when a sort column is chosen

@@ -30,7 +30,9 @@ export const PlanFilterColumn = () => {
   if (!plans || activePlan) return null;
 
   const { statusCounts } = selectPlanRows(plans.entries, filters);
+  const { statusCounts: corpusStatusCounts } = selectPlanRows(plans.entries);
   const activeStatuses = new Set(filters.statuses);
+  const visibleStatuses = STATUS_CHIP_ORDER.filter((status) => corpusStatusCounts[status] > 0);
 
   const linkClass =
     'bg-none bg-transparent border-none p-0 cursor-pointer opacity-70 underline text-2xs';
@@ -66,7 +68,7 @@ export const PlanFilterColumn = () => {
 
       <div>
         <div className="flex flex-col">
-          {STATUS_CHIP_ORDER.map((status) => {
+          {visibleStatuses.map((status) => {
             const isActive = activeStatuses.has(status);
             return (
               <ListItem
