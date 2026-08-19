@@ -81,21 +81,58 @@ const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
 });
 
 describe('getPrioritiseVerdict', () => {
-  it('rejects a verdict missing an active id', async () => {
+  it('rejects malformed JSON, naming the JSON problem', async () => {
+    const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
+    const runPrompt = async () => '{not json}';
+
+    await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
+      'was not valid JSON',
+    );
+  });
+
+  it('rejects a verdict missing the order/why shape', async () => {
+    const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
+    const runPrompt = async () => JSON.stringify({ order: ['IDEA-1', 'IDEA-2'] });
+
+    await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
+      'missing an `order` array or a `why` string',
+    );
+  });
+
+  it('rejects a verdict with the wrong count of ordered ids, naming both counts', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
     const runPrompt = async () => JSON.stringify({ order: ['IDEA-1'], why: 'kept first' });
 
     await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
-      'every active id exactly once',
+      'ordered 1 ideas but 2 are active',
     );
   });
 
-  it('rejects a verdict with a duplicated id', async () => {
+  it('rejects a verdict with a duplicated id, naming the id', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
     const runPrompt = async () => JSON.stringify({ order: ['IDEA-1', 'IDEA-1'], why: 'a\nb' });
 
     await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
-      'every active id exactly once',
+      'listed id "IDEA-1" more than once',
+    );
+  });
+
+  it('rejects a verdict with an id outside the active set, naming the id', async () => {
+    const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
+    const runPrompt = async () => JSON.stringify({ order: ['IDEA-1', 'IDEA-9'], why: 'a\nb' });
+
+    await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
+      'included id "IDEA-9", which is not in the active set',
+    );
+  });
+
+  it('rejects a `why` whose line count does not match the order, naming both counts', async () => {
+    const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
+    const runPrompt = async () =>
+      JSON.stringify({ order: ['IDEA-1', 'IDEA-2'], why: 'only one reason' });
+
+    await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
+      'why" had 1 line(s) but the order has 2 ids',
     );
   });
 

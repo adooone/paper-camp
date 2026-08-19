@@ -100,8 +100,9 @@ What the prioritise agent weighs, and the run-order classification itself.
 - [x] Report a partial apply honestly
       Return 200 with a partial result (reorder done, N ideas un-annotated) instead of 400, or make the run-order write roll back on annotation failure.
       run: 4m17s · 6.3k in · 13.5k out · sonnet-5
-- [ ] Give each validation cause its own message
+- [x] Give each validation cause its own message
       Split the four `validatePrioritiseVerdict` failures into distinct messages that name the offending id or line count.
+      run: 2m49s · 235 in · 7.4k out · sonnet-5
 - [ ] Relax the `why` line-count contract
       Accept an otherwise-valid ordering whose `why` line count mismatches by falling back to a generic per-id reason.
 - [ ] Retry the agent once on a malformed verdict

@@ -15,25 +15,43 @@ import {
   writeRunOrderFile,
 } from './helpers';
 
-function validatePrioritiseVerdict(
-  candidate: string,
-  activeIds: string[],
-): PrioritiseVerdict | undefined {
+function validatePrioritiseVerdict(candidate: string, activeIds: string[]): PrioritiseVerdict {
+  let parsed: { order?: string[]; why?: string };
   try {
-    const parsed = JSON.parse(candidate) as { order?: string[]; why?: string };
-    if (!Array.isArray(parsed.order) || typeof parsed.why !== 'string') return undefined;
-    // Every active id exactly once: no gaps, dupes, or ids outside the active set.
-    if (parsed.order.length !== activeIds.length) return undefined;
-    const seen = new Set(parsed.order);
-    if (seen.size !== activeIds.length) return undefined;
-    if (!activeIds.every((id) => seen.has(id))) return undefined;
-    // One non-empty reason per ordered id, same index, per the prompt's contract.
-    const whyLines = parsed.why.split('\n').filter((line) => line.trim().length > 0);
-    if (whyLines.length !== parsed.order.length) return undefined;
-    return { order: parsed.order, why: parsed.why };
+    parsed = JSON.parse(candidate) as { order?: string[]; why?: string };
   } catch {
-    return undefined;
+    throw new Error('Agent verdict was not valid JSON');
   }
+  if (!Array.isArray(parsed.order) || typeof parsed.why !== 'string') {
+    throw new Error('Agent verdict was missing an `order` array or a `why` string');
+  }
+  if (parsed.order.length !== activeIds.length) {
+    throw new Error(
+      `Agent verdict ordered ${parsed.order.length} ideas but ${activeIds.length} are active`,
+    );
+  }
+  const orderSeen = new Set<string>();
+  for (const id of parsed.order) {
+    if (orderSeen.has(id)) throw new Error(`Agent verdict listed id "${id}" more than once`);
+    orderSeen.add(id);
+  }
+  const activeSet = new Set(activeIds);
+  const unknown = parsed.order.find((id) => !activeSet.has(id));
+  if (unknown) {
+    throw new Error(`Agent verdict included id "${unknown}", which is not in the active set`);
+  }
+  const missing = activeIds.find((id) => !orderSeen.has(id));
+  if (missing) {
+    throw new Error(`Agent verdict is missing active id "${missing}"`);
+  }
+  // One non-empty reason per ordered id, same index, per the prompt's contract.
+  const whyLines = parsed.why.split('\n').filter((line) => line.trim().length > 0);
+  if (whyLines.length !== parsed.order.length) {
+    throw new Error(
+      `Agent verdict's "why" had ${whyLines.length} line(s) but the order has ${parsed.order.length} ids`,
+    );
+  }
+  return { order: parsed.order, why: parsed.why };
 }
 
 // One-shot, read-only agent call, not the long-running phase/task system in
@@ -65,11 +83,7 @@ export async function getPrioritiseVerdict(
   const match = resultText.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('Agent did not return a parseable prioritise verdict');
 
-  const verdict = validatePrioritiseVerdict(match[0], activeIds);
-  if (!verdict) {
-    throw new Error('Agent verdict did not include every active id exactly once');
-  }
-  return verdict;
+  return validatePrioritiseVerdict(match[0], activeIds);
 }
 
 function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): string[] {
