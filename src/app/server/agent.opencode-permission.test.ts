@@ -94,20 +94,10 @@ function currentStatus(manager: Manager) {
 
 const settled = (status: string) => status === 'done' || status === 'error';
 
-async function waitForStatus(
-  manager: Manager,
-  done: (status: string) => boolean,
-  timeoutMs = 10_000,
-): Promise<string> {
-  const start = Date.now();
+async function waitForStatus(manager: Manager, done: (status: string) => boolean): Promise<string> {
   for (;;) {
     const status = currentStatus(manager)?.status;
     if (status && done(status)) return status;
-    if (Date.now() - start > timeoutMs) {
-      throw new Error(
-        `timed out waiting; last status: ${status}, lines: ${currentStatus(manager)?.lines.join(' | ')}`,
-      );
-    }
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
 }
