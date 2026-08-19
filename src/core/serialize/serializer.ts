@@ -223,6 +223,9 @@ interface NewEntityFileInput {
   phases?: PhaseItem[];
   fixes?: PhaseItem[];
   thread?: ThreadMessage[];
+  // Frontmatter keys this paper-camp doesn't recognise, round-tripped from parseEntityFile
+  // so a write never drops a field a newer version wrote — see entityFrontmatterKnownKeys.
+  unknownFrontmatter?: Record<string, unknown>;
 }
 
 export function formatEntityFile(input: NewEntityFileInput): string {
@@ -242,6 +245,9 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   if (input.tags && input.tags.length > 0) frontmatter.tags = input.tags;
   if (input.subject) frontmatter.subject = input.subject;
   if (input.order !== undefined) frontmatter.order = input.order;
+  for (const key of Object.keys(input.unknownFrontmatter ?? {}).sort()) {
+    frontmatter[key] = (input.unknownFrontmatter as Record<string, unknown>)[key];
+  }
 
   const sections: string[] = [serializeFrontmatter(frontmatter)];
   if (input.body) sections.push(input.body);

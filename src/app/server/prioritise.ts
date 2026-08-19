@@ -128,6 +128,7 @@ export async function applyPrioritiseVerdict(
     if (!entry) continue;
     try {
       await writeEntityFile(
+        root,
         file,
         entityFileInput(entry, {
           thread: [...(entry.thread ?? []), agentThreadMessage(reasonFor(id))],

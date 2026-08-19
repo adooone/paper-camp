@@ -28,6 +28,7 @@ import {
 } from '../sections';
 import { threadFromLegacy } from '../thread';
 import {
+  entityFrontmatterKnownKeys,
   entityFrontmatterSchema,
   ideaFrontmatterSchema,
   planFieldsSchema,
@@ -220,6 +221,16 @@ export function parseFrontmatter<T>(
   return { data: result.data, body, warnings };
 }
 
+function unknownFrontmatterKeys(
+  frontmatter: Record<string, unknown>,
+  knownKeys: ReadonlySet<string>,
+): Record<string, unknown> | undefined {
+  const unknown = Object.fromEntries(
+    Object.entries(frontmatter).filter(([key]) => !knownKeys.has(key)),
+  );
+  return Object.keys(unknown).length > 0 ? unknown : undefined;
+}
+
 export function parseEntityFile(content: string): ParseResult<EntityEntry> {
   const warnings: ParseWarning[] = [];
   const {
@@ -254,6 +265,8 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     });
   }
 
+  const unknownFrontmatter = unknownFrontmatterKeys(frontmatter, entityFrontmatterKnownKeys);
+
   const entry: EntityEntry = {
     id: frontmatter.id,
     title: frontmatter.title,
@@ -273,6 +286,7 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     phases,
     ...(fixes.length > 0 && { fixes }),
     ...(thread.length > 0 && { thread }),
+    ...(unknownFrontmatter && { unknownFrontmatter }),
   };
 
   return { entries: [entry], warnings };

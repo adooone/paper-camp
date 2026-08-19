@@ -275,6 +275,38 @@ describe('formatEntityFile round-trip', () => {
     expect(entries[0].subject).toBeUndefined();
     expect(entries[0].order).toBeUndefined();
   });
+
+  it('carries an unrecognised frontmatter key through parse -> format -> parse', () => {
+    const content = `---
+id: IDEA-47
+title: Written by a newer paper-camp
+created: 2026-07-05
+formatVersion: 2
+---
+Body prose.`;
+    const { entries } = parseEntityFile(content);
+    expect(entries[0].unknownFrontmatter).toEqual({ formatVersion: 2 });
+
+    const serialized = formatEntityFile(entries[0]);
+    expect(serialized).toContain('formatVersion: 2');
+
+    const { entries: reparsed } = parseEntityFile(serialized);
+    expect(reparsed[0].unknownFrontmatter).toEqual({ formatVersion: 2 });
+  });
+
+  it('writes multiple unrecognised keys in a stable, sorted order', () => {
+    const serialized = formatEntityFile({
+      id: 'IDEA-48',
+      title: 'Multiple unknown keys',
+      created: '2026-07-05',
+      body: 'Prose.',
+      unknownFrontmatter: { zField: 'z', aField: 'a' },
+    });
+    const zIndex = serialized.indexOf('zField:');
+    const aIndex = serialized.indexOf('aField:');
+    expect(aIndex).toBeGreaterThan(-1);
+    expect(aIndex).toBeLessThan(zIndex);
+  });
 });
 
 describe('assignEntityId', () => {

@@ -276,6 +276,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           const sourcePath = join(ideasDir, `${id}.md`);
           if (!target || !(await fileExists(sourcePath))) continue;
           await writeEntityFile(
+            root,
             join(archiveDir, `${id}.md`),
             entityFileInput(target, { status: 'done', updated: todayDateString() }),
           );

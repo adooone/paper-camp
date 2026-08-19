@@ -28,26 +28,30 @@ export const planFieldsSchema = z.object({
 // YAML frontmatter schemas: the per-file plan/idea format, `---`-delimited YAML
 // metadata plus a markdown body. Field-based schemas above exist only until the
 // monolithic-file format is fully migrated away.
-export const planFrontmatterSchema = z.object({
-  id: z.string().describe('Permanent plan ID, e.g. FEAT-24'),
-  title: z.string().describe('Human-readable plan name, e.g. "Plan storage architecture"'),
-  kind: z
-    .enum(['feat', 'fix', 'chore', 'docs', 'refactor'])
-    .describe('Plan kind matching Conventional Commits types'),
-  status: z
-    .enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped'])
-    .describe('Current lifecycle status'),
-  idea: z.string().optional().describe('IDEA-N backlink if this plan grew out of an idea'),
-  agent: z.enum(AGENT_IDS).optional().describe('Per-plan agent override'),
-  created: dateString.describe('Creation date (YYYY-MM-DD)'),
-  updated: dateString.optional().describe('Last significant update date (YYYY-MM-DD)'),
-  audited: dateString.optional().describe('Date of last successful convergence audit (YYYY-MM-DD)'),
-  'audited-hash': z
-    .string()
-    .optional()
-    .describe('Content hash of the plan at last audit, used to detect edits regardless of mtime'),
-  tags: z.array(z.string()).optional().describe('Tagging categories'),
-});
+export const planFrontmatterSchema = z
+  .object({
+    id: z.string().describe('Permanent plan ID, e.g. FEAT-24'),
+    title: z.string().describe('Human-readable plan name, e.g. "Plan storage architecture"'),
+    kind: z
+      .enum(['feat', 'fix', 'chore', 'docs', 'refactor'])
+      .describe('Plan kind matching Conventional Commits types'),
+    status: z
+      .enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped'])
+      .describe('Current lifecycle status'),
+    idea: z.string().optional().describe('IDEA-N backlink if this plan grew out of an idea'),
+    agent: z.enum(AGENT_IDS).optional().describe('Per-plan agent override'),
+    created: dateString.describe('Creation date (YYYY-MM-DD)'),
+    updated: dateString.optional().describe('Last significant update date (YYYY-MM-DD)'),
+    audited: dateString
+      .optional()
+      .describe('Date of last successful convergence audit (YYYY-MM-DD)'),
+    'audited-hash': z
+      .string()
+      .optional()
+      .describe('Content hash of the plan at last audit, used to detect edits regardless of mtime'),
+    tags: z.array(z.string()).optional().describe('Tagging categories'),
+  })
+  .passthrough();
 
 export const ideaFrontmatterSchema = z
   .object({
@@ -62,6 +66,7 @@ export const ideaFrontmatterSchema = z
       .optional()
       .describe('Manual lifecycle, valid only on notes — plan-bearing ideas carry no status'),
   })
+  .passthrough()
   .refine((data) => data.status === undefined || data.kind === 'note', {
     message: 'status is only valid on ideas with kind: note',
     path: ['status'],
@@ -69,7 +74,7 @@ export const ideaFrontmatterSchema = z
 
 // Unified entity schema: one file per entity, with the plan as an optional
 // `### Phases` body section. Replaces the legacy pair above once migration lands.
-export const entityFrontmatterSchema = z
+const entityFrontmatterObjectSchema = z
   .object({
     id: z.string().describe('Permanent lifetime entity ID, e.g. IDEA-45 — never changes'),
     title: z.string().describe('Human-readable entity name'),
@@ -118,6 +123,16 @@ export const entityFrontmatterSchema = z
       .optional()
       .describe('Run order; absent means unordered, sorting after ordered entries'),
   })
+  .passthrough();
+
+// Frontmatter keys the schema above assigns explicit meaning to — everything else
+// parses through untouched so an older paper-camp can carry a newer field it
+// doesn't understand instead of dropping it on the next write.
+export const entityFrontmatterKnownKeys: ReadonlySet<string> = new Set(
+  Object.keys(entityFrontmatterObjectSchema.shape),
+);
+
+export const entityFrontmatterSchema = entityFrontmatterObjectSchema
   .refine(
     (data) =>
       data.kind !== 'note' ||
@@ -158,7 +173,10 @@ export const deskConfigSchema = z.object({
 });
 
 export const paperCampConfigSchema = z.object({
-  version: z.string(),
+  version: z
+    .number()
+    .int()
+    .describe('Corpus format version (see CORPUS_FORMAT_VERSION), not the package version'),
   projectName: z.string(),
   initializedAt: z.string(),
   nextId: z

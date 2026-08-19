@@ -1,6 +1,7 @@
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { PaperCampConfig } from '../../types/index';
+import { CORPUS_FORMAT_VERSION } from '../corpus-format';
 import { paperCampConfigSchema } from '../parse/schemas';
 import { formatEntityFile, todayDateString } from '../serialize';
 import { CLAUDE_SETTINGS_JSON, SKILL_MD_CONTENT } from './templates';
@@ -37,7 +38,7 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
   }
 
   const config: PaperCampConfig = {
-    version: PAPER_CAMP_VERSION,
+    version: CORPUS_FORMAT_VERSION,
     projectName: options.projectName,
     initializedAt: new Date().toISOString(),
     nextId: { idea: 2 },

@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import { CORPUS_FORMAT_VERSION } from '../corpus-format';
 import { initProject } from './scaffold';
 
 const dirs: string[] = [];
@@ -30,6 +31,15 @@ describe('initProject Claude Code integration scaffolding', () => {
 
     const settings = JSON.parse(await readFile(join(root, '.claude', 'settings.json'), 'utf-8'));
     expect(settings.hooks.SessionStart[0].hooks[0].command).toContain('session-focus');
+  });
+
+  it('stamps config.json with the corpus format version, not the package version', async () => {
+    const root = await makeTempDir('papercamp-scaffold-');
+
+    await initProject(root, { projectName: 'demo' });
+
+    const config = JSON.parse(await readFile(join(root, 'papercamp', 'config.json'), 'utf-8'));
+    expect(config.version).toBe(CORPUS_FORMAT_VERSION);
   });
 
   it('never overwrites an existing skill file or settings.json', async () => {

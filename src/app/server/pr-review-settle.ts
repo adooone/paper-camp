@@ -128,6 +128,7 @@ async function appendReviewThreadMessage(root: string, entityId: string, summary
   if (!entry) return false;
 
   await writeEntityFile(
+    root,
     file,
     entityFileInput(entry, {
       thread: [...(entry.thread ?? []), agentThreadMessage(summary, 'review')],

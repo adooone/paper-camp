@@ -157,6 +157,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
               const otherFile = join(ideasDir, `${other.id}.md`);
               if (await fileExists(otherFile)) {
                 await writeEntityFile(
+                  root,
                   otherFile,
                   entityFileInput(other, { status: 'planned', updated: todayDateString() }),
                 );
@@ -165,7 +166,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           }
         }
 
-        await writeEntityFile(targetFile, entityFileInput(updatedEntry));
+        await writeEntityFile(root, targetFile, entityFileInput(updatedEntry));
 
         // Any status/order write can break the run-order invariant (contiguous
         // 1..N over planned/in-progress/review); reflow papercamp/run-order.md to

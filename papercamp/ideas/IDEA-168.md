@@ -2,7 +2,7 @@
 id: IDEA-168
 title: Version the corpus format
 type: feat
-status: idea
+status: review
 created: 2026-08-13
 updated: 2026-08-13
 tags:
@@ -71,15 +71,21 @@ Out of scope: the hub itself, cross-corpus links ([[IDEA-123]]), and any
 migration tooling beyond a single doctor-driven bump.
 
 ### Phases
-- [ ] Preserve unknown frontmatter keys on read
+- [x] Preserve unknown frontmatter keys on read
       Add passthrough to the Zod frontmatter schemas so unrecognised keys survive parse.
-- [ ] Emit preserved keys on write
+      run: 6m9s · 6.3k in · 8.6k out · sonnet-5
+- [x] Emit preserved keys on write
       Change serializer.ts to write carried-through keys alongside known ones in a stable order.
-- [ ] Define the format version, separate from the package version
+      run: 7m44s · 1.4k in · 12.9k out · sonnet-5
+- [x] Define the format version, separate from the package version
       Introduce a format-version constant and repurpose config.version to declare it, stamped honestly on write.
-- [ ] Refuse lossy writes against a newer corpus
+      run: 4m52s · 793 in · 12.3k out · sonnet-5
+- [x] Refuse lossy writes against a newer corpus
       Compare the corpus format version to the running one; keep reads tolerant, refuse writes when the corpus is newer.
-- [ ] Surface the mismatch in the doctor
+      run: 7m57s · 4.4k in · 18.6k out · sonnet-5
+- [x] Surface the mismatch in the doctor
       Report a newer-than-supported corpus as a doctor finding on load.
-- [ ] Add the doctor-driven format bump
+      run: 3m50s · 1.2k in · 6.3k out · sonnet-5
+- [x] Add the doctor-driven format bump
       Make migration an explicit, reviewable action that produces a git diff rather than an implicit rewrite.
+      run: 4m29s · 867 in · 10.9k out · sonnet-5

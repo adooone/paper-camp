@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PaperCampConfig } from '../../../types/index';
+import { CORPUS_FORMAT_VERSION } from '../../corpus-format';
 import type { DoctorContext, DoctorEntityFile } from '../doctor';
 import { metadataChecks } from './metadata';
 
@@ -86,6 +87,29 @@ describe('metadata checks', () => {
   it('does not flag the counter when config has no idea counter', () => {
     const findings = run([valid('IDEA-99')], {} as PaperCampConfig).filter(
       (x) => x.rule === 'id-counter-stale',
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it('flags a corpus format version newer than this paper-camp understands', () => {
+    const findings = run([valid('IDEA-1')], {
+      version: CORPUS_FORMAT_VERSION + 1,
+    } as PaperCampConfig).filter((x) => x.rule === 'corpus-format-too-new');
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({ file: 'papercamp/config.json', line: 1 });
+    expect(findings[0].message).toContain(String(CORPUS_FORMAT_VERSION + 1));
+  });
+
+  it('does not flag a corpus format version at or below the current one', () => {
+    const findings = run([valid('IDEA-1')], {
+      version: CORPUS_FORMAT_VERSION,
+    } as PaperCampConfig).filter((x) => x.rule === 'corpus-format-too-new');
+    expect(findings).toEqual([]);
+  });
+
+  it('does not flag a corpus with no version stamped', () => {
+    const findings = run([valid('IDEA-1')], {} as PaperCampConfig).filter(
+      (x) => x.rule === 'corpus-format-too-new',
     );
     expect(findings).toEqual([]);
   });

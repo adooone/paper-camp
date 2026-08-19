@@ -36,7 +36,7 @@ describe('deskConfigSchema', () => {
 describe('paperCampConfigSchema desk field', () => {
   it('validates an embedded desk manifest', () => {
     const result = paperCampConfigSchema.safeParse({
-      version: '0.1.0',
+      version: 1,
       projectName: 'paper-camp',
       initializedAt: '2026-04-29T00:00:00.000Z',
       desk: { checks: [{ name: 'types', cmd: 'pnpm check-types' }] },

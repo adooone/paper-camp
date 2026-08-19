@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { formatIdeaFile, formatPlanFile } from '../serialize/serializer';
 import { parseFrontmatter, parseIdeaFile, parsePlanFile } from './parser';
+import { entityFrontmatterSchema, ideaFrontmatterSchema, planFrontmatterSchema } from './schemas';
 
 const testSchema = z.object({
   id: z.string(),
@@ -73,6 +74,42 @@ body`;
     expect(result.warnings).toHaveLength(1);
     expect(result.warnings[0].message).toContain('expected string');
     expect(result.data).toBeNull();
+  });
+});
+
+describe('frontmatter schema passthrough', () => {
+  it('preserves an unrecognised key on entityFrontmatterSchema', () => {
+    const result = entityFrontmatterSchema.safeParse({
+      id: 'IDEA-1',
+      title: 'Test idea',
+      created: '2026-08-19',
+      futureField: 'from a newer paper-camp',
+    });
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({ futureField: 'from a newer paper-camp' });
+  });
+
+  it('preserves an unrecognised key on planFrontmatterSchema', () => {
+    const result = planFrontmatterSchema.safeParse({
+      id: 'FEAT-1',
+      title: 'Test plan',
+      kind: 'feat',
+      status: 'planned',
+      created: '2026-08-19',
+      futureField: 'from a newer paper-camp',
+    });
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({ futureField: 'from a newer paper-camp' });
+  });
+
+  it('preserves an unrecognised key on ideaFrontmatterSchema', () => {
+    const result = ideaFrontmatterSchema.safeParse({
+      id: 'IDEA-1',
+      title: 'Test idea',
+      futureField: 'from a newer paper-camp',
+    });
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({ futureField: 'from a newer paper-camp' });
   });
 });
 

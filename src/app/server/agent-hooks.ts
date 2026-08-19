@@ -34,6 +34,7 @@ export function createAgentHooks(root: string, git: GitManager) {
     const entry = parsed.entries[0];
     const auditedHash = computePlanContentHash({ body: entry.body, phases: entry.phases });
     await writeEntityFile(
+      root,
       planFile,
       entityFileInput(entry, { audited: todayDateString(), auditedHash }),
     );
@@ -54,7 +55,7 @@ export function createAgentHooks(root: string, git: GitManager) {
     const target = list?.[phaseIndex];
     if (!target) return;
     target.run = mergeRun(target.run, run.usage);
-    await writeEntityFile(planFile, entityFileInput(entry));
+    await writeEntityFile(root, planFile, entityFileInput(entry));
   }
 
   function snapshotWorkingTree(): Promise<GitStatusEntry[]> {
@@ -99,6 +100,7 @@ export function createAgentHooks(root: string, git: GitManager) {
     const entry = parsed.entries[0];
     if (entry.status === 'review' || entry.status === 'done' || entry.status === 'dropped') return;
     await writeEntityFile(
+      root,
       planFile,
       entityFileInput(entry, {
         status: 'review',

@@ -15,7 +15,7 @@ export const DOCTOR_RULES = [
     category: 'metadata',
     severity: 'error',
     summary:
-      'Frontmatter fails entityFrontmatterSchema — missing required field, unknown key, bad enum, malformed date, or a violated note/status refinement.',
+      'Frontmatter fails entityFrontmatterSchema — missing required field, bad enum, malformed date, or a violated note/status refinement.',
   },
   {
     id: 'filename-id-mismatch',
@@ -35,6 +35,13 @@ export const DOCTOR_RULES = [
     severity: 'error',
     summary:
       'An entity id is greater than or equal to config.nextId.idea, so the next mint collides with an existing file.',
+  },
+  {
+    id: 'corpus-format-too-new',
+    category: 'metadata',
+    severity: 'error',
+    summary:
+      'config.version is newer than the format this paper-camp understands; reads stay tolerant but writes are refused until it upgrades.',
   },
   {
     id: 'phases-list-split',
