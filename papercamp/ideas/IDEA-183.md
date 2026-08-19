@@ -2,7 +2,7 @@
 id: IDEA-183
 title: Filters and sort tell the truth
 type: fix
-status: review
+status: in-progress
 created: 2026-08-16
 updated: 2026-08-19
 tags:
@@ -86,7 +86,11 @@ archive section's own filtering ([[IDEA-184]]).
 - [x] Move grouping toggle above the list with handwritten styling
       The subject-grouping toggle currently sits inline in the column-header row next to the sort titles, which reads as a stray control. Move it above the list (its own row, not mixed with column headers) and style it with the app's handwritten font treatment instead of a plain button.
       run: 1m5s · 5.7k in · 4.3k out · sonnet-5
+- [ ] Move grouping toggle into the header actions row
+      Relocate the subject-grouping toggle out of its own row and into the existing actions row above the table (alongside New idea and other list actions), keeping the handwritten-font styling.
 
 ### Thread
 - [x] 2026-08-19 [chat] why this awful button placed directly into list header with column titles. It should be above the list and with handwritten font
 - [x] 2026-08-19 [chat] [agent] Added that as a fix here — moving the subject-grouping toggle above the list (out of the column-header row) and styling it with the handwritten font instead of a plain button in the header. (reopened this idea to re-run)
+- [x] 2026-08-19 [chat] we have a row above table with new idea and other actions, why you cant put this button here? Why do I need to explain such simple things
+- [x] 2026-08-19 [chat] [agent] Fair — added it here as a phase to put the toggle in the header actions row (where New idea and the other controls already live), not a separate row above the list. (reopened this idea to re-run)
