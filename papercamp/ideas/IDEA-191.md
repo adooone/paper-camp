@@ -107,7 +107,7 @@ nor a global `testTimeout` is part of this.
 ### Phases
 - [x] Export CLI command bodies as callable functions
       Split argv parsing and exit codes from each command's work so tests can call the function directly.
-- [ ] Move the CLI tests in-process
+- [x] Move the CLI tests in-process
       Rewrite `stamp-release`, `audit`, and `release-notes` tests to call the exported functions; keep one real `bun` invocation as the sole process-boundary test.
 - [ ] Give the fake agent adapter a test-controlled completion signal
       Replace the `node -e` stub and the wall-clock sleeps in `agent.test.ts` with a signal the test resolves itself.
