@@ -64,10 +64,14 @@ export const WorklistActionsMenu = () => {
     setRunning('prioritise');
     try {
       const result = await launchPrioritise();
+      const unannotated = result.moved.length - result.annotated.length;
       toast({
         title: result.moved.length > 0 ? 'Queue reordered' : 'Already in order',
-        description: result.why || undefined,
-        variant: 'success',
+        description:
+          unannotated > 0
+            ? `${unannotated} of ${result.moved.length} ideas could not be annotated`
+            : result.why || undefined,
+        variant: unannotated > 0 ? 'warning' : 'success',
       });
     } catch (err) {
       toast({

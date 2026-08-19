@@ -97,8 +97,9 @@ been rejected until something else triggers a reload.
 What the prioritise agent weighs, and the run-order classification itself.
 
 ### Phases
-- [ ] Report a partial apply honestly
+- [x] Report a partial apply honestly
       Return 200 with a partial result (reorder done, N ideas un-annotated) instead of 400, or make the run-order write roll back on annotation failure.
+      run: 4m17s · 6.3k in · 13.5k out · sonnet-5
 - [ ] Give each validation cause its own message
       Split the four `validatePrioritiseVerdict` failures into distinct messages that name the offending id or line count.
 - [ ] Relax the `why` line-count contract

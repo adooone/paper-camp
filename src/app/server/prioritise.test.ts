@@ -132,12 +132,13 @@ describe('applyPrioritiseVerdict', () => {
     });
     writeRunOrder(root, ['IDEA-1 — First', 'IDEA-2 — Second']);
 
-    const moved = await applyPrioritiseVerdict(root, {
+    const result = await applyPrioritiseVerdict(root, {
       order: ['IDEA-2', 'IDEA-1'],
       why: 'unblocks IDEA-1\nwaits on IDEA-2',
     });
 
-    expect(moved.sort()).toEqual(['IDEA-1', 'IDEA-2']);
+    expect(result.moved.sort()).toEqual(['IDEA-1', 'IDEA-2']);
+    expect(result.annotated.sort()).toEqual(['IDEA-1', 'IDEA-2']);
     expect(readRunOrder(root)).toEqual(['IDEA-2 — Second', 'IDEA-1 — First']);
     expect(readLog(root, 'IDEA-2')).toEqual([expect.stringContaining('unblocks IDEA-1')]);
     expect(readLog(root, 'IDEA-1')).toEqual([expect.stringContaining('waits on IDEA-2')]);
@@ -161,13 +162,49 @@ describe('applyPrioritiseVerdict', () => {
     });
     writeRunOrder(root, ['IDEA-1 — First', 'IDEA-2 — Second']);
 
-    const moved = await applyPrioritiseVerdict(root, {
+    const result = await applyPrioritiseVerdict(root, {
       order: ['IDEA-1', 'IDEA-2'],
       why: 'stays first\nstays second',
     });
 
-    expect(moved).toEqual([]);
+    expect(result.moved).toEqual([]);
+    expect(result.annotated).toEqual([]);
     expect(readLog(root, 'IDEA-1')).toEqual([]);
     expect(readLog(root, 'IDEA-2')).toEqual([]);
+  });
+
+  it('keeps the reorder and reports the failure when annotating a moved idea fails', async () => {
+    const root = tmpRoot();
+    write(root, {
+      id: 'IDEA-1',
+      title: 'First',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-01',
+    });
+    write(root, {
+      id: 'IDEA-2',
+      title: 'Second',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-02',
+    });
+    writeRunOrder(root, ['IDEA-1 — First', 'IDEA-2 — Second']);
+    const idea2File = join(root, 'papercamp', 'ideas', 'IDEA-2.md');
+    chmodSync(idea2File, 0o444);
+
+    try {
+      const result = await applyPrioritiseVerdict(root, {
+        order: ['IDEA-2', 'IDEA-1'],
+        why: 'unblocks IDEA-1\nwaits on IDEA-2',
+      });
+
+      expect(result.moved.sort()).toEqual(['IDEA-1', 'IDEA-2']);
+      expect(result.annotated).toEqual(['IDEA-1']);
+      expect(result.annotationError).toContain('IDEA-2');
+      expect(readRunOrder(root)).toEqual(['IDEA-2 — Second', 'IDEA-1 — First']);
+    } finally {
+      chmodSync(idea2File, 0o644);
+    }
   });
 });

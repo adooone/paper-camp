@@ -84,13 +84,27 @@ function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): st
   return [...changed];
 }
 
+export interface ApplyPrioritiseResult {
+  /** Ids whose position changed and were written to run-order.md. */
+  moved: string[];
+  /** Subset of `moved` that also got the `why` thread message appended. */
+  annotated: string[];
+  /** Set when annotation stopped early because a write failed. */
+  annotationError?: string;
+}
+
 /** Applies a prioritise verdict: reorders papercamp/run-order.md to the agent's
  *  target sequence and appends the matching `why` line as a log comment to each
- *  ranked idea whose position actually moved. */
+ *  ranked idea whose position actually moved.
+ *
+ *  The reorder and the annotations are two separate writes — if an annotation
+ *  fails partway through, the reorder that already happened is not rolled
+ *  back or hidden: `moved` always reflects the ids actually reordered on
+ *  disk, and `annotated` reports how many of them got their `why` line. */
 export async function applyPrioritiseVerdict(
   root: string,
   verdict: PrioritiseVerdict,
-): Promise<string[]> {
+): Promise<ApplyPrioritiseResult> {
   const ideasDir = campFile(root, 'ideas');
   const { entries } = await readEntities(ideasDir);
   const { entries: work } = await readWorkEntries(ideasDir);
@@ -109,7 +123,7 @@ export async function applyPrioritiseVerdict(
     if (moved.length > 0) await writeRunOrderFile(root, reconciled);
     return moved;
   });
-  if (moved.length === 0) return [];
+  if (moved.length === 0) return { moved: [], annotated: [] };
 
   const whyLines = verdict.why.split('\n').filter((line) => line.trim().length > 0);
   const reasonFor = (id: string) => {
@@ -117,7 +131,8 @@ export async function applyPrioritiseVerdict(
     return whyLines[index]?.trim() || 'Reprioritised by the shuffle agent.';
   };
 
-  const applied: string[] = [];
+  const annotated: string[] = [];
+  let annotationError: string | undefined;
   for (const id of moved) {
     const primaryFile = join(ideasDir, `${id}.md`);
     const file = (await fileExists(primaryFile))
@@ -134,13 +149,12 @@ export async function applyPrioritiseVerdict(
           thread: [...(entry.thread ?? []), agentThreadMessage(reasonFor(id))],
         }),
       );
-      applied.push(id);
+      annotated.push(id);
     } catch (err) {
-      throw new Error(
-        `Prioritise partially applied (${applied.length}/${moved.length} ideas updated) before failing on ${id}: ${(err as Error).message}`,
-      );
+      annotationError = `Failed to annotate ${id}: ${(err as Error).message}`;
+      break;
     }
   }
 
-  return applied;
+  return { moved, annotated, ...(annotationError ? { annotationError } : {}) };
 }

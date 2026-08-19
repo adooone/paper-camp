@@ -322,8 +322,14 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           const { entries } = await readWorkEntries(campFile(root, 'ideas'));
           const roadmapText = await readMaybe(join(root, 'ROADMAP.md'));
           const verdict = await getPrioritiseVerdict(entries, roadmapText, agent.runPrioritise);
-          const moved = await applyPrioritiseVerdict(root, verdict);
-          sendJson(res, 200, { ok: true, moved, why: verdict.why });
+          const { moved, annotated, annotationError } = await applyPrioritiseVerdict(root, verdict);
+          sendJson(res, 200, {
+            ok: true,
+            moved,
+            annotated,
+            why: verdict.why,
+            ...(annotationError ? { annotationError } : {}),
+          });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
         }
