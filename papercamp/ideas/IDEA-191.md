@@ -120,6 +120,7 @@ nor a global `testTimeout` is part of this.
       Audit the other test files that spawn and convert any whose behaviour a direct call already covers.
       run: 1m25s · 382 in · 5.1k out · sonnet-5
 - [x] [manual] Mark the Tests-check fix as done in IDEA-191
+- [x] [manual] Fix deliver footer sizing and git action label wrapping
 
 ### Fixes
 - [x] Fix the failing "Tests" check

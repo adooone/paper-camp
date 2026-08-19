@@ -15,6 +15,7 @@ export const GitSyncActions = () => {
       <Tooltip content={gitBranchHygiene === 'clean-on-main' ? 'Already on clean main' : undefined}>
         <Button
           size="small"
+          className="whitespace-nowrap"
           variant="secondary"
           icon={<MergeIcon size={14} />}
           disabled={gitActionBusy || gitBranchHygiene === 'clean-on-main'}
@@ -25,6 +26,7 @@ export const GitSyncActions = () => {
       </Tooltip>
       <Button
         size="small"
+        className="whitespace-nowrap"
         icon={<PushIcon size={14} />}
         disabled={gitActionBusy || gitAhead === 0}
         onClick={handlePush}
@@ -33,6 +35,7 @@ export const GitSyncActions = () => {
       </Button>
       <Button
         size="small"
+        className="whitespace-nowrap"
         variant="secondary"
         icon={<PullIcon size={14} />}
         disabled={gitActionBusy}

@@ -391,8 +391,8 @@ export const DeliverEmptyState = () => {
   const gitAhead = useAppStore((s) => s.gitAhead);
 
   return (
-    <div className="flex flex-col items-start gap-3">
-      <p className="m-0 text-xs opacity-50">
+    <div className="flex flex-col items-center gap-3">
+      <p className="m-0 text-center text-xs opacity-50">
         {gitAhead > 0
           ? `All changes committed — ${gitAhead} commit${gitAhead === 1 ? '' : 's'} ready to push.`
           : 'No changed files.'}

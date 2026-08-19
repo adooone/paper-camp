@@ -440,13 +440,16 @@ const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
   const commitForm = useDeliverCommitForm(plan, files);
   const hasChanges = files.length > 0;
   return (
-    <div className="flex flex-col gap-2 md:flex-row md:items-start md:gap-x-6">
-      <div className="flex flex-1 flex-col gap-2">
+    // Fixed height so the footer never resizes between the changed and clean states,
+    // and min-w-0 on both halves so flex-1 actually splits them evenly — without it a
+    // half cannot shrink below its content and steals width from the other.
+    <div className="flex min-h-[7rem] flex-col justify-center gap-2 md:flex-row md:items-stretch md:gap-x-6">
+      <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2">
         <DeliverChecksRow />
         {hasChanges && <CommitMessageFields state={commitForm} filesEmpty={!hasChanges} />}
       </div>
       <Divider orientation="vertical" className="hidden md:block" />
-      <div className="flex flex-1 flex-col gap-2">
+      <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2">
         {hasChanges ? (
           <>
             <DeliverChangedFiles count={files.length} />
