@@ -342,6 +342,7 @@ export function createAgentManager(
     if (!(await fileExists(file))) return;
     const needsInput = entry.status !== 'done' && entry.status !== 'dropped';
     await writeEntityFile(
+      root,
       file,
       entityFileInput(entry, {
         thread: [...(entry.thread ?? []), agentThreadMessage(message, 'question')],

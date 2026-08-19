@@ -207,7 +207,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
           updated: todayDateString(),
         };
 
-        await writeEntityFile(targetFile, entityFileInput(updatedEntry));
+        await writeEntityFile(root, targetFile, entityFileInput(updatedEntry));
 
         // `done` is derived from a merged PR and needs no archiving; `dropped` has no
         // such signal, so it's the one status that still archives on write.
@@ -259,7 +259,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         if (type !== undefined) overrides.type = type;
 
         const updatedEntry = { ...entry, updated: todayDateString() };
-        await writeEntityFile(targetFile, entityFileInput(updatedEntry, overrides));
+        await writeEntityFile(root, targetFile, entityFileInput(updatedEntry, overrides));
 
         return json({ ok: true });
       }),
@@ -291,6 +291,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     const thread = [...(entry.thread ?? []), message];
 
     await writeEntityFile(
+      root,
       targetFile,
       entityFileInput({ ...entry, thread, updated: todayDateString() }),
     );
@@ -461,6 +462,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         }
 
         await writeEntityFile(
+          root,
           targetFile,
           entityFileInput(entry, {
             thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
@@ -497,6 +499,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         const entry = parsed.entries[0];
 
         await writeEntityFile(
+          root,
           targetFile,
           entityFileInput(entry, { status: 'dropped', updated: todayDateString() }),
         );

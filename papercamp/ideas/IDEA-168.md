@@ -80,8 +80,9 @@ migration tooling beyond a single doctor-driven bump.
 - [x] Define the format version, separate from the package version
       Introduce a format-version constant and repurpose config.version to declare it, stamped honestly on write.
       run: 4m52s · 793 in · 12.3k out · sonnet-5
-- [ ] Refuse lossy writes against a newer corpus
+- [x] Refuse lossy writes against a newer corpus
       Compare the corpus format version to the running one; keep reads tolerant, refuse writes when the corpus is newer.
+      run: 7m57s · 4.4k in · 18.6k out · sonnet-5
 - [ ] Surface the mismatch in the doctor
       Report a newer-than-supported corpus as a doctor finding on load.
 - [ ] Add the doctor-driven format bump

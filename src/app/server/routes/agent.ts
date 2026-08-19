@@ -483,6 +483,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         // Written before the agent runs so the user's message survives a slow or
         // failed run — the reply below is a second, best-effort append on top.
         await writeEntityFile(
+          root,
           targetFile,
           entityFileInput(entity, { thread: threadWithUser, updated: todayDateString() }),
         );
@@ -534,6 +535,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
           thread = [...answeredThread, agentThreadMessage(replyText, 'chat')];
           await writeEntityFile(
+            root,
             targetFile,
             entityFileInput(entity, {
               thread,
@@ -673,6 +675,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         }
 
         await writeEntityFile(
+          root,
           targetFile,
           entityFileInput(entity, {
             thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
@@ -715,6 +718,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           const summary = await summarizeFeedback(plan, messages, agent.runFeedbackReply);
           const thread = [...(entity.thread ?? []), agentThreadMessage(summary)];
           await writeEntityFile(
+            root,
             targetFile,
             entityFileInput(entity, { thread, updated: todayDateString() }),
           );

@@ -607,7 +607,7 @@ export async function runStampRelease(root: string, version: string): Promise<bo
       console.log(`  [skip]     ${id} — already stamped ${entry.released}`);
       continue;
     }
-    await writeEntityFile(planFile, entityFileInput(entry, { released: version }));
+    await writeEntityFile(root, planFile, entityFileInput(entry, { released: version }));
     console.log(`  [stamped]  ${id} -> ${version}`);
     stamped++;
   }

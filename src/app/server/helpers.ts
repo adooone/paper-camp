@@ -1,5 +1,6 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { assertCorpusWritable } from '@/core/corpus-format';
 import { readEntitiesWithDerivedStatus } from '@/core/readers';
 import {
   type RunOrderFileEntry,
@@ -65,7 +66,12 @@ export function entityFileInput(
   };
 }
 
-export async function writeEntityFile(path: string, input: EntityFileInput): Promise<void> {
+export async function writeEntityFile(
+  root: string,
+  path: string,
+  input: EntityFileInput,
+): Promise<void> {
+  await assertCorpusWritable(campFile(root, 'config.json'));
   await writeFile(path, `${formatEntityFile(input)}\n`, 'utf-8');
 }
 

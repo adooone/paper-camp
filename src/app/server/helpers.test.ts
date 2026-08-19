@@ -1,6 +1,10 @@
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { CORPUS_FORMAT_VERSION, CorpusTooNewError } from '@/core/corpus-format';
 import type { EntityEntry } from '@/types/index';
-import { describe, expect, it } from 'vitest';
-import { checkStaleBaseForRunAll, entityFileInput } from './helpers';
+import { afterAll, describe, expect, it } from 'vitest';
+import { checkStaleBaseForRunAll, entityFileInput, writeEntityFile } from './helpers';
 
 describe('entityFileInput', () => {
   it('carries unknownFrontmatter through so routine writes never drop it', () => {
@@ -17,6 +21,41 @@ describe('entityFileInput', () => {
     expect(entityFileInput(entry, { status: 'done' }).unknownFrontmatter).toEqual({
       formatVersion: 2,
     });
+  });
+});
+
+describe('writeEntityFile', () => {
+  const dirs: string[] = [];
+
+  afterAll(async () => {
+    await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
+  });
+
+  async function makeCorpus(version: unknown): Promise<string> {
+    const root = await mkdtemp(join(tmpdir(), 'papercamp-write-entity-'));
+    dirs.push(root);
+    await mkdir(join(root, 'papercamp'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'config.json'), JSON.stringify({ version }), 'utf-8');
+    return root;
+  }
+
+  it('writes normally when the corpus format version is understood', async () => {
+    const root = await makeCorpus(CORPUS_FORMAT_VERSION);
+    const path = join(root, 'IDEA-1.md');
+    await writeEntityFile(root, path, {
+      id: 'IDEA-1',
+      title: 'Test',
+      created: '2026-08-19',
+    });
+    expect(await readFile(path, 'utf-8')).toContain('id: IDEA-1');
+  });
+
+  it('refuses to write when the corpus format version is newer than this paper-camp', async () => {
+    const root = await makeCorpus(CORPUS_FORMAT_VERSION + 1);
+    const path = join(root, 'IDEA-1.md');
+    await expect(
+      writeEntityFile(root, path, { id: 'IDEA-1', title: 'Test', created: '2026-08-19' }),
+    ).rejects.toBeInstanceOf(CorpusTooNewError);
   });
 });
 
