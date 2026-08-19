@@ -16,6 +16,13 @@ import {
 import { createAgentHooks } from './agent-hooks';
 import { createGitManager } from './git';
 
+// These are IDEA-191's sanctioned end-to-end tests: they spawn a real agent process
+// and drive a real git repo, which is the point of keeping them. vitest's 5s default
+// is a local-machine number — CI runs the same work under `--coverage` on a loaded
+// 2-core runner, where the slowest of them (~2.2s here) has no headroom left. Set once
+// for the file rather than scattered per test, so a new end-to-end case inherits it.
+vi.setConfig({ testTimeout: 20_000 });
+
 // The manager is exercised with a fake adapter whose "agent" is a short `node -e`
 // script — the real spawn/readline/verification machinery runs, only the AI CLI is
 // substituted. `agentScript.current` is what each spawned agent executes.

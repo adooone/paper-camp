@@ -11,7 +11,6 @@ tags:
   - agent
   - cli
 subject: Testing
-order: 9
 ---
 
 The suite exercises behaviour in-process. Spawning a real subprocess is a
@@ -124,6 +123,7 @@ nor a global `testTimeout` is part of this.
 - [x] [manual] Fix deliver footer sizing and git action label wrapping
 - [x] [manual] Wrap git actions and collapse empty deliver footer split
 - [x] [manual] Show all deliver checks and center commit footer layout
+- [x] [manual] Bump agent.test.ts timeout for CI-loaded runners
 
 ### Fixes
 - [x] Fix the failing "Tests" check
