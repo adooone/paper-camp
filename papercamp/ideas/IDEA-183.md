@@ -65,8 +65,9 @@ archive section's own filtering ([[IDEA-184]]).
 - [x] Render every status chip whenever plans exist
       In `plan-filter-column.tsx`, iterate `STATUS_CHIP_ORDER` unconditionally, drop the `statusCounts[status] > 0 || activeStatuses.has(status)` guard.
       run: 40s · 5.7k in · 1.9k out · sonnet-5
-- [ ] Show zero counts as clickable `0` chips
+- [x] Show zero counts as clickable `0` chips
       Keep unselected zero-count chips enabled so selecting one reveals the empty result.
+      run: 30s · 228 in · 1.6k out · sonnet-5
 - [ ] Gate whole-corpus hiding on the unfiltered total
       If a genuinely empty status should still hide, key it off the pre-search corpus count, never the filtered count.
 - [ ] Make subject grouping an explicit toggle
