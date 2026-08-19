@@ -440,25 +440,30 @@ const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
   const commitForm = useDeliverCommitForm(plan, files);
   const hasChanges = files.length > 0;
   return (
-    // Fixed height so the footer never resizes between the changed and clean states,
-    // and min-w-0 on both halves so flex-1 actually splits them evenly — without it a
-    // half cannot shrink below its content and steals width from the other.
-    <div className="flex min-h-[7rem] flex-col justify-center gap-2 md:flex-row md:items-stretch md:gap-x-6">
-      <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2">
-        <DeliverChecksRow />
-        {hasChanges && <CommitMessageFields state={commitForm} filesEmpty={!hasChanges} />}
-      </div>
-      <Divider orientation="vertical" className="hidden md:block" />
-      <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2">
-        {hasChanges ? (
-          <>
+    // min-h keeps the footer from resizing between states. Splitting in two is only
+    // worth it when there is something to commit — with a clean tree the left half
+    // holds one stamp, so an even split strands it beside an over-stuffed right half.
+    <div className="flex min-h-[7rem] flex-col items-center justify-center gap-3">
+      {hasChanges ? (
+        <div className="flex w-full flex-col gap-2 md:flex-row md:items-stretch md:gap-x-6">
+          {/* min-w-0: without it a half cannot shrink below its content and steals
+              width from the other, so flex-1 stops meaning an even split. */}
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
+            <DeliverChecksRow />
+            <CommitMessageFields state={commitForm} filesEmpty={false} />
+          </div>
+          <Divider orientation="vertical" className="hidden md:block" />
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
             <DeliverChangedFiles count={files.length} />
-            <DeliverCommitButton state={commitForm} filesEmpty={!hasChanges} />
-          </>
-        ) : (
+            <DeliverCommitButton state={commitForm} filesEmpty={false} />
+          </div>
+        </div>
+      ) : (
+        <>
+          <DeliverChecksRow />
           <DeliverEmptyState />
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };
