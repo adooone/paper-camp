@@ -96,12 +96,15 @@ export function createPlansSlice(set: SetState, _get: GetState): PlansSlice {
     setSubjectFilter: (subject) =>
       set((s) => ({ planFilters: storePlanFilters({ ...s.planFilters, subject }) })),
     setPlanSortKey: (sortKey) =>
-      set((s) => ({ planFilters: storePlanFilters({ ...s.planFilters, sortKey }) })),
+      set((s) => ({
+        planFilters: storePlanFilters({ ...s.planFilters, sortKey, groupBySubject: false }),
+      })),
     togglePlanSortDirection: () =>
       set((s) => ({
         planFilters: storePlanFilters({
           ...s.planFilters,
           sortDirection: s.planFilters.sortDirection === 'asc' ? 'desc' : 'asc',
+          groupBySubject: false,
         }),
       })),
     toggleGroupBySubject: () =>

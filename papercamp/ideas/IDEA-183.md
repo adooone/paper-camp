@@ -74,7 +74,8 @@ archive section's own filtering ([[IDEA-184]]).
 - [x] Make subject grouping an explicit toggle
       Replace the implicit `showSubjectHeaders = groups.length > 1` with a user-controlled toggle.
       run: 1m48s · 517 in · 7.1k out · sonnet-5
-- [ ] Turn grouping off when a sort column is chosen
+- [x] Turn grouping off when a sort column is chosen
       Selecting a sortable header disables grouping so rendered order matches the header.
+      run: 1m40s · 229 in · 2.8k out · sonnet-5
 - [ ] Set `aria-sort` only when rows reflect it
       Emit `aria-sort` on the `#` column only while grouping is off and the gutter is truly sorted.
