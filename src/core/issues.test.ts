@@ -5,7 +5,7 @@ import {
   collectCheckIssues,
   collectPrReviewIssues,
   collectSyncIssues,
-  upsertIssues,
+  reconcileIssues,
 } from './issues';
 
 const taskLogEntry = (overrides: Partial<TaskLogEntry> = {}): TaskLogEntry => ({
@@ -47,6 +47,17 @@ const syncFailure = (overrides: Partial<GitSyncFailure> = {}): GitSyncFailure =>
   conflictRef: 'origin/main',
   conflictedFiles: ['src/a.ts'],
   recoveryPrompt: 'recover',
+  ...overrides,
+});
+
+const existingIssue = (overrides: Partial<Issue> = {}): Issue => ({
+  id: 'check:lint',
+  sourceKind: 'check',
+  sourceKey: 'lint',
+  title: 'lint failing',
+  reason: 'reason',
+  thread: [],
+  status: 'open',
   ...overrides,
 });
 
@@ -118,57 +129,69 @@ describe('collectSyncIssues', () => {
   });
 });
 
-describe('upsertIssues', () => {
-  it('replaces a repeat failure of the same source in place, preserving its thread', () => {
-    const existing: Issue[] = [
-      {
-        id: 'check:lint',
-        sourceKind: 'check',
-        sourceKey: 'lint',
+describe('reconcileIssues', () => {
+  it('replaces a repeat failure of the same source in place, preserving its thread and status open', () => {
+    const existing = [
+      existingIssue({
         title: 'old title',
         reason: 'old reason',
         thread: [{ kind: 'log', text: 'first attempt', from: 'agent' }],
-      },
+      }),
     ];
     const fresh = collectCheckIssues([deskCheck({ output: 'new failure output' })]);
-    const merged = upsertIssues(existing, fresh);
+    const merged = reconcileIssues(existing, fresh);
     expect(merged).toHaveLength(1);
-    expect(merged[0].output).toBe('new failure output');
+    expect(merged[0]).toMatchObject({ output: 'new failure output', status: 'open' });
     expect(merged[0].thread).toEqual(existing[0].thread);
   });
 
   it('appends a newly-failing source without disturbing existing positions', () => {
-    const existing: Issue[] = [
-      {
-        id: 'check:lint',
-        sourceKind: 'check',
-        sourceKey: 'lint',
-        title: 'lint failing',
-        reason: 'reason',
-        thread: [],
-      },
-    ];
+    const existing = [existingIssue()];
     const fresh = [
       ...collectCheckIssues([deskCheck()]),
       ...collectCheckIssues([deskCheck({ name: 'test' })]),
     ];
-    const merged = upsertIssues(existing, fresh);
+    const merged = reconcileIssues(existing, fresh);
     expect(merged.map((issue) => issue.id)).toEqual(['check:lint', 'check:test']);
   });
 
-  it('leaves an existing issue in place when nothing fresh matches it — closure is derived elsewhere', () => {
-    const existing: Issue[] = [
-      {
-        id: 'check:lint',
-        sourceKind: 'check',
-        sourceKey: 'lint',
-        title: 'lint failing',
-        reason: 'reason',
-        thread: [],
-      },
-    ];
-    const merged = upsertIssues(existing, []);
+  it('closes an issue whose check went green — absent from the fresh collection', () => {
+    const existing = [existingIssue({ status: 'open' })];
+    const merged = reconcileIssues(existing, []);
     expect(merged).toHaveLength(1);
-    expect(merged[0].id).toBe('check:lint');
+    expect(merged[0]).toMatchObject({ id: 'check:lint', status: 'closed' });
+  });
+
+  it('reopens a previously-closed issue when the same source fails again', () => {
+    const existing = [existingIssue({ status: 'closed' })];
+    const fresh = collectCheckIssues([deskCheck()]);
+    const merged = reconcileIssues(existing, fresh);
+    expect(merged[0].status).toBe('open');
+  });
+
+  it('keeps a promoted issue open while its fix entity has not shipped, even if still failing', () => {
+    const existing = [existingIssue({ promotedFixId: 'IDEA-200', status: 'open' })];
+    const fresh = collectCheckIssues([deskCheck()]);
+    const merged = reconcileIssues(existing, fresh, (id) =>
+      id === 'IDEA-200' ? 'in-progress' : undefined,
+    );
+    expect(merged[0]).toMatchObject({ status: 'open', promotedFixId: 'IDEA-200' });
+  });
+
+  it('closes a promoted issue once its fix entity ships, even if still detected as failing', () => {
+    const existing = [existingIssue({ promotedFixId: 'IDEA-200', status: 'open' })];
+    const fresh = collectCheckIssues([deskCheck()]);
+    const merged = reconcileIssues(existing, fresh, (id) =>
+      id === 'IDEA-200' ? 'done' : undefined,
+    );
+    expect(merged[0]).toMatchObject({ status: 'closed', promotedFixId: 'IDEA-200' });
+  });
+
+  it('closes a promoted issue whose source resolved on its own, without waiting on the fix', () => {
+    const existing = [existingIssue({ promotedFixId: 'IDEA-200', status: 'open' })];
+    const merged = reconcileIssues(existing, [], (id) =>
+      id === 'IDEA-200' ? 'in-progress' : undefined,
+    );
+    expect(merged[0]).toMatchObject({ status: 'closed', promotedFixId: 'IDEA-200' });
   });
 });

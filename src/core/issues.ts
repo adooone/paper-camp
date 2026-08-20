@@ -1,4 +1,11 @@
-import type { DeskCheckState, GitSyncFailure, Issue, PrInfo, TaskLogEntry } from '../types/index';
+import type {
+  DeskCheckState,
+  EntityStatus,
+  GitSyncFailure,
+  Issue,
+  PrInfo,
+  TaskLogEntry,
+} from '../types/index';
 
 const issueId = (sourceKind: Issue['sourceKind'], sourceKey: string): string =>
   `${sourceKind}:${sourceKey}`;
@@ -21,6 +28,7 @@ export function collectAgentRunIssues(taskLog: TaskLogEntry[]): Issue[] {
         reason: entry.reason ?? 'The run ended in error with no reason recorded.',
         occurredAt: entry.endedAt,
         thread: [],
+        status: 'open',
       };
     });
 }
@@ -39,6 +47,7 @@ export function collectCheckIssues(checks: DeskCheckState[]): Issue[] {
       output: check.output || undefined,
       occurredAt: check.lastRun ?? undefined,
       thread: [],
+      status: 'open',
     }));
 }
 
@@ -61,6 +70,7 @@ export function collectPrReviewIssues(
         title: `${entity.title} — PR review requested changes`,
         reason: `PR #${pr.number} has unresolved change requests.`,
         thread: [],
+        status: 'open',
       };
     });
 }
@@ -88,20 +98,33 @@ export function collectSyncIssues(
         ? `Conflicted files: ${failure.conflictedFiles.join(', ')}`
         : undefined,
       thread: [],
+      status: 'open',
     },
   ];
 }
 
-/** Merges freshly-collected issues into the existing set, keyed by `id`: a repeat
- * failure of the same thing replaces that issue's title/reason/output in place,
- * preserving its position and its thread, instead of appending a duplicate. */
-export function upsertIssues(existing: Issue[], fresh: Issue[]): Issue[] {
+/** Reconciles freshly-collected issues (every one currently detected as failing, so
+ * always 'open') against the existing set, keyed by `id`. A repeat failure of the
+ * same thing replaces that issue's title/reason/output in place, preserving its
+ * position and its thread. An existing issue absent from `fresh` has stopped
+ * failing, so it closes — unless it was promoted to a fix entity that hasn't
+ * shipped yet (`fixEntityStatus` reports its status), which keeps it open until
+ * that entity reaches 'done'. Closure is derived here, never a mark-read button. */
+export function reconcileIssues(
+  existing: Issue[],
+  fresh: Issue[],
+  fixEntityStatus: (fixId: string) => EntityStatus | undefined = () => undefined,
+): Issue[] {
   const freshById = new Map(fresh.map((issue) => [issue.id, issue]));
-  const merged = existing.map((issue) => {
+  const merged = existing.map((issue): Issue => {
+    if (issue.promotedFixId && fixEntityStatus(issue.promotedFixId) === 'done') {
+      freshById.delete(issue.id);
+      return { ...issue, status: 'closed' };
+    }
     const next = freshById.get(issue.id);
-    if (!next) return issue;
+    if (!next) return { ...issue, status: 'closed' };
     freshById.delete(issue.id);
-    return { ...next, thread: issue.thread };
+    return { ...next, thread: issue.thread, promotedFixId: issue.promotedFixId };
   });
   return [...merged, ...freshById.values()];
 }

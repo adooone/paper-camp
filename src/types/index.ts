@@ -973,6 +973,11 @@ export interface ReconcileQueueItem {
  * project check, a PR review that requested changes, and a git rebase/sync failure. */
 export type IssueSourceKind = 'agent-run' | 'check' | 'pr-review' | 'sync';
 
+/** Derived from the world on every read, never a mark-read button — 'open' while a
+ * collector still finds the failure, 'closed' once it doesn't or the promoted fix
+ * that carries it ships. */
+export type IssueStatus = 'open' | 'closed';
+
 /** One collected failure (IDEA-192), read as a short thread. `id` is derived from
  * `sourceKind` + `sourceKey`, so a repeat failure of the same thing resolves to the
  * same issue and continues its thread instead of raising a duplicate. */
@@ -992,4 +997,9 @@ export interface Issue {
   /** Absent when the source carries no timestamp of its own (a live PR review decision). */
   occurredAt?: string;
   thread: ThreadMessage[];
+  status: IssueStatus;
+  /** Set once promoted to a fix entity (IDEA-192 phase 6) — that entity's own id.
+   * A promoted issue closes when the fix entity's status reaches 'done', independent
+   * of whether the original source is still detected as failing. */
+  promotedFixId?: string;
 }

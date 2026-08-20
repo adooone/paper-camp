@@ -86,8 +86,9 @@ current shape. Notifications for issues — the page is pulled, not pushed.
 - [x] Define the issue model and its four collectors
       One issue shape fed by failed agent runs, red checks, PR change-requests, and rebase/sync failures — deduped by source so a repeat failure continues an existing issue.
       run: 7m10s · 11.1k in · 27.2k out · sonnet-5
-- [ ] Derive open/closed state from the world
+- [x] Derive open/closed state from the world
       Close an issue when its check goes green, its rerun succeeds, or its promoted fix ships; never a mark-read button.
+      run: 4m56s · 4.3k in · 15.4k out · sonnet-5
 - [ ] Swap the nav slot: Issues in, Tasks out
       Move the task log behind the Stack panel's Agent section and its "N more…" link; keep the log route and shape unchanged.
 - [ ] Build the Issues page as expandable Inbox-shaped rows
