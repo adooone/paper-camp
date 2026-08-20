@@ -2,7 +2,7 @@
 id: IDEA-185
 title: Delete the idea-group machinery
 type: refactor
-status: idea
+status: review
 created: 2026-08-16
 updated: 2026-08-17
 tags:
@@ -10,6 +10,7 @@ tags:
   - plans
   - refactor
 subject: Code health
+order: 3
 ---
 
 The worklist carries a whole parent/child rendering path that cannot execute.
@@ -81,13 +82,21 @@ the field it keyed off is about to carry real weight.
 Run this idea before [[IDEA-187]], with that carve-out explicit in the removal.
 
 ### Phases
-- [ ] Confirm shared call sites survive
+- [x] Confirm shared call sites survive
       Verify `DraftPlanButton` and `ExtendIdeaButton` are mounted elsewhere before deleting the group card.
-- [ ] Collapse the selector partition
+      run: 10s · 5.6k in · 648 out · sonnet-5
+- [x] Collapse the selector partition
       Drop the `ideaParents` loop and `childrenByIdea`/`orphanPlans` split in `plan-list-selector.ts`; every plan becomes a plain row.
-- [ ] Remove the group card and its state
+      run: 5m29s · 367 in · 11.8k out · sonnet-5
+- [x] Remove the group card and its state
       Delete `IdeaGroupRowCard`, the `IdeaGroupRow` type, `DONE_COLLAPSE_THRESHOLD`, `expandedDone`, `toggleExpanded`, and the "+N done" toggle.
-- [ ] Fold the three duplicate/dead-code cleanups
+      run: 4m16s · 792 in · 14.3k out · sonnet-5
+- [x] Fold the three duplicate/dead-code cleanups
       Share `PLAN_ROWS_GRID_CLASS` from `plan-rows`, resolve `ROW_MARKER_WIDTH`, and drop the dead `showHeader` branch in `PlanRows`.
-- [ ] Verify identical output and run checks
+      run: 2m40s · 519 in · 5.5k out · sonnet-5
+- [x] Verify identical output and run checks
       Confirm the worklist renders the same before and after, keeping `idea:` in the schema; run quality, tests, and consistency checks.
+      run: 2m22s · 237 in · 2.6k out · sonnet-5
+
+### Thread
+- [x] 2026-08-20 [review] [agent] Approves · 0 findings — The diff cleanly removes the idea-group rendering path exactly as the spec describes: the IdeaGroupRow type/card, the childrenByIdea/orphanPlans partition and ideaParents loop, the done-collapse state, and the three duplicate/dead-code cleanups (shared PLAN_ROWS_GRID_CLASS, dropped ROW_MARKER_WIDTH, removed dead showHeader branch). Because /api/ideas only returns notes in production, dropping the idea-group branch and feeding nonFixPlans (instead of orphanPlans) preserves rendered output, and the schema-level idea: field is left untouched per the carve-out. Remaining constants and imports (titleButtonClass, headerLabelClass, matchesSubject, matchesIdeaSearch, PLAN_ROWS_GRID_CLASS) all still have live consumers, so nothing is left dangling.

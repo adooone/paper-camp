@@ -11,14 +11,7 @@ interface PlanRowsProps {
   plans: PlanEntry[];
   activePlanTitle?: string | null;
   onOpen?: (title: string) => void;
-  /** FEAT-42: worklist-rows.tsx nests this under an idea-group header, which already
-   * carries its own header row — set false there so it isn't repeated per group. */
-  showHeader?: boolean;
 }
-
-const headerLabelClass = 'text-sm font-semibold opacity-60 whitespace-nowrap overflow-hidden';
-
-export const ROW_MARKER_WIDTH = 36;
 
 /** The gutter outside a row card: spinner while an agent works, run-order stamp, a check for done, or blank. */
 export const RowMarker = ({
@@ -70,27 +63,11 @@ export const RowMarker = ({
 export const PLAN_ROWS_GRID_CLASS =
   'grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
-export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: PlanRowsProps) => {
+export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
   const gridClass = PLAN_ROWS_GRID_CLASS;
   const agentStatus = useAppStore((s) => s.agentStatus);
   return (
     <div className="flex flex-col gap-1">
-      {showHeader && (
-        <div className="flex items-center">
-          <span className="flex-[0_0_36px]" />
-          <div className="flex-1 min-w-0">
-            <Card size="small" texture="kraft" className="plan-row-card">
-              <div className={gridClass}>
-                <span className={headerLabelClass}>Id</span>
-                <span className={headerLabelClass}>Title</span>
-                <span className={`max-lg:hidden ${headerLabelClass}`}>Updated</span>
-                <span className={headerLabelClass}>Progress</span>
-                <span className={headerLabelClass}>Status</span>
-              </div>
-            </Card>
-          </div>
-        </div>
-      )}
       {plans.map((plan) => {
         const progress = phaseProgress(plan);
         const status = effectiveStatus(plan, agentStatus);

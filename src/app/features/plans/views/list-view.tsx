@@ -1,23 +1,15 @@
 import type { WorklistRow } from '@/app/features/plans/helpers';
-import type { PlanEntry } from '@/types/index';
 import { useEffect, useRef } from 'react';
 import { WorklistRows } from './worklist-rows';
 
 interface ListViewProps {
-  plans: PlanEntry[];
   rows: WorklistRow[];
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
   onOpenIdea?: (title: string) => void;
 }
 
-export const ListView = ({
-  plans,
-  rows,
-  activePlanTitle,
-  onOpenPlan,
-  onOpenIdea,
-}: ListViewProps) => {
+export const ListView = ({ rows, activePlanTitle, onOpenPlan, onOpenIdea }: ListViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,7 +23,6 @@ export const ListView = ({
       {rows.length > 0 ? (
         <WorklistRows
           rows={rows}
-          plans={plans}
           activePlanTitle={activePlanTitle}
           onOpenPlan={onOpenPlan}
           onOpenIdea={onOpenIdea}

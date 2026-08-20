@@ -1,41 +1,24 @@
-import { LightbulbIcon, NoteIcon } from '@/app/components/icons';
-import type {
-  FixRow,
-  IdeaGroupRow,
-  NoteRow,
-  PlanSortKey,
-  WorklistRow,
-} from '@/app/features/plans/helpers';
+import { NoteIcon } from '@/app/components/icons';
+import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
 import { groupRowsBySubject } from '@/app/features/plans/helpers';
 import { useRoadmapItemNames } from '@/app/features/roadmap';
 import { useSubjectVocabulary } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import type { PlanEntry } from '@/types/index';
 import { Card, Stamp, Switch } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
-import { DraftPlanButton, ExtendIdeaButton } from '../actions';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, runningTaskForPlan } from '../helpers';
-import { PlanRows, ROW_MARKER_WIDTH, RowMarker } from './plan-rows';
-
-/** Past this many children, done ones collapse behind a "+N done" toggle. */
-const DONE_COLLAPSE_THRESHOLD = 5;
+import { PLAN_ROWS_GRID_CLASS, PlanRows, RowMarker } from './plan-rows';
 
 interface WorklistRowsProps {
   rows: WorklistRow[];
-  /** All plans, not just this group's children — DraftPlanButton's overlap prompt wants the full set. */
-  plans: PlanEntry[];
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
   onOpenIdea?: (title: string) => void;
 }
 
 const headerLabelClass = 'text-sm font-semibold opacity-60 whitespace-nowrap overflow-hidden';
-
-const PLAN_ROWS_GRID_CLASS =
-  'grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
 const subjectHeaderClass =
   'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
@@ -76,12 +59,10 @@ export const GroupBySubjectToggle = () => {
 
 export const WorklistRows = ({
   rows,
-  plans,
   activePlanTitle,
   onOpenPlan,
   onOpenIdea,
 }: WorklistRowsProps) => {
-  const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set());
   const {
     subjects: validSubjects,
     loading: subjectsLoading,
@@ -101,15 +82,6 @@ export const WorklistRows = ({
     else setPlanSortKey(key);
   };
 
-  const toggleExpanded = (ideaTitle: string) => {
-    setExpandedDone((prev) => {
-      const next = new Set(prev);
-      if (next.has(ideaTitle)) next.delete(ideaTitle);
-      else next.add(ideaTitle);
-      return next;
-    });
-  };
-
   const renderRow = (row: WorklistRow) => {
     if (row.type === 'plan') {
       return (
@@ -118,33 +90,18 @@ export const WorklistRows = ({
           plans={[row.plan]}
           activePlanTitle={activePlanTitle}
           onOpen={onOpenPlan}
-          showHeader={false}
         />
       );
     }
     if (row.type === 'note') {
       return <NoteRowCard key={row.idea.title} row={row} onOpen={onOpenIdea} />;
     }
-    if (row.type === 'fix') {
-      return (
-        <FixRowCard
-          key={row.fix.title}
-          row={row}
-          activePlanTitle={activePlanTitle}
-          onOpen={onOpenPlan}
-        />
-      );
-    }
     return (
-      <IdeaGroupRowCard
-        key={row.idea.title}
+      <FixRowCard
+        key={row.fix.title}
         row={row}
-        plans={plans}
         activePlanTitle={activePlanTitle}
-        onOpenPlan={onOpenPlan}
-        onOpenIdea={onOpenIdea}
-        expanded={expandedDone.has(row.idea.title)}
-        onToggleExpanded={() => toggleExpanded(row.idea.title)}
+        onOpen={onOpenPlan}
       />
     );
   };
@@ -359,87 +316,6 @@ const FixRowCard = ({
           </div>
         </Card>
       </div>
-    </div>
-  );
-};
-
-interface IdeaGroupRowCardProps {
-  row: IdeaGroupRow;
-  plans: PlanEntry[];
-  activePlanTitle?: string | null;
-  onOpenPlan?: (title: string) => void;
-  onOpenIdea?: (title: string) => void;
-  expanded: boolean;
-  onToggleExpanded: () => void;
-}
-
-const IdeaGroupRowCard = ({
-  row,
-  plans,
-  activePlanTitle,
-  onOpenPlan,
-  onOpenIdea,
-  expanded,
-  onToggleExpanded,
-}: IdeaGroupRowCardProps) => {
-  const idea = row.idea;
-  const children = row.children;
-  const done = children.filter((p) => p.status === 'done');
-  const notDone = children.filter((p) => p.status !== 'done');
-  const shouldCollapseDone = children.length > DONE_COLLAPSE_THRESHOLD;
-  const visibleChildren = shouldCollapseDone && !expanded ? notDone : children;
-
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center">
-        <RowMarker order={idea.order} done={idea.status === 'done'} status={idea.status} />
-        <div className="flex-1 min-w-0">
-          <Card size="small" texture="canvas" className="plan-row-card">
-            <div className="grid grid-cols-[76px_minmax(0,1fr)_84px_1fr] gap-2 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1">
-              {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
-              {/* Raw <button>: a chromeless click target wrapping icon + title text,
-              not a paper-ui Button. */}
-              <button
-                type="button"
-                onClick={() => onOpenIdea?.(idea.title)}
-                className={titleButtonClass}
-              >
-                <LightbulbIcon />
-                <span className={titleTextClass}>{idea.title}</span>
-              </button>
-              <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
-              <div className="flex items-center justify-end gap-2">
-                <span className={`text-sm ${children.length > 0 ? 'opacity-60' : 'opacity-30'}`}>
-                  {children.length > 0 ? `${done.length}/${children.length} plans done` : '—'}
-                </span>
-                <ExtendIdeaButton idea={idea} compact />
-                <DraftPlanButton idea={idea} otherPlans={plans} />
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-      {children.length > 0 && (
-        <div className="ml-5 pl-3 border-l-2 border-black/[8%] flex flex-col gap-1">
-          <PlanRows
-            plans={visibleChildren}
-            activePlanTitle={activePlanTitle}
-            onOpen={onOpenPlan}
-            showHeader={false}
-          />
-          {/* Raw <button>: an inline text link, not LinkButton — this one needs a
-              muted opacity/font-size rather than LinkButton's fixed amber style. */}
-          {shouldCollapseDone && (
-            <button
-              type="button"
-              onClick={onToggleExpanded}
-              className="self-start bg-none bg-transparent border-none py-1 px-0 opacity-60 cursor-pointer underline text-xs [font:inherit]"
-            >
-              {expanded ? 'Show less' : `+${done.length} done`}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 };
