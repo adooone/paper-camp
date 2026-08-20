@@ -107,8 +107,9 @@ history buys nothing. Fixes on notes, which never carry plans. Any change to how
 - [x] Add `fix` to the `kind` enum
       Extend `entityFrontmatterSchema` so a fix derives status from its own phases and PR, and refine that `kind: fix` requires an `idea:` link to a done/archived parent.
       run: 7m18s · 813 in · 17.4k out · sonnet-5
-- [ ] Spawn a fix entity from a closed idea instead of reopening
+- [x] Spawn a fix entity from a closed idea instead of reopening
       A done/archived idea raises a new `IDEA-N` fix file with its parent link and a short 1–3 phase list; drop the reopen action from the UI.
+      run: 13m20s · 14.2k in · 50.1k out · sonnet-5
 - [ ] Enforce the boundary rule by parent status
       Open ideas keep the inline `### Fixes` list; only done/archived ideas can spawn a fix entity, decided by status so there is no judgement call.
 - [ ] Render fixes as their own worklist row

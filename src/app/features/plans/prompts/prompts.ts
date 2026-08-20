@@ -370,7 +370,7 @@ Rules:
 - "reply" is always required and is the only thing shown when nothing needs to change — omit "edit" entirely in that case.
 - "answersQuestion" is a boolean, only ever true; omit it entirely rather than sending false.
 - "edit.phases" entries: "add" appends a new phase at the end; "reword" replaces the title/description of the existing phase at the given 1-based "index" (matching the numbered list above) — never invent an index outside that range.
-- When every phase above is already checked ([x]) and the message asks for new or still-missing work, use "add" for a new phase — never "reword" a finished phase to smuggle in new work, since a completed phase never re-runs. Adding a phase to a finished idea reopens it, and the app tracks the new work separately as a Fix rather than rewriting the finished Phases history.
+- When every phase above is already checked ([x]) and the message asks for new or still-missing work, use "add" for a new phase — never "reword" a finished phase to smuggle in new work, since a completed phase never re-runs. The app never rewrites a finished Phases history: for a plan still under review it tracks the new work in its own Fixes list; for a done or archived idea it spawns a separate linked fix entity instead of reopening the closed idea, so your reply should just acknowledge the request rather than promise the fix landed on this idea.
 - "edit.body", when present, must be the complete replacement body, not a fragment — reproduce every part that isn't changing, word for word.
 - Only include "edit" when the message clearly asks for a change; a fix request always becomes an "edit" (a phase on this idea), never anything else. Never create a new idea, and never decline a fix request with a bare reply.`;
 }

@@ -42,12 +42,30 @@ Plan body.
 - [x] First phase
 `;
 
+const PLAN_DONE = `---
+id: IDEA-3
+title: Shipped plan
+type: feat
+status: done
+created: 2026-07-01
+---
+Plan body.
+
+### Phases
+- [x] First phase
+`;
+
 async function makeRoot(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'papercamp-agent-route-test-'));
   roots.push(root);
   await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
   await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), PLAN_WITH_OPEN_QUESTION);
   await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), PLAN_IN_REVIEW);
+  await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-3.md'), PLAN_DONE);
+  await writeFile(
+    join(root, 'papercamp', 'config.json'),
+    JSON.stringify({ nextId: { idea: 100 } }),
+  );
   return root;
 }
 
@@ -378,6 +396,68 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
     expect(commit).toHaveBeenCalledOnce();
     expect(startRunAllPhases).toHaveBeenCalledOnce();
     expect(callOrder).toEqual(['commit', 'launch']);
+  });
+});
+
+describe('POST /api/agent/feedback-message spawning a fix from a closed idea', () => {
+  it('spawns a new linked fix entity instead of reopening a done plan', async () => {
+    const root = await makeRoot();
+    const runFeedbackReply = vi.fn(async () =>
+      JSON.stringify({
+        reply: 'Good catch.',
+        edit: { phases: [{ op: 'add', text: 'Fix the regression' }] },
+      }),
+    );
+    const startRunAllPhases = vi.fn(
+      (_plan: PlanEntry, _runProjectChecks?: () => Promise<CheckName[]>) => ({ ok: true }) as const,
+    );
+    const commit = vi.fn(async () => {});
+
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/agent/feedback-message', {
+      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      status: {
+        runChecksAndWait: vi.fn(async () => [] as CheckName[]),
+      } as unknown as RouteContext['status'],
+      git: fakeGit({ commit }),
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-3', text: 'This regressed.' })), res);
+
+    expect(status()).toBe(200);
+    expect(json()).toMatchObject({ ok: true });
+
+    const spawnedFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-100.md'), 'utf-8');
+    expect(spawnedFile).toContain('kind: fix');
+    expect(spawnedFile).toContain('idea: IDEA-3');
+    expect(spawnedFile).toContain('Fix the regression');
+
+    expect(commit).toHaveBeenCalledOnce();
+    expect(startRunAllPhases).toHaveBeenCalledOnce();
+    const [launchedPlan] = startRunAllPhases.mock.calls[0];
+    expect(launchedPlan).toMatchObject({ id: 'IDEA-100', idea: 'IDEA-3', kind: 'fix' });
+
+    const parentFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-3.md'), 'utf-8');
+    expect(parentFile).toContain('status: done');
+    expect(parentFile).not.toContain('Fix the regression');
+    expect(parentFile).not.toContain('### Fixes');
+  });
+
+  it('does not spawn a fix when the reply adds no phase', async () => {
+    const root = await makeRoot();
+    const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Just noting this.' }));
+    const startRunAllPhases = vi.fn(() => ({ ok: true }) as const);
+
+    const { res, status } = fakeRes();
+    await route(root, '/api/agent/feedback-message', {
+      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      status: {} as unknown as RouteContext['status'],
+      git: fakeGit(),
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-3', text: 'Just an aside.' })), res);
+
+    expect(status()).toBe(200);
+    expect(startRunAllPhases).not.toHaveBeenCalled();
+    await expect(
+      readFile(join(root, 'papercamp', 'ideas', 'IDEA-100.md'), 'utf-8'),
+    ).rejects.toThrow();
   });
 });
 

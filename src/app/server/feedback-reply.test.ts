@@ -189,16 +189,36 @@ describe('applyFeedbackEdit', () => {
     expect(result.fixes).toEqual([{ done: false, text: 'A late fix', description: undefined }]);
   });
 
-  it('routes an added phase into fixes when the plan is already done, appending existing fixes', () => {
+  it('spawns a fix instead of touching a done plan, leaving its own file untouched', () => {
     const donePhases: PhaseItem[] = [{ done: true, text: 'First phase' }];
     const existingFixes: PhaseItem[] = [{ done: true, text: 'Earlier fix' }];
     const result = applyFeedbackEdit(
       { phases: donePhases, fixes: existingFixes, status: 'done' },
       { phases: [{ op: 'add', text: 'Another fix' }] },
     );
-    expect(result.fixes).toEqual([
-      ...existingFixes,
-      { done: false, text: 'Another fix', description: undefined },
+    expect(result.spawnFix).toEqual([{ done: false, text: 'Another fix', description: undefined }]);
+    expect(result.phases).toBeUndefined();
+    expect(result.fixes).toBeUndefined();
+  });
+
+  it('spawns a fix instead of touching an archived plan', () => {
+    const donePhases: PhaseItem[] = [{ done: true, text: 'First phase' }];
+    const result = applyFeedbackEdit(
+      { phases: donePhases, status: 'idea', archived: true },
+      { phases: [{ op: 'add', text: 'A late correction' }] },
+    );
+    expect(result.spawnFix).toEqual([
+      { done: false, text: 'A late correction', description: undefined },
     ]);
+    expect(result.phases).toBeUndefined();
+    expect(result.fixes).toBeUndefined();
+  });
+
+  it('ignores a body edit on a closed plan', () => {
+    const result = applyFeedbackEdit(
+      { phases: [{ done: true, text: 'First phase' }], status: 'done' },
+      { body: 'Rewriting shipped history.' },
+    );
+    expect(result).toEqual({});
   });
 });

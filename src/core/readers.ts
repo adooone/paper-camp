@@ -96,6 +96,7 @@ export function entityToPlan(
     statusFallback: isStatusFallback(e, pr, prLookupResolved),
     kind: e.type,
     id: e.id,
+    idea: e.idea,
     agent: e.agent,
     created: e.created,
     updated: e.updated,
