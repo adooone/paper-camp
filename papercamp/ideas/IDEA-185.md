@@ -90,7 +90,8 @@ Run this idea before [[IDEA-187]], with that carve-out explicit in the removal.
 - [x] Remove the group card and its state
       Delete `IdeaGroupRowCard`, the `IdeaGroupRow` type, `DONE_COLLAPSE_THRESHOLD`, `expandedDone`, `toggleExpanded`, and the "+N done" toggle.
       run: 4m16s · 792 in · 14.3k out · sonnet-5
-- [ ] Fold the three duplicate/dead-code cleanups
+- [x] Fold the three duplicate/dead-code cleanups
       Share `PLAN_ROWS_GRID_CLASS` from `plan-rows`, resolve `ROW_MARKER_WIDTH`, and drop the dead `showHeader` branch in `PlanRows`.
+      run: 2m40s · 519 in · 5.5k out · sonnet-5
 - [ ] Verify identical output and run checks
       Confirm the worklist renders the same before and after, keeping `idea:` in the schema; run quality, tests, and consistency checks.

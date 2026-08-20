@@ -9,7 +9,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, runningTaskForPlan } from '../helpers';
-import { PlanRows, ROW_MARKER_WIDTH, RowMarker } from './plan-rows';
+import { PLAN_ROWS_GRID_CLASS, PlanRows, RowMarker } from './plan-rows';
 
 interface WorklistRowsProps {
   rows: WorklistRow[];
@@ -19,9 +19,6 @@ interface WorklistRowsProps {
 }
 
 const headerLabelClass = 'text-sm font-semibold opacity-60 whitespace-nowrap overflow-hidden';
-
-const PLAN_ROWS_GRID_CLASS =
-  'grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
 const subjectHeaderClass =
   'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
@@ -93,7 +90,6 @@ export const WorklistRows = ({
           plans={[row.plan]}
           activePlanTitle={activePlanTitle}
           onOpen={onOpenPlan}
-          showHeader={false}
         />
       );
     }
