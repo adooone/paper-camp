@@ -2,7 +2,7 @@
 id: IDEA-187
 title: Fixes are their own entity
 type: feat
-status: review
+status: done
 created: 2026-08-17
 updated: 2026-08-20
 tags:

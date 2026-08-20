@@ -2,7 +2,7 @@
 id: IDEA-194
 title: Complete an idea without leaving
 type: feat
-status: review
+status: done
 created: 2026-08-19
 updated: 2026-08-20
 tags:

@@ -2,9 +2,9 @@
 id: IDEA-180
 title: Say what each idea is for
 type: feat
-status: idea
+status: dropped
 created: 2026-08-14
-updated: 2026-08-14
+updated: 2026-08-20
 tags:
   - app
   - plans
