@@ -355,6 +355,37 @@ export async function validatePrTitle(
   return isConventionalPrTitle(view.title) ? 'valid' : 'invalid';
 }
 
+/** Squash is the only merge method the repo allows (see `merge-policy.ts`), and the
+ * squash commit title is configured to inherit the PR title verbatim — the same
+ * title `validatePrTitle` already requires to match the idea exactly. No merge
+ * message/title flag is passed here for that reason. */
+export function squashMergePr(
+  root: string,
+  ref: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  return new Promise((resolve) => {
+    const proc = spawn('gh', ['pr', 'merge', ref, '--squash'], {
+      cwd: root,
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    let stderr = '';
+    proc.stderr?.on('data', (d: Buffer) => {
+      stderr += d.toString();
+    });
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve({ ok: true });
+      } else {
+        resolve({
+          ok: false,
+          message: stderr.trim() || `gh pr merge ${ref} --squash exited with code ${code}`,
+        });
+      }
+    });
+    proc.on('error', (err) => resolve({ ok: false, message: err.message }));
+  });
+}
+
 function runGhPrReady(root: string, ref: string): Promise<boolean> {
   return new Promise((resolve) => {
     const proc = spawn('gh', ['pr', 'ready', ref], {

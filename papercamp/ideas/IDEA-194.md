@@ -78,7 +78,8 @@ before this exists.
 - [x] Guard the working tree before merging
       Refuse when the tree is dirty, naming the uncommitted files, so the merge never lands ahead of a failed switch.
       run: 1m40s · 892 in · 4.5k out · sonnet-5
-- [ ] Squash-merge the PR through authenticated `gh`
+- [x] Squash-merge the PR through authenticated `gh`
+      run: 2m16s · 4.7k in · 7.8k out · sonnet-5
 - [ ] Return to a current `main`
       Check out `main`, fast-forward it, and delete the branch locally and on the remote.
 - [ ] Wire the single action into the idea view
