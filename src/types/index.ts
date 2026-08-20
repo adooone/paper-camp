@@ -214,6 +214,9 @@ export interface PlanEntry {
   title: string;
   status: PlanStatus;
   kind?: PlanKind;
+  /** 'fix' when this plan is a follow-up fix entity (IDEA-187) — undefined for an
+   * ordinary plan-bearing idea. Distinct from `kind`, which carries the commit type. */
+  entityKind?: EntityKind;
   id?: string;
   idea?: string;
   agent?: AgentId;
@@ -375,15 +378,20 @@ export type EntityType = PlanKind;
 /** Plan lifecycle plus the note-only `open`. Notes use open → done/dropped; everything else uses the PlanStatus track. */
 export type EntityStatus = PlanStatus | 'open';
 
+/** "note" never grows phases; "fix" is a follow-up entity linked to a done/archived
+ * parent via `idea` — see entityFrontmatterSchema. Omitted for a normal idea. */
+export type EntityKind = 'note' | 'fix';
+
 export interface EntityEntry {
   id: string;
   title: string;
   /** Absent until the entity is classified (usually when its plan is drafted). */
   type?: EntityType;
-  /** "note" marks an entity that never grows phases. */
-  kind?: 'note';
+  kind?: EntityKind;
   /** Stored override, not the source of truth — see entityFrontmatterSchema. */
   status?: EntityStatus;
+  /** IDEA-N backlink to the parent this fix addresses; required when kind: fix. */
+  idea?: string;
   agent?: AgentId;
   created: string;
   updated?: string;

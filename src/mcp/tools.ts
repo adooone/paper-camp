@@ -21,6 +21,7 @@ import {
   removeSuggestionLine,
   todayDateString,
 } from '../core/serialize';
+import { isClosedEntity } from '../core/status';
 import { promoteThreadMessage } from '../core/thread';
 import { PLAN_KINDS, PLAN_STATUSES, type ThreadMessage } from '../types/index';
 import { idResultSchema, okResultSchema, parseWarningSchema, planEntrySchema } from './schemas';
@@ -194,6 +195,19 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         if (phaseIndex < 0 || phaseIndex >= entry.phases.length) {
           throw new Error(
             `phase index ${phaseIndex} out of range (plan has ${entry.phases.length} phases)`,
+          );
+        }
+
+        // A done/archived entity's status only ever moves between the closed statuses —
+        // new work spawns its own linked fix entity instead of reopening this one (IDEA-187).
+        if (
+          isClosedEntity(entry) &&
+          status !== undefined &&
+          status !== 'done' &&
+          status !== 'dropped'
+        ) {
+          throw new Error(
+            'a done/archived entity is read-only — new work spawns its own fix entity',
           );
         }
 

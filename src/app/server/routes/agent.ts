@@ -1,11 +1,16 @@
 import { randomUUID } from 'node:crypto';
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { buildFixReviewPrompt, buildPrReviewPrompt } from '@/app/features/plans/prompts';
 import { fetchCiReleaseState } from '@/core/ci';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
-import { agentThreadMessage, todayDateString } from '@/core/serialize';
+import {
+  agentThreadMessage,
+  assignEntityId,
+  formatEntityFile,
+  todayDateString,
+} from '@/core/serialize';
 import { chatSinceLastLog, logFromThread, promoteThreadMessage } from '@/core/thread';
 import type {
   EntityEntry,
@@ -120,7 +125,7 @@ function toIdeaEntry(e: EntityEntry): IdeaEntry {
     id: e.id,
     title: e.title,
     body: e.body,
-    kind: e.kind,
+    kind: e.kind === 'note' ? 'note' : undefined,
     status: e.kind === 'note' ? (e.status as IdeaStatus) : undefined,
     log: logFromThread(e.thread),
   };
@@ -500,7 +505,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             agent.runFeedbackReply,
             context,
           );
-          const overrides = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
+          const editResult = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
+          const { spawnFix, ...overrides } = editResult;
 
           // The agent flags when this message answers a question it asked earlier —
           // reclassify it from a plain log line to a clarification so it's visible
@@ -526,10 +532,53 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
           let replyText = result.reply;
 
-          // A feedback edit that adds an undone Fix to an already-finished plan is new
+          // A closed (done/archived) idea's file stays read-only — a phase-add edit
+          // there comes back as spawnFix, so it raises its own linked IDEA-N fix
+          // entity instead of reopening the closed idea (IDEA-187): reopening used to
+          // strand archived files, credit `done` to the wrong PR, and overwrite the
+          // shipped Phases history (IDEA-158/162/174/181).
+          let spawnedId: string | undefined;
+          if (spawnFix?.length) {
+            const configPath = join(root, 'papercamp', 'config.json');
+            spawnedId = await assignEntityId(configPath);
+            if (spawnedId) {
+              const ideasDir = campFile(root, 'ideas');
+              await mkdir(ideasDir, { recursive: true });
+              const fixPath = join(ideasDir, `${spawnedId}.md`);
+              const spawnedEntity: EntityEntry = {
+                id: spawnedId,
+                title: spawnFix[0].text,
+                type: 'fix',
+                kind: 'fix',
+                idea: entity.id,
+                created: todayDateString(),
+                tags: [],
+                body: '',
+                phases: spawnFix,
+              };
+              await writeFile(fixPath, `${formatEntityFile(spawnedEntity)}\n`, 'utf-8');
+              await git.commit(
+                [relative(root, fixPath)],
+                `fix(ideas): spawn ${spawnedId} from ${entity.id}`,
+                `Refs: ${spawnedId}`,
+                { noVerify: true },
+              );
+              undo = { commitSha: await git.getHeadSha() };
+              replyText = `${replyText} (spawned ${spawnedId} to track this)`;
+
+              const spawnConflict = await checkBranchConflictForPlan(root, git, spawnedId);
+              if (!spawnConflict) {
+                agent.startRunAllPhases(entityToPlan(spawnedEntity), () =>
+                  status.runChecksAndWait(),
+                );
+              }
+            }
+          }
+
+          // A feedback edit that adds an undone Fix to a plan still under review is new
           // work: reopen it so it re-enters the run-order queue and run-all implements it —
-          // otherwise the edit lands on a closed plan and nothing ever runs (or shows). The
-          // same signal arms the fixes run's auto-launch (IDEA-149).
+          // otherwise the edit lands on a plan that looks finished and nothing ever runs
+          // (or shows). The same signal arms the fixes run's auto-launch (IDEA-149).
           const reopen = addsOpenFix(entity.fixes, overrides.fixes);
           if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
 

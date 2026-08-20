@@ -48,6 +48,7 @@ export function entityFileInput(
     type: entry.type,
     kind: entry.kind,
     status: entry.status,
+    idea: entry.idea,
     agent: entry.agent,
     created: entry.created,
     updated: entry.updated,

@@ -2,6 +2,7 @@ import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_PLAN_LIST_FILTERS,
+  type WorklistRow,
   deriveChildrenSummary,
   groupRowsBySubject,
   selectPlanRows,
@@ -24,6 +25,12 @@ const idea = (overrides: Partial<IdeaEntry>): IdeaEntry => ({
   body: '',
   ...overrides,
 });
+
+const rowTitle = (row: WorklistRow): string => {
+  if (row.type === 'plan') return row.plan.title;
+  if (row.type === 'fix') return row.fix.title;
+  return row.idea.title;
+};
 
 describe('selectPlanRows', () => {
   it('excludes done/dropped by default', () => {
@@ -214,10 +221,7 @@ describe('selectWorklistRows', () => {
       sortKey: 'status',
       statuses: ['in-progress', 'planned'],
     });
-    expect(rows.map((r) => (r.type === 'plan' ? r.plan.title : r.idea.title))).toEqual([
-      'Top plan',
-      'Grouped idea',
-    ]);
+    expect(rows.map(rowTitle)).toEqual(['Top plan', 'Grouped idea']);
   });
 
   it('sorts by order by default, taking an idea-group or note row order from the idea itself', () => {
@@ -227,11 +231,7 @@ describe('selectWorklistRows', () => {
     ];
     const plans = [plan({ title: 'Orphan plan', idea: undefined, order: 3 })];
     const { rows } = selectWorklistRows(plans, ideas);
-    expect(rows.map((r) => (r.type === 'plan' ? r.plan.title : r.idea.title))).toEqual([
-      'Note',
-      'Grouped idea',
-      'Orphan plan',
-    ]);
+    expect(rows.map(rowTitle)).toEqual(['Note', 'Grouped idea', 'Orphan plan']);
   });
 
   it('filters idea-groups and notes by subject too', () => {
@@ -245,10 +245,43 @@ describe('selectWorklistRows', () => {
       ...DEFAULT_PLAN_LIST_FILTERS,
       subject: 'Mobile control desk',
     });
-    expect(rows.map((r) => (r.type === 'plan' ? r.plan.title : r.idea.title))).toEqual([
-      'Matching idea',
-      'Matching note',
-    ]);
+    expect(rows.map(rowTitle)).toEqual(['Matching idea', 'Matching note']);
+  });
+
+  it("renders a fix entity as its own row, inheriting its parent's subject rather than nesting", () => {
+    const plans = [
+      plan({
+        id: 'IDEA-20',
+        title: 'Shipped idea',
+        status: 'done',
+        subject: 'Run & monitor',
+      }),
+      plan({
+        id: 'IDEA-21',
+        title: 'A fix',
+        status: 'planned',
+        entityKind: 'fix',
+        idea: 'IDEA-20',
+      }),
+    ];
+    const { rows } = selectWorklistRows(plans, [], {
+      ...DEFAULT_PLAN_LIST_FILTERS,
+      statuses: ['planned', 'done'],
+    });
+    const fixRow = rows.find((r) => r.type === 'fix');
+    expect(fixRow).toEqual({
+      type: 'fix',
+      fix: { ...plans[1], subject: 'Run & monitor' },
+    });
+  });
+
+  it('never nests a fix as an idea-group child, even when the plan-bearing parent is still open', () => {
+    const ideas = [idea({ id: 'IDEA-22', title: 'Open idea' })];
+    const plans = [plan({ id: 'IDEA-23', title: 'A fix', entityKind: 'fix', idea: 'IDEA-22' })];
+    const { rows } = selectWorklistRows(plans, ideas);
+    const group = rows.find((r) => r.type === 'idea-group');
+    expect(group).toMatchObject({ children: [] });
+    expect(rows).toContainEqual({ type: 'fix', fix: plans[0] });
   });
 });
 

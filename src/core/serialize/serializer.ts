@@ -208,8 +208,10 @@ interface NewEntityFileInput {
   title: string;
   type?: string;
   // "note" for entities that never grow phases — notes use open/done/dropped status.
+  // "fix" is a follow-up entity, linked to its parent via `idea`.
   kind?: string;
   status?: string;
+  idea?: string;
   agent?: string;
   created: string;
   updated?: string;
@@ -236,6 +238,7 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   if (input.type) frontmatter.type = input.type;
   if (input.kind) frontmatter.kind = input.kind;
   if (input.status) frontmatter.status = input.status;
+  if (input.idea) frontmatter.idea = input.idea;
   frontmatter.created = input.created;
   if (input.agent) frontmatter.agent = input.agent;
   if (input.updated) frontmatter.updated = input.updated;

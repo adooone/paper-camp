@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { readEntities, readWorkEntries } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import { archiveEntityFile, todayDateString } from '@/core/serialize';
+import { isClosedEntity } from '@/core/status';
 import { replaceThreadKinds } from '@/core/thread';
 import {
   AGENT_IDS,
@@ -100,6 +101,26 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         if (!target) {
           sendJson(res, 404, { error: 'entity not found' });
           return;
+        }
+
+        // A done/archived entity's own file is read-only (IDEA-187) — new phases or
+        // fixes always spawn their own linked fix entity instead of landing here, and
+        // its status only ever moves between the closed statuses (done/dropped), never
+        // back toward an active one, so there is no reopen path to bypass this way.
+        if (isClosedEntity(target)) {
+          const addsPhases = (updates.phases?.length ?? 0) > target.phases.length;
+          const addsFixes = (updates.fixes?.length ?? 0) > (target.fixes?.length ?? 0);
+          const reopensStatus =
+            updates.status !== undefined &&
+            updates.status !== null &&
+            updates.status !== 'done' &&
+            updates.status !== 'dropped';
+          if (addsPhases || addsFixes || reopensStatus || updates.body !== undefined) {
+            sendJson(res, 409, {
+              error: 'a done/archived entity is read-only — new work spawns its own fix entity',
+            });
+            return;
+          }
         }
 
         // target may be archived (done/dropped); resolve either location or

@@ -10,6 +10,7 @@ import {
   useSendFeedbackMessage,
   useTrail,
 } from '@/app/features/plans/hooks';
+import { entityRouteParam } from '@/app/hooks';
 import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
@@ -28,6 +29,7 @@ import {
   Tooltip,
   useToast,
 } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
@@ -43,7 +45,7 @@ import { FeedbackThread, type PromoteTarget } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { ProvenanceTrailPanel } from '../components';
-import { STATUS_COLOR, STATUS_STAMP } from '../constants';
+import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import {
   effectiveStatus,
   latestReviewNote,
@@ -427,6 +429,78 @@ const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] 
   );
 };
 
+/** Only a fix entity carries `idea:` — its parent, linked, so the context that
+ * produced it is one click away (IDEA-187). */
+const ParentLinkRow = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: PlanEntry[] }) => {
+  const navigate = useNavigate();
+  if (plan.entityKind !== 'fix' || !plan.idea) return null;
+  const parentId = plan.idea;
+  const parent = otherPlans.find((p) => p.id === parentId);
+  return (
+    <div className="mb-3">
+      {/* Raw <button>: a chromeless click target wrapping a stamp + label, not a paper-ui Button. */}
+      <button
+        type="button"
+        onClick={() =>
+          navigate({
+            to: '/plans/$planId',
+            params: { planId: entityRouteParam(parentId, parent?.title ?? parentId) },
+          })
+        }
+        className="flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left"
+      >
+        <Stamp size="small" variant="warning">
+          fix
+        </Stamp>
+        <span className="text-sm opacity-70">
+          Fixes <span className="font-mono">{parentId}</span>
+          {parent && ` — ${parent.title}`}
+        </span>
+      </button>
+    </div>
+  );
+};
+
+/** Every linked fix entity with its status — the parent stays archived and
+ * read-only, but it knows what came after it (IDEA-187). */
+const FixesSection = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: PlanEntry[] }) => {
+  const navigate = useNavigate();
+  const fixes = otherPlans.filter((p) => p.entityKind === 'fix' && p.idea === plan.id);
+  if (fixes.length === 0) return null;
+  return (
+    <div className="mb-5">
+      <h3 className={`${sectionHeadingClass} mb-3`}>Fixes</h3>
+      <div className="flex flex-col gap-2 mb-3">
+        {fixes.map((fix) => (
+          <button
+            key={fix.title}
+            type="button"
+            onClick={() =>
+              navigate({
+                to: '/plans/$planId',
+                params: { planId: entityRouteParam(fix.id, fix.title) },
+              })
+            }
+            className="flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left text-sm"
+          >
+            <PlanIdStamp id={fix.id} />
+            <span className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+              {fix.title}
+            </span>
+            <Stamp
+              size="small"
+              fillColor={STATUS_STAMP[fix.status].fill}
+              textColor={STATUS_STAMP[fix.status].text}
+            >
+              {STATUS_LABEL[fix.status]}
+            </Stamp>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Always rendered as the Phases table's panelFooter — never hidden, so the
 // panel reads as a persistent Deliver station rather than something that
 // pops in only once there happens to be a change to commit.
@@ -737,6 +811,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         </div>
       </div>
 
+      <ParentLinkRow plan={plan} otherPlans={otherPlans} />
+
       {/* One strip: pipeline position, progress and cost all answer "where is this
           and what has it cost", and each was claiming a full-width band of its own.
           Wraps back to stacked rows when the column is too narrow to hold them. */}
@@ -787,6 +863,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
             ideaView={ideaView}
             otherPlans={otherPlans}
           />
+
+          <FixesSection plan={plan} otherPlans={otherPlans} />
 
           <ClarificationsSection clarifications={plan.clarifications ?? []} />
 

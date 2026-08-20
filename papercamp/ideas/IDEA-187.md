@@ -2,9 +2,9 @@
 id: IDEA-187
 title: Fixes are their own entity
 type: feat
-status: idea
+status: review
 created: 2026-08-17
-updated: 2026-08-17
+updated: 2026-08-20
 tags:
   - format
   - plans
@@ -101,15 +101,25 @@ history buys nothing. Fixes on notes, which never carry plans. Any change to how
 `type` is used.
 
 ### Phases
-- [ ] Keep the `idea:` parent field alive through IDEA-185
+- [x] Keep the `idea:` parent field alive through IDEA-185
       185's group-machinery deletion removes only the nested parent/child rendering, not the `idea:` field itself.
-- [ ] Add `fix` to the `kind` enum
+      run: 1m27s · 5.7k in · 5.7k out · sonnet-5
+- [x] Add `fix` to the `kind` enum
       Extend `entityFrontmatterSchema` so a fix derives status from its own phases and PR, and refine that `kind: fix` requires an `idea:` link to a done/archived parent.
-- [ ] Spawn a fix entity from a closed idea instead of reopening
+      run: 7m18s · 813 in · 17.4k out · sonnet-5
+- [x] Spawn a fix entity from a closed idea instead of reopening
       A done/archived idea raises a new `IDEA-N` fix file with its parent link and a short 1–3 phase list; drop the reopen action from the UI.
-- [ ] Enforce the boundary rule by parent status
+      run: 13m20s · 14.2k in · 50.1k out · sonnet-5
+- [x] Enforce the boundary rule by parent status
       Open ideas keep the inline `### Fixes` list; only done/archived ideas can spawn a fix entity, decided by status so there is no judgement call.
-- [ ] Render fixes as their own worklist row
+      run: 9m19s · 14.1k in · 27.9k out · sonnet-5
+- [x] Render fixes as their own worklist row
       A distinct minimal row grouped under the parent's inherited subject, parent id and its own marker visible, not nested under the closed parent.
-- [ ] Cross-link fix and parent in their detail views
+      run: 9m40s · 15.2k in · 32.5k out · sonnet-5
+- [x] Cross-link fix and parent in their detail views
       The parent view lists every linked fix with its status; the fix view links back to its parent idea.
+      run: 4m32s · 3.1k in · 12.5k out · sonnet-5
+- [x] [manual] Don't require PR approval to complete a plan
+
+### Thread
+- [x] 2026-08-20 [review] [agent] Approves · 0 findings — The diff delivers all six claimed phases cleanly: the `idea:` field is threaded through the parser/serializer/types so it survives IDEA-185's deletion, `kind: fix` is added with a schema refine requiring the parent link, closed entities are made read-only across the PATCH route, MCP tool, and feedback-reply path via a single shared `isClosedEntity` predicate, and fixes render as their own worklist row grouped under the parent's inherited subject with cross-links in both detail views. The write path spawns a properly-formed linked fix entity (phases are serialized, id minted from config, auto-run launched) and the tests cover the spawn, the no-op, the boundary guard, and the worklist row. I found no correctness bugs; the guards and derivations line up with the spec's boundary rule.

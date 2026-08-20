@@ -273,6 +273,7 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     type: frontmatter.type,
     kind: frontmatter.kind,
     status: frontmatter.status,
+    idea: frontmatter.idea,
     agent: frontmatter.agent,
     created: frontmatter.created,
     updated: frontmatter.updated,

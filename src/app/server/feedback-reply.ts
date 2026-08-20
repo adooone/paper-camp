@@ -1,4 +1,5 @@
 import { buildFeedbackReplyPrompt, buildFeedbackSummaryPrompt } from '@/app/features/plans/prompts';
+import { isClosedEntity } from '@/core/status';
 import type {
   EntityEntry,
   EntityStatus,
@@ -114,23 +115,36 @@ export async function summarizeFeedback(
 // Applies a proposed edit's phase ops onto the entity's current phase/fix lists —
 // deterministic in the app, never as freeform file edits by the agent, so the
 // entity file's grammar (frontmatter, Phases, Fixes, Thread) can never be corrupted.
+//
+// A closed (done/archived) entity's own file stays read-only from here on: new
+// phase-adds come back as `spawnFix` for the caller to raise as their own linked
+// fix entity instead of reopening the closed one (IDEA-187) — reopening used to
+// strand archived files, credit `done` to the wrong PR, and overwrite the shipped
+// Phases history. A plan still under review keeps today's behaviour — new work
+// lands in its own Fixes list, since its Phases history isn't finished shipping yet.
 export function applyFeedbackEdit(
-  entity: { phases: PhaseItem[]; fixes?: PhaseItem[]; status?: EntityStatus },
+  entity: { phases: PhaseItem[]; fixes?: PhaseItem[]; status?: EntityStatus; archived?: boolean },
   edit: FeedbackEdit,
-): { phases?: PhaseItem[]; fixes?: PhaseItem[]; body?: string } {
-  const overrides: { phases?: PhaseItem[]; fixes?: PhaseItem[]; body?: string } = {};
+): { phases?: PhaseItem[]; fixes?: PhaseItem[]; body?: string; spawnFix?: PhaseItem[] } {
+  const overrides: {
+    phases?: PhaseItem[];
+    fixes?: PhaseItem[];
+    body?: string;
+    spawnFix?: PhaseItem[];
+  } = {};
+  const closed = isClosedEntity(entity);
   if (edit.phases?.length) {
-    // A plan already landed in review/done has its Phases history finished — new
-    // work an edit adds belongs in Fixes instead, so it never rewrites that history.
-    const implemented = entity.status === 'review' || entity.status === 'done';
+    const implemented = !closed && entity.status === 'review';
     const phases = [...entity.phases];
     const fixes = [...(entity.fixes ?? [])];
+    const spawnFix: PhaseItem[] = [];
     for (const phaseEdit of edit.phases) {
       if (phaseEdit.op === 'add') {
         const item = { done: false, text: phaseEdit.text, description: phaseEdit.description };
-        if (implemented) fixes.push(item);
+        if (closed) spawnFix.push(item);
+        else if (implemented) fixes.push(item);
         else phases.push(item);
-      } else if (typeof phaseEdit.index === 'number') {
+      } else if (typeof phaseEdit.index === 'number' && !closed) {
         const i = phaseEdit.index - 1;
         if (phases[i]) {
           phases[i] = {
@@ -141,10 +155,11 @@ export function applyFeedbackEdit(
         }
       }
     }
-    overrides.phases = phases;
+    if (!closed) overrides.phases = phases;
     if (implemented) overrides.fixes = fixes;
+    if (spawnFix.length > 0) overrides.spawnFix = spawnFix;
   }
-  if (edit.body) overrides.body = edit.body;
+  if (edit.body && !closed) overrides.body = edit.body;
   return overrides;
 }
 

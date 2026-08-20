@@ -24,7 +24,7 @@ const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
 });
 
 describe('completionGate', () => {
-  it('is ready when every phase and fix is checked, the PR is approved, and CI is green', () => {
+  it('is ready when every phase and fix is checked, a PR exists, and CI is green', () => {
     expect(completionGate(plan({ phases: [phase(true)], fixes: [phase(true)] }), true)).toEqual({
       ready: true,
       missing: [],
@@ -43,16 +43,26 @@ describe('completionGate', () => {
     );
   });
 
-  it('names missing PR approval', () => {
+  it('names a missing PR when there is none to merge', () => {
+    expect(completionGate(plan({ pr: undefined }), true).missing).toContain('an open PR');
+  });
+
+  it('does not require an approving review — completing is the approval', () => {
     const result = completionGate(
       plan({ pr: approvedPr({ reviewDecision: 'review-required' }) }),
       true,
     );
-    expect(result.missing).toContain('PR approval');
+    expect(result.missing).not.toContain('an open PR');
+    expect(result.ready).toBe(true);
   });
 
-  it('names missing PR approval when there is no PR at all', () => {
-    expect(completionGate(plan({ pr: undefined }), true).missing).toContain('PR approval');
+  it('blocks on a review that requested changes', () => {
+    const result = completionGate(
+      plan({ pr: approvedPr({ reviewDecision: 'changes-requested' }) }),
+      true,
+    );
+    expect(result.ready).toBe(false);
+    expect(result.missing).toContain('requested changes');
   });
 
   it('names missing CI when CI is not green', () => {
@@ -67,6 +77,6 @@ describe('completionGate', () => {
       false,
     );
     expect(result.ready).toBe(false);
-    expect(result.missing).toEqual(['open phases', 'open fixes', 'PR approval', 'CI']);
+    expect(result.missing).toEqual(['open phases', 'open fixes', 'an open PR', 'CI']);
   });
 });
