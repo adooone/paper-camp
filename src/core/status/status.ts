@@ -10,6 +10,15 @@ export interface StatusDerivationInput {
 
 export type ArchivabilityInput = StatusDerivationInput;
 
+// The one predicate the fix/reopen boundary (IDEA-187) keys off everywhere: a done
+// or archived entity's own file is read-only, so new work always spawns its own
+// linked fix entity instead. Reads the stored status, not the derived one — a
+// merged-but-not-yet-archived idea only counts once something has actually stamped
+// `status: done` on it (readEntities sets `archived` from the file's directory).
+export function isClosedEntity(entity: { status?: EntityStatus; archived?: boolean }): boolean {
+  return entity.archived === true || entity.status === 'done';
+}
+
 function allChecked(entity: StatusDerivationInput): boolean {
   const phasesDone = entity.phases.length > 0 && entity.phases.every((p) => p.done);
   const fixesDone = (entity.fixes ?? []).every((f) => f.done);

@@ -1,4 +1,5 @@
 import { buildFeedbackReplyPrompt, buildFeedbackSummaryPrompt } from '@/app/features/plans/prompts';
+import { isClosedEntity } from '@/core/status';
 import type {
   EntityEntry,
   EntityStatus,
@@ -131,7 +132,7 @@ export function applyFeedbackEdit(
     body?: string;
     spawnFix?: PhaseItem[];
   } = {};
-  const closed = entity.archived === true || entity.status === 'done';
+  const closed = isClosedEntity(entity);
   if (edit.phases?.length) {
     const implemented = !closed && entity.status === 'review';
     const phases = [...entity.phases];

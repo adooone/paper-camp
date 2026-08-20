@@ -110,8 +110,9 @@ history buys nothing. Fixes on notes, which never carry plans. Any change to how
 - [x] Spawn a fix entity from a closed idea instead of reopening
       A done/archived idea raises a new `IDEA-N` fix file with its parent link and a short 1–3 phase list; drop the reopen action from the UI.
       run: 13m20s · 14.2k in · 50.1k out · sonnet-5
-- [ ] Enforce the boundary rule by parent status
+- [x] Enforce the boundary rule by parent status
       Open ideas keep the inline `### Fixes` list; only done/archived ideas can spawn a fix entity, decided by status so there is no judgement call.
+      run: 9m19s · 14.1k in · 27.9k out · sonnet-5
 - [ ] Render fixes as their own worklist row
       A distinct minimal row grouped under the parent's inherited subject, parent id and its own marker visible, not nested under the closed parent.
 - [ ] Cross-link fix and parent in their detail views
