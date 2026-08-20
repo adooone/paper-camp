@@ -2,9 +2,9 @@
 id: IDEA-179
 title: Prioritise lies about what it did
 type: fix
-status: review
+status: done
 created: 2026-08-14
-updated: 2026-08-14
+updated: 2026-08-20
 tags:
   - app
   - server

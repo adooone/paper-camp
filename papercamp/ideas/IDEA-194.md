@@ -70,3 +70,14 @@ action inherits that; no merge-method choice is offered.
 Creating the PR, which the draft-PR workflow already handles. Any other merge
 method. Reverting a completed idea. Cleaning up the branches that accumulated
 before this exists.
+
+### Phases
+- [ ] Gate completion on finished work
+      Offer the action only when every phase and fix is checked, the PR is approved and CI is green; name whichever is missing instead of hiding it.
+- [ ] Guard the working tree before merging
+      Refuse when the tree is dirty, naming the uncommitted files, so the merge never lands ahead of a failed switch.
+- [ ] Squash-merge the PR through authenticated `gh`
+- [ ] Return to a current `main`
+      Check out `main`, fast-forward it, and delete the branch locally and on the remote.
+- [ ] Wire the single action into the idea view
+      Replace `Approve & close` with the merge-and-reset action and let `deriveStatus` carry the status change.
