@@ -1,7 +1,7 @@
-import type { EntityStatus, PhaseItem, PrInfo } from '../../types/index';
+import type { EntityKind, EntityStatus, PhaseItem, PrInfo } from '../../types/index';
 
 export interface StatusDerivationInput {
-  kind?: 'note';
+  kind?: EntityKind;
   status?: EntityStatus;
   phases: PhaseItem[];
   fixes?: PhaseItem[];

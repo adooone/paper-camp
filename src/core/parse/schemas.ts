@@ -85,9 +85,11 @@ const entityFrontmatterObjectSchema = z
         'Work classification (Conventional Commits values) driving commit types and branch prefixes; usually set once a plan is drafted',
       ),
     kind: z
-      .enum(['note'])
+      .enum(['note', 'fix'])
       .optional()
-      .describe('"note" marks an entity that never grows phases; omitted for normal ideas'),
+      .describe(
+        '"note" marks an entity that never grows phases; "fix" is a follow-up entity linked to a done/archived parent via `idea`; omitted for normal ideas',
+      ),
     status: z
       .enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped', 'open'])
       .optional()
@@ -113,6 +115,10 @@ const entityFrontmatterObjectSchema = z
         'Version tag (e.g. v0.13.1) that first shipped this idea, stamped from the release train',
       ),
     tags: z.array(z.string()).optional().describe('Tagging categories'),
+    idea: z
+      .string()
+      .optional()
+      .describe('IDEA-N backlink to the parent this fix addresses; required when kind: fix'),
     subject: z
       .string()
       .optional()
@@ -146,6 +152,10 @@ export const entityFrontmatterSchema = entityFrontmatterObjectSchema
   .refine((data) => data.kind === 'note' || data.status !== 'open', {
     message: 'status open is only valid on entities with kind: note',
     path: ['status'],
+  })
+  .refine((data) => data.kind !== 'fix' || data.idea !== undefined, {
+    message: 'a kind: fix entity requires an idea: link to its parent',
+    path: ['idea'],
   });
 
 export const deskServiceSchema = z.object({

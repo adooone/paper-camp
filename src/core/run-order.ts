@@ -22,7 +22,13 @@ export function isRunOrdered(entry: Pick<RunOrderEntry, 'status'>): boolean {
  * Shared by every write path so classification only lives in one place.
  */
 export function classifyRunOrderEntries(
-  entries: { id: string; title: string; created: string; status?: string; kind?: 'note' }[],
+  entries: {
+    id: string;
+    title: string;
+    created: string;
+    status?: string;
+    kind?: 'note' | 'fix';
+  }[],
   work: { id?: string; status?: string }[],
   statusOverride?: (id: string) => { value: string | undefined } | undefined,
 ): RunOrderEntry[] {

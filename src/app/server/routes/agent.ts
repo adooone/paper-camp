@@ -120,7 +120,7 @@ function toIdeaEntry(e: EntityEntry): IdeaEntry {
     id: e.id,
     title: e.title,
     body: e.body,
-    kind: e.kind,
+    kind: e.kind === 'note' ? 'note' : undefined,
     status: e.kind === 'note' ? (e.status as IdeaStatus) : undefined,
     log: logFromThread(e.thread),
   };

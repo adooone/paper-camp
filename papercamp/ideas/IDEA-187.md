@@ -104,8 +104,9 @@ history buys nothing. Fixes on notes, which never carry plans. Any change to how
 - [x] Keep the `idea:` parent field alive through IDEA-185
       185's group-machinery deletion removes only the nested parent/child rendering, not the `idea:` field itself.
       run: 1m27s · 5.7k in · 5.7k out · sonnet-5
-- [ ] Add `fix` to the `kind` enum
+- [x] Add `fix` to the `kind` enum
       Extend `entityFrontmatterSchema` so a fix derives status from its own phases and PR, and refine that `kind: fix` requires an `idea:` link to a done/archived parent.
+      run: 7m18s · 813 in · 17.4k out · sonnet-5
 - [ ] Spawn a fix entity from a closed idea instead of reopening
       A done/archived idea raises a new `IDEA-N` fix file with its parent link and a short 1–3 phase list; drop the reopen action from the UI.
 - [ ] Enforce the boundary rule by parent status
