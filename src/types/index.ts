@@ -968,3 +968,28 @@ export interface ReconcileQueueItem {
   title: string;
   before: { body: string; phases: PhaseItem[] };
 }
+
+/** The four failures IDEA-192 collects into one place: a failed agent run, a red
+ * project check, a PR review that requested changes, and a git rebase/sync failure. */
+export type IssueSourceKind = 'agent-run' | 'check' | 'pr-review' | 'sync';
+
+/** One collected failure (IDEA-192), read as a short thread. `id` is derived from
+ * `sourceKind` + `sourceKey`, so a repeat failure of the same thing resolves to the
+ * same issue and continues its thread instead of raising a duplicate. */
+export interface Issue {
+  id: string;
+  sourceKind: IssueSourceKind;
+  /** Stable within `sourceKind` — a task's `planId`, a check's `name`, a PR's
+   * `number` + `headSha`, or a sync failure's branch + target ref. */
+  sourceKey: string;
+  entityId?: string;
+  entityTitle?: string;
+  title: string;
+  reason: string;
+  /** Last output lines, when the source captured any (a check's command output, a
+   * sync failure's conflicted files). */
+  output?: string;
+  /** Absent when the source carries no timestamp of its own (a live PR review decision). */
+  occurredAt?: string;
+  thread: ThreadMessage[];
+}

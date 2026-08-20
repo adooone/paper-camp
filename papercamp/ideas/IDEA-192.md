@@ -83,8 +83,9 @@ Any change to the Inbox. The task log page itself, which keeps its route and its
 current shape. Notifications for issues — the page is pulled, not pushed.
 
 ### Phases
-- [ ] Define the issue model and its four collectors
+- [x] Define the issue model and its four collectors
       One issue shape fed by failed agent runs, red checks, PR change-requests, and rebase/sync failures — deduped by source so a repeat failure continues an existing issue.
+      run: 7m10s · 11.1k in · 27.2k out · sonnet-5
 - [ ] Derive open/closed state from the world
       Close an issue when its check goes green, its rerun succeeds, or its promoted fix ships; never a mark-read button.
 - [ ] Swap the nav slot: Issues in, Tasks out
