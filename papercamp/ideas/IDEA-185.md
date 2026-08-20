@@ -81,8 +81,9 @@ the field it keyed off is about to carry real weight.
 Run this idea before [[IDEA-187]], with that carve-out explicit in the removal.
 
 ### Phases
-- [ ] Confirm shared call sites survive
+- [x] Confirm shared call sites survive
       Verify `DraftPlanButton` and `ExtendIdeaButton` are mounted elsewhere before deleting the group card.
+      run: 10s · 5.6k in · 648 out · sonnet-5
 - [ ] Collapse the selector partition
       Drop the `ideaParents` loop and `childrenByIdea`/`orphanPlans` split in `plan-list-selector.ts`; every plan becomes a plain row.
 - [ ] Remove the group card and its state
