@@ -72,8 +72,9 @@ method. Reverting a completed idea. Cleaning up the branches that accumulated
 before this exists.
 
 ### Phases
-- [ ] Gate completion on finished work
+- [x] Gate completion on finished work
       Offer the action only when every phase and fix is checked, the PR is approved and CI is green; name whichever is missing instead of hiding it.
+      run: 2m32s · 6.4k in · 9.7k out · sonnet-5
 - [ ] Guard the working tree before merging
       Refuse when the tree is dirty, naming the uncommitted files, so the merge never lands ahead of a failed switch.
 - [ ] Squash-merge the PR through authenticated `gh`

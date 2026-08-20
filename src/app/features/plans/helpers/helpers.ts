@@ -93,6 +93,27 @@ export const canMarkPlanDone = (plan: PlanEntry): boolean =>
   plan.phases.every((p) => p.done) &&
   (plan.fixes ?? []).every((f) => f.done);
 
+export interface CompletionGateResult {
+  ready: boolean;
+  missing: string[];
+}
+
+/** Gates the merge-and-reset completion action (IDEA-194): recomputes from raw
+ * phases/fixes/PR/CI rather than trusting `plan.status`, the same "derive, don't
+ * assert" rule deriveStatus follows. `ciGreen` comes from `usePrReviewStatus`,
+ * which is the only place CI state is already fetched for a PR. */
+export const completionGate = (
+  plan: PlanEntry,
+  ciGreen: boolean | null | undefined,
+): CompletionGateResult => {
+  const missing: string[] = [];
+  if (!(plan.phases.length > 0 && plan.phases.every((p) => p.done))) missing.push('open phases');
+  if (!(plan.fixes ?? []).every((f) => f.done)) missing.push('open fixes');
+  if (plan.pr?.reviewDecision !== 'approved') missing.push('PR approval');
+  if (ciGreen !== true) missing.push('CI');
+  return { ready: missing.length === 0, missing };
+};
+
 export interface OpenQuestionGroup {
   plan: PlanEntry;
   questions: ThreadMessage[];
