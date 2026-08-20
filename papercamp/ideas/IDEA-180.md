@@ -2,7 +2,7 @@
 id: IDEA-180
 title: Say what each idea is for
 type: feat
-status: in-progress
+status: review
 created: 2026-08-14
 updated: 2026-08-20
 tags:
@@ -56,8 +56,9 @@ index.md rendering — that file no longer exists in the app.
 - [x] Handle bodies with no usable opening sentence
       Define fallback behavior when an entity's body has no sentence that works as a summary.
       run: 2m14s · 962 in · 8.5k out · sonnet-5
-- [ ] Handle bodies with no usable opening sentence
+- [x] Handle bodies with no usable opening sentence
       Fall back cleanly when the first sentence is empty or degenerate.
+      run: 28s · 94 in · 1.1k out · sonnet-5
 
 ### Thread
 - [ ] 2026-08-20 [question] [agent] Run-all parked on phase 1 ("Derive the purpose line from the body") — the agent needs a decision: `papercamp/ideas/index.md` and `regenerateIndexes` were removed from the codebase (commit dbb663f, 2026-08-18, "Drop ideas/index.md, generate no longer, doc updated") after IDEA-180 was authored. The idea still describes rendering the purpose line "in `index.md` beside the existing columns" via `regenerateIndexes`. Should I: (a) drop the index.md-related scope entirely and rewrite IDEA-180 to cover only the worklist-row purpose line, or (b) keep the idea as-is and you'll handle reconciling it separately? I don't want to guess at rewriting the idea's scope myself.
