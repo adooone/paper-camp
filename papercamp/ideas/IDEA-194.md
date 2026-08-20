@@ -80,7 +80,8 @@ before this exists.
       run: 1m40s · 892 in · 4.5k out · sonnet-5
 - [x] Squash-merge the PR through authenticated `gh`
       run: 2m16s · 4.7k in · 7.8k out · sonnet-5
-- [ ] Return to a current `main`
+- [x] Return to a current `main`
       Check out `main`, fast-forward it, and delete the branch locally and on the remote.
+      run: 2m8s · 883 in · 8.2k out · sonnet-5
 - [ ] Wire the single action into the idea view
       Replace `Approve & close` with the merge-and-reset action and let `deriveStatus` carry the status change.

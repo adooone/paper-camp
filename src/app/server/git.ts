@@ -36,6 +36,11 @@ export class DirtyWorkingTreeError extends Error {
   }
 }
 
+export interface ReturnToMainResult {
+  branch: string;
+  remoteDeleted: boolean;
+}
+
 // Thrown by reconcileOnto so callers can tell a genuine content conflict — one that needs
 // domain judgement to resolve — apart from any other reconcile failure (fetch, checkout, ...).
 export class RebaseConflictError extends Error {
@@ -269,6 +274,26 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       throw new Error(result.stderr.toString().trim() || `Unable to create branch ${branch}`);
     }
     return warning;
+  }
+
+  // Called right after a successful squash-merge (IDEA-194). `git branch -d` would
+  // refuse: squashing rewrites the SHA, so the branch never reads as merged into
+  // main — `-D` is required, not a looser safety check being skipped.
+  async function returnToMain(): Promise<ReturnToMainResult> {
+    const branch = getCurrentBranch();
+    await runGit(['fetch', 'origin', 'main']);
+    await runGit(['checkout', 'main']);
+    await runGit(['merge', '--ff-only', 'origin/main']);
+    if (branch === 'main' || branch === 'master') {
+      return { branch, remoteDeleted: false };
+    }
+    await runGit(['branch', '-D', branch]);
+    let remoteDeleted = false;
+    try {
+      await runGit(['push', 'origin', '--delete', branch]);
+      remoteDeleted = true;
+    } catch {}
+    return { branch, remoteDeleted };
   }
 
   async function refresh() {
@@ -927,6 +952,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       return runGitStatus();
     },
     assertCleanWorkingTree,
+    returnToMain,
     getCurrentBranch,
     commit,
     commitCorpus,
