@@ -2,9 +2,9 @@
 id: IDEA-168
 title: Version the corpus format
 type: feat
-status: review
+status: done
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-19
 tags:
   - format
   - core

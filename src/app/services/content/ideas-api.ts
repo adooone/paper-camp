@@ -5,7 +5,9 @@ import type { ArchivableIdea, IdeaEntry, OverlapVerdict, ParseResult } from '@/t
 export interface PrioritiseResult {
   ok: boolean;
   moved: string[];
+  annotated: string[];
   why: string;
+  annotationError?: string;
 }
 
 const IDEAS_TIMEOUT_MS = 45_000;
