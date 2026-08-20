@@ -162,7 +162,7 @@ export const resolveConflict = async (prompt: string): Promise<{ ok: boolean; er
 // once the merged PR is re-read, so no status patch happens here.
 export const completeIdea = async (
   planId: string,
-): Promise<{ branch: string; remoteDeleted: boolean }> => {
+): Promise<{ branch: string; remoteDeleted?: boolean; needsAttention?: string }> => {
   const response = await fetch(apiUrl('/api/git/complete-idea'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -171,7 +171,11 @@ export const completeIdea = async (
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Failed to complete idea');
-  return { branch: data.branch as string, remoteDeleted: data.remoteDeleted as boolean };
+  return {
+    branch: data.branch as string,
+    remoteDeleted: data.remoteDeleted as boolean | undefined,
+    needsAttention: data.needsAttention as string | undefined,
+  };
 };
 
 export const createPlanBranch = async (

@@ -23,12 +23,20 @@ export const CompleteIdeaButton = ({ plan, disabled }: CompleteIdeaButtonProps) 
     if (!plan.id) return;
     setCompleting(true);
     try {
-      await completeIdea(plan.id);
-      toast({
-        title: 'Idea complete',
-        description: `${plan.id} merged — main is up to date`,
-        variant: 'success',
-      });
+      const result = await completeIdea(plan.id);
+      if (result.needsAttention) {
+        toast({
+          title: 'Merged — main needs manual sync',
+          description: oneLineErrorSummary(result.needsAttention),
+          variant: 'error',
+        });
+      } else {
+        toast({
+          title: 'Idea complete',
+          description: `${plan.id} merged — main is up to date`,
+          variant: 'success',
+        });
+      }
       await refreshAll();
     } catch (err) {
       toast({

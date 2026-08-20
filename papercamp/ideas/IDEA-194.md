@@ -4,7 +4,7 @@ title: Complete an idea without leaving
 type: feat
 status: review
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-08-20
 tags:
   - app
   - git
@@ -86,3 +86,7 @@ before this exists.
 - [x] Wire the single action into the idea view
       Replace `Approve & close` with the merge-and-reset action and let `deriveStatus` carry the status change.
       run: 5m23s · 2.4k in · 21.2k out · sonnet-5
+- [x] [manual] Report merged-but-unfinished when returnToMain fails
+
+### Thread
+- [x] 2026-08-20 [review] [agent] Comments · 2 findings — The diff cleanly delivers the five phases: a completion gate that recomputes from raw phase/fix/PR/CI state, a working-tree guard thrown before the merge, an authenticated `gh pr merge --squash`, a return-to-main routine, and the wired-in idea-view action replacing `Approve & close`. Test coverage is thorough and the ordering guarantee the spec insists on (check tree before merge) is respected. The main risk is that `returnToMain` uses `--ff-only` against `origin/main`, which fails *after* the merge has already landed if local `main` has diverged — precisely the split-main condition this repo is known to hit.

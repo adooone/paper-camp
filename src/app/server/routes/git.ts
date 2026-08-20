@@ -120,17 +120,30 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             return;
           }
           await git.assertCleanWorkingTree();
+          const featureBranch = git.getCurrentBranch();
           const merge = await squashMergePr(root, String(plan.pr.number));
           if (!merge.ok) {
             sendJson(res, 409, { error: merge.message });
             return;
           }
-          const { remoteDeleted } = await git.returnToMain();
-          sendJson(res, 200, {
-            ok: true,
-            branch: git.getCurrentBranch(),
-            remoteDeleted,
-          });
+          // The PR merged upstream at this point — a failure below must not read
+          // as "nothing happened", since it isn't. It's reported as merged-but-
+          // unfinished rather than rolled into the generic 409 catch below.
+          try {
+            const { remoteDeleted } = await git.returnToMain();
+            sendJson(res, 200, {
+              ok: true,
+              branch: git.getCurrentBranch(),
+              remoteDeleted,
+            });
+          } catch (error) {
+            sendJson(res, 200, {
+              ok: true,
+              merged: true,
+              branch: git.getCurrentBranch(),
+              needsAttention: `${planId}'s PR merged, but returning to main failed: ${(error as Error).message}. Run \`git fetch origin main && git checkout main && git merge --ff-only origin/main\`, then delete branch ${featureBranch} locally and on the remote.`,
+            });
+          }
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
         }
