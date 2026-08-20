@@ -24,6 +24,23 @@ const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 // Unmerged porcelain status codes — a rebase (or merge) conflict, as opposed to a plain edit.
 const CONFLICT_STATUSES = new Set(['UU', 'AA', 'DD', 'AU', 'UA', 'DU', 'UD']);
 
+// Thrown by assertCleanWorkingTree so the completion action (IDEA-194) can refuse before
+// merging — landing the squash-merge and only then failing to switch to main would be
+// the worst outcome, so the tree is checked ahead of the merge, not after.
+export class DirtyWorkingTreeError extends Error {
+  files: string[];
+
+  constructor(files: string[]) {
+    super(`Working tree has uncommitted changes: ${files.join(', ')}`);
+    this.files = files;
+  }
+}
+
+export interface ReturnToMainResult {
+  branch: string;
+  remoteDeleted: boolean;
+}
+
 // Thrown by reconcileOnto so callers can tell a genuine content conflict — one that needs
 // domain judgement to resolve — apart from any other reconcile failure (fetch, checkout, ...).
 export class RebaseConflictError extends Error {
@@ -134,6 +151,13 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
 
   function runGitStatus(): Promise<GitStatusEntry[]> {
     return runGit(['status', '--porcelain=v1']).then(parsePorcelain);
+  }
+
+  async function assertCleanWorkingTree(): Promise<void> {
+    const status = await runGitStatus();
+    if (status.length > 0) {
+      throw new DirtyWorkingTreeError(status.map((entry) => entry.path));
+    }
   }
 
   async function commit(
@@ -250,6 +274,26 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       throw new Error(result.stderr.toString().trim() || `Unable to create branch ${branch}`);
     }
     return warning;
+  }
+
+  // Called right after a successful squash-merge (IDEA-194). `git branch -d` would
+  // refuse: squashing rewrites the SHA, so the branch never reads as merged into
+  // main — `-D` is required, not a looser safety check being skipped.
+  async function returnToMain(): Promise<ReturnToMainResult> {
+    const branch = getCurrentBranch();
+    await runGit(['fetch', 'origin', 'main']);
+    await runGit(['checkout', 'main']);
+    await runGit(['merge', '--ff-only', 'origin/main']);
+    if (branch === 'main' || branch === 'master') {
+      return { branch, remoteDeleted: false };
+    }
+    await runGit(['branch', '-D', branch]);
+    let remoteDeleted = false;
+    try {
+      await runGit(['push', 'origin', '--delete', branch]);
+      remoteDeleted = true;
+    } catch {}
+    return { branch, remoteDeleted };
   }
 
   async function refresh() {
@@ -907,6 +951,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     async getStatus(): Promise<GitStatusEntry[]> {
       return runGitStatus();
     },
+    assertCleanWorkingTree,
+    returnToMain,
     getCurrentBranch,
     commit,
     commitCorpus,

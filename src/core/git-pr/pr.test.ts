@@ -16,6 +16,7 @@ import {
   resolvePlanForPrRef,
   resolvePrsByEntity,
   scoutReviewFooter,
+  squashMergePr,
   syncConsistencyCommentToPr,
   syncPlanPhasesToPr,
   syncPrLabelsToPr,
@@ -963,6 +964,60 @@ describe('validatePrTitle', () => {
     );
 
     expect(await validatePrTitle(root, 'feat/idea-9-x')).toBe('invalid');
+  });
+});
+
+describe('squashMergePr', () => {
+  const originalPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = originalPath;
+  });
+
+  it('reports ok when gh exits zero', async () => {
+    const { root } = installFakeGh(`if [ "$1" = "pr" ] && [ "$2" = "merge" ]; then\nexit 0\nfi`);
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await squashMergePr(root, '42')).toEqual({ ok: true });
+  });
+
+  it('passes the ref and --squash, and no other merge-method flag', async () => {
+    const argsDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-merge-args-'));
+    const argsFile = join(argsDir, 'args');
+    const { root } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "merge" ]; then\necho "$@" > "${argsFile}"\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    await squashMergePr(root, 'feat/idea-194-x');
+    const recordedArgs = readFileSync(argsFile, 'utf-8');
+    expect(recordedArgs).toContain('pr merge feat/idea-194-x --squash');
+    expect(recordedArgs).not.toContain('--merge');
+    expect(recordedArgs).not.toContain('--rebase');
+  });
+
+  it('reports the failure message when gh exits non-zero', async () => {
+    const { root } = installFakeGh(
+      `if [ "$1" = "pr" ] && [ "$2" = "merge" ]; then\necho "not mergeable: checks pending" 1>&2\nexit 1\nfi`,
+    );
+    process.env.PATH = `${root}:${originalPath}`;
+    expect(await squashMergePr(root, '42')).toEqual({
+      ok: false,
+      message: 'not mergeable: checks pending',
+    });
+  });
+
+  it('reports a fallback message when gh exits non-zero with no stderr', async () => {
+    const { root } = installFakeGh(`if [ "$1" = "pr" ] && [ "$2" = "merge" ]; then\nexit 1\nfi`);
+    process.env.PATH = `${root}:${originalPath}`;
+    const result = await squashMergePr(root, '42');
+    expect(result.ok).toBe(false);
+    expect((result as { ok: false; message: string }).message).toContain(
+      'gh pr merge 42 --squash exited with code 1',
+    );
+  });
+
+  it('reports unavailable when gh is not on PATH', async () => {
+    process.env.PATH = '/nonexistent';
+    const result = await squashMergePr('/tmp', '42');
+    expect(result.ok).toBe(false);
   });
 });
 

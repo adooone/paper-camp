@@ -896,6 +896,88 @@ describe('getStatus', () => {
   });
 });
 
+describe('assertCleanWorkingTree', () => {
+  it('resolves on a clean tree', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    await expect(manager.assertCleanWorkingTree()).resolves.toBeUndefined();
+  });
+
+  it('throws naming every uncommitted file, tracked and untracked', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'README.md'), 'modified\n');
+    await writeFile(join(root, 'untracked.txt'), 'new\n');
+    const manager = gitManager(root);
+    await expect(manager.assertCleanWorkingTree()).rejects.toMatchObject({
+      files: expect.arrayContaining(['README.md', 'untracked.txt']),
+    });
+  });
+});
+
+describe('returnToMain', () => {
+  it('checks out main, fast-forwards it, and deletes the branch locally and on the remote', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/idea-1-x');
+    await commitFile(root, 'feature.txt', 'feature work\n', 'feature commit');
+    git(root, 'push', '-u', 'origin', 'feat/idea-1-x');
+    // Simulates the squash-merge landing on origin/main while the local feature
+    // branch (with its own pre-squash commit) is still checked out.
+    git(root, 'checkout', 'main');
+    await commitFile(root, 'squashed.txt', 'squash landed\n', 'feat: squashed (IDEA-1)');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'checkout', 'feat/idea-1-x');
+    const manager = gitManager(root);
+
+    const result = await manager.returnToMain();
+
+    expect(result).toEqual({ branch: 'feat/idea-1-x', remoteDeleted: true });
+    expect(manager.getCurrentBranch()).toBe('main');
+    expect(await readFile(join(root, 'squashed.txt'), 'utf-8')).toBe('squash landed\n');
+    expect(git(root, 'branch', '--list', 'feat/idea-1-x')).toBe('');
+    expect(git(root, 'ls-remote', '--heads', 'origin', 'feat/idea-1-x')).toBe('');
+  });
+
+  it('force-deletes locally even though squashing means the branch never merged into main', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/idea-2-y');
+    await commitFile(root, 'feature.txt', 'feature work\n', 'feature commit');
+    const manager = gitManager(root);
+
+    await manager.returnToMain();
+
+    // A plain `git branch -d` would refuse here: this branch's commit is nowhere
+    // in main's ancestry (a squash never lands the original SHA).
+    expect(git(root, 'branch', '--list', 'feat/idea-2-y')).toBe('');
+  });
+
+  it('reports remoteDeleted: false without throwing when the remote branch is already gone', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    git(root, 'checkout', '-b', 'feat/idea-3-z');
+    await commitFile(root, 'feature.txt', 'feature work\n', 'feature commit');
+    const manager = gitManager(root);
+
+    const result = await manager.returnToMain();
+
+    expect(result).toEqual({ branch: 'feat/idea-3-z', remoteDeleted: false });
+    expect(manager.getCurrentBranch()).toBe('main');
+    expect(git(root, 'branch', '--list', 'feat/idea-3-z')).toBe('');
+  });
+
+  it('is a safe no-op when already on main', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    const manager = gitManager(root);
+
+    const result = await manager.returnToMain();
+
+    expect(result).toEqual({ branch: 'main', remoteDeleted: false });
+    expect(manager.getCurrentBranch()).toBe('main');
+  });
+});
+
 describe('stagePath', () => {
   it('stages a modified file into the index', async () => {
     const root = await initRepo();

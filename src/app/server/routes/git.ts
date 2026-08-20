@@ -1,4 +1,5 @@
 import { findFocusPlan } from '@/app/features/plans/helpers';
+import { squashMergePr } from '@/core/git-pr';
 import { entityToPlan, readEntities, readWorkEntries } from '@/core/readers';
 import type { GitSyncFailure } from '@/types/index';
 import type { AgentManager } from '../agent';
@@ -84,6 +85,67 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
           sendJson(res, 200, { ok: true, branch: git.getCurrentBranch(), warning });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
+        }
+      },
+    },
+
+    // Squash-merges the plan's PR, then returns to a current main — the tree is
+    // checked before the merge, not after, so a dirty tree never lands a merge it
+    // then can't switch away from cleanly.
+    {
+      method: 'POST',
+      path: '/api/git/complete-idea',
+      handle: async (req, res) => {
+        try {
+          const body = await readBody(req);
+          const { planId } = JSON.parse(body) as { planId?: string };
+          if (!planId) {
+            sendJson(res, 400, { error: 'planId is required' });
+            return;
+          }
+          const { entries } = await readWorkEntries(campFile(root, 'ideas'));
+          const plan = entries.find((e) => e.id === planId);
+          if (!plan) {
+            sendJson(res, 404, { error: 'entity not found' });
+            return;
+          }
+          if (!plan.pr) {
+            sendJson(res, 400, { error: `${planId} has no PR to merge` });
+            return;
+          }
+          if (git.getFeatureBranchPlanId() !== planId) {
+            sendJson(res, 409, {
+              error: `Not on ${planId}'s branch — check it out before completing it`,
+            });
+            return;
+          }
+          await git.assertCleanWorkingTree();
+          const featureBranch = git.getCurrentBranch();
+          const merge = await squashMergePr(root, String(plan.pr.number));
+          if (!merge.ok) {
+            sendJson(res, 409, { error: merge.message });
+            return;
+          }
+          // The PR merged upstream at this point — a failure below must not read
+          // as "nothing happened", since it isn't. It's reported as merged-but-
+          // unfinished rather than rolled into the generic 409 catch below.
+          try {
+            const { remoteDeleted } = await git.returnToMain();
+            sendJson(res, 200, {
+              ok: true,
+              branch: git.getCurrentBranch(),
+              remoteDeleted,
+            });
+          } catch (error) {
+            sendJson(res, 200, {
+              ok: true,
+              merged: true,
+              branch: git.getCurrentBranch(),
+              needsAttention: `${planId}'s PR merged, but returning to main failed: ${(error as Error).message}. Run \`git fetch origin main && git checkout main && git merge --ff-only origin/main\`, then delete branch ${featureBranch} locally and on the remote.`,
+            });
+          }
+        } catch (error) {
+          sendJson(res, 409, { error: (error as Error).message });
         }
       },
     },

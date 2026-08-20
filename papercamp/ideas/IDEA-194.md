@@ -2,9 +2,9 @@
 id: IDEA-194
 title: Complete an idea without leaving
 type: feat
-status: idea
+status: review
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-08-20
 tags:
   - app
   - git
@@ -70,3 +70,23 @@ action inherits that; no merge-method choice is offered.
 Creating the PR, which the draft-PR workflow already handles. Any other merge
 method. Reverting a completed idea. Cleaning up the branches that accumulated
 before this exists.
+
+### Phases
+- [x] Gate completion on finished work
+      Offer the action only when every phase and fix is checked, the PR is approved and CI is green; name whichever is missing instead of hiding it.
+      run: 2m32s · 6.4k in · 9.7k out · sonnet-5
+- [x] Guard the working tree before merging
+      Refuse when the tree is dirty, naming the uncommitted files, so the merge never lands ahead of a failed switch.
+      run: 1m40s · 892 in · 4.5k out · sonnet-5
+- [x] Squash-merge the PR through authenticated `gh`
+      run: 2m16s · 4.7k in · 7.8k out · sonnet-5
+- [x] Return to a current `main`
+      Check out `main`, fast-forward it, and delete the branch locally and on the remote.
+      run: 2m8s · 883 in · 8.2k out · sonnet-5
+- [x] Wire the single action into the idea view
+      Replace `Approve & close` with the merge-and-reset action and let `deriveStatus` carry the status change.
+      run: 5m23s · 2.4k in · 21.2k out · sonnet-5
+- [x] [manual] Report merged-but-unfinished when returnToMain fails
+
+### Thread
+- [x] 2026-08-20 [review] [agent] Comments · 2 findings — The diff cleanly delivers the five phases: a completion gate that recomputes from raw phase/fix/PR/CI state, a working-tree guard thrown before the merge, an authenticated `gh pr merge --squash`, a return-to-main routine, and the wired-in idea-view action replacing `Approve & close`. Test coverage is thorough and the ordering guarantee the spec insists on (check tree before merge) is respected. The main risk is that `returnToMain` uses `--ff-only` against `origin/main`, which fails *after* the merge has already landed if local `main` has diverged — precisely the split-main condition this repo is known to hit.

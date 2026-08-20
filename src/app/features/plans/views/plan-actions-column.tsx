@@ -4,6 +4,7 @@ import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { Card, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
+import { CompleteIdeaButton } from '../actions';
 import { FixReviewButton } from '../actions';
 import { PrReviewButton } from '../actions';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
@@ -160,20 +161,7 @@ export const PlanActionsColumn = () => {
           {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
           {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
 
-          {underReview && (
-            // Offline fallback: sticks only once the live PR lookup can't resolve
-            // a merge either way (done normally derives from the PR merging).
-            <ListItem
-              size="small"
-              // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
-              icon={<span className="text-watercolor-green-dark">✓</span>}
-              onClick={() => patch({ status: 'done' })}
-              disabled={updating}
-              className={`pc-row text-xs ${updating ? 'opacity-50' : ''}`}
-            >
-              Approve &amp; close
-            </ListItem>
-          )}
+          {underReview && <CompleteIdeaButton plan={plan} disabled={agentBusy || updating} />}
 
           {done && (
             <ListItem

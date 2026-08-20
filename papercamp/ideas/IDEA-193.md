@@ -172,3 +172,15 @@ integration that requires a webhook receiver.
 - [ ] 2026-08-19 [question] [human] Is plan-only a first-class state a project can
       live in indefinitely, or a temporary condition on the way to attaching a
       runtime?
+
+### Phases
+- [ ] Measure the localhost carve-out
+      On one machine where the browser and runtime coexist, fetch an http localhost origin from an https page and confirm arrival in the server log.
+- [ ] Add CORS headers to runtime API responses
+      Let an http client read the cross-origin response the browser already delivers.
+- [ ] Split plugins into two extension points
+      Separate external services from local adapters, each with its own credential store and failure mode.
+- [ ] Package the runtime as an installed repo dependency
+      Ship it as a dev dependency run from the repo it serves, alongside the papercamp/ corpus.
+- [ ] Choose the front door from the surviving shortlist
+      Pick localhost, extension, or native based on the measurement.
