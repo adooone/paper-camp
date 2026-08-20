@@ -2,7 +2,7 @@
 id: IDEA-192
 title: An Issues page you can act on
 type: feat
-status: review
+status: done
 created: 2026-08-19
 updated: 2026-08-20
 tags:

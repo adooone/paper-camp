@@ -2,9 +2,9 @@
 id: IDEA-164
 title: Browser-driven page audits
 type: feat
-status: idea
+status: dropped
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-20
 tags:
   - app
   - agent

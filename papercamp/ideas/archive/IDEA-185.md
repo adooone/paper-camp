@@ -2,9 +2,9 @@
 id: IDEA-185
 title: Delete the idea-group machinery
 type: refactor
-status: review
+status: done
 created: 2026-08-16
-updated: 2026-08-17
+updated: 2026-08-20
 tags:
   - app
   - plans
