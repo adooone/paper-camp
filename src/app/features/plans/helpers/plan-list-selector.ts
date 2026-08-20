@@ -212,7 +212,14 @@ interface PlanRow {
   plan: PlanEntry;
 }
 
-export type WorklistRow = IdeaGroupRow | NoteRow | PlanRow;
+export interface FixRow {
+  type: 'fix';
+  /** Its `subject` is the parent's, resolved by `selectWorklistRows` — a fix never
+   * stores its own, so it can't drift from the idea it fixes. */
+  fix: PlanEntry;
+}
+
+export type WorklistRow = IdeaGroupRow | NoteRow | PlanRow | FixRow;
 
 export interface SubjectGroup {
   /** null is the virtual "No subject" group. */
@@ -220,14 +227,25 @@ export interface SubjectGroup {
   rows: WorklistRow[];
 }
 
-const subjectOf = (row: WorklistRow): string | undefined =>
-  row.type === 'plan' ? row.plan.subject : row.idea.subject;
+const subjectOf = (row: WorklistRow): string | undefined => {
+  if (row.type === 'plan') return row.plan.subject;
+  if (row.type === 'fix') return row.fix.subject;
+  return row.idea.subject;
+};
 
-const rowOrder = (row: WorklistRow): number | undefined =>
-  row.type === 'plan' ? row.plan.order : row.idea.order;
+const rowOrder = (row: WorklistRow): number | undefined => {
+  if (row.type === 'plan') return row.plan.order;
+  if (row.type === 'fix') return row.fix.order;
+  return row.idea.order;
+};
 
 const rowUpdatedTimestamp = (row: WorklistRow): number => {
-  const raw = row.type === 'plan' ? (row.plan.updated ?? row.plan.created) : row.idea.created;
+  const raw =
+    row.type === 'plan'
+      ? (row.plan.updated ?? row.plan.created)
+      : row.type === 'fix'
+        ? (row.fix.updated ?? row.fix.created)
+        : row.idea.created;
   const parsed = new Date(raw ?? '').getTime();
   return Number.isNaN(parsed) ? 0 : parsed;
 };
@@ -306,6 +324,7 @@ export const deriveChildrenSummary = (
  * the group's most-advanced child, falling back to the undrafted/note tier. */
 const worklistSortProxy = (row: WorklistRow): PlanEntry => {
   if (row.type === 'plan') return row.plan;
+  if (row.type === 'fix') return row.fix;
 
   if (row.type === 'note') {
     return {
@@ -340,13 +359,25 @@ const worklistSortProxy = (row: WorklistRow): PlanEntry => {
 };
 
 /** Nests a plan under its `idea:` backlink as a group; other plans and
- * `kind: note` ideas stay top-level. Nesting stops at this one level. */
+ * `kind: note` ideas stay top-level. Nesting stops at this one level. A fix
+ * entity never nests — its parent is closed and no longer in the list — it
+ * renders as its own row, grouped under the parent's subject, inherited here
+ * rather than stored, so a fix can't drift from the idea it fixes. */
 export const selectWorklistRows = (
   plans: PlanEntry[],
   ideas: IdeaEntry[],
   filters: PlanListFilters = DEFAULT_PLAN_LIST_FILTERS,
 ): WorklistResult => {
-  const { statusCounts, tagCounts } = selectPlanRows(plans, filters);
+  const subjectById = new Map(plans.map((p) => [p.id, p.subject] as const));
+  const withInheritedSubject = plans.map((p) =>
+    p.entityKind === 'fix'
+      ? { ...p, subject: (p.idea && subjectById.get(p.idea)) || undefined }
+      : p,
+  );
+  const fixPlans = withInheritedSubject.filter((p) => p.entityKind === 'fix');
+  const nonFixPlans = withInheritedSubject.filter((p) => p.entityKind !== 'fix');
+
+  const { statusCounts, tagCounts } = selectPlanRows(withInheritedSubject, filters);
 
   const notes = ideas.filter((idea) => idea.kind === 'note');
   const ideaParents = ideas.filter((idea) => idea.kind !== 'note');
@@ -356,7 +387,7 @@ export const selectWorklistRows = (
 
   const childrenByIdea = new Map<string, PlanEntry[]>();
   const orphanPlans: PlanEntry[] = [];
-  for (const p of plans) {
+  for (const p of nonFixPlans) {
     if (p.idea && ideaParentIds.has(p.idea)) {
       const list = childrenByIdea.get(p.idea) ?? [];
       list.push(p);
@@ -376,6 +407,7 @@ export const selectWorklistRows = (
   const rows: WorklistRow[] = selectPlanRows(orphanPlans, filters).rows.map(
     (plan): PlanRow => ({ type: 'plan', plan }),
   );
+  rows.push(...selectPlanRows(fixPlans, filters).rows.map((fix): FixRow => ({ type: 'fix', fix })));
 
   for (const idea of ideaParents) {
     const allChildren = idea.id ? (childrenByIdea.get(idea.id) ?? []) : [];

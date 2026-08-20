@@ -1,5 +1,11 @@
 import { LightbulbIcon, NoteIcon } from '@/app/components/icons';
-import type { IdeaGroupRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
+import type {
+  FixRow,
+  IdeaGroupRow,
+  NoteRow,
+  PlanSortKey,
+  WorklistRow,
+} from '@/app/features/plans/helpers';
 import { groupRowsBySubject } from '@/app/features/plans/helpers';
 import { useRoadmapItemNames } from '@/app/features/roadmap';
 import { useSubjectVocabulary } from '@/app/hooks';
@@ -10,7 +16,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton } from '../actions';
 import { PlanIdStamp } from '../components';
-import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../constants';
+import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
+import { effectiveStatus, runningTaskForPlan } from '../helpers';
 import { PlanRows, ROW_MARKER_WIDTH, RowMarker } from './plan-rows';
 
 /** Past this many children, done ones collapse behind a "+N done" toggle. */
@@ -117,6 +124,16 @@ export const WorklistRows = ({
     }
     if (row.type === 'note') {
       return <NoteRowCard key={row.idea.title} row={row} onOpen={onOpenIdea} />;
+    }
+    if (row.type === 'fix') {
+      return (
+        <FixRowCard
+          key={row.fix.title}
+          row={row}
+          activePlanTitle={activePlanTitle}
+          onOpen={onOpenPlan}
+        />
+      );
     }
     return (
       <IdeaGroupRowCard
@@ -269,6 +286,75 @@ const NoteRowCard = ({
               textColor={IDEA_STATUS_STAMP[status].text}
             >
               {IDEA_STATUS_LABEL[status]}
+            </Stamp>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+/** Fewer columns than a plan row (no updated/progress) and its own marker in the
+ * title, since a fix is a distinct, minimal follow-up entity, not a nested child
+ * of its (closed) parent — see IDEA-187. */
+const FIX_ROW_GRID_CLASS =
+  'grid grid-cols-[76px_minmax(0,1fr)_112px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
+
+const FixRowCard = ({
+  row,
+  activePlanTitle,
+  onOpen,
+}: {
+  row: FixRow;
+  activePlanTitle?: string | null;
+  onOpen?: (title: string) => void;
+}) => {
+  const agentStatus = useAppStore((s) => s.agentStatus);
+  const fix = row.fix;
+  const status = effectiveStatus(fix, agentStatus);
+  return (
+    <div className="flex items-center">
+      <RowMarker
+        order={fix.order}
+        done={fix.status === 'done'}
+        status={fix.status}
+        running={Boolean(runningTaskForPlan(fix.id, agentStatus))}
+        fallback={fix.statusFallback}
+      />
+      <div
+        role={onOpen ? 'button' : undefined}
+        tabIndex={onOpen ? 0 : undefined}
+        onClick={onOpen ? () => onOpen(fix.title) : undefined}
+        onKeyDown={
+          onOpen
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onOpen(fix.title);
+                }
+              }
+            : undefined
+        }
+        className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${fix.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
+      >
+        <Card size="small" texture="kraft" className="plan-row-card">
+          <div className={FIX_ROW_GRID_CLASS}>
+            <PlanIdStamp id={fix.id} />
+            <span className={`${titleButtonClass} [cursor:inherit]`}>
+              <Stamp size="small" variant="warning">
+                fix
+              </Stamp>
+              <span className={titleTextClass}>{fix.title}</span>
+              {fix.idea && (
+                <span className="text-xs opacity-45 whitespace-nowrap font-mono">→ {fix.idea}</span>
+              )}
+            </span>
+            <Stamp
+              size="small"
+              fillColor={STATUS_STAMP[status].fill}
+              textColor={STATUS_STAMP[status].text}
+            >
+              {STATUS_LABEL[status]}
             </Stamp>
           </div>
         </Card>

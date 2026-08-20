@@ -113,7 +113,8 @@ history buys nothing. Fixes on notes, which never carry plans. Any change to how
 - [x] Enforce the boundary rule by parent status
       Open ideas keep the inline `### Fixes` list; only done/archived ideas can spawn a fix entity, decided by status so there is no judgement call.
       run: 9m19s · 14.1k in · 27.9k out · sonnet-5
-- [ ] Render fixes as their own worklist row
+- [x] Render fixes as their own worklist row
       A distinct minimal row grouped under the parent's inherited subject, parent id and its own marker visible, not nested under the closed parent.
+      run: 9m40s · 15.2k in · 32.5k out · sonnet-5
 - [ ] Cross-link fix and parent in their detail views
       The parent view lists every linked fix with its status; the fix view links back to its parent idea.
