@@ -24,6 +24,18 @@ const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 // Unmerged porcelain status codes — a rebase (or merge) conflict, as opposed to a plain edit.
 const CONFLICT_STATUSES = new Set(['UU', 'AA', 'DD', 'AU', 'UA', 'DU', 'UD']);
 
+// Thrown by assertCleanWorkingTree so the completion action (IDEA-194) can refuse before
+// merging — landing the squash-merge and only then failing to switch to main would be
+// the worst outcome, so the tree is checked ahead of the merge, not after.
+export class DirtyWorkingTreeError extends Error {
+  files: string[];
+
+  constructor(files: string[]) {
+    super(`Working tree has uncommitted changes: ${files.join(', ')}`);
+    this.files = files;
+  }
+}
+
 // Thrown by reconcileOnto so callers can tell a genuine content conflict — one that needs
 // domain judgement to resolve — apart from any other reconcile failure (fetch, checkout, ...).
 export class RebaseConflictError extends Error {
@@ -134,6 +146,13 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
 
   function runGitStatus(): Promise<GitStatusEntry[]> {
     return runGit(['status', '--porcelain=v1']).then(parsePorcelain);
+  }
+
+  async function assertCleanWorkingTree(): Promise<void> {
+    const status = await runGitStatus();
+    if (status.length > 0) {
+      throw new DirtyWorkingTreeError(status.map((entry) => entry.path));
+    }
   }
 
   async function commit(
@@ -907,6 +926,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     async getStatus(): Promise<GitStatusEntry[]> {
       return runGitStatus();
     },
+    assertCleanWorkingTree,
     getCurrentBranch,
     commit,
     commitCorpus,

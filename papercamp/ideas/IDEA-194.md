@@ -75,8 +75,9 @@ before this exists.
 - [x] Gate completion on finished work
       Offer the action only when every phase and fix is checked, the PR is approved and CI is green; name whichever is missing instead of hiding it.
       run: 2m32s · 6.4k in · 9.7k out · sonnet-5
-- [ ] Guard the working tree before merging
+- [x] Guard the working tree before merging
       Refuse when the tree is dirty, naming the uncommitted files, so the merge never lands ahead of a failed switch.
+      run: 1m40s · 892 in · 4.5k out · sonnet-5
 - [ ] Squash-merge the PR through authenticated `gh`
 - [ ] Return to a current `main`
       Check out `main`, fast-forward it, and delete the branch locally and on the remote.

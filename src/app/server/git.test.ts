@@ -896,6 +896,24 @@ describe('getStatus', () => {
   });
 });
 
+describe('assertCleanWorkingTree', () => {
+  it('resolves on a clean tree', async () => {
+    const root = await initRepo();
+    const manager = gitManager(root);
+    await expect(manager.assertCleanWorkingTree()).resolves.toBeUndefined();
+  });
+
+  it('throws naming every uncommitted file, tracked and untracked', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'README.md'), 'modified\n');
+    await writeFile(join(root, 'untracked.txt'), 'new\n');
+    const manager = gitManager(root);
+    await expect(manager.assertCleanWorkingTree()).rejects.toMatchObject({
+      files: expect.arrayContaining(['README.md', 'untracked.txt']),
+    });
+  });
+});
+
 describe('stagePath', () => {
   it('stages a modified file into the index', async () => {
     const root = await initRepo();
