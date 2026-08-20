@@ -87,8 +87,9 @@ Run this idea before [[IDEA-187]], with that carve-out explicit in the removal.
 - [x] Collapse the selector partition
       Drop the `ideaParents` loop and `childrenByIdea`/`orphanPlans` split in `plan-list-selector.ts`; every plan becomes a plain row.
       run: 5m29s · 367 in · 11.8k out · sonnet-5
-- [ ] Remove the group card and its state
+- [x] Remove the group card and its state
       Delete `IdeaGroupRowCard`, the `IdeaGroupRow` type, `DONE_COLLAPSE_THRESHOLD`, `expandedDone`, `toggleExpanded`, and the "+N done" toggle.
+      run: 4m16s · 792 in · 14.3k out · sonnet-5
 - [ ] Fold the three duplicate/dead-code cleanups
       Share `PLAN_ROWS_GRID_CLASS` from `plan-rows`, resolve `ROW_MARKER_WIDTH`, and drop the dead `showHeader` branch in `PlanRows`.
 - [ ] Verify identical output and run checks

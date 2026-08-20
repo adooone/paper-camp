@@ -171,7 +171,6 @@ export const PlansPage = () => {
             </p>
           ) : (
             <ListView
-              plans={plans.entries}
               rows={rows}
               activePlanTitle={null}
               onOpenPlan={handleOpenPlan}

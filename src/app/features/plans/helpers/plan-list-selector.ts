@@ -196,12 +196,6 @@ const matchesIdeaSearch = (idea: IdeaEntry, search: string): boolean => {
   return idea.title.toLowerCase().includes(needle) || idea.body.toLowerCase().includes(needle);
 };
 
-export interface IdeaGroupRow {
-  type: 'idea-group';
-  idea: IdeaEntry;
-  children: PlanEntry[];
-}
-
 export interface NoteRow {
   type: 'note';
   idea: IdeaEntry;
@@ -219,7 +213,7 @@ export interface FixRow {
   fix: PlanEntry;
 }
 
-export type WorklistRow = IdeaGroupRow | NoteRow | PlanRow | FixRow;
+export type WorklistRow = NoteRow | PlanRow | FixRow;
 
 export interface SubjectGroup {
   /** null is the virtual "No subject" group. */
@@ -320,40 +314,20 @@ export const deriveChildrenSummary = (
   return { done: children.filter((p) => p.status === 'done').length, total: children.length };
 };
 
-/** Title/id stay the idea's own identity; status/updated/progress come from
- * the group's most-advanced child, falling back to the undrafted/note tier. */
+/** Title/id stay the idea's own identity; status/updated/progress fall back to
+ * the note tier. */
 const worklistSortProxy = (row: WorklistRow): PlanEntry => {
   if (row.type === 'plan') return row.plan;
   if (row.type === 'fix') return row.fix;
 
-  if (row.type === 'note') {
-    return {
-      title: row.idea.title,
-      id: row.idea.id ?? undefined,
-      status: NOTE_STATUS_TIER[row.idea.status ?? 'open'],
-      created: row.idea.created ?? '',
-      tags: [],
-      body: row.idea.body,
-      phases: [],
-      order: row.idea.order,
-    };
-  }
-
-  const mostAdvanced =
-    row.children.length > 0
-      ? [...row.children].sort((a, b) => comparePlans(a, b, 'status'))[0]
-      : undefined;
-
   return {
-    ...(mostAdvanced ?? {
-      status: 'idea' as const,
-      created: row.idea.created ?? '',
-      tags: [],
-      body: row.idea.body,
-      phases: [],
-    }),
     title: row.idea.title,
     id: row.idea.id ?? undefined,
+    status: NOTE_STATUS_TIER[row.idea.status ?? 'open'],
+    created: row.idea.created ?? '',
+    tags: [],
+    body: row.idea.body,
+    phases: [],
     order: row.idea.order,
   };
 };
