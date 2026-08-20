@@ -143,6 +143,17 @@ export const collectOpenQuestions = (plans: PlanEntry[]): OpenQuestionGroup[] =>
     .map((group) => ({ plan: group.plan, questions: [...group.questions].sort(byDateAscending) }))
     .sort((a, b) => byDateAscending(a.questions[0], b.questions[0]));
 
+/** The worklist row's "what you get" line (IDEA-180): the body's own opening
+ * sentence, trimmed to one line. Punctuation only ends a sentence when followed
+ * by whitespace or the end of the text, so a dotted token like `plan-list-
+ * selector.ts` doesn't cut the line short. */
+export const derivePurposeLine = (body: string): string => {
+  const normalized = body.trim().replace(/\s+/g, ' ');
+  if (!normalized) return '';
+  const match = normalized.match(/^.*?[.!?](?=\s|$)/);
+  return (match ? match[0] : normalized).trim();
+};
+
 export const findFocusPlan = (
   plans: PlanEntry[] | undefined,
   activePlanTitle?: string | null,

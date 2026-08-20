@@ -47,8 +47,9 @@ restate what is written. Changing the title rules ([[IDEA-143]] stands). Any
 index.md rendering — that file no longer exists in the app.
 
 ### Phases
-- [ ] Derive the purpose line from the body
+- [x] Derive the purpose line from the body
       Extract the trimmed opening sentence from each entity's body as its purpose line.
+      run: 1m59s · 6.5k in · 6.2k out · sonnet-5
 - [ ] Show the line in the worklist row
       Render the derived purpose line dimmed, single-line with ellipsis, under the title in plan-list-selector.ts / worklist-rows.tsx.
 - [ ] Handle bodies with no usable opening sentence
