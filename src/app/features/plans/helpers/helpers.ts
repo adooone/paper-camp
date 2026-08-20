@@ -109,7 +109,15 @@ export const completionGate = (
   const missing: string[] = [];
   if (!(plan.phases.length > 0 && plan.phases.every((p) => p.done))) missing.push('open phases');
   if (!(plan.fixes ?? []).every((f) => f.done)) missing.push('open fixes');
-  if (plan.pr?.reviewDecision !== 'approved') missing.push('PR approval');
+  // A PR must exist to merge, but it need not be approved: clicking Complete is the
+  // approval. Requiring one would send you to GitHub to approve, where you could just
+  // merge — leaving the button with nothing to offer. GitHub agrees: main requires the
+  // Quality/Tests/Consistency checks, no approving review.
+  if (!plan.pr) missing.push('an open PR');
+  // Requested changes are different from an absent review: a reviewer looked and said
+  // no. Findings usually land as fixes, which the gate above catches, but not always —
+  // so an unanswered change request blocks on its own.
+  else if (plan.pr.reviewDecision === 'changes-requested') missing.push('requested changes');
   if (ciGreen !== true) missing.push('CI');
   return { ready: missing.length === 0, missing };
 };

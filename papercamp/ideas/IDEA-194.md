@@ -41,7 +41,19 @@ managing what happens inside it.
 
 ### The action is offered when the work is actually finished
 
-Every phase and fix checked, the PR approved, CI green. All three are already
+Approval is deliberately not a condition. Requiring one would send you to GitHub
+to approve — where you could merge in the same click — leaving the button with
+nothing left to offer. Clicking Complete *is* the approval. GitHub agrees: `main`
+requires the Quality/Tests/Consistency checks and no approving review, so nothing
+downstream rejects the merge.
+
+A review that *requested changes* still blocks, which is not the same rule. An
+absent review means nobody looked; a change request means someone looked and said
+no. Findings usually become fixes, which the phase gate already catches, but not
+reliably enough to leave the case unhandled.
+
+
+Every phase and fix checked, a PR open to merge, CI green. All three are already
 known to the app — they drive the phase table, the review thread and the Desk
 checks — so completion confirms a state that is visible rather than asserting
 one. When any is missing the action says which, rather than disappearing.
@@ -73,7 +85,7 @@ before this exists.
 
 ### Phases
 - [x] Gate completion on finished work
-      Offer the action only when every phase and fix is checked, the PR is approved and CI is green; name whichever is missing instead of hiding it.
+      Offer the action only when every phase and fix is checked, a PR exists and CI is green; name whichever is missing instead of hiding it.
       run: 2m32s · 6.4k in · 9.7k out · sonnet-5
 - [x] Guard the working tree before merging
       Refuse when the tree is dirty, naming the uncommitted files, so the merge never lands ahead of a failed switch.

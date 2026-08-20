@@ -4,7 +4,7 @@ title: Fixes are their own entity
 type: feat
 status: review
 created: 2026-08-17
-updated: 2026-08-17
+updated: 2026-08-20
 tags:
   - format
   - plans
@@ -119,3 +119,7 @@ history buys nothing. Fixes on notes, which never carry plans. Any change to how
 - [x] Cross-link fix and parent in their detail views
       The parent view lists every linked fix with its status; the fix view links back to its parent idea.
       run: 4m32s · 3.1k in · 12.5k out · sonnet-5
+- [x] [manual] Don't require PR approval to complete a plan
+
+### Thread
+- [x] 2026-08-20 [review] [agent] Approves · 0 findings — The diff delivers all six claimed phases cleanly: the `idea:` field is threaded through the parser/serializer/types so it survives IDEA-185's deletion, `kind: fix` is added with a schema refine requiring the parent link, closed entities are made read-only across the PATCH route, MCP tool, and feedback-reply path via a single shared `isClosedEntity` predicate, and fixes render as their own worklist row grouped under the parent's inherited subject with cross-links in both detail views. The write path spawns a properly-formed linked fix entity (phases are serialized, id minted from config, auto-run launched) and the tests cover the spawn, the no-op, the boundary guard, and the worklist row. I found no correctness bugs; the guards and derivations line up with the spec's boundary rule.
