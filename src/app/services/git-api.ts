@@ -157,6 +157,23 @@ export const resolveConflict = async (prompt: string): Promise<{ ok: boolean; er
   }
 };
 
+// Squash-merges the plan's PR and returns to a current main — the one action
+// that replaces "Approve & close" (IDEA-194); `deriveStatus` picks up `done`
+// once the merged PR is re-read, so no status patch happens here.
+export const completeIdea = async (
+  planId: string,
+): Promise<{ branch: string; remoteDeleted: boolean }> => {
+  const response = await fetch(apiUrl('/api/git/complete-idea'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId }),
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Failed to complete idea');
+  return { branch: data.branch as string, remoteDeleted: data.remoteDeleted as boolean };
+};
+
 export const createPlanBranch = async (
   planId: string,
 ): Promise<{ branch: string; warning?: string }> => {

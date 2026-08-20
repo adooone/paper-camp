@@ -2,7 +2,7 @@
 id: IDEA-194
 title: Complete an idea without leaving
 type: feat
-status: idea
+status: review
 created: 2026-08-19
 updated: 2026-08-19
 tags:
@@ -83,5 +83,6 @@ before this exists.
 - [x] Return to a current `main`
       Check out `main`, fast-forward it, and delete the branch locally and on the remote.
       run: 2m8s · 883 in · 8.2k out · sonnet-5
-- [ ] Wire the single action into the idea view
+- [x] Wire the single action into the idea view
       Replace `Approve & close` with the merge-and-reset action and let `deriveStatus` carry the status change.
+      run: 5m23s · 2.4k in · 21.2k out · sonnet-5
