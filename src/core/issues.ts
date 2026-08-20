@@ -5,6 +5,7 @@ import type {
   Issue,
   PrInfo,
   TaskLogEntry,
+  ThreadMessage,
 } from '../types/index';
 
 const issueId = (sourceKind: Issue['sourceKind'], sourceKey: string): string =>
@@ -127,4 +128,24 @@ export function reconcileIssues(
     return { ...next, thread: issue.thread, promotedFixId: issue.promotedFixId };
   });
   return [...merged, ...freshById.values()];
+}
+
+/** "Fix it here" (IDEA-192) launches an `issue-fix` task carrying the issue's id;
+ * this reconstructs that issue's thread from every tasks.log entry carrying it,
+ * oldest first, so a repeat fix attempt reads as a continuation, not a fresh mystery. */
+export function issueThreadFromTaskLog(issue: Issue, taskLog: TaskLogEntry[]): ThreadMessage[] {
+  return taskLog
+    .filter((entry) => entry.issueId === issue.id)
+    .sort((a, b) => a.endedAt.localeCompare(b.endedAt))
+    .map((entry) => ({
+      kind: 'log',
+      date: entry.endedAt.slice(0, 10),
+      from: 'agent',
+      text:
+        entry.outcome === 'done'
+          ? 'Ran a fix agent — finished.'
+          : entry.outcome === 'error'
+            ? `Ran a fix agent — failed: ${entry.reason ?? 'no reason recorded'}`
+            : 'Ran a fix agent — superseded by a newer run.',
+    }));
 }

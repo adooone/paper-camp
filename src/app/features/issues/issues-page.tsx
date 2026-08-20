@@ -2,7 +2,12 @@ import { PageTitle } from '@/app/components/page-title';
 import { entityRouteParam } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { useAppStore } from '@/app/stores/app-store';
-import { collectAgentRunIssues, collectCheckIssues, collectPrReviewIssues } from '@/core/issues';
+import {
+  collectAgentRunIssues,
+  collectCheckIssues,
+  collectPrReviewIssues,
+  issueThreadFromTaskLog,
+} from '@/core/issues';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import { sortIssuesByAge } from './helpers';
@@ -15,6 +20,8 @@ export const IssuesPage = () => {
   const loadTaskLog = useAppStore((s) => s.loadTaskLog);
   const plans = useAppStore((s) => s.plans);
   const ideaEntries = useAppStore((s) => s.ideaEntries);
+  const agentStatus = useAppStore((s) => s.agentStatus);
+  const launchIssueFix = useAppStore((s) => s.launchIssueFix);
   const { checks } = useDeskChecks();
   const navigate = useNavigate();
 
@@ -26,11 +33,15 @@ export const IssuesPage = () => {
     const entities = [...(plans?.entries ?? []), ...ideaEntries].filter(
       (entity): entity is typeof entity & { id: string } => entity.id != null,
     );
-    return sortIssuesByAge([
+    const collected = sortIssuesByAge([
       ...collectAgentRunIssues(taskLog),
       ...collectCheckIssues(checks),
       ...collectPrReviewIssues(entities),
     ]);
+    return collected.map((issue) => ({
+      ...issue,
+      thread: issueThreadFromTaskLog(issue, taskLog),
+    }));
   }, [taskLog, checks, plans, ideaEntries]);
 
   const openEntity = (id: string, title: string) => {
@@ -40,6 +51,14 @@ export const IssuesPage = () => {
       navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
     }
   };
+
+  const fixingIssueId = agentStatus.find(
+    (t) =>
+      t.taskKind === 'issue-fix' &&
+      t.status !== 'done' &&
+      t.status !== 'error' &&
+      t.status !== 'superseded',
+  )?.issueId;
 
   return (
     <div>
@@ -64,6 +83,9 @@ export const IssuesPage = () => {
                   ? () => openEntity(issue.entityId as string, issue.entityTitle as string)
                   : undefined
               }
+              fixing={fixingIssueId === issue.id}
+              fixDisabled={fixingIssueId !== undefined}
+              onFix={() => launchIssueFix(issue.id, issue.title, issue.reason, issue.output)}
             />
           ))}
         </div>

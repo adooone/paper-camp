@@ -5,6 +5,7 @@ import {
   collectCheckIssues,
   collectPrReviewIssues,
   collectSyncIssues,
+  issueThreadFromTaskLog,
   reconcileIssues,
 } from './issues';
 
@@ -193,5 +194,49 @@ describe('reconcileIssues', () => {
       id === 'IDEA-200' ? 'in-progress' : undefined,
     );
     expect(merged[0]).toMatchObject({ status: 'closed', promotedFixId: 'IDEA-200' });
+  });
+});
+
+describe('issueThreadFromTaskLog', () => {
+  it('ignores task log entries for other issues', () => {
+    const issue = existingIssue({ id: 'check:lint' });
+    const entries = [taskLogEntry({ issueId: 'check:test', outcome: 'done' })];
+    expect(issueThreadFromTaskLog(issue, entries)).toEqual([]);
+  });
+
+  it('reports a successful fix attempt', () => {
+    const issue = existingIssue({ id: 'check:lint' });
+    const entries = [taskLogEntry({ issueId: 'check:lint', outcome: 'done', reason: undefined })];
+    expect(issueThreadFromTaskLog(issue, entries)).toEqual([
+      { kind: 'log', date: '2026-08-01', from: 'agent', text: 'Ran a fix agent — finished.' },
+    ]);
+  });
+
+  it('carries the reason forward on a failed fix attempt', () => {
+    const issue = existingIssue({ id: 'check:lint' });
+    const entries = [
+      taskLogEntry({ issueId: 'check:lint', outcome: 'error', reason: 'still red' }),
+    ];
+    expect(issueThreadFromTaskLog(issue, entries)[0]).toMatchObject({
+      text: 'Ran a fix agent — failed: still red',
+    });
+  });
+
+  it('orders repeat attempts oldest first, so a second failure reads as a continuation', () => {
+    const issue = existingIssue({ id: 'check:lint' });
+    const entries = [
+      taskLogEntry({
+        issueId: 'check:lint',
+        outcome: 'error',
+        endedAt: '2026-08-02T00:00:00.000Z',
+      }),
+      taskLogEntry({
+        issueId: 'check:lint',
+        outcome: 'error',
+        endedAt: '2026-08-01T00:00:00.000Z',
+      }),
+    ];
+    const thread = issueThreadFromTaskLog(issue, entries);
+    expect(thread.map((m) => m.date)).toEqual(['2026-08-01', '2026-08-02']);
   });
 });

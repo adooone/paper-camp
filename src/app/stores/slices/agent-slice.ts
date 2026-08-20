@@ -10,6 +10,7 @@ import {
   launchBatchReconcile as launchBatchReconcileApi,
   launchFixReview as launchFixReviewApi,
   launchIdeaExtend as launchIdeaExtendApi,
+  launchIssueFix as launchIssueFixApi,
   launchPlanAudit as launchPlanAuditApi,
   launchPlanDraft as launchPlanDraftApi,
   launchPlanReconcile as launchPlanReconcileApi,
@@ -59,6 +60,12 @@ export type AgentSlice = {
   launchRunAll: (planId: string) => Promise<void>;
   launchFixReview: (planId: string) => Promise<void>;
   launchPrReview: (planId: string) => Promise<void>;
+  launchIssueFix: (
+    issueId: string,
+    title: string,
+    reason: string,
+    output: string | undefined,
+  ) => Promise<void>;
   stopAgent: (taskId?: string) => Promise<void>;
 
   // null when no relay has been started this session, or once it's cancelled/consumed.
@@ -92,6 +99,16 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
         const data = await fetchAgentStatus();
         const prev = get().agentStatus;
         set({ agentStatus: data });
+
+        // Issues page derives each issue's thread from tasks.log (IDEA-192) rather
+        // than polling itself, so a "fix it here" run needs this nudge to appear.
+        const finishedIssueFix = data.some((t) => {
+          if (t.taskKind !== 'issue-fix') return false;
+          if (t.status !== 'done' && t.status !== 'error') return false;
+          const before = prev.find((p) => p.id === t.id);
+          return before && before.status !== 'done' && before.status !== 'error';
+        });
+        if (finishedIssueFix) get().loadTaskLog();
 
         const completedRun = data.find((t) => {
           if (t.status !== 'done') return false;
@@ -204,6 +221,7 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
     launchRunAll: withAgentPoll(get, launchRunAllApi),
     launchFixReview: withAgentPoll(get, launchFixReviewApi),
     launchPrReview: withAgentPoll(get, launchPrReviewApi),
+    launchIssueFix: withAgentPoll(get, launchIssueFixApi),
     stopAgent: async (taskId) => {
       try {
         await stopAgentApi(taskId);

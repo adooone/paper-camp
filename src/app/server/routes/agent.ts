@@ -1,7 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import { buildFixReviewPrompt, buildPrReviewPrompt } from '@/app/features/plans/prompts';
+import {
+  buildFixReviewPrompt,
+  buildIssueFixPrompt,
+  buildPrReviewPrompt,
+} from '@/app/features/plans/prompts';
 import { fetchCiReleaseState } from '@/core/ci';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities } from '@/core/readers';
@@ -422,6 +426,24 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         if (!diff) return { ok: false, error: 'Could not fetch the PR diff' };
         const prompt = buildPrReviewPrompt(plan, diff);
         return agent.startPrReview(plan, prompt, pr.headSha, pr.url);
+      },
+    ),
+
+    planActionRoute(
+      '/api/agent/issue-fix',
+      (raw) => {
+        const { issueId, title, reason, output } = JSON.parse(raw) as {
+          issueId?: string;
+          title?: string;
+          reason?: string;
+          output?: string;
+        };
+        return issueId && title && reason ? { issueId, title, reason, output } : null;
+      },
+      'issueId, title, and reason are required',
+      async ({ issueId, title, reason, output }) => {
+        const prompt = buildIssueFixPrompt({ title, reason, output });
+        return agent.startIssueFix(issueId, title, prompt);
       },
     ),
 

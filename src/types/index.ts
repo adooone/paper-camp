@@ -859,7 +859,8 @@ export type TaskKind =
   | 'fix-review'
   | 'resolve-conflict'
   | 'feedback'
-  | 'pr-review';
+  | 'pr-review'
+  | 'issue-fix';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
 // unlike the in-memory task registry.
@@ -876,6 +877,9 @@ export interface TaskLogEntry {
   usage?: RunUsage;
   phaseRuns?: PhaseRunRecord[];
   rateLimit?: RateLimitSnapshot;
+  /** issue-fix only: the Issue.id (IDEA-192) this run was launched to fix, so a
+   * repeat failure's thread can be reconstructed by matching entries to the issue. */
+  issueId?: string;
 }
 
 export interface RunUsage {
@@ -949,6 +953,8 @@ export interface AgentTaskState {
   prReviewUrl?: string;
   errorKind?: 'auth' | 'question';
   rateLimit?: RateLimitSnapshot;
+  // issue-fix only: the Issue.id this run was launched to fix.
+  issueId?: string;
 }
 
 export interface OverlapVerdict {

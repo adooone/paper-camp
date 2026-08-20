@@ -95,7 +95,8 @@ current shape. Notifications for issues — the page is pulled, not pushed.
 - [x] Build the Issues page as expandable Inbox-shaped rows
       Compact row per issue, oldest first, opening in place into a thread of what failed, the reason, and the last output lines.
       run: 9m25s · 16.8k in · 32.6k out · sonnet-5
-- [ ] Add "fix it here" to launch a fix agent from an issue
+- [x] Add "fix it here" to launch a fix agent from an issue
       Carry the issue's context into the agent and record the attempt and result back in the thread.
+      run: 21m30s · 14.2k in · 70.9k out · sonnet-5
 - [ ] Add "promote to a fix entity" per [[IDEA-187]]
       Create the fix entity, point the issue at it, and stop the issue carrying the work.

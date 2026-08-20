@@ -122,6 +122,20 @@ export const launchPrReview = async (planId: string): Promise<void> => {
   await handleAgentResponse(response);
 };
 
+export const launchIssueFix = async (
+  issueId: string,
+  title: string,
+  reason: string,
+  output: string | undefined,
+): Promise<void> => {
+  const response = await fetch(apiUrl('/api/agent/issue-fix'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ issueId, title, reason, output }),
+  });
+  await handleAgentResponse(response);
+};
+
 export const fetchPrReviewStatus = async (planId: string): Promise<PrReviewStatus | null> => {
   try {
     const response = await fetch(
