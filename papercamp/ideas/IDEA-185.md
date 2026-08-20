@@ -10,6 +10,7 @@ tags:
   - plans
   - refactor
 subject: Code health
+order: 3
 ---
 
 The worklist carries a whole parent/child rendering path that cannot execute.
@@ -96,3 +97,6 @@ Run this idea before [[IDEA-187]], with that carve-out explicit in the removal.
 - [x] Verify identical output and run checks
       Confirm the worklist renders the same before and after, keeping `idea:` in the schema; run quality, tests, and consistency checks.
       run: 2m22s · 237 in · 2.6k out · sonnet-5
+
+### Thread
+- [x] 2026-08-20 [review] [agent] Approves · 0 findings — The diff cleanly removes the idea-group rendering path exactly as the spec describes: the IdeaGroupRow type/card, the childrenByIdea/orphanPlans partition and ideaParents loop, the done-collapse state, and the three duplicate/dead-code cleanups (shared PLAN_ROWS_GRID_CLASS, dropped ROW_MARKER_WIDTH, removed dead showHeader branch). Because /api/ideas only returns notes in production, dropping the idea-group branch and feeding nonFixPlans (instead of orphanPlans) preserves rendered output, and the schema-level idea: field is left untouched per the carve-out. Remaining constants and imports (titleButtonClass, headerLabelClass, matchesSubject, matchesIdeaSearch, PLAN_ROWS_GRID_CLASS) all still have live consumers, so nothing is left dangling.
