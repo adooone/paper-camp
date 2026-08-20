@@ -2,7 +2,7 @@
 id: IDEA-192
 title: An Issues page you can act on
 type: feat
-status: idea
+status: in-progress
 created: 2026-08-19
 updated: 2026-08-19
 tags:
@@ -11,6 +11,7 @@ tags:
   - git
   - ux
 subject: Run & monitor
+order: 4
 ---
 
 Everything that failed collects in one place, reads as a short conversation,
@@ -100,3 +101,12 @@ current shape. Notifications for issues — the page is pulled, not pushed.
       run: 21m30s · 14.2k in · 70.9k out · sonnet-5
 - [ ] Add "promote to a fix entity" per [[IDEA-187]]
       Create the fix entity, point the issue at it, and stop the issue carrying the work.
+
+### Thread
+- [ ] 2026-08-20 [question] [agent] Run-all parked on phase 6 ("Add "promote to a fix entity" per [[IDEA-187]]") — the agent needs a decision: "Promote to a fix entity" runs into two unresolved gaps I can't safely guess past:
+
+1. **No persistence for `promotedFixId`.** Issues aren't stored anywhere — `IssuesPage` recomputes them fresh from live sources (`tasks.log`, checks, PR state) on every render, with no backing file/store (phases 4–5 deliberately avoided building one, reusing `tasks.log` instead of a real issues store). `Issue.promotedFixId` and `reconcileIssues` were built in phase 1–2 anticipating this phase, but nothing persists an issue's state between loads today. "Point the issue at it" needs somewhere durable to record that link — should I build a persisted issues store now (a real architectural addition beyond what this phase's one-line description suggests), or is there a different, lighter place you want that link to live (e.g., stamped onto the *fix entity* itself, discovered by scanning existing fix entities for a backlink, rather than stored on the issue)?
+
+2. **IDEA-187's boundary rule doesn't fit most issues.** A `kind: fix` entity is only ever spawned today when its parent idea/plan is already `done`/`archived` — enforced deliberately everywhere in the app (`isClosedEntity` guards) so "there is never a judgement call" (IDEA-187, status: review, just shipped). But most issues arise from *open* work: a check failing right now, an agent run failing mid-plan, a PR still under review — and check/sync issues often have no parent idea at all (`entityId` is unset). For these — the majority case — is there truly no eligible closed parent to spawn a proper `kind: fix` entity against. Do you want me to: (a) only show "Promote" when the issue's entity is actually closed (narrow — the button would rarely appear), (b) fall back to creating a plain new idea (not `kind: fix`) when there's no closed parent, or (c) relax IDEA-187's boundary rule to also allow a `kind: fix` entity with no parent or an open parent?
+
+I don't want to guess on either — the first invents a persistence layer the plan didn't scope, and the second reinterprets a just-reviewed architectural boundary. Let me know how you'd like these resolved and I'll pick the phase back up.
