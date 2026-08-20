@@ -2,7 +2,7 @@
 id: IDEA-185
 title: Delete the idea-group machinery
 type: refactor
-status: idea
+status: review
 created: 2026-08-16
 updated: 2026-08-17
 tags:
@@ -93,5 +93,6 @@ Run this idea before [[IDEA-187]], with that carve-out explicit in the removal.
 - [x] Fold the three duplicate/dead-code cleanups
       Share `PLAN_ROWS_GRID_CLASS` from `plan-rows`, resolve `ROW_MARKER_WIDTH`, and drop the dead `showHeader` branch in `PlanRows`.
       run: 2m40s · 519 in · 5.5k out · sonnet-5
-- [ ] Verify identical output and run checks
+- [x] Verify identical output and run checks
       Confirm the worklist renders the same before and after, keeping `idea:` in the schema; run quality, tests, and consistency checks.
+      run: 2m22s · 237 in · 2.6k out · sonnet-5
