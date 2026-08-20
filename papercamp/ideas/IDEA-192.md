@@ -92,8 +92,9 @@ current shape. Notifications for issues — the page is pulled, not pushed.
 - [x] Swap the nav slot: Issues in, Tasks out
       Move the task log behind the Stack panel's Agent section and its "N more…" link; keep the log route and shape unchanged.
       run: 3m16s · 5.3k in · 9.4k out · sonnet-5
-- [ ] Build the Issues page as expandable Inbox-shaped rows
+- [x] Build the Issues page as expandable Inbox-shaped rows
       Compact row per issue, oldest first, opening in place into a thread of what failed, the reason, and the last output lines.
+      run: 9m25s · 16.8k in · 32.6k out · sonnet-5
 - [ ] Add "fix it here" to launch a fix agent from an issue
       Carry the issue's context into the agent and record the attempt and result back in the thread.
 - [ ] Add "promote to a fix entity" per [[IDEA-187]]
