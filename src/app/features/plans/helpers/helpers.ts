@@ -143,15 +143,30 @@ export const collectOpenQuestions = (plans: PlanEntry[]): OpenQuestionGroup[] =>
     .map((group) => ({ plan: group.plan, questions: [...group.questions].sort(byDateAscending) }))
     .sort((a, b) => byDateAscending(a.questions[0], b.questions[0]));
 
+const PURPOSE_LINE_MAX_LENGTH = 160;
+
+const hasLetters = (value: string): boolean => /[a-zA-Z]/.test(value);
+
 /** The worklist row's "what you get" line (IDEA-180): the body's own opening
  * sentence, trimmed to one line. Punctuation only ends a sentence when followed
  * by whitespace or the end of the text, so a dotted token like `plan-list-
- * selector.ts` doesn't cut the line short. */
+ * selector.ts` doesn't cut the line short. Returns '' when the body has no
+ * usable opening sentence — empty, a bare heading marker, or punctuation/symbols
+ * with no words — so callers can skip rendering the line entirely. A sentence
+ * with no terminal punctuation (so the whole body would otherwise stand in for
+ * it) is capped rather than dumped in full. */
 export const derivePurposeLine = (body: string): string => {
-  const normalized = body.trim().replace(/\s+/g, ' ');
-  if (!normalized) return '';
+  const normalized = body
+    .trim()
+    .replace(/^#+\s*/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!normalized || !hasLetters(normalized)) return '';
   const match = normalized.match(/^.*?[.!?](?=\s|$)/);
-  return (match ? match[0] : normalized).trim();
+  const sentence = (match ? match[0] : normalized).trim();
+  if (!hasLetters(sentence)) return '';
+  if (sentence.length <= PURPOSE_LINE_MAX_LENGTH) return sentence;
+  return `${sentence.slice(0, PURPOSE_LINE_MAX_LENGTH).trimEnd()}…`;
 };
 
 export const findFocusPlan = (

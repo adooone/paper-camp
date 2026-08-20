@@ -30,4 +30,29 @@ describe('derivePurposeLine', () => {
     expect(derivePurposeLine('')).toBe('');
     expect(derivePurposeLine('   \n  ')).toBe('');
   });
+
+  it('returns an empty string when the body is only punctuation or symbols', () => {
+    expect(derivePurposeLine('---')).toBe('');
+    expect(derivePurposeLine('***\n...')).toBe('');
+    expect(derivePurposeLine('1234 / 5678')).toBe('');
+  });
+
+  it('strips a leading markdown heading marker before extracting the sentence', () => {
+    expect(derivePurposeLine('### Why it is unreachable\n\nBecause nothing calls it.')).toBe(
+      'Why it is unreachable Because nothing calls it.',
+    );
+  });
+
+  it('returns an empty string for a bare heading marker with no words after it', () => {
+    expect(derivePurposeLine('### ')).toBe('');
+    expect(derivePurposeLine('#')).toBe('');
+  });
+
+  it('caps a punctuation-free body instead of returning it in full', () => {
+    const body = Array.from({ length: 40 }, (_, i) => `word${i}`).join(' ');
+    const line = derivePurposeLine(body);
+    expect(line.length).toBe(161);
+    expect(line.endsWith('…')).toBe(true);
+    expect(body.startsWith(line.slice(0, -1))).toBe(true);
+  });
 });

@@ -53,8 +53,9 @@ index.md rendering — that file no longer exists in the app.
 - [x] Show the line in the worklist row
       Render the derived purpose line dimmed, single-line with ellipsis, under the title in plan-list-selector.ts / worklist-rows.tsx.
       run: 2m16s · 1.1k in · 10.2k out · sonnet-5
-- [ ] Handle bodies with no usable opening sentence
+- [x] Handle bodies with no usable opening sentence
       Define fallback behavior when an entity's body has no sentence that works as a summary.
+      run: 2m14s · 962 in · 8.5k out · sonnet-5
 - [ ] Handle bodies with no usable opening sentence
       Fall back cleanly when the first sentence is empty or degenerate.
 
