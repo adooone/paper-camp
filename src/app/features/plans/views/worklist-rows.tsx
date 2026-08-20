@@ -17,7 +17,7 @@ import { useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton } from '../actions';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { effectiveStatus, runningTaskForPlan } from '../helpers';
+import { derivePurposeLine, effectiveStatus, runningTaskForPlan } from '../helpers';
 import { PlanRows, ROW_MARKER_WIDTH, RowMarker } from './plan-rows';
 
 /** Past this many children, done ones collapse behind a "+N done" toggle. */
@@ -56,6 +56,9 @@ const titleButtonClass =
   'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit font-semibold';
 
 const titleTextClass = 'overflow-hidden text-ellipsis whitespace-nowrap';
+
+const purposeLineClass =
+  'text-xs font-normal opacity-45 overflow-hidden text-ellipsis whitespace-nowrap';
 
 export const GroupBySubjectToggle = () => {
   const groupBySubject = useAppStore((s) => s.planFilters.groupBySubject);
@@ -252,6 +255,7 @@ const NoteRowCard = ({
 }) => {
   const idea = row.idea;
   const status = idea.status ?? 'open';
+  const purposeLine = derivePurposeLine(idea.body);
   return (
     <div className="flex items-center">
       <RowMarker order={idea.order} done={status === 'done'} status={status} />
@@ -276,7 +280,10 @@ const NoteRowCard = ({
             {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
             <span className={`${titleButtonClass} [cursor:inherit]`}>
               <NoteIcon />
-              <span className={titleTextClass}>{idea.title}</span>
+              <span className="flex flex-col min-w-0">
+                <span className={titleTextClass}>{idea.title}</span>
+                {purposeLine && <span className={purposeLineClass}>{purposeLine}</span>}
+              </span>
             </span>
             <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
             <span className="text-sm opacity-30">—</span>
@@ -312,6 +319,7 @@ const FixRowCard = ({
   const agentStatus = useAppStore((s) => s.agentStatus);
   const fix = row.fix;
   const status = effectiveStatus(fix, agentStatus);
+  const purposeLine = derivePurposeLine(fix.body);
   return (
     <div className="flex items-center">
       <RowMarker
@@ -344,10 +352,17 @@ const FixRowCard = ({
               <Stamp size="small" variant="warning">
                 fix
               </Stamp>
-              <span className={titleTextClass}>{fix.title}</span>
-              {fix.idea && (
-                <span className="text-xs opacity-45 whitespace-nowrap font-mono">→ {fix.idea}</span>
-              )}
+              <span className="flex flex-col min-w-0">
+                <span className="flex items-center gap-1 min-w-0">
+                  <span className={titleTextClass}>{fix.title}</span>
+                  {fix.idea && (
+                    <span className="text-xs opacity-45 whitespace-nowrap font-mono">
+                      → {fix.idea}
+                    </span>
+                  )}
+                </span>
+                {purposeLine && <span className={purposeLineClass}>{purposeLine}</span>}
+              </span>
             </span>
             <Stamp
               size="small"
@@ -384,6 +399,7 @@ const IdeaGroupRowCard = ({
 }: IdeaGroupRowCardProps) => {
   const idea = row.idea;
   const children = row.children;
+  const purposeLine = derivePurposeLine(idea.body);
   const done = children.filter((p) => p.status === 'done');
   const notDone = children.filter((p) => p.status !== 'done');
   const shouldCollapseDone = children.length > DONE_COLLAPSE_THRESHOLD;
@@ -405,7 +421,10 @@ const IdeaGroupRowCard = ({
                 className={titleButtonClass}
               >
                 <LightbulbIcon />
-                <span className={titleTextClass}>{idea.title}</span>
+                <span className="flex flex-col min-w-0">
+                  <span className={titleTextClass}>{idea.title}</span>
+                  {purposeLine && <span className={purposeLineClass}>{purposeLine}</span>}
+                </span>
               </button>
               <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
               <div className="flex items-center justify-end gap-2">

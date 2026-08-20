@@ -50,8 +50,9 @@ index.md rendering — that file no longer exists in the app.
 - [x] Derive the purpose line from the body
       Extract the trimmed opening sentence from each entity's body as its purpose line.
       run: 1m59s · 6.5k in · 6.2k out · sonnet-5
-- [ ] Show the line in the worklist row
+- [x] Show the line in the worklist row
       Render the derived purpose line dimmed, single-line with ellipsis, under the title in plan-list-selector.ts / worklist-rows.tsx.
+      run: 2m16s · 1.1k in · 10.2k out · sonnet-5
 - [ ] Handle bodies with no usable opening sentence
       Define fallback behavior when an entity's body has no sentence that works as a summary.
 - [ ] Handle bodies with no usable opening sentence

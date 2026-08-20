@@ -5,7 +5,13 @@ import { Card, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { PR_STATE_STAMP, STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
+import {
+  derivePurposeLine,
+  effectiveStatus,
+  phaseProgress,
+  relativeDate,
+  runningTaskForPlan,
+} from '../helpers';
 
 interface PlanRowsProps {
   plans: PlanEntry[];
@@ -70,6 +76,9 @@ export const RowMarker = ({
 export const PLAN_ROWS_GRID_CLASS =
   'grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
+const purposeLineClass =
+  'text-xs font-normal opacity-45 overflow-hidden text-ellipsis whitespace-nowrap';
+
 export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: PlanRowsProps) => {
   const gridClass = PLAN_ROWS_GRID_CLASS;
   const agentStatus = useAppStore((s) => s.agentStatus);
@@ -94,6 +103,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
       {plans.map((plan) => {
         const progress = phaseProgress(plan);
         const status = effectiveStatus(plan, agentStatus);
+        const purposeLine = derivePurposeLine(plan.body);
         return (
           <div key={plan.title} className="flex items-center">
             <RowMarker
@@ -122,9 +132,12 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen, showHeader = true }: 
               <Card size="small" texture="canvas" className="plan-row-card">
                 <div className={gridClass}>
                   <PlanIdStamp id={plan.id} />
-                  <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
-                    {plan.title}
-                  </span>
+                  <div className="min-w-0 flex flex-col">
+                    <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
+                      {plan.title}
+                    </span>
+                    {purposeLine && <span className={purposeLineClass}>{purposeLine}</span>}
+                  </div>
                   <span className="max-lg:hidden text-sm opacity-[0.45] whitespace-nowrap">
                     {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
                   </span>
