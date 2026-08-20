@@ -84,8 +84,9 @@ Run this idea before [[IDEA-187]], with that carve-out explicit in the removal.
 - [x] Confirm shared call sites survive
       Verify `DraftPlanButton` and `ExtendIdeaButton` are mounted elsewhere before deleting the group card.
       run: 10s · 5.6k in · 648 out · sonnet-5
-- [ ] Collapse the selector partition
+- [x] Collapse the selector partition
       Drop the `ideaParents` loop and `childrenByIdea`/`orphanPlans` split in `plan-list-selector.ts`; every plan becomes a plain row.
+      run: 5m29s · 367 in · 11.8k out · sonnet-5
 - [ ] Remove the group card and its state
       Delete `IdeaGroupRowCard`, the `IdeaGroupRow` type, `DONE_COLLAPSE_THRESHOLD`, `expandedDone`, `toggleExpanded`, and the "+N done" toggle.
 - [ ] Fold the three duplicate/dead-code cleanups

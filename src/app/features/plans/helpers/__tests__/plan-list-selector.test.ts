@@ -174,11 +174,11 @@ describe('deriveChildrenSummary', () => {
 });
 
 describe('selectWorklistRows', () => {
-  it('nests a plan under its idea via the idea: backlink, one level only', () => {
+  it('renders a plan as a plain row even when it carries an idea: backlink', () => {
     const ideas = [idea({ id: 'IDEA-1', title: 'Group idea' })];
     const plans = [plan({ title: 'Child plan', status: 'in-progress', idea: 'IDEA-1' })];
     const { rows } = selectWorklistRows(plans, ideas);
-    expect(rows).toEqual([{ type: 'idea-group', idea: ideas[0], children: [plans[0]] }]);
+    expect(rows).toEqual([{ type: 'plan', plan: plans[0] }]);
   });
 
   it('keeps a plan without a matching idea backlink top-level', () => {
@@ -187,13 +187,13 @@ describe('selectWorklistRows', () => {
     expect(rows).toEqual([{ type: 'plan', plan: plans[0] }]);
   });
 
-  it('shows a plan-bearing idea with no drafted plans yet as an empty group', () => {
+  it('produces no row for a kind !== note idea with no plans', () => {
     const ideas = [idea({ id: 'IDEA-2', title: 'Undrafted idea' })];
     const { rows } = selectWorklistRows([], ideas);
-    expect(rows).toEqual([{ type: 'idea-group', idea: ideas[0], children: [] }]);
+    expect(rows).toEqual([]);
   });
 
-  it('drops a group once every child is filtered out and the idea itself misses search', () => {
+  it('drops a plan filtered out by status, regardless of its idea backlink', () => {
     const ideas = [idea({ id: 'IDEA-3', title: 'Done idea' })];
     const plans = [plan({ title: 'Done child', status: 'done', idea: 'IDEA-3' })];
     const { rows } = selectWorklistRows(plans, ideas);
@@ -210,7 +210,7 @@ describe('selectWorklistRows', () => {
     expect(noteStatusCounts).toEqual({ open: 1, done: 1, dropped: 0 });
   });
 
-  it('sorts a group by its most-advanced child alongside ordinary plan rows', () => {
+  it('sorts plan rows normally alongside an unrelated kind !== note idea', () => {
     const ideas = [idea({ id: 'IDEA-6', title: 'Grouped idea' })];
     const plans = [
       plan({ title: 'Group child', status: 'planned', idea: 'IDEA-6', updated: '2026-01-01' }),
@@ -221,23 +221,18 @@ describe('selectWorklistRows', () => {
       sortKey: 'status',
       statuses: ['in-progress', 'planned'],
     });
-    expect(rows.map(rowTitle)).toEqual(['Top plan', 'Grouped idea']);
+    expect(rows.map(rowTitle)).toEqual(['Top plan', 'Group child']);
   });
 
-  it('sorts by order by default, taking an idea-group or note row order from the idea itself', () => {
-    const ideas = [
-      idea({ id: 'IDEA-7', title: 'Grouped idea', order: 2 }),
-      idea({ id: 'IDEA-8', title: 'Note', kind: 'note', order: 1 }),
-    ];
+  it('sorts by order by default, taking a note row order from the idea itself', () => {
+    const ideas = [idea({ id: 'IDEA-8', title: 'Note', kind: 'note', order: 1 })];
     const plans = [plan({ title: 'Orphan plan', idea: undefined, order: 3 })];
     const { rows } = selectWorklistRows(plans, ideas);
-    expect(rows.map(rowTitle)).toEqual(['Note', 'Grouped idea', 'Orphan plan']);
+    expect(rows.map(rowTitle)).toEqual(['Note', 'Orphan plan']);
   });
 
-  it('filters idea-groups and notes by subject too', () => {
+  it('filters notes by subject too', () => {
     const ideas = [
-      idea({ id: 'IDEA-9', title: 'Matching idea', subject: 'Mobile control desk' }),
-      idea({ id: 'IDEA-10', title: 'Other idea', subject: 'Other subject' }),
       idea({ title: 'Matching note', kind: 'note', subject: 'Mobile control desk' }),
       idea({ title: 'Other note', kind: 'note', subject: 'Other subject' }),
     ];
@@ -245,7 +240,7 @@ describe('selectWorklistRows', () => {
       ...DEFAULT_PLAN_LIST_FILTERS,
       subject: 'Mobile control desk',
     });
-    expect(rows.map(rowTitle)).toEqual(['Matching idea', 'Matching note']);
+    expect(rows.map(rowTitle)).toEqual(['Matching note']);
   });
 
   it("renders a fix entity as its own row, inheriting its parent's subject rather than nesting", () => {
@@ -275,12 +270,10 @@ describe('selectWorklistRows', () => {
     });
   });
 
-  it('never nests a fix as an idea-group child, even when the plan-bearing parent is still open', () => {
+  it('renders a fix as its own row even when its parent idea is still open', () => {
     const ideas = [idea({ id: 'IDEA-22', title: 'Open idea' })];
     const plans = [plan({ id: 'IDEA-23', title: 'A fix', entityKind: 'fix', idea: 'IDEA-22' })];
     const { rows } = selectWorklistRows(plans, ideas);
-    const group = rows.find((r) => r.type === 'idea-group');
-    expect(group).toMatchObject({ children: [] });
     expect(rows).toContainEqual({ type: 'fix', fix: plans[0] });
   });
 });

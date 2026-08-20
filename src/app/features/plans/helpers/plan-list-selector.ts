@@ -358,11 +358,10 @@ const worklistSortProxy = (row: WorklistRow): PlanEntry => {
   };
 };
 
-/** Nests a plan under its `idea:` backlink as a group; other plans and
- * `kind: note` ideas stay top-level. Nesting stops at this one level. A fix
- * entity never nests — its parent is closed and no longer in the list — it
- * renders as its own row, grouped under the parent's subject, inherited here
- * rather than stored, so a fix can't drift from the idea it fixes. */
+/** Every plan renders as its own row; `kind: note` ideas surface alongside
+ * them. A fix entity renders as its own row too, grouped under the parent's
+ * subject, inherited here rather than stored, so a fix can't drift from the
+ * idea it fixes. */
 export const selectWorklistRows = (
   plans: PlanEntry[],
   ideas: IdeaEntry[],
@@ -380,22 +379,6 @@ export const selectWorklistRows = (
   const { statusCounts, tagCounts } = selectPlanRows(withInheritedSubject, filters);
 
   const notes = ideas.filter((idea) => idea.kind === 'note');
-  const ideaParents = ideas.filter((idea) => idea.kind !== 'note');
-  const ideaParentIds = new Set(
-    ideaParents.map((idea) => idea.id).filter((id): id is string => Boolean(id)),
-  );
-
-  const childrenByIdea = new Map<string, PlanEntry[]>();
-  const orphanPlans: PlanEntry[] = [];
-  for (const p of nonFixPlans) {
-    if (p.idea && ideaParentIds.has(p.idea)) {
-      const list = childrenByIdea.get(p.idea) ?? [];
-      list.push(p);
-      childrenByIdea.set(p.idea, list);
-    } else {
-      orphanPlans.push(p);
-    }
-  }
 
   const noteStatusSet = new Set(filters.noteStatuses);
   const noteStatusCounts = countBy(
@@ -404,23 +387,10 @@ export const selectWorklistRows = (
   ) as Record<IdeaStatus, number>;
   for (const status of IDEA_STATUSES) noteStatusCounts[status] ??= 0;
 
-  const rows: WorklistRow[] = selectPlanRows(orphanPlans, filters).rows.map(
+  const rows: WorklistRow[] = selectPlanRows(nonFixPlans, filters).rows.map(
     (plan): PlanRow => ({ type: 'plan', plan }),
   );
   rows.push(...selectPlanRows(fixPlans, filters).rows.map((fix): FixRow => ({ type: 'fix', fix })));
-
-  for (const idea of ideaParents) {
-    const allChildren = idea.id ? (childrenByIdea.get(idea.id) ?? []) : [];
-    const filteredChildren = selectPlanRows(allChildren, filters).rows;
-    // A child plan's own subject can diverge from its parent idea's, so a subject
-    // mismatch on the idea alone must not hide a group with a matching child.
-    if (!matchesSubject(idea.subject, filters.subject) && filteredChildren.length === 0) continue;
-    if (filteredChildren.length === 0) {
-      // Only a genuinely undrafted idea (no plans yet) falls back to search alone.
-      if (allChildren.length > 0 || !matchesIdeaSearch(idea, filters.search)) continue;
-    }
-    rows.push({ type: 'idea-group', idea, children: filteredChildren });
-  }
 
   for (const idea of notes) {
     if (!noteStatusSet.has(idea.status ?? 'open')) continue;
