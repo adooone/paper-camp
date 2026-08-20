@@ -35,6 +35,47 @@ describe('claude-code parseLine', () => {
     expect(parseLine(line)?.sessionId).toBeUndefined();
   });
 
+  it('reports the subtype as the reason when the CLI fails without a message', () => {
+    const line = JSON.stringify({
+      type: 'result',
+      is_error: true,
+      result: '',
+      subtype: 'error_max_turns',
+    });
+    const parsed = parseLine(line);
+    expect(parsed?.error).toBe(true);
+    expect(parsed?.reason).toBe('error_max_turns');
+    expect(parsed?.text).toBe('error_max_turns');
+  });
+
+  it('prefers the CLI message over the subtype when both are present', () => {
+    const line = JSON.stringify({
+      type: 'result',
+      is_error: true,
+      result: 'ran out of context',
+      subtype: 'error_during_execution',
+    });
+    expect(parseLine(line)?.reason).toBe('ran out of context');
+  });
+
+  it('carries no reason on a successful result', () => {
+    const line = JSON.stringify({
+      type: 'result',
+      is_error: false,
+      result: 'Done',
+      subtype: 'success',
+    });
+    const parsed = parseLine(line);
+    expect(parsed?.reason).toBeUndefined();
+    expect(parsed?.text).toBe('Done');
+  });
+
+  it('still falls back when the CLI gives neither message nor subtype', () => {
+    const parsed = parseLine(JSON.stringify({ type: 'result', is_error: true, result: '' }));
+    expect(parsed?.text).toBe('Agent run failed');
+    expect(parsed?.reason).toBeUndefined();
+  });
+
   it('captures usage, duration, and model from a result event', () => {
     const line = JSON.stringify({
       type: 'result',

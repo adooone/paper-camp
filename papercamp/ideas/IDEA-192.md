@@ -4,14 +4,13 @@ title: An Issues page you can act on
 type: feat
 status: review
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-08-20
 tags:
   - app
   - agent
   - git
   - ux
 subject: Run & monitor
-order: 4
 ---
 
 Everything that failed collects in one place, reads as a short conversation,
@@ -102,6 +101,7 @@ current shape. Notifications for issues — the page is pulled, not pushed.
 - [x] Add "promote to a fix entity" per [[IDEA-187]]
       Create the fix entity, point the issue at it, and stop the issue carrying the work.
       run: 14m30s · 11.5k in · 60.6k out · sonnet-5
+- [x] [manual] Add promote-to-fix flow for issues
 
 ### Thread
 - [x] 2026-08-20 [question] [agent] Run-all parked on phase 6 ("Add "promote to a fix entity" per [[IDEA-187]]") — the agent needs a decision: "Promote to a fix entity" runs into two unresolved gaps I can't safely guess past:

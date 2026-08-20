@@ -159,9 +159,22 @@ export function parseLine(line: string): ParsedAgentLine | null {
     case 'result': {
       const error = Boolean(json.is_error);
       const result = typeof json.result === 'string' ? json.result.trim() : '';
-      const text = result || (error ? 'Agent run failed' : 'Agent run finished');
+      // The CLI names why it stopped in `subtype` (`error_max_turns`,
+      // `error_during_execution`, …) and often leaves `result` empty when it does.
+      // Without this the run reports a bare "Agent run failed" and `task.errorReason`
+      // stays undefined, so the reason exists nowhere — not the log, not the record.
+      const subtype = typeof json.subtype === 'string' ? json.subtype : undefined;
+      const detail = result || (error ? subtype : undefined);
+      const text = detail ?? (error ? 'Agent run failed' : 'Agent run finished');
       const sessionId = typeof json.session_id === 'string' ? json.session_id : undefined;
-      return { text, done: true, error, sessionId, usage: extractUsage(json) };
+      return {
+        text,
+        done: true,
+        error,
+        ...(error && detail ? { reason: detail } : {}),
+        sessionId,
+        usage: extractUsage(json),
+      };
     }
     default:
       return { text: 'Agent is working…' };
