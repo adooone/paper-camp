@@ -2,7 +2,7 @@
 id: IDEA-187
 title: Fixes are their own entity
 type: feat
-status: idea
+status: review
 created: 2026-08-17
 updated: 2026-08-17
 tags:
@@ -116,5 +116,6 @@ history buys nothing. Fixes on notes, which never carry plans. Any change to how
 - [x] Render fixes as their own worklist row
       A distinct minimal row grouped under the parent's inherited subject, parent id and its own marker visible, not nested under the closed parent.
       run: 9m40s · 15.2k in · 32.5k out · sonnet-5
-- [ ] Cross-link fix and parent in their detail views
+- [x] Cross-link fix and parent in their detail views
       The parent view lists every linked fix with its status; the fix view links back to its parent idea.
+      run: 4m32s · 3.1k in · 12.5k out · sonnet-5
