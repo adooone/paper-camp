@@ -62,12 +62,15 @@ const GitFileList = lazy(() =>
 const InboxPage = lazy(() =>
   import('@/app/features/inbox/index').then((m) => ({ default: m.InboxPage })),
 );
+const IssuesPage = lazy(() =>
+  import('@/app/features/issues/index').then((m) => ({ default: m.IssuesPage })),
+);
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
   { id: 'roadmap', label: 'Roadmap', path: '/roadmap' },
   { id: 'docs', label: 'Docs', path: '/docs' },
-  { id: 'tasks', label: 'Tasks', path: '/tasks' },
+  { id: 'issues', label: 'Issues', path: '/issues' },
   { id: 'stats', label: 'Stats', path: '/stats' },
   { id: 'settings', label: 'Settings', path: '/settings' },
 ];
@@ -491,6 +494,12 @@ const tasksRoute = createRoute({
   }),
 });
 
+const issuesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/issues',
+  component: IssuesPage,
+});
+
 const routeTree = rootRoute.addChildren([
   plansRoute,
   planDetailRoute,
@@ -500,6 +509,7 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
   settingsSectionRoute,
   tasksRoute,
+  issuesRoute,
   roadmapRoute,
   statsRoute,
   inboxRoute,

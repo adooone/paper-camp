@@ -11,7 +11,7 @@ import { formatRunLine, parseRunLine } from './phase-run';
 
 const SUB_HEADING_RE = /^#{2,3}\s+/;
 const CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.*)$/;
-const PHASE_SOURCE_RE = /^\[(review|manual)\]\s+(.*)$/;
+const PHASE_SOURCE_RE = /^\[(review|manual|issue)\]\s+(.*)$/;
 const RUN_LINE_RE = /^run:\s*(.+)$/;
 const DATED_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
 const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(?:\[(decision|question)\]\s+)?(.*)$/;

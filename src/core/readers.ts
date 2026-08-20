@@ -107,6 +107,7 @@ export function entityToPlan(
     tags: e.tags,
     subject: e.subject,
     order: e.order,
+    issueSource: e.issueSource,
     body: e.body,
     phases: e.phases,
     fixes: e.fixes,

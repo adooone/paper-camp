@@ -39,7 +39,7 @@ export interface PhaseItem {
   done: boolean;
   text: string;
   description?: string;
-  source?: 'review' | 'manual';
+  source?: 'review' | 'manual' | 'issue';
   run?: PhaseRun;
 }
 
@@ -231,6 +231,8 @@ export interface PlanEntry {
   subject?: string;
   /** Absent means unordered — sorts after all ordered entries, by created date. */
   order?: number;
+  /** See EntityEntry.issueSource. */
+  issueSource?: string;
   body: string;
   phases: PhaseItem[];
   /** Post-build findings, same checkbox grammar as `phases` — see EntityEntry.fixes. */
@@ -404,6 +406,10 @@ export interface EntityEntry {
   subject?: string;
   /** Absent means unordered — sorts after all ordered entries, by created date. */
   order?: number;
+  /** The Issue.id (`sourceKind:sourceKey`, IDEA-192) this entity was spawned to promote,
+   * if any — how a promoted issue is re-matched to its target on every read, since
+   * issues carry no store of their own. */
+  issueSource?: string;
   body: string;
   phases: PhaseItem[];
   /** Post-build findings, same checkbox grammar as `phases` — appended below Phases
@@ -859,7 +865,8 @@ export type TaskKind =
   | 'fix-review'
   | 'resolve-conflict'
   | 'feedback'
-  | 'pr-review';
+  | 'pr-review'
+  | 'issue-fix';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
 // unlike the in-memory task registry.
@@ -876,6 +883,9 @@ export interface TaskLogEntry {
   usage?: RunUsage;
   phaseRuns?: PhaseRunRecord[];
   rateLimit?: RateLimitSnapshot;
+  /** issue-fix only: the Issue.id (IDEA-192) this run was launched to fix, so a
+   * repeat failure's thread can be reconstructed by matching entries to the issue. */
+  issueId?: string;
 }
 
 export interface RunUsage {
@@ -949,6 +959,8 @@ export interface AgentTaskState {
   prReviewUrl?: string;
   errorKind?: 'auth' | 'question';
   rateLimit?: RateLimitSnapshot;
+  // issue-fix only: the Issue.id this run was launched to fix.
+  issueId?: string;
 }
 
 export interface OverlapVerdict {
@@ -967,4 +979,41 @@ export interface ReconcileQueueItem {
   planId: string;
   title: string;
   before: { body: string; phases: PhaseItem[] };
+}
+
+/** The four failures IDEA-192 collects into one place: a failed agent run, a red
+ * project check, a PR review that requested changes, and a git rebase/sync failure. */
+export type IssueSourceKind = 'agent-run' | 'check' | 'pr-review' | 'sync';
+
+/** Derived from the world on every read, never a mark-read button — 'open' while a
+ * collector still finds the failure, 'closed' once it doesn't or the promoted fix
+ * that carries it ships. */
+export type IssueStatus = 'open' | 'closed';
+
+/** One collected failure (IDEA-192), read as a short thread. `id` is derived from
+ * `sourceKind` + `sourceKey`, so a repeat failure of the same thing resolves to the
+ * same issue and continues its thread instead of raising a duplicate. */
+export interface Issue {
+  id: string;
+  sourceKind: IssueSourceKind;
+  /** Stable within `sourceKind` — a task's `planId`, a check's `name`, a PR's
+   * `number` + `headSha`, or a sync failure's branch + target ref. */
+  sourceKey: string;
+  entityId?: string;
+  entityTitle?: string;
+  title: string;
+  reason: string;
+  /** Last output lines, when the source captured any (a check's command output, a
+   * sync failure's conflicted files). */
+  output?: string;
+  /** Absent when the source carries no timestamp of its own (a live PR review decision). */
+  occurredAt?: string;
+  thread: ThreadMessage[];
+  status: IssueStatus;
+  /** Set once promoted (IDEA-192 phase 6) — the id of whatever now carries the work:
+   * a spawned fix entity, a spawned plain idea (no parent), or the open parent an
+   * issue was appended to as an inline fix. A promoted issue closes when that
+   * entity's status reaches 'done', independent of whether the original source is
+   * still detected as failing. */
+  promotedFixId?: string;
 }

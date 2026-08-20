@@ -283,6 +283,7 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     tags: frontmatter.tags ?? [],
     subject: frontmatter.subject,
     order: frontmatter.order,
+    issueSource: frontmatter.issueSource,
     body,
     phases,
     ...(fixes.length > 0 && { fixes }),

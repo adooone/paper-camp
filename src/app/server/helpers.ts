@@ -58,6 +58,7 @@ export function entityFileInput(
     tags: entry.tags,
     subject: entry.subject,
     order: entry.order,
+    issueSource: entry.issueSource,
     body: entry.body,
     phases: entry.phases,
     fixes: entry.fixes,

@@ -118,6 +118,8 @@ export interface AgentTask {
   runUsage?: RunUsage;
   rateLimit?: RateLimitSnapshot;
   phaseRuns?: PhaseRunRecord[];
+  // issue-fix only: the Issue.id (IDEA-192) this run was launched to fix.
+  issueId?: string;
 }
 
 export function readDefaultAgentIds(root: string): DefaultAgentsMap {
@@ -709,6 +711,7 @@ export function createAgentManager(
     'sync',
     'resolve-conflict',
     'pr-review',
+    'issue-fix',
   ]);
   const ENTITY_WRITER_KINDS = new Set<TaskKind>([
     'audit',
@@ -785,6 +788,7 @@ export function createAgentManager(
       | 'fixReviewThreads'
       | 'prReviewSha'
       | 'prReviewUrl'
+      | 'issueId'
     >,
   ): Result {
     const blocked = admit(scope.taskKind, identity.planId ?? scope.ideaId);
@@ -913,6 +917,13 @@ export function createAgentManager(
     return launch({ planTitle: 'Resolve rebase conflict' }, prompt, {
       taskKind: 'resolve-conflict',
     });
+  }
+
+  // "Fix it here" (IDEA-192) — no planId/ideaId, so this never lands in the Inbox's
+  // completion notifications; the Issues page picks up the result from tasks.log
+  // (issueId) once it's done, not from a push.
+  function startIssueFix(issueId: string, title: string, prompt: string): Result {
+    return launch({ planTitle: title }, prompt, { taskKind: 'issue-fix', issueId });
   }
 
   async function findBatchPlanFile(plansDir: string, id: string): Promise<string | null> {
@@ -1271,6 +1282,7 @@ export function createAgentManager(
 
       if (task.blocker) {
         failed++;
+        task.errorReason ??= task.blocker;
         pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${task.blocker}`);
         await escalateToLog(
           task,
@@ -1283,6 +1295,7 @@ export function createAgentManager(
 
       if (timedOut) {
         failed++;
+        task.errorReason = `${kind} ${i + 1} — no progress for ${PHASE_TIMEOUT_MS / 60000}min`;
         pushLine(
           task,
           `[timeout] ${kind} ${i + 1} — no progress for ${PHASE_TIMEOUT_MS / 60000}min, stopping`,
@@ -1293,6 +1306,9 @@ export function createAgentManager(
       if (!exitedOk) {
         failed++;
         if (stderr.trim()) pushLine(task, stderr.trim());
+        task.errorReason = task.errorReason
+          ? `${kind} ${i + 1} — ${task.errorReason}`
+          : `${kind} ${i + 1} — agent error`;
         pushLine(
           task,
           task.errorReason
@@ -1305,6 +1321,10 @@ export function createAgentManager(
       const progressed = await didTaskProgress(task);
       if (!progressed) {
         failed++;
+        task.errorReason =
+          progressed === null
+            ? `${kind} ${i + 1} — could not read plan after run`
+            : `${kind} ${i + 1} — ${kind} checkbox did not flip`;
         pushLine(
           task,
           progressed === null
@@ -1376,6 +1396,7 @@ export function createAgentManager(
 
         if (fixBlocker) {
           failed++;
+          task.errorReason ??= fixBlocker;
           pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${fixBlocker}`);
           await escalateToLog(
             task,
@@ -1387,6 +1408,7 @@ export function createAgentManager(
 
         if (!checksOk) {
           failed++;
+          task.errorReason = `${kind} ${i + 1} — project checks (${introduced.join(', ')}) still failing after ${fixAttempt} fix attempt(s)`;
           pushLine(
             task,
             `[blocked] ${kind} ${i + 1} — project checks still failing after ${fixAttempt} fix attempt(s)`,
@@ -1739,6 +1761,7 @@ export function createAgentManager(
       ...(task.prReviewUrl ? { prReviewUrl: task.prReviewUrl } : {}),
       ...(task.errorKind ? { errorKind: task.errorKind } : {}),
       ...(task.rateLimit ? { rateLimit: task.rateLimit } : {}),
+      ...(task.issueId ? { issueId: task.issueId } : {}),
     }));
   }
 
@@ -1829,6 +1852,7 @@ export function createAgentManager(
     startSuggest,
     startGitSyncRecovery,
     startResolveConflict,
+    startIssueFix,
     runCommitSuggest,
     runOverlapCheck,
     runPrioritise,
@@ -1906,6 +1930,7 @@ export interface AgentManager {
   startSuggest: (prompt: string) => Promise<Result>;
   startGitSyncRecovery: (prompt: string) => Result;
   startResolveConflict: (prompt: string) => Result;
+  startIssueFix: (issueId: string, title: string, prompt: string) => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
   runPrioritise: (prompt: string) => Promise<string>;

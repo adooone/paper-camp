@@ -1,6 +1,7 @@
 import type {
   EntityEntry,
   IdeaEntry,
+  Issue,
   MountContext,
   PlanEntry,
   ReviewThread,
@@ -15,6 +16,26 @@ import type { SimilarityCandidate } from '../helpers';
 export const BREVITY_CONTRACT = `Keep phases short: 3-7 phases, each a one-line imperative title. Add a description only when the phase isn't self-explanatory, and keep it to one sentence. Never restate the idea's body and never summarise the work you did.`;
 
 export const TITLE_STYLE = `A title is a noun/verb phrase, at most 40 characters (roughly 3-6 words), no em-dash subtitles or trailing clauses — the symptom, mechanism, and detail belong in the body's first paragraph, not the title.`;
+
+// "Fix it here" (IDEA-192) — no plan/idea file to scope this to, so unlike the phase
+// runner this fix commits its own work; a human reviews it via ordinary git status.
+export function buildIssueFixPrompt(issue: Pick<Issue, 'title' | 'reason' | 'output'>): string {
+  const outputBlock = issue.output ? `\n\nLast output:\n${issue.output}` : '';
+
+  return `You are fixing a failure reported on paper-camp's Issues page: "${issue.title}".
+
+${issue.reason}${outputBlock}
+
+Find the root cause in this repo and fix it. Commit the fix yourself once the repo is green — there is no plan or PR review step waiting on this one.
+
+Never run \`git stash\`, \`git reset\`, or \`git checkout\` over working-tree state you did not create yourself — it may be someone else's pending work. To compare against a clean baseline, use read-only \`git diff\` or \`git show HEAD:<file>\` instead.
+
+Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
+
+You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, lint, tests) — never open the app, navigate to a URL, or take screenshots.
+
+If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`NEEDS-DECISION:\` followed by your question, then stop without committing.`;
+}
 
 export function buildConvergenceAuditPrompt(plan: PlanEntry): string {
   const phaseList = plan.phases
