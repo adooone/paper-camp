@@ -102,6 +102,7 @@ current shape. Notifications for issues — the page is pulled, not pushed.
       Create the fix entity, point the issue at it, and stop the issue carrying the work.
       run: 14m30s · 11.5k in · 60.6k out · sonnet-5
 - [x] [manual] Add promote-to-fix flow for issues
+- [x] [manual] Fix issue promotion entity lookup and spawn kind
 
 ### Thread
 - [x] 2026-08-20 [question] [agent] Run-all parked on phase 6 ("Add "promote to a fix entity" per [[IDEA-187]]") — the agent needs a decision: "Promote to a fix entity" runs into two unresolved gaps I can't safely guess past:
@@ -110,3 +111,4 @@ current shape. Notifications for issues — the page is pulled, not pushed.
 - [x] 2026-08-20 [clarification] No issues store. Issues stay entirely derived — a store means reconciling derived state against stored state forever, and it invites the "mark read" closure this idea rules out. `sourceKind` + `sourceKey` is already documented as stable, so stamp that pair on the fix entity (a file, in git) and match derived issues against fix entities. The link survives reload because git holds it, and the scan rides on the entity read the corpus already does.
 - [x] 2026-08-20 [clarification] [[IDEA-187]]'s boundary rule is not relaxed and does not change. It routes idea follow-ups by status, and an issue with no parent is simply outside its scope. Promote routes by what the issue points at: a closed or archived parent spawns a fix entity (187's case); an open parent appends to that idea's inline `### Fixes` (187's other branch); an issue with no parent becomes a plain `kind: idea`. Every issue has a destination and nothing is bent.
 - [x] 2026-08-20 [clarification] Because Promote's behaviour now varies by target, the control must name what it will do — "Promote to fix", "Add to IDEA-N's fixes", or "Promote to idea" — rather than reading as one generic action.
+- [x] 2026-08-20 [review] [agent] Requests changes · 4 findings — The bulk of the feature is here and well-tested at the core level, but two spec requirements aren't actually delivered end-to-end: the fourth collector (rebase/sync failures) is written and tested yet never wired into the page, and the no-parent promotion path types the spawned entity as a fix rather than the plain idea the settled decision calls for. There is also a client/server corpus mismatch in how the parent entity is resolved that can mislabel Promote and break the issue↔fix link on reload.

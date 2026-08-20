@@ -500,8 +500,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         const spawnedEntity: EntityEntry = {
           id: spawnedId,
           title: issue.title,
-          type: 'fix',
-          ...(parent ? { kind: 'fix' as const, idea: parent.id } : {}),
+          ...(parent ? { type: 'fix' as const, kind: 'fix' as const, idea: parent.id } : {}),
           issueSource: issue.id,
           created: todayDateString(),
           tags: [],

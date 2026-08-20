@@ -11,14 +11,17 @@ import {
   issueThreadFromTaskLog,
 } from '@/core/issues';
 import { isClosedEntity } from '@/core/status';
-import type { Issue, PlanEntry } from '@/types/index';
+import type { EntityStatus, Issue, PlanEntry } from '@/types/index';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import { sortIssuesByAge } from './helpers';
 import { IssueRow } from './issue-row';
 
-const promoteLabel = (issue: Issue, planEntities: PlanEntry[]): string => {
-  const parent = issue.entityId ? planEntities.find((p) => p.id === issue.entityId) : undefined;
+const promoteLabel = (
+  issue: Issue,
+  entities: { id: string; status?: EntityStatus; archived?: boolean }[],
+): string => {
+  const parent = issue.entityId ? entities.find((p) => p.id === issue.entityId) : undefined;
   if (!parent) return 'Promote to idea';
   return isClosedEntity(parent) ? 'Promote to fix' : `Add to ${parent.id}'s fixes`;
 };
@@ -47,20 +50,25 @@ export const IssuesPage = () => {
     [plans],
   );
 
+  const entities = useMemo(
+    () =>
+      [...planEntities, ...ideaEntries].filter(
+        (entity): entity is typeof entity & { id: string } => entity.id != null,
+      ),
+    [planEntities, ideaEntries],
+  );
+
   const issues = useMemo(() => {
-    const entities = [...planEntities, ...ideaEntries].filter(
-      (entity): entity is typeof entity & { id: string } => entity.id != null,
-    );
     const collected = sortIssuesByAge([
       ...collectAgentRunIssues(taskLog),
       ...collectCheckIssues(checks),
       ...collectPrReviewIssues(entities),
     ]);
-    return applyPromotions(collected, planEntities).map((issue) => ({
+    return applyPromotions(collected, entities).map((issue) => ({
       ...issue,
       thread: issueThreadFromTaskLog(issue, taskLog),
     }));
-  }, [taskLog, checks, planEntities, ideaEntries]);
+  }, [taskLog, checks, entities]);
 
   const openEntity = (id: string, title: string) => {
     if (plans?.entries.some((p) => p.id === id || p.title === title)) {
@@ -102,8 +110,7 @@ export const IssuesPage = () => {
         <div className="flex flex-col">
           {issues.map((issue) => {
             const promotedTitle = issue.promotedFixId
-              ? (planEntities.find((p) => p.id === issue.promotedFixId)?.title ??
-                issue.promotedFixId)
+              ? (entities.find((p) => p.id === issue.promotedFixId)?.title ?? issue.promotedFixId)
               : undefined;
             return (
               <IssueRow
@@ -119,7 +126,7 @@ export const IssuesPage = () => {
                 fixing={fixingIssueId === issue.id}
                 fixDisabled={fixingIssueId !== undefined}
                 onFix={() => launchIssueFix(issue.id, issue.title, issue.reason, issue.output)}
-                promoteLabel={promoteLabel(issue, planEntities)}
+                promoteLabel={promoteLabel(issue, entities)}
                 promoting={promotingId === issue.id}
                 promoteDisabled={promotingId !== null}
                 onPromote={() => handlePromote(issue)}
