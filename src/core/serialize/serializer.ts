@@ -221,6 +221,7 @@ interface NewEntityFileInput {
   tags?: string[];
   subject?: string;
   order?: number;
+  issueSource?: string;
   body?: string;
   phases?: PhaseItem[];
   fixes?: PhaseItem[];
@@ -248,6 +249,7 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   if (input.tags && input.tags.length > 0) frontmatter.tags = input.tags;
   if (input.subject) frontmatter.subject = input.subject;
   if (input.order !== undefined) frontmatter.order = input.order;
+  if (input.issueSource) frontmatter.issueSource = input.issueSource;
   for (const key of Object.keys(input.unknownFrontmatter ?? {}).sort()) {
     frontmatter[key] = (input.unknownFrontmatter as Record<string, unknown>)[key];
   }

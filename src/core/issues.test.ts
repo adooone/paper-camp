@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DeskCheckState, GitSyncFailure, Issue, PrInfo, TaskLogEntry } from '../types/index';
 import {
+  applyPromotions,
   collectAgentRunIssues,
   collectCheckIssues,
   collectPrReviewIssues,
@@ -194,6 +195,56 @@ describe('reconcileIssues', () => {
       id === 'IDEA-200' ? 'in-progress' : undefined,
     );
     expect(merged[0]).toMatchObject({ status: 'closed', promotedFixId: 'IDEA-200' });
+  });
+});
+
+describe('applyPromotions', () => {
+  it('matches a spawned fix entity by its issueSource stamp', () => {
+    const issues = [existingIssue({ id: 'check:lint' })];
+    const entities = [
+      { id: 'IDEA-200', issueSource: 'check:lint', status: 'in-progress' as const },
+    ];
+    const merged = applyPromotions(issues, entities);
+    expect(merged[0]).toMatchObject({ promotedFixId: 'IDEA-200' });
+  });
+
+  it("matches an issue-sourced item appended to its parent's inline Fixes list", () => {
+    const issues = [
+      existingIssue({ id: 'check:lint', entityId: 'IDEA-5', title: '"lint" check is failing' }),
+    ];
+    const entities = [
+      {
+        id: 'IDEA-5',
+        status: 'in-progress' as const,
+        fixes: [{ done: false, text: '"lint" check is failing', source: 'issue' as const }],
+      },
+    ];
+    const merged = applyPromotions(issues, entities);
+    expect(merged[0]).toMatchObject({ promotedFixId: 'IDEA-5' });
+  });
+
+  it('leaves an issue unmatched when nothing points back at it', () => {
+    const issues = [existingIssue({ id: 'check:lint' })];
+    const entities = [{ id: 'IDEA-200', status: 'in-progress' as const }];
+    const merged = applyPromotions(issues, entities);
+    expect(merged[0].promotedFixId).toBeUndefined();
+  });
+
+  it('closes an issue once its promoted target ships', () => {
+    const issues = [existingIssue({ id: 'check:lint' })];
+    const entities = [{ id: 'IDEA-200', issueSource: 'check:lint', status: 'done' as const }];
+    const merged = applyPromotions(issues, entities);
+    expect(merged).toHaveLength(0);
+  });
+
+  it('keeps a promoted issue open while its target has not shipped', () => {
+    const issues = [existingIssue({ id: 'check:lint' })];
+    const entities = [
+      { id: 'IDEA-200', issueSource: 'check:lint', status: 'in-progress' as const },
+    ];
+    const merged = applyPromotions(issues, entities);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].promotedFixId).toBe('IDEA-200');
   });
 });
 

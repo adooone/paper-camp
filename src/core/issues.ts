@@ -3,6 +3,7 @@ import type {
   EntityStatus,
   GitSyncFailure,
   Issue,
+  PhaseItem,
   PrInfo,
   TaskLogEntry,
   ThreadMessage,
@@ -128,6 +129,36 @@ export function reconcileIssues(
     return { ...next, thread: issue.thread, promotedFixId: issue.promotedFixId };
   });
   return [...merged, ...freshById.values()];
+}
+
+/** An entity Promote (IDEA-192 phase 6) may have created or amended — a spawned
+ * fix/idea entity stamps `issueSource`; an open parent gets a `source: 'issue'`
+ * item appended to its inline Fixes list instead. */
+type PromotionTarget = {
+  id?: string;
+  status?: EntityStatus;
+  issueSource?: string;
+  fixes?: PhaseItem[];
+};
+
+/** Matches every issue against the corpus for a prior Promote (IDEA-192 phase 6),
+ * re-derived from disk on every read since issues carry no store of their own —
+ * the promotion survives a reload because git holds it, not a stored issue. Once
+ * matched, an issue whose target has shipped (`status: 'done'`) closes, even if
+ * its original source is still detected as failing. */
+export function applyPromotions(issues: Issue[], entities: PromotionTarget[]): Issue[] {
+  return issues
+    .map((issue): Issue => {
+      const spawned = entities.find((e) => e.issueSource === issue.id);
+      if (spawned?.id) return { ...issue, promotedFixId: spawned.id };
+      const parent = issue.entityId ? entities.find((e) => e.id === issue.entityId) : undefined;
+      const appended = parent?.fixes?.some((f) => f.source === 'issue' && f.text === issue.title);
+      return appended && parent?.id ? { ...issue, promotedFixId: parent.id } : issue;
+    })
+    .filter((issue) => {
+      const target = issue.promotedFixId && entities.find((e) => e.id === issue.promotedFixId);
+      return !(target && target.status === 'done');
+    });
 }
 
 /** "Fix it here" (IDEA-192) launches an `issue-fix` task carrying the issue's id;

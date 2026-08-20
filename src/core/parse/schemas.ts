@@ -128,6 +128,12 @@ const entityFrontmatterObjectSchema = z
       .int()
       .optional()
       .describe('Run order; absent means unordered, sorting after ordered entries'),
+    issueSource: z
+      .string()
+      .optional()
+      .describe(
+        'sourceKind:sourceKey of the Issue (IDEA-192) this entity was promoted from, if any',
+      ),
   })
   .passthrough();
 

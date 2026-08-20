@@ -11,6 +11,11 @@ interface IssueRowProps {
   fixing: boolean;
   fixDisabled: boolean;
   onFix: () => Promise<void>;
+  promoteLabel: string;
+  promoting: boolean;
+  promoteDisabled: boolean;
+  onPromote: () => Promise<void>;
+  onOpenPromoted?: () => void;
 }
 
 export const IssueRow = ({
@@ -21,10 +26,23 @@ export const IssueRow = ({
   fixing,
   fixDisabled,
   onFix,
+  promoteLabel,
+  promoting,
+  promoteDisabled,
+  onPromote,
+  onOpenPromoted,
 }: IssueRowProps) => {
   const handleFix = async () => {
     try {
       await onFix();
+    } catch (err) {
+      alert((err as Error).message);
+    }
+  };
+
+  const handlePromote = async () => {
+    try {
+      await onPromote();
     } catch (err) {
       alert((err as Error).message);
     }
@@ -67,10 +85,22 @@ export const IssueRow = ({
             <FeedbackThread messages={issue.thread} undo={null} undoing={false} onUndo={() => {}} />
           )}
           <div className="flex items-center gap-3">
-            <Button size="small" onClick={handleFix} disabled={fixDisabled}>
-              {fixing ? 'Fixing…' : 'Fix it here'}
-            </Button>
-            {fixing && <Spinner size="small" label="Agent fixing…" />}
+            {issue.promotedFixId ? (
+              <Button size="small" onClick={onOpenPromoted}>
+                View {issue.promotedFixId}
+              </Button>
+            ) : (
+              <>
+                <Button size="small" onClick={handleFix} disabled={fixDisabled}>
+                  {fixing ? 'Fixing…' : 'Fix it here'}
+                </Button>
+                {fixing && <Spinner size="small" label="Agent fixing…" />}
+                <Button size="small" onClick={handlePromote} disabled={promoteDisabled}>
+                  {promoting ? 'Promoting…' : promoteLabel}
+                </Button>
+                {promoting && <Spinner size="small" label="Promoting…" />}
+              </>
+            )}
           </div>
         </div>
       )}

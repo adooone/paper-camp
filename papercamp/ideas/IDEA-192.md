@@ -2,7 +2,7 @@
 id: IDEA-192
 title: An Issues page you can act on
 type: feat
-status: in-progress
+status: review
 created: 2026-08-19
 updated: 2026-08-19
 tags:
@@ -99,19 +99,14 @@ current shape. Notifications for issues — the page is pulled, not pushed.
 - [x] Add "fix it here" to launch a fix agent from an issue
       Carry the issue's context into the agent and record the attempt and result back in the thread.
       run: 21m30s · 14.2k in · 70.9k out · sonnet-5
-- [ ] Add "promote to a fix entity" per [[IDEA-187]]
+- [x] Add "promote to a fix entity" per [[IDEA-187]]
       Create the fix entity, point the issue at it, and stop the issue carrying the work.
+      run: 14m30s · 11.5k in · 60.6k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-20 [question] [agent] Run-all parked on phase 6 ("Add "promote to a fix entity" per [[IDEA-187]]") — the agent needs a decision: "Promote to a fix entity" runs into two unresolved gaps I can't safely guess past:
 - [x] 2026-08-20 [question] [agent] Run-all parked on phase 6 ("Add "promote to a fix entity" per [[IDEA-187]]") — the agent needs a decision: Phase 6 ("Add promote to a fix entity") hits two unresolved gaps from the prior parked run's thread note on IDEA-192: (1) Issues have no persistence today — `Issue.promotedFixId` exists on the type but nothing stores an issue's state between loads (phases 4–5 deliberately reused `tasks.log`/live derivation instead of a real store). Should I build a persisted issues store now, or should the promoted-fix link live elsewhere (e.g. stamped on the fix entity itself, discovered by scanning fix entities for a backlink) instead of on the issue? (2) IDEA-187's boundary rule only allows `kind: fix` to spawn from a done/archived parent, but most issues come from open work (a check failing now, an agent run failing mid-plan, a PR under review) or have no parent idea at all. Should "Promote" only appear when the issue's entity happens to be closed (narrow), fall back to a plain `kind: idea` when there's no closed parent, or should IDEA-187's boundary rule be relaxed to allow `kind: fix` with no parent or an open parent?
 - [x] 2026-08-20 [question] [agent] Run-all parked on phase 6 ("Add "promote to a fix entity" per [[IDEA-187]]") — the agent needs a decision: Phase 6 ("promote to a fix entity") has two unresolved gaps a prior parked run already flagged in IDEA-192's thread, and neither has been answered since:
-
-1. **Persistence** — issues have no store between page loads today. `src/app/features/issues/issues-page.tsx` re-derives issues from `collectAgentRunIssues`/`collectCheckIssues`/`collectPrReviewIssues` on every render and never calls `reconcileIssues` (the function that would carry `promotedFixId` forward). Should I build a real persisted issues store now so a promotion survives reload, or should the link live elsewhere instead — e.g. stamped only on the fix entity itself (its `idea:`/body references the issue), discovered by scanning fix entities rather than storing state on the issue?
-
-2. **IDEA-187's boundary rule** requires `kind: fix` to link to a **done/archived** parent idea. But most issues here point at **open** work (a check failing on an in-progress plan, an agent run failing mid-plan) or have no parent entity at all (a sync failure, a check with no linked idea). Should "Promote" only be offered when the issue's entity happens to be closed (narrow, mismatches most real issues), fall back to a plain `kind: idea` when there's no closed parent, or should IDEA-187's boundary rule be relaxed to permit `kind: fix` with no parent / an open parent for this case?
-
-Both are real product decisions, not implementation details — I don't want to guess an issues-store architecture or bend IDEA-187's boundary rule without your call. Stopping here without editing any files.
 - [x] 2026-08-20 [clarification] No issues store. Issues stay entirely derived — a store means reconciling derived state against stored state forever, and it invites the "mark read" closure this idea rules out. `sourceKind` + `sourceKey` is already documented as stable, so stamp that pair on the fix entity (a file, in git) and match derived issues against fix entities. The link survives reload because git holds it, and the scan rides on the entity read the corpus already does.
 - [x] 2026-08-20 [clarification] [[IDEA-187]]'s boundary rule is not relaxed and does not change. It routes idea follow-ups by status, and an issue with no parent is simply outside its scope. Promote routes by what the issue points at: a closed or archived parent spawns a fix entity (187's case); an open parent appends to that idea's inline `### Fixes` (187's other branch); an issue with no parent becomes a plain `kind: idea`. Every issue has a destination and nothing is bent.
 - [x] 2026-08-20 [clarification] Because Promote's behaviour now varies by target, the control must name what it will do — "Promote to fix", "Add to IDEA-N's fixes", or "Promote to idea" — rather than reading as one generic action.

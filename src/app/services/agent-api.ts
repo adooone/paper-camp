@@ -1,5 +1,6 @@
 import type {
   AgentTaskState,
+  Issue,
   LoginRelayState,
   MountContext,
   PrReviewStatus,
@@ -134,6 +135,19 @@ export const launchIssueFix = async (
     body: JSON.stringify({ issueId, title, reason, output }),
   });
   await handleAgentResponse(response);
+};
+
+export const promoteIssue = async (
+  issue: Issue,
+): Promise<{ promotedTo: string; kind: 'fix' | 'append' | 'idea' }> => {
+  const response = await fetch(apiUrl('/api/agent/promote-issue'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ issue }),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.error ?? `Failed to promote issue (${response.status})`);
+  return data;
 };
 
 export const fetchPrReviewStatus = async (planId: string): Promise<PrReviewStatus | null> => {

@@ -8,19 +8,22 @@ import {
 } from '@/app/features/plans/prompts';
 import { fetchCiReleaseState } from '@/core/ci';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
-import { entityToPlan, readEntities } from '@/core/readers';
+import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
 import {
   agentThreadMessage,
   assignEntityId,
   formatEntityFile,
   todayDateString,
 } from '@/core/serialize';
+import { isClosedEntity } from '@/core/status';
 import { chatSinceLastLog, logFromThread, promoteThreadMessage } from '@/core/thread';
 import type {
   EntityEntry,
   IdeaEntry,
   IdeaStatus,
+  Issue,
   MountContext,
+  PhaseItem,
   PlanEntry,
   PrReviewStatus,
   ThreadMessage,
@@ -446,6 +449,83 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         return agent.startIssueFix(issueId, title, prompt);
       },
     ),
+
+    {
+      method: 'POST',
+      path: '/api/agent/promote-issue',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { issue } = JSON.parse(reqBody) as { issue?: Issue };
+        if (!issue?.id || !issue.title || !issue.reason) {
+          sendJson(res, 400, { error: 'issue is required' });
+          return;
+        }
+
+        const ideasDir = campFile(root, 'ideas');
+        const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
+        const parent = issue.entityId ? entries.find((e) => e.id === issue.entityId) : undefined;
+
+        // An open parent keeps its inline Fixes list; only a closed/archived parent,
+        // or no parent at all, spawns a linked entity (IDEA-187's boundary rule).
+        if (parent && !isClosedEntity(parent)) {
+          const targetFile =
+            (await resolveEntityFilePath(root, parent.id)) ?? join(ideasDir, `${parent.id}.md`);
+          const fixes: PhaseItem[] = [
+            ...(parent.fixes ?? []),
+            { done: false, text: issue.title, description: issue.reason, source: 'issue' },
+          ];
+          await writeEntityFile(
+            root,
+            targetFile,
+            entityFileInput(parent, { fixes, updated: todayDateString() }),
+          );
+          await git.commit(
+            [relative(root, targetFile)],
+            `fix(ideas): add issue to ${parent.id}'s fixes`,
+            `Refs: ${parent.id}`,
+            { noVerify: true },
+          );
+          sendJson(res, 200, { promotedTo: parent.id, kind: 'append' });
+          return;
+        }
+
+        const configPath = join(root, 'papercamp', 'config.json');
+        const spawnedId = await assignEntityId(configPath);
+        if (!spawnedId) {
+          sendJson(res, 500, { error: 'Could not mint a new id' });
+          return;
+        }
+        await mkdir(ideasDir, { recursive: true });
+        const fixPath = join(ideasDir, `${spawnedId}.md`);
+        const spawnedEntity: EntityEntry = {
+          id: spawnedId,
+          title: issue.title,
+          type: 'fix',
+          ...(parent ? { kind: 'fix' as const, idea: parent.id } : {}),
+          issueSource: issue.id,
+          created: todayDateString(),
+          tags: [],
+          body: issue.reason,
+          phases: parent ? [{ done: false, text: issue.title, description: issue.reason }] : [],
+        };
+        await writeFile(fixPath, `${formatEntityFile(spawnedEntity)}\n`, 'utf-8');
+        await git.commit(
+          [relative(root, fixPath)],
+          `fix(ideas): spawn ${spawnedId} from issue ${issue.id}`,
+          `Refs: ${spawnedId}`,
+          { noVerify: true },
+        );
+
+        if (parent) {
+          const spawnConflict = await checkBranchConflictForPlan(root, git, spawnedId);
+          if (!spawnConflict) {
+            agent.startRunAllPhases(entityToPlan(spawnedEntity), () => status.runChecksAndWait());
+          }
+        }
+
+        sendJson(res, 200, { promotedTo: spawnedId, kind: parent ? 'fix' : 'idea' });
+      },
+    },
 
     {
       method: 'GET',

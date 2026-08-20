@@ -39,7 +39,7 @@ export interface PhaseItem {
   done: boolean;
   text: string;
   description?: string;
-  source?: 'review' | 'manual';
+  source?: 'review' | 'manual' | 'issue';
   run?: PhaseRun;
 }
 
@@ -231,6 +231,8 @@ export interface PlanEntry {
   subject?: string;
   /** Absent means unordered — sorts after all ordered entries, by created date. */
   order?: number;
+  /** See EntityEntry.issueSource. */
+  issueSource?: string;
   body: string;
   phases: PhaseItem[];
   /** Post-build findings, same checkbox grammar as `phases` — see EntityEntry.fixes. */
@@ -404,6 +406,10 @@ export interface EntityEntry {
   subject?: string;
   /** Absent means unordered — sorts after all ordered entries, by created date. */
   order?: number;
+  /** The Issue.id (`sourceKind:sourceKey`, IDEA-192) this entity was spawned to promote,
+   * if any — how a promoted issue is re-matched to its target on every read, since
+   * issues carry no store of their own. */
+  issueSource?: string;
   body: string;
   phases: PhaseItem[];
   /** Post-build findings, same checkbox grammar as `phases` — appended below Phases
@@ -1004,8 +1010,10 @@ export interface Issue {
   occurredAt?: string;
   thread: ThreadMessage[];
   status: IssueStatus;
-  /** Set once promoted to a fix entity (IDEA-192 phase 6) — that entity's own id.
-   * A promoted issue closes when the fix entity's status reaches 'done', independent
-   * of whether the original source is still detected as failing. */
+  /** Set once promoted (IDEA-192 phase 6) — the id of whatever now carries the work:
+   * a spawned fix entity, a spawned plain idea (no parent), or the open parent an
+   * issue was appended to as an inline fix. A promoted issue closes when that
+   * entity's status reaches 'done', independent of whether the original source is
+   * still detected as failing. */
   promotedFixId?: string;
 }
