@@ -1282,6 +1282,7 @@ export function createAgentManager(
 
       if (task.blocker) {
         failed++;
+        task.errorReason ??= task.blocker;
         pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${task.blocker}`);
         await escalateToLog(
           task,
@@ -1294,6 +1295,7 @@ export function createAgentManager(
 
       if (timedOut) {
         failed++;
+        task.errorReason = `${kind} ${i + 1} — no progress for ${PHASE_TIMEOUT_MS / 60000}min`;
         pushLine(
           task,
           `[timeout] ${kind} ${i + 1} — no progress for ${PHASE_TIMEOUT_MS / 60000}min, stopping`,
@@ -1304,6 +1306,9 @@ export function createAgentManager(
       if (!exitedOk) {
         failed++;
         if (stderr.trim()) pushLine(task, stderr.trim());
+        task.errorReason = task.errorReason
+          ? `${kind} ${i + 1} — ${task.errorReason}`
+          : `${kind} ${i + 1} — agent error`;
         pushLine(
           task,
           task.errorReason
@@ -1316,6 +1321,10 @@ export function createAgentManager(
       const progressed = await didTaskProgress(task);
       if (!progressed) {
         failed++;
+        task.errorReason =
+          progressed === null
+            ? `${kind} ${i + 1} — could not read plan after run`
+            : `${kind} ${i + 1} — ${kind} checkbox did not flip`;
         pushLine(
           task,
           progressed === null
@@ -1387,6 +1396,7 @@ export function createAgentManager(
 
         if (fixBlocker) {
           failed++;
+          task.errorReason ??= fixBlocker;
           pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${fixBlocker}`);
           await escalateToLog(
             task,
@@ -1398,6 +1408,7 @@ export function createAgentManager(
 
         if (!checksOk) {
           failed++;
+          task.errorReason = `${kind} ${i + 1} — project checks (${introduced.join(', ')}) still failing after ${fixAttempt} fix attempt(s)`;
           pushLine(
             task,
             `[blocked] ${kind} ${i + 1} — project checks still failing after ${fixAttempt} fix attempt(s)`,
