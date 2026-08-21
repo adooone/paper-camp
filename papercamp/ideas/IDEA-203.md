@@ -35,6 +35,7 @@ Branch creation is delivery, so it belongs with the other delivery controls in t
       run: 5m52s · 9.2k in · 31.2k out · sonnet-5
 - [x] Drop the on-branch card from the idea view
       `BranchRow`'s on-own-branch card duplicates the top bar; remove it and keep only the wrong-branch case.
+      run: 2m23s · 233 in · 2.3k out · sonnet-5
 
 ### Fixes
 - [ ] Remove the wrong-branch card from the idea view

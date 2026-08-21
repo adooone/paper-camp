@@ -320,25 +320,17 @@ const BranchRow = ({
   onOwnBranch: boolean;
 }) => {
   const showBranchRow =
-    plan.status === 'planned' || plan.status === 'in-progress' || plan.status === 'review';
+    !onOwnBranch &&
+    (plan.status === 'planned' || plan.status === 'in-progress' || plan.status === 'review');
   if (!showBranchRow) return null;
 
   return (
     <div className="flex items-center gap-3 flex-wrap mb-3 min-h-8">
-      {!onOwnBranch && (
-        <Card size="small" accent accentColor="amber" texture="kraft">
-          <span className="text-xs">
-            <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
-          </span>
-        </Card>
-      )}
-      {onOwnBranch && (
-        <Card size="small" texture="paper">
-          <span className="text-xs opacity-[0.6]">
-            <code>{gitBranch}</code>
-          </span>
-        </Card>
-      )}
+      <Card size="small" accent accentColor="amber" texture="kraft">
+        <span className="text-xs">
+          <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
+        </span>
+      </Card>
     </div>
   );
 };
