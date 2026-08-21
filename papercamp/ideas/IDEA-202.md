@@ -28,6 +28,7 @@ The overlay itself is right and should stay: `readRunOrderRanks` is explicit tha
       run: 2m56s · 375 in · 4.8k out · sonnet-5
 - [x] Strip ranks already written to the corpus
       Remove `order:` frontmatter that a previous write stamped in, leaving genuine stored values alone.
+      run: 4m55s · 1.1k in · 9.9k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Tiny corpus-integrity fix touching write paths every other idea's phases will exercise, so it should land before more writes accumulate the same leak.
