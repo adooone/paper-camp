@@ -2,7 +2,7 @@
 id: IDEA-201
 title: Boards and tickets
 type: feat
-status: review
+status: in-progress
 created: 2026-08-21
 updated: 2026-08-21
 tags:
@@ -46,3 +46,11 @@ The board's view lists its tickets with the same row treatment the main list use
 - [x] Convert [[IDEA-195]] into a board
       Turn its five sequencing steps into tickets and repoint [[IDEA-117]]'s dependency at the real ids.
       run: 3m · 7.3k in · 13.6k out · sonnet-5
+
+### Fixes
+- [ ] Hide tickets from the main plans list
+      A ticket entity should render only inside its parent board's view, never as a row in the top-level worklist — it's decomposition detail, not a standalone list item.
+
+### Thread
+- [x] 2026-08-21 [chat] tickets should be rendered inside board. It is the list inside board, so no tickets should be visible in the main list
+- [x] 2026-08-21 [chat] [agent] Got it — tickets should only ever show up inside their board's own list, not duplicated in the main worklist. Adding that as a fix here. (reopened this idea to re-run)
