@@ -1,5 +1,6 @@
 import {
   ProjectIdentityHeader,
+  RuntimeUnavailable,
   ServerReloadBanner,
   SidebarShell,
   StackPanel,
@@ -8,6 +9,7 @@ import {
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
+import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
 import { mountPrefix } from '@/app/services/mount';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
 import {
@@ -158,6 +160,16 @@ const RootLayout = () => {
   const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
   const loadNotifications = useAppStore((s) => s.loadNotifications);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
+  const checkRuntimeReachable = useAppStore((s) => s.checkRuntimeReachable);
+  const runtimeReachable = useAppStore((s) => s.runtimeReachable);
+  const runtimeChecking = useAppStore((s) => s.runtimeChecking);
+  const activeLayer = useRouterState({
+    select: (s) => s.matches.at(-1)?.staticData.layer,
+  });
+  const readiness = moduleReadiness(activeLayer, {
+    reachable: runtimeReachable,
+    checking: runtimeChecking,
+  });
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   // Detail views replace the sidebar breadcrumb that used to carry the way back.
@@ -198,6 +210,7 @@ const RootLayout = () => {
     loadAgentAuthStatus();
     loadParkedQuestions();
     loadNotifications();
+    checkRuntimeReachable();
   }, [
     loadPlans,
     loadIdeas,
@@ -206,6 +219,7 @@ const RootLayout = () => {
     loadAgentAuthStatus,
     loadParkedQuestions,
     loadNotifications,
+    checkRuntimeReachable,
   ]);
 
   // Land fresh installs (or any install with an incomplete capability) on Setup
@@ -361,9 +375,13 @@ const RootLayout = () => {
                       rounded="none"
                       className="pc-page w-full max-w-none"
                     >
-                      <Suspense fallback={null}>
-                        <Outlet />
-                      </Suspense>
+                      {readiness === 'unreachable' ? (
+                        <RuntimeUnavailable />
+                      ) : (
+                        <Suspense fallback={null}>
+                          <Outlet />
+                        </Suspense>
+                      )}
                     </Page>
                   </div>
                 </div>
@@ -425,37 +443,44 @@ const plansRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): { subject?: string } => ({
     subject: typeof search.subject === 'string' ? search.subject : undefined,
   }),
+  staticData: { layer: 'runtime' },
 });
 const planDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/plans/$planId',
   component: PlansPage,
+  staticData: { layer: 'runtime' },
 });
 const ideaDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/ideas/$ideaId',
   component: PlansPage,
+  staticData: { layer: 'runtime' },
 });
 const docsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs',
   component: DocsPage,
+  staticData: { layer: 'runtime' },
 });
 const docsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs/$section',
   component: DocsPage,
+  staticData: { layer: 'runtime' },
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings',
   component: SettingsPage,
+  staticData: { layer: 'runtime' },
 });
 const settingsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings/$section',
   component: SettingsPage,
+  staticData: { layer: 'runtime' },
 });
 
 const roadmapRoute = createRoute({
@@ -465,24 +490,28 @@ const roadmapRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): { item?: string } => ({
     item: typeof search.item === 'string' ? search.item : undefined,
   }),
+  staticData: { layer: 'runtime' },
 });
 
 const inboxRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/inbox',
   component: InboxPage,
+  staticData: { layer: 'runtime' },
 });
 
 const statsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/stats',
   component: StatsPage,
+  staticData: { layer: 'runtime' },
 });
 
 const gitRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/git',
   component: GitPage,
+  staticData: { layer: 'runtime' },
 });
 
 const tasksRoute = createRoute({
@@ -492,12 +521,14 @@ const tasksRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): { taskId?: string } => ({
     taskId: typeof search.taskId === 'string' ? search.taskId : undefined,
   }),
+  staticData: { layer: 'runtime' },
 });
 
 const issuesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/issues',
   component: IssuesPage,
+  staticData: { layer: 'runtime' },
 });
 
 const routeTree = rootRoute.addChildren([
@@ -521,5 +552,8 @@ export const router = createRouter({ routeTree, basepath: mountPrefix || '/' });
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
+  }
+  interface StaticDataRouteOption {
+    layer?: ModuleLayer;
   }
 }

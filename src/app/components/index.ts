@@ -6,6 +6,7 @@ export { LinkButton } from './link-button';
 export { Markdown } from './markdown';
 export { StackPanel } from './stack-panel';
 export { ProjectIdentityHeader } from './shell/project-identity-header';
+export { RuntimeUnavailable } from './shell/runtime-unavailable';
 export { ServerReloadBanner } from './shell/server-reload-banner';
 export { SidebarShell } from './shell/sidebar-shell';
 export { StatusBar } from './shell/status-bar';

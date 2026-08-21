@@ -162,8 +162,9 @@ remains on both notes is work.
 - [x] Detach the client
       Ship the bundle as an artifact that takes a runtime URL, keeping `paper-camp dev` serving the same bundle locally.
       run: 5m21s · 650 in · 16.2k out · sonnet-5
-- [ ] Make every module declare the layer it needs
+- [x] Make every module declare the layer it needs
       Capability-aware modules so the client composes from what is reachable and a runtime-only feature says so in place.
+      run: 8m7s · 1.1k in · 26k out · sonnet-5
 - [ ] Reach the corpus with no runtime
       The client talks to GitHub directly with a device-flow or PKCE token, which is what makes plan-only real.
 - [ ] Split plugins into two extension points
