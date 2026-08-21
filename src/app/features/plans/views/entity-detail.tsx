@@ -11,6 +11,7 @@ import {
   useTrail,
 } from '@/app/features/plans/hooks';
 import { entityRouteParam } from '@/app/hooks';
+import { createTicket } from '@/app/services/content';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import { type UsageRollup, formatDuration, formatTokens, rollupUsage } from '@/core/phase-run';
@@ -32,6 +33,7 @@ import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import { AddReviewPhasesButton, AgentStartButton, AuditPhasesButton } from '../actions';
+import { AddTicketButton } from '../actions';
 import {
   DeliverChangedFiles,
   DeliverChecksRow,
@@ -448,11 +450,13 @@ const FixesSection = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: PlanE
 };
 
 /** A board's decomposition, in the same row treatment the main worklist uses
- * (IDEA-201) — never the phases Table, since a board carries no phases of its own. */
+ * (IDEA-201) — never the phases Table, since a board carries no phases of its own.
+ * Adding a ticket stays on this view: it posts straight to the board's own list
+ * and reloads, rather than navigating to a separate creation flow. */
 const TicketsSection = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: PlanEntry[] }) => {
   const navigate = useNavigate();
+  const loadPlans = useAppStore((s) => s.loadPlans);
   const tickets = otherPlans.filter((p) => p.entityKind === 'ticket' && p.idea === plan.id);
-  if (tickets.length === 0) return null;
   const handleOpen = (title: string) => {
     const ticket = tickets.find((t) => t.title === title);
     if (!ticket) return;
@@ -461,10 +465,24 @@ const TicketsSection = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: Pla
       params: { planId: entityRouteParam(ticket.id, ticket.title) },
     });
   };
+  const handleAddTicket = async (title: string) => {
+    if (!plan.id) return;
+    await createTicket({ boardId: plan.id, title });
+    await loadPlans();
+  };
   return (
     <div className="mb-8">
-      <h3 className={`${sectionHeadingClass} mb-3`}>Tickets</h3>
-      <PlanRows plans={tickets} onOpen={handleOpen} />
+      <div className="flex items-center justify-between mb-3">
+        <h3 className={`${sectionHeadingClass} m-0`}>Tickets</h3>
+        <AddTicketButton onAdd={handleAddTicket} disabled={!plan.id} />
+      </div>
+      {tickets.length > 0 ? (
+        <PlanRows plans={tickets} onOpen={handleOpen} />
+      ) : (
+        <p className="text-sm m-0 opacity-50">
+          No tickets yet — add one to start the decomposition.
+        </p>
+      )}
     </div>
   );
 };
@@ -597,7 +615,7 @@ const FeedbackSection = ({
   const handlePromoteToIdea = async (idea: {
     title: string;
     content?: string;
-    kind?: 'idea' | 'note';
+    kind?: 'idea' | 'note' | 'board';
   }) => {
     if (ideaPromptIndex === null) return;
     if (await promoteToIdea(ideaPromptIndex, idea)) setIdeaPromptIndex(null);

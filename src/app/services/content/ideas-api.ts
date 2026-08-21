@@ -38,7 +38,7 @@ export const archiveIdeas = async (ids: string[]): Promise<{ archived: string[] 
 export const createIdea = async (idea: {
   title: string;
   content?: string;
-  kind?: 'idea' | 'note';
+  kind?: 'idea' | 'note' | 'board';
 }): Promise<string> => {
   const response = await fetch(apiUrl('/api/ideas'), {
     method: 'POST',
@@ -47,6 +47,17 @@ export const createIdea = async (idea: {
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Failed to create idea');
+  return data.id as string;
+};
+
+export const createTicket = async (ticket: { boardId: string; title: string }): Promise<string> => {
+  const response = await fetch(apiUrl('/api/tickets'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ticket),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Failed to create ticket');
   return data.id as string;
 };
 

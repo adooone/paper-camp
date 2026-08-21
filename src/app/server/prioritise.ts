@@ -4,7 +4,7 @@ import { readEntities, readWorkEntries } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import type { RunOrderFileEntry } from '@/core/run-order-file';
 import { agentThreadMessage } from '@/core/serialize';
-import type { PlanEntry, PrioritiseVerdict } from '@/types/index';
+import type { PlanEntry, PrioritiseVerdict, ThreadMessage } from '@/types/index';
 import {
   campFile,
   entityFileInput,
@@ -109,6 +109,19 @@ export async function getPrioritiseVerdict(
   }
 }
 
+/** Why an idea sits where it does in the run order. Prefixed so a later run can find
+ * and replace its own previous note instead of stacking another one — the reason is
+ * current state, not history, and an append-only list of near-identical rationales
+ * reads like unanswered agent messages. */
+const RANK_NOTE_PREFIX = 'Run order: ';
+
+const rankNote = (reason: string) => `${RANK_NOTE_PREFIX}${reason}`;
+
+const withoutRankNote = (thread: ThreadMessage[] = []) =>
+  thread.filter(
+    (m) => !(m.kind === 'log' && m.from === 'agent' && m.text.startsWith(RANK_NOTE_PREFIX)),
+  );
+
 function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): string[] {
   const changed = new Set<string>();
   const len = Math.max(before.length, after.length);
@@ -182,7 +195,7 @@ export async function applyPrioritiseVerdict(
         root,
         file,
         entityFileInput(entry, {
-          thread: [...(entry.thread ?? []), agentThreadMessage(reasonFor(id))],
+          thread: [...withoutRankNote(entry.thread), agentThreadMessage(rankNote(reasonFor(id)))],
         }),
       );
       annotated.push(id);
