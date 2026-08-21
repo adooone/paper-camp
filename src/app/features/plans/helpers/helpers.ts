@@ -103,6 +103,8 @@ export const canMarkPlanDone = (plan: PlanEntry): boolean =>
   plan.phases.every((p) => p.done) &&
   (plan.fixes ?? []).every((f) => f.done);
 
+export const hasCompletedPhase = (plan: PlanEntry): boolean => plan.phases.some((p) => p.done);
+
 export interface CompletionGateResult {
   ready: boolean;
   missing: string[];

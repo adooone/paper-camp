@@ -2,7 +2,7 @@
 id: IDEA-199
 title: Style pass as a phase action
 type: feat
-status: idea
+status: review
 created: 2026-08-21
 tags:
   - app
@@ -81,7 +81,8 @@ guide says.
       run: 2m35s · 370 in · 4.5k out · sonnet-5
 - [x] Wire the button into the Phases toolbar next to Audit, Reconcile and Add review phases
       run: 2m45s · 522 in · 4.8k out · sonnet-5
-- [ ] Test the builder output and the one-completed-phase enablement
+- [x] Test the builder output and the one-completed-phase enablement
+      run: 3m · 521 in · 6.6k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Depends on IDEA-196 existing as the enforceable check the style pass is meant to satisfy, so it lands last among the code-health items

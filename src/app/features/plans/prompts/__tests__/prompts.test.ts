@@ -11,6 +11,7 @@ import {
   buildPlanDraftPrompt,
   buildPrReviewPrompt,
   buildReconcilePrompt,
+  buildStylePassPhase,
 } from '../prompts';
 
 const idea: IdeaEntry = { id: 'IDEA-7', title: 'Test idea', body: 'Idea body prose.' };
@@ -317,6 +318,29 @@ describe('buildFeedbackReplyPrompt', () => {
     expect(prompt).not.toContain('Message 2\n');
     expect(prompt).toContain('Message 3');
     expect(prompt).toContain('Message 12');
+  });
+});
+
+describe('buildStylePassPhase', () => {
+  it('returns an unchecked phase scoped to the plan diff, docs/CODE_STYLE.md, and the three checks', () => {
+    const phase = buildStylePassPhase();
+    expect(phase.done).toBe(false);
+    expect(phase.text).toBeTruthy();
+    expect(phase.description).toContain('the files this plan has changed');
+    expect(phase.description).toContain('docs/CODE_STYLE.md');
+    expect(phase.description).toContain('pnpm check-types');
+    expect(phase.description).toContain('pnpm lint');
+    expect(phase.description).toContain('npx vitest run');
+    expect(phase.description).toContain('do not edit any test');
+  });
+
+  it('feeds the phase-execution prompt as ordinary phase details', () => {
+    const phase = buildStylePassPhase();
+    const withPhase: PlanEntry = { ...plan, phases: [...plan.phases, phase] };
+    const prompt = buildAgentPrompt(withPhase, phase, 1);
+    expect(prompt).toContain('phase 2, "Style pass"');
+    expect(prompt).toContain('Phase details:');
+    expect(prompt).toContain('docs/CODE_STYLE.md');
   });
 });
 

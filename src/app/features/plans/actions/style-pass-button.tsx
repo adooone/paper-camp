@@ -1,3 +1,4 @@
+import { hasCompletedPhase } from '@/app/features/plans/helpers';
 import type { PhaseItem, PlanEntry } from '@/types/index';
 import { Button, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -11,7 +12,6 @@ interface StylePassButtonProps {
 
 export const StylePassButton = ({ plan, onAdd, disabled }: StylePassButtonProps) => {
   const [adding, setAdding] = useState(false);
-  const hasCompletedPhase = plan.phases.some((phase) => phase.done);
 
   const handleClick = async () => {
     setAdding(true);
@@ -28,7 +28,7 @@ export const StylePassButton = ({ plan, onAdd, disabled }: StylePassButtonProps)
         variant="ghost"
         size="small"
         onClick={handleClick}
-        disabled={disabled || adding || !hasCompletedPhase}
+        disabled={disabled || adding || !hasCompletedPhase(plan)}
       >
         Style pass
       </Button>
