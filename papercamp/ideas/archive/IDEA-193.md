@@ -2,7 +2,7 @@
 id: IDEA-193
 title: Client, runtime and plugin layers
 type: feat
-status: review
+status: done
 created: 2026-08-19
 updated: 2026-08-21
 tags:

@@ -3,14 +3,15 @@ id: TICKET-2
 title: Detach the client
 type: feat
 kind: ticket
-idea: IDEA-195
 status: idea
+idea: IDEA-195
 created: 2026-08-21
 tags:
   - client
   - build
   - runtime
 subject: Multi-project
+order: 10
 ---
 
 Ship the bundle as an artifact taking a runtime URL — the second sequencing step on [[IDEA-195]].
@@ -26,3 +27,6 @@ Ship the bundle as an artifact taking a runtime URL — the second sequencing st
       Send the pairing token and satisfy the CORS and Private Network Access surface TICKET-1 adds.
 - [ ] Keep `paper-camp dev` serving the same bundle
       Verify local hosting still works as the same artifact from a different origin, needing no transport change.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: Second named sequencing step; needs TICKET-1's pairing token and origin checks before the client can dial a runtime cross-origin

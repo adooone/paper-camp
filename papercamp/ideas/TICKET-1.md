@@ -3,14 +3,15 @@ id: TICKET-1
 title: Contract and auth
 type: feat
 kind: ticket
-idea: IDEA-195
 status: idea
+idea: IDEA-195
 created: 2026-08-21
 tags:
   - runtime
   - http
   - security
 subject: Multi-project
+order: 9
 ---
 
 Freeze the runtime's HTTP surface, add pairing, origin checking on reads, CORS and the Private Network Access preflight — the first sequencing step on [[IDEA-195]].
@@ -26,3 +27,6 @@ Freeze the runtime's HTTP surface, add pairing, origin checking on reads, CORS a
       `isForbiddenRequest` guards mutating methods only; apply it to reads too and pin the hosted client's exact origin.
 - [ ] Add a pairing token established at announce time
       Issue the token when the runtime announces itself and require it alongside the origin check to distinguish the user's own client.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: First sequencing step IDEA-195 names explicitly: contract, CORS, PNA preflight and pairing must exist before the client can detach

@@ -3,14 +3,15 @@ id: TICKET-3
 title: Capability-aware modules
 type: feat
 kind: ticket
-idea: IDEA-195
 status: idea
+idea: IDEA-195
 created: 2026-08-21
 tags:
   - modules
   - capabilities
   - client
 subject: Multi-project
+order: 11
 ---
 
 Every module declares the layer it needs so the client composes from what is reachable — a sequencing step on [[IDEA-195]].
@@ -26,3 +27,6 @@ Every module declares the layer it needs so the client composes from what is rea
       Render a runtime-only module as visible-but-inert with a plain reason, so plan-only reads as a first-class state, not a broken one.
 - [ ] Annotate existing modules with their layer
       Tag today's modules with their required layer and confirm plan-only surfaces the planning half while execution modules go inert.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: Fifth named sequencing step on IDEA-195, following the shell so modules have a composed client to gate

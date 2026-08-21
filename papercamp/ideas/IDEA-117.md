@@ -34,3 +34,6 @@ Waits on [[TICKET-1]] and [[TICKET-2]]: pairing the client to a runtime, and det
 - [ ] Build the project switcher
 - [ ] Ship cross-project views
       Everything-in-review, overnight agent activity, and global idea search composed from the fan-out.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: Explicitly waits on TICKET-1 and TICKET-2 for pairing/detach, and the shell it renders is IDEA-205, so it must follow both

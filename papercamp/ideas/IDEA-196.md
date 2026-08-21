@@ -91,3 +91,6 @@ comments in tests, which the walker already excludes.
       Rewrite to fit the cap or delete; deleting is the expected outcome for decision-narrating comments.
 - [ ] Clear the remaining violations in src/app/server/ and src/core/
 - [ ] Wire the gate into the app's Quality check alongside lint and format
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: Independent code-health work with no blockers; small, decisive, and its cleanup phases are a prerequisite for IDEA-199's style pass to have a green gate to run against

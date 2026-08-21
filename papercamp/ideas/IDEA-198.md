@@ -88,3 +88,6 @@ Behaviour, again — this is convention only. Splitting `entity-detail.tsx`
       Collapse each module imported twice into one statement across the six files.
 - [ ] Codify the conventions in docs/CODE_STYLE.md
       Add rules for named props interfaces, feature hooks owning store access, hooks living in `hooks/`, one import per module, and `constants.ts` as the only sanctioned colour literal.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: Builds on IDEA-197's split (props/hooks conventions apply to the newly separated files) and explicitly defers the color-token fix to a future paper-ui publish

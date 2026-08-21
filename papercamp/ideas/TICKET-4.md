@@ -3,14 +3,15 @@ id: TICKET-4
 title: GitHub import and scaffold-by-PR
 type: feat
 kind: ticket
-idea: IDEA-195
 status: idea
+idea: IDEA-195
 created: 2026-08-21
 tags:
   - github
   - scaffold
   - plan-only
 subject: Multi-project
+order: 12
 ---
 
 What makes plan-only real — a sequencing step on [[IDEA-195]].
@@ -26,3 +27,6 @@ What makes plan-only real — a sequencing step on [[IDEA-195]].
       Add the runtime-less registry entry a GitHub import produces, deferring registry semantics to [[IDEA-117]].
 - [ ] Write corpus edits back through GitHub
       Create ideas, order the queue and record reviews as commits, so the whole planning half works with no runtime.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: Sixth named sequencing step, the one that makes plan-only real, needed before IDEA-117's plan-only fallback is meaningful at scale

@@ -10,6 +10,7 @@ tags:
   - multi-project
   - github
 subject: Multi-project
+order: 7
 ---
 
 The hosted client opens on nothing today — the app assumes it is already inside one repo. The shell is what a URL with no project behind it must show: a welcome screen, a way to connect GitHub, and the list of projects to enter.
@@ -35,3 +36,6 @@ Disconnected with no runtimes registered, the shell is still honest: it shows th
       One row per registry entry, runtime-backed or GitHub-imported, each showing whether it can execute or only plan.
 - [ ] Enter and leave a project
       Choose a project to mount the desk against it, and return to the shell without losing the registry.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: Fourth sequencing step; needs the hosted deploy from IDEA-204 to have a URL with no project behind it to open

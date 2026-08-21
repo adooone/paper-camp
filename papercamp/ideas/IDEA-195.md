@@ -8,6 +8,7 @@ tags:
   - architecture
   - research
 subject: Multi-project
+order: 8
 ---
 
 The settled architecture for Paper Camp as a hosted client driving work on the
@@ -191,3 +192,4 @@ from any other caller that happens to know the port.
 - [x] 2026-08-21 [decision] The project registry lives in the client's device-local browser storage, alongside each runtime's pairing token.
 - [x] 2026-08-21 [decision] Folder scanning is dropped: a project enters the registry when its runtime announces itself, or through GitHub import when it has no runtime yet.
 - [x] 2026-08-21 [decision] Tunnels, a browser extension and a native app are shelved rather than rejected — none is needed for the front door, and they exist only for driving a machine you are not sitting at.
+- [x] 2026-08-21 [log] [agent] Run order: Undrafted foundation note every other multi-project item explicitly rests on and must be settled before any dependent work starts

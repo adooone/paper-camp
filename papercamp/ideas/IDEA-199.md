@@ -79,3 +79,6 @@ guide says.
       Gated on the plan having at least one completed phase; append via `patchByTitle` like the review-phases path, and export it from `actions/index.ts`.
 - [ ] Wire the button into the Phases toolbar next to Audit, Reconcile and Add review phases
 - [ ] Test the builder output and the one-completed-phase enablement
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: Depends on IDEA-196 existing as the enforceable check the style pass is meant to satisfy, so it lands last among the code-health items

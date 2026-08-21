@@ -3,14 +3,15 @@ id: TICKET-5
 title: Plugins as a real extension point
 type: feat
 kind: ticket
-idea: IDEA-195
 status: idea
+idea: IDEA-195
 created: 2026-08-21
 tags:
   - plugins
   - extensibility
   - adapters
 subject: Multi-project
+order: 13
 ---
 
 The last sequencing step on [[IDEA-195]].
@@ -26,3 +27,6 @@ The last sequencing step on [[IDEA-195]].
       Extend the capability gate so a module can require a specific plugin and go inert in place with a plain reason when it is absent.
 - [ ] Document adding a plugin
       Write the steps to add a new external service or adapter so a third one lands without touching core.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: Last named sequencing step on IDEA-195's chain, lowest priority of the ordered list

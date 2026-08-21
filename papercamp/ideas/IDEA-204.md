@@ -10,6 +10,7 @@ tags:
   - deployment
   - app
 subject: Infrastructure
+order: 6
 ---
 
 [[IDEA-195]] settles that the client is a static bundle on a CDN and that opening a URL is the front door. Nothing publishes that bundle today. This is the pipeline that does: a Vercel project building `vite build --config vite.app.config.ts`, production on `main` and a preview per pull request.
@@ -29,3 +30,6 @@ Local hosting is unaffected. `paper-camp dev` keeps serving the same bundle from
       Drive `setApiBase` from configuration instead of assuming same-origin.
 - [ ] Wire production and preview deploys
       `main` to production, a preview per pull request.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Run order: Third sequencing step; needs the detached bundle from TICKET-2 before there is anything to put on a CDN
