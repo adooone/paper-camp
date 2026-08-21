@@ -9,6 +9,7 @@ tags:
   - code-health
   - plans
 subject: Code health
+order: 7
 ---
 
 Four conventions the plans feature applies inconsistently. Each is small, each
@@ -75,3 +76,18 @@ literal is added outside it.
 
 Behaviour, again — this is convention only. Splitting `entity-detail.tsx`
 ([[IDEA-197]]). Any change to paper-ui.
+
+### Phases
+- [ ] Name every props interface
+      Replace the 11 inline props type literals with `{Component}Props` interfaces.
+- [ ] Give store-heavy components a feature hook
+      Extract one `hooks/` hook per component for `plans-page.tsx`, `worklist-rows.tsx`, and `deliver-controls.tsx`; leave `entity-detail.tsx` to [[IDEA-197]].
+- [ ] Relocate useDeliverCommitForm and split its file
+      Move the hook to `hooks/use-deliver-commit-form.ts` and break the remaining components out of `deliver-controls.tsx`.
+- [ ] Merge duplicate import statements
+      Collapse each module imported twice into one statement across the six files.
+- [ ] Codify the conventions in docs/CODE_STYLE.md
+      Add rules for named props interfaces, feature hooks owning store access, hooks living in `hooks/`, one import per module, and `constants.ts` as the only sanctioned colour literal.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Names conventions (props, hooks, imports) that IDEA-197's extraction should already follow, so deciding them first avoids re-splitting files.

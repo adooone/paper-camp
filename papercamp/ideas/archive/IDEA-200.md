@@ -2,8 +2,9 @@
 id: IDEA-200
 title: Resync about.md with the codebase
 type: docs
-status: idea
+status: dropped
 created: 2026-08-21
+updated: 2026-08-21
 tags:
   - docs
   - corpus
@@ -67,3 +68,6 @@ rewrite can verify mechanically.
 
 Changing the corpus format or any code. `AGENTS.md`, `USAGE.md`, `docs/MCP.md`
 and `docs/CODE_STYLE.md` were resynced on 2026-08-21 and are not part of this.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Rewritten directly rather than through draft-plan, at the user's request. 556 -> 384 lines: the format/architecture half corrected claim by claim, the Package layout, Dashboard and Current implementation status sections deleted as an unmaintained duplicate of AGENTS.md's codebase map. Every path and symbol the new file names was verified to exist.

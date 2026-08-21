@@ -9,6 +9,7 @@ tags:
   - multi-project
   - app
 subject: Multi-project
+order: 1
 ---
 
 Graduates Horizon 3's **Multi-project** bullet. Paper Camp shows every registered project in one desk instead of one browser tab per repo — a project switcher, and cross-project views on top of it. The data stays per-repo in git: never centralize the corpus, centralize only the lens.
@@ -21,7 +22,7 @@ What the switcher unlocks is cross-project views: everything-in-review across pr
 
 Engineering note: fanning out means meeting runtimes at different paper-camp versions, and the skew moved. [[IDEA-168]] gave the corpus an explicit format version and made unknown frontmatter keys round-trip instead of being dropped on write, and the doctor ([[IDEA-121]]) reports a corpus newer than the running paper-camp — but each runtime parses its own corpus, so that end is covered. What this needs instead is the frozen HTTP contract from [[IDEA-195]] and a version each runtime reports, so the client flags a skew rather than silently mis-rendering.
 
-Depends on [[IDEA-195]]'s first two steps: pairing auth, and a client detached from any one runtime. Companion captures: [[IDEA-118]] (decisions inbox), which has since shipped. [[IDEA-123]] (cross-corpus links) was dropped.
+Blocked on two things [[IDEA-195]] sequences ahead of it: pairing auth on the runtime, and a client detached from any one runtime. Those are prose steps on a note today, so nothing tracks them — [[IDEA-201]] turns that sequence into tickets this can point at. Companion captures: [[IDEA-118]] (decisions inbox), which has since shipped. [[IDEA-123]] (cross-corpus links) was dropped.
 
 ### Phases
 - [ ] Register projects by runtime address
@@ -33,3 +34,7 @@ Depends on [[IDEA-195]]'s first two steps: pairing auth, and a client detached f
 - [ ] Build the project switcher
 - [ ] Ship cross-project views
       Everything-in-review, overnight agent activity, and global idea search composed from the fan-out.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] It explicitly states it is blocked on two things IDEA-193 sequences ahead of it (pairing auth, a detached client) and wants those steps tracked as tickets from IDEA-201, so it must come last.
+- [x] 2026-08-21 [log] [agent] Explicitly blocked on IDEA-195's (now IDEA-193/201) pairing-auth and detached-client steps, so it must sit last among these until that foundation lands.

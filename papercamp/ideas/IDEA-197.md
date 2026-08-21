@@ -72,3 +72,17 @@ named value. The wider literal problem is [[IDEA-198]]'s, not this plan's.
 Behaviour. This is a pure move: no prop renamed, no render output changed, no
 new feature. `pnpm check-types`, `pnpm lint` and `npx vitest run` pass unchanged,
 and the page looks identical. Cross-cutting convention fixes are [[IDEA-198]].
+
+### Phases
+- [ ] Relocate the pure functions to their existing homes
+      `formatRunSummary` → `@/core/phase-run`, `branchEntityId` → `@/app/utils`, `feedbackDraftKeyFor` → `@/app/utils/local-draft-store`, and `WorkRow`/`isRunningRow` → `helpers/`.
+- [ ] Extract the Phases table into `components/` cells and a `views/` section
+      Turn the inline `columns` renderers into named cell components; move `PhasesSection` to its own view file.
+- [ ] Move `FeedbackSection` state into `hooks/use-feedback-composer.ts`
+      Leave the section as a `views/` file that renders what the hook returns.
+- [ ] Split the remaining sections into one-component-per-file views
+      `RunCostSummary`, `BranchRow`, `PlanProgressRow`, `PlanBodySection`, `ClarificationsSection`, `ParentLinkRow`, `FixesSection`, `DeliverSection`, `TrailSection`.
+- [ ] Reduce `entity-detail.tsx` to composition and apply the two fixes
+      Merge the duplicated `../actions` and `../components` imports; replace the raw rgba highlight with `STATUS_STAMP.review`.
+- [ ] Confirm the checks pass unchanged
+      `pnpm check-types`, `pnpm lint`, `npx vitest run`.

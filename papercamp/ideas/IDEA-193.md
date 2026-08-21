@@ -10,6 +10,7 @@ tags:
   - multi-project
   - app
 subject: Multi-project
+order: 2
 ---
 
 Paper Camp separates into three layers, and ships no backend. The UI is static
@@ -178,3 +179,7 @@ apart.
       Ship it as a dev dependency run from the repo it serves, alongside the papercamp/ corpus.
 - [ ] Choose the front door from the surviving shortlist
       Pick localhost, extension, or native based on the measurement.
+
+### Thread
+- [x] 2026-08-21 [log] [agent] It's an unresolved research note whose measurement (localhost carve-out) and settled decisions (runtime scope, registry home, folder scanning) are the frozen contract IDEA-117 and IDEA-201's board conversion explicitly depend on.
+- [x] 2026-08-21 [log] [agent] IDEA-193 is the note IDEA-201 converts into a board and whose open questions IDEA-117 is explicitly blocked on, so its unresolved sequencing must be settled before the hub can proceed.

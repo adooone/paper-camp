@@ -8,6 +8,7 @@ tags:
   - code-health
   - tooling
 subject: Code health
+order: 3
 ---
 
 `docs/CODE_STYLE.md` §7 states a rule about *individual comments* — a comment
@@ -78,3 +79,18 @@ are concentrated in `src/app/server/` and `src/core/`.
 Changing the 2-line cap itself. Diff-scoping the gate — it runs over all of
 `src/`, which is only tenable because the cleanup above is in scope. Counting
 comments in tests, which the walker already excludes.
+
+### Phases
+- [ ] Detect over-cap comment runs in the script
+      Group each file's comment trivia into contiguous runs, flag runs longer than 2 lines, and count trailing `code; // why` lines the classifier currently ignores.
+- [ ] Exempt JSDoc immediately preceding an export
+      Only `/** … */` directly before an `export` is exempt; `/* … */` inside a body is capped.
+- [ ] Make the check fail and keep the ratio in JSON
+      Drop the "informational only, never fails" behaviour; the ratio stays in the JSON output for the stats view but is no longer the pass condition.
+- [ ] Clear the pilot violations in src/app/features/plans/
+      Rewrite to fit the cap or delete; deleting is the expected outcome for decision-narrating comments.
+- [ ] Clear the remaining violations in src/app/server/ and src/core/
+- [ ] Wire the gate into the app's Quality check alongside lint and format
+
+### Thread
+- [x] 2026-08-21 [log] [agent] First phase is a cheap measurement/decision that resolves scope before the larger cleanup ideas below depend on the gate's shape.

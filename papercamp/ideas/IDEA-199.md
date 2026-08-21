@@ -9,6 +9,7 @@ tags:
   - agent
   - code-health
 subject: Run & monitor
+order: 8
 ---
 
 An agent implementing a phase optimises for making it work. Nothing afterwards
@@ -70,3 +71,14 @@ explicit action keeps the decision with the person who just read the diff.
 Running it over files outside the plan's diff. Enforcing the guide — that is a
 check's job, and the comment half of it is [[IDEA-196]]. Any change to what the
 guide says.
+
+### Phases
+- [ ] Add a style-pass phase builder to `prompts.ts`
+      Returns the appended phase (title + description) that scopes the agent to the plan's changed files, reads `docs/CODE_STYLE.md`, and ends with the three checks green and no test edited.
+- [ ] Add a `StylePassButton` action that appends the phase
+      Gated on the plan having at least one completed phase; append via `patchByTitle` like the review-phases path, and export it from `actions/index.ts`.
+- [ ] Wire the button into the Phases toolbar next to Audit, Reconcile and Add review phases
+- [ ] Test the builder output and the one-completed-phase enablement
+
+### Thread
+- [x] 2026-08-21 [log] [agent] Explicitly meant to enforce the guide state that IDEA-196/197/198 establish, so it only makes sense once those conventions and the comment gate exist.
