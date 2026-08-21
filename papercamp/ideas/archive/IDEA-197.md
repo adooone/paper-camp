@@ -2,7 +2,7 @@
 id: IDEA-197
 title: Break up entity-detail.tsx
 type: refactor
-status: review
+status: done
 created: 2026-08-21
 updated: 2026-08-21
 tags:

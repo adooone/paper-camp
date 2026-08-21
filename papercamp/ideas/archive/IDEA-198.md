@@ -2,8 +2,9 @@
 id: IDEA-198
 title: Plans feature conventions pass
 type: refactor
-status: review
+status: done
 created: 2026-08-21
+updated: 2026-08-21
 tags:
   - app
   - code-health
