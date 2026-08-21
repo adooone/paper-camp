@@ -1,14 +1,16 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlan, useSubjectVocabulary } from '@/app/hooks';
+import { verifyDirectCompletion } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { Card, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
 import { CompleteIdeaButton } from '../actions';
+import { CreateBranchButton } from '../actions';
 import { FixReviewButton } from '../actions';
 import { PrReviewButton } from '../actions';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { canMarkPlanDone, effectiveStatus } from '../helpers';
+import { branchEntityId, canMarkPlanDone, effectiveStatus } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
 
@@ -19,6 +21,7 @@ export const PlanActionsColumn = () => {
   const plan = useActivePlan();
   const agentBusy = useAppStore(selectAgentBusy);
   const agentStatus = useAppStore((s) => s.agentStatus);
+  const gitBranch = useAppStore((s) => s.gitBranch);
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const { subjects, available: subjectsAvailable } = useSubjectVocabulary();
   const detailView = useAppStore((s) => s.detailView);
@@ -40,6 +43,8 @@ export const PlanActionsColumn = () => {
   const hasUnchecked = plan.phases.some((p) => !p.done);
   const canRunAll = (plan.status === 'planned' || inProgress) && hasUnchecked;
   const canMarkDone = canMarkPlanDone(plan);
+  const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
+  const canCreateBranch = (plan.status === 'planned' || inProgress || underReview) && !onOwnBranch;
   const canFixReview = Boolean(
     plan.pr &&
       (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
@@ -57,6 +62,31 @@ export const PlanActionsColumn = () => {
     if (!plan.id) return;
     setArchiving(true);
     try {
+      await archiveIdeas([plan.id]);
+    } catch (err) {
+      toast({ title: 'Archive failed', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setArchiving(false);
+    }
+  };
+
+  // Complete Idea verifies a merge and green CI before it promotes; a direct-to-main
+  // idea never opens a PR, so this is the equivalent check for that path — a clean
+  // tree and a commit naming the idea's id, both confirmed right before the archive
+  // write that promotes it to done.
+  const handleMarkDone = async () => {
+    if (!plan.id) return;
+    setArchiving(true);
+    try {
+      const check = await verifyDirectCompletion(plan.id);
+      if (!check.ready) {
+        toast({
+          title: 'Not ready to complete idea',
+          description: `Waiting on ${check.missing.join(', ')}`,
+          variant: 'error',
+        });
+        return;
+      }
       await archiveIdeas([plan.id]);
     } catch (err) {
       toast({ title: 'Archive failed', description: (err as Error).message, variant: 'error' });
@@ -157,11 +187,14 @@ export const PlanActionsColumn = () => {
 
       <Card size="small">
         <div className="flex flex-col">
+          {canCreateBranch && <CreateBranchButton plan={plan} disabled={agentBusy || updating} />}
           {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
           {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
           {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
 
-          {underReview && <CompleteIdeaButton plan={plan} disabled={agentBusy || updating} />}
+          {underReview && plan.pr && (
+            <CompleteIdeaButton plan={plan} disabled={agentBusy || updating} />
+          )}
 
           {done && (
             <ListItem
@@ -180,11 +213,11 @@ export const PlanActionsColumn = () => {
               size="small"
               // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
               icon={<span className="text-watercolor-green-dark">✓</span>}
-              onClick={handleArchive}
+              onClick={handleMarkDone}
               disabled={archiving || !plan.id}
               className={`pc-row text-xs ${archiving || !plan.id ? 'opacity-50' : ''}`}
             >
-              {archiving ? 'Marking done…' : 'Mark done'}
+              {archiving ? 'Completing…' : 'Complete idea'}
             </ListItem>
           )}
 

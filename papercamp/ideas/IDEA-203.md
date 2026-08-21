@@ -2,7 +2,7 @@
 id: IDEA-203
 title: Direct-to-main delivery path
 type: feat
-status: in-progress
+status: review
 created: 2026-08-21
 updated: 2026-08-21
 tags:

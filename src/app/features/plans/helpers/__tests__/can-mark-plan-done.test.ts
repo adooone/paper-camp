@@ -37,9 +37,24 @@ describe('canMarkPlanDone', () => {
     ).toBe(false);
   });
 
-  it('is false for done, dropped, and review — each already has its own control', () => {
+  it('is false for done and dropped — each already has its own control', () => {
     expect(canMarkPlanDone(plan({ phases: [phase(true)], status: 'done' }))).toBe(false);
     expect(canMarkPlanDone(plan({ phases: [phase(true)], status: 'dropped' }))).toBe(false);
-    expect(canMarkPlanDone(plan({ phases: [phase(true)], status: 'review' }))).toBe(false);
+  });
+
+  it('is true for a review plan with no PR — work landed straight on main', () => {
+    expect(canMarkPlanDone(plan({ phases: [phase(true)], status: 'review' }))).toBe(true);
+  });
+
+  it('is false for a review plan with a PR — that completes through the merge action', () => {
+    expect(
+      canMarkPlanDone(
+        plan({
+          phases: [phase(true)],
+          status: 'review',
+          pr: { number: 1, url: 'u', state: 'open' },
+        }),
+      ),
+    ).toBe(false);
   });
 });

@@ -49,6 +49,12 @@ export const rollupProgress = (
   return { done: base.done, total: base.total, pct: (filled / base.total) * 100 };
 };
 
+/** Parses the entity id a feature branch encodes (feat/idea-43-… → IDEA-43). */
+export const branchEntityId = (branch: string | null): string | null => {
+  const match = branch?.match(/^[a-z]+\/([a-z]+-\d+)-/);
+  return match ? match[1].toUpperCase() : null;
+};
+
 export const runningTaskForPlan = (
   planId: string | undefined,
   agentStatus: AgentTaskState[],
@@ -84,11 +90,13 @@ export const effectiveStatus = (
   return runningTaskForPlan(plan.id, agentStatus) ? 'in-progress' : plan.status;
 };
 
+/** `review` is allowed here only because `!plan.pr` already scoped this to work that
+ * never opened one — a direct-to-main idea, whose merge-and-reset control has nothing
+ * to merge. A review plan WITH a PR completes through completionGate instead. */
 export const canMarkPlanDone = (plan: PlanEntry): boolean =>
   !plan.pr &&
   plan.status !== 'done' &&
   plan.status !== 'dropped' &&
-  plan.status !== 'review' &&
   plan.phases.length > 0 &&
   plan.phases.every((p) => p.done) &&
   (plan.fixes ?? []).every((f) => f.done);
