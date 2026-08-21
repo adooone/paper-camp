@@ -91,7 +91,3 @@ comments in tests, which the walker already excludes.
       Rewrite to fit the cap or delete; deleting is the expected outcome for decision-narrating comments.
 - [ ] Clear the remaining violations in src/app/server/ and src/core/
 - [ ] Wire the gate into the app's Quality check alongside lint and format
-
-### Thread
-- [x] 2026-08-21 [log] [agent] First phase is a cheap measurement/decision that resolves scope before the larger cleanup ideas below depend on the gate's shape.
-- [x] 2026-08-21 [log] [agent] Small, self-contained tooling gate with no dependency on the other code-health ideas, so it can land early and cheaply before the bigger refactors it will then also apply to.

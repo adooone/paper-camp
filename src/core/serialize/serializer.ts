@@ -63,6 +63,10 @@ export async function assignEntityId(configPath: string): Promise<string | undef
   return assignPlanId(configPath, 'idea');
 }
 
+export async function assignTicketId(configPath: string): Promise<string | undefined> {
+  return assignPlanId(configPath, 'ticket');
+}
+
 // Chained alongside id assignment so a candidate promote's id-mint and subject-create
 // writes to the same config.json can't clobber each other.
 export async function ensureSubject(configPath: string, subject: string): Promise<void> {

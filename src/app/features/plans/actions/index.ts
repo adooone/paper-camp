@@ -1,4 +1,5 @@
 export * from './add-review-phases-button';
+export * from './add-ticket-button';
 export * from './agent-start-button';
 export * from './audit-phases-button';
 export * from './complete-idea-button';

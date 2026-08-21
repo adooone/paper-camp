@@ -12,7 +12,11 @@ import { PlanIdStamp } from '../components';
 interface CreateIdeaModalProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (idea: { title: string; content?: string; kind?: 'idea' | 'note' }) => Promise<void>;
+  onAdd: (idea: {
+    title: string;
+    content?: string;
+    kind?: 'idea' | 'note' | 'board';
+  }) => Promise<void>;
   /** Pre-fills Description — used to promote a chat message into a new idea. */
   initialContent?: string;
 }
@@ -21,6 +25,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isNote, setIsNote] = useState(false);
+  const [isBoard, setIsBoard] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [extendingId, setExtendingId] = useState<string | null>(null);
@@ -47,6 +52,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
       setTitle('');
       setContent(initialContent ?? '');
       setIsNote(false);
+      setIsBoard(false);
       setLoading(false);
       setError(null);
       setCheckingOverlap(false);
@@ -115,7 +121,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
       await onAdd({
         title: title.trim(),
         content: content.trim() || undefined,
-        kind: isNote ? 'note' : undefined,
+        kind: isNote ? 'note' : isBoard ? 'board' : undefined,
       });
       onClose();
     } catch (err) {
@@ -240,7 +246,19 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
         <Switch
           label="Just a note (no plan needed)"
           checked={isNote}
-          onChange={(e) => setIsNote(e.target.checked)}
+          onChange={(e) => {
+            setIsNote(e.target.checked);
+            if (e.target.checked) setIsBoard(false);
+          }}
+          disabled={loading}
+        />
+        <Switch
+          label="Board (decomposes into tickets instead of phases)"
+          checked={isBoard}
+          onChange={(e) => {
+            setIsBoard(e.target.checked);
+            if (e.target.checked) setIsNote(false);
+          }}
           disabled={loading}
         />
         {error && <p className="m-0 text-watercolor-rose-dark text-sm">{error}</p>}

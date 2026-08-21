@@ -188,9 +188,6 @@ remains on both notes is work.
 - [x] [manual] Re-sync corpus loads and gate checking routes
 
 ### Thread
-- [x] 2026-08-21 [log] [agent] It's an unresolved research note whose measurement (localhost carve-out) and settled decisions (runtime scope, registry home, folder scanning) are the frozen contract IDEA-117 and IDEA-201's board conversion explicitly depend on.
-- [x] 2026-08-21 [log] [agent] IDEA-193 is the note IDEA-201 converts into a board and whose open questions IDEA-117 is explicitly blocked on, so its unresolved sequencing must be settled before the hub can proceed.
-- [x] 2026-08-21 [log] [agent] Its own body says the client/runtime split, CORS, plugin extension points and the registry's home were the open research this idea itself settles, and IDEA-117 and IDEA-201's first ticket both depend on decisions made here.
 - [x] 2026-08-21 [question] [agent] Run-all parked on phase 1 ("Measure the localhost carve-out") — the agent needs a decision: I can't run a browser to measure the localhost carve-out (headless, no display). Do you want to run this yourself, or would you like me to first prepare a minimal throwaway harness for you to run, without checking the phase off until you report back?
 - [x] 2026-08-21 [decision] Neither: the measurement is dropped. Loopback is the settled front door ([[IDEA-195]]), so phase 1 is replaced by the engineering it actually implies — CORS headers and the Private Network Access preflight. The harness built for it is shelved, unused.
 - [x] 2026-08-21 [decision] Worth keeping from the attempt: a mixed-content block and a plain connection failure are indistinguishable from JS, both surfacing as `TypeError: Failed to fetch`, so any future browser-reachability claim has to be read from the server's own log rather than the client.

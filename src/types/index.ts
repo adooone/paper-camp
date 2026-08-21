@@ -214,8 +214,8 @@ export interface PlanEntry {
   title: string;
   status: PlanStatus;
   kind?: PlanKind;
-  /** 'fix' when this plan is a follow-up fix entity (IDEA-187) — undefined for an
-   * ordinary plan-bearing idea. Distinct from `kind`, which carries the commit type. */
+  /** 'fix'/'board'/'ticket' mark a structural role beyond a plain plan-bearing idea —
+   * undefined for an ordinary one. Distinct from `kind`, which carries the commit type. */
   entityKind?: EntityKind;
   id?: string;
   idea?: string;
@@ -381,8 +381,10 @@ export type EntityType = PlanKind;
 export type EntityStatus = PlanStatus | 'open';
 
 /** "note" never grows phases; "fix" is a follow-up entity linked to a done/archived
- * parent via `idea` — see entityFrontmatterSchema. Omitted for a normal idea. */
-export type EntityKind = 'note' | 'fix';
+ * parent via `idea` — see entityFrontmatterSchema. "board" carries no phases, decomposing
+ * into "ticket" children instead (IDEA-201) — a ticket is a full entity with its own
+ * `TICKET-N` id, linked back to its board via `idea`. Omitted for a normal idea. */
+export type EntityKind = 'note' | 'fix' | 'board' | 'ticket';
 
 export interface EntityEntry {
   id: string;
@@ -671,8 +673,9 @@ export interface PaperCampConfig {
   version: number;
   projectName: string;
   initializedAt: string;
-  /** The unified-entity `idea` counter; the per-kind plan counters are legacy, present only in pre-migration configs. */
-  nextId?: Partial<Record<PlanKind, number>> & { idea?: number };
+  /** The unified-entity `idea` counter, plus the `ticket` counter (IDEA-201); the
+   * per-kind plan counters are legacy, present only in pre-migration configs. */
+  nextId?: Partial<Record<PlanKind, number>> & { idea?: number; ticket?: number };
   port?: number;
   defaultAgents?: DefaultAgentsMap;
   /** Derived from `ROADMAP.md` on every read (IDEA-95), never written to disk; an idea's

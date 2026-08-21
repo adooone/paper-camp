@@ -11,6 +11,7 @@ import {
 } from '@/core/roadmap';
 import {
   assignEntityId,
+  assignTicketId,
   formatEntityFile,
   removeSuggestionLine,
   todayDateString,
@@ -32,7 +33,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
         const { title, content, kind } = JSON.parse(reqBody) as {
           title?: string;
           content?: string;
-          kind?: 'idea' | 'note';
+          kind?: 'idea' | 'note' | 'board';
         };
         if (!title?.trim()) {
           sendJson(res, 400, { error: 'title is required' });
@@ -50,10 +51,44 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
         const entityContent = formatEntityFile({
           id: newId,
           title: title.trim(),
-          kind: isNote ? 'note' : undefined,
+          kind: isNote ? 'note' : kind === 'board' ? 'board' : undefined,
           status: isNote ? 'open' : 'idea',
           created: todayDateString(),
           body: content?.trim(),
+        });
+        await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
+        sendJson(res, 201, { ok: true, id: newId });
+      },
+    },
+
+    // A ticket is a plain entity like any other, minted from its own TICKET-N
+    // counter (IDEA-201) and linked back to its board via `idea` — the same
+    // backlink a fix uses for its parent.
+    {
+      method: 'POST',
+      path: '/api/tickets',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { boardId, title } = JSON.parse(reqBody) as { boardId?: string; title?: string };
+        if (!boardId || !title?.trim()) {
+          sendJson(res, 400, { error: 'boardId and title are required' });
+          return;
+        }
+        const configPath = join(root, 'papercamp', 'config.json');
+        const newId = await assignTicketId(configPath);
+        if (!newId) {
+          sendJson(res, 500, { error: 'could not assign ticket ID' });
+          return;
+        }
+        const ideasDir = campFile(root, 'ideas');
+        await mkdir(ideasDir, { recursive: true });
+        const entityContent = formatEntityFile({
+          id: newId,
+          title: title.trim(),
+          kind: 'ticket',
+          idea: boardId,
+          status: 'idea',
+          created: todayDateString(),
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         sendJson(res, 201, { ok: true, id: newId });

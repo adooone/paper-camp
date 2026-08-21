@@ -29,7 +29,7 @@ export function entityToPlan(
     status: deriveStatus(e, pr, prLookupResolved, hasMainActivity) as PlanStatus,
     statusFallback: isStatusFallback(e, pr, prLookupResolved),
     kind: e.type,
-    entityKind: e.kind === 'fix' ? 'fix' : undefined,
+    entityKind: e.kind === 'note' ? undefined : e.kind,
     id: e.id,
     idea: e.idea,
     agent: e.agent,

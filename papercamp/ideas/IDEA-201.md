@@ -2,7 +2,7 @@
 id: IDEA-201
 title: Boards and tickets
 type: feat
-status: idea
+status: review
 created: 2026-08-21
 updated: 2026-08-21
 tags:
@@ -32,18 +32,28 @@ The board's view lists its tickets with the same row treatment the main list use
 [[IDEA-195]] is the case that produced this. It is a `note`, so it has no phases, and its `### Sequencing` block is hand-numbered prose — which is why [[IDEA-117]] could claim to depend on "the first two steps" while nothing in the corpus enforced or tracked them. As a board, those five steps become five tickets with real ids, real status, and a real dependency [[IDEA-117]] can point at.
 
 ### Phases
-- [ ] Add `board` and `ticket` to the entity kinds
+- [x] Add `board` and `ticket` to the entity kinds
       Extend `EntityKind`, the frontmatter schema, and the `TICKET-N` counter in `config.json`; widen the doctor's wikilink check to resolve `[[TICKET-N]]`.
-- [ ] Suppress phases on a board and derive its status
+      run: 4m5s · 6.1k in · 8k out · sonnet-5
+- [x] Suppress phases on a board and derive its status
       `PhasesSection` is not rendered for a board; roll its status up from its tickets, stopping at `review`.
-- [ ] Render a board's tickets in its view
+      run: 8m45s · 950 in · 24.7k out · sonnet-5
+- [x] Render a board's tickets in its view
       Reuse the main list's row treatment (`PlanRows`), scoped to the board, with the ticket-to-board backlink. Behaviour may diverge — strict order, board-specific actions — but the phases `Table` is never used here.
-- [ ] Create and decompose from the app
+      run: 4m45s · 4.2k in · 8.7k out · sonnet-5
+- [x] Create and decompose from the app
       Mark a new idea as a board, and add tickets to it without leaving its view.
-- [ ] Convert [[IDEA-195]] into a board
+- [x] Convert [[IDEA-195]] into a board
       Turn its five sequencing steps into tickets and repoint [[IDEA-117]]'s dependency at the real ids.
+      run: 3m · 7.3k in · 13.6k out · sonnet-5
+- [x] [manual] treat dropped tickets as terminal in board status rollup
+
+### Fixes
+- [x] Hide tickets from the main plans list
+      A ticket entity should render only inside its parent board's view, never as a row in the top-level worklist — it's decomposition detail, not a standalone list item.
+      run: 3m7s · 7.8k in · 6k out · sonnet-5
 
 ### Thread
-- [x] 2026-08-21 [log] [agent] It generalizes the fix/board mechanism and is named as the vehicle to turn IDEA-195's five sequencing steps into real tickets, which IDEA-117 needs before it can point at them as a tracked dependency.
-- [x] 2026-08-21 [log] [agent] IDEA-201 turns IDEA-195's five-step sequence into real tickets that IDEA-117 explicitly says it is blocked on, so it must precede the hub work; independent of the code-health cluster above.
-- [x] 2026-08-21 [log] [agent] Turns IDEA-195's hand-numbered sequencing prose into real tickets that IDEA-117 explicitly says it wants to point at, so it must land before IDEA-117 can rely on tracked dependencies.
+- [x] 2026-08-21 [chat] tickets should be rendered inside board. It is the list inside board, so no tickets should be visible in the main list
+- [x] 2026-08-21 [chat] [agent] Got it — tickets should only ever show up inside their board's own list, not duplicated in the main worklist. Adding that as a fix here. (reopened this idea to re-run)
+- [x] 2026-08-21 [review] [agent] Comments · 2 findings — The diff delivers the boards-and-tickets feature coherently: a new `board`/`ticket` kind pair, per-kind `TICKET-N` counter, status rollup, ticket rendering reusing PlanRows, an API + modal for creation, and the IDEA-195 conversion — all with reasonable test coverage. It conforms to the spec and contradicts no settled decision. A couple of edge cases in status rollup and an offline-mode gap in ticket creation are worth a look, and the prioritise/thread-note refactor is bundled in beyond the stated scope.

@@ -13,7 +13,7 @@ import { resolveIdsWithMainActivity } from './git-log';
 import { resolvePrsByEntity } from './git-pr/pr-lookup';
 import { parseEntityFile } from './parse/parser';
 import { parseRunOrderFile } from './run-order-file';
-import { deriveStatus, isArchivable } from './status';
+import { deriveBoardStatus, deriveStatus, isArchivable } from './status';
 
 export { entityToIdea, entityToPlan } from './entity-view';
 
@@ -100,7 +100,14 @@ export async function readEntitiesWithDerivedStatus(
     ...e,
     status: deriveStatus(e, prs?.get(e.id), resolved, mainActivityIds.has(e.id)),
   }));
-  return { entries: derived, warnings };
+  const withBoardStatus = derived.map((e) => {
+    if (e.kind !== 'board' || e.archived || e.status === 'done' || e.status === 'dropped') return e;
+    const ticketStatuses = derived
+      .filter((t) => t.kind === 'ticket' && t.idea === e.id)
+      .map((t) => t.status ?? 'idea');
+    return { ...e, status: deriveBoardStatus(ticketStatuses) };
+  });
+  return { entries: withBoardStatus, warnings };
 }
 
 export async function readWorkEntries(
@@ -111,13 +118,19 @@ export async function readWorkEntries(
     ideasDir,
     ttlMs,
   );
-  return {
-    entries: entries
-      .filter((e) => e.kind !== 'note')
-      .map((e) => entityToPlan(e, prs?.get(e.id), resolved, mainActivityIds.has(e.id))),
-    warnings,
-    resolved,
-  };
+  const work = entries
+    .filter((e) => e.kind !== 'note')
+    .map((e) => entityToPlan(e, prs?.get(e.id), resolved, mainActivityIds.has(e.id)));
+  const withBoardStatus = work.map((p) => {
+    if (p.entityKind !== 'board' || p.archived || p.status === 'done' || p.status === 'dropped') {
+      return p;
+    }
+    const ticketStatuses = work
+      .filter((t) => t.entityKind === 'ticket' && t.idea === p.id)
+      .map((t) => t.status);
+    return { ...p, status: deriveBoardStatus(ticketStatuses) };
+  });
+  return { entries: withBoardStatus, warnings, resolved };
 }
 
 // Merged PR + review/done status + file still in ideasDir (not ideas/archive/): the

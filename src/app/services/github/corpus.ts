@@ -119,7 +119,7 @@ let idAssignmentChain: Promise<unknown> = Promise.resolve();
 
 export async function createGithubIdea(
   config: GithubCorpusConfig,
-  idea: { title: string; content?: string; kind?: 'idea' | 'note' },
+  idea: { title: string; content?: string; kind?: 'idea' | 'note' | 'board' },
 ): Promise<string> {
   const run = idAssignmentChain.then(async () => {
     const { file, sha } = await readConfigFile(config);
@@ -137,7 +137,7 @@ export async function createGithubIdea(
     const content = formatEntityFile({
       id,
       title: idea.title.trim(),
-      kind: isNote ? 'note' : undefined,
+      kind: isNote ? 'note' : idea.kind === 'board' ? 'board' : undefined,
       status: isNote ? 'open' : 'idea',
       created: todayDateString(),
       body: idea.content?.trim(),

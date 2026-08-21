@@ -11,6 +11,7 @@ import {
   useTrail,
 } from '@/app/features/plans/hooks';
 import { entityRouteParam } from '@/app/hooks';
+import { createTicket } from '@/app/services/content';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import { type UsageRollup, formatDuration, formatTokens, rollupUsage } from '@/core/phase-run';
@@ -32,6 +33,7 @@ import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
 import { ReconcileButton } from '../actions';
 import { AddReviewPhasesButton, AgentStartButton, AuditPhasesButton } from '../actions';
+import { AddTicketButton } from '../actions';
 import {
   DeliverChangedFiles,
   DeliverChecksRow,
@@ -53,6 +55,7 @@ import {
   runningTaskForPlan,
 } from '../helpers';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
+import { PlanRows } from './plan-rows';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -377,7 +380,8 @@ const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] 
  * produced it is one click away (IDEA-187). */
 const ParentLinkRow = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: PlanEntry[] }) => {
   const navigate = useNavigate();
-  if (plan.entityKind !== 'fix' || !plan.idea) return null;
+  const isTicket = plan.entityKind === 'ticket';
+  if ((!isTicket && plan.entityKind !== 'fix') || !plan.idea) return null;
   const parentId = plan.idea;
   const parent = otherPlans.find((p) => p.id === parentId);
   return (
@@ -393,11 +397,11 @@ const ParentLinkRow = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: Plan
         }
         className="flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left"
       >
-        <Stamp size="small" variant="warning">
-          fix
+        <Stamp size="small" variant={isTicket ? 'info' : 'warning'}>
+          {isTicket ? 'ticket' : 'fix'}
         </Stamp>
         <span className="text-sm opacity-70">
-          Fixes <span className="font-mono">{parentId}</span>
+          {isTicket ? 'On board' : 'Fixes'} <span className="font-mono">{parentId}</span>
           {parent && ` — ${parent.title}`}
         </span>
       </button>
@@ -441,6 +445,44 @@ const FixesSection = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: PlanE
           </button>
         ))}
       </div>
+    </div>
+  );
+};
+
+/** A board's decomposition, in the same row treatment the main worklist uses
+ * (IDEA-201) — never the phases Table, since a board carries no phases of its own.
+ * Adding a ticket stays on this view: it posts straight to the board's own list
+ * and reloads, rather than navigating to a separate creation flow. */
+const TicketsSection = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: PlanEntry[] }) => {
+  const navigate = useNavigate();
+  const loadPlans = useAppStore((s) => s.loadPlans);
+  const tickets = otherPlans.filter((p) => p.entityKind === 'ticket' && p.idea === plan.id);
+  const handleOpen = (title: string) => {
+    const ticket = tickets.find((t) => t.title === title);
+    if (!ticket) return;
+    navigate({
+      to: '/plans/$planId',
+      params: { planId: entityRouteParam(ticket.id, ticket.title) },
+    });
+  };
+  const handleAddTicket = async (title: string) => {
+    if (!plan.id) return;
+    await createTicket({ boardId: plan.id, title });
+    await loadPlans();
+  };
+  return (
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className={`${sectionHeadingClass} m-0`}>Tickets</h3>
+        <AddTicketButton onAdd={handleAddTicket} disabled={!plan.id} />
+      </div>
+      {tickets.length > 0 ? (
+        <PlanRows plans={tickets} onOpen={handleOpen} />
+      ) : (
+        <p className="text-sm m-0 opacity-50">
+          No tickets yet — add one to start the decomposition.
+        </p>
+      )}
     </div>
   );
 };
@@ -573,7 +615,7 @@ const FeedbackSection = ({
   const handlePromoteToIdea = async (idea: {
     title: string;
     content?: string;
-    kind?: 'idea' | 'note';
+    kind?: 'idea' | 'note' | 'board';
   }) => {
     if (ideaPromptIndex === null) return;
     if (await promoteToIdea(ideaPromptIndex, idea)) setIdeaPromptIndex(null);
@@ -763,18 +805,22 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         />
       ) : (
         <>
-          <PhasesSection
-            plan={plan}
-            auditRunning={auditRunning}
-            agentBusy={agentBusy}
-            runningFill={runningFill}
-            updating={updating}
-            onTogglePhase={handleTogglePhase}
-            onToggleFix={handleToggleFix}
-            onAddReviewPhases={handleAddReviewPhases}
-            ideaView={ideaView}
-            otherPlans={otherPlans}
-          />
+          {plan.entityKind === 'board' ? (
+            <TicketsSection plan={plan} otherPlans={otherPlans} />
+          ) : (
+            <PhasesSection
+              plan={plan}
+              auditRunning={auditRunning}
+              agentBusy={agentBusy}
+              runningFill={runningFill}
+              updating={updating}
+              onTogglePhase={handleTogglePhase}
+              onToggleFix={handleToggleFix}
+              onAddReviewPhases={handleAddReviewPhases}
+              ideaView={ideaView}
+              otherPlans={otherPlans}
+            />
+          )}
 
           <FixesSection plan={plan} otherPlans={otherPlans} />
 

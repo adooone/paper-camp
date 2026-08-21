@@ -79,7 +79,3 @@ guide says.
       Gated on the plan having at least one completed phase; append via `patchByTitle` like the review-phases path, and export it from `actions/index.ts`.
 - [ ] Wire the button into the Phases toolbar next to Audit, Reconcile and Add review phases
 - [ ] Test the builder output and the one-completed-phase enablement
-
-### Thread
-- [x] 2026-08-21 [log] [agent] Explicitly meant to enforce the guide state that IDEA-196/197/198 establish, so it only makes sense once those conventions and the comment gate exist.
-- [x] 2026-08-21 [log] [agent] Depends on IDEA-197 and IDEA-198 having established the conventions (hooks/, helpers/, code style) that its style-pass prompt is meant to enforce going forward.

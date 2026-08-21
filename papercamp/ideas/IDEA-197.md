@@ -87,6 +87,3 @@ and the page looks identical. Cross-cutting convention fixes are [[IDEA-198]].
       Merge the duplicated `../actions` and `../components` imports; replace the raw rgba highlight with `STATUS_STAMP.review`.
 - [ ] Confirm the checks pass unchanged
       `pnpm check-types`, `pnpm lint`, `npx vitest run`.
-
-### Thread
-- [x] 2026-08-21 [log] [agent] Its own file, entity-detail.tsx, is exactly what IDEA-198 says it will also touch, and IDEA-198 explicitly treats IDEA-197 as the prerequisite that handles the one big file first.

@@ -276,6 +276,15 @@ describe('selectWorklistRows', () => {
     const { rows } = selectWorklistRows(plans, ideas);
     expect(rows).toContainEqual({ type: 'fix', fix: plans[0] });
   });
+
+  it('never renders a ticket as a row — only its board owns that list', () => {
+    const plans = [
+      plan({ id: 'IDEA-24', title: 'A board', entityKind: 'board' }),
+      plan({ id: 'TICKET-1', title: 'A ticket', entityKind: 'ticket', idea: 'IDEA-24' }),
+    ];
+    const { rows } = selectWorklistRows(plans, []);
+    expect(rows.map(rowTitle)).toEqual(['A board']);
+  });
 });
 
 describe('groupRowsBySubject', () => {

@@ -1,8 +1,7 @@
 ---
 id: IDEA-195
 title: Global client, local runtime
-kind: note
-status: open
+kind: board
 created: 2026-08-19
 updated: 2026-08-21
 tags:
@@ -166,18 +165,21 @@ from any other caller that happens to know the port.
 
 ### Sequencing
 
-1. Contract and auth — freeze the runtime's HTTP surface, add pairing, origin
-   checking on reads, CORS and the Private Network Access preflight.
-2. Detach the client — ship the bundle as an artifact taking a runtime URL.
+1. [[TICKET-1]] Contract and auth — freeze the runtime's HTTP surface, add
+   pairing, origin checking on reads, CORS and the Private Network Access
+   preflight.
+2. [[TICKET-2]] Detach the client — ship the bundle as an artifact taking a
+   runtime URL.
 3. Deploy it ([[IDEA-204]]) — the static bundle on a CDN, which is what makes the
    URL a front door rather than a plan.
 4. The hub shell ([[IDEA-205]]) — welcome, GitHub sign-in and the projects list,
    the surface a URL with no project behind it has to show.
-5. Capability-aware modules — every module declares the layer it needs so the
-   client composes from what is reachable.
-6. GitHub import and scaffold-by-PR, which is what makes plan-only real.
+5. [[TICKET-3]] Capability-aware modules — every module declares the layer it
+   needs so the client composes from what is reachable.
+6. [[TICKET-4]] GitHub import and scaffold-by-PR, which is what makes plan-only
+   real.
 7. Multi-project registry, fan-out and switcher ([[IDEA-117]]).
-8. Plugins as a real extension point.
+8. [[TICKET-5]] Plugins as a real extension point.
 
 ### Thread
 - [x] 2026-08-21 [decision] The hosted client reaches the runtime over the loopback carve-out, which is the settled front door; the residual work is the Private Network Access preflight and CORS headers, not a measurement, so [[IDEA-193]]'s measurement phase is dropped.

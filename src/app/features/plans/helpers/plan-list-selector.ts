@@ -335,14 +335,16 @@ const worklistSortProxy = (row: WorklistRow): PlanEntry => {
 /** Every plan renders as its own row; `kind: note` ideas surface alongside
  * them. A fix entity renders as its own row too, grouped under the parent's
  * subject, inherited here rather than stored, so a fix can't drift from the
- * idea it fixes. */
+ * idea it fixes. A ticket never gets a row here — it's decomposition detail
+ * that only ever renders inside its board's own view (IDEA-201). */
 export const selectWorklistRows = (
   plans: PlanEntry[],
   ideas: IdeaEntry[],
   filters: PlanListFilters = DEFAULT_PLAN_LIST_FILTERS,
 ): WorklistResult => {
-  const subjectById = new Map(plans.map((p) => [p.id, p.subject] as const));
-  const withInheritedSubject = plans.map((p) =>
+  const nonTicketPlans = plans.filter((p) => p.entityKind !== 'ticket');
+  const subjectById = new Map(nonTicketPlans.map((p) => [p.id, p.subject] as const));
+  const withInheritedSubject = nonTicketPlans.map((p) =>
     p.entityKind === 'fix'
       ? { ...p, subject: (p.idea && subjectById.get(p.idea)) || undefined }
       : p,

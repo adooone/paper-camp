@@ -1,3 +1,4 @@
+import type { EntityKind } from '../types/index';
 import type { RunOrderFileEntry } from './run-order-file';
 
 const ORDERED_STATUSES = new Set<string>(['planned', 'in-progress', 'review']);
@@ -27,7 +28,7 @@ export function classifyRunOrderEntries(
     title: string;
     created: string;
     status?: string;
-    kind?: 'note' | 'fix';
+    kind?: EntityKind;
   }[],
   work: { id?: string; status?: string }[],
   statusOverride?: (id: string) => { value: string | undefined } | undefined,

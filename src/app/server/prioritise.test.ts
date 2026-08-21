@@ -228,6 +228,71 @@ describe('applyPrioritiseVerdict', () => {
     expect(readLog(root, 'IDEA-1')).toEqual([expect.stringContaining('waits on IDEA-2')]);
   });
 
+  it('replaces its own previous run-order note instead of stacking another', async () => {
+    const root = tmpRoot();
+    write(root, {
+      id: 'IDEA-1',
+      title: 'First',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-01',
+    });
+    write(root, {
+      id: 'IDEA-2',
+      title: 'Second',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-02',
+    });
+    writeRunOrder(root, ['IDEA-1 — First', 'IDEA-2 — Second']);
+
+    await applyPrioritiseVerdict(root, {
+      order: ['IDEA-2', 'IDEA-1'],
+      why: ['first reason for 2', 'first reason for 1'],
+    });
+    await applyPrioritiseVerdict(root, {
+      order: ['IDEA-1', 'IDEA-2'],
+      why: ['second reason for 1', 'second reason for 2'],
+    });
+
+    // One note per idea after two runs, carrying only the latest reason.
+    expect(readLog(root, 'IDEA-1')).toEqual([expect.stringContaining('second reason for 1')]);
+    expect(readLog(root, 'IDEA-2')).toEqual([expect.stringContaining('second reason for 2')]);
+    expect(readLog(root, 'IDEA-1')[0]).not.toContain('first reason');
+  });
+
+  it('leaves an agent log that is not a run-order note alone', async () => {
+    const root = tmpRoot();
+    write(root, {
+      id: 'IDEA-1',
+      title: 'First',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-01',
+      thread: [
+        { kind: 'log', from: 'agent', date: '2026-07-01', text: 'Feedback summary worth keeping' },
+      ],
+    });
+    write(root, {
+      id: 'IDEA-2',
+      title: 'Second',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-02',
+    });
+    writeRunOrder(root, ['IDEA-1 — First', 'IDEA-2 — Second']);
+
+    await applyPrioritiseVerdict(root, {
+      order: ['IDEA-2', 'IDEA-1'],
+      why: ['reason for 2', 'reason for 1'],
+    });
+
+    const logs = readLog(root, 'IDEA-1');
+    expect(logs).toHaveLength(2);
+    expect(logs[0]).toContain('Feedback summary worth keeping');
+    expect(logs[1]).toContain('reason for 1');
+  });
+
   it('falls back to a generic reason for ids without a matching why line', async () => {
     const root = tmpRoot();
     write(root, {

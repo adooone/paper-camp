@@ -32,7 +32,7 @@ export const usePromoteThreadMessage = (plan: PlanEntry) => {
 
   const promoteToIdea = async (
     index: number,
-    idea: { title: string; content?: string; kind?: 'idea' | 'note' },
+    idea: { title: string; content?: string; kind?: 'idea' | 'note' | 'board' },
   ): Promise<boolean> => {
     if (!plan.id || promotingIndex !== null) return false;
     setPromotingIndex(index);

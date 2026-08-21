@@ -22,7 +22,7 @@ The shell that opens on the projects list is [[IDEA-205]]; this idea owns what s
 
 Engineering note: fanning out means meeting runtimes at different paper-camp versions, and the skew moved. [[IDEA-168]] gave the corpus an explicit format version and made unknown frontmatter keys round-trip instead of being dropped on write, and the doctor ([[IDEA-121]]) reports a corpus newer than the running paper-camp — but each runtime parses its own corpus, so that end is covered. What this needs instead is the frozen HTTP contract from [[IDEA-195]] and a version each runtime reports, so the client flags a skew rather than silently mis-rendering.
 
-Waits on two phases of [[IDEA-193]]: pairing the client to a runtime, and detaching the client so it takes a runtime URL. A registered project whose runtime is unreachable is not a hole in the hub — it shows as plan-only, which [[IDEA-195]] settles as a first-class state, so the switcher is useful before every runtime is up. Companion captures: [[IDEA-118]] (decisions inbox), which has since shipped. [[IDEA-123]] (cross-corpus links) was dropped.
+Waits on [[TICKET-1]] and [[TICKET-2]]: pairing the client to a runtime, and detaching the client so it takes a runtime URL. A registered project whose runtime is unreachable is not a hole in the hub — it shows as plan-only, which [[IDEA-195]] settles as a first-class state, so the switcher is useful before every runtime is up. Companion captures: [[IDEA-118]] (decisions inbox), which has since shipped. [[IDEA-123]] (cross-corpus links) was dropped.
 
 ### Phases
 - [ ] Register projects by runtime address
@@ -34,8 +34,3 @@ Waits on two phases of [[IDEA-193]]: pairing the client to a runtime, and detach
 - [ ] Build the project switcher
 - [ ] Ship cross-project views
       Everything-in-review, overnight agent activity, and global idea search composed from the fan-out.
-
-### Thread
-- [x] 2026-08-21 [log] [agent] It explicitly states it is blocked on two things IDEA-193 sequences ahead of it (pairing auth, a detached client) and wants those steps tracked as tickets from IDEA-201, so it must come last.
-- [x] 2026-08-21 [log] [agent] Explicitly blocked on IDEA-195's (now IDEA-193/201) pairing-auth and detached-client steps, so it must sit last among these until that foundation lands.
-- [x] 2026-08-21 [log] [agent] Explicitly blocked on the two steps IDEA-195/193 sequences ahead of it (pairing auth, a detached client), so it can only proceed once those land.

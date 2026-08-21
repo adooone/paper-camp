@@ -11,7 +11,11 @@ export const NewIdeaButton = () => {
   const githubConfig = useAppStore((s) => s.githubConfig);
   const [open, setOpen] = useState(false);
 
-  const handleAdd = async (idea: { title: string; content?: string; kind?: 'idea' | 'note' }) => {
+  const handleAdd = async (idea: {
+    title: string;
+    content?: string;
+    kind?: 'idea' | 'note' | 'board';
+  }) => {
     if (!runtimeReachable && githubConfig) {
       await createGithubIdea(githubConfig, idea);
     } else {
