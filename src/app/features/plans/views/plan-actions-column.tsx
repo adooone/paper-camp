@@ -2,6 +2,7 @@ import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlan, useSubjectVocabulary } from '@/app/hooks';
 import { verifyDirectCompletion } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
+import { branchEntityId } from '@/app/utils/branch-entity-id';
 import { Card, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { RunAllPhasesButton } from '../actions';
@@ -10,7 +11,7 @@ import { CreateBranchButton } from '../actions';
 import { FixReviewButton } from '../actions';
 import { PrReviewButton } from '../actions';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { branchEntityId, canMarkPlanDone, effectiveStatus } from '../helpers';
+import { canMarkPlanDone, effectiveStatus } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
 

@@ -13,8 +13,19 @@ import {
 import { entityRouteParam } from '@/app/hooks';
 import { createTicket } from '@/app/services/content';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
-import { type UsageRollup, formatDuration, formatTokens, rollupUsage } from '@/core/phase-run';
+import {
+  feedbackDraftKeyFor,
+  readLocalDraft,
+  removeLocalDraft,
+  writeLocalDraft,
+} from '@/app/utils/local-draft-store';
+import {
+  type UsageRollup,
+  formatDuration,
+  formatRunSummary,
+  formatTokens,
+  rollupUsage,
+} from '@/core/phase-run';
 import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
   Button,
@@ -47,7 +58,9 @@ import { ProgressBar } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import {
+  type WorkRow,
   effectiveStatus,
+  isRunningRow,
   latestReviewNote,
   relativeDate,
   rollupProgress,
@@ -62,14 +75,6 @@ interface EntityDetailProps {
 }
 
 const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
-
-// Phases and post-build fixes share one table; fixes are appended and tinted
-// (`.fix-row`) so they read as part of the same list, distinct only by colour.
-type WorkRow = { kind: 'phase' | 'fix'; item: PhaseItem; index: number };
-
-function formatRunSummary(run: NonNullable<PhaseItem['run']>): string {
-  return `${formatTokens(run.inputTokens + run.outputTokens)} tokens · ${formatDuration(run.durationMs)}${run.attempts > 1 ? ` ×${run.attempts}` : ''}${run.model ? ` · ${run.model}` : ''}`;
-}
 
 // Same stamp as a phase row's run cost, and the same three-item shape — the
 // rollup swaps the phase's single model for a run count.
@@ -123,8 +128,6 @@ const PhasesSection = ({
     ...plan.phases.map((item, index) => ({ kind: 'phase' as const, item, index })),
     ...fixes.map((item, index) => ({ kind: 'fix' as const, item, index })),
   ];
-  const isRunningRow = (row: WorkRow) =>
-    row.kind === 'phase' && !row.item.done && runningFill?.index === row.index;
   return (
     <div
       className="mb-8"
@@ -189,7 +192,7 @@ const PhasesSection = ({
             key: 'checkbox',
             header: '',
             cell: (row: WorkRow) =>
-              isRunningRow(row) ? (
+              isRunningRow(row, runningFill) ? (
                 <Spinner size="small" />
               ) : (
                 <Checkbox
@@ -215,7 +218,7 @@ const PhasesSection = ({
                 >
                   {row.item.text}
                 </span>
-                {isRunningRow(row) && (
+                {isRunningRow(row, runningFill) && (
                   <span className="text-xs opacity-[0.55]">
                     {Math.round((runningFill?.fraction ?? 0) * 100)}%
                   </span>
@@ -248,7 +251,7 @@ const PhasesSection = ({
             align: 'end',
             width: 6,
             cell: (row: WorkRow) => {
-              if (isRunningRow(row)) return null;
+              if (isRunningRow(row, runningFill)) return null;
               if (row.item.done) {
                 const run = row.item.run;
                 if (!run) return null;
@@ -300,7 +303,7 @@ const PhasesSection = ({
           return undefined;
         }}
         rowClassName={(row: WorkRow) => {
-          if (isRunningRow(row)) return 'phase-running-row';
+          if (isRunningRow(row, runningFill)) return 'phase-running-row';
           if (row.kind === 'phase' && row.item.source === 'review') {
             return 'bg-[rgba(155,122,181,0.08)]';
           }
@@ -556,10 +559,6 @@ const TrailSection = ({
     </div>
   );
 };
-
-function feedbackDraftKeyFor(plan: PlanEntry): string {
-  return `feedback-draft:${plan.id ?? plan.title}`;
-}
 
 const FeedbackSection = ({
   plan,

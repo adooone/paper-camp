@@ -1,4 +1,12 @@
+import type { RunningPhaseFill } from '@/app/features/plans/hooks';
 import type { AgentTaskState, PhaseItem, PlanEntry, ThreadMessage } from '@/types/index';
+
+// Phases and post-build fixes share one table; fixes are appended and tinted
+// (`.fix-row`) so they read as part of the same list, distinct only by colour.
+export type WorkRow = { kind: 'phase' | 'fix'; item: PhaseItem; index: number };
+
+export const isRunningRow = (row: WorkRow, runningFill: RunningPhaseFill | null): boolean =>
+  row.kind === 'phase' && !row.item.done && runningFill?.index === row.index;
 
 export const relativeDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -47,12 +55,6 @@ export const rollupProgress = (
   if (!base) return null;
   const filled = Math.min(base.total, base.done + runningFraction);
   return { done: base.done, total: base.total, pct: (filled / base.total) * 100 };
-};
-
-/** Parses the entity id a feature branch encodes (feat/idea-43-… → IDEA-43). */
-export const branchEntityId = (branch: string | null): string | null => {
-  const match = branch?.match(/^[a-z]+\/([a-z]+-\d+)-/);
-  return match ? match[1].toUpperCase() : null;
 };
 
 export const runningTaskForPlan = (

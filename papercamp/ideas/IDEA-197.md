@@ -75,8 +75,9 @@ new feature. `pnpm check-types`, `pnpm lint` and `npx vitest run` pass unchanged
 and the page looks identical. Cross-cutting convention fixes are [[IDEA-198]].
 
 ### Phases
-- [ ] Relocate the pure functions to their existing homes
+- [x] Relocate the pure functions to their existing homes
       `formatRunSummary` → `@/core/phase-run`, `branchEntityId` → `@/app/utils`, `feedbackDraftKeyFor` → `@/app/utils/local-draft-store`, and `WorkRow`/`isRunningRow` → `helpers/`.
+      run: 4m5s · 9.9k in · 10.3k out · sonnet-5
 - [ ] Extract the Phases table into `components/` cells and a `views/` section
       Turn the inline `columns` renderers into named cell components; move `PhasesSection` to its own view file.
 - [ ] Move `FeedbackSection` state into `hooks/use-feedback-composer.ts`
