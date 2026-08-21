@@ -2,7 +2,7 @@
 id: IDEA-198
 title: Plans feature conventions pass
 type: refactor
-status: idea
+status: review
 created: 2026-08-21
 tags:
   - app
@@ -90,8 +90,9 @@ Behaviour, again — this is convention only. Splitting `entity-detail.tsx`
 - [x] Merge duplicate import statements
       Collapse each module imported twice into one statement across the six files.
       run: 1m55s · 510 in · 7.2k out · sonnet-5
-- [ ] Codify the conventions in docs/CODE_STYLE.md
+- [x] Codify the conventions in docs/CODE_STYLE.md
       Add rules for named props interfaces, feature hooks owning store access, hooks living in `hooks/`, one import per module, and `constants.ts` as the only sanctioned colour literal.
+      run: 2m10s · 374 in · 9k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Builds on IDEA-197's split (props/hooks conventions apply to the newly separated files) and explicitly defers the color-token fix to a future paper-ui publish

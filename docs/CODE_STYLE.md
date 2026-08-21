@@ -209,6 +209,11 @@ features/plans/
   `views/`, `modals/`, `actions/`, `components/` are the standard buckets — add
   one only once it has members. (A vague `utils/` junk-drawer is not a role: if
   you can't say what a file *is*, don't group it yet.)
+- A hook — including one used by a single component, or one that just wraps a
+  global hook (§3) — always lives in `hooks/`, named `use-*.ts`. A
+  `components/` or `views/` file exports components only; a hook stapled onto
+  the end of one because it's only used there is how that file stops being
+  something you can name.
 - **Colocate tests** in a `__tests__/` subfolder inside the folder they cover
   (`helpers/__tests__/diff.test.ts`).
 - Each folder's `index.ts` re-exports its files, and consumers import from the
@@ -375,6 +380,9 @@ are one command.
 7. **Comment runs over the cap** (§7), and whether each survivor states a *why*
    that the code cannot.
 8. **Direct `fetch()` in components** (§4) — should be zero.
+9. **Hooks outside `hooks/`.** `grep -rn "^export const use[A-Z]"
+   components/ views/ actions/ modals/`. A match is a hook mis-filed next to
+   the components that happen to call it (§4).
 
 Anything a second feature would hit the same way stops being a fix and becomes a
 rule in this file. That is the point of the pass.
