@@ -49,6 +49,10 @@ export function shortModel(model: string): string {
     .replace(/-\d{6,8}$/, '');
 }
 
+export function formatRunSummary(run: PhaseRun): string {
+  return `${formatTokens(run.inputTokens + run.outputTokens)} tokens · ${formatDuration(run.durationMs)}${run.attempts > 1 ? ` ×${run.attempts}` : ''}${run.model ? ` · ${run.model}` : ''}`;
+}
+
 export function formatRunLine(run: PhaseRun): string {
   const parts = [
     formatDuration(run.durationMs),

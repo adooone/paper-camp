@@ -2,8 +2,9 @@
 id: IDEA-197
 title: Break up entity-detail.tsx
 type: refactor
-status: idea
+status: review
 created: 2026-08-21
+updated: 2026-08-21
 tags:
   - app
   - code-health
@@ -75,18 +76,26 @@ new feature. `pnpm check-types`, `pnpm lint` and `npx vitest run` pass unchanged
 and the page looks identical. Cross-cutting convention fixes are [[IDEA-198]].
 
 ### Phases
-- [ ] Relocate the pure functions to their existing homes
+- [x] Relocate the pure functions to their existing homes
       `formatRunSummary` → `@/core/phase-run`, `branchEntityId` → `@/app/utils`, `feedbackDraftKeyFor` → `@/app/utils/local-draft-store`, and `WorkRow`/`isRunningRow` → `helpers/`.
-- [ ] Extract the Phases table into `components/` cells and a `views/` section
+      run: 4m5s · 9.9k in · 10.3k out · sonnet-5
+- [x] Extract the Phases table into `components/` cells and a `views/` section
       Turn the inline `columns` renderers into named cell components; move `PhasesSection` to its own view file.
-- [ ] Move `FeedbackSection` state into `hooks/use-feedback-composer.ts`
+      run: 10m3s · 3.9k in · 24k out · sonnet-5
+- [x] Move `FeedbackSection` state into `hooks/use-feedback-composer.ts`
       Leave the section as a `views/` file that renders what the hook returns.
-- [ ] Split the remaining sections into one-component-per-file views
+      run: 4m3s · 978 in · 11.3k out · sonnet-5
+- [x] Split the remaining sections into one-component-per-file views
       `RunCostSummary`, `BranchRow`, `PlanProgressRow`, `PlanBodySection`, `ClarificationsSection`, `ParentLinkRow`, `FixesSection`, `DeliverSection`, `TrailSection`.
-- [ ] Reduce `entity-detail.tsx` to composition and apply the two fixes
+      run: 5m28s · 5k in · 20.4k out · sonnet-5
+- [x] Reduce `entity-detail.tsx` to composition and apply the two fixes
       Merge the duplicated `../actions` and `../components` imports; replace the raw rgba highlight with `STATUS_STAMP.review`.
-- [ ] Confirm the checks pass unchanged
+      run: 4m17s · 1.4k in · 9.4k out · sonnet-5
+- [x] Confirm the checks pass unchanged
       `pnpm check-types`, `pnpm lint`, `npx vitest run`.
+      run: 2m6s · 1.2k in · 1.1k out · sonnet-5
+- [x] [manual] Restore review-highlight rgba to spec'd value
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Independent code-health refactor with no blockers; pure move, unblocks IDEA-198's convention pass on the same file structure
+- [x] 2026-08-21 [review] [agent] Requests changes · 1 finding — The mechanical split is clean and faithful — sections become one-file-per-component views, the pure functions land in their specified homes (formatRunSummary, branchEntityId, feedbackDraftKeyFor, WorkRow/isRunningRow), and the feedback state moves into use-feedback-composer as spec'd. However, Phase 5's second fix was botched: the raw rgba review highlight was neither replaced with the named STATUS_STAMP.review value nor left untouched — it was rewritten to a different literal, changing render output in a PR that explicitly forbids that.
