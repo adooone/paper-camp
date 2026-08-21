@@ -41,6 +41,11 @@ export interface ReturnToMainResult {
   remoteDeleted: boolean;
 }
 
+export interface DirectCompletionCheck {
+  ready: boolean;
+  missing: string[];
+}
+
 // Thrown by reconcileOnto so callers can tell a genuine content conflict — one that needs
 // domain judgement to resolve — apart from any other reconcile failure (fetch, checkout, ...).
 export class RebaseConflictError extends Error {
@@ -436,6 +441,20 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       }
     }
     return null;
+  }
+
+  // Confirms a direct-to-main completion actually landed (IDEA-203): a clean tree, and
+  // at least one commit on main naming the idea's id. Both are checked (not just the
+  // first that fails) so the report names everything still missing, not just one item.
+  async function verifyDirectCompletion(id: string): Promise<DirectCompletionCheck> {
+    const missing: string[] = [];
+    const status = await runGitStatus();
+    if (status.length > 0) missing.push('a clean working tree');
+    const commits = await runGit(['log', await mainRef(), '--grep', id, '--format=%H', '-1']).catch(
+      () => '',
+    );
+    if (!commits.trim()) missing.push(`a commit for ${id} on main`);
+    return { ready: missing.length === 0, missing };
   }
 
   async function isMergedIntoMain(): Promise<boolean> {
@@ -952,6 +971,7 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       return runGitStatus();
     },
     assertCleanWorkingTree,
+    verifyDirectCompletion,
     returnToMain,
     getCurrentBranch,
     commit,

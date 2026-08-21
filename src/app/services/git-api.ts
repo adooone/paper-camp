@@ -178,6 +178,20 @@ export const completeIdea = async (
   };
 };
 
+export const verifyDirectCompletion = async (
+  planId: string,
+): Promise<{ ready: boolean; missing: string[] }> => {
+  const response = await fetch(apiUrl('/api/git/verify-direct-completion'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ planId }),
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Failed to verify completion');
+  return { ready: data.ready as boolean, missing: data.missing as string[] };
+};
+
 export const createPlanBranch = async (
   planId: string,
 ): Promise<{ branch: string; warning?: string }> => {

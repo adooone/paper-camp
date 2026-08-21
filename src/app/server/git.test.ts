@@ -914,6 +914,41 @@ describe('assertCleanWorkingTree', () => {
   });
 });
 
+describe('verifyDirectCompletion', () => {
+  it('is ready when the tree is clean and a commit names the id', async () => {
+    const root = await initRepo();
+    await commitFile(root, 'notes.md', 'work', 'fix(app): IDEA-203 land the thing');
+    const manager = gitManager(root);
+    await expect(manager.verifyDirectCompletion('IDEA-203')).resolves.toEqual({
+      ready: true,
+      missing: [],
+    });
+  });
+
+  it('reports a dirty tree and a missing commit together', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'README.md'), 'modified\n');
+    const manager = gitManager(root);
+    await expect(manager.verifyDirectCompletion('IDEA-203')).resolves.toEqual({
+      ready: false,
+      missing: ['a clean working tree', 'a commit for IDEA-203 on main'],
+    });
+  });
+
+  it('checks origin/main when it exists, not the possibly-behind local main', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    await commitFile(root, 'notes.md', 'work', 'fix(app): IDEA-203 land the thing');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    const manager = gitManager(root);
+    await expect(manager.verifyDirectCompletion('IDEA-203')).resolves.toEqual({
+      ready: true,
+      missing: [],
+    });
+  });
+});
+
 describe('returnToMain', () => {
   it('checks out main, fast-forwards it, and deletes the branch locally and on the remote', async () => {
     const root = await initRepo();

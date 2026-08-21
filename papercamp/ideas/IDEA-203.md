@@ -23,8 +23,9 @@ That unblocks the queue but leaves the path second-class. The same outcome is ca
 Branch creation is delivery, so it belongs with the other delivery controls in the actions sidebar rather than as a card in the middle of the idea body. Moving it also settles what happens after: once you are on the idea's branch, the detail view shows a second card that says nothing the top bar does not already say. That card goes. The idea view keeps the case that carries information — being on the *wrong* branch — and even that reads better as a sidebar control than as a banner.
 
 ### Phases
-- [ ] Verify a direct completion before promoting
+- [x] Verify a direct completion before promoting
       Require a clean working tree and commits for the idea's id on main; report exactly what is missing when the check fails.
+      run: 5m19s · 11.3k in · 21.2k out · sonnet-5
 - [ ] Give both routes one name
       The PR route and the direct route reach the same end state and should say so; keep the distinction in what each verifies, not in the label.
 - [ ] Move branch creation into the actions sidebar

@@ -152,6 +152,25 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
 
     {
       method: 'POST',
+      path: '/api/git/verify-direct-completion',
+      handle: async (req, res) => {
+        try {
+          const body = await readBody(req);
+          const { planId } = JSON.parse(body) as { planId?: string };
+          if (!planId) {
+            sendJson(res, 400, { error: 'planId is required' });
+            return;
+          }
+          const result = await git.verifyDirectCompletion(planId);
+          sendJson(res, 200, result);
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
+        }
+      },
+    },
+
+    {
+      method: 'POST',
       path: '/api/git/push',
       handle: async (_req, res) => {
         try {
