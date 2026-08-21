@@ -214,8 +214,8 @@ export interface PlanEntry {
   title: string;
   status: PlanStatus;
   kind?: PlanKind;
-  /** 'fix' when this plan is a follow-up fix entity (IDEA-187) — undefined for an
-   * ordinary plan-bearing idea. Distinct from `kind`, which carries the commit type. */
+  /** 'fix'/'board'/'ticket' mark a structural role beyond a plain plan-bearing idea —
+   * undefined for an ordinary one. Distinct from `kind`, which carries the commit type. */
   entityKind?: EntityKind;
   id?: string;
   idea?: string;

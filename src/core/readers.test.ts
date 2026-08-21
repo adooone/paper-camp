@@ -369,6 +369,60 @@ describe('status derivation from PR state', () => {
   });
 });
 
+describe('board status rollup from tickets', () => {
+  it('rolls a board up from its tickets, capping at review', async () => {
+    installGh([]); // gh resolves, repo has no PRs
+    const dir = tmpIdeas();
+    write(dir, {
+      id: 'IDEA-30',
+      title: 'Empty board',
+      kind: 'board',
+      created: '2026-07-01',
+      body: 'x',
+    });
+    write(dir, {
+      id: 'IDEA-31',
+      title: 'Board with a done ticket',
+      kind: 'board',
+      created: '2026-07-01',
+      body: 'x',
+    });
+    write(dir, {
+      id: 'TICKET-1',
+      title: 'Done ticket',
+      kind: 'ticket',
+      idea: 'IDEA-31',
+      created: '2026-07-01',
+      body: 'x',
+      phases: [{ text: 'One', done: true }],
+      status: 'done',
+    });
+    const byId = Object.fromEntries(
+      (await readWorkEntries(dir)).entries.map((e) => [e.id, e.status]),
+    );
+    expect(byId['IDEA-30']).toBe('idea');
+    expect(byId['IDEA-31']).toBe('review');
+    expect(byId['TICKET-1']).toBe('done');
+  });
+
+  it('respects a manually stamped done/dropped board status instead of the rollup', async () => {
+    installGh([]);
+    const dir = tmpIdeas();
+    write(dir, {
+      id: 'IDEA-32',
+      title: 'Manually closed board',
+      kind: 'board',
+      status: 'dropped',
+      created: '2026-07-01',
+      body: 'x',
+    });
+    const byId = Object.fromEntries(
+      (await readWorkEntries(dir)).entries.map((e) => [e.id, e.status]),
+    );
+    expect(byId['IDEA-32']).toBe('dropped');
+  });
+});
+
 describe('status derivation from main-branch commit activity', () => {
   it('advances a no-PR idea from main commits referencing its id: in-progress, then review once all phases are checked', async () => {
     installGh([]); // gh resolves, repo has no PRs

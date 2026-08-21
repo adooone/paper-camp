@@ -763,18 +763,20 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         />
       ) : (
         <>
-          <PhasesSection
-            plan={plan}
-            auditRunning={auditRunning}
-            agentBusy={agentBusy}
-            runningFill={runningFill}
-            updating={updating}
-            onTogglePhase={handleTogglePhase}
-            onToggleFix={handleToggleFix}
-            onAddReviewPhases={handleAddReviewPhases}
-            ideaView={ideaView}
-            otherPlans={otherPlans}
-          />
+          {plan.entityKind !== 'board' && (
+            <PhasesSection
+              plan={plan}
+              auditRunning={auditRunning}
+              agentBusy={agentBusy}
+              runningFill={runningFill}
+              updating={updating}
+              onTogglePhase={handleTogglePhase}
+              onToggleFix={handleToggleFix}
+              onAddReviewPhases={handleAddReviewPhases}
+              ideaView={ideaView}
+              otherPlans={otherPlans}
+            />
+          )}
 
           <FixesSection plan={plan} otherPlans={otherPlans} />
 

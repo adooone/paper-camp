@@ -35,8 +35,9 @@ The board's view lists its tickets with the same row treatment the main list use
 - [x] Add `board` and `ticket` to the entity kinds
       Extend `EntityKind`, the frontmatter schema, and the `TICKET-N` counter in `config.json`; widen the doctor's wikilink check to resolve `[[TICKET-N]]`.
       run: 4m5s · 6.1k in · 8k out · sonnet-5
-- [ ] Suppress phases on a board and derive its status
+- [x] Suppress phases on a board and derive its status
       `PhasesSection` is not rendered for a board; roll its status up from its tickets, stopping at `review`.
+      run: 8m45s · 950 in · 24.7k out · sonnet-5
 - [ ] Render a board's tickets in its view
       Reuse the main list's row treatment (`PlanRows`), scoped to the board, with the ticket-to-board backlink. Behaviour may diverge — strict order, board-specific actions — but the phases `Table` is never used here.
 - [ ] Create and decompose from the app

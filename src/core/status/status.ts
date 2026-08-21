@@ -1,4 +1,4 @@
-import type { EntityKind, EntityStatus, PhaseItem, PrInfo } from '../../types/index';
+import type { EntityKind, EntityStatus, PhaseItem, PlanStatus, PrInfo } from '../../types/index';
 
 export interface StatusDerivationInput {
   kind?: EntityKind;
@@ -64,7 +64,7 @@ export function isStatusFallback(
   pr: PrInfo | undefined,
   prLookupResolved: boolean,
 ): boolean {
-  if (entity.kind === 'note') return false;
+  if (entity.kind === 'note' || entity.kind === 'board') return false;
   if (entity.status === 'dropped') return false;
   if (entity.archived) return false;
   if (pr) return false;
@@ -77,4 +77,14 @@ export function isArchivable(entity: ArchivabilityInput, pr: PrInfo | undefined)
   if (entity.kind === 'note' || entity.archived || pr?.state !== 'merged') return false;
   const status = deriveStatus(entity, pr, true);
   return status === 'review' || status === 'done';
+}
+
+// A board carries no phases of its own — its status rolls up from its tickets'
+// derived statuses the way a plan's rolls up from its phases, capped at `review`
+// since closing an entity is always a human promotion (IDEA-187), never automatic.
+export function deriveBoardStatus(ticketStatuses: EntityStatus[]): PlanStatus {
+  if (ticketStatuses.length === 0) return 'idea';
+  if (ticketStatuses.every((s) => s === 'done')) return 'review';
+  if (ticketStatuses.some((s) => s !== 'idea' && s !== 'planned')) return 'in-progress';
+  return 'planned';
 }

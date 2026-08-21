@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PrInfo } from '../../types/index';
-import { deriveStatus, isArchivable, isStatusFallback } from './status';
+import { deriveBoardStatus, deriveStatus, isArchivable, isStatusFallback } from './status';
 
 const phase = (done: boolean) => ({ done, text: 'phase' });
 const pr = (state: PrInfo['state']): PrInfo => ({ number: 1, url: 'u', state });
@@ -184,5 +184,28 @@ describe('isStatusFallback', () => {
 
   it('is false for a note — notes never derive from PR state', () => {
     expect(isStatusFallback({ kind: 'note', phases: [] }, undefined, false)).toBe(false);
+  });
+
+  it('is false for a board — its status rolls up from tickets, not PR state', () => {
+    expect(isStatusFallback({ kind: 'board', phases: [] }, undefined, false)).toBe(false);
+  });
+});
+
+describe('deriveBoardStatus', () => {
+  it('is idea with no tickets — the shell sits empty before it is decomposed', () => {
+    expect(deriveBoardStatus([])).toBe('idea');
+  });
+
+  it('is planned when every ticket is still unstarted', () => {
+    expect(deriveBoardStatus(['idea', 'planned'])).toBe('planned');
+  });
+
+  it('is in-progress once any ticket has moved past planned', () => {
+    expect(deriveBoardStatus(['idea', 'in-progress'])).toBe('in-progress');
+    expect(deriveBoardStatus(['planned', 'review'])).toBe('in-progress');
+  });
+
+  it('is review, never done, once every ticket is done', () => {
+    expect(deriveBoardStatus(['done', 'done'])).toBe('review');
   });
 });
