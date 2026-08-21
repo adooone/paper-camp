@@ -26,8 +26,9 @@ Branch creation is delivery, so it belongs with the other delivery controls in t
 - [x] Verify a direct completion before promoting
       Require a clean working tree and commits for the idea's id on main; report exactly what is missing when the check fails.
       run: 5m19s · 11.3k in · 21.2k out · sonnet-5
-- [ ] Give both routes one name
+- [x] Give both routes one name
       The PR route and the direct route reach the same end state and should say so; keep the distinction in what each verifies, not in the label.
+      run: 2m41s · 230 in · 3.4k out · sonnet-5
 - [ ] Move branch creation into the actions sidebar
       The create-and-switch control joins the other delivery actions in `PlanActionsColumn`.
 - [ ] Drop the on-branch card from the idea view
