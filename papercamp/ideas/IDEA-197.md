@@ -4,6 +4,7 @@ title: Break up entity-detail.tsx
 type: refactor
 status: review
 created: 2026-08-21
+updated: 2026-08-21
 tags:
   - app
   - code-health
@@ -93,6 +94,8 @@ and the page looks identical. Cross-cutting convention fixes are [[IDEA-198]].
 - [x] Confirm the checks pass unchanged
       `pnpm check-types`, `pnpm lint`, `npx vitest run`.
       run: 2m6s · 1.2k in · 1.1k out · sonnet-5
+- [x] [manual] Restore review-highlight rgba to spec'd value
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Independent code-health refactor with no blockers; pure move, unblocks IDEA-198's convention pass on the same file structure
+- [x] 2026-08-21 [review] [agent] Requests changes · 1 finding — The mechanical split is clean and faithful — sections become one-file-per-component views, the pure functions land in their specified homes (formatRunSummary, branchEntityId, feedbackDraftKeyFor, WorkRow/isRunningRow), and the feedback state moves into use-feedback-composer as spec'd. However, Phase 5's second fix was botched: the raw rgba review highlight was neither replaced with the named STATUS_STAMP.review value nor left untouched — it was rewritten to a different literal, changing render output in a PR that explicitly forbids that.
