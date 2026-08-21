@@ -153,8 +153,9 @@ runtime's scope, the registry's home and the fate of folder scanning. What
 remains on both notes is work.
 
 ### Phases
-- [ ] Make the runtime answer a hosted origin
+- [x] Make the runtime answer a hosted origin
       CORS headers on API responses plus the Private Network Access preflight, so an https client can both reach and read `http://localhost:PORT`.
+      run: 4m34s · 8.8k in · 12.2k out · sonnet-5
 - [ ] Pair the client to the runtime
       A pairing token issued when the runtime announces itself, an allow-list for the hosted client's exact origin, and origin checking extended to reads.
 - [ ] Detach the client

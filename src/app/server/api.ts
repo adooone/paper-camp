@@ -102,6 +102,33 @@ export function isForbiddenRequest(req: {
   return false;
 }
 
+const CORS_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
+
+/** Lets a hosted https client read /api responses. Reflects the request's own
+ *  Origin rather than `*` (incompatible with credentials) or a fixed value (there's
+ *  no known client origin yet — that arrives with pairing). This only affects what
+ *  JS may read; isForbiddenRequest above still gates which requests are answered. */
+export function applyCorsHeaders(req: IncomingMessage, res: ServerResponse): void {
+  const origin = req.headers.origin;
+  if (!origin) return;
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
+}
+
+/** Answers the CORS/Private Network Access preflight Chrome sends before a public
+ *  page may fetch a private-network address like localhost — without an explicit
+ *  Access-Control-Allow-Private-Network, the browser refuses the real request. */
+export function handlePreflight(req: IncomingMessage, res: ServerResponse): void {
+  res.setHeader('Access-Control-Allow-Methods', CORS_METHODS);
+  const requestHeaders = req.headers['access-control-request-headers'];
+  if (requestHeaders) res.setHeader('Access-Control-Allow-Headers', requestHeaders);
+  if (req.headers['access-control-request-private-network'] === 'true') {
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
+  }
+  res.statusCode = 204;
+  res.end();
+}
+
 export function createApiMiddleware(
   root: string,
   agentState?: AgentManagerState,
@@ -133,9 +160,16 @@ export function createApiMiddleware(
 
     // Only guard our own /api surface — static assets / Vite HMR fall through to
     // next() untouched so the SPA still loads from any interface.
-    if (pathname.startsWith('/api/') && isForbiddenRequest(req)) {
-      sendJson(res, 403, { error: 'Forbidden: request failed the Host/Origin check' });
-      return;
+    if (pathname.startsWith('/api/')) {
+      applyCorsHeaders(req, res);
+      if (isForbiddenRequest(req)) {
+        sendJson(res, 403, { error: 'Forbidden: request failed the Host/Origin check' });
+        return;
+      }
+      if (req.method === 'OPTIONS') {
+        handlePreflight(req, res);
+        return;
+      }
     }
 
     const route = routes.find((r) => r.method === req.method && r.path === pathname);

@@ -1,6 +1,7 @@
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { hostname } from 'node:os';
 import { afterEach, describe, expect, it } from 'vitest';
-import { isForbiddenRequest, isTrustedHost } from './api';
+import { applyCorsHeaders, handlePreflight, isForbiddenRequest, isTrustedHost } from './api';
 
 describe('isTrustedHost', () => {
   afterEach(() => {
@@ -86,5 +87,67 @@ describe('isForbiddenRequest', () => {
 
   it('allows a trusted-Host GET with no Origin (non-browser client)', () => {
     expect(isForbiddenRequest({ headers: { host: '127.0.0.1:3333' }, method: 'GET' })).toBe(false);
+  });
+});
+
+function fakeReq(headers: Record<string, string | undefined>): IncomingMessage {
+  return { headers } as unknown as IncomingMessage;
+}
+
+function fakeRes(): {
+  res: ServerResponse;
+  headers: () => Record<string, string>;
+  status: () => number;
+} {
+  const headers: Record<string, string> = {};
+  let statusCode = 0;
+  const res = {
+    setHeader: (name: string, value: string) => {
+      headers[name] = value;
+    },
+    end: () => {},
+    set statusCode(code: number) {
+      statusCode = code;
+    },
+    get statusCode() {
+      return statusCode;
+    },
+  } as unknown as ServerResponse;
+  return { res, headers: () => headers, status: () => statusCode };
+}
+
+describe('applyCorsHeaders', () => {
+  it('reflects the request Origin so a hosted client can read the response', () => {
+    const { res, headers } = fakeRes();
+    applyCorsHeaders(fakeReq({ origin: 'https://app.papercamp.dev' }), res);
+    expect(headers()).toEqual({
+      'Access-Control-Allow-Origin': 'https://app.papercamp.dev',
+      Vary: 'Origin',
+    });
+  });
+
+  it('sets nothing for a same-origin request with no Origin header', () => {
+    const { res, headers } = fakeRes();
+    applyCorsHeaders(fakeReq({}), res);
+    expect(headers()).toEqual({});
+  });
+});
+
+describe('handlePreflight', () => {
+  it('answers a plain CORS preflight with allowed methods and headers', () => {
+    const { res, headers, status } = fakeRes();
+    handlePreflight(fakeReq({ 'access-control-request-headers': 'content-type' }), res);
+    expect(status()).toBe(204);
+    expect(headers()['Access-Control-Allow-Methods']).toBe(
+      'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    );
+    expect(headers()['Access-Control-Allow-Headers']).toBe('content-type');
+    expect(headers()['Access-Control-Allow-Private-Network']).toBeUndefined();
+  });
+
+  it('grants Private Network Access when the browser requests it', () => {
+    const { res, headers } = fakeRes();
+    handlePreflight(fakeReq({ 'access-control-request-private-network': 'true' }), res);
+    expect(headers()['Access-Control-Allow-Private-Network']).toBe('true');
   });
 });
