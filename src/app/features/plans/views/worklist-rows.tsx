@@ -1,14 +1,11 @@
 import { NoteIcon } from '@/app/components/icons';
 import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
-import { groupRowsBySubject } from '@/app/features/plans/helpers';
-import { useRoadmapItemNames } from '@/app/features/roadmap';
-import { useSubjectVocabulary } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { Card, Stamp, Switch } from '@dendelion/paper-ui';
-import { useNavigate } from '@tanstack/react-router';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, runningTaskForPlan } from '../helpers';
+import { useWorklistRows } from '../hooks';
 import { PLAN_ROWS_GRID_CLASS, PlanRows, RowMarker } from './plan-rows';
 
 interface WorklistRowsProps {
@@ -63,24 +60,17 @@ export const WorklistRows = ({
   onOpenPlan,
   onOpenIdea,
 }: WorklistRowsProps) => {
-  const {
-    subjects: validSubjects,
-    loading: subjectsLoading,
-    available: subjectsAvailable,
-  } = useSubjectVocabulary();
-  const roadmapItemNames = useRoadmapItemNames();
-  const navigate = useNavigate();
   const gridClass = PLAN_ROWS_GRID_CLASS;
-  const sortKey = useAppStore((s) => s.planFilters.sortKey);
-  const sortDirection = useAppStore((s) => s.planFilters.sortDirection);
-  const groupBySubject = useAppStore((s) => s.planFilters.groupBySubject);
-  const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);
-  const togglePlanSortDirection = useAppStore((s) => s.togglePlanSortDirection);
-
-  const handleSort = (key: PlanSortKey) => {
-    if (key === sortKey) togglePlanSortDirection();
-    else setPlanSortKey(key);
-  };
+  const {
+    roadmapItemNames,
+    navigate,
+    sortKey,
+    sortDirection,
+    handleSort,
+    groups,
+    showSubjectHeaders,
+    sortReflectsRows,
+  } = useWorklistRows(rows);
 
   const renderRow = (row: WorklistRow) => {
     if (row.type === 'plan') {
@@ -105,14 +95,6 @@ export const WorklistRows = ({
       />
     );
   };
-
-  const groups = groupRowsBySubject(
-    rows,
-    sortDirection,
-    subjectsLoading || !subjectsAvailable ? undefined : validSubjects,
-  );
-  const showSubjectHeaders = groupBySubject && groups.length > 1;
-  const sortReflectsRows = !showSubjectHeaders;
 
   return (
     <div className="flex flex-col gap-1">

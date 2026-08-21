@@ -81,8 +81,9 @@ Behaviour, again — this is convention only. Splitting `entity-detail.tsx`
 - [x] Name every props interface
       Replace the 11 inline props type literals with `{Component}Props` interfaces.
       run: 2m22s · 6.1k in · 15.2k out · sonnet-5
-- [ ] Give store-heavy components a feature hook
+- [x] Give store-heavy components a feature hook
       Extract one `hooks/` hook per component for `plans-page.tsx`, `worklist-rows.tsx`, and `deliver-controls.tsx`; leave `entity-detail.tsx` to [[IDEA-197]].
+      run: 4m18s · 662 in · 24.1k out · sonnet-5
 - [ ] Relocate useDeliverCommitForm and split its file
       Move the hook to `hooks/use-deliver-commit-form.ts` and break the remaining components out of `deliver-controls.tsx`.
 - [ ] Merge duplicate import statements

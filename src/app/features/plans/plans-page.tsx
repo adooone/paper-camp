@@ -1,11 +1,7 @@
 import { PageTitle } from '@/app/components/page-title';
-import { entityRouteParam, useActiveIdea, useActivePlan } from '@/app/hooks';
-import { useAppStore } from '@/app/stores/app-store';
-import type { ArchivableIdea, SuggestionEntry } from '@/types/index';
-import { Breadcrumb, Card, useToast } from '@dendelion/paper-ui';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
+import { Breadcrumb, Card } from '@dendelion/paper-ui';
 import { selectWorklistRows } from './helpers';
+import { usePlansPage } from './hooks';
 import { PromoteSuggestionModal } from './modals';
 import { ReconcileQueueReview } from './views';
 import { EntityDetail } from './views';
@@ -19,71 +15,24 @@ import {
 } from './views';
 
 export const PlansPage = () => {
-  const plans = useAppStore((s) => s.plans);
-  const plansError = useAppStore((s) => s.plansError);
-  const ideaEntries = useAppStore((s) => s.ideaEntries);
-  const suggestions = useAppStore((s) => s.suggestions);
-  const loadPlans = useAppStore((s) => s.loadPlans);
-  const setDetailView = useAppStore((s) => s.setDetailView);
-  const planFilters = useAppStore((s) => s.planFilters);
-  const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
-  const activePlan = useActivePlan();
-  const activeIdea = useActiveIdea();
-  const { planId, ideaId } = useParams({ strict: false });
-  const dismissSuggestion = useAppStore((s) => s.dismissSuggestion);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { subject: subjectParam } = useSearch({ strict: false }) as { subject?: string };
-
-  useEffect(() => {
-    setSubjectFilter(subjectParam ?? null);
-  }, [subjectParam, setSubjectFilter]);
-
-  // Switching to a different plan/idea always lands on Details, never a stale Feedback
-  // view — but the initial mount (a reload landing on an already-open entity) must not
-  // stomp the detailView restored from storage, so the reset only fires on an actual change.
-  const entityKey = planId ?? ideaId;
-  const previousEntityKey = useRef(entityKey);
-  useEffect(() => {
-    if (previousEntityKey.current !== entityKey) {
-      setDetailView('details');
-    }
-    previousEntityKey.current = entityKey;
-  }, [entityKey, setDetailView]);
-
-  const handleBack = () => {
-    navigate({ to: '/' });
-  };
-
-  const handleOpenPlan = (title: string) => {
-    const id = plans?.entries.find((p) => p.title === title)?.id;
-    navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(id, title) } });
-  };
-
-  const handleOpenIdea = (title: string) => {
-    const id = ideaEntries.find((idea) => idea.title === title)?.id;
-    navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
-  };
-
-  // Archivable entities are work entities, so they route to /plans and their id is
-  // already to hand — `ideaEntries` holds only notes and would never resolve them.
-  const handleOpenArchivable = (idea: ArchivableIdea) => {
-    navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(idea.id, idea.title) } });
-  };
-
-  const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);
-
-  const handleDismissSuggestion = async (suggestion: SuggestionEntry) => {
-    try {
-      await dismissSuggestion(suggestion);
-    } catch (err) {
-      toast({
-        title: 'Failed to dismiss suggestion',
-        description: (err as Error).message,
-        variant: 'error',
-      });
-    }
-  };
+  const {
+    plans,
+    plansError,
+    ideaEntries,
+    suggestions,
+    planFilters,
+    activePlan,
+    activeIdea,
+    planId,
+    ideaId,
+    openSuggestion,
+    setOpenSuggestion,
+    handleBack,
+    handleOpenPlan,
+    handleOpenIdea,
+    handleOpenArchivable,
+    handleDismissSuggestion,
+  } = usePlansPage();
 
   if (plansError) {
     return (

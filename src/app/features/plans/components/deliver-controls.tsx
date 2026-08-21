@@ -4,7 +4,7 @@ import { type CommitFormFile, useCommitForm } from '@/app/hooks/use-commit-form'
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
-import type { AgentTaskState, CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
+import type { AgentTaskState, CheckStatus, PlanEntry } from '@/types/index';
 import { Button, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -14,7 +14,7 @@ import {
   planEntityPath,
   upsertCheckFixes,
 } from '../helpers';
-import { usePlanStatusPatch } from '../hooks';
+import { useDeliverChecksRow, usePlanStatusPatch } from '../hooks';
 
 const COMMIT_SCOPES = [
   'core',
@@ -78,27 +78,20 @@ const CheckStamp = ({ label, status, title, anyRunning, onClick }: CheckStampPro
 );
 
 export const DeliverChecksRow = () => {
-  const status = useAppStore((s) => s.status);
-  const runConsistencyCheck = useAppStore((s) => s.runConsistencyCheck);
-  const { checks: deskChecks, run: runDeskCheck } = useDeskChecks();
-  const consistency = useAppStore((s) => s.consistency);
-  const plans = useAppStore((s) => s.plans);
-  const navigate = useNavigate();
-  const [docsExpanded, setDocsExpanded] = useState(false);
-
-  const { qualityStatus, testStatus, consistencyStatus } = useMemo(
-    () => deriveCheckStatuses(status, deskChecks),
-    [status, deskChecks],
-  );
-  const anyRunning =
-    qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
-  const hasDocIssues = consistency.length > 0;
-
-  const linkedPlanFor = useCallback(
-    (issue: ConsistencyIssue) =>
-      issue.planId ? plans?.entries.find((p) => p.id === issue.planId) : undefined,
-    [plans?.entries],
-  );
+  const {
+    qualityStatus,
+    testStatus,
+    consistencyStatus,
+    anyRunning,
+    hasDocIssues,
+    consistency,
+    docsExpanded,
+    setDocsExpanded,
+    navigate,
+    runDeskCheck,
+    runConsistencyCheck,
+    linkedPlanFor,
+  } = useDeliverChecksRow();
 
   return (
     <div className="flex flex-col items-center gap-2">
