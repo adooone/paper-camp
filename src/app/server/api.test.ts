@@ -88,6 +88,33 @@ describe('isForbiddenRequest', () => {
   it('allows a trusted-Host GET with no Origin (non-browser client)', () => {
     expect(isForbiddenRequest({ headers: { host: '127.0.0.1:3333' }, method: 'GET' })).toBe(false);
   });
+
+  it('blocks a cross-site GET whose Origin is foreign, not just writes', () => {
+    // A hosted client can now hit localhost too, so a page reading the API is
+    // just as much a threat as one writing to it — the check applies to both.
+    expect(
+      isForbiddenRequest({
+        headers: { host: 'localhost:3333', origin: 'https://evil.com' },
+        method: 'GET',
+      }),
+    ).toBe(true);
+  });
+
+  it('trusts a paired origin even though it is not on a private network', () => {
+    const isPairedOrigin = (origin: string) => origin === 'https://app.papercamp.dev';
+    expect(
+      isForbiddenRequest(
+        { headers: { host: 'localhost:3333', origin: 'https://app.papercamp.dev' }, method: 'GET' },
+        isPairedOrigin,
+      ),
+    ).toBe(false);
+    expect(
+      isForbiddenRequest(
+        { headers: { host: 'localhost:3333', origin: 'https://evil.com' }, method: 'GET' },
+        isPairedOrigin,
+      ),
+    ).toBe(true);
+  });
 });
 
 function fakeReq(headers: Record<string, string | undefined>): IncomingMessage {

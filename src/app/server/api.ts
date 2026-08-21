@@ -15,6 +15,7 @@ import {
 } from './desk-services';
 import { createGitManager } from './git';
 import { sendJson } from './http';
+import { type PairingManager, type PairingManagerState, createPairingManager } from './pairing';
 import { buildRoutes, readRoutes } from './routes/index';
 import { type StatusManagerState, createStatusManager } from './status';
 
@@ -23,12 +24,12 @@ export interface ApiMiddleware {
   agent: AgentManager;
   services: DeskServiceManager;
   checks: DeskCheckManager;
+  pairing: PairingManager;
   getStatusState: () => StatusManagerState;
   getServiceState: () => DeskServiceManagerState;
   getCheckState: () => DeskCheckManagerState;
+  getPairingState: () => PairingManagerState;
 }
-
-const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 // Trusted because a DNS-rebinding attacker controls their own public domain,
 // never the victim's real hostname, so accepting it can't widen the rebinding surface.
@@ -82,22 +83,23 @@ export function isTrustedHost(host: string): boolean {
   return false;
 }
 
-/** Blocks DNS-rebinding (foreign Host) and cross-site CSRF (foreign Origin on a
- *  state-changing call). Returns true if the request should be rejected. */
-export function isForbiddenRequest(req: {
-  headers: { host?: string; origin?: string };
-  method?: string;
-}): boolean {
+/** Blocks DNS-rebinding (foreign Host) and cross-origin reads/writes alike (foreign
+ *  Origin). Once any hosted page can attempt a loopback request, "arrived from
+ *  loopback" stops being evidence the caller is the user's own client — so a
+ *  paired origin (established via /api/pair's shared token) is trusted the same
+ *  as a LAN/Tailscale one. Returns true if the request should be rejected. */
+export function isForbiddenRequest(
+  req: { headers: { host?: string; origin?: string }; method?: string },
+  isPairedOrigin: (origin: string) => boolean = () => false,
+): boolean {
   if (!isTrustedHost(hostOf(req.headers.host))) return true;
-  if (MUTATING_METHODS.has(req.method ?? '')) {
-    const origin = req.headers.origin;
-    if (origin) {
-      let originHost = 'invalid';
-      try {
-        originHost = hostOf(new URL(origin).host);
-      } catch {}
-      if (!isTrustedHost(originHost)) return true;
-    }
+  const origin = req.headers.origin;
+  if (origin) {
+    let originHost = 'invalid';
+    try {
+      originHost = hostOf(new URL(origin).host);
+    } catch {}
+    if (!isTrustedHost(originHost) && !isPairedOrigin(origin)) return true;
   }
   return false;
 }
@@ -135,11 +137,13 @@ export function createApiMiddleware(
   statusState?: StatusManagerState,
   serviceState?: DeskServiceManagerState,
   checkState?: DeskCheckManagerState,
+  pairingState?: PairingManagerState,
 ): ApiMiddleware {
   const git = createGitManager(root);
   const status = createStatusManager(root, statusState);
   const services = createDeskServiceManager(root, serviceState);
   const checks = createDeskCheckManager(root, checkState);
+  const pairing = createPairingManager(pairingState);
   const hooks = createAgentHooks(root, git);
   const agent = createAgentManager(
     root,
@@ -153,7 +157,7 @@ export function createApiMiddleware(
   );
   const activity = createActivityManager(root);
 
-  const routes = buildRoutes({ root, activity, agent, git, status, services, checks });
+  const routes = buildRoutes({ root, activity, agent, git, status, services, checks, pairing });
 
   const handler = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const pathname = (req.url ?? '').split('?')[0];
@@ -162,12 +166,22 @@ export function createApiMiddleware(
     // next() untouched so the SPA still loads from any interface.
     if (pathname.startsWith('/api/')) {
       applyCorsHeaders(req, res);
-      if (isForbiddenRequest(req)) {
-        sendJson(res, 403, { error: 'Forbidden: request failed the Host/Origin check' });
-        return;
-      }
+      // The preflight itself carries no credentials and changes nothing, so it's
+      // answered before the Host/Origin gate — otherwise an unpaired origin could
+      // never get far enough to call /api/pair and prove it's the user's client.
       if (req.method === 'OPTIONS') {
         handlePreflight(req, res);
+        return;
+      }
+      // /api/pair is how a not-yet-trusted origin becomes trusted, so it can't
+      // require Origin trust itself — only that the caller reached a real Host.
+      // Its own token check is what stands in for the Origin gate here.
+      const forbidden =
+        pathname === '/api/pair'
+          ? !isTrustedHost(hostOf(req.headers.host))
+          : isForbiddenRequest(req, pairing.isPairedOrigin);
+      if (forbidden) {
+        sendJson(res, 403, { error: 'Forbidden: request failed the Host/Origin check' });
         return;
       }
     }
@@ -197,8 +211,10 @@ export function createApiMiddleware(
   (handler as ApiMiddleware).agent = agent;
   (handler as ApiMiddleware).services = services;
   (handler as ApiMiddleware).checks = checks;
+  (handler as ApiMiddleware).pairing = pairing;
   (handler as ApiMiddleware).getStatusState = status.getState;
   (handler as ApiMiddleware).getServiceState = services.getState;
   (handler as ApiMiddleware).getCheckState = checks.getState;
+  (handler as ApiMiddleware).getPairingState = pairing.getState;
   return handler as ApiMiddleware;
 }

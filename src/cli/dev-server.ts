@@ -40,6 +40,9 @@ export async function startDevServer({ root, port }: DevServerOptions): Promise<
   }
 
   const apiMiddleware = createApiMiddleware(root);
+  console.log(
+    `Pairing token (paste into the hosted client to connect): ${apiMiddleware.pairing.token}`,
+  );
 
   async function serveStatic(req: IncomingMessage, res: ServerResponse) {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);

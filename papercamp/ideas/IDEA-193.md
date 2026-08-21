@@ -156,8 +156,9 @@ remains on both notes is work.
 - [x] Make the runtime answer a hosted origin
       CORS headers on API responses plus the Private Network Access preflight, so an https client can both reach and read `http://localhost:PORT`.
       run: 4m34s · 8.8k in · 12.2k out · sonnet-5
-- [ ] Pair the client to the runtime
+- [x] Pair the client to the runtime
       A pairing token issued when the runtime announces itself, an allow-list for the hosted client's exact origin, and origin checking extended to reads.
+      run: 6m48s · 1.5k in · 26k out · sonnet-5
 - [ ] Detach the client
       Ship the bundle as an artifact that takes a runtime URL, keeping `paper-camp dev` serving the same bundle locally.
 - [ ] Make every module declare the layer it needs
