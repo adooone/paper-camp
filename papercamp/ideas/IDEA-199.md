@@ -79,7 +79,8 @@ guide says.
 - [x] Add a `StylePassButton` action that appends the phase
       Gated on the plan having at least one completed phase; append via `patchByTitle` like the review-phases path, and export it from `actions/index.ts`.
       run: 2m35s · 370 in · 4.5k out · sonnet-5
-- [ ] Wire the button into the Phases toolbar next to Audit, Reconcile and Add review phases
+- [x] Wire the button into the Phases toolbar next to Audit, Reconcile and Add review phases
+      run: 2m45s · 522 in · 4.8k out · sonnet-5
 - [ ] Test the builder output and the one-completed-phase enablement
 
 ### Thread
