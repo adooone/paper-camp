@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.20.0](https://github.com/adooone/paper-camp/compare/v0.19.0...v0.20.0) (2026-08-21)
+
+
+### Features
+
+* **agent:** Fixes accumulate into one commit (IDEA-188) ([#171](https://github.com/adooone/paper-camp/issues/171)) ([a7f6750](https://github.com/adooone/paper-camp/commit/a7f6750a3b5f522b0797de78d51c592136fd2bd3))
+* **app:** Add stage-all/unstage-all and group git file list by folder ([4b7b882](https://github.com/adooone/paper-camp/commit/4b7b882c461dac98fe9d4b936cfd24de736b604b))
+* **app:** An Issues page you can act on (IDEA-192) ([#181](https://github.com/adooone/paper-camp/issues/181)) ([39c42a2](https://github.com/adooone/paper-camp/commit/39c42a25cc2690f9e423eec271e2d425fe7ade14))
+* **app:** Complete an idea without leaving (IDEA-194) ([#178](https://github.com/adooone/paper-camp/issues/178)) ([fe4721a](https://github.com/adooone/paper-camp/commit/fe4721a249d669244677dd9cd04ec90654aeeeb9))
+* **app:** Page texture fills the centre column (IDEA-189) ([#170](https://github.com/adooone/paper-camp/issues/170)) ([107a254](https://github.com/adooone/paper-camp/commit/107a2543f3ad2d56f124b793d7db3ce0bc0361aa))
+* **app:** Use the whole width (IDEA-186) ([#167](https://github.com/adooone/paper-camp/issues/167)) ([381810b](https://github.com/adooone/paper-camp/commit/381810bf6ac67913b5d98629fcb94b6b5811614b))
+* **core:** Version the corpus format (IDEA-168) ([#175](https://github.com/adooone/paper-camp/issues/175)) ([b6d2f82](https://github.com/adooone/paper-camp/commit/b6d2f82527135711536b5c7dba6d6ba63dbb5b5a))
+* **plans:** Fixes are their own entity (IDEA-187) ([#179](https://github.com/adooone/paper-camp/issues/179)) ([e21f249](https://github.com/adooone/paper-camp/commit/e21f249f2d8d87d556ce5181b3a6375b387ce0dc))
+* **server:** Make `clearPrCache` invalidate the persisted map ([75341f1](https://github.com/adooone/paper-camp/commit/75341f1a18d5e8e9a25c40e7e75371fb76e16e1a))
+* **server:** mark IDEA-181 review ([67f2ff3](https://github.com/adooone/paper-camp/commit/67f2ff30bbd0c903b0c0d020235bd93c244376e3))
+
+
+### Bug Fixes
+
+* **agent:** Agents commit only what they wrote (IDEA-190) ([#173](https://github.com/adooone/paper-camp/issues/173)) ([829d2d5](https://github.com/adooone/paper-camp/commit/829d2d50698f34dc4dec504cbf939cf7ff2c1013))
+* **app:** Dedupe React and rework button color tokens ([62f03d7](https://github.com/adooone/paper-camp/commit/62f03d711bd238798cd0be106d9573a2565dd8fb))
+* **app:** Filters and sort tell the truth (IDEA-183) ([#176](https://github.com/adooone/paper-camp/issues/176)) ([492233d](https://github.com/adooone/paper-camp/commit/492233db0efb4cd5847a7017298463216952fcbc))
+* **app:** Merge git-page header row and refresh diff after commit ([33920bb](https://github.com/adooone/paper-camp/commit/33920bbd415c86c89d503f72f8b29e2ad53b29bc))
+* **app:** One row treatment on the Plans page (IDEA-184) ([#169](https://github.com/adooone/paper-camp/issues/169)) ([3bd42a5](https://github.com/adooone/paper-camp/commit/3bd42a555f3de373993b2d097ed31808d027a189))
+* **app:** Prioritise lies about what it did (IDEA-179) ([#177](https://github.com/adooone/paper-camp/issues/177)) ([5849ef0](https://github.com/adooone/paper-camp/commit/5849ef05aa1e9fcb4113d3302f155fdd6d3339f3))
+* **core:** Rate limits must not rewrite status (IDEA-178) ([#172](https://github.com/adooone/paper-camp/issues/172)) ([94494d2](https://github.com/adooone/paper-camp/commit/94494d2104af7df84180dfe4d0a5f1f97ae90d25))
+* **server:** Skip idea-thread write for closed PR reviews ([ec4f866](https://github.com/adooone/paper-camp/commit/ec4f866ba4be08b7f5340ef430114eff0ebb843d))
+
 ## [0.19.0](https://github.com/adooone/paper-camp/compare/v0.18.1...v0.19.0) (2026-08-17)
 
 
