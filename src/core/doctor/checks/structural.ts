@@ -11,7 +11,7 @@ const PHASES_HEADING_LINE_RE = /^#{1,6}\s+Phases\s*$/i;
 const THREAD_TEXT_RE =
   /^(?:\d{4}-\d{2}-\d{2}\s+)?\[(?:log|clarification|review|note|decision|question|chat)\]/;
 const NOTE_ANCHOR_RE = /^\[(?:phase:\d+|body)\]/;
-const WIKILINK_RE = /\[\[\s*(IDEA-\d+)(?:\s*\|[^\]]*)?\s*\]\]/g;
+const WIKILINK_RE = /\[\[\s*((?:IDEA|TICKET)-\d+)(?:\s*\|[^\]]*)?\s*\]\]/g;
 
 const ACTIVE_STATUSES = new Set(['idea', 'planned', 'in-progress', 'review', 'open']);
 const CLOSED_STATUSES = new Set(['done', 'dropped']);

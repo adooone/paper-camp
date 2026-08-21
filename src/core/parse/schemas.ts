@@ -85,10 +85,10 @@ const entityFrontmatterObjectSchema = z
         'Work classification (Conventional Commits values) driving commit types and branch prefixes; usually set once a plan is drafted',
       ),
     kind: z
-      .enum(['note', 'fix'])
+      .enum(['note', 'fix', 'board', 'ticket'])
       .optional()
       .describe(
-        '"note" marks an entity that never grows phases; "fix" is a follow-up entity linked to a done/archived parent via `idea`; omitted for normal ideas',
+        '"note" marks an entity that never grows phases; "fix" is a follow-up entity linked to a done/archived parent via `idea`; "board" decomposes into "ticket" children instead of phases; "ticket" is a full entity linked back to its board via `idea`; omitted for normal ideas',
       ),
     status: z
       .enum(['idea', 'planned', 'in-progress', 'review', 'done', 'dropped', 'open'])
@@ -162,6 +162,10 @@ export const entityFrontmatterSchema = entityFrontmatterObjectSchema
   .refine((data) => data.kind !== 'fix' || data.idea !== undefined, {
     message: 'a kind: fix entity requires an idea: link to its parent',
     path: ['idea'],
+  })
+  .refine((data) => data.kind !== 'ticket' || data.idea !== undefined, {
+    message: 'a kind: ticket entity requires an idea: link to its board',
+    path: ['idea'],
   });
 
 export const deskServiceSchema = z.object({
@@ -198,8 +202,10 @@ export const paperCampConfigSchema = z.object({
   nextId: z
     .object({
       // idea: unified-entity counter, all new entities mint lifetime IDEA-N ids from
-      // here. The rest are legacy per-kind counters, still present in old configs.
+      // here. ticket: the board/ticket counter (IDEA-201), mints TICKET-N ids. The
+      // rest are legacy per-kind counters, still present in old configs.
       idea: z.number().optional(),
+      ticket: z.number().optional(),
       feat: z.number().optional(),
       fix: z.number().optional(),
       chore: z.number().optional(),

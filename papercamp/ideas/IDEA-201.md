@@ -32,8 +32,9 @@ The board's view lists its tickets with the same row treatment the main list use
 [[IDEA-195]] is the case that produced this. It is a `note`, so it has no phases, and its `### Sequencing` block is hand-numbered prose — which is why [[IDEA-117]] could claim to depend on "the first two steps" while nothing in the corpus enforced or tracked them. As a board, those five steps become five tickets with real ids, real status, and a real dependency [[IDEA-117]] can point at.
 
 ### Phases
-- [ ] Add `board` and `ticket` to the entity kinds
+- [x] Add `board` and `ticket` to the entity kinds
       Extend `EntityKind`, the frontmatter schema, and the `TICKET-N` counter in `config.json`; widen the doctor's wikilink check to resolve `[[TICKET-N]]`.
+      run: 4m5s · 6.1k in · 8k out · sonnet-5
 - [ ] Suppress phases on a board and derive its status
       `PhasesSection` is not rendered for a board; roll its status up from its tickets, stopping at `review`.
 - [ ] Render a board's tickets in its view
