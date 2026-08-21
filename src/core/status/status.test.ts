@@ -208,4 +208,9 @@ describe('deriveBoardStatus', () => {
   it('is review, never done, once every ticket is done', () => {
     expect(deriveBoardStatus(['done', 'done'])).toBe('review');
   });
+
+  it('is review when every ticket is resolved, mixing done and dropped', () => {
+    expect(deriveBoardStatus(['done', 'dropped'])).toBe('review');
+    expect(deriveBoardStatus(['dropped', 'dropped'])).toBe('review');
+  });
 });

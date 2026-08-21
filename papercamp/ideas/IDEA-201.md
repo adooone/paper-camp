@@ -46,6 +46,7 @@ The board's view lists its tickets with the same row treatment the main list use
 - [x] Convert [[IDEA-195]] into a board
       Turn its five sequencing steps into tickets and repoint [[IDEA-117]]'s dependency at the real ids.
       run: 3m · 7.3k in · 13.6k out · sonnet-5
+- [x] [manual] treat dropped tickets as terminal in board status rollup
 
 ### Fixes
 - [x] Hide tickets from the main plans list
@@ -55,3 +56,4 @@ The board's view lists its tickets with the same row treatment the main list use
 ### Thread
 - [x] 2026-08-21 [chat] tickets should be rendered inside board. It is the list inside board, so no tickets should be visible in the main list
 - [x] 2026-08-21 [chat] [agent] Got it — tickets should only ever show up inside their board's own list, not duplicated in the main worklist. Adding that as a fix here. (reopened this idea to re-run)
+- [x] 2026-08-21 [review] [agent] Comments · 2 findings — The diff delivers the boards-and-tickets feature coherently: a new `board`/`ticket` kind pair, per-kind `TICKET-N` counter, status rollup, ticket rendering reusing PlanRows, an API + modal for creation, and the IDEA-195 conversion — all with reasonable test coverage. It conforms to the spec and contradicts no settled decision. A couple of edge cases in status rollup and an offline-mode gap in ticket creation are worth a look, and the prioritise/thread-note refactor is bundled in beyond the stated scope.

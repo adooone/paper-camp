@@ -84,7 +84,7 @@ export function isArchivable(entity: ArchivabilityInput, pr: PrInfo | undefined)
 // since closing an entity is always a human promotion (IDEA-187), never automatic.
 export function deriveBoardStatus(ticketStatuses: EntityStatus[]): PlanStatus {
   if (ticketStatuses.length === 0) return 'idea';
-  if (ticketStatuses.every((s) => s === 'done')) return 'review';
+  if (ticketStatuses.every((s) => s === 'done' || s === 'dropped')) return 'review';
   if (ticketStatuses.some((s) => s !== 'idea' && s !== 'planned')) return 'in-progress';
   return 'planned';
 }
