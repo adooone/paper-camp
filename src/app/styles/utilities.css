@@ -143,27 +143,6 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * The Deliver row (entity-detail.tsx) gives the commit title input flex
- * priority over the Commit/Fix button, so the button is what yields when the
- * row is tight. Below a floor its full-label `Button` collapses to an
- * icon-only `IconButton` carrying the same label as its native title
- * tooltip, via a container query scoped to the button's own
- * `[container-type:inline-size]` wrapper — a `Button` alone can't shrink
- * past its label's min-content width, but swapping to an icon can.
- */
-.commit-btn-compact {
-  display: none;
-}
-@container (max-width: 140px) {
-  .commit-btn-full {
-    display: none;
-  }
-  .commit-btn-compact {
-    display: inline-flex;
-  }
-}
-
-/*
  * A running phase row fills left-to-right like a loading line: the fraction is
  * published as --phase-fill on the Phases wrapper (entity-detail.tsx) and read
  * here, since paper-ui's Table exposes only rowClassName (a static class), no

@@ -1,12 +1,11 @@
 import { GitStashSurface, GitSyncActions } from '@/app/components';
-import { CommitIcon } from '@/app/components/icons';
 import { entityRouteParam } from '@/app/hooks';
 import { type CommitFormFile, useCommitForm } from '@/app/hooks/use-commit-form';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import type { AgentTaskState, CheckStatus, ConsistencyIssue, PlanEntry } from '@/types/index';
-import { Button, IconButton, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
+import { Button, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -296,59 +295,44 @@ export const DeliverCommitButton = ({
 
   if (checksFailing) {
     const label = state.fixing ? 'Fixing…' : 'Fix';
-    const disabled = !state.canFix || state.fixing;
     return (
-      <div className="[container-type:inline-size]">
-        <Button
-          className="commit-btn-full"
-          size="small"
-          disabled={disabled}
-          onClick={state.handleFix}
-        >
-          {label}
-        </Button>
-        <IconButton
-          className="commit-btn-compact"
-          icon={<CommitIcon size={14} />}
-          size="small"
-          label={label}
-          disabled={disabled}
-          onClick={state.handleFix}
-        />
-      </div>
+      <CommitActionButton
+        label={label}
+        disabled={!state.canFix || state.fixing}
+        onClick={state.handleFix}
+      />
     );
   }
 
-  const label =
-    state.committing || state.commitInFlight
-      ? 'Committing…'
-      : state.stagedCount > 0
-        ? `Commit ${state.stagedCount} staged`
-        : 'Commit';
-  const disabled =
-    filesEmpty || !state.commitTitle.trim() || state.committing || state.commitInFlight;
+  const committing = state.committing || state.commitInFlight;
+  const label = committing
+    ? 'Committing…'
+    : state.stagedCount > 0
+      ? `Commit ${state.stagedCount} staged`
+      : 'Commit';
 
   return (
-    <div className="[container-type:inline-size]">
-      <Button
-        className="commit-btn-full"
-        size="small"
-        disabled={disabled}
-        onClick={state.handleCommit}
-      >
-        {label}
-      </Button>
-      <IconButton
-        className="commit-btn-compact"
-        icon={<CommitIcon size={14} />}
-        size="small"
-        label={label}
-        disabled={disabled}
-        onClick={state.handleCommit}
-      />
-    </div>
+    <CommitActionButton
+      label={label}
+      disabled={filesEmpty || !state.commitTitle.trim() || committing}
+      onClick={state.handleCommit}
+    />
   );
 };
+
+const CommitActionButton = ({
+  label,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+}) => (
+  <Button size="small" disabled={disabled} onClick={onClick}>
+    {label}
+  </Button>
+);
 
 export const DeliverEmptyState = () => {
   const gitAhead = useAppStore((s) => s.gitAhead);

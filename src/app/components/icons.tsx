@@ -148,22 +148,6 @@ export const ChevronRightIcon = ({ size = 12 }: IconProps) => (
   </svg>
 );
 
-export const CommitIcon = ({ size = 12 }: IconProps) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 20 20"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <circle cx="10" cy="10" r="3" />
-    <path d="M2.5 10h4.5M13 10h4.5" />
-  </svg>
-);
-
 export const BellIcon = ({ size = 16 }: IconProps) => (
   <svg
     width={size}

@@ -45,7 +45,6 @@ import { ProgressBar } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import {
-  branchEntityId,
   effectiveStatus,
   latestReviewNote,
   relativeDate,
@@ -306,31 +305,6 @@ const PhasesSection = ({
         }}
         className="phase-table-phone"
       />
-    </div>
-  );
-};
-
-const BranchRow = ({
-  plan,
-  gitBranch,
-  onOwnBranch,
-}: {
-  plan: PlanEntry;
-  gitBranch: string | null;
-  onOwnBranch: boolean;
-}) => {
-  const showBranchRow =
-    !onOwnBranch &&
-    (plan.status === 'planned' || plan.status === 'in-progress' || plan.status === 'review');
-  if (!showBranchRow) return null;
-
-  return (
-    <div className="flex items-center gap-3 flex-wrap mb-3 min-h-8">
-      <Card size="small" accent accentColor="amber" texture="kraft">
-        <span className="text-xs">
-          <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
-        </span>
-      </Card>
     </div>
   );
 };
@@ -676,7 +650,6 @@ const FeedbackSection = ({
 
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const allPlans = useAppStore((s) => s.plans);
-  const gitBranch = useAppStore((s) => s.gitBranch);
   const loadPlans = useAppStore((s) => s.loadPlans);
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
@@ -701,8 +674,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     log: plan.log,
   };
   const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
-  // The app never switches branches on its own; this just offers the plan's branch as one click.
-  const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
 
   useEffect(() => {
     loadTaskLog();
@@ -792,8 +763,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         />
       ) : (
         <>
-          <BranchRow plan={plan} gitBranch={gitBranch} onOwnBranch={onOwnBranch} />
-
           <PhasesSection
             plan={plan}
             auditRunning={auditRunning}

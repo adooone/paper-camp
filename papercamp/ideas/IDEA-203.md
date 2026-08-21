@@ -36,10 +36,12 @@ Branch creation is delivery, so it belongs with the other delivery controls in t
 - [x] Drop the on-branch card from the idea view
       `BranchRow`'s on-own-branch card duplicates the top bar; remove it and keep only the wrong-branch case.
       run: 2m23s · 233 in · 2.3k out · sonnet-5
+- [x] [manual] Remove wrong-branch card from plan detail view
 
 ### Fixes
-- [ ] Remove the wrong-branch card from the idea view
+- [x] Remove the wrong-branch card from the idea view
       The idea body says this case should read as a sidebar control, not a banner in the body — drop the remaining card that says main isn't the current idea branch.
+      run: 1m6s · 5.8k in · 3.8k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-21 [chat] I still see card with text - main is not current idea branch, we should remove it too
