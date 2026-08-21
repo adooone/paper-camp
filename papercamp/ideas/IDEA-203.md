@@ -2,7 +2,7 @@
 id: IDEA-203
 title: Direct-to-main delivery path
 type: feat
-status: idea
+status: in-progress
 created: 2026-08-21
 updated: 2026-08-21
 tags:
@@ -10,6 +10,7 @@ tags:
   - git
   - delivery
 subject: Review-queue hygiene
+order: 8
 ---
 
 Not every idea earns a branch. Small ones land straight on main, and the app has no way to finish them: every phase checked puts the idea in `review`, and `review` offers only Complete Idea, whose gate demands an open PR and green CI. An idea that never opened a PR can never satisfy that, so it sits in the review queue forever. [[IDEA-202]] hit this the day it was written.
@@ -32,5 +33,13 @@ Branch creation is delivery, so it belongs with the other delivery controls in t
 - [x] Move branch creation into the actions sidebar
       The create-and-switch control joins the other delivery actions in `PlanActionsColumn`.
       run: 5m52s · 9.2k in · 31.2k out · sonnet-5
-- [ ] Drop the on-branch card from the idea view
+- [x] Drop the on-branch card from the idea view
       `BranchRow`'s on-own-branch card duplicates the top bar; remove it and keep only the wrong-branch case.
+
+### Fixes
+- [ ] Remove the wrong-branch card from the idea view
+      The idea body says this case should read as a sidebar control, not a banner in the body — drop the remaining card that says main isn't the current idea branch.
+
+### Thread
+- [x] 2026-08-21 [chat] I still see card with text - main is not current idea branch, we should remove it too
+- [x] 2026-08-21 [chat] [agent] Added that as a fix here — dropping the remaining wrong-branch banner from the idea view now that branch control lives in the sidebar. (reopened this idea to re-run)
