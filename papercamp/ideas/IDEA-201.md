@@ -10,6 +10,7 @@ tags:
   - app
   - planning
 subject: The format as the product
+order: 7
 ---
 
 An idea with a phase list is the right unit for something small and quick. For a project the size of the multi-project hub it is the wrong one: the work splits into several independently plannable pieces, and a flat checklist cannot carry status, an agent run, or a thread per piece. A **board** is an idea that decomposes into **tickets** instead of phases, and a ticket is a full entity with everything an idea has — phases, status, thread, agent runs.
@@ -45,3 +46,4 @@ The board's view lists its tickets with the same row treatment the main list use
 ### Thread
 - [x] 2026-08-21 [log] [agent] It generalizes the fix/board mechanism and is named as the vehicle to turn IDEA-195's five sequencing steps into real tickets, which IDEA-117 needs before it can point at them as a tracked dependency.
 - [x] 2026-08-21 [log] [agent] IDEA-201 turns IDEA-195's five-step sequence into real tickets that IDEA-117 explicitly says it is blocked on, so it must precede the hub work; independent of the code-health cluster above.
+- [x] 2026-08-21 [log] [agent] Turns IDEA-195's hand-numbered sequencing prose into real tickets that IDEA-117 explicitly says it wants to point at, so it must land before IDEA-117 can rely on tracked dependencies.

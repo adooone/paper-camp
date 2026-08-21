@@ -8,6 +8,7 @@ tags:
   - code-health
   - tooling
 subject: Code health
+order: 3
 ---
 
 `docs/CODE_STYLE.md` §7 states a rule about *individual comments* — a comment
@@ -93,3 +94,4 @@ comments in tests, which the walker already excludes.
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] First phase is a cheap measurement/decision that resolves scope before the larger cleanup ideas below depend on the gate's shape.
+- [x] 2026-08-21 [log] [agent] Small, self-contained tooling gate with no dependency on the other code-health ideas, so it can land early and cheaply before the bigger refactors it will then also apply to.

@@ -9,6 +9,7 @@ tags:
   - multi-project
   - app
 subject: Multi-project
+order: 1
 ---
 
 Graduates Horizon 3's **Multi-project** bullet. Paper Camp shows every registered project in one desk instead of one browser tab per repo — a project switcher, and cross-project views on top of it. The data stays per-repo in git: never centralize the corpus, centralize only the lens.
@@ -37,3 +38,4 @@ Blocked on two things [[IDEA-195]] sequences ahead of it: pairing auth on the ru
 ### Thread
 - [x] 2026-08-21 [log] [agent] It explicitly states it is blocked on two things IDEA-193 sequences ahead of it (pairing auth, a detached client) and wants those steps tracked as tickets from IDEA-201, so it must come last.
 - [x] 2026-08-21 [log] [agent] Explicitly blocked on IDEA-195's (now IDEA-193/201) pairing-auth and detached-client steps, so it must sit last among these until that foundation lands.
+- [x] 2026-08-21 [log] [agent] Explicitly blocked on the two steps IDEA-195/193 sequences ahead of it (pairing auth, a detached client), so it can only proceed once those land.

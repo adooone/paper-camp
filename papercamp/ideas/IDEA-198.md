@@ -9,6 +9,7 @@ tags:
   - code-health
   - plans
 subject: Code health
+order: 5
 ---
 
 Four conventions the plans feature applies inconsistently. Each is small, each
@@ -90,3 +91,4 @@ Behaviour, again — this is convention only. Splitting `entity-detail.tsx`
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Names conventions (props, hooks, imports) that IDEA-197's extraction should already follow, so deciding them first avoids re-splitting files.
+- [x] 2026-08-21 [log] [agent] Explicitly scoped as 'everything else' after IDEA-197 handles the big file, and defers its own color-literal fix to IDEA-111, so it follows IDEA-197 directly.
