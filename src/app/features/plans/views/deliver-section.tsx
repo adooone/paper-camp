@@ -7,8 +7,8 @@ import {
   DeliverChecksRow,
   DeliverCommitButton,
   DeliverEmptyState,
-  useDeliverCommitForm,
 } from '../components';
+import { useDeliverCommitForm } from '../hooks';
 
 // Always rendered as the Phases table's panelFooter — never hidden, so the
 // panel reads as a persistent Deliver station rather than something that

@@ -70,7 +70,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
       timers[key] = setTimeout(run, ms);
     };
     const unsubscribe = subscribeToActivityStream((payload) => {
-      // Keeps the commit gate's consistency check warm for other pages (e.g. deliver-controls)
+      // Keeps the commit gate's consistency check warm for other pages (e.g. deliver-checks-row)
       // even while this panel — which no longer renders it — is what's mounted.
       if (payload.type === 'status') {
         schedule('status', () => useAppStore.getState().loadStatus(), 80);
