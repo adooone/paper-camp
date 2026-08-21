@@ -3,14 +3,14 @@ import { Breadcrumb, Card } from '@dendelion/paper-ui';
 import { selectWorklistRows } from './helpers';
 import { usePlansPage } from './hooks';
 import { PromoteSuggestionModal } from './modals';
-import { ReconcileQueueReview } from './views';
-import { EntityDetail } from './views';
-import { NoteDetail } from './views';
 import {
   ArchiveSection,
+  EntityDetail,
   ListView,
+  NoteDetail,
   PlansHeader,
   PlansListSkeleton,
+  ReconcileQueueReview,
   SuggestionsSection,
 } from './views';
 

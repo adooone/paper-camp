@@ -5,11 +5,13 @@ import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { branchEntityId } from '@/app/utils/branch-entity-id';
 import { Card, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
-import { RunAllPhasesButton } from '../actions';
-import { CompleteIdeaButton } from '../actions';
-import { CreateBranchButton } from '../actions';
-import { FixReviewButton } from '../actions';
-import { PrReviewButton } from '../actions';
+import {
+  CompleteIdeaButton,
+  CreateBranchButton,
+  FixReviewButton,
+  PrReviewButton,
+  RunAllPhasesButton,
+} from '../actions';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { canMarkPlanDone, effectiveStatus } from '../helpers';
 

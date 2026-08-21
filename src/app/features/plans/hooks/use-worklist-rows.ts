@@ -2,8 +2,7 @@ import { useRoadmapItemNames } from '@/app/features/roadmap';
 import { useSubjectVocabulary } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { useNavigate } from '@tanstack/react-router';
-import type { PlanSortKey, WorklistRow } from '../helpers';
-import { groupRowsBySubject } from '../helpers';
+import { type PlanSortKey, type WorklistRow, groupRowsBySubject } from '../helpers';
 
 export const useWorklistRows = (rows: WorklistRow[]) => {
   const {

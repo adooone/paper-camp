@@ -87,8 +87,9 @@ Behaviour, again — this is convention only. Splitting `entity-detail.tsx`
 - [x] Relocate useDeliverCommitForm and split its file
       Move the hook to `hooks/use-deliver-commit-form.ts` and break the remaining components out of `deliver-controls.tsx`.
       run: 2m26s · 661 in · 12.7k out · sonnet-5
-- [ ] Merge duplicate import statements
+- [x] Merge duplicate import statements
       Collapse each module imported twice into one statement across the six files.
+      run: 1m55s · 510 in · 7.2k out · sonnet-5
 - [ ] Codify the conventions in docs/CODE_STYLE.md
       Add rules for named props interfaces, feature hooks owning store access, hooks living in `hooks/`, one import per module, and `constants.ts` as the only sanctioned colour literal.
 

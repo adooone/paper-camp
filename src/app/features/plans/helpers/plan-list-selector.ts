@@ -1,5 +1,10 @@
-import type { IdeaEntry, IdeaStatus, PlanEntry, PlanStatus } from '@/types/index';
-import { PLAN_STATUSES } from '@/types/index';
+import {
+  type IdeaEntry,
+  type IdeaStatus,
+  PLAN_STATUSES,
+  type PlanEntry,
+  type PlanStatus,
+} from '@/types/index';
 import { phasePercentage } from './helpers';
 
 export type PlanSortKey = 'status' | 'updated' | 'title' | 'id' | 'progress' | 'order';

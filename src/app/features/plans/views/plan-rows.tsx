@@ -2,8 +2,7 @@ import { LightbulbIcon, MergeIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { Card, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
-import { PlanIdStamp } from '../components';
-import { ProgressBar } from '../components';
+import { PlanIdStamp, ProgressBar } from '../components';
 import { PR_STATE_STAMP, STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
 
