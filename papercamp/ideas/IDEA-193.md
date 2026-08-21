@@ -159,8 +159,9 @@ remains on both notes is work.
 - [x] Pair the client to the runtime
       A pairing token issued when the runtime announces itself, an allow-list for the hosted client's exact origin, and origin checking extended to reads.
       run: 6m48s · 1.5k in · 26k out · sonnet-5
-- [ ] Detach the client
+- [x] Detach the client
       Ship the bundle as an artifact that takes a runtime URL, keeping `paper-camp dev` serving the same bundle locally.
+      run: 5m21s · 650 in · 16.2k out · sonnet-5
 - [ ] Make every module declare the layer it needs
       Capability-aware modules so the client composes from what is reachable and a runtime-only feature says so in place.
 - [ ] Reach the corpus with no runtime
