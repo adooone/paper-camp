@@ -79,26 +79,37 @@ survives any tool — the app is optional at every step.
 
 ## Installing into your own project
 
-Paper Camp ships on npm. In any git repo:
+Paper Camp ships on npm and installs like any other dev dependency — the
+runtime lives in the repo it serves, alongside the `papercamp/` corpus it
+reads, pinned in your lockfile so it stays reproducible on any clone:
 
 ```bash
-npx @dendelion/paper-camp init      # scaffold papercamp/ + Claude Code hooks
-npx @dendelion/paper-camp dev       # dashboard at localhost:3333 (-p to change)
+npm install --save-dev @dendelion/paper-camp   # or pnpm add -D / yarn add -D
+npx paper-camp init                            # scaffold papercamp/ + Claude Code hooks
+npx paper-camp dev                              # dashboard at localhost:3333 (-p to change)
 ```
+
+Once installed, `npx` (or `pnpm exec`/`yarn`) resolves the pinned local copy
+rather than fetching latest on every run. Upgrading later is a normal
+dependency bump — `npm update @dendelion/paper-camp` (or the pnpm/yarn
+equivalent) — reviewed and committed like any other; check `npx paper-camp
+--version` against the [changelog](CHANGELOG.md) if you want to confirm what
+shipped since you last bumped it. A repo with no `package.json` (or no
+interest in pinning) can still reach for `npx @dendelion/paper-camp@latest`,
+but loses that reproducibility.
 
 `init` creates the corpus and the `.claude/` integration (a paper-camp skill
 plus session hooks), so Claude Code sessions in that repo work the method
 natively. For the full loop you also want `gh auth login` (PR features) and a
-coding agent CLI (`claude` or `opencode`) on PATH. Note the published version
-trails this repo's main — cut a release to ship the newest desk.
+coding agent CLI (`claude` or `opencode`) on PATH.
 
 Working on Paper Camp itself is the clone path instead: `pnpm install`,
 `pnpm dev`, open `localhost:3333`.
 
 ## Introducing someone
 
-1. `npx @dendelion/paper-camp init` in a repo of theirs (or yours), then
-   `npx @dendelion/paper-camp dev`.
+1. `npm install --save-dev @dendelion/paper-camp` in a repo of theirs (or
+   yours), then `npx paper-camp init` and `npx paper-camp dev`.
 2. Have them read this page in the Docs tab.
 3. First exercise: capture a small real idea → *Extend* → *Draft plan* →
    *Create branch* → run one phase → commit from the Stack panel. One loop

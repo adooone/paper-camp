@@ -1,9 +1,10 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 import { CORPUS_FORMAT_VERSION } from '../corpus-format';
-import { initProject } from './scaffold';
+import { PAPER_CAMP_VERSION, initProject } from './scaffold';
 
 const dirs: string[] = [];
 
@@ -16,6 +17,14 @@ async function makeTempDir(prefix: string): Promise<string> {
   dirs.push(root);
   return root;
 }
+
+describe('PAPER_CAMP_VERSION', () => {
+  it("tracks this package's own version rather than a hand-kept constant", async () => {
+    const packageJsonPath = fileURLToPath(new URL('../../../package.json', import.meta.url));
+    const pkg = JSON.parse(await readFile(packageJsonPath, 'utf-8'));
+    expect(PAPER_CAMP_VERSION).toBe(pkg.version);
+  });
+});
 
 describe('initProject Claude Code integration scaffolding', () => {
   it('writes the skill file and settings.json hooks', async () => {

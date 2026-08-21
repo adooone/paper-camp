@@ -2,7 +2,7 @@
 id: IDEA-193
 title: Client, runtime and plugin layers
 type: feat
-status: in-progress
+status: review
 created: 2026-08-19
 updated: 2026-08-21
 tags:
@@ -182,8 +182,9 @@ remains on both notes is work.
 - [x] Split plugins into two extension points
       Separate external services from local adapters, each with its own credential store and failure mode.
       run: 9m4s · 4.7k in · 22.5k out · sonnet-5
-- [ ] Package the runtime as an installed repo dependency
+- [x] Package the runtime as an installed repo dependency
       Ship it as a dev dependency run from the repo it serves, alongside the papercamp/ corpus.
+      run: 17m12s · 5.5k in · 29.6k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] It's an unresolved research note whose measurement (localhost carve-out) and settled decisions (runtime scope, registry home, folder scanning) are the frozen contract IDEA-117 and IDEA-201's board conversion explicitly depend on.
