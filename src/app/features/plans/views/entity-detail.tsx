@@ -11,9 +11,7 @@ import {
   useTrail,
 } from '@/app/features/plans/hooks';
 import { entityRouteParam } from '@/app/hooks';
-import { createPlanBranch } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import { type UsageRollup, formatDuration, formatTokens, rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
@@ -47,6 +45,7 @@ import { ProgressBar } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import {
+  branchEntityId,
   effectiveStatus,
   latestReviewNote,
   relativeDate,
@@ -58,12 +57,6 @@ import { CreateIdeaModal } from '../modals/create-idea-modal';
 
 interface EntityDetailProps {
   plan: PlanEntry;
-}
-
-/** Parses the entity id a feature branch encodes (feat/idea-43-… → IDEA-43). */
-function branchEntityId(branch: string | null): string | null {
-  const match = branch?.match(/^[a-z]+\/([a-z]+-\d+)-/);
-  return match ? match[1].toUpperCase() : null;
 }
 
 const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
@@ -321,14 +314,10 @@ const BranchRow = ({
   plan,
   gitBranch,
   onOwnBranch,
-  branching,
-  onCreateBranch,
 }: {
   plan: PlanEntry;
   gitBranch: string | null;
   onOwnBranch: boolean;
-  branching: boolean;
-  onCreateBranch: () => void;
 }) => {
   const showBranchRow =
     plan.status === 'planned' || plan.status === 'in-progress' || plan.status === 'review';
@@ -336,25 +325,14 @@ const BranchRow = ({
 
   return (
     <div className="flex items-center gap-3 flex-wrap mb-3 min-h-8">
-      {showBranchRow && !onOwnBranch && (
+      {!onOwnBranch && (
         <Card size="small" accent accentColor="amber" texture="kraft">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-xs">
-              <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
-            </span>
-            {plan.id && (
-              <Tooltip
-                content={`Creates ${(plan.kind ?? 'feat').toLowerCase()}/${plan.id.toLowerCase()}-… from main, or switches to it if it already exists`}
-              >
-                <Button size="small" onClick={onCreateBranch} disabled={branching}>
-                  {branching ? 'Switching…' : 'Create branch'}
-                </Button>
-              </Tooltip>
-            )}
-          </div>
+          <span className="text-xs">
+            <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch.
+          </span>
         </Card>
       )}
-      {showBranchRow && onOwnBranch && (
+      {onOwnBranch && (
         <Card size="small" texture="paper">
           <span className="text-xs opacity-[0.6]">
             <code>{gitBranch}</code>
@@ -707,11 +685,9 @@ const FeedbackSection = ({
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const allPlans = useAppStore((s) => s.plans);
   const gitBranch = useAppStore((s) => s.gitBranch);
-  const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const loadPlans = useAppStore((s) => s.loadPlans);
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
-  const [branching, setBranching] = useState(false);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
   const detailView = useAppStore((s) => s.detailView);
@@ -739,25 +715,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   useEffect(() => {
     loadTaskLog();
   }, [loadTaskLog]);
-
-  const handleCreateBranch = async () => {
-    if (!plan.id) return;
-    setBranching(true);
-    try {
-      const { branch, warning } = await createPlanBranch(plan.id);
-      toast({ title: 'Branch ready', description: `Now on ${branch}`, variant: 'success' });
-      if (warning) toast({ title: 'Stale fork', description: warning, variant: 'warning' });
-      await loadGitStatus();
-    } catch (err) {
-      toast({
-        title: 'Branch failed',
-        description: oneLineErrorSummary((err as Error).message),
-        variant: 'error',
-      });
-    } finally {
-      setBranching(false);
-    }
-  };
 
   const handleTogglePhase = async (index: number) => {
     const nextPhases: PhaseItem[] = plan.phases.map((phase, i) =>
@@ -843,13 +800,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         />
       ) : (
         <>
-          <BranchRow
-            plan={plan}
-            gitBranch={gitBranch}
-            onOwnBranch={onOwnBranch}
-            branching={branching}
-            onCreateBranch={handleCreateBranch}
-          />
+          <BranchRow plan={plan} gitBranch={gitBranch} onOwnBranch={onOwnBranch} />
 
           <PhasesSection
             plan={plan}

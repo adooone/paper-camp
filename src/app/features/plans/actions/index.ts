@@ -2,6 +2,7 @@ export * from './add-review-phases-button';
 export * from './agent-start-button';
 export * from './audit-phases-button';
 export * from './complete-idea-button';
+export * from './create-branch-button';
 export * from './draft-plan-button';
 export * from './extend-idea-button';
 export * from './fix-review-button';

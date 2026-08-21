@@ -29,7 +29,8 @@ Branch creation is delivery, so it belongs with the other delivery controls in t
 - [x] Give both routes one name
       The PR route and the direct route reach the same end state and should say so; keep the distinction in what each verifies, not in the label.
       run: 2m41s · 230 in · 3.4k out · sonnet-5
-- [ ] Move branch creation into the actions sidebar
+- [x] Move branch creation into the actions sidebar
       The create-and-switch control joins the other delivery actions in `PlanActionsColumn`.
+      run: 5m52s · 9.2k in · 31.2k out · sonnet-5
 - [ ] Drop the on-branch card from the idea view
       `BranchRow`'s on-own-branch card duplicates the top bar; remove it and keep only the wrong-branch case.
