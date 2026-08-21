@@ -34,8 +34,3 @@ Waits on two phases of [[IDEA-193]]: pairing the client to a runtime, and detach
 - [ ] Build the project switcher
 - [ ] Ship cross-project views
       Everything-in-review, overnight agent activity, and global idea search composed from the fan-out.
-
-### Thread
-- [x] 2026-08-21 [log] [agent] It explicitly states it is blocked on two things IDEA-193 sequences ahead of it (pairing auth, a detached client) and wants those steps tracked as tickets from IDEA-201, so it must come last.
-- [x] 2026-08-21 [log] [agent] Explicitly blocked on IDEA-195's (now IDEA-193/201) pairing-auth and detached-client steps, so it must sit last among these until that foundation lands.
-- [x] 2026-08-21 [log] [agent] Explicitly blocked on the two steps IDEA-195/193 sequences ahead of it (pairing auth, a detached client), so it can only proceed once those land.

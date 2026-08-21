@@ -41,12 +41,7 @@ The board's view lists its tickets with the same row treatment the main list use
 - [x] Render a board's tickets in its view
       Reuse the main list's row treatment (`PlanRows`), scoped to the board, with the ticket-to-board backlink. Behaviour may diverge — strict order, board-specific actions — but the phases `Table` is never used here.
       run: 4m45s · 4.2k in · 8.7k out · sonnet-5
-- [ ] Create and decompose from the app
+- [x] Create and decompose from the app
       Mark a new idea as a board, and add tickets to it without leaving its view.
 - [ ] Convert [[IDEA-195]] into a board
       Turn its five sequencing steps into tickets and repoint [[IDEA-117]]'s dependency at the real ids.
-
-### Thread
-- [x] 2026-08-21 [log] [agent] It generalizes the fix/board mechanism and is named as the vehicle to turn IDEA-195's five sequencing steps into real tickets, which IDEA-117 needs before it can point at them as a tracked dependency.
-- [x] 2026-08-21 [log] [agent] IDEA-201 turns IDEA-195's five-step sequence into real tickets that IDEA-117 explicitly says it is blocked on, so it must precede the hub work; independent of the code-health cluster above.
-- [x] 2026-08-21 [log] [agent] Turns IDEA-195's hand-numbered sequencing prose into real tickets that IDEA-117 explicitly says it wants to point at, so it must land before IDEA-117 can rely on tracked dependencies.

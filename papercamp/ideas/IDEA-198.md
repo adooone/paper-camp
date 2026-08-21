@@ -88,7 +88,3 @@ Behaviour, again — this is convention only. Splitting `entity-detail.tsx`
       Collapse each module imported twice into one statement across the six files.
 - [ ] Codify the conventions in docs/CODE_STYLE.md
       Add rules for named props interfaces, feature hooks owning store access, hooks living in `hooks/`, one import per module, and `constants.ts` as the only sanctioned colour literal.
-
-### Thread
-- [x] 2026-08-21 [log] [agent] Names conventions (props, hooks, imports) that IDEA-197's extraction should already follow, so deciding them first avoids re-splitting files.
-- [x] 2026-08-21 [log] [agent] Explicitly scoped as 'everything else' after IDEA-197 handles the big file, and defers its own color-literal fix to IDEA-111, so it follows IDEA-197 directly.
