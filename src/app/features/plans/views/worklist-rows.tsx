@@ -200,13 +200,12 @@ export const WorklistRows = ({
   );
 };
 
-const NoteRowCard = ({
-  row,
-  onOpen,
-}: {
+interface NoteRowCardProps {
   row: NoteRow;
   onOpen?: (title: string) => void;
-}) => {
+}
+
+const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
   const idea = row.idea;
   const status = idea.status ?? 'open';
   return (
@@ -257,15 +256,13 @@ const NoteRowCard = ({
 const FIX_ROW_GRID_CLASS =
   'grid grid-cols-[76px_minmax(0,1fr)_112px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
-const FixRowCard = ({
-  row,
-  activePlanTitle,
-  onOpen,
-}: {
+interface FixRowCardProps {
   row: FixRow;
   activePlanTitle?: string | null;
   onOpen?: (title: string) => void;
-}) => {
+}
+
+const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const fix = row.fix;
   const status = effectiveStatus(fix, agentStatus);

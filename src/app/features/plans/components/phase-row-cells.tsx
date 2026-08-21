@@ -5,19 +5,21 @@ import { STATUS_STAMP } from '../constants';
 import { type WorkRow, isRunningRow } from '../helpers';
 import type { RunningPhaseFill } from '../hooks';
 
+interface PhaseCheckboxCellProps {
+  row: WorkRow;
+  runningFill: RunningPhaseFill | null;
+  updating: boolean;
+  onTogglePhase: (index: number) => void;
+  onToggleFix: (index: number) => void;
+}
+
 export const PhaseCheckboxCell = ({
   row,
   runningFill,
   updating,
   onTogglePhase,
   onToggleFix,
-}: {
-  row: WorkRow;
-  runningFill: RunningPhaseFill | null;
-  updating: boolean;
-  onTogglePhase: (index: number) => void;
-  onToggleFix: (index: number) => void;
-}) =>
+}: PhaseCheckboxCellProps) =>
   isRunningRow(row, runningFill) ? (
     <Spinner size="small" />
   ) : (
@@ -28,13 +30,12 @@ export const PhaseCheckboxCell = ({
     />
   );
 
-export const PhaseTitleCell = ({
-  row,
-  runningFill,
-}: {
+interface PhaseTitleCellProps {
   row: WorkRow;
   runningFill: RunningPhaseFill | null;
-}) => (
+}
+
+export const PhaseTitleCell = ({ row, runningFill }: PhaseTitleCellProps) => (
   <span
     className={`inline-flex min-w-0 max-w-full items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
   >
@@ -67,17 +68,19 @@ export const PhaseTitleCell = ({
   </span>
 );
 
+interface PhaseActionsCellProps {
+  row: WorkRow;
+  runningFill: RunningPhaseFill | null;
+  agentBusy: boolean;
+  planId: string | undefined;
+}
+
 export const PhaseActionsCell = ({
   row,
   runningFill,
   agentBusy,
   planId,
-}: {
-  row: WorkRow;
-  runningFill: RunningPhaseFill | null;
-  agentBusy: boolean;
-  planId: string | undefined;
-}) => {
+}: PhaseActionsCellProps) => {
   if (isRunningRow(row, runningFill)) return null;
   if (row.item.done) {
     const run = row.item.run;

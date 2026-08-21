@@ -20,6 +20,20 @@ import { type WorkRow, isRunningRow } from '../helpers';
 
 const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
 
+interface PhasesSectionProps {
+  plan: PlanEntry;
+  auditRunning: boolean;
+  agentBusy: boolean;
+  runningFill: RunningPhaseFill | null;
+  updating: boolean;
+  onTogglePhase: (index: number) => void;
+  onToggleFix: (index: number) => void;
+  onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
+  ideaView: IdeaEntry;
+  otherPlans: PlanEntry[];
+  deliverPanel: ReactNode;
+}
+
 export const PhasesSection = ({
   plan,
   auditRunning,
@@ -32,19 +46,7 @@ export const PhasesSection = ({
   ideaView,
   otherPlans,
   deliverPanel,
-}: {
-  plan: PlanEntry;
-  auditRunning: boolean;
-  agentBusy: boolean;
-  runningFill: RunningPhaseFill | null;
-  updating: boolean;
-  onTogglePhase: (index: number) => void;
-  onToggleFix: (index: number) => void;
-  onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
-  ideaView: IdeaEntry;
-  otherPlans: PlanEntry[];
-  deliverPanel: ReactNode;
-}) => {
+}: PhasesSectionProps) => {
   const launchRunAll = useAppStore((s) => s.launchRunAll);
   const fixes = plan.fixes ?? [];
   const hasOpenFix = fixes.some((fix) => !fix.done);

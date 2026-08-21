@@ -12,13 +12,12 @@ const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity
  * (IDEA-201) — never the phases Table, since a board carries no phases of its own.
  * Adding a ticket stays on this view: it posts straight to the board's own list
  * and reloads, rather than navigating to a separate creation flow. */
-export const TicketsSection = ({
-  plan,
-  otherPlans,
-}: {
+interface TicketsSectionProps {
   plan: PlanEntry;
   otherPlans: PlanEntry[];
-}) => {
+}
+
+export const TicketsSection = ({ plan, otherPlans }: TicketsSectionProps) => {
   const navigate = useNavigate();
   const loadPlans = useAppStore((s) => s.loadPlans);
   const tickets = otherPlans.filter((p) => p.entityKind === 'ticket' && p.idea === plan.id);

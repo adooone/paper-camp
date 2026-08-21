@@ -13,7 +13,11 @@ import {
 // Always rendered as the Phases table's panelFooter — never hidden, so the
 // panel reads as a persistent Deliver station rather than something that
 // pops in only once there happens to be a change to commit.
-export const DeliverSection = ({ plan }: { plan: PlanEntry }) => {
+interface DeliverSectionProps {
+  plan: PlanEntry;
+}
+
+export const DeliverSection = ({ plan }: DeliverSectionProps) => {
   const gitStatus = useAppStore((s) => s.gitStatus);
   const files = useMemo(
     () => gitStatus?.map((entry) => ({ path: entry.path, staged: entry.staged })) ?? [],

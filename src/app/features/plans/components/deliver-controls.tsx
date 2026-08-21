@@ -50,19 +50,15 @@ const CHECK_VARIANT: Record<CheckStatus, StampVariant> = {
   stale: 'neutral',
 };
 
-const CheckStamp = ({
-  label,
-  status,
-  title,
-  anyRunning,
-  onClick,
-}: {
+interface CheckStampProps {
   label: string;
   status: CheckStatus;
   title: string;
   anyRunning: boolean;
   onClick: () => void;
-}) => (
+}
+
+const CheckStamp = ({ label, status, title, anyRunning, onClick }: CheckStampProps) => (
   <Tooltip content={title}>
     {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
     <button
@@ -195,7 +191,11 @@ export const DeliverChecksRow = () => {
   );
 };
 
-export const DeliverChangedFiles = ({ count }: { count: number }) => {
+interface DeliverChangedFilesProps {
+  count: number;
+}
+
+export const DeliverChangedFiles = ({ count }: DeliverChangedFilesProps) => {
   const navigate = useNavigate();
   return (
     // Raw <button>: paper-ui Button has no inline-underlined link style.
@@ -277,13 +277,12 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: CommitFormFile[]) =
 export type DeliverCommitFormState = ReturnType<typeof useDeliverCommitForm>;
 
 // Becomes Fix on a failing check — a plan always exists here, unlike the git page's GitCommitButton.
-export const DeliverCommitButton = ({
-  state,
-  filesEmpty,
-}: {
+interface DeliverCommitButtonProps {
   state: DeliverCommitFormState;
   filesEmpty: boolean;
-}) => {
+}
+
+export const DeliverCommitButton = ({ state, filesEmpty }: DeliverCommitButtonProps) => {
   const status = useAppStore((s) => s.status);
   const { checks: deskChecks } = useDeskChecks();
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
@@ -320,15 +319,13 @@ export const DeliverCommitButton = ({
   );
 };
 
-const CommitActionButton = ({
-  label,
-  disabled,
-  onClick,
-}: {
+interface CommitActionButtonProps {
   label: string;
   disabled: boolean;
   onClick: () => void;
-}) => (
+}
+
+const CommitActionButton = ({ label, disabled, onClick }: CommitActionButtonProps) => (
   <Button size="small" disabled={disabled} onClick={onClick}>
     {label}
   </Button>

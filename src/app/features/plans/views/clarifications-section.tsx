@@ -2,7 +2,11 @@ import type { LogEntry } from '@/types/index';
 
 const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
 
-export const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] }) => {
+interface ClarificationsSectionProps {
+  clarifications: LogEntry[];
+}
+
+export const ClarificationsSection = ({ clarifications }: ClarificationsSectionProps) => {
   if (clarifications.length === 0) return null;
   return (
     <div className="mb-5">

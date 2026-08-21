@@ -2,15 +2,13 @@ import type { UsageRollup } from '@/core/phase-run';
 import { ProgressBar } from '../components';
 import { RunCostSummary } from './run-cost-summary';
 
-export const PlanProgressRow = ({
-  progress,
-  color: barColor,
-  rollup,
-}: {
+interface PlanProgressRowProps {
   progress: { pct: number; done: number; total: number } | null;
   color: string;
   rollup: UsageRollup;
-}) => {
+}
+
+export const PlanProgressRow = ({ progress, color: barColor, rollup }: PlanProgressRowProps) => {
   if (progress === null && rollup.runs === 0) return null;
   return (
     // min-w-min, not a fixed rem: the cost stamp's width depends on its numbers, so

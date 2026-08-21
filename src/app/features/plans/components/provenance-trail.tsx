@@ -6,17 +6,14 @@ import { ReviewSignalBadge } from './review-signal-badge';
 const REACHED_STAMP = { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' };
 const UNREACHED_STAMP = { fill: 'rgba(0, 0, 0, 0.05)', text: 'rgba(0, 0, 0, 0.35)' };
 
-const TrailNode = ({
-  reached,
-  label,
-  tooltip,
-  href,
-}: {
+interface TrailNodeProps {
   reached: boolean;
   label: string;
   tooltip?: string;
   href?: string;
-}) => {
+}
+
+const TrailNode = ({ reached, label, tooltip, href }: TrailNodeProps) => {
   const stamp = (
     <Stamp
       size="small"

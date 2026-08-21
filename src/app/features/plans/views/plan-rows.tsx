@@ -13,21 +13,17 @@ interface PlanRowsProps {
   onOpen?: (title: string) => void;
 }
 
-/** The gutter outside a row card: spinner while an agent works, run-order stamp, a check for done, or blank. */
-export const RowMarker = ({
-  order,
-  done,
-  running,
-  status,
-  fallback,
-}: {
+interface RowMarkerProps {
   order?: number;
   done?: boolean;
   running?: boolean;
   status?: string;
   /** Queue position was computed from a status guess (GitHub unreachable) — see plan.statusFallback. */
   fallback?: boolean;
-}) => (
+}
+
+/** The gutter outside a row card: spinner while an agent works, run-order stamp, a check for done, or blank. */
+export const RowMarker = ({ order, done, running, status, fallback }: RowMarkerProps) => (
   <span className="flex-[0_0_36px] flex items-center justify-center">
     {running ? (
       <Spinner size="small" label="Agent running" />

@@ -3,7 +3,11 @@ import type { PlanEntry } from '@/types/index';
 
 const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
 
-export const PlanBodySection = ({ plan }: { plan: PlanEntry }) => {
+interface PlanBodySectionProps {
+  plan: PlanEntry;
+}
+
+export const PlanBodySection = ({ plan }: PlanBodySectionProps) => {
   if (!plan.body) return null;
   return (
     <div className="mb-4">

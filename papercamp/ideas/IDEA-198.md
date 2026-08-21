@@ -78,8 +78,9 @@ Behaviour, again — this is convention only. Splitting `entity-detail.tsx`
 ([[IDEA-197]]). Any change to paper-ui.
 
 ### Phases
-- [ ] Name every props interface
+- [x] Name every props interface
       Replace the 11 inline props type literals with `{Component}Props` interfaces.
+      run: 2m22s · 6.1k in · 15.2k out · sonnet-5
 - [ ] Give store-heavy components a feature hook
       Extract one `hooks/` hook per component for `plans-page.tsx`, `worklist-rows.tsx`, and `deliver-controls.tsx`; leave `entity-detail.tsx` to [[IDEA-197]].
 - [ ] Relocate useDeliverCommitForm and split its file

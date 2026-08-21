@@ -2,17 +2,14 @@ import { useTrail } from '@/app/features/plans/hooks';
 import { Skeleton } from '@dendelion/paper-ui';
 import { ProvenanceTrailPanel } from '../components';
 
-export const TrailSection = ({
-  planId,
-  released,
-  reviewing,
-  reviewNote,
-}: {
+interface TrailSectionProps {
   planId: string | undefined;
   released?: string;
   reviewing?: boolean;
   reviewNote?: string;
-}) => {
+}
+
+export const TrailSection = ({ planId, released, reviewing, reviewNote }: TrailSectionProps) => {
   const trail = useTrail(planId);
   if (!planId) return null;
   return (

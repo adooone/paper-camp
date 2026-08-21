@@ -3,7 +3,11 @@ import { Stamp, Tooltip } from '@dendelion/paper-ui';
 
 // Same stamp as a phase row's run cost, and the same three-item shape — the
 // rollup swaps the phase's single model for a run count.
-export const RunCostSummary = ({ rollup }: { rollup: UsageRollup }) => {
+interface RunCostSummaryProps {
+  rollup: UsageRollup;
+}
+
+export const RunCostSummary = ({ rollup }: RunCostSummaryProps) => {
   if (rollup.runs === 0) return null;
   return (
     // shrink-0: the stamp sets its own width from nowrap text, so letting flex

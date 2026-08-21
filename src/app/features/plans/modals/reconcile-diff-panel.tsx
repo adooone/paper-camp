@@ -13,7 +13,11 @@ interface ReconcileDiffPanelProps {
   queuePosition?: { index: number; total: number };
 }
 
-export const DiffText = ({ tokens }: { tokens: DiffToken[] }) => (
+interface DiffTextProps {
+  tokens: DiffToken[];
+}
+
+export const DiffText = ({ tokens }: DiffTextProps) => (
   <>
     {tokens.map((token, i) => {
       if (token.type === 'same') return <span key={`${token.type}-${i}`}>{token.text}</span>;

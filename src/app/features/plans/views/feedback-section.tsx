@@ -6,6 +6,15 @@ import { CreateIdeaModal } from '../modals/create-idea-modal';
 
 const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
 
+interface FeedbackSectionProps {
+  plan: PlanEntry;
+  updating: boolean;
+  onSend: (text: string) => Promise<boolean>;
+  undo: { commitSha: string } | null;
+  undoing: boolean;
+  onUndo: () => void;
+}
+
 export const FeedbackSection = ({
   plan,
   updating,
@@ -13,14 +22,7 @@ export const FeedbackSection = ({
   undo,
   undoing,
   onUndo,
-}: {
-  plan: PlanEntry;
-  updating: boolean;
-  onSend: (text: string) => Promise<boolean>;
-  undo: { commitSha: string } | null;
-  undoing: boolean;
-  onUndo: () => void;
-}) => {
+}: FeedbackSectionProps) => {
   const {
     thread,
     input,
