@@ -254,6 +254,8 @@ export const SetupSection = () => {
   };
 
   const allOk = connections?.every((c) => c.status === 'ok') ?? true;
+  const externalConnections = connections?.filter((c) => c.kind === 'external') ?? [];
+  const localConnections = connections?.filter((c) => c.kind === 'local') ?? [];
 
   return (
     <div>
@@ -276,19 +278,46 @@ export const SetupSection = () => {
               </Alert>
             </div>
           )}
-          <Card size="small" texture="kraft">
-            {connections.map((c, idx) => (
-              <ConnectionRow
-                key={c.id}
-                connection={c}
-                isLast={idx === connections.length - 1}
-                onRecheck={handleRecheck}
-                rechecking={reloadingId === c.id}
-                onConnect={handleConnect}
-                connecting={connectingId === c.id}
-              />
-            ))}
-          </Card>
+          {externalConnections.length > 0 && (
+            <div className="mb-4">
+              <p className="opacity-[0.45] text-sm mt-0 mb-2">
+                External services — reached on your behalf with their own remote credential.
+              </p>
+              <Card size="small" texture="kraft">
+                {externalConnections.map((c, idx) => (
+                  <ConnectionRow
+                    key={c.id}
+                    connection={c}
+                    isLast={idx === externalConnections.length - 1}
+                    onRecheck={handleRecheck}
+                    rechecking={reloadingId === c.id}
+                    onConnect={handleConnect}
+                    connecting={connectingId === c.id}
+                  />
+                ))}
+              </Card>
+            </div>
+          )}
+          {localConnections.length > 0 && (
+            <div className="mb-4">
+              <p className="opacity-[0.45] text-sm mt-0 mb-2">
+                Local adapters — driven on this machine with their own local session.
+              </p>
+              <Card size="small" texture="kraft">
+                {localConnections.map((c, idx) => (
+                  <ConnectionRow
+                    key={c.id}
+                    connection={c}
+                    isLast={idx === localConnections.length - 1}
+                    onRecheck={handleRecheck}
+                    rechecking={reloadingId === c.id}
+                    onConnect={handleConnect}
+                    connecting={connectingId === c.id}
+                  />
+                ))}
+              </Card>
+            </div>
+          )}
           <div className="mt-4">
             <Button size="small" onClick={handleDismissToggle}>
               {setupDismissed ? 'Show Setup on open again' : "Don't show Setup on open"}

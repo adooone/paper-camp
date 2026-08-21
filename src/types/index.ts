@@ -732,6 +732,12 @@ export interface LoginRelayState {
 
 export type ServiceId = 'git' | 'gh' | `agent:${AgentId}`;
 
+/** The two plugin extension points (IDEA-193): 'external' reaches another system on
+ * the user's behalf (GitHub today) with a remote-account credential; 'local' is a
+ * tool the runtime drives on the machine (git, an agent CLI) with its own local
+ * session, never a remote identity. */
+export type PluginKind = 'external' | 'local';
+
 /** What a Connections row offers once its service isn't `ok` — copy a command, follow a link, or read plain instructions. */
 export type ConnectAction =
   /** `runnable` marks a command with no placeholders and no interactive prompts — safe for the server to execute directly instead of just displaying it. */
@@ -741,6 +747,7 @@ export type ConnectAction =
 
 export interface ConnectionResult {
   id: ServiceId;
+  kind: PluginKind;
   label: string;
   unlocks: string;
   status: CapabilityStatus;

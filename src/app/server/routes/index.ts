@@ -5,6 +5,7 @@ import { ciRoutes } from './ci';
 import { ideaRoutes, planRoutes } from './content';
 import { gitRoutes } from './git';
 import { notificationRoutes } from './notifications';
+import { pairingRoutes } from './pairing';
 import { releaseNotesRoutes } from './release-notes';
 import { serviceRoutes } from './services';
 import { statusRoutes } from './status';
@@ -35,5 +36,6 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...mergePolicyRoutes(ctx),
     ...trailRoutes(ctx),
     ...releaseNotesRoutes(ctx),
+    ...pairingRoutes(ctx),
   ];
 }

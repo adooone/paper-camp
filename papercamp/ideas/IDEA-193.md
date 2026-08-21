@@ -2,7 +2,7 @@
 id: IDEA-193
 title: Client, runtime and plugin layers
 type: feat
-status: idea
+status: review
 created: 2026-08-19
 updated: 2026-08-21
 tags:
@@ -98,89 +98,103 @@ CI cannot use a Claude subscription, only a metered API key in repo secrets —
 and it cannot answer a parked question mid-run. Worth revisiting only if the
 transport below proves unworkable.
 
-### What a browser will actually allow
+### How the client reaches the runtime
 
-Measured on 2026-08-19 rather than reasoned about, because two confident
-predictions about browser behaviour turned out to be wrong.
+Over loopback, and that is settled ([[IDEA-195]]). The hosted https client dials
+`http://localhost:PORT`. Loopback is a potentially trustworthy origin, so the
+mixed-content rule does not apply to it — which matters, because everything else
+about http is closed.
 
-**A hosted https client cannot reach a plain-http runtime.** From an https page,
-a request to an http origin never left the browser — the target's access log
-stayed empty even with `mode: 'no-cors'`, which bypasses CORS entirely. Mixed
-content blocks it before the network. This is the wall, and no server-side change
-moves it.
+That was measured on 2026-08-19, after two confident predictions about browser
+behaviour turned out wrong. **A hosted https page cannot reach a plain-http
+non-loopback address**: the request never left the browser, the target's access
+log stayed empty even with `mode: 'no-cors'`, and no server-side change moves it.
+That is precisely why loopback is the only address the client ever dials.
+**Cross-origin http→http works**, arriving and being answered with only the
+response hidden, because the API's own responses carry no CORS headers while
+Vite's middleware answers the preflight.
 
-**Cross-origin between two http origins works, and CORS is a small fix.** The
-same request from an http page arrived and was answered; the browser only hid the
-response. The cause is narrow: the preflight already returns
-`Access-Control-Allow-Origin: *` (Vite's dev middleware answers it) while the
-API's own responses carry no CORS headers at all. A handful of lines.
+Two pieces of engineering follow, and neither is a question. Responses need CORS
+headers. And Private Network Access requires the runtime to answer the preflight
+a public origin sends before it may reach a local one — the mechanism that
+actually governs a hosted page dialling localhost, once mixed content is out of
+the way.
 
-**The localhost carve-out is still unverified.** Mixed content exempts localhost,
-which is the entire basis for a hosted client reaching a local runtime — but it
-could not be tested here, because the browser and the runtime were on different
-machines and every `localhost` probe resolved to the browser's own machine where
-nothing listens. It has to be measured where the two genuinely coexist, and given
-the record above it should not be assumed.
+### Plan-only, when no runtime is reachable
 
-### The shortlist that survives
+Not a degraded mode. With no runtime the client still does the whole planning
+half — read the corpus, write ideas, order the queue, review — by talking to
+GitHub itself with a fine-grained personal access token the user mints and pastes
+in once. Only execution needs the machine: agent runs, git operations, checks,
+the filesystem.
 
-Tailscale is out: it is one developer's setup, not something a user can be asked
-to install. With no relay and no certificate authority within reach, three
-options remain.
+The mechanism is forced, and it was measured rather than assumed.
+`github.com/login/*` sends no `Access-Control-Allow-Origin` and 404s the
+preflight, so device flow and the OAuth token exchange cannot complete in a
+browser — they need a server-side hop, and a hosted shim is the backend this
+design refuses. `api.github.com` answers `Access-Control-Allow-Origin: *`, so
+once a token exists every corpus read and write works from the browser directly.
+Only acquisition was ever the problem, and a token the user mints solves it
+without operating anything. A fine-grained token is also narrower than an OAuth
+grant: scoped to chosen repositories, and revocable from GitHub at any time.
 
-- **Localhost only.** Minimal effort — open the site, run one command — and
-  desktop-only by construction. Depends entirely on the unverified carve-out.
-- **Browser extension.** Has the privileges to ignore these rules, at the cost of
-  install friction and a build per browser.
-- **Native desktop app.** No browser rules apply at all, but the client becomes a
-  download rather than a URL.
+This is what rewrites "the client holds nothing" into something precise: no
+corpus, no account, and no credential it did not obtain from the user's own
+authorization. No backend holds that token and no Paper Camp service sees it.
 
-Cross-device from a phone browser is not among them. A phone reaching a LAN
-address from an https page is blocked the same way, and the only fixes are a
-relay or a certificate — both excluded. The phone needs a native client or it
-waits.
-
-### Degrading when the runtime is away
-
-With no backend, an unreachable runtime takes GitHub access with it — the `gh`
-credentials live on that machine too, so there is no path left to the corpus. A
-project whose runtime is away is not plan-only, it is unavailable, and the client
-can only show what it last read.
-
-Making plan-only real would mean the client talking to GitHub itself with a token
-the user grants it, which puts a credential in the browser and contradicts the
-client holding nothing. That trade is unresolved and is the first thing to settle
-if reading a corpus from a phone matters.
+Every module therefore declares which layer it needs, and the client composes
+from what is reachable. A module that needs the runtime stays visible and says so
+in place. It is one app either way — a separate reduced build would drift from
+this one and double the surface.
 
 ### Out of scope
 
-Providing reachability — no relay, no tunnel, no hosted broker. Requiring a VPN.
-Running the agent in CI. Accounts and identity, which have nowhere to live. Any
-integration that requires a webhook receiver.
+Providing reachability — no relay, no hosted broker. Requiring a VPN. Running the
+agent in CI. Accounts and identity, which have nowhere to live. Any integration
+that requires a webhook receiver. Driving a machine you are not sitting at: the
+tunnel, extension and native-app options are shelved on [[IDEA-195]], not
+scheduled here.
 
-### Open questions
+### Nothing left open
 
-They live on [[IDEA-195]], the research note this design rests on: whether the
-localhost carve-out holds, whether step one can put a GitHub token in the client
-without breaking the principle above, whether the no-AI app is a reduced surface
-or disabled controls, and whether plan-only is a state a project can sit in. The
-runtime's scope, the registry's home and the fate of folder scanning were settled
-there on 2026-08-21. Keeping them in one place stops two lists from drifting
-apart.
+[[IDEA-195]] carried the open questions this design rested on and they were all
+settled on 2026-08-21: the front door, plan-only, the GitHub credential in the
+client, capability-aware modules, local hosting alongside the hosted client, the
+runtime's scope, the registry's home and the fate of folder scanning. What
+remains on both notes is work.
 
 ### Phases
-- [ ] Measure the localhost carve-out
-      On one machine where the browser and runtime coexist, fetch an http localhost origin from an https page and confirm arrival in the server log.
-- [ ] Add CORS headers to runtime API responses
-      Let an http client read the cross-origin response the browser already delivers.
-- [ ] Split plugins into two extension points
+- [x] Make the runtime answer a hosted origin
+      CORS headers on API responses plus the Private Network Access preflight, so an https client can both reach and read `http://localhost:PORT`.
+      run: 4m34s · 8.8k in · 12.2k out · sonnet-5
+- [x] Pair the client to the runtime
+      A pairing token issued when the runtime announces itself, an allow-list for the hosted client's exact origin, and origin checking extended to reads.
+      run: 6m48s · 1.5k in · 26k out · sonnet-5
+- [x] Detach the client
+      Ship the bundle as an artifact that takes a runtime URL, keeping `paper-camp dev` serving the same bundle locally.
+      run: 5m21s · 650 in · 16.2k out · sonnet-5
+- [x] Make every module declare the layer it needs
+      Capability-aware modules so the client composes from what is reachable and a runtime-only feature says so in place.
+      run: 8m7s · 1.1k in · 26k out · sonnet-5
+- [x] Reach the corpus with no runtime
+      The client reads and writes the corpus through `api.github.com` with a user-minted fine-grained token held in device-local storage, which is what makes plan-only real.
+      run: 24m46s · 27.2k in · 88k out · sonnet-5
+- [x] Split plugins into two extension points
       Separate external services from local adapters, each with its own credential store and failure mode.
-- [ ] Package the runtime as an installed repo dependency
+      run: 9m4s · 4.7k in · 22.5k out · sonnet-5
+- [x] Package the runtime as an installed repo dependency
       Ship it as a dev dependency run from the repo it serves, alongside the papercamp/ corpus.
-- [ ] Choose the front door from the surviving shortlist
-      Pick localhost, extension, or native based on the measurement.
+      run: 17m12s · 5.5k in · 29.6k out · sonnet-5
+- [x] [manual] Re-sync corpus loads and gate checking routes
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] It's an unresolved research note whose measurement (localhost carve-out) and settled decisions (runtime scope, registry home, folder scanning) are the frozen contract IDEA-117 and IDEA-201's board conversion explicitly depend on.
 - [x] 2026-08-21 [log] [agent] IDEA-193 is the note IDEA-201 converts into a board and whose open questions IDEA-117 is explicitly blocked on, so its unresolved sequencing must be settled before the hub can proceed.
 - [x] 2026-08-21 [log] [agent] Its own body says the client/runtime split, CORS, plugin extension points and the registry's home were the open research this idea itself settles, and IDEA-117 and IDEA-201's first ticket both depend on decisions made here.
+- [x] 2026-08-21 [question] [agent] Run-all parked on phase 1 ("Measure the localhost carve-out") — the agent needs a decision: I can't run a browser to measure the localhost carve-out (headless, no display). Do you want to run this yourself, or would you like me to first prepare a minimal throwaway harness for you to run, without checking the phase off until you report back?
+- [x] 2026-08-21 [decision] Neither: the measurement is dropped. Loopback is the settled front door ([[IDEA-195]]), so phase 1 is replaced by the engineering it actually implies — CORS headers and the Private Network Access preflight. The harness built for it is shelved, unused.
+- [x] 2026-08-21 [decision] Worth keeping from the attempt: a mixed-content block and a plain connection failure are indistinguishable from JS, both surfacing as `TypeError: Failed to fetch`, so any future browser-reachability claim has to be read from the server's own log rather than the client.
+- [x] 2026-08-21 [question] [agent] Run-all parked on phase 5 ("Reach the corpus with no runtime") — the agent needs a decision: I measured GitHub's OAuth endpoints before writing any code (same discipline this idea already used for the localhost carve-out): `https://github.com/login/device/code` and `https://github.com/login/oauth/access_token` both respond with no `Access-Control-Allow-Origin` header. That means a browser `fetch` from the hosted client's own origin can't read either response — the device-flow code request and the token exchange are both blocked by CORS, not just theoretically but confirmed by curl against the live endpoints just now. This is the same class of "confident prediction turns out wrong" this idea already flagged once for localhost, so I didn't want to build past it on an assumption.
+- [x] 2026-08-21 [decision] Confirmed independently: `github.com/login/*` returns no `Access-Control-Allow-Origin` and 404s the preflight, so device flow cannot complete in a browser — but `api.github.com` answers `Access-Control-Allow-Origin: *`, so only token *acquisition* was ever blocked, never corpus reads and writes. Plan-only survives unchanged.
+- [x] 2026-08-21 [decision] Option 1: the client takes a user-minted fine-grained personal access token. Option 2 was rejected because a runtime-brokered exchange cannot serve the no-runtime case that plan-only exists for, and a hosted token-exchange shim is a backend, which "nothing is hosted on the user's behalf" rules out as bedrock rather than preference.
+- [x] 2026-08-21 [review] [agent] Comments · 2 findings — The PR delivers all seven claimed phases cleanly: CORS + Private Network Access preflight, a pairing-token allow-list with origin checking now extended to reads, a detach path that pairs before first render, per-route layer declarations, a full read/write GitHub corpus path for plan-only, the external/local plugin split, and the dev-dependency packaging story. It is faithful to the settled decisions (loopback front door, user-minted fine-grained token, no backend). The concerns below are two ordering/edge-case bugs around the runtime-reachability probe, not spec contradictions.

@@ -3,6 +3,7 @@ import {
   type PlanListFilters,
   type PlanSortKey,
 } from '@/app/features/plans/helpers';
+import { fetchGithubPlans } from '@/app/services/github/corpus';
 import { readLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { IdeaStatus, ParseResult, PlanEntry, PlanStatus } from '@/types/index';
 import { fetchPlans } from '../../services/content';
@@ -50,14 +51,17 @@ export type PlansSlice = {
   setDetailView: (view: DetailView) => void;
 };
 
-export function createPlansSlice(set: SetState, _get: GetState): PlansSlice {
+export function createPlansSlice(set: SetState, get: GetState): PlansSlice {
   return {
     plans: null,
     plansLoading: false,
     plansError: null,
     loadPlans: loadSlice(
       set,
-      fetchPlans,
+      () => {
+        const { runtimeReachable, githubConfig } = get();
+        return !runtimeReachable && githubConfig ? fetchGithubPlans(githubConfig) : fetchPlans();
+      },
       (data) => ({ plans: data, plansError: null }),
       (err) => ({ plansError: String(err) }),
       'plansLoading',

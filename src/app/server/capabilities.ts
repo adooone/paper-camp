@@ -1,50 +1,72 @@
 import type { AgentAuthStatus, AgentId, CapabilityResult, ConnectionResult } from '../../types';
-import { SERVICES, type ServiceDefinition, claudeAuthStatus, run } from './services';
+import { EXTERNAL_SERVICES, type ExternalServiceDefinition } from './external-services';
+import { LOCAL_ADAPTERS, type LocalAdapterDefinition, claudeAuthStatus } from './local-adapters';
+import { run } from './run';
+
+export type { ProbeResult } from './run';
+export { run } from './run';
+
+type Plugin =
+  | { kind: 'external'; def: ExternalServiceDefinition }
+  | { kind: 'local'; def: LocalAdapterDefinition };
+
+const PLUGINS: Plugin[] = [
+  ...EXTERNAL_SERVICES.map((def) => ({ kind: 'external' as const, def })),
+  ...LOCAL_ADAPTERS.map((def) => ({ kind: 'local' as const, def })),
+];
+
+// The one place the two credential stores meet: an external service reports whether
+// its remote account is authenticated, a local adapter whether its own local session
+// is signed in — never the same thing, but both render the same way to the client.
+function authState(plugin: Plugin, root: string): Promise<boolean | null> {
+  return plugin.kind === 'external' ? plugin.def.authenticated(root) : plugin.def.signedIn(root);
+}
 
 export async function probeCapabilities(root: string): Promise<CapabilityResult[]> {
-  return Promise.all(SERVICES.map((service) => service.probe(root)));
+  return Promise.all(PLUGINS.map((p) => p.def.probe(root)));
 }
 
 async function toConnectionResult(
-  service: ServiceDefinition,
+  plugin: Plugin,
   root: string,
   precomputed?: CapabilityResult,
 ): Promise<ConnectionResult> {
   const [result, authenticated] = await Promise.all([
-    precomputed ?? service.probe(root),
-    service.authenticated(root),
+    precomputed ?? plugin.def.probe(root),
+    authState(plugin, root),
   ]);
   return {
-    id: service.id as ConnectionResult['id'],
-    label: service.label,
-    unlocks: service.unlocks,
+    id: plugin.def.id as ConnectionResult['id'],
+    kind: plugin.kind,
+    label: plugin.def.label,
+    unlocks: plugin.def.unlocks,
     status: result.status,
     detail: result.detail,
     authenticated,
-    connect: service.connect(result),
+    connect: plugin.def.connect(result),
   };
 }
 
 export async function probeConnections(root: string): Promise<ConnectionResult[]> {
-  return Promise.all(SERVICES.map((service) => toConnectionResult(service, root)));
+  return Promise.all(PLUGINS.map((p) => toConnectionResult(p, root)));
 }
 
-/** Runs a service's connect action when it's safe to run non-interactively, then
+/** Runs a plugin's connect action when it's safe to run non-interactively, then
  *  re-probes; a non-runnable action (interactive login, a command with placeholders,
  *  a link, or plain text) is left for the caller to display instead. */
 export async function runConnect(id: string, root: string): Promise<ConnectionResult | null> {
-  const service = SERVICES.find((s) => s.id === id);
-  if (!service) return null;
-  const before = await service.probe(root);
-  const action = service.connect(before);
+  const plugin = PLUGINS.find((p) => p.def.id === id);
+  if (!plugin) return null;
+  const before = await plugin.def.probe(root);
+  const action = plugin.def.connect(before);
   if (action?.kind !== 'command' || !action.runnable) {
-    return toConnectionResult(service, root, before);
+    return toConnectionResult(plugin, root, before);
   }
   // `runnable` commands are checked at their definition site to be argv-safe literals
   // (no placeholders, no shell operators), so splitting on spaces is sufficient here.
   const [command, ...args] = action.command.split(' ');
   const outcome = await run(command, args, root);
-  const after = await toConnectionResult(service, root);
+  const after = await toConnectionResult(plugin, root);
   return outcome.code === 0
     ? after
     : { ...after, detail: `${action.command} failed: ${outcome.stderr.trim() || after.detail}` };

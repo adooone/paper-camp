@@ -2,7 +2,8 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { assignEntityId, formatEntityFile } from '../serialize/serializer';
+import { formatEntityFile } from '../serialize/entity-file';
+import { assignEntityId } from '../serialize/serializer';
 import { clarificationsFromThread, logFromThread } from '../thread';
 import { parseEntityFile } from './parser';
 

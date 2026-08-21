@@ -8,6 +8,7 @@ import type { ApiMiddleware } from './src/app/server/api';
 import type { AgentManagerState } from './src/app/server/agent';
 import type { DeskCheckManagerState } from './src/app/server/desk-checks';
 import type { DeskServiceManagerState } from './src/app/server/desk-services';
+import type { PairingManagerState } from './src/app/server/pairing';
 import type { StatusManagerState } from './src/app/server/status';
 
 // src/app/server/** isn't a config dependency, so Vite never restarts for it — the
@@ -24,6 +25,7 @@ const g = globalThis as {
   __paperCampStatusState?: StatusManagerState;
   __paperCampServiceState?: DeskServiceManagerState;
   __paperCampCheckState?: DeskCheckManagerState;
+  __paperCampPairingState?: PairingManagerState;
 };
 
 function papercampApi(): Plugin {
@@ -67,22 +69,26 @@ function papercampApi(): Plugin {
               statusState?: StatusManagerState,
               serviceState?: DeskServiceManagerState,
               checkState?: DeskCheckManagerState,
+              pairingState?: PairingManagerState,
             ) => ApiMiddleware;
           };
           const agentState = g.__paperCampAgentState;
           const statusState = g.__paperCampStatusState;
           const serviceState = g.__paperCampServiceState;
           const checkState = g.__paperCampCheckState;
+          const pairingState = g.__paperCampPairingState;
           g.__paperCampAgentState = undefined;
           g.__paperCampStatusState = undefined;
           g.__paperCampServiceState = undefined;
           g.__paperCampCheckState = undefined;
+          g.__paperCampPairingState = undefined;
           const api = mod.createApiMiddleware(
             process.cwd(),
             agentState,
             statusState,
             serviceState,
             checkState,
+            pairingState,
           );
           g.__paperCampApi = api;
           if (reloadFailed) {
@@ -135,6 +141,9 @@ function papercampApi(): Plugin {
           // Likewise keep the last check results so a running one-click check isn't
           // dropped and its stamp doesn't reset to stale on every server edit.
           g.__paperCampCheckState = g.__paperCampApi.getCheckState();
+          // Preserve the pairing token and paired origins so a server edit doesn't
+          // force the hosted client to re-pair mid-session.
+          g.__paperCampPairingState = g.__paperCampApi.getPairingState();
         }
         g.__paperCampApi = undefined;
         // Fire-and-forget here: `reportReloadFailure` above already handles logging

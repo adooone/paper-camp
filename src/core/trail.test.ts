@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clearPrCache } from './git-pr/pr-lookup';
-import { formatEntityFile } from './serialize/serializer';
+import { formatEntityFile } from './serialize/entity-file';
 import {
   findReleaseLineForId,
   resolveEntityIdForCommit,

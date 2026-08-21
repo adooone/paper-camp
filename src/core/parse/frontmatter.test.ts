@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { formatIdeaFile, formatPlanFile } from '../serialize/serializer';
+import { formatIdeaFile, formatPlanFile } from '../serialize/entity-file';
 import { parseFrontmatter, parseIdeaFile, parsePlanFile } from './parser';
 import { entityFrontmatterSchema, ideaFrontmatterSchema, planFrontmatterSchema } from './schemas';
 

@@ -4,6 +4,7 @@ import type { AgentManager } from '../agent';
 import type { DeskCheckManager } from '../desk-checks';
 import type { DeskServiceManager } from '../desk-services';
 import type { GitManager } from '../git';
+import type { PairingManager } from '../pairing';
 import type { StatusManager } from '../status';
 
 /** Everything a route module can need — built once per middleware in api.ts. */
@@ -15,6 +16,7 @@ export interface RouteContext {
   status: StatusManager;
   services: DeskServiceManager;
   checks: DeskCheckManager;
+  pairing: PairingManager;
 }
 
 /** Exact method + pathname match. An error thrown from handle becomes a 500 JSON reply. */

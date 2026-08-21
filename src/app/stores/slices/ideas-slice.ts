@@ -1,3 +1,4 @@
+import { fetchGithubIdeas } from '@/app/services/github/corpus';
 import type { ArchivableIdea, IdeaEntry } from '@/types/index';
 import {
   archiveIdeas as archiveIdeasApi,
@@ -21,7 +22,10 @@ export function createIdeasSlice(set: SetState, get: GetState): IdeasSlice {
     ideaEntries: [],
     loadIdeas: loadSlice(
       set,
-      fetchIdeas,
+      () => {
+        const { runtimeReachable, githubConfig } = get();
+        return !runtimeReachable && githubConfig ? fetchGithubIdeas(githubConfig) : fetchIdeas();
+      },
       (result) => ({ ideaEntries: result.entries }),
       () => ({ ideaEntries: [] }),
     ),

@@ -1,12 +1,40 @@
+import { existsSync, readFileSync } from 'node:fs';
 import { access, mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { PaperCampConfig } from '../../types/index';
 import { CORPUS_FORMAT_VERSION } from '../corpus-format';
 import { paperCampConfigSchema } from '../parse/schemas';
 import { formatEntityFile, todayDateString } from '../serialize';
 import { CLAUDE_SETTINGS_JSON, SKILL_MD_CONTENT } from './templates';
 
-export const PAPER_CAMP_VERSION = '0.1.0';
+const PACKAGE_JSON_SEARCH_DEPTH = 5;
+
+// Read once, from the installed package's own package.json rather than a hand-kept
+// constant — this used to drift (stuck at 0.1.0 while releases moved on), which is
+// exactly the kind of untrustworthy version report a pinned dev dependency can't
+// afford. Walking up from this module's own location (rather than a fixed relative
+// path) survives both the bundled build (this file's code lands in dist/cli/index.js
+// or dist/core/index.js, two levels down from the package root) and running the raw
+// source directly (three levels down) without hardcoding either depth.
+function readOwnVersion(): string {
+  try {
+    let dir = dirname(fileURLToPath(import.meta.url));
+    for (let i = 0; i < PACKAGE_JSON_SEARCH_DEPTH; i++) {
+      const candidate = join(dir, 'package.json');
+      if (existsSync(candidate)) {
+        const pkg = JSON.parse(readFileSync(candidate, 'utf-8')) as { version?: string };
+        return pkg.version ?? '0.0.0';
+      }
+      dir = dirname(dir);
+    }
+    return '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
+export const PAPER_CAMP_VERSION = readOwnVersion();
 
 export class AlreadyInitializedError extends Error {
   constructor(targetDir: string) {

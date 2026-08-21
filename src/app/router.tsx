@@ -1,5 +1,6 @@
 import {
   ProjectIdentityHeader,
+  RuntimeUnavailable,
   ServerReloadBanner,
   SidebarShell,
   StackPanel,
@@ -8,6 +9,7 @@ import {
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
+import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
 import { mountPrefix } from '@/app/services/mount';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
 import {
@@ -158,6 +160,18 @@ const RootLayout = () => {
   const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
   const loadNotifications = useAppStore((s) => s.loadNotifications);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
+  const checkRuntimeReachable = useAppStore((s) => s.checkRuntimeReachable);
+  const runtimeReachable = useAppStore((s) => s.runtimeReachable);
+  const runtimeChecking = useAppStore((s) => s.runtimeChecking);
+  const githubConfig = useAppStore((s) => s.githubConfig);
+  const activeLayer = useRouterState({
+    select: (s) => s.matches.at(-1)?.staticData.layer,
+  });
+  const readiness = moduleReadiness(
+    activeLayer,
+    { reachable: runtimeReachable, checking: runtimeChecking },
+    { githubConfigured: githubConfig !== null },
+  );
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   // Detail views replace the sidebar breadcrumb that used to carry the way back.
@@ -191,22 +205,29 @@ const RootLayout = () => {
   useNotificationPush();
 
   useEffect(() => {
-    loadPlans();
-    loadIdeas();
     loadSuggestions();
     loadCapabilities();
     loadAgentAuthStatus();
     loadParkedQuestions();
     loadNotifications();
+    checkRuntimeReachable();
   }, [
-    loadPlans,
-    loadIdeas,
     loadSuggestions,
     loadCapabilities,
     loadAgentAuthStatus,
     loadParkedQuestions,
     loadNotifications,
+    checkRuntimeReachable,
   ]);
+
+  // Corpus source depends on runtimeReachable, which a detached client only knows
+  // once the probe in the effect above resolves — re-run once it has, so a client
+  // that's actually reachable doesn't get stuck on the plan-only GitHub path.
+  useEffect(() => {
+    if (runtimeChecking) return;
+    loadPlans();
+    loadIdeas();
+  }, [runtimeChecking, loadPlans, loadIdeas]);
 
   // Land fresh installs (or any install with an incomplete capability) on Setup
   // instead of letting them discover gaps by hitting a broken PR badge or agent button.
@@ -361,9 +382,13 @@ const RootLayout = () => {
                       rounded="none"
                       className="pc-page w-full max-w-none"
                     >
-                      <Suspense fallback={null}>
-                        <Outlet />
-                      </Suspense>
+                      {readiness === 'unreachable' ? (
+                        <RuntimeUnavailable layer={activeLayer} />
+                      ) : readiness === 'checking' ? null : (
+                        <Suspense fallback={null}>
+                          <Outlet />
+                        </Suspense>
+                      )}
                     </Page>
                   </div>
                 </div>
@@ -425,37 +450,44 @@ const plansRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): { subject?: string } => ({
     subject: typeof search.subject === 'string' ? search.subject : undefined,
   }),
+  staticData: { layer: 'corpus' },
 });
 const planDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/plans/$planId',
   component: PlansPage,
+  staticData: { layer: 'corpus' },
 });
 const ideaDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/ideas/$ideaId',
   component: PlansPage,
+  staticData: { layer: 'corpus' },
 });
 const docsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs',
   component: DocsPage,
+  staticData: { layer: 'runtime' },
 });
 const docsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs/$section',
   component: DocsPage,
+  staticData: { layer: 'runtime' },
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings',
   component: SettingsPage,
+  staticData: { layer: 'runtime' },
 });
 const settingsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings/$section',
   component: SettingsPage,
+  staticData: { layer: 'runtime' },
 });
 
 const roadmapRoute = createRoute({
@@ -465,24 +497,28 @@ const roadmapRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): { item?: string } => ({
     item: typeof search.item === 'string' ? search.item : undefined,
   }),
+  staticData: { layer: 'runtime' },
 });
 
 const inboxRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/inbox',
   component: InboxPage,
+  staticData: { layer: 'runtime' },
 });
 
 const statsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/stats',
   component: StatsPage,
+  staticData: { layer: 'runtime' },
 });
 
 const gitRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/git',
   component: GitPage,
+  staticData: { layer: 'runtime' },
 });
 
 const tasksRoute = createRoute({
@@ -492,12 +528,14 @@ const tasksRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): { taskId?: string } => ({
     taskId: typeof search.taskId === 'string' ? search.taskId : undefined,
   }),
+  staticData: { layer: 'runtime' },
 });
 
 const issuesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/issues',
   component: IssuesPage,
+  staticData: { layer: 'runtime' },
 });
 
 const routeTree = rootRoute.addChildren([
@@ -521,5 +559,8 @@ export const router = createRouter({ routeTree, basepath: mountPrefix || '/' });
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
+  }
+  interface StaticDataRouteOption {
+    layer?: ModuleLayer;
   }
 }
