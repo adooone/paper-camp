@@ -24,8 +24,9 @@ The overlay itself is right and should stay: `readRunOrderRanks` is explicit tha
 - [x] Keep the pre-overlay `order` on the entity
       Preserve the frontmatter value `readEntities` currently overwrites, so a writer can tell the stored field from the display rank.
       run: 1m11s · 5.9k in · 3.5k out · sonnet-5
-- [ ] Persist only the stored value
+- [x] Persist only the stored value
       `entityFileInput` writes the frontmatter `order`, never the overlaid rank; cover it with a test that reads an entity with a run-order rank and writes it back unchanged.
+      run: 2m56s · 375 in · 4.8k out · sonnet-5
 - [ ] Strip ranks already written to the corpus
       Remove `order:` frontmatter that a previous write stamped in, leaving genuine stored values alone.
 

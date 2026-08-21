@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CORPUS_FORMAT_VERSION, CorpusTooNewError } from '@/core/corpus-format';
+import { readEntities } from '@/core/readers';
 import type { EntityEntry } from '@/types/index';
 import { afterAll, describe, expect, it } from 'vitest';
 import { checkStaleBaseForRunAll, entityFileInput, writeEntityFile } from './helpers';
@@ -21,6 +22,24 @@ describe('entityFileInput', () => {
     expect(entityFileInput(entry, { status: 'done' }).unknownFrontmatter).toEqual({
       formatVersion: 2,
     });
+  });
+
+  it('writes back the stored order, not the run-order rank overlaid on read', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'papercamp-entity-file-input-'));
+    const dir = join(root, 'ideas');
+    await mkdir(join(dir, 'archive'), { recursive: true });
+    await writeFile(
+      join(dir, 'IDEA-1.md'),
+      '---\nid: IDEA-1\ntitle: Test\ntype: feat\nstatus: planned\ncreated: 2026-07-01\norder: 9\n---\nx\n',
+    );
+    await writeFile(join(root, 'run-order.md'), 'IDEA-1 — Test\n');
+
+    const { entries } = await readEntities(dir);
+    const entry = entries.find((e) => e.id === 'IDEA-1');
+    expect(entry?.order).toBe(1); // the overlaid rank, not the stale frontmatter value
+    expect(entityFileInput(entry as EntityEntry).order).toBe(9);
+
+    await rm(root, { recursive: true, force: true });
   });
 });
 
