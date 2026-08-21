@@ -41,7 +41,7 @@ hierarchy, motion). Read both before making UI changes.
 
 The dashboard is built on `@dendelion/paper-ui`, which lives in a sibling repo at
 `~/dev/paper-ui` and is published to npm. `package.json` declares it as a
-normal registry range (`"@dendelion/paper-ui": "^0.2.0"`) — this is required
+normal registry range (`"@dendelion/paper-ui": "^0.17.0"`) — this is required
 for CI and for anyone installing `paper-camp` for real; a `link:../paper-ui`
 relative path only resolves on this dev machine and breaks everywhere else
 (this is exactly the bug that broke the CI quality check and would have
@@ -143,7 +143,7 @@ directly on `main`. A draft PR is auto-created on first push.
   GitHub uses the PR title as the squash commit's **subject** and the PR
   description as its **body**. One commit per idea lands on `main`; the
   per-phase commit history stays on the PR (and, more durably, in the idea's
-  own `### Log`/`progress.md` narrative) instead of duplicating it badly in
+  own `### Thread` narrative) instead of duplicating it badly in
   `git log`. `sync-pr-metadata.yml` keeps the PR title in conventional-commit
   form (`<type>(<scope>): <Idea title> (IDEA-N)`) precisely so the inherited
   squash commit subject is release-please-visible — see "Commit messages"
@@ -151,7 +151,7 @@ directly on `main`. A draft PR is auto-created on first push.
 
 - **`main` stays pushable.** Direct pushes to `main` are allowed but
   *conventionally* reserved for:
-  - Agent writes to `papercamp/ideas/` and `papercamp/progress.md` during phase execution
+  - Agent writes to `papercamp/ideas/` during phase execution
     (these are the only agent writes that land directly on `main`)
   - Tiny fixes and config changes
   - Merging feature branch PRs
@@ -161,12 +161,10 @@ directly on `main`. A draft PR is auto-created on first push.
 - **Agents and branches:** When an agent executes a plan phase, it works on
   whatever branch is currently checked out. If the agent was started from a
   branch (e.g. via the Stack panel while that branch is active), its writes to
-  the entity's file under `papercamp/ideas/` and to `papercamp/progress.md` land on that
-  branch. When the PR merges, those changes come along with the rest of the
-  branch. Per-file entity storage means two branches working different
-  plans touch different files and no longer conflict on merge; `papercamp/progress.md`
-  remains a shared append-only log, so concurrent appends there can still
-  conflict.
+  the entity's file under `papercamp/ideas/` land on that branch. When the PR
+  merges, those changes come along with the rest of the branch. Per-file entity
+  storage means two branches working different plans touch different files and no
+  longer conflict on merge.
 
 - **Naming enforcement:** The branch naming convention is not enforced by CI
   (no branch-name lint). It is a convention agents are expected to follow,

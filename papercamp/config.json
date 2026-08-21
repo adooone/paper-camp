@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": 1,
   "projectName": "paper-camp",
   "initializedAt": "2026-04-29T00:00:00.000Z",
   "nextId": {
@@ -8,7 +8,7 @@
     "chore": 2,
     "docs": 4,
     "refactor": 5,
-    "idea": 196
+    "idea": 201
   },
   "defaultAgents": {
     "phase": {

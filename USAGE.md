@@ -11,11 +11,9 @@ Everything lives under `papercamp/` in your repo:
 
 | File | What it is |
 |---|---|
-| `ideas/IDEA-N.md` | One entity per file: frontmatter (status, subject, order, tags) + body + `### Phases` checklist + `### Log` comments |
+| `ideas/IDEA-N.md` | One entity per file: frontmatter (status, subject, order, tags) + body + `### Phases` checklist + `### Thread` messages |
 | `ideas/archive/` | Finished (done/dropped) entities, moved here on archive |
 | `config.json` | Project config: id counters, subjects, per-task agent defaults |
-| `decisions.md`, `open-questions.md` | Settled calls and unresolved questions, written mostly by agents |
-| `progress.md` | Append-only changelog — every phase an agent finishes gets a dated entry |
 | `suggestions.md`, `tasks.log` | AI idea inbox; machine record of every agent run |
 
 Because it's all markdown in git, every change is reviewable, diffable, and

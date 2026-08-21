@@ -4,7 +4,7 @@ title: Client, runtime and plugin layers
 type: feat
 status: idea
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-08-21
 tags:
   - architecture
   - multi-project
@@ -33,8 +33,10 @@ honest that some clients will not reach some machines.
 
 **Client — collects intent.** A web app, a mobile app, a chat surface, served as
 static files from anywhere that serves files. It shows the desk and captures what
-the human wants, and it holds nothing: no account, no registry, no corpus, no
-credential it did not receive from a runtime. It is deliberately thin in the
+the human wants, and it holds no account, no corpus and no credential it did not
+receive from a runtime. The one thing it does keep is the project registry — a
+device-local list of runtime addresses, settled on [[IDEA-195]] as connection
+state rather than data. It is deliberately thin in the
 other sense too — it does not decide what an intent *means*. If the client
 transforms actions into plans, every client reimplements the methodology and they
 drift apart, and three clients become three products.
@@ -74,7 +76,10 @@ customer's planning history.
 ### Installed into the repository
 
 The runtime arrives the way any other dev dependency does — added to the repo it
-serves and run from there, alongside the `papercamp/` corpus it reads. Nothing to
+serves and run from there, alongside the `papercamp/` corpus it reads. One
+runtime per repository, never one managing many: a client showing several
+projects fans out across their runtimes rather than asking one to hold them
+all. Nothing to
 provision, nothing to sign up for, and a repo that carries its own tooling stays
 reproducible on any machine that clones it.
 
@@ -152,26 +157,15 @@ Providing reachability — no relay, no tunnel, no hosted broker. Requiring a VP
 Running the agent in CI. Accounts and identity, which have nowhere to live. Any
 integration that requires a webhook receiver.
 
-### Thread
-- [ ] 2026-08-19 [question] [human] Does the localhost carve-out hold? Run the
-      measurement on a machine where the browser and the runtime coexist: an https
-      page fetching `http://localhost:PORT`, checking the server's log for arrival
-      rather than trusting the JS error. Everything else waits on this — if it
-      fails, the hosted front door is impossible and only an extension or a native
-      app remain.
-- [ ] 2026-08-19 [question] [human] One runtime per repo, or one runtime managing
-      many? "Installed into the repository" implies per-repo, but [[IDEA-117]]
-      wants the hub precisely to avoid "N dev servers on N ports". Both cannot
-      hold, and the answer decides what the client connects to.
-- [ ] 2026-08-19 [question] [human] Without a backend, where does the project
-      registry live — in browser storage per device, in a repo the user owns, or
-      assembled by asking each reachable runtime what it has?
-- [ ] 2026-08-19 [question] [human] Does folder scanning from [[IDEA-117]] survive
-      alongside GitHub import, or does import replace it as the way a project
-      enters the registry?
-- [ ] 2026-08-19 [question] [human] Is plan-only a first-class state a project can
-      live in indefinitely, or a temporary condition on the way to attaching a
-      runtime?
+### Open questions
+
+They live on [[IDEA-195]], the research note this design rests on: whether the
+localhost carve-out holds, whether step one can put a GitHub token in the client
+without breaking the principle above, whether the no-AI app is a reduced surface
+or disabled controls, and whether plan-only is a state a project can sit in. The
+runtime's scope, the registry's home and the fate of folder scanning were settled
+there on 2026-08-21. Keeping them in one place stops two lists from drifting
+apart.
 
 ### Phases
 - [ ] Measure the localhost carve-out

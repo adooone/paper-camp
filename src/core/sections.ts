@@ -19,6 +19,32 @@ const THREAD_LINE_RE =
   /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question|chat)\]\s+(\[agent\]\s+)?(.*)$/;
 const NOTE_STATE_KINDS: ThreadMessageKind[] = ['note', 'decision', 'question'];
 
+/** Entry grammars match a single line, so a hand-wrapped entry used to keep only its
+ * first line and silently drop the rest. Folds the indented continuation lines back in;
+ * the serializer then re-canonicalizes the entry to one line. */
+function foldContinuation(
+  lines: string[],
+  start: number,
+  end: number,
+  entryRe: RegExp,
+): { text: string; next: number } {
+  const parts: string[] = [];
+  let i = start;
+  while (i < end) {
+    const line = lines[i];
+    if (line.trim() === '' || !/^\s/.test(line)) break;
+    const trimmed = line.trimStart();
+    if (entryRe.test(trimmed) || SUB_HEADING_RE.test(trimmed)) break;
+    parts.push(trimmed);
+    i++;
+  }
+  return { text: parts.join(' '), next: i };
+}
+
+function joinFolded(first: string, rest: string): string {
+  return rest ? `${first.trim()} ${rest}` : first.trim();
+}
+
 function parsePhaseEntries(lines: string[], start: number, end: number): PhaseItem[] {
   const phases: PhaseItem[] = [];
   let i = start;
@@ -64,9 +90,16 @@ function parsePhaseEntries(lines: string[], start: number, end: number): PhaseIt
 
 function parseDatedEntries(lines: string[], start: number, end: number): LogEntry[] {
   const entries: LogEntry[] = [];
-  for (let i = start; i < end; i++) {
+  let i = start;
+  while (i < end) {
     const match = lines[i].match(DATED_ENTRY_RE);
-    if (match) entries.push({ date: match[1], text: match[2].trim() });
+    if (!match) {
+      i++;
+      continue;
+    }
+    const folded = foldContinuation(lines, i + 1, end, DATED_ENTRY_RE);
+    entries.push({ date: match[1], text: joinFolded(match[2], folded.text) });
+    i = folded.next;
   }
   return entries;
 }
@@ -94,21 +127,26 @@ function formatAnchor(anchor: MarginNoteAnchor): string {
 
 function parseNoteEntries(lines: string[], start: number, end: number): MarginNote[] {
   const notes: MarginNote[] = [];
-  for (let i = start; i < end; i++) {
+  let i = start;
+  while (i < end) {
     const match = lines[i].match(CHECKBOX_RE);
-    if (!match) continue;
-    const anchorMatch = match[2].trim().match(NOTE_ANCHOR_RE);
-    if (!anchorMatch) continue;
+    const anchorMatch = match ? match[2].trim().match(NOTE_ANCHOR_RE) : null;
+    if (!match || !anchorMatch) {
+      i++;
+      continue;
+    }
     const anchor: MarginNoteAnchor = anchorMatch[1]
       ? { kind: 'phase', index: Number(anchorMatch[1]) }
       : { kind: 'body' };
     const kind = anchorMatch[2] as MarginNoteKind | undefined;
+    const folded = foldContinuation(lines, i + 1, end, CHECKBOX_RE);
     notes.push({
       anchor,
-      prose: anchorMatch[3].trim(),
+      prose: joinFolded(anchorMatch[3], folded.text),
       state: match[1].toLowerCase() === 'x' ? 'resolved' : 'open',
       ...(kind ? { kind } : {}),
     });
+    i = folded.next;
   }
   return notes;
 }
@@ -176,17 +214,23 @@ export const REVIEW_SECTION: SectionDef<LogEntry> = {
 
 function parseThreadEntries(lines: string[], start: number, end: number): ThreadMessage[] {
   const messages: ThreadMessage[] = [];
-  for (let i = start; i < end; i++) {
+  let i = start;
+  while (i < end) {
     const match = lines[i].match(THREAD_LINE_RE);
-    if (!match) continue;
+    if (!match) {
+      i++;
+      continue;
+    }
     const kind = match[3] as ThreadMessageKind;
-    const message: ThreadMessage = { kind, text: match[5].trim() };
+    const folded = foldContinuation(lines, i + 1, end, THREAD_LINE_RE);
+    const message: ThreadMessage = { kind, text: joinFolded(match[5], folded.text) };
     if (match[2]) message.date = match[2];
     if (match[4]) message.from = 'agent';
     if (NOTE_STATE_KINDS.includes(kind)) {
       message.state = match[1].toLowerCase() === 'x' ? 'resolved' : 'open';
     }
     messages.push(message);
+    i = folded.next;
   }
   return messages;
 }

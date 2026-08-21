@@ -31,20 +31,12 @@ Known gaps that are intentionally raw:
 
 ### Lane/column boards use `Table`'s `board` prop
 
-Any UI that groups items into side-by-side lanes (the Kanban board, the Ideas
-Planned/Done board) renders through paper-ui's `Table` component with its
-`board` prop, not a hand-rolled `display: flex` div per column. `Table` owns
-the wrapper border/shadow/paper-texture, the column header chrome (label +
-count badge, accent-colored bottom border), and the per-card border/background
-— so a board consumer only supplies `{ key, label, accent, items, getKey,
-renderItem }` per column and a `renderItem` that returns the card's *inner*
-content (no outer border/background of its own; `Table` draws that).
-
-See [`board-view.tsx`](src/app/features/plans/components/board-view.tsx) and
-[`ideas-board.tsx`](src/app/features/plans/components/ideas-board.tsx) for the
-canonical usage. The `board` prop itself lives in the paper-ui repo
-(`~/dev/paper-ui/src/components/table/table.tsx`) — see "Working with the
-paper-ui sibling repo" in `AGENTS.md` before touching it.
+If you build a UI that groups items into side-by-side lanes, render it through
+paper-ui's `Table` with its `board` prop rather than a hand-rolled `flex` div per
+column — `Table` owns the wrapper chrome, the column headers and the card
+borders, so a consumer supplies only `{ key, label, accent, items, getKey,
+renderItem }` per column. Nothing in `src/app` uses it today (the boards it was
+written for were deleted); the prop lives in the paper-ui repo.
 
 ### Content cards use `texture="kraft"`
 
@@ -152,6 +144,19 @@ Examples already in flight:
 - `LinkButton` — consolidates the inline "link button" style repeated in
   decision/question detail views.
 
+Where the shared thing lands follows what it knows about: feature logic goes to
+that feature's `helpers/` or `hooks/`, anything that would read the same in
+another feature goes to `@/app/utils` or `@/app/hooks`.
+
+### A feature hook may wrap a global one
+
+When a feature needs a global hook plus its own rules, compose rather than fork.
+`useDeliverCommitForm` calls `useCommitForm` from `@/app/hooks` and adds only
+what plans needs — the suggested title, a `beforeCommit` that records a manual
+phase, the rollback if the commit fails. The global hook stays unaware of plans,
+and the feature keeps one place for its variation. Copying the global hook's body
+to change three lines is the mistake this avoids.
+
 ## 4. Feature folders and service layer
 
 Organize code like this:
@@ -214,6 +219,28 @@ features/plans/
   back through a barrel should import the **specific file** to avoid a cycle
   (depcruise fails the build on cycles).
 
+### Components render, hooks decide
+
+A component's body should read as *what it renders*. Anything else — fetching,
+subscribing, deriving, sequencing async work — belongs in a hook in the feature's
+`hooks/`, and the component consumes what the hook returns.
+
+Two signals that a component has taken on work that isn't rendering:
+
+- **More than about four store subscriptions.** A component with ten
+  `useAppStore((s) => …)` selectors is coupled to the store's shape rather than
+  to its own props, and can't be rendered in a test without a store. Give the
+  component (or the page) one hook that reads the store and returns exactly the
+  data and callbacks it uses.
+- **State plus effects plus async handlers in the same body.** Three `useState`,
+  two `useEffect` and a `handleSend` that awaits a service call is a hook with
+  JSX stapled to it. Split it: the hook owns the state machine, the component
+  owns the markup.
+
+The JSX that remains should stay shallow. Deeply nested ternaries and inline
+`.map()` callbacks that render twenty lines each are a sign a child component is
+missing.
+
 ### Non-feature modules group by domain
 
 Outside `features/`, the same anchors-plus-subfolders idea applies, but the
@@ -230,9 +257,19 @@ Below that, flat is the more readable choice — `docs/` and `settings/` stay as
 
 - Biome is the formatter/linter. Run `pnpm lint` and `pnpm lint:write`.
 - Components: PascalCase, named export, props interface named `{Component}Props`.
+  Always a named interface — never an inline type literal in the parameter list.
+  A component with more than a couple of props becomes unreadable as a literal,
+  and the type cannot be referenced by a test or a wrapper.
+- One component per file under `views/` and `components/`. A "sections" file that
+  accumulates a page's parts is how a 900-line file starts.
+- Table/list column definitions live outside the JSX. A `columns` array whose
+  `cell` renderers are written inline nests real markup several levels deep
+  inside an object literal inside a prop; give each cell a named component.
 - Services: `{domain}-api.ts`, async named exports.
 - Helpers: camelCase, pure where possible.
 - Event handlers: `handleXxx` (e.g., `handleSubmit`, `handleTogglePhase`).
+- One import statement per module. Biome sorts imports but does not merge two
+  statements pulling from the same path, so this is on you.
 - Imports: use `@/` aliases everywhere, including `src/app/server`; do not reach
   through `../../` more than one level. (The dev config loads the server via
   Vite's `ssrLoadModule` so `@/` resolves there too — see `vite.app.config.ts`.
@@ -263,6 +300,21 @@ A comment must clear *all three* bars, or it doesn't ship:
 2. Rediscovering it would cost a future reader **real debugging time**.
 3. It fits in **one line** (two at the absolute most).
 
+The cap applies to a *contiguous run* of comment lines, not to a syntactic
+comment: three stacked `//` lines with no code between them are one three-line
+violation, not three legal comments.
+
+Prefer the trailing form when the constraint attaches to one line —
+`return h.slice(1, h.indexOf(']')); // [::1]:3333` says everything a stacked
+block would, in the width the rule asks for.
+
+**JSDoc on an exported symbol is exempt.** A `/** … */` block immediately
+preceding an `export` documents that function's contract for callers who will
+never read its body, and may run longer than two lines. The exemption is exactly
+that narrow: a `/* … */` inside a function body is not JSDoc and is capped like
+anything else. If you are tempted to write a long JSDoc on a non-exported
+helper, export it or shorten it.
+
 If you're writing a third line, you're explaining yourself, not the constraint —
 delete it and put the reasoning in the commit message, where it belongs.
 
@@ -275,7 +327,7 @@ These never qualify — rename or restructure instead:
 
 - Restating what the next line already says.
 - Narrating history or a decision ("used to do X", "changed from Y", "this is
-  better because") — git, the PR, and `papercamp/progress.md` hold that.
+  better because") — git and the PR hold that.
 - Labelling an obvious block ("// handlers", "// render") — a good name or a
   short function does that job.
 - Explaining your own reasoning for a change. That is commit-message content.
@@ -287,3 +339,53 @@ annotating it.
 UX/UI principles (layout stability, visual hierarchy, motion restraint, and so
 on) live in [`UX_PRINCIPLES.md`](UX_PRINCIPLES.md), not here — this file is
 about how the code is written, that one is about how the UI feels to use.
+
+## 8. The style pass
+
+Working code is not finished code. An agent implementing a phase optimises for
+making it work; nothing afterwards reads the result back against this document,
+so every plan lands a little heavier than it needed to be. The **Style pass**
+action in the phases list is the correction: it appends a phase that reviews the
+plan's own diff against this guide and applies it.
+
+It is scoped to the files the plan changed, never the whole codebase, and it may
+not change behaviour — it ends with `pnpm check-types`, `pnpm lint` and
+`npx vitest run` green and no test edited to accommodate it. A test that had to
+change means the pass went too far.
+
+### Auditing a feature folder
+
+When passing over a whole feature rather than one diff, this is the order that
+surfaced the most in the least time. Prefer measuring to reading: most of these
+are one command.
+
+1. **Line counts first.** `find . -type f | xargs wc -l | sort -rn`. The outlier
+   at the top is usually the whole problem — one 900-line file, not fifty
+   messy ones.
+2. **Components per file.** More than one under `views/` or `components/` is a
+   split waiting to happen.
+3. **Store subscriptions per file.** `grep -c "useAppStore((s)"`. Five or more
+   means a missing hook (§4).
+4. **Inline prop literals.** `grep -n "^}: {"` finds components skipping the
+   `{Component}Props` convention (§5).
+5. **Duplicate imports.** Per file, `grep -o "from '[^']*'" | sort | uniq -d`.
+6. **Colour and spacing literals.** `grep -n "rgba(\|#[0-9a-fA-F]\{6\}"`.
+   Expect these to concentrate in one `constants.ts`; see the note below before
+   planning to remove them.
+7. **Comment runs over the cap** (§7), and whether each survivor states a *why*
+   that the code cannot.
+8. **Direct `fetch()` in components** (§4) — should be zero.
+
+Anything a second feature would hit the same way stops being a fix and becomes a
+rule in this file. That is the point of the pass.
+
+### Known blocker: colour literals
+
+`STATUS_ACCENT`, `STATUS_STAMP` and friends in
+`features/plans/constants.ts` are raw `#hex`/`rgba()` values, which §2 forbids.
+Do not "fix" them in passing. Removing them requires paper-ui to publish
+`--pui-color-*-rgb` channel tokens first; the approach is settled and the
+paper-ui code was written, but never released, and paper-camp's installed
+paper-ui still ships no `-rgb` token. Until that publish happens, a feature's
+`constants.ts` is the one sanctioned home for a colour literal, and no new
+literal is added outside it.

@@ -590,6 +590,119 @@ Body prose.
     ]);
   });
 
+  it('folds hand-wrapped continuation lines into one Thread message', () => {
+    const md = `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+### Thread
+- [ ] 2026-08-19 [question] One runtime per repo, or one runtime managing
+      many? Both cannot hold, and the answer decides what the client
+      connects to.
+- [x] 2026-08-21 [decision] Folding lands.
+`;
+    const { entries, warnings } = parseEntityFile(md);
+    expect(warnings).toEqual([]);
+    expect(entries[0].thread).toEqual([
+      {
+        kind: 'question',
+        date: '2026-08-19',
+        state: 'open',
+        text: 'One runtime per repo, or one runtime managing many? Both cannot hold, and the answer decides what the client connects to.',
+      },
+      { kind: 'decision', date: '2026-08-21', state: 'resolved', text: 'Folding lands.' },
+    ]);
+  });
+
+  it('serializes a folded Thread message back onto one line', () => {
+    const md = `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+### Thread
+- [ ] 2026-08-19 [note] Wrapped across
+      two lines.
+`;
+    const { entries } = parseEntityFile(md);
+    const written = formatEntityFile({
+      id: 'IDEA-99',
+      title: 'Tolerant heading',
+      type: 'feat',
+      created: '2026-07-13',
+      body: 'Body prose.',
+      thread: entries[0].thread,
+    });
+    expect(written).toContain('- [ ] 2026-08-19 [note] Wrapped across two lines.');
+    expect(parseEntityFile(written).entries[0].thread).toEqual(entries[0].thread);
+  });
+
+  it('stops folding at a blank line, an unindented line, and the next entry', () => {
+    const md = `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+### Thread
+- [ ] 2026-08-19 [note] First entry
+      folded tail.
+- [ ] 2026-08-19 [note] Second entry
+
+Trailing prose that is not part of the thread.
+`;
+    const { entries } = parseEntityFile(md);
+    expect(entries[0].thread).toEqual([
+      { kind: 'note', date: '2026-08-19', state: 'open', text: 'First entry folded tail.' },
+      { kind: 'note', date: '2026-08-19', state: 'open', text: 'Second entry' },
+    ]);
+  });
+
+  it('folds continuation lines on Review and Notes entries too', () => {
+    const md = `---
+id: IDEA-99
+title: Tolerant heading
+type: feat
+created: 2026-07-13
+---
+
+Body prose.
+
+### Review
+- 2026-07-27: The phase 2 rollout plan is missing
+  a rollback step
+
+### Notes
+- [ ] [body] [question] Does this need
+      a migration?
+`;
+    const { entries, warnings } = parseEntityFile(md);
+    expect(warnings).toEqual([]);
+    expect(reviewFromThread(entries[0].thread)).toEqual([
+      { date: '2026-07-27', text: 'The phase 2 rollout plan is missing a rollback step' },
+    ]);
+    expect(notesFromThread(entries[0].thread)).toEqual([
+      {
+        anchor: { kind: 'body' },
+        prose: 'Does this need a migration?',
+        state: 'open',
+        kind: 'question',
+      },
+    ]);
+  });
+
   it('extracts Fixes entries out of the body, separate from Phases', () => {
     const md = `---
 id: IDEA-99

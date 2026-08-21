@@ -4,7 +4,7 @@ title: Global client, local runtime
 kind: note
 status: open
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-08-21
 tags:
   - architecture
   - research
@@ -12,9 +12,9 @@ subject: Multi-project
 ---
 
 Research and settled decisions for turning Paper Camp from one local app into a
-hosted client driving work on the user's own machine. Collects what several
-ideas depend on — [[IDEA-117]], [[IDEA-193]], [[IDEA-192]] — so none of them has
-to restate it.
+hosted client driving work on the user's own machine. Collects what
+[[IDEA-117]] and [[IDEA-193]] depend on, so neither has to restate it.
+([[IDEA-192]] drew on it too and has since shipped.)
 
 ### Settled
 
@@ -40,6 +40,31 @@ installs the methodology — docs, config, corpus — via a PR. Usable with no A
 and no install, as a PM system in the repo. Step two: install the local package
 to add execution. Step one is shippable without answering any transport
 question, which is what makes this sequence valuable.
+
+**One runtime per repository.** The runtime stays what [[IDEA-193]] settles it
+is — a dev dependency of the repo it serves — and the client fans out across as
+many as the user registers. Everything a runtime does is already repo-scoped: it
+shells `git`, `gh` and the agent binary with the repo as cwd and runs that repo's
+own checks, so one runtime managing many would still fork per-repo subprocesses,
+and would additionally force a single paper-camp version on every project — the
+skew [[IDEA-168]] exists to tolerate. [[IDEA-117]]'s promise was one desk, not
+one process; N ports become registry detail the user never sees.
+
+**The registry is device-local.** The client keeps the list of runtime URLs in
+browser storage, per device. [[IDEA-193]]'s "the client holds nothing" narrows
+accordingly — no corpus, no credential, no account — because a list of addresses
+it was told to remember is connection state, not data. A desk repo in git would
+sync across devices but needs a runtime to read the registry that says where the
+runtimes are; probing for whatever answers stores nothing but makes an offline
+project vanish, when knowing it exists is the point of a hub.
+
+**Projects are registered, never discovered by scanning.** Folder scanning from
+[[IDEA-117]] is dropped: a repo-scoped runtime has no business reading disk
+outside its repo, and a client cannot read disk at all. A project enters the
+registry when its runtime announces itself — `paper-camp dev` prints a
+registration URL — or, when it has no runtime yet, through the GitHub import in
+step one of onboarding. The registry holds both kinds of entry, and a project
+whose runtime is unreachable is shown as unavailable rather than hidden.
 
 ### Measured, not assumed
 
@@ -74,17 +99,25 @@ one developer's setup. Users cannot be asked to install a VPN.
 ### Security, which gates the remote paths
 
 The runtime authenticates by network topology: `isTrustedHost` accepts anything
-arriving from loopback, private LAN, `.ts.net` or `.local`. That answers "is the
-caller on a network that points at this machine", never "is this caller allowed".
+arriving from loopback, private LAN, `.ts.net`, `.local`, this machine's own
+hostname, or an entry in `PAPERCAMP_ALLOWED_HOSTS`. That answers "is the caller on
+a network that points at this machine", never "is this caller allowed".
 
-Two consequences. Any website a user visits could probe for a local runtime and
-drive it, so origin checking and a pairing token are mandatory for a hosted
-client, not refinements. And any tunnel makes every request arrive at loopback,
-so the check passes for the entire internet — publishing an API that runs git and
-spawns agents, protected only by an unguessable URL.
+Origin checking is already half-built, so it should not be respecified from
+scratch. `isForbiddenRequest` rejects a foreign `Origin` on every mutating
+method, which means a website a user visits cannot drive a local runtime's
+writes today. It can still read one — the check runs on POST/PUT/PATCH/DELETE
+only — and no pairing token exists, so nothing distinguishes an allowed caller
+from any other caller sitting on a trusted network.
 
-Authentication is therefore the precondition for every remote option, which is
-why it sequences first.
+The tunnel consequence is unchanged and is the harder one: a tunnel makes every
+request arrive at loopback, so the topology check passes for the entire internet
+— publishing an API that runs git and spawns agents, protected only by an
+unguessable URL.
+
+What remains is therefore a pairing token and origin checking on reads, not
+origin checking as such. Authentication is still the precondition for every
+remote option, which is why it sequences first.
 
 ### Transport options still open
 
@@ -110,16 +143,10 @@ relay, so it needs a tunnel, a native client, or it waits.
 5. Plugins as a real extension point.
 
 ### Thread
-- [ ] 2026-08-19 [question] [human] Does the localhost carve-out hold? Measure on
-      a machine where browser and runtime coexist, checking the server's log for
-      arrival rather than trusting the JS error.
-- [ ] 2026-08-19 [question] [human] Step one needs the browser to talk to GitHub
-      directly, which means a token in the client — contradicting [[IDEA-193]]'s
-      "the client holds nothing". Device flow or PKCE makes it backend-free, but
-      the principle has to be rewritten rather than quietly broken.
-- [ ] 2026-08-19 [question] [human] Is the no-AI step-one app a reduced surface or
-      the same app with disabled controls? Most of the current UI is agent-shaped,
-      so the first is credible and the second looks broken.
-- [ ] 2026-08-19 [question] [human] One runtime per repo, or one managing many?
-      "Installed into the repository" implies per-repo; [[IDEA-117]] wants the hub
-      precisely to avoid N servers on N ports.
+- [ ] 2026-08-19 [question] Does the localhost carve-out hold? Measure on a machine where the browser and the runtime coexist: an https page fetching `http://localhost:PORT`, checking the server's log for arrival rather than trusting the JS error. Everything else waits on this — if it fails, the hosted front door is impossible and only an extension or a native app remain.
+- [ ] 2026-08-19 [question] Step one needs the browser to talk to GitHub directly, which means a token in the client — contradicting the "no credential" half of the narrowed principle above. Device flow or PKCE makes it backend-free, but the principle has to be rewritten rather than quietly broken.
+- [ ] 2026-08-19 [question] Is the no-AI step-one app a reduced surface or the same app with disabled controls? Most of the current UI is agent-shaped, so the first is credible and the second looks broken.
+- [ ] 2026-08-19 [question] Is plan-only a first-class state a project can live in indefinitely, or a temporary condition on the way to attaching a runtime?
+- [x] 2026-08-21 [decision] One runtime per repository, not one managing many: the runtime stays a repo dev dependency and the client fans out across N of them, so [[IDEA-117]]'s hub is a client concern rather than a runtime one.
+- [x] 2026-08-21 [decision] The project registry lives in the client's device-local browser storage, narrowing [[IDEA-193]]'s "the client holds nothing" to no corpus, no credential, no account.
+- [x] 2026-08-21 [decision] Folder scanning is dropped: a project enters the registry when its runtime announces itself, or through GitHub import when it has no runtime yet.
