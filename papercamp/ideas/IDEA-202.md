@@ -21,8 +21,9 @@ Two consequences, both observed. The rank reaches git even though the file it ca
 The overlay itself is right and should stay: `readRunOrderRanks` is explicit that the rank beats the frontmatter value, which its own comment calls stale and pre-migration. What is wrong is that a value derived for display survives into a write. The fix belongs at that boundary, not at the call sites, so no future write path has to remember.
 
 ### Phases
-- [ ] Keep the pre-overlay `order` on the entity
+- [x] Keep the pre-overlay `order` on the entity
       Preserve the frontmatter value `readEntities` currently overwrites, so a writer can tell the stored field from the display rank.
+      run: 1m11s · 5.9k in · 3.5k out · sonnet-5
 - [ ] Persist only the stored value
       `entityFileInput` writes the frontmatter `order`, never the overlaid rank; cover it with a test that reads an entity with a run-order rank and writes it back unchanged.
 - [ ] Strip ranks already written to the corpus

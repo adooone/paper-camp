@@ -70,7 +70,12 @@ export async function readEntities(
     for (const result of parsed) {
       if ('entries' in result) {
         entries.push(
-          ...result.entries.map((e) => ({ ...e, archived, order: ranks.get(e.id) ?? e.order })),
+          ...result.entries.map((e) => ({
+            ...e,
+            archived,
+            storedOrder: e.order,
+            order: ranks.get(e.id) ?? e.order,
+          })),
         );
       }
       warnings.push(...result.warnings);

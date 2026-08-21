@@ -404,8 +404,12 @@ export interface EntityEntry {
   tags: string[];
   /** Absent renders as the virtual "No subject" group. */
   subject?: string;
-  /** Absent means unordered — sorts after all ordered entries, by created date. */
+  /** Absent means unordered — sorts after all ordered entries, by created date. Overlaid
+   * with the run-order rank by readEntities — see `storedOrder` for the frontmatter value. */
   order?: number;
+  /** The frontmatter `order` as read from disk, before readEntities overlays the run-order
+   * rank onto `order` — what a write path should persist back. See entityFileInput. */
+  storedOrder?: number;
   /** The Issue.id (`sourceKind:sourceKey`, IDEA-192) this entity was spawned to promote,
    * if any — how a promoted issue is re-matched to its target on every read, since
    * issues carry no store of their own. */
