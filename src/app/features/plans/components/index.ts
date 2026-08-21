@@ -1,6 +1,7 @@
 export * from './collapsible-text';
 export * from './deliver-controls';
 export * from './feedback-thread';
+export * from './phase-row-cells';
 export * from './plan-id-stamp';
 export * from './pr-badge';
 export * from './progress-bar';

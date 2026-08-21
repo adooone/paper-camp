@@ -2,7 +2,6 @@ import { CommitMessageFields } from '@/app/components';
 import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import {
-  type RunningPhaseFill,
   useFeedbackQuietSummary,
   usePlanStatusPatch,
   usePromoteThreadMessage,
@@ -19,31 +18,21 @@ import {
   removeLocalDraft,
   writeLocalDraft,
 } from '@/app/utils/local-draft-store';
-import {
-  type UsageRollup,
-  formatDuration,
-  formatRunSummary,
-  formatTokens,
-  rollupUsage,
-} from '@/core/phase-run';
+import { type UsageRollup, formatDuration, formatTokens, rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
 import {
   Button,
   Card,
-  Checkbox,
   Skeleton,
   Spinner,
   Stamp,
-  Table,
   Textarea,
   Tooltip,
   useToast,
 } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { type CSSProperties, useEffect, useMemo, useState } from 'react';
-import { DraftPlanButton, ExtendIdeaButton, RefreshButton } from '../actions';
-import { ReconcileButton } from '../actions';
-import { AddReviewPhasesButton, AgentStartButton, AuditPhasesButton } from '../actions';
+import { useEffect, useMemo, useState } from 'react';
+import { RefreshButton } from '../actions';
 import { AddTicketButton } from '../actions';
 import {
   DeliverChangedFiles,
@@ -58,9 +47,7 @@ import { ProgressBar } from '../components';
 import { ProvenanceTrailPanel } from '../components';
 import { STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import {
-  type WorkRow,
   effectiveStatus,
-  isRunningRow,
   latestReviewNote,
   relativeDate,
   rollupProgress,
@@ -68,6 +55,7 @@ import {
   runningTaskForPlan,
 } from '../helpers';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
+import { PhasesSection } from './phases-section';
 import { PlanRows } from './plan-rows';
 
 interface EntityDetailProps {
@@ -95,223 +83,6 @@ const RunCostSummary = ({ rollup }: { rollup: UsageRollup }) => {
         </Stamp>
       </Tooltip>
     </span>
-  );
-};
-
-const PhasesSection = ({
-  plan,
-  auditRunning,
-  agentBusy,
-  runningFill,
-  updating,
-  onTogglePhase,
-  onToggleFix,
-  onAddReviewPhases,
-  ideaView,
-  otherPlans,
-}: {
-  plan: PlanEntry;
-  auditRunning: boolean;
-  agentBusy: boolean;
-  runningFill: RunningPhaseFill | null;
-  updating: boolean;
-  onTogglePhase: (index: number) => void;
-  onToggleFix: (index: number) => void;
-  onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
-  ideaView: IdeaEntry;
-  otherPlans: PlanEntry[];
-}) => {
-  const launchRunAll = useAppStore((s) => s.launchRunAll);
-  const fixes = plan.fixes ?? [];
-  const hasOpenFix = fixes.some((fix) => !fix.done);
-  const rows: WorkRow[] = [
-    ...plan.phases.map((item, index) => ({ kind: 'phase' as const, item, index })),
-    ...fixes.map((item, index) => ({ kind: 'fix' as const, item, index })),
-  ];
-  return (
-    <div
-      className="mb-8"
-      style={
-        runningFill
-          ? ({ '--phase-fill': `${runningFill.fraction * 100}%` } as CSSProperties)
-          : undefined
-      }
-    >
-      <Table
-        data={rows}
-        toolbar={{
-          title: <h3 className={`${sectionHeadingClass} m-0`}>Phases</h3>,
-          actions: (
-            <>
-              {auditRunning && <Spinner size="small" label="Audit running…" />}
-              {/* Undrafted: the only sensible action is extending the idea. Auditing,
-                  reconciling and adding review phases all presuppose phases to act on. */}
-              {rows.length === 0 && <ExtendIdeaButton idea={ideaView} />}
-              {rows.length > 0 && (plan.status === 'review' || plan.status === 'done') && (
-                <AuditPhasesButton plan={plan} />
-              )}
-              {rows.length > 0 && plan.status !== 'done' && <ReconcileButton plan={plan} />}
-              {rows.length > 0 && (
-                <AddReviewPhasesButton
-                  onAdd={onAddReviewPhases}
-                  disabled={updating}
-                  entityId={plan.id ?? plan.title}
-                />
-              )}
-              {plan.id && hasOpenFix && (
-                <Tooltip content="Run the open fixes with an agent">
-                  <Button
-                    size="small"
-                    onClick={() => plan.id && launchRunAll(plan.id)}
-                    disabled={agentBusy}
-                  >
-                    {agentBusy ? 'Running…' : 'Run fixes'}
-                  </Button>
-                </Tooltip>
-              )}
-            </>
-          ),
-        }}
-        panelFooter={
-          rows.length === 0 ? (
-            // Table has no empty-body slot, so the invitation rides in the footer —
-            // with no rows above it, it lands directly under the header either way.
-            <div className="flex justify-center py-6">
-              <DraftPlanButton
-                idea={ideaView}
-                otherPlans={otherPlans}
-                className="font-handwritten !text-base underline"
-              />
-            </div>
-          ) : (
-            <DeliverSection plan={plan} />
-          )
-        }
-        columns={[
-          {
-            key: 'checkbox',
-            header: '',
-            cell: (row: WorkRow) =>
-              isRunningRow(row, runningFill) ? (
-                <Spinner size="small" />
-              ) : (
-                <Checkbox
-                  checked={row.item.done}
-                  onChange={() =>
-                    row.kind === 'phase' ? onTogglePhase(row.index) : onToggleFix(row.index)
-                  }
-                  disabled={updating}
-                />
-              ),
-            width: 1,
-          },
-          {
-            key: 'title',
-            header: 'Title',
-            cell: (row: WorkRow) => (
-              <span
-                className={`inline-flex min-w-0 max-w-full items-center gap-2 ${row.item.done ? 'line-through opacity-[0.45]' : 'no-underline'}`}
-              >
-                <span
-                  title={row.item.text}
-                  className="overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-base leading-tight"
-                >
-                  {row.item.text}
-                </span>
-                {isRunningRow(row, runningFill) && (
-                  <span className="text-xs opacity-[0.55]">
-                    {Math.round((runningFill?.fraction ?? 0) * 100)}%
-                  </span>
-                )}
-                {row.kind === 'phase' && row.item.source === 'review' && (
-                  <Stamp
-                    size="small"
-                    fillColor={STATUS_STAMP.review.fill}
-                    textColor={STATUS_STAMP.review.text}
-                  >
-                    review
-                  </Stamp>
-                )}
-                {row.kind === 'phase' && row.item.source === 'manual' && (
-                  <Stamp size="small" variant="neutral">
-                    manual
-                  </Stamp>
-                )}
-                {row.kind === 'fix' && (
-                  <Stamp size="small" variant="warning">
-                    fix
-                  </Stamp>
-                )}
-              </span>
-            ),
-          },
-          {
-            key: 'actions',
-            header: '',
-            align: 'end',
-            width: 6,
-            cell: (row: WorkRow) => {
-              if (isRunningRow(row, runningFill)) return null;
-              if (row.item.done) {
-                const run = row.item.run;
-                if (!run) return null;
-                return (
-                  <div className="flex w-full justify-end [container-type:inline-size]">
-                    <Stamp size="small" fillColor="var(--pui-texture-shade)" textColor="inherit">
-                      <span className="whitespace-nowrap font-mono text-3xs font-normal opacity-[0.7]">
-                        <span>{formatTokens(run.inputTokens + run.outputTokens)} tokens</span>
-                        <span className="run-meta-full">
-                          {' '}
-                          · {formatDuration(run.durationMs)}
-                          {run.attempts > 1 && ` ×${run.attempts}`}
-                          {run.model && ` · ${run.model}`}
-                        </span>
-                      </span>
-                    </Stamp>
-                  </div>
-                );
-              }
-              if (row.kind !== 'phase') return null;
-              return (
-                <div className="flex justify-end">
-                  <AgentStartButton planId={plan.id} phaseIndex={row.index} disabled={agentBusy} />
-                </div>
-              );
-            },
-          },
-        ]}
-        expandable={{
-          render: (row: WorkRow) => {
-            const runSummary = row.item.run ? formatRunSummary(row.item.run) : null;
-            if (!row.item.description && !runSummary) return null;
-            return (
-              <div className="flex flex-col gap-1">
-                {row.item.description && <span>{row.item.description}</span>}
-                {runSummary && (
-                  <span className="font-mono text-3xs opacity-[0.7]">{runSummary}</span>
-                )}
-              </div>
-            );
-          },
-        }}
-        hideHeader
-        density="compact"
-        showExpandColumn={false}
-        rowTexture={(row: WorkRow) => {
-          if (row.kind === 'fix') return 'kraft';
-          if (row.kind === 'phase' && row.item.done) return 'canvas';
-          return undefined;
-        }}
-        rowClassName={(row: WorkRow) => {
-          if (isRunningRow(row, runningFill)) return 'phase-running-row';
-          if (row.kind === 'phase' && row.item.source === 'review') {
-            return 'bg-[rgba(155,122,181,0.08)]';
-          }
-          return undefined;
-        }}
-        className="phase-table-phone"
-      />
-    </div>
   );
 };
 
@@ -818,6 +589,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               onAddReviewPhases={handleAddReviewPhases}
               ideaView={ideaView}
               otherPlans={otherPlans}
+              deliverPanel={<DeliverSection plan={plan} />}
             />
           )}
 

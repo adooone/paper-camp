@@ -78,8 +78,9 @@ and the page looks identical. Cross-cutting convention fixes are [[IDEA-198]].
 - [x] Relocate the pure functions to their existing homes
       `formatRunSummary` → `@/core/phase-run`, `branchEntityId` → `@/app/utils`, `feedbackDraftKeyFor` → `@/app/utils/local-draft-store`, and `WorkRow`/`isRunningRow` → `helpers/`.
       run: 4m5s · 9.9k in · 10.3k out · sonnet-5
-- [ ] Extract the Phases table into `components/` cells and a `views/` section
+- [x] Extract the Phases table into `components/` cells and a `views/` section
       Turn the inline `columns` renderers into named cell components; move `PhasesSection` to its own view file.
+      run: 10m3s · 3.9k in · 24k out · sonnet-5
 - [ ] Move `FeedbackSection` state into `hooks/use-feedback-composer.ts`
       Leave the section as a `views/` file that renders what the hook returns.
 - [ ] Split the remaining sections into one-component-per-file views

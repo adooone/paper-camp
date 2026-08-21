@@ -2,6 +2,7 @@ export * from './archive-section';
 export * from './entity-detail';
 export * from './list-view';
 export * from './note-detail';
+export * from './phases-section';
 export * from './plan-actions-column';
 export * from './plan-filter-column';
 export * from './plan-rows';
