@@ -38,8 +38,9 @@ The board's view lists its tickets with the same row treatment the main list use
 - [x] Suppress phases on a board and derive its status
       `PhasesSection` is not rendered for a board; roll its status up from its tickets, stopping at `review`.
       run: 8m45s · 950 in · 24.7k out · sonnet-5
-- [ ] Render a board's tickets in its view
+- [x] Render a board's tickets in its view
       Reuse the main list's row treatment (`PlanRows`), scoped to the board, with the ticket-to-board backlink. Behaviour may diverge — strict order, board-specific actions — but the phases `Table` is never used here.
+      run: 4m45s · 4.2k in · 8.7k out · sonnet-5
 - [ ] Create and decompose from the app
       Mark a new idea as a board, and add tickets to it without leaving its view.
 - [ ] Convert [[IDEA-195]] into a board

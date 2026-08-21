@@ -53,6 +53,7 @@ import {
   runningTaskForPlan,
 } from '../helpers';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
+import { PlanRows } from './plan-rows';
 
 interface EntityDetailProps {
   plan: PlanEntry;
@@ -377,7 +378,8 @@ const ClarificationsSection = ({ clarifications }: { clarifications: LogEntry[] 
  * produced it is one click away (IDEA-187). */
 const ParentLinkRow = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: PlanEntry[] }) => {
   const navigate = useNavigate();
-  if (plan.entityKind !== 'fix' || !plan.idea) return null;
+  const isTicket = plan.entityKind === 'ticket';
+  if ((!isTicket && plan.entityKind !== 'fix') || !plan.idea) return null;
   const parentId = plan.idea;
   const parent = otherPlans.find((p) => p.id === parentId);
   return (
@@ -393,11 +395,11 @@ const ParentLinkRow = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: Plan
         }
         className="flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left"
       >
-        <Stamp size="small" variant="warning">
-          fix
+        <Stamp size="small" variant={isTicket ? 'info' : 'warning'}>
+          {isTicket ? 'ticket' : 'fix'}
         </Stamp>
         <span className="text-sm opacity-70">
-          Fixes <span className="font-mono">{parentId}</span>
+          {isTicket ? 'On board' : 'Fixes'} <span className="font-mono">{parentId}</span>
           {parent && ` — ${parent.title}`}
         </span>
       </button>
@@ -441,6 +443,28 @@ const FixesSection = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: PlanE
           </button>
         ))}
       </div>
+    </div>
+  );
+};
+
+/** A board's decomposition, in the same row treatment the main worklist uses
+ * (IDEA-201) — never the phases Table, since a board carries no phases of its own. */
+const TicketsSection = ({ plan, otherPlans }: { plan: PlanEntry; otherPlans: PlanEntry[] }) => {
+  const navigate = useNavigate();
+  const tickets = otherPlans.filter((p) => p.entityKind === 'ticket' && p.idea === plan.id);
+  if (tickets.length === 0) return null;
+  const handleOpen = (title: string) => {
+    const ticket = tickets.find((t) => t.title === title);
+    if (!ticket) return;
+    navigate({
+      to: '/plans/$planId',
+      params: { planId: entityRouteParam(ticket.id, ticket.title) },
+    });
+  };
+  return (
+    <div className="mb-8">
+      <h3 className={`${sectionHeadingClass} mb-3`}>Tickets</h3>
+      <PlanRows plans={tickets} onOpen={handleOpen} />
     </div>
   );
 };
@@ -763,7 +787,9 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
         />
       ) : (
         <>
-          {plan.entityKind !== 'board' && (
+          {plan.entityKind === 'board' ? (
+            <TicketsSection plan={plan} otherPlans={otherPlans} />
+          ) : (
             <PhasesSection
               plan={plan}
               auditRunning={auditRunning}
