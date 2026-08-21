@@ -2,7 +2,7 @@
 id: IDEA-201
 title: Boards and tickets
 type: feat
-status: idea
+status: review
 created: 2026-08-21
 updated: 2026-08-21
 tags:
@@ -43,5 +43,6 @@ The board's view lists its tickets with the same row treatment the main list use
       run: 4m45s · 4.2k in · 8.7k out · sonnet-5
 - [x] Create and decompose from the app
       Mark a new idea as a board, and add tickets to it without leaving its view.
-- [ ] Convert [[IDEA-195]] into a board
+- [x] Convert [[IDEA-195]] into a board
       Turn its five sequencing steps into tickets and repoint [[IDEA-117]]'s dependency at the real ids.
+      run: 3m · 7.3k in · 13.6k out · sonnet-5
