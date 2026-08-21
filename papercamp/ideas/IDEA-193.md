@@ -124,8 +124,19 @@ the way.
 
 Not a degraded mode. With no runtime the client still does the whole planning
 half — read the corpus, write ideas, order the queue, review — by talking to
-GitHub itself with a token the user granted it by device flow or PKCE. Only
-execution needs the machine: agent runs, git operations, checks, the filesystem.
+GitHub itself with a fine-grained personal access token the user mints and pastes
+in once. Only execution needs the machine: agent runs, git operations, checks,
+the filesystem.
+
+The mechanism is forced, and it was measured rather than assumed.
+`github.com/login/*` sends no `Access-Control-Allow-Origin` and 404s the
+preflight, so device flow and the OAuth token exchange cannot complete in a
+browser — they need a server-side hop, and a hosted shim is the backend this
+design refuses. `api.github.com` answers `Access-Control-Allow-Origin: *`, so
+once a token exists every corpus read and write works from the browser directly.
+Only acquisition was ever the problem, and a token the user mints solves it
+without operating anything. A fine-grained token is also narrower than an OAuth
+grant: scoped to chosen repositories, and revocable from GitHub at any time.
 
 This is what rewrites "the client holds nothing" into something precise: no
 corpus, no account, and no credential it did not obtain from the user's own
@@ -166,7 +177,7 @@ remains on both notes is work.
       Capability-aware modules so the client composes from what is reachable and a runtime-only feature says so in place.
       run: 8m7s · 1.1k in · 26k out · sonnet-5
 - [ ] Reach the corpus with no runtime
-      The client talks to GitHub directly with a device-flow or PKCE token, which is what makes plan-only real.
+      The client reads and writes the corpus through `api.github.com` with a user-minted fine-grained token held in device-local storage, which is what makes plan-only real.
 - [ ] Split plugins into two extension points
       Separate external services from local adapters, each with its own credential store and failure mode.
 - [ ] Package the runtime as an installed repo dependency
@@ -179,3 +190,15 @@ remains on both notes is work.
 - [x] 2026-08-21 [question] [agent] Run-all parked on phase 1 ("Measure the localhost carve-out") — the agent needs a decision: I can't run a browser to measure the localhost carve-out (headless, no display). Do you want to run this yourself, or would you like me to first prepare a minimal throwaway harness for you to run, without checking the phase off until you report back?
 - [x] 2026-08-21 [decision] Neither: the measurement is dropped. Loopback is the settled front door ([[IDEA-195]]), so phase 1 is replaced by the engineering it actually implies — CORS headers and the Private Network Access preflight. The harness built for it is shelved, unused.
 - [x] 2026-08-21 [decision] Worth keeping from the attempt: a mixed-content block and a plain connection failure are indistinguishable from JS, both surfacing as `TypeError: Failed to fetch`, so any future browser-reachability claim has to be read from the server's own log rather than the client.
+- [x] 2026-08-21 [question] [agent] Run-all parked on phase 5 ("Reach the corpus with no runtime") — the agent needs a decision: I measured GitHub's OAuth endpoints before writing any code (same discipline this idea already used for the localhost carve-out): `https://github.com/login/device/code` and `https://github.com/login/oauth/access_token` both respond with no `Access-Control-Allow-Origin` header. That means a browser `fetch` from the hosted client's own origin can't read either response — the device-flow code request and the token exchange are both blocked by CORS, not just theoretically but confirmed by curl against the live endpoints just now. This is the same class of "confident prediction turns out wrong" this idea already flagged once for localhost, so I didn't want to build past it on an assumption.
+
+This means "the client talks to GitHub directly with a device-flow or PKCE token" can't be implemented as literally a same-origin, backend-free browser flow — GitHub's OAuth token endpoints require a server-side hop to work around CORS, which is the industry-standard reason GitHub OAuth normally needs a backend. But this plan's own "Out of scope" section rules out exactly that: "no relay, no hosted broker," and "Nothing is hosted on the user's behalf" is called the constraint the rest of the design answers to, not a preference to revisit.
+
+I don't want to guess past this contradiction. Do you want me to:
+1. Have the client accept a manually-created GitHub fine-grained personal access token (pasted in by the user) instead of device-flow/PKCE — no OAuth exchange, no CORS problem, but it's not what this phase's title says and pushes token-minting UX onto the user.
+2. Use the runtime itself as the token-exchange relay when one happens to be reachable (defeats the point of plan-only, which is specifically the *no-runtime* case).
+3. Something else I haven't considered.
+
+Let me know how to proceed and I'll implement it as this phase's scope.
+- [x] 2026-08-21 [decision] Confirmed independently: `github.com/login/*` returns no `Access-Control-Allow-Origin` and 404s the preflight, so device flow cannot complete in a browser — but `api.github.com` answers `Access-Control-Allow-Origin: *`, so only token *acquisition* was ever blocked, never corpus reads and writes. Plan-only survives unchanged.
+- [x] 2026-08-21 [decision] Option 1: the client takes a user-minted fine-grained personal access token. Option 2 was rejected because a runtime-brokered exchange cannot serve the no-runtime case that plan-only exists for, and a hosted token-exchange shim is a backend, which "nothing is hosted on the user's behalf" rules out as bedrock rather than preference.

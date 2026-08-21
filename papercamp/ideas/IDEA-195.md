@@ -58,9 +58,15 @@ and it can stay that way indefinitely.
 **The client holds a GitHub credential, and the principle says so.** Plan-only
 requires it, so "the client holds nothing" is rewritten rather than quietly
 broken: the client holds no corpus, no account, and no credential it did not
-obtain directly from the user's own authorization. A GitHub token acquired by
-device flow or PKCE and kept in device-local storage is exactly that — no backend
-holds it, and no Paper Camp service ever sees it.
+obtain directly from the user's own authorization. A fine-grained GitHub token
+the user mints and pastes in, kept in device-local storage, is exactly that — no
+backend holds it, and no Paper Camp service ever sees it.
+
+Device flow was the obvious mechanism and it does not work: `github.com/login/*`
+sends no CORS headers and 404s the preflight, so the exchange needs a server-side
+hop, and a hosted shim is the backend this architecture refuses. `api.github.com`
+is CORS-enabled, so only acquisition was ever blocked. A minted token also grants
+less than an OAuth flow would — chosen repositories only, revocable at will.
 
 **One app, capability-aware modules.** The no-runtime experience is the same app
 with its modules reporting what they can do, not a separate reduced build. A
@@ -176,7 +182,7 @@ from any other caller that happens to know the port.
 ### Thread
 - [x] 2026-08-21 [decision] The hosted client reaches the runtime over the loopback carve-out, which is the settled front door; the residual work is the Private Network Access preflight and CORS headers, not a measurement, so [[IDEA-193]]'s measurement phase is dropped.
 - [x] 2026-08-21 [decision] Plan-only is a first-class state a project can sit in indefinitely: with no runtime the client still does the whole planning half by talking to GitHub, and only execution needs the local machine.
-- [x] 2026-08-21 [decision] The client holds a GitHub token obtained by device flow or PKCE, so "the client holds nothing" is rewritten to no corpus, no account, and no credential it did not get from the user's own authorization.
+- [x] 2026-08-21 [decision] The client holds a fine-grained GitHub token the user mints and pastes in, so "the client holds nothing" is rewritten to no corpus, no account, and no credential it did not get from the user's own authorization. Device flow was measured and rejected: `github.com/login/*` sends no CORS headers, `api.github.com` does, so only acquisition was ever blocked and a hosted shim to fix it would be the backend this architecture refuses.
 - [x] 2026-08-21 [decision] The no-runtime experience is the same app with capability-aware modules that report what they can do, never a separate reduced build.
 - [x] 2026-08-21 [decision] Local hosting via `paper-camp dev` with the in-app toolbar stays fully supported alongside the hosted client — the same bundle from a different origin, needing no transport work.
 - [x] 2026-08-21 [decision] One runtime per repository, not one managing many: the runtime stays a repo dev dependency and the client fans out across N of them, so [[IDEA-117]]'s hub is a client concern rather than a runtime one.
