@@ -9,7 +9,6 @@ tags:
   - agent
   - code-health
 subject: Run & monitor
-order: 8
 ---
 
 An agent implementing a phase optimises for making it work. Nothing afterwards

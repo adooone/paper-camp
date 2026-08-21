@@ -9,7 +9,6 @@ tags:
   - app
   - routing
 subject: App UI
-order: 4
 ---
 
 Plan and idea URLs are unreadable — `/plans/Deliver%20lives%20in%20the%20idea%20view`

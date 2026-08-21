@@ -2,14 +2,13 @@
 id: IDEA-202
 title: Stop writes leaking the run-order rank
 type: fix
-status: idea
+status: review
 created: 2026-08-21
 updated: 2026-08-21
 tags:
   - corpus
   - code-health
 subject: The format as the product
-order: 6
 ---
 
 `papercamp/run-order.md` is untracked on purpose. The `.gitignore` entry says why: the queue order is local, and a clone rebuilds membership but not the ordering. Every write to an idea currently contradicts that, persisting the local rank into tracked frontmatter.
@@ -27,7 +26,7 @@ The overlay itself is right and should stay: `readRunOrderRanks` is explicit tha
 - [x] Persist only the stored value
       `entityFileInput` writes the frontmatter `order`, never the overlaid rank; cover it with a test that reads an entity with a run-order rank and writes it back unchanged.
       run: 2m56s · 375 in · 4.8k out · sonnet-5
-- [ ] Strip ranks already written to the corpus
+- [x] Strip ranks already written to the corpus
       Remove `order:` frontmatter that a previous write stamped in, leaving genuine stored values alone.
 
 ### Thread

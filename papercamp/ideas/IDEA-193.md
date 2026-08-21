@@ -10,7 +10,6 @@ tags:
   - multi-project
   - app
 subject: Multi-project
-order: 2
 ---
 
 Paper Camp separates into three layers, and ships no backend. The UI is static

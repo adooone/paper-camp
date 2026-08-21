@@ -10,7 +10,6 @@ tags:
   - git
   - ux
 subject: App UI
-order: 4
 ---
 
 The git page never says what happened to a file, and the chrome around it

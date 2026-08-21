@@ -11,7 +11,6 @@ tags:
   - ux
   - chat
 subject: In-app dev toolbar
-order: 1
 ---
 
 The embedded island gets its name: **Scout** — we send a scout into each

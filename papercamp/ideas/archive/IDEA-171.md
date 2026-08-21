@@ -10,7 +10,6 @@ tags:
   - plans
   - git
 subject: Run & monitor
-order: 7
 ---
 
 A plan's completion state lives in its entity file, which is branch-local. So

@@ -10,7 +10,6 @@ tags:
   - ui
   - agent
 subject: Richer review loop
-order: 13
 ---
 
 A `pr-review` task is invisible *as a review* while it runs. It takes two to

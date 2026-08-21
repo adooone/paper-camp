@@ -10,7 +10,6 @@ tags:
   - git
   - plans
 subject: Run & monitor
-order: 7
 ---
 
 `runGitSync` stashes the whole dirty tree — corpus included — then pops it back

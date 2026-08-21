@@ -11,7 +11,6 @@ tags:
   - stack
   - git
 subject: App UI
-order: 1
 ---
 
 Deliver sits in the Stack panel, a room away from the work it closes:

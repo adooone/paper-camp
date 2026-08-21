@@ -10,7 +10,6 @@ tags:
   - plans
   - ux
 subject: Planning surface
-order: 5
 ---
 
 The Plans worklist's two controls both misreport: the status filter deletes

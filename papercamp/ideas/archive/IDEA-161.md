@@ -10,7 +10,6 @@ tags:
   - stack
   - layout
 subject: App UI
-order: 1
 ---
 
 The Stack panel's Desk section has no scroll container, so everything past the

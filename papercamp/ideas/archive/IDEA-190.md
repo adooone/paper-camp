@@ -10,7 +10,6 @@ tags:
   - git
   - server
 subject: Run & monitor
-order: 9
 ---
 
 A phase commit contains the files that phase edited. Whatever else is sitting

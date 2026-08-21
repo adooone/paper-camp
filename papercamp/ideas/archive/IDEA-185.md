@@ -10,7 +10,6 @@ tags:
   - plans
   - refactor
 subject: Code health
-order: 3
 ---
 
 The worklist carries a whole parent/child rendering path that cannot execute.

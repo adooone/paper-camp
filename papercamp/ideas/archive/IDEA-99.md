@@ -11,7 +11,6 @@ tags:
   - metrics
   - server
   - ui
-order: 1
 ---
 
 We collect signals about the codebase but expose none of them, and the one gate built on such a signal — the comment-ratio budget — was removed for failing builds unpredictably (a whole-repo ratio no phase could fix). The information is still worth having; it just belongs as something you *watch*, not something that *blocks*.

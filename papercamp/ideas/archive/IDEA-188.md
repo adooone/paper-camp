@@ -10,7 +10,6 @@ tags:
   - server
   - git
 subject: Run & monitor
-order: 10
 ---
 
 A fix pass commits once per fix, so a plan with a dozen follow-ups buries its

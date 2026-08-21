@@ -11,7 +11,6 @@ tags:
   - git
   - ui
 subject: Richer review loop
-order: 5
 ---
 
 A dedicated view for reading the changes before you deliver — the target of the "N files changed" link from the Deliver card ([[IDEA-109]]). Review your working tree in-app instead of dropping to a terminal or the GitHub PR.

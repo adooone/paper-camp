@@ -10,7 +10,6 @@ tags:
   - github
   - ui
 subject: Richer review loop
-order: 15
 ---
 
 Reviews currently post from the repo owner's own account with a one-string

@@ -10,7 +10,6 @@ tags:
   - app
   - planning
 subject: The format as the product
-order: 5
 ---
 
 An idea with a phase list is the right unit for something small and quick. For a project the size of the multi-project hub it is the wrong one: the work splits into several independently plannable pieces, and a flat checklist cannot carry status, an agent run, or a thread per piece. A **board** is an idea that decomposes into **tickets** instead of phases, and a ticket is a full entity with everything an idea has — phases, status, thread, agent runs.

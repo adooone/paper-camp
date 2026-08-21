@@ -10,7 +10,6 @@ tags:
   - ui
   - roadmap
 subject: Planning surface
-order: 1
 ---
 
 Visual review of the Roadmap page (2026-08-06): three views fragment one

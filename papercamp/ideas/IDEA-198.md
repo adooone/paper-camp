@@ -9,7 +9,6 @@ tags:
   - code-health
   - plans
 subject: Code health
-order: 7
 ---
 
 Four conventions the plans feature applies inconsistently. Each is small, each

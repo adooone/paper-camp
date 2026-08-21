@@ -12,7 +12,6 @@ tags:
   - agent
   - plans
 subject: Conversational feedback
-order: 7
 ---
 
 The Feedback view on an idea becomes one chat thread with a single message box and a single send. Posting a message is the only action — there is no Apply, no Split, and no pre-sorting by the author. Every message goes to the agent, which decides what it is and acts on it. This closes the answer gap [[IDEA-104]] left: questions already live on the idea, but nothing let you answer one.

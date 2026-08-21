@@ -10,7 +10,6 @@ tags:
   - github
   - plans
 subject: Planning surface
-order: 4
 ---
 
 When PR state cannot be resolved, every entity's status silently becomes a guess

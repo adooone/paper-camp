@@ -10,7 +10,6 @@ tags:
   - ui
   - layout
 subject: App UI
-order: 11
 ---
 
 The shell wastes horizontal space at every width below 1440px, and the page stops

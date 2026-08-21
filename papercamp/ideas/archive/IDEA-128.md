@@ -10,7 +10,6 @@ tags:
   - integration
   - app
 subject: In-app dev toolbar
-order: 4
 ---
 
 Owner's idea: integrate paper-camp natively into the application being built. When the target app's dev server runs, paper-camp is present *inside it* — a **docked toolbar** (Vercel-Toolbar-style) wired to the corpus and tools, a link out to the full desk, and optionally the whole desk mounted on a subroute of the app.

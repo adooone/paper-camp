@@ -10,7 +10,6 @@ tags:
   - ui
   - git
 subject: App UI
-order: 1
 ---
 
 The Changes page (`/diff`, [[IDEA-110]]) doesn't speak the desk's layout

@@ -10,7 +10,6 @@ tags:
   - github
   - core
 subject: Run & monitor
-order: 6
 ---
 
 GitHub is read when the human asks for it, and at no other time. No timers, no

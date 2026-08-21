@@ -8,7 +8,6 @@ tags:
   - code-health
   - tooling
 subject: Code health
-order: 3
 ---
 
 `docs/CODE_STYLE.md` §7 states a rule about *individual comments* — a comment

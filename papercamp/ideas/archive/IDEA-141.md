@@ -10,7 +10,6 @@ tags:
   - ui
   - plans
 subject: Planning surface
-order: 2
 ---
 
 The phases table is static — a checkbox list that looks the same whether a

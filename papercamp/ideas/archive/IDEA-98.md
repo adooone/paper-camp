@@ -10,7 +10,6 @@ tags:
   - core
   - plans
   - git
-order: 13
 ---
 
 Run order lives in each entity's frontmatter as `order: N`, so reordering is inherently a
