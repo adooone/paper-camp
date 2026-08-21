@@ -71,7 +71,7 @@ export const WorklistActionsMenu = () => {
         description:
           unannotated > 0
             ? `${unannotated} of ${result.moved.length} ideas could not be annotated`
-            : result.why || undefined,
+            : result.why.join('\n') || undefined,
         variant: unannotated > 0 ? 'warning' : 'success',
       });
     } catch (err) {

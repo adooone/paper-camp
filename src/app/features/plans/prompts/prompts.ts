@@ -493,11 +493,15 @@ export function buildPrioritisePrompt(worklist: PlanEntry[], roadmapText: string
   const queue = active
     .map((p) => {
       const tags = p.tags.length ? ` (tags: ${p.tags.join(', ')})` : '';
-      return `${p.id ?? 'no id'}: ${p.title}${tags} — subject: ${p.subject ?? 'none'}, created: ${p.created}, status: ${p.status}\n${p.body}`;
+      const done = p.phases.filter((phase) => phase.done).length;
+      const phaseList = p.phases.length
+        ? `\nphases (${done}/${p.phases.length} done):\n${p.phases.map((phase) => `  - [${phase.done ? 'x' : ' '}] ${phase.text}`).join('\n')}`
+        : '\nphases: none yet (undrafted)';
+      return `${p.id ?? 'no id'}: ${p.title}${tags} — subject: ${p.subject ?? 'none'}, created: ${p.created}, status: ${p.status}${phaseList}\n\n${p.body}`;
     })
-    .join('\n\n');
+    .join('\n\n---\n\n');
 
-  return `You are prioritising the run-order queue — the ordered set of planned/in-progress/review work, whose position determines what gets worked on next. Do not use any tools, do not read or edit any files — base your answer only on the text given below.
+  return `You are prioritising the run-order queue of Paper Camp, a planning tool whose corpus lives as markdown in the repo. Each entry below is an idea: a unit of work with a body explaining what it is and why, and a list of phases that are the steps to build it. Position in this queue determines what gets worked on next. Do not use any tools, do not read or edit any files — base your answer only on the text given below.
 
 Current queue, in existing run order:
 ${queue || '(empty)'}
@@ -505,16 +509,22 @@ ${queue || '(empty)'}
 ROADMAP.md, for horizon and dependency context:
 ${roadmapText || '(no roadmap file)'}
 
-Task: decide the best run order for the queue above, weighing:
-- dependencies between ideas (one blocks or unblocks another)
-- how close each idea's subject is to the roadmap's near-term horizons vs. later ones
-- staleness (an idea sitting unstarted a long time vs. one just added)
-- size (a small idea ahead of a large one keeps the queue moving)
+Task: read each body properly and decide the order they should actually be built in, weighing these in order of importance:
+
+1. Stated blockers. A body may say outright that it waits on something ("blocked on", "depends on", "needs X first"). That dominates everything else — never place an idea ahead of what it says it needs. An idea whose blocker is not in this queue still ranks low, because it cannot start.
+2. Dependencies you infer. A \`[[IDEA-N]]\` wikilink is a reference to another idea; read the sentence around it to tell a real dependency from a passing mention. Work that unblocks other queued work goes first.
+3. Foundations before the things built on them. If one idea changes a format, a shared component, or a contract that another idea must then use, doing it second means redoing work.
+4. Cheap decisive work early. An idea whose first phase resolves an unknown that could invalidate later planning — a measurement, a spike, a decision — is worth more early than a large idea that is merely valuable.
+5. Roadmap horizon. Prefer subjects the roadmap places near-term over ones it defers.
+6. Size and staleness, as tie-breakers only. A small idea ahead of a large one keeps the queue moving; an idea sitting unstarted a long time deserves a look. Neither outweighs the points above.
+
+Judge size from the phase list, not the body's length. Ignore the existing order except as a tie-break — it may be wrong, and correcting it is the point.
 
 Respond with ONLY a single JSON object, no prose, no code fences, no markdown — exactly this shape:
-{"order": ["${active[0]?.id ?? 'IDEA-N'}", "..."], "why": "one line per entry in order, same index, explaining that id's placement"}
+{"order": ["${active[0]?.id ?? 'IDEA-N'}", "..."], "why": ["reason for the first id", "reason for the second id"]}
 
 Rules:
 - "order" must contain every id from the current queue exactly once — no id added, dropped, or duplicated.
-- "why" must have exactly as many lines as "order" has entries, in the same order.`;
+- "why" must be an array of strings with exactly one entry per "order" entry, at the same index.
+- Each "why" entry is one sentence naming what put that idea in that position — the blocker, the dependency, or the trade-off. Do not restate the idea's title or summarise what it does.`;
 }

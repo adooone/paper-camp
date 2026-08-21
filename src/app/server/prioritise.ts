@@ -15,15 +15,31 @@ import {
   writeRunOrderFile,
 } from './helpers';
 
-function validatePrioritiseVerdict(candidate: string, activeIds: string[]): PrioritiseVerdict {
-  let parsed: { order?: string[]; why?: string };
+/** `strictWhy` is on for the first attempt only: a misaligned `why` is worth one
+ * retry, but never worth discarding an otherwise-valid ordering. */
+function validatePrioritiseVerdict(
+  candidate: string,
+  activeIds: string[],
+  strictWhy: boolean,
+): PrioritiseVerdict {
+  let parsed: { order?: string[]; why?: string[] | string };
   try {
-    parsed = JSON.parse(candidate) as { order?: string[]; why?: string };
+    parsed = JSON.parse(candidate) as { order?: string[]; why?: string[] | string };
   } catch {
     throw new Error('Agent verdict was not valid JSON');
   }
-  if (!Array.isArray(parsed.order) || typeof parsed.why !== 'string') {
-    throw new Error('Agent verdict was missing an `order` array or a `why` string');
+  // A `why` string is the older shape — split it so an agent that ignores the
+  // array contract still lands its reasons on the right ideas.
+  const why = Array.isArray(parsed.why)
+    ? parsed.why.map((line) => String(line).trim())
+    : typeof parsed.why === 'string'
+      ? parsed.why
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+      : null;
+  if (!Array.isArray(parsed.order) || why === null) {
+    throw new Error('Agent verdict was missing an `order` array or a `why` array');
   }
   if (parsed.order.length !== activeIds.length) {
     throw new Error(
@@ -44,7 +60,12 @@ function validatePrioritiseVerdict(candidate: string, activeIds: string[]): Prio
   if (missing) {
     throw new Error(`Agent verdict is missing active id "${missing}"`);
   }
-  return { order: parsed.order, why: parsed.why };
+  if (strictWhy && why.length !== parsed.order.length) {
+    throw new Error(
+      `Agent verdict gave ${why.length} reasons for ${parsed.order.length} ideas — one per idea is required`,
+    );
+  }
+  return { order: parsed.order, why };
 }
 
 // One-shot, read-only agent call, not the long-running phase/task system in
@@ -64,7 +85,7 @@ export async function getPrioritiseVerdict(
     throw new Error('No planned/in-progress/review ideas to prioritise');
   }
 
-  const attempt = async (prompt: string): Promise<PrioritiseVerdict> => {
+  const attempt = async (prompt: string, strictWhy: boolean): Promise<PrioritiseVerdict> => {
     const output = await runPrompt(prompt);
 
     let resultText = output;
@@ -76,15 +97,15 @@ export async function getPrioritiseVerdict(
     const match = resultText.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('Agent did not return a parseable prioritise verdict');
 
-    return validatePrioritiseVerdict(match[0], activeIds);
+    return validatePrioritiseVerdict(match[0], activeIds, strictWhy);
   };
 
   const prompt = buildPrioritisePrompt(worklist, roadmapText);
   try {
-    return await attempt(prompt);
+    return await attempt(prompt, true);
   } catch (err) {
     const retryPrompt = `${prompt}\n\nYour previous response was invalid: ${(err as Error).message}\n\nRespond again with ONLY the corrected JSON object, following the rules exactly.`;
-    return await attempt(retryPrompt);
+    return await attempt(retryPrompt, false);
   }
 }
 
@@ -141,10 +162,9 @@ export async function applyPrioritiseVerdict(
   });
   if (moved.length === 0) return { moved: [], annotated: [] };
 
-  const whyLines = verdict.why.split('\n').filter((line) => line.trim().length > 0);
   const reasonFor = (id: string) => {
     const index = verdict.order.indexOf(id);
-    return whyLines[index]?.trim() || 'Reprioritised by the shuffle agent.';
+    return verdict.why[index]?.trim() || 'Reprioritised by the shuffle agent.';
   };
 
   const annotated: string[] = [];

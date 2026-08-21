@@ -972,7 +972,9 @@ export interface OverlapVerdict {
 /** `why` carries one line per entry in `order`, same index — the reason for that id's placement. */
 export interface PrioritiseVerdict {
   order: string[];
-  why: string;
+  /** One reason per `order` entry, same index. May be short if the agent
+   * under-supplied after a retry — callers fall back per missing index. */
+  why: string[];
 }
 
 export interface ReconcileQueueItem {

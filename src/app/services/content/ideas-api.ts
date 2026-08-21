@@ -6,7 +6,7 @@ export interface PrioritiseResult {
   ok: boolean;
   moved: string[];
   annotated: string[];
-  why: string;
+  why: string[];
   annotationError?: string;
 }
 

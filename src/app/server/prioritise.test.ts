@@ -103,11 +103,11 @@ describe('getPrioritiseVerdict', () => {
     const runPrompt = async () => {
       call += 1;
       if (call === 1) return '{not json}';
-      return JSON.stringify({ order: ['IDEA-2', 'IDEA-1'], why: 'a\nb' });
+      return JSON.stringify({ order: ['IDEA-2', 'IDEA-1'], why: ['a', 'b'] });
     };
 
     const verdict = await getPrioritiseVerdict(worklist, '', runPrompt);
-    expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: 'a\nb' });
+    expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: ['a', 'b'] });
     expect(call).toBe(2);
   });
 
@@ -116,13 +116,13 @@ describe('getPrioritiseVerdict', () => {
     const runPrompt = async () => JSON.stringify({ order: ['IDEA-1', 'IDEA-2'] });
 
     await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
-      'missing an `order` array or a `why` string',
+      'missing an `order` array or a `why` array',
     );
   });
 
   it('rejects a verdict with the wrong count of ordered ids, naming both counts', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
-    const runPrompt = async () => JSON.stringify({ order: ['IDEA-1'], why: 'kept first' });
+    const runPrompt = async () => JSON.stringify({ order: ['IDEA-1'], why: ['kept first'] });
 
     await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
       'ordered 1 ideas but 2 are active',
@@ -131,7 +131,7 @@ describe('getPrioritiseVerdict', () => {
 
   it('rejects a verdict with a duplicated id, naming the id', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
-    const runPrompt = async () => JSON.stringify({ order: ['IDEA-1', 'IDEA-1'], why: 'a\nb' });
+    const runPrompt = async () => JSON.stringify({ order: ['IDEA-1', 'IDEA-1'], why: ['a', 'b'] });
 
     await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
       'listed id "IDEA-1" more than once',
@@ -140,20 +140,47 @@ describe('getPrioritiseVerdict', () => {
 
   it('rejects a verdict with an id outside the active set, naming the id', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
-    const runPrompt = async () => JSON.stringify({ order: ['IDEA-1', 'IDEA-9'], why: 'a\nb' });
+    const runPrompt = async () => JSON.stringify({ order: ['IDEA-1', 'IDEA-9'], why: ['a', 'b'] });
 
     await expect(getPrioritiseVerdict(worklist, '', runPrompt)).rejects.toThrow(
       'included id "IDEA-9", which is not in the active set',
     );
   });
 
-  it('accepts an otherwise-valid ordering whose `why` line count does not match', async () => {
+  it('retries once when `why` has fewer reasons than ordered ids', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
-    const runPrompt = async () =>
-      JSON.stringify({ order: ['IDEA-1', 'IDEA-2'], why: 'only one reason' });
+    let call = 0;
+    const runPrompt = async () => {
+      call += 1;
+      if (call === 1) return JSON.stringify({ order: ['IDEA-1', 'IDEA-2'], why: ['only one'] });
+      return JSON.stringify({ order: ['IDEA-1', 'IDEA-2'], why: ['first', 'second'] });
+    };
 
     const verdict = await getPrioritiseVerdict(worklist, '', runPrompt);
-    expect(verdict).toEqual({ order: ['IDEA-1', 'IDEA-2'], why: 'only one reason' });
+    expect(verdict).toEqual({ order: ['IDEA-1', 'IDEA-2'], why: ['first', 'second'] });
+    expect(call).toBe(2);
+  });
+
+  it('keeps a valid ordering when the retry still under-supplies reasons', async () => {
+    const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
+    let call = 0;
+    const runPrompt = async () => {
+      call += 1;
+      return JSON.stringify({ order: ['IDEA-1', 'IDEA-2'], why: ['only one reason'] });
+    };
+
+    const verdict = await getPrioritiseVerdict(worklist, '', runPrompt);
+    expect(verdict).toEqual({ order: ['IDEA-1', 'IDEA-2'], why: ['only one reason'] });
+    expect(call).toBe(2);
+  });
+
+  it('splits a legacy newline-delimited `why` string onto the right ideas', async () => {
+    const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
+    const runPrompt = async () =>
+      JSON.stringify({ order: ['IDEA-1', 'IDEA-2'], why: 'first\nsecond' });
+
+    const verdict = await getPrioritiseVerdict(worklist, '', runPrompt);
+    expect(verdict).toEqual({ order: ['IDEA-1', 'IDEA-2'], why: ['first', 'second'] });
   });
 
   it('accepts a full permutation of the active ids', async () => {
@@ -163,10 +190,10 @@ describe('getPrioritiseVerdict', () => {
       plan({ id: 'IDEA-3', status: 'idea' }),
     ];
     const runPrompt = async () =>
-      JSON.stringify({ order: ['IDEA-2', 'IDEA-1'], why: 'blocks first\nsecond' });
+      JSON.stringify({ order: ['IDEA-2', 'IDEA-1'], why: ['blocks first', 'second'] });
 
     const verdict = await getPrioritiseVerdict(worklist, '', runPrompt);
-    expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: 'blocks first\nsecond' });
+    expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: ['blocks first', 'second'] });
   });
 });
 
@@ -191,7 +218,7 @@ describe('applyPrioritiseVerdict', () => {
 
     const result = await applyPrioritiseVerdict(root, {
       order: ['IDEA-2', 'IDEA-1'],
-      why: 'unblocks IDEA-1\nwaits on IDEA-2',
+      why: ['unblocks IDEA-1', 'waits on IDEA-2'],
     });
 
     expect(result.moved.sort()).toEqual(['IDEA-1', 'IDEA-2']);
@@ -221,7 +248,7 @@ describe('applyPrioritiseVerdict', () => {
 
     const result = await applyPrioritiseVerdict(root, {
       order: ['IDEA-2', 'IDEA-1'],
-      why: 'only one reason',
+      why: ['only one reason'],
     });
 
     expect(result.moved.sort()).toEqual(['IDEA-1', 'IDEA-2']);
@@ -252,7 +279,7 @@ describe('applyPrioritiseVerdict', () => {
 
     const result = await applyPrioritiseVerdict(root, {
       order: ['IDEA-1', 'IDEA-2'],
-      why: 'stays first\nstays second',
+      why: ['stays first', 'stays second'],
     });
 
     expect(result.moved).toEqual([]);
@@ -284,7 +311,7 @@ describe('applyPrioritiseVerdict', () => {
     try {
       const result = await applyPrioritiseVerdict(root, {
         order: ['IDEA-2', 'IDEA-1'],
-        why: 'unblocks IDEA-1\nwaits on IDEA-2',
+        why: ['unblocks IDEA-1', 'waits on IDEA-2'],
       });
 
       expect(result.moved.sort()).toEqual(['IDEA-1', 'IDEA-2']);
