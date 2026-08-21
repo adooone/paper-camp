@@ -2,7 +2,7 @@
 id: IDEA-197
 title: Break up entity-detail.tsx
 type: refactor
-status: idea
+status: review
 created: 2026-08-21
 tags:
   - app
@@ -90,8 +90,9 @@ and the page looks identical. Cross-cutting convention fixes are [[IDEA-198]].
 - [x] Reduce `entity-detail.tsx` to composition and apply the two fixes
       Merge the duplicated `../actions` and `../components` imports; replace the raw rgba highlight with `STATUS_STAMP.review`.
       run: 4m17s · 1.4k in · 9.4k out · sonnet-5
-- [ ] Confirm the checks pass unchanged
+- [x] Confirm the checks pass unchanged
       `pnpm check-types`, `pnpm lint`, `npx vitest run`.
+      run: 2m6s · 1.2k in · 1.1k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Independent code-health refactor with no blockers; pure move, unblocks IDEA-198's convention pass on the same file structure
