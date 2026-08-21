@@ -84,8 +84,9 @@ and the page looks identical. Cross-cutting convention fixes are [[IDEA-198]].
 - [x] Move `FeedbackSection` state into `hooks/use-feedback-composer.ts`
       Leave the section as a `views/` file that renders what the hook returns.
       run: 4m3s · 978 in · 11.3k out · sonnet-5
-- [ ] Split the remaining sections into one-component-per-file views
+- [x] Split the remaining sections into one-component-per-file views
       `RunCostSummary`, `BranchRow`, `PlanProgressRow`, `PlanBodySection`, `ClarificationsSection`, `ParentLinkRow`, `FixesSection`, `DeliverSection`, `TrailSection`.
+      run: 5m28s · 5k in · 20.4k out · sonnet-5
 - [ ] Reduce `entity-detail.tsx` to composition and apply the two fixes
       Merge the duplicated `../actions` and `../components` imports; replace the raw rgba highlight with `STATUS_STAMP.review`.
 - [ ] Confirm the checks pass unchanged
