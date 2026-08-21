@@ -171,7 +171,7 @@ export const PhasesSection = ({
         rowClassName={(row: WorkRow) => {
           if (isRunningRow(row, runningFill)) return 'phase-running-row';
           if (row.kind === 'phase' && row.item.source === 'review') {
-            return 'bg-[rgba(155,122,181,0.08)]';
+            return 'bg-[rgba(155,122,181,0.25)]';
           }
           return undefined;
         }}

@@ -87,8 +87,9 @@ and the page looks identical. Cross-cutting convention fixes are [[IDEA-198]].
 - [x] Split the remaining sections into one-component-per-file views
       `RunCostSummary`, `BranchRow`, `PlanProgressRow`, `PlanBodySection`, `ClarificationsSection`, `ParentLinkRow`, `FixesSection`, `DeliverSection`, `TrailSection`.
       run: 5m28s · 5k in · 20.4k out · sonnet-5
-- [ ] Reduce `entity-detail.tsx` to composition and apply the two fixes
+- [x] Reduce `entity-detail.tsx` to composition and apply the two fixes
       Merge the duplicated `../actions` and `../components` imports; replace the raw rgba highlight with `STATUS_STAMP.review`.
+      run: 4m17s · 1.4k in · 9.4k out · sonnet-5
 - [ ] Confirm the checks pass unchanged
       `pnpm check-types`, `pnpm lint`, `npx vitest run`.
 
