@@ -81,8 +81,9 @@ and the page looks identical. Cross-cutting convention fixes are [[IDEA-198]].
 - [x] Extract the Phases table into `components/` cells and a `views/` section
       Turn the inline `columns` renderers into named cell components; move `PhasesSection` to its own view file.
       run: 10m3s · 3.9k in · 24k out · sonnet-5
-- [ ] Move `FeedbackSection` state into `hooks/use-feedback-composer.ts`
+- [x] Move `FeedbackSection` state into `hooks/use-feedback-composer.ts`
       Leave the section as a `views/` file that renders what the hook returns.
+      run: 4m3s · 978 in · 11.3k out · sonnet-5
 - [ ] Split the remaining sections into one-component-per-file views
       `RunCostSummary`, `BranchRow`, `PlanProgressRow`, `PlanBodySection`, `ClarificationsSection`, `ParentLinkRow`, `FixesSection`, `DeliverSection`, `TrailSection`.
 - [ ] Reduce `entity-detail.tsx` to composition and apply the two fixes

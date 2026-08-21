@@ -1,5 +1,6 @@
 export * from './archive-section';
 export * from './entity-detail';
+export * from './feedback-section';
 export * from './list-view';
 export * from './note-detail';
 export * from './phases-section';

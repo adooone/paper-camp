@@ -1,3 +1,4 @@
+export * from './use-feedback-composer';
 export * from './use-feedback-quiet-summary';
 export * from './use-plan-status-patch';
 export * from './use-promote-thread-message';

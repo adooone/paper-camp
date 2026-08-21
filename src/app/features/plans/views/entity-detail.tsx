@@ -2,9 +2,7 @@ import { CommitMessageFields } from '@/app/components';
 import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import {
-  useFeedbackQuietSummary,
   usePlanStatusPatch,
-  usePromoteThreadMessage,
   useRunningPhaseFill,
   useSendFeedbackMessage,
   useTrail,
@@ -12,26 +10,11 @@ import {
 import { entityRouteParam } from '@/app/hooks';
 import { createTicket } from '@/app/services/content';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import {
-  feedbackDraftKeyFor,
-  readLocalDraft,
-  removeLocalDraft,
-  writeLocalDraft,
-} from '@/app/utils/local-draft-store';
 import { type UsageRollup, formatDuration, formatTokens, rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, LogEntry, PhaseItem, PlanEntry } from '@/types/index';
-import {
-  Button,
-  Card,
-  Skeleton,
-  Spinner,
-  Stamp,
-  Textarea,
-  Tooltip,
-  useToast,
-} from '@dendelion/paper-ui';
+import { Skeleton, Stamp, Tooltip, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { RefreshButton } from '../actions';
 import { AddTicketButton } from '../actions';
 import {
@@ -41,7 +24,6 @@ import {
   DeliverEmptyState,
   useDeliverCommitForm,
 } from '../components';
-import { FeedbackThread, type PromoteTarget } from '../components';
 import { PlanIdStamp } from '../components';
 import { ProgressBar } from '../components';
 import { ProvenanceTrailPanel } from '../components';
@@ -54,7 +36,7 @@ import {
   runningPrReviewForPlan,
   runningTaskForPlan,
 } from '../helpers';
-import { CreateIdeaModal } from '../modals/create-idea-modal';
+import { FeedbackSection } from './feedback-section';
 import { PhasesSection } from './phases-section';
 import { PlanRows } from './plan-rows';
 
@@ -327,135 +309,6 @@ const TrailSection = ({
           <Skeleton variant="text" height={32} />
         </div>
       )}
-    </div>
-  );
-};
-
-const FeedbackSection = ({
-  plan,
-  updating,
-  onSend,
-  undo,
-  undoing,
-  onUndo,
-}: {
-  plan: PlanEntry;
-  updating: boolean;
-  onSend: (text: string) => Promise<boolean>;
-  undo: { commitSha: string } | null;
-  undoing: boolean;
-  onUndo: () => void;
-}) => {
-  const [input, setInput] = useState('');
-  const [pending, setPending] = useState<string | null>(null);
-  const [ideaPromptIndex, setIdeaPromptIndex] = useState<number | null>(null);
-  const thread = plan.thread ?? [];
-  const { promotingIndex, promoteToDurable, promoteToIdea } = usePromoteThreadMessage(plan);
-  useFeedbackQuietSummary(plan, true);
-
-  const draftKey = feedbackDraftKeyFor(plan);
-
-  useEffect(() => {
-    setInput(readLocalDraft<string>(draftKey) ?? '');
-  }, [draftKey]);
-
-  useEffect(() => {
-    if (!input) return;
-    writeLocalDraft(draftKey, input);
-  }, [draftKey, input]);
-
-  const handleSend = async () => {
-    const text = input.trim();
-    if (!text) return;
-    setPending(text);
-    setInput('');
-    if (await onSend(text)) {
-      removeLocalDraft(draftKey);
-    } else {
-      setInput((current) => current || text);
-    }
-    setPending(null);
-  };
-
-  const handlePromote = (index: number, target: PromoteTarget) => {
-    if (target === 'idea') setIdeaPromptIndex(index);
-    else promoteToDurable(index, target);
-  };
-
-  const handlePromoteToIdea = async (idea: {
-    title: string;
-    content?: string;
-    kind?: 'idea' | 'note' | 'board';
-  }) => {
-    if (ideaPromptIndex === null) return;
-    if (await promoteToIdea(ideaPromptIndex, idea)) setIdeaPromptIndex(null);
-  };
-
-  return (
-    <div className="mb-8">
-      <h3 className={`${sectionHeadingClass} mb-3`}>Feedback</h3>
-      <Card size="small" accent accentColor="slate" texture="kraft">
-        <div className="flex flex-col gap-3 mb-4">
-          {thread.length > 0 || pending ? (
-            <>
-              <FeedbackThread
-                messages={thread}
-                undo={undo}
-                undoing={undoing}
-                onUndo={onUndo}
-                onPromote={handlePromote}
-                promotingIndex={promotingIndex}
-              />
-              {pending && (
-                <div className="flex flex-col gap-1 items-end">
-                  <div className="max-w-[85%]">
-                    <Card
-                      size="small"
-                      surface="paper"
-                      texture="parchment"
-                      accent
-                      accentColor="blue"
-                    >
-                      {pending}
-                    </Card>
-                  </div>
-                </div>
-              )}
-              {updating && (
-                <div className="flex flex-col gap-1 items-start">
-                  <Card size="small" surface="paper" texture="kraft" shade>
-                    <Spinner size="small" label="Agent thinking…" />
-                  </Card>
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="text-sm m-0 text-ink-500">
-              Jot a comment, ask a question, or say what's wrong with this plan.
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            aria-label="Feedback message"
-            placeholder="Write a message…"
-            rows={3}
-          />
-          <div className="flex justify-end items-center gap-3">
-            <Button size="small" onClick={handleSend} disabled={updating || !input.trim()}>
-              Send
-            </Button>
-          </div>
-        </div>
-      </Card>
-      <CreateIdeaModal
-        open={ideaPromptIndex !== null}
-        onClose={() => setIdeaPromptIndex(null)}
-        onAdd={handlePromoteToIdea}
-        initialContent={ideaPromptIndex !== null ? thread[ideaPromptIndex]?.text : undefined}
-      />
     </div>
   );
 };
