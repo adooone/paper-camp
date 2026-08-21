@@ -152,6 +152,16 @@ function byConnId(connections: Awaited<ReturnType<typeof probeConnections>>, id:
   return found;
 }
 
+describe('probeConnections: plugin kind', () => {
+  it('tags gh as an external service and git/agents as local adapters', async () => {
+    const connections = await probeConnections(ROOT);
+    expect(byConnId(connections, 'gh').kind).toBe('external');
+    expect(byConnId(connections, 'git').kind).toBe('local');
+    expect(byConnId(connections, 'agent:claude-code').kind).toBe('local');
+    expect(byConnId(connections, 'agent:opencode').kind).toBe('local');
+  });
+});
+
 describe('probeConnections', () => {
   it('reports git as never authenticated, regardless of status', async () => {
     mock.git.name = '';

@@ -179,8 +179,9 @@ remains on both notes is work.
 - [x] Reach the corpus with no runtime
       The client reads and writes the corpus through `api.github.com` with a user-minted fine-grained token held in device-local storage, which is what makes plan-only real.
       run: 24m46s · 27.2k in · 88k out · sonnet-5
-- [ ] Split plugins into two extension points
+- [x] Split plugins into two extension points
       Separate external services from local adapters, each with its own credential store and failure mode.
+      run: 9m4s · 4.7k in · 22.5k out · sonnet-5
 - [ ] Package the runtime as an installed repo dependency
       Ship it as a dev dependency run from the repo it serves, alongside the papercamp/ corpus.
 

@@ -1,6 +1,6 @@
 import type * as Pty from 'node-pty';
 import type { LoginRelayPhase, LoginRelayState } from '../../types';
-import { claudeAuthStatus } from './services';
+import { claudeAuthStatus } from './local-adapters';
 
 const URL_TIMEOUT_MS = 20_000;
 const SESSION_TIMEOUT_MS = 5 * 60_000;
