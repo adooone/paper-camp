@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { EntityEntry, ThreadMessage } from '../types/index';
 import { collectParkedQuestions, readParkedQuestions } from './parked-questions';
-import { formatEntityFile } from './serialize/serializer';
+import { formatEntityFile } from './serialize/entity-file';
 
 const entity = (overrides: Partial<EntityEntry>): EntityEntry => ({
   id: 'IDEA-1',

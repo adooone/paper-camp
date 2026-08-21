@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlanEntry } from '../../types/index';
-import { formatEntityFile } from '../serialize/serializer';
+import { formatEntityFile } from '../serialize/entity-file';
 import { notesFromThread, reviewFromThread } from '../thread';
 import {
   findConsistencyIssues,

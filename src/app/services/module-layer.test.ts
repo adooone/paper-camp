@@ -21,4 +21,22 @@ describe('moduleReadiness', () => {
   it('is unreachable when a runtime module confirms the runtime is not', () => {
     expect(moduleReadiness('runtime', { reachable: false, checking: false })).toBe('unreachable');
   });
+
+  it('is ready for a corpus module via a configured GitHub token, even mid-probe', () => {
+    expect(
+      moduleReadiness('corpus', { reachable: false, checking: true }, { githubConfigured: true }),
+    ).toBe('ready');
+  });
+
+  it('is ready for a corpus module once the runtime is reachable, with no GitHub token', () => {
+    expect(
+      moduleReadiness('corpus', { reachable: true, checking: false }, { githubConfigured: false }),
+    ).toBe('ready');
+  });
+
+  it('is unreachable for a corpus module when neither the runtime nor GitHub is available', () => {
+    expect(
+      moduleReadiness('corpus', { reachable: false, checking: false }, { githubConfigured: false }),
+    ).toBe('unreachable');
+  });
 });

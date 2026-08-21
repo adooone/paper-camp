@@ -14,7 +14,7 @@ import {
   readNoteEntries,
   readWorkEntries,
 } from './readers';
-import { formatEntityFile } from './serialize/serializer';
+import { formatEntityFile } from './serialize/entity-file';
 
 const originalPath = process.env.PATH;
 

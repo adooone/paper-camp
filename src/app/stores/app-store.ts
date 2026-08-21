@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { type AgentSlice, createAgentSlice } from './slices/agent-slice';
 import { type DiffSlice, createDiffSlice } from './slices/diff-slice';
 import { type DocsSlice, createDocsSlice } from './slices/docs-slice';
+import { type GithubSlice, createGithubSlice } from './slices/github-slice';
 import { type IdeasSlice, createIdeasSlice } from './slices/ideas-slice';
 import { type NotificationsSlice, createNotificationsSlice } from './slices/notifications-slice';
 import {
@@ -28,7 +29,8 @@ export type AppStore = PlansSlice &
   DiffSlice &
   ParkedQuestionsSlice &
   NotificationsSlice &
-  RuntimeSlice;
+  RuntimeSlice &
+  GithubSlice;
 
 export const useAppStore = create<AppStore>()((set, get) => ({
   ...createPlansSlice(set, get),
@@ -43,6 +45,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   ...createParkedQuestionsSlice(set),
   ...createNotificationsSlice(set, get),
   ...createRuntimeSlice(set),
+  ...createGithubSlice(set),
 }));
 
 export const selectAgentBusy = (s: AppStore) =>

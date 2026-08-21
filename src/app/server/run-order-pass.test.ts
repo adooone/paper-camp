@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clearPrCache } from '../../core/git-pr/pr';
-import { formatEntityFile } from '../../core/serialize/serializer';
+import { formatEntityFile } from '../../core/serialize/entity-file';
 import { runRunOrderPass } from './run-order-pass';
 
 const originalPath = process.env.PATH;

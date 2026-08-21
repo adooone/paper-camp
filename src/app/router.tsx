@@ -163,13 +163,15 @@ const RootLayout = () => {
   const checkRuntimeReachable = useAppStore((s) => s.checkRuntimeReachable);
   const runtimeReachable = useAppStore((s) => s.runtimeReachable);
   const runtimeChecking = useAppStore((s) => s.runtimeChecking);
+  const githubConfig = useAppStore((s) => s.githubConfig);
   const activeLayer = useRouterState({
     select: (s) => s.matches.at(-1)?.staticData.layer,
   });
-  const readiness = moduleReadiness(activeLayer, {
-    reachable: runtimeReachable,
-    checking: runtimeChecking,
-  });
+  const readiness = moduleReadiness(
+    activeLayer,
+    { reachable: runtimeReachable, checking: runtimeChecking },
+    { githubConfigured: githubConfig !== null },
+  );
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   // Detail views replace the sidebar breadcrumb that used to carry the way back.
@@ -376,7 +378,7 @@ const RootLayout = () => {
                       className="pc-page w-full max-w-none"
                     >
                       {readiness === 'unreachable' ? (
-                        <RuntimeUnavailable />
+                        <RuntimeUnavailable layer={activeLayer} />
                       ) : (
                         <Suspense fallback={null}>
                           <Outlet />
@@ -443,19 +445,19 @@ const plansRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): { subject?: string } => ({
     subject: typeof search.subject === 'string' ? search.subject : undefined,
   }),
-  staticData: { layer: 'runtime' },
+  staticData: { layer: 'corpus' },
 });
 const planDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/plans/$planId',
   component: PlansPage,
-  staticData: { layer: 'runtime' },
+  staticData: { layer: 'corpus' },
 });
 const ideaDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/ideas/$ideaId',
   component: PlansPage,
-  staticData: { layer: 'runtime' },
+  staticData: { layer: 'corpus' },
 });
 const docsRoute = createRoute({
   getParentRoute: () => rootRoute,

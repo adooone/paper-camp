@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { formatReleaseNotesMarkdown, resolveReleaseNotes } from './release-notes';
-import { formatEntityFile } from './serialize/serializer';
+import { formatEntityFile } from './serialize/entity-file';
 
 function git(cwd: string, ...args: string[]): string {
   const result = spawnSync('git', args, { cwd, encoding: 'utf-8' });
