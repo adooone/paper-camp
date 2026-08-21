@@ -76,8 +76,9 @@ guide says.
 - [x] Add a style-pass phase builder to `prompts.ts`
       Returns the appended phase (title + description) that scopes the agent to the plan's changed files, reads `docs/CODE_STYLE.md`, and ends with the three checks green and no test edited.
       run: 4m50s · 12.3k in · 15.2k out · sonnet-5
-- [ ] Add a `StylePassButton` action that appends the phase
+- [x] Add a `StylePassButton` action that appends the phase
       Gated on the plan having at least one completed phase; append via `patchByTitle` like the review-phases path, and export it from `actions/index.ts`.
+      run: 2m35s · 370 in · 4.5k out · sonnet-5
 - [ ] Wire the button into the Phases toolbar next to Audit, Reconcile and Add review phases
 - [ ] Test the builder output and the one-completed-phase enablement
 
