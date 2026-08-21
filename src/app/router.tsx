@@ -205,8 +205,6 @@ const RootLayout = () => {
   useNotificationPush();
 
   useEffect(() => {
-    loadPlans();
-    loadIdeas();
     loadSuggestions();
     loadCapabilities();
     loadAgentAuthStatus();
@@ -214,8 +212,6 @@ const RootLayout = () => {
     loadNotifications();
     checkRuntimeReachable();
   }, [
-    loadPlans,
-    loadIdeas,
     loadSuggestions,
     loadCapabilities,
     loadAgentAuthStatus,
@@ -223,6 +219,15 @@ const RootLayout = () => {
     loadNotifications,
     checkRuntimeReachable,
   ]);
+
+  // Corpus source depends on runtimeReachable, which a detached client only knows
+  // once the probe in the effect above resolves — re-run once it has, so a client
+  // that's actually reachable doesn't get stuck on the plan-only GitHub path.
+  useEffect(() => {
+    if (runtimeChecking) return;
+    loadPlans();
+    loadIdeas();
+  }, [runtimeChecking, loadPlans, loadIdeas]);
 
   // Land fresh installs (or any install with an incomplete capability) on Setup
   // instead of letting them discover gaps by hitting a broken PR badge or agent button.
@@ -379,7 +384,7 @@ const RootLayout = () => {
                     >
                       {readiness === 'unreachable' ? (
                         <RuntimeUnavailable layer={activeLayer} />
-                      ) : (
+                      ) : readiness === 'checking' ? null : (
                         <Suspense fallback={null}>
                           <Outlet />
                         </Suspense>

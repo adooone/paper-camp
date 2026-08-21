@@ -185,6 +185,7 @@ remains on both notes is work.
 - [x] Package the runtime as an installed repo dependency
       Ship it as a dev dependency run from the repo it serves, alongside the papercamp/ corpus.
       run: 17m12s · 5.5k in · 29.6k out · sonnet-5
+- [x] [manual] Re-sync corpus loads and gate checking routes
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] It's an unresolved research note whose measurement (localhost carve-out) and settled decisions (runtime scope, registry home, folder scanning) are the frozen contract IDEA-117 and IDEA-201's board conversion explicitly depend on.
