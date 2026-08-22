@@ -27,8 +27,9 @@ It is the outermost frame, and it owns the moment before a project is chosen. [[
 Disconnected with no runtimes registered, the shell is still honest: it shows the welcome screen. It never presents an empty desk as though something went wrong.
 
 ### Phases
-- [ ] Build the shell frame
+- [x] Build the shell frame
       The outermost layout the hosted client opens into, with the app mounting inside it once a project is chosen.
+      run: 4m34s · 6.1k in · 13.5k out · sonnet-5
 - [ ] Welcome screen for an empty desk
       Connect GitHub, or add a project by runtime URL, presented as a starting point rather than an error.
 - [ ] GitHub connect surface

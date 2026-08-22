@@ -3,13 +3,16 @@ import { createRoot } from 'react-dom/client';
 import '@dendelion/paper-ui/dist/index.css';
 import './styles/utilities.css';
 import { RouterProvider } from '@tanstack/react-router';
+import { HubShell } from './features/hub';
 import { router } from './router';
 import { apiUrl, setApiBase } from './services/api-base';
+import { hasChosenProject } from './services/hub';
 import { mountPrefix } from './services/mount';
 import { runtimeConnection } from './services/runtime-connection';
 
 const { runtimeUrl, pairingToken } = runtimeConnection;
 setApiBase(runtimeUrl || mountPrefix);
+const chosenProject = hasChosenProject(mountPrefix, runtimeUrl);
 
 // A detached, hosted bundle pairs via its `?runtime=&token=` link or a token
 // persisted from an earlier one — pair before the first render so the app's
@@ -28,8 +31,6 @@ if (!rootElement) throw new Error('#root element not found');
 
 pairIfNeeded().finally(() => {
   createRoot(rootElement).render(
-    <StrictMode>
-      <RouterProvider router={router} />
-    </StrictMode>,
+    <StrictMode>{chosenProject ? <RouterProvider router={router} /> : <HubShell />}</StrictMode>,
   );
 });
