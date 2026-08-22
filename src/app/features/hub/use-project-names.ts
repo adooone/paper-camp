@@ -1,5 +1,5 @@
-import { fetchPackageNameAt, projectDisplayName } from '@/app/services/system';
 import type { RuntimeConnection } from '@/app/services/runtime-connection';
+import { fetchPackageNameAt, projectDisplayName } from '@/app/services/system';
 import { useEffect, useState } from 'react';
 
 /** Asks each registered runtime what project it serves. A runtime that is down, or
@@ -12,18 +12,18 @@ export function useProjectNames(runtimes: RuntimeConnection[]): Record<string, s
   useEffect(() => {
     let cancelled = false;
     const list = urls === '' ? [] : urls.split('\n');
-    Promise.all(
-      list.map(async (url) => [url, await fetchPackageNameAt(url)] as const),
-    ).then((resolved) => {
-      if (cancelled) return;
-      setNames(
-        Object.fromEntries(
-          resolved
-            .filter((entry): entry is readonly [string, string] => entry[1] !== null)
-            .map(([url, name]) => [url, projectDisplayName(name)]),
-        ),
-      );
-    });
+    Promise.all(list.map(async (url) => [url, await fetchPackageNameAt(url)] as const)).then(
+      (resolved) => {
+        if (cancelled) return;
+        setNames(
+          Object.fromEntries(
+            resolved
+              .filter((entry): entry is readonly [string, string] => entry[1] !== null)
+              .map(([url, name]) => [url, projectDisplayName(name)]),
+          ),
+        );
+      },
+    );
     return () => {
       cancelled = true;
     };
