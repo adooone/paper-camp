@@ -3,14 +3,15 @@ id: IDEA-117
 title: Multi-project hub
 type: feat
 kind: ticket
-status: review
+status: in-progress
 idea: IDEA-195
 created: 2026-08-04
-updated: 2026-08-21
+updated: 2026-08-22
 tags:
   - multi-project
   - app
 subject: Multi-project
+order: 1
 ---
 
 Graduates Horizon 3's **Multi-project** bullet. Paper Camp shows every registered project in one desk instead of one browser tab per repo — a project switcher, and cross-project views on top of it. The data stays per-repo in git: never centralize the corpus, centralize only the lens.
@@ -41,6 +42,14 @@ Waits on [[TICKET-1]] and [[TICKET-2]]: pairing the client to a runtime, and det
       Everything-in-review, overnight agent activity, and global idea search composed from the fan-out.
       run: 10m2s · 14.6k in · 46.9k out · sonnet-5
 
+### Fixes
+- [ ] Replace project switcher with a simple 'Back to projects' button
+      The current project switcher UI is unwieldy; swap it for a plain back button for now.
+
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Explicitly waits on TICKET-1 and TICKET-2 for pairing/detach, and the shell it renders is IDEA-205, so it must follow both
 - [x] 2026-08-22 [log] [agent] Announce a runtime from the CLI: delivered by [[TICKET-2]] (PR #188) rather than by this phase's own run — `startDevServer` already prints `buildRegistrationLink(port, pairing.token)` on every `paper-camp dev` start (src/cli/dev-server.ts, src/cli/registration-link.ts), and opening that link is already proven to register itself via `loadRuntimeConnection` (src/cli/registration-link.test.ts). Verified by rebuilding `dist` and running `paper-camp dev` directly. Closed as done because the outcome exists, not because this phase ran.
+- [x] 2026-08-22 [chat] I want to get back previous button - Back to projects. Project selector is looking awful, so simple button back to projects is enough for now
+- [x] 2026-08-22 [chat] [agent] Got it — swapping the switcher for a plain 'Back to projects' button. Added it here as a fix.
+- [x] 2026-08-22 [chat] I dont see a fix in plan
+- [x] 2026-08-22 [chat] [agent] Re-adding it now as a phase — looks like it didn't stick the first time. (reopened this idea to re-run)
