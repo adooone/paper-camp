@@ -37,9 +37,11 @@ describe('chrome stays outside the scroll container (IDEA-155)', () => {
     expect(scrollDivOpen).toBeGreaterThan(-1);
   });
 
-  it('renders the header and toolbar chrome before the scroll container opens', () => {
+  it('renders the banner, app bar and status bar before the scroll container opens', () => {
     expect(source.indexOf('<ServerReloadBanner')).toBeGreaterThan(-1);
     expect(source.indexOf('<ServerReloadBanner')).toBeLessThan(scrollDivOpen);
+    expect(source.indexOf('pc-app-header')).toBeGreaterThan(-1);
+    expect(source.indexOf('pc-app-header')).toBeLessThan(scrollDivOpen);
     expect(source.indexOf('<StatusBar')).toBeGreaterThan(-1);
     expect(source.indexOf('<StatusBar')).toBeLessThan(scrollDivOpen);
   });

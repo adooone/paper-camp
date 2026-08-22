@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { ProjectIdentityHeader } from './project-identity-header';
 
 interface SidebarShellProps {
   routeKey: string;
@@ -64,12 +63,10 @@ export const SidebarShell = ({
             : 'bg-transparent'
         }`}
       >
-        {/* 66px, not a padding pair: the ruled background's 32px lines start 2px below
-            this aside, so a two-cell header lands the column's first row exactly on a
-            grid line. Rows below are 32px each and stay on it. */}
-        <div className="shrink-0 h-[66px] flex items-center">
-          <ProjectIdentityHeader size="sm" />
-        </div>
+        {/* Matches the sheet's 2rem top inset, so the column's first row lines up with
+            the page's first line now that the app bar spans both instead of sitting
+            inside the content column. */}
+        <div className="shrink-0 h-8" />
         <div className="flex-1 overflow-y-auto relative">
           <div key={routeKey}>{children}</div>
         </div>

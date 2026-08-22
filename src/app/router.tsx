@@ -250,10 +250,44 @@ const RootLayout = () => {
   return (
     <ToastProvider position="bottom-left">
       <div className="h-screen box-border flex flex-col">
-        {/* Only the toolbar reserves the Stack's width — the columns below run full
+        {/* Only the chrome reserves the Stack's width — the columns below run full
             width so the parchment passes under the panel instead of stopping at it. */}
         <div className="shrink-0 min-[1199px]:pr-[var(--pc-stack-width)]">
           <ServerReloadBanner />
+          {/* Full-bleed app bar: identity at the left edge, nav at the right, spanning
+              the sidebar and the sheet instead of sitting inside the content column. */}
+          <header
+            className="pc-app-header flex items-center gap-3 h-[var(--pc-header-h)] max-[480px]:hidden"
+            style={getSurfaceStyles({ texture: 'parchment', shade: true })}
+          >
+            {hasSidebar && (
+              <IconButton
+                variant="ghost"
+                size="small"
+                className="lg:hidden"
+                label="Open sidebar"
+                onClick={() => setMobileSidebarOpen(true)}
+                icon={<SidebarToggleIcon />}
+              />
+            )}
+            <ProjectIdentityHeader size="sm" />
+            <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
+              {navItems.map((item) => (
+                <Button
+                  key={item.id}
+                  variant="ghost"
+                  size="small"
+                  isActive={item.id === activeId}
+                  onClick={() => navigate({ to: item.path })}
+                  aria-current={item.id === activeId ? 'page' : undefined}
+                >
+                  <NavLabel item={item} />
+                </Button>
+              ))}
+            </nav>
+          </header>
+          {/* Ambient status sits under the app bar: a rail belonging to the chrome
+              above the work surface, not a band competing with it for the top edge. */}
           <StatusBar />
         </div>
         <Layout
@@ -320,38 +354,6 @@ const RootLayout = () => {
                   {/* Its own band above the sheet rather than a pill floating on it. `shade`
                       is the same parchment grain one step darker, so the seam reads as a
                       fold in one surface instead of a different material. */}
-                  <header
-                    className="pc-page-header sticky top-0 z-20 shrink-0 flex items-center gap-3 h-[var(--pc-header-h)] max-[480px]:hidden"
-                    style={getSurfaceStyles({ texture: 'parchment', shade: true })}
-                  >
-                    {hasSidebar ? (
-                      <IconButton
-                        variant="ghost"
-                        size="small"
-                        className="lg:hidden"
-                        label="Open sidebar"
-                        onClick={() => setMobileSidebarOpen(true)}
-                        icon={<SidebarToggleIcon />}
-                      />
-                    ) : (
-                      // Routes without a sidebar have no grid column to carry the identity.
-                      <ProjectIdentityHeader size="sm" />
-                    )}
-                    <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
-                      {navItems.map((item) => (
-                        <Button
-                          key={item.id}
-                          variant="ghost"
-                          size="small"
-                          isActive={item.id === activeId}
-                          onClick={() => navigate({ to: item.path })}
-                          aria-current={item.id === activeId ? 'page' : undefined}
-                        >
-                          <NavLabel item={item} />
-                        </Button>
-                      ))}
-                    </nav>
-                  </header>
                   <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}

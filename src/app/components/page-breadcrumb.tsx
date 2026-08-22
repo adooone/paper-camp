@@ -54,10 +54,10 @@ export const PageBreadcrumb = () => {
 
   if (!items) return null;
   return (
-    // Pulled up into the sheet's top padding: the breadcrumb is a label for the page
-    // below it, not a band of its own, so it sits close under the header while pages
-    // without one keep the full inset.
-    <div className="-mt-2 mb-3">
+    // Pulled up through the sheet's 2rem top inset so the breadcrumb sits close under
+    // the header — it labels the page below it rather than forming a band of its own.
+    // Scoped here so every page without a breadcrumb keeps the full inset untouched.
+    <div className="-mt-6 mb-3">
       <Breadcrumb className="font-handwritten !text-xs min-w-0" items={items} />
     </div>
   );
