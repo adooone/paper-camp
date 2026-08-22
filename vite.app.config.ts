@@ -198,7 +198,11 @@ function watchPaperUi(): Plugin {
 export default defineConfig({
   plugins: [react(), tsconfigPaths(), papercampApi(), watchPaperUi()],
   root: '.',
-  base: './',
+  // Absolute, not relative: a hosted client serves the same bundle at nested paths
+  // like /ideas/195/tickets/2, where './assets/…' resolves against the route instead
+  // of the root and 404s. `paper-camp dev` serves dist/app from its own root, so an
+  // absolute base is correct there too.
+  base: '/',
   publicDir: 'public',
   server: {
     port: 3333,

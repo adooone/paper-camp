@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm build:app",
+  "outputDirectory": "dist/app",
+  "framework": null,
+  "rewrites": [
+    { "source": "/((?!assets/|img/|fonts/|manifest.json).*)", "destination": "/index.html" }
+  ]
+}
