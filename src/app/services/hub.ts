@@ -5,3 +5,10 @@
 export function hasChosenProject(mountPrefix: string, runtimeUrl: string): boolean {
   return mountPrefix !== '' || runtimeUrl !== '';
 }
+
+// Reuses the same `?runtime=` query param `runtime-connection.ts` already reads
+// and persists — a manually pasted address is adopted exactly like a
+// `paper-camp dev` registration link.
+export function runtimeAdditionUrl(currentPath: string, runtimeUrl: string): string {
+  return `${currentPath}?runtime=${encodeURIComponent(runtimeUrl)}`;
+}

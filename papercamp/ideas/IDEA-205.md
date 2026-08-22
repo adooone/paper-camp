@@ -30,8 +30,9 @@ Disconnected with no runtimes registered, the shell is still honest: it shows th
 - [x] Build the shell frame
       The outermost layout the hosted client opens into, with the app mounting inside it once a project is chosen.
       run: 4m34s · 6.1k in · 13.5k out · sonnet-5
-- [ ] Welcome screen for an empty desk
+- [x] Welcome screen for an empty desk
       Connect GitHub, or add a project by runtime URL, presented as a starting point rather than an error.
+      run: 6m53s · 650 in · 26.5k out · sonnet-5
 - [ ] GitHub connect surface
       Take a user-minted fine-grained token with clear minting instructions, show the connected identity, and disconnect.
 - [ ] Projects list
