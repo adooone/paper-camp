@@ -3,7 +3,7 @@ id: TICKET-2
 title: Detach the client
 type: feat
 kind: ticket
-status: idea
+status: review
 idea: IDEA-195
 created: 2026-08-21
 tags:
@@ -24,8 +24,9 @@ A URL carried in the query string dies with the tab. Nothing remembers which run
 - [x] Select which runtime the client dials
       Let the client hold more than one and switch between them, which is the seam [[IDEA-117]] extends into a registry.
       run: 3m55s · 360 in · 12.4k out · sonnet-5
-- [ ] Adopt a runtime from a registration link
+- [x] Adopt a runtime from a registration link
       Take the URL and token a `paper-camp dev` announce prints and store them, instead of requiring a hand-pasted query string.
+      run: 4m5s · 647 in · 11.6k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Second named sequencing step; needs TICKET-1's pairing token and origin checks before the client can dial a runtime cross-origin
