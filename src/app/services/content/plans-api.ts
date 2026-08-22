@@ -18,6 +18,20 @@ export const fetchPlans = async (): Promise<ParseResult<PlanEntry>> => {
   return response.json();
 };
 
+// The registry holds runtimes this client is not currently pointed at, so the base
+// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
+export const fetchPlansAt = async (baseUrl: string): Promise<ParseResult<PlanEntry> | null> => {
+  try {
+    const response = await fetch(`${baseUrl}/api/plans`, {
+      signal: AbortSignal.timeout(PLANS_TIMEOUT_MS),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
+
 export const updatePlan = async (
   title: string,
   updates: {

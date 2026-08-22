@@ -7,7 +7,13 @@ import {
   StatusBar,
 } from '@/app/components';
 import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
-import { HubHome, HubShell } from '@/app/features/hub';
+import {
+  CrossProjectActivityView,
+  CrossProjectIdeasView,
+  CrossProjectReviewsView,
+  HubHome,
+  HubShell,
+} from '@/app/features/hub';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { bareId } from '@/app/hooks';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
@@ -73,6 +79,12 @@ const IssuesPage = lazy(() =>
 );
 
 const PROJECTS_PATH = '/projects';
+const HUB_PATHS: string[] = [
+  PROJECTS_PATH,
+  '/projects/reviews',
+  '/projects/activity',
+  '/projects/ideas',
+];
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
@@ -249,8 +261,9 @@ const RootLayout = () => {
   }, [pathname]);
 
   // The hub is a level above the project, so it takes the whole window rather than
-  // rendering inside the chrome of a project you have not chosen yet.
-  if (pathname === PROJECTS_PATH) {
+  // rendering inside the chrome of a project you have not chosen yet — the
+  // cross-project views compose several projects at once, so they belong here too.
+  if (HUB_PATHS.includes(pathname)) {
     return (
       <ToastProvider position="bottom-left">
         <HubShell>
@@ -447,6 +460,27 @@ const projectsRoute = createRoute({
   staticData: { layer: 'client' },
 });
 
+// Composed by fanning out across every registered runtime directly, so none of
+// these need this client's own runtime — only whichever projects answer.
+const projectReviewsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/projects/reviews',
+  component: CrossProjectReviewsView,
+  staticData: { layer: 'client' },
+});
+const projectActivityRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/projects/activity',
+  component: CrossProjectActivityView,
+  staticData: { layer: 'client' },
+});
+const projectIdeasRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/projects/ideas',
+  component: CrossProjectIdeasView,
+  staticData: { layer: 'client' },
+});
+
 const plansRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
@@ -557,6 +591,9 @@ const issuesRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   plansRoute,
   projectsRoute,
+  projectReviewsRoute,
+  projectActivityRoute,
+  projectIdeasRoute,
   legacyPlanDetailRoute,
   ideaDetailRoute,
   ticketDetailRoute,

@@ -13,6 +13,19 @@ export const fetchTaskLog = async () => {
   return res.json() as Promise<{ entries: TaskLogEntry[] }>;
 };
 
+// The registry holds runtimes this client is not currently pointed at, so the base
+// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
+export const fetchTaskLogAt = async (baseUrl: string): Promise<TaskLogEntry[] | null> => {
+  try {
+    const res = await fetch(`${baseUrl}/api/tasks`);
+    if (!res.ok) return null;
+    const body = (await res.json()) as { entries: TaskLogEntry[] };
+    return body.entries;
+  } catch {
+    return null;
+  }
+};
+
 export const fetchTaskLogLines = async (id: string) => {
   const res = await fetch(apiUrl(`/api/tasks/output?id=${encodeURIComponent(id)}`));
   if (!res.ok) throw new Error(`Failed to fetch task log: ${res.status}`);

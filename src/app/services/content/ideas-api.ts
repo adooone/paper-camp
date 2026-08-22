@@ -19,6 +19,20 @@ export const fetchIdeas = async (): Promise<ParseResult<IdeaEntry>> => {
   return response.json();
 };
 
+// The registry holds runtimes this client is not currently pointed at, so the base
+// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
+export const fetchIdeasAt = async (baseUrl: string): Promise<ParseResult<IdeaEntry> | null> => {
+  try {
+    const response = await fetch(`${baseUrl}/api/ideas`, {
+      signal: AbortSignal.timeout(IDEAS_TIMEOUT_MS),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
+
 export const fetchArchivableIdeas = async (): Promise<ArchivableIdea[]> => {
   const response = await fetch(apiUrl('/api/archivable-ideas'));
   return response.json();

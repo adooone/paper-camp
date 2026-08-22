@@ -3,7 +3,7 @@ id: IDEA-117
 title: Multi-project hub
 type: feat
 kind: ticket
-status: idea
+status: review
 idea: IDEA-195
 created: 2026-08-04
 updated: 2026-08-21
@@ -37,8 +37,9 @@ Waits on [[TICKET-1]] and [[TICKET-2]]: pairing the client to a runtime, and det
       run: 7m54s · 14.7k in · 30.6k out · sonnet-5
 - [x] Build the project switcher
       run: 8m11s · 9.5k in · 24.1k out · sonnet-5
-- [ ] Ship cross-project views
+- [x] Ship cross-project views
       Everything-in-review, overnight agent activity, and global idea search composed from the fan-out.
+      run: 10m2s · 14.6k in · 46.9k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Explicitly waits on TICKET-1 and TICKET-2 for pairing/detach, and the shell it renders is IDEA-205, so it must follow both
