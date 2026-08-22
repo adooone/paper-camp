@@ -3,6 +3,7 @@ import type {
   IdeaEntry,
   Issue,
   MountContext,
+  PhaseItem,
   PlanEntry,
   ReviewThread,
   SuggestionEntry,
@@ -107,6 +108,24 @@ Hard guardrails, never violate these:
 - Never add or remove phases.
 - Never touch the Log or Clarifications sections.
 - If nothing is stale, make no edits at all.`;
+}
+
+// Not a prompt string like its neighbours — the phase itself is what run-all
+// later turns into a prompt via buildAgentPrompt's `phase.description` slot.
+export function buildStylePassPhase(): PhaseItem {
+  return {
+    done: false,
+    text: 'Style pass',
+    description: `Scope yourself to only the files this plan has changed — compare against the base branch (e.g. \`git diff main...HEAD --name-only\`), never the wider codebase. Read docs/CODE_STYLE.md in full and apply it to those files:
+
+- Delete any comment that fails §7 — the cap is two lines and the default count is zero.
+- Move complex logic out of components into hooks/, leaving components rendering what a hook returns.
+- Sort files into the by-role folders of §4, and split a file holding more than one component.
+- Replace a literal with its design token (§2) and a hand-rolled element with its paper-ui component (§1).
+- Extract anything now written three times (§3) — into the feature's helpers/ if it is feature logic, into @/app/utils or @/app/hooks if it is not.
+
+Behaviour may not change. Finish with \`pnpm check-types\`, \`pnpm lint\` and \`npx vitest run\` all green, and do not edit any test to accommodate a change — a test that has to change means this pass altered behaviour and went too far.`,
+  };
 }
 
 function buildIdeaFleshOutPrompt(

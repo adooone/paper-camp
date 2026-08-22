@@ -2,8 +2,9 @@
 id: IDEA-199
 title: Style pass as a phase action
 type: feat
-status: idea
+status: review
 created: 2026-08-21
+updated: 2026-08-22
 tags:
   - app
   - agent
@@ -73,12 +74,19 @@ check's job, and the comment half of it is [[IDEA-196]]. Any change to what the
 guide says.
 
 ### Phases
-- [ ] Add a style-pass phase builder to `prompts.ts`
+- [x] Add a style-pass phase builder to `prompts.ts`
       Returns the appended phase (title + description) that scopes the agent to the plan's changed files, reads `docs/CODE_STYLE.md`, and ends with the three checks green and no test edited.
-- [ ] Add a `StylePassButton` action that appends the phase
+      run: 4m50s · 12.3k in · 15.2k out · sonnet-5
+- [x] Add a `StylePassButton` action that appends the phase
       Gated on the plan having at least one completed phase; append via `patchByTitle` like the review-phases path, and export it from `actions/index.ts`.
-- [ ] Wire the button into the Phases toolbar next to Audit, Reconcile and Add review phases
-- [ ] Test the builder output and the one-completed-phase enablement
+      run: 2m35s · 370 in · 4.5k out · sonnet-5
+- [x] Wire the button into the Phases toolbar next to Audit, Reconcile and Add review phases
+      run: 2m45s · 522 in · 4.8k out · sonnet-5
+- [x] Test the builder output and the one-completed-phase enablement
+      run: 3m · 521 in · 6.6k out · sonnet-5
+- [x] Style pass
+      Scope yourself to only the files this plan has changed — compare against the base branch (e.g. `git diff main...HEAD --name-only`), never the wider codebase. Read docs/CODE_STYLE.md in full and apply it to those files:
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Depends on IDEA-196 existing as the enforceable check the style pass is meant to satisfy, so it lands last among the code-health items
+- [x] 2026-08-22 [review] [agent] Approves · 0 findings — The diff cleanly delivers the idea: a `buildStylePassPhase` builder returning an unchecked phase scoped to the plan's changed files against docs/CODE_STYLE.md, a gated `StylePassButton` that appends it via the shared onAdd/patchByTitle path, correct toolbar wiring next to Add review phases, and tests covering both builder output and the one-completed-phase gate. The `onAddReviewPhases`→`onAddPhases` rename is applied consistently across entity-detail and phases-section, and the enablement logic (`hasCompletedPhase`) matches the spec. No correctness or conformance problems stand out.

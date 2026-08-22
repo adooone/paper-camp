@@ -15,6 +15,7 @@ import {
   DraftPlanButton,
   ExtendIdeaButton,
   ReconcileButton,
+  StylePassButton,
 } from '../actions';
 import { type WorkRow, isRunningRow } from '../helpers';
 
@@ -28,7 +29,7 @@ interface PhasesSectionProps {
   updating: boolean;
   onTogglePhase: (index: number) => void;
   onToggleFix: (index: number) => void;
-  onAddReviewPhases: (newPhases: PhaseItem[]) => Promise<void>;
+  onAddPhases: (newPhases: PhaseItem[]) => Promise<void>;
   ideaView: IdeaEntry;
   otherPlans: PlanEntry[];
   deliverPanel: ReactNode;
@@ -42,7 +43,7 @@ export const PhasesSection = ({
   updating,
   onTogglePhase,
   onToggleFix,
-  onAddReviewPhases,
+  onAddPhases,
   ideaView,
   otherPlans,
   deliverPanel,
@@ -79,10 +80,13 @@ export const PhasesSection = ({
               {rows.length > 0 && plan.status !== 'done' && <ReconcileButton plan={plan} />}
               {rows.length > 0 && (
                 <AddReviewPhasesButton
-                  onAdd={onAddReviewPhases}
+                  onAdd={onAddPhases}
                   disabled={updating}
                   entityId={plan.id ?? plan.title}
                 />
+              )}
+              {rows.length > 0 && (
+                <StylePassButton plan={plan} onAdd={onAddPhases} disabled={updating} />
               )}
               {plan.id && hasOpenFix && (
                 <Tooltip content="Run the open fixes with an agent">

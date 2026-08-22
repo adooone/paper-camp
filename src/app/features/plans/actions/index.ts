@@ -12,4 +12,5 @@ export * from './pr-review-button';
 export * from './reconcile-button';
 export * from './refresh-button';
 export * from './run-all-phases-button';
+export * from './style-pass-button';
 export * from './worklist-actions-menu';

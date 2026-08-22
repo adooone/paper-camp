@@ -78,7 +78,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     }
   };
 
-  const handleAddReviewPhases = async (newPhases: PhaseItem[]) => {
+  const handleAddPhases = async (newPhases: PhaseItem[]) => {
     await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
   };
 
@@ -161,7 +161,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
               updating={updating}
               onTogglePhase={handleTogglePhase}
               onToggleFix={handleToggleFix}
-              onAddReviewPhases={handleAddReviewPhases}
+              onAddPhases={handleAddPhases}
               ideaView={ideaView}
               otherPlans={otherPlans}
               deliverPanel={<DeliverSection plan={plan} />}
