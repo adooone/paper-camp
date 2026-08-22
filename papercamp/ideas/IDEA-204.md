@@ -6,7 +6,7 @@ kind: ticket
 status: idea
 idea: IDEA-195
 created: 2026-08-21
-updated: 2026-08-21
+updated: 2026-08-22
 tags:
   - infrastructure
   - deployment
@@ -29,9 +29,9 @@ Local hosting is unaffected. `paper-camp dev` keeps serving the same bundle from
       Absolute `base` so nested routes resolve their assets; `pnpm build:app` verified to emit `/assets/…` into `dist/app`.
 - [x] Add the SPA rewrites
       `vercel.json` rewrites every path but `assets/`, `img/`, `fonts/` and `manifest.json` to `index.html`.
-- [ ] Create the Vercel project
+- [x] Create the Vercel project
       Point it at this repo with no functions and no environment variables; the committed `vercel.json` carries the build command, output directory and rewrites.
-- [ ] Confirm production and preview deploys
+- [x] Confirm production and preview deploys
       `main` to production, a preview per pull request, and a deep link surviving a refresh.
 
 ### Thread
