@@ -33,8 +33,9 @@ Disconnected with no runtimes registered, the shell is still honest: it shows th
 - [x] Welcome screen for an empty desk
       Connect GitHub, or add a project by runtime URL, presented as a starting point rather than an error.
       run: 6m53s · 650 in · 26.5k out · sonnet-5
-- [ ] GitHub connect surface
+- [x] GitHub connect surface
       Take a user-minted fine-grained token with clear minting instructions, show the connected identity, and disconnect.
+      run: 4m20s · 2.6k in · 13k out · sonnet-5
 - [ ] Projects list
       One row per registry entry, runtime-backed or GitHub-imported, each showing whether it can execute or only plan.
 - [ ] Enter and leave a project
