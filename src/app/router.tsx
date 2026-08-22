@@ -8,7 +8,7 @@ import {
   StatusBar,
 } from '@/app/components';
 import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
-import { HubHome } from '@/app/features/hub';
+import { HubHome, HubShell } from '@/app/features/hub';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { bareId } from '@/app/hooks';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
@@ -73,8 +73,9 @@ const IssuesPage = lazy(() =>
   import('@/app/features/issues/index').then((m) => ({ default: m.IssuesPage })),
 );
 
+const PROJECTS_PATH = '/projects';
+
 const navItems = [
-  { id: 'projects', label: 'Projects', path: '/projects' },
   { id: 'plans', label: 'Plans', path: '/' },
   { id: 'roadmap', label: 'Roadmap', path: '/roadmap' },
   { id: 'docs', label: 'Docs', path: '/docs' },
@@ -247,6 +248,18 @@ const RootLayout = () => {
   useEffect(() => {
     setMobileSidebarOpen(false);
   }, [pathname]);
+
+  // The hub is a level above the project, so it takes the whole window rather than
+  // rendering inside the chrome of a project you have not chosen yet.
+  if (pathname === PROJECTS_PATH) {
+    return (
+      <ToastProvider position="bottom-left">
+        <HubShell>
+          <Outlet />
+        </HubShell>
+      </ToastProvider>
+    );
+  }
 
   return (
     <ToastProvider position="bottom-left">

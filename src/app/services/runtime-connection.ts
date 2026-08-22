@@ -50,13 +50,6 @@ export function selectRuntime(
   return match;
 }
 
-// Leaving a project drops which runtime is active, not the runtimes list
-// itself — the registry survives so the shell's projects list still has
-// every entry to choose from again.
-export function leaveActiveRuntime(storage: Storage | null): void {
-  storage?.removeItem(ACTIVE_RUNTIME_KEY);
-}
-
 // A pasted `?runtime=&token=` link only carries the connection on the visit
 // that used it; storing it is what makes a later reload with no query string
 // still dial the same runtime, and remembering rather than overwriting is

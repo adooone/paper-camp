@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@dendelion/paper-ui/dist/index.css';
 import './styles/utilities.css';
+import { ToastProvider } from '@dendelion/paper-ui';
 import { RouterProvider } from '@tanstack/react-router';
 import { HubHome, HubShell } from './features/hub';
 import { router } from './router';
@@ -42,9 +43,11 @@ pairIfNeeded()
         {chosenProject ? (
           <RouterProvider router={router} />
         ) : (
-          <HubShell>
-            <HubHome />
-          </HubShell>
+          <ToastProvider position="bottom-left">
+            <HubShell>
+              <HubHome />
+            </HubShell>
+          </ToastProvider>
         )}
       </StrictMode>,
     );

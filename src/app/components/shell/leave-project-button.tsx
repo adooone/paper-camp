@@ -1,16 +1,19 @@
 import { mountPrefix } from '@/app/services/mount';
-import { leaveActiveRuntime, runtimeConnection } from '@/app/services/runtime-connection';
 import { Button } from '@dendelion/paper-ui';
-
-function leaveProject(): void {
-  leaveActiveRuntime(window.localStorage);
-  window.location.assign(window.location.pathname);
-}
+import { useNavigate } from '@tanstack/react-router';
 
 export const LeaveProjectButton = () => {
-  if (mountPrefix !== '' || runtimeConnection.runtimeUrl === '') return null;
+  const navigate = useNavigate();
+  // Embedded under a mount prefix there is no hub to go back to: the host app
+  // decides which project this is.
+  if (mountPrefix !== '') return null;
   return (
-    <Button variant="ghost" size="small" onClick={leaveProject}>
+    <Button
+      variant="ghost"
+      size="small"
+      className="font-handwritten !text-sm opacity-70"
+      onClick={() => navigate({ to: '/projects' })}
+    >
       Back to projects
     </Button>
   );
