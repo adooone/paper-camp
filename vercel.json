@@ -4,6 +4,6 @@
   "outputDirectory": "dist/app",
   "framework": null,
   "rewrites": [
-    { "source": "/((?!assets/|img/|fonts/|manifest.json).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|img/|fonts/|manifest.json).*)", "destination": "/index.html" }
   ]
 }

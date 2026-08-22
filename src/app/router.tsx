@@ -8,6 +8,7 @@ import {
   StatusBar,
 } from '@/app/components';
 import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
+import { HubHome } from '@/app/features/hub';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { bareId } from '@/app/hooks';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
@@ -73,6 +74,7 @@ const IssuesPage = lazy(() =>
 );
 
 const navItems = [
+  { id: 'projects', label: 'Projects', path: '/projects' },
   { id: 'plans', label: 'Plans', path: '/' },
   { id: 'roadmap', label: 'Roadmap', path: '/roadmap' },
   { id: 'docs', label: 'Docs', path: '/docs' },
@@ -164,8 +166,6 @@ const RootLayout = () => {
   );
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
-  // Detail views replace the sidebar breadcrumb that used to carry the way back.
-  const isPlanDetail = pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
   const isRoadmapArea = pathname === '/roadmap';
@@ -426,6 +426,16 @@ const RootLayout = () => {
 
 const rootRoute = createRootRoute({ component: RootLayout });
 
+// The hub's own page, reachable whether or not a project is open — the shell in
+// main.tsx only covers the case where none is, which a locally served bundle never
+// hits. Registry state is device-local, so this needs no runtime and no corpus.
+const projectsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/projects',
+  component: HubHome,
+  staticData: { layer: 'client' },
+});
+
 const plansRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
@@ -535,6 +545,7 @@ const issuesRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   plansRoute,
+  projectsRoute,
   legacyPlanDetailRoute,
   ideaDetailRoute,
   ticketDetailRoute,

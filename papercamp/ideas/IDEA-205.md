@@ -6,7 +6,7 @@ kind: ticket
 status: review
 idea: IDEA-195
 created: 2026-08-21
-updated: 2026-08-21
+updated: 2026-08-22
 tags:
   - app
   - multi-project
@@ -42,6 +42,7 @@ Disconnected with no runtimes registered, the shell is still honest: it shows th
 - [x] Enter and leave a project
       Choose a project to mount the desk against it, and return to the shell without losing the registry.
       run: 4m35s · 652 in · 12.6k out · sonnet-5
+- [x] [manual] Recognize a runtime-served bundle as a chosen project
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Fourth sequencing step; needs the hosted deploy from IDEA-204 to have a URL with no project behind it to open

@@ -6,13 +6,12 @@ import { RouterProvider } from '@tanstack/react-router';
 import { HubHome, HubShell } from './features/hub';
 import { router } from './router';
 import { apiUrl, setApiBase } from './services/api-base';
-import { hasChosenProject } from './services/hub';
+import { hasChosenProject, servesOwnRuntime } from './services/hub';
 import { mountPrefix } from './services/mount';
 import { runtimeConnection } from './services/runtime-connection';
 
 const { runtimeUrl, pairingToken } = runtimeConnection;
 setApiBase(runtimeUrl || mountPrefix);
-const chosenProject = hasChosenProject(mountPrefix, runtimeUrl);
 
 // A detached, hosted bundle pairs via its `?runtime=&token=` link or a token
 // persisted from an earlier one — pair before the first render so the app's
@@ -29,16 +28,24 @@ async function pairIfNeeded(): Promise<void> {
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element not found');
 
-pairIfNeeded().finally(() => {
-  createRoot(rootElement).render(
-    <StrictMode>
-      {chosenProject ? (
-        <RouterProvider router={router} />
-      ) : (
-        <HubShell>
-          <HubHome />
-        </HubShell>
-      )}
-    </StrictMode>,
-  );
-});
+async function chooseProject(): Promise<boolean> {
+  if (hasChosenProject(mountPrefix, runtimeUrl)) return true;
+  return servesOwnRuntime(runtimeUrl, (path) => fetch(apiUrl(path)));
+}
+
+pairIfNeeded()
+  .then(chooseProject)
+  .catch(() => false)
+  .then((chosenProject) => {
+    createRoot(rootElement).render(
+      <StrictMode>
+        {chosenProject ? (
+          <RouterProvider router={router} />
+        ) : (
+          <HubShell>
+            <HubHome />
+          </HubShell>
+        )}
+      </StrictMode>,
+    );
+  });
