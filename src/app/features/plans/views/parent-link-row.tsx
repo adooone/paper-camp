@@ -1,4 +1,4 @@
-import { entityRouteParam } from '@/app/hooks';
+import { entityLink } from '@/app/hooks';
 import type { PlanEntry } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -21,12 +21,7 @@ export const ParentLinkRow = ({ plan, otherPlans }: ParentLinkRowProps) => {
       {/* Raw <button>: a chromeless click target wrapping a stamp + label, not a paper-ui Button. */}
       <button
         type="button"
-        onClick={() =>
-          navigate({
-            to: '/plans/$planId',
-            params: { planId: entityRouteParam(parentId, parent?.title ?? parentId) },
-          })
-        }
+        onClick={() => navigate(entityLink(parent ?? { id: parentId, title: parentId }))}
         className="flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left"
       >
         <Stamp size="small" variant={isTicket ? 'info' : 'warning'}>

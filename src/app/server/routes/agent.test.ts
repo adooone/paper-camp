@@ -337,7 +337,9 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
     expect(planFile).toContain('status: in-progress');
   });
 
-  it('does not auto-launch when another plan owns the current branch', async () => {
+  // Which branch you sit on no longer gates a run, so a plan that does not own the
+  // current branch auto-launches like any other.
+  it('auto-launches even when another plan owns the current branch', async () => {
     const root = await makeRoot();
     const runFeedbackReply = vi.fn(async () =>
       JSON.stringify({
@@ -360,7 +362,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
 
     expect(status()).toBe(200);
     expect(json()).toMatchObject({ ok: true });
-    expect(startRunAllPhases).not.toHaveBeenCalled();
+    expect(startRunAllPhases).toHaveBeenCalled();
   });
 
   it('commits the feedback edit before launching the fixes run', async () => {

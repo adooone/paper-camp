@@ -6,7 +6,9 @@ import {
   StackPanel,
   StatusBar,
 } from '@/app/components';
+import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
+import { bareId } from '@/app/hooks';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
@@ -25,6 +27,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  redirect,
   useNavigate,
   useRouterState,
 } from '@tanstack/react-router';
@@ -79,20 +82,6 @@ const navItems = [
 
 const NavLabel = ({ item }: { item: (typeof navItems)[number] }) => (
   <span className="inline-flex items-center gap-1.5">{item.label}</span>
-);
-
-const BackIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 20 20"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    aria-hidden="true"
-  >
-    <path d="M12 4l-5 6 5 6" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
 );
 
 const SidebarToggleIcon = () => (
@@ -261,10 +250,44 @@ const RootLayout = () => {
   return (
     <ToastProvider position="bottom-left">
       <div className="h-screen box-border flex flex-col">
-        {/* Only the toolbar reserves the Stack's width — the columns below run full
+        {/* Only the chrome reserves the Stack's width — the columns below run full
             width so the parchment passes under the panel instead of stopping at it. */}
         <div className="shrink-0 min-[1199px]:pr-[var(--pc-stack-width)]">
           <ServerReloadBanner />
+          {/* Full-bleed app bar: identity at the left edge, nav at the right, spanning
+              the sidebar and the sheet instead of sitting inside the content column. */}
+          <header
+            className="pc-app-header flex items-center gap-3 h-[var(--pc-header-h)] max-[480px]:hidden"
+            style={getSurfaceStyles({ texture: 'parchment', shade: true })}
+          >
+            {hasSidebar && (
+              <IconButton
+                variant="ghost"
+                size="small"
+                className="lg:hidden"
+                label="Open sidebar"
+                onClick={() => setMobileSidebarOpen(true)}
+                icon={<SidebarToggleIcon />}
+              />
+            )}
+            <ProjectIdentityHeader size="sm" />
+            <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
+              {navItems.map((item) => (
+                <Button
+                  key={item.id}
+                  variant="ghost"
+                  size="small"
+                  isActive={item.id === activeId}
+                  onClick={() => navigate({ to: item.path })}
+                  aria-current={item.id === activeId ? 'page' : undefined}
+                >
+                  <NavLabel item={item} />
+                </Button>
+              ))}
+            </nav>
+          </header>
+          {/* Ambient status sits under the app bar: a rail belonging to the chrome
+              above the work surface, not a band competing with it for the top edge. */}
           <StatusBar />
         </div>
         <Layout
@@ -331,49 +354,6 @@ const RootLayout = () => {
                   {/* Its own band above the sheet rather than a pill floating on it. `shade`
                       is the same parchment grain one step darker, so the seam reads as a
                       fold in one surface instead of a different material. */}
-                  <header
-                    className="pc-page-header sticky top-0 z-20 shrink-0 flex items-center gap-3 h-[var(--pc-header-h)] max-[480px]:hidden"
-                    style={getSurfaceStyles({ texture: 'parchment', shade: true })}
-                  >
-                    {hasSidebar ? (
-                      <IconButton
-                        variant="ghost"
-                        size="small"
-                        className="lg:hidden"
-                        label="Open sidebar"
-                        onClick={() => setMobileSidebarOpen(true)}
-                        icon={<SidebarToggleIcon />}
-                      />
-                    ) : (
-                      // Routes without a sidebar have no grid column to carry the identity.
-                      <ProjectIdentityHeader size="sm" />
-                    )}
-                    {isPlanDetail && (
-                      <Button
-                        variant="ghost"
-                        size="small"
-                        icon={<BackIcon />}
-                        onClick={() => navigate({ to: '/' })}
-                        className="font-handwritten !text-sm opacity-70"
-                      >
-                        Back to plans
-                      </Button>
-                    )}
-                    <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
-                      {navItems.map((item) => (
-                        <Button
-                          key={item.id}
-                          variant="ghost"
-                          size="small"
-                          isActive={item.id === activeId}
-                          onClick={() => navigate({ to: item.path })}
-                          aria-current={item.id === activeId ? 'page' : undefined}
-                        >
-                          <NavLabel item={item} />
-                        </Button>
-                      ))}
-                    </nav>
-                  </header>
                   <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
@@ -386,6 +366,7 @@ const RootLayout = () => {
                         <RuntimeUnavailable layer={activeLayer} />
                       ) : readiness === 'checking' ? null : (
                         <Suspense fallback={null}>
+                          <PageBreadcrumb />
                           <Outlet />
                         </Suspense>
                       )}
@@ -452,15 +433,27 @@ const plansRoute = createRoute({
   }),
   staticData: { layer: 'corpus' },
 });
-const planDetailRoute = createRoute({
+// `/plans/:id` was the old address for the same page. Kept as a redirect so links
+// already shared or bookmarked don't 404.
+const legacyPlanDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/plans/$planId',
-  component: PlansPage,
-  staticData: { layer: 'corpus' },
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: '/ideas/$ideaId',
+      params: { ideaId: bareId(params.planId) ?? params.planId },
+    });
+  },
 });
 const ideaDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/ideas/$ideaId',
+  component: PlansPage,
+  staticData: { layer: 'corpus' },
+});
+const ticketDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/ideas/$ideaId/tickets/$ticketId',
   component: PlansPage,
   staticData: { layer: 'corpus' },
 });
@@ -540,8 +533,9 @@ const issuesRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   plansRoute,
-  planDetailRoute,
+  legacyPlanDetailRoute,
   ideaDetailRoute,
+  ticketDetailRoute,
   docsRoute,
   docsSectionRoute,
   settingsRoute,

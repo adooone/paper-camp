@@ -12,7 +12,6 @@ tags:
   - deployment
   - app
 subject: Infrastructure
-order: 6
 ---
 
 [[IDEA-195]] settles that the client is a static bundle on a CDN and that opening a URL is the front door. Nothing publishes that bundle today. This is the pipeline that does: a Vercel project building `vite build --config vite.app.config.ts`, production on `main` and a preview per pull request.

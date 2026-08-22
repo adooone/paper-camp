@@ -47,7 +47,12 @@ export const PlanActionsColumn = () => {
   const canRunAll = (plan.status === 'planned' || inProgress) && hasUnchecked;
   const canMarkDone = canMarkPlanDone(plan);
   const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
-  const canCreateBranch = (plan.status === 'planned' || inProgress || underReview) && !onOwnBranch;
+  // A board holds no code of its own — its tickets carry the work, and each branches
+  // for itself — so it never offers a branch.
+  const canCreateBranch =
+    plan.entityKind !== 'board' &&
+    (plan.status === 'planned' || inProgress || underReview) &&
+    !onOwnBranch;
   const canFixReview = Boolean(
     plan.pr &&
       (plan.pr.state === 'open' || plan.pr.state === 'draft') &&

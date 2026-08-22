@@ -10,7 +10,6 @@ tags:
   - code-health
   - plans
 subject: Code health
-order: 4
 ---
 
 `src/app/features/plans/views/entity-detail.tsx` is 876 lines holding **twelve

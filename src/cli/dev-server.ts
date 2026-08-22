@@ -3,6 +3,7 @@ import { type IncomingMessage, type ServerResponse, createServer } from 'node:ht
 import { dirname, extname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApiMiddleware } from '../app/server/api';
+import { buildRegistrationLink } from './registration-link';
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -41,7 +42,7 @@ export async function startDevServer({ root, port }: DevServerOptions): Promise<
 
   const apiMiddleware = createApiMiddleware(root);
   console.log(
-    `Pairing token (paste into the hosted client to connect): ${apiMiddleware.pairing.token}`,
+    `Registration link (open in the hosted client to connect): ${buildRegistrationLink(port, apiMiddleware.pairing.token)}`,
   );
 
   async function serveStatic(req: IncomingMessage, res: ServerResponse) {

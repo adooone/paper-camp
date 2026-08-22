@@ -1,5 +1,5 @@
 import { PageTitle } from '@/app/components/page-title';
-import { entityRouteParam } from '@/app/hooks';
+import { useOpenEntity } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { promoteIssue } from '@/app/services/agent-api';
 import { useAppStore } from '@/app/stores/app-store';
@@ -12,7 +12,6 @@ import {
 } from '@/core/issues';
 import { isClosedEntity } from '@/core/status';
 import type { EntityStatus, Issue, PlanEntry } from '@/types/index';
-import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import { sortIssuesByAge } from './helpers';
 import { IssueRow } from './issue-row';
@@ -39,7 +38,7 @@ export const IssuesPage = () => {
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
   const { checks } = useDeskChecks();
-  const navigate = useNavigate();
+  const openEntity = useOpenEntity();
 
   useEffect(() => {
     loadTaskLog();
@@ -69,14 +68,6 @@ export const IssuesPage = () => {
       thread: issueThreadFromTaskLog(issue, taskLog),
     }));
   }, [taskLog, checks, entities]);
-
-  const openEntity = (id: string, title: string) => {
-    if (plans?.entries.some((p) => p.id === id || p.title === title)) {
-      navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(id, title) } });
-    } else {
-      navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
-    }
-  };
 
   const handlePromote = async (issue: Issue) => {
     setPromotingId(issue.id);

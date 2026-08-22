@@ -1,5 +1,6 @@
 import { PageTitle } from '@/app/components/page-title';
-import { Breadcrumb, Card } from '@dendelion/paper-ui';
+import type { PlanEntry } from '@/types/index';
+import { Card } from '@dendelion/paper-ui';
 import { selectWorklistRows } from './helpers';
 import { usePlansPage } from './hooks';
 import { PromoteSuggestionModal } from './modals';
@@ -86,14 +87,6 @@ export const PlansPage = () => {
         </div>
       ) : activeIdea ? (
         <div>
-          <div className="mb-4">
-            <Breadcrumb
-              items={[
-                { id: 'plans', label: 'Plans', onClick: handleBack },
-                { id: 'idea', label: activeIdea.title },
-              ]}
-            />
-          </div>
           <NoteDetail idea={activeIdea} />
         </div>
       ) : (

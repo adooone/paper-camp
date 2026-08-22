@@ -294,19 +294,14 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * The header band shares the sheet's gutters so the nav aligns with page content,
- * and its left border continues the sheet's so the column edge reads as one line.
+ * Full-bleed app bar above both columns: identity at the left gutter, nav at the
+ * right. Only a bottom rule — it spans the window, so it has no column edge to
+ * continue.
  */
-.pc-page-header {
+.pc-app-header {
   padding-left: 2rem;
   padding-right: 2rem;
-  border-left: 1px solid var(--pui-sketch-stroke);
   border-bottom: 1px solid var(--pui-sketch-stroke);
-}
-@media (min-width: 1199px) {
-  .pc-page-header {
-    padding-right: var(--pc-stack-width);
-  }
 }
 
 /* The sidebar edge is the only edge that reads as a border. */

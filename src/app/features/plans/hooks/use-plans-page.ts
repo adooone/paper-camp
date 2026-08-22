@@ -1,4 +1,4 @@
-import { entityRouteParam, useActiveIdea, useActivePlan } from '@/app/hooks';
+import { entityRouteParam, useActiveIdea, useActivePlan, useOpenEntity } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { ArchivableIdea, SuggestionEntry } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
@@ -18,6 +18,7 @@ export const usePlansPage = () => {
   const activeIdea = useActiveIdea();
   const { planId, ideaId } = useParams({ strict: false });
   const navigate = useNavigate();
+  const openEntity = useOpenEntity();
   const { toast } = useToast();
   const { subject: subjectParam } = useSearch({ strict: false }) as { subject?: string };
 
@@ -43,7 +44,7 @@ export const usePlansPage = () => {
 
   const handleOpenPlan = (title: string) => {
     const id = plans?.entries.find((p) => p.title === title)?.id;
-    navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(id, title) } });
+    openEntity(id, title);
   };
 
   const handleOpenIdea = (title: string) => {
@@ -54,7 +55,7 @@ export const usePlansPage = () => {
   // Archivable entities are work entities, so they route to /plans and their id is
   // already to hand — `ideaEntries` holds only notes and would never resolve them.
   const handleOpenArchivable = (idea: ArchivableIdea) => {
-    navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(idea.id, idea.title) } });
+    openEntity(idea.id, idea.title);
   };
 
   const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);

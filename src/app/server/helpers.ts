@@ -101,32 +101,6 @@ export function withRunOrderLock<T>(fn: () => Promise<T>): Promise<T> {
   return result;
 }
 
-export async function checkBranchConflictForPlan(
-  root: string,
-  git: {
-    getFeatureBranchPlanId: () => string | null;
-    getBranchHygieneStatus: () => Promise<BranchHygieneStatus>;
-  },
-  targetPlanId?: string,
-): Promise<string | null> {
-  const activePlanId = git.getFeatureBranchPlanId();
-  // Must come before the hygiene check so you're never blocked from advancing your own plan.
-  if (targetPlanId && activePlanId === targetPlanId) return null;
-  if (!activePlanId) return null;
-
-  const hygiene = await git.getBranchHygieneStatus();
-  if (hygiene === 'stale-merged') {
-    return "You're on a merged branch — switch to main before starting another plan";
-  }
-
-  // Pre-migration branches carry legacy <KIND>-<N> ids that match no entity,
-  // so the lookup misses and the guard stays silent for them.
-  const { entries } = await readEntitiesWithDerivedStatus(campFile(root, 'ideas'));
-  const activePlan = entries.find((e) => e.id === activePlanId && e.kind !== 'note');
-  if (!activePlan || activePlan.status === 'done' || activePlan.status === 'dropped') return null;
-  return `Finish \`${activePlanId}\` — ${activePlan.title} — before starting another plan`;
-}
-
 // See IDEA-171: a branch forked before another ref finished this plan's phases would
 // otherwise redo that work invisibly. Refuse rather than warn — the failure is silent
 // and expensive to clean up by hand.

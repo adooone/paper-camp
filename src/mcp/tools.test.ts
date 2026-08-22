@@ -219,79 +219,6 @@ describe('write tools', () => {
   });
 });
 
-describe('branch-conflict guard', () => {
-  it('rejects draft_plan while the current branch has an unfinished plan of its own', async () => {
-    const root = await makeRoot();
-    await writePlan(
-      root,
-      'IDEA-1',
-      planFile({ id: 'IDEA-1', title: 'In-flight plan', status: 'in-progress' }),
-    );
-    git(root, 'add', '.');
-    git(root, 'commit', '-m', 'add IDEA-1');
-    git(root, 'checkout', '-b', 'feat/idea-1-in-flight-plan');
-    const client = await connect(root, createGitManager(root, { watch: false }));
-
-    const result = await client.callTool({
-      name: 'draft_plan',
-      arguments: { title: 'A different plan' },
-    });
-    expect(result.isError).toBe(true);
-
-    const plansDir = join(root, 'papercamp', 'ideas');
-    const { readdir } = await import('node:fs/promises');
-    expect((await readdir(plansDir)).filter((f) => f.endsWith('.md'))).toEqual(['IDEA-1.md']);
-  });
-
-  it("allows update_phase to advance the branch's own active plan", async () => {
-    const root = await makeRoot();
-    await writePlan(
-      root,
-      'IDEA-1',
-      planFile({ id: 'IDEA-1', title: 'In-flight plan', status: 'in-progress' }),
-    );
-    git(root, 'add', '.');
-    git(root, 'commit', '-m', 'add IDEA-1');
-    git(root, 'checkout', '-b', 'feat/idea-1-in-flight-plan');
-    const client = await connect(root, createGitManager(root, { watch: false }));
-
-    const result = await client.callTool({
-      name: 'update_phase',
-      arguments: { id: 'IDEA-1', phaseIndex: 0, done: true },
-    });
-    expect(result.isError).toBeFalsy();
-    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
-    expect(written).toContain('- [x] First phase');
-  });
-
-  it('rejects update_phase on a different plan while the branch has an unfinished plan of its own', async () => {
-    const root = await makeRoot();
-    await writePlan(
-      root,
-      'IDEA-1',
-      planFile({ id: 'IDEA-1', title: 'In-flight plan', status: 'in-progress' }),
-    );
-    await writePlan(
-      root,
-      'IDEA-2',
-      planFile({ id: 'IDEA-2', title: 'Other plan', status: 'planned' }),
-    );
-    git(root, 'add', '.');
-    git(root, 'commit', '-m', 'add plans');
-    git(root, 'checkout', '-b', 'feat/idea-1-in-flight-plan');
-    const client = await connect(root, createGitManager(root, { watch: false }));
-
-    const result = await client.callTool({
-      name: 'update_phase',
-      arguments: { id: 'IDEA-2', phaseIndex: 0, done: true },
-    });
-    expect(result.isError).toBe(true);
-
-    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), 'utf-8');
-    expect(written).toContain('- [ ] First phase');
-  });
-});
-
 describe('edit_idea', () => {
   it('edits title, body, tags, and type', async () => {
     const root = await makeRoot();
@@ -618,7 +545,7 @@ describe('archive_entity', () => {
   });
 });
 
-describe('branch-conflict guard on the full write surface', () => {
+describe('writes on any branch', () => {
   async function onBranchWithUnfinishedPlan(): Promise<string> {
     const root = await makeRoot();
     await writePlan(
@@ -637,30 +564,9 @@ describe('branch-conflict guard on the full write surface', () => {
     return root;
   }
 
-  it('rejects add_idea while the branch has an unfinished plan of its own', async () => {
-    const root = await onBranchWithUnfinishedPlan();
-    const client = await connect(root, createGitManager(root, { watch: false }));
-
-    const result = await client.callTool({ name: 'add_idea', arguments: { title: 'Sneaky idea' } });
-    expect(result.isError).toBe(true);
-  });
-
-  it('rejects promote_suggestion while the branch has an unfinished plan of its own', async () => {
-    const root = await onBranchWithUnfinishedPlan();
-    await writeFile(
-      join(root, 'papercamp', 'suggestions.md'),
-      '- 2026-07-01: A suggestion — description\n',
-    );
-    const client = await connect(root, createGitManager(root, { watch: false }));
-
-    const result = await client.callTool({
-      name: 'promote_suggestion',
-      arguments: { title: 'A suggestion' },
-    });
-    expect(result.isError).toBe(true);
-  });
-
-  it('rejects a mutation on a different plan but allows it on the branch owner', async () => {
+  // The branch you sit on no longer decides what you may work on: pushing one idea's
+  // change from another idea's branch, or straight to main, is deliberate.
+  it('mutates a plan that does not own the current branch', async () => {
     const root = await onBranchWithUnfinishedPlan();
     const client = await connect(root, createGitManager(root, { watch: false }));
 
@@ -668,14 +574,16 @@ describe('branch-conflict guard on the full write surface', () => {
       name: 'append_log',
       arguments: { id: 'IDEA-2', text: 'poke' },
     });
-    expect(other.isError).toBe(true);
+    expect(other.isError).toBeFalsy();
+    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), 'utf-8');
+    expect(written).toContain('[log] [agent] poke');
+  });
 
-    const own = await client.callTool({
-      name: 'append_log',
-      arguments: { id: 'IDEA-1', text: 'progress' },
-    });
-    expect(own.isError).toBeFalsy();
-    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
-    expect(written).toContain('[log] [agent] progress');
+  it('adds an idea while another plan owns the branch', async () => {
+    const root = await onBranchWithUnfinishedPlan();
+    const client = await connect(root, createGitManager(root, { watch: false }));
+
+    const result = await client.callTool({ name: 'add_idea', arguments: { title: 'New idea' } });
+    expect(result.isError).toBeFalsy();
   });
 });
