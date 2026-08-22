@@ -29,8 +29,9 @@ Waits on [[TICKET-1]] and [[TICKET-2]]: pairing the client to a runtime, and det
 - [x] Register projects by runtime address
       Add, rename and remove runtime URLs; persist the registry in device-local browser storage.
       run: 6m48s · 21.7k in · 27.3k out · sonnet-5
-- [ ] Announce a runtime from the CLI
+- [x] Announce a runtime from the CLI
       `paper-camp dev` prints a registration link that adds itself to the client's registry.
+      run: 3m54s · 435 in · 11.6k out · sonnet-5
 - [ ] Fan out across registered runtimes
       Read every reachable runtime in parallel; show an unreachable one as plan-only rather than missing, and flag version skew.
 - [ ] Build the project switcher
@@ -39,3 +40,4 @@ Waits on [[TICKET-1]] and [[TICKET-2]]: pairing the client to a runtime, and det
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Explicitly waits on TICKET-1 and TICKET-2 for pairing/detach, and the shell it renders is IDEA-205, so it must follow both
+- [x] 2026-08-22 [log] [agent] Announce a runtime from the CLI: delivered by [[TICKET-2]] (PR #188) rather than by this phase's own run — `startDevServer` already prints `buildRegistrationLink(port, pairing.token)` on every `paper-camp dev` start (src/cli/dev-server.ts, src/cli/registration-link.ts), and opening that link is already proven to register itself via `loadRuntimeConnection` (src/cli/registration-link.test.ts). Verified by rebuilding `dist` and running `paper-camp dev` directly. Closed as done because the outcome exists, not because this phase ran.
