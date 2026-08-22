@@ -278,7 +278,10 @@ header[class*="layout-module__header___"] {
      the clip path both survive it. */
   border-radius: 0;
   clip-path: none;
-  padding-top: 2rem;
+  /* The header band directly above already separates the sheet from the viewport,
+     and now carries the breadcrumb too — a full 2rem on top of it read as dead space
+     before the first line of every page. */
+  padding-top: 1rem;
 }
 
 /*

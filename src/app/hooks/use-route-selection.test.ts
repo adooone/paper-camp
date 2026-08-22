@@ -66,13 +66,23 @@ describe('resolveByIdOrTitle', () => {
 describe('entityLink', () => {
   it('nests a TICKET under the board that owns it', () => {
     expect(
-      entityLink({ id: 'TICKET-2', title: 'Detach the client', entityKind: 'ticket', idea: 'IDEA-195' }),
+      entityLink({
+        id: 'TICKET-2',
+        title: 'Detach the client',
+        entityKind: 'ticket',
+        idea: 'IDEA-195',
+      }),
     ).toEqual({ to: '/ideas/$ideaId/tickets/$ticketId', params: { ideaId: '195', ticketId: '2' } });
   });
 
   it('keeps an idea promoted onto a board at its own address', () => {
     expect(
-      entityLink({ id: 'IDEA-117', title: 'Multi-project hub', entityKind: 'ticket', idea: 'IDEA-195' }),
+      entityLink({
+        id: 'IDEA-117',
+        title: 'Multi-project hub',
+        entityKind: 'ticket',
+        idea: 'IDEA-195',
+      }),
     ).toEqual({ to: '/ideas/$ideaId', params: { ideaId: '117' } });
   });
 

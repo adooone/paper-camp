@@ -29,6 +29,7 @@ A URL carried in the query string dies with the tab. Nothing remembers which run
       Take the URL and token a `paper-camp dev` announce prints and store them, instead of requiring a hand-pasted query string.
       run: 4m5s · 647 in · 11.6k out · sonnet-5
 - [x] [manual] Centralize entity navigation with useOpenEntity and entityLink
+- [x] [manual] Centralize page breadcrumbs into one component
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Second named sequencing step; needs TICKET-1's pairing token and origin checks before the client can dial a runtime cross-origin

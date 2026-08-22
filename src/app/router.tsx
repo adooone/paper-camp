@@ -6,6 +6,7 @@ import {
   StackPanel,
   StatusBar,
 } from '@/app/components';
+import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { bareId } from '@/app/hooks';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
@@ -81,20 +82,6 @@ const navItems = [
 
 const NavLabel = ({ item }: { item: (typeof navItems)[number] }) => (
   <span className="inline-flex items-center gap-1.5">{item.label}</span>
-);
-
-const BackIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 20 20"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    aria-hidden="true"
-  >
-    <path d="M12 4l-5 6 5 6" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
 );
 
 const SidebarToggleIcon = () => (
@@ -350,17 +337,6 @@ const RootLayout = () => {
                       // Routes without a sidebar have no grid column to carry the identity.
                       <ProjectIdentityHeader size="sm" />
                     )}
-                    {isPlanDetail && (
-                      <Button
-                        variant="ghost"
-                        size="small"
-                        icon={<BackIcon />}
-                        onClick={() => navigate({ to: '/' })}
-                        className="font-handwritten !text-sm opacity-70"
-                      >
-                        Back to plans
-                      </Button>
-                    )}
                     <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
                       {navItems.map((item) => (
                         <Button
@@ -388,6 +364,7 @@ const RootLayout = () => {
                         <RuntimeUnavailable layer={activeLayer} />
                       ) : readiness === 'checking' ? null : (
                         <Suspense fallback={null}>
+                          <PageBreadcrumb />
                           <Outlet />
                         </Suspense>
                       )}
