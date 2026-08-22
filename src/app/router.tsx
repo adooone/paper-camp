@@ -1,6 +1,5 @@
 import {
-  LeaveProjectButton,
-  ProjectIdentityHeader,
+  ProjectSwitcher,
   RuntimeUnavailable,
   ServerReloadBanner,
   SidebarShell,
@@ -284,8 +283,7 @@ const RootLayout = () => {
                 icon={<SidebarToggleIcon />}
               />
             )}
-            <ProjectIdentityHeader size="sm" />
-            <LeaveProjectButton />
+            <ProjectSwitcher />
             <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
               {navItems.map((item) => (
                 <Button
