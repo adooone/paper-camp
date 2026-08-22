@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { loadRuntimeConnection, readRuntimeConnection } from './runtime-connection';
+import {
+  listRuntimes,
+  loadRuntimeConnection,
+  readRuntimeConnection,
+  selectRuntime,
+} from './runtime-connection';
 
 function createStorage(): Storage {
   const data = new Map<string, string>();
@@ -68,26 +73,32 @@ describe('loadRuntimeConnection', () => {
     });
   });
 
-  it('falls back to the persisted connection when the query string is empty', () => {
+  it('falls back to the active persisted connection when the query string is empty', () => {
     const storage = createStorage();
-    storage.setItem('paper-camp.runtimeUrl', 'http://localhost:3333');
-    storage.setItem('paper-camp.pairingToken', 'abc123');
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
     expect(loadRuntimeConnection({ search: '' }, storage)).toEqual({
       runtimeUrl: 'http://localhost:3333',
       pairingToken: 'abc123',
     });
   });
 
-  it('clears the persisted token when a fresh runtime link carries none', () => {
+  it('overwrites a known runtime when a fresh link for it carries no token', () => {
     const storage = createStorage();
-    storage.setItem('paper-camp.runtimeUrl', 'http://localhost:3333');
-    storage.setItem('paper-camp.pairingToken', 'abc123');
-    const connection = loadRuntimeConnection(
-      { search: '?runtime=http%3A%2F%2Flocalhost%3A4444' },
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
       storage,
     );
-    expect(connection).toEqual({ runtimeUrl: 'http://localhost:4444', pairingToken: null });
-    expect(storage.getItem('paper-camp.pairingToken')).toBeNull();
+    const connection = loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333' },
+      storage,
+    );
+    expect(connection).toEqual({ runtimeUrl: 'http://localhost:3333', pairingToken: null });
+    expect(listRuntimes(storage)).toEqual([
+      { runtimeUrl: 'http://localhost:3333', pairingToken: null },
+    ]);
   });
 
   it('works without a storage backend', () => {
@@ -97,6 +108,61 @@ describe('loadRuntimeConnection', () => {
     expect(loadRuntimeConnection({ search: '' }, null)).toEqual({
       runtimeUrl: '',
       pairingToken: null,
+    });
+  });
+
+  it('keeps every runtime a device has dialled rather than the last one only', () => {
+    const storage = createStorage();
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A4444&token=def456' },
+      storage,
+    );
+    expect(listRuntimes(storage)).toEqual([
+      { runtimeUrl: 'http://localhost:3333', pairingToken: 'abc123' },
+      { runtimeUrl: 'http://localhost:4444', pairingToken: 'def456' },
+    ]);
+    expect(loadRuntimeConnection({ search: '' }, storage)).toEqual({
+      runtimeUrl: 'http://localhost:4444',
+      pairingToken: 'def456',
+    });
+  });
+});
+
+describe('selectRuntime', () => {
+  it('switches which known runtime is active', () => {
+    const storage = createStorage();
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A4444&token=def456' },
+      storage,
+    );
+    expect(selectRuntime('http://localhost:3333', storage)).toEqual({
+      runtimeUrl: 'http://localhost:3333',
+      pairingToken: 'abc123',
+    });
+    expect(loadRuntimeConnection({ search: '' }, storage)).toEqual({
+      runtimeUrl: 'http://localhost:3333',
+      pairingToken: 'abc123',
+    });
+  });
+
+  it('is a no-op for a runtime the device has never dialled', () => {
+    const storage = createStorage();
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
+    expect(selectRuntime('http://localhost:9999', storage)).toBeNull();
+    expect(loadRuntimeConnection({ search: '' }, storage)).toEqual({
+      runtimeUrl: 'http://localhost:3333',
+      pairingToken: 'abc123',
     });
   });
 });
