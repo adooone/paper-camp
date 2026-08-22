@@ -3,7 +3,7 @@ id: IDEA-204
 title: Deploy the hosted client
 type: feat
 kind: ticket
-status: idea
+status: done
 idea: IDEA-195
 created: 2026-08-21
 updated: 2026-08-22
@@ -12,6 +12,7 @@ tags:
   - deployment
   - app
 subject: Infrastructure
+order: 1
 ---
 
 [[IDEA-195]] settles that the client is a static bundle on a CDN and that opening a URL is the front door. Nothing publishes that bundle today. This is the pipeline that does: a Vercel project building `vite build --config vite.app.config.ts`, production on `main` and a preview per pull request.
