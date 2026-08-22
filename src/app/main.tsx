@@ -2,10 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@dendelion/paper-ui/dist/index.css';
 import './styles/utilities.css';
-import { ToastProvider } from '@dendelion/paper-ui';
 import { RouterProvider } from '@tanstack/react-router';
-import { HubHome, HubShell } from './features/hub';
-import { router } from './router';
+import { HUB_PATH, router } from './router';
 import { apiUrl, setApiBase } from './services/api-base';
 import { hasChosenProject, servesOwnRuntime } from './services/hub';
 import { mountPrefix } from './services/mount';
@@ -34,21 +32,19 @@ async function chooseProject(): Promise<boolean> {
   return servesOwnRuntime(runtimeUrl, (path) => fetch(apiUrl(path)));
 }
 
+// The router always mounts. With no project chosen the hub is where you land, but it
+// is a route like any other — rendering it outside the RouterProvider left its own
+// navigation calling router hooks with no router, which crashed every hosted load.
 pairIfNeeded()
   .then(chooseProject)
   .catch(() => false)
   .then((chosenProject) => {
+    if (!chosenProject && !window.location.pathname.startsWith(HUB_PATH)) {
+      window.history.replaceState(null, '', `${mountPrefix}${HUB_PATH}`);
+    }
     createRoot(rootElement).render(
       <StrictMode>
-        {chosenProject ? (
-          <RouterProvider router={router} />
-        ) : (
-          <ToastProvider position="bottom-left">
-            <HubShell>
-              <HubHome />
-            </HubShell>
-          </ToastProvider>
-        )}
+        <RouterProvider router={router} />
       </StrictMode>,
     );
   });

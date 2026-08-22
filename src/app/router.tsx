@@ -78,9 +78,9 @@ const IssuesPage = lazy(() =>
   import('@/app/features/issues/index').then((m) => ({ default: m.IssuesPage })),
 );
 
-const PROJECTS_PATH = '/projects';
+export const HUB_PATH = '/projects';
 const HUB_PATHS: string[] = [
-  PROJECTS_PATH,
+  HUB_PATH,
   '/projects/reviews',
   '/projects/activity',
   '/projects/ideas',
