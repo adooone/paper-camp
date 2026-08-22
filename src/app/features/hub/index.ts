@@ -1,2 +1,2 @@
+export { HubHome } from './hub-home';
 export { HubShell } from './hub-shell';
-export { WelcomeScreen } from './welcome-screen';

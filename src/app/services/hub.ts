@@ -12,3 +12,14 @@ export function hasChosenProject(mountPrefix: string, runtimeUrl: string): boole
 export function runtimeAdditionUrl(currentPath: string, runtimeUrl: string): string {
   return `${currentPath}?runtime=${encodeURIComponent(runtimeUrl)}`;
 }
+
+// A registered runtime has no announced project name yet — IDEA-117 fans out to
+// ask each one, which this shell doesn't do — so the address itself is the only
+// row label available today.
+export function runtimeRowLabel(runtimeUrl: string): string {
+  try {
+    return new URL(runtimeUrl).host;
+  } catch {
+    return runtimeUrl;
+  }
+}

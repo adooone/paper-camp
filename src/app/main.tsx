@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import '@dendelion/paper-ui/dist/index.css';
 import './styles/utilities.css';
 import { RouterProvider } from '@tanstack/react-router';
-import { HubShell, WelcomeScreen } from './features/hub';
+import { HubHome, HubShell } from './features/hub';
 import { router } from './router';
 import { apiUrl, setApiBase } from './services/api-base';
 import { hasChosenProject } from './services/hub';
@@ -36,7 +36,7 @@ pairIfNeeded().finally(() => {
         <RouterProvider router={router} />
       ) : (
         <HubShell>
-          <WelcomeScreen />
+          <HubHome />
         </HubShell>
       )}
     </StrictMode>,

@@ -36,8 +36,9 @@ Disconnected with no runtimes registered, the shell is still honest: it shows th
 - [x] GitHub connect surface
       Take a user-minted fine-grained token with clear minting instructions, show the connected identity, and disconnect.
       run: 4m20s · 2.6k in · 13k out · sonnet-5
-- [ ] Projects list
+- [x] Projects list
       One row per registry entry, runtime-backed or GitHub-imported, each showing whether it can execute or only plan.
+      run: 5m40s · 515 in · 19.5k out · sonnet-5
 - [ ] Enter and leave a project
       Choose a project to mount the desk against it, and return to the shell without losing the registry.
 

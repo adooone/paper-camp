@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasChosenProject, runtimeAdditionUrl } from './hub';
+import { hasChosenProject, runtimeAdditionUrl, runtimeRowLabel } from './hub';
 
 describe('hasChosenProject', () => {
   it('is false for a hosted client with no paired runtime', () => {
@@ -26,5 +26,15 @@ describe('runtimeAdditionUrl', () => {
     expect(runtimeAdditionUrl('/some/path', 'http://localhost:4444')).toBe(
       '/some/path?runtime=http%3A%2F%2Flocalhost%3A4444',
     );
+  });
+});
+
+describe('runtimeRowLabel', () => {
+  it('shortens a runtime URL to its host', () => {
+    expect(runtimeRowLabel('http://localhost:3333')).toBe('localhost:3333');
+  });
+
+  it('falls back to the raw value for an unparsable address', () => {
+    expect(runtimeRowLabel('not-a-url')).toBe('not-a-url');
   });
 });
