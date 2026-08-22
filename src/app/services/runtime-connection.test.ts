@@ -3,6 +3,8 @@ import {
   listRuntimes,
   loadRuntimeConnection,
   readRuntimeConnection,
+  removeRuntime,
+  renameRuntime,
   selectRuntime,
 } from './runtime-connection';
 
@@ -164,5 +166,93 @@ describe('selectRuntime', () => {
       runtimeUrl: 'http://localhost:3333',
       pairingToken: 'abc123',
     });
+  });
+});
+
+describe('renameRuntime', () => {
+  it('sets a device-local label on a known runtime', () => {
+    const storage = createStorage();
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
+    expect(renameRuntime('http://localhost:3333', 'Paper Camp', storage)).toEqual({
+      runtimeUrl: 'http://localhost:3333',
+      pairingToken: 'abc123',
+      label: 'Paper Camp',
+    });
+    expect(listRuntimes(storage)).toEqual([
+      { runtimeUrl: 'http://localhost:3333', pairingToken: 'abc123', label: 'Paper Camp' },
+    ]);
+  });
+
+  it('trims the label and clears it back to the announced name when blank', () => {
+    const storage = createStorage();
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
+    renameRuntime('http://localhost:3333', '  Paper Camp  ', storage);
+    expect(renameRuntime('http://localhost:3333', '  ', storage)).toEqual({
+      runtimeUrl: 'http://localhost:3333',
+      pairingToken: 'abc123',
+    });
+  });
+
+  it('is a no-op for a runtime the device has never dialled', () => {
+    const storage = createStorage();
+    expect(renameRuntime('http://localhost:9999', 'Paper Camp', storage)).toBeNull();
+    expect(listRuntimes(storage)).toEqual([]);
+  });
+
+  it('survives a re-dial that carries no label of its own', () => {
+    const storage = createStorage();
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
+    renameRuntime('http://localhost:3333', 'Paper Camp', storage);
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
+    expect(listRuntimes(storage)).toEqual([
+      { runtimeUrl: 'http://localhost:3333', pairingToken: 'abc123', label: 'Paper Camp' },
+    ]);
+  });
+});
+
+describe('removeRuntime', () => {
+  it('forgets a registered runtime', () => {
+    const storage = createStorage();
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A4444&token=def456' },
+      storage,
+    );
+    removeRuntime('http://localhost:3333', storage);
+    expect(listRuntimes(storage)).toEqual([
+      { runtimeUrl: 'http://localhost:4444', pairingToken: 'def456' },
+    ]);
+  });
+
+  it('clears the active runtime when it is the one removed', () => {
+    const storage = createStorage();
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
+    removeRuntime('http://localhost:3333', storage);
+    expect(loadRuntimeConnection({ search: '' }, storage)).toEqual({
+      runtimeUrl: '',
+      pairingToken: null,
+    });
+  });
+
+  it('works without a storage backend', () => {
+    expect(() => removeRuntime('http://localhost:3333', null)).not.toThrow();
   });
 });

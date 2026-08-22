@@ -26,8 +26,9 @@ Engineering note: fanning out means meeting runtimes at different paper-camp ver
 Waits on [[TICKET-1]] and [[TICKET-2]]: pairing the client to a runtime, and detaching the client so it takes a runtime URL. A registered project whose runtime is unreachable is not a hole in the hub — it shows as plan-only, which [[IDEA-195]] settles as a first-class state, so the switcher is useful before every runtime is up. Companion captures: [[IDEA-118]] (decisions inbox), which has since shipped. [[IDEA-123]] (cross-corpus links) was dropped.
 
 ### Phases
-- [ ] Register projects by runtime address
+- [x] Register projects by runtime address
       Add, rename and remove runtime URLs; persist the registry in device-local browser storage.
+      run: 6m48s · 21.7k in · 27.3k out · sonnet-5
 - [ ] Announce a runtime from the CLI
       `paper-camp dev` prints a registration link that adds itself to the client's registry.
 - [ ] Fan out across registered runtimes
