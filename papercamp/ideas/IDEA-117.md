@@ -3,7 +3,7 @@ id: IDEA-117
 title: Multi-project hub
 type: feat
 kind: ticket
-status: in-progress
+status: review
 idea: IDEA-195
 created: 2026-08-04
 updated: 2026-08-22
@@ -43,8 +43,9 @@ Waits on [[TICKET-1]] and [[TICKET-2]]: pairing the client to a runtime, and det
       run: 10m2s · 14.6k in · 46.9k out · sonnet-5
 
 ### Fixes
-- [ ] Replace project switcher with a simple 'Back to projects' button
+- [x] Replace project switcher with a simple 'Back to projects' button
       The current project switcher UI is unwieldy; swap it for a plain back button for now.
+      run: 1m53s · 5.8k in · 5.5k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Explicitly waits on TICKET-1 and TICKET-2 for pairing/detach, and the shell it renders is IDEA-205, so it must follow both
