@@ -32,8 +32,9 @@ Waits on [[TICKET-1]] and [[TICKET-2]]: pairing the client to a runtime, and det
 - [x] Announce a runtime from the CLI
       `paper-camp dev` prints a registration link that adds itself to the client's registry.
       run: 3m54s · 435 in · 11.6k out · sonnet-5
-- [ ] Fan out across registered runtimes
+- [x] Fan out across registered runtimes
       Read every reachable runtime in parallel; show an unreachable one as plan-only rather than missing, and flag version skew.
+      run: 7m54s · 14.7k in · 30.6k out · sonnet-5
 - [ ] Build the project switcher
 - [ ] Ship cross-project views
       Everything-in-review, overnight agent activity, and global idea search composed from the fan-out.

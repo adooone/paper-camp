@@ -1,3 +1,4 @@
+import { PAPER_CAMP_VERSION } from '@/core/scaffold';
 import { probeCapabilities, probeConnections, runConnect } from '../capabilities';
 import { requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
@@ -8,7 +9,10 @@ export function capabilitiesRoutes({ root }: RouteContext): Route[] {
       method: 'GET',
       path: '/api/capabilities',
       handle: async (_req, res) => {
-        sendJson(res, 200, { capabilities: await probeCapabilities(root) });
+        sendJson(res, 200, {
+          capabilities: await probeCapabilities(root),
+          version: PAPER_CAMP_VERSION,
+        });
       },
     },
     {
