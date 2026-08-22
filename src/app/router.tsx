@@ -1,4 +1,5 @@
 import {
+  LeaveProjectButton,
   ProjectIdentityHeader,
   RuntimeUnavailable,
   ServerReloadBanner,
@@ -271,6 +272,7 @@ const RootLayout = () => {
               />
             )}
             <ProjectIdentityHeader size="sm" />
+            <LeaveProjectButton />
             <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
               {navItems.map((item) => (
                 <Button

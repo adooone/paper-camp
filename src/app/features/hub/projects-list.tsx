@@ -1,6 +1,11 @@
 import { runtimeRowLabel } from '@/app/services/hub';
-import type { RuntimeConnection } from '@/app/services/runtime-connection';
+import { type RuntimeConnection, selectRuntime } from '@/app/services/runtime-connection';
 import { Card, ListItem, Stamp } from '@dendelion/paper-ui';
+
+function enterProject(runtimeUrl: string): void {
+  selectRuntime(runtimeUrl, window.localStorage);
+  window.location.assign(window.location.pathname);
+}
 
 export const ProjectsList = ({ runtimes }: { runtimes: RuntimeConnection[] }) => (
   <Card size="small" texture="kraft" className="flex flex-col gap-2 text-left">
@@ -10,6 +15,7 @@ export const ProjectsList = ({ runtimes }: { runtimes: RuntimeConnection[] }) =>
         <ListItem
           key={runtime.runtimeUrl}
           size="small"
+          onClick={() => enterProject(runtime.runtimeUrl)}
           action={
             <Stamp size="small" variant="success">
               Can execute

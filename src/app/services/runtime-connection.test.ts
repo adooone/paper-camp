@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  leaveActiveRuntime,
   listRuntimes,
   loadRuntimeConnection,
   readRuntimeConnection,
@@ -164,5 +165,27 @@ describe('selectRuntime', () => {
       runtimeUrl: 'http://localhost:3333',
       pairingToken: 'abc123',
     });
+  });
+});
+
+describe('leaveActiveRuntime', () => {
+  it('clears the active runtime without dropping it from the registry', () => {
+    const storage = createStorage();
+    loadRuntimeConnection(
+      { search: '?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123' },
+      storage,
+    );
+    leaveActiveRuntime(storage);
+    expect(loadRuntimeConnection({ search: '' }, storage)).toEqual({
+      runtimeUrl: '',
+      pairingToken: null,
+    });
+    expect(listRuntimes(storage)).toEqual([
+      { runtimeUrl: 'http://localhost:3333', pairingToken: 'abc123' },
+    ]);
+  });
+
+  it('works without a storage backend', () => {
+    expect(() => leaveActiveRuntime(null)).not.toThrow();
   });
 });
