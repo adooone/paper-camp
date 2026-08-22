@@ -3,7 +3,7 @@ id: TICKET-2
 title: Detach the client
 type: feat
 kind: ticket
-status: review
+status: done
 idea: IDEA-195
 created: 2026-08-21
 updated: 2026-08-22
