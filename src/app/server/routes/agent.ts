@@ -39,7 +39,6 @@ import {
 } from '../feedback-reply';
 import {
   campFile,
-  checkBranchConflictForPlan,
   checkStaleBaseForRunAll,
   entityFileInput,
   fileExists,
@@ -152,8 +151,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
   ): Promise<{ ok: true; plan: PlanEntry } | { ok: false; error: string; status: number }> {
     const plan = await findPlanById(root, planId);
     if (!plan) return { ok: false, status: 404, error: 'plan not found' };
-    const conflict = await checkBranchConflictForPlan(root, git, plan.id);
-    if (conflict) return { ok: false, status: 409, error: conflict };
     return { ok: true, plan };
   }
 
@@ -344,8 +341,6 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       () => ({}),
       '',
       async () => {
-        const conflict = await checkBranchConflictForPlan(root, git);
-        if (conflict) return { ok: false, error: conflict };
         return agent.startBatchReconcile();
       },
     ),
@@ -516,10 +511,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
         );
 
         if (parent) {
-          const spawnConflict = await checkBranchConflictForPlan(root, git, spawnedId);
-          if (!spawnConflict) {
-            agent.startRunAllPhases(entityToPlan(spawnedEntity), () => status.runChecksAndWait());
-          }
+          agent.startRunAllPhases(entityToPlan(spawnedEntity), () => status.runChecksAndWait());
         }
 
         sendJson(res, 200, { promotedTo: spawnedId, kind: parent ? 'fix' : 'idea' });
@@ -667,12 +659,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
               undo = { commitSha: await git.getHeadSha() };
               replyText = `${replyText} (spawned ${spawnedId} to track this)`;
 
-              const spawnConflict = await checkBranchConflictForPlan(root, git, spawnedId);
-              if (!spawnConflict) {
-                agent.startRunAllPhases(entityToPlan(spawnedEntity), () =>
-                  status.runChecksAndWait(),
-                );
-              }
+              agent.startRunAllPhases(entityToPlan(spawnedEntity), () => status.runChecksAndWait());
             }
           }
 
@@ -726,12 +713,10 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
           // Same path the "Run fixes" button uses — the fix phase already landed in
           // the file above (and is now committed), so this starts implementing it as
-          // the reply posts. Guarded the same way the button's resolvePlan is: a branch
-          // conflict here is rejected instead of auto-launching into it. Busy agents are
-          // already turned away by startRunAllPhases's own admit() guard.
+          // the reply posts. Busy agents are turned away by startRunAllPhases's own
+          // admit() guard.
           if (reopen) {
-            const conflict = await checkBranchConflictForPlan(root, git, entity.id);
-            if (!conflict) {
+            {
               const reopenedPlan = entityToPlan({
                 ...entity,
                 thread,

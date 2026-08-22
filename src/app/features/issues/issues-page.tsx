@@ -1,5 +1,5 @@
 import { PageTitle } from '@/app/components/page-title';
-import { entityRouteParam } from '@/app/hooks';
+import { entityRouteParam, useOpenEntity } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { promoteIssue } from '@/app/services/agent-api';
 import { useAppStore } from '@/app/stores/app-store';
@@ -40,6 +40,7 @@ export const IssuesPage = () => {
   const loadIdeas = useAppStore((s) => s.loadIdeas);
   const { checks } = useDeskChecks();
   const navigate = useNavigate();
+  const openEntity = useOpenEntity();
 
   useEffect(() => {
     loadTaskLog();
@@ -69,14 +70,6 @@ export const IssuesPage = () => {
       thread: issueThreadFromTaskLog(issue, taskLog),
     }));
   }, [taskLog, checks, entities]);
-
-  const openEntity = (id: string, title: string) => {
-    if (plans?.entries.some((p) => p.id === id || p.title === title)) {
-      navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(id, title) } });
-    } else {
-      navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
-    }
-  };
 
   const handlePromote = async (issue: Issue) => {
     setPromotingId(issue.id);

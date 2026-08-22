@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { type RunOrderEntry, normalizeRunOrder, sameRunOrder } from './run-order';
+import {
+  type RunOrderEntry,
+  classifyRunOrderEntries,
+  normalizeRunOrder,
+  sameRunOrder,
+} from './run-order';
 
 const entry = (overrides: Partial<RunOrderEntry>): RunOrderEntry => ({
   id: 'IDEA-1',
@@ -102,6 +107,29 @@ describe('normalizeRunOrder', () => {
   it('returns an empty list when nothing is ordered', () => {
     const entries = [entry({ id: 'A', status: 'done' })];
     expect(normalizeRunOrder([], entries)).toEqual([]);
+  });
+});
+
+describe('classifyRunOrderEntries', () => {
+  const entry = (id: string, kind?: 'note' | 'board' | 'ticket') => ({
+    id,
+    title: id,
+    created: '2026-08-01',
+    status: 'planned',
+    ...(kind ? { kind } : {}),
+  });
+
+  it('excludes notes and boards, which have no phases to run', () => {
+    const classified = classifyRunOrderEntries(
+      [
+        entry('IDEA-1'),
+        entry('IDEA-2', 'note'),
+        entry('IDEA-3', 'board'),
+        entry('TICKET-1', 'ticket'),
+      ],
+      [],
+    );
+    expect(classified.map((e) => e.id)).toEqual(['IDEA-1', 'TICKET-1']);
   });
 });
 

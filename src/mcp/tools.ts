@@ -3,13 +3,7 @@ import { join } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { GitManager } from '../app/server/git';
-import {
-  campFile,
-  checkBranchConflictForPlan,
-  entityFileInput,
-  readMaybe,
-  writeEntityFile,
-} from '../app/server/helpers';
+import { campFile, entityFileInput, readMaybe, writeEntityFile } from '../app/server/helpers';
 import { parseEntityFile, parseSuggestions } from '../core/parse';
 import { entityToPlan, readEntities, readWorkEntries } from '../core/readers';
 import { linkRoadmapItem, parseRoadmap, removeRoadmapItem } from '../core/roadmap';
@@ -92,12 +86,10 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     return result;
   };
 
-  const guardedWrite = <T>(targetPlanId: string | undefined, fn: () => Promise<T>): Promise<T> =>
-    runExclusive(async () => {
-      const conflict = await checkBranchConflictForPlan(root, git, targetPlanId);
-      if (conflict) throw new Error(conflict);
-      return fn();
-    });
+  // Serialised, not branch-gated: which branch you are on no longer decides what you
+  // may work on, so this only keeps concurrent writes from interleaving.
+  const guardedWrite = <T>(_targetPlanId: string | undefined, fn: () => Promise<T>): Promise<T> =>
+    runExclusive(fn);
 
   async function createIdeaEntity(input: {
     title: string;

@@ -1,4 +1,4 @@
-import { entityRouteParam } from '@/app/hooks';
+import { entityLink, entityRouteParam } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { DoctorFindingSummary, DoctorFindingWithSeverity } from '@/core/doctor';
@@ -193,13 +193,7 @@ export const ChecksGroup = () => {
                   key={`${issue.kind}-${issue.title}-${i}`}
                   issue={issue}
                   linkedPlan={linkedPlan}
-                  onNavigate={() =>
-                    linkedPlan &&
-                    navigate({
-                      to: '/plans/$planId',
-                      params: { planId: entityRouteParam(linkedPlan.id, linkedPlan.title) },
-                    })
-                  }
+                  onNavigate={() => linkedPlan && navigate(entityLink(linkedPlan))}
                 />
               );
             })}

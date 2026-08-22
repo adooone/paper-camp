@@ -1,6 +1,6 @@
 import { PageTitle } from '@/app/components/page-title';
 import { PlanIdStamp } from '@/app/features/plans/components';
-import { entityRouteParam } from '@/app/hooks';
+import { entityRouteParam, useOpenEntity } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { notificationAgeDays } from '@/core/notifications';
 import { useNavigate } from '@tanstack/react-router';
@@ -18,6 +18,7 @@ export const InboxPage = () => {
   const loadNotifications = useAppStore((s) => s.loadNotifications);
   const markRead = useAppStore((s) => s.markRead);
   const navigate = useNavigate();
+  const openEntity = useOpenEntity();
 
   useEffect(() => {
     loadNotifications();
@@ -32,14 +33,6 @@ export const InboxPage = () => {
 
   const reload = async () => {
     await Promise.all([loadPlans(), loadNotifications()]);
-  };
-
-  const openEntity = (id: string, title: string) => {
-    if (plans?.entries.some((p) => p.id === id || p.title === title)) {
-      navigate({ to: '/plans/$planId', params: { planId: entityRouteParam(id, title) } });
-    } else {
-      navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
-    }
   };
 
   return (

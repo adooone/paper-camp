@@ -1,4 +1,4 @@
-import { entityRouteParam } from '@/app/hooks';
+import { entityLink } from '@/app/hooks';
 import { createTicket } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
@@ -20,14 +20,15 @@ interface TicketsSectionProps {
 export const TicketsSection = ({ plan, otherPlans }: TicketsSectionProps) => {
   const navigate = useNavigate();
   const loadPlans = useAppStore((s) => s.loadPlans);
-  const tickets = otherPlans.filter((p) => p.entityKind === 'ticket' && p.idea === plan.id);
+  // Run-order rank, so the board lists its tickets in the order they should be worked.
+  // An unranked ticket (not in the queue) sorts after every ranked one.
+  const tickets = otherPlans
+    .filter((p) => p.entityKind === 'ticket' && p.idea === plan.id)
+    .sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY));
   const handleOpen = (title: string) => {
     const ticket = tickets.find((t) => t.title === title);
     if (!ticket) return;
-    navigate({
-      to: '/plans/$planId',
-      params: { planId: entityRouteParam(ticket.id, ticket.title) },
-    });
+    navigate(entityLink(ticket));
   };
   const handleAddTicket = async (title: string) => {
     if (!plan.id) return;

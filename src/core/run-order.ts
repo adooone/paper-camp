@@ -36,17 +36,21 @@ export function classifyRunOrderEntries(
   const derived = new Map(
     work.filter((w) => w.id !== undefined).map((w) => [w.id as string, w.status]),
   );
-  return entries
-    .filter((e) => e.kind !== 'note')
-    .map((e) => {
-      const override = statusOverride?.(e.id);
-      return {
-        id: e.id,
-        title: e.title,
-        created: e.created,
-        status: override ? override.value : (derived.get(e.id) ?? e.status),
-      };
-    });
+  return (
+    entries
+      // A note has no phases and a board's are its tickets, so neither is runnable —
+      // a queue slot for either is one nothing can ever be worked on from.
+      .filter((e) => e.kind !== 'note' && e.kind !== 'board')
+      .map((e) => {
+        const override = statusOverride?.(e.id);
+        return {
+          id: e.id,
+          title: e.title,
+          created: e.created,
+          status: override ? override.value : (derived.get(e.id) ?? e.status),
+        };
+      })
+  );
 }
 
 /**

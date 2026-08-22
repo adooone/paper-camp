@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title';
+import type { PlanEntry } from '@/types/index';
 import { Breadcrumb, Card } from '@dendelion/paper-ui';
 import { selectWorklistRows } from './helpers';
 import { usePlansPage } from './hooks';
@@ -33,6 +34,22 @@ export const PlansPage = () => {
     handleOpenArchivable,
     handleDismissSuggestion,
   } = usePlansPage();
+
+  // A ticket's way out is its board, not the whole worklist — the board is the
+  // context it was decomposed from, and Plans stays reachable one hop further back.
+  const planTrail = (plan: PlanEntry) => {
+    const board =
+      plan.entityKind === 'ticket' && plan.idea
+        ? (plans?.entries ?? []).find((p) => p.id === plan.idea)
+        : undefined;
+    return [
+      { id: 'plans', label: 'Plans', onClick: handleBack },
+      ...(board
+        ? [{ id: 'board', label: board.title, onClick: () => handleOpenPlan(board.title) }]
+        : []),
+      { id: 'plan', label: plan.title },
+    ];
+  };
 
   if (plansError) {
     return (
@@ -82,12 +99,16 @@ export const PlansPage = () => {
       <ReconcileQueueReview />
       {activePlan ? (
         <div>
+          <div className="mb-2">
+            <Breadcrumb className="font-handwritten !text-xs" items={planTrail(activePlan)} />
+          </div>
           <EntityDetail plan={activePlan} />
         </div>
       ) : activeIdea ? (
         <div>
-          <div className="mb-4">
+          <div className="mb-2">
             <Breadcrumb
+              className="font-handwritten !text-xs"
               items={[
                 { id: 'plans', label: 'Plans', onClick: handleBack },
                 { id: 'idea', label: activeIdea.title },

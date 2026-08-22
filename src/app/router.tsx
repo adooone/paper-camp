@@ -7,6 +7,7 @@ import {
   StatusBar,
 } from '@/app/components';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
+import { bareId } from '@/app/hooks';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
@@ -25,6 +26,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  redirect,
   useNavigate,
   useRouterState,
 } from '@tanstack/react-router';
@@ -452,15 +454,27 @@ const plansRoute = createRoute({
   }),
   staticData: { layer: 'corpus' },
 });
-const planDetailRoute = createRoute({
+// `/plans/:id` was the old address for the same page. Kept as a redirect so links
+// already shared or bookmarked don't 404.
+const legacyPlanDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/plans/$planId',
-  component: PlansPage,
-  staticData: { layer: 'corpus' },
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: '/ideas/$ideaId',
+      params: { ideaId: bareId(params.planId) ?? params.planId },
+    });
+  },
 });
 const ideaDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/ideas/$ideaId',
+  component: PlansPage,
+  staticData: { layer: 'corpus' },
+});
+const ticketDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/ideas/$ideaId/tickets/$ticketId',
   component: PlansPage,
   staticData: { layer: 'corpus' },
 });
@@ -540,8 +554,9 @@ const issuesRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   plansRoute,
-  planDetailRoute,
+  legacyPlanDetailRoute,
   ideaDetailRoute,
+  ticketDetailRoute,
   docsRoute,
   docsSectionRoute,
   settingsRoute,

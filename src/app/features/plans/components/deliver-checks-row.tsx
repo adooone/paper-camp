@@ -1,5 +1,5 @@
 import { GitStashSurface } from '@/app/components';
-import { entityRouteParam } from '@/app/hooks';
+import { entityLink, entityRouteParam } from '@/app/hooks';
 import type { CheckStatus } from '@/types/index';
 import { Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
 import { useDeliverChecksRow } from '../hooks';
@@ -117,14 +117,7 @@ export const DeliverChecksRow = () => {
                       {linkedPlan ? (
                         <button
                           type="button"
-                          onClick={() =>
-                            navigate({
-                              to: '/plans/$planId',
-                              params: {
-                                planId: entityRouteParam(linkedPlan.id, linkedPlan.title),
-                              },
-                            })
-                          }
+                          onClick={() => navigate(entityLink(linkedPlan))}
                           className="bg-none bg-transparent border-none p-0 underline cursor-pointer [font:inherit] text-left"
                         >
                           {issue.message}

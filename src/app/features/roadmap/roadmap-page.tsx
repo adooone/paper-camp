@@ -2,7 +2,7 @@ import { Markdown } from '@/app/components/markdown';
 import { PageTitle } from '@/app/components/page-title';
 import { PrBadge } from '@/app/features/plans/components/pr-badge';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
-import { entityRouteParam } from '@/app/hooks';
+import { entityRouteParam, useOpenEntity } from '@/app/hooks';
 import { addRoadmapCandidate } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import type {
@@ -307,6 +307,7 @@ export const RoadmapPage = () => {
   } | null>(null);
   const plans = useAppStore((s) => s.plans);
   const navigate = useNavigate();
+  const openEntity = useOpenEntity();
   const { item: highlightedItem } = useSearch({ from: '/roadmap' });
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -390,12 +391,7 @@ export const RoadmapPage = () => {
                         setPromoting({ horizonTitle: horizon.title, item, candidateName })
                       }
                       onAddCandidate={(name) => handleAddCandidate(horizon.title, item.name, name)}
-                      onOpenGraduated={(id, title) =>
-                        navigate({
-                          to: '/plans/$planId',
-                          params: { planId: entityRouteParam(id, title) },
-                        })
-                      }
+                      onOpenGraduated={(id, title) => openEntity(id, title)}
                     />
                   ))}
                 </div>

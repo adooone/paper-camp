@@ -1,5 +1,5 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
-import { entityRouteParam, useSimilarIdeas } from '@/app/hooks';
+import { entityRouteParam, useOpenEntity, useSimilarIdeas } from '@/app/hooks';
 import { checkIdeaOverlap } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
@@ -35,6 +35,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
   const planEntries = useAppStore((s) => s.plans?.entries ?? []);
   const { patch } = usePlanStatusPatch();
   const navigate = useNavigate();
+  const openEntity = useOpenEntity();
   // `log` included here (unlike the overlap-check candidates below): Extend/Draft need it.
   const similarIdeas = useSimilarIdeas(
     title,
@@ -63,10 +64,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
 
   const handleOpenSimilar = (matchId: string | undefined, matchTitle: string) => {
     onClose();
-    navigate({
-      to: '/plans/$planId',
-      params: { planId: entityRouteParam(matchId, matchTitle) },
-    });
+    openEntity(matchId, matchTitle);
   };
 
   const handleCheckOverlap = async () => {
