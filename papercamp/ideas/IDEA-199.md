@@ -4,6 +4,7 @@ title: Style pass as a phase action
 type: feat
 status: review
 created: 2026-08-21
+updated: 2026-08-22
 tags:
   - app
   - agent
@@ -83,6 +84,16 @@ guide says.
       run: 2m45s · 522 in · 4.8k out · sonnet-5
 - [x] Test the builder output and the one-completed-phase enablement
       run: 3m · 521 in · 6.6k out · sonnet-5
+- [x] Style pass
+      Scope yourself to only the files this plan has changed — compare against the base branch (e.g. `git diff main...HEAD --name-only`), never the wider codebase. Read docs/CODE_STYLE.md in full and apply it to those files:
+      
+      - Delete any comment that fails §7 — the cap is two lines and the default count is zero.
+      - Move complex logic out of components into hooks/, leaving components rendering what a hook returns.
+      - Sort files into the by-role folders of §4, and split a file holding more than one component.
+      - Replace a literal with its design token (§2) and a hand-rolled element with its paper-ui component (§1).
+      - Extract anything now written three times (§3) — into the feature's helpers/ if it is feature logic, into @/app/utils or @/app/hooks if it is not.
+      
+      Behaviour may not change. Finish with `pnpm check-types`, `pnpm lint` and `npx vitest run` all green, and do not edit any test to accommodate a change — a test that has to change means this pass altered behaviour and went too far.
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Depends on IDEA-196 existing as the enforceable check the style pass is meant to satisfy, so it lands last among the code-health items
