@@ -3,15 +3,16 @@ id: IDEA-205
 title: Hub shell and projects list
 type: feat
 kind: ticket
-status: idea
+status: review
 idea: IDEA-195
 created: 2026-08-21
-updated: 2026-08-21
+updated: 2026-08-22
 tags:
   - app
   - multi-project
   - github
 subject: Multi-project
+order: 1
 ---
 
 The hosted client opens on nothing today — the app assumes it is already inside one repo. The shell is what a URL with no project behind it must show: a welcome screen, a way to connect GitHub, and the list of projects to enter.
@@ -27,16 +28,25 @@ It is the outermost frame, and it owns the moment before a project is chosen. [[
 Disconnected with no runtimes registered, the shell is still honest: it shows the welcome screen. It never presents an empty desk as though something went wrong.
 
 ### Phases
-- [ ] Build the shell frame
+- [x] Build the shell frame
       The outermost layout the hosted client opens into, with the app mounting inside it once a project is chosen.
-- [ ] Welcome screen for an empty desk
+      run: 4m34s · 6.1k in · 13.5k out · sonnet-5
+- [x] Welcome screen for an empty desk
       Connect GitHub, or add a project by runtime URL, presented as a starting point rather than an error.
-- [ ] GitHub connect surface
+      run: 6m53s · 650 in · 26.5k out · sonnet-5
+- [x] GitHub connect surface
       Take a user-minted fine-grained token with clear minting instructions, show the connected identity, and disconnect.
-- [ ] Projects list
+      run: 4m20s · 2.6k in · 13k out · sonnet-5
+- [x] Projects list
       One row per registry entry, runtime-backed or GitHub-imported, each showing whether it can execute or only plan.
-- [ ] Enter and leave a project
+      run: 5m40s · 515 in · 19.5k out · sonnet-5
+- [x] Enter and leave a project
       Choose a project to mount the desk against it, and return to the shell without losing the registry.
+      run: 4m35s · 652 in · 12.6k out · sonnet-5
+- [x] [manual] Recognize a runtime-served bundle as a chosen project
+- [x] [manual] Move projects hub to its own full-window route
+- [x] [manual] Paginate GitHub repo listing for token reach
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Fourth sequencing step; needs the hosted deploy from IDEA-204 to have a URL with no project behind it to open
+- [x] 2026-08-22 [review] [agent] Comments · 2 findings — The diff cleanly delivers the shell frame, welcome screen, GitHub-connect surface, runtime-served-bundle detection, and the /projects route, with good service-layer separation and solid unit tests. The one substantive gap is the projects list, which only renders runtime entries and unconditionally stamps them 'Can execute' — the plan-only and GitHub-imported states the spec calls first-class are absent — but that machinery is explicitly delegated to IDEA-117, so it reads as intentional deferral rather than a contradiction. A minor real bug is the un-paginated repo fetch producing an undercount on tokens reaching more than 100 repositories.

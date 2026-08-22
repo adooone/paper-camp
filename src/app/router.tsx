@@ -1,4 +1,5 @@
 import {
+  LeaveProjectButton,
   ProjectIdentityHeader,
   RuntimeUnavailable,
   ServerReloadBanner,
@@ -7,6 +8,7 @@ import {
   StatusBar,
 } from '@/app/components';
 import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
+import { HubHome, HubShell } from '@/app/features/hub';
 import { PlanActionsColumn, PlanFilterColumn, PlansPage } from '@/app/features/plans/index';
 import { bareId } from '@/app/hooks';
 import { useNotificationPush } from '@/app/hooks/use-notification-push';
@@ -70,6 +72,8 @@ const InboxPage = lazy(() =>
 const IssuesPage = lazy(() =>
   import('@/app/features/issues/index').then((m) => ({ default: m.IssuesPage })),
 );
+
+const PROJECTS_PATH = '/projects';
 
 const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
@@ -163,8 +167,6 @@ const RootLayout = () => {
   );
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
-  // Detail views replace the sidebar breadcrumb that used to carry the way back.
-  const isPlanDetail = pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
   const isRoadmapArea = pathname === '/roadmap';
@@ -247,6 +249,18 @@ const RootLayout = () => {
     setMobileSidebarOpen(false);
   }, [pathname]);
 
+  // The hub is a level above the project, so it takes the whole window rather than
+  // rendering inside the chrome of a project you have not chosen yet.
+  if (pathname === PROJECTS_PATH) {
+    return (
+      <ToastProvider position="bottom-left">
+        <HubShell>
+          <Outlet />
+        </HubShell>
+      </ToastProvider>
+    );
+  }
+
   return (
     <ToastProvider position="bottom-left">
       <div className="h-screen box-border flex flex-col">
@@ -271,6 +285,7 @@ const RootLayout = () => {
               />
             )}
             <ProjectIdentityHeader size="sm" />
+            <LeaveProjectButton />
             <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
               {navItems.map((item) => (
                 <Button
@@ -424,6 +439,16 @@ const RootLayout = () => {
 
 const rootRoute = createRootRoute({ component: RootLayout });
 
+// The hub's own page, reachable whether or not a project is open — the shell in
+// main.tsx only covers the case where none is, which a locally served bundle never
+// hits. Registry state is device-local, so this needs no runtime and no corpus.
+const projectsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/projects',
+  component: HubHome,
+  staticData: { layer: 'client' },
+});
+
 const plansRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
@@ -533,6 +558,7 @@ const issuesRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   plansRoute,
+  projectsRoute,
   legacyPlanDetailRoute,
   ideaDetailRoute,
   ticketDetailRoute,

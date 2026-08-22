@@ -5,6 +5,7 @@ export { GitSyncActions } from './git-sync-actions';
 export { LinkButton } from './link-button';
 export { Markdown } from './markdown';
 export { StackPanel } from './stack-panel';
+export { LeaveProjectButton } from './shell/leave-project-button';
 export { ProjectIdentityHeader } from './shell/project-identity-header';
 export { RuntimeUnavailable } from './shell/runtime-unavailable';
 export { ServerReloadBanner } from './shell/server-reload-banner';

@@ -2,9 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@dendelion/paper-ui/dist/index.css';
 import './styles/utilities.css';
+import { ToastProvider } from '@dendelion/paper-ui';
 import { RouterProvider } from '@tanstack/react-router';
+import { HubHome, HubShell } from './features/hub';
 import { router } from './router';
 import { apiUrl, setApiBase } from './services/api-base';
+import { hasChosenProject, servesOwnRuntime } from './services/hub';
 import { mountPrefix } from './services/mount';
 import { runtimeConnection } from './services/runtime-connection';
 
@@ -26,10 +29,26 @@ async function pairIfNeeded(): Promise<void> {
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element not found');
 
-pairIfNeeded().finally(() => {
-  createRoot(rootElement).render(
-    <StrictMode>
-      <RouterProvider router={router} />
-    </StrictMode>,
-  );
-});
+async function chooseProject(): Promise<boolean> {
+  if (hasChosenProject(mountPrefix, runtimeUrl)) return true;
+  return servesOwnRuntime(runtimeUrl, (path) => fetch(apiUrl(path)));
+}
+
+pairIfNeeded()
+  .then(chooseProject)
+  .catch(() => false)
+  .then((chosenProject) => {
+    createRoot(rootElement).render(
+      <StrictMode>
+        {chosenProject ? (
+          <RouterProvider router={router} />
+        ) : (
+          <ToastProvider position="bottom-left">
+            <HubShell>
+              <HubHome />
+            </HubShell>
+          </ToastProvider>
+        )}
+      </StrictMode>,
+    );
+  });
