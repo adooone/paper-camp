@@ -1,9 +1,8 @@
 import { PageTitle } from '@/app/components/page-title';
 import { PlanIdStamp } from '@/app/features/plans/components';
-import { entityRouteParam, useOpenEntity } from '@/app/hooks';
+import { useOpenEntity } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { notificationAgeDays } from '@/core/notifications';
-import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { formatAge } from './helpers';
 import { NotificationRow } from './notification-row';
@@ -17,7 +16,6 @@ export const InboxPage = () => {
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadNotifications = useAppStore((s) => s.loadNotifications);
   const markRead = useAppStore((s) => s.markRead);
-  const navigate = useNavigate();
   const openEntity = useOpenEntity();
 
   useEffect(() => {
