@@ -11,7 +11,6 @@ tags:
   - multi-project
   - app
 subject: Multi-project
-order: 1
 ---
 
 Graduates Horizon 3's **Multi-project** bullet. Paper Camp shows every registered project in one desk instead of one browser tab per repo — a project switcher, and cross-project views on top of it. The data stays per-repo in git: never centralize the corpus, centralize only the lens.

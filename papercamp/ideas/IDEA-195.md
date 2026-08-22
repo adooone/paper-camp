@@ -8,7 +8,6 @@ tags:
   - architecture
   - research
 subject: Multi-project
-order: 8
 ---
 
 The settled architecture for Paper Camp as a hosted client driving work on the

@@ -11,7 +11,6 @@ tags:
   - scaffold
   - plan-only
 subject: Multi-project
-order: 12
 ---
 
 What makes plan-only real — a sequencing step on [[IDEA-195]].

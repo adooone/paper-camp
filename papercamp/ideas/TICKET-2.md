@@ -11,7 +11,6 @@ tags:
   - build
   - runtime
 subject: Multi-project
-order: 10
 ---
 
 Most of detaching the client shipped with [[IDEA-193]] (PR #184): `src/app/services/runtime-connection.ts` reads a runtime URL and pairing token from the query string, `setApiBase` repoints every call, and `paper-camp dev` still serves the same bundle from its own origin. One gap is left, and it is the one that matters for a hub.

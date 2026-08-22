@@ -12,7 +12,6 @@ tags:
   - multi-project
   - github
 subject: Multi-project
-order: 7
 ---
 
 The hosted client opens on nothing today — the app assumes it is already inside one repo. The shell is what a URL with no project behind it must show: a welcome screen, a way to connect GitHub, and the list of projects to enter.

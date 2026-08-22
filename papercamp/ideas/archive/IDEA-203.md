@@ -10,7 +10,6 @@ tags:
   - git
   - delivery
 subject: Review-queue hygiene
-order: 8
 ---
 
 Not every idea earns a branch. Small ones land straight on main, and the app has no way to finish them: every phase checked puts the idea in `review`, and `review` offers only Complete Idea, whose gate demands an open PR and green CI. An idea that never opened a PR can never satisfy that, so it sits in the review queue forever. [[IDEA-202]] hit this the day it was written.

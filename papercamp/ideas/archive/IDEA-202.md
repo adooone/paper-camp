@@ -9,7 +9,6 @@ tags:
   - corpus
   - code-health
 subject: The format as the product
-order: 8
 ---
 
 `papercamp/run-order.md` is untracked on purpose. The `.gitignore` entry says why: the queue order is local, and a clone rebuilds membership but not the ordering. Every write to an idea currently contradicts that, persisting the local rank into tracked frontmatter.
