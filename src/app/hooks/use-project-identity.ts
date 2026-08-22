@@ -1,11 +1,5 @@
-import { fetchIconDataUri, fetchPackageName } from '@/app/services/system';
+import { fetchIconDataUri, fetchPackageName, projectDisplayName } from '@/app/services/system';
 import { useEffect, useState } from 'react';
-
-const kebabToTitle = (s: string) =>
-  s
-    .replace(/^@[^/]+\//, '')
-    .replace(/[-_]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 export interface ProjectIdentity {
   projectName: string | null;
@@ -24,7 +18,7 @@ export const useProjectIdentity = (): ProjectIdentity => {
 
     Promise.all([
       fetchPackageName().then((name) => {
-        if (!cancelled && name) setProjectName(kebabToTitle(name));
+        if (!cancelled && name) setProjectName(projectDisplayName(name));
       }),
       fetchIconDataUri().then((uri) => {
         if (!cancelled) setIconDataUri(uri);

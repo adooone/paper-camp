@@ -30,7 +30,15 @@ export async function fetchGithubIdentity(token: string): Promise<GithubIdentity
 }
 
 export async function fetchAccessibleRepoNames(token: string): Promise<string[]> {
-  const body = await request(token, '/user/repos?per_page=100&affiliation=owner,collaborator');
-  if (!Array.isArray(body)) return [];
-  return body.map((repo: { full_name: string }) => repo.full_name);
+  const names: string[] = [];
+  for (let page = 1; ; page++) {
+    const body = await request(
+      token,
+      `/user/repos?per_page=100&affiliation=owner,collaborator&page=${page}`,
+    );
+    if (!Array.isArray(body) || body.length === 0) break;
+    names.push(...body.map((repo: { full_name: string }) => repo.full_name));
+    if (body.length < 100) break;
+  }
+  return names;
 }

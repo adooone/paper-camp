@@ -12,6 +12,7 @@ tags:
   - multi-project
   - github
 subject: Multi-project
+order: 1
 ---
 
 The hosted client opens on nothing today — the app assumes it is already inside one repo. The shell is what a URL with no project behind it must show: a welcome screen, a way to connect GitHub, and the list of projects to enter.
@@ -44,6 +45,8 @@ Disconnected with no runtimes registered, the shell is still honest: it shows th
       run: 4m35s · 652 in · 12.6k out · sonnet-5
 - [x] [manual] Recognize a runtime-served bundle as a chosen project
 - [x] [manual] Move projects hub to its own full-window route
+- [x] [manual] Paginate GitHub repo listing for token reach
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Fourth sequencing step; needs the hosted deploy from IDEA-204 to have a URL with no project behind it to open
+- [x] 2026-08-22 [review] [agent] Comments · 2 findings — The diff cleanly delivers the shell frame, welcome screen, GitHub-connect surface, runtime-served-bundle detection, and the /projects route, with good service-layer separation and solid unit tests. The one substantive gap is the projects list, which only renders runtime entries and unconditionally stamps them 'Can execute' — the plan-only and GitHub-imported states the spec calls first-class are absent — but that machinery is explicitly delegated to IDEA-117, so it reads as intentional deferral rather than a contradiction. A minor real bug is the un-paginated repo fetch producing an undercount on tokens reaching more than 100 repositories.
