@@ -166,21 +166,26 @@ from any other caller that happens to know the port.
 
 ### Sequencing
 
-1. [[TICKET-1]] Contract and auth — freeze the runtime's HTTP surface, add
-   pairing, origin checking on reads, CORS and the Private Network Access
-   preflight.
-2. [[TICKET-2]] Detach the client — ship the bundle as an artifact taking a
-   runtime URL.
-3. Deploy it ([[IDEA-204]]) — the static bundle on a CDN, which is what makes the
-   URL a front door rather than a plan.
-4. The hub shell ([[IDEA-205]]) — welcome, GitHub sign-in and the projects list,
+Three steps of the original chain shipped with [[IDEA-193]] (PR #184) and are
+archived: contract and auth, capability-aware modules, and the plugin split. Of
+the two that shipped only in part, what survives is listed below as its own
+ticket. Every ticket on this board is work nobody has done.
+
+1. [[TICKET-2]] Persist a runtime and its pairing token device-locally. The
+   client can already dial a runtime from a query string; nothing remembers it,
+   which is the seam the registry needs.
+2. [[IDEA-204]] Deploy the hosted client — the static bundle on a CDN, which is
+   what makes the URL a front door rather than a plan.
+3. [[IDEA-205]] The hub shell — welcome, connect GitHub, and the projects list,
    the surface a URL with no project behind it has to show.
-5. [[TICKET-3]] Capability-aware modules — every module declares the layer it
-   needs so the client composes from what is reachable.
-6. [[TICKET-4]] GitHub import and scaffold-by-PR, which is what makes plan-only
-   real.
-7. Multi-project registry, fan-out and switcher ([[IDEA-117]]).
-8. [[TICKET-5]] Plugins as a real extension point.
+4. [[TICKET-4]] GitHub import and scaffold-by-PR. Reading and writing a corpus
+   over the API already ships; getting a repo *into* that state does not.
+5. [[IDEA-117]] Multi-project registry, fan-out and switcher — the hub itself,
+   which everything above exists to make possible.
+
+[[IDEA-204]], [[IDEA-205]] and [[IDEA-117]] are tickets on this board and kept
+their own ids: a new ticket is minted as `TICKET-N`, but an idea promoted onto a
+board keeps the id every existing link already points at.
 
 ### Thread
 - [x] 2026-08-21 [decision] The hosted client reaches the runtime over the loopback carve-out, which is the settled front door; the residual work is the Private Network Access preflight and CORS headers, not a measurement, so [[IDEA-193]]'s measurement phase is dropped.

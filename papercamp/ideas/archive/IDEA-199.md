@@ -2,7 +2,7 @@
 id: IDEA-199
 title: Style pass as a phase action
 type: feat
-status: review
+status: done
 created: 2026-08-21
 updated: 2026-08-22
 tags:

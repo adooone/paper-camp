@@ -2,7 +2,9 @@
 id: IDEA-117
 title: Multi-project hub
 type: feat
+kind: ticket
 status: idea
+idea: IDEA-195
 created: 2026-08-04
 updated: 2026-08-21
 tags:

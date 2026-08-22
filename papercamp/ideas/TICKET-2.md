@@ -14,19 +14,17 @@ subject: Multi-project
 order: 10
 ---
 
-Ship the bundle as an artifact taking a runtime URL — the second sequencing step on [[IDEA-195]].
+Most of detaching the client shipped with [[IDEA-193]] (PR #184): `src/app/services/runtime-connection.ts` reads a runtime URL and pairing token from the query string, `setApiBase` repoints every call, and `paper-camp dev` still serves the same bundle from its own origin. One gap is left, and it is the one that matters for a hub.
+
+A URL carried in the query string dies with the tab. Nothing remembers which runtimes exist, so every visit starts from a pasted link and a single runtime is all the client can hold. Persisting them — the URL and its pairing token, per device — is what turns one dialled runtime into a registry, which is why [[IDEA-117]] builds on this rather than beside it.
 
 ### Phases
-- [ ] Point the client at an explicit runtime URL
-      Replace every same-origin API assumption with a runtime base URL the client reads, so the bundle no longer presumes it was served from the repo it drives.
-- [ ] Build the client as a standalone static artifact
-      Produce a CDN-ready bundle decoupled from the repo dev server, against the frozen surface from [[TICKET-1]].
-- [ ] Persist and select the runtime URL device-locally
-      Keep the loopback URL and its pairing token in browser storage, per device, and let the client pick which runtime it dials.
-- [ ] Dial the runtime cross-origin with the pairing token
-      Send the pairing token and satisfy the CORS and Private Network Access surface TICKET-1 adds.
-- [ ] Keep `paper-camp dev` serving the same bundle
-      Verify local hosting still works as the same artifact from a different origin, needing no transport change.
+- [ ] Persist a runtime and its pairing token device-locally
+      Keep the runtime URL and token in browser storage rather than the query string, so a reload keeps the connection.
+- [ ] Select which runtime the client dials
+      Let the client hold more than one and switch between them, which is the seam [[IDEA-117]] extends into a registry.
+- [ ] Adopt a runtime from a registration link
+      Take the URL and token a `paper-camp dev` announce prints and store them, instead of requiring a hand-pasted query string.
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Second named sequencing step; needs TICKET-1's pairing token and origin checks before the client can dial a runtime cross-origin

@@ -2,7 +2,9 @@
 id: IDEA-205
 title: Hub shell and projects list
 type: feat
+kind: ticket
 status: idea
+idea: IDEA-195
 created: 2026-08-21
 updated: 2026-08-21
 tags:

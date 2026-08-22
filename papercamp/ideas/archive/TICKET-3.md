@@ -3,7 +3,7 @@ id: TICKET-3
 title: Capability-aware modules
 type: feat
 kind: ticket
-status: idea
+status: done
 idea: IDEA-195
 created: 2026-08-21
 tags:
@@ -11,22 +11,22 @@ tags:
   - capabilities
   - client
 subject: Multi-project
-order: 11
 ---
 
 Every module declares the layer it needs so the client composes from what is reachable — a sequencing step on [[IDEA-195]].
 
 ### Phases
-- [ ] Define the layer-capability contract
+- [x] Define the layer-capability contract
       Give each module a declaration of which layers it needs — client, runtime, or a plugin — against the frozen surface from [[TICKET-1]].
-- [ ] Resolve which layers are reachable
+- [x] Resolve which layers are reachable
       Derive per-project reachability from connection state: runtime dialable, GitHub credential present, each plugin available.
-- [ ] Gate modules on their declared layer
+- [x] Gate modules on their declared layer
       Compose the app from what is reachable, so a module whose layer is absent is disabled in place rather than dropped.
-- [ ] Show the in-place unavailable state
+- [x] Show the in-place unavailable state
       Render a runtime-only module as visible-but-inert with a plain reason, so plan-only reads as a first-class state, not a broken one.
-- [ ] Annotate existing modules with their layer
+- [x] Annotate existing modules with their layer
       Tag today's modules with their required layer and confirm plan-only surfaces the planning half while execution modules go inert.
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Fifth named sequencing step on IDEA-195, following the shell so modules have a composed client to gate
+- [x] 2026-08-21 [log] Delivered by [[IDEA-193]] (PR #184) rather than by this ticket: the layer contract ships as `ModuleLayer` and `moduleReadiness` in `src/app/services/module-layer.ts`, wired into `router.tsx`. Closed as done because the outcome exists, not because the ticket ran.
