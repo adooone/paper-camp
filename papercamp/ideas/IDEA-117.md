@@ -41,6 +41,7 @@ Waits on [[TICKET-1]] and [[TICKET-2]]: pairing the client to a runtime, and det
 - [x] Ship cross-project views
       Everything-in-review, overnight agent activity, and global idea search composed from the fan-out.
       run: 10m2s · 14.6k in · 46.9k out · sonnet-5
+- [x] [manual] Reorder project switcher header and back link
 
 ### Fixes
 - [x] Replace project switcher with a simple 'Back to projects' button

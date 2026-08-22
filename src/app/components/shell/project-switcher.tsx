@@ -1,7 +1,6 @@
 import { mountPrefix } from '@/app/services/mount';
 import { Button } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { ChevronRightIcon } from '../icons';
 import { ProjectIdentityHeader } from './project-identity-header';
 
 export const ProjectSwitcher = () => {
@@ -13,18 +12,15 @@ export const ProjectSwitcher = () => {
 
   return (
     <div className="flex items-center gap-3 min-w-0">
+      <ProjectIdentityHeader size="sm" />
       <Button
         variant="ghost"
         size="small"
-        className="shrink-0 gap-1.5"
+        className="font-handwritten !text-sm opacity-70"
         onClick={() => navigate({ to: '/projects' })}
       >
-        <span className="rotate-180">
-          <ChevronRightIcon size={12} />
-        </span>
         Back to projects
       </Button>
-      <ProjectIdentityHeader size="sm" />
     </div>
   );
 };
