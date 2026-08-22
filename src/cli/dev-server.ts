@@ -3,7 +3,7 @@ import { type IncomingMessage, type ServerResponse, createServer } from 'node:ht
 import { dirname, extname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApiMiddleware } from '../app/server/api';
-import { buildRegistrationLink } from './registration-link';
+import { registrationLinks } from './registration-link';
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -41,9 +41,12 @@ export async function startDevServer({ root, port }: DevServerOptions): Promise<
   }
 
   const apiMiddleware = createApiMiddleware(root);
-  console.log(
-    `Registration link (open in the hosted client to connect): ${buildRegistrationLink(port, apiMiddleware.pairing.token)}`,
-  );
+  const links = registrationLinks(port, apiMiddleware.pairing.token);
+  console.log('Registration link (open in the hosted client to connect):');
+  for (const link of links) console.log(`  ${link}`);
+  if (links.length > 1) {
+    console.log('  Use the address your browser can reach — localhost only works on this machine.');
+  }
 
   async function serveStatic(req: IncomingMessage, res: ServerResponse) {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
