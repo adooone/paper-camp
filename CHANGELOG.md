@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.21.0](https://github.com/adooone/paper-camp/compare/v0.20.0...v0.21.0) (2026-08-22)
+
+
+### Features
+
+* **app:** Announce a runtime from the CLI ([433e77e](https://github.com/adooone/paper-camp/commit/433e77e743ee9116dc76fee18a046eceb3014fb6))
+* **app:** Boards and tickets (IDEA-201) ([#185](https://github.com/adooone/paper-camp/issues/185)) ([aad3397](https://github.com/adooone/paper-camp/commit/aad33971b4bd91ca3693b0ca40eb09c49fbb0c20))
+* **app:** Build the project switcher ([8a8d29c](https://github.com/adooone/paper-camp/commit/8a8d29cd73761516271c6d0e2db19fcab35890cd))
+* **app:** Client, runtime and plugin layers (IDEA-193) ([#184](https://github.com/adooone/paper-camp/issues/184)) ([38a42e0](https://github.com/adooone/paper-camp/commit/38a42e0345659da70f0644d9052b9f03821726ef))
+* **app:** Drop the on-branch card from the idea view ([6da4704](https://github.com/adooone/paper-camp/commit/6da470481b4b4e5f193a8cd05f91da79bfa493fe))
+* **app:** Fan out across registered runtimes ([2337f7d](https://github.com/adooone/paper-camp/commit/2337f7d8d433a73cb2f3cfd7fc814b758102625a))
+* **app:** Give both routes one name ([39b99cf](https://github.com/adooone/paper-camp/commit/39b99cf8ed49e6265e36f87d9d0f1204acc07fc0))
+* **app:** Hub shell and projects list (IDEA-205) ([#189](https://github.com/adooone/paper-camp/issues/189)) ([c1ebb05](https://github.com/adooone/paper-camp/commit/c1ebb050059a70bc47d0ae464128a496fb1be84f))
+* **app:** mark IDEA-117 review ([2f4b69d](https://github.com/adooone/paper-camp/commit/2f4b69d40ca16ec2711b9523a3106217526c2266))
+* **app:** mark IDEA-203 review ([171c3cd](https://github.com/adooone/paper-camp/commit/171c3cd05d0ac009440d44342c121f1681883455))
+* **app:** Move branch creation into the actions sidebar ([f4a71e4](https://github.com/adooone/paper-camp/commit/f4a71e48ae7347d5532bbfb1d947d00d8cf53523))
+* **app:** Register projects by runtime address ([833650f](https://github.com/adooone/paper-camp/commit/833650ffaa6737ce5e238c311ba4f4601f6fe126))
+* **app:** Ship cross-project views ([9b5ce01](https://github.com/adooone/paper-camp/commit/9b5ce01da6e9349a7e5107847423185c519b430a))
+* **app:** Ship IDEA-204 hosted deploy config ([4199193](https://github.com/adooone/paper-camp/commit/41991930dcc867f80912466ba76fa4b7623be905))
+* **app:** Style pass as a phase action (IDEA-199) ([#187](https://github.com/adooone/paper-camp/issues/187)) ([a368128](https://github.com/adooone/paper-camp/commit/a368128ecd0553ad109325c71542e54d15d59478))
+* **app:** Verify a direct completion before promoting ([2febb67](https://github.com/adooone/paper-camp/commit/2febb67ef929fc834b117e1f1ded93453dbf7c2e))
+* **ideas:** apply feedback edit to IDEA-117 ([bbc0051](https://github.com/adooone/paper-camp/commit/bbc005156fc90b05fc97080e7c4c3ab6ef7e4632))
+* **ideas:** apply feedback edit to IDEA-203 ([20990ac](https://github.com/adooone/paper-camp/commit/20990acc2fca6892b111eeccd11bbc21eb8cfcf3))
+* **repo:** Detach the client (TICKET-2) ([#188](https://github.com/adooone/paper-camp/issues/188)) ([3037c8c](https://github.com/adooone/paper-camp/commit/3037c8c3c4cd2a43184d59ea0cf480f451d6f89b))
+
+
+### Bug Fixes
+
+* **app:** Remove wrong-branch card from plan detail view ([165c60d](https://github.com/adooone/paper-camp/commit/165c60d4a0975d6b0dd1b25ded1386dbebed419b))
+* **app:** Reorder project switcher header and back link ([d3b05c7](https://github.com/adooone/paper-camp/commit/d3b05c7351402c11a756bbaedebc192e20d3b87f))
+* **app:** Route hub state through router instead of bypassing it ([4a6a470](https://github.com/adooone/paper-camp/commit/4a6a4709c5fd309096d238ebdd80122543b35eaf))
+* **cli:** Offer every reachable host in the registration link ([0f822c7](https://github.com/adooone/paper-camp/commit/0f822c771583c6e4390af2cf8c8db412476c0be7))
+* **plans:** Keep the pre-overlay `order` on the entity ([cb323eb](https://github.com/adooone/paper-camp/commit/cb323eb90b9e7a5d6bba57c440cc090f66ce1c7d))
+* **plans:** Persist only the stored value ([9f93a4d](https://github.com/adooone/paper-camp/commit/9f93a4d616c4e59e9cf043fa84e55207827c79c2))
+* **plans:** Strip ranks already written to the corpus ([4bcb7e6](https://github.com/adooone/paper-camp/commit/4bcb7e698efb87682b67752e77a7095032659401))
+* **server:** Make prioritise why an array so writes stop leaking rank ([947e8dc](https://github.com/adooone/paper-camp/commit/947e8dc32f341984675b2f38d1f2da3194b43eb9))
+
 ## [0.20.0](https://github.com/adooone/paper-camp/compare/v0.19.0...v0.20.0) (2026-08-21)
 
 
