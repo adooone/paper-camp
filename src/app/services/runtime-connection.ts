@@ -1,5 +1,7 @@
 const RUNTIME_URL_PARAM = 'runtime';
 const PAIRING_TOKEN_PARAM = 'token';
+const RUNTIME_URL_KEY = 'paper-camp.runtimeUrl';
+const PAIRING_TOKEN_KEY = 'paper-camp.pairingToken';
 
 export interface RuntimeConnection {
   runtimeUrl: string;
@@ -16,6 +18,27 @@ export function readRuntimeConnection(location: { search: string } | null): Runt
   };
 }
 
-export const runtimeConnection = readRuntimeConnection(
+// A pasted `?runtime=&token=` link only carries the connection on the visit
+// that used it; storing it is what makes a later reload with no query string
+// still dial the same runtime.
+export function loadRuntimeConnection(
+  location: { search: string } | null,
+  storage: Storage | null,
+): RuntimeConnection {
+  const fromQuery = readRuntimeConnection(location);
+  if (fromQuery.runtimeUrl) {
+    storage?.setItem(RUNTIME_URL_KEY, fromQuery.runtimeUrl);
+    if (fromQuery.pairingToken) storage?.setItem(PAIRING_TOKEN_KEY, fromQuery.pairingToken);
+    else storage?.removeItem(PAIRING_TOKEN_KEY);
+    return fromQuery;
+  }
+  return {
+    runtimeUrl: storage?.getItem(RUNTIME_URL_KEY) ?? '',
+    pairingToken: storage?.getItem(PAIRING_TOKEN_KEY) ?? null,
+  };
+}
+
+export const runtimeConnection = loadRuntimeConnection(
   typeof window === 'undefined' ? null : window.location,
+  typeof window === 'undefined' ? null : window.localStorage,
 );

@@ -18,8 +18,9 @@ Most of detaching the client shipped with [[IDEA-193]] (PR #184): `src/app/servi
 A URL carried in the query string dies with the tab. Nothing remembers which runtimes exist, so every visit starts from a pasted link and a single runtime is all the client can hold. Persisting them — the URL and its pairing token, per device — is what turns one dialled runtime into a registry, which is why [[IDEA-117]] builds on this rather than beside it.
 
 ### Phases
-- [ ] Persist a runtime and its pairing token device-locally
+- [x] Persist a runtime and its pairing token device-locally
       Keep the runtime URL and token in browser storage rather than the query string, so a reload keeps the connection.
+      run: 3m52s · 6.5k in · 8.8k out · sonnet-5
 - [ ] Select which runtime the client dials
       Let the client hold more than one and switch between them, which is the seam [[IDEA-117]] extends into a registry.
 - [ ] Adopt a runtime from a registration link

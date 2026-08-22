@@ -11,8 +11,9 @@ import { runtimeConnection } from './services/runtime-connection';
 const { runtimeUrl, pairingToken } = runtimeConnection;
 setApiBase(runtimeUrl || mountPrefix);
 
-// A detached, hosted bundle arrives paired via its `?runtime=&token=` link — pair
-// before the first render so the app's own API calls aren't the ones that 403.
+// A detached, hosted bundle pairs via its `?runtime=&token=` link or a token
+// persisted from an earlier one — pair before the first render so the app's
+// own API calls aren't the ones that 403.
 async function pairIfNeeded(): Promise<void> {
   if (!runtimeUrl || !pairingToken) return;
   await fetch(apiUrl('/api/pair'), {
