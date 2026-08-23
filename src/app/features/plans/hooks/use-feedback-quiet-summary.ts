@@ -5,11 +5,11 @@ import { useEffect } from 'react';
 
 const QUIET_MS = 3 * 60_000;
 
-// A chat session "goes quiet" when its last message sits unanswered for a while —
-// the timer resets on every new message (any thread change moves `last` off `chat`
-// or replaces it) and fires at most once per quiet stretch, since the log entry it
-// appends is no longer `chat` itself. `enabled` scopes this to whichever mount is
-// actually showing the thread (see IDEA-130 phase 4).
+/** A chat session "goes quiet" when its last message sits unanswered for a while —
+ * the timer resets on every new message (any thread change moves `last` off `chat`
+ * or replaces it) and fires at most once per quiet stretch, since the log entry it
+ * appends is no longer `chat` itself. `enabled` scopes this to whichever mount is
+ * actually showing the thread (see IDEA-130 phase 4). */
 export const useFeedbackQuietSummary = (plan: PlanEntry, enabled: boolean): void => {
   const loadPlans = useAppStore((s) => s.loadPlans);
   const thread = plan.thread ?? [];

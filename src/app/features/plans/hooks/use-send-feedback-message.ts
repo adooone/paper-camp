@@ -8,17 +8,16 @@ export interface SendFeedbackMessageCallbacks {
   /** Refreshes whatever this mount uses to list plans; a toolbar mount whose
    * activity-stream subscription already refetches for it can pass a no-op. */
   reload: () => Promise<void> | void;
-  /** paper-ui's `useToast().toast` on the desk — the toolbar has no
-   * `<ToastProvider>` (its portal would escape the shadow DOM), so it supplies
-   * its own inline notify instead. */
+  /** paper-ui's `useToast().toast` on the desk — the toolbar lacks `<ToastProvider>`
+   * (its portal would escape the shadow DOM), so it supplies its own instead. */
   notify: (options: ToastOptions) => void;
 }
 
-// Posting a feedback message runs a one-shot agent before the reply lands in the
-// thread, so this can't reuse usePlanStatusPatch's plain PATCH-and-reload shape.
-// `reload`/`notify` are injected rather than read from the app store or
-// paper-ui's toast context, so mounts without either (the toolbar — IDEA-130
-// phase 6) can supply their own.
+/** Posting a feedback message runs a one-shot agent before the reply lands in the
+ * thread, so this can't reuse usePlanStatusPatch's plain PATCH-and-reload shape.
+ * `reload`/`notify` are injected rather than read from the app store or paper-ui's
+ * toast context, so mounts without either (the toolbar — IDEA-130 phase 6) can
+ * supply their own. */
 export const useSendFeedbackMessage = (
   plan: PlanEntry,
   { reload, notify }: SendFeedbackMessageCallbacks,
@@ -29,8 +28,7 @@ export const useSendFeedbackMessage = (
   // the page loses it, which is fine for a one-tap "just sent" correction.
   const [undo, setUndo] = useState<{ commitSha: string } | null>(null);
 
-  // EntityDetail isn't remounted per plan, so a stale undo from the previous
-  // plan would otherwise send this plan's id with that plan's commit sha.
+  // A stale undo from the previous plan would otherwise pair with this plan's id.
   // biome-ignore lint/correctness/useExhaustiveDependencies: plan.id is the reset trigger, not read in the body.
   useEffect(() => {
     setUndo(null);

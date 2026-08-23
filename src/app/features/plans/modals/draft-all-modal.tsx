@@ -18,8 +18,7 @@ export const DraftAllModal = ({ open, onClose, onConfirm }: DraftAllModalProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Snapshotted only when the modal opens, not on every worklist refresh while it's
-  // open and the user is picking — see IDEA-169's "You pick which".
+  // Snapshotted only on open, not on every worklist refresh while the user is picking.
   // biome-ignore lint/correctness/useExhaustiveDependencies: planEntries is read as of the open transition, not tracked continuously.
   useEffect(() => {
     if (open) {

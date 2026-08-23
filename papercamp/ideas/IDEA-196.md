@@ -89,8 +89,9 @@ comments in tests, which the walker already excludes.
 - [x] Make the check fail and keep the ratio in JSON
       Drop the "informational only, never fails" behaviour; the ratio stays in the JSON output for the stats view but is no longer the pass condition.
       run: 1m39s · 421 in · 5.4k out · sonnet-5
-- [ ] Clear the pilot violations in src/app/features/plans/
+- [x] Clear the pilot violations in src/app/features/plans/
       Rewrite to fit the cap or delete; deleting is the expected outcome for decision-narrating comments.
+      run: 3m44s · 874 in · 17.2k out · sonnet-5
 - [ ] Clear the remaining violations in src/app/server/ and src/core/
 - [ ] Wire the gate into the app's Quality check alongside lint and format
 

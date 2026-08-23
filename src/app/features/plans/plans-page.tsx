@@ -48,10 +48,8 @@ export const PlansPage = () => {
   }
 
   if (!plans) {
-    // A direct reload/deep-link into a plan or idea route lands here too —
-    // the worklist skeleton (table rows, search bar) reads as a mismatched
-    // flash of the wrong page rather than a loading state for the detail
-    // view about to render, so it's scoped to the actual worklist case.
+    // A direct reload/deep-link into a plan or idea route lands here too — the worklist
+    // skeleton would flash as the wrong page instead of the detail view's own loading state.
     if (planId || ideaId) {
       return (
         <div>

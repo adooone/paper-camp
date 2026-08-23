@@ -26,9 +26,8 @@ export const usePlansPage = () => {
     setSubjectFilter(subjectParam ?? null);
   }, [subjectParam, setSubjectFilter]);
 
-  // Switching to a different plan/idea always lands on Details, never a stale Feedback
-  // view — but the initial mount (a reload landing on an already-open entity) must not
-  // stomp the detailView restored from storage, so the reset only fires on an actual change.
+  // Reset to Details only on an actual plan/idea change, not on initial mount —
+  // otherwise a reload would stomp the detailView restored from storage.
   const entityKey = planId ?? ideaId;
   const previousEntityKey = useRef(entityKey);
   useEffect(() => {

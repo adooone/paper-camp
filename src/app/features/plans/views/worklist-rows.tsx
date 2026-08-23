@@ -232,9 +232,8 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
   );
 };
 
-/** Fewer columns than a plan row (no updated/progress) and its own marker in the
- * title, since a fix is a distinct, minimal follow-up entity, not a nested child
- * of its (closed) parent — see IDEA-187. */
+// Fewer columns than a plan row (no updated/progress) — a fix is a distinct,
+// minimal follow-up entity, not a nested child of its (closed) parent (IDEA-187).
 const FIX_ROW_GRID_CLASS =
   'grid grid-cols-[76px_minmax(0,1fr)_112px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
 

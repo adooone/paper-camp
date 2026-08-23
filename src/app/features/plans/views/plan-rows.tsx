@@ -52,9 +52,9 @@ export const RowMarker = ({ order, done, running, status, fallback }: RowMarkerP
   </span>
 );
 
-// Built from Cards, not paper-ui's Table, sharing the plan rows grid column
-// template so the header and rows line up. Exported so PlansListSkeleton can
-// match this exact column shape.
+/** Built from Cards, not paper-ui's Table, sharing the plan rows grid column
+ * template so the header and rows line up. Exported so PlansListSkeleton can
+ * match this exact column shape. */
 export const PLAN_ROWS_GRID_CLASS =
   'grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
 

@@ -78,10 +78,8 @@ export const PlanActionsColumn = () => {
     }
   };
 
-  // Complete Idea verifies a merge and green CI before it promotes; a direct-to-main
-  // idea never opens a PR, so this is the equivalent check for that path — a clean
-  // tree and a commit naming the idea's id, both confirmed right before the archive
-  // write that promotes it to done.
+  // Equivalent of Complete Idea's merge+CI check for a direct-to-main idea, which
+  // never opens a PR: a clean tree and a commit naming the idea's id, instead.
   const handleMarkDone = async () => {
     if (!plan.id) return;
     setArchiving(true);

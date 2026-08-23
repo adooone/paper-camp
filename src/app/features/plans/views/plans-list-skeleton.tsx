@@ -12,9 +12,9 @@ const ROWS = [
   { key: 'f', title: '58%' },
 ];
 
-// Mirrors PlanRows' layout, including its 36px marker gutter sitting outside the
-// Card, so nothing jumps when /api/plans resolves (status derives from a `gh` PR
-// lookup, so a cold read can take a moment).
+/** Mirrors PlanRows' layout, including its 36px marker gutter sitting outside the
+ * Card, so nothing jumps when /api/plans resolves (status derives from a `gh` PR
+ * lookup, so a cold read can take a moment). */
 export const PlansListSkeleton = () => (
   <div className="flex flex-col gap-1" aria-hidden="true">
     <div className="flex items-center">

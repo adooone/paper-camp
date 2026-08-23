@@ -22,10 +22,8 @@ export const TrailSection = ({ planId, released, reviewing, reviewNote }: TrailS
           reviewNote={reviewNote}
         />
       ) : (
-        // Reserves the real row's height (4 small stamps + arrows) so the
-        // trail fetch resolving doesn't push the header content below it
-        // down once it lands — most visible now that History sits right
-        // under the title instead of at the page's bottom.
+        // Reserves the real row's height (4 stamps + arrows) so the trail fetch
+        // resolving doesn't push the header content below it down once it lands.
         <div className="max-w-xs" aria-hidden="true">
           <Skeleton variant="text" height={32} />
         </div>

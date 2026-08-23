@@ -10,9 +10,8 @@ import {
 } from '../components';
 import { useDeliverCommitForm } from '../hooks';
 
-// Always rendered as the Phases table's panelFooter — never hidden, so the
-// panel reads as a persistent Deliver station rather than something that
-// pops in only once there happens to be a change to commit.
+// Always rendered as the Phases table's panelFooter — never hidden, so it
+// reads as a persistent Deliver station, not something gated on having changes.
 interface DeliverSectionProps {
   plan: PlanEntry;
 }

@@ -87,9 +87,8 @@ const matchesSubject = (subject: string | undefined, filterSubject: string | nul
 const activeRank = (plan: PlanEntry): number =>
   plan.status === 'in-progress' || plan.status === 'review' ? 0 : 1;
 
-/** `sortDirection` flips the sign rather than redefining "natural" per key, except
- * for `order`, where unordered rows must stay last regardless of direction, and for
- * the active pin below, which stays first regardless of key or direction. */
+/** sortDirection flips the sign except for `order` (unordered rows always last)
+ * and the active pin below (always first), regardless of key or direction. */
 const comparePlans = (
   a: PlanEntry,
   b: PlanEntry,

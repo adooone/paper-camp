@@ -8,10 +8,8 @@ import { PlanRows } from './plan-rows';
 
 const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
 
-/** A board's decomposition, in the same row treatment the main worklist uses
- * (IDEA-201) — never the phases Table, since a board carries no phases of its own.
- * Adding a ticket stays on this view: it posts straight to the board's own list
- * and reloads, rather than navigating to a separate creation flow. */
+// A board's decomposition, in the worklist's row treatment (IDEA-201), never the
+// phases Table — a board carries no phases; adding one posts and reloads in place.
 interface TicketsSectionProps {
   plan: PlanEntry;
   otherPlans: PlanEntry[];

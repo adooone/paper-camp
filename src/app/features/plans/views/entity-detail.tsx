@@ -120,9 +120,8 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
       <ParentLinkRow plan={plan} otherPlans={otherPlans} />
 
-      {/* One strip: pipeline position, progress and cost all answer "where is this
-          and what has it cost", and each was claiming a full-width band of its own.
-          Wraps back to stacked rows when the column is too narrow to hold them. */}
+      {/* One strip, not three full-width bands — they all answer "where is this and
+          what has it cost". Wraps to stacked rows when the column is too narrow. */}
       <div className="flex items-center gap-x-4 gap-y-1 flex-wrap mb-3">
         <TrailSection
           planId={plan.id}

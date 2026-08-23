@@ -181,9 +181,9 @@ ${idea.body}`;
   return buildIdeaFleshOutPrompt(idea, 'fleshing out', context, PROMOTE_KEEP_UNCHANGED);
 }
 
-// Fires once per idea, right after roadmap-promote's route mints the id and writes the
-// idea file (server/routes/content/ideas.ts's POST /api/roadmap/promote); reuses
-// buildIdeaExtendPrompt's launch path and success check, same as buildSuggestionPromotePrompt.
+/** Fires once per idea, right after roadmap-promote's route mints the id and writes the
+ * idea file (server/routes/content/ideas.ts's POST /api/roadmap/promote); reuses
+ * buildIdeaExtendPrompt's launch path and success check, same as buildSuggestionPromotePrompt. */
 export function buildRoadmapPromotePrompt(idea: IdeaEntry, horizonTitle: string): string {
   const context = `This idea was just promoted from a roadmap item under "${horizonTitle}" in ROADMAP.md — its current body is only that item's one-line description plus a provenance note, with no deeper context yet:
 ${idea.body}`;
@@ -271,11 +271,11 @@ Rules:
 - If a comment needs a decision only a human can make, skip it and say so in its \`why\` instead of guessing.`;
 }
 
-// Runs read-only against an open PR's diff, replacing CodeRabbit as the producer
-// end of the review pipeline IDEA-57 already built (fetchUnresolvedThreads →
-// buildFixReviewPrompt consumes what this produces). Deliberately given only the
-// idea's own record — diff, body, phases, thread — never the authoring 'phase'
-// run's transcript or task-log entry, so it can't inherit that run's blind spots.
+/** Runs read-only against an open PR's diff, replacing CodeRabbit as the producer
+ * end of the review pipeline IDEA-57 already built (fetchUnresolvedThreads →
+ * buildFixReviewPrompt consumes what this produces). Deliberately given only the
+ * idea's own record — diff, body, phases, thread — never the authoring 'phase'
+ * run's transcript or task-log entry, so it can't inherit that run's blind spots. */
 export function buildPrReviewPrompt(plan: PlanEntry, diff: string): string {
   const phaseList = plan.phases.length
     ? plan.phases
@@ -335,13 +335,13 @@ function formatMountContext(context?: MountContext): string {
   return `\nAmbient context from the surface you're chatting in — use it silently, never mention it explicitly:\n${lines.join('\n')}\n`;
 }
 
-// Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply) — never uses
-// tools or edits a file itself; it proposes an edit/follow-up as JSON and
-// feedback-reply.ts's applyFeedbackEdit + the route apply it deterministically.
-//
-// Section order is stable-first (persona, corpus index, idea, thread, latest) so
-// consecutive replies in the same chat reuse Anthropic's prompt cache on the
-// unchanged prefix — only the thread and task tail differ turn to turn.
+/** Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply) — never uses
+ * tools or edits a file itself; it proposes an edit/follow-up as JSON and
+ * feedback-reply.ts's applyFeedbackEdit + the route apply it deterministically.
+ *
+ * Section order is stable-first (persona, corpus index, idea, thread, latest) so
+ * consecutive replies in the same chat reuse Anthropic's prompt cache on the
+ * unchanged prefix — only the thread and task tail differ turn to turn. */
 export function buildFeedbackReplyPrompt(
   plan: PlanEntry,
   otherEntities: EntityEntry[],
@@ -415,9 +415,9 @@ Rules:
 - Only include "edit" when the message clearly asks for a change; a fix request always becomes an "edit" (a phase on this idea), never anything else. Never create a new idea, and never decline a fix request with a bare reply.`;
 }
 
-// Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply, reused for this
-// too) — fires once a chat session goes quiet (routes/agent.ts's feedback-summarize),
-// distilling the exchange since the last log entry into one durable line.
+/** Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply, reused for this
+ * too) — fires once a chat session goes quiet (routes/agent.ts's feedback-summarize),
+ * distilling the exchange since the last log entry into one durable line. */
 export function buildFeedbackSummaryPrompt(plan: PlanEntry, messages: ThreadMessage[]): string {
   const exchange = messages
     .map((m) => `${m.from === 'agent' ? 'Agent' : 'User'}: ${m.text}`)

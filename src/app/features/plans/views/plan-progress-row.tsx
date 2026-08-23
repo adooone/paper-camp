@@ -11,9 +11,8 @@ interface PlanProgressRowProps {
 export const PlanProgressRow = ({ progress, color: barColor, rollup }: PlanProgressRowProps) => {
   if (progress === null && rollup.runs === 0) return null;
   return (
-    // min-w-min, not a fixed rem: the cost stamp's width depends on its numbers, so
-    // only min-content knows when the bar has hit its floor and the strip must wrap.
-    // A guessed rem value either wraps too eagerly or lets the stamp overflow.
+    // min-w-min, not a fixed rem: only min-content knows when the bar has hit its
+    // floor and the strip must wrap, since the cost stamp's width varies with its numbers.
     <div className="flex items-center gap-3 flex-1 min-w-min">
       {progress !== null && (
         <>
