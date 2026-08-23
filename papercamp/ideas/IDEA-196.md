@@ -80,8 +80,9 @@ Changing the 2-line cap itself. Diff-scoping the gate — it runs over all of
 comments in tests, which the walker already excludes.
 
 ### Phases
-- [ ] Detect over-cap comment runs in the script
+- [x] Detect over-cap comment runs in the script
       Group each file's comment trivia into contiguous runs, flag runs longer than 2 lines, and count trailing `code; // why` lines the classifier currently ignores.
+      run: 2m39s · 6k in · 11k out · sonnet-5
 - [ ] Exempt JSDoc immediately preceding an export
       Only `/** … */` directly before an `export` is exempt; `/* … */` inside a body is capped.
 - [ ] Make the check fail and keep the ratio in JSON
