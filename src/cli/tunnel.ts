@@ -1,4 +1,7 @@
 import { type ChildProcess, spawn } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 export interface QuickTunnel {
   process: ChildProcess;
@@ -24,13 +27,28 @@ export function isCloudflaredAvailable(): Promise<boolean> {
   });
 }
 
+/** `cloudflared` reads /etc/cloudflared/config.yml unless told otherwise, so on a
+ *  machine already running a named tunnel `--url` silently joins that tunnel and
+ *  serves its ingress rules instead — every request to the quick address hitting
+ *  whatever catch-all it ends in. An empty config file is the only way to opt out. */
+export function quickTunnelArgs(port: number, configPath: string): string[] {
+  return ['--config', configPath, 'tunnel', '--url', `http://localhost:${port}`];
+}
+
 /** Spawns an account-less `cloudflared` quick tunnel pointed at the local dev
  *  server and resolves once its https address shows up in the process output —
  *  cloudflared only prints the address, there is no flag to have it returned
  *  structured. Rejects if the binary is missing or exits before printing one. */
 export function startQuickTunnel(port: number): Promise<QuickTunnel> {
   return new Promise((resolve, reject) => {
-    const proc = spawn('cloudflared', ['tunnel', '--url', `http://localhost:${port}`], {
+    const configPath = join(tmpdir(), 'paper-camp-quick-tunnel.yml');
+    try {
+      writeFileSync(configPath, '');
+    } catch (error) {
+      reject(error);
+      return;
+    }
+    const proc = spawn('cloudflared', quickTunnelArgs(port, configPath), {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 

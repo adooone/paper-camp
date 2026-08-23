@@ -94,14 +94,21 @@ export function isTrustedHost(host: string): boolean {
  *  Origin). Once any hosted page can attempt a loopback request, "arrived from
  *  loopback" stops being evidence the caller is the user's own client — so a
  *  paired origin (established via /api/pair's shared token) is trusted the same
- *  as a LAN/Tailscale one. Browsers omit Origin on a same-origin GET, but they
- *  can't fake the Host they're actually addressing — a non-loopback trusted Host
- *  (LAN, Tailscale, a shared tunnel) is reachable by curl too, so a request that
- *  carries neither Origin nor the pairing token is treated as one of those.
- *  Returns true if the request should be rejected. */
+ *  as a LAN/Tailscale one. Browsers omit Origin on a same-origin GET, but a
+ *  same-origin fetch still carries `Sec-Fetch-Site: same-origin` — a header the
+ *  Fetch API forbids scripts from setting, so only the browser itself can send
+ *  it truthfully. A non-loopback trusted Host (LAN, Tailscale, a shared tunnel)
+ *  is reachable by curl too, so a request carrying none of Origin, that header,
+ *  or the pairing token is treated as one of those. Returns true if the request
+ *  should be rejected. */
 export function isForbiddenRequest(
   req: {
-    headers: { host?: string; origin?: string; [PAIRING_TOKEN_HEADER]?: string };
+    headers: {
+      host?: string;
+      origin?: string;
+      'sec-fetch-site'?: string;
+      [PAIRING_TOKEN_HEADER]?: string;
+    };
     method?: string;
   },
   isPairedOrigin: (origin: string) => boolean = () => false,
@@ -118,6 +125,7 @@ export function isForbiddenRequest(
     return !isTrustedHost(originHost) && !isPairedOrigin(origin);
   }
   if (isLoopbackHost(host)) return false;
+  if (req.headers['sec-fetch-site'] === 'same-origin') return false;
   const token = req.headers[PAIRING_TOKEN_HEADER];
   return !pairingToken || token !== pairingToken;
 }

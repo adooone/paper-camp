@@ -112,6 +112,17 @@ describe('isForbiddenRequest', () => {
     ).toBe(true);
   });
 
+  it('allows a non-loopback trusted Host with no Origin when Sec-Fetch-Site says same-origin', () => {
+    // A dashboard served directly (typed URL, no ?token=) makes same-origin
+    // fetches that omit Origin but still carry this browser-set header.
+    expect(
+      isForbiddenRequest({
+        headers: { host: '192.168.1.5:3333', 'sec-fetch-site': 'same-origin' },
+        method: 'GET',
+      }),
+    ).toBe(false);
+  });
+
   it('allows a non-loopback trusted Host with no Origin when the pairing token matches', () => {
     expect(
       isForbiddenRequest(

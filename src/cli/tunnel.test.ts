@@ -2,7 +2,12 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { extractTunnelUrl, isCloudflaredAvailable, startQuickTunnel } from './tunnel';
+import {
+  extractTunnelUrl,
+  isCloudflaredAvailable,
+  quickTunnelArgs,
+  startQuickTunnel,
+} from './tunnel';
 
 describe('extractTunnelUrl', () => {
   it('finds the https trycloudflare address inside cloudflared banner output', () => {
@@ -17,6 +22,25 @@ describe('extractTunnelUrl', () => {
 
   it('returns null when no tunnel address is present', () => {
     expect(extractTunnelUrl('2024-01-01T00:00:00Z INF Starting tunnel')).toBeNull();
+  });
+});
+
+describe('quickTunnelArgs', () => {
+  // A machine already running a named tunnel otherwise has its /etc config picked up,
+  // and the quick address serves that tunnel's ingress instead of the dev server.
+  it('points cloudflared at an isolated config so it cannot join an existing tunnel', () => {
+    expect(quickTunnelArgs(3333, '/tmp/empty.yml')).toEqual([
+      '--config',
+      '/tmp/empty.yml',
+      'tunnel',
+      '--url',
+      'http://localhost:3333',
+    ]);
+  });
+
+  it('passes --config before the subcommand, where cloudflared accepts global flags', () => {
+    const args = quickTunnelArgs(4800, '/tmp/empty.yml');
+    expect(args.indexOf('--config')).toBeLessThan(args.indexOf('tunnel'));
   });
 });
 

@@ -66,6 +66,10 @@ The last two rows are the whole problem. From `https://paper-camp.vercel.app` a 
       `tailscale serve` as the stable-address alternative, with the certificate and HTTPS-enable steps it needs.
       run: 1m50s · 369 in · 6k out · sonnet-5
 - [x] [manual] Attach pairing token to hosted client requests
+- [x] Style pass
+      Scope yourself to only the files this plan has changed — compare against the base branch (e.g. `git diff main...HEAD --name-only`), never the wider codebase. Read docs/CODE_STYLE.md in full and apply it to those files:
+- [x] [manual] Trust same-origin fetches with no pairing token
 
 ### Thread
 - [x] 2026-08-23 [review] [agent] Requests changes · 2 findings — The server-side hardening and the tunnel spawning are well-structured and well-tested at the unit level, but the phase-1 change to isForbiddenRequest breaks legitimate browser access to any non-loopback trusted host. Because no browser client ever attaches the new x-pairing-token header, a same-origin GET (which browsers send with no Origin) now 403s against a LAN/tailnet host — a case the spec's own table lists as already working — and against the tunnel-served dashboard that the printed --share link actually opens. The curl-blocking intent is correct, but as written it also locks out the exact flows this idea is supposed to enable.
+- [x] 2026-08-23 [review] [agent] Requests changes · 2 findings — The server-side hardening, the cloudflared quick-tunnel spawning, and the token-attaching apiFetch are well-structured and thoroughly unit-tested, and phase 6 correctly closes the gap for clients that hold a token — link-opened LAN clients and the tunnel-served dashboard now pass. But the phase-1 rule still 403s any same-origin browser request that carries neither an Origin header (browsers omit it on same-origin GETs) nor a pairing token, and a client that reaches a non-loopback trusted host by being opened directly (not via a registration link) never obtains a token. That regresses the spec table's row-2 ("LAN or tailnet host: yes") and directly contradicts the README's own phase-5 tailnet instructions, which tell the user to open the .ts.net URL directly.
