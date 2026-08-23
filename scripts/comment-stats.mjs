@@ -30,10 +30,15 @@ for (const file of files) {
   let inBlock = false;
   let runStart = null;
   let runLength = 0;
-  const endRun = () => {
-    if (runLength > RUN_CAP) overCapRuns.push({ file, startLine: runStart, length: runLength });
+  let runIsJsDoc = false;
+  const endRun = (nextLine) => {
+    const isExemptJsDoc = runIsJsDoc && nextLine?.startsWith('export');
+    if (runLength > RUN_CAP && !isExemptJsDoc) {
+      overCapRuns.push({ file, startLine: runStart, length: runLength });
+    }
     runStart = null;
     runLength = 0;
+    runIsJsDoc = false;
   };
   lines.forEach((raw, i) => {
     const line = raw.trim();
@@ -48,6 +53,7 @@ for (const file of files) {
     } else if (line.startsWith('/*') || line.startsWith('{/*')) {
       isCommentLine = true;
       comments++;
+      if (runLength === 0) runIsJsDoc = line.startsWith('/**');
       if (!line.slice(line.indexOf('/*') + 2).includes('*/')) inBlock = true;
     } else if (line !== '' && TRAILING_COMMENT.test(line)) {
       totalTrailing++;
@@ -56,10 +62,10 @@ for (const file of files) {
       if (runStart === null) runStart = i + 1;
       runLength++;
     } else {
-      endRun();
+      endRun(line);
     }
   });
-  endRun();
+  endRun(null);
   totalLines += lines.length;
   totalComments += comments;
   if (comments > 0) perFile.push([file, comments]);
