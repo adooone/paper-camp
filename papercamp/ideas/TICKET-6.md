@@ -52,8 +52,9 @@ The last two rows are the whole problem. From `https://paper-camp.vercel.app` a 
 - [x] Require the pairing token when no trusted Origin is present
       Close the gap where a request carrying no `Origin` header passes on the Host check alone — the precondition for exposing the runtime at all.
       run: 8m · 6.9k in · 27.7k out · sonnet-5
-- [ ] Spawn a quick tunnel behind `paper-camp dev --share`
+- [x] Spawn a quick tunnel behind `paper-camp dev --share`
       Start `cloudflared`, read the issued https address, and allow-list that host on the running runtime.
+      run: 5m14s · 1k in · 12k out · sonnet-5
 - [ ] Print one registration link for the tunnel
       The https runtime URL and pairing token in a single link, alongside the existing local addresses.
 - [ ] Fail honestly when `cloudflared` is missing
