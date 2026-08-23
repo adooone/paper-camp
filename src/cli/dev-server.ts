@@ -4,7 +4,12 @@ import { dirname, extname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApiMiddleware } from '../app/server/api';
 import { buildRegistrationLinkForRuntime, registrationLinks } from './registration-link';
-import { type QuickTunnel, startQuickTunnel } from './tunnel';
+import {
+  CLOUDFLARED_MISSING_MESSAGE,
+  type QuickTunnel,
+  isCloudflaredAvailable,
+  startQuickTunnel,
+} from './tunnel';
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -33,6 +38,10 @@ export interface DevServerOptions {
 /** Serves the pre-built dashboard SPA (dist/app), for an installed package
  * where there's no Vite runtime available (it's a devDependency). */
 export async function startDevServer({ root, port, share }: DevServerOptions): Promise<void> {
+  if (share && !(await isCloudflaredAvailable())) {
+    throw new Error(CLOUDFLARED_MISSING_MESSAGE);
+  }
+
   const staticDir = appDir();
   const indexPath = join(staticDir, 'index.html');
   const indexHtml = await readFile(indexPath, 'utf-8').catch(() => null);

@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { extractTunnelUrl, startQuickTunnel } from './tunnel';
+import { extractTunnelUrl, isCloudflaredAvailable, startQuickTunnel } from './tunnel';
 
 describe('extractTunnelUrl', () => {
   it('finds the https trycloudflare address inside cloudflared banner output', () => {
@@ -20,7 +20,7 @@ describe('extractTunnelUrl', () => {
   });
 });
 
-describe('startQuickTunnel', () => {
+describe('cloudflared binary stubbing', () => {
   const dirs: string[] = [];
   const originalPath = process.env.PATH;
 
@@ -39,20 +39,39 @@ describe('startQuickTunnel', () => {
     return binPath;
   }
 
-  it('resolves with the tunnel url once cloudflared prints one', async () => {
-    await stubCloudflared('echo "|  https://foo-bar.trycloudflare.com  |" >&2\nsleep 5 &\nwait');
-    const tunnel = await startQuickTunnel(3333);
-    expect(tunnel.url).toBe('https://foo-bar.trycloudflare.com');
-    tunnel.process.kill();
+  describe('startQuickTunnel', () => {
+    it('resolves with the tunnel url once cloudflared prints one', async () => {
+      await stubCloudflared('echo "|  https://foo-bar.trycloudflare.com  |" >&2\nsleep 5 &\nwait');
+      const tunnel = await startQuickTunnel(3333);
+      expect(tunnel.url).toBe('https://foo-bar.trycloudflare.com');
+      tunnel.process.kill();
+    });
+
+    it('rejects when cloudflared exits before printing a url', async () => {
+      await stubCloudflared('echo "boom" >&2\nexit 1');
+      await expect(startQuickTunnel(3333)).rejects.toThrow(/exited before printing/);
+    });
+
+    it('rejects when the cloudflared binary is missing', async () => {
+      process.env.PATH = '';
+      await expect(startQuickTunnel(3333)).rejects.toThrow();
+    });
   });
 
-  it('rejects when cloudflared exits before printing a url', async () => {
-    await stubCloudflared('echo "boom" >&2\nexit 1');
-    await expect(startQuickTunnel(3333)).rejects.toThrow(/exited before printing/);
-  });
+  describe('isCloudflaredAvailable', () => {
+    it('resolves true when cloudflared exits 0 for --version', async () => {
+      await stubCloudflared('exit 0');
+      expect(await isCloudflaredAvailable()).toBe(true);
+    });
 
-  it('rejects when the cloudflared binary is missing', async () => {
-    process.env.PATH = '';
-    await expect(startQuickTunnel(3333)).rejects.toThrow();
+    it('resolves false when cloudflared exits non-zero', async () => {
+      await stubCloudflared('exit 1');
+      expect(await isCloudflaredAvailable()).toBe(false);
+    });
+
+    it('resolves false when the binary is missing', async () => {
+      process.env.PATH = '';
+      expect(await isCloudflaredAvailable()).toBe(false);
+    });
   });
 });

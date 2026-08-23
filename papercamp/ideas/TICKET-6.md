@@ -58,7 +58,8 @@ The last two rows are the whole problem. From `https://paper-camp.vercel.app` a 
 - [x] Print one registration link for the tunnel
       The https runtime URL and pairing token in a single link, alongside the existing local addresses.
       run: 4m · 1.5k in · 6.2k out · sonnet-5
-- [ ] Fail honestly when `cloudflared` is missing
+- [x] Fail honestly when `cloudflared` is missing
       Detect it up front and say how to install it, rather than starting and dying without an address.
+      run: 4m6s · 875 in · 7.4k out · sonnet-5
 - [ ] Document the tailnet route for anyone already on Tailscale
       `tailscale serve` as the stable-address alternative, with the certificate and HTTPS-enable steps it needs.

@@ -11,6 +11,19 @@ export function extractTunnelUrl(output: string): string | null {
   return output.match(TUNNEL_URL_PATTERN)?.[0] ?? null;
 }
 
+export const CLOUDFLARED_MISSING_MESSAGE =
+  '`cloudflared` is required for --share but was not found on PATH. Install it from ' +
+  'https://developers.cloudflare.com/cloudflared/install-and-setup/installation/ ' +
+  '(macOS: `brew install cloudflared`), then try again.';
+
+export function isCloudflaredAvailable(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn('cloudflared', ['--version'], { stdio: 'ignore' });
+    proc.on('error', () => resolve(false));
+    proc.on('exit', (code) => resolve(code === 0));
+  });
+}
+
 /** Spawns an account-less `cloudflared` quick tunnel pointed at the local dev
  *  server and resolves once its https address shows up in the process output —
  *  cloudflared only prints the address, there is no flag to have it returned
