@@ -42,6 +42,10 @@ export function startQuickTunnel(port: number): Promise<QuickTunnel> {
       settled = true;
       proc.stdout?.off('data', onOutput);
       proc.stderr?.off('data', onOutput);
+      // cloudflared keeps logging connection/metrics lines for the tunnel's
+      // whole life; leaving the pipe undrained backs up its stdio and stalls it.
+      proc.stdout?.resume();
+      proc.stderr?.resume();
       resolve({ process: proc, url });
     };
     proc.stdout?.on('data', onOutput);

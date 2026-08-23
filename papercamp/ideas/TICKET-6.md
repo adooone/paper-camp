@@ -6,12 +6,13 @@ kind: ticket
 status: review
 idea: IDEA-195
 created: 2026-08-22
-updated: 2026-08-22
+updated: 2026-08-23
 tags:
   - runtime
   - transport
   - security
 subject: Multi-project
+order: 2
 ---
 
 The hosted client works and the runtime answers it — but only when both sit on the same machine. Everything else in the chain shipped; this is the one gap left before the deployed URL is usable by anyone who isn't sitting at the machine running `paper-camp dev`.
@@ -64,3 +65,7 @@ The last two rows are the whole problem. From `https://paper-camp.vercel.app` a 
 - [x] Document the tailnet route for anyone already on Tailscale
       `tailscale serve` as the stable-address alternative, with the certificate and HTTPS-enable steps it needs.
       run: 1m50s · 369 in · 6k out · sonnet-5
+- [x] [manual] Attach pairing token to hosted client requests
+
+### Thread
+- [x] 2026-08-23 [review] [agent] Requests changes · 2 findings — The server-side hardening and the tunnel spawning are well-structured and well-tested at the unit level, but the phase-1 change to isForbiddenRequest breaks legitimate browser access to any non-loopback trusted host. Because no browser client ever attaches the new x-pairing-token header, a same-origin GET (which browsers send with no Origin) now 403s against a LAN/tailnet host — a case the spec's own table lists as already working — and against the tunnel-served dashboard that the printed --share link actually opens. The curl-blocking intent is correct, but as written it also locks out the exact flows this idea is supposed to enable.

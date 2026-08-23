@@ -6,7 +6,7 @@ import type {
   PrReviewStatus,
   ReconcileQueueItem,
 } from '@/types/index';
-import { apiUrl } from './api-base';
+import { apiFetch, apiUrl } from './api-base';
 
 const handleAgentResponse = async (
   response: Response,
@@ -19,17 +19,17 @@ const handleAgentResponse = async (
 };
 
 export const fetchAgentStatus = async (): Promise<AgentTaskState[]> => {
-  const response = await fetch(apiUrl('/api/agent/status'));
+  const response = await apiFetch(apiUrl('/api/agent/status'));
   return response.json();
 };
 
 export const fetchReconcileQueue = async (): Promise<ReconcileQueueItem[] | null> => {
-  const response = await fetch(apiUrl('/api/agent/reconcile-queue'));
+  const response = await apiFetch(apiUrl('/api/agent/reconcile-queue'));
   return response.json();
 };
 
 export const launchAgent = async (planId: string, phaseIndex: number): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch'), {
+  const response = await apiFetch(apiUrl('/api/agent/launch'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, phaseIndex }),
@@ -38,7 +38,7 @@ export const launchAgent = async (planId: string, phaseIndex: number): Promise<v
 };
 
 export const launchPlanAudit = async (planId: string, prompt: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch-audit'), {
+  const response = await apiFetch(apiUrl('/api/agent/launch-audit'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, prompt }),
@@ -47,7 +47,7 @@ export const launchPlanAudit = async (planId: string, prompt: string): Promise<v
 };
 
 export const launchPlanReconcile = async (planId: string, prompt: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch-reconcile'), {
+  const response = await apiFetch(apiUrl('/api/agent/launch-reconcile'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, prompt }),
@@ -56,7 +56,7 @@ export const launchPlanReconcile = async (planId: string, prompt: string): Promi
 };
 
 export const launchPlanDraft = async (ideaId: string, prompt: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch-draft'), {
+  const response = await apiFetch(apiUrl('/api/agent/launch-draft'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ideaId, prompt }),
@@ -65,7 +65,7 @@ export const launchPlanDraft = async (ideaId: string, prompt: string): Promise<v
 };
 
 export const launchIdeaExtend = async (ideaId: string, prompt: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch-extend'), {
+  const response = await apiFetch(apiUrl('/api/agent/launch-extend'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ideaId, prompt }),
@@ -74,7 +74,7 @@ export const launchIdeaExtend = async (ideaId: string, prompt: string): Promise<
 };
 
 export const launchSuggestIdeas = async (prompt: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch-suggest'), {
+  const response = await apiFetch(apiUrl('/api/agent/launch-suggest'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt }),
@@ -83,12 +83,12 @@ export const launchSuggestIdeas = async (prompt: string): Promise<void> => {
 };
 
 export const launchBatchReconcile = async (): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch-reconcile-all'), { method: 'POST' });
+  const response = await apiFetch(apiUrl('/api/agent/launch-reconcile-all'), { method: 'POST' });
   await handleAgentResponse(response);
 };
 
 export const launchBatchDraft = async (ids: string[]): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch-draft-all'), {
+  const response = await apiFetch(apiUrl('/api/agent/launch-draft-all'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ids }),
@@ -97,7 +97,7 @@ export const launchBatchDraft = async (ids: string[]): Promise<void> => {
 };
 
 export const launchRunAll = async (planId: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch-run-all'), {
+  const response = await apiFetch(apiUrl('/api/agent/launch-run-all'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),
@@ -106,7 +106,7 @@ export const launchRunAll = async (planId: string): Promise<void> => {
 };
 
 export const launchFixReview = async (planId: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch-fix-review'), {
+  const response = await apiFetch(apiUrl('/api/agent/launch-fix-review'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),
@@ -115,7 +115,7 @@ export const launchFixReview = async (planId: string): Promise<void> => {
 };
 
 export const launchPrReview = async (planId: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/launch-pr-review'), {
+  const response = await apiFetch(apiUrl('/api/agent/launch-pr-review'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),
@@ -129,7 +129,7 @@ export const launchIssueFix = async (
   reason: string,
   output: string | undefined,
 ): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/issue-fix'), {
+  const response = await apiFetch(apiUrl('/api/agent/issue-fix'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ issueId, title, reason, output }),
@@ -140,7 +140,7 @@ export const launchIssueFix = async (
 export const promoteIssue = async (
   issue: Issue,
 ): Promise<{ promotedTo: string; kind: 'fix' | 'append' | 'idea' }> => {
-  const response = await fetch(apiUrl('/api/agent/promote-issue'), {
+  const response = await apiFetch(apiUrl('/api/agent/promote-issue'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ issue }),
@@ -167,7 +167,7 @@ export const postFeedbackMessage = async (
   text: string,
   context?: MountContext,
 ): Promise<{ error?: string; undo?: { commitSha: string } }> => {
-  const response = await fetch(apiUrl('/api/agent/feedback-message'), {
+  const response = await apiFetch(apiUrl('/api/agent/feedback-message'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, text, context }),
@@ -183,7 +183,7 @@ export const promoteFeedbackMessage = async (
   target: 'decision' | 'log',
   note?: string,
 ): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/feedback-promote'), {
+  const response = await apiFetch(apiUrl('/api/agent/feedback-promote'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, index, target, note }),
@@ -197,7 +197,7 @@ export const promoteFeedbackMessage = async (
 export const summarizeFeedbackSession = async (
   planId: string,
 ): Promise<{ skipped?: boolean; summary?: string }> => {
-  const response = await fetch(apiUrl('/api/agent/feedback-summarize'), {
+  const response = await apiFetch(apiUrl('/api/agent/feedback-summarize'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),
@@ -212,7 +212,7 @@ export const undoFeedbackEdit = async (
   planId: string,
   commitSha: string,
 ): Promise<{ error?: string }> => {
-  const response = await fetch(apiUrl('/api/agent/feedback-undo'), {
+  const response = await apiFetch(apiUrl('/api/agent/feedback-undo'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId, commitSha }),
@@ -223,7 +223,7 @@ export const undoFeedbackEdit = async (
 };
 
 export const stopAgent = async (taskId?: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/agent/stop'), {
+  const response = await apiFetch(apiUrl('/api/agent/stop'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ taskId }),
@@ -232,15 +232,15 @@ export const stopAgent = async (taskId?: string): Promise<void> => {
 };
 
 export const startLoginRelay = async (): Promise<LoginRelayState> => {
-  const response = await fetch(apiUrl('/api/agent/login-relay/start'), { method: 'POST' });
+  const response = await apiFetch(apiUrl('/api/agent/login-relay/start'), { method: 'POST' });
   return response.json();
 };
 
 export const fetchLoginRelayStatus = async (): Promise<LoginRelayState | null> => {
-  const response = await fetch(apiUrl('/api/agent/login-relay/status'));
+  const response = await apiFetch(apiUrl('/api/agent/login-relay/status'));
   return response.json();
 };
 
 export const cancelLoginRelay = async (): Promise<void> => {
-  await fetch(apiUrl('/api/agent/login-relay/cancel'), { method: 'POST' });
+  await apiFetch(apiUrl('/api/agent/login-relay/cancel'), { method: 'POST' });
 };

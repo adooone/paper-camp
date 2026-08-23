@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { hostname } from 'node:os';
+import { PAIRING_TOKEN_HEADER } from '@/types/index';
 import { createActivityManager } from './activity';
 import { type AgentManager, type AgentManagerState, createAgentManager } from './agent';
 import { createAgentHooks } from './agent-hooks';
@@ -56,8 +57,6 @@ function hostOf(value: string | undefined): string {
 function isLoopbackHost(host: string): boolean {
   return host === 'localhost' || host === '127.0.0.1' || host === '::1';
 }
-
-export const PAIRING_TOKEN_HEADER = 'x-pairing-token' as const;
 
 /** Hosts that actually point at this machine — loopback, private LAN, Tailscale/mDNS,
  *  or PAPERCAMP_ALLOWED_HOSTS. This API runs git and launches auto-permission agents,

@@ -4,13 +4,14 @@ import '@dendelion/paper-ui/dist/index.css';
 import './styles/utilities.css';
 import { RouterProvider } from '@tanstack/react-router';
 import { HUB_PATH, router } from './router';
-import { apiUrl, setApiBase } from './services/api-base';
+import { apiFetch, apiUrl, setApiBase, setApiPairingToken } from './services/api-base';
 import { hasChosenProject, servesOwnRuntime } from './services/hub';
 import { mountPrefix } from './services/mount';
 import { runtimeConnection } from './services/runtime-connection';
 
 const { runtimeUrl, pairingToken } = runtimeConnection;
 setApiBase(runtimeUrl || mountPrefix);
+setApiPairingToken(pairingToken);
 
 // A detached, hosted bundle pairs via its `?runtime=&token=` link or a token
 // persisted from an earlier one — pair before the first render so the app's
@@ -29,7 +30,7 @@ if (!rootElement) throw new Error('#root element not found');
 
 async function chooseProject(): Promise<boolean> {
   if (hasChosenProject(mountPrefix, runtimeUrl)) return true;
-  return servesOwnRuntime(runtimeUrl, (path) => fetch(apiUrl(path)));
+  return servesOwnRuntime(runtimeUrl, (path) => apiFetch(apiUrl(path)));
 }
 
 // The router always mounts. With no project chosen the hub is where you land, but it
