@@ -3,7 +3,7 @@ import { type IncomingMessage, type ServerResponse, createServer } from 'node:ht
 import { dirname, extname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApiMiddleware } from '../app/server/api';
-import { registrationLinks } from './registration-link';
+import { buildRegistrationLinkForRuntime, registrationLinks } from './registration-link';
 import { type QuickTunnel, startQuickTunnel } from './tunnel';
 
 const MIME: Record<string, string> = {
@@ -111,6 +111,7 @@ export async function startDevServer({ root, port, share }: DevServerOptions): P
     const tunnelHost = new URL(tunnel.url).hostname;
     const existing = process.env.PAPERCAMP_ALLOWED_HOSTS;
     process.env.PAPERCAMP_ALLOWED_HOSTS = existing ? `${existing},${tunnelHost}` : tunnelHost;
-    console.log(`Shared tunnel: ${tunnel.url}`);
+    const tunnelLink = buildRegistrationLinkForRuntime(tunnel.url, apiMiddleware.pairing.token);
+    console.log(`  ${tunnelLink}  (reachable from anywhere)`);
   }
 }

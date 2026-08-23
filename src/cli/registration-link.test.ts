@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildRegistrationLink, reachableHosts } from './registration-link';
+import {
+  buildRegistrationLink,
+  buildRegistrationLinkForRuntime,
+  reachableHosts,
+} from './registration-link';
 
 describe('buildRegistrationLink', () => {
   it('carries the runtime origin and pairing token as query params', () => {
@@ -14,6 +18,24 @@ describe('buildRegistrationLink', () => {
     const search = link.slice(link.indexOf('?'));
     expect(loadRuntimeConnection({ search }, null)).toEqual({
       runtimeUrl: 'http://localhost:4444',
+      pairingToken: 'def456',
+    });
+  });
+});
+
+describe('buildRegistrationLinkForRuntime', () => {
+  it('carries an already-complete runtime URL and pairing token as query params', () => {
+    expect(buildRegistrationLinkForRuntime('https://foo-bar.trycloudflare.com', 'abc123')).toBe(
+      'https://foo-bar.trycloudflare.com/?runtime=https%3A%2F%2Ffoo-bar.trycloudflare.com&token=abc123',
+    );
+  });
+
+  it('is adopted back into the same runtime URL and token by the client', async () => {
+    const { loadRuntimeConnection } = await import('../app/services/runtime-connection');
+    const link = buildRegistrationLinkForRuntime('https://foo-bar.trycloudflare.com', 'def456');
+    const search = link.slice(link.indexOf('?'));
+    expect(loadRuntimeConnection({ search }, null)).toEqual({
+      runtimeUrl: 'https://foo-bar.trycloudflare.com',
       pairingToken: 'def456',
     });
   });
