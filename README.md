@@ -23,6 +23,40 @@ bun run dev
 
 Open `http://localhost:3333` to access the dashboard.
 
+## Reachable from anywhere
+
+`paper-camp dev` only answers requests from the machine it runs on, or another
+device on the same LAN/tailnet. To reach it from the hosted client on a
+different machine over the open internet, run:
+
+```bash
+paper-camp dev --share
+```
+
+This opens an account-less `cloudflared` quick tunnel and prints a
+registration link with its `https://…trycloudflare.com` address baked in —
+open that link in the hosted client and it's paired. The address changes every
+restart; that's the trade for needing no setup and no account.
+
+### Already on Tailscale?
+
+If every machine involved is already on your tailnet, `tailscale serve` gives
+you a stable address and a real certificate with no third party in the path —
+worth it if you have Tailscale, but more setup than `--share`:
+
+1. Enable HTTPS certificates for your tailnet once, in the
+   [Tailscale admin console](https://login.tailscale.com/admin/dns) under
+   **DNS → HTTPS Certificates**.
+2. From the machine running `paper-camp dev`, serve it over HTTPS at a stable
+   MagicDNS address:
+   ```bash
+   sudo tailscale serve --bg --https=443 / http://localhost:3333
+   ```
+   The first run needs `sudo` so Tailscale can provision the certificate.
+3. Open `https://<your-machine>.<your-tailnet>.ts.net/` — directly, or pasted
+   into the hosted client — from any device on the tailnet. Stop sharing with
+   `tailscale serve reset`.
+
 ## Pages
 
 - **Plans** — Browse and manage plans from `papercamp/plans/`

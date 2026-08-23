@@ -3,7 +3,7 @@ id: TICKET-6
 title: Reachable from anywhere
 type: feat
 kind: ticket
-status: idea
+status: review
 idea: IDEA-195
 created: 2026-08-22
 updated: 2026-08-22
@@ -61,5 +61,6 @@ The last two rows are the whole problem. From `https://paper-camp.vercel.app` a 
 - [x] Fail honestly when `cloudflared` is missing
       Detect it up front and say how to install it, rather than starting and dying without an address.
       run: 4m6s · 875 in · 7.4k out · sonnet-5
-- [ ] Document the tailnet route for anyone already on Tailscale
+- [x] Document the tailnet route for anyone already on Tailscale
       `tailscale serve` as the stable-address alternative, with the certificate and HTTPS-enable steps it needs.
+      run: 1m50s · 369 in · 6k out · sonnet-5
