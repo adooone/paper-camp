@@ -2,12 +2,14 @@
 id: IDEA-196
 title: Make the comment check enforceable
 type: chore
-status: idea
+status: in-progress
 created: 2026-08-21
+updated: 2026-08-23
 tags:
   - code-health
   - tooling
 subject: Code health
+order: 1
 ---
 
 `docs/CODE_STYLE.md` §7 states a rule about *individual comments* — a comment
@@ -95,6 +97,10 @@ comments in tests, which the walker already excludes.
 - [x] Clear the remaining violations in src/app/server/ and src/core/
       run: 2m1s · 45k in · 96.1k out · sonnet-5
 - [ ] Wire the gate into the app's Quality check alongside lint and format
+      Also clean up the remaining comment-cap violations found once the gate runs over all of src/ (condense to ≤2 lines, delete decision-narration, or convert genuine export-adjacent // blocks to JSDoc), so Quality lands green rather than red.
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Independent code-health work with no blockers; small, decisive, and its cleanup phases are a prerequisite for IDEA-199's style pass to have a green gate to run against
+- [ ] 2026-08-23 [question] [agent] Run-all parked on phase 6 ("Wire the gate into the app's Quality check alongside lint and format") — the agent needs a decision: Should I also clean up these 62 remaining violations (same mechanical approach as phases 4–5: condense to ≤2 lines, delete decision-narration, or convert genuine export-adjacent `//` blocks to JSDoc) as part of wiring the gate so it lands green — or wire it as-is and accept Quality goes red until a follow-up handles the rest?
+- [x] 2026-08-23 [chat] clean up also
+- [x] 2026-08-23 [chat] [agent] Added it as a fix on this idea — cleaning up the 62 remaining comment violations as part of wiring the gate into Quality, so it lands green.
