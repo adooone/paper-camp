@@ -1,5 +1,5 @@
 import type { FileDiffEntry, GitStatusResponse } from '@/types/index';
-import { apiUrl } from './api-base';
+import { apiFetch, apiUrl } from './api-base';
 
 // Sits above the server's own 30s cap so the server's command-named timeout
 // error is what wins whenever a call stalls; this only covers a response
@@ -13,7 +13,7 @@ async function throwIfNotOk(response: Response, fallbackError: string): Promise<
 }
 
 export const fetchGitStatus = async (): Promise<GitStatusResponse> => {
-  const response = await fetch(apiUrl('/api/git/status'), {
+  const response = await apiFetch(apiUrl('/api/git/status'), {
     signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
   await throwIfNotOk(response, 'Failed to load git status');
@@ -21,7 +21,7 @@ export const fetchGitStatus = async (): Promise<GitStatusResponse> => {
 };
 
 export const fetchFileDiffs = async (): Promise<FileDiffEntry[]> => {
-  const response = await fetch(apiUrl('/api/git/diff'), {
+  const response = await apiFetch(apiUrl('/api/git/diff'), {
     signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
   await throwIfNotOk(response, 'Failed to load diff');
@@ -30,7 +30,7 @@ export const fetchFileDiffs = async (): Promise<FileDiffEntry[]> => {
 };
 
 export const fetchStashDiff = async (index: number): Promise<string> => {
-  const response = await fetch(apiUrl(`/api/git/stash-diff?index=${index}`), {
+  const response = await apiFetch(apiUrl(`/api/git/stash-diff?index=${index}`), {
     signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
   await throwIfNotOk(response, 'Failed to load stash diff');
@@ -43,7 +43,7 @@ export const commitChanges = async (
   title: string,
   message?: string,
 ): Promise<void> => {
-  const response = await fetch(apiUrl('/api/git/commit'), {
+  const response = await apiFetch(apiUrl('/api/git/commit'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ files, title, message }),
@@ -53,7 +53,7 @@ export const commitChanges = async (
 };
 
 export const stagePath = async (path: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/git/stage'), {
+  const response = await apiFetch(apiUrl('/api/git/stage'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path }),
@@ -63,7 +63,7 @@ export const stagePath = async (path: string): Promise<void> => {
 };
 
 export const unstagePath = async (path: string): Promise<void> => {
-  const response = await fetch(apiUrl('/api/git/unstage'), {
+  const response = await apiFetch(apiUrl('/api/git/unstage'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path }),
@@ -73,7 +73,7 @@ export const unstagePath = async (path: string): Promise<void> => {
 };
 
 export const pushChanges = async (): Promise<void> => {
-  const response = await fetch(apiUrl('/api/git/push'), {
+  const response = await apiFetch(apiUrl('/api/git/push'), {
     method: 'POST',
     signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
@@ -83,7 +83,7 @@ export const pushChanges = async (): Promise<void> => {
 export const suggestCommitMessage = async (
   files: string[],
 ): Promise<{ title: string; message: string }> => {
-  const response = await fetch(apiUrl('/api/git/suggest-commit-message'), {
+  const response = await apiFetch(apiUrl('/api/git/suggest-commit-message'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ files }),
@@ -102,7 +102,7 @@ export type SyncResult =
   | { ok: false; recovering: false; conflictPrompt: string; message: string };
 
 export const syncToMain = async (): Promise<SyncResult> => {
-  const response = await fetch(apiUrl('/api/git/sync'), {
+  const response = await apiFetch(apiUrl('/api/git/sync'), {
     method: 'POST',
     signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
@@ -118,7 +118,7 @@ export const syncToMain = async (): Promise<SyncResult> => {
 
 // Fast-forward the current branch from origin in place (no branch switch).
 export const pullFromOrigin = async (): Promise<void> => {
-  const response = await fetch(apiUrl('/api/git/pull'), {
+  const response = await apiFetch(apiUrl('/api/git/pull'), {
     method: 'POST',
     signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
@@ -128,7 +128,7 @@ export const pullFromOrigin = async (): Promise<void> => {
 // Rebase the current branch onto its diverged remote; on conflict the server
 // hands off to a recovery agent instead of throwing (see SyncResult).
 export const fixGitDivergence = async (): Promise<SyncResult> => {
-  const response = await fetch(apiUrl('/api/git/fix-divergence'), {
+  const response = await apiFetch(apiUrl('/api/git/fix-divergence'), {
     method: 'POST',
     signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
@@ -145,7 +145,7 @@ export const fixGitDivergence = async (): Promise<SyncResult> => {
 // Launches the resolve-conflict agent against a paused-then-aborted rebase — only
 // called on explicit "ask the agent to resolve" confirmation from the sync-failed toast.
 export const resolveConflict = async (prompt: string): Promise<{ ok: boolean; error?: string }> => {
-  const response = await fetch(apiUrl('/api/git/resolve-conflict'), {
+  const response = await apiFetch(apiUrl('/api/git/resolve-conflict'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt }),
@@ -163,7 +163,7 @@ export const resolveConflict = async (prompt: string): Promise<{ ok: boolean; er
 export const completeIdea = async (
   planId: string,
 ): Promise<{ branch: string; remoteDeleted?: boolean; needsAttention?: string }> => {
-  const response = await fetch(apiUrl('/api/git/complete-idea'), {
+  const response = await apiFetch(apiUrl('/api/git/complete-idea'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),
@@ -181,7 +181,7 @@ export const completeIdea = async (
 export const verifyDirectCompletion = async (
   planId: string,
 ): Promise<{ ready: boolean; missing: string[] }> => {
-  const response = await fetch(apiUrl('/api/git/verify-direct-completion'), {
+  const response = await apiFetch(apiUrl('/api/git/verify-direct-completion'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),
@@ -195,7 +195,7 @@ export const verifyDirectCompletion = async (
 export const createPlanBranch = async (
   planId: string,
 ): Promise<{ branch: string; warning?: string }> => {
-  const response = await fetch(apiUrl('/api/git/branch'), {
+  const response = await apiFetch(apiUrl('/api/git/branch'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planId }),

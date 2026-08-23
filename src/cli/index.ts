@@ -162,12 +162,16 @@ program
     '-p, --port <number>',
     'port to listen on (default: papercamp/config.json port, else 3333)',
   )
-  .action(async (opts: { port?: string }) => {
+  .option(
+    '--share',
+    'open an account-less cloudflared quick tunnel so the hosted client can reach this machine from anywhere',
+  )
+  .action(async (opts: { port?: string; share?: boolean }) => {
     const root = process.cwd();
     const configPort = opts.port ? undefined : await readConfigPort(root);
     const port = resolveDevPort(opts.port, configPort);
     try {
-      await startDevServer({ root, port });
+      await startDevServer({ root, port, share: opts.share });
       console.log(`Paper Camp dashboard running at http://localhost:${port}`);
     } catch (error) {
       console.error((error as Error).message);

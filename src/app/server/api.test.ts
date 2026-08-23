@@ -100,6 +100,49 @@ describe('isForbiddenRequest', () => {
     ).toBe(true);
   });
 
+  it('blocks a non-loopback trusted Host with no Origin and no pairing token', () => {
+    // A LAN host or shared tunnel is reachable by curl, not just browsers, so a
+    // missing Origin can no longer coast through on the Host check alone.
+    expect(
+      isForbiddenRequest(
+        { headers: { host: '192.168.1.5:3333' }, method: 'GET' },
+        undefined,
+        'the-token',
+      ),
+    ).toBe(true);
+  });
+
+  it('allows a non-loopback trusted Host with no Origin when Sec-Fetch-Site says same-origin', () => {
+    // A dashboard served directly (typed URL, no ?token=) makes same-origin
+    // fetches that omit Origin but still carry this browser-set header.
+    expect(
+      isForbiddenRequest({
+        headers: { host: '192.168.1.5:3333', 'sec-fetch-site': 'same-origin' },
+        method: 'GET',
+      }),
+    ).toBe(false);
+  });
+
+  it('allows a non-loopback trusted Host with no Origin when the pairing token matches', () => {
+    expect(
+      isForbiddenRequest(
+        { headers: { host: '192.168.1.5:3333', 'x-pairing-token': 'the-token' }, method: 'GET' },
+        undefined,
+        'the-token',
+      ),
+    ).toBe(false);
+  });
+
+  it('blocks a non-loopback trusted Host with no Origin and a wrong pairing token', () => {
+    expect(
+      isForbiddenRequest(
+        { headers: { host: '192.168.1.5:3333', 'x-pairing-token': 'wrong' }, method: 'GET' },
+        undefined,
+        'the-token',
+      ),
+    ).toBe(true);
+  });
+
   it('trusts a paired origin even though it is not on a private network', () => {
     const isPairedOrigin = (origin: string) => origin === 'https://app.papercamp.dev';
     expect(

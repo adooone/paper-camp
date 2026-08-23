@@ -1,3 +1,7 @@
+// Shared between server (isForbiddenRequest) and client (api-base) so a hosted
+// client sending this header and a server checking it can't drift apart.
+export const PAIRING_TOKEN_HEADER = 'x-pairing-token' as const;
+
 export type PlanStatus = 'idea' | 'planned' | 'in-progress' | 'review' | 'done' | 'dropped';
 
 export const PLAN_STATUSES: PlanStatus[] = [

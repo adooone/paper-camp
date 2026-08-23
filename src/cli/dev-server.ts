@@ -3,7 +3,13 @@ import { type IncomingMessage, type ServerResponse, createServer } from 'node:ht
 import { dirname, extname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApiMiddleware } from '../app/server/api';
-import { registrationLinks } from './registration-link';
+import { buildRegistrationLinkForRuntime, registrationLinks } from './registration-link';
+import {
+  CLOUDFLARED_MISSING_MESSAGE,
+  type QuickTunnel,
+  isCloudflaredAvailable,
+  startQuickTunnel,
+} from './tunnel';
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -26,11 +32,16 @@ function appDir(): string {
 export interface DevServerOptions {
   root: string;
   port: number;
+  share?: boolean;
 }
 
 /** Serves the pre-built dashboard SPA (dist/app), for an installed package
  * where there's no Vite runtime available (it's a devDependency). */
-export async function startDevServer({ root, port }: DevServerOptions): Promise<void> {
+export async function startDevServer({ root, port, share }: DevServerOptions): Promise<void> {
+  if (share && !(await isCloudflaredAvailable())) {
+    throw new Error(CLOUDFLARED_MISSING_MESSAGE);
+  }
+
   const staticDir = appDir();
   const indexPath = join(staticDir, 'index.html');
   const indexHtml = await readFile(indexPath, 'utf-8').catch(() => null);
@@ -87,7 +98,9 @@ export async function startDevServer({ root, port }: DevServerOptions): Promise<
     });
   });
 
+  let tunnel: QuickTunnel | undefined;
   const shutdown = async () => {
+    tunnel?.process.kill();
     await apiMiddleware.agent.killCurrent();
     await apiMiddleware.services.killAll();
     process.exit(0);
@@ -101,4 +114,13 @@ export async function startDevServer({ root, port }: DevServerOptions): Promise<
     server.once('error', reject);
     server.listen(port, resolve);
   });
+
+  if (share) {
+    tunnel = await startQuickTunnel(port);
+    const tunnelHost = new URL(tunnel.url).hostname;
+    const existing = process.env.PAPERCAMP_ALLOWED_HOSTS;
+    process.env.PAPERCAMP_ALLOWED_HOSTS = existing ? `${existing},${tunnelHost}` : tunnelHost;
+    const tunnelLink = buildRegistrationLinkForRuntime(tunnel.url, apiMiddleware.pairing.token);
+    console.log(`  ${tunnelLink}  (reachable from anywhere)`);
+  }
 }
