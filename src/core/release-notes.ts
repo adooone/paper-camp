@@ -13,9 +13,8 @@ const TYPE_SECTION_LABELS: Record<EntityType, string> = {
 
 const SECTION_ORDER = Array.from(new Set(Object.values(TYPE_SECTION_LABELS)));
 
-// One row per idea rather than per commit — the join dedupes a fix-up commit landing
-// after the idea's initial commit into the same row, and swaps the commit subject for
-// the idea's own title, so a release reads as a list of shipped ideas, not raw commits.
+/** One row per idea rather than per commit: dedupes a fix-up commit into the idea's
+ * initial row and swaps in the idea's title, so a release reads as shipped ideas, not raw commits. */
 export async function resolveReleaseNotes(
   root: string,
   version: string,

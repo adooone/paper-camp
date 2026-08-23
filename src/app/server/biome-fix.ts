@@ -6,9 +6,8 @@ export const BIOME_FIX_COMMAND = 'npx biome check . --write';
 
 const BIOME_FIX_TIMEOUT_MS = 60_000;
 
-// Best-effort: resolves even on a non-zero exit (unfixable lint) — the writer
-// still applies every fix it can, and real failures surface through check-types.
-// A hung process is killed after the timeout so it can't stall the phase commit.
+// Best-effort: resolves even on non-zero exit since real failures surface via
+// check-types; a hung process is killed after the timeout to not stall commits.
 export function runBiomeFix(root: string): Promise<void> {
   return new Promise((resolve) => {
     const proc = spawn(BIOME_FIX_COMMAND, { cwd: root, stdio: 'ignore', shell: true });

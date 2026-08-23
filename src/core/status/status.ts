@@ -10,11 +10,12 @@ export interface StatusDerivationInput {
 
 export type ArchivabilityInput = StatusDerivationInput;
 
-// The one predicate the fix/reopen boundary (IDEA-187) keys off everywhere: a done
-// or archived entity's own file is read-only, so new work always spawns its own
-// linked fix entity instead. Reads the stored status, not the derived one — a
-// merged-but-not-yet-archived idea only counts once something has actually stamped
-// `status: done` on it (readEntities sets `archived` from the file's directory).
+/**
+ * The fix/reopen boundary predicate (IDEA-187): a done/archived entity's file is
+ * read-only, so new work spawns a linked fix entity instead. Reads the stored status,
+ * not the derived one — a merged-but-not-yet-archived idea counts once `status: done`
+ * is actually stamped (readEntities sets `archived` from the file's directory).
+ */
 export function isClosedEntity(entity: { status?: EntityStatus; archived?: boolean }): boolean {
   return entity.archived === true || entity.status === 'done';
 }
@@ -56,9 +57,11 @@ export function deriveStatus(
   return entity.phases.length > 0 ? 'planned' : 'idea';
 }
 
-// Mirrors deriveStatus's guards up to its `!prLookupResolved` branch: true exactly when
-// that branch is the one producing the status, i.e. GitHub was unreachable and nothing
-// derivable (archived/dropped/a resolved PR) overrode the guess.
+/**
+ * Mirrors deriveStatus's guards up to its `!prLookupResolved` branch: true exactly when
+ * GitHub was unreachable and nothing derivable (archived/dropped/a resolved PR) overrode
+ * the guess.
+ */
 export function isStatusFallback(
   entity: StatusDerivationInput,
   pr: PrInfo | undefined,
@@ -79,9 +82,11 @@ export function isArchivable(entity: ArchivabilityInput, pr: PrInfo | undefined)
   return status === 'review' || status === 'done';
 }
 
-// A board carries no phases of its own — its status rolls up from its tickets'
-// derived statuses the way a plan's rolls up from its phases, capped at `review`
-// since closing an entity is always a human promotion (IDEA-187), never automatic.
+/**
+ * A board's status rolls up from its tickets' derived statuses, the way a plan's rolls
+ * up from its phases, capped at `review` since closing an entity is always a human
+ * promotion (IDEA-187), never automatic.
+ */
 export function deriveBoardStatus(ticketStatuses: EntityStatus[]): PlanStatus {
   if (ticketStatuses.length === 0) return 'idea';
   if (ticketStatuses.every((s) => s === 'done' || s === 'dropped')) return 'review';

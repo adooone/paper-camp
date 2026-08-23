@@ -33,9 +33,8 @@ export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// Every agent-authored thread message must carry `from: 'agent'` or it renders as the
-// user's own message in the feedback chat. Build them through here so the field can't be
-// forgotten at a call site.
+/** Every agent-authored thread message must carry `from: 'agent'` or it renders as the
+ * user's own message in the feedback chat — build them through here so it can't be forgotten. */
 export function agentThreadMessage(
   text: string,
   kind: ThreadMessage['kind'] = 'log',

@@ -65,9 +65,8 @@ function humanizeTaskKind(kind: TaskKind): string {
   return kind.replace(/-/g, ' ');
 }
 
-// Lets the phase or fix-pass agent short-circuit straight to escalation when
-// it hits a genuine ambiguity or product choice, instead of guessing or
-// spinning through the fix-attempt cap.
+// Lets the phase/fix-pass agent short-circuit to escalation on a genuine
+// ambiguity instead of guessing or spinning through the fix-attempt cap.
 function extractBlocker(text: string): string | undefined {
   const idx = text.indexOf(NEEDS_DECISION_MARKER);
   if (idx === -1) return undefined;
@@ -85,8 +84,7 @@ export interface AgentTask {
   startedAt: string;
   phaseIndex?: number;
   /** Set while run-all's post-phase Fixes loop is on this item; checked ahead of
-   * `phaseIndex` in didTaskProgress since a stale phaseIndex can linger from the
-   * phase loop that ran before it. */
+   * `phaseIndex` since a stale phaseIndex can linger from the prior phase loop. */
   fixIndex?: number;
   fixAttempt?: number;
   fixAttemptCap?: number;
@@ -297,10 +295,8 @@ export function createAgentManager(
   snapshotWorkingTree?: () => Promise<GitStatusEntry[]>,
   state: AgentManagerState = createEmptyAgentState(),
 ) {
-  // `tasks`/`clients` are the same Map/Set a hot-reloaded replacement instance
-  // receives via `state`, so in-flight process listeners (registered on this
-  // closure) and the new instance's getStatus()/subscribe() read and write the
-  // same underlying collections instead of drifting apart after the swap.
+  // Shared with a hot-reloaded replacement instance via `state`, so in-flight
+  // listeners and the new instance's getStatus()/subscribe() stay in sync.
   const { tasks, clients } = state;
 
   function currentTask(): AgentTask | undefined {
@@ -319,13 +315,8 @@ export function createAgentManager(
     return task.status === 'stopping';
   }
 
-  // Writes a run-all escalation into the plan's thread so a human sees the agent's
-  // question in the same place they'd leave one, and the Feedback chat can pick it
-  // back up instead of the run dying with no trace.
-  // Also flips the plan back to in-progress so a parked run surfaces in the
-  // worklist as needing input rather than looking merely errored, and tags the
-  // task 'question' so resumeQuestionParkedTasks knows to re-enter it once the
-  // Feedback chat's reply resolves the question.
+  // Writes the escalation into the plan's thread (so it's visible where a human
+  // would leave one) and flips status to in-progress so it surfaces as needing input.
   async function escalateToLog(
     task: AgentTask,
     planId: string | undefined,
@@ -407,11 +398,8 @@ export function createAgentManager(
 
   function setStatus(task: AgentTask, status: AgentTaskStatus) {
     task.status = status;
-    // Classify from the terminal output only: a genuine auth failure leaves the marker
-    // among the last lines, whereas a transient blip earlier in a long multi-phase run
-    // (that then recovered and failed the gate) must not mislabel the run as auth.
-    // A 'question' tag set by escalateToLog is left alone — it already identifies the
-    // parked cause more precisely than anything the terminal lines could tell us.
+    // Classify from the terminal lines only, so a transient auth blip that later
+    // recovered isn't mislabeled; a 'question' tag from escalateToLog is left alone.
     if (status === 'error' && task.errorKind !== 'question') {
       const terminalLines = task.lines.flatMap((entry) => entry.split(/\r?\n/)).slice(-5);
       task.errorKind = terminalLines.some(isAuthError) ? 'auth' : undefined;
@@ -514,12 +502,8 @@ export function createAgentManager(
         settleReviewThreads(root, task.fixReviewResult, (text) => pushLine(task, text));
       }
     }
-    // A killed/never-run task must stay unreviewed so the next poll retries it.
-    // Record only when the GitHub post or the idea thread message landed — a
-    // verdict that reached neither is a transient delivery failure and the next
-    // poll should retry it. An unparseable verdict is recorded immediately
-    // instead: a garbled response still consumed the SHA's one review attempt,
-    // and must not spin the same broken prompt every poll.
+    // Record only once the GitHub post or idea-thread message lands (retry otherwise);
+    // an unparseable verdict records immediately since it already used the SHA's attempt.
     if (task.taskKind === 'pr-review' && task.planId && task.prReviewSha) {
       const result = parsePrReviewResult(task.lines);
       if (result && task.prReviewUrl) {
@@ -626,10 +610,8 @@ export function createAgentManager(
     });
   }
 
-  // Shared by batch-reconcile's per-entity loop, the fix pass, and run-all's
-  // per-phase loop: spawn one agent process against `task.proc`, stream its
-  // parsed lines, and resolve with the same { ok, timedOut, stderr } shape
-  // each caller already made its own pass/fail decisions from.
+  // Shared by batch-reconcile, the fix pass, and run-all: spawn one agent process
+  // against `task.proc`, stream its parsed lines, resolve with { ok, timedOut, stderr }.
   function runPhaseProcess(
     task: AgentTask,
     adapter: AgentAdapter,
@@ -644,9 +626,8 @@ export function createAgentManager(
     sessionId?: string;
     usage?: RunUsage;
   }> {
-    // Cleared per attempt: this task object is reused across a queue's items and a
-    // fix pass's retries, so a stale reason from an earlier, ultimately-successful
-    // attempt must never be attributed to a later, unrelated failure.
+    // Cleared per attempt: `task` is reused across retries, so a stale reason from
+    // an earlier attempt must never be attributed to a later, unrelated failure.
     task.errorReason = undefined;
     task.phaseAnchor = undefined;
     task.anchorEnteredAt = undefined;
@@ -910,18 +891,16 @@ export function createAgentManager(
     return launch({ planTitle: 'Recover sync to main' }, prompt, { taskKind: 'sync' });
   }
 
-  // One-click "ask the agent to resolve" against a paused rebase, launched only on
-  // explicit human confirmation from the sync-failed toast — unlike startGitSyncRecovery's
-  // automatic escalation, a content conflict never gets auto-merged unseen.
+  // Unlike startGitSyncRecovery's automatic escalation, a content conflict is only
+  // resolved on explicit human confirmation from the sync-failed toast.
   function startResolveConflict(prompt: string): Result {
     return launch({ planTitle: 'Resolve rebase conflict' }, prompt, {
       taskKind: 'resolve-conflict',
     });
   }
 
-  // "Fix it here" (IDEA-192) — no planId/ideaId, so this never lands in the Inbox's
-  // completion notifications; the Issues page picks up the result from tasks.log
-  // (issueId) once it's done, not from a push.
+  // No planId/ideaId, so this never lands in the Inbox notifications; the Issues
+  // page picks up the result from tasks.log (issueId) instead.
   function startIssueFix(issueId: string, title: string, prompt: string): Result {
     return launch({ planTitle: title }, prompt, { taskKind: 'issue-fix', issueId });
   }
@@ -1779,9 +1758,8 @@ export function createAgentManager(
     state.pendingFixReviewResult = null;
   }
 
-  // The login relay's confirmation cue (IDEA-101): a run-all or single-phase task that
-  // parked with errorKind 'auth' re-launches for the same plan instead of staying failed —
-  // the checkbox it never flipped is exactly what `start`/`startRunAllPhases` pick up next.
+  // Re-launches a run-all/single-phase task parked with errorKind 'auth' instead of
+  // leaving it failed; `start`/`startRunAllPhases` pick up the checkbox it never flipped.
   async function resumeAuthParkedTasks(
     runProjectChecks?: () => Promise<CheckName[]>,
   ): Promise<{ resumed: string[] }> {
@@ -1812,10 +1790,8 @@ export function createAgentManager(
     return { resumed };
   }
 
-  // The Feedback chat's resolution cue (IDEA-125): a run-all that parked with errorKind
-  // 'question' — a permission ask or NEEDS-DECISION escalateToLog surfaced — re-launches
-  // for the same plan once the human's reply resolves that question, picking back up at
-  // whichever phase/fix is still unchecked instead of staying failed forever.
+  // Re-launches a run-all parked with errorKind 'question' once the Feedback chat's
+  // reply resolves it, picking back up at whichever phase/fix is still unchecked.
   async function resumeQuestionParkedTasks(
     planId: string,
     runProjectChecks?: () => Promise<CheckName[]>,
@@ -1860,9 +1836,8 @@ export function createAgentManager(
     stop,
     getStatus,
     getReconcileQueue,
-    // Handed to a hot-reloaded replacement instance's constructor so both share
-    // this exact state object — in-flight tasks and their process listeners keep
-    // updating the same Map/Set/scalars the new instance reads.
+    // Handed to a hot-reloaded replacement instance so both share this exact
+    // state object instead of drifting apart after the swap.
     getState: () => state,
     subscribe(res: ServerResponse) {
       clients.add(res);

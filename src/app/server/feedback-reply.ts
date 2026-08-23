@@ -43,9 +43,8 @@ function toEdit(raw: {
   return { ...(phases.length ? { phases } : {}), ...(body ? { body } : {}) };
 }
 
-// Claude's `-p --output-format json` wraps the model's own text in a {result: "..."}
-// envelope; opencode's `--format json` does not. Unwrap either shape, then pull the
-// JSON object the prompt's contract requires as the final line.
+// Claude's `-p --output-format json` wraps the model's text in {result: "..."}; opencode's
+// `--format json` doesn't. Unwrap either shape, then pull the trailing JSON object.
 function extractJsonBlock(output: string): string | null {
   let resultText = output;
   try {
@@ -55,11 +54,10 @@ function extractJsonBlock(output: string): string | null {
   return resultText.match(/\{[\s\S]*\}/)?.[0] ?? null;
 }
 
-// One-shot, read-only agent call, not the long-running phase/task system in
-// agent.ts: runs independently of the task registry, so it's never blocked by
-// (and never blocks) a running phase/reconcile/etc. Never edits a file itself —
-// the route applies the edit this returns, via applyFeedbackEdit below. This chat
-// never creates new ideas — a request always becomes an edit on the current plan.
+/** One-shot, read-only agent call, independent of the long-running phase/task system in
+ * agent.ts — never blocked by, and never blocks, a running phase/reconcile/etc. Never
+ * edits a file itself; the caller applies the returned edit via applyFeedbackEdit below.
+ * A request always becomes an edit on the current plan, never a new idea. */
 export async function replyToFeedback(
   plan: PlanEntry,
   otherEntities: EntityEntry[],
@@ -112,16 +110,11 @@ export async function summarizeFeedback(
   return summary;
 }
 
-// Applies a proposed edit's phase ops onto the entity's current phase/fix lists —
-// deterministic in the app, never as freeform file edits by the agent, so the
-// entity file's grammar (frontmatter, Phases, Fixes, Thread) can never be corrupted.
-//
-// A closed (done/archived) entity's own file stays read-only from here on: new
-// phase-adds come back as `spawnFix` for the caller to raise as their own linked
-// fix entity instead of reopening the closed one (IDEA-187) — reopening used to
-// strand archived files, credit `done` to the wrong PR, and overwrite the shipped
-// Phases history. A plan still under review keeps today's behaviour — new work
-// lands in its own Fixes list, since its Phases history isn't finished shipping yet.
+/** Applies a proposed edit's phase ops onto the entity's current phase/fix lists,
+ * deterministically, so the entity file's grammar can't be corrupted by freeform agent edits.
+ * A closed (done/archived) entity stays read-only: new phase-adds come back as `spawnFix` for
+ * the caller to raise as a separate fix entity instead of reopening the closed one (IDEA-187).
+ * A plan still under review routes new work to its own Fixes list instead. */
 export function applyFeedbackEdit(
   entity: { phases: PhaseItem[]; fixes?: PhaseItem[]; status?: EntityStatus; archived?: boolean },
   edit: FeedbackEdit,
@@ -163,9 +156,8 @@ export function applyFeedbackEdit(
   return overrides;
 }
 
-// True when applyFeedbackEdit's `fixes` override appended a new, still-open Fix —
-// the signal that a feedback run turned into real work (IDEA-149), used both to
-// reopen an already-finished plan and to arm the fixes run's auto-launch.
+/** True when applyFeedbackEdit's `fixes` override appended a new, still-open Fix —
+ * used both to reopen an already-finished plan and to arm the fixes run's auto-launch. */
 export function addsOpenFix(
   priorFixes: PhaseItem[] | undefined,
   fixes: PhaseItem[] | undefined,

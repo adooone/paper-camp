@@ -15,9 +15,8 @@ const PLUGINS: Plugin[] = [
   ...LOCAL_ADAPTERS.map((def) => ({ kind: 'local' as const, def })),
 ];
 
-// The one place the two credential stores meet: an external service reports whether
-// its remote account is authenticated, a local adapter whether its own local session
-// is signed in — never the same thing, but both render the same way to the client.
+// The one place the two credential stores meet: external services report remote-account
+// auth, local adapters local-session sign-in — different things, same client rendering.
 function authState(plugin: Plugin, root: string): Promise<boolean | null> {
   return plugin.kind === 'external' ? plugin.def.authenticated(root) : plugin.def.signedIn(root);
 }

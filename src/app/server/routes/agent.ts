@@ -601,11 +601,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           const editResult = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
           const { spawnFix, ...overrides } = editResult;
 
-          // The agent flags when this message answers a question it asked earlier —
-          // reclassify it from a plain log line to a clarification so it's visible
-          // to future runs (readers.ts's clarificationsFromThread) and other agents,
-          // and resolve the open question it answers so a run parked on it (IDEA-125)
-          // is eligible to resume below.
+          // Reclassify a message answering an earlier question as a clarification,
+          // and resolve that question so a run parked on it (IDEA-125) can resume below.
           const withClarification = result.answersQuestion
             ? threadWithUser.map((m, i) =>
                 i === threadWithUser.length - 1 ? { ...m, kind: 'clarification' as const } : m,
@@ -625,11 +622,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
 
           let replyText = result.reply;
 
-          // A closed (done/archived) idea's file stays read-only — a phase-add edit
-          // there comes back as spawnFix, so it raises its own linked IDEA-N fix
-          // entity instead of reopening the closed idea (IDEA-187): reopening used to
-          // strand archived files, credit `done` to the wrong PR, and overwrite the
-          // shipped Phases history (IDEA-158/162/174/181).
+          // A closed idea's file stays read-only, so a phase-add edit there raises
+          // its own linked IDEA-N fix entity instead of reopening the idea (IDEA-187).
           let spawnedId: string | undefined;
           if (spawnFix?.length) {
             const configPath = join(root, 'papercamp', 'config.json');
@@ -663,10 +657,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             }
           }
 
-          // A feedback edit that adds an undone Fix to a plan still under review is new
-          // work: reopen it so it re-enters the run-order queue and run-all implements it —
-          // otherwise the edit lands on a plan that looks finished and nothing ever runs
-          // (or shows). The same signal arms the fixes run's auto-launch (IDEA-149).
+          // An undone Fix added to a plan under review is new work: reopen it so
+          // run-all implements it instead of it landing on a plan that looks finished.
           const reopen = addsOpenFix(entity.fixes, overrides.fixes);
           if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
 
@@ -689,17 +681,14 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             text: replyText,
           });
 
-          // Resolving an open question is exactly the confirmation cue a run-all
-          // parked on it (IDEA-125) is waiting for — re-enter it now instead of
-          // leaving it failed until someone notices and relaunches by hand.
+          // Re-enter a run-all parked on this question (IDEA-125) now, instead of
+          // leaving it failed until someone notices.
           if (openQuestionIndex !== -1) {
             await agent.resumeQuestionParkedTasks(entity.id, () => status.runChecksAndWait());
           }
 
-          // Only a plan edit needs an Undo — commit it on its own so a revert can't
-          // also sweep in unrelated dirty files elsewhere in the working tree. Committed
-          // before the auto-launch below so the run's worker never writes phase-run
-          // changes into a commit still being staged for this feedback edit.
+          // Commit a plan edit on its own so an Undo revert can't sweep in unrelated
+          // dirty files, and before the auto-launch below writes phase-run changes.
           if (overrides.phases || overrides.fixes || overrides.body) {
             const relFile = relative(root, targetFile);
             await git.commit(
@@ -711,10 +700,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             undo = { commitSha: await git.getHeadSha() };
           }
 
-          // Same path the "Run fixes" button uses — the fix phase already landed in
-          // the file above (and is now committed), so this starts implementing it as
-          // the reply posts. Busy agents are turned away by startRunAllPhases's own
-          // admit() guard.
+          // Same path the "Run fixes" button uses; startRunAllPhases's own admit()
+          // guard turns away busy agents.
           if (reopen) {
             {
               const reopenedPlan = entityToPlan({
@@ -776,11 +763,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // Distills one ephemeral `chat` message into a durable thread kind — deterministic,
-    // no agent call, mirroring how applyFeedbackEdit above never touches a file itself
-    // beyond what the route writes. `note` carries the promote-to-idea breadcrumb (the
-    // idea itself is minted through the ordinary POST /api/ideas, then this call marks
-    // the source message as captured — see useSendFeedbackMessage's sibling hook).
+    // Distills one ephemeral `chat` message into a durable thread kind, deterministically.
+    // `note` carries the promote-to-idea breadcrumb after the idea is minted elsewhere.
     {
       method: 'POST',
       path: '/api/agent/feedback-promote',
@@ -821,10 +805,8 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
       },
     },
 
-    // Fires once a chat session goes quiet (client-side inactivity timer — see
-    // useFeedbackQuietSummary), distilling the exchange since the last log entry into
-    // one durable line. A no-op (skipped: true) when nothing chat-kind followed it,
-    // so re-firing on an already-quiet thread never appends a duplicate summary.
+    // Fires once a chat session goes quiet (client-side inactivity timer), distilling
+    // the exchange since the last log entry into one durable line; no-op if nothing new.
     {
       method: 'POST',
       path: '/api/agent/feedback-summarize',

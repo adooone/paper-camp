@@ -24,9 +24,10 @@ const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 // Unmerged porcelain status codes — a rebase (or merge) conflict, as opposed to a plain edit.
 const CONFLICT_STATUSES = new Set(['UU', 'AA', 'DD', 'AU', 'UA', 'DU', 'UD']);
 
-// Thrown by assertCleanWorkingTree so the completion action (IDEA-194) can refuse before
-// merging — landing the squash-merge and only then failing to switch to main would be
-// the worst outcome, so the tree is checked ahead of the merge, not after.
+/**
+ * Thrown by assertCleanWorkingTree so a caller can refuse before merging, rather
+ * than landing a squash-merge and only then failing to switch to main.
+ */
 export class DirtyWorkingTreeError extends Error {
   files: string[];
 
@@ -208,10 +209,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await runGit(args);
   }
 
-  // Called right after branch setup so a run can never erase the drafted plan it is
-  // about to execute — see IDEA-137, and by runGitSync before stashing — see IDEA-176.
-  // Scoped to papercamp/ only: unrelated dirty state outside the corpus is left for
-  // the caller's own commit steps.
+  // Scoped to papercamp/ only — unrelated dirty state outside the corpus is left
+  // for the caller's own commit steps.
   async function commitCorpus(subject: string, refsId?: string): Promise<void> {
     const status = await runGitStatus();
     const files = status.filter((entry) => entry.path.startsWith('papercamp/')).map((e) => e.path);
@@ -233,9 +232,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     const currentBranch = currentResult.stdout.toString().trim();
     if (currentBranch === branch) return undefined;
 
-    // Whether the branch already exists decides create-vs-checkout — never infer it
-    // from a `checkout -b` failure, which also fires for a dirty/blocked worktree and
-    // would then surface the misleading "pathspec did not match" from a doomed retry.
+    // Whether the branch already exists decides create-vs-checkout — inferring it from
+    // a `checkout -b` failure would misreport a dirty/blocked worktree as "branch exists".
     const branchExists =
       spawnSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`], { cwd: root })
         .status === 0;
@@ -262,9 +260,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
         ? 'origin/main'
         : 'main';
 
-    // Read before the checkout below moves HEAD — this is the cheap moment to catch a
-    // stale fork (IDEA-171): the new branch is about to inherit whatever corpus state
-    // HEAD carries, so warn now rather than after run-all silently redoes the work.
+    // Read before checkout moves HEAD: the new branch inherits whatever corpus state
+    // HEAD carries, so a stale fork is warned about now, not after silently redone work.
     const stale = await findStaleBaseRef(planId);
     const warning = stale
       ? `${planId} already has ${stale.done}/${stale.total} phases complete on ${stale.ref} — this new branch forks from before that work, so it will inherit the stale corpus state. Rebase onto ${stale.ref} once created.`
@@ -281,9 +278,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     return warning;
   }
 
-  // Called right after a successful squash-merge (IDEA-194). `git branch -d` would
-  // refuse: squashing rewrites the SHA, so the branch never reads as merged into
-  // main — `-D` is required, not a looser safety check being skipped.
+  // `git branch -d` would refuse here: squashing rewrites the SHA, so the branch
+  // never reads as merged into main — `-D` is required, not a skipped safety check.
   async function returnToMain(): Promise<ReturnToMainResult> {
     const branch = getCurrentBranch();
     await runGit(['fetch', 'origin', 'main']);
@@ -427,10 +423,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     };
   }
 
-  // Refuses a stale fork: main or origin/main already has phases checked that HEAD (the
-  // branch about to run) still shows unchecked — the IDEA-137 bug class. Compares total
-  // done counts, not per-phase identity: a ref simply further along than HEAD is enough
-  // to flag, regardless of which specific phases moved.
+  // Flags a ref whose total done-phase count exceeds HEAD's, regardless of which
+  // specific phases moved — HEAD is about to fork from a base that's already ahead.
   async function findStaleBaseRef(id: string): Promise<StaleBaseRef | null> {
     const current = await getPhaseStateAtRef(id, 'HEAD');
     if (!current) return null;
@@ -443,9 +437,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     return null;
   }
 
-  // Confirms a direct-to-main completion actually landed (IDEA-203): a clean tree, and
-  // at least one commit on main naming the idea's id. Both are checked (not just the
-  // first that fails) so the report names everything still missing, not just one item.
+  // Both a clean tree and a commit-on-main are checked (not short-circuited) so the
+  // report names everything still missing, not just the first failure.
   async function verifyDirectCompletion(id: string): Promise<DirectCompletionCheck> {
     const missing: string[] = [];
     const status = await runGitStatus();
@@ -472,9 +465,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
-  // Squash-merge deletes the branch and drops its commits from `main`, so
-  // ancestry (`isMergedIntoMain`) never sees a squashed branch as merged; the
-  // PR's own state is the only signal that survives the squash.
+  // Squash-merge drops the branch's commits from `main`, so ancestry-based
+  // `isMergedIntoMain` can't see it — the PR's own state is the only signal left.
   async function isBranchMerged(): Promise<boolean> {
     const entityId = getFeatureBranchPlanId();
     if (!entityId) return isMergedIntoMain();
@@ -672,9 +664,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       let patchOutput = binary
         ? ''
         : await runGit(['diff', 'HEAD', '--', ...literalPathspecs]).catch(() => '');
-      // Below git's rename-similarity threshold, the "diff" is a full delete of the old
-      // path plus a full add of the new one — a full re-add. We already know from status
-      // that it's a rename, so drop the dump in favor of the compact header the UI shows.
+      // Below git's rename-similarity threshold the diff is a full delete+add; status
+      // already knows it's a rename, so drop the dump for the UI's compact header.
       if (entry.renameSource && !patchOutput.includes('rename from ')) {
         patchOutput = '';
       }
@@ -730,12 +721,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
-  // `papercamp/run-order.md` used to be listed here as disposable; it's gitignored
-  // now, so it never reaches `runGitStatus()` at all.
-  //
-  // The watcher rewrites files and re-normalizes `order:`, often with the same change an
-  // incoming commit carries; those edits survive the stash but collide on pop, silently
-  // blocking sync. Drop the disposable ones: identical-to-origin/main loses nothing.
+  // The watcher re-normalizes files with the same change an incoming commit often
+  // carries; those edits survive a stash but collide on pop, silently blocking sync.
   async function dropDisposableLocalChanges(): Promise<void> {
     const tracked = (await runGitStatus()).filter((entry) => !entry.status.startsWith('?'));
     const disposable: string[] = [];
@@ -752,10 +739,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     }
   }
 
-  // Trunk-style reconcile: fast-forward when the local ref is merely behind, else
-  // replay the local (direct-to-main) commits on top of the squash-merged remote so
-  // a committed-but-unpushed change never leaves the branch split. A genuine content
-  // conflict aborts the rebase cleanly and surfaces, rather than dumping markers.
+  // Fast-forwards when behind, else rebases local commits onto the remote so a
+  // committed-but-unpushed change never leaves the branch split.
   const MAX_CONFLICT_CONTENT_CHARS = 20000;
 
   async function reconcileOnto(ref: string): Promise<void> {
@@ -819,9 +804,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await runGit(['fetch', '--prune']).catch(() => {});
     await dropDisposableLocalChanges().catch(() => {});
 
-    // Committed here, ahead of the stash below, so papercamp/ never enters it — see
-    // IDEA-176. A commit made on a branch other than main doesn't travel with a plain
-    // `checkout main`, so its sha is captured to cherry-pick across below.
+    // Committed ahead of the stash below so papercamp/ never enters it; its sha is
+    // captured since a plain `checkout main` won't carry the commit across branches.
     const startBranch = getCurrentBranch();
     const headBeforeCorpus = await getHeadSha();
     await commitCorpus('docs(ideas): sync corpus');
@@ -936,9 +920,8 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     await reconcileOnto(`origin/${branch}`);
   }
 
-  // Same rebase-then-report path as runGitPull, but returns a GitSyncResult
-  // (with a recovery prompt on failure) instead of throwing, so the caller can
-  // hand a conflict to the recovery agent the way runGitSync already does.
+  // Same rebase-then-report path as runGitPull, but returns a GitSyncResult instead
+  // of throwing so the caller can hand a conflict to the recovery agent.
   async function fixDivergence(): Promise<GitSyncResult> {
     await runGit(['fetch', '--prune']).catch(() => {});
     const branch = getCurrentBranch();

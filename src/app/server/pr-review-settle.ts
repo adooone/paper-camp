@@ -139,9 +139,8 @@ async function appendReviewThreadMessage(
   const { entries } = await readEntities(ideasDir);
   const entry = entries.find((e) => e.id === entityId);
   if (!entry) return 'failed';
-  // A review can land long after the PR merged and the entity closed — waiting on
-  // GitHub means the result arrives whenever it arrives. Writing it then reopens a
-  // settled file for a verdict nothing can act on, so a closed entity is left alone.
+  // A review can land long after the PR merged and the entity closed; writing it then
+  // would reopen a settled file for a verdict nothing can act on, so it's left alone.
   if (isClosedEntity(entry, file)) return 'closed';
 
   await writeEntityFile(
@@ -165,10 +164,8 @@ function isUnprocessableEntity(body: string | undefined): boolean {
   return body !== undefined && /\bHTTP 422\b/.test(body);
 }
 
-// createPrReview posts all-or-nothing: GitHub rejects the whole review with 422
-// if any single comment's line isn't part of the diff. Retrying once with no
-// inline comments turns a bad line number into a dropped finding instead of a
-// lost review.
+// createPrReview posts all-or-nothing: a bad line rejects the whole review with 422.
+// Retry once with no inline comments to turn that into a dropped finding, not a lost review.
 async function createPrReviewDegraded(
   root: string,
   prUrl: string,
@@ -191,10 +188,10 @@ async function createPrReviewDegraded(
   return { delivery: fallback, dropped: result.findings.length };
 }
 
-// Posts the GitHub review (each finding becomes a resolvable thread — exactly
-// what fetchUnresolvedThreads already consumes, so the Fix-review button picks
-// them up unchanged) and lands the verdict as a [review] thread message on the
-// idea, so it's in the corpus and travels with the entity (IDEA-170).
+/** Posts the GitHub review (each finding becomes a resolvable thread, which is what
+ * fetchUnresolvedThreads consumes for the Fix-review button) and lands the verdict as
+ * a [review] thread message on the idea, so it's in the corpus and travels with the
+ * entity (IDEA-170). */
 export async function postPrReview(
   root: string,
   entityId: string,

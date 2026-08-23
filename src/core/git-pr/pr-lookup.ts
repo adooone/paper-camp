@@ -405,9 +405,8 @@ async function enrichWithReviewSignal(root: string, byId: Map<string, PrInfo>): 
   });
 }
 
-// Non-zero exit (or a spawn/parse failure) means "can't resolve" (no gh, offline,
-// unauthenticated), not "no PRs" — caller must fall back rather than treat this as a
-// confirmed empty set, so `spawnJson`'s `undefined` propagates as-is.
+// A failed/unauthenticated `gh` call means "can't resolve", not "no PRs" — callers must
+// fall back, so `spawnJson`'s `undefined` propagates as-is rather than becoming an empty set.
 async function runGhPrListAll(root: string): Promise<Map<string, PrInfo> | undefined> {
   const rows = await spawnJson<GhPrRow[]>(root, [
     'pr',

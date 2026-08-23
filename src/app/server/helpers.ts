@@ -87,9 +87,8 @@ export async function writeRunOrderFile(root: string, list: RunOrderFileEntry[])
   await writeFile(runOrderFilePath(root), formatRunOrderFile(list), 'utf-8');
 }
 
-// Every read-normalize-write of run-order.md (plans PATCH, the activity-triggered
-// pass, applyPrioritiseVerdict) must run as one critical section, or an interleaved
-// pass can normalize against a stale read and clobber a concurrent write.
+// Every read-normalize-write of run-order.md must run as one critical section, or an
+// interleaved pass can normalize against a stale read and clobber a concurrent write.
 let runOrderLock: Promise<unknown> = Promise.resolve();
 
 export function withRunOrderLock<T>(fn: () => Promise<T>): Promise<T> {
@@ -101,9 +100,8 @@ export function withRunOrderLock<T>(fn: () => Promise<T>): Promise<T> {
   return result;
 }
 
-// See IDEA-171: a branch forked before another ref finished this plan's phases would
-// otherwise redo that work invisibly. Refuse rather than warn — the failure is silent
-// and expensive to clean up by hand.
+/** Refuses (rather than warns) when the branch was forked before another ref finished
+ * this plan's phases — otherwise that work would be silently redone. */
 export async function checkStaleBaseForRunAll(
   git: { findStaleBaseRef: (id: string) => Promise<StaleBaseRef | null> },
   planId: string,

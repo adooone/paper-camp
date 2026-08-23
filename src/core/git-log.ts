@@ -21,11 +21,8 @@ export async function resolveDefaultBranch(root: string): Promise<string> {
   return symbolic.trim().match(/refs\/remotes\/origin\/(.+)/)?.[1] ?? 'main';
 }
 
-// A release-please release line is `* **scope:** Title (IDEA-N) ([hash](url))` — the
-// commit subject it was compiled from, plus the markdown link. Works for both a raw
-// commit subject and a release line, so it doubles as the reverse of findReleaseLineForId.
-// Pre-squash history also has to fall back to the source branch named in a merge
-// commit's own subject, since those predate the `(IDEA-N)` squash-title convention.
+/** Matches a release-please line, a raw commit subject, or (for pre-squash history)
+ * a merge commit's own source-branch name, since those predate the `(IDEA-N)` convention. */
 export function resolveIdFromCommitMessage(message: string): string | null {
   const trailer = message.match(/^Refs:\s*([A-Za-z]+-\d+)\s*$/m);
   if (trailer) return trailer[1].toUpperCase();

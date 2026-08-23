@@ -10,13 +10,8 @@ import { CLAUDE_SETTINGS_JSON, SKILL_MD_CONTENT } from './templates';
 
 const PACKAGE_JSON_SEARCH_DEPTH = 5;
 
-// Read once, from the installed package's own package.json rather than a hand-kept
-// constant — this used to drift (stuck at 0.1.0 while releases moved on), which is
-// exactly the kind of untrustworthy version report a pinned dev dependency can't
-// afford. Walking up from this module's own location (rather than a fixed relative
-// path) survives both the bundled build (this file's code lands in dist/cli/index.js
-// or dist/core/index.js, two levels down from the package root) and running the raw
-// source directly (three levels down) without hardcoding either depth.
+// Walks up from this module's own location rather than a fixed relative path, so it
+// survives both the bundled build and running from raw source at different directory depths.
 function readOwnVersion(): string {
   try {
     let dir = dirname(fileURLToPath(import.meta.url));

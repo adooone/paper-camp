@@ -104,9 +104,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
         }
 
         // A done/archived entity's own file is read-only (IDEA-187) — new phases or
-        // fixes always spawn their own linked fix entity instead of landing here, and
-        // its status only ever moves between the closed statuses (done/dropped), never
-        // back toward an active one, so there is no reopen path to bypass this way.
+        // fixes spawn their own linked fix entity instead of landing here.
         if (isClosedEntity(target)) {
           const addsPhases = (updates.phases?.length ?? 0) > target.phases.length;
           const addsFixes = (updates.fixes?.length ?? 0) > (target.fixes?.length ?? 0);
@@ -135,10 +133,8 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           return;
         }
 
-        // Run order for plans/ideas lives in papercamp/run-order.md, not frontmatter (IDEA-98);
-        // notes aren't part of that list, so their `order` still writes straight to frontmatter.
-        // log is a legacy shape callers still send in full-replacement form — fold it back
-        // into its slice of the entity's single thread.
+        // Run order lives in papercamp/run-order.md, not frontmatter (IDEA-98); notes
+        // aren't part of that list, so their `order` still writes straight to frontmatter.
         let thread = target.thread;
         if (updates.thread !== undefined) {
           thread = updates.thread;
@@ -189,11 +185,8 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
 
         await writeEntityFile(root, targetFile, entityFileInput(updatedEntry));
 
-        // Any status/order write can break the run-order invariant (contiguous
-        // 1..N over planned/in-progress/review); reflow papercamp/run-order.md to
-        // restore it. Classification uses DERIVED status (readWorkEntries) — stored
-        // overrides lag reality (merged-PR entries stay `review`, phased ideas stay
-        // `idea`). Notes have no derived PlanStatus and aren't part of the list.
+        // A status/order write can break the run-order invariant (contiguous 1..N over
+        // planned/in-progress/review); reflow using DERIVED status, since overrides can lag.
         if (
           target.kind !== 'note' &&
           (updates.order !== undefined || updates.status !== undefined)

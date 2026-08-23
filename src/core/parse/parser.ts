@@ -74,9 +74,8 @@ const STANDARD_SECTION_DEFS: Record<keyof StandardSections, SectionDef<unknown>>
   review: REVIEW_SECTION as SectionDef<unknown>,
 };
 
-/** Every entry file (plan, entity, raw ## block) carries the same five optional
- * trailing sections in the same order — extract them together so callers stop
- * re-spelling the phases/log/clarifications/notes/review sequence three times. */
+/** Every entry file carries the same five optional trailing sections in the same order —
+ * extract them together so callers stop re-spelling that sequence three times. */
 function extractStandardSections(body: string): { body: string } & StandardSections {
   const result: Record<keyof StandardSections, unknown[]> = {
     phases: [],

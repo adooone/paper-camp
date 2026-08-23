@@ -56,9 +56,8 @@ export interface LoginRelayOptions {
   onLoginConfirmed?: () => void;
 }
 
-// The CLI exiting 0 already implies success, but its own auth state can lag the
-// exit by a beat, so confirm against the same probe that flagged "signed out" in
-// the first place rather than trusting the exit code alone.
+// The CLI exiting 0 already implies success, but its auth state can lag the exit by a
+// beat, so confirm against the same probe that flagged "signed out" in the first place.
 function pollAuthStatus(root: string, opts: LoginRelayOptions): void {
   if (!opts.onLoginConfirmed) return;
   const pollMs = opts.authStatusPollMs ?? AUTH_STATUS_POLL_MS;
@@ -87,8 +86,7 @@ export async function startClaudeLoginRelay(
   let cancelledBeforeSpawn = false;
 
   // Reserved synchronously (before the `await import` below yields) so a second call
-  // racing in during module load still sees `current` and returns this same handle
-  // instead of spawning a competing `claude auth login`.
+  // racing in during module load sees `current` and returns this handle instead of spawning a competing login.
   const handle: LoginRelayHandle = {
     getState: () => ({ ...state }),
     cancel: () => {
@@ -113,9 +111,8 @@ export async function startClaudeLoginRelay(
 
   if (cancelledBeforeSpawn) return handle;
 
-  // A no-PTY sandbox or a missing `claude` binary makes pty.spawn throw synchronously
-  // (rather than emit an async 'error' like child_process.spawn) — surface that as the
-  // same 'error' phase so the client falls back to the copy-command guide.
+  // A no-PTY sandbox or missing `claude` binary makes pty.spawn throw synchronously; surface
+  // that as the same 'error' phase so the client falls back to the copy-command guide.
   try {
     proc = pty.spawn('claude', ['auth', 'login'], {
       name: 'xterm-color',

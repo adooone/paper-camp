@@ -92,7 +92,8 @@ comments in tests, which the walker already excludes.
 - [x] Clear the pilot violations in src/app/features/plans/
       Rewrite to fit the cap or delete; deleting is the expected outcome for decision-narrating comments.
       run: 3m44s · 874 in · 17.2k out · sonnet-5
-- [ ] Clear the remaining violations in src/app/server/ and src/core/
+- [x] Clear the remaining violations in src/app/server/ and src/core/
+      run: 2m1s · 45k in · 96.1k out · sonnet-5
 - [ ] Wire the gate into the app's Quality check alongside lint and format
 
 ### Thread

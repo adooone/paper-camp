@@ -106,9 +106,8 @@ export function countThreadNotes(entities: EntityEntry[]): {
   return { openQuestions, decisions };
 }
 
-// ISO 8601 week — ties task activity to a calendar week regardless of which
-// day it started on. Standard "shift to the week's Thursday" algorithm: a
-// year's week 1 is whichever week owns that year's first Thursday.
+/** ISO 8601 week, via the standard "shift to the week's Thursday" algorithm — ties
+ * activity to a calendar week regardless of which day it started on. */
 export function isoWeekKey(dateStr: string): string {
   const date = new Date(dateStr);
   const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));

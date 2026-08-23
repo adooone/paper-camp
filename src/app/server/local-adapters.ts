@@ -3,9 +3,8 @@ import { AGENT_IDS, AGENT_LABELS } from '../../types';
 import { AGENTS } from './agents';
 import { run } from './run';
 
-// Tools the runtime drives on the machine — git, claude-code, opencode. Each keeps
-// its own credential (git's local identity, an agent CLI's own login session) on
-// this machine only; none of it is a remote account tied to Paper Camp.
+// Tools the runtime drives on the machine (git, claude-code, opencode); each keeps its
+// own credential locally on this machine, never a remote account tied to Paper Camp.
 export interface LocalAdapterDefinition {
   id: string;
   label: string;

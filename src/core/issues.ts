@@ -131,9 +131,8 @@ export function reconcileIssues(
   return [...merged, ...freshById.values()];
 }
 
-/** An entity Promote (IDEA-192 phase 6) may have created or amended — a spawned
- * fix/idea entity stamps `issueSource`; an open parent gets a `source: 'issue'`
- * item appended to its inline Fixes list instead. */
+/** A spawned fix/idea entity from Promote (IDEA-192 phase 6) stamps `issueSource`;
+ * an open parent instead gets a `source: 'issue'` item appended to its inline Fixes list. */
 type PromotionTarget = {
   id?: string;
   status?: EntityStatus;

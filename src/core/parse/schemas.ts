@@ -25,9 +25,10 @@ export const planFieldsSchema = z.object({
   tags: z.string().optional(),
 });
 
-// YAML frontmatter schemas: the per-file plan/idea format, `---`-delimited YAML
-// metadata plus a markdown body. Field-based schemas above exist only until the
-// monolithic-file format is fully migrated away.
+/**
+ * YAML frontmatter schema for the per-file plan format (`---`-delimited YAML plus a
+ * markdown body). Field-based schemas above exist only until that format fully migrates.
+ */
 export const planFrontmatterSchema = z
   .object({
     id: z.string().describe('Permanent plan ID, e.g. FEAT-24'),
@@ -137,9 +138,10 @@ const entityFrontmatterObjectSchema = z
   })
   .passthrough();
 
-// Frontmatter keys the schema above assigns explicit meaning to — everything else
-// parses through untouched so an older paper-camp can carry a newer field it
-// doesn't understand instead of dropping it on the next write.
+/**
+ * Frontmatter keys the schema above assigns explicit meaning to; everything else parses
+ * through untouched so an older paper-camp can carry a newer field instead of dropping it.
+ */
 export const entityFrontmatterKnownKeys: ReadonlySet<string> = new Set(
   Object.keys(entityFrontmatterObjectSchema.shape),
 );
@@ -201,9 +203,8 @@ export const paperCampConfigSchema = z.object({
   initializedAt: z.string(),
   nextId: z
     .object({
-      // idea: unified-entity counter, all new entities mint lifetime IDEA-N ids from
-      // here. ticket: the board/ticket counter (IDEA-201), mints TICKET-N ids. The
-      // rest are legacy per-kind counters, still present in old configs.
+      // idea: unified-entity counter minting lifetime IDEA-N ids. ticket: board/ticket
+      // counter (IDEA-201) minting TICKET-N ids. The rest are legacy per-kind counters.
       idea: z.number().optional(),
       ticket: z.number().optional(),
       feat: z.number().optional(),

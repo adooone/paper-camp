@@ -19,9 +19,8 @@ const THREAD_LINE_RE =
   /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question|chat)\]\s+(\[agent\]\s+)?(.*)$/;
 const NOTE_STATE_KINDS: ThreadMessageKind[] = ['note', 'decision', 'question'];
 
-/** Entry grammars match a single line, so a hand-wrapped entry used to keep only its
- * first line and silently drop the rest. Folds the indented continuation lines back in;
- * the serializer then re-canonicalizes the entry to one line. */
+/** Entry grammars match a single line, so a hand-wrapped entry would otherwise keep only
+ * its first line; this folds the indented continuation lines back in before re-parsing. */
 function foldContinuation(
   lines: string[],
   start: number,

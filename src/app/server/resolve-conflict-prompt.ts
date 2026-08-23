@@ -1,8 +1,7 @@
 import type { GitSyncFailure } from '@/types/index';
 
-// Read-only assembly for the `resolve-conflict` task: unlike buildGitSyncRecoveryPrompt's
-// broad "fix whatever's broken" prompt, this is scoped to one paused-then-aborted rebase —
-// reproduce it, apply the same domain judgement a human would, and land it.
+// Read-only assembly for `resolve-conflict`: unlike buildGitSyncRecoveryPrompt's broad
+// prompt, this is scoped to one paused-then-aborted rebase to reproduce and land.
 export function buildResolveConflictPrompt(
   failure: Pick<GitSyncFailure, 'conflictedFiles' | 'conflictRef' | 'conflictedContent'>,
   branch: string,
@@ -15,9 +14,8 @@ export function buildResolveConflictPrompt(
     .map((path) => {
       const content = contentByPath.get(path);
       if (!content) return `### ${path}\n(content unavailable)`;
-      // A four-backtick fence survives the three-backtick fences that papercamp
-      // markdown files themselves carry — a shorter fence would let file content
-      // close it early and blur the line between data and instructions.
+      // A four-backtick fence survives the three-backtick fences papercamp markdown carries;
+      // a shorter fence would let file content close it early and blur data from instructions.
       const truncated = content.endsWith('... (truncated)');
       return `### ${path}${truncated ? ' (truncated)' : ''}\n\`\`\`\`\n${content}\n\`\`\`\``;
     })

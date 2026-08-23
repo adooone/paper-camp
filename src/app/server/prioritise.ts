@@ -68,9 +68,8 @@ function validatePrioritiseVerdict(
   return { order: parsed.order, why };
 }
 
-// One-shot, read-only agent call, not the long-running phase/task system in
-// agent.ts: runs independently of the task registry, so it's never blocked by
-// (and never blocks) a running phase/reconcile/etc.
+/** One-shot, read-only agent call, independent of the long-running phase/task system in
+ * agent.ts — never blocked by, and never blocks, a running phase/reconcile/etc. */
 export async function getPrioritiseVerdict(
   worklist: PlanEntry[],
   roadmapText: string,
@@ -109,10 +108,8 @@ export async function getPrioritiseVerdict(
   }
 }
 
-/** Why an idea sits where it does in the run order. Prefixed so a later run can find
- * and replace its own previous note instead of stacking another one — the reason is
- * current state, not history, and an append-only list of near-identical rationales
- * reads like unanswered agent messages. */
+// Prefixed so a later run replaces its own previous note instead of stacking another —
+// the reason is current state, not a history of rationales.
 const RANK_NOTE_PREFIX = 'Run order: ';
 
 const rankNote = (reason: string) => `${RANK_NOTE_PREFIX}${reason}`;

@@ -52,9 +52,10 @@ function parseItems(lines: string[], start: number, end: number): RoadmapItem[] 
   return items;
 }
 
-// Tolerant of prose anywhere outside the load-bearing headings: only `## The goal`,
-// `## Horizon N — …`, and `## Standing concerns` are ever inspected, everything else
-// (intro, "How this file works") is skipped.
+/**
+ * Only `## The goal`, `## Horizon N — …`, and `## Standing concerns` headings are
+ * inspected; other prose (intro, "How this file works") is skipped.
+ */
 export function parseRoadmap(markdown: string): Roadmap {
   const lines = markdown.split('\n');
   let goal = '';
@@ -108,9 +109,8 @@ function locateHorizon(
   return undefined;
 }
 
-// Finds one item's bullet line range (start inclusive, end exclusive of its wrapped
-// continuation lines and candidates) within a horizon, so the 4 mutators below can splice
-// off this one scan instead of each re-walking the heading and bullet structure themselves.
+// Locates one item's bullet range (start inclusive, end exclusive of continuations/candidates)
+// so the mutators below share one scan instead of each re-walking the structure.
 function locateItem(
   lines: string[],
   horizonTitle: string,
@@ -133,10 +133,10 @@ function locateItem(
   return undefined;
 }
 
-// Splices out one item's bullet (and its wrapped continuation lines and candidates) so the
-// round trip through parseRoadmap sees one fewer item and nothing else changes — used to
-// promote an item into an idea while keeping the roadmap the honest map of what hasn't started.
-// Passing candidateName instead removes just that one candidate bullet, leaving the item in place.
+/**
+ * Removes one item's bullet (with its continuation lines and candidates), or — if
+ * `candidateName` is given — just that one candidate bullet, leaving the item in place.
+ */
 export function removeRoadmapItem(
   markdown: string,
   horizonTitle: string,
@@ -162,9 +162,10 @@ export function removeRoadmapItem(
   return markdown;
 }
 
-// Appends a new item bullet (`- **name** — description`) at the end of a horizon's item
-// list, in the same shape parseItems expects back. No-op (returns markdown unchanged) if
-// the horizon doesn't exist.
+/**
+ * Appends a new item bullet (`- **name** — description`) at the end of a horizon's
+ * item list, in the shape parseItems expects. No-op if the horizon doesn't exist.
+ */
 export function addRoadmapItem(
   markdown: string,
   horizonTitle: string,
@@ -213,9 +214,10 @@ export function linkRoadmapItem(
   return lines.join('\n');
 }
 
-// The subject vocabulary: horizon items in horizon/item order (H1 near-term → H3 long
-// bets), then standing concerns last — the one ordered read of ROADMAP.md every subject
-// picker and grouping should derive from, so it's the only writable source.
+/**
+ * The subject vocabulary in order: horizon items (H1 near-term → H3 long bets), then
+ * standing concerns last. The one ordered read every subject picker/grouping should use.
+ */
 export function deriveSubjectVocabulary(roadmap: Roadmap): string[] {
   return [
     ...roadmap.horizons.flatMap((horizon) => horizon.items.map((item) => item.name)),
@@ -268,9 +270,11 @@ export function resolveRoadmap(
   return { goal: roadmap.goal, horizons, events };
 }
 
-// One chronological model over two append-only sources, each keyed back to the roadmap item
-// (via its `linked` entity ids) and the entity it happened to. `updated` is deliberately excluded —
-// see IDEA-92's Timeline phase for why a last-touched timestamp can't stand in for history.
+/**
+ * One chronological model over two append-only sources, keyed back to the roadmap item
+ * via its `linked` entity ids. `updated` is deliberately excluded (see IDEA-92's Timeline
+ * phase) since a last-touched timestamp can't stand in for history.
+ */
 export function deriveRoadmapEvents(
   roadmap: Roadmap,
   entities: PlanEntry[],

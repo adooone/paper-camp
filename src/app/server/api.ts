@@ -192,16 +192,14 @@ export function createApiMiddleware(
     // next() untouched so the SPA still loads from any interface.
     if (pathname.startsWith('/api/')) {
       applyCorsHeaders(req, res);
-      // The preflight itself carries no credentials and changes nothing, so it's
-      // answered before the Host/Origin gate — otherwise an unpaired origin could
-      // never get far enough to call /api/pair and prove it's the user's client.
+      // Preflight carries no credentials and changes nothing, so it's answered before
+      // the Host/Origin gate — otherwise an unpaired origin could never reach /api/pair.
       if (req.method === 'OPTIONS') {
         handlePreflight(req, res);
         return;
       }
-      // /api/pair is how a not-yet-trusted origin becomes trusted, so it can't
-      // require Origin trust itself — only that the caller reached a real Host.
-      // Its own token check is what stands in for the Origin gate here.
+      // /api/pair is how an origin becomes trusted, so it can't require Origin trust
+      // itself — only a real Host; its own token check stands in for the Origin gate.
       const forbidden =
         pathname === '/api/pair'
           ? !isTrustedHost(hostOf(req.headers.host))

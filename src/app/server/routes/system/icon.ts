@@ -54,8 +54,7 @@ export function iconRoutes({ root }: RouteContext): Route[] {
         const assetsDir = join(root, 'papercamp', 'assets');
         await mkdir(assetsDir, { recursive: true });
         // Remove any previously uploaded icon with a different extension — GET serves
-        // the first extension it finds, so a stale icon.svg would permanently shadow
-        // a newly uploaded icon.png.
+        // the first extension it finds, so a stale one would permanently shadow the new upload.
         await Promise.all(
           Object.keys(MIME_BY_EXT)
             .filter((e) => e !== ext)

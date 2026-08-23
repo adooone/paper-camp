@@ -1,6 +1,5 @@
-// Scoped to /api/plans, /api/ideas, and /api/archivable-ideas only: other callers
-// read their own recent writes back within the same request and must never see
-// a stale entry.
+// Scoped to /api/plans, /api/ideas, /api/archivable-ideas only: other callers read
+// their own recent writes back within the same request and must never see stale data.
 const cache = new Map<string, Promise<unknown>>();
 
 export function cached<T>(

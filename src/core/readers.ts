@@ -89,9 +89,8 @@ async function readEntitiesAndPrs(ideasDir: string, ttlMs?: number) {
   return { entries, warnings, prs, resolved: prs !== undefined, mainActivityIds };
 }
 
-// One `gh` PR listing resolves every entity's PR (cached); this is a shallow copy
-// that never touches disk, so it's safe to feed back into entityToPlan/deriveStatus
-// elsewhere without risking a stale-status write.
+/** One `gh` PR listing resolves every entity's PR (cached); the result is a shallow copy
+ * that never touches disk, so it's safe to feed back into entityToPlan/deriveStatus elsewhere. */
 export async function readEntitiesWithDerivedStatus(
   ideasDir: string,
 ): Promise<ParseResult<EntityEntry>> {

@@ -1,9 +1,8 @@
 import type { CapabilityResult, ConnectAction } from '../../types';
 import { run } from './run';
 
-// The runtime speaks to these on the user's behalf — GitHub today, Figma or Linear
-// later. The credential lives in the service's own CLI (`gh auth status`), tied to
-// a remote account, never a Paper Camp identity.
+// The runtime speaks to these on the user's behalf (GitHub today, Figma/Linear later);
+// credentials live in each service's own CLI, tied to a remote account, not Paper Camp.
 export interface ExternalServiceDefinition {
   id: string;
   label: string;

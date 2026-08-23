@@ -1,9 +1,10 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
-// The corpus's on-disk schema version, stored in papercamp/config.json's `version`
-// field. Bumped only when the frontmatter/config shape changes — never on every
-// package release — so a paper-camp reading the corpus can tell whether it
-// understands the format it's looking at. Distinct from the npm package version.
+/**
+ * The corpus's on-disk schema version, stored in papercamp/config.json's `version`
+ * field. Bumped only when the frontmatter/config shape changes, not on every package
+ * release. Distinct from the npm package version.
+ */
 export const CORPUS_FORMAT_VERSION = 1;
 
 export class CorpusTooNewError extends Error {
@@ -35,9 +36,10 @@ function configVersion(config: Record<string, unknown> | null): number | null {
   return typeof version === 'number' ? version : null;
 }
 
-// A corpus older than this paper-camp, or one with no version stamped at all, reads and
-// writes normally — only a corpus declaring a format newer than this one is refused, since
-// writing it back would silently drop fields this version doesn't know how to preserve.
+/**
+ * Refuses only a corpus declaring a format newer than this paper-camp's, since writing
+ * it back would silently drop fields this version can't preserve. Older/unstamped is fine.
+ */
 export async function assertCorpusWritable(configPath: string): Promise<void> {
   const version = configVersion(await readConfigJson(configPath));
   if (version !== null && version > CORPUS_FORMAT_VERSION) {
@@ -50,10 +52,11 @@ export interface CorpusFormatBump {
   to: number;
 }
 
-// The explicit, reviewable counterpart to assertCorpusWritable's refusal: stamps
-// config.json with the format version this paper-camp writes, producing an ordinary
-// file change a human reviews via `git diff` before committing — never run implicitly
-// on load. A no-op (returns null) once the corpus is already current or ahead.
+/**
+ * Explicit, reviewable counterpart to assertCorpusWritable: stamps config.json with the
+ * current format version as an ordinary file change for `git diff`, never run implicitly
+ * on load. No-op (returns null) if the corpus is already current or ahead.
+ */
 export async function bumpCorpusFormat(configPath: string): Promise<CorpusFormatBump | null> {
   const config = await readConfigJson(configPath);
   if (!config) return null;

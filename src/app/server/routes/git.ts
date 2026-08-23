@@ -9,9 +9,7 @@ import { readBody, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 // A genuine content conflict needs domain judgement, so it's never auto-escalated —
-// the client offers a one-click "ask the agent to resolve" instead (see
-// /api/git/resolve-conflict) so a bad auto-merge never lands unseen. Any other
-// reconcile failure (fetch, checkout, ...) still gets the automatic recovery agent.
+// the client offers a one-click "ask the agent to resolve" instead (/api/git/resolve-conflict).
 function syncFailurePayload(result: GitSyncFailure, agent: AgentManager) {
   if (result.stage === 'conflicted') {
     return {
@@ -41,8 +39,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         const branch = git.getCurrentBranch();
         // getStatus and getBranchHygieneStatus both run `git status`, which races on
-        // .git/index.lock if run concurrently; getAheadCount/getBehindCount's `git
-        // rev-list` doesn't.
+        // .git/index.lock if run concurrently — getAheadCount/getBehindCount don't.
         const [entries, ahead, behind, stashPending, stashes] = await Promise.all([
           git.getStatus(),
           git.getAheadCount(),
@@ -89,9 +86,8 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       },
     },
 
-    // Squash-merges the plan's PR, then returns to a current main — the tree is
-    // checked before the merge, not after, so a dirty tree never lands a merge it
-    // then can't switch away from cleanly.
+    // The tree is checked before the merge, not after, so a dirty tree never lands
+    // a merge it then can't switch away from cleanly.
     {
       method: 'POST',
       path: '/api/git/complete-idea',
@@ -126,9 +122,8 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             sendJson(res, 409, { error: merge.message });
             return;
           }
-          // The PR merged upstream at this point — a failure below must not read
-          // as "nothing happened", since it isn't. It's reported as merged-but-
-          // unfinished rather than rolled into the generic 409 catch below.
+          // The PR merged upstream at this point, so a failure below is reported as
+          // merged-but-unfinished rather than rolled into the generic 409 catch below.
           try {
             const { remoteDeleted } = await git.returnToMain();
             sendJson(res, 200, {
@@ -260,9 +255,8 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       },
     },
 
-    // One-click "ask the agent to resolve" from the sync-failed toast — never
-    // launched automatically, only on explicit human confirmation of the prompt
-    // /sync or /fix-divergence returned for stage: 'conflicted'.
+    // Never launched automatically — only on explicit human confirmation of the
+    // prompt /sync or /fix-divergence returned for stage: 'conflicted'.
     {
       method: 'POST',
       path: '/api/git/resolve-conflict',

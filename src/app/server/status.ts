@@ -33,9 +33,8 @@ export type StatusManager = ReturnType<typeof createStatusManager>;
 
 export interface StatusManagerState {
   snapshot: StatusSnapshot;
-  // The in-flight guard. Must outlive a hot reload: a fresh Set would forget the
-  // child process a previous instance spawned, so every server-file edit would
-  // let another consistency run stack on top of the one still running.
+  // Must outlive a hot reload: a fresh Set would forget a running child process,
+  // letting another consistency run stack on top of the one still running.
   running: Set<CheckName>;
   queued: Set<CheckName>;
   clients: Set<ServerResponse>;
@@ -57,8 +56,7 @@ export function createStatusManager(
   state: StatusManagerState = createEmptyStatusState(),
 ) {
   // Same containers a hot-reloaded replacement receives, so a still-running check's
-  // process listeners (owned by the old closure) and the new instance's guard read
-  // and write one shared set instead of drifting apart across the swap.
+  // process listeners and the new instance's guard read and write one shared set.
   const { snapshot, running, queued, clients } = state;
 
   // `type` lets the client route without refetching everything each tick (an agent
@@ -130,12 +128,8 @@ export function createStatusManager(
     });
   }
 
-  // Bypasses the queue for a result reflecting the live tree; runs the auto-fixer
-  // first so pre-existing formatting nits can't hard-fail an autonomous run-all phase — only
-  // real lint/test failures do. Sources commands from the desk manifest (IDEA-162) rather than
-  // a hardcoded list, so it stays in sync with whatever the project actually declares.
-  // Resolves with the names of checks still red, so callers can tell which
-  // checks a change actually broke apart from checks that were already red.
+  // Bypasses the queue and runs the auto-fixer first, so pre-existing formatting nits
+  // can't hard-fail an autonomous run-all phase.
   function runChecksAndWait(): Promise<CheckName[]> {
     return new Promise<CheckName[]>((resolve) => {
       const runChecks = () => {

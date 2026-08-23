@@ -61,9 +61,8 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
       },
     },
 
-    // A ticket is a plain entity like any other, minted from its own TICKET-N
-    // counter (IDEA-201) and linked back to its board via `idea` — the same
-    // backlink a fix uses for its parent.
+    // A ticket is minted from its own TICKET-N counter and linked back to its
+    // board via `idea`, the same backlink a fix uses for its parent.
     {
       method: 'POST',
       path: '/api/tickets',
@@ -135,12 +134,8 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
       },
     },
 
-    // Promotion links rather than deletes: the item always survives in ROADMAP.md so the
-    // roadmap stays a map to track rather than a queue to consume. A candidate promotion
-    // still consumes its own bullet — the candidate text was only ever a placeholder for
-    // the idea it's now become — but the parent item gains the link either way, so every
-    // minted entity is resolvable from its item for progress rollup regardless of which
-    // path minted it.
+    // Promotion links rather than deletes: the item survives in ROADMAP.md as a map
+    // to track. A candidate bullet is consumed since it was only a placeholder for the idea.
     {
       method: 'POST',
       path: '/api/roadmap/promote',
@@ -287,9 +282,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
     },
 
     // The click that promotes to `done` IS the archive decision, so the frontmatter
-    // change is written straight to the archive destination — never to the ideasDir
-    // copy — instead of a write-then-move. Silently skips ids that no longer resolve
-    // (already archived, or the id list going stale between list and click).
+    // change is written straight to the archive destination instead of a write-then-move.
     {
       method: 'POST',
       path: '/api/ideas/archive',

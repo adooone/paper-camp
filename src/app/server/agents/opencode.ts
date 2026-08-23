@@ -31,9 +31,8 @@ const PERMISSION_VERBS: Record<string, string> = {
   webfetch: 'fetch',
 };
 
-// Only file-path tools give us a target we can actually call "outside
-// workspace" — a denied bash command or URL fetch isn't a workspace-boundary
-// question, so those get a generic denial reason instead.
+// Only file-path tools give a target we can call "outside workspace" — a denied
+// bash/webfetch isn't a workspace-boundary question, so it gets a generic denial.
 const EXTERNAL_DIRECTORY_TOOLS = new Set(['read', 'write', 'edit']);
 
 function permissionTarget(

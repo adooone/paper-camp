@@ -14,9 +14,8 @@ import {
   reviewFromThread,
 } from './thread';
 
-// status is derived via deriveStatus, not read from e.status: e.status stays the
-// raw stored override so round-tripping an EntityEntry back to disk never persists
-// a derived value.
+/** Status is derived via deriveStatus, not read from `e.status` — that field stays the
+ * raw stored override so round-tripping an EntityEntry back to disk never persists a derived value. */
 export function entityToPlan(
   e: EntityEntry,
   pr?: PrInfo,

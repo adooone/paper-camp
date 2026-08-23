@@ -4,9 +4,8 @@ import type { OverlapVerdict } from '@/types/index';
 
 const VALID_VERDICTS: OverlapVerdict['verdict'][] = ['existing', 'extend', 'new'];
 
-// One-shot, read-only agent call, not the long-running phase/task system in
-// agent.ts: runs independently of the task registry, so it's never blocked by
-// (and never blocks) a running phase/reconcile/etc.
+// One-shot, read-only agent call, not agent.ts's long-running phase/task system:
+// runs outside the task registry, so it never blocks or is blocked by a running phase.
 export async function checkIdeaOverlap(
   text: string,
   candidates: SimilarityCandidate[],

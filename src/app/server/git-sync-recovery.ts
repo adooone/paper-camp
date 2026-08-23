@@ -1,8 +1,7 @@
 import type { GitStatusEntry, GitSyncFailure } from '@/types/index';
 
-// Read-only assembly: turns a deterministic sync failure into everything an agent
-// needs to finish the job with judgment, since the fast path (git.ts's runGitSync)
-// gives up rather than guessing at a stash conflict or diverged rebase.
+// Read-only assembly: turns a deterministic sync failure into what an agent needs to
+// finish with judgment, since runGitSync's fast path gives up rather than guessing.
 export function buildGitSyncRecoveryPrompt(
   failure: Pick<GitSyncFailure, 'stage' | 'message' | 'stashPending' | 'conflictedFiles'>,
   branch: string,

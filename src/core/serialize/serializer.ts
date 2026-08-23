@@ -3,10 +3,8 @@ import { dirname, join } from 'node:path';
 
 let idAssignmentChain: Promise<unknown> = Promise.resolve();
 
-// Highest N already used by an existing `<PREFIX>-N.md` entity file on disk, across
-// the live and archived entity dirs. Lets id assignment stay ahead of ids that were
-// created out-of-band (e.g. a file written by hand or by a crashed run) without
-// bumping the counter — otherwise the counter hands the same number out twice.
+// Highest N already used by an existing `<PREFIX>-N.md` file on disk, across live and
+// archived dirs — keeps id assignment ahead of ids created out-of-band without double-issuing one.
 async function highestEntityIdOnDisk(campDir: string, kind: string): Promise<number> {
   const fileRe = new RegExp(`^${kind.toUpperCase()}-(\\d+)\\.md$`);
   const dirs = [
@@ -44,9 +42,8 @@ export async function assignPlanId(configPath: string, kind: string): Promise<st
       return undefined;
     }
     if (!config?.nextId) return undefined;
-    // Take whichever is higher: the stored counter or one past the highest id already
-    // on disk. This makes assignment collision-proof — a file that claimed an id
-    // without advancing the counter can never cause the same id to be reused.
+    // Take whichever is higher (stored counter vs. one past the highest id on disk) so an
+    // id claimed without advancing the counter can never be reused.
     const counter = config.nextId[kind] ?? 1;
     const highestOnDisk = await highestEntityIdOnDisk(dirname(configPath), kind);
     const next = Math.max(counter, highestOnDisk + 1);

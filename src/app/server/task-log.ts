@@ -14,9 +14,8 @@ import { campFile, readMaybe, taskLogFile } from './helpers';
 const RETENTION_DAYS = 3;
 const RETENTION_MS = RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
-// Serialized: rewriting tasks.log is read-modify-write; concurrent completions would drop each
-// other. Also covers each completion's own output-write + row-append, so a prune can never see
-// a tasks.log row without its output file (or vice versa) from a completion still in flight.
+// Serialized: rewriting tasks.log is read-modify-write, so concurrent completions would drop
+// each other. Also covers each completion's output-write + row-append, so a prune never sees one without the other.
 let taskChain: Promise<unknown> = Promise.resolve();
 
 // Drops runs past the retention window — rows and their output files, so no row outlives
