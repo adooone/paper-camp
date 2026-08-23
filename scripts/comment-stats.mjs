@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Reports the comment-line ratio across src/ — informational only, never fails.
-// `--json` emits machine-readable output for the app's future stats view.
+// Fails on any comment run over the 2-line cap (docs/CODE_STYLE.md §7).
+// `--json` adds machine-readable output for the app's stats view.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -95,3 +95,5 @@ if (asJson) {
     console.log(`  ${run.file}:${run.startLine} — ${run.length} lines`);
   }
 }
+
+if (overCapRuns.length > 0) process.exitCode = 1;

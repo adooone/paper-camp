@@ -54,8 +54,8 @@ function runCommentStats(root: string): Promise<CommentStats> {
     proc.stdout?.on('data', (d: Buffer) => {
       stdout += d.toString();
     });
-    proc.on('close', (code) => {
-      if (code !== 0 || !stdout) return resolve(ZERO_COMMENT_STATS);
+    proc.on('close', () => {
+      if (!stdout) return resolve(ZERO_COMMENT_STATS);
       try {
         const { commentLines, sourceLines, ratio } = JSON.parse(stdout);
         resolve({ commentLines, sourceLines, ratio });

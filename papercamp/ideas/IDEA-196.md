@@ -86,8 +86,9 @@ comments in tests, which the walker already excludes.
 - [x] Exempt JSDoc immediately preceding an export
       Only `/** … */` directly before an `export` is exempt; `/* … */` inside a body is capped.
       run: 1m38s · 1.7k in · 6.9k out · sonnet-5
-- [ ] Make the check fail and keep the ratio in JSON
+- [x] Make the check fail and keep the ratio in JSON
       Drop the "informational only, never fails" behaviour; the ratio stays in the JSON output for the stats view but is no longer the pass condition.
+      run: 1m39s · 421 in · 5.4k out · sonnet-5
 - [ ] Clear the pilot violations in src/app/features/plans/
       Rewrite to fit the cap or delete; deleting is the expected outcome for decision-narrating comments.
 - [ ] Clear the remaining violations in src/app/server/ and src/core/
