@@ -51,12 +51,20 @@ function hostOf(value: string | undefined): string {
   return h.split(':')[0];
 }
 
+// Reaching loopback proves the caller is a process on this machine, the one
+// case a missing Origin can still stand in for the pairing token.
+function isLoopbackHost(host: string): boolean {
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+}
+
+export const PAIRING_TOKEN_HEADER = 'x-pairing-token' as const;
+
 /** Hosts that actually point at this machine — loopback, private LAN, Tailscale/mDNS,
  *  or PAPERCAMP_ALLOWED_HOSTS. This API runs git and launches auto-permission agents,
  *  so anything else is rejected to block DNS-rebinding. */
 export function isTrustedHost(host: string): boolean {
   if (!host) return false;
-  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+  if (isLoopbackHost(host)) return true;
   if (SELF_HOSTNAMES.has(host)) return true;
   if (host.endsWith('.ts.net') || host.endsWith('.local')) return true; // Tailscale / mDNS
   const extra = process.env.PAPERCAMP_ALLOWED_HOSTS;
@@ -87,21 +95,32 @@ export function isTrustedHost(host: string): boolean {
  *  Origin). Once any hosted page can attempt a loopback request, "arrived from
  *  loopback" stops being evidence the caller is the user's own client — so a
  *  paired origin (established via /api/pair's shared token) is trusted the same
- *  as a LAN/Tailscale one. Returns true if the request should be rejected. */
+ *  as a LAN/Tailscale one. Browsers omit Origin on a same-origin GET, but they
+ *  can't fake the Host they're actually addressing — a non-loopback trusted Host
+ *  (LAN, Tailscale, a shared tunnel) is reachable by curl too, so a request that
+ *  carries neither Origin nor the pairing token is treated as one of those.
+ *  Returns true if the request should be rejected. */
 export function isForbiddenRequest(
-  req: { headers: { host?: string; origin?: string }; method?: string },
+  req: {
+    headers: { host?: string; origin?: string; [PAIRING_TOKEN_HEADER]?: string };
+    method?: string;
+  },
   isPairedOrigin: (origin: string) => boolean = () => false,
+  pairingToken?: string,
 ): boolean {
-  if (!isTrustedHost(hostOf(req.headers.host))) return true;
+  const host = hostOf(req.headers.host);
+  if (!isTrustedHost(host)) return true;
   const origin = req.headers.origin;
   if (origin) {
     let originHost = 'invalid';
     try {
       originHost = hostOf(new URL(origin).host);
     } catch {}
-    if (!isTrustedHost(originHost) && !isPairedOrigin(origin)) return true;
+    return !isTrustedHost(originHost) && !isPairedOrigin(origin);
   }
-  return false;
+  if (isLoopbackHost(host)) return false;
+  const token = req.headers[PAIRING_TOKEN_HEADER];
+  return !pairingToken || token !== pairingToken;
 }
 
 const CORS_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
@@ -179,7 +198,7 @@ export function createApiMiddleware(
       const forbidden =
         pathname === '/api/pair'
           ? !isTrustedHost(hostOf(req.headers.host))
-          : isForbiddenRequest(req, pairing.isPairedOrigin);
+          : isForbiddenRequest(req, pairing.isPairedOrigin, pairing.token);
       if (forbidden) {
         sendJson(res, 403, { error: 'Forbidden: request failed the Host/Origin check' });
         return;

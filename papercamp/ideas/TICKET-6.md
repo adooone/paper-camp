@@ -49,8 +49,9 @@ The last two rows are the whole problem. From `https://paper-camp.vercel.app` a 
 **A browser extension or a native app.** Both sidestep browser rules entirely and both replace "open a URL" with "install something", which is the property that makes the hosted client worth having.
 
 ### Phases
-- [ ] Require the pairing token when no trusted Origin is present
+- [x] Require the pairing token when no trusted Origin is present
       Close the gap where a request carrying no `Origin` header passes on the Host check alone — the precondition for exposing the runtime at all.
+      run: 8m · 6.9k in · 27.7k out · sonnet-5
 - [ ] Spawn a quick tunnel behind `paper-camp dev --share`
       Start `cloudflared`, read the issued https address, and allow-list that host on the running runtime.
 - [ ] Print one registration link for the tunnel
