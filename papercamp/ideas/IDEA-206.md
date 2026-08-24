@@ -63,12 +63,13 @@ sets `dropped`) — that's a separate, broader gap across every entity kind, not
 board-specific, and isn't part of this idea.
 
 ### Phases
-- [ ] Trust the board's derived status in `canMarkPlanDone`
+- [x] Trust the board's derived status in `canMarkPlanDone`
       In `src/app/features/plans/helpers/helpers.ts:98-104`, branch on
       `plan.entityKind === 'board'`: for a board, readiness is `plan.status === 'review'`
       (already freshly derived from the ticket rollup by `readWorkEntries` on this same
       read). Every other entity kind keeps the existing
       `plan.phases.length > 0 && plan.phases.every(p => p.done)` check unchanged.
+      run: 59s · 5.7k in · 3k out · sonnet-5
 - [ ] Skip `verifyDirectCompletion` for boards in `handleMarkDone`
       In `plan-actions-column.tsx:83-102`, when `plan.entityKind === 'board'`, call
       `archiveIdeas([plan.id])` directly instead of gating on
