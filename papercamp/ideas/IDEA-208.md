@@ -2,7 +2,7 @@
 id: IDEA-208
 title: Hub feature conventions pass
 type: refactor
-status: planned
+status: review
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -44,5 +44,7 @@ Behaviour. Any change to paper-ui. The other features' passes.
 - [x] Sort the rest into by-role folders
       Apply the §4 template, dissolving `cross-project/`: `hub-shell.tsx` and `index.ts` stay as anchors; screens and views (`hub-home`, `welcome-screen`, `projects-list`, the three `*-view` files) into `views/`; cards (`github-connect-card`, `add-runtime-card`) into `components/`; `rename-runtime-button.tsx` into `actions/`; pure logic (`fan-out.ts`, `project-label.ts`, `open-in-project.ts`) into `helpers/` with `fan-out.test.ts` in `helpers/__tests__/`.
       run: 4m35s · 74 in · 9k out · sonnet-5
-- [ ] Name props interfaces and merge duplicate imports
+- [x] Name props interfaces and merge duplicate imports
       Convert the inline props literals in `projects-list.tsx` and `github-connect-card.tsx` to `{Component}Props` interfaces, and collapse the two duplicated import statements (§5).
+      run: 3m3s · 22 in · 3.3k out · sonnet-5
+- [x] [manual] Sort hub feature files into by-role folders
