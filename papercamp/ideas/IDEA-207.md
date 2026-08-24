@@ -38,8 +38,9 @@ Behaviour. Any change to paper-ui. The other features — each has its own pass
 ([[IDEA-208]]–[[IDEA-215]]).
 
 ### Phases
-- [ ] Move the hook out of git-commit-controls
+- [x] Move the hook out of git-commit-controls
       Relocate the hook exported by `git-commit-controls.tsx` to `hooks/use-*.ts`, and convert that component's inline props literal to a named `{Component}Props` interface (§5).
+      run: 4m · 6.2k in · 5.2k out · sonnet-5
 - [ ] Extract page wiring into feature hooks
       Give `git-page.tsx` and `git-file-list.tsx` one `hooks/` hook each that owns their store selectors, state, effects and async handlers (including the stage/unstage fan-out); the components consume what the hooks return.
 - [ ] Sort files into by-role folders

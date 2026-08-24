@@ -1,7 +1,8 @@
 import { CommitMessageFields, GitStashSurface, GitSyncActions } from '@/app/components';
 import { PageTitle } from '@/app/components/page-title';
 import { FileDiffSection } from '@/app/features/git/file-diff-section';
-import { GitCommitButton, useGitCommitForm } from '@/app/features/git/git-commit-controls';
+import { GitCommitButton } from '@/app/features/git/git-commit-controls';
+import { useGitCommitForm } from '@/app/features/git/hooks';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
 import { Button, Divider, Spinner } from '@dendelion/paper-ui';
