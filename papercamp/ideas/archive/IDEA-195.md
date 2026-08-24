@@ -2,8 +2,9 @@
 id: IDEA-195
 title: Global client, local runtime
 kind: board
+status: done
 created: 2026-08-19
-updated: 2026-08-21
+updated: 2026-08-24
 tags:
   - architecture
   - research
