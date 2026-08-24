@@ -2,7 +2,7 @@
 id: IDEA-207
 title: Git feature conventions pass
 type: refactor
-status: planned
+status: in-progress
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -10,6 +10,7 @@ tags:
   - code-health
   - git
 subject: Code health
+order: 1
 ---
 
 The `docs/CODE_STYLE.md` conventions pass [[IDEA-198]] ran over the plans
@@ -47,3 +48,6 @@ Behaviour. Any change to paper-ui. The other features — each has its own pass
       Apply the §4 feature template: `git-page.tsx` and `index.ts` stay as anchors; views into `views/`, small atoms (`git-status-marker.tsx`, `file-path.tsx`, `count-badge.tsx`) into `components/`, each folder with an `index.ts` barrel and consumers importing through it.
 - [ ] Audit every comment against §7
       Walk the 18 `//` lines: keep a one/two-line non-derivable why, delete everything else. No new comments are added to compensate.
+
+### Thread
+- [ ] 2026-08-24 [question] [agent] Run-all parked on phase 2 ("Extract page wiring into feature hooks") — the agent needs a decision: Not logged in · Please run /login
