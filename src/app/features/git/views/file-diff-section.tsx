@@ -1,10 +1,8 @@
+import { CountBadge, FilePath, GitStatusMarker } from '@/app/features/git/components';
 import { useAppStore } from '@/app/stores/app-store';
 import { type DiffLineType, parsePatch, rawContentHunks } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
 import { Accordion, Stamp } from '@dendelion/paper-ui';
-import { CountBadge } from './count-badge';
-import { FilePath } from './file-path';
-import { GitStatusMarker } from './git-status-marker';
 
 const COLLAPSE_LINE_THRESHOLD = 60;
 
