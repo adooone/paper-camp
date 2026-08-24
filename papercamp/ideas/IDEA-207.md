@@ -51,6 +51,7 @@ Behaviour. Any change to paper-ui. The other features — each has its own pass
 - [x] Audit every comment against §7
       Walk the 18 `//` lines: keep a one/two-line non-derivable why, delete everything else. No new comments are added to compensate.
       run: 3m47s · 28 in · 8.2k out · sonnet-5
+- [x] [manual] Split git feature into actions, components, views
 
 ### Thread
 - [ ] 2026-08-24 [question] [agent] Run-all parked on phase 2 ("Extract page wiring into feature hooks") — the agent needs a decision: Not logged in · Please run /login
