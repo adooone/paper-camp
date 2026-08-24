@@ -45,8 +45,9 @@ Behaviour. Any change to paper-ui. The other features — each has its own pass
 - [x] Extract page wiring into feature hooks
       Give `git-page.tsx` and `git-file-list.tsx` one `hooks/` hook each that owns their store selectors, state, effects and async handlers (including the stage/unstage fan-out); the components consume what the hooks return.
       run: 2m34s · 20 in · 1.9k out · sonnet-5
-- [ ] Sort files into by-role folders
+- [x] Sort files into by-role folders
       Apply the §4 feature template: `git-page.tsx` and `index.ts` stay as anchors; views into `views/`, small atoms (`git-status-marker.tsx`, `file-path.tsx`, `count-badge.tsx`) into `components/`, each folder with an `index.ts` barrel and consumers importing through it.
+      run: 3m55s · 52 in · 7.9k out · sonnet-5
 - [ ] Audit every comment against §7
       Walk the 18 `//` lines: keep a one/two-line non-derivable why, delete everything else. No new comments are added to compensate.
 
