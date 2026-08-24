@@ -100,47 +100,75 @@ describe('isForbiddenRequest', () => {
     ).toBe(true);
   });
 
-  it('blocks a non-loopback trusted Host with no Origin and no pairing token', () => {
-    // A LAN host or shared tunnel is reachable by curl, not just browsers, so a
-    // missing Origin can no longer coast through on the Host check alone.
-    expect(
-      isForbiddenRequest(
-        { headers: { host: '192.168.1.5:3333' }, method: 'GET' },
-        undefined,
-        'the-token',
-      ),
-    ).toBe(true);
+  it('trusts a network-scoped Host with no Origin, no Sec-Fetch-Site, and no token', () => {
+    // Only a device already on that LAN/tailnet can reach these at all — the same
+    // reason loopback needs no other evidence. A real browser opening the dashboard
+    // directly (typed URL, no ?token=) sends neither Origin nor Sec-Fetch-Site on
+    // some paths, so this must not depend on either.
+    for (const host of [
+      '192.168.1.5:3333',
+      'laptop.tail1234.ts.net:3333',
+      'my-machine.local:3333',
+    ]) {
+      expect(isForbiddenRequest({ headers: { host }, method: 'GET' }), host).toBe(false);
+    }
   });
 
-  it('allows a non-loopback trusted Host with no Origin when Sec-Fetch-Site says same-origin', () => {
-    // A dashboard served directly (typed URL, no ?token=) makes same-origin
-    // fetches that omit Origin but still carry this browser-set header.
-    expect(
-      isForbiddenRequest({
-        headers: { host: '192.168.1.5:3333', 'sec-fetch-site': 'same-origin' },
-        method: 'GET',
-      }),
-    ).toBe(false);
-  });
+  describe('a host trusted only via PAPERCAMP_ALLOWED_HOSTS (a --share tunnel)', () => {
+    afterEach(() => {
+      Reflect.deleteProperty(process.env, 'PAPERCAMP_ALLOWED_HOSTS');
+    });
 
-  it('allows a non-loopback trusted Host with no Origin when the pairing token matches', () => {
-    expect(
-      isForbiddenRequest(
-        { headers: { host: '192.168.1.5:3333', 'x-pairing-token': 'the-token' }, method: 'GET' },
-        undefined,
-        'the-token',
-      ),
-    ).toBe(false);
-  });
+    it('blocks a missing Origin with no pairing token', () => {
+      // Reachable by anyone with the URL, not just curl — unlike a LAN host, absence
+      // of Origin here can't coast through on the Host check alone.
+      process.env.PAPERCAMP_ALLOWED_HOSTS = 'tunnel.trycloudflare.com';
+      expect(
+        isForbiddenRequest(
+          { headers: { host: 'tunnel.trycloudflare.com' }, method: 'GET' },
+          undefined,
+          'the-token',
+        ),
+      ).toBe(true);
+    });
 
-  it('blocks a non-loopback trusted Host with no Origin and a wrong pairing token', () => {
-    expect(
-      isForbiddenRequest(
-        { headers: { host: '192.168.1.5:3333', 'x-pairing-token': 'wrong' }, method: 'GET' },
-        undefined,
-        'the-token',
-      ),
-    ).toBe(true);
+    it('allows a missing Origin when Sec-Fetch-Site says same-origin', () => {
+      process.env.PAPERCAMP_ALLOWED_HOSTS = 'tunnel.trycloudflare.com';
+      expect(
+        isForbiddenRequest({
+          headers: { host: 'tunnel.trycloudflare.com', 'sec-fetch-site': 'same-origin' },
+          method: 'GET',
+        }),
+      ).toBe(false);
+    });
+
+    it('allows a missing Origin when the pairing token matches', () => {
+      process.env.PAPERCAMP_ALLOWED_HOSTS = 'tunnel.trycloudflare.com';
+      expect(
+        isForbiddenRequest(
+          {
+            headers: { host: 'tunnel.trycloudflare.com', 'x-pairing-token': 'the-token' },
+            method: 'GET',
+          },
+          undefined,
+          'the-token',
+        ),
+      ).toBe(false);
+    });
+
+    it('blocks a missing Origin with a wrong pairing token', () => {
+      process.env.PAPERCAMP_ALLOWED_HOSTS = 'tunnel.trycloudflare.com';
+      expect(
+        isForbiddenRequest(
+          {
+            headers: { host: 'tunnel.trycloudflare.com', 'x-pairing-token': 'wrong' },
+            method: 'GET',
+          },
+          undefined,
+          'the-token',
+        ),
+      ).toBe(true);
+    });
   });
 
   it('trusts a paired origin even though it is not on a private network', () => {

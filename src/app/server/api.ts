@@ -58,23 +58,13 @@ function isLoopbackHost(host: string): boolean {
   return host === 'localhost' || host === '127.0.0.1' || host === '::1';
 }
 
-/** Hosts that actually point at this machine — loopback, private LAN, Tailscale/mDNS,
- *  or PAPERCAMP_ALLOWED_HOSTS. This API runs git and launches auto-permission agents,
- *  so anything else is rejected to block DNS-rebinding. */
-export function isTrustedHost(host: string): boolean {
+/** Hosts only a device already inside this machine's own network can reach at all —
+ *  reaching one is evidence in itself, the same way loopback is. */
+function isNetworkScopedHost(host: string): boolean {
   if (!host) return false;
   if (isLoopbackHost(host)) return true;
   if (SELF_HOSTNAMES.has(host)) return true;
   if (host.endsWith('.ts.net') || host.endsWith('.local')) return true; // Tailscale / mDNS
-  const extra = process.env.PAPERCAMP_ALLOWED_HOSTS;
-  if (
-    extra
-      ?.split(',')
-      .map((s) => s.trim().toLowerCase())
-      .includes(host)
-  ) {
-    return true;
-  }
   const m = host.match(/^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/);
   if (m) {
     const a = Number(m[1]);
@@ -90,17 +80,37 @@ export function isTrustedHost(host: string): boolean {
   return false;
 }
 
+// PAPERCAMP_ALLOWED_HOSTS is how a --share tunnel host gets in (dev-server.ts) — an
+// address anyone on the internet can reach, unlike every network-scoped host above.
+function isAllowListedHost(host: string): boolean {
+  if (!host) return false;
+  const extra = process.env.PAPERCAMP_ALLOWED_HOSTS;
+  return (
+    extra
+      ?.split(',')
+      .map((s) => s.trim().toLowerCase())
+      .includes(host) ?? false
+  );
+}
+
+/** Hosts that actually point at this machine — network-scoped, or explicitly
+ *  allow-listed. This API runs git and launches auto-permission agents, so anything
+ *  else is rejected to block DNS-rebinding. */
+export function isTrustedHost(host: string): boolean {
+  return isNetworkScopedHost(host) || isAllowListedHost(host);
+}
+
 /** Blocks DNS-rebinding (foreign Host) and cross-origin reads/writes alike (foreign
  *  Origin). Once any hosted page can attempt a loopback request, "arrived from
  *  loopback" stops being evidence the caller is the user's own client — so a
  *  paired origin (established via /api/pair's shared token) is trusted the same
- *  as a LAN/Tailscale one. Browsers omit Origin on a same-origin GET, but a
- *  same-origin fetch still carries `Sec-Fetch-Site: same-origin` — a header the
- *  Fetch API forbids scripts from setting, so only the browser itself can send
- *  it truthfully. A non-loopback trusted Host (LAN, Tailscale, a shared tunnel)
- *  is reachable by curl too, so a request carrying none of Origin, that header,
- *  or the pairing token is treated as one of those. Returns true if the request
- *  should be rejected. */
+ *  as a LAN/Tailscale one. A missing Origin is trusted on any network-scoped host —
+ *  loopback, LAN, Tailscale, mDNS — the same way it is on loopback, since nothing
+ *  outside that boundary can reach the host at all. Only a host trusted purely via
+ *  PAPERCAMP_ALLOWED_HOSTS (a --share tunnel) is reachable by literally anyone, so a
+ *  missing Origin there falls back to `Sec-Fetch-Site: same-origin` — a header only
+ *  the browser itself can set truthfully — and failing that, the pairing token.
+ *  Returns true if the request should be rejected. */
 export function isForbiddenRequest(
   req: {
     headers: {
@@ -124,7 +134,7 @@ export function isForbiddenRequest(
     } catch {}
     return !isTrustedHost(originHost) && !isPairedOrigin(origin);
   }
-  if (isLoopbackHost(host)) return false;
+  if (isNetworkScopedHost(host)) return false;
   if (req.headers['sec-fetch-site'] === 'same-origin') return false;
   const token = req.headers[PAIRING_TOKEN_HEADER];
   return !pairingToken || token !== pairingToken;

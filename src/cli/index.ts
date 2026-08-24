@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { mkdir, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
@@ -787,6 +788,17 @@ program
     );
   });
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+// import.meta.url is realpath-resolved but argv[1] isn't, so under pnpm's symlinked
+// node_modules this guard was false on every install — the CLI ran, matched nothing, and exited 0.
+function isMainModule(): boolean {
+  if (!process.argv[1]) return false;
+  try {
+    return fileURLToPath(import.meta.url) === realpathSync(resolve(process.argv[1]));
+  } catch {
+    return fileURLToPath(import.meta.url) === resolve(process.argv[1]);
+  }
+}
+
+if (isMainModule()) {
   program.parseAsync(process.argv);
 }
