@@ -30,9 +30,8 @@ export interface UseCommitFormOptions {
   beforeCommit?: (title: string) => Promise<CommitOutcome>;
 }
 
-// Module-level, not component state: must survive the unmount that happens
-// when the user navigates away while a commit-suggestion task is running, so
-// the task's result can still be recognized as fresh when they come back.
+// Module-level, not component state: must survive the unmount that happens when the
+// user navigates away mid-suggestion, so its result is still recognized on return.
 const lastClearedAt = new Map<string, number>();
 const appliedSuggestionIds = new Map<string, Set<string>>();
 
@@ -43,9 +42,8 @@ export function useCommitForm(files: CommitFormFile[], options: UseCommitFormOpt
   const { formKey, suggestedTitle, matchesSuggestionTask, beforeCommit } = options;
   const agentStatus = useAppStore((s) => s.agentStatus);
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
-  // A commit empties the working tree, so the changed-files list is stale the moment
-  // it lands. Nothing else refreshes it in-app: the activity stream only watches the
-  // corpus, and window focus never fires when you never left the window.
+  // A commit leaves the changed-files list stale; nothing else refreshes it in-app —
+  // the activity stream only watches the corpus, and window focus never fires here.
   const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const setCommitInFlight = useAppStore((s) => s.setCommitInFlight);

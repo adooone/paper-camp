@@ -13,10 +13,12 @@ export function buildRegistrationLink(
   return buildRegistrationLinkForRuntime(`http://${host}:${port}`, pairingToken);
 }
 
-// `localhost` only reaches the runtime from the machine running it, so a link built
-// from it is dead in exactly the setup the hosted client exists for — a browser
-// somewhere else. Every non-loopback address this host answers on is offered too,
-// and the caller picks the one their browser can actually reach.
+/**
+ * `localhost` only reaches the runtime from the machine running it, so a link built
+ * from it is dead in exactly the setup the hosted client exists for — a browser
+ * somewhere else. Returns every non-loopback address this host answers on too, so
+ * the caller can offer one their browser can actually reach.
+ */
 export function reachableHosts(
   interfaces: Record<string, { family: string; internal: boolean; address: string }[] | undefined>,
   ownHostname: string,

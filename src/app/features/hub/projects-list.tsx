@@ -13,8 +13,7 @@ import { RenameRuntimeButton } from './rename-runtime-button';
 import { type RuntimeStatus, useRuntimeStatuses } from './use-runtime-statuses';
 
 // A full load, not a client navigation: the runtime URL and API base are read once
-// at startup. Back to the app root rather than the current path, which is the hub
-// itself and would land straight back here.
+// at startup. Lands on the app root, not the current (hub) path, to avoid a loop back here.
 function enterProject(runtimeUrl: string): void {
   selectRuntime(runtimeUrl, window.localStorage);
   window.location.assign(mountPrefix || '/');

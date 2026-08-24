@@ -2,9 +2,9 @@
 id: IDEA-196
 title: Make the comment check enforceable
 type: chore
-status: in-progress
+status: review
 created: 2026-08-21
-updated: 2026-08-23
+updated: 2026-08-24
 tags:
   - code-health
   - tooling
@@ -96,8 +96,9 @@ comments in tests, which the walker already excludes.
       run: 3m44s · 874 in · 17.2k out · sonnet-5
 - [x] Clear the remaining violations in src/app/server/ and src/core/
       run: 2m1s · 45k in · 96.1k out · sonnet-5
-- [ ] Wire the gate into the app's Quality check alongside lint and format
+- [x] Wire the gate into the app's Quality check alongside lint and format
       Also clean up the remaining comment-cap violations found once the gate runs over all of src/ (condense to ≤2 lines, delete decision-narration, or convert genuine export-adjacent // blocks to JSDoc), so Quality lands green rather than red.
+- [x] [manual] Wire comment lint gate into Quality check
 
 ### Thread
 - [x] 2026-08-21 [log] [agent] Run order: Independent code-health work with no blockers; small, decisive, and its cleanup phases are a prerequisite for IDEA-199's style pass to have a green gate to run against

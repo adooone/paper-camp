@@ -8,10 +8,12 @@ export const fetchCapabilities = async (): Promise<CapabilityResult[] | null> =>
   return body.capabilities;
 };
 
-// The registry holds runtimes this client is not currently pointed at, so the base
-// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`. A
-// response at all, regardless of the version it carries, is this hub's signal that
-// the runtime is reachable.
+/**
+ * The registry holds runtimes this client is not currently pointed at, so
+ * the base URL is explicit rather than taken from `apiUrl`. A response at
+ * all, regardless of the version it carries, is this hub's signal that the
+ * runtime is reachable.
+ */
 export const fetchRuntimeVersionAt = async (baseUrl: string): Promise<string | null> => {
   try {
     const response = await fetch(`${baseUrl}/api/capabilities`);

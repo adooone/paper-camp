@@ -83,10 +83,12 @@ export function selectRuntime(
   return match;
 }
 
-// A pasted `?runtime=&token=` link only carries the connection on the visit
-// that used it; storing it is what makes a later reload with no query string
-// still dial the same runtime, and remembering rather than overwriting is
-// what lets the device hold more than one.
+/**
+ * A pasted `?runtime=&token=` link only carries the connection on the visit
+ * that used it; storing it is what makes a later reload with no query
+ * string still dial the same runtime, and remembering rather than
+ * overwriting is what lets the device hold more than one.
+ */
 export function loadRuntimeConnection(
   location: { search: string } | null,
   storage: Storage | null,

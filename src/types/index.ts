@@ -150,9 +150,9 @@ export interface PrReviewFinding {
 
 export type PrReviewVerdict = 'approve' | 'comment' | 'request-changes';
 
-// Parsed from the JSON object a pr-review agent's prompt requires as its final
-// line — see buildPrReviewPrompt. findings become per-line PR review comments;
-// the other fields are rendered per destination (IDEA-170, IDEA-175).
+/** Parsed from the JSON object a pr-review agent's prompt requires as its final
+ * line (see buildPrReviewPrompt). `findings` become per-line PR review comments;
+ * the other fields are rendered per destination. */
 export interface PrReviewResult {
   verdict: PrReviewVerdict;
   assessment: string;
@@ -174,9 +174,9 @@ export interface FeedbackEdit {
   body?: string;
 }
 
-// Parsed from the JSON object a feedback-reply agent's prompt requires as its
-// final line. The chat never creates ideas — a request is either a reply or an
-// edit on the current plan.
+/** Parsed from the JSON object a feedback-reply agent's prompt requires as its
+ * final line. The chat never creates ideas — a request is either a reply or an
+ * edit on the current plan. */
 export interface FeedbackReplyResult {
   reply: string;
   edit?: FeedbackEdit;
@@ -252,9 +252,8 @@ export interface PlanEntry {
   /** Set by readEntities from which dir the file came from — see EntityEntry.archived. */
   archived?: boolean;
   pr?: PrInfo;
-  /** True when `status` is a phase-count/stored-override guess because GitHub's PR
-   * state couldn't be resolved, rather than derived from a resolved PR — see
-   * isStatusFallback. */
+  /** True when `status` is a guessed fallback because GitHub's PR state
+   * couldn't be resolved — see isStatusFallback. */
   statusFallback?: boolean;
 }
 
@@ -416,9 +415,8 @@ export interface EntityEntry {
   /** The frontmatter `order` as read from disk, before readEntities overlays the run-order
    * rank onto `order` — what a write path should persist back. See entityFileInput. */
   storedOrder?: number;
-  /** The Issue.id (`sourceKind:sourceKey`, IDEA-192) this entity was spawned to promote,
-   * if any — how a promoted issue is re-matched to its target on every read, since
-   * issues carry no store of their own. */
+  /** The Issue.id this entity was spawned to promote, if any — how a promoted
+   * issue is re-matched to its target on every read. */
   issueSource?: string;
   body: string;
   phases: PhaseItem[];
@@ -847,18 +845,15 @@ export interface GitSyncFailure {
   // Only set when stage is 'conflicted': the files a rebase left with unresolved
   // markers, for a one-click "ask the agent to resolve" rather than a bare error.
   conflictedFiles?: string[];
-  // Only set when stage is 'conflicted': the ref the rebase targeted, and each
-  // conflicted file's last-seen content (with markers) before the rebase was
-  // aborted for safety — the resolve-conflict agent's raw material.
+  // Only set when stage is 'conflicted': the ref the rebase targeted, plus each
+  // conflicted file's last-seen content — the resolve-conflict agent's raw material.
   conflictRef?: string;
   conflictedContent?: { path: string; content: string }[];
-  // Prompt for the agent recovery job (see git-sync-recovery.ts) — the deterministic
-  // path's failure, the working-tree state, and the goal, packaged for a future
-  // launch rather than thrown at the user.
+  // Prompt for the agent recovery job (see git-sync-recovery.ts), packaged for a
+  // future launch rather than thrown at the user.
   recoveryPrompt: string;
   // Only set when stage is 'conflicted': a prompt scoped to landing this one rebase
-  // (see resolve-conflict-prompt.ts) — launched only on explicit "ask the agent to
-  // resolve" confirmation from the sync-failed toast, never automatically.
+  // (see resolve-conflict-prompt.ts), launched only on explicit user confirmation.
   conflictPrompt?: string;
 }
 
@@ -1030,10 +1025,7 @@ export interface Issue {
   occurredAt?: string;
   thread: ThreadMessage[];
   status: IssueStatus;
-  /** Set once promoted (IDEA-192 phase 6) — the id of whatever now carries the work:
-   * a spawned fix entity, a spawned plain idea (no parent), or the open parent an
-   * issue was appended to as an inline fix. A promoted issue closes when that
-   * entity's status reaches 'done', independent of whether the original source is
-   * still detected as failing. */
+  /** Set once promoted — the id of whatever now carries the work. A promoted
+   * issue closes when that entity's status reaches 'done'. */
   promotedFixId?: string;
 }

@@ -1,9 +1,8 @@
 import type { FileDiffEntry, GitStatusResponse } from '@/types/index';
 import { apiFetch, apiUrl } from './api-base';
 
-// Sits above the server's own 30s cap so the server's command-named timeout
-// error is what wins whenever a call stalls; this only covers a response
-// that never arrives at all.
+// Above the server's 30s cap so a stall surfaces the server's own timeout
+// error rather than this one racing it.
 const GIT_TIMEOUT_MS = 45_000;
 
 async function throwIfNotOk(response: Response, fallbackError: string): Promise<void> {
@@ -157,9 +156,10 @@ export const resolveConflict = async (prompt: string): Promise<{ ok: boolean; er
   }
 };
 
-// Squash-merges the plan's PR and returns to a current main — the one action
-// that replaces "Approve & close" (IDEA-194); `deriveStatus` picks up `done`
-// once the merged PR is re-read, so no status patch happens here.
+/**
+ * Squash-merges the plan's PR and returns to main. No status patch happens
+ * here — `deriveStatus` picks up `done` once the merged PR is re-read.
+ */
 export const completeIdea = async (
   planId: string,
 ): Promise<{ branch: string; remoteDeleted?: boolean; needsAttention?: string }> => {

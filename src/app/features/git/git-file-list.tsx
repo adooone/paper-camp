@@ -55,9 +55,8 @@ export const GitFileList = () => {
 
   if (!files || files.length === 0) return null;
 
-  // No bulk endpoint exists, so this fans out over the per-path ones and reloads once
-  // at the end rather than after each — a partial failure still reports, and whatever
-  // did land shows up in that single reload.
+  // No bulk endpoint: fans out over per-path calls and reloads once at the end, so a
+  // partial failure still reports and whatever landed shows up in that single reload.
   const toggleAll = async () => {
     const targets = files.filter((f) => f.staged === allStaged);
     setBulkPending(true);

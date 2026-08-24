@@ -6,13 +6,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { chalkStatusFill, chalkStatusText, formatLastRun, sectionLabelClassName } from './shared';
 
 const MAX_VISIBLE_TASKS = 1;
-// Fixed so every card is the same height regardless of how much its title or
-// metadata truncates — content no longer drives card height. 4.625rem = 74px:
-// Card size="small" padding (2 * 12px) + gap-1 (4px) between the title and
-// metadata rows + the two rows themselves (title row + the taller of the
-// metadata text and the Stamp it sits beside, 58px combined) — the minimum
-// the two-line layout needs, so the border layer's overflow-y: hidden never
-// clips a row.
+// Fixed so card height doesn't vary with title/metadata truncation; 4.625rem is the
+// minimum for the two-line layout (padding + row gap + title row + metadata/Stamp row).
 const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
 // One card plus the "N more" row, reserved so the empty state doesn't shrink the
 // panel when tasks finish and clear.

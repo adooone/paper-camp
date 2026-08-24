@@ -55,9 +55,8 @@ async function readRunOrderRanks(config: GithubCorpusConfig): Promise<Map<string
   return new Map(parseRunOrderFile(file?.content ?? '').map((e, i) => [e.id, i + 1]));
 }
 
-// Mirrors core/readers.ts#readEntities against api.github.com instead of the
-// filesystem — no PR lookup (no `gh` in the browser), so callers get the same
-// offline fallback deriveStatus already gives a runtime with gh unreachable.
+// Mirrors core/readers.ts#readEntities but does no PR lookup (no `gh` in the
+// browser), so callers get the same offline fallback as a runtime with gh unreachable.
 async function readEntitiesFromGithub(config: GithubCorpusConfig): Promise<LoadedEntity[]> {
   const [live, archived, ranks] = await Promise.all([
     readDirEntities(config, IDEAS_DIR, false),
@@ -112,9 +111,8 @@ async function readConfigFile(
   return { file: JSON.parse(github.content) as ConfigFile, sha: github.sha };
 }
 
-// Chained so two nearly-simultaneous mints in this tab can't read the same counter —
-// mirrors serializer.ts#idAssignmentChain; a concurrent second tab/device is an
-// accepted gap, same as the runtime's own single-process guarantee.
+// Chained so two nearly-simultaneous mints in this tab can't read the same
+// counter; a concurrent second tab/device is an accepted gap.
 let idAssignmentChain: Promise<unknown> = Promise.resolve();
 
 export async function createGithubIdea(
@@ -224,10 +222,11 @@ async function reflowRunOrder(
   );
 }
 
-// Mirrors the PATCH /api/plans route against api.github.com — the write half of
-// plan-only. Every field it accepts round-trips through the same formatEntityFile
-// the runtime writes with, so a plan-only edit and a runtime edit produce the same
-// corpus shape.
+/**
+ * Mirrors the PATCH /api/plans route against api.github.com. Every field it
+ * accepts round-trips through the same formatEntityFile the runtime writes
+ * with, so a plan-only edit and a runtime edit produce the same corpus shape.
+ */
 export async function saveGithubEntity(
   config: GithubCorpusConfig,
   key: string,

@@ -3,9 +3,6 @@ import { useAppStore } from '@/app/stores/app-store';
 import { Button, Card, Input } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
-// The plan-only path onto the corpus (IDEA-193 phase 5): a fine-grained GitHub
-// personal access token, minted by the user and kept device-local, never sent
-// anywhere but api.github.com.
 const GithubTokenForm = () => {
   const setGithubConfig = useAppStore((s) => s.setGithubConfig);
   const [owner, setOwner] = useState('');

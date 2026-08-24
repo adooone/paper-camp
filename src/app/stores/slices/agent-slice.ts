@@ -179,9 +179,8 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
     launchAgent: withAgentPoll(get, launchAgentApi),
     launchPlanAudit: withAgentPoll(get, launchPlanAuditApi),
     launchPlanReconcile: async (planId, prompt, before) => {
-      // Refuse rather than overwrite: clearing an existing pendingReconcile on a second
-      // launch would strip its diff safety net, and a same-plan relaunch is reachable
-      // (navigate away mid-reconcile and back resets ReconcileButton's local flag).
+      // Refuse rather than overwrite: clearing an existing pendingReconcile would strip
+      // its diff safety net, and a same-plan relaunch is reachable via navigate-away-and-back.
       const existing = get().pendingReconcile;
       if (existing) {
         throw new Error(
@@ -190,9 +189,8 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
             : 'A reconcile is already in progress for another plan',
         );
       }
-      // An unreviewed preview for this entity blocks a relaunch: a second preview's
-      // `before` is the state *after* the first rewrite, so discarding them out of
-      // order would reinstate a rewrite the user already rejected.
+      // An unreviewed preview blocks a relaunch: a second preview's `before` is the state
+      // *after* the first rewrite, so discarding out of order would reinstate a rejected rewrite.
       if (get().reconcileQueue.some((item) => item.planId === planId)) {
         throw new Error('Review the pending reconcile for this plan first');
       }

@@ -9,9 +9,8 @@ export type RuntimeSlice = {
   checkRuntimeReachable: () => Promise<void>;
 };
 
-// `paper-camp dev` serving this bundle to itself is the runtime, so there's nothing
-// to probe there — only a detached client pointed at a `runtime` URL needs to confirm
-// it before letting runtime-layer modules render (see moduleReadiness).
+// `paper-camp dev` serving this bundle to itself is the runtime, so there's nothing to
+// probe — only a detached client pointed at a `runtime` URL needs to confirm it first.
 const hasDetachedRuntime = !!runtimeConnection.runtimeUrl;
 
 export function createRuntimeSlice(set: SetState): RuntimeSlice {

@@ -54,9 +54,8 @@ export const PageBreadcrumb = () => {
 
   if (!items) return null;
   return (
-    // Pulled up through the sheet's 2rem top inset so the breadcrumb sits close under
-    // the header — it labels the page below it rather than forming a band of its own.
-    // Scoped here so every page without a breadcrumb keeps the full inset untouched.
+    // Pulled up through the sheet's top inset so it sits close under the header;
+    // scoped here so pages without a breadcrumb keep the full inset untouched.
     <div className="-mt-6 mb-3">
       <Breadcrumb className="font-handwritten !text-xs min-w-0" items={items} />
     </div>

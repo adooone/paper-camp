@@ -12,9 +12,8 @@ import {
 } from '../services/git-api';
 import { fetchAgentAuthStatus, fetchCapabilities } from '../services/system';
 
-// The embed has no store of its own — this is the Scout panel's independent
-// poll-and-mutate client for its git banner, distinct from the desk's
-// StatusBarCore/useAppStore path.
+// The embed has no store of its own — this is the Scout panel's independent poll-and-mutate
+// client for its git banner, distinct from the desk's StatusBarCore/useAppStore path.
 export type StatusClientState = {
   gitBranch: string | null;
   gitAhead: number;
@@ -175,9 +174,8 @@ export function useStatusClient(): StatusClientState {
     })();
   }, [loadGitStatus]);
 
-  // Split out of onQuickCommit for a compose flow (edit-before-commit): the
-  // embed has no store, so — like onQuickCommit — this reads the same
-  // changedFilesRef rather than taking a files argument from the caller.
+  // Split out of onQuickCommit for a compose flow (edit-before-commit): reads the
+  // same changedFilesRef, since the embed has no store to pass files through.
   const suggestCommit = useCallback(async () => {
     const files = changedFilesRef.current;
     if (files.length === 0) return null;

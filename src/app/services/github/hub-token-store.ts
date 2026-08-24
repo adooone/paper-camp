@@ -1,8 +1,10 @@
 const STORAGE_KEY = 'papercamp:github-hub-token';
 
-// Device-local, like `config-store.ts` — but the hub's own token, not scoped to a
-// single repo: this is what the welcome screen connects before any project (and
-// therefore any owner/repo) is chosen.
+/**
+ * Device-local, like `config-store.ts` — but the hub's own token, not scoped
+ * to a single repo: this is what the welcome screen connects before any
+ * project (and therefore any owner/repo) is chosen.
+ */
 export function readHubGithubToken(): string | null {
   try {
     return localStorage.getItem(STORAGE_KEY);

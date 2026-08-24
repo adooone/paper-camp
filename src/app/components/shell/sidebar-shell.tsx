@@ -48,9 +48,7 @@ export const SidebarShell = ({
       <aside
         ref={asideRef}
         // Dialog semantics only as a mobile drawer — at lg+ it's an in-flow sidebar.
-        // `100%` alone would make the sticky sidebar page-height and scroll away;
-        // --pc-sidebar-h caps it to the gap between the fixed chrome. `100%` stays
-        // the fallback for the mobile drawer, which wants full height.
+        // --pc-sidebar-h caps the sticky sidebar to the fixed-chrome gap; `100%` is the mobile-drawer fallback.
         role={mobileOpen ? 'dialog' : undefined}
         aria-modal={mobileOpen || undefined}
         aria-label="Sidebar navigation"
@@ -63,9 +61,7 @@ export const SidebarShell = ({
             : 'bg-transparent'
         }`}
       >
-        {/* Matches the sheet's 2rem top inset, so the column's first row lines up with
-            the page's first line now that the app bar spans both instead of sitting
-            inside the content column. */}
+        {/* Matches the sheet's 2rem top inset so the column's first row lines up with the page's first line. */}
         <div className="shrink-0 h-8" />
         <div className="flex-1 overflow-y-auto relative">
           <div key={routeKey}>{children}</div>

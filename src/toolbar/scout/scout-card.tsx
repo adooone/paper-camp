@@ -17,13 +17,6 @@ const bodyStyle: CSSProperties = {
   overflow: 'hidden',
 };
 
-// scout-trigger.tsx's `.pc-scout-card > section` rule strips the Island's
-// own padding to 0, so this sits directly against the true edges with no
-// bleed trick needed — no negative margin, no radius-matching. Its own top
-// corners still need to curve with the Island (`.pc-scout-island`'s
-// overflow: hidden alone won't reliably clip a short banner against the
-// Island's corner arc — see IDEA-147 thread), so it carries a matching
-// radius directly.
 const bannerStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -35,9 +28,7 @@ const bannerStyle: CSSProperties = {
   borderRadius: '28px 28px 0 0',
 };
 
-// All the padding the Island's own section used to carry now lives here,
-// on a wrapper below the banner — the banner is full-bleed, everything
-// else keeps the original inset.
+// The banner above is full-bleed; this wrapper carries the padding instead.
 const contentPaddingStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -77,11 +68,8 @@ const glanceColumnStyle: CSSProperties = {
   minWidth: 0,
 };
 
-// Natural top-down flow, not space-between — stretching a handful of lines
-// across the full column height (matching the chat column) left large,
-// content-less gaps between them. A single flex spacer (below) does the same
-// full-height fill job by pinning the desk link / Build row to the bottom;
-// everything above it keeps a normal, consistent gap.
+// Top-down flow, not space-between, to avoid large content-less gaps; a
+// flex spacer below pins the bottom row instead.
 const glanceCardBodyStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -161,10 +149,7 @@ const emptyCommitStyle: CSSProperties = {
   textAlign: 'center',
 };
 
-// paper-ui's Input "small" size is 0.875rem — matches deskLinkStyle's
-// 0.75rem instead, so the composer reads at the same scale as the
-// "Open Paper Camp" link above it. `style` spreads straight onto the
-// native <input> in paper-ui's Input, so this overrides the module class.
+// Overrides paper-ui's 0.875rem Input size to match deskLinkStyle's 0.75rem.
 const commitInputTextStyle: CSSProperties = { fontSize: '0.75rem' };
 
 const commitActionsRowStyle: CSSProperties = {
@@ -176,21 +161,14 @@ const commitActionsRowStyle: CSSProperties = {
 
 const commitActionsSpacerStyle: CSSProperties = { flex: 1 };
 
-// Card sets no height of its own; this fills the glance column so it matches
-// the chat column's stretched full-panel height. `.pc-scout-island` clips
-// the Island's own content to its rounded border — paper-ui's Island doesn't
-// set overflow: hidden itself, so without this the full-bleed banner's
-// square corners poke out past the Island's curve instead of being cut to it.
+// `.pc-scout-island` clips the full-bleed banner's square corners to the
+// Island's own rounded border, which paper-ui's Island doesn't set itself.
 const scoutCardCss = `
 .pc-scout-island {
   overflow: hidden;
 }
 .pc-scout-id-stamp {
-  /* Stamp's small size has 0.75rem horizontal padding for its own organic
-     blob shape (paper-ui stamp.module.scss), so its box is flush-left but
-     the "IDEA-4" text inside sits 12px in from that edge — visibly offset
-     from the plain title text below it. Pull the stamp itself left by
-     exactly that padding so both read as starting from the same edge. */
+  /* Offsets the Stamp's own 0.75rem padding so its text aligns with the title below. */
   margin-left: -0.75rem;
 }
 .pc-scout-glance-card {

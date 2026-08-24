@@ -1,8 +1,7 @@
 import type { GithubCorpusConfig } from './config-store';
 
-// `api.github.com` answers every response (including errors) with
-// `Access-Control-Allow-Origin: *` (measured, see IDEA-193) — the one GitHub surface
-// reachable directly from a hosted browser client with no server-side hop.
+// `api.github.com` answers every response with `Access-Control-Allow-Origin: *` —
+// the one GitHub surface reachable directly from a hosted browser client.
 const API_ROOT = 'https://api.github.com';
 
 export class GithubApiError extends Error {

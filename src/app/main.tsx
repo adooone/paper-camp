@@ -13,9 +13,8 @@ const { runtimeUrl, pairingToken } = runtimeConnection;
 setApiBase(runtimeUrl || mountPrefix);
 setApiPairingToken(pairingToken);
 
-// A detached, hosted bundle pairs via its `?runtime=&token=` link or a token
-// persisted from an earlier one — pair before the first render so the app's
-// own API calls aren't the ones that 403.
+// A detached, hosted bundle pairs via its `?runtime=&token=` link or a persisted
+// token — pair before the first render so the app's own API calls don't 403.
 async function pairIfNeeded(): Promise<void> {
   if (!runtimeUrl || !pairingToken) return;
   await fetch(apiUrl('/api/pair'), {
@@ -33,9 +32,8 @@ async function chooseProject(): Promise<boolean> {
   return servesOwnRuntime(runtimeUrl, (path) => apiFetch(apiUrl(path)));
 }
 
-// The router always mounts. With no project chosen the hub is where you land, but it
-// is a route like any other — rendering it outside the RouterProvider left its own
-// navigation calling router hooks with no router, which crashed every hosted load.
+// The router always mounts: rendering the hub outside RouterProvider left its own
+// navigation calling router hooks with no router, crashing every hosted load.
 pairIfNeeded()
   .then(chooseProject)
   .catch(() => false)

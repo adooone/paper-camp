@@ -222,9 +222,8 @@ const RootLayout = () => {
     checkRuntimeReachable,
   ]);
 
-  // Corpus source depends on runtimeReachable, which a detached client only knows
-  // once the probe in the effect above resolves — re-run once it has, so a client
-  // that's actually reachable doesn't get stuck on the plan-only GitHub path.
+  // Corpus source depends on runtimeReachable, known only once the probe above
+  // resolves — re-run then so a reachable client isn't stuck on the plan-only path.
   useEffect(() => {
     if (runtimeChecking) return;
     loadPlans();
@@ -260,9 +259,8 @@ const RootLayout = () => {
     setMobileSidebarOpen(false);
   }, [pathname]);
 
-  // The hub is a level above the project, so it takes the whole window rather than
-  // rendering inside the chrome of a project you have not chosen yet — the
-  // cross-project views compose several projects at once, so they belong here too.
+  // The hub is a level above the project, so it takes the whole window instead of
+  // the project chrome — cross-project views compose several projects at once.
   if (HUB_PATHS.includes(pathname)) {
     return (
       <ToastProvider position="bottom-left">
@@ -330,13 +328,8 @@ const RootLayout = () => {
             {/* Bled out of `.content`'s padding: the scrollbar renders at this box's
                 edge, so content isn't inset by a strip that no longer exists. */}
             <div
-              // No top inset: there's no header band above the columns anymore, so the
-              // page should meet the top of the viewport directly. Page's own 2rem padding
-              // still holds the text off the edge — re-adding it here would stack two grid
-              // cells of dead space.
-              // paddingBottom uses var() so utilities.css can widen it below the phone
-              // breakpoint, clearing the fixed .phone-bottom-nav that replaces the header
-              // nav there.
+              // No top inset: Page's own 2rem padding already holds text off the edge.
+              // paddingBottom is a var() so utilities.css can widen it below the phone breakpoint.
               className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto [scrollbar-gutter:stable] -mt-8 -ml-8 -mr-8 pt-0 pl-8 pr-8 pb-[var(--pc-content-pad-bottom)]"
             >
               {/* --pc-sidebar-h: the sticky sidebar can't size off this group (it's as
@@ -377,9 +370,8 @@ const RootLayout = () => {
                   </SidebarShell>
                 )}
                 <div className="relative flex flex-col min-w-0 flex-[1_1_0%]">
-                  {/* Its own band above the sheet rather than a pill floating on it. `shade`
-                      is the same parchment grain one step darker, so the seam reads as a
-                      fold in one surface instead of a different material. */}
+                  {/* Its own band above the sheet, not a pill floating on it — `shade` is
+                      the same parchment grain one step darker, reading as one folded surface. */}
                   <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
@@ -450,9 +442,8 @@ const RootLayout = () => {
 
 const rootRoute = createRootRoute({ component: RootLayout });
 
-// The hub's own page, reachable whether or not a project is open — the shell in
-// main.tsx only covers the case where none is, which a locally served bundle never
-// hits. Registry state is device-local, so this needs no runtime and no corpus.
+// The hub's own page, reachable whether or not a project is open. Registry state
+// is device-local, so this needs no runtime and no corpus.
 const projectsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/projects',

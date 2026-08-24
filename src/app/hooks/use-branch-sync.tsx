@@ -13,9 +13,8 @@ import { useCallback } from 'react';
 
 type GitAction = 'push' | 'sync' | 'pull' | 'fix-divergence';
 
-// Shared by push/sync/pull: run an action against the store-wide lock so no two
-// can run at once across any useBranchSync() mount, and toast a one-line
-// summary if it throws — the only thing the three differ on.
+// Shared by push/sync/pull: runs against the store-wide lock so no two can run at
+// once across any useBranchSync() mount, and toasts a one-line summary if it throws.
 function useTrackedAction(kind: GitAction, failTitle: string) {
   const { toast } = useToast();
   const activeGitAction = useAppStore((s) => s.activeGitAction);
@@ -57,11 +56,8 @@ export function useBranchSync() {
   const [pulling, runPull] = useTrackedAction('pull', 'Pull failed');
   const [fixingDivergence, runFixDivergence] = useTrackedAction('fix-divergence', 'Fix failed');
 
-  // Handles a deterministic sync/fix-divergence failure: a plain reconcile failure was
-  // already auto-handed to a recovery agent (result.recovering), while a genuine content
-  // conflict (result.conflictPrompt) waits for an explicit click before the agent touches
-  // it, so a bad auto-merge never lands unseen. Returns true once handled — false means
-  // the caller should still throw result.message.
+  // result.recovering is already auto-handed off; result.conflictPrompt waits for a click.
+  // Returns true once handled — false means the caller should still throw result.message.
   const handleDeterministicFailure = useCallback(
     (label: string, result: Extract<SyncResult, { ok: false }>) => {
       if (result.recovering) {

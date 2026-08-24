@@ -39,7 +39,7 @@
     "dev:lib": "vite",
     "cli": "bun src/cli/index.ts",
     "check-types": "tsc --noEmit --incremental",
-    "lint": "biome check .",
+    "lint": "biome check . && node scripts/comment-stats.mjs",
     "lint:write": "biome check --write .",
     "test": "vitest run --coverage",
     "test:watch": "vitest",

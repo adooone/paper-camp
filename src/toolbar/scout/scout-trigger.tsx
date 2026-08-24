@@ -55,11 +55,8 @@ const cardLayerStyle = (open: boolean): CSSProperties => ({
     : 'transform 0.26s ease, opacity 0.2s ease, visibility 0s 0.26s',
 });
 
-// paper-ui's Island fixes its own position/transform/size through a hashed
-// class we can't target by name; this scoped child-selector rule (higher
-// specificity) neutralises that so the card flows inside the grow-from-trigger
-// layer we animate, and gets a static height and equal x/y padding instead of
-// the island's own content-driven size.
+// Neutralises paper-ui's own Island position/transform/size (set via a
+// hashed class) so the card flows inside the grow-from-trigger layer instead.
 const scoutCss = `
 .pc-scout-trigger:hover {
   border-color: rgba(61, 53, 43, 0.5);
@@ -71,9 +68,7 @@ const scoutCss = `
   left: auto;
   z-index: auto;
   height: 30rem;
-  /* No padding on the section itself — the branch banner needs to sit flush
-     against every edge. scout-card.tsx puts padding on its own wrapper,
-     below the banner, instead of here. */
+  /* No padding here so the branch banner sits flush; scout-card.tsx pads its own wrapper. */
   padding: 0;
   box-sizing: border-box;
 }

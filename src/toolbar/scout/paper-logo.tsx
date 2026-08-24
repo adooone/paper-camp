@@ -1,6 +1,5 @@
 // Raw inline SVG: paper-ui ships no logo component, and the brand mark's fill
-// colours are intrinsic artwork (the canonical public/img/paper-logo.svg), not
-// themeable chrome — so it can't reduce to currentColor or a --pui-* token.
+// colours are intrinsic artwork, not themeable chrome, so they can't reduce to a --pui-* token.
 export const PaperLogo = ({ size = 20 }: { size?: number }) => (
   <svg
     width={size}

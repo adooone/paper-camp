@@ -8,9 +8,8 @@ type DocSection = (typeof DOC_SECTIONS)[number];
 const SETTINGS_SECTIONS = ['subjects', 'setup', 'merge-policy'] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
-// URLs carry bare numbers, never prefixed ids: /ideas/195, /ideas/195/tickets/2. A
-// number alone can't distinguish TICKET-2 from IDEA-2, so the *route shape* does it —
-// an idea sits at /ideas/:n and a ticket is nested under the board that owns it.
+// URLs carry bare numbers, never prefixed ids: /ideas/195, /ideas/195/tickets/2. A number
+// alone can't distinguish TICKET-2 from IDEA-2, so the route shape does — not the id.
 export function bareId(id: string | null | undefined): string | null {
   return id?.match(/\d+$/)?.[0] ?? null;
 }
