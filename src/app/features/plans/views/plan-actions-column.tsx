@@ -84,14 +84,16 @@ export const PlanActionsColumn = () => {
     if (!plan.id) return;
     setArchiving(true);
     try {
-      const check = await verifyDirectCompletion(plan.id);
-      if (!check.ready) {
-        toast({
-          title: 'Not ready to complete idea',
-          description: `Waiting on ${check.missing.join(', ')}`,
-          variant: 'error',
-        });
-        return;
+      if (plan.entityKind !== 'board') {
+        const check = await verifyDirectCompletion(plan.id);
+        if (!check.ready) {
+          toast({
+            title: 'Not ready to complete idea',
+            description: `Waiting on ${check.missing.join(', ')}`,
+            variant: 'error',
+          });
+          return;
+        }
       }
       await archiveIdeas([plan.id]);
     } catch (err) {

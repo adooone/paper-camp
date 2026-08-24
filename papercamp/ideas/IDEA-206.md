@@ -2,7 +2,7 @@
 id: IDEA-206
 title: Mark board ideas done
 type: fix
-status: planned
+status: review
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -70,10 +70,11 @@ board-specific, and isn't part of this idea.
       read). Every other entity kind keeps the existing
       `plan.phases.length > 0 && plan.phases.every(p => p.done)` check unchanged.
       run: 59s · 5.7k in · 3k out · sonnet-5
-- [ ] Skip `verifyDirectCompletion` for boards in `handleMarkDone`
+- [x] Skip `verifyDirectCompletion` for boards in `handleMarkDone`
       In `plan-actions-column.tsx:83-102`, when `plan.entityKind === 'board'`, call
       `archiveIdeas([plan.id])` directly instead of gating on
       `verifyDirectCompletion(plan.id)` — that check greps main for a commit under the
       board's own id, which a board never has since its tickets carry the work under
       their own ids. The board's readiness was already fully verified by the ticket
       rollup that produced `status: 'review'` in phase one's gate.
+      run: 37s · 240 in · 1.4k out · sonnet-5
