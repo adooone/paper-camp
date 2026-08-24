@@ -1,5 +1,4 @@
-import { AddByRuntimeUrlCard } from './add-runtime-card';
-import { GithubConnectCard } from './github-connect-card';
+import { AddByRuntimeUrlCard, GithubConnectCard } from '../components';
 
 export const WelcomeScreen = () => (
   <div className="flex flex-col gap-6">

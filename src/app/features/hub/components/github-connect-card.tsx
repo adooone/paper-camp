@@ -4,8 +4,11 @@ import {
   readHubGithubToken,
   writeHubGithubToken,
 } from '@/app/services/github/hub-token-store';
-import { fetchAccessibleRepoNames, fetchGithubIdentity } from '@/app/services/github/identity';
-import type { GithubIdentity } from '@/app/services/github/identity';
+import {
+  type GithubIdentity,
+  fetchAccessibleRepoNames,
+  fetchGithubIdentity,
+} from '@/app/services/github/identity';
 import { Button, Card, Input, ListItem } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 
@@ -29,13 +32,12 @@ function connectErrorMessage(error: unknown): string {
   return 'Could not reach GitHub.';
 }
 
-const ConnectedGithub = ({
-  connection,
-  onDisconnect,
-}: {
+interface ConnectedGithubProps {
   connection: Connection;
   onDisconnect: () => void;
-}) => (
+}
+
+const ConnectedGithub = ({ connection, onDisconnect }: ConnectedGithubProps) => (
   <Card size="small" texture="kraft" className="flex flex-1 flex-col gap-2 text-left">
     <p className="m-0 font-semibold">Connected as {connection.identity.login}</p>
     <p className="m-0 text-sm opacity-70">

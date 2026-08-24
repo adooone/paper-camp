@@ -1,6 +1,6 @@
 import type { RuntimeConnection } from '@/app/services/runtime-connection';
 import { describe, expect, it } from 'vitest';
-import { fanOutRuntimes } from './fan-out';
+import { fanOutRuntimes } from '../fan-out';
 
 function runtime(runtimeUrl: string): RuntimeConnection {
   return { runtimeUrl, pairingToken: null };

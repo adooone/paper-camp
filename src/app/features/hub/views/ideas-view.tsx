@@ -1,8 +1,7 @@
 import { Card, Input, ListItem, Stamp } from '@dendelion/paper-ui';
 import { useMemo, useState } from 'react';
-import { openInProject } from './open-in-project';
-import { projectLabel } from './project-label';
-import { useCrossProjectIdeas } from './use-cross-project-ideas';
+import { openInProject, projectLabel } from '../helpers';
+import { useCrossProjectIdeas } from '../hooks';
 
 export const CrossProjectIdeasView = () => {
   const { rows, loading } = useCrossProjectIdeas();

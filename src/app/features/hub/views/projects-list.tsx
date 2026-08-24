@@ -8,9 +8,9 @@ import {
 import { CLIENT_VERSION } from '@/app/services/version';
 import { Card, CloseIcon, IconButton, ListItem, Stamp, Tooltip } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
-import { AddByRuntimeUrlCard } from './add-runtime-card';
-import { RenameRuntimeButton } from './rename-runtime-button';
-import { type RuntimeStatus, useRuntimeStatuses } from './use-runtime-statuses';
+import { RenameRuntimeButton } from '../actions';
+import { AddByRuntimeUrlCard } from '../components';
+import { type RuntimeStatus, useRuntimeStatuses } from '../hooks';
 
 // A full load, not a client navigation: the runtime URL and API base are read once
 // at startup. Lands on the app root, not the current (hub) path, to avoid a loop back here.
@@ -52,13 +52,12 @@ function StatusStamp({ status }: { status: RuntimeStatus | undefined }): ReactNo
   );
 }
 
-export const ProjectsList = ({
-  runtimes,
-  onChange,
-}: {
+interface ProjectsListProps {
   runtimes: RuntimeConnection[];
   onChange: () => void;
-}) => {
+}
+
+export const ProjectsList = ({ runtimes, onChange }: ProjectsListProps) => {
   const statuses = useRuntimeStatuses(runtimes);
   return (
     <div className="flex flex-col gap-4">
