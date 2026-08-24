@@ -38,8 +38,9 @@ and `npx vitest run` green and no test edited to accommodate it.
 Behaviour. Any change to paper-ui. The other features' passes.
 
 ### Phases
-- [ ] Gather every hook into hooks/
+- [x] Gather every hook into hooks/
       Move `use-runtime-statuses.ts` and the three `cross-project/use-cross-project-*.ts` hooks into `hooks/` with an `index.ts` barrel; consumers import through the barrel.
+      run: 3m26s · 38 in · 3.9k out · sonnet-5
 - [ ] Sort the rest into by-role folders
       Apply the §4 template, dissolving `cross-project/`: `hub-shell.tsx` and `index.ts` stay as anchors; screens and views (`hub-home`, `welcome-screen`, `projects-list`, the three `*-view` files) into `views/`; cards (`github-connect-card`, `add-runtime-card`) into `components/`; `rename-runtime-button.tsx` into `actions/`; pure logic (`fan-out.ts`, `project-label.ts`, `open-in-project.ts`) into `helpers/` with `fan-out.test.ts` in `helpers/__tests__/`.
 - [ ] Name props interfaces and merge duplicate imports
