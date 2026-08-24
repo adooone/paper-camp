@@ -2,13 +2,14 @@
 id: IDEA-206
 title: Mark board ideas done
 type: fix
-status: review
+status: done
 created: 2026-08-24
 updated: 2026-08-24
 tags:
   - app
   - multi-project
 subject: Planning surface
+order: 1
 ---
 
 A `kind: board` entity (e.g. [[IDEA-195]]) has no phases and no PR of its own — its
