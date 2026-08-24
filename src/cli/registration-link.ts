@@ -1,16 +1,34 @@
 import { hostname, networkInterfaces } from 'node:os';
 
-export function buildRegistrationLinkForRuntime(runtimeUrl: string, pairingToken: string): string {
+// The generic multi-project client this package deploys (IDEA-204) — the one
+// place a runtime's registration accumulates into a cross-project registry,
+// since that registry lives in this origin's localStorage. A link built from
+// the runtime's own address instead would register it under that runtime's
+// own origin, which no other project's runtime ever shares — never joining
+// into one desk. A fork serving its own deployment overrides the origin.
+const DEFAULT_HOSTED_CLIENT_URL = 'https://paper-camp.vercel.app';
+
+export function hostedClientUrl(): string {
+  const configured = process.env.PAPERCAMP_HOSTED_CLIENT_URL?.trim();
+  return (configured || DEFAULT_HOSTED_CLIENT_URL).replace(/\/+$/, '');
+}
+
+export function buildRegistrationLinkForRuntime(
+  runtimeUrl: string,
+  pairingToken: string,
+  clientUrl = hostedClientUrl(),
+): string {
   const params = new URLSearchParams({ runtime: runtimeUrl, token: pairingToken });
-  return `${runtimeUrl}/?${params}`;
+  return `${clientUrl}/?${params}`;
 }
 
 export function buildRegistrationLink(
   port: number,
   pairingToken: string,
   host = 'localhost',
+  clientUrl = hostedClientUrl(),
 ): string {
-  return buildRegistrationLinkForRuntime(`http://${host}:${port}`, pairingToken);
+  return buildRegistrationLinkForRuntime(`http://${host}:${port}`, pairingToken, clientUrl);
 }
 
 /**

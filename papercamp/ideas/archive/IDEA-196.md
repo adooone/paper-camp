@@ -2,7 +2,7 @@
 id: IDEA-196
 title: Make the comment check enforceable
 type: chore
-status: review
+status: done
 created: 2026-08-21
 updated: 2026-08-24
 tags:
