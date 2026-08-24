@@ -78,3 +78,4 @@ board-specific, and isn't part of this idea.
       their own ids. The board's readiness was already fully verified by the ticket
       rollup that produced `status: 'review'` in phase one's gate.
       run: 37s · 240 in · 1.4k out · sonnet-5
+- [x] [manual] Retry the runtime probe and time out the pairing fetch

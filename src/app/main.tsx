@@ -13,14 +13,18 @@ const { runtimeUrl, pairingToken } = runtimeConnection;
 setApiBase(runtimeUrl || mountPrefix);
 setApiPairingToken(pairingToken);
 
+// A fresh --share tunnel can still be warming up when its link is first opened.
+const TUNNEL_WARMUP_TIMEOUT_MS = 15_000;
+
 // A detached, hosted bundle pairs via its `?runtime=&token=` link or a persisted
-// token — pair before the first render so the app's own API calls don't 403.
+// token, timed so an unreachable tunnel can't hang the boot sequence forever.
 async function pairIfNeeded(): Promise<void> {
   if (!runtimeUrl || !pairingToken) return;
   await fetch(apiUrl('/api/pair'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token: pairingToken }),
+    signal: AbortSignal.timeout(TUNNEL_WARMUP_TIMEOUT_MS),
   }).catch(() => {});
 }
 
