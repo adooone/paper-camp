@@ -9,7 +9,7 @@ import {
 
 describe('hostedClientUrl', () => {
   afterEach(() => {
-    delete process.env.PAPERCAMP_HOSTED_CLIENT_URL;
+    Reflect.deleteProperty(process.env, 'PAPERCAMP_HOSTED_CLIENT_URL');
   });
 
   it('defaults to the hosted client this package deploys', () => {
@@ -122,7 +122,7 @@ describe('reachableHosts', () => {
 
 describe('registrationLinks', () => {
   afterEach(() => {
-    delete process.env.PAPERCAMP_HOSTED_CLIENT_URL;
+    Reflect.deleteProperty(process.env, 'PAPERCAMP_HOSTED_CLIENT_URL');
   });
 
   it('emits one hosted-client link per reachable host, varying only the runtime value', () => {

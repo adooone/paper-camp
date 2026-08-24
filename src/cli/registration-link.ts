@@ -1,11 +1,6 @@
 import { hostname, networkInterfaces } from 'node:os';
 
-// The generic multi-project client this package deploys (IDEA-204) — the one
-// place a runtime's registration accumulates into a cross-project registry,
-// since that registry lives in this origin's localStorage. A link built from
-// the runtime's own address instead would register it under that runtime's
-// own origin, which no other project's runtime ever shares — never joining
-// into one desk. A fork serving its own deployment overrides the origin.
+// Every link shares this origin so registrations land in one localStorage registry.
 const DEFAULT_HOSTED_CLIENT_URL = 'https://paper-camp.vercel.app';
 
 export function hostedClientUrl(): string {
