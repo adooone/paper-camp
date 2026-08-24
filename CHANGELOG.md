@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.21.1](https://github.com/adooone/paper-camp/compare/v0.21.0...v0.21.1) (2026-08-24)
+
+
+### Bug Fixes
+
+* **cli:** satisfy lint gates on the hosted-client registration link ([4aff638](https://github.com/adooone/paper-camp/commit/4aff638530c34aad17a8789b667dec0a3e2db848))
+* **server:** trust missing Origin on any network-scoped host, not just loopback ([9b1069c](https://github.com/adooone/paper-camp/commit/9b1069c9a673947354b216a71ff0de4239bd515a))
+
 ## [0.21.0](https://github.com/adooone/paper-camp/compare/v0.20.0...v0.21.0) (2026-08-24)
 
 
