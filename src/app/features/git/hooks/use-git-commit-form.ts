@@ -1,7 +1,6 @@
 import { type CommitFormFile, useCommitForm } from '@/app/hooks/use-commit-form';
 
-// Stable across renders, and the same value used before this idea's staging/body
-// work — keeps drafts saved under the git page's key from being orphaned.
+// Stable across renders — keeps drafts saved under the git page's key from being orphaned.
 const GIT_PAGE_FORM_KEY = '__git__';
 
 const matchAnySuggestionTask = () => true;

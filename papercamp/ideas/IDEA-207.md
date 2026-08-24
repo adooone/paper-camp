@@ -2,7 +2,7 @@
 id: IDEA-207
 title: Git feature conventions pass
 type: refactor
-status: in-progress
+status: review
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -48,8 +48,9 @@ Behaviour. Any change to paper-ui. The other features — each has its own pass
 - [x] Sort files into by-role folders
       Apply the §4 feature template: `git-page.tsx` and `index.ts` stay as anchors; views into `views/`, small atoms (`git-status-marker.tsx`, `file-path.tsx`, `count-badge.tsx`) into `components/`, each folder with an `index.ts` barrel and consumers importing through it.
       run: 3m55s · 52 in · 7.9k out · sonnet-5
-- [ ] Audit every comment against §7
+- [x] Audit every comment against §7
       Walk the 18 `//` lines: keep a one/two-line non-derivable why, delete everything else. No new comments are added to compensate.
+      run: 3m47s · 28 in · 8.2k out · sonnet-5
 
 ### Thread
 - [ ] 2026-08-24 [question] [agent] Run-all parked on phase 2 ("Extract page wiring into feature hooks") — the agent needs a decision: Not logged in · Please run /login
