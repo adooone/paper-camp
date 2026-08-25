@@ -1,8 +1,6 @@
-import type { StampVariant } from '@dendelion/paper-ui';
-import { Card, ListItem, Stamp } from '@dendelion/paper-ui';
-import { openInProject } from './open-in-project';
-import { projectLabel } from './project-label';
-import { useCrossProjectActivity } from './use-cross-project-activity';
+import { Card, ListItem, Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { openInProject, projectLabel } from '../helpers';
+import { useCrossProjectActivity } from '../hooks';
 
 const OUTCOME_VARIANT: Record<'done' | 'error' | 'superseded', StampVariant> = {
   done: 'success',

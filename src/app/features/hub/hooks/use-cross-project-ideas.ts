@@ -2,7 +2,7 @@ import { fetchIdeasAt } from '@/app/services/content';
 import { listRuntimes } from '@/app/services/runtime-connection';
 import type { IdeaEntry } from '@/types/index';
 import { useEffect, useState } from 'react';
-import { type ProjectContribution, fanOutRuntimes } from './fan-out';
+import { type ProjectContribution, fanOutRuntimes } from '../helpers';
 
 export type IdeaRow = ProjectContribution<IdeaEntry>;
 

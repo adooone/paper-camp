@@ -2,7 +2,7 @@ import { fetchPlansAt } from '@/app/services/content';
 import { listRuntimes } from '@/app/services/runtime-connection';
 import type { PlanEntry } from '@/types/index';
 import { useEffect, useState } from 'react';
-import { type ProjectContribution, fanOutRuntimes } from './fan-out';
+import { type ProjectContribution, fanOutRuntimes } from '../helpers';
 
 export type ReviewRow = ProjectContribution<PlanEntry & { id: string }>;
 

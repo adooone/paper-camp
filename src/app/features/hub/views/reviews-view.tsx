@@ -1,7 +1,6 @@
 import { Card, ListItem, Stamp } from '@dendelion/paper-ui';
-import { openInProject } from './open-in-project';
-import { projectLabel } from './project-label';
-import { useCrossProjectReviews } from './use-cross-project-reviews';
+import { openInProject, projectLabel } from '../helpers';
+import { useCrossProjectReviews } from '../hooks';
 
 export const CrossProjectReviewsView = () => {
   const { rows, loading } = useCrossProjectReviews();
