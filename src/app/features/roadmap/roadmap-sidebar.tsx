@@ -1,7 +1,7 @@
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { Button, ListItem } from '@dendelion/paper-ui';
-import { AddRoadmapItemModal } from './add-roadmap-item-modal';
 import { useRoadmapSidebar } from './hooks';
+import { AddRoadmapItemModal } from './modals';
 
 // Matches SidebarSection — handwritten, no caps, one grid cell.
 const sectionLabelClass = 'pc-row-label font-handwritten text-xs font-semibold opacity-[0.45]';

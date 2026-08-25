@@ -1,6 +1,6 @@
 import { PageTitle } from '@/app/components/page-title';
 import { useRoadmapPage } from './hooks';
-import { PromoteRoadmapItemModal } from './promote-roadmap-item-modal';
+import { PromoteRoadmapItemModal } from './modals';
 import { GoalBanner, HorizonSection } from './views';
 
 export const RoadmapPage = () => {

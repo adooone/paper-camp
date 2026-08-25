@@ -1,7 +1,7 @@
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanStatus } from '@/types/index';
 import { useState } from 'react';
-import { horizonItemCounts, statusItemCounts } from '../roadmap-filters';
+import { horizonItemCounts, statusItemCounts } from '../helpers';
 
 const STATUS_CHIP_ORDER: PlanStatus[] = [
   'in-progress',

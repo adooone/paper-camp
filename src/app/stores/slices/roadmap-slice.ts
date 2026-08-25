@@ -1,7 +1,7 @@
 import {
   DEFAULT_ROADMAP_FILTERS,
   type RoadmapFilters,
-} from '@/app/features/roadmap/roadmap-filters';
+} from '@/app/features/roadmap/helpers/roadmap-filters';
 import type { PlanStatus, ResolvedRoadmap } from '@/types/index';
 import { fetchRoadmap } from '../../services/content/docs-api';
 import type { GetState, SetState } from './slice-helpers';

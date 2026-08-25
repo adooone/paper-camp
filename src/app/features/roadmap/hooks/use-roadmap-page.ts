@@ -4,7 +4,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry, ResolvedRoadmapItem } from '@/types/index';
 import { useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { filterHorizons } from '../roadmap-filters';
+import { filterHorizons } from '../helpers';
 
 interface Promoting {
   horizonTitle: string;
