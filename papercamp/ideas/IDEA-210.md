@@ -4,12 +4,13 @@ title: Settings feature conventions pass
 type: refactor
 status: review
 created: 2026-08-24
-updated: 2026-08-24
+updated: 2026-08-25
 tags:
   - app
   - code-health
   - settings
 subject: Code health
+order: 1
 ---
 
 [[IDEA-198]]'s conventions pass applied to `src/app/features/settings` — the
@@ -55,3 +56,7 @@ makes the shared home a token, not another literal map.
 - [x] Audit every comment against §7
       Walk the 8 `//` lines: keep a one/two-line non-derivable why, delete the rest.
       run: 3m53s · 28 in · 8.4k out · sonnet-5
+- [x] [manual] Split multi-component files and consolidate task constants
+
+### Thread
+- [x] 2026-08-25 [review] [agent] Requests changes · 4 findings — The extraction work is faithful: the settings page state machine, the setup-section store access and the sign-in relay logic move to hooks/ verbatim, the six colour literals land in a new constants.ts, the comment audit is clean (comment-stats reports 0 runs over the cap), and check-types, lint and all 1300 tests pass with no test touched. The behaviour-preserving claim holds — I diffed the moved hook bodies against the originals and found no semantic change. What the pass does not finish is its own §5/§8 checklist: three of the files it created still hold two components each, including a newly created views/ file with two exported components, which is exactly the metric the idea says the pass exists to clear.

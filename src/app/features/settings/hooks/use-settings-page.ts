@@ -9,25 +9,7 @@ import {
 } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
 import { useEffect, useRef, useState } from 'react';
-
-export const TASK_TYPE_KEYS = [
-  'phase',
-  'planDraft',
-  'ideaExtend',
-  'commitSuggest',
-  'feedback',
-  'codeReview',
-] as const;
-export type TaskTypeKey = (typeof TASK_TYPE_KEYS)[number];
-
-export const TASK_TYPE_LABELS: Record<TaskTypeKey, string> = {
-  phase: 'Phase run',
-  planDraft: 'Plan draft',
-  ideaExtend: 'Idea extend',
-  commitSuggest: 'Commit suggest',
-  feedback: 'Scout chat',
-  codeReview: 'Code review',
-};
+import type { TaskTypeKey } from '../constants';
 
 export const useSettingsPage = () => {
   const fileRef = useRef<HTMLInputElement>(null);

@@ -1,9 +1,10 @@
 import { color } from '@/app/styles/tokens';
 import { DEFAULT_AGENTS } from '@/types/index';
 import { Alert, Button, Card, Divider, Input, Stamp } from '@dendelion/paper-ui';
-import { VERSION_STAMP_FILL } from '../constants';
-import { TASK_TYPE_KEYS, useSettingsPage } from '../hooks';
-import { AgentTaskRow, AgentTaskRowHeader } from './agent-task-row';
+import { TASK_TYPE_KEYS, VERSION_STAMP_FILL } from '../constants';
+import { useSettingsPage } from '../hooks';
+import { AgentTaskRow } from './agent-task-row';
+import { AgentTaskRowHeader } from './agent-task-row-header';
 
 export const GeneralSection = () => {
   const {

@@ -1,5 +1,24 @@
 import type { CapabilityStatus } from '@/types/index';
 
+export const TASK_TYPE_KEYS = [
+  'phase',
+  'planDraft',
+  'ideaExtend',
+  'commitSuggest',
+  'feedback',
+  'codeReview',
+] as const;
+export type TaskTypeKey = (typeof TASK_TYPE_KEYS)[number];
+
+export const TASK_TYPE_LABELS: Record<TaskTypeKey, string> = {
+  phase: 'Phase run',
+  planDraft: 'Plan draft',
+  ideaExtend: 'Idea extend',
+  commitSuggest: 'Commit suggest',
+  feedback: 'Scout chat',
+  codeReview: 'Code review',
+};
+
 export const CAPABILITY_STATUS_STAMP: Record<
   CapabilityStatus,
   { fill: string; text: string; label: string }

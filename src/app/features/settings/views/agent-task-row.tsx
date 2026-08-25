@@ -7,21 +7,11 @@ import {
 } from '@/types/index';
 import { Divider, Input, Select } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
-import { TASK_TYPE_LABELS, type TaskTypeKey } from '../hooks';
+import { TASK_TYPE_LABELS, type TaskTypeKey } from '../constants';
 
-const TASK_COLUMN_WIDTH = 110;
 const AGENT_COLUMN_WIDTH = 140;
 const MODEL_COLUMN_WIDTH = 160;
 const EFFORT_COLUMN_WIDTH = 110;
-
-export const AgentTaskRowHeader = () => (
-  <div className="flex items-center gap-3 pb-1">
-    <span className="w-[110px] shrink-0 text-sm opacity-[0.45]">Task</span>
-    <span className="w-[140px] shrink-0 text-sm opacity-[0.45]">Agent</span>
-    <span className="w-[160px] shrink-0 text-sm opacity-[0.45]">Model</span>
-    <span className="w-[110px] shrink-0 text-sm opacity-[0.45]">Effort</span>
-  </div>
-);
 
 interface AgentTaskRowProps {
   taskKey: TaskTypeKey;

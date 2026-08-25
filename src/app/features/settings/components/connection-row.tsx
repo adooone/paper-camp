@@ -1,46 +1,11 @@
 import type { ConnectionResult } from '@/types/index';
-import { Button, CodeBlock, Divider, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { Button, Divider, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { CAPABILITY_STATUS_STAMP } from '../constants';
+import { ConnectActionView } from './connect-action-view';
 import { SignInAction } from './sign-in-action';
 
 // Only claude-code exposes `auth login`/`auth status` (see agentAuthenticated in server/services.ts).
 const RELAY_CONNECTION_ID: ConnectionResult['id'] = 'agent:claude-code';
-
-interface ConnectActionViewProps {
-  connection: ConnectionResult;
-  onConnect: (id: string) => void;
-  connecting: boolean;
-}
-
-const ConnectActionView = ({ connection, onConnect, connecting }: ConnectActionViewProps) => {
-  const { connect } = connection;
-  if (!connect) return null;
-  if (connect.kind === 'command' && connect.runnable) {
-    return (
-      <Button size="small" onClick={() => onConnect(connection.id)} disabled={connecting}>
-        {connecting ? 'Running…' : `Run \`${connect.command}\``}
-      </Button>
-    );
-  }
-  if (connect.kind === 'command') {
-    return (
-      <div className="mt-2">
-        <CodeBlock code={connect.command} />
-      </div>
-    );
-  }
-  if (connect.kind === 'link') {
-    return (
-      <Button
-        size="small"
-        onClick={() => window.open(connect.url, '_blank', 'noopener,noreferrer')}
-      >
-        {connect.label}
-      </Button>
-    );
-  }
-  return <p className="opacity-[0.65] text-sm mt-2 mx-0 mb-0">{connect.message}</p>;
-};
 
 interface ConnectionRowProps {
   connection: ConnectionResult;
