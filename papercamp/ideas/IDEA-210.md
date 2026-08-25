@@ -43,8 +43,9 @@ each feature's `constants.ts` stays self-contained until the token publish
 makes the shared home a token, not another literal map.
 
 ### Phases
-- [ ] Split settings-page and extract its hook
+- [x] Split settings-page and extract its hook
       Break `settings-page.tsx` into per-section `views/` files, with a `hooks/use-settings-page.ts` owning its state, effects and async handlers; the page composes views and renders what the hook returns.
+      run: 4m18s · 40 in · 13.3k out · sonnet-5
 - [ ] Give setup-section a hook and named props
       Extract `setup-section.tsx`'s store access and derivation into `hooks/use-setup-section.ts`, convert the inline props literal to a `{Component}Props` interface, and split the file if more than one component remains in it.
 - [ ] Concentrate colour literals in constants.ts
