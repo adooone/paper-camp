@@ -2,6 +2,7 @@ import { STATUS_STAMP } from '@/app/features/plans/constants';
 import type { PlanEntry, ResolvedRoadmapItem } from '@/types/index';
 import { Button, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
+import { CANDIDATE_STAMP, HIGHLIGHT_OUTLINE_CLASS } from '../constants';
 import { AddCandidateForm } from './add-candidate-form';
 import { CandidateRow } from './candidate-row';
 import { IdeaRow, mergeIdeas } from './idea-row';
@@ -58,7 +59,7 @@ export const RoadmapItemRow = ({
 
   return (
     <div
-      className={`border-b border-black/10 last:border-b-0 ${highlighted ? 'roadmap-item-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
+      className={`border-b border-black/10 last:border-b-0 ${highlighted ? `roadmap-item-highlighted outline outline-2 outline-offset-[-2px] ${HIGHLIGHT_OUTLINE_CLASS}` : ''}`}
     >
       <button
         type="button"
@@ -88,7 +89,7 @@ export const RoadmapItemRow = ({
           </Stamp>
         )}
         {candidates > 0 && (
-          <Stamp size="small" fillColor="rgba(0, 0, 0, 0.06)" textColor="rgba(0, 0, 0, 0.55)">
+          <Stamp size="small" fillColor={CANDIDATE_STAMP.fill} textColor={CANDIDATE_STAMP.text}>
             {candidates} candidate{candidates === 1 ? '' : 's'}
           </Stamp>
         )}

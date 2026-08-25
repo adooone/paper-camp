@@ -2,7 +2,7 @@
 id: IDEA-209
 title: Roadmap feature conventions pass
 type: refactor
-status: planned
+status: review
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -49,5 +49,6 @@ the paper-ui `-rgb` publish, see CODE_STYLE §8).
 - [x] Sort the remaining files into by-role folders
       `hooks/` takes `use-roadmap-item-names.ts`, `modals/` takes both modal files, `helpers/` takes `roadmap-filters.ts`; each folder gets an `index.ts` barrel and consumers import through it.
       run: 3m31s · 38 in · 5.5k out · sonnet-5
-- [ ] Concentrate colour literals in constants.ts
+- [x] Concentrate colour literals in constants.ts
       Create the feature's `constants.ts` and move the two raw `rgba()` values there as named constants — the sanctioned home per §8 — leaving no literal in a component file.
+      run: 5m56s · 58 in · 9.5k out · sonnet-5
