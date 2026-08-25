@@ -28,7 +28,7 @@ interface AgentTaskRowProps {
   agentConfig: AgentConfig;
   isLast: boolean;
   onSave: (key: TaskTypeKey, config: AgentConfig) => Promise<void>;
-  /** The code-authoring task's config — codeReview's model must never match it (IDEA-170). */
+  // The code-authoring task's config — codeReview's model must never match it (IDEA-170).
   authorConfig?: AgentConfig;
 }
 
@@ -41,7 +41,6 @@ export const AgentTaskRow = ({
 }: AgentTaskRowProps) => {
   // Fall back if the config carries an unknown agent id — never white-screen the page.
   const opts = AGENT_OPTIONS[agentConfig.agent] ?? AGENT_OPTIONS['claude-code'];
-  // Only the author's model is excluded, and only while both rows share the same agent id.
   const excludedModel =
     authorConfig && authorConfig.agent === agentConfig.agent
       ? (authorConfig.model ?? '')

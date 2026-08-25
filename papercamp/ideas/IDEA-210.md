@@ -2,7 +2,7 @@
 id: IDEA-210
 title: Settings feature conventions pass
 type: refactor
-status: planned
+status: review
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -52,5 +52,6 @@ makes the shared home a token, not another literal map.
 - [x] Concentrate colour literals in constants.ts
       Create the feature's `constants.ts` and move all six raw values there as named maps (status stamp map, merge-policy pair, page fill) — no literal left in a component file.
       run: 3m8s · 40 in · 5.8k out · sonnet-5
-- [ ] Audit every comment against §7
+- [x] Audit every comment against §7
       Walk the 8 `//` lines: keep a one/two-line non-derivable why, delete the rest.
+      run: 3m53s · 28 in · 8.4k out · sonnet-5
