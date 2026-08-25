@@ -46,7 +46,8 @@ the paper-ui `-rgb` publish, see CODE_STYLE §8).
 - [x] Split roadmap-page into views and a page hook
       Break the 411-line `roadmap-page.tsx` into one-component-per-file views under `views/`, extract a `hooks/use-roadmap-page.ts` owning its selectors, state and effects, and convert the inline props literal to a named interface. `roadmap-sidebar.tsx` gets its own hook in the same motion.
       run: 7m59s · 64 in · 21.9k out · sonnet-5
-- [ ] Sort the remaining files into by-role folders
+- [x] Sort the remaining files into by-role folders
       `hooks/` takes `use-roadmap-item-names.ts`, `modals/` takes both modal files, `helpers/` takes `roadmap-filters.ts`; each folder gets an `index.ts` barrel and consumers import through it.
+      run: 3m31s · 38 in · 5.5k out · sonnet-5
 - [ ] Concentrate colour literals in constants.ts
       Create the feature's `constants.ts` and move the two raw `rgba()` values there as named constants — the sanctioned home per §8 — leaving no literal in a component file.
