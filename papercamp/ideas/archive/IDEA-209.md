@@ -2,7 +2,7 @@
 id: IDEA-209
 title: Roadmap feature conventions pass
 type: refactor
-status: review
+status: done
 created: 2026-08-24
 updated: 2026-08-25
 tags:
@@ -10,6 +10,7 @@ tags:
   - code-health
   - roadmap
 subject: Code health
+order: 1
 ---
 
 [[IDEA-198]]'s conventions pass applied to `src/app/features/roadmap` —
