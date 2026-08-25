@@ -1,40 +1,27 @@
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
-import { useAppStore } from '@/app/stores/app-store';
-import type { PlanStatus } from '@/types/index';
 import { Button, ListItem } from '@dendelion/paper-ui';
-import { useState } from 'react';
 import { AddRoadmapItemModal } from './add-roadmap-item-modal';
-import { horizonItemCounts, statusItemCounts } from './roadmap-filters';
-
-const STATUS_CHIP_ORDER: PlanStatus[] = [
-  'in-progress',
-  'review',
-  'planned',
-  'idea',
-  'done',
-  'dropped',
-];
+import { useRoadmapSidebar } from './hooks';
 
 // Matches SidebarSection — handwritten, no caps, one grid cell.
 const sectionLabelClass = 'pc-row-label font-handwritten text-xs font-semibold opacity-[0.45]';
 
 export const RoadmapSidebar = () => {
-  const roadmap = useAppStore((s) => s.roadmap);
-  const filters = useAppStore((s) => s.roadmapFilters);
-  const toggleRoadmapHorizon = useAppStore((s) => s.toggleRoadmapHorizon);
-  const toggleRoadmapStatus = useAppStore((s) => s.toggleRoadmapStatus);
-  const [addOpen, setAddOpen] = useState(false);
+  const {
+    roadmap,
+    horizonTitles,
+    horizonCounts,
+    statusCounts,
+    activeHorizons,
+    activeStatuses,
+    visibleStatuses,
+    addOpen,
+    setAddOpen,
+    toggleRoadmapHorizon,
+    toggleRoadmapStatus,
+  } = useRoadmapSidebar();
 
   if (!roadmap) return null;
-
-  const horizonTitles = roadmap.horizons.map((horizon) => horizon.title);
-  const horizonCounts = horizonItemCounts(roadmap, filters);
-  const statusCounts = statusItemCounts(roadmap, filters);
-  const activeHorizons = new Set(filters.horizons);
-  const activeStatuses = new Set(filters.statuses);
-  const visibleStatuses = STATUS_CHIP_ORDER.filter(
-    (status) => (statusCounts[status] ?? 0) > 0 || activeStatuses.has(status),
-  );
 
   return (
     <div className="flex flex-col">
