@@ -19,7 +19,11 @@ function enterProject(runtimeUrl: string): void {
   window.location.assign(mountPrefix || '/');
 }
 
-function StatusStamp({ status }: { status: RuntimeStatus | undefined }): ReactNode {
+interface StatusStampProps {
+  status: RuntimeStatus | undefined;
+}
+
+function StatusStamp({ status }: StatusStampProps): ReactNode {
   if (!status) {
     return (
       <Stamp size="small" variant="neutral">

@@ -4,12 +4,13 @@ title: Hub feature conventions pass
 type: refactor
 status: review
 created: 2026-08-24
-updated: 2026-08-24
+updated: 2026-08-25
 tags:
   - app
   - code-health
   - multi-project
 subject: Code health
+order: 1
 ---
 
 [[IDEA-198]]'s conventions pass applied to `src/app/features/hub` — the newest
@@ -48,3 +49,7 @@ Behaviour. Any change to paper-ui. The other features' passes.
       Convert the inline props literals in `projects-list.tsx` and `github-connect-card.tsx` to `{Component}Props` interfaces, and collapse the two duplicated import statements (§5).
       run: 3m3s · 22 in · 3.3k out · sonnet-5
 - [x] [manual] Sort hub feature files into by-role folders
+- [x] [manual] Name StatusStamp props interface in hub
+
+### Thread
+- [x] 2026-08-25 [review] [agent] Requests changes · 1 finding — The move itself is clean and faithful to the §4 template: every hook is now under hooks/, cross-project/ is dissolved into views/helpers, the test sits in helpers/__tests__/, each new folder has a barrel, and consumers import through those barrels with hub-home deliberately importing sibling files directly so no cycle forms. I ran the acceptance gates and all are green — check-types, lint, vitest (108 files / 1300 tests) and knip+depcruise (no dependency violations), and no test was edited. The one gap is phase 3: projects-list.tsx still contains an inline props type literal, so a violation the idea explicitly measured in that named file survives while the phase is checked off.
