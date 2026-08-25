@@ -4,7 +4,7 @@ title: Roadmap feature conventions pass
 type: refactor
 status: review
 created: 2026-08-24
-updated: 2026-08-24
+updated: 2026-08-25
 tags:
   - app
   - code-health
@@ -52,3 +52,4 @@ the paper-ui `-rgb` publish, see CODE_STYLE §8).
 - [x] Concentrate colour literals in constants.ts
       Create the feature's `constants.ts` and move the two raw `rgba()` values there as named constants — the sanctioned home per §8 — leaving no literal in a component file.
       run: 5m56s · 58 in · 9.5k out · sonnet-5
+- [x] [manual] Reorganize roadmap feature into subfolders
