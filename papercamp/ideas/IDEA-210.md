@@ -46,8 +46,9 @@ makes the shared home a token, not another literal map.
 - [x] Split settings-page and extract its hook
       Break `settings-page.tsx` into per-section `views/` files, with a `hooks/use-settings-page.ts` owning its state, effects and async handlers; the page composes views and renders what the hook returns.
       run: 4m18s · 40 in · 13.3k out · sonnet-5
-- [ ] Give setup-section a hook and named props
+- [x] Give setup-section a hook and named props
       Extract `setup-section.tsx`'s store access and derivation into `hooks/use-setup-section.ts`, convert the inline props literal to a `{Component}Props` interface, and split the file if more than one component remains in it.
+      run: 5m27s · 46 in · 19.1k out · sonnet-5
 - [ ] Concentrate colour literals in constants.ts
       Create the feature's `constants.ts` and move all six raw values there as named maps (status stamp map, merge-policy pair, page fill) — no literal left in a component file.
 - [ ] Audit every comment against §7
