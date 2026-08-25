@@ -49,7 +49,8 @@ makes the shared home a token, not another literal map.
 - [x] Give setup-section a hook and named props
       Extract `setup-section.tsx`'s store access and derivation into `hooks/use-setup-section.ts`, convert the inline props literal to a `{Component}Props` interface, and split the file if more than one component remains in it.
       run: 5m27s · 46 in · 19.1k out · sonnet-5
-- [ ] Concentrate colour literals in constants.ts
+- [x] Concentrate colour literals in constants.ts
       Create the feature's `constants.ts` and move all six raw values there as named maps (status stamp map, merge-policy pair, page fill) — no literal left in a component file.
+      run: 3m8s · 40 in · 5.8k out · sonnet-5
 - [ ] Audit every comment against §7
       Walk the 8 `//` lines: keep a one/two-line non-derivable why, delete the rest.

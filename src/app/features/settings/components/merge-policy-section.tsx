@@ -2,6 +2,7 @@ import { applyMergePolicy, fetchMergePolicy } from '@/app/services/system';
 import type { MergePolicy, MergePolicyResult } from '@/types/index';
 import { Alert, Button, Card, Divider, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
+import { MERGE_POLICY_STAMP } from '../constants';
 
 const RECOMMENDED: MergePolicy = {
   allowSquashMerge: true,
@@ -95,8 +96,12 @@ export const MergePolicySection = () => {
             <span className="font-medium">{result.repo}</span>
             <Stamp
               size="small"
-              fillColor={upToDate ? 'rgba(143, 185, 150, 0.25)' : 'rgba(212, 163, 115, 0.25)'}
-              textColor={upToDate ? '#5E8A66' : '#A67B4F'}
+              fillColor={
+                upToDate ? MERGE_POLICY_STAMP.upToDate.fill : MERGE_POLICY_STAMP.outdated.fill
+              }
+              textColor={
+                upToDate ? MERGE_POLICY_STAMP.upToDate.text : MERGE_POLICY_STAMP.outdated.text
+              }
             >
               {upToDate ? 'Matches recommended policy' : 'Differs from recommended policy'}
             </Stamp>

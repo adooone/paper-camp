@@ -1,15 +1,10 @@
-import type { CapabilityStatus, ConnectionResult } from '@/types/index';
+import type { ConnectionResult } from '@/types/index';
 import { Button, CodeBlock, Divider, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { CAPABILITY_STATUS_STAMP } from '../constants';
 import { SignInAction } from './sign-in-action';
 
 // Only claude-code exposes `auth login`/`auth status` (see agentAuthenticated in server/services.ts).
 const RELAY_CONNECTION_ID: ConnectionResult['id'] = 'agent:claude-code';
-
-const STATUS_STAMP: Record<CapabilityStatus, { fill: string; text: string; label: string }> = {
-  ok: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66', label: 'Ready' },
-  warn: { fill: 'rgba(212, 163, 115, 0.25)', text: '#A67B4F', label: 'Needs attention' },
-  missing: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A', label: 'Missing' },
-};
 
 interface ConnectActionViewProps {
   connection: ConnectionResult;
@@ -64,7 +59,7 @@ export const ConnectionRow = ({
   onConnect,
   connecting,
 }: ConnectionRowProps) => {
-  const stamp = STATUS_STAMP[connection.status];
+  const stamp = CAPABILITY_STATUS_STAMP[connection.status];
   return (
     <>
       <div className="pb-3 pt-3">

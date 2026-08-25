@@ -1,6 +1,7 @@
 import { color } from '@/app/styles/tokens';
 import { DEFAULT_AGENTS } from '@/types/index';
 import { Alert, Button, Card, Divider, Input, Stamp } from '@dendelion/paper-ui';
+import { VERSION_STAMP_FILL } from '../constants';
 import { TASK_TYPE_KEYS, useSettingsPage } from '../hooks';
 import { AgentTaskRow, AgentTaskRowHeader } from './agent-task-row';
 
@@ -42,11 +43,7 @@ export const GeneralSection = () => {
               onBlur={handleSaveName}
               label="Project Name"
             />
-            <Stamp
-              size="small"
-              fillColor="rgba(143, 185, 150, 0.25)"
-              textColor={color.accentGreenDark}
-            >
+            <Stamp size="small" fillColor={VERSION_STAMP_FILL} textColor={color.accentGreenDark}>
               v{config.version}
             </Stamp>
           </div>
