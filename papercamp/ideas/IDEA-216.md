@@ -2,7 +2,7 @@
 id: IDEA-216
 title: Pairing survives dev restarts
 type: feat
-status: idea
+status: review
 created: 2026-08-26
 tags:
   - cli
@@ -59,5 +59,6 @@ reloads within one process.
 - [x] Cover restart, revocation, and init in tests
       A reloaded state keeps the token and origins; a deleted file mints fresh.
       run: 5m7s · 32 in · 9.1k out · sonnet-5
-- [ ] Drop the re-pair caveat from `USAGE.md`
+- [x] Drop the re-pair caveat from `USAGE.md`
       Replace it with deleting the file as the revocation story.
+      run: 3m7s · 62 in · 6.6k out · sonnet-5
