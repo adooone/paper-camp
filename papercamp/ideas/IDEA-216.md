@@ -48,9 +48,10 @@ reloads within one process.
       Load `papercamp/.pairing.json` into a `PairingManagerState`, tolerating a
       missing or malformed file, and save it with mode 0600.
       run: 2m43s · 42 in · 6.3k out · sonnet-5
-- [ ] Persist through the dev server
+- [x] Persist through the dev server
       Load the state before `createApiMiddleware(root)`, pass it in, and write
       `getPairingState()` back on first mint and after every successful pair.
+      run: 2m39s · 34 in · 5k out · sonnet-5
 - [ ] Gitignore the file from `paper-camp init`
       Append the line to the repo's `.gitignore`, creating it when missing, and
       add it to this repo's existing papercamp block.
