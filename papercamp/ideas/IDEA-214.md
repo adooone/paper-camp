@@ -2,7 +2,7 @@
 id: IDEA-214
 title: Inbox feature conventions pass
 type: refactor
-status: planned
+status: review
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -32,5 +32,6 @@ Behaviour. Any change to paper-ui. Restructuring into by-role folders — 5
 files is below the §4 ceiling.
 
 ### Phases
-- [ ] Extract a page hook for inbox-page
+- [x] Extract a page hook for inbox-page
       Create `hooks/use-inbox-page.ts` owning the 6 store selectors, state and effects; `inbox-page.tsx` consumes exactly the data and callbacks it renders. The `hooks/` folder gets an `index.ts` barrel.
+      run: 3m40s · 34 in · 3.8k out · sonnet-5
