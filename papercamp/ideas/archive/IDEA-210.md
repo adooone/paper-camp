@@ -2,9 +2,9 @@
 id: IDEA-210
 title: Settings feature conventions pass
 type: refactor
-status: review
+status: done
 created: 2026-08-24
-updated: 2026-08-25
+updated: 2026-08-26
 tags:
   - app
   - code-health

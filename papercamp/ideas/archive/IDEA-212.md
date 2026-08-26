@@ -2,9 +2,8 @@
 id: IDEA-212
 title: Stats feature conventions pass
 type: refactor
-status: review
 created: 2026-08-24
-updated: 2026-08-24
+updated: 2026-08-26
 tags:
   - app
   - code-health
