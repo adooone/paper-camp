@@ -2,7 +2,7 @@
 id: IDEA-212
 title: Stats feature conventions pass
 type: refactor
-status: planned
+status: review
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -31,5 +31,6 @@ and `npx vitest run` green and no test edited to accommodate it.
 Behaviour. Any change to paper-ui.
 
 ### Phases
-- [ ] Split stats-page into views and a page hook
+- [x] Split stats-page into views and a page hook
       Break `stats-page.tsx` into one-component-per-file `views/` files, extract a `hooks/use-stats-page.ts` owning the data fetching, state and effects, and give every component a named `{Component}Props` interface.
+      run: 23s · 52 in · 13.6k out · sonnet-5
