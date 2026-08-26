@@ -2,14 +2,15 @@
 id: IDEA-215
 title: Docs feature conventions pass
 type: refactor
-status: review
+status: done
 created: 2026-08-24
-updated: 2026-08-24
+updated: 2026-08-26
 tags:
   - app
   - code-health
   - docs
 subject: Code health
+order: 1
 ---
 
 [[IDEA-198]]'s conventions pass applied to `src/app/features/docs` — 7 files,
