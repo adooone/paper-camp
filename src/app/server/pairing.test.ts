@@ -1,8 +1,13 @@
-import { mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { createPairingManager, loadPairingState, savePairingState } from './pairing';
+import {
+  createPairingManager,
+  loadOrMintPairingState,
+  loadPairingState,
+  savePairingState,
+} from './pairing';
 
 describe('createPairingManager', () => {
   it('issues a fresh token when no prior state is given', () => {
@@ -64,5 +69,56 @@ describe('loadPairingState / savePairingState', () => {
 
     const loaded = await loadPairingState(root);
     expect(loaded).toEqual(state);
+  });
+});
+
+describe('loadOrMintPairingState', () => {
+  function tempRoot(): string {
+    return mkdtempSync(join(tmpdir(), 'papercamp-pairing-test-'));
+  }
+
+  it('mints a fresh token and empty origins on a first-ever boot', async () => {
+    const { state, minted } = await loadOrMintPairingState(tempRoot());
+    expect(minted).toBe(true);
+    expect(state.token).toMatch(/^[0-9a-f]{64}$/);
+    expect(state.origins.size).toBe(0);
+  });
+
+  it('a restart reloads the persisted token and origins unchanged', async () => {
+    const root = tempRoot();
+    const original = { token: 'abc123', origins: new Set(['https://app.papercamp.dev']) };
+    await savePairingState(root, original);
+
+    const { state, minted } = await loadOrMintPairingState(root);
+    expect(minted).toBe(false);
+    expect(state).toEqual(original);
+  });
+
+  it('revocation: deleting the file mints a new token and forgets every origin', async () => {
+    const root = tempRoot();
+    const first = await loadOrMintPairingState(root);
+    await savePairingState(root, first.state);
+    await savePairingState(root, {
+      ...first.state,
+      origins: new Set(['https://app.papercamp.dev']),
+    });
+
+    rmSync(join(root, 'papercamp', '.pairing.json'));
+
+    const { state, minted } = await loadOrMintPairingState(root);
+    expect(minted).toBe(true);
+    expect(state.token).not.toBe(first.state.token);
+    expect(state.origins.size).toBe(0);
+  });
+
+  it('a full boot cycle persists a first mint so the next boot reloads it', async () => {
+    const root = tempRoot();
+    const booted = await loadOrMintPairingState(root);
+    expect(booted.minted).toBe(true);
+    await savePairingState(root, booted.state);
+
+    const restarted = await loadOrMintPairingState(root);
+    expect(restarted.minted).toBe(false);
+    expect(restarted.state).toEqual(booted.state);
   });
 });

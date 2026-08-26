@@ -56,7 +56,8 @@ reloads within one process.
       Append the line to the repo's `.gitignore`, creating it when missing, and
       add it to this repo's existing papercamp block.
       run: 2m12s · 36 in · 6.5k out · sonnet-5
-- [ ] Cover restart, revocation, and init in tests
+- [x] Cover restart, revocation, and init in tests
       A reloaded state keeps the token and origins; a deleted file mints fresh.
+      run: 5m7s · 32 in · 9.1k out · sonnet-5
 - [ ] Drop the re-pair caveat from `USAGE.md`
       Replace it with deleting the file as the revocation story.

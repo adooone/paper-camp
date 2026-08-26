@@ -50,6 +50,17 @@ export async function savePairingState(root: string, state: PairingManagerState)
   });
 }
 
+/** Loads persisted state for a restart, or mints a fresh token and empty origin
+ * set — the same path a first-ever boot and a revoked (deleted) file both take.
+ * `minted` tells the caller whether this state still needs to be persisted. */
+export async function loadOrMintPairingState(
+  root: string,
+): Promise<{ state: PairingManagerState; minted: boolean }> {
+  const loaded = await loadPairingState(root);
+  if (loaded) return { state: loaded, minted: false };
+  return { state: createPairingManager().getState(), minted: true };
+}
+
 export interface PairingManager {
   token: string;
   isPairedOrigin: (origin: string) => boolean;

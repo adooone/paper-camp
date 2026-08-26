@@ -3,7 +3,7 @@ import { type IncomingMessage, type ServerResponse, createServer } from 'node:ht
 import { dirname, extname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApiMiddleware } from '../app/server/api';
-import { loadPairingState, savePairingState } from '../app/server/pairing';
+import { loadOrMintPairingState, savePairingState } from '../app/server/pairing';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { formatDevBanner, formatShareLine } from './dev-banner';
 import { portInUseMessage } from './dev-port';
@@ -55,7 +55,7 @@ export async function startDevServer({ root, port, share }: DevServerOptions): P
     );
   }
 
-  const pairingState = await loadPairingState(root);
+  const { state: pairingState, minted } = await loadOrMintPairingState(root);
   const apiMiddleware = createApiMiddleware(
     root,
     undefined,
@@ -69,7 +69,7 @@ export async function startDevServer({ root, port, share }: DevServerOptions): P
     savePairingState(root, apiMiddleware.getPairingState()).catch((error) => {
       console.error('papercamp: could not persist pairing state:', error);
     });
-  if (!pairingState) await persistPairingState();
+  if (minted) await persistPairingState();
 
   async function serveStatic(req: IncomingMessage, res: ServerResponse) {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
