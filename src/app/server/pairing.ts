@@ -1,8 +1,53 @@
 import { randomBytes } from 'node:crypto';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
+import { campFile } from './helpers';
 
 export interface PairingManagerState {
   token: string;
   origins: Set<string>;
+}
+
+interface PersistedPairingState {
+  token: string;
+  origins: string[];
+}
+
+const pairingFilePath = (root: string) => campFile(root, '.pairing.json');
+
+function isPersistedPairingState(value: unknown): value is PersistedPairingState {
+  const v = value as Partial<PersistedPairingState> | null;
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    typeof v.token === 'string' &&
+    Array.isArray(v.origins) &&
+    v.origins.every((origin) => typeof origin === 'string')
+  );
+}
+
+/** Resolves `undefined` on a missing or malformed file — callers mint a fresh
+ * state in that case, same as a first-ever boot. */
+export async function loadPairingState(root: string): Promise<PairingManagerState | undefined> {
+  try {
+    const raw = await readFile(pairingFilePath(root), 'utf-8');
+    const parsed: unknown = JSON.parse(raw);
+    if (!isPersistedPairingState(parsed)) return undefined;
+    return { token: parsed.token, origins: new Set(parsed.origins) };
+  } catch {
+    return undefined;
+  }
+}
+
+/** Mode 0600: the token in this file is equivalent to a bearer credential. */
+export async function savePairingState(root: string, state: PairingManagerState): Promise<void> {
+  const path = pairingFilePath(root);
+  const payload: PersistedPairingState = { token: state.token, origins: [...state.origins] };
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, `${JSON.stringify(payload, null, 2)}\n`, {
+    encoding: 'utf-8',
+    mode: 0o600,
+  });
 }
 
 export interface PairingManager {

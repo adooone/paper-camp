@@ -44,9 +44,10 @@ Pairing UI. The vite-plugin dev path, which already carries state across
 reloads within one process.
 
 ### Phases
-- [ ] Read and write the pairing file
+- [x] Read and write the pairing file
       Load `papercamp/.pairing.json` into a `PairingManagerState`, tolerating a
       missing or malformed file, and save it with mode 0600.
+      run: 2m43s · 42 in · 6.3k out · sonnet-5
 - [ ] Persist through the dev server
       Load the state before `createApiMiddleware(root)`, pass it in, and write
       `getPairingState()` back on first mint and after every successful pair.
