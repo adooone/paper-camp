@@ -52,9 +52,10 @@ reloads within one process.
       Load the state before `createApiMiddleware(root)`, pass it in, and write
       `getPairingState()` back on first mint and after every successful pair.
       run: 2m39s · 34 in · 5k out · sonnet-5
-- [ ] Gitignore the file from `paper-camp init`
+- [x] Gitignore the file from `paper-camp init`
       Append the line to the repo's `.gitignore`, creating it when missing, and
       add it to this repo's existing papercamp block.
+      run: 2m12s · 36 in · 6.5k out · sonnet-5
 - [ ] Cover restart, revocation, and init in tests
       A reloaded state keeps the token and origins; a deleted file mints fresh.
 - [ ] Drop the re-pair caveat from `USAGE.md`

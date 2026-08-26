@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { access, mkdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { PaperCampConfig } from '../../types/index';
@@ -95,7 +95,32 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
 
   await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
 
+  await ensureGitignoreEntry(targetDir);
+
   await scaffoldClaudeCodeIntegration(targetDir);
+}
+
+const PAIRING_GITIGNORE_ENTRY = 'papercamp/.pairing.json';
+
+// Machine-local pairing state must never be tracked — a token committed to the
+// repo would let anyone with read access pair as a trusted hosted client.
+async function ensureGitignoreEntry(targetDir: string): Promise<void> {
+  const gitignorePath = join(targetDir, '.gitignore');
+  const content = (await exists(gitignorePath)) ? await readFile(gitignorePath, 'utf-8') : '';
+  const lines = content.length > 0 ? content.split('\n') : [];
+  if (lines.some((line) => line.trim() === PAIRING_GITIGNORE_ENTRY)) return;
+
+  const lastPapercampLine = lines.reduce(
+    (last, line, i) => (line.startsWith('papercamp/') ? i : last),
+    -1,
+  );
+  if (lastPapercampLine === -1) {
+    const separator = content.length > 0 && !content.endsWith('\n') ? '\n' : '';
+    await writeFile(gitignorePath, `${content}${separator}${PAIRING_GITIGNORE_ENTRY}\n`, 'utf-8');
+    return;
+  }
+  lines.splice(lastPapercampLine + 1, 0, PAIRING_GITIGNORE_ENTRY);
+  await writeFile(gitignorePath, lines.join('\n'), 'utf-8');
 }
 
 async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<void> {
