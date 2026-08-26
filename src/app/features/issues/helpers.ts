@@ -1,3 +1,15 @@
+import { isClosedEntity } from '@/core/status';
+import type { EntityStatus, Issue } from '@/types/index';
+
+export const promoteLabel = (
+  issue: Issue,
+  entities: { id: string; status?: EntityStatus; archived?: boolean }[],
+): string => {
+  const parent = issue.entityId ? entities.find((p) => p.id === issue.entityId) : undefined;
+  if (!parent) return 'Promote to idea';
+  return isClosedEntity(parent) ? 'Promote to fix' : `Add to ${parent.id}'s fixes`;
+};
+
 export const formatIssueAge = (occurredAt: string | undefined): string => {
   if (!occurredAt) return '';
   const ageDays = Math.floor((Date.now() - Date.parse(occurredAt)) / 86_400_000);

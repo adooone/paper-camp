@@ -2,7 +2,7 @@
 id: IDEA-213
 title: Issues feature conventions pass
 type: refactor
-status: planned
+status: review
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -33,5 +33,6 @@ Behaviour. Any change to paper-ui. Restructuring into by-role folders — 4
 files is below the §4 ceiling and flat is the more readable choice.
 
 ### Phases
-- [ ] Extract a page hook for issues-page
+- [x] Extract a page hook for issues-page
       Create `hooks/use-issues-page.ts` owning the 9 store selectors, state and effects; `issues-page.tsx` consumes exactly the data and callbacks it renders. The `hooks/` folder gets an `index.ts` barrel.
+      run: 4m23s · 38 in · 9.8k out · sonnet-5
