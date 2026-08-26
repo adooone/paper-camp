@@ -2,6 +2,7 @@ import { color } from '@/app/styles/tokens';
 import { AGENT_LABELS, type TaskKind, type TaskLogEntry } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
+import { HIGHLIGHT_OUTLINE_CLASS, TASK_OUTCOME_STAMP_FILL } from '../constants';
 import { formatTime } from '../helpers';
 import { TaskLogLines } from './task-log-lines';
 
@@ -62,7 +63,7 @@ export const TaskRow = ({ entry, highlighted }: TaskRowProps) => {
     <div
       className={
         highlighted
-          ? 'task-row-highlighted flex flex-col gap-1 rounded-[10px] outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]'
+          ? `task-row-highlighted flex flex-col gap-1 rounded-[10px] outline outline-2 outline-offset-[-2px] ${HIGHLIGHT_OUTLINE_CLASS}`
           : 'flex flex-col gap-1 rounded-[10px]'
       }
     >
@@ -100,13 +101,7 @@ export const TaskRow = ({ entry, highlighted }: TaskRowProps) => {
             <div className="flex items-center">
               <Stamp
                 size="small"
-                fillColor={
-                  entry.outcome === 'done'
-                    ? 'rgba(143, 185, 150, 0.25)'
-                    : entry.outcome === 'superseded'
-                      ? 'rgba(212, 163, 115, 0.25)'
-                      : 'rgba(201, 139, 139, 0.25)'
-                }
+                fillColor={TASK_OUTCOME_STAMP_FILL[entry.outcome]}
                 textColor={
                   entry.outcome === 'done'
                     ? color.accentGreenDark

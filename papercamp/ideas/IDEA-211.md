@@ -2,7 +2,7 @@
 id: IDEA-211
 title: Tasks feature conventions pass
 type: refactor
-status: planned
+status: review
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -37,5 +37,6 @@ the paper-ui `-rgb` publish).
 - [x] Split tasks-page into views and a page hook
       Break `tasks-page.tsx` into one-component-per-file `views/` files (task row, list, any detail piece), with a `hooks/use-tasks-page.ts` owning the selectors, state and effects; folders get `index.ts` barrels.
       run: 6m55s · 54 in · 16.2k out · sonnet-5
-- [ ] Concentrate colour literals in constants.ts
+- [x] Concentrate colour literals in constants.ts
       Create the feature's `constants.ts` and move the four raw `rgba()` values there as named constants; audit the 3 comment lines against §7 in the same motion.
+      run: 5m18s · 48 in · 8.9k out · sonnet-5

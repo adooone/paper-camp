@@ -30,7 +30,6 @@ export const TaskLogLines = ({ id }: TaskLogLinesProps) => {
             timer = setTimeout(() => load(remaining - 1), 700);
             return;
           }
-          // Empty result != failed request: conflating them mislabels a fetch error as "no output".
           setFailed(true);
           setLines([]);
         });
