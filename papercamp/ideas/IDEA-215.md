@@ -2,7 +2,7 @@
 id: IDEA-215
 title: Docs feature conventions pass
 type: refactor
-status: planned
+status: review
 created: 2026-08-24
 updated: 2026-08-24
 tags:
@@ -32,5 +32,6 @@ and `npx vitest run` green and no test edited to accommodate it.
 Behaviour. Any change to paper-ui.
 
 ### Phases
-- [ ] Extract a hook for docs-sidebar
+- [x] Extract a hook for docs-sidebar
       Create `hooks/use-docs-sidebar.ts` owning the 12 store selectors and any derivation; `docs-sidebar.tsx` consumes exactly the data and callbacks it renders.
+      run: 4m13s · 44 in · 5.2k out · sonnet-5
