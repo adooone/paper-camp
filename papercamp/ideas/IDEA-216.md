@@ -42,3 +42,18 @@ this lands.
 
 Pairing UI. The vite-plugin dev path, which already carries state across
 reloads within one process.
+
+### Phases
+- [ ] Read and write the pairing file
+      Load `papercamp/.pairing.json` into a `PairingManagerState`, tolerating a
+      missing or malformed file, and save it with mode 0600.
+- [ ] Persist through the dev server
+      Load the state before `createApiMiddleware(root)`, pass it in, and write
+      `getPairingState()` back on first mint and after every successful pair.
+- [ ] Gitignore the file from `paper-camp init`
+      Append the line to the repo's `.gitignore`, creating it when missing, and
+      add it to this repo's existing papercamp block.
+- [ ] Cover restart, revocation, and init in tests
+      A reloaded state keeps the token and origins; a deleted file mints fresh.
+- [ ] Drop the re-pair caveat from `USAGE.md`
+      Replace it with deleting the file as the revocation story.
