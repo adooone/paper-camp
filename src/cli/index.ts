@@ -173,7 +173,6 @@ program
     const port = resolveDevPort(opts.port, configPort);
     try {
       await startDevServer({ root, port, share: opts.share });
-      console.log(`Paper Camp dashboard running at http://localhost:${port}`);
     } catch (error) {
       console.error((error as Error).message);
       // Hard-exit: the API middleware's fs watchers are already running by the time

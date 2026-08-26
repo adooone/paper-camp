@@ -5,11 +5,12 @@ type: fix
 status: done
 created: 2026-08-18
 updated: 2026-08-19
+audited: 2026-08-26
+audited-hash: 5f421d24099c443776962100d7cdc34f858367479168adb7d35a34b6fa0d08fa
 tags:
   - agent
   - git
   - server
-subject: Run & monitor
 ---
 
 A phase commit contains the files that phase edited. Whatever else is sitting
@@ -98,6 +99,11 @@ splitting commits that already absorbed unrelated files.
       Assert an unrelated edit sitting in the tree before a phase stays
       uncommitted while the phase's own edits land.
       run: 2m32s · 507 in · 4.8k out · sonnet-5 · ×2
+- [ ] Scope the run-review commit the same way
+      `setRunReview` still calls `git.stageAll()` + `commit([])` to mark a
+      plan's status as review, sweeping in any stray uncommitted files the
+      same way `runPhaseCommit` used to.
 
 ### Thread
 - [x] 2026-08-18 [review] [agent] Approves · 0 findings — The diff faithfully delivers the spec: it snapshots the working tree per phase, threads the start snapshot through commitPhase, reduces the two snapshots to the changed paths (carrying rename sources), and commits only those through the existing pathspec path with a test proving an unrelated dirty file is left untouched. All four claimed phases are actually implemented, the getStatus call correctly happens after annotatePhaseRun so the plan-file update is captured, and the optional-hook fallback preserves the old commit-everything behavior when no snapshotter is wired. No contradictions with the idea body or any settled decision.
+- [x] 2026-08-26 [log] Found `setRunReview` (agent-hooks.ts) still uses the unscoped `stageAll()` + `commit([])` pattern this plan removed from `commitPhase`; appended a phase to scope it too.

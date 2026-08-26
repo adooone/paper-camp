@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  bestNetworkHost,
   buildRegistrationLink,
   buildRegistrationLinkForRuntime,
   hostedClientUrl,
-  reachableHosts,
-  registrationLinks,
+  networkRegistrationLink,
 } from './registration-link';
 
 describe('hostedClientUrl', () => {
@@ -91,45 +91,78 @@ describe('buildRegistrationLink', () => {
   });
 });
 
-describe('reachableHosts', () => {
-  const interfaces = {
-    lo: [{ family: 'IPv4', internal: true, address: '127.0.0.1' }],
-    eth0: [{ family: 'IPv4', internal: false, address: '192.168.1.20' }],
-    tailscale0: [
-      { family: 'IPv4', internal: false, address: '100.80.79.13' },
-      { family: 'IPv6', internal: false, address: 'fd7a:115c::1' },
-    ],
-  };
+describe('bestNetworkHost', () => {
+  const lo = [{ family: 'IPv4', internal: true, address: '127.0.0.1' }];
 
-  it('offers every non-loopback IPv4 and the hostname alongside localhost', () => {
-    expect(reachableHosts(interfaces, 'deimos')).toEqual([
-      'localhost',
+  it('prefers a tailnet address — it reaches the user’s other devices even off-LAN', () => {
+    const host = bestNetworkHost(
+      {
+        lo,
+        wan: [{ family: 'IPv4', internal: false, address: '69.62.127.217' }],
+        eth0: [{ family: 'IPv4', internal: false, address: '192.168.1.20' }],
+        tailscale0: [
+          { family: 'IPv4', internal: false, address: '100.80.79.13' },
+          { family: 'IPv6', internal: false, address: 'fd7a:115c::1' },
+        ],
+      },
       'deimos',
-      '192.168.1.20',
-      '100.80.79.13',
-    ]);
+    );
+    expect(host).toBe('100.80.79.13');
   });
 
-  it('drops loopback and IPv6 addresses, which the link cannot use as a bare host', () => {
-    expect(reachableHosts(interfaces, 'deimos')).not.toContain('127.0.0.1');
-    expect(reachableHosts(interfaces, 'deimos')).not.toContain('fd7a:115c::1');
+  it('takes a private LAN address over a public one, regardless of interface order', () => {
+    const host = bestNetworkHost(
+      {
+        wan: [{ family: 'IPv4', internal: false, address: '69.62.127.217' }],
+        eth0: [{ family: 'IPv4', internal: false, address: '192.168.1.20' }],
+      },
+      'deimos',
+    );
+    expect(host).toBe('192.168.1.20');
   });
 
-  it('falls back to localhost alone when nothing else answers', () => {
-    expect(reachableHosts({ lo: interfaces.lo }, '')).toEqual(['localhost']);
+  it('ignores container and VM bridges even though their addresses look private', () => {
+    const host = bestNetworkHost(
+      {
+        lo,
+        docker0: [{ family: 'IPv4', internal: false, address: '172.17.0.1' }],
+        'br-f00d': [{ family: 'IPv4', internal: false, address: '172.18.0.1' }],
+      },
+      'deimos',
+    );
+    expect(host).toBe('deimos');
+  });
+
+  it('still offers a public address when it is all the machine has', () => {
+    const host = bestNetworkHost(
+      { wan: [{ family: 'IPv4', internal: false, address: '69.62.127.217' }] },
+      'deimos',
+    );
+    expect(host).toBe('69.62.127.217');
+  });
+
+  it('skips link-local addresses, which no other machine can route to', () => {
+    const host = bestNetworkHost(
+      { eth0: [{ family: 'IPv4', internal: false, address: '169.254.10.10' }] },
+      'deimos',
+    );
+    expect(host).toBe('deimos');
+  });
+
+  it('returns undefined when there is neither an address nor a hostname', () => {
+    expect(bestNetworkHost({ lo }, '')).toBeUndefined();
   });
 });
 
-describe('registrationLinks', () => {
+describe('networkRegistrationLink', () => {
   afterEach(() => {
     Reflect.deleteProperty(process.env, 'PAPERCAMP_HOSTED_CLIENT_URL');
   });
 
-  it('emits one hosted-client link per reachable host, varying only the runtime value', () => {
-    const links = registrationLinks(3333, 'abc123');
-    expect(links.length).toBeGreaterThan(0);
-    for (const link of links) {
-      expect(link.startsWith('https://paper-camp.vercel.app/?runtime=')).toBe(true);
-    }
+  it('emits a single hosted-client link for this machine', () => {
+    const link = networkRegistrationLink(3333, 'abc123');
+    expect(link).toBeDefined();
+    expect(link?.startsWith('https://paper-camp.vercel.app/?runtime=')).toBe(true);
+    expect(link).toContain('token=abc123');
   });
 });

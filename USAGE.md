@@ -67,6 +67,9 @@ survives any tool — the app is optional at every step.
 - **Docs** — this file and other repo docs, searchable.
 - **Settings** — project identity, Subjects management, and which agent/model
   runs each task type.
+- **Projects hub** — the registry of every project this browser knows, with
+  cross-project tabs; *Back to projects* in the header opens it. See "The
+  hub" below.
 
 ## Beyond the app
 
@@ -105,6 +108,58 @@ coding agent CLI (`claude` or `opencode`) on PATH.
 
 Working on Paper Camp itself is the clone path instead: `pnpm install`,
 `pnpm dev`, open `localhost:3333`.
+
+## The hub — every project in one place
+
+The hub is the `/projects` view of the same app: the registry of your projects
+plus the cross-project tabs — **Projects**, **In review**, **Agent activity**,
+**Ideas**. It lives in two places:
+
+- **The hosted client** at `https://paper-camp.vercel.app` — a static build
+  with no project of its own, so it opens straight into the hub. Every Network
+  link `paper-camp dev` prints points here, which is what lands all your
+  projects in this one registry.
+- **Any running dashboard** — *Back to projects* in the header opens that
+  server's own hub at `/projects`.
+
+The registry is the browser's localStorage at that origin: a project added in
+your laptop's hosted client is not in your phone's — open its link once there
+too.
+
+### Adding a project
+
+1. In the project's repo, run `npx paper-camp dev`. The banner prints a
+   **Local** link (the dashboard on this machine) and a **Network** link (the
+   pairing link for other devices).
+2. Open the **Network** link in the browser that should hold the hub. It
+   carries the runtime's address and a pairing token, so one visit both
+   registers the project and pairs the client with its runtime. The project
+   now sits in the hub's **Projects** list.
+3. Click a project's row to enter it; *Back to projects* returns to the hub.
+   Rows can be renamed and removed — removing only forgets the address, never
+   anything in the repo.
+
+The pairing token is minted fresh on every `paper-camp dev` start. Local, LAN,
+and tailnet origins never need it — network topology already vouches for
+them — but after a runtime restarts, a hosted client needs one visit through
+the freshly printed Network link to re-pair.
+
+Other ways in:
+
+- **Add a project by URL** (on the hub's Projects tab): paste a running
+  runtime's address this browser can reach — another port on this machine, a
+  LAN or tailnet address. Right for hubs served from a trusted origin; from
+  the hosted client, prefer the Network link, which carries the token.
+- **`paper-camp dev --share`** prints a Tunnel link — the hosted client can
+  reach that machine across the open internet. The address changes every
+  restart.
+- **Connect GitHub** (offered while the hub is empty): mint a fine-grained
+  token scoped to the repositories you want, and the hub can browse and plan
+  them with no runtime running at all.
+
+Each row's stamp says what the hub can do right now: **Can execute** (the
+runtime answers), **Plan-only** (it doesn't — browse and plan only), or
+**Version mismatch** (runtime and client differ — update one side).
 
 ## Introducing someone
 

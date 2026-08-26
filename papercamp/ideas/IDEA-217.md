@@ -1,0 +1,28 @@
+---
+id: IDEA-217
+title: GitHub connect on the Projects tab
+type: fix
+status: idea
+created: 2026-08-26
+tags:
+  - app
+subject: Multi-project
+---
+
+`GithubConnectCard` renders only on the hub's `WelcomeScreen`, and the welcome
+screen renders only while the runtime registry is empty (`hub-home.tsx`). Add
+one project and the card is unreachable: connecting GitHub after your first
+project means removing every project just to see the form again, and an
+already-stored token has no visible status or disconnect anywhere in the app.
+
+Render `GithubConnectCard` on the Projects tab too: in `ProjectsList`, beside
+`AddByRuntimeUrlCard`, in the same side-by-side row the welcome screen uses
+(`flex flex-col gap-4 sm:flex-row`). Both of the card's states come along
+unchanged — the connect form when no token is stored, the connected card
+(identity, reachable repositories, Disconnect) when one is — so the hub always
+shows GitHub status. The welcome screen keeps its copy; `hub-home.tsx` stays
+the only switch between the two views.
+
+### Out of scope
+
+Any change to the GitHub token flow itself, or where the token is stored.

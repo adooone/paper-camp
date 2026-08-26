@@ -1,6 +1,6 @@
 import { Input, ListItem } from '@dendelion/paper-ui';
 import { SidebarSection } from '../../plans/components/sidebar-section';
-import { useDocsSidebar } from '../hooks/use-docs-sidebar';
+import { useDocsSidebar } from '../hooks';
 
 const simplecaseLabel = (name: string) =>
   name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();

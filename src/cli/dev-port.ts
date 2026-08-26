@@ -44,3 +44,10 @@ export async function readConfigIntegration(
 export function resolveDevPort(explicitPort: string | undefined, configPort: number | undefined) {
   return explicitPort ? Number(explicitPort) : (configPort ?? 3333);
 }
+
+export function portInUseMessage(port: number): string {
+  return [
+    `Port ${port} is already taken — something else (maybe another paper-camp) is listening there.`,
+    'Pick a different port with -p, or set "port" in papercamp/config.json for this project.',
+  ].join('\n');
+}

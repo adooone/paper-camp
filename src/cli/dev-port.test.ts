@@ -2,7 +2,12 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { readConfigIntegration, readConfigPort, resolveDevPort } from './dev-port';
+import {
+  portInUseMessage,
+  readConfigIntegration,
+  readConfigPort,
+  resolveDevPort,
+} from './dev-port';
 
 describe('resolveDevPort', () => {
   it('prefers an explicit port over config', () => {
@@ -15,6 +20,15 @@ describe('resolveDevPort', () => {
 
   it('falls back to 3333 when neither is set', () => {
     expect(resolveDevPort(undefined, undefined)).toBe(3333);
+  });
+});
+
+describe('portInUseMessage', () => {
+  it('names the taken port and both ways out', () => {
+    const message = portInUseMessage(3333);
+    expect(message).toContain('3333');
+    expect(message).toContain('-p');
+    expect(message).toContain('papercamp/config.json');
   });
 });
 

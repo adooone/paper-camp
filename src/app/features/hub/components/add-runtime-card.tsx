@@ -10,8 +10,9 @@ export const AddByRuntimeUrlCard = () => {
     <Card size="small" texture="kraft" className="flex flex-1 flex-col gap-2 text-left">
       <p className="m-0 font-semibold">Add a project by URL</p>
       <p className="m-0 text-sm opacity-70">
-        Paste one of the addresses <code>paper-camp dev</code> printed when it started — the one
-        this browser can reach. <code>localhost</code> only works on the machine running it.
+        Paste the address of a running <code>paper-camp dev</code> this browser can reach — its LAN
+        or tailnet address from another machine. <code>localhost</code> only works on the machine
+        running it.
       </p>
       <Input
         size="small"

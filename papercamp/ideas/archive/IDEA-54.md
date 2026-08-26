@@ -5,6 +5,8 @@ type: refactor
 status: done
 created: 2026-06-27
 updated: 2026-06-27
+audited: 2026-08-26
+audited-hash: 5d1ec05e778a21a545fd7f8b321c0072cf3c8a5cc94d91a07902ec68add63fc8
 tags:
   - app
   - ui

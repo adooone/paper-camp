@@ -3,7 +3,10 @@ import { type IncomingMessage, type ServerResponse, createServer } from 'node:ht
 import { dirname, extname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApiMiddleware } from '../app/server/api';
-import { buildRegistrationLinkForRuntime, registrationLinks } from './registration-link';
+import { PAPER_CAMP_VERSION } from '../core/scaffold';
+import { formatDevBanner, formatShareLine } from './dev-banner';
+import { portInUseMessage } from './dev-port';
+import { buildRegistrationLinkForRuntime, networkRegistrationLink } from './registration-link';
 import {
   CLOUDFLARED_MISSING_MESSAGE,
   type QuickTunnel,
@@ -52,12 +55,6 @@ export async function startDevServer({ root, port, share }: DevServerOptions): P
   }
 
   const apiMiddleware = createApiMiddleware(root);
-  const links = registrationLinks(port, apiMiddleware.pairing.token);
-  console.log('Registration link (open in the hosted client to connect):');
-  for (const link of links) console.log(`  ${link}`);
-  if (links.length > 1) {
-    console.log('  Use the address your browser can reach — localhost only works on this machine.');
-  }
 
   async function serveStatic(req: IncomingMessage, res: ServerResponse) {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
@@ -109,9 +106,21 @@ export async function startDevServer({ root, port, share }: DevServerOptions): P
   // Reject on listen errors (EADDRINUSE etc.) — with only the success callback,
   // a taken port left this promise pending forever and the CLI hanging silently.
   await new Promise<void>((resolve, reject) => {
-    server.once('error', reject);
+    server.once('error', (error: NodeJS.ErrnoException) => {
+      reject(error.code === 'EADDRINUSE' ? new Error(portInUseMessage(port)) : error);
+    });
     server.listen(port, resolve);
   });
+
+  const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
+  console.log(
+    formatDevBanner({
+      version: PAPER_CAMP_VERSION,
+      localUrl: `http://localhost:${port}`,
+      networkLink: networkRegistrationLink(port, apiMiddleware.pairing.token),
+      color,
+    }),
+  );
 
   if (share) {
     tunnel = await startQuickTunnel(port);
@@ -119,6 +128,6 @@ export async function startDevServer({ root, port, share }: DevServerOptions): P
     const existing = process.env.PAPERCAMP_ALLOWED_HOSTS;
     process.env.PAPERCAMP_ALLOWED_HOSTS = existing ? `${existing},${tunnelHost}` : tunnelHost;
     const tunnelLink = buildRegistrationLinkForRuntime(tunnel.url, apiMiddleware.pairing.token);
-    console.log(`  ${tunnelLink}  (reachable from anywhere)`);
+    console.log(formatShareLine(tunnelLink, color));
   }
 }
