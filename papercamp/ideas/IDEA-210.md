@@ -2,14 +2,15 @@
 id: IDEA-210
 title: Settings feature conventions pass
 type: refactor
-status: planned
+status: review
 created: 2026-08-24
-updated: 2026-08-24
+updated: 2026-08-25
 tags:
   - app
   - code-health
   - settings
 subject: Code health
+order: 1
 ---
 
 [[IDEA-198]]'s conventions pass applied to `src/app/features/settings` — the
@@ -43,11 +44,19 @@ each feature's `constants.ts` stays self-contained until the token publish
 makes the shared home a token, not another literal map.
 
 ### Phases
-- [ ] Split settings-page and extract its hook
+- [x] Split settings-page and extract its hook
       Break `settings-page.tsx` into per-section `views/` files, with a `hooks/use-settings-page.ts` owning its state, effects and async handlers; the page composes views and renders what the hook returns.
-- [ ] Give setup-section a hook and named props
+      run: 4m18s · 40 in · 13.3k out · sonnet-5
+- [x] Give setup-section a hook and named props
       Extract `setup-section.tsx`'s store access and derivation into `hooks/use-setup-section.ts`, convert the inline props literal to a `{Component}Props` interface, and split the file if more than one component remains in it.
-- [ ] Concentrate colour literals in constants.ts
+      run: 5m27s · 46 in · 19.1k out · sonnet-5
+- [x] Concentrate colour literals in constants.ts
       Create the feature's `constants.ts` and move all six raw values there as named maps (status stamp map, merge-policy pair, page fill) — no literal left in a component file.
-- [ ] Audit every comment against §7
+      run: 3m8s · 40 in · 5.8k out · sonnet-5
+- [x] Audit every comment against §7
       Walk the 8 `//` lines: keep a one/two-line non-derivable why, delete the rest.
+      run: 3m53s · 28 in · 8.4k out · sonnet-5
+- [x] [manual] Split multi-component files and consolidate task constants
+
+### Thread
+- [x] 2026-08-25 [review] [agent] Requests changes · 4 findings — The extraction work is faithful: the settings page state machine, the setup-section store access and the sign-in relay logic move to hooks/ verbatim, the six colour literals land in a new constants.ts, the comment audit is clean (comment-stats reports 0 runs over the cap), and check-types, lint and all 1300 tests pass with no test touched. The behaviour-preserving claim holds — I diffed the moved hook bodies against the originals and found no semantic change. What the pass does not finish is its own §5/§8 checklist: three of the files it created still hold two components each, including a newly created views/ file with two exported components, which is exactly the metric the idea says the pass exists to clear.
