@@ -72,3 +72,43 @@ describe('initProject Claude Code integration scaffolding', () => {
     );
   });
 });
+
+describe('initProject .gitignore', () => {
+  it('creates .gitignore with the pairing entry when the repo has none', async () => {
+    const root = await makeTempDir('papercamp-scaffold-gitignore-');
+
+    await initProject(root, { projectName: 'demo' });
+
+    expect(await readFile(join(root, '.gitignore'), 'utf-8')).toBe('papercamp/.pairing.json\n');
+  });
+
+  it('appends the pairing entry after an existing papercamp block', async () => {
+    const root = await makeTempDir('papercamp-scaffold-gitignore-');
+    await writeFile(
+      join(root, '.gitignore'),
+      'node_modules\npapercamp/tasks.log\npapercamp/pr-map.json\n# a comment\n',
+      'utf-8',
+    );
+
+    await initProject(root, { projectName: 'demo' });
+
+    expect(await readFile(join(root, '.gitignore'), 'utf-8')).toBe(
+      'node_modules\npapercamp/tasks.log\npapercamp/pr-map.json\npapercamp/.pairing.json\n# a comment\n',
+    );
+  });
+
+  it('does not duplicate the entry if already present', async () => {
+    const root = await makeTempDir('papercamp-scaffold-gitignore-');
+    await writeFile(
+      join(root, '.gitignore'),
+      'papercamp/tasks.log\npapercamp/.pairing.json\n',
+      'utf-8',
+    );
+
+    await initProject(root, { projectName: 'demo' });
+
+    expect(await readFile(join(root, '.gitignore'), 'utf-8')).toBe(
+      'papercamp/tasks.log\npapercamp/.pairing.json\n',
+    );
+  });
+});

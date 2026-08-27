@@ -26,3 +26,14 @@ the only switch between the two views.
 ### Out of scope
 
 Any change to the GitHub token flow itself, or where the token is stored.
+
+### Phases
+- [ ] Render `GithubConnectCard` beside `AddByRuntimeUrlCard`
+      Wrap both in a `flex flex-col gap-4 sm:flex-row` row at the bottom of
+      `ProjectsList`, below the Projects card.
+- [ ] Check both card states on a hub that has projects
+      The connect form with no stored token, the connected card with one, and
+      the form returning after Disconnect.
+- [ ] Confine the diff to `projects-list.tsx`
+      `WelcomeScreen` keeps its own copy and row, `hub-home.tsx` its switch.
+- [ ] Run the app's quality checks

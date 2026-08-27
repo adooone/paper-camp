@@ -2,12 +2,14 @@
 id: IDEA-216
 title: Pairing survives dev restarts
 type: feat
-status: idea
+status: review
 created: 2026-08-26
+updated: 2026-08-27
 tags:
   - cli
   - server
 subject: Multi-project
+order: 1
 ---
 
 The hosted client's trust in a runtime is a pairing: the Network link's token,
@@ -42,3 +44,27 @@ this lands.
 
 Pairing UI. The vite-plugin dev path, which already carries state across
 reloads within one process.
+
+### Phases
+- [x] Read and write the pairing file
+      Load `papercamp/.pairing.json` into a `PairingManagerState`, tolerating a
+      missing or malformed file, and save it with mode 0600.
+      run: 2m43s · 42 in · 6.3k out · sonnet-5
+- [x] Persist through the dev server
+      Load the state before `createApiMiddleware(root)`, pass it in, and write
+      `getPairingState()` back on first mint and after every successful pair.
+      run: 2m39s · 34 in · 5k out · sonnet-5
+- [x] Gitignore the file from `paper-camp init`
+      Append the line to the repo's `.gitignore`, creating it when missing, and
+      add it to this repo's existing papercamp block.
+      run: 2m12s · 36 in · 6.5k out · sonnet-5
+- [x] Cover restart, revocation, and init in tests
+      A reloaded state keeps the token and origins; a deleted file mints fresh.
+      run: 5m7s · 32 in · 9.1k out · sonnet-5
+- [x] Drop the re-pair caveat from `USAGE.md`
+      Replace it with deleting the file as the revocation story.
+      run: 3m7s · 62 in · 6.6k out · sonnet-5
+- [x] [manual] Harden pairing-state persistence and error handling
+
+### Thread
+- [x] 2026-08-26 [review] [agent] Comments · 3 findings — The diff delivers what the idea specifies: pairing state is persisted to papercamp/.pairing.json with mode 0600, the CLI dev server loads it at boot and writes back on first mint and after each successful pair through the existing createApiMiddleware/getPairingState seam, init gitignores the file, this repo's .gitignore gets the line, and USAGE.md's re-pair caveat is replaced with the delete-to-revoke story. All five claimed phases are actually done and nothing contradicts the spec's out-of-scope list. The remaining comments are durability and layering concerns around the write path, plus an unrelated file that rode along in the PR.

@@ -139,10 +139,11 @@ too.
    Rows can be renamed and removed — removing only forgets the address, never
    anything in the repo.
 
-The pairing token is minted fresh on every `paper-camp dev` start. Local, LAN,
-and tailnet origins never need it — network topology already vouches for
-them — but after a runtime restarts, a hosted client needs one visit through
-the freshly printed Network link to re-pair.
+The pairing token persists in `papercamp/.pairing.json`, so a hosted client
+paired once stays paired across `paper-camp dev` restarts — Local, LAN, and
+tailnet origins never needed it anyway, since network topology already
+vouches for them. To revoke every paired client, delete that file: the next
+start mints a fresh token and forgets every paired origin.
 
 Other ways in:
 

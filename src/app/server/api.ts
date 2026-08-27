@@ -174,12 +174,13 @@ export function createApiMiddleware(
   serviceState?: DeskServiceManagerState,
   checkState?: DeskCheckManagerState,
   pairingState?: PairingManagerState,
+  onPaired?: (origin: string) => void,
 ): ApiMiddleware {
   const git = createGitManager(root);
   const status = createStatusManager(root, statusState);
   const services = createDeskServiceManager(root, serviceState);
   const checks = createDeskCheckManager(root, checkState);
-  const pairing = createPairingManager(pairingState);
+  const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);
   const agent = createAgentManager(
     root,
