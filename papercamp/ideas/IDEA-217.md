@@ -2,7 +2,7 @@
 id: IDEA-217
 title: GitHub connect on the Projects tab
 type: fix
-status: idea
+status: review
 created: 2026-08-26
 tags:
   - app
@@ -39,4 +39,5 @@ Any change to the GitHub token flow itself, or where the token is stored.
 - [x] Confine the diff to `projects-list.tsx`
       `WelcomeScreen` keeps its own copy and row, `hub-home.tsx` its switch.
       run: 23s · 12 in · 861 out · sonnet-5
-- [ ] Run the app's quality checks
+- [x] Run the app's quality checks
+      run: 24s · 12 in · 816 out · sonnet-5
