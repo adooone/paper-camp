@@ -36,6 +36,7 @@ Any change to the GitHub token flow itself, or where the token is stored.
       The connect form with no stored token, the connected card with one, and
       the form returning after Disconnect.
       run: 31s · 6 in · 1k out · sonnet-5
-- [ ] Confine the diff to `projects-list.tsx`
+- [x] Confine the diff to `projects-list.tsx`
       `WelcomeScreen` keeps its own copy and row, `hub-home.tsx` its switch.
+      run: 23s · 12 in · 861 out · sonnet-5
 - [ ] Run the app's quality checks
