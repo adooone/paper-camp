@@ -28,9 +28,10 @@ the only switch between the two views.
 Any change to the GitHub token flow itself, or where the token is stored.
 
 ### Phases
-- [ ] Render `GithubConnectCard` beside `AddByRuntimeUrlCard`
+- [x] Render `GithubConnectCard` beside `AddByRuntimeUrlCard`
       Wrap both in a `flex flex-col gap-4 sm:flex-row` row at the bottom of
       `ProjectsList`, below the Projects card.
+      run: 1m16s · 20 in · 2.1k out · sonnet-5
 - [ ] Check both card states on a hub that has projects
       The connect form with no stored token, the connected card with one, and
       the form returning after Disconnect.

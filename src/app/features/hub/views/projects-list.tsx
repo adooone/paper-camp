@@ -9,7 +9,7 @@ import { CLIENT_VERSION } from '@/app/services/version';
 import { Card, CloseIcon, IconButton, ListItem, Stamp, Tooltip } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 import { RenameRuntimeButton } from '../actions';
-import { AddByRuntimeUrlCard } from '../components';
+import { AddByRuntimeUrlCard, GithubConnectCard } from '../components';
 import { type RuntimeStatus, useRuntimeStatuses } from '../hooks';
 
 // A full load, not a client navigation: the runtime URL and API base are read once
@@ -111,7 +111,10 @@ export const ProjectsList = ({ runtimes, onChange }: ProjectsListProps) => {
           })}
         </div>
       </Card>
-      <AddByRuntimeUrlCard />
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <GithubConnectCard />
+        <AddByRuntimeUrlCard />
+      </div>
     </div>
   );
 };
