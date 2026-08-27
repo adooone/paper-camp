@@ -56,6 +56,11 @@ export async function startDevServer({ root, port, share }: DevServerOptions): P
   }
 
   const { state: pairingState, minted } = await loadOrMintPairingState(root);
+  const persistPairingState = () =>
+    savePairingState(root, pairingState).catch((error) => {
+      console.error('papercamp: could not persist pairing state:', error);
+    });
+
   const apiMiddleware = createApiMiddleware(
     root,
     undefined,
@@ -63,12 +68,9 @@ export async function startDevServer({ root, port, share }: DevServerOptions): P
     undefined,
     undefined,
     pairingState,
+    () => persistPairingState(),
   );
 
-  const persistPairingState = () =>
-    savePairingState(root, apiMiddleware.getPairingState()).catch((error) => {
-      console.error('papercamp: could not persist pairing state:', error);
-    });
   if (minted) await persistPairingState();
 
   async function serveStatic(req: IncomingMessage, res: ServerResponse) {
@@ -100,11 +102,6 @@ export async function startDevServer({ root, port, share }: DevServerOptions): P
   }
 
   const server = createServer((req, res) => {
-    if (req.method === 'POST' && (req.url ?? '').split('?')[0] === '/api/pair') {
-      res.once('finish', () => {
-        if (res.statusCode === 200) persistPairingState();
-      });
-    }
     apiMiddleware(req, res, () => {
       serveStatic(req, res).catch((error) => {
         res.statusCode = 500;

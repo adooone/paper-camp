@@ -4,10 +4,12 @@ title: Pairing survives dev restarts
 type: feat
 status: review
 created: 2026-08-26
+updated: 2026-08-27
 tags:
   - cli
   - server
 subject: Multi-project
+order: 1
 ---
 
 The hosted client's trust in a runtime is a pairing: the Network link's token,
@@ -62,3 +64,7 @@ reloads within one process.
 - [x] Drop the re-pair caveat from `USAGE.md`
       Replace it with deleting the file as the revocation story.
       run: 3m7s · 62 in · 6.6k out · sonnet-5
+- [x] [manual] Harden pairing-state persistence and error handling
+
+### Thread
+- [x] 2026-08-26 [review] [agent] Comments · 3 findings — The diff delivers what the idea specifies: pairing state is persisted to papercamp/.pairing.json with mode 0600, the CLI dev server loads it at boot and writes back on first mint and after each successful pair through the existing createApiMiddleware/getPairingState seam, init gitignores the file, this repo's .gitignore gets the line, and USAGE.md's re-pair caveat is replaced with the delete-to-revoke story. All five claimed phases are actually done and nothing contradicts the spec's out-of-scope list. The remaining comments are durability and layering concerns around the write path, plus an unrelated file that rode along in the PR.
