@@ -4,6 +4,7 @@ import { checkRoutes } from './checks';
 import { ciRoutes } from './ci';
 import { ideaRoutes, planRoutes } from './content';
 import { gitRoutes } from './git';
+import { githubDeviceFlowRoutes } from './github-device-flow';
 import { notificationRoutes } from './notifications';
 import { pairingRoutes } from './pairing';
 import { releaseNotesRoutes } from './release-notes';
@@ -23,6 +24,7 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...ideaRoutes(ctx),
     ...iconRoutes(ctx),
     ...gitRoutes(ctx),
+    ...githubDeviceFlowRoutes(ctx),
     ...capabilitiesRoutes(ctx),
     ...statusRoutes(ctx),
     ...serviceRoutes(ctx),

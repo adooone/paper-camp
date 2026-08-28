@@ -62,8 +62,9 @@ app level. Removing the paste-a-token fallback.
       Human step: device flow on, user-token expiry disabled, metadata and contents read confirmed in its permissions; record the public client ID.
 - [x] Ship the client ID as a constant with a `PAPERCAMP_GITHUB_CLIENT_ID` override
       run: 1m14s · 34 in · 4.5k out · sonnet-5
-- [ ] Add the two device-flow proxy routes to the runtime server
+- [x] Add the two device-flow proxy routes to the runtime server
       `POST /api/github/device-code` and `POST /api/github/device-token`, passing GitHub's `interval` and `slow_down` straight back.
+      run: 2m18s · 40 in · 9.6k out · sonnet-5
 - [ ] Mirror the same proxy as one Vercel serverless function for the hosted client
 - [ ] Add the Sign in with GitHub button and user-code step to the connect card
       Primary action above the existing paste-a-token fallback, ending in the same Connected state.
