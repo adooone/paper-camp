@@ -65,7 +65,8 @@ app level. Removing the paste-a-token fallback.
 - [x] Add the two device-flow proxy routes to the runtime server
       `POST /api/github/device-code` and `POST /api/github/device-token`, passing GitHub's `interval` and `slow_down` straight back.
       run: 2m18s · 40 in · 9.6k out · sonnet-5
-- [ ] Mirror the same proxy as one Vercel serverless function for the hosted client
+- [x] Mirror the same proxy as one Vercel serverless function for the hosted client
+      run: 1m36s · 24 in · 6.8k out · sonnet-5
 - [ ] Add the Sign in with GitHub button and user-code step to the connect card
       Primary action above the existing paste-a-token fallback, ending in the same Connected state.
 - [ ] Return the card to idle on cancel, denial, or code expiry with GitHub's message
