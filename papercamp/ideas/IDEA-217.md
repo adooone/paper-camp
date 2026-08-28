@@ -2,7 +2,7 @@
 id: IDEA-217
 title: GitHub connect on the Projects tab
 type: fix
-status: idea
+status: review
 created: 2026-08-26
 tags:
   - app
@@ -28,12 +28,16 @@ the only switch between the two views.
 Any change to the GitHub token flow itself, or where the token is stored.
 
 ### Phases
-- [ ] Render `GithubConnectCard` beside `AddByRuntimeUrlCard`
+- [x] Render `GithubConnectCard` beside `AddByRuntimeUrlCard`
       Wrap both in a `flex flex-col gap-4 sm:flex-row` row at the bottom of
       `ProjectsList`, below the Projects card.
-- [ ] Check both card states on a hub that has projects
+      run: 1m16s · 20 in · 2.1k out · sonnet-5
+- [x] Check both card states on a hub that has projects
       The connect form with no stored token, the connected card with one, and
       the form returning after Disconnect.
-- [ ] Confine the diff to `projects-list.tsx`
+      run: 31s · 6 in · 1k out · sonnet-5
+- [x] Confine the diff to `projects-list.tsx`
       `WelcomeScreen` keeps its own copy and row, `hub-home.tsx` its switch.
-- [ ] Run the app's quality checks
+      run: 23s · 12 in · 861 out · sonnet-5
+- [x] Run the app's quality checks
+      run: 24s · 12 in · 816 out · sonnet-5
