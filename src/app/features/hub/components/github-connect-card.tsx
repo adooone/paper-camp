@@ -1,3 +1,7 @@
+import {
+  pollGithubDeviceToken,
+  startGithubDeviceFlow,
+} from '@/app/services/github-device-flow-api';
 import { GithubApiError } from '@/app/services/github/client';
 import {
   clearHubGithubToken,
@@ -9,8 +13,8 @@ import {
   fetchAccessibleRepoNames,
   fetchGithubIdentity,
 } from '@/app/services/github/identity';
-import { Button, Card, Input, ListItem } from '@dendelion/paper-ui';
-import { useEffect, useState } from 'react';
+import { Button, Card, CopyButton, Input, ListItem } from '@dendelion/paper-ui';
+import { useEffect, useRef, useState } from 'react';
 
 const GITHUB_TOKEN_MINT_URL = 'https://github.com/settings/personal-access-tokens/new';
 
@@ -31,6 +35,33 @@ function connectErrorMessage(error: unknown): string {
   if (error instanceof GithubApiError) return error.message;
   return 'Could not reach GitHub.';
 }
+
+interface DeviceFlowState {
+  userCode: string;
+  deviceCode: string;
+  verificationUri: string;
+}
+
+interface DeviceFlowCardProps {
+  state: DeviceFlowState;
+  error: string | null;
+  onCancel: () => void;
+}
+
+const DeviceFlowCard = ({ state, error, onCancel }: DeviceFlowCardProps) => (
+  <Card size="small" texture="kraft" className="flex flex-1 flex-col gap-2 text-left">
+    <p className="m-0 font-semibold">Sign in with GitHub</p>
+    <p className="m-0 text-sm opacity-70">Enter this code on the GitHub tab that just opened:</p>
+    <p className="m-0 flex items-center gap-2 text-lg font-semibold tracking-widest">
+      {state.userCode}
+      <CopyButton text={state.userCode} />
+    </p>
+    {error && <p className="m-0 text-watercolor-rose-dark text-sm">{error}</p>}
+    <Button size="small" variant="secondary" onClick={onCancel}>
+      Cancel
+    </Button>
+  </Card>
+);
 
 interface ConnectedGithubProps {
   connection: Connection;
@@ -65,6 +96,9 @@ export const GithubConnectCard = () => {
   const [connection, setConnection] = useState<Connection | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deviceFlow, setDeviceFlow] = useState<DeviceFlowState | null>(null);
+  const [deviceFlowLoading, setDeviceFlowLoading] = useState(false);
+  const activeDeviceCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
     const stored = readHubGithubToken();
@@ -100,15 +134,80 @@ export const GithubConnectCard = () => {
     setError(null);
   };
 
+  const pollDeviceToken = async (deviceCode: string, intervalSeconds: number) => {
+    await new Promise((resolve) => setTimeout(resolve, intervalSeconds * 1000));
+    if (activeDeviceCodeRef.current !== deviceCode) return;
+    const result = await pollGithubDeviceToken(deviceCode);
+    if (activeDeviceCodeRef.current !== deviceCode) return;
+
+    if (result.access_token) {
+      activeDeviceCodeRef.current = null;
+      writeHubGithubToken(result.access_token);
+      try {
+        setConnection(await connect(result.access_token));
+      } catch (connectError) {
+        setError(connectErrorMessage(connectError));
+      }
+      setDeviceFlow(null);
+      return;
+    }
+    if (result.error === 'authorization_pending') {
+      await pollDeviceToken(deviceCode, intervalSeconds);
+      return;
+    }
+    if (result.error === 'slow_down') {
+      await pollDeviceToken(deviceCode, result.interval ?? intervalSeconds + 5);
+      return;
+    }
+
+    activeDeviceCodeRef.current = null;
+    setDeviceFlow(null);
+    setError(result.error_description ?? 'GitHub sign-in did not complete.');
+  };
+
+  const handleSignIn = () => {
+    setDeviceFlowLoading(true);
+    setError(null);
+    startGithubDeviceFlow()
+      .then((code) => {
+        activeDeviceCodeRef.current = code.device_code;
+        window.open(code.verification_uri, '_blank', 'noopener,noreferrer');
+        setDeviceFlow({
+          userCode: code.user_code,
+          deviceCode: code.device_code,
+          verificationUri: code.verification_uri,
+        });
+        pollDeviceToken(code.device_code, code.interval);
+      })
+      .catch(() => setError('Could not reach GitHub.'))
+      .finally(() => setDeviceFlowLoading(false));
+  };
+
+  const handleCancelDeviceFlow = () => {
+    activeDeviceCodeRef.current = null;
+    setDeviceFlow(null);
+    setError(null);
+  };
+
   if (connection) {
     return <ConnectedGithub connection={connection} onDisconnect={handleDisconnect} />;
+  }
+
+  if (deviceFlow) {
+    return <DeviceFlowCard state={deviceFlow} error={error} onCancel={handleCancelDeviceFlow} />;
   }
 
   return (
     <Card size="small" texture="kraft" className="flex flex-1 flex-col gap-2 text-left">
       <p className="m-0 font-semibold">Connect GitHub</p>
       <p className="m-0 text-sm opacity-70">
-        Mint a{' '}
+        Sign in to browse and plan against your repositories.
+      </p>
+      <Button size="small" disabled={deviceFlowLoading} onClick={handleSignIn}>
+        {deviceFlowLoading ? 'Starting…' : 'Sign in with GitHub'}
+      </Button>
+      <p className="m-0 text-sm opacity-70">
+        Or mint a{' '}
         <a href={GITHUB_TOKEN_MINT_URL} target="_blank" rel="noopener noreferrer">
           fine-grained token
         </a>{' '}
@@ -122,7 +221,12 @@ export const GithubConnectCard = () => {
         onChange={(e) => setToken(e.target.value)}
       />
       {error && <p className="m-0 text-watercolor-rose-dark text-sm">{error}</p>}
-      <Button size="small" disabled={token.trim() === '' || loading} onClick={handleConnect}>
+      <Button
+        size="small"
+        variant="secondary"
+        disabled={token.trim() === '' || loading}
+        onClick={handleConnect}
+      >
         {loading ? 'Connecting…' : 'Connect'}
       </Button>
     </Card>
