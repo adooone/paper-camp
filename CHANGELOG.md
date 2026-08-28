@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.22.0](https://github.com/adooone/paper-camp/compare/v0.21.1...v0.22.0) (2026-08-28)
+
+
+### Features
+
+* **cli:** Pairing survives dev restarts (IDEA-216) ([#195](https://github.com/adooone/paper-camp/issues/195)) ([2a5ce11](https://github.com/adooone/paper-camp/commit/2a5ce1152b159eec69377b2874ebc17b499c9465))
+* **cli:** Show a network-aware dev banner and clearer port errors ([360138e](https://github.com/adooone/paper-camp/commit/360138e7af0df1be599a32ca07b9cf04a732f63e))
+
+
+### Bug Fixes
+
+* **app:** GitHub connect on the Projects tab (IDEA-217) ([#196](https://github.com/adooone/paper-camp/issues/196)) ([be0dc8b](https://github.com/adooone/paper-camp/commit/be0dc8b8042c5f5689f68a48d947ebb8726b41af))
+* **app:** Retry the runtime probe and time out the pairing fetch ([f49d5d1](https://github.com/adooone/paper-camp/commit/f49d5d1c009b4ecd823ac20c882f1ae737a3ee9e))
+* **app:** Skip `verifyDirectCompletion` for boards in `handleMarkDone` ([18967b8](https://github.com/adooone/paper-camp/commit/18967b8dc19ee7d812e7883d184f1685b939d16d))
+* **app:** Trust the board's derived status in `canMarkPlanDone` ([8e043e2](https://github.com/adooone/paper-camp/commit/8e043e20c64859cbe6354964b32f68a9da267a8c))
+
 ## [0.21.1](https://github.com/adooone/paper-camp/compare/v0.21.0...v0.21.1) (2026-08-24)
 
 
