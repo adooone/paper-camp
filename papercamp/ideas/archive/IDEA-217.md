@@ -2,8 +2,9 @@
 id: IDEA-217
 title: GitHub connect on the Projects tab
 type: fix
-status: review
+status: done
 created: 2026-08-26
+updated: 2026-08-28
 tags:
   - app
 subject: Multi-project

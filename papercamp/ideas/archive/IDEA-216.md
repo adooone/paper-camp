@@ -2,9 +2,9 @@
 id: IDEA-216
 title: Pairing survives dev restarts
 type: feat
-status: review
+status: done
 created: 2026-08-26
-updated: 2026-08-27
+updated: 2026-08-28
 tags:
   - cli
   - server
