@@ -73,6 +73,7 @@ app level. Removing the paste-a-token fallback.
 - [x] Return the card to idle on cancel, denial, or code expiry with GitHub's message
       run: 1m17s · 22 in · 5.3k out · sonnet-5
 - [x] [manual] Add GitHub device flow sign-in to the connect card
+- [x] [manual] Add api/**/*.ts to knip entry points
 
 ### Thread
 - [x] 2026-08-28 [decision] [agent] Reuse the Paper Scout GitHub App instead of registering a new one — device flow adds only the public client ID, the private-key PR-bot path is untouched, and one installation's repo selection powers both the PR bot and the hub's repo list. Accepted trade-off: a future hub permission Scout lacks re-prompts every installation.
