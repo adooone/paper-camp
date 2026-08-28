@@ -2,7 +2,7 @@
 id: IDEA-218
 title: GitHub sign-in via device flow
 type: feat
-status: in-progress
+status: review
 created: 2026-08-28
 updated: 2026-08-28
 tags:
@@ -70,7 +70,8 @@ app level. Removing the paste-a-token fallback.
 - [x] Add the Sign in with GitHub button and user-code step to the connect card
       Primary action above the existing paste-a-token fallback, ending in the same Connected state.
       run: 43s · 14 in · 1.9k out · sonnet-5
-- [ ] Return the card to idle on cancel, denial, or code expiry with GitHub's message
+- [x] Return the card to idle on cancel, denial, or code expiry with GitHub's message
+      run: 1m17s · 22 in · 5.3k out · sonnet-5
 
 ### Thread
 - [x] 2026-08-28 [decision] [agent] Reuse the Paper Scout GitHub App instead of registering a new one — device flow adds only the public client ID, the private-key PR-bot path is untouched, and one installation's repo selection powers both the PR bot and the hub's repo list. Accepted trade-off: a future hub permission Scout lacks re-prompts every installation.
