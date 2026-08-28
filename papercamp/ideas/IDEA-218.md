@@ -60,7 +60,8 @@ app level. Removing the paste-a-token fallback.
 ### Phases
 - [x] Enable device flow on the Paper Scout app
       Human step: device flow on, user-token expiry disabled, metadata and contents read confirmed in its permissions; record the public client ID.
-- [ ] Ship the client ID as a constant with a `PAPERCAMP_GITHUB_CLIENT_ID` override
+- [x] Ship the client ID as a constant with a `PAPERCAMP_GITHUB_CLIENT_ID` override
+      run: 1m14s · 34 in · 4.5k out · sonnet-5
 - [ ] Add the two device-flow proxy routes to the runtime server
       `POST /api/github/device-code` and `POST /api/github/device-token`, passing GitHub's `interval` and `slow_down` straight back.
 - [ ] Mirror the same proxy as one Vercel serverless function for the hosted client
