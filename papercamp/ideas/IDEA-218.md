@@ -2,12 +2,14 @@
 id: IDEA-218
 title: GitHub sign-in via device flow
 type: feat
-status: idea
+status: in-progress
 created: 2026-08-28
+updated: 2026-08-28
 tags:
   - app
   - server
 subject: Multi-project
+order: 1
 ---
 
 The hub's Connect GitHub card makes the user mint and paste a fine-grained
@@ -68,3 +70,6 @@ app level. Removing the paste-a-token fallback.
 
 ### Thread
 - [x] 2026-08-28 [decision] [agent] Reuse the Paper Scout GitHub App instead of registering a new one — device flow adds only the public client ID, the private-key PR-bot path is untouched, and one installation's repo selection powers both the PR bot and the hub's repo list. Accepted trade-off: a future hub permission Scout lacks re-prompts every installation.
+- [x] 2026-08-28 [question] [agent] Run-all parked on phase 1 ("Enable device flow on the Paper Scout app") — the agent needs a decision: Phase 1 of IDEA-218 requires manually enabling device flow, disabling user-token expiry, and confirming metadata/contents read permissions in the Paper Scout GitHub App settings (github.com → Settings → Developer settings → GitHub Apps → Paper Scout), then reporting back the app's public Client ID. Could you do this in the GitHub UI and give me the Client ID so I can mark this phase complete and proceed to phase 2 (shipping it as a constant)?
+- [x] 2026-08-28 [clarification] client id - Iv23ligLF1oQlhORSdew
+- [x] 2026-08-28 [chat] [agent] Got it — Client ID Iv23ligLF1oQlhORSdew. That closes out phase 1; marking it done and moving to phase 2 (shipping the ID as a constant with the PAPERCAMP_GITHUB_CLIENT_ID override).
