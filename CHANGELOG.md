@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.0](https://github.com/adooone/paper-camp/compare/v0.22.0...v0.23.0) (2026-08-28)
+
+
+### Features
+
+* **app:** Add GitHub device flow sign-in to the connect card ([b8468fa](https://github.com/adooone/paper-camp/commit/b8468fa74dd7b39c3ed6043e2379fb2e40967f5c))
+* **app:** Add the Sign in with GitHub button and user-code step to the connect card ([096a4c2](https://github.com/adooone/paper-camp/commit/096a4c29a248fb0f1e1c1ed6ff278eac6fc1eb7c))
+* **app:** Add the two device-flow proxy routes to the runtime server ([8781eeb](https://github.com/adooone/paper-camp/commit/8781eeb061f57f7b98e61e316559280f2b911a5b))
+* **app:** Mirror the same proxy as one Vercel serverless function for the hosted client ([bf4735b](https://github.com/adooone/paper-camp/commit/bf4735b007d3863e364a73ba39f4c7dd1b821ecd))
+* **app:** Return the card to idle on cancel, denial, or code expiry with GitHub's message ([a87b411](https://github.com/adooone/paper-camp/commit/a87b4111f5efa5684e4a769fedfed3826528c61f))
+* **app:** Ship the client ID as a constant with a `PAPERCAMP_GITHUB_CLIENT_ID` override ([34e7147](https://github.com/adooone/paper-camp/commit/34e7147de6db7d55e5673f798c6a538140efc6e4))
+
 ## [0.22.0](https://github.com/adooone/paper-camp/compare/v0.21.1...v0.22.0) (2026-08-28)
 
 
