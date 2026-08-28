@@ -67,8 +67,9 @@ app level. Removing the paste-a-token fallback.
       run: 2m18s · 40 in · 9.6k out · sonnet-5
 - [x] Mirror the same proxy as one Vercel serverless function for the hosted client
       run: 1m36s · 24 in · 6.8k out · sonnet-5
-- [ ] Add the Sign in with GitHub button and user-code step to the connect card
+- [x] Add the Sign in with GitHub button and user-code step to the connect card
       Primary action above the existing paste-a-token fallback, ending in the same Connected state.
+      run: 43s · 14 in · 1.9k out · sonnet-5
 - [ ] Return the card to idle on cancel, denial, or code expiry with GitHub's message
 
 ### Thread
