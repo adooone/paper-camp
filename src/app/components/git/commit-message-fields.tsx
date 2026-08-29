@@ -1,5 +1,5 @@
 import { Alert, IconButton, Input } from '@dendelion/paper-ui';
-import { WandIcon } from './icons';
+import { WandIcon } from '../icons';
 
 export interface CommitMessageFieldsState {
   commitTitle: string;

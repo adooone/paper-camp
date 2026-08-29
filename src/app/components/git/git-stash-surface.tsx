@@ -3,7 +3,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import type { GitStashEntry } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { LinkButton } from './link-button';
+import { LinkButton } from '../link-button';
 
 const formatStashAge = (days: number) =>
   days <= 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`;

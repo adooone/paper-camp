@@ -74,8 +74,9 @@ tree. Stores and services (their own pass if one is ever needed).
 - [x] Hooks own the store access
       `use-app-shell.ts`, `use-stack-panel.ts`, `use-status-bar.ts` in src/app/hooks; `useMediaQuery` and stack-open persistence move alongside; components keep rendering only.
       run: 6m12s · 62 in · 20.8k out · sonnet-5
-- [ ] Group the git-domain components under components/git
+- [x] Group the git-domain components under components/git
       git-stash-surface, git-sync-actions, commit-message-fields, with imports updated.
+      run: 3m37s · 36 in · 3.2k out · sonnet-5
 - [ ] Prune narrating comments across router and components
       Keep ~1-line non-derivable whys only; reasoning goes to the commit message.
 - [ ] Codify the layout rule and run the quality checks
