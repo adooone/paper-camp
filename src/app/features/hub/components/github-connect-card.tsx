@@ -13,7 +13,16 @@ import {
   fetchAccessibleRepoNames,
   fetchGithubIdentity,
 } from '@/app/services/github/identity';
-import { Button, Card, CopyButton, Input, ListItem } from '@dendelion/paper-ui';
+import { addHubRepo, listHubRepos, removeHubRepo } from '@/app/services/hub-repo-store';
+import {
+  Button,
+  Card,
+  CloseIcon,
+  CopyButton,
+  IconButton,
+  Input,
+  ListItem,
+} from '@dendelion/paper-ui';
 import { useEffect, useRef, useState } from 'react';
 
 const GITHUB_TOKEN_MINT_URL = 'https://github.com/settings/personal-access-tokens/new';
@@ -63,33 +72,101 @@ const DeviceFlowCard = ({ state, error, onCancel }: DeviceFlowCardProps) => (
   </Card>
 );
 
+function RepoLabel({ repoName }: { repoName: string }) {
+  const slash = repoName.indexOf('/');
+  if (slash === -1) {
+    return (
+      <span className="block truncate" title={repoName}>
+        {repoName}
+      </span>
+    );
+  }
+  return (
+    <span className="flex min-w-0 items-center" title={repoName}>
+      <span className="min-w-0 truncate">{repoName.slice(0, slash)}</span>
+      <span className="shrink-0">{repoName.slice(slash)}</span>
+    </span>
+  );
+}
+
 interface ConnectedGithubProps {
   connection: Connection;
   onDisconnect: () => void;
 }
 
-const ConnectedGithub = ({ connection, onDisconnect }: ConnectedGithubProps) => (
-  <Card size="small" texture="kraft" className="flex flex-1 flex-col gap-2 text-left">
-    <p className="m-0 font-semibold">Connected as {connection.identity.login}</p>
-    <p className="m-0 text-sm opacity-70">
-      {connection.repoNames.length === 0
-        ? 'This token reaches no repositories yet.'
-        : `Reaches ${connection.repoNames.length} ${connection.repoNames.length === 1 ? 'repository' : 'repositories'}:`}
-    </p>
-    {connection.repoNames.length > 0 && (
-      <div className="flex flex-col gap-1">
-        {connection.repoNames.map((repoName) => (
-          <ListItem key={repoName} size="small">
-            {repoName}
-          </ListItem>
-        ))}
+const ConnectedGithub = ({ connection, onDisconnect }: ConnectedGithubProps) => {
+  const [chosenRepos, setChosenRepos] = useState<string[]>(() => listHubRepos(window.localStorage));
+  const [query, setQuery] = useState('');
+
+  const chosenSet = new Set(chosenRepos);
+  const trimmedQuery = query.trim().toLowerCase();
+  const pickable = connection.repoNames.filter(
+    (repoName) => !chosenSet.has(repoName) && repoName.toLowerCase().includes(trimmedQuery),
+  );
+
+  return (
+    <Card size="small" texture="kraft" className="flex flex-1 flex-col gap-2 text-left">
+      <div className="flex items-center justify-between gap-2">
+        <p
+          className="m-0 min-w-0 truncate font-semibold"
+          title={`Connected as ${connection.identity.login}`}
+        >
+          Connected as {connection.identity.login}
+        </p>
+        <Button size="small" variant="secondary" className="shrink-0" onClick={onDisconnect}>
+          Disconnect
+        </Button>
       </div>
-    )}
-    <Button size="small" variant="secondary" onClick={onDisconnect}>
-      Disconnect
-    </Button>
-  </Card>
-);
+      {chosenRepos.length > 0 && (
+        <div className="flex flex-col gap-1">
+          {chosenRepos.map((repoName) => (
+            <div key={repoName} className="flex items-center gap-1">
+              <ListItem size="small" className="min-w-0 flex-1">
+                <RepoLabel repoName={repoName} />
+              </ListItem>
+              <IconButton
+                variant="danger"
+                size="small"
+                className="shrink-0"
+                aria-label={`Remove ${repoName}`}
+                icon={<CloseIcon size={14} />}
+                onClick={() => setChosenRepos(removeHubRepo(repoName, window.localStorage))}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+      <Input
+        type="search"
+        size="small"
+        placeholder="Search repositories…"
+        aria-label="Search repositories"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <div className="flex max-h-[160px] flex-col gap-1 overflow-y-auto">
+        {pickable.length === 0 ? (
+          <p className="m-0 text-sm opacity-70">
+            {connection.repoNames.length === 0
+              ? 'This token reaches no repositories yet.'
+              : 'No matching repositories.'}
+          </p>
+        ) : (
+          pickable.map((repoName) => (
+            <ListItem
+              key={repoName}
+              size="small"
+              className="min-w-0"
+              onClick={() => setChosenRepos(addHubRepo(repoName, window.localStorage))}
+            >
+              <RepoLabel repoName={repoName} />
+            </ListItem>
+          ))
+        )}
+      </div>
+    </Card>
+  );
+};
 
 export const GithubConnectCard = () => {
   const [token, setToken] = useState('');
