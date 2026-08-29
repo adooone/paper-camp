@@ -2,7 +2,7 @@
 id: IDEA-219
 title: Hub screen scroll and repo picker
 type: fix
-status: idea
+status: review
 created: 2026-08-29
 tags:
   - app
@@ -67,4 +67,5 @@ paper-ui's `Layout` contract.
 - [x] Turn the connected card into the repo picker
       Identity + Disconnect header, search over accessible repos, five-row scrollable list, chosen repos pinned on top as removable entries.
       run: 3m57s · 36 in · 7.1k out · sonnet-5
-- [ ] Run the app's quality checks
+- [x] Run the app's quality checks
+      run: 3m24s · 16 in · 1.1k out · sonnet-5
