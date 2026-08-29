@@ -65,8 +65,9 @@ Behaviour. Route structure or paths. Any change to paper-ui. The features
 tree. Stores and services (their own pass if one is ever needed).
 
 ### Phases
-- [ ] Extract the app shell from router.tsx into components/layout
+- [x] Extract the app shell from router.tsx into components/layout
       `app-shell.tsx` (RootLayout chrome) and `nav.ts` (nav items, icons, layout constants); router.tsx keeps only lazy imports and route definitions, under 300 lines.
+      run: 8m · 76 in · 20k out · sonnet-5
 - [ ] Fold components/shell into components/layout
       Move all shell files, update the barrel and the one direct import, refresh AGENTS.md's codebase map.
 - [ ] Hooks own the store access

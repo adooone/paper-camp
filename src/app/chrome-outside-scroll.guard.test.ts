@@ -6,7 +6,10 @@ import { describe, expect, it } from 'vitest';
 // IDEA-155: only the content scroll container may scroll — header, toolbar,
 // and the mobile bottom nav must stay outside it so they never scroll away.
 // Static source check (no jsdom/browser here) rather than a DOM measurement.
-const ROUTER_PATH = join(dirname(fileURLToPath(import.meta.url)), 'router.tsx');
+const ROUTER_PATH = join(
+  dirname(fileURLToPath(import.meta.url)),
+  'components/layout/app-shell.tsx',
+);
 
 function findMatchingDivClose(source: string, openTagStart: number): number {
   const tagRe = /<div\b[^>]*?(\/)?>|<\/div>/g;
@@ -22,7 +25,7 @@ function findMatchingDivClose(source: string, openTagStart: number): number {
       depth += 1;
     }
   }
-  throw new Error('unbalanced <div> tags while scanning router.tsx');
+  throw new Error('unbalanced <div> tags while scanning app-shell.tsx');
 }
 
 describe('chrome stays outside the scroll container (IDEA-155)', () => {
