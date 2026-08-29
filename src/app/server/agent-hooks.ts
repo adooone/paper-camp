@@ -65,9 +65,7 @@ export function createAgentHooks(root: string, git: GitManager) {
   function changedSince(start: GitStatusEntry[], end: GitStatusEntry[]): string[] {
     const startStatusByPath = new Map(start.map((entry) => [entry.path, entry.status]));
     const changed = end.filter((entry) => startStatusByPath.get(entry.path) !== entry.status);
-    return changed.flatMap((entry) =>
-      entry.renameSource ? [entry.renameSource, entry.path] : [entry.path],
-    );
+    return changed.map((entry) => entry.path);
   }
 
   async function commitPhase(

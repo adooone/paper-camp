@@ -44,6 +44,36 @@ async function makeGitRoot(): Promise<string> {
   return root;
 }
 
+describe('commitPhase', () => {
+  it('commits a renamed file without failing git add on the old path', async () => {
+    const root = await makeGitRoot();
+    await mkdir(join(root, 'src'), { recursive: true });
+    await writeFile(join(root, 'src', 'old-name.ts'), 'export const x = 1;\n');
+    await run('git', ['add', '-A'], { cwd: root });
+    await run('git', ['commit', '-q', '-m', 'add file'], { cwd: root });
+
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+    const startSnapshot = await hooks.snapshotWorkingTree();
+
+    await run('git', ['mv', 'src/old-name.ts', 'src/new-name.ts'], { cwd: root });
+    await run('git', ['add', '-A'], { cwd: root });
+
+    const plan = { id: 'IDEA-1', title: 'Test plan', kind: 'feat', tags: [] } as never;
+    const phase = { text: 'Rename the file', done: true } as never;
+
+    await expect(hooks.commitPhase(plan, phase, 0, startSnapshot)).resolves.not.toThrow();
+
+    const { stdout } = await run('git', ['status', '--porcelain'], { cwd: root });
+    expect(stdout.trim()).not.toContain('old-name.ts');
+    const { stdout: headFiles } = await run('git', ['ls-tree', '-r', '--name-only', 'HEAD'], {
+      cwd: root,
+    });
+    expect(headFiles).toContain('src/new-name.ts');
+    expect(headFiles).not.toContain('src/old-name.ts');
+  });
+});
+
 describe('annotateFixRun', () => {
   it('persists the run stamp to the corpus without committing it', async () => {
     const root = await makeGitRoot();

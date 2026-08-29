@@ -1582,6 +1582,7 @@ export function createAgentManager(
         if (isSuperseded(task)) {
           if (!isTaskDone(task)) finalizeSuperseded(task);
         } else {
+          task.errorReason ??= (err as Error).message;
           pushLine(task, `Run all phases failed: ${(err as Error).message}`);
           setStatus(task, 'error');
         }
