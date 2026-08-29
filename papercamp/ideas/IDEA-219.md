@@ -61,8 +61,9 @@ paper-ui's `Layout` contract.
 - [x] Shrink-safe project rows
       `min-w-0` + `truncate` + `title` on labels, `shrink-0` on row buttons; verify with a trycloudflare-length hostname.
       run: 1m14s · 24 in · 4k out · sonnet-5
-- [ ] Add the hub-repo-store
+- [x] Add the hub-repo-store
       Device-local chosen-repo set in localStorage with add/remove/list, mirroring the runtimes registry pattern.
+      run: 54s · 18 in · 3.6k out · sonnet-5
 - [ ] Turn the connected card into the repo picker
       Identity + Disconnect header, search over accessible repos, five-row scrollable list, chosen repos pinned on top as removable entries.
 - [ ] Run the app's quality checks
