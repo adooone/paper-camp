@@ -22,8 +22,8 @@ export const HubShell = ({ children }: { children?: ReactNode }) => {
       showPage={false}
       bleedBottom
     >
-      <div className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
-        <Page texture={{ texture: 'parchment' }} className="w-full max-w-lg">
+      <div className="h-full overflow-y-auto px-6 py-16">
+        <Page texture={{ texture: 'parchment' }} className="m-auto w-full max-w-lg">
           <PageTitle>Paper Camp</PageTitle>
           <nav aria-label="Hub navigation" className="flex flex-wrap gap-1 mb-4">
             {TABS.map((tab) => (
