@@ -2,8 +2,8 @@
 id: IDEA-219
 title: Hub screen scroll and repo picker
 type: fix
-status: review
 created: 2026-08-29
+updated: 2026-08-29
 tags:
   - app
 subject: Multi-project
