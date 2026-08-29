@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.1](https://github.com/adooone/paper-camp/compare/v0.23.0...v0.23.1) (2026-08-29)
+
+
+### Bug Fixes
+
+* **app:** Inline device-flow proxy code so Vercel functions run standalone ([4369e7c](https://github.com/adooone/paper-camp/commit/4369e7c78bdaae078c7a02858ad58a52c09aa964))
+
 ## [0.23.0](https://github.com/adooone/paper-camp/compare/v0.22.0...v0.23.0) (2026-08-28)
 
 
