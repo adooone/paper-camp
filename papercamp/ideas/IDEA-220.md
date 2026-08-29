@@ -71,8 +71,9 @@ tree. Stores and services (their own pass if one is ever needed).
 - [x] Fold components/shell into components/layout
       Move all shell files, update the barrel and the one direct import, refresh AGENTS.md's codebase map.
       run: 3m47s · 40 in · 5k out · sonnet-5
-- [ ] Hooks own the store access
+- [x] Hooks own the store access
       `use-app-shell.ts`, `use-stack-panel.ts`, `use-status-bar.ts` in src/app/hooks; `useMediaQuery` and stack-open persistence move alongside; components keep rendering only.
+      run: 6m12s · 62 in · 20.8k out · sonnet-5
 - [ ] Group the git-domain components under components/git
       git-stash-surface, git-sync-actions, commit-message-fields, with imports updated.
 - [ ] Prune narrating comments across router and components
