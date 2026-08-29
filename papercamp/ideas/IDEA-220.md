@@ -77,7 +77,8 @@ tree. Stores and services (their own pass if one is ever needed).
 - [x] Group the git-domain components under components/git
       git-stash-surface, git-sync-actions, commit-message-fields, with imports updated.
       run: 3m37s · 36 in · 3.2k out · sonnet-5
-- [ ] Prune narrating comments across router and components
+- [x] Prune narrating comments across router and components
       Keep ~1-line non-derivable whys only; reasoning goes to the commit message.
+      run: 1m16s · 28 in · 4k out · sonnet-5
 - [ ] Codify the layout rule and run the quality checks
       CODE_STYLE.md gains the components/layout rule; check-types, lint, vitest, consistency all green.
