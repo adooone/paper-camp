@@ -2,7 +2,7 @@
 id: IDEA-218
 title: GitHub sign-in via device flow
 type: feat
-status: review
+status: done
 created: 2026-08-28
 updated: 2026-08-28
 tags:
