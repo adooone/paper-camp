@@ -33,6 +33,7 @@ export const RenameRuntimeButton = ({
         type="button"
         variant="ghost"
         size="small"
+        className="shrink-0"
         onClick={(e) => {
           e.stopPropagation();
           setOpen(true);

@@ -75,19 +75,26 @@ export const ProjectsList = ({ runtimes, onChange }: ProjectsListProps) => {
               <div key={runtime.runtimeUrl} className="flex items-center gap-1">
                 <ListItem
                   size="small"
-                  className="flex-1"
+                  className="min-w-0 flex-1"
                   onClick={() => enterProject(runtime.runtimeUrl)}
                   action={<StatusStamp status={status} />}
                 >
                   {displayName ? (
-                    <span className="flex flex-col gap-0.5 text-left">
-                      <span>{displayName}</span>
-                      <span className="font-handwritten text-2xs opacity-60">
+                    <span className="flex min-w-0 flex-col gap-0.5 text-left">
+                      <span className="truncate" title={displayName}>
+                        {displayName}
+                      </span>
+                      <span
+                        className="truncate font-handwritten text-2xs opacity-60"
+                        title={runtimeRowLabel(runtime.runtimeUrl)}
+                      >
                         {runtimeRowLabel(runtime.runtimeUrl)}
                       </span>
                     </span>
                   ) : (
-                    runtimeRowLabel(runtime.runtimeUrl)
+                    <span className="block truncate" title={runtimeRowLabel(runtime.runtimeUrl)}>
+                      {runtimeRowLabel(runtime.runtimeUrl)}
+                    </span>
                   )}
                 </ListItem>
                 <RenameRuntimeButton
@@ -98,6 +105,7 @@ export const ProjectsList = ({ runtimes, onChange }: ProjectsListProps) => {
                 <IconButton
                   variant="danger"
                   size="small"
+                  className="shrink-0"
                   aria-label={`Remove ${displayName ?? runtimeRowLabel(runtime.runtimeUrl)}`}
                   icon={<CloseIcon size={14} />}
                   onClick={(e) => {

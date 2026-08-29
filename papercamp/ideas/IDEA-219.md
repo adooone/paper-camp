@@ -58,8 +58,9 @@ paper-ui's `Layout` contract.
 - [x] Make the hub shell scrollable
       `h-full overflow-y-auto` wrapper with the Page on `m-auto`; verify a 25-row Projects card scrolls end to end and a short hub still centers.
       run: 36s · 14 in · 981 out · sonnet-5
-- [ ] Shrink-safe project rows
+- [x] Shrink-safe project rows
       `min-w-0` + `truncate` + `title` on labels, `shrink-0` on row buttons; verify with a trycloudflare-length hostname.
+      run: 1m14s · 24 in · 4k out · sonnet-5
 - [ ] Add the hub-repo-store
       Device-local chosen-repo set in localStorage with add/remove/list, mirroring the runtimes registry pattern.
 - [ ] Turn the connected card into the repo picker
