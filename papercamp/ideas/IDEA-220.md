@@ -2,7 +2,7 @@
 id: IDEA-220
 title: Router and layout conventions pass
 type: refactor
-status: idea
+status: review
 created: 2026-08-29
 tags:
   - app
@@ -80,5 +80,6 @@ tree. Stores and services (their own pass if one is ever needed).
 - [x] Prune narrating comments across router and components
       Keep ~1-line non-derivable whys only; reasoning goes to the commit message.
       run: 1m16s · 28 in · 4k out · sonnet-5
-- [ ] Codify the layout rule and run the quality checks
+- [x] Codify the layout rule and run the quality checks
       CODE_STYLE.md gains the components/layout rule; check-types, lint, vitest, consistency all green.
+      run: 3m8s · 20 in · 2.1k out · sonnet-5
