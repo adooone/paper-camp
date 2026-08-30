@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.2](https://github.com/adooone/paper-camp/compare/v0.23.1...v0.23.2) (2026-08-30)
+
+
+### Bug Fixes
+
+* **app:** Add the hub-repo-store ([5aae08c](https://github.com/adooone/paper-camp/commit/5aae08c1ec7b88a34b0e4b6a933e1664ac138244))
+* **app:** Make the hub shell scrollable ([144ff0c](https://github.com/adooone/paper-camp/commit/144ff0c1a6e86075a34ac7b74baf6ae34c940945))
+* **app:** Run the app's quality checks ([c9495f6](https://github.com/adooone/paper-camp/commit/c9495f6abce72fa4a23952f5007830805de1f62d))
+* **app:** Shrink-safe project rows ([556fce2](https://github.com/adooone/paper-camp/commit/556fce2d9a53a36d65ba09684c7fd7675bbb8fd9))
+* **app:** Turn the connected card into the repo picker ([30963b7](https://github.com/adooone/paper-camp/commit/30963b7a2d852ea9c23b97c2dbebfa3973419ecd))
+* **server:** stop run-all commits from choking on renamed files ([7241dc7](https://github.com/adooone/paper-camp/commit/7241dc7cf96c264388492e402339f046d5950bb6))
+
 ## [0.23.1](https://github.com/adooone/paper-camp/compare/v0.23.0...v0.23.1) (2026-08-29)
 
 
