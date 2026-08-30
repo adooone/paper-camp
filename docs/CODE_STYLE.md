@@ -183,6 +183,18 @@ Rules:
 - Each feature, and each of `components/`, `services/`, and `stores/`, has an
   `index.ts` barrel file.
 
+### `components/` groups by domain
+
+A generic atom with no domain of its own (`LinkButton`, `Markdown`,
+`PageTitle`) stays flat at the `components/` root. Once two or more files only
+make sense together, they get a domain folder instead of sitting loose beside
+the atoms: `layout/` holds the app chrome (`AppShell`, the sidebar shell, the
+status bar, nav items and layout constants), `git/` holds the git-domain
+surfaces (`GitStashSurface`, `GitSyncActions`, `CommitMessageFields`),
+`stack-panel/` holds the Stack panel's sections. `layout/` in particular is
+the *one* home for layout — a second `shell/`-style folder for chrome is the
+mistake this rule prevents.
+
 ### The feature template
 
 A feature keeps only a few anchors at its top and sorts everything else into

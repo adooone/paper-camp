@@ -4,6 +4,7 @@ title: Router and layout conventions pass
 type: refactor
 status: review
 created: 2026-08-29
+updated: 2026-08-30
 tags:
   - app
   - code-health
@@ -83,3 +84,4 @@ tree. Stores and services (their own pass if one is ever needed).
 - [x] Codify the layout rule and run the quality checks
       CODE_STYLE.md gains the components/layout rule; check-types, lint, vitest, consistency all green.
       run: 3m8s · 20 in · 2.1k out · sonnet-5
+- [x] [manual] Split AppShell state into hooks and rename shell to layout

@@ -9,10 +9,7 @@ import {
 import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
 import { HubShell } from '@/app/features/hub';
 import { PlanActionsColumn, PlanFilterColumn } from '@/app/features/plans/index';
-import { useNotificationPush } from '@/app/hooks/use-notification-push';
-import { fetchIdeas, fetchPlans } from '@/app/services/content';
-import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
-import { fetchCapabilities, fetchConfig } from '@/app/services/system';
+import { useAppShell } from '@/app/hooks/use-app-shell';
 import {
   Button,
   IconButton,
@@ -21,10 +18,9 @@ import {
   ToastProvider,
   getSurfaceStyles,
 } from '@dendelion/paper-ui';
-import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import { useAppStore } from '../../stores/app-store';
-import { HUB_PATHS, LARGE_SCREEN_QUERY, NavLabel, SidebarToggleIcon, navItems } from './nav';
+import { Outlet } from '@tanstack/react-router';
+import { Suspense, lazy } from 'react';
+import { NavLabel, SidebarToggleIcon, navItems } from './nav';
 
 const DocsSidebar = lazy(() =>
   import('@/app/features/docs/index').then((m) => ({ default: m.DocsSidebar })),
@@ -39,147 +35,31 @@ const GitFileList = lazy(() =>
   import('@/app/features/git/index').then((m) => ({ default: m.GitFileList })),
 );
 
-const STACK_OPEN_KEY = 'stack-open';
-
-function readStoredStackOpen(): boolean {
-  try {
-    return localStorage.getItem(STACK_OPEN_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-function writeStoredStackOpen(value: boolean): void {
-  try {
-    localStorage.setItem(STACK_OPEN_KEY, String(value));
-  } catch {
-    // localStorage unavailable (e.g. private browsing) — fall back to in-memory only
-  }
-}
-
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(query).matches : false,
-  );
-  useEffect(() => {
-    const mql = window.matchMedia(query);
-    const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
-    setMatches(mql.matches);
-    mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
-  }, [query]);
-  return matches;
-}
-
 export const AppShell = () => {
-  const navigate = useNavigate();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const loadPlans = useAppStore((s) => s.loadPlans);
-  const loadIdeas = useAppStore((s) => s.loadIdeas);
-  const loadSuggestions = useAppStore((s) => s.loadSuggestions);
-  const loadCapabilities = useAppStore((s) => s.loadCapabilities);
-  const loadAgentAuthStatus = useAppStore((s) => s.loadAgentAuthStatus);
-  const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
-  const loadNotifications = useAppStore((s) => s.loadNotifications);
-  const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
-  const checkRuntimeReachable = useAppStore((s) => s.checkRuntimeReachable);
-  const runtimeReachable = useAppStore((s) => s.runtimeReachable);
-  const runtimeChecking = useAppStore((s) => s.runtimeChecking);
-  const githubConfig = useAppStore((s) => s.githubConfig);
-  const activeLayer = useRouterState({
-    select: (s) => s.matches.at(-1)?.staticData.layer,
-  });
-  const readiness = moduleReadiness(
+  const {
+    navigate,
     activeLayer,
-    { reachable: runtimeReachable, checking: runtimeChecking },
-    { githubConfigured: githubConfig !== null },
-  );
-  const isPlansArea =
-    pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
-  const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
-  const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
-  const isRoadmapArea = pathname === '/roadmap';
-  const isGitArea = pathname === '/git';
-  const activeId = isPlansArea
-    ? 'plans'
-    : isDocsArea
-      ? 'docs'
-      : isSettingsArea
-        ? 'settings'
-        : navItems.find((item) => item.path === pathname)?.id;
-  const hasSidebar = isPlansArea || isDocsArea || isSettingsArea || isRoadmapArea || isGitArea;
-  const sidebarAreaKey = isPlansArea
-    ? 'plans'
-    : isDocsArea
-      ? 'docs'
-      : isSettingsArea
-        ? 'settings'
-        : isRoadmapArea
-          ? 'roadmap'
-          : 'git';
-  const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
-  const firstRunChecked = useRef(false);
-
-  useNotificationPush();
-
-  useEffect(() => {
-    loadSuggestions();
-    loadCapabilities();
-    loadAgentAuthStatus();
-    loadParkedQuestions();
-    loadNotifications();
-    checkRuntimeReachable();
-  }, [
-    loadSuggestions,
-    loadCapabilities,
-    loadAgentAuthStatus,
-    loadParkedQuestions,
-    loadNotifications,
-    checkRuntimeReachable,
-  ]);
-
-  // Corpus source depends on runtimeReachable, known only once the probe above
-  // resolves — re-run then so a reachable client isn't stuck on the plan-only path.
-  useEffect(() => {
-    if (runtimeChecking) return;
-    loadPlans();
-    loadIdeas();
-  }, [runtimeChecking, loadPlans, loadIdeas]);
-
-  // Land fresh installs (or any install with an incomplete capability) on Setup
-  // instead of letting them discover gaps by hitting a broken PR badge or agent button.
-  useEffect(() => {
-    if (firstRunChecked.current || pathname !== '/') return;
-    firstRunChecked.current = true;
-    Promise.all([fetchConfig(), fetchCapabilities()]).then(([config, capabilities]) => {
-      if (
-        !config?.setupDismissed &&
-        capabilities !== null &&
-        !capabilities.every((c) => c.status === 'ok')
-      ) {
-        navigate({ to: '/settings/$section', params: { section: 'setup' } });
-        return;
-      }
-      // A corpus at or below `init`'s single seeded example idea (IDEA-1, no plans yet)
-      // hasn't been used for real work — point it at USAGE.md instead of an empty Ideas list.
-      Promise.all([fetchIdeas(), fetchPlans()]).then(([ideas, plans]) => {
-        if (ideas.entries.length > 1 || plans.entries.length > 0) return;
-        setActiveDocTitle('USAGE.md');
-        navigate({ to: '/docs' });
-      });
-    });
-  }, [pathname, navigate, setActiveDocTitle]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body.
-  useEffect(() => {
-    setMobileSidebarOpen(false);
-  }, [pathname]);
+    readiness,
+    activeId,
+    hasSidebar,
+    sidebarAreaKey,
+    isPlansArea,
+    isDocsArea,
+    isSettingsArea,
+    isRoadmapArea,
+    isGitArea,
+    isInHub,
+    stackOpen,
+    toggleStack,
+    isLarge,
+    mobileSidebarOpen,
+    openMobileSidebar,
+    closeMobileSidebar,
+  } = useAppShell();
 
   // The hub is a level above the project, so it takes the whole window instead of
   // the project chrome — cross-project views compose several projects at once.
-  if (HUB_PATHS.includes(pathname)) {
+  if (isInHub) {
     return (
       <ToastProvider position="bottom-left">
         <HubShell>
@@ -208,7 +88,7 @@ export const AppShell = () => {
                 size="small"
                 className="lg:hidden"
                 label="Open sidebar"
-                onClick={() => setMobileSidebarOpen(true)}
+                onClick={openMobileSidebar}
                 icon={<SidebarToggleIcon />}
               />
             )}
@@ -257,7 +137,7 @@ export const AppShell = () => {
                   <SidebarShell
                     routeKey={sidebarAreaKey}
                     mobileOpen={mobileSidebarOpen}
-                    onMobileClose={() => setMobileSidebarOpen(false)}
+                    onMobileClose={closeMobileSidebar}
                   >
                     {isPlansArea && (
                       <>
@@ -314,16 +194,7 @@ export const AppShell = () => {
           </div>
         </Layout>
       </div>
-      <StackPanel
-        open={stackOpen}
-        pinned={isLarge}
-        onToggle={() => {
-          // Updaters must be pure — StrictMode double-invokes them.
-          const next = !stackOpen;
-          writeStoredStackOpen(next);
-          setStackOpen(next);
-        }}
-      />
+      <StackPanel open={stackOpen} pinned={isLarge} onToggle={toggleStack} />
       {/* Header's nav row (max-[480px]:hidden above) has nowhere to wrap below the
           phone breakpoint — this fixed bottom bar replaces it, reachable one-handed. */}
       <nav
@@ -335,7 +206,7 @@ export const AppShell = () => {
             variant="ghost"
             size="small"
             label="Open sidebar"
-            onClick={() => setMobileSidebarOpen(true)}
+            onClick={openMobileSidebar}
             icon={<SidebarToggleIcon />}
             className="min-h-11"
           />
