@@ -3,6 +3,7 @@ import { readHubGithubToken } from '@/app/services/github/hub-token-store';
 import { mountPrefix } from '@/app/services/mount';
 import {
   type ProjectEntry,
+  addGithubProject,
   listProjects,
   projectEntryId,
   removeProject,
@@ -15,7 +16,7 @@ const storage = typeof window === 'undefined' ? null : window.localStorage;
 
 export interface UseProjectsResult {
   projects: ProjectEntry[];
-  refresh: () => void;
+  addGithubEntry: (repoFullName: string) => void;
   renameEntry: (id: string, label: string) => void;
   removeEntry: (id: string) => void;
   openEntry: (id: string) => void;
@@ -38,7 +39,10 @@ export function useProjects(): UseProjectsResult {
 
   return {
     projects,
-    refresh,
+    addGithubEntry: (repoFullName) => {
+      addGithubProject(repoFullName, storage);
+      refresh();
+    },
     renameEntry: (id, label) => {
       renameProject(id, label, storage);
       refresh();

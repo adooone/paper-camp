@@ -4,15 +4,15 @@ import { GithubConnectCard } from './github-connect-card';
 
 export interface AddProjectColumnProps {
   projects: ProjectEntry[];
-  onProjectsChange: () => void;
+  onAddRepo: (repoFullName: string) => void;
 }
 
-export const AddProjectColumn = ({ projects, onProjectsChange }: AddProjectColumnProps) => (
+export const AddProjectColumn = ({ projects, onAddRepo }: AddProjectColumnProps) => (
   <div className="flex flex-col gap-4">
     <p className="m-0 font-semibold">Add a project</p>
     <GithubConnectCard
       chosenRepoNames={projects.filter((entry) => entry.kind === 'github').map(projectEntryId)}
-      onProjectsChange={onProjectsChange}
+      onAddRepo={onAddRepo}
     />
     <AddByRuntimeUrlCard />
   </div>

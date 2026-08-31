@@ -3,7 +3,7 @@ import { AddProjectColumn, ProjectsColumn } from '../components';
 import { useProjects } from '../hooks';
 
 export const HubHome = () => {
-  const { projects, refresh, renameEntry, removeEntry, openEntry } = useProjects();
+  const { projects, addGithubEntry, renameEntry, removeEntry, openEntry } = useProjects();
 
   return (
     <div className="flex flex-col gap-6 md:flex-row md:items-stretch">
@@ -18,7 +18,7 @@ export const HubHome = () => {
       <Divider orientation="horizontal" className="md:hidden" />
       <Divider orientation="vertical" className="hidden md:block" />
       <div className="min-w-0 md:flex-1">
-        <AddProjectColumn projects={projects} onProjectsChange={refresh} />
+        <AddProjectColumn projects={projects} onAddRepo={addGithubEntry} />
       </div>
     </div>
   );

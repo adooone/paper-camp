@@ -2,7 +2,7 @@
 id: IDEA-221
 title: Hub rebuild as a project picker
 type: feat
-status: idea
+status: review
 created: 2026-08-31
 updated: 2026-08-31
 tags:
@@ -79,6 +79,7 @@ paper-ui.
 - [x] Collapse GitHub connect to its three states
       One button signed out, the user-code step mid-flow, identity + search + five-row list connected; token paste as the post-click fallback.
       run: 6m33s · 44 in · 17.8k out · sonnet-5
-- [ ] Conventions and quality checks
+- [x] Conventions and quality checks
       Hooks own store access, named props interfaces, ~1-line whys; check-types, lint, vitest, consistency all green.
+      run: 8m16s · 84 in · 23.7k out · sonnet-5
 - [x] [manual] Hub rebuild as a project picker

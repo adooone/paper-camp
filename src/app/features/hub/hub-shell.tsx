@@ -2,7 +2,11 @@ import { PageTitle } from '@/app/components/page-title';
 import { Layout, Page } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 
-export const HubShell = ({ children }: { children?: ReactNode }) => (
+export interface HubShellProps {
+  children?: ReactNode;
+}
+
+export const HubShell = ({ children }: HubShellProps) => (
   <Layout
     background={{ texture: 'speckle', ruledType: 'grid', ruledColor: 'blue' }}
     showHeader={false}
