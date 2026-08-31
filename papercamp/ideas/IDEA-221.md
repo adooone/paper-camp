@@ -64,8 +64,9 @@ as they already do). The device-flow endpoints and pairing protocol.
 paper-ui.
 
 ### Phases
-- [ ] Delete the cross-project hub
+- [x] Delete the cross-project hub
       Remove the In review / Agent activity / Ideas views, their routes, and the hub tab bar; the hub renders one screen.
+      run: 8m26s · 112 in · 26.6k out · sonnet-5
 - [ ] Unify the project registry
       One device-local store of entries, runtime-backed or GitHub-backed; the hub-repo-store folds in; add, remove, rename, select work for both kinds.
 - [ ] Rebuild the hub screen on the confirmed layout

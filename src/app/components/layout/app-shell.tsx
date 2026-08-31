@@ -158,13 +158,11 @@ export const AppShell = () => {
                   </SidebarShell>
                 )}
                 <div className="relative flex flex-col min-w-0 flex-[1_1_0%]">
-                  {/* Its own band above the sheet, not a pill floating on it — `shade` is
-                      the same parchment grain one step darker, reading as one folded surface. */}
                   <div className="flex flex-col flex-1 min-w-0">
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
                     <Page
-                      texture={{ texture: 'paper', shade: true }}
+                      texture={{ texture: 'paper' }}
                       rounded="none"
                       className="pc-page w-full max-w-none"
                     >
