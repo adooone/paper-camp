@@ -56,6 +56,8 @@ const AUTH_ERROR_MARKER = 'Not logged in · Please run /login';
 const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
 const DESTRUCTIVE_GIT_BAN =
   "Never run `git stash`, `git reset`, or `git checkout` over working-tree state you did not create yourself — it may be someone else's pending work. To compare against a clean baseline, use read-only `git diff` or `git show HEAD:<file>` instead.";
+const FOREGROUND_COMMANDS_ONLY =
+  "This is a one-shot headless run with no notification channel: run every command in the foreground and wait for its output directly. Never background a command (no `run_in_background`, no `&`, no `nohup`) and never sleep/poll waiting for one to finish — a backgrounded command's completion will never reach you, and you will stall until the run is cut off without finishing this work.";
 
 function isAuthError(text: string): boolean {
   return text.includes(AUTH_ERROR_MARKER);
@@ -177,6 +179,8 @@ Do only this phase — do not start any other phase, even if it looks quick.
 
 ${DESTRUCTIVE_GIT_BAN}
 
+${FOREGROUND_COMMANDS_ONLY}
+
 Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
 You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`) — never open the app, navigate to a URL, or take screenshots, even if the phase describes a visual check; note in the commit message that it's left to a human instead.
@@ -206,6 +210,8 @@ Only make the failing checks pass — change nothing else: no new features, no r
 
 ${DESTRUCTIVE_GIT_BAN}
 
+${FOREGROUND_COMMANDS_ONLY}
+
 Run \`pnpm run check-types\`, \`npx biome check . --write\`, and \`npx vitest run\` to see what's red, fix exactly that, then stop.
 
 If the failure requires a decision you can't make on your own — not just a fix you haven't found yet — output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop.`;
@@ -231,6 +237,8 @@ ${toleratedNote}${details}Plan context: ${plan.body}
 Do only this fix — do not start any other fix or phase, even if it looks quick.
 
 ${DESTRUCTIVE_GIT_BAN}
+
+${FOREGROUND_COMMANDS_ONLY}
 
 Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
