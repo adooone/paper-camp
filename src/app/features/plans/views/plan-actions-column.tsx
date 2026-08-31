@@ -55,8 +55,8 @@ export const PlanActionsColumn = () => {
     !onOwnBranch;
   const canFixReview = Boolean(
     plan.pr &&
-      (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
-      plan.pr.unresolvedThreadCount,
+    (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
+    plan.pr.unresolvedThreadCount,
   );
   const canReviewPr = plan.pr?.state === 'open' || plan.pr?.state === 'draft';
   const orphanSubject =
@@ -193,7 +193,7 @@ export const PlanActionsColumn = () => {
         </div>
       )}
 
-      <Card size="small">
+      <Card size="small" texture="kraft">
         <div className="flex flex-col">
           {canCreateBranch && <CreateBranchButton plan={plan} disabled={agentBusy || updating} />}
           {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}

@@ -114,24 +114,14 @@ export const AppShell = () => {
         </div>
         <Layout
           style={{ flex: '1 1 0%', minHeight: 0, height: 'auto' }}
-          background={{ texture: 'speckle', ruledType: 'grid', ruledColor: 'blue' }}
-          // Explicit false: paper-ui defaults it to true, and an empty header still
-          // renders a 64px band that pushes the parchment down.
+          background={{ texture: 'parchment' }}
           showHeader={false}
           showSidebar={false}
           showPage={false}
           bleedBottom
         >
           <div className="flex flex-col h-full min-h-0">
-            {/* Bled out of `.content`'s padding: the scrollbar renders at this box's
-                edge, so content isn't inset by a strip that no longer exists. */}
-            <div
-              // No top inset: Page's own 2rem padding already holds text off the edge.
-              // paddingBottom is a var() so utilities.css can widen it below the phone breakpoint.
-              className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto [scrollbar-gutter:stable] -mt-8 -ml-8 -mr-8 pt-0 pl-8 pr-8 pb-[var(--pc-content-pad-bottom)]"
-            >
-              {/* --pc-sidebar-h: the sticky sidebar can't size off this group (it's as
-                  tall as the page). lg only — below that it's a full-height drawer. */}
+            <div className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto [scrollbar-gutter:stable] -mt-8 -ml-8 -mr-8 pt-0 pl-8 pr-8 pb-[var(--pc-content-pad-bottom)]">
               <div className="flex min-w-0 justify-center lg:[--pc-sidebar-h:calc(100vh-160px)] gap-6 w-full min-h-full">
                 {hasSidebar && (
                   <SidebarShell
@@ -174,7 +164,7 @@ export const AppShell = () => {
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
                     <Page
-                      texture={{ texture: 'parchment' }}
+                      texture={{ texture: 'paper', shade: true }}
                       rounded="none"
                       className="pc-page w-full max-w-none"
                     >

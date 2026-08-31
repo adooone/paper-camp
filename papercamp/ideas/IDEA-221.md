@@ -76,4 +76,4 @@ paper-ui.
       One button signed out, the user-code step mid-flow, identity + search + five-row list connected; token paste as the post-click fallback.
 - [ ] Conventions and quality checks
       Hooks own store access, named props interfaces, ~1-line whys; check-types, lint, vitest, consistency all green.
-- [x] [manual] Archive IDEA-220, add IDEA-221 hub rebuild
+- [x] [manual] Hub rebuild as a project picker

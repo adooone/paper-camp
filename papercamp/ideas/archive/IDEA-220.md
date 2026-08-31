@@ -2,13 +2,14 @@
 id: IDEA-220
 title: Router and layout conventions pass
 type: refactor
-status: review
+status: done
 created: 2026-08-29
 updated: 2026-08-30
 tags:
   - app
   - code-health
 subject: Code health
+order: 1
 ---
 
 [[IDEA-198]]'s conventions pass, applied to the last uncovered frontend
