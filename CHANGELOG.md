@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.24.0](https://github.com/adooone/paper-camp/compare/v0.23.2...v0.24.0) (2026-08-31)
+
+
+### Features
+
+* **app:** Hub rebuild as a project picker ([9e27642](https://github.com/adooone/paper-camp/commit/9e2764248aa95f3192f19c59e6f3a92bb104b668))
+* **app:** Hub rebuild as a project picker (IDEA-221) ([#201](https://github.com/adooone/paper-camp/issues/201)) ([db340ce](https://github.com/adooone/paper-camp/commit/db340ce763327dc815c68ce5011fa564d4adbe6c))
+
 ## [0.23.2](https://github.com/adooone/paper-camp/compare/v0.23.1...v0.23.2) (2026-08-30)
 
 
