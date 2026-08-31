@@ -1,9 +1,14 @@
 /**
- * A project is chosen once it's embedded under a mount prefix or paired
- * with a runtime it dialled. The hosted client starts with neither.
+ * A project is chosen once it's embedded under a mount prefix, paired with a
+ * runtime it dialled, or pointed at a GitHub corpus source. The hosted
+ * client starts with none of the three.
  */
-export function hasChosenProject(mountPrefix: string, runtimeUrl: string): boolean {
-  return mountPrefix !== '' || runtimeUrl !== '';
+export function hasChosenProject(
+  mountPrefix: string,
+  runtimeUrl: string,
+  githubConfigured: boolean,
+): boolean {
+  return mountPrefix !== '' || runtimeUrl !== '' || githubConfigured;
 }
 
 /**

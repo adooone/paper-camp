@@ -1,10 +1,5 @@
 export const HUB_PATH = '/projects';
-export const HUB_PATHS: string[] = [
-  HUB_PATH,
-  '/projects/reviews',
-  '/projects/activity',
-  '/projects/ideas',
-];
+export const HUB_PATHS: string[] = [HUB_PATH];
 
 export const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },

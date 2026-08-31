@@ -2,7 +2,7 @@
 id: IDEA-221
 title: Hub rebuild as a project picker
 type: feat
-status: idea
+status: review
 created: 2026-08-31
 updated: 2026-08-31
 tags:
@@ -64,16 +64,22 @@ as they already do). The device-flow endpoints and pairing protocol.
 paper-ui.
 
 ### Phases
-- [ ] Delete the cross-project hub
+- [x] Delete the cross-project hub
       Remove the In review / Agent activity / Ideas views, their routes, and the hub tab bar; the hub renders one screen.
-- [ ] Unify the project registry
+      run: 8m26s · 112 in · 26.6k out · sonnet-5
+- [x] Unify the project registry
       One device-local store of entries, runtime-backed or GitHub-backed; the hub-repo-store folds in; add, remove, rename, select work for both kinds.
-- [ ] Rebuild the hub screen on the confirmed layout
+      run: 4m29s · 38 in · 5.4k out · sonnet-5
+- [x] Rebuild the hub screen on the confirmed layout
       One `max-w-3xl` container, two columns with a center divider — Projects left, connection right — stacking on narrow screens; rows and blocks per the wireframe, no truncated labels, management behind `···`.
-- [ ] Open GitHub-backed projects plan-only
+      run: 9m28s · 110 in · 29k out · sonnet-5
+- [x] Open GitHub-backed projects plan-only
       Entering a GitHub entry boots the GitHub corpus source with execute surfaces disabled; a paired runtime upgrades the row.
-- [ ] Collapse GitHub connect to its three states
+      run: 7m39s · 68 in · 21.6k out · sonnet-5
+- [x] Collapse GitHub connect to its three states
       One button signed out, the user-code step mid-flow, identity + search + five-row list connected; token paste as the post-click fallback.
-- [ ] Conventions and quality checks
+      run: 6m33s · 44 in · 17.8k out · sonnet-5
+- [x] Conventions and quality checks
       Hooks own store access, named props interfaces, ~1-line whys; check-types, lint, vitest, consistency all green.
+- [x] [manual] Hub rebuild as a project picker
 - [x] [manual] Hub rebuild as a project picker

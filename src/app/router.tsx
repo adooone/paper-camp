@@ -1,10 +1,5 @@
 import { AppShell } from '@/app/components/layout/app-shell';
-import {
-  CrossProjectActivityView,
-  CrossProjectIdeasView,
-  CrossProjectReviewsView,
-  HubHome,
-} from '@/app/features/hub';
+import { HubHome } from '@/app/features/hub';
 import { PlansPage } from '@/app/features/plans/index';
 import { bareId } from '@/app/hooks';
 import type { ModuleLayer } from '@/app/services/module-layer';
@@ -47,27 +42,6 @@ const projectsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/projects',
   component: HubHome,
-  staticData: { layer: 'client' },
-});
-
-// Composed by fanning out across every registered runtime directly, so none of
-// these need this client's own runtime — only whichever projects answer.
-const projectReviewsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/projects/reviews',
-  component: CrossProjectReviewsView,
-  staticData: { layer: 'client' },
-});
-const projectActivityRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/projects/activity',
-  component: CrossProjectActivityView,
-  staticData: { layer: 'client' },
-});
-const projectIdeasRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/projects/ideas',
-  component: CrossProjectIdeasView,
   staticData: { layer: 'client' },
 });
 
@@ -181,9 +155,6 @@ const issuesRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   plansRoute,
   projectsRoute,
-  projectReviewsRoute,
-  projectActivityRoute,
-  projectIdeasRoute,
   legacyPlanDetailRoute,
   ideaDetailRoute,
   ticketDetailRoute,
