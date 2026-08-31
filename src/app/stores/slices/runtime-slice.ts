@@ -1,4 +1,5 @@
 import { apiUrl } from '@/app/services/api-base';
+import { mountPrefix } from '@/app/services/mount';
 import { runtimeConnection } from '@/app/services/runtime-connection';
 import type { SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
@@ -9,8 +10,9 @@ export type RuntimeSlice = {
   checkRuntimeReachable: () => Promise<void>;
 };
 
-// `paper-camp dev` serving this bundle to itself is the runtime, so there's nothing to
-// probe — only a detached client pointed at a `runtime` URL needs to confirm it first.
+// Embedded serves itself, so there's nothing to probe; detached needs a probe to
+// confirm; neither (the GitHub plan-only path) has no runtime, so it's just unreachable.
+const hasEmbeddedRuntime = !!mountPrefix;
 const hasDetachedRuntime = !!runtimeConnection.runtimeUrl;
 
 const PROBE_TIMEOUT_MS = 15_000;
@@ -36,11 +38,15 @@ export async function probeReachable(): Promise<boolean> {
 
 export function createRuntimeSlice(set: SetState): RuntimeSlice {
   return {
-    runtimeReachable: !hasDetachedRuntime,
+    runtimeReachable: hasEmbeddedRuntime,
     runtimeChecking: hasDetachedRuntime,
     checkRuntimeReachable: loadSlice(
       set,
-      async () => (hasDetachedRuntime ? probeReachable() : true),
+      async () => {
+        if (hasEmbeddedRuntime) return true;
+        if (hasDetachedRuntime) return probeReachable();
+        return false;
+      },
       (reachable) => ({ runtimeReachable: reachable }),
       () => ({ runtimeReachable: false }),
       'runtimeChecking',
