@@ -76,8 +76,9 @@ paper-ui.
 - [x] Open GitHub-backed projects plan-only
       Entering a GitHub entry boots the GitHub corpus source with execute surfaces disabled; a paired runtime upgrades the row.
       run: 7m39s · 68 in · 21.6k out · sonnet-5
-- [ ] Collapse GitHub connect to its three states
+- [x] Collapse GitHub connect to its three states
       One button signed out, the user-code step mid-flow, identity + search + five-row list connected; token paste as the post-click fallback.
+      run: 6m33s · 44 in · 17.8k out · sonnet-5
 - [ ] Conventions and quality checks
       Hooks own store access, named props interfaces, ~1-line whys; check-types, lint, vitest, consistency all green.
 - [x] [manual] Hub rebuild as a project picker

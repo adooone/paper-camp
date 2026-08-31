@@ -18,7 +18,7 @@ export const HubHome = () => {
       <Divider orientation="horizontal" className="md:hidden" />
       <Divider orientation="vertical" className="hidden md:block" />
       <div className="min-w-0 md:flex-1">
-        <AddProjectColumn onProjectsChange={refresh} />
+        <AddProjectColumn projects={projects} onProjectsChange={refresh} />
       </div>
     </div>
   );
