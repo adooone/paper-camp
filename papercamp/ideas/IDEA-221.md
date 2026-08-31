@@ -70,8 +70,9 @@ paper-ui.
 - [x] Unify the project registry
       One device-local store of entries, runtime-backed or GitHub-backed; the hub-repo-store folds in; add, remove, rename, select work for both kinds.
       run: 4m29s · 38 in · 5.4k out · sonnet-5
-- [ ] Rebuild the hub screen on the confirmed layout
+- [x] Rebuild the hub screen on the confirmed layout
       One `max-w-3xl` container, two columns with a center divider — Projects left, connection right — stacking on narrow screens; rows and blocks per the wireframe, no truncated labels, management behind `···`.
+      run: 9m28s · 110 in · 29k out · sonnet-5
 - [ ] Open GitHub-backed projects plan-only
       Entering a GitHub entry boots the GitHub corpus source with execute surfaces disabled; a paired runtime upgrades the row.
 - [ ] Collapse GitHub connect to its three states
