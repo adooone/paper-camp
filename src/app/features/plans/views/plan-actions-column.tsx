@@ -55,8 +55,8 @@ export const PlanActionsColumn = () => {
     !onOwnBranch;
   const canFixReview = Boolean(
     plan.pr &&
-    (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
-    plan.pr.unresolvedThreadCount,
+      (plan.pr.state === 'open' || plan.pr.state === 'draft') &&
+      plan.pr.unresolvedThreadCount,
   );
   const canReviewPr = plan.pr?.state === 'open' || plan.pr?.state === 'draft';
   const orphanSubject =

@@ -81,5 +81,5 @@ paper-ui.
       run: 6m33s · 44 in · 17.8k out · sonnet-5
 - [x] Conventions and quality checks
       Hooks own store access, named props interfaces, ~1-line whys; check-types, lint, vitest, consistency all green.
-      run: 8m16s · 84 in · 23.7k out · sonnet-5
+- [x] [manual] Hub rebuild as a project picker
 - [x] [manual] Hub rebuild as a project picker
