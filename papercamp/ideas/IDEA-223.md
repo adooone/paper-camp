@@ -9,6 +9,7 @@ tags:
   - server
   - settings
 subject: Run & monitor
+order: 2
 ---
 
 The Stack panel is already config-driven and nothing fills the config. The
@@ -76,3 +77,6 @@ in.
       A project with no `desk` block offers the scan once from the panel's empty state; Settings can re-run it any time.
 - [ ] Cover discovery in tests and run the quality checks
       Evidence gathering covered per stack fixture, schema rejection covered; check-types, lint, vitest, consistency green.
+
+### Thread
+- [x] 2026-09-01 [log] [agent] Run order: Fills the Stack panel's empty desk config with no dependency on the other three, and is a foundation the daemon's per-project serving in IDEA-224 benefits from having in place first.
