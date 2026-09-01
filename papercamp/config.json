@@ -13,9 +13,7 @@
   },
   "defaultAgents": {
     "phase": {
-      "agent": "claude-code",
-      "model": "sonnet",
-      "effort": "medium"
+      "agent": "opencode"
     },
     "planDraft": {
       "agent": "claude-code",
@@ -36,6 +34,14 @@
       "agent": "claude-code",
       "model": "sonnet",
       "effort": "medium"
+    },
+    "codeReview": {
+      "agent": "claude-code",
+      "model": "opus",
+      "effort": "high"
+    },
+    "deskDiscovery": {
+      "agent": "claude-code"
     }
   },
   "subjects": [

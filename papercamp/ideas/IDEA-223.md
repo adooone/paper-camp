@@ -2,7 +2,7 @@
 id: IDEA-223
 title: Desk discovery for new projects
 type: feat
-status: idea
+status: in-progress
 created: 2026-09-01
 tags:
   - app
@@ -82,3 +82,4 @@ in.
 
 ### Thread
 - [x] 2026-09-01 [log] [agent] Run order: Fills the Stack panel's empty desk config with no dependency on the other three, and is a foundation the daemon's per-project serving in IDEA-224 benefits from having in place first.
+- [ ] 2026-09-01 [question] [agent] Run-all parked on phase 3 ("Build the Settings desk section") — the agent needs a decision: You've hit your session limit · resets 1:40pm (UTC)
