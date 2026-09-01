@@ -75,7 +75,7 @@ in.
       Read and edit `desk.services`, `desk.checks`, and `desk.ci` by hand, the surface the app lacks today.
 - [x] Review and apply a proposal
       Show the proposed block against current config, let the user edit before applying, and diff rather than overwrite on a re-run.
-- [ ] Offer discovery from the empty Stack panel
+- [x] Offer discovery from the empty Stack panel
       A project with no `desk` block offers the scan once from the panel's empty state; Settings can re-run it any time.
 - [ ] Cover discovery in tests and run the quality checks
       Evidence gathering covered per stack fixture, schema rejection covered; check-types, lint, vitest, consistency green.

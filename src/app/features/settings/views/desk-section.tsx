@@ -1,3 +1,4 @@
+import { DeskProposalModal } from '@/app/components/stack-panel/desk-proposal-modal';
 import {
   Alert,
   Button,
@@ -9,7 +10,6 @@ import {
   Switch,
 } from '@dendelion/paper-ui';
 import { useDeskSection } from '../hooks/use-desk-section';
-import { DeskProposalModal } from '../modals';
 import { DeskCheckRow } from './desk-check-row';
 import { DeskServiceRow } from './desk-service-row';
 

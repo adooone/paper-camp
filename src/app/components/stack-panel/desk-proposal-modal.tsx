@@ -1,7 +1,7 @@
+import type { DeskDiff } from '@/app/features/settings/helpers';
 import type { DeskCheck, DeskCi, DeskConfig, DeskService } from '@/types/index';
 import { Button, CloseIcon, Divider, IconButton, Input, Modal, Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import type { DeskDiff } from '../helpers';
 
 interface DeskProposalModalProps {
   current: DeskConfig | null | undefined;
