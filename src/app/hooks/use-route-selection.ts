@@ -5,7 +5,7 @@ import { useParams } from '@tanstack/react-router';
 const DOC_SECTIONS = ['repo-docs', 'release-notes'] as const;
 type DocSection = (typeof DOC_SECTIONS)[number];
 
-const SETTINGS_SECTIONS = ['subjects', 'setup', 'merge-policy'] as const;
+const SETTINGS_SECTIONS = ['subjects', 'setup', 'merge-policy', 'desk'] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 // URLs carry bare numbers, never prefixed ids: /ideas/195, /ideas/195/tickets/2. A number

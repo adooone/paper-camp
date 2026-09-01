@@ -1,5 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { deskConfigSchema } from '@/core/parse';
 import {
   AGENT_IDS,
   type AgentId,
@@ -62,8 +63,9 @@ export function configRoutes({ root }: RouteContext): Route[] {
             toolbar?: { enabled?: unknown; segments?: unknown; allowProduction?: unknown };
             route?: unknown;
           };
+          desk?: unknown;
         };
-        const { port, projectName, defaultAgent, subjects, setupDismissed, integration } =
+        const { port, projectName, defaultAgent, subjects, setupDismissed, integration, desk } =
           bodyParsed;
         const rawDefaultAgents = bodyParsed.defaultAgents;
         if (port !== undefined && (!Number.isInteger(port) || port <= 0)) {
@@ -155,6 +157,11 @@ export function configRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'integration.route must be a path starting with /' });
           return;
         }
+        const deskResult = desk !== undefined ? deskConfigSchema.safeParse(desk) : undefined;
+        if (deskResult && !deskResult.success) {
+          sendJson(res, 400, { error: `desk: ${deskResult.error.message}` });
+          return;
+        }
         const config = JSON.parse(raw) as PaperCampConfig;
         const defaultAgents: DefaultAgentsMap | undefined = rawDefaultAgents
           ? {
@@ -209,6 +216,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
           ...(resolvedDefaultAgents && { defaultAgents: resolvedDefaultAgents }),
           ...(setupDismissed !== undefined && { setupDismissed }),
           ...(resolvedIntegration && { integration: resolvedIntegration }),
+          ...(deskResult?.success && { desk: deskResult.data }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
         sendJson(res, 200, { ok: true });

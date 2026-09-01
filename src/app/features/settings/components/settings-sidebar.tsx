@@ -47,6 +47,16 @@ export const SettingsSidebar = () => {
           Subjects
         </ListItem>
       </SidebarSection>
+      <SidebarSection label="Stack">
+        <ListItem
+          size="small"
+          className="pc-row text-xs"
+          active={section === 'desk'}
+          onClick={() => navigate({ to: '/settings/$section', params: { section: 'desk' } })}
+        >
+          Desk
+        </ListItem>
+      </SidebarSection>
     </>
   );
 };
