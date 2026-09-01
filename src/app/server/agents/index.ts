@@ -53,6 +53,7 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   prioritise: 'commitSuggest',
   feedback: 'feedback',
   'pr-review': 'codeReview',
+  'desk-discovery': 'deskDiscovery',
 };
 
 export function resolveAgent(opts: {

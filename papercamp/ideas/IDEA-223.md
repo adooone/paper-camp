@@ -68,8 +68,9 @@ in.
 - [x] Gather project evidence
       A core module returning package manager, scripts, detected dev port, git origin slug, CI and release-please presence, and non-JS manifest targets — facts only, absent files simply absent.
       run: 9m15s · 88 in · 26.4k out · sonnet-5
-- [ ] Add the deskDiscovery agent task
+- [x] Add the deskDiscovery agent task
       New task type in `defaultAgents` with a prompt that takes the evidence and returns a schema-valid desk block; invalid output is rejected, not written.
+      run: 9m13s · 154 in · 30.5k out · sonnet-5
 - [ ] Build the Settings desk section
       Read and edit `desk.services`, `desk.checks`, and `desk.ci` by hand, the surface the app lacks today.
 - [ ] Review and apply a proposal

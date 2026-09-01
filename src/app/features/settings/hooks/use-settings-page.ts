@@ -39,6 +39,7 @@ export const useSettingsPage = () => {
       commitSuggest: current?.commitSuggest ?? DEFAULT_AGENTS.commitSuggest,
       feedback: current?.feedback ?? DEFAULT_AGENTS.feedback,
       codeReview: current?.codeReview ?? DEFAULT_AGENTS.codeReview,
+      deskDiscovery: current?.deskDiscovery ?? DEFAULT_AGENTS.deskDiscovery,
       [key]: newEntry,
     };
     if (key === 'codeReview' && agentConfigsEqual(newEntry, updated.phase)) {

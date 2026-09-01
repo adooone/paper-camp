@@ -164,6 +164,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
               commitSuggest: coerceAgentConfig(rawDefaultAgents.commitSuggest),
               feedback: coerceAgentConfig(rawDefaultAgents.feedback),
               codeReview: coerceAgentConfig(rawDefaultAgents.codeReview),
+              deskDiscovery: coerceAgentConfig(rawDefaultAgents.deskDiscovery),
             }
           : undefined;
         const resolvedDefaultAgents: DefaultAgentsMap | undefined =
@@ -176,6 +177,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
                 commitSuggest: { agent: defaultAgent },
                 feedback: { agent: defaultAgent },
                 codeReview: { agent: defaultAgent },
+                deskDiscovery: { agent: defaultAgent },
               }
             : undefined);
         const configWithOld = config as PaperCampConfig & { defaultAgent?: AgentId };

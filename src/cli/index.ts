@@ -410,6 +410,9 @@ export async function runAudit(root: string): Promise<boolean> {
         codeReview: rawAgents.codeReview
           ? coerceAgentConfig(rawAgents.codeReview)
           : DEFAULT_AGENTS.codeReview,
+        deskDiscovery: rawAgents.deskDiscovery
+          ? coerceAgentConfig(rawAgents.deskDiscovery)
+          : DEFAULT_AGENTS.deskDiscovery,
       }
     : DEFAULT_AGENTS;
   const { adapter, model, effort } = resolveAgent({ defaultAgents, taskKind: 'audit' });
