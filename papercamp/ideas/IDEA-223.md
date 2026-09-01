@@ -2,7 +2,7 @@
 id: IDEA-223
 title: Desk discovery for new projects
 type: feat
-status: in-progress
+status: review
 created: 2026-09-01
 tags:
   - app
@@ -77,7 +77,7 @@ in.
       Show the proposed block against current config, let the user edit before applying, and diff rather than overwrite on a re-run.
 - [x] Offer discovery from the empty Stack panel
       A project with no `desk` block offers the scan once from the panel's empty state; Settings can re-run it any time.
-- [ ] Cover discovery in tests and run the quality checks
+- [x] Cover discovery in tests and run the quality checks
       Evidence gathering covered per stack fixture, schema rejection covered; check-types, lint, vitest, consistency green.
 
 ### Thread
