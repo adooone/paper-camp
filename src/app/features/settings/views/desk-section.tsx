@@ -1,5 +1,15 @@
-import { Alert, Button, Card, Divider, Input, PlusIcon, Switch } from '@dendelion/paper-ui';
+import {
+  Alert,
+  Button,
+  Card,
+  Divider,
+  Input,
+  PlusIcon,
+  Spinner,
+  Switch,
+} from '@dendelion/paper-ui';
 import { useDeskSection } from '../hooks/use-desk-section';
+import { DeskProposalModal } from '../modals';
 import { DeskCheckRow } from './desk-check-row';
 import { DeskServiceRow } from './desk-service-row';
 
@@ -9,6 +19,9 @@ export const DeskSection = () => {
     services,
     checks,
     ci,
+    proposal,
+    diff,
+    discovering,
     addService,
     updateService,
     removeService,
@@ -16,15 +29,33 @@ export const DeskSection = () => {
     updateCheck,
     removeCheck,
     updateCi,
+    startDiscovery,
+    cancelProposal,
+    applyProposal,
   } = useDeskSection();
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="m-0">Desk</h2>
-        <p className="opacity-50 mt-1">
-          Services, checks, and CI/release sources for this project's Stack panel.
-        </p>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="m-0">Desk</h2>
+          <p className="opacity-50 mt-1">
+            Services, checks, and CI/release sources for this project's Stack panel.
+          </p>
+        </div>
+        {config && (
+          <Button size="small" onClick={startDiscovery} disabled={discovering}>
+            {discovering ? (
+              <>
+                <Spinner size="small" label="Discovering" /> Discovering…
+              </>
+            ) : config.desk ? (
+              'Re-scan with discovery'
+            ) : (
+              'Discover from project'
+            )}
+          </Button>
+        )}
       </div>
       {config === undefined && <p>Loading…</p>}
       {config === null && (
@@ -103,6 +134,16 @@ export const DeskSection = () => {
               </div>
             </Card>
           </div>
+
+          {proposal && diff && (
+            <DeskProposalModal
+              current={config.desk}
+              proposal={proposal}
+              diff={diff}
+              onApply={applyProposal}
+              onCancel={cancelProposal}
+            />
+          )}
         </>
       )}
     </div>

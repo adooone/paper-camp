@@ -73,7 +73,7 @@ in.
       run: 9m13s · 154 in · 30.5k out · sonnet-5
 - [x] Build the Settings desk section
       Read and edit `desk.services`, `desk.checks`, and `desk.ci` by hand, the surface the app lacks today.
-- [ ] Review and apply a proposal
+- [x] Review and apply a proposal
       Show the proposed block against current config, let the user edit before applying, and diff rather than overwrite on a re-run.
 - [ ] Offer discovery from the empty Stack panel
       A project with no `desk` block offers the scan once from the panel's empty state; Settings can re-run it any time.
