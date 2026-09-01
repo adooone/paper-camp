@@ -71,7 +71,7 @@ in.
 - [x] Add the deskDiscovery agent task
       New task type in `defaultAgents` with a prompt that takes the evidence and returns a schema-valid desk block; invalid output is rejected, not written.
       run: 9m13s · 154 in · 30.5k out · sonnet-5
-- [ ] Build the Settings desk section
+- [x] Build the Settings desk section
       Read and edit `desk.services`, `desk.checks`, and `desk.ci` by hand, the surface the app lacks today.
 - [ ] Review and apply a proposal
       Show the proposed block against current config, let the user edit before applying, and diff rather than overwrite on a re-run.
