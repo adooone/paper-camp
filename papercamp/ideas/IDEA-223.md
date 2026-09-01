@@ -65,8 +65,9 @@ vocabulary. Guessing config for a project paper-camp was never initialized
 in.
 
 ### Phases
-- [ ] Gather project evidence
+- [x] Gather project evidence
       A core module returning package manager, scripts, detected dev port, git origin slug, CI and release-please presence, and non-JS manifest targets — facts only, absent files simply absent.
+      run: 9m15s · 88 in · 26.4k out · sonnet-5
 - [ ] Add the deskDiscovery agent task
       New task type in `defaultAgents` with a prompt that takes the evidence and returns a schema-valid desk block; invalid output is rejected, not written.
 - [ ] Build the Settings desk section
