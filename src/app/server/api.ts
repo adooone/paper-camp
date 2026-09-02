@@ -175,6 +175,7 @@ export function createApiMiddleware(
   checkState?: DeskCheckManagerState,
   pairingState?: PairingManagerState,
   onPaired?: (origin: string) => void,
+  isMachineBusy?: () => boolean,
 ): ApiMiddleware {
   const git = createGitManager(root);
   const status = createStatusManager(root, statusState);
@@ -193,6 +194,7 @@ export function createApiMiddleware(
     hooks.snapshotWorkingTree,
     () => activity.notifyChanged(),
     agentState,
+    isMachineBusy,
   );
 
   const routes = buildRoutes({ root, activity, agent, git, status, services, checks, pairing });

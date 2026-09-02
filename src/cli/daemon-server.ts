@@ -66,10 +66,15 @@ async function loadMachinePairing(): Promise<{
   return { state, persist };
 }
 
+export function isMachineBusy(mounted: ReadonlyMap<string, ApiMiddleware>): boolean {
+  return [...mounted.values()].some((apiMiddleware) => apiMiddleware.agent.hasActiveTask());
+}
+
 export async function createProjectApi(
   project: MachineProject,
   pairingState: PairingManagerState,
   onPaired: () => void,
+  checkMachineBusy: () => boolean,
 ): Promise<ApiMiddleware> {
   return createApiMiddleware(
     project.path,
@@ -79,6 +84,7 @@ export async function createProjectApi(
     undefined,
     pairingState,
     onPaired,
+    checkMachineBusy,
   );
 }
 
@@ -88,9 +94,8 @@ export async function createProjectApi(
 export function createProjectMounter(
   registryPath: string,
   buildApi: (project: MachineProject) => Promise<ApiMiddleware>,
+  mounted: Map<string, ApiMiddleware> = new Map(),
 ) {
-  const mounted = new Map<string, ApiMiddleware>();
-
   async function mount(slug: string): Promise<ApiMiddleware | null> {
     const cached = mounted.get(slug);
     if (cached) return cached;
@@ -118,8 +123,12 @@ export async function startDaemonServer({ port }: DaemonServerOptions): Promise<
   }
 
   const { state: pairingState, persist: persistPairing } = await loadMachinePairing();
-  const { mount, mounted } = createProjectMounter(defaultRegistryPath(), (project) =>
-    createProjectApi(project, pairingState, persistPairing),
+  const mounted = new Map<string, ApiMiddleware>();
+  const checkMachineBusy = () => isMachineBusy(mounted);
+  const { mount } = createProjectMounter(
+    defaultRegistryPath(),
+    (project) => createProjectApi(project, pairingState, persistPairing, checkMachineBusy),
+    mounted,
   );
 
   const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {

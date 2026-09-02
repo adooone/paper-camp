@@ -310,6 +310,7 @@ export function createAgentManager(
   snapshotWorkingTree?: () => Promise<GitStatusEntry[]>,
   onCorpusChanged?: () => void,
   state: AgentManagerState = createEmptyAgentState(),
+  isMachineBusy?: () => boolean,
 ) {
   // Shared with a hot-reloaded replacement instance via `state`, so in-flight
   // listeners and the new instance's getStatus()/subscribe() stay in sync.
@@ -757,6 +758,9 @@ export function createAgentManager(
   }
 
   function admit(taskKind: TaskKind, entityId?: string): Result | null {
+    if (isMachineBusy?.()) {
+      return { ok: false, error: 'An agent task is already running on this machine' };
+    }
     const incoming = writeSetFor(taskKind, entityId);
     for (const task of runningTasks()) {
       const running = writeSetFor(task.taskKind, currentEntityId(task));
@@ -1771,6 +1775,10 @@ export function createAgentManager(
     }));
   }
 
+  function hasActiveTask(): boolean {
+    return runningTasks().length > 0;
+  }
+
   function getReconcileQueue(): ReconcileQueueItem[] | null {
     const task = currentTask();
     if (!task || task.taskKind !== 'batch-reconcile') return null;
@@ -1863,6 +1871,7 @@ export function createAgentManager(
     runDeskDiscovery,
     stop,
     getStatus,
+    hasActiveTask,
     getReconcileQueue,
     // Handed to a hot-reloaded replacement instance so both share this exact
     // state object instead of drifting apart after the swap.
@@ -1941,6 +1950,7 @@ export interface AgentManager {
   runDeskDiscovery: (evidence: ProjectEvidence) => Promise<DeskConfig>;
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
+  hasActiveTask: () => boolean;
   getReconcileQueue: () => ReconcileQueueItem[] | null;
   getState: () => AgentManagerState;
   subscribe: (res: ServerResponse) => void;

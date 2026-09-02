@@ -908,6 +908,42 @@ describe('write-set collision gate', () => {
   });
 });
 
+describe('machine-wide busy gate', () => {
+  it('hasActiveTask reflects whether any task is still running', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const manager = createAgentManager(root);
+
+    expect(manager.hasActiveTask()).toBe(false);
+    expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+    expect(manager.hasActiveTask()).toBe(true);
+
+    manager.stop();
+    await waitForStatus(manager, settled);
+    expect(manager.hasActiveTask()).toBe(false);
+  });
+
+  it('rejects a launch when another project is running on the same machine, even with no local collision', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const manager = createAgentManager(
+      root,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      () => true,
+    );
+
+    expect(manager.start(plan, 0)).toEqual({
+      ok: false,
+      error: 'An agent task is already running on this machine',
+    });
+  });
+});
+
 describe('startGitSyncRecovery', () => {
   it('launches a sync-kind task carrying the recovery prompt, and blocks a second launch while it runs', async () => {
     const { root } = await makeRoot(PLAN_TWO_PHASES);

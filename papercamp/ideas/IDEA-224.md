@@ -2,7 +2,7 @@
 id: IDEA-224
 title: Machine daemon for all projects
 type: feat
-status: idea
+status: review
 created: 2026-09-01
 tags:
   - cli
@@ -90,5 +90,6 @@ an agent against a working tree on a different machine. Replacing
 - [x] Connect to a machine from the hub
       The connection column connects to a daemon and lists its projects, replacing Add a project by URL; opening one enters it as a normal project.
       run: 40m37s · 348 in · 119k out · sonnet-5 · ×2
-- [ ] Queue agent runs per machine and run the quality checks
+- [x] Queue agent runs per machine and run the quality checks
       One agent run at a time per daemon by default; check-types, lint, vitest, consistency green.
+      run: 10m14s · 60 in · 13.5k out · sonnet-5

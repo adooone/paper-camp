@@ -8,6 +8,7 @@ import { type MachineRegistry, addProject, saveRegistry } from '../core/machine-
 import {
   createProjectApi,
   createProjectMounter,
+  isMachineBusy,
   parseMountRequest,
   readMachineProjectSummaries,
 } from './daemon-server';
@@ -138,11 +139,13 @@ describe('createProjectApi', () => {
       { slug: 'alpha', path: '/some/alpha', name: 'Alpha' },
       pairingState,
       onPaired,
+      () => false,
     );
     const apiBeta = await createProjectApi(
       { slug: 'beta', path: '/some/beta', name: 'Beta' },
       pairingState,
       onPaired,
+      () => false,
     );
 
     expect(apiAlpha.pairing.token).toBe('shared-token');
@@ -151,5 +154,35 @@ describe('createProjectApi', () => {
     expect(apiAlpha.pairing.pair('shared-token', 'https://app.papercamp.dev')).toBe(true);
     expect(apiBeta.pairing.isPairedOrigin('https://app.papercamp.dev')).toBe(true);
     expect(onPaired).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('isMachineBusy', () => {
+  const fakeApi = (active: boolean) =>
+    ({ agent: { hasActiveTask: () => active } }) as unknown as ApiMiddleware;
+
+  it('is false when no mounted project has an active task', () => {
+    const mounted = new Map([
+      ['alpha', fakeApi(false)],
+      ['beta', fakeApi(false)],
+    ]);
+    expect(isMachineBusy(mounted)).toBe(false);
+  });
+
+  it('is true when any mounted project has an active task, not just the first', () => {
+    const mounted = new Map([
+      ['alpha', fakeApi(false)],
+      ['beta', fakeApi(true)],
+    ]);
+    expect(isMachineBusy(mounted)).toBe(true);
+  });
+
+  it('reflects a project mounted after the map was first captured', () => {
+    const mounted = new Map<string, ApiMiddleware>([['alpha', fakeApi(false)]]);
+    const checkMachineBusy = () => isMachineBusy(mounted);
+
+    expect(checkMachineBusy()).toBe(false);
+    mounted.set('beta', fakeApi(true));
+    expect(checkMachineBusy()).toBe(true);
   });
 });
