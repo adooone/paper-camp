@@ -12,6 +12,7 @@ import { releaseNotesRoutes } from './release-notes';
 import { serviceRoutes } from './services';
 import { statusRoutes } from './status';
 import { configRoutes, envRoutes, iconRoutes, mergePolicyRoutes } from './system';
+import { tailnetDiscoveryRoutes } from './tailnet-discovery';
 import { taskRoutes } from './tasks';
 import { trailRoutes } from './trail';
 import type { Route, RouteContext } from './types';
@@ -38,6 +39,7 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...envRoutes(ctx),
     ...mergePolicyRoutes(ctx),
     ...deskDiscoveryRoutes(ctx),
+    ...tailnetDiscoveryRoutes(ctx),
     ...trailRoutes(ctx),
     ...releaseNotesRoutes(ctx),
     ...pairingRoutes(ctx),

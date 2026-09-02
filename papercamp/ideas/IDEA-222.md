@@ -77,8 +77,9 @@ PWA on a tailnet-joined phone is the mobile story.
 - [x] Serve over HTTPS with `paper-camp dev --tailnet`
       Run `tailscale serve --bg --https=443`, print the https registration link, and report a missing tailnet certificate setting with the admin-console link.
       run: 10m49s · 102 in · 25.6k out · sonnet-5
-- [ ] Probe tailnet peers for runtimes
+- [x] Probe tailnet peers for runtimes
       Parallel `/api/capabilities` probes of online peers with a short timeout, session-cached, exposed on the runtime API.
+      run: 7m36s · 88 in · 21.9k out · sonnet-5
 - [ ] Offer discovered runtimes in the hub
       Discovered peers appear in the connection column as addable entries in [[IDEA-221]]'s registry; never auto-added, refreshable on demand.
 - [ ] Document the tailnet and mobile paths

@@ -1,4 +1,9 @@
-import type { AgentAuthStatus, CapabilityResult, ConnectionResult } from '@/types/index';
+import type {
+  AgentAuthStatus,
+  CapabilityResult,
+  ConnectionResult,
+  TailnetPeerRuntime,
+} from '@/types/index';
 import { apiUrl } from '../api-base';
 
 export const fetchCapabilities = async (): Promise<CapabilityResult[] | null> => {
@@ -37,6 +42,19 @@ export const fetchConnections = async (): Promise<ConnectionResult[] | null> => 
     if (!response.ok) return null;
     const body = (await response.json()) as { connections: ConnectionResult[] };
     return body.connections;
+  } catch {
+    return null;
+  }
+};
+
+export const fetchTailnetPeerRuntimes = async (
+  refresh = false,
+): Promise<TailnetPeerRuntime[] | null> => {
+  try {
+    const response = await fetch(apiUrl(`/api/tailnet/peers${refresh ? '?refresh=1' : ''}`));
+    if (!response.ok) return null;
+    const body = (await response.json()) as { peers: TailnetPeerRuntime[] };
+    return body.peers;
   } catch {
     return null;
   }

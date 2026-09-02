@@ -763,6 +763,13 @@ export interface ConnectionResult {
   connect: ConnectAction | null;
 }
 
+/** A tailnet peer whose `/api/capabilities` answered — a running paper-camp runtime. */
+export interface TailnetPeerRuntime {
+  dnsName: string;
+  runtimeUrl: string;
+  version: string | null;
+}
+
 export interface MergePolicy {
   allowSquashMerge: boolean;
   allowMergeCommit: boolean;
