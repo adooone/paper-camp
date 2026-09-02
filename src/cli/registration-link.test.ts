@@ -1,4 +1,11 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { TailnetStatus } from '../core/tailnet';
+
+const { mockReadTailnetStatus } = vi.hoisted(() => ({
+  mockReadTailnetStatus: vi.fn<() => Promise<TailnetStatus | undefined>>(),
+}));
+vi.mock('../core/tailnet', () => ({ readTailnetStatus: mockReadTailnetStatus }));
+
 import {
   bestNetworkHost,
   buildRegistrationLink,
@@ -157,12 +164,32 @@ describe('bestNetworkHost', () => {
 describe('networkRegistrationLink', () => {
   afterEach(() => {
     Reflect.deleteProperty(process.env, 'PAPERCAMP_HOSTED_CLIENT_URL');
+    mockReadTailnetStatus.mockReset();
   });
 
-  it('emits a single hosted-client link for this machine', () => {
-    const link = networkRegistrationLink(3333, 'abc123');
+  it('emits a single hosted-client link for this machine', async () => {
+    mockReadTailnetStatus.mockResolvedValue(undefined);
+    const link = await networkRegistrationLink(3333, 'abc123');
     expect(link).toBeDefined();
     expect(link?.startsWith('https://paper-camp.vercel.app/?runtime=')).toBe(true);
     expect(link).toContain('token=abc123');
+  });
+
+  it('prefers the MagicDNS name over an address when Tailscale is up', async () => {
+    mockReadTailnetStatus.mockResolvedValue({
+      selfDnsName: 'deimos.pitta-ray.ts.net',
+      magicDnsSuffix: 'pitta-ray.ts.net',
+      onlinePeers: [],
+    });
+    const link = await networkRegistrationLink(3333, 'abc123');
+    expect(link).toBe(
+      'https://paper-camp.vercel.app/?runtime=http%3A%2F%2Fdeimos.pitta-ray.ts.net%3A3333&token=abc123',
+    );
+  });
+
+  it('falls back to the address order when Tailscale is down', async () => {
+    mockReadTailnetStatus.mockResolvedValue(undefined);
+    const link = await networkRegistrationLink(3333, 'abc123');
+    expect(link).not.toContain('.ts.net');
   });
 });

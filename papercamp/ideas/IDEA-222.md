@@ -86,6 +86,7 @@ PWA on a tailnet-joined phone is the mobile story.
 - [x] Document the tailnet and mobile paths
       `USAGE.md` gains the tailnet setup, the installed-PWA mobile path, and the plain statement that any `.ts.net` origin is trusted without a token.
       run: 4m40s · 28 in · 10.9k out · sonnet-5
+- [x] [manual] Prefer tailnet MagicDNS host in registration link
 
 ### Thread
 - [x] 2026-09-01 [log] [agent] Run order: Explicitly lands after IDEA-221's unified registry (already done) and its discovery entries feed the same registry IDEA-224 generalizes, so it precedes the daemon that subsumes its per-project probing.

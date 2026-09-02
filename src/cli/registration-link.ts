@@ -1,4 +1,5 @@
 import { hostname, networkInterfaces } from 'node:os';
+import { readTailnetStatus } from '../core/tailnet';
 
 // Every link shares this origin so registrations land in one localStorage registry.
 const DEFAULT_HOSTED_CLIENT_URL = 'https://paper-camp.vercel.app';
@@ -70,8 +71,15 @@ export function bestNetworkHost(
   );
 }
 
-/** Hosted-client pairing link for the best reachable host, if the machine has one. */
-export function networkRegistrationLink(port: number, pairingToken: string): string | undefined {
-  const host = bestNetworkHost(networkInterfaces() as InterfaceEntries, hostname());
+/** Hosted-client pairing link for the best reachable host, if the machine has one. A
+ *  MagicDNS name is preferred whenever Tailscale is up — stable across reboots and IP
+ *  churn, already trusted tokenlessly, and the only form that can carry a certificate. */
+export async function networkRegistrationLink(
+  port: number,
+  pairingToken: string,
+): Promise<string | undefined> {
+  const tailnet = await readTailnetStatus();
+  const host =
+    tailnet?.selfDnsName ?? bestNetworkHost(networkInterfaces() as InterfaceEntries, hostname());
   return host === undefined ? undefined : buildRegistrationLink(port, pairingToken, host);
 }
