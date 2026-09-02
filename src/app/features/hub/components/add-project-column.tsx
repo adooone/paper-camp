@@ -1,5 +1,5 @@
 import { type ProjectEntry, projectEntryId } from '@/app/services/project-registry';
-import { AddByRuntimeUrlCard } from './add-runtime-card';
+import { ConnectMachineCard } from './connect-machine-card';
 import { GithubConnectCard } from './github-connect-card';
 import { TailnetPeersCard } from './tailnet-peers-card';
 
@@ -18,6 +18,6 @@ export const AddProjectColumn = ({ projects, onAddRepo }: AddProjectColumnProps)
     <TailnetPeersCard
       chosenRuntimeUrls={projects.filter((entry) => entry.kind === 'runtime').map(projectEntryId)}
     />
-    <AddByRuntimeUrlCard />
+    <ConnectMachineCard />
   </div>
 );

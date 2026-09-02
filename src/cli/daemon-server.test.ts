@@ -5,7 +5,12 @@ import { afterAll, describe, expect, it, vi } from 'vitest';
 import type { ApiMiddleware } from '../app/server/api';
 import type { PairingManagerState } from '../app/server/pairing';
 import { type MachineRegistry, addProject, saveRegistry } from '../core/machine-registry';
-import { createProjectApi, createProjectMounter, parseMountRequest } from './daemon-server';
+import {
+  createProjectApi,
+  createProjectMounter,
+  parseMountRequest,
+  readMachineProjectSummaries,
+} from './daemon-server';
 
 describe('parseMountRequest', () => {
   it('extracts the slug and defaults rest to "/" for the bare mount', () => {
@@ -86,6 +91,41 @@ describe('createProjectMounter', () => {
     expect(await mount('alpha')).toBe(apiAlpha);
     expect(await mount('beta')).toBe(apiBeta);
     expect(buildApi).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('readMachineProjectSummaries', () => {
+  const dirs: string[] = [];
+
+  afterAll(async () => {
+    await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
+  });
+
+  async function makeRegistryFile(registry: MachineRegistry): Promise<string> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-test-'));
+    dirs.push(dir);
+    const path = join(dir, 'projects.json');
+    await saveRegistry(path, registry);
+    return path;
+  }
+
+  it('lists slug and name, sorted, with no filesystem path', async () => {
+    const step1 = addProject({ version: 1, projects: [] }, '/some/zeta', 'Zeta');
+    const step2 = addProject(step1.registry, '/some/alpha', 'Alpha');
+    const registryPath = await makeRegistryFile(step2.registry);
+
+    const summaries = await readMachineProjectSummaries(registryPath);
+
+    expect(summaries).toEqual([
+      { slug: 'alpha', name: 'Alpha' },
+      { slug: 'zeta', name: 'Zeta' },
+    ]);
+  });
+
+  it('resolves an empty list for an empty registry', async () => {
+    const registryPath = await makeRegistryFile({ version: 1, projects: [] });
+
+    expect(await readMachineProjectSummaries(registryPath)).toEqual([]);
   });
 });
 

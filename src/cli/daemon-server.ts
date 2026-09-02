@@ -1,5 +1,13 @@
 import { type IncomingMessage, type ServerResponse, createServer } from 'node:http';
-import { type ApiMiddleware, createApiMiddleware } from '../app/server/api';
+import {
+  type ApiMiddleware,
+  applyCorsHeaders,
+  createApiMiddleware,
+  handlePreflight,
+  hostOf,
+  isTrustedHost,
+} from '../app/server/api';
+import { sendJson } from '../app/server/http';
 import {
   type PairingManagerState,
   loadOrMintPairingState,
@@ -7,7 +15,13 @@ import {
   savePairingState,
 } from '../app/server/pairing';
 import { injectMountAttribute } from '../app/services/mount';
-import { type MachineProject, defaultRegistryPath, loadRegistry } from '../core/machine-registry';
+import {
+  type MachineProject,
+  defaultRegistryPath,
+  listProjects,
+  loadRegistry,
+} from '../core/machine-registry';
+import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
 import { portInUseMessage } from './dev-port';
 import { appDir, loadIndexHtml, serveStatic } from './serve-static';
 
@@ -25,6 +39,15 @@ interface MountRequest {
 export function parseMountRequest(pathname: string): MountRequest | null {
   const match = pathname.match(/^\/p\/([^/]+)(\/.*)?$/);
   return match ? { slug: match[1], rest: match[2] ?? '/' } : null;
+}
+
+/** No filesystem path in the response — the hub only ever sees projects already
+ * registered, never browses a machine's filesystem to find them. */
+export async function readMachineProjectSummaries(
+  registryPath: string,
+): Promise<MachineProjectSummary[]> {
+  const registry = await loadRegistry(registryPath);
+  return listProjects(registry).map(({ slug, name }) => ({ slug, name }));
 }
 
 /** Loaded once and passed by reference into every project's middleware, so pairing
@@ -101,6 +124,24 @@ export async function startDaemonServer({ port }: DaemonServerOptions): Promise<
 
   const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
+
+    if (pathname === MACHINE_PROJECTS_PATH) {
+      applyCorsHeaders(req, res);
+      if (req.method === 'OPTIONS') {
+        handlePreflight(req, res);
+        return;
+      }
+      // Host-trust only, same carve-out as /api/pair: a hosted hub must be able to
+      // discover what a reachable machine serves before it has any pairing to lose.
+      if (!isTrustedHost(hostOf(req.headers.host))) {
+        sendJson(res, 403, { error: 'Forbidden: request failed the Host check' });
+        return;
+      }
+      const projects = await readMachineProjectSummaries(defaultRegistryPath());
+      sendJson(res, 200, { projects });
+      return;
+    }
+
     const request = parseMountRequest(pathname);
     if (!request) {
       await serveStatic(req, res, staticDir, indexHtml);
@@ -154,5 +195,6 @@ export async function startDaemonServer({ port }: DaemonServerOptions): Promise<
   });
 
   console.log(`paper-camp daemon listening on http://localhost:${port}`);
+  console.log(`Pairing token: ${pairingState.token}`);
   console.log('Registered projects mount lazily at /p/<slug>/ on first request.');
 }

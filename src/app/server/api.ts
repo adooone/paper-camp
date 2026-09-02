@@ -45,7 +45,7 @@ const SELF_HOSTNAMES = new Set(
   })(),
 );
 
-function hostOf(value: string | undefined): string {
+export function hostOf(value: string | undefined): string {
   if (!value) return '';
   const h = value.trim().toLowerCase();
   if (h.startsWith('[')) return h.slice(1, h.indexOf(']')); // [::1]:3333

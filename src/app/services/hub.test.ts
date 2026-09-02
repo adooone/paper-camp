@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   hasChosenProject,
+  machineProjectRuntimeUrl,
   pickableTailnetPeers,
   runtimeAdditionUrl,
   runtimeRowLabel,
@@ -46,6 +47,14 @@ describe('runtimeRowLabel', () => {
 
   it('falls back to the raw value for an unparsable address', () => {
     expect(runtimeRowLabel('not-a-url')).toBe('not-a-url');
+  });
+});
+
+describe('machineProjectRuntimeUrl', () => {
+  it('appends the project slug as a /p/<slug> mount', () => {
+    expect(machineProjectRuntimeUrl('http://100.64.1.2:4333', 'my-repo')).toBe(
+      'http://100.64.1.2:4333/p/my-repo',
+    );
   });
 });
 

@@ -770,6 +770,17 @@ export interface TailnetPeerRuntime {
   version: string | null;
 }
 
+/** Shared between the daemon (daemon-server) and the client (machine-connection)
+ *  so a listing request and the route answering it can't drift apart. */
+export const MACHINE_PROJECTS_PATH = '/api/machine/projects' as const;
+
+/** One entry from a `paper-camp daemon`'s registry, as listed to the hub — no
+ *  filesystem path, since the hub only ever sees projects already registered. */
+export interface MachineProjectSummary {
+  slug: string;
+  name: string;
+}
+
 export interface MergePolicy {
   allowSquashMerge: boolean;
   allowMergeCommit: boolean;

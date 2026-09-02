@@ -56,6 +56,14 @@ export function runtimeRowLabel(runtimeUrl: string): string {
 }
 
 /**
+ * A daemon-served project is just a runtime whose base URL happens to be
+ * `<machine>/p/<slug>` — the existing runtime-add flow opens it unchanged.
+ */
+export function machineProjectRuntimeUrl(machineUrl: string, slug: string): string {
+  return `${machineUrl}/p/${slug}`;
+}
+
+/**
  * A discovered peer already sitting in the registry is not still "addable" —
  * compared by runtimeUrl, the same identity a runtime entry's `projectEntryId` uses.
  */
