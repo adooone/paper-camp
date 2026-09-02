@@ -67,8 +67,9 @@ capacity, which reports nothing comparable today.
 - [x] Read capacity from the in-flight task
       Expose the running task's `rateLimit` on the agent status route so a limit hit shows during the run, not after it.
       run: 7m43s · 92 in · 23.4k out · sonnet-5
-- [ ] Expire spent snapshots
+- [x] Expire spent snapshots
       `latestCapacity` treats a snapshot whose `resetsAt` has passed as unknown rather than current.
+      run: 4m36s · 42 in · 7.9k out · sonnet-5
 - [ ] Sum window spend from the task log
       Tokens and cost across runs since the current window opened, exposed beside the snapshot.
 - [ ] Add the compact indicator to the Stack panel

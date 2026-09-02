@@ -14,6 +14,7 @@ import type {
   UsagePerWeek,
 } from '../types/index';
 import { parseTaskLog } from './parse';
+import { resetsAtMs } from './rate-limit';
 import { readEntitiesWithDerivedStatus } from './readers';
 
 async function walk(dir: string): Promise<string[]> {
@@ -189,6 +190,11 @@ export function latestCapacity(entries: TaskLogEntry[]): CapacityStat | null {
   let latestMs = Number.NEGATIVE_INFINITY;
   for (const entry of entries) {
     if (!entry.rateLimit) continue;
+    if (
+      entry.rateLimit.resetsAt !== undefined &&
+      resetsAtMs(entry.rateLimit.resetsAt) <= Date.now()
+    )
+      continue;
     const at = Date.parse(entry.endedAt);
     if (Number.isNaN(at)) continue;
     if (at >= latestMs) {

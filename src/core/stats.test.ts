@@ -219,6 +219,10 @@ describe('mostExpensiveIdeas', () => {
 });
 
 describe('latestCapacity', () => {
+  // Seconds, well past any real clock without being a moving target.
+  const FUTURE_RESETS_AT = 4_000_000_000;
+  const PAST_RESETS_AT = 1_700_000_000;
+
   it('returns the rate-limit snapshot from the most recently ended run that carried one', () => {
     const entries: TaskLogEntry[] = [
       logEntry({
@@ -227,12 +231,12 @@ describe('latestCapacity', () => {
       }),
       logEntry({
         endedAt: '2026-08-03T10:00:00Z',
-        rateLimit: { status: 'allowed_warning', resetsAt: 1_700_000_000 },
+        rateLimit: { status: 'allowed_warning', resetsAt: FUTURE_RESETS_AT },
       }),
       logEntry({ endedAt: '2026-08-04T10:00:00Z' }),
     ];
     expect(latestCapacity(entries)).toEqual({
-      snapshot: { status: 'allowed_warning', resetsAt: 1_700_000_000 },
+      snapshot: { status: 'allowed_warning', resetsAt: FUTURE_RESETS_AT },
       capturedAt: '2026-08-03T10:00:00Z',
     });
   });
@@ -250,5 +254,42 @@ describe('latestCapacity', () => {
 
   it('returns null when no run reported capacity', () => {
     expect(latestCapacity([logEntry({})])).toBeNull();
+  });
+
+  it('treats a snapshot whose resetsAt has passed as unknown, falling back to an earlier current one', () => {
+    const entries: TaskLogEntry[] = [
+      logEntry({
+        endedAt: '2026-08-01T10:00:00Z',
+        rateLimit: { status: 'allowed_warning', resetsAt: FUTURE_RESETS_AT },
+      }),
+      logEntry({
+        endedAt: '2026-08-03T10:00:00Z',
+        rateLimit: { status: 'rejected', resetsAt: PAST_RESETS_AT },
+      }),
+    ];
+    expect(latestCapacity(entries)).toEqual({
+      snapshot: { status: 'allowed_warning', resetsAt: FUTURE_RESETS_AT },
+      capturedAt: '2026-08-01T10:00:00Z',
+    });
+  });
+
+  it('returns null when the only snapshot on record has expired', () => {
+    const entries: TaskLogEntry[] = [
+      logEntry({
+        endedAt: '2026-08-01T10:00:00Z',
+        rateLimit: { status: 'rejected', resetsAt: PAST_RESETS_AT },
+      }),
+    ];
+    expect(latestCapacity(entries)).toBeNull();
+  });
+
+  it('keeps a snapshot with no resetsAt as current regardless of age', () => {
+    const entries: TaskLogEntry[] = [
+      logEntry({ endedAt: '2020-01-01T10:00:00Z', rateLimit: { status: 'allowed' } }),
+    ];
+    expect(latestCapacity(entries)).toEqual({
+      snapshot: { status: 'allowed' },
+      capturedAt: '2020-01-01T10:00:00Z',
+    });
   });
 });
