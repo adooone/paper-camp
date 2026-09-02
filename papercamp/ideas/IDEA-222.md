@@ -68,8 +68,9 @@ A provider abstraction for other VPNs. Any native mobile app: the hosted
 PWA on a tailnet-joined phone is the mobile story.
 
 ### Phases
-- [ ] Read the local tailnet identity
+- [x] Read the local tailnet identity
       One module shelling out to `tailscale status --json` for `Self.DNSName`, `MagicDNSSuffix`, and online peers; absent or offline Tailscale returns nothing and every caller degrades to today's behaviour.
+      run: 5m29s · 64 in · 13.6k out · sonnet-5
 - [ ] Prefer the MagicDNS name in the dev banner
       The Network link uses `<node>.<tailnet>.ts.net` when Tailscale is up, falling back to the current address order.
 - [ ] Serve over HTTPS with `paper-camp dev --tailnet`
