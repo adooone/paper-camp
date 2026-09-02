@@ -2,7 +2,7 @@
 id: IDEA-224
 title: Machine daemon for all projects
 type: feat
-status: review
+status: done
 created: 2026-09-01
 updated: 2026-09-02
 tags:
@@ -10,6 +10,7 @@ tags:
   - server
   - app
 subject: Multi-project
+order: 1
 ---
 
 Managing ten repositories today means ten `paper-camp dev` processes on ten
