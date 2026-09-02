@@ -86,8 +86,9 @@ an agent against a working tree on a different machine. Replacing
       run: 35m18s · 402 in · 83.7k out · sonnet-5 · ×2
 - [x] Move pairing to the machine
       One token stored beside the registry, pairing the hub to every project the daemon serves.
-      run: 2m37s · 34 in · 5k out · sonnet-5
-- [ ] Connect to a machine from the hub
+      run: 20m4s · 164 in · 44.5k out · sonnet-5 · ×2
+- [x] Connect to a machine from the hub
       The connection column connects to a daemon and lists its projects, replacing Add a project by URL; opening one enters it as a normal project.
+      run: 40m37s · 348 in · 119k out · sonnet-5 · ×2
 - [ ] Queue agent runs per machine and run the quality checks
       One agent run at a time per daemon by default; check-types, lint, vitest, consistency green.
