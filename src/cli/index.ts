@@ -25,6 +25,16 @@ import {
   syncPrTitleToPr,
   validatePrTitle,
 } from '../core/git-pr';
+import {
+  type MachineProject,
+  addProject,
+  defaultRegistryPath,
+  listProjects,
+  loadRegistry,
+  removeProject,
+  saveRegistry,
+  scanForProjects,
+} from '../core/machine-registry';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parse';
 import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
 import { formatReleaseNotesMarkdown, resolveReleaseNotes } from '../core/release-notes';
@@ -42,6 +52,7 @@ import {
   type PlanEntry,
   coerceAgentConfig,
 } from '../types/index';
+import { startDaemonServer } from './daemon-server';
 import { readConfigPort, resolveDevPort } from './dev-port';
 import { startDevServer } from './dev-server';
 import { buildSessionFocus } from './session-focus';
@@ -182,6 +193,110 @@ program
       // Hard-exit: the API middleware's fs watchers are already running by the time
       // listen fails, and they keep the event loop alive forever with exitCode alone.
       process.exit(1);
+    }
+  });
+
+const DEFAULT_DAEMON_PORT = 4333;
+
+program
+  .command('daemon')
+  .description(
+    'Serve every registered project from one process, mounted at /p/<slug>/ on first request',
+  )
+  .option('-p, --port <number>', `port to listen on (default: ${DEFAULT_DAEMON_PORT})`)
+  .action(async (opts: { port?: string }) => {
+    const port = opts.port ? Number(opts.port) : DEFAULT_DAEMON_PORT;
+    try {
+      await startDaemonServer({ port });
+    } catch (error) {
+      console.error((error as Error).message);
+      // Hard-exit: a mounted project's fs watchers may already be running by the
+      // time listen fails, and they keep the event loop alive forever otherwise.
+      process.exit(1);
+    }
+  });
+
+program
+  .command('ls')
+  .description('List projects registered in the machine-level registry')
+  .action(async () => {
+    const registry = await loadRegistry(defaultRegistryPath());
+    const projects = listProjects(registry);
+    if (projects.length === 0) {
+      console.log('No projects registered.');
+      return;
+    }
+    const slugWidth = Math.max(...projects.map((p) => p.slug.length));
+    for (const project of projects) {
+      console.log(`${project.slug.padEnd(slugWidth)}  ${project.path}`);
+    }
+  });
+
+program
+  .command('rm <slug>')
+  .description('Remove a project from the machine-level registry')
+  .action(async (slug: string) => {
+    const path = defaultRegistryPath();
+    const registry = await loadRegistry(path);
+    const result = removeProject(registry, slug);
+    if (!result.removed) {
+      fail(`No registered project with slug "${slug}"`);
+      return;
+    }
+    await saveRegistry(path, result.registry);
+    console.log(`Removed "${slug}" from the registry.`);
+  });
+
+program
+  .command('scan <dir>')
+  .description(
+    'Register every folder one level deep under <dir> that contains papercamp/config.json',
+  )
+  .action(async (dir: string) => {
+    const entries = await scanForProjects(dir).catch((error: NodeJS.ErrnoException) => {
+      fail(`Could not scan "${dir}": ${error.message}`);
+      return null;
+    });
+    if (!entries) return;
+
+    const path = defaultRegistryPath();
+    let registry = await loadRegistry(path);
+    const added: MachineProject[] = [];
+    const skipped: { name: string; reason: string }[] = [];
+
+    for (const entry of entries) {
+      if (!entry.hasConfig) {
+        skipped.push({ name: entry.name, reason: 'no papercamp/config.json' });
+        continue;
+      }
+      const result = addProject(registry, entry.path, entry.name);
+      registry = result.registry;
+      if (result.created) {
+        added.push(result.entry);
+      } else {
+        skipped.push({ name: entry.name, reason: `already registered as "${result.entry.slug}"` });
+      }
+    }
+
+    if (added.length === 0 && skipped.length === 0) {
+      console.log(`No subdirectories found under ${resolve(dir)}.`);
+      return;
+    }
+
+    if (added.length > 0) {
+      await saveRegistry(path, registry);
+      console.log('Added:');
+      const slugWidth = Math.max(...added.map((p) => p.slug.length));
+      for (const project of added) {
+        console.log(`  ${project.slug.padEnd(slugWidth)}  ${project.path}`);
+      }
+    }
+
+    if (skipped.length > 0) {
+      console.log('Skipped:');
+      for (const s of skipped) {
+        console.log(`  ${s.name} — ${s.reason}`);
+      }
     }
   });
 

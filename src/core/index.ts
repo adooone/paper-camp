@@ -10,4 +10,5 @@ export * from './roadmap';
 export * from './trail';
 export * from './parked-questions';
 export * from './phase-progress';
+export * from './machine-registry';
 export * from '../types/index';

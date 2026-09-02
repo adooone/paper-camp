@@ -4,6 +4,7 @@ title: Machine daemon for all projects
 type: feat
 status: review
 created: 2026-09-01
+updated: 2026-09-02
 tags:
   - cli
   - server
@@ -92,4 +93,5 @@ an agent against a working tree on a different machine. Replacing
       run: 40m37s · 348 in · 119k out · sonnet-5 · ×2
 - [x] Queue agent runs per machine and run the quality checks
       One agent run at a time per daemon by default; check-types, lint, vitest, consistency green.
-      run: 10m14s · 60 in · 13.5k out · sonnet-5
+      run: 31m44s · 230 in · 64.9k out · sonnet-5 · ×2
+- [x] [manual] Add machine registry with daemon, ls, rm, and scan commands
