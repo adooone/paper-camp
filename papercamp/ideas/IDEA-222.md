@@ -74,8 +74,9 @@ PWA on a tailnet-joined phone is the mobile story.
       run: 5m29s · 64 in · 13.6k out · sonnet-5
 - [x] Prefer the MagicDNS name in the dev banner
       The Network link uses `<node>.<tailnet>.ts.net` when Tailscale is up, falling back to the current address order.
-- [ ] Serve over HTTPS with `paper-camp dev --tailnet`
+- [x] Serve over HTTPS with `paper-camp dev --tailnet`
       Run `tailscale serve --bg --https=443`, print the https registration link, and report a missing tailnet certificate setting with the admin-console link.
+      run: 10m49s · 102 in · 25.6k out · sonnet-5
 - [ ] Probe tailnet peers for runtimes
       Parallel `/api/capabilities` probes of online peers with a short timeout, session-cached, exposed on the runtime API.
 - [ ] Offer discovered runtimes in the hub

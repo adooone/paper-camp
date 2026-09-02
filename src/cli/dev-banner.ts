@@ -44,7 +44,20 @@ export function formatDevBanner({ version, localUrl, networkLink, color }: DevBa
   return lines.join('\n');
 }
 
-export function formatShareLine(tunnelLink: string, color: boolean): string {
+function formatExternalLink(label: string, link: string, note: string, color: boolean): string {
   const { bold, dim, green, cyan } = palette(color);
-  return `  ${green('➜')}  ${bold('Tunnel:'.padEnd(LABEL_WIDTH))} ${cyan(tunnelLink)}  ${dim('(reachable from anywhere)')}`;
+  return `  ${green('➜')}  ${bold(label.padEnd(LABEL_WIDTH))} ${cyan(link)}  ${dim(note)}`;
+}
+
+export function formatShareLine(tunnelLink: string, color: boolean): string {
+  return formatExternalLink('Tunnel:', tunnelLink, '(reachable from anywhere)', color);
+}
+
+export function formatTailnetLine(tailnetLink: string, color: boolean): string {
+  return formatExternalLink(
+    'Tailnet:',
+    tailnetLink,
+    '(stable HTTPS address on your tailnet)',
+    color,
+  );
 }

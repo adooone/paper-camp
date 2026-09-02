@@ -167,12 +167,16 @@ program
     '--share',
     'open an account-less cloudflared quick tunnel so the hosted client can reach this machine from anywhere',
   )
-  .action(async (opts: { port?: string; share?: boolean }) => {
+  .option(
+    '--tailnet',
+    "serve over HTTPS at this machine's stable MagicDNS address via `tailscale serve`",
+  )
+  .action(async (opts: { port?: string; share?: boolean; tailnet?: boolean }) => {
     const root = process.cwd();
     const configPort = opts.port ? undefined : await readConfigPort(root);
     const port = resolveDevPort(opts.port, configPort);
     try {
-      await startDevServer({ root, port, share: opts.share });
+      await startDevServer({ root, port, share: opts.share, tailnet: opts.tailnet });
     } catch (error) {
       console.error((error as Error).message);
       // Hard-exit: the API middleware's fs watchers are already running by the time

@@ -5,9 +5,16 @@ import { fileURLToPath } from 'node:url';
 import { createApiMiddleware } from '../app/server/api';
 import { loadOrMintPairingState, savePairingState } from '../app/server/pairing';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
-import { formatDevBanner, formatShareLine } from './dev-banner';
+import { readTailnetStatus } from '../core/tailnet';
+import { formatDevBanner, formatShareLine, formatTailnetLine } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import { buildRegistrationLinkForRuntime, networkRegistrationLink } from './registration-link';
+import {
+  TAILNET_HTTPS_CERTS_MISSING_MESSAGE,
+  TAILNET_NOT_RUNNING_MESSAGE,
+  isMissingHttpsCertsError,
+  runTailnetServe,
+} from './tailnet-serve';
 import {
   CLOUDFLARED_MISSING_MESSAGE,
   type QuickTunnel,
@@ -37,11 +44,17 @@ export interface DevServerOptions {
   root: string;
   port: number;
   share?: boolean;
+  tailnet?: boolean;
 }
 
 /** Serves the pre-built dashboard SPA (dist/app), for an installed package
  * where there's no Vite runtime available (it's a devDependency). */
-export async function startDevServer({ root, port, share }: DevServerOptions): Promise<void> {
+export async function startDevServer({
+  root,
+  port,
+  share,
+  tailnet,
+}: DevServerOptions): Promise<void> {
   if (share && !(await isCloudflaredAvailable())) {
     throw new Error(CLOUDFLARED_MISSING_MESSAGE);
   }
@@ -134,10 +147,30 @@ export async function startDevServer({ root, port, share }: DevServerOptions): P
     formatDevBanner({
       version: PAPER_CAMP_VERSION,
       localUrl: `http://localhost:${port}`,
-      networkLink: networkRegistrationLink(port, apiMiddleware.pairing.token),
+      networkLink: await networkRegistrationLink(port, apiMiddleware.pairing.token),
       color,
     }),
   );
+
+  if (tailnet) {
+    const tailnetStatus = await readTailnetStatus();
+    if (!tailnetStatus) {
+      console.error(TAILNET_NOT_RUNNING_MESSAGE);
+    } else {
+      const result = await runTailnetServe(port);
+      if (result.ok) {
+        const tailnetLink = buildRegistrationLinkForRuntime(
+          `https://${tailnetStatus.selfDnsName}/`,
+          apiMiddleware.pairing.token,
+        );
+        console.log(formatTailnetLine(tailnetLink, color));
+      } else if (isMissingHttpsCertsError(result.output)) {
+        console.error(TAILNET_HTTPS_CERTS_MISSING_MESSAGE);
+      } else {
+        console.error(`papercamp: tailscale serve failed:\n${result.output}`);
+      }
+    }
+  }
 
   if (share) {
     tunnel = await startQuickTunnel(port);

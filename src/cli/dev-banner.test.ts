@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDevBanner, formatShareLine } from './dev-banner';
+import { formatDevBanner, formatShareLine, formatTailnetLine } from './dev-banner';
 
 const input = {
   version: '0.21.1',
@@ -42,5 +42,14 @@ describe('formatShareLine', () => {
     expect(line).toContain('Tunnel:');
     expect(line).toContain('https://foo-bar.trycloudflare.com');
     expect(line).toContain('reachable from anywhere');
+  });
+});
+
+describe('formatTailnetLine', () => {
+  it('labels the tailnet link and says it is a stable tailnet address', () => {
+    const line = formatTailnetLine('https://paper-camp.vercel.app/?runtime=…', false);
+    expect(line).toContain('Tailnet:');
+    expect(line).toContain('https://paper-camp.vercel.app/?runtime=…');
+    expect(line).toContain('stable HTTPS address on your tailnet');
   });
 });
