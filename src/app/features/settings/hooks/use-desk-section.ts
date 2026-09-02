@@ -19,10 +19,8 @@ const isCompleteCheck = (c: DeskCheck) => c.name.trim() !== '' && c.cmd.trim() !
 
 const stripId = <T extends { id: string }>({ id: _id, ...rest }: T) => rest;
 
-// A reload after every save should not remint every row's id — that remounts each
-// row (losing focus) and reseeds any local edit a sibling row hadn't blurred yet.
-// Match server rows back to their existing id by cmd, and keep rows the server
-// never received (still incomplete) instead of dropping them mid-edit.
+// Reminting ids on the post-save reload would remount every row, losing focus and
+// any sibling edit not yet blurred — so rows keep their id, matched back by cmd.
 function reconcileRows<T extends { name: string; cmd: string }>(
   prev: Array<T & { id: string }>,
   next: T[],

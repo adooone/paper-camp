@@ -83,6 +83,7 @@ in.
 - [x] [manual] Add Desk settings section and discovery API
 - [x] [manual] Let kept proposal rows be restored and fix desk save issues
 - [x] [manual] Fix desk row saves and let CI be restored in proposals
+- [x] [manual] Tighten reconcileRows comment for clarity
 
 ### Thread
 - [x] 2026-09-01 [log] [agent] Run order: Fills the Stack panel's empty desk config with no dependency on the other three, and is a foundation the daemon's per-project serving in IDEA-224 benefits from having in place first.
