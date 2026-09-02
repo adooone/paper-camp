@@ -72,8 +72,9 @@ an agent against a working tree on a different machine. Replacing
 `paper-camp dev`.
 
 ### Phases
-- [ ] Machine-level project registry
+- [x] Machine-level project registry
       `~/.config/paper-camp/projects.json` with add, remove, and list; `paper-camp ls` and `paper-camp rm` on top of it.
+      run: 2m44s · 26 in · 4k out · sonnet-5
 - [ ] Scan a directory for projects
       `paper-camp scan <dir>` registers every folder one level deep containing `papercamp/config.json`, reporting what it added and skipped.
 - [ ] Serve registered projects from one daemon
