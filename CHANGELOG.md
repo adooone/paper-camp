@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.25.0](https://github.com/adooone/paper-camp/compare/v0.24.0...v0.25.0) (2026-09-02)
+
+
+### Features
+
+* **app:** Desk discovery for new projects (IDEA-223) ([#202](https://github.com/adooone/paper-camp/issues/202)) ([9cb48a0](https://github.com/adooone/paper-camp/commit/9cb48a00708f5cbdf07468406b6acb5d727ca427))
+* **cli:** Add machine registry with daemon, ls, rm, and scan commands ([05596e9](https://github.com/adooone/paper-camp/commit/05596e9a84d2ac8fdf133a9dd3b4aeeb33b63a55))
+* **cli:** Connect to a machine from the hub ([3a5c2d8](https://github.com/adooone/paper-camp/commit/3a5c2d8e5711cf5f4cc5cf2276978ec9ac4d9add))
+* **cli:** Connect to a machine from the hub ([35e8576](https://github.com/adooone/paper-camp/commit/35e8576acbee259724e4f8fc704d603a8d7729d6))
+* **cli:** Document the tailnet and mobile paths ([7809055](https://github.com/adooone/paper-camp/commit/780905537fa27f3fa8cacbf5933ff603b6ec5995))
+* **cli:** Drop the filesystem watchers ([9a74e69](https://github.com/adooone/paper-camp/commit/9a74e69b0ecd7395726424b2f9a38bc0ebed628e))
+* **cli:** Machine-level project registry ([ced13ad](https://github.com/adooone/paper-camp/commit/ced13adc6b1534f4687921b0be2be2c91e579a94))
+* **cli:** Move pairing to the machine ([285e29a](https://github.com/adooone/paper-camp/commit/285e29a8f0ff906b9bc50c61a76ee9e4305cd614))
+* **cli:** Offer discovered runtimes in the hub ([466c9dd](https://github.com/adooone/paper-camp/commit/466c9dd74513e754fd6b15b7c6457024b1dd976f))
+* **cli:** Probe tailnet peers for runtimes ([55191aa](https://github.com/adooone/paper-camp/commit/55191aa831e36753b8fd281944e66374c44d5048))
+* **cli:** Queue agent runs per machine and run the quality checks ([157d380](https://github.com/adooone/paper-camp/commit/157d380451056bdff9bd789e2966baf0fc6ddd39))
+* **cli:** Read the local tailnet identity ([d35cc5a](https://github.com/adooone/paper-camp/commit/d35cc5a001f70ce44e6da9c4c153973a7b1ee42d))
+* **cli:** Scan a directory for projects ([f4b90a3](https://github.com/adooone/paper-camp/commit/f4b90a3b322e29b1c3450ec3ceee1a2d96f349b2))
+* **cli:** Serve over HTTPS with `paper-camp dev --tailnet` ([709304a](https://github.com/adooone/paper-camp/commit/709304ae7d8c1b44ac63f5abfd683a3e9522f73f))
+* **cli:** Serve registered projects from one daemon ([e988260](https://github.com/adooone/paper-camp/commit/e98826086b4cf0f71ff6092b7385e1168e08f133))
+
+
+### Bug Fixes
+
+* **cli:** Prefer tailnet MagicDNS host in registration link ([c3279b6](https://github.com/adooone/paper-camp/commit/c3279b69e5216927466750a7ce7696ea7e757247))
+
 ## [0.24.0](https://github.com/adooone/paper-camp/compare/v0.23.2...v0.24.0) (2026-08-31)
 
 
