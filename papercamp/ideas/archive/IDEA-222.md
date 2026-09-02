@@ -2,7 +2,7 @@
 id: IDEA-222
 title: Tailnet-first project discovery
 type: feat
-status: review
+status: done
 created: 2026-09-01
 updated: 2026-09-02
 tags:
