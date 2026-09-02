@@ -8,3 +8,7 @@ export function readMountPrefix(
 
 export const mountPrefix =
   typeof document === 'undefined' ? '' : readMountPrefix(document.getElementById('root'));
+
+export function injectMountAttribute(html: string, mount: string): string {
+  return html.replace('<div id="root">', `<div id="root" ${MOUNT_ATTRIBUTE}="${mount}">`);
+}

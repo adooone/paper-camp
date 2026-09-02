@@ -1,7 +1,4 @@
-import { readFile, stat } from 'node:fs/promises';
-import { type IncomingMessage, type ServerResponse, createServer } from 'node:http';
-import { dirname, extname, join, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { createServer } from 'node:http';
 import { createApiMiddleware } from '../app/server/api';
 import { loadOrMintPairingState, savePairingState } from '../app/server/pairing';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
@@ -9,6 +6,7 @@ import { readTailnetStatus } from '../core/tailnet';
 import { formatDevBanner, formatShareLine, formatTailnetLine } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import { buildRegistrationLinkForRuntime, networkRegistrationLink } from './registration-link';
+import { appDir, loadIndexHtml, serveStatic } from './serve-static';
 import {
   TAILNET_HTTPS_CERTS_MISSING_MESSAGE,
   TAILNET_NOT_RUNNING_MESSAGE,
@@ -21,24 +19,6 @@ import {
   isCloudflaredAvailable,
   startQuickTunnel,
 } from './tunnel';
-
-const MIME: Record<string, string> = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.ico': 'image/x-icon',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-};
-
-function appDir(): string {
-  return join(dirname(fileURLToPath(import.meta.url)), '..', 'app');
-}
 
 export interface DevServerOptions {
   root: string;
@@ -60,8 +40,7 @@ export async function startDevServer({
   }
 
   const staticDir = appDir();
-  const indexPath = join(staticDir, 'index.html');
-  const indexHtml = await readFile(indexPath, 'utf-8').catch(() => null);
+  const indexHtml = await loadIndexHtml(staticDir);
   if (indexHtml === null) {
     throw new Error(
       `Dashboard assets not found at ${staticDir}. Run \`pnpm build\` (or reinstall the package) so dist/app exists.`,
@@ -86,37 +65,9 @@ export async function startDevServer({
 
   if (minted) await persistPairingState();
 
-  async function serveStatic(req: IncomingMessage, res: ServerResponse) {
-    const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
-    const filePath = join(staticDir, pathname === '/' ? 'index.html' : pathname);
-
-    // join() normalizes `..`, so a crafted path like /../../.env would otherwise
-    // escape staticDir and serve arbitrary files; treat it as the SPA fallback instead.
-    const escapesStaticDir = filePath !== staticDir && !filePath.startsWith(staticDir + sep);
-
-    // Prevent browsers from heuristically caching stale bundles across rebuilds.
-    res.setHeader('Cache-Control', 'no-cache');
-
-    try {
-      const fileStat = escapesStaticDir ? null : await stat(filePath);
-      if (fileStat?.isFile()) {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', MIME[extname(filePath)] ?? 'application/octet-stream');
-        res.end(await readFile(filePath));
-        return;
-      }
-    } catch {
-      // not a file on disk — fall through to the SPA fallback below
-    }
-
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.end(indexHtml);
-  }
-
   const server = createServer((req, res) => {
     apiMiddleware(req, res, () => {
-      serveStatic(req, res).catch((error) => {
+      serveStatic(req, res, staticDir, indexHtml).catch((error) => {
         res.statusCode = 500;
         res.end(String(error));
       });

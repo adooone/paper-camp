@@ -1,14 +1,12 @@
 import { type IncomingMessage, type ServerResponse, request as httpRequest } from 'node:http';
-import { MOUNT_ATTRIBUTE } from '../app/services/mount';
+import { injectMountAttribute } from '../app/services/mount';
+
+export { injectMountAttribute };
 
 export interface ProxyToCampServerOptions {
   port: number;
   host?: string;
   mount?: string;
-}
-
-export function injectMountAttribute(html: string, mount: string): string {
-  return html.replace('<div id="root">', `<div id="root" ${MOUNT_ATTRIBUTE}="${mount}">`);
 }
 
 export function proxyToCampServer(
