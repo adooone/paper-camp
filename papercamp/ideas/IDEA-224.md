@@ -84,8 +84,9 @@ an agent against a working tree on a different machine. Replacing
 - [x] Drop the filesystem watchers
       Remove the `papercamp/`, `.git`, and `src` watchers; the daemon invalidates its own cache and emits activity events on its own writes.
       run: 35m18s · 402 in · 83.7k out · sonnet-5 · ×2
-- [ ] Move pairing to the machine
+- [x] Move pairing to the machine
       One token stored beside the registry, pairing the hub to every project the daemon serves.
+      run: 2m37s · 34 in · 5k out · sonnet-5
 - [ ] Connect to a machine from the hub
       The connection column connects to a daemon and lists its projects, replacing Add a project by URL; opening one enters it as a normal project.
 - [ ] Queue agent runs per machine and run the quality checks
