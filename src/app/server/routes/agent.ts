@@ -145,7 +145,7 @@ async function findIdeaById(root: string, ideaId: string): Promise<IdeaEntry | u
 
 type ActionResult = { ok: true } | { ok: false; error: string; status?: number };
 
-export function agentRoutes({ root, git, status, agent }: RouteContext): Route[] {
+export function agentRoutes({ root, git, status, agent, activity }: RouteContext): Route[] {
   async function resolvePlan(
     planId: string,
   ): Promise<{ ok: true; plan: PlanEntry } | { ok: false; error: string; status: number }> {
@@ -480,6 +480,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             `Refs: ${parent.id}`,
             { noVerify: true },
           );
+          activity.notifyChanged();
           sendJson(res, 200, { promotedTo: parent.id, kind: 'append' });
           return;
         }
@@ -514,6 +515,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           agent.startRunAllPhases(entityToPlan(spawnedEntity), () => status.runChecksAndWait());
         }
 
+        activity.notifyChanged();
         sendJson(res, 200, { promotedTo: spawnedId, kind: parent ? 'fix' : 'idea' });
       },
     },
@@ -718,6 +720,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           error = (err as Error).message;
         }
 
+        activity.notifyChanged();
         sendJson(res, 200, { ok: true, ...(error ? { error } : {}), ...(undo ? { undo } : {}) });
       },
     },
@@ -759,6 +762,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
           return;
         }
 
+        activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },
     },
@@ -801,6 +805,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             updated: todayDateString(),
           }),
         );
+        activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },
     },
@@ -839,6 +844,7 @@ export function agentRoutes({ root, git, status, agent }: RouteContext): Route[]
             targetFile,
             entityFileInput(entity, { thread, updated: todayDateString() }),
           );
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true, summary });
         } catch (err) {
           sendJson(res, 500, { error: (err as Error).message });

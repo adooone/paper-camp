@@ -82,7 +82,7 @@ describe('read tools', () => {
   it('list_plans returns per-file plans', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'First plan' }));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({ name: 'list_plans', arguments: {} });
     expect(result.isError).toBeFalsy();
@@ -95,7 +95,7 @@ describe('read tools', () => {
   it('get_plan finds a plan by id and returns null for an unknown id', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'First plan' }));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const found = await client.callTool({ name: 'get_plan', arguments: { id: 'IDEA-1' } });
     expect(found.structuredContent).toMatchObject({
@@ -119,7 +119,7 @@ describe('write tools', () => {
       join(root, 'papercamp', 'config.json'),
       `${JSON.stringify({ nextId: { idea: 2 } }, null, 2)}\n`,
     );
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'add_idea',
@@ -135,7 +135,7 @@ describe('write tools', () => {
 
   it('draft_plan assigns the next id for its kind and writes the file', async () => {
     const root = await makeRoot();
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'draft_plan',
@@ -160,7 +160,7 @@ describe('write tools', () => {
         phases: ['- [ ] First phase', '- [ ] Second phase'],
       }),
     );
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'update_phase',
@@ -181,7 +181,7 @@ describe('write tools', () => {
       'IDEA-1',
       planFile({ id: 'IDEA-1', title: 'Nearly done plan', phases: ['- [ ] Only phase'] }),
     );
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'update_phase',
@@ -200,7 +200,7 @@ describe('write tools', () => {
       'IDEA-1',
       planFile({ id: 'IDEA-1', title: 'Nearly done plan', phases: ['- [ ] Only phase'] }),
     );
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'update_phase',
@@ -223,7 +223,7 @@ describe('edit_idea', () => {
   it('edits title, body, tags, and type', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'Old title' }));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'edit_idea',
@@ -249,7 +249,7 @@ describe('edit_idea', () => {
   it('leaves omitted fields untouched', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'Keep me' }));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     await client.callTool({ name: 'edit_idea', arguments: { id: 'IDEA-1', tags: ['solo'] } });
 
@@ -262,7 +262,7 @@ describe('edit_idea', () => {
   it('rejects an empty title and an unknown id', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'Title' }));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const empty = await client.callTool({
       name: 'edit_idea',
@@ -282,7 +282,7 @@ describe('append tools', () => {
   it('append_log adds an agent-authored log line to the thread', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'Plan' }));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'append_log',
@@ -299,7 +299,7 @@ describe('append tools', () => {
   it('append_decision and append_note write open (unchecked) thread entries', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'Plan' }));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     await client.callTool({
       name: 'append_decision',
@@ -319,7 +319,7 @@ describe('append tools', () => {
   it('append_clarification writes a clarification entry', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'Plan' }));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     await client.callTool({
       name: 'append_clarification',
@@ -333,7 +333,7 @@ describe('append tools', () => {
   it('rejects empty text and an unknown id', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'Plan' }));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const empty = await client.callTool({
       name: 'append_log',
@@ -356,7 +356,7 @@ describe('promote_suggestion', () => {
       join(root, 'papercamp', 'suggestions.md'),
       '# Suggestions\n\n- 2026-07-01: Guarded gateway — route writes through MCP\n',
     );
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'promote_suggestion',
@@ -379,7 +379,7 @@ describe('promote_suggestion', () => {
       join(root, 'papercamp', 'suggestions.md'),
       '- 2026-07-01: Real one — a description\n',
     );
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'promote_suggestion',
@@ -401,7 +401,7 @@ describe('promote_roadmap_item', () => {
   it('mints an idea from an item and links it back', async () => {
     const root = await makeRoot();
     await writeFile(join(root, 'ROADMAP.md'), roadmap);
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'promote_roadmap_item',
@@ -422,7 +422,7 @@ describe('promote_roadmap_item', () => {
   it('promotes a candidate, consuming its bullet and linking the item', async () => {
     const root = await makeRoot();
     await writeFile(join(root, 'ROADMAP.md'), roadmap);
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'promote_roadmap_item',
@@ -445,7 +445,7 @@ describe('promote_roadmap_item', () => {
   it('rejects an unknown horizon, item, or candidate', async () => {
     const root = await makeRoot();
     await writeFile(join(root, 'ROADMAP.md'), roadmap);
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'promote_roadmap_item',
@@ -474,7 +474,7 @@ Body of ${id}.
   it('distills a thread message into an open decision in place', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planWithThread('IDEA-1'));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'promote_thread_message',
@@ -490,7 +490,7 @@ Body of ${id}.
   it('distills into a log and can append a breadcrumb note', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planWithThread('IDEA-1'));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'promote_thread_message',
@@ -506,7 +506,7 @@ Body of ${id}.
   it('rejects an out-of-range index', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planWithThread('IDEA-1'));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({
       name: 'promote_thread_message',
@@ -520,7 +520,7 @@ describe('archive_entity', () => {
   it('sets status dropped and moves the file into the archive', async () => {
     const root = await makeRoot();
     await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'On its way out' }));
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({ name: 'archive_entity', arguments: { id: 'IDEA-1' } });
     expect(result.isError).toBeFalsy();
@@ -538,7 +538,7 @@ describe('archive_entity', () => {
 
   it('rejects an unknown id', async () => {
     const root = await makeRoot();
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({ name: 'archive_entity', arguments: { id: 'IDEA-9' } });
     expect(result.isError).toBe(true);
@@ -568,7 +568,7 @@ describe('writes on any branch', () => {
   // change from another idea's branch, or straight to main, is deliberate.
   it('mutates a plan that does not own the current branch', async () => {
     const root = await onBranchWithUnfinishedPlan();
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const other = await client.callTool({
       name: 'append_log',
@@ -581,7 +581,7 @@ describe('writes on any branch', () => {
 
   it('adds an idea while another plan owns the branch', async () => {
     const root = await onBranchWithUnfinishedPlan();
-    const client = await connect(root, createGitManager(root, { watch: false }));
+    const client = await connect(root, createGitManager(root));
 
     const result = await client.callTool({ name: 'add_idea', arguments: { title: 'New idea' } });
     expect(result.isError).toBeFalsy();

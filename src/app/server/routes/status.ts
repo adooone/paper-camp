@@ -8,7 +8,6 @@ export function statusRoutes({
   root,
   activity,
   agent,
-  git,
   status,
   services,
   checks,
@@ -63,7 +62,6 @@ export function statusRoutes({
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
         activity.subscribe(res);
-        git.subscribe(res);
         status.subscribe(res);
         agent.subscribe(res);
         services.subscribe(res);

@@ -1,6 +1,11 @@
 import { type IncomingMessage, type ServerResponse, createServer } from 'node:http';
 import { type ApiMiddleware, createApiMiddleware } from '../app/server/api';
-import { loadOrMintPairingState, savePairingState } from '../app/server/pairing';
+import {
+  type PairingManagerState,
+  loadOrMintPairingState,
+  machinePairingPath,
+  savePairingState,
+} from '../app/server/pairing';
 import { injectMountAttribute } from '../app/services/mount';
 import { type MachineProject, defaultRegistryPath, loadRegistry } from '../core/machine-registry';
 import { portInUseMessage } from './dev-port';
@@ -22,23 +27,36 @@ export function parseMountRequest(pathname: string): MountRequest | null {
   return match ? { slug: match[1], rest: match[2] ?? '/' } : null;
 }
 
-async function createProjectApi(project: MachineProject): Promise<ApiMiddleware> {
-  const { state: pairingState, minted } = await loadOrMintPairingState(project.path);
-  const persistPairingState = () =>
-    savePairingState(project.path, pairingState).catch((error) => {
-      console.error(`paper-camp: could not persist pairing state for "${project.slug}":`, error);
+/** Loaded once and passed by reference into every project's middleware, so pairing
+ * against any mounted project pairs the hub to all of them. */
+async function loadMachinePairing(): Promise<{
+  state: PairingManagerState;
+  persist: () => void;
+}> {
+  const path = machinePairingPath();
+  const { state, minted } = await loadOrMintPairingState(path);
+  const persist = () =>
+    savePairingState(path, state).catch((error) => {
+      console.error('paper-camp: could not persist machine pairing state:', error);
     });
-  const apiMiddleware = createApiMiddleware(
+  if (minted) await persist();
+  return { state, persist };
+}
+
+export async function createProjectApi(
+  project: MachineProject,
+  pairingState: PairingManagerState,
+  onPaired: () => void,
+): Promise<ApiMiddleware> {
+  return createApiMiddleware(
     project.path,
     undefined,
     undefined,
     undefined,
     undefined,
     pairingState,
-    () => persistPairingState(),
+    onPaired,
   );
-  if (minted) await persistPairingState();
-  return apiMiddleware;
 }
 
 /** Builds and caches a project's API middleware instance on first request — an
@@ -46,7 +64,7 @@ async function createProjectApi(project: MachineProject): Promise<ApiMiddleware>
  * tests to avoid spinning up a real project's git/watcher stack. */
 export function createProjectMounter(
   registryPath: string,
-  buildApi: (project: MachineProject) => Promise<ApiMiddleware> = createProjectApi,
+  buildApi: (project: MachineProject) => Promise<ApiMiddleware>,
 ) {
   const mounted = new Map<string, ApiMiddleware>();
 
@@ -76,7 +94,10 @@ export async function startDaemonServer({ port }: DaemonServerOptions): Promise<
     );
   }
 
-  const { mount, mounted } = createProjectMounter(defaultRegistryPath());
+  const { state: pairingState, persist: persistPairing } = await loadMachinePairing();
+  const { mount, mounted } = createProjectMounter(defaultRegistryPath(), (project) =>
+    createProjectApi(project, pairingState, persistPairing),
+  );
 
   const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);

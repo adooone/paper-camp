@@ -308,6 +308,7 @@ export function createAgentManager(
     run: { usage: RunUsage; kind: 'fix' },
   ) => Promise<void>,
   snapshotWorkingTree?: () => Promise<GitStatusEntry[]>,
+  onCorpusChanged?: () => void,
   state: AgentManagerState = createEmptyAgentState(),
 ) {
   // Shared with a hot-reloaded replacement instance via `state`, so in-flight
@@ -423,6 +424,9 @@ export function createAgentManager(
     if (status === 'done' || status === 'error' || status === 'superseded') {
       void logTaskCompletion(root, task, status);
       pruneCompletedTasks();
+      // No filesystem watcher observes the corpus edits a run just made — this is
+      // the daemon's one moment to know the task (and whatever it wrote) is settled.
+      onCorpusChanged?.();
     }
     const entityId = task.planId ?? task.ideaId;
     if (

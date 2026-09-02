@@ -1,6 +1,10 @@
 import { createServer } from 'node:http';
 import { createApiMiddleware } from '../app/server/api';
-import { loadOrMintPairingState, savePairingState } from '../app/server/pairing';
+import {
+  loadOrMintPairingState,
+  projectPairingPath,
+  savePairingState,
+} from '../app/server/pairing';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
 import { formatDevBanner, formatShareLine, formatTailnetLine } from './dev-banner';
@@ -47,9 +51,9 @@ export async function startDevServer({
     );
   }
 
-  const { state: pairingState, minted } = await loadOrMintPairingState(root);
+  const { state: pairingState, minted } = await loadOrMintPairingState(projectPairingPath(root));
   const persistPairingState = () =>
-    savePairingState(root, pairingState).catch((error) => {
+    savePairingState(projectPairingPath(root), pairingState).catch((error) => {
       console.error('papercamp: could not persist pairing state:', error);
     });
 

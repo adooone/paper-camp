@@ -3,8 +3,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 import type { ApiMiddleware } from '../app/server/api';
+import type { PairingManagerState } from '../app/server/pairing';
 import { type MachineRegistry, addProject, saveRegistry } from '../core/machine-registry';
-import { createProjectMounter, parseMountRequest } from './daemon-server';
+import { createProjectApi, createProjectMounter, parseMountRequest } from './daemon-server';
 
 describe('parseMountRequest', () => {
   it('extracts the slug and defaults rest to "/" for the bare mount', () => {
@@ -85,5 +86,30 @@ describe('createProjectMounter', () => {
     expect(await mount('alpha')).toBe(apiAlpha);
     expect(await mount('beta')).toBe(apiBeta);
     expect(buildApi).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('createProjectApi', () => {
+  it('shares one pairing token and origin set across every project it builds', async () => {
+    const pairingState: PairingManagerState = { token: 'shared-token', origins: new Set() };
+    const onPaired = vi.fn();
+
+    const apiAlpha = await createProjectApi(
+      { slug: 'alpha', path: '/some/alpha', name: 'Alpha' },
+      pairingState,
+      onPaired,
+    );
+    const apiBeta = await createProjectApi(
+      { slug: 'beta', path: '/some/beta', name: 'Beta' },
+      pairingState,
+      onPaired,
+    );
+
+    expect(apiAlpha.pairing.token).toBe('shared-token');
+    expect(apiBeta.pairing.token).toBe('shared-token');
+
+    expect(apiAlpha.pairing.pair('shared-token', 'https://app.papercamp.dev')).toBe(true);
+    expect(apiBeta.pairing.isPairedOrigin('https://app.papercamp.dev')).toBe(true);
+    expect(onPaired).toHaveBeenCalledTimes(1);
   });
 });

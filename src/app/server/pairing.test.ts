@@ -6,6 +6,7 @@ import {
   createPairingManager,
   loadOrMintPairingState,
   loadPairingState,
+  projectPairingPath,
   savePairingState,
 } from './pairing';
 
@@ -45,20 +46,20 @@ describe('loadPairingState / savePairingState', () => {
   }
 
   it('resolves undefined when no file exists yet', async () => {
-    expect(await loadPairingState(tempRoot())).toBeUndefined();
+    expect(await loadPairingState(projectPairingPath(tempRoot()))).toBeUndefined();
   });
 
   it('resolves undefined for a malformed file', async () => {
     const root = tempRoot();
     mkdirSync(join(root, 'papercamp'), { recursive: true });
     writeFileSync(join(root, 'papercamp', '.pairing.json'), 'not json');
-    expect(await loadPairingState(root)).toBeUndefined();
+    expect(await loadPairingState(projectPairingPath(root))).toBeUndefined();
   });
 
   it('round-trips a token and origins, written with mode 0600', async () => {
     const root = tempRoot();
     const state = { token: 'abc123', origins: new Set(['https://app.papercamp.dev']) };
-    await savePairingState(root, state);
+    await savePairingState(projectPairingPath(root), state);
 
     const path = join(root, 'papercamp', '.pairing.json');
     expect(JSON.parse(readFileSync(path, 'utf-8'))).toEqual({
@@ -67,7 +68,7 @@ describe('loadPairingState / savePairingState', () => {
     });
     expect(statSync(path).mode & 0o777).toBe(0o600);
 
-    const loaded = await loadPairingState(root);
+    const loaded = await loadPairingState(projectPairingPath(root));
     expect(loaded).toEqual(state);
   });
 });
@@ -78,46 +79,46 @@ describe('loadOrMintPairingState', () => {
   }
 
   it('mints a fresh token and empty origins on a first-ever boot', async () => {
-    const { state, minted } = await loadOrMintPairingState(tempRoot());
+    const { state, minted } = await loadOrMintPairingState(projectPairingPath(tempRoot()));
     expect(minted).toBe(true);
     expect(state.token).toMatch(/^[0-9a-f]{64}$/);
     expect(state.origins.size).toBe(0);
   });
 
   it('a restart reloads the persisted token and origins unchanged', async () => {
-    const root = tempRoot();
+    const path = projectPairingPath(tempRoot());
     const original = { token: 'abc123', origins: new Set(['https://app.papercamp.dev']) };
-    await savePairingState(root, original);
+    await savePairingState(path, original);
 
-    const { state, minted } = await loadOrMintPairingState(root);
+    const { state, minted } = await loadOrMintPairingState(path);
     expect(minted).toBe(false);
     expect(state).toEqual(original);
   });
 
   it('revocation: deleting the file mints a new token and forgets every origin', async () => {
-    const root = tempRoot();
-    const first = await loadOrMintPairingState(root);
-    await savePairingState(root, first.state);
-    await savePairingState(root, {
+    const path = projectPairingPath(tempRoot());
+    const first = await loadOrMintPairingState(path);
+    await savePairingState(path, first.state);
+    await savePairingState(path, {
       ...first.state,
       origins: new Set(['https://app.papercamp.dev']),
     });
 
-    rmSync(join(root, 'papercamp', '.pairing.json'));
+    rmSync(path);
 
-    const { state, minted } = await loadOrMintPairingState(root);
+    const { state, minted } = await loadOrMintPairingState(path);
     expect(minted).toBe(true);
     expect(state.token).not.toBe(first.state.token);
     expect(state.origins.size).toBe(0);
   });
 
   it('a full boot cycle persists a first mint so the next boot reloads it', async () => {
-    const root = tempRoot();
-    const booted = await loadOrMintPairingState(root);
+    const path = projectPairingPath(tempRoot());
+    const booted = await loadOrMintPairingState(path);
     expect(booted.minted).toBe(true);
-    await savePairingState(root, booted.state);
+    await savePairingState(path, booted.state);
 
-    const restarted = await loadOrMintPairingState(root);
+    const restarted = await loadOrMintPairingState(path);
     expect(restarted.minted).toBe(false);
     expect(restarted.state).toEqual(booted.state);
   });

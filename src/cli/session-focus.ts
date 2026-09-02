@@ -22,7 +22,7 @@ export async function buildSessionFocus(root: string): Promise<string | null> {
   if (!(await fileExists(campFile(root, 'ideas')))) return null;
 
   const { entries } = await readWorkEntries(campFile(root, 'ideas'));
-  const git = createGitManager(root, { watch: false });
+  const git = createGitManager(root);
   const branchPlanId = git.getFeatureBranchPlanId();
   const plan =
     (branchPlanId ? entries.find((p) => p.id === branchPlanId) : undefined) ??

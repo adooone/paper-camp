@@ -699,7 +699,7 @@ Plan body.
     it('leaves the fix pass as one accumulated diff with no per-fix commits', async () => {
       const { root, plan } = await makeGitRoot(PLAN_PHASES_DONE_TWO_FIXES);
       agentScript.current = FLIP_NEXT_CHECKBOX;
-      const git = createGitManager(root, { watch: false });
+      const git = createGitManager(root);
       const hooks = createAgentHooks(root, git);
       const onRunComplete = vi.fn(async () => {});
       const manager = createAgentManager(
@@ -800,7 +800,7 @@ fs.writeFileSync('touched.ts', 'export const touched = true;\\n');
     await writeFile(join(root, 'unrelated.txt'), 'work in progress\n');
 
     agentScript.current = FLIP_AND_TOUCH_SRC;
-    const git = createGitManager(root, { watch: false });
+    const git = createGitManager(root);
     const hooks = createAgentHooks(root, git);
     const manager = createAgentManager(
       root,

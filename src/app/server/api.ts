@@ -182,6 +182,7 @@ export function createApiMiddleware(
   const checks = createDeskCheckManager(root, checkState);
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);
+  const activity = createActivityManager(root);
   const agent = createAgentManager(
     root,
     hooks.stampAuditDate,
@@ -190,9 +191,9 @@ export function createApiMiddleware(
     hooks.commitCorpus,
     hooks.annotateFixRun,
     hooks.snapshotWorkingTree,
+    () => activity.notifyChanged(),
     agentState,
   );
-  const activity = createActivityManager(root);
 
   const routes = buildRoutes({ root, activity, agent, git, status, services, checks, pairing });
 

@@ -81,8 +81,9 @@ an agent against a working tree on a different machine. Replacing
 - [x] Serve registered projects from one daemon
       `paper-camp daemon` mounts each project under `/p/<slug>/` on first request, reusing the existing per-root middleware factory and the client's mount prefix.
       run: 20m14s · 204 in · 64.5k out · sonnet-5
-- [ ] Drop the filesystem watchers
+- [x] Drop the filesystem watchers
       Remove the `papercamp/`, `.git`, and `src` watchers; the daemon invalidates its own cache and emits activity events on its own writes.
+      run: 35m18s · 402 in · 83.7k out · sonnet-5 · ×2
 - [ ] Move pairing to the machine
       One token stored beside the registry, pairing the hub to every project the daemon serves.
 - [ ] Connect to a machine from the hub

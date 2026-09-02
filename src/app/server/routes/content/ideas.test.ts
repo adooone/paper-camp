@@ -24,9 +24,10 @@ async function makeRoot(nextId: Record<string, number> = { idea: 1, ticket: 1 })
 }
 
 function route(root: string, method: string, path: string) {
-  const found = ideaRoutes({ root } as RouteContext).find(
-    (r) => r.method === method && r.path === path,
-  );
+  const found = ideaRoutes({
+    root,
+    activity: { notifyChanged: () => {} },
+  } as RouteContext).find((r) => r.method === method && r.path === path);
   if (!found) throw new Error(`no ${method} ${path} route registered`);
   return found;
 }

@@ -1,7 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { watch } from 'node:fs';
 import { lstat, readFile } from 'node:fs/promises';
-import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { branchName, resolvePrsByEntity } from '@/core/git-pr';
 import { parseEntityFile } from '@/core/parse/parser';
@@ -74,26 +72,7 @@ const toLiteralPathspec = (file: string) => `:(literal)${file}`;
 
 export type GitManager = ReturnType<typeof createGitManager>;
 
-export interface GitManagerOptions {
-  // Tests disable this: Node's recursive-watch fallback crashes uncatchably
-  // when a watched tree is deleted (e.g. a temp repo cleanup).
-  watch?: boolean;
-}
-
-export function createGitManager(root: string, options: GitManagerOptions = {}) {
-  const clients = new Set<ServerResponse>();
-
-  function broadcast(event: { message: string; timestamp: string }) {
-    const data = `data: ${JSON.stringify(event)}\n\n`;
-    for (const client of clients) {
-      try {
-        client.write(data);
-      } catch {
-        clients.delete(client);
-      }
-    }
-  }
-
+export function createGitManager(root: string) {
   function parsePorcelain(output: string): GitStatusEntry[] {
     const entries: GitStatusEntry[] = [];
     for (const line of output.split('\n')) {
@@ -295,40 +274,6 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
       remoteDeleted = true;
     } catch {}
     return { branch, remoteDeleted };
-  }
-
-  async function refresh() {
-    try {
-      await runGitStatus();
-      broadcast({
-        message: 'Working tree status updated',
-        timestamp: new Date().toISOString(),
-      });
-    } catch {}
-  }
-
-  if (options.watch !== false) {
-    const gitDir = join(root, '.git');
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    try {
-      const gitWatcher = watch(gitDir, { recursive: true }, (eventType, filename) => {
-        if (filename === 'index') {
-          if (timer) clearTimeout(timer);
-          timer = setTimeout(refresh, 500);
-        }
-      });
-      gitWatcher.on('error', () => {});
-    } catch {}
-
-    const srcDir = join(root, 'src');
-    let srcTimer: ReturnType<typeof setTimeout> | null = null;
-    try {
-      const srcWatcher = watch(srcDir, { recursive: true }, () => {
-        if (srcTimer) clearTimeout(srcTimer);
-        srcTimer = setTimeout(refresh, 500);
-      });
-      srcWatcher.on('error', () => {});
-    } catch {}
   }
 
   async function hasUpstream(): Promise<boolean> {
@@ -983,9 +928,5 @@ export function createGitManager(root: string, options: GitManagerOptions = {}) 
     runGitSync,
     runGitPull,
     fixDivergence,
-    subscribe(res: ServerResponse) {
-      clients.add(res);
-      res.on('close', () => clients.delete(res));
-    },
   };
 }

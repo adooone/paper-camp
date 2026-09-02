@@ -10,11 +10,7 @@ import { createGitManager } from './git';
 // the git binary, and the bugs this file guards against (a fresh feature branch
 // reported as stale) live in how real git answers `branch --merged` / `rev-list`,
 // not in anything a mock would exercise.
-//
-// Managers are created with watching disabled: the recursive fs watchers live for
-// the whole process, and Node's recursive-watch fallback crashes with an uncatchable
-// ENOENT when afterAll deletes the temp repos out from under them.
-const gitManager = (root: string) => createGitManager(root, { watch: false });
+const gitManager = createGitManager;
 
 const roots: string[] = [];
 

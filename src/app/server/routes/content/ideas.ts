@@ -23,7 +23,7 @@ import { checkIdeaOverlap } from '../../overlap-check';
 import { applyPrioritiseVerdict, getPrioritiseVerdict } from '../../prioritise';
 import type { Route, RouteContext } from '../types';
 
-export function ideaRoutes({ root, agent }: RouteContext): Route[] {
+export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
   return [
     {
       method: 'POST',
@@ -57,6 +57,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           body: content?.trim(),
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
+        activity.notifyChanged();
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -90,6 +91,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           created: todayDateString(),
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
+        activity.notifyChanged();
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -130,6 +132,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         await writeFile(suggestionsPath, updated, 'utf-8');
+        activity.notifyChanged();
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -191,6 +194,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           : raw;
         const updated = linkRoadmapItem(withoutCandidate, horizonTitle, item.name, newId);
         await writeFile(roadmapPath, updated, 'utf-8');
+        activity.notifyChanged();
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -277,6 +281,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           return;
         }
         await writeFile(suggestionsPath, updated, 'utf-8');
+        activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },
     },
@@ -312,6 +317,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           archived.push(id);
         }
 
+        if (archived.length > 0) activity.notifyChanged();
         sendJson(res, 200, { ok: true, archived });
       },
     },
@@ -351,6 +357,7 @@ export function ideaRoutes({ root, agent }: RouteContext): Route[] {
           const roadmapText = await readMaybe(join(root, 'ROADMAP.md'));
           const verdict = await getPrioritiseVerdict(entries, roadmapText, agent.runPrioritise);
           const { moved, annotated, annotationError } = await applyPrioritiseVerdict(root, verdict);
+          if (moved.length > 0) activity.notifyChanged();
           sendJson(res, 200, {
             ok: true,
             moved,

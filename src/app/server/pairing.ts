@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
+import { machineConfigDir } from '@/core/machine-registry';
 import { campFile } from './helpers';
 
 export interface PairingManagerState {
@@ -13,7 +14,11 @@ interface PersistedPairingState {
   origins: string[];
 }
 
-const pairingFilePath = (root: string) => campFile(root, '.pairing.json');
+export const projectPairingPath = (root: string) => campFile(root, '.pairing.json');
+
+/** Beside the machine registry — one token pairs the hub to every project a
+ * daemon serves, replacing a mounted project's own `papercamp/.pairing.json`. */
+export const machinePairingPath = () => join(machineConfigDir(), 'pairing.json');
 
 function isPersistedPairingState(value: unknown): value is PersistedPairingState {
   const v = value as Partial<PersistedPairingState> | null;
@@ -28,10 +33,10 @@ function isPersistedPairingState(value: unknown): value is PersistedPairingState
 
 /** Resolves `undefined` on a missing or malformed file — callers mint a fresh
  * state in that case, same as a first-ever boot. */
-export async function loadPairingState(root: string): Promise<PairingManagerState | undefined> {
+export async function loadPairingState(path: string): Promise<PairingManagerState | undefined> {
   let raw: string;
   try {
-    raw = await readFile(pairingFilePath(root), 'utf-8');
+    raw = await readFile(path, 'utf-8');
   } catch (error) {
     // ENOENT is a first-ever boot or a revoked (deleted) file — anything else
     // (EACCES, EISDIR) means the state is there and unreadable, worth surfacing.
@@ -54,8 +59,7 @@ export async function loadPairingState(root: string): Promise<PairingManagerStat
  * so a concurrent save or a crash mid-write can never leave a truncated file
  * for `loadPairingState` to trip over, and since the temp file is always newly
  * created, its mode is 0600 regardless of what the replaced file's mode was. */
-export async function savePairingState(root: string, state: PairingManagerState): Promise<void> {
-  const path = pairingFilePath(root);
+export async function savePairingState(path: string, state: PairingManagerState): Promise<void> {
   const payload: PersistedPairingState = { token: state.token, origins: [...state.origins] };
   await mkdir(dirname(path), { recursive: true });
   const tmpPath = `${path}.${randomBytes(6).toString('hex')}.tmp`;
@@ -70,9 +74,9 @@ export async function savePairingState(root: string, state: PairingManagerState)
  * set — the same path a first-ever boot and a revoked (deleted) file both take.
  * `minted` tells the caller whether this state still needs to be persisted. */
 export async function loadOrMintPairingState(
-  root: string,
+  path: string,
 ): Promise<{ state: PairingManagerState; minted: boolean }> {
-  const loaded = await loadPairingState(root);
+  const loaded = await loadPairingState(path);
   if (loaded) return { state: loaded, minted: false };
   return { state: createPairingManager().getState(), minted: true };
 }

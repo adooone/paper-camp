@@ -37,7 +37,7 @@ function findWorkEntity(
   );
 }
 
-export function planRoutes({ root, git }: RouteContext): Route[] {
+export function planRoutes({ root, git, activity }: RouteContext): Route[] {
   return [
     {
       method: 'DELETE',
@@ -61,6 +61,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           return;
         }
         await unlink(filePath);
+        activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },
     },
@@ -212,6 +213,7 @@ export function planRoutes({ root, git }: RouteContext): Route[] {
           await archiveEntityFile(root, target.id);
         }
 
+        activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },
     },

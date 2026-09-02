@@ -80,7 +80,11 @@ function fakeGit(overrides: Partial<RouteContext['git']> = {}): RouteContext['gi
 }
 
 function route(root: string, path: string, ctx: Partial<RouteContext> = {}) {
-  const found = agentRoutes({ root, ...ctx } as RouteContext).find((r) => r.path === path);
+  const found = agentRoutes({
+    root,
+    activity: { notifyChanged: () => {} },
+    ...ctx,
+  } as RouteContext).find((r) => r.path === path);
   if (!found) throw new Error(`no route registered for ${path}`);
   return found;
 }

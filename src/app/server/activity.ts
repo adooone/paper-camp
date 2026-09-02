@@ -1,6 +1,4 @@
-import { watch } from 'node:fs';
 import type { ServerResponse } from 'node:http';
-import { join } from 'node:path';
 import { invalidateCorpusCache } from './corpus-cache';
 import { runRunOrderPass } from './run-order-pass';
 
@@ -61,18 +59,13 @@ export function createActivityManager(root: string) {
     }, 300);
   }
 
-  try {
-    // Cache invalidation runs on every raw event, not just the debounced broadcast,
-    // so a read racing a write never sees stale entries.
-    watch(join(root, 'papercamp'), { recursive: true }, () => {
+  return {
+    // Called by every write path in place of a papercamp/ watcher — the daemon
+    // knows its own writes, so it invalidates and re-broadcasts right there.
+    notifyChanged() {
       invalidateCorpusCache();
       scheduleRunPass();
-    });
-  } catch {
-    // papercamp/ doesn't exist yet (uninitialized project) — nothing to watch.
-  }
-
-  return {
+    },
     subscribe(res: ServerResponse) {
       clients.add(res);
       const connected = JSON.stringify({

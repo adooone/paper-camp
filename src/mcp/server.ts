@@ -13,9 +13,7 @@ export async function startMcpServer(root: string): Promise<void> {
     name: 'paper-camp',
     version: PAPER_CAMP_VERSION,
   });
-  // No SSE subscribers over stdio, so skip the fs watchers the dashboard uses
-  // to push live status ticks.
-  const git = createGitManager(root, { watch: false });
+  const git = createGitManager(root);
   registerReadTools(server, root);
   registerWriteTools(server, root, git);
   const transport = new StdioServerTransport();

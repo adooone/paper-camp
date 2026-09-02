@@ -39,7 +39,7 @@ export async function listConfigFiles(root: string): Promise<{ files: string[] }
   return { files };
 }
 
-export function configRoutes({ root }: RouteContext): Route[] {
+export function configRoutes({ root, activity }: RouteContext): Route[] {
   return [
     {
       method: 'POST',
@@ -227,6 +227,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
           ...(deskProvided && { desk: resolvedDesk }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
+        activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },
     },

@@ -12,7 +12,7 @@ const MIME_BY_EXT: Record<string, string> = {
   webp: 'image/webp',
 };
 
-export function iconRoutes({ root }: RouteContext): Route[] {
+export function iconRoutes({ root, activity }: RouteContext): Route[] {
   return [
     {
       method: 'GET',
@@ -61,6 +61,7 @@ export function iconRoutes({ root }: RouteContext): Route[] {
             .map((e) => unlink(join(assetsDir, `icon.${e}`)).catch(() => {})),
         );
         await writeFile(join(assetsDir, `icon.${ext}`), buffer);
+        activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },
     },
