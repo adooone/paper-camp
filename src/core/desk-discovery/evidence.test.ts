@@ -98,6 +98,19 @@ describe('gatherProjectEvidence', () => {
     expect(evidence.devPort).toBe(4321);
   });
 
+  it('ignores a nested port inside the server block, like hmr.port', async () => {
+    const root = await makeTempDir();
+    await writePackageJson(root, { dev: 'vite' });
+    await writeFile(
+      join(root, 'vite.config.ts'),
+      'export default { server: { hmr: { port: 24678 }, port: 4321 } };\n',
+    );
+
+    const evidence = await gatherProjectEvidence(root);
+
+    expect(evidence.devPort).toBe(4321);
+  });
+
   it('returns null when no port lives inside the server block', async () => {
     const root = await makeTempDir();
     await writePackageJson(root, { dev: 'vite' });

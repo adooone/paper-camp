@@ -1,6 +1,15 @@
 import type { DeskDiff } from '@/app/features/settings/helpers';
 import type { DeskCheck, DeskCi, DeskConfig, DeskService } from '@/types/index';
-import { Button, CloseIcon, Divider, IconButton, Input, Modal, Stamp } from '@dendelion/paper-ui';
+import {
+  Button,
+  CloseIcon,
+  Divider,
+  IconButton,
+  Input,
+  Modal,
+  Stamp,
+  Switch,
+} from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface DeskProposalModalProps {
@@ -126,6 +135,10 @@ export const DeskProposalModal = ({
     setChecks((prev) =>
       prev.map((c) => (c.rowKey === rowKey ? { ...c, status: 'kept' as const } : c)),
     );
+
+  const restoreCi = () => {
+    if (current?.ci) setCi(current.ci);
+  };
 
   const addCheck = () =>
     setChecks((prev) => [
@@ -362,21 +375,39 @@ export const DeskProposalModal = ({
               </Stamp>
             )}
           </div>
-          {!ci && <p className="opacity-[0.45] text-sm m-0">No CI in the proposal.</p>}
+          {!ci && (
+            <div className="flex items-center justify-between gap-3">
+              <p className="opacity-[0.45] text-sm m-0">No CI in the proposal.</p>
+              {current?.ci && (
+                <Button size="small" variant="ghost" onClick={restoreCi}>
+                  Keep current CI
+                </Button>
+              )}
+            </div>
+          )}
           {ci && (
-            <div className="flex items-end gap-3 pb-2 pt-2">
-              <Input
-                size="small"
-                label="Repo (owner/name)"
-                value={ci.repo}
-                onChange={(e) => setCi({ ...ci, repo: e.target.value })}
-              />
-              <Input
-                size="small"
-                label="Branch"
-                value={ci.branch ?? ''}
-                onChange={(e) => setCi({ ...ci, branch: e.target.value || undefined })}
-              />
+            <div className="flex flex-col gap-3 pb-2 pt-2">
+              <div className="flex items-end gap-3">
+                <Input
+                  size="small"
+                  label="Repo (owner/name)"
+                  value={ci.repo}
+                  onChange={(e) => setCi({ ...ci, repo: e.target.value })}
+                />
+                <Input
+                  size="small"
+                  label="Branch"
+                  value={ci.branch ?? ''}
+                  onChange={(e) => setCi({ ...ci, branch: e.target.value || undefined })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Release Please</span>
+                <Switch
+                  checked={ci.releasePlease ?? false}
+                  onChange={(e) => setCi({ ...ci, releasePlease: e.target.checked })}
+                />
+              </div>
             </div>
           )}
         </div>

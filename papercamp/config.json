@@ -13,7 +13,9 @@
   },
   "defaultAgents": {
     "phase": {
-      "agent": "opencode"
+      "agent": "claude-code",
+      "model": "sonnet",
+      "effort": "high"
     },
     "planDraft": {
       "agent": "claude-code",

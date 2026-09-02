@@ -157,12 +157,15 @@ export function configRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'integration.route must be a path starting with /' });
           return;
         }
-        const deskResult = desk !== undefined ? deskConfigSchema.safeParse(desk) : undefined;
+        const deskProvided = desk !== undefined;
+        const deskResult = deskProvided ? deskConfigSchema.safeParse(desk) : undefined;
         if (deskResult && !deskResult.success) {
           sendJson(res, 400, { error: `desk: ${deskResult.error.message}` });
           return;
         }
         const parsedDesk = deskResult?.success ? deskResult.data : undefined;
+        // An empty desk sent by the client means "clear it", not "leave it alone" —
+        // only an omitted `desk` key means the latter.
         const resolvedDesk =
           parsedDesk && (parsedDesk.services || parsedDesk.checks || parsedDesk.ci)
             ? parsedDesk
@@ -221,7 +224,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
           ...(resolvedDefaultAgents && { defaultAgents: resolvedDefaultAgents }),
           ...(setupDismissed !== undefined && { setupDismissed }),
           ...(resolvedIntegration && { integration: resolvedIntegration }),
-          ...(resolvedDesk && { desk: resolvedDesk }),
+          ...(deskProvided && { desk: resolvedDesk }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
         sendJson(res, 200, { ok: true });

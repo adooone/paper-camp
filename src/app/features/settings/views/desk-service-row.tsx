@@ -14,7 +14,17 @@ export const DeskServiceRow = ({ service, onSave, onRemove, isLast }: DeskServic
 
   useEffect(() => setLocal(service), [service]);
 
-  const commit = () => onSave(local);
+  const commit = () => {
+    if (
+      local.name === service.name &&
+      local.cmd === service.cmd &&
+      (local.port ?? undefined) === (service.port ?? undefined) &&
+      (local.healthcheck ?? undefined) === (service.healthcheck ?? undefined)
+    ) {
+      return;
+    }
+    onSave(local);
+  };
 
   return (
     <>

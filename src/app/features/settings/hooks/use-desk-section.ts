@@ -19,6 +19,28 @@ const isCompleteCheck = (c: DeskCheck) => c.name.trim() !== '' && c.cmd.trim() !
 
 const stripId = <T extends { id: string }>({ id: _id, ...rest }: T) => rest;
 
+// A reload after every save should not remint every row's id — that remounts each
+// row (losing focus) and reseeds any local edit a sibling row hadn't blurred yet.
+// Match server rows back to their existing id by cmd, and keep rows the server
+// never received (still incomplete) instead of dropping them mid-edit.
+function reconcileRows<T extends { name: string; cmd: string }>(
+  prev: Array<T & { id: string }>,
+  next: T[],
+): Array<T & { id: string }> {
+  const usedIds = new Set<string>();
+  const merged = next.map((row) => {
+    const match = row.cmd ? prev.find((p) => !usedIds.has(p.id) && p.cmd === row.cmd) : undefined;
+    if (!match) return { ...row, id: crypto.randomUUID() };
+    usedIds.add(match.id);
+    const { id, ...matchRest } = match;
+    return JSON.stringify(matchRest) === JSON.stringify(row) ? match : { ...row, id };
+  });
+  const pending = prev.filter(
+    (p) => !usedIds.has(p.id) && (p.name.trim() === '' || p.cmd.trim() === ''),
+  );
+  return [...merged, ...pending];
+}
+
 export const useDeskSection = () => {
   const [config, setConfig] = useState<PaperCampConfig | null | undefined>(undefined);
   const [services, setServices] = useState<KeyedDeskService[]>([]);
@@ -29,8 +51,8 @@ export const useDeskSection = () => {
 
   const reloadFromConfig = useCallback((c: PaperCampConfig | null) => {
     setConfig(c);
-    setServices((c?.desk?.services ?? []).map((s) => ({ ...s, id: crypto.randomUUID() })));
-    setChecks((c?.desk?.checks ?? []).map((ch) => ({ ...ch, id: crypto.randomUUID() })));
+    setServices((prev) => reconcileRows(prev, c?.desk?.services ?? []));
+    setChecks((prev) => reconcileRows(prev, c?.desk?.checks ?? []));
     setCi(c?.desk?.ci ?? EMPTY_CI);
   }, []);
 

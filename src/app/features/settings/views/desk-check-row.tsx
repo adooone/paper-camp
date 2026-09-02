@@ -14,7 +14,10 @@ export const DeskCheckRow = ({ check, onSave, onRemove, isLast }: DeskCheckRowPr
 
   useEffect(() => setLocal(check), [check]);
 
-  const commit = () => onSave(local);
+  const commit = () => {
+    if (local.name === check.name && local.cmd === check.cmd) return;
+    onSave(local);
+  };
 
   return (
     <>

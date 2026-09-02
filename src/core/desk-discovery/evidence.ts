@@ -95,10 +95,29 @@ async function findPortInConfig(root: string): Promise<number | null> {
     const raw = await readFile(join(root, file), 'utf-8').catch(() => '');
     const serverBlock = firstServerBlockBody(raw);
     if (!serverBlock) continue;
-    const portInServer = serverBlock.match(CONFIG_PORT_RE);
+    // Nested sub-objects (hmr, proxy, …) can carry their own `port:` key — only a
+    // top-level key in the server block is actually the dev server's port.
+    const portInServer = stripNestedBraces(serverBlock).match(CONFIG_PORT_RE);
     if (portInServer) return Number(portInServer[1]);
   }
   return null;
+}
+
+function stripNestedBraces(body: string): string {
+  let result = '';
+  let depth = 0;
+  for (const ch of body) {
+    if (ch === '{') {
+      depth += 1;
+      continue;
+    }
+    if (ch === '}') {
+      depth -= 1;
+      continue;
+    }
+    if (depth === 0) result += ch;
+  }
+  return result;
 }
 
 function firstServerBlockBody(raw: string): string | null {
