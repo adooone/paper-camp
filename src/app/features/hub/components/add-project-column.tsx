@@ -1,6 +1,7 @@
 import { type ProjectEntry, projectEntryId } from '@/app/services/project-registry';
 import { AddByRuntimeUrlCard } from './add-runtime-card';
 import { GithubConnectCard } from './github-connect-card';
+import { TailnetPeersCard } from './tailnet-peers-card';
 
 export interface AddProjectColumnProps {
   projects: ProjectEntry[];
@@ -13,6 +14,9 @@ export const AddProjectColumn = ({ projects, onAddRepo }: AddProjectColumnProps)
     <GithubConnectCard
       chosenRepoNames={projects.filter((entry) => entry.kind === 'github').map(projectEntryId)}
       onAddRepo={onAddRepo}
+    />
+    <TailnetPeersCard
+      chosenRuntimeUrls={projects.filter((entry) => entry.kind === 'runtime').map(projectEntryId)}
     />
     <AddByRuntimeUrlCard />
   </div>

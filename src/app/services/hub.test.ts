@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { hasChosenProject, runtimeAdditionUrl, runtimeRowLabel, servesOwnRuntime } from './hub';
+import {
+  hasChosenProject,
+  pickableTailnetPeers,
+  runtimeAdditionUrl,
+  runtimeRowLabel,
+  servesOwnRuntime,
+} from './hub';
 
 describe('hasChosenProject', () => {
   it('is false for a hosted client with no paired runtime and no GitHub source', () => {
@@ -40,6 +46,23 @@ describe('runtimeRowLabel', () => {
 
   it('falls back to the raw value for an unparsable address', () => {
     expect(runtimeRowLabel('not-a-url')).toBe('not-a-url');
+  });
+});
+
+describe('pickableTailnetPeers', () => {
+  const peers = [
+    { runtimeUrl: 'http://phobos.pitta-ray.ts.net:3333' },
+    { runtimeUrl: 'http://io.pitta-ray.ts.net:3333' },
+  ];
+
+  it('keeps every discovered peer when none are already added', () => {
+    expect(pickableTailnetPeers(peers, [])).toEqual(peers);
+  });
+
+  it('drops a peer whose runtimeUrl is already in the registry', () => {
+    expect(pickableTailnetPeers(peers, ['http://phobos.pitta-ray.ts.net:3333'])).toEqual([
+      { runtimeUrl: 'http://io.pitta-ray.ts.net:3333' },
+    ]);
   });
 });
 

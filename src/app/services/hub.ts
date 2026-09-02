@@ -54,3 +54,15 @@ export function runtimeRowLabel(runtimeUrl: string): string {
     return runtimeUrl;
   }
 }
+
+/**
+ * A discovered peer already sitting in the registry is not still "addable" —
+ * compared by runtimeUrl, the same identity a runtime entry's `projectEntryId` uses.
+ */
+export function pickableTailnetPeers<T extends { runtimeUrl: string }>(
+  peers: T[],
+  chosenRuntimeUrls: string[],
+): T[] {
+  const chosen = new Set(chosenRuntimeUrls);
+  return peers.filter((peer) => !chosen.has(peer.runtimeUrl));
+}

@@ -80,8 +80,9 @@ PWA on a tailnet-joined phone is the mobile story.
 - [x] Probe tailnet peers for runtimes
       Parallel `/api/capabilities` probes of online peers with a short timeout, session-cached, exposed on the runtime API.
       run: 7m36s · 88 in · 21.9k out · sonnet-5
-- [ ] Offer discovered runtimes in the hub
+- [x] Offer discovered runtimes in the hub
       Discovered peers appear in the connection column as addable entries in [[IDEA-221]]'s registry; never auto-added, refreshable on demand.
+      run: 8m59s · 90 in · 29.7k out · sonnet-5
 - [ ] Document the tailnet and mobile paths
       `USAGE.md` gains the tailnet setup, the installed-PWA mobile path, and the plain statement that any `.ts.net` origin is trusted without a token.
 
