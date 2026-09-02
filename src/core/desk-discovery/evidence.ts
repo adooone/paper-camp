@@ -54,6 +54,7 @@ const DEV_CONFIG_FILES = [
 
 const PORT_FLAG_RE = /(?:--port|-p)[=\s]+(\d{2,5})/;
 const CONFIG_PORT_RE = /port\s*:\s*(\d{2,5})/;
+const SERVER_BLOCK_OPENER_RE = /server\s*:\s*\{/g;
 const MAKEFILE_TARGET_RE = /^([A-Za-z0-9][A-Za-z0-9_.-]*)\s*:(?!=)/gm;
 const CARGO_NAME_RE = /^\s*name\s*=\s*"([^"]+)"/gm;
 const PYPROJECT_SCRIPT_SECTION_RE =
@@ -92,10 +93,36 @@ async function findPortInConfig(root: string): Promise<number | null> {
   for (const file of DEV_CONFIG_FILES) {
     if (!existsSync(join(root, file))) continue;
     const raw = await readFile(join(root, file), 'utf-8').catch(() => '');
-    const match = raw.match(CONFIG_PORT_RE);
-    if (match) return Number(match[1]);
+    const serverBlock = firstServerBlockBody(raw);
+    if (!serverBlock) continue;
+    const portInServer = serverBlock.match(CONFIG_PORT_RE);
+    if (portInServer) return Number(portInServer[1]);
   }
   return null;
+}
+
+function firstServerBlockBody(raw: string): string | null {
+  SERVER_BLOCK_OPENER_RE.lastIndex = 0;
+  for (const match of raw.matchAll(SERVER_BLOCK_OPENER_RE)) {
+    const openBrace = (match.index ?? 0) + match[0].length - 1;
+    const closeBrace = findMatchingBrace(raw, openBrace);
+    if (closeBrace === -1) continue;
+    return raw.slice(openBrace + 1, closeBrace);
+  }
+  return null;
+}
+
+function findMatchingBrace(raw: string, openIdx: number): number {
+  let depth = 0;
+  for (let i = openIdx; i < raw.length; i += 1) {
+    const ch = raw[i];
+    if (ch === '{') depth += 1;
+    else if (ch === '}') {
+      depth -= 1;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
 }
 
 async function detectDevPort(root: string, scripts: ProjectScript[]): Promise<number | null> {

@@ -49,13 +49,7 @@ function buildServiceRows(
   }
   for (const c of currentServices) {
     if (!proposedKeys.has(c.cmd)) {
-      rows.push({
-        ...c,
-        rowKey: crypto.randomUUID(),
-        status: 'removed',
-        port: undefined,
-        healthcheck: undefined,
-      });
+      rows.push({ ...c, rowKey: crypto.randomUUID(), status: 'removed' });
     }
   }
   return { rows };
@@ -111,6 +105,11 @@ export const DeskProposalModal = ({
   const removeService = (rowKey: string) =>
     setServices((prev) => prev.filter((s) => s.rowKey !== rowKey));
 
+  const keepService = (rowKey: string) =>
+    setServices((prev) =>
+      prev.map((s) => (s.rowKey === rowKey ? { ...s, status: 'kept' as const } : s)),
+    );
+
   const addService = () =>
     setServices((prev) => [
       ...prev,
@@ -122,6 +121,11 @@ export const DeskProposalModal = ({
 
   const removeCheck = (rowKey: string) =>
     setChecks((prev) => prev.filter((c) => c.rowKey !== rowKey));
+
+  const keepCheck = (rowKey: string) =>
+    setChecks((prev) =>
+      prev.map((c) => (c.rowKey === rowKey ? { ...c, status: 'kept' as const } : c)),
+    );
 
   const addCheck = () =>
     setChecks((prev) => [
@@ -239,11 +243,25 @@ export const DeskProposalModal = ({
                     }
                   />
                   <IconButton
-                    icon={<CloseIcon size={16} />}
-                    variant="danger"
+                    icon={
+                      service.status === 'removed' ? (
+                        <UndoIcon size={16} />
+                      ) : (
+                        <CloseIcon size={16} />
+                      )
+                    }
+                    variant={service.status === 'removed' ? 'default' : 'danger'}
                     size="small"
-                    onClick={() => removeService(service.rowKey)}
-                    label={`Remove ${service.name || 'service'}`}
+                    onClick={() =>
+                      service.status === 'removed'
+                        ? keepService(service.rowKey)
+                        : removeService(service.rowKey)
+                    }
+                    label={
+                      service.status === 'removed'
+                        ? `Keep ${service.name || 'service'}`
+                        : `Remove ${service.name || 'service'}`
+                    }
                   />
                 </div>
                 {idx < services.length - 1 && <Divider />}
@@ -299,11 +317,21 @@ export const DeskProposalModal = ({
                     onChange={(e) => updateCheck(check.rowKey, { cmd: e.target.value })}
                   />
                   <IconButton
-                    icon={<CloseIcon size={16} />}
-                    variant="danger"
+                    icon={
+                      check.status === 'removed' ? <UndoIcon size={16} /> : <CloseIcon size={16} />
+                    }
+                    variant={check.status === 'removed' ? 'default' : 'danger'}
                     size="small"
-                    onClick={() => removeCheck(check.rowKey)}
-                    label={`Remove ${check.name || 'check'}`}
+                    onClick={() =>
+                      check.status === 'removed'
+                        ? keepCheck(check.rowKey)
+                        : removeCheck(check.rowKey)
+                    }
+                    label={
+                      check.status === 'removed'
+                        ? `Keep ${check.name || 'check'}`
+                        : `Remove ${check.name || 'check'}`
+                    }
                   />
                 </div>
                 {idx < checks.length - 1 && <Divider />}
@@ -388,4 +416,21 @@ const Section = ({ title, summary, onAdd, children }: SectionProps) => (
     </div>
     {children}
   </div>
+);
+
+const UndoIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M3 7v6h6" />
+    <path d="M21 17a9 9 0 0 0-15-6.7L3 13" />
+  </svg>
 );

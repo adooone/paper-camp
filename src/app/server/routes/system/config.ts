@@ -162,6 +162,11 @@ export function configRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 400, { error: `desk: ${deskResult.error.message}` });
           return;
         }
+        const parsedDesk = deskResult?.success ? deskResult.data : undefined;
+        const resolvedDesk =
+          parsedDesk && (parsedDesk.services || parsedDesk.checks || parsedDesk.ci)
+            ? parsedDesk
+            : undefined;
         const config = JSON.parse(raw) as PaperCampConfig;
         const defaultAgents: DefaultAgentsMap | undefined = rawDefaultAgents
           ? {
@@ -216,7 +221,7 @@ export function configRoutes({ root }: RouteContext): Route[] {
           ...(resolvedDefaultAgents && { defaultAgents: resolvedDefaultAgents }),
           ...(setupDismissed !== undefined && { setupDismissed }),
           ...(resolvedIntegration && { integration: resolvedIntegration }),
-          ...(deskResult?.success && { desk: deskResult.data }),
+          ...(resolvedDesk && { desk: resolvedDesk }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
         sendJson(res, 200, { ok: true });

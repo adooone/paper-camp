@@ -85,6 +85,32 @@ describe('gatherProjectEvidence', () => {
     expect(evidence.devPort).toBe(4321);
   });
 
+  it('only reads the dev port from a server block, not stray port literals', async () => {
+    const root = await makeTempDir();
+    await writePackageJson(root, { dev: 'vite' });
+    await writeFile(
+      join(root, 'vite.config.ts'),
+      'export default { preview: { port: 9999 }, server: { port: 4321 } };\n',
+    );
+
+    const evidence = await gatherProjectEvidence(root);
+
+    expect(evidence.devPort).toBe(4321);
+  });
+
+  it('returns null when no port lives inside the server block', async () => {
+    const root = await makeTempDir();
+    await writePackageJson(root, { dev: 'vite' });
+    await writeFile(
+      join(root, 'vite.config.ts'),
+      'export default { preview: { port: 9999 }, server: { host: "0.0.0.0" } };\n',
+    );
+
+    const evidence = await gatherProjectEvidence(root);
+
+    expect(evidence.devPort).toBeNull();
+  });
+
   it('resolves an owner/repo slug from an SSH origin', async () => {
     const root = await makeTempDir();
     initGitRepo(root, 'git@github.com:acme/widgets.git');

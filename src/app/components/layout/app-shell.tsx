@@ -15,7 +15,6 @@ import {
   IconButton,
   Layout,
   Page,
-  type SurfaceConfig,
   ToastProvider,
   getSurfaceStyles,
 } from '@dendelion/paper-ui';
@@ -163,7 +162,7 @@ export const AppShell = () => {
                     {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
                         stretch, so without it the sheet sizes to its content. */}
                     <Page
-                      texture={{ texture: 'paper', shade: true } as SurfaceConfig}
+                      texture={{ texture: 'paper' }}
                       rounded="none"
                       className="pc-page w-full max-w-none"
                     >

@@ -1,16 +1,8 @@
 import { DeskProposalModal } from '@/app/components/stack-panel/desk-proposal-modal';
-import {
-  Alert,
-  Button,
-  Card,
-  Divider,
-  Input,
-  PlusIcon,
-  Spinner,
-  Switch,
-} from '@dendelion/paper-ui';
+import { Alert, Button, Card, PlusIcon, Spinner } from '@dendelion/paper-ui';
 import { useDeskSection } from '../hooks/use-desk-section';
 import { DeskCheckRow } from './desk-check-row';
+import { DeskCiEditor } from './desk-ci-editor';
 import { DeskServiceRow } from './desk-service-row';
 
 export const DeskSection = () => {
@@ -110,28 +102,7 @@ export const DeskSection = () => {
           <div>
             <h3 className="m-0 mb-3">CI</h3>
             <Card size="small" texture="kraft">
-              <div className="flex items-end gap-3 pb-3">
-                <Input
-                  size="small"
-                  label="Repo (owner/name)"
-                  value={ci.repo}
-                  onChange={(e) => updateCi({ ...ci, repo: e.target.value })}
-                />
-                <Input
-                  size="small"
-                  label="Branch"
-                  value={ci.branch ?? ''}
-                  onChange={(e) => updateCi({ ...ci, branch: e.target.value || undefined })}
-                />
-              </div>
-              <Divider />
-              <div className="flex items-center justify-between pt-3">
-                <span>Release Please</span>
-                <Switch
-                  checked={ci.releasePlease ?? false}
-                  onChange={(e) => updateCi({ ...ci, releasePlease: e.target.checked })}
-                />
-              </div>
+              <DeskCiEditor ci={ci} onSave={updateCi} />
             </Card>
           </div>
 
