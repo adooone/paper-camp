@@ -154,6 +154,10 @@ Other ways in:
 - **`paper-camp dev --share`** prints a Tunnel link — the hosted client can
   reach that machine across the open internet. The address changes every
   restart.
+- **`paper-camp dev --tailnet`** serves over HTTPS at a stable
+  `https://<node>.<tailnet>.ts.net` address and prints that link — no token
+  needed, since a tailnet origin is already trusted. See "On your tailnet"
+  below.
 - **Connect GitHub** (offered while the hub is empty): mint a fine-grained
   token scoped to the repositories you want, and the hub can browse and plan
   them with no runtime running at all.
@@ -161,6 +165,38 @@ Other ways in:
 Each row's stamp says what the hub can do right now: **Can execute** (the
 runtime answers), **Plan-only** (it doesn't — browse and plan only), or
 **Version mismatch** (runtime and client differ — update one side).
+
+### On your tailnet
+
+If every machine involved already runs Tailscale, `paper-camp dev --tailnet`
+is the fastest way in — no pasted link, no tunnel:
+
+```bash
+npx paper-camp dev --tailnet
+```
+
+It runs `tailscale serve --bg --https=443` for you, then prints the
+`https://<node>.<tailnet>.ts.net` link straight in the banner — open it from
+any device on the tailnet and it just works, no pairing token needed at all:
+a `.ts.net` origin is trusted the moment it's reached, the same as loopback
+or a LAN address, because network topology already vouches for it. On a
+personal tailnet that's exactly right; on a shared one it means every
+member's device is trusted by the runtime, worth knowing before you add
+people to it. If your tailnet hasn't turned on HTTPS certificates yet, the
+banner says so and links straight to the
+[admin console](https://login.tailscale.com/admin/dns) setting that turns it
+on — `README.md` keeps the manual `tailscale serve` steps as a fallback.
+
+Once one machine is reachable this way, `paper-camp dev` also lists its
+online tailnet peers as addable entries in the hub's connection column —
+whichever answer `/api/capabilities` within a short timeout. Discovery never
+adds anything on its own; you still click to add, and the list is
+session-cached with a refresh control for a peer that just came online.
+
+**Mobile:** open the `https://…ts.net` link on a phone joined to the same
+tailnet, then install it to the home screen (`Add to Home Screen` on iOS
+Safari, `Install app` on Android Chrome) — that installed PWA is the mobile
+story; there's no native app.
 
 ## Introducing someone
 
