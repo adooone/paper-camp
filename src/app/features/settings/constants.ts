@@ -7,6 +7,7 @@ export const TASK_TYPE_KEYS = [
   'commitSuggest',
   'feedback',
   'codeReview',
+  'deskDiscovery',
 ] as const;
 export type TaskTypeKey = (typeof TASK_TYPE_KEYS)[number];
 
@@ -17,6 +18,7 @@ export const TASK_TYPE_LABELS: Record<TaskTypeKey, string> = {
   commitSuggest: 'Commit suggest',
   feedback: 'Scout chat',
   codeReview: 'Code review',
+  deskDiscovery: 'Desk discovery',
 };
 
 export const CAPABILITY_STATUS_STAMP: Record<

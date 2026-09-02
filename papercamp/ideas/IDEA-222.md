@@ -9,6 +9,7 @@ tags:
   - app
   - server
 subject: Multi-project
+order: 1
 ---
 
 Every machine on a tailnet already runs its own checkout, its own agent CLIs
@@ -79,3 +80,6 @@ PWA on a tailnet-joined phone is the mobile story.
       Discovered peers appear in the connection column as addable entries in [[IDEA-221]]'s registry; never auto-added, refreshable on demand.
 - [ ] Document the tailnet and mobile paths
       `USAGE.md` gains the tailnet setup, the installed-PWA mobile path, and the plain statement that any `.ts.net` origin is trusted without a token.
+
+### Thread
+- [x] 2026-09-01 [log] [agent] Run order: Explicitly lands after IDEA-221's unified registry (already done) and its discovery entries feed the same registry IDEA-224 generalizes, so it precedes the daemon that subsumes its per-project probing.

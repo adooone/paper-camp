@@ -65,10 +65,15 @@ broken `npm publish` too).
   token` works), verify with `pnpm run check-types && pnpm run build`, commit,
   then `pnpm publish --access public`. Bump paper-camp's `package.json` range
   afterward and `pnpm install`.
-- **Check the real source, not just the `.d.ts`.** Before assuming what a
-  paper-ui prop does, read the component under `~/dev/paper-ui/src/components/`
-  (and its showcase entry under `~/dev/paper-ui/src/showcase/`) rather than
-  guessing from the type signature alone.
+- **Check the real source, not just the `.d.ts` — from inside this repo.**
+  The published package ships no `src/components`, but its bundle's source
+  map embeds every original `.tsx`, so the real component source is already
+  in `node_modules`. Print it with `node scripts/paper-ui-source.mjs <name>`
+  (no argument lists every component). Do **not** read
+  `~/dev/paper-ui/src/components/` for this: leaving the workspace is what
+  makes headless opencode runs stop for an `external_directory` approval.
+  The sibling checkout is needed only for the showcase, SCSS module
+  internals, and editing paper-ui itself.
 - **When changing paper-ui itself,** follow `~/dev/paper-ui/AGENTS.md`/
   `CODE_STYLE.md` (one component per file, `cn()` for classNames, SCSS modules
   for styles — no hardcoded hex in `.tsx`), then run `pnpm run check-types` and

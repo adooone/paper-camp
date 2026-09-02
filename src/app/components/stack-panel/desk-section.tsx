@@ -1,10 +1,11 @@
 // Specific file, not the `actions` barrel: the barrel pulls in the whole plans
 // graph and loops back to components/index.ts, which depcruise fails as a cycle.
 import { RefreshButton } from '@/app/features/plans/actions/refresh-button';
-import { useDeskManifest } from '@/app/hooks/use-desk-manifest';
-import { Divider, Skeleton } from '@dendelion/paper-ui';
+import { useDeskDiscovery } from '@/app/hooks/use-desk-discovery';
+import { Button, Divider, Skeleton, Spinner } from '@dendelion/paper-ui';
 import { CHECKS_GROUP_LABEL, ChecksGroup } from './checks-group';
 import { CI_GROUP_LABEL, CiGroup } from './ci-group';
+import { DeskProposalModal } from './desk-proposal-modal';
 import { SERVICES_GROUP_LABEL, ServicesGroup } from './services-group';
 import { groupLabelClassName, sectionLabelClassName } from './shared';
 
@@ -21,16 +22,40 @@ const DeskSectionSkeleton = () => (
   </div>
 );
 
-const DeskSectionEmpty = () => (
-  <div className="flex flex-1 items-center justify-center">
+const DeskSectionEmpty = ({
+  discovering,
+  onDiscover,
+}: {
+  discovering: boolean;
+  onDiscover: () => void;
+}) => (
+  <div className="flex flex-1 flex-col items-center justify-center gap-3">
     <p className="m-0 text-center text-xs text-desk-text-muted">
-      Desk isn't configured — add <code>desk</code> to <code>papercamp/config.json</code>.
+      Desk isn't configured — scan the project for one-click checks and long-running services.
     </p>
+    <Button size="small" surface="chalkboard" onClick={onDiscover} disabled={discovering}>
+      {discovering ? (
+        <>
+          <Spinner size="small" surface="chalkboard" label="Discovering" /> Discovering…
+        </>
+      ) : (
+        'Discover from project'
+      )}
+    </Button>
   </div>
 );
 
 export const DeskSection = () => {
-  const { desk, loading } = useDeskManifest();
+  const {
+    configLoaded,
+    current,
+    proposal,
+    diff,
+    discovering,
+    startDiscovery,
+    cancelProposal,
+    applyProposal,
+  } = useDeskDiscovery();
 
   return (
     <>
@@ -44,18 +69,27 @@ export const DeskSection = () => {
             surface="chalkboard"
           />
         </div>
-        {loading ? (
+        {!configLoaded ? (
           <DeskSectionSkeleton />
-        ) : desk ? (
+        ) : current ? (
           <div className="flex flex-col gap-4">
             <ServicesGroup />
             <ChecksGroup />
             <CiGroup />
           </div>
         ) : (
-          <DeskSectionEmpty />
+          <DeskSectionEmpty discovering={discovering} onDiscover={startDiscovery} />
         )}
       </div>
+      {proposal && diff && (
+        <DeskProposalModal
+          current={current}
+          proposal={proposal}
+          diff={diff}
+          onApply={applyProposal}
+          onCancel={cancelProposal}
+        />
+      )}
     </>
   );
 };

@@ -25,6 +25,7 @@ const TASK_KIND_LABELS: Record<TaskKind, string> = {
   feedback: 'Feedback reply',
   'pr-review': 'PR review',
   'issue-fix': 'Issue fix',
+  'desk-discovery': 'Desk discovery',
 };
 
 export const TASK_ROWS_GRID_CLASS =

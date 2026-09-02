@@ -3,7 +3,7 @@ import { useActiveSettingsSection } from '@/app/hooks';
 import { MergePolicySection } from './components/merge-policy-section';
 import { SetupSection } from './components/setup-section';
 import { SubjectsSection } from './components/subjects-section';
-import { GeneralSection } from './views';
+import { DeskSection, GeneralSection } from './views';
 
 export const SettingsPage = () => {
   const section = useActiveSettingsSection();
@@ -16,6 +16,8 @@ export const SettingsPage = () => {
         <SetupSection />
       ) : section === 'merge-policy' ? (
         <MergePolicySection />
+      ) : section === 'desk' ? (
+        <DeskSection />
       ) : (
         <GeneralSection />
       )}

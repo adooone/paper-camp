@@ -553,6 +553,7 @@ export interface DefaultAgentsMap {
   commitSuggest: AgentConfig;
   feedback: AgentConfig;
   codeReview: AgentConfig;
+  deskDiscovery: AgentConfig;
 }
 
 export const DEFAULT_AGENTS: DefaultAgentsMap = {
@@ -562,6 +563,7 @@ export const DEFAULT_AGENTS: DefaultAgentsMap = {
   commitSuggest: { agent: 'claude-code' },
   feedback: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
   codeReview: { agent: 'claude-code', model: 'opus', effort: 'high' },
+  deskDiscovery: { agent: 'claude-code' },
 };
 
 /** A reviewer must not use the same model as the task that wrote the code (IDEA-170) — self-review rubber-stamps. */
@@ -879,7 +881,8 @@ export type TaskKind =
   | 'resolve-conflict'
   | 'feedback'
   | 'pr-review'
-  | 'issue-fix';
+  | 'issue-fix'
+  | 'desk-discovery';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
 // unlike the in-memory task registry.

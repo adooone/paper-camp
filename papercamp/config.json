@@ -8,14 +8,14 @@
     "chore": 2,
     "docs": 4,
     "refactor": 5,
-    "idea": 226,
+    "idea": 227,
     "ticket": 7
   },
   "defaultAgents": {
     "phase": {
       "agent": "claude-code",
       "model": "sonnet",
-      "effort": "medium"
+      "effort": "high"
     },
     "planDraft": {
       "agent": "claude-code",
@@ -36,6 +36,14 @@
       "agent": "claude-code",
       "model": "sonnet",
       "effort": "medium"
+    },
+    "codeReview": {
+      "agent": "claude-code",
+      "model": "opus",
+      "effort": "high"
+    },
+    "deskDiscovery": {
+      "agent": "claude-code"
     }
   },
   "subjects": [

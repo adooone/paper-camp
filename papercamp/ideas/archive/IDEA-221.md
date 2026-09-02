@@ -2,12 +2,13 @@
 id: IDEA-221
 title: Hub rebuild as a project picker
 type: feat
-status: review
+status: done
 created: 2026-08-31
-updated: 2026-08-31
+updated: 2026-09-01
 tags:
   - app
 subject: Multi-project
+order: 1
 ---
 
 The hub screen is rebuilt from scratch. [[IDEA-219]] patched its symptoms;

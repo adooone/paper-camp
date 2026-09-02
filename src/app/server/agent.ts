@@ -6,6 +6,7 @@ import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { buildPlanDraftPrompt, buildReconcilePrompt } from '@/app/features/plans/prompts';
+import type { ProjectEvidence } from '@/core/desk-discovery/evidence';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { advanceAnchor } from '@/core/phase-progress';
 import {
@@ -23,6 +24,7 @@ import {
   type CheckName,
   DEFAULT_AGENTS,
   type DefaultAgentsMap,
+  type DeskConfig,
   type EntityEntry,
   type FixReviewResult,
   type GitStatusEntry,
@@ -41,6 +43,7 @@ import {
 } from '@/types/index';
 import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
+import { discoverDeskConfig } from './desk-discovery';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
 import { appendNotification } from './notification-log';
@@ -139,6 +142,9 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         codeReview: rawAgents.codeReview
           ? coerceAgentConfig(rawAgents.codeReview)
           : DEFAULT_AGENTS.codeReview,
+        deskDiscovery: rawAgents.deskDiscovery
+          ? coerceAgentConfig(rawAgents.deskDiscovery)
+          : DEFAULT_AGENTS.deskDiscovery,
       };
     }
     if (config.defaultAgent) {
@@ -150,6 +156,7 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         commitSuggest: { agent: id },
         feedback: { agent: id },
         codeReview: { agent: id },
+        deskDiscovery: { agent: id },
       };
     }
     return DEFAULT_AGENTS;
@@ -715,6 +722,7 @@ export function createAgentManager(
     'overlap-check',
     'prioritise',
     'feedback',
+    'desk-discovery',
   ]);
 
   function writeSetFor(taskKind: TaskKind, entityId?: string): WriteSet {
@@ -1605,7 +1613,7 @@ export function createAgentManager(
 
   function runReadOnlyPrompt(
     prompt: string,
-    taskKind: 'commit-suggest' | 'overlap-check' | 'prioritise' | 'feedback',
+    taskKind: 'commit-suggest' | 'overlap-check' | 'prioritise' | 'feedback' | 'desk-discovery',
     planTitle: string,
   ): Promise<string> {
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
@@ -1715,6 +1723,12 @@ export function createAgentManager(
 
   function runFeedbackReply(prompt: string, planTitle: string): Promise<string> {
     return runReadOnlyPrompt(prompt, 'feedback', planTitle);
+  }
+
+  function runDeskDiscovery(evidence: ProjectEvidence): Promise<DeskConfig> {
+    return discoverDeskConfig(evidence, (prompt) =>
+      runReadOnlyPrompt(prompt, 'desk-discovery', 'Discover desk config'),
+    );
   }
 
   function stop(taskId?: string): Result {
@@ -1842,6 +1856,7 @@ export function createAgentManager(
     runOverlapCheck,
     runPrioritise,
     runFeedbackReply,
+    runDeskDiscovery,
     stop,
     getStatus,
     getReconcileQueue,
@@ -1919,6 +1934,7 @@ export interface AgentManager {
   runOverlapCheck: (prompt: string) => Promise<string>;
   runPrioritise: (prompt: string) => Promise<string>;
   runFeedbackReply: (prompt: string, planTitle: string) => Promise<string>;
+  runDeskDiscovery: (evidence: ProjectEvidence) => Promise<DeskConfig>;
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
   getReconcileQueue: () => ReconcileQueueItem[] | null;

@@ -3,6 +3,7 @@ import { capabilitiesRoutes } from './capabilities';
 import { checkRoutes } from './checks';
 import { ciRoutes } from './ci';
 import { ideaRoutes, planRoutes } from './content';
+import { deskDiscoveryRoutes } from './desk-discovery';
 import { gitRoutes } from './git';
 import { githubDeviceFlowRoutes } from './github-device-flow';
 import { notificationRoutes } from './notifications';
@@ -36,6 +37,7 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...configRoutes(ctx),
     ...envRoutes(ctx),
     ...mergePolicyRoutes(ctx),
+    ...deskDiscoveryRoutes(ctx),
     ...trailRoutes(ctx),
     ...releaseNotesRoutes(ctx),
     ...pairingRoutes(ctx),

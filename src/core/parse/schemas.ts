@@ -223,6 +223,7 @@ export const paperCampConfigSchema = z.object({
       commitSuggest: agentConfigSchema,
       feedback: agentConfigSchema,
       codeReview: agentConfigSchema,
+      deskDiscovery: agentConfigSchema,
     })
     .optional(),
   desk: deskConfigSchema.optional(),
