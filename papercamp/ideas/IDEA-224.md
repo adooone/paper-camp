@@ -75,8 +75,9 @@ an agent against a working tree on a different machine. Replacing
 - [x] Machine-level project registry
       `~/.config/paper-camp/projects.json` with add, remove, and list; `paper-camp ls` and `paper-camp rm` on top of it.
       run: 2m44s · 26 in · 4k out · sonnet-5
-- [ ] Scan a directory for projects
+- [x] Scan a directory for projects
       `paper-camp scan <dir>` registers every folder one level deep containing `papercamp/config.json`, reporting what it added and skipped.
+      run: 4m27s · 48 in · 13.1k out · sonnet-5
 - [ ] Serve registered projects from one daemon
       `paper-camp daemon` mounts each project under `/p/<slug>/` on first request, reusing the existing per-root middleware factory and the client's mount prefix.
 - [ ] Drop the filesystem watchers
