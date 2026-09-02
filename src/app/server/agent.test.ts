@@ -46,6 +46,9 @@ vi.mock('./agents', () => {
       if (text.startsWith('SESSION:')) {
         return { text: '', sessionId: text.slice('SESSION:'.length).trim() };
       }
+      if (text.startsWith('RATE-LIMIT:')) {
+        return { text: '', rateLimit: JSON.parse(text.slice('RATE-LIMIT:'.length)) };
+      }
       return { text };
     },
     options: {},
@@ -993,6 +996,27 @@ describe('start (single phase)', () => {
     expect(manager.start(plan, 0)).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
+  });
+
+  it('surfaces a rate-limit snapshot on the running task before the run finishes (IDEA-225)', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const signalPath = join(root, '.agent-signal');
+    const snapshot = { status: 'allowed_warning', resetsAt: 1_700_000_000 };
+    agentScript.current = `
+console.log('RATE-LIMIT:' + ${JSON.stringify(JSON.stringify(snapshot))});
+${waitForSignalScript(signalPath, FLIP_NEXT_CHECKBOX)}`;
+    const manager = createAgentManager(root);
+
+    expect(manager.start(plan, 0)).toEqual({ ok: true });
+    const start = Date.now();
+    while (!currentStatus(manager)?.rateLimit && Date.now() - start < 5000) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(currentStatus(manager)?.status).toBe('running');
+    expect(currentStatus(manager)?.rateLimit).toEqual(snapshot);
+
+    await releaseSignal(signalPath);
+    expect(await waitForStatus(manager, settled)).toBe('done');
   });
 
   it('warns when the agent exits cleanly without checking off the phase', async () => {

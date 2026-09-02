@@ -64,8 +64,9 @@ drives the `claude` CLI and holds no API credentials of its own. opencode
 capacity, which reports nothing comparable today.
 
 ### Phases
-- [ ] Read capacity from the in-flight task
+- [x] Read capacity from the in-flight task
       Expose the running task's `rateLimit` on the agent status route so a limit hit shows during the run, not after it.
+      run: 7m43s · 92 in · 23.4k out · sonnet-5
 - [ ] Expire spent snapshots
       `latestCapacity` treats a snapshot whose `resetsAt` has passed as unknown rather than current.
 - [ ] Sum window spend from the task log
