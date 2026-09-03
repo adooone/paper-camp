@@ -131,6 +131,22 @@ export function createProjectMounter(
   return { mount, mounted };
 }
 
+export function formatDaemonBanner(
+  port: number,
+  networkLink: string | undefined,
+  color: boolean,
+): string {
+  return [
+    formatDevBanner({
+      version: PAPER_CAMP_VERSION,
+      localUrl: `http://localhost:${port}`,
+      networkLink,
+      color,
+    }),
+    formatDimNote('Registered projects mount lazily at /p/<slug>/ on first request.', color),
+  ].join('\n');
+}
+
 export async function startDaemonServer({
   port,
   share,
@@ -233,15 +249,7 @@ export async function startDaemonServer({
 
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
   console.log(
-    formatDevBanner({
-      version: PAPER_CAMP_VERSION,
-      localUrl: `http://localhost:${port}`,
-      networkLink: await networkRegistrationLink(port, pairingState.token),
-      color,
-    }),
-  );
-  console.log(
-    formatDimNote('Registered projects mount lazily at /p/<slug>/ on first request.', color),
+    formatDaemonBanner(port, await networkRegistrationLink(port, pairingState.token), color),
   );
 
   if (tailnet) {

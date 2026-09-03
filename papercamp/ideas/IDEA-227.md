@@ -2,7 +2,7 @@
 id: IDEA-227
 title: Daemon prints the dev banner
 type: feat
-status: idea
+status: review
 created: 2026-09-03
 tags:
   - cli
@@ -57,5 +57,6 @@ surface. Pairing semantics — this changes only what is printed.
 - [x] Extend `--tailnet` and `--share` to the daemon
       Same flags, same `Tailnet:` and `Tunnel:` rows, resolved against the daemon's port.
       run: 2m16s · 44 in · 7.2k out · sonnet-5
-- [ ] Cover the daemon banner in tests and run the quality checks
+- [x] Cover the daemon banner in tests and run the quality checks
       Banner rows and token absence asserted; check-types, lint, vitest, consistency green.
+      run: 8m54s · 42 in · 7.9k out · sonnet-5

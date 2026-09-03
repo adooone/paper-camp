@@ -8,6 +8,7 @@ import { type MachineRegistry, addProject, saveRegistry } from '../core/machine-
 import {
   createProjectApi,
   createProjectMounter,
+  formatDaemonBanner,
   isMachineBusy,
   parseMountRequest,
   readMachineProjectSummaries,
@@ -184,5 +185,31 @@ describe('isMachineBusy', () => {
     expect(checkMachineBusy()).toBe(false);
     mounted.set('beta', fakeApi(true));
     expect(checkMachineBusy()).toBe(true);
+  });
+});
+
+describe('formatDaemonBanner', () => {
+  const networkLink =
+    'https://paper-camp.vercel.app/?runtime=http%3A%2F%2F100.80.79.13%3A4333&token=shared-token';
+
+  it('carries the daemon port in the Local row and the resolved Network link', () => {
+    const banner = formatDaemonBanner(4333, networkLink, false);
+    expect(banner).toContain('Local:   http://localhost:4333');
+    expect(banner).toContain(`Network: ${networkLink}`);
+  });
+
+  it('keeps the lazy-mount note as a dim row after the banner', () => {
+    const banner = formatDaemonBanner(4333, networkLink, false);
+    expect(banner).toContain('Registered projects mount lazily at /p/<slug>/ on first request.');
+  });
+
+  it('never prints the pairing token as its own bare line', () => {
+    const banner = formatDaemonBanner(4333, networkLink, false);
+    expect(banner).not.toMatch(/^Pairing token:/m);
+  });
+
+  it('omits the Network row when the machine has no reachable address', () => {
+    const banner = formatDaemonBanner(4333, undefined, false);
+    expect(banner).not.toContain('Network:');
   });
 });
