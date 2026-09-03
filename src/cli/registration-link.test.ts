@@ -9,7 +9,6 @@ vi.mock('../core/tailnet', () => ({ readTailnetStatus: mockReadTailnetStatus }))
 import {
   bestNetworkHost,
   buildRegistrationLinkForRuntime,
-  canReachRuntime,
   hostedClientUrl,
   networkRegistrationLink,
 } from './registration-link';
@@ -74,40 +73,6 @@ describe('buildRegistrationLinkForRuntime', () => {
     expect(buildRegistrationLinkForRuntime('http://localhost:3333', 'abc123')).toBe(
       'https://paper-camp.vercel.app/?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123',
     );
-  });
-});
-
-describe('canReachRuntime', () => {
-  it('lets an https: client reach an https: runtime', () => {
-    expect(canReachRuntime('https://paper-camp.vercel.app', 'https://deimos.ts.net:3941')).toBe(
-      true,
-    );
-  });
-
-  it('blocks an https: client from an http: runtime on a non-loopback host', () => {
-    expect(canReachRuntime('https://paper-camp.vercel.app', 'http://deimos.ts.net:3941')).toBe(
-      false,
-    );
-  });
-
-  it('lets an http: client reach an http: runtime', () => {
-    expect(canReachRuntime('http://localhost:5173', 'http://deimos.ts.net:3941')).toBe(true);
-  });
-
-  it('lets an http: client reach an https: runtime', () => {
-    expect(canReachRuntime('http://localhost:5173', 'https://deimos.ts.net:3941')).toBe(true);
-  });
-
-  it('always allows an http: runtime on localhost, even from an https: client', () => {
-    expect(canReachRuntime('https://paper-camp.vercel.app', 'http://localhost:3941')).toBe(true);
-  });
-
-  it('always allows an http: runtime on 127.0.0.1, even from an https: client', () => {
-    expect(canReachRuntime('https://paper-camp.vercel.app', 'http://127.0.0.1:3941')).toBe(true);
-  });
-
-  it('always allows an http: runtime on the IPv6 loopback, even from an https: client', () => {
-    expect(canReachRuntime('https://paper-camp.vercel.app', 'http://[::1]:3941')).toBe(true);
   });
 });
 

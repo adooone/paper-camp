@@ -1,4 +1,5 @@
 import { hostname, networkInterfaces } from 'node:os';
+import { canReachRuntime } from '../core/runtime-reachability';
 import { readTailnetStatus } from '../core/tailnet';
 
 // Every link shares this origin so registrations land in one localStorage registry.
@@ -16,18 +17,6 @@ export function buildRegistrationLinkForRuntime(
 ): string {
   const params = new URLSearchParams({ runtime: runtimeUrl, token: pairingToken });
   return `${clientUrl}/?${params}`;
-}
-
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
-
-/** Whether a browser on `clientOrigin` will let a fetch through to `runtimeUrl`: browsers
- *  treat loopback as trustworthy regardless of scheme, but otherwise refuse an http: fetch
- *  from an https: page outright as mixed content, without ever attempting the request. */
-export function canReachRuntime(clientOrigin: string, runtimeUrl: string): boolean {
-  const runtime = new URL(runtimeUrl);
-  if (LOOPBACK_HOSTS.has(runtime.hostname)) return true;
-  const client = new URL(clientOrigin);
-  return client.protocol !== 'https:' || runtime.protocol === 'https:';
 }
 
 type InterfaceEntries = Record<

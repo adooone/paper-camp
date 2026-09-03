@@ -26,6 +26,15 @@ function StatusStamp({ entry, status }: StatusStampProps) {
       </Stamp>
     );
   }
+  if (status.schemeBlocked) {
+    return (
+      <Tooltip content="The browser blocked this http runtime as mixed content — rerun with --tailnet or --share for an HTTPS address.">
+        <Stamp size="small" variant="warning">
+          Needs HTTPS
+        </Stamp>
+      </Tooltip>
+    );
+  }
   if (!status.reachable) {
     return (
       <Stamp size="small" variant="info">
