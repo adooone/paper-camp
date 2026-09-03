@@ -45,8 +45,9 @@ pairing file, which follows the config dir as it already does.
 - [x] Honour `PAPERCAMP_CONFIG_DIR`
       `machineConfigDir()` reads the variable when set, so the registry and pairing files both follow it; unset behaviour is unchanged.
       run: 1m21s · 14 in · 1.3k out · sonnet-5
-- [ ] Cover the registry commands end to end
+- [x] Cover the registry commands end to end
       `scan`, `ls`, and `rm` tested against a temp config dir, including that a directory without `papercamp/config.json` is skipped.
+      run: 1m51s · 32 in · 6.8k out · sonnet-5
 - [ ] Cover the daemon's project listing
       Daemon started against a temp registry: `/api/machine/projects` lists them, `/p/<slug>/` mounts, an unknown slug 404s.
 - [ ] Document it and run the quality checks
