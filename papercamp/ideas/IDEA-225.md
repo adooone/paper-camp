@@ -2,7 +2,7 @@
 id: IDEA-225
 title: Capacity indicator in the Stack panel
 type: feat
-status: idea
+status: review
 created: 2026-09-01
 tags:
   - app
@@ -78,5 +78,6 @@ capacity, which reports nothing comparable today.
 - [x] Reword the empty state on both surfaces
       Silence means healthy, not missing — the Stats card and the new indicator both say so.
       run: 3m32s · 24 in · 3.5k out · sonnet-5
-- [ ] Cover it in tests and run the quality checks
+- [x] Cover it in tests and run the quality checks
       Expiry, window summing, and the absent-snapshot path covered; check-types, lint, vitest, consistency green.
+      run: 4m40s · 32 in · 11k out · sonnet-5
