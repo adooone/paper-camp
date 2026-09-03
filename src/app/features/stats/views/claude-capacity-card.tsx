@@ -19,7 +19,9 @@ export const ClaudeCapacityCard = ({ capacity }: ClaudeCapacityCardProps) => {
   return (
     <StatCard title="Claude capacity">
       {capacity === null ? (
-        <p className="opacity-50 m-0">No agent run has reported capacity yet.</p>
+        <p className="opacity-50 m-0">
+          Claude only reports capacity when a run is near a limit — no report means you're clear.
+        </p>
       ) : (
         <>
           <div className="flex items-center gap-2">

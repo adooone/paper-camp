@@ -34,7 +34,7 @@ export const CapacityRow = () => {
   if (!capacity) {
     return (
       <p className="m-0 text-2xs text-desk-text-muted opacity-70">
-        No capacity signal — Claude only reports one near a limit, so quiet is healthy.
+        No capacity report — you're clear of any limit.
       </p>
     );
   }

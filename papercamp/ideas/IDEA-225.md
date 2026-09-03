@@ -75,7 +75,8 @@ capacity, which reports nothing comparable today.
 - [x] Add the compact indicator to the Stack panel
       One row: the reset-window bar when known, window spend, status stamp and overage, with `null` rendering as a quiet resting state.
       run: 17m15s · 166 in · 53.5k out · sonnet-5
-- [ ] Reword the empty state on both surfaces
+- [x] Reword the empty state on both surfaces
       Silence means healthy, not missing — the Stats card and the new indicator both say so.
+      run: 3m32s · 24 in · 3.5k out · sonnet-5
 - [ ] Cover it in tests and run the quality checks
       Expiry, window summing, and the absent-snapshot path covered; check-types, lint, vitest, consistency green.
