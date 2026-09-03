@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.26.0](https://github.com/adooone/paper-camp/compare/v0.25.0...v0.26.0) (2026-09-03)
+
+
+### Features
+
+* **app:** Add the compact indicator to the Stack panel ([a4800db](https://github.com/adooone/paper-camp/commit/a4800dba9db4c2f4713be85720fa1ad48a8d32a8))
+* **app:** Cover it in tests and run the quality checks ([9d4fb15](https://github.com/adooone/paper-camp/commit/9d4fb15eb56d5247f17d2637a6b9f1907f82761c))
+* **app:** Expire spent snapshots ([52ec418](https://github.com/adooone/paper-camp/commit/52ec4187e0eef6cc9e208c9a3aef5c7fd5abb4e3))
+* **app:** Read capacity from the in-flight task ([2b12a27](https://github.com/adooone/paper-camp/commit/2b12a2777adedcc3c015c946f65b2de803395867))
+* **app:** Reword the empty state on both surfaces ([21f7cd0](https://github.com/adooone/paper-camp/commit/21f7cd0139bcdb89000ea15c9f1a171e3da66565))
+* **cli:** Cover the daemon banner in tests and run the quality checks ([bf80af4](https://github.com/adooone/paper-camp/commit/bf80af4ee792f04803dd33b7a97782013ed1a316))
+* **cli:** Drop the bare pairing token line ([dd42774](https://github.com/adooone/paper-camp/commit/dd42774238dd793b3d942a2e8e036de83fa5873e))
+* **cli:** Extend `--tailnet` and `--share` to the daemon ([d817c33](https://github.com/adooone/paper-camp/commit/d817c33f574ed81816c8210e746e786fa11f9b85))
+* **cli:** Give the daemon the shared banner ([99d9f9d](https://github.com/adooone/paper-camp/commit/99d9f9daa8dfbb353250d936df2dc2d9120f832a))
+* **stack:** Unify capacity/agent card layout and shorten task titles ([976c7a5](https://github.com/adooone/paper-camp/commit/976c7a58ea2369b166a4249b88db60fa85ed4f26))
+
+
+### Bug Fixes
+
+* **app:** Parse rate_limit_info and drive capacity from real utilization ([9d88c0e](https://github.com/adooone/paper-camp/commit/9d88c0ecf102f8a609011c91e18f66901e2c3fce))
+* **stack:** Move agent overflow link into the section header row ([b5cbbf7](https://github.com/adooone/paper-camp/commit/b5cbbf7bec8feaf335a1a18e67e53fce340ecc8d))
+
 ## [0.25.0](https://github.com/adooone/paper-camp/compare/v0.24.0...v0.25.0) (2026-09-02)
 
 
