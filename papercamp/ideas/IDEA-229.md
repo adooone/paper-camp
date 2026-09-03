@@ -2,7 +2,7 @@
 id: IDEA-229
 title: Explain the blocked http runtime
 type: fix
-status: idea
+status: review
 created: 2026-09-03
 updated: 2026-09-03
 tags:
@@ -83,8 +83,9 @@ admin-console setting on the user's side and already has its own message
 - [x] Stamp Needs HTTPS in the hub
       Carry a scheme-blocked flag through `use-runtime-statuses.ts` from the runtime URL and `window.location.protocol`, and branch `project-row.tsx` to a warning stamp with the tooltip before the unreachable branch.
       run: 7m31s · 76 in · 22.5k out · sonnet-5
-- [ ] Correct USAGE.md and run the quality checks
+- [x] Correct USAGE.md and run the quality checks
       Qualify the Network-link step with the HTTPS requirement and name the two flags; check-types, lint, vitest, consistency green.
+      run: 7m1s · 26 in · 4.4k out · sonnet-5
 
 ### Thread
 - [x] 2026-09-03 [log] [agent] Found while verifying the 0.26.0 release against the published tarball. The rest of the release checked out clean: init scaffolds the corpus plus a `.gitignore` entry and a `0600` pairing file, `doctor` passes on a fresh scaffold, SIGTERM/SIGINT shut the server down in under a second, the daemon serves `/api/machine/projects` and mounts `/p/<slug>/` lazily, `PAPERCAMP_CONFIG_DIR` leaves the real registry untouched, and the hosted client's bundle is byte-identical to the one in the package (md5 8d479ba1a9286554195ea2732dcd4b23), so version skew cannot misfire. This was the only defect.

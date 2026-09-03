@@ -138,7 +138,10 @@ too.
 2. Open the **Network** link in the browser that should hold the hub. It
    carries the runtime's address and a pairing token, so one visit both
    registers the project and pairs the client with its runtime. The project
-   now sits in the hub's **Projects** list.
+   now sits in the hub's **Projects** list. The hosted client is HTTPS, so it
+   can only fetch an HTTPS runtime — pairing from another device needs
+   `--tailnet` or `--share`; without one, the banner prints that requirement
+   in place of a Network link.
 3. Click a project's row to enter it; *Back to projects* returns to the hub.
    Rows can be renamed and removed — removing only forgets the address, never
    anything in the repo.
