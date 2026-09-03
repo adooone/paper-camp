@@ -1,5 +1,12 @@
 import { classifyAnchor } from '@/core/phase-progress';
-import type { AgentRunOptions, PhaseMilestone, RateLimitSnapshot, RunUsage } from '@/types/index';
+import type {
+  AgentRunOptions,
+  PhaseMilestone,
+  RateLimitSnapshot,
+  RateLimitWindow,
+  RateLimitWindowKey,
+  RunUsage,
+} from '@/types/index';
 
 export interface ParsedAgentLine {
   text: string;
@@ -63,8 +70,33 @@ function extractUsage(json: Record<string, unknown>): RunUsage {
   };
 }
 
+const WINDOW_KEYS: RateLimitWindowKey[] = ['five_hour', 'seven_day'];
+
+function extractWindows(
+  value: unknown,
+): Partial<Record<RateLimitWindowKey, RateLimitWindow>> | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const source = value as Record<string, unknown>;
+  const windows: Partial<Record<RateLimitWindowKey, RateLimitWindow>> = {};
+  for (const key of WINDOW_KEYS) {
+    const raw = source[key];
+    if (typeof raw !== 'object' || raw === null) continue;
+    const { utilization, resetsAt } = raw as Record<string, unknown>;
+    if (typeof utilization !== 'number' || !Number.isFinite(utilization)) continue;
+    windows[key] = {
+      utilization,
+      ...(typeof resetsAt === 'number' && Number.isFinite(resetsAt) && { resetsAt }),
+    };
+  }
+  return Object.keys(windows).length > 0 ? windows : undefined;
+}
+
 function extractRateLimit(json: Record<string, unknown>): RateLimitSnapshot | null {
-  const rl = (json.rate_limit ?? json.rateLimit ?? json) as Record<string, unknown>;
+  // `rate_limit_info` is what the CLI actually emits; the others are older spellings.
+  const rl = (json.rate_limit_info ?? json.rate_limit ?? json.rateLimit ?? json) as Record<
+    string,
+    unknown
+  >;
   const status = typeof rl.status === 'string' ? rl.status : undefined;
   if (!status) return null;
   const rateLimitType =
@@ -76,8 +108,15 @@ function extractRateLimit(json: Record<string, unknown>): RateLimitSnapshot | nu
   const resetsAtRaw = rl.resetsAt ?? rl.resets_at;
   const resetsAt =
     typeof resetsAtRaw === 'number' && Number.isFinite(resetsAtRaw) ? resetsAtRaw : undefined;
-  const overage = Boolean(rl.overage ?? rl.usingOverage ?? rl.overageActive);
-  return { status, rateLimitType, resetsAt, overage };
+  const overage = Boolean(rl.isUsingOverage ?? rl.overage ?? rl.usingOverage ?? rl.overageActive);
+  const unifiedWindows = extractWindows(rl.unifiedWindows);
+  return {
+    status,
+    rateLimitType,
+    resetsAt,
+    overage,
+    ...(unifiedWindows && { unifiedWindows }),
+  };
 }
 
 export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {

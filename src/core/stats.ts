@@ -2,7 +2,6 @@ import { spawn } from 'node:child_process';
 import { lstat, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
-  CapacityStat,
   CommentStats,
   EntityEntry,
   EntityStatus,
@@ -14,8 +13,10 @@ import type {
   UsagePerWeek,
 } from '../types/index';
 import { parseTaskLog } from './parse';
-import { resetsAtMs } from './rate-limit';
+import { latestCapacity } from './rate-limit';
 import { readEntitiesWithDerivedStatus } from './readers';
+
+export { latestCapacity } from './rate-limit';
 
 async function walk(dir: string): Promise<string[]> {
   const names = await readdir(dir).catch(() => []);
@@ -183,26 +184,6 @@ export function medianPhaseDurationMs(entries: TaskLogEntry[]): number | null {
   durations.sort((a, b) => a - b);
   const mid = Math.floor(durations.length / 2);
   return durations.length % 2 === 0 ? (durations[mid - 1] + durations[mid]) / 2 : durations[mid];
-}
-
-export function latestCapacity(entries: TaskLogEntry[]): CapacityStat | null {
-  let latest: CapacityStat | null = null;
-  let latestMs = Number.NEGATIVE_INFINITY;
-  for (const entry of entries) {
-    if (!entry.rateLimit) continue;
-    if (
-      entry.rateLimit.resetsAt !== undefined &&
-      resetsAtMs(entry.rateLimit.resetsAt) <= Date.now()
-    )
-      continue;
-    const at = Date.parse(entry.endedAt);
-    if (Number.isNaN(at)) continue;
-    if (at >= latestMs) {
-      latestMs = at;
-      latest = { snapshot: entry.rateLimit, capturedAt: entry.endedAt };
-    }
-  }
-  return latest;
 }
 
 export function mostExpensiveIdeas(entries: TaskLogEntry[], limit = 5): IdeaCost[] {

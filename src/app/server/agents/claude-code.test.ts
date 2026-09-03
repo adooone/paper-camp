@@ -154,6 +154,51 @@ describe('claude-code parseLine', () => {
     });
   });
 
+  // The shape the CLI actually emits, captured from a live `claude -p` run: the payload
+  // sits under `rate_limit_info` and carries a real utilization per plan window.
+  it('reads the live rate_limit_info payload including both plan windows', () => {
+    const line = JSON.stringify({
+      type: 'rate_limit_event',
+      rate_limit_info: {
+        status: 'allowed',
+        rateLimitType: 'five_hour',
+        resetsAt: 1_788_436_800,
+        overageStatus: 'rejected',
+        isUsingOverage: false,
+        unifiedWindows: {
+          five_hour: { utilization: 0.11, resetsAt: 1_788_436_800 },
+          seven_day: { utilization: 0.06, resetsAt: 1_788_768_000 },
+        },
+      },
+    });
+    expect(parseLine(line)?.rateLimit).toEqual({
+      status: 'allowed',
+      rateLimitType: 'five_hour',
+      resetsAt: 1_788_436_800,
+      overage: false,
+      unifiedWindows: {
+        five_hour: { utilization: 0.11, resetsAt: 1_788_436_800 },
+        seven_day: { utilization: 0.06, resetsAt: 1_788_768_000 },
+      },
+    });
+  });
+
+  it('takes isUsingOverage as the overage flag', () => {
+    const line = JSON.stringify({
+      type: 'rate_limit_event',
+      rate_limit_info: { status: 'allowed', isUsingOverage: true },
+    });
+    expect(parseLine(line)?.rateLimit?.overage).toBe(true);
+  });
+
+  it('omits unifiedWindows when a window carries no numeric utilization', () => {
+    const line = JSON.stringify({
+      type: 'rate_limit_event',
+      rate_limit_info: { status: 'allowed', unifiedWindows: { five_hour: {} } },
+    });
+    expect(parseLine(line)?.rateLimit?.unifiedWindows).toBeUndefined();
+  });
+
   it('drops a rate_limit_event that carries no status', () => {
     expect(parseLine(JSON.stringify({ type: 'rate_limit_event' }))).toBeNull();
   });

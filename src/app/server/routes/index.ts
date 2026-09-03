@@ -1,5 +1,6 @@
 import { agentRoutes } from './agent';
 import { capabilitiesRoutes } from './capabilities';
+import { capacityRoutes } from './capacity';
 import { checkRoutes } from './checks';
 import { ciRoutes } from './ci';
 import { ideaRoutes, planRoutes } from './content';
@@ -38,6 +39,7 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...configRoutes(ctx),
     ...envRoutes(ctx),
     ...mergePolicyRoutes(ctx),
+    ...capacityRoutes(ctx),
     ...deskDiscoveryRoutes(ctx),
     ...tailnetDiscoveryRoutes(ctx),
     ...trailRoutes(ctx),

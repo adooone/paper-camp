@@ -78,7 +78,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           )}
         </div>
         <Divider surface="chalkboard" />
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <AgentSection />
           <DeskSection />
         </div>

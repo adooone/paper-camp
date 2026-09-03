@@ -1,10 +1,16 @@
 import { formatDuration } from '@/core/phase-run';
 import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
 import type { ProjectStats } from '@/types/index';
+import type { RateLimitWindowKey } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { CAPACITY_STAMP } from '../constants';
 import { StatCard, StatRow } from './stat-card';
+
+const WINDOW_ROWS: { key: RateLimitWindowKey; label: string }[] = [
+  { key: 'five_hour', label: '5-hour limit' },
+  { key: 'seven_day', label: 'Weekly' },
+];
 
 export interface ClaudeCapacityCardProps {
   capacity: ProjectStats['capacity'];
@@ -19,9 +25,7 @@ export const ClaudeCapacityCard = ({ capacity }: ClaudeCapacityCardProps) => {
   return (
     <StatCard title="Claude capacity">
       {capacity === null ? (
-        <p className="opacity-50 m-0">
-          Claude only reports capacity when a run is near a limit — no report means you're clear.
-        </p>
+        <p className="opacity-50 m-0">No agent run has reported capacity yet.</p>
       ) : (
         <>
           <div className="flex items-center gap-2">
@@ -34,15 +38,21 @@ export const ClaudeCapacityCard = ({ capacity }: ClaudeCapacityCardProps) => {
               </Stamp>
             )}
           </div>
-          {capacity.snapshot.rateLimitType && (
-            <StatRow label="Window" value={capacity.snapshot.rateLimitType} />
-          )}
-          {capacity.snapshot.resetsAt !== undefined && (
-            <StatRow
-              label="Resets"
-              value={new Date(resetsAtMs(capacity.snapshot.resetsAt)).toLocaleTimeString()}
-            />
-          )}
+          {WINDOW_ROWS.map(({ key, label }) => {
+            const window = capacity.snapshot.unifiedWindows?.[key];
+            if (!window) return null;
+            const resets =
+              window.resetsAt === undefined
+                ? ''
+                : ` · resets ${new Date(resetsAtMs(window.resetsAt)).toLocaleTimeString()}`;
+            return (
+              <StatRow
+                key={key}
+                label={label}
+                value={`${Math.round(window.utilization * 100)}% used${resets}`}
+              />
+            );
+          })}
           <span className="text-2xs opacity-50">
             as of last agent run,{' '}
             {formatDuration(Math.max(0, now - Date.parse(capacity.capturedAt)))} ago

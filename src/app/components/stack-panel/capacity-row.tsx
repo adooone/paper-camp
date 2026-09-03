@@ -1,7 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { formatTokens } from '@/core/phase-run';
 import { capacityLevel, latestCapacity, mergeLiveCapacity, resetsAtMs } from '@/core/rate-limit';
-import { Progress, Stamp } from '@dendelion/paper-ui';
+import { Card, Progress, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useMemo, useState } from 'react';
 import { chalkStatusFill, chalkStatusText } from './shared';
 
@@ -17,9 +16,20 @@ const levelText = {
   rejected: chalkStatusText.fail,
 } as const;
 
+function formatGap(ms: number): string {
+  const minutes = Math.max(0, Math.round(ms / 60_000));
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return minutes % 60 ? `${hours}h ${minutes % 60}m` : `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
 export const CapacityRow = () => {
   const taskLog = useAppStore((s) => s.taskLog);
   const agentStatus = useAppStore((s) => s.agentStatus);
+  const refreshCapacity = useAppStore((s) => s.refreshCapacity);
+  const probed = useAppStore((s) => s.probedCapacity);
+  const [refreshing, setRefreshing] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -28,28 +38,34 @@ export const CapacityRow = () => {
   }, []);
 
   const live = agentStatus.find((t) => t.rateLimit)?.rateLimit ?? null;
-  const stat = useMemo(() => latestCapacity(taskLog), [taskLog]);
-  const capacity = mergeLiveCapacity(live, stat);
+  const logged = useMemo(() => latestCapacity(taskLog), [taskLog]);
+  const capacity = mergeLiveCapacity(live, probed ?? logged);
+
+  const refresh = () => {
+    setRefreshing(true);
+    void refreshCapacity().finally(() => setRefreshing(false));
+  };
 
   if (!capacity) {
     return (
-      <p className="m-0 text-2xs text-desk-text-muted opacity-70">
-        No capacity report — you're clear of any limit.
-      </p>
+      <Card surface="chalkboard" size="small" className="flex items-center justify-between gap-2">
+        <p className="m-0 text-2xs text-desk-text-muted opacity-70">
+          No capacity report — you're clear of any limit.
+        </p>
+        <button type="button" className="text-2xs underline opacity-70" onClick={refresh}>
+          {refreshing ? 'Checking…' : 'Check now'}
+        </button>
+      </Card>
     );
   }
 
-  const level = capacityLevel(capacity.snapshot.status);
-  const resetsAt = capacity.snapshot.resetsAt;
-  const windowStartMs = capacity.windowStartedAt ? Date.parse(capacity.windowStartedAt) : null;
-  let elapsedFraction: number | null = null;
-  if (resetsAt !== undefined && windowStartMs !== null && !Number.isNaN(windowStartMs)) {
-    const totalMs = resetsAtMs(resetsAt) - windowStartMs;
-    elapsedFraction = totalMs > 0 ? Math.min(1, Math.max(0, (now - windowStartMs) / totalMs)) : 0;
-  }
+  const { snapshot, capturedAt } = capacity;
+  const level = capacityLevel(snapshot.status);
+  const fiveHour = snapshot.unifiedWindows?.five_hour;
+  const capturedMs = capturedAt ? Date.parse(capturedAt) : null;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <Card surface="chalkboard" size="small" className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-2">
         <Stamp
           surface="chalkboard"
@@ -57,9 +73,9 @@ export const CapacityRow = () => {
           fillColor={levelFill[level]}
           textColor={levelText[level]}
         >
-          {capacity.snapshot.status}
+          {snapshot.status}
         </Stamp>
-        {capacity.snapshot.overage && (
+        {snapshot.overage && (
           <Stamp
             surface="chalkboard"
             size="small"
@@ -69,22 +85,33 @@ export const CapacityRow = () => {
             overage
           </Stamp>
         )}
-        {capacity.windowSpend && (
-          <span className="text-2xs text-desk-text-muted">
-            {formatTokens(capacity.windowSpend.inputTokens)} in ·{' '}
-            {formatTokens(capacity.windowSpend.outputTokens)} out this window
-          </span>
-        )}
+        <span className="ml-auto flex items-center gap-2 text-2xs text-desk-text-muted">
+          {capturedMs !== null && !Number.isNaN(capturedMs) && (
+            <span className="opacity-70">as of {formatGap(now - capturedMs)} ago</span>
+          )}
+          <button type="button" className="underline opacity-70" onClick={refresh}>
+            {refreshing ? 'Checking…' : 'Refresh'}
+          </button>
+        </span>
       </div>
-      {elapsedFraction !== null && (
-        <Progress
-          value={elapsedFraction * 100}
-          max={100}
-          color={levelFill[level]}
-          height={4}
-          surface="chalkboard"
-        />
+      {fiveHour && (
+        <div className="flex items-center gap-2">
+          <Progress
+            className="flex-1"
+            value={Math.round(fiveHour.utilization * 100)}
+            max={100}
+            color={levelFill[level]}
+            height={4}
+            surface="chalkboard"
+          />
+          <span className="shrink-0 text-2xs text-desk-text-muted">
+            {Math.round(fiveHour.utilization * 100)}%
+            {fiveHour.resetsAt === undefined
+              ? ''
+              : ` · resets in ${formatGap(resetsAtMs(fiveHour.resetsAt) - now)}`}
+          </span>
+        </div>
       )}
-    </div>
+    </Card>
   );
 };

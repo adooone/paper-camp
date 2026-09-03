@@ -72,8 +72,6 @@ describe('latestCapacity', () => {
     expect(latestCapacity(entries)).toEqual({
       snapshot: { status: 'allowed_warning', resetsAt: FUTURE_RESETS_AT },
       capturedAt: '2026-08-03T10:00:00Z',
-      windowSpend: { inputTokens: 0, outputTokens: 0, costUsd: 0 },
-      windowStartedAt: '2026-07-27T10:00:00.000Z',
     });
   });
 
@@ -85,8 +83,6 @@ describe('latestCapacity', () => {
     expect(latestCapacity(entries)).toEqual({
       snapshot: { status: 'allowed' },
       capturedAt: '2026-08-01T10:00:00Z',
-      windowSpend: { inputTokens: 0, outputTokens: 0, costUsd: 0 },
-      windowStartedAt: '2026-07-27T10:00:00.000Z',
     });
   });
 
@@ -108,8 +104,6 @@ describe('latestCapacity', () => {
     expect(latestCapacity(entries)).toEqual({
       snapshot: { status: 'allowed_warning', resetsAt: FUTURE_RESETS_AT },
       capturedAt: '2026-08-01T10:00:00Z',
-      windowSpend: { inputTokens: 0, outputTokens: 0, costUsd: 0 },
-      windowStartedAt: '2026-07-27T10:00:00.000Z',
     });
   });
 
@@ -130,41 +124,7 @@ describe('latestCapacity', () => {
     expect(latestCapacity(entries)).toEqual({
       snapshot: { status: 'allowed' },
       capturedAt: '2020-01-01T10:00:00Z',
-      windowSpend: { inputTokens: 0, outputTokens: 0, costUsd: 0 },
-      windowStartedAt: '2026-07-27T10:00:00.000Z',
     });
-  });
-
-  it('sums tokens and cost across every run since the earliest one sharing the same resetsAt', () => {
-    const entries: TaskLogEntry[] = [
-      // Outside the window: an older run under a different (already-passed) reset.
-      logEntry({
-        startedAt: '2026-07-30T09:00:00Z',
-        endedAt: '2026-07-30T09:05:00Z',
-        rateLimit: { status: 'allowed', resetsAt: PAST_RESETS_AT },
-        usage: usage({ inputTokens: 9999, outputTokens: 9999, costUsd: 99 }),
-      }),
-      logEntry({
-        startedAt: '2026-08-01T09:00:00Z',
-        endedAt: '2026-08-01T09:05:00Z',
-        rateLimit: { status: 'allowed_warning', resetsAt: FUTURE_RESETS_AT },
-        usage: usage({ inputTokens: 100, outputTokens: 10, costUsd: 0.1 }),
-      }),
-      logEntry({
-        startedAt: '2026-08-02T09:00:00Z',
-        endedAt: '2026-08-02T09:05:00Z',
-        usage: usage({ inputTokens: 200, outputTokens: 20, costUsd: 0.2 }),
-      }),
-      logEntry({
-        startedAt: '2026-08-03T09:00:00Z',
-        endedAt: '2026-08-03T09:05:00Z',
-        rateLimit: { status: 'allowed_warning', resetsAt: FUTURE_RESETS_AT },
-        usage: usage({ inputTokens: 300, outputTokens: 30, costUsd: 0.3 }),
-      }),
-    ];
-    const windowSpend = latestCapacity(entries)?.windowSpend;
-    expect(windowSpend).toMatchObject({ inputTokens: 600, outputTokens: 60 });
-    expect(windowSpend?.costUsd).toBeCloseTo(0.6);
   });
 });
 
@@ -172,8 +132,6 @@ describe('mergeLiveCapacity', () => {
   const stat: CapacityStat = {
     snapshot: { status: 'allowed_warning', resetsAt: 4_000_000_000 },
     capturedAt: '2026-08-01T10:00:00Z',
-    windowSpend: { inputTokens: 100, outputTokens: 10, costUsd: 0.1 },
-    windowStartedAt: '2026-07-27T10:00:00.000Z',
   };
 
   it('returns null when neither the live task nor the log has ever reported capacity', () => {
@@ -183,35 +141,17 @@ describe('mergeLiveCapacity', () => {
   it('falls back to the logged snapshot when no task is in flight', () => {
     expect(mergeLiveCapacity(null, stat)).toEqual({
       snapshot: stat.snapshot,
-      windowSpend: stat.windowSpend,
-      windowStartedAt: stat.windowStartedAt,
+      capturedAt: stat.capturedAt,
     });
   });
 
-  it('prefers the in-flight snapshot, keeping the logged window spend when the window matches', () => {
+  it('prefers the in-flight snapshot, which is current by definition', () => {
     const live: RateLimitSnapshot = { status: 'rejected', resetsAt: stat.snapshot.resetsAt };
-    expect(mergeLiveCapacity(live, stat)).toEqual({
-      snapshot: live,
-      windowSpend: stat.windowSpend,
-      windowStartedAt: stat.windowStartedAt,
-    });
+    expect(mergeLiveCapacity(live, stat)).toEqual({ snapshot: live, capturedAt: null });
   });
 
-  it('drops the logged window spend when the in-flight snapshot belongs to a newer window', () => {
-    const live: RateLimitSnapshot = { status: 'allowed', resetsAt: 5_000_000_000 };
-    expect(mergeLiveCapacity(live, stat)).toEqual({
-      snapshot: live,
-      windowSpend: null,
-      windowStartedAt: null,
-    });
-  });
-
-  it('uses the in-flight snapshot with no window data when nothing has ever been logged', () => {
+  it('uses the in-flight snapshot when nothing has ever been logged', () => {
     const live: RateLimitSnapshot = { status: 'allowed' };
-    expect(mergeLiveCapacity(live, null)).toEqual({
-      snapshot: live,
-      windowSpend: null,
-      windowStartedAt: null,
-    });
+    expect(mergeLiveCapacity(live, null)).toEqual({ snapshot: live, capturedAt: null });
   });
 });

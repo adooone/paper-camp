@@ -933,11 +933,20 @@ export interface RunUsage {
   costUsd: number;
 }
 
+/** One plan window's share consumed, as the `/usage` ring reports it. */
+export interface RateLimitWindow {
+  utilization: number;
+  resetsAt?: number;
+}
+
+export type RateLimitWindowKey = 'five_hour' | 'seven_day';
+
 export interface RateLimitSnapshot {
   status: string;
   rateLimitType?: string;
   resetsAt?: number;
   overage?: boolean;
+  unifiedWindows?: Partial<Record<RateLimitWindowKey, RateLimitWindow>>;
 }
 
 export interface PhaseRunRecord {

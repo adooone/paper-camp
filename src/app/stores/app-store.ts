@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { type AgentSlice, createAgentSlice } from './slices/agent-slice';
+import { type CapacitySlice, createCapacitySlice } from './slices/capacity-slice';
 import { type DiffSlice, createDiffSlice } from './slices/diff-slice';
 import { type DocsSlice, createDocsSlice } from './slices/docs-slice';
 import { type GithubSlice, createGithubSlice } from './slices/github-slice';
@@ -18,7 +19,8 @@ import { type TaskLogSlice, createTaskLogSlice } from './slices/task-log-slice';
 
 export type { DetailView } from './slices/plans-slice';
 
-export type AppStore = PlansSlice &
+export type AppStore = CapacitySlice &
+  PlansSlice &
   RoadmapSlice &
   IdeasSlice &
   SuggestionsSlice &
@@ -33,6 +35,7 @@ export type AppStore = PlansSlice &
   GithubSlice;
 
 export const useAppStore = create<AppStore>()((set, get) => ({
+  ...createCapacitySlice(set),
   ...createPlansSlice(set, get),
   ...createRoadmapSlice(set, get),
   ...createIdeasSlice(set, get),
