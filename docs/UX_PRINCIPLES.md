@@ -46,11 +46,48 @@ layout-jump complaints come from. Rules, in priority order:
   column), not stick to the top and leave dead space below. Only anchor to an
   edge when there's a deliberate reason (e.g. a log that should grow downward
   from a fixed top).
-- **An empty-state fallback needs the same height treatment as the populated
-  state.** If the populated branch of a component fills its container's full
-  height, the empty-state branch (typically a single "No X." message) must be
-  wrapped the same way — a centered `flex: 1` container — or it will sit at the
-  top with a large gap below it.
+- **An empty state is the populated state with the values missing — not a
+  different layout.** Do not branch a component into two shapes. Render one
+  structure and vary what fills it: the same rows, the same stamps, the same
+  controls, with placeholder values (`no report`, `no data yet`, a bar at zero)
+  where the numbers would be. Matching only the *height* of two different
+  layouts is the weaker version of this rule and drifts the moment either side
+  changes.
+
+  This is also what keeps a fixed-height card from overflowing. A capacity card
+  pinned to `4.625rem` held a two-row reading, but its empty branch was a
+  free-flowing sentence plus a link — which wrapped to two lines and clipped
+  under the card's edge. Two fixed rows fit by construction; prose in a
+  fixed-height box does not. **Anything inside a fixed-height container must be
+  a fixed number of rows.**
+- **A container may fix its size; nothing inside it may.** When a box has a
+  height, its contents flex to fit — rows share the space, controls shrink, and
+  no child carries a height, width, or padding of its own that can push past the
+  edge. **When content overflows a fixed container, shrink the content; do not
+  grow the container.** Growing it is the tempting fix and the wrong one: it
+  silently resizes every sibling that shares the size, and the real offender (a
+  control with a fixed height) is still there to break the next layout.
+
+  Concretely, a capacity card clipped by 8px inside a shared 4.625rem card. The
+  cause was an `IconButton` at its natural 40px inflating the header row; the
+  first fix grew both cards to 5.5rem, which hid the symptom and enlarged the
+  agent card for no reason. The right fix let the icon size to its content
+  (`h-auto w-auto p-0`) and gave the rows a wrapper that owns the layout.
+
+  Related trap: a component library's outer element is not always the one that
+  lays out your children. Passing `flex flex-col justify-center gap-1` to
+  paper-ui's `Card` puts those classes on its *border* layer, while an inner
+  texture layer arranges the children with its own spacing — 13px of gap that no
+  class of yours controls. **Wrap your rows in a `div` you own and put the
+  layout there**, letting the library element carry only the size.
+- **Reserve exactly what the common case occupies — over-reserving is the same
+  bug as under-reserving.** Space held for content that rarely appears reads as
+  a mysterious gap. The Stack panel's task area reserved `6.625rem` for one card
+  *plus* an "N more…" row that almost never renders (only one task is ever
+  visible), leaving ~2rem of dead space above the next card. Reserving one card
+  (`min-h-[4.625rem]`) removed the gap and still held the section steady as
+  tasks start and clear. Size the reservation to what is normally there, not to
+  the worst case.
 - **Verify across states, not in isolation.** Layout balance only shows up when
   you trigger every state of a component (loading, pass, fail, empty,
   populated) live in the browser — reasoning about one state's styles in
@@ -70,6 +107,11 @@ layout-jump complaints come from. Rules, in priority order:
   styling for the *same kind of title* across views (e.g. a plan's title reads
   the same way in the list and in its detail view) rather than inventing a
   different weight per screen.
+- **One font per line of text.** A line that mixes fonts to highlight its
+  numbers (a mono `16%` inside a sans sentence) reads as a rendering bug, not as
+  emphasis. Pick the font for the whole line — including its digits, durations
+  and percentages — and let size, weight, or colour carry any emphasis within
+  it.
 - Prefer paper-ui's existing `Stamp`/color conventions for conveying state
   (pass/fail/running, plan status) over inventing new color meanings. Once a
   color means something in one place (e.g. rose = fail), keep that meaning

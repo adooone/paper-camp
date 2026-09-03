@@ -98,6 +98,7 @@ opencode capacity, which reports nothing comparable today.
 - [x] Cover the corrected path in tests and run the quality checks
       Real payload shape parsed, both windows surfaced, probe kills on first event; check-types, lint, vitest, consistency green.
 - [x] [manual] Parse rate_limit_info and drive capacity from real utilization
+- [x] [manual] Unify capacity/agent card layout and shorten task titles
 
 ### Thread
 - [x] 2026-09-03 [decision] [agent] Capacity is captured from runs and refreshed on click — never polled. Every agent run already carries the event, so storing it costs nothing; a Refresh control covers usage spent outside paper-camp. Measured: the probe kills on the second stream line, ~3.4s, with utilization unchanged (0.11) across two consecutive probes.

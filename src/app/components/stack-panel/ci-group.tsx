@@ -89,7 +89,7 @@ export const CiGroup = () => {
           <div className="flex flex-wrap gap-x-3 text-2xs">
             {ci.releasePr && (
               <a href={ci.releasePr.url} target="_blank" rel="noreferrer" className={linkClass}>
-                Release PR #{ci.releasePr.number}
+                Release PR <span className="font-mono">#{ci.releasePr.number}</span>
               </a>
             )}
             <a href={actionsUrl} target="_blank" rel="noreferrer" className={linkClass}>

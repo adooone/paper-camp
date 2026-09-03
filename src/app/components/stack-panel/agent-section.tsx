@@ -1,18 +1,22 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { AGENT_LABELS, type AgentTaskState, type AgentTaskStatus } from '@/types/index';
+import {
+  AGENT_LABELS,
+  type AgentTaskState,
+  type AgentTaskStatus,
+  type TaskKind,
+} from '@/types/index';
 import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { CapacityRow } from './capacity-row';
-import { chalkStatusFill, chalkStatusText, formatLastRun, sectionLabelClassName } from './shared';
+import { chalkStatusFill, chalkStatusText, formatLastRun, groupLabelClassName } from './shared';
 
 const MAX_VISIBLE_TASKS = 1;
-// Fixed so card height doesn't vary with title/metadata truncation; 4.625rem is the
-// minimum for the two-line layout (padding + row gap + title row + metadata/Stamp row).
+// Shared by the task and capacity cards so they read as one stack. Their contents flex
+// to fit it; nothing inside carries a height of its own.
 const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
-// One card plus the "N more" row, reserved so the empty state doesn't shrink the
-// panel when tasks finish and clear.
-const TASK_STACK_MIN_HEIGHT_CLASS = 'basis-[6.625rem]';
+// Reserved so the Desk section below holds still as tasks start, finish, and clear.
+const TASK_STACK_MIN_HEIGHT_CLASS = 'min-h-[4.625rem]';
 
 export const taskKindLabel = (task: AgentTaskState): string => {
   switch (task.taskKind) {
@@ -49,6 +53,35 @@ export const taskKindLabel = (task: AgentTaskState): string => {
     default:
       return '';
   }
+};
+
+const SHORT_KIND_LABELS: Partial<Record<TaskKind, string>> = {
+  phase: 'Phase',
+  'run-all': 'Phases',
+  'commit-suggest': 'Commit',
+  'fix-review': 'Fix',
+  'pr-review': 'Review',
+  'batch-reconcile': 'Reconcile',
+  reconcile: 'Reconcile',
+  'batch-draft': 'Draft',
+  draft: 'Draft',
+  extend: 'Extend',
+  audit: 'Audit',
+  'overlap-check': 'Overlap',
+  sync: 'Sync',
+  'resolve-conflict': 'Conflict',
+};
+
+/** `Phases: IDEA-123` — the kind and the entity, not the whole title, so the id
+ *  survives at panel width. Falls back to the title when there is no id. */
+export const taskCardTitle = (task: AgentTaskState): string => {
+  const kind = SHORT_KIND_LABELS[task.taskKind];
+  if (!kind) return task.planId ?? task.planTitle;
+  const numbered =
+    task.taskKind === 'phase' && task.phaseIndex !== undefined
+      ? `${kind} ${task.phaseIndex + 1}`
+      : kind;
+  return task.planId ? `${numbered}: ${task.planId}` : numbered;
 };
 
 export const taskSubtitle = (task: AgentTaskState): string => {
@@ -115,11 +148,10 @@ const AgentTaskCard = ({
         className="flex h-full min-w-0 cursor-pointer flex-col justify-center gap-1 rounded-[10px]"
       >
         <span className="block min-w-[6ch] overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm font-semibold text-desk-chalk">
-          {task.planTitle}
-          {taskSubtitle(task)}
+          {taskCardTitle(task)}
         </span>
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-2xs text-desk-text-muted">
+          <span className="min-w-0 shrink-0 whitespace-nowrap font-handwritten text-xs text-desk-text-muted">
             {AGENT_LABELS[task.agentId]} · {formatLastRun(task.startedAt)}
           </span>
           <div className="flex shrink-0 items-center gap-2">
@@ -180,19 +212,21 @@ export const AgentSection = () => {
 
   return (
     <div className="flex min-h-0 flex-none flex-col p-[var(--pc-stack-pad)]">
-      <h3 className={`${sectionLabelClassName} m-0`}>Agent</h3>
+      <h3 className={`${groupLabelClassName} m-0`}>Agent</h3>
       <div
-        className={`flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto ${TASK_STACK_MIN_HEIGHT_CLASS} ${
-          visibleTasks.length > 0 ? 'justify-start' : 'justify-center'
-        }`}
+        className={`flex shrink-0 flex-col justify-start gap-2 overflow-y-auto ${TASK_STACK_MIN_HEIGHT_CLASS}`}
       >
         {visibleTasks.length > 0 ? (
           visibleTasks.map((task) => (
             <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
           ))
         ) : (
-          <Card surface="chalkboard" size="small">
-            <p className="m-0 text-center text-xs opacity-50">No agent running.</p>
+          <Card
+            surface="chalkboard"
+            size="small"
+            className={`flex items-center ${TASK_CARD_HEIGHT_CLASS}`}
+          >
+            <p className="m-0 text-xs opacity-50">No agent running.</p>
           </Card>
         )}
         {hiddenCount > 0 && (
@@ -206,7 +240,7 @@ export const AgentSection = () => {
         )}
       </div>
       <div className="mt-2 shrink-0">
-        <CapacityRow />
+        <CapacityRow heightClassName={TASK_CARD_HEIGHT_CLASS} />
       </div>
     </div>
   );

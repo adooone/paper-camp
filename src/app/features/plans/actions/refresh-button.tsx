@@ -1,12 +1,13 @@
 import { RefreshIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
-import { IconButton, useToast } from '@dendelion/paper-ui';
-import { formatFetchedAt } from '../helpers/helpers';
+import { Button, IconButton, useToast } from '@dendelion/paper-ui';
 
 interface RefreshButtonProps {
   label?: string;
   refreshingLabel?: string;
   surface?: 'paper' | 'chalkboard';
+  /** Render the label as visible text rather than an icon-only control. */
+  withText?: boolean;
 }
 
 /** Only re-reads what's already there — distinct from `WorklistActionsMenu`'s
@@ -15,10 +16,10 @@ export const RefreshButton = ({
   label = 'Refresh data',
   refreshingLabel = 'Refreshing…',
   surface,
+  withText = false,
 }: RefreshButtonProps = {}) => {
   const refreshAll = useAppStore((s) => s.refreshAll);
   const refreshing = useAppStore((s) => s.refreshing);
-  const prFetchedAt = useAppStore((s) => s.status?.prFetchedAt ?? null);
   const { toast } = useToast();
 
   const handleClick = async () => {
@@ -39,15 +40,23 @@ export const RefreshButton = ({
     }
   };
 
+  if (withText) {
+    return (
+      <Button
+        size="small"
+        variant="ghost"
+        surface={surface}
+        disabled={refreshing}
+        onClick={handleClick}
+        className="font-handwritten text-xs"
+      >
+        {refreshing ? refreshingLabel : label}
+      </Button>
+    );
+  }
+
   return (
     <span className="inline-flex items-center gap-2">
-      {prFetchedAt != null && (
-        <span
-          className={`text-xs whitespace-nowrap ${surface === 'chalkboard' ? 'text-desk-text-muted' : 'opacity-[0.45]'}`}
-        >
-          {formatFetchedAt(prFetchedAt)}
-        </span>
-      )}
       <IconButton
         icon={
           <span className="inline-flex">

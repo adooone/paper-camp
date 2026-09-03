@@ -1,6 +1,6 @@
 import type { AgentTaskState } from '@/types/index';
 import { describe, expect, it } from 'vitest';
-import { taskKindLabel, taskSubtitle } from './agent-section';
+import { taskCardTitle, taskKindLabel, taskSubtitle } from './agent-section';
 
 const task = (overrides: Partial<AgentTaskState> = {}): AgentTaskState => ({
   id: 't1',
@@ -60,5 +60,28 @@ describe('taskSubtitle', () => {
 
   it('is empty when the kind has no label at all', () => {
     expect(taskSubtitle(task({ taskKind: 'phase', phaseIndex: undefined }))).toBe('');
+  });
+});
+
+describe('taskCardTitle', () => {
+  it('names the kind and the entity, not the plan title', () => {
+    expect(taskCardTitle(task({ taskKind: 'run-all', planId: 'IDEA-123' }))).toBe(
+      'Phases: IDEA-123',
+    );
+    expect(taskCardTitle(task({ taskKind: 'commit-suggest', planId: 'IDEA-321' }))).toBe(
+      'Commit: IDEA-321',
+    );
+  });
+
+  it('numbers a single phase', () => {
+    expect(taskCardTitle(task({ taskKind: 'phase', phaseIndex: 2, planId: 'IDEA-7' }))).toBe(
+      'Phase 3: IDEA-7',
+    );
+  });
+
+  it('falls back to the kind alone when the task carries no entity id', () => {
+    expect(
+      taskCardTitle(task({ taskKind: 'commit-suggest', planTitle: 'Suggest commit message' })),
+    ).toBe('Commit');
   });
 });

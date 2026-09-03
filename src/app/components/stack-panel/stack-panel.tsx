@@ -1,5 +1,5 @@
 import { useStackPanel } from '@/app/hooks/use-stack-panel';
-import { Divider, IconButton, Spinner } from '@dendelion/paper-ui';
+import { IconButton, Spinner } from '@dendelion/paper-ui';
 import { AgentSection } from './agent-section';
 import { DeskSection } from './desk-section';
 
@@ -64,9 +64,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         className="fixed inset-y-0 right-0 z-[300] flex w-[min(var(--pc-stack-width),100vw)] flex-col overflow-hidden border-l-4 border-paper-950/[12%] text-desk-text bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]"
         style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
       >
-        <div className="flex h-14 shrink-0 items-center justify-between px-[var(--pc-stack-pad)]">
-          <h2 className="m-0 font-display-luminari text-base font-bold text-desk-chalk">Stack</h2>
-          {!pinned && (
+        {!pinned && (
+          <div className="flex h-10 shrink-0 items-center justify-end px-[var(--pc-stack-pad)]">
             <IconButton
               icon={<span className="text-sm leading-none">&times;</span>}
               surface="chalkboard"
@@ -75,9 +74,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
               onClick={onToggle}
               className="h-7 w-7 border border-desk-border"
             />
-          )}
-        </div>
-        <Divider surface="chalkboard" />
+          </div>
+        )}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <AgentSection />
           <DeskSection />

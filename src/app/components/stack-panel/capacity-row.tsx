@@ -1,6 +1,7 @@
+import { RefreshIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import { capacityLevel, latestCapacity, mergeLiveCapacity, resetsAtMs } from '@/core/rate-limit';
-import { Card, Progress, Stamp } from '@dendelion/paper-ui';
+import { Card, IconButton, Progress, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useMemo, useState } from 'react';
 import { chalkStatusFill, chalkStatusText } from './shared';
 
@@ -24,7 +25,11 @@ function formatGap(ms: number): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
-export const CapacityRow = () => {
+export interface CapacityRowProps {
+  heightClassName?: string;
+}
+
+export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
   const taskLog = useAppStore((s) => s.taskLog);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const refreshCapacity = useAppStore((s) => s.refreshCapacity);
@@ -46,72 +51,68 @@ export const CapacityRow = () => {
     void refreshCapacity().finally(() => setRefreshing(false));
   };
 
-  if (!capacity) {
-    return (
-      <Card surface="chalkboard" size="small" className="flex items-center justify-between gap-2">
-        <p className="m-0 text-2xs text-desk-text-muted opacity-70">
-          No capacity report — you're clear of any limit.
-        </p>
-        <button type="button" className="text-2xs underline opacity-70" onClick={refresh}>
-          {refreshing ? 'Checking…' : 'Check now'}
-        </button>
-      </Card>
-    );
-  }
-
-  const { snapshot, capturedAt } = capacity;
-  const level = capacityLevel(snapshot.status);
-  const fiveHour = snapshot.unifiedWindows?.five_hour;
-  const capturedMs = capturedAt ? Date.parse(capturedAt) : null;
+  const snapshot = capacity?.snapshot ?? null;
+  const level = capacityLevel(snapshot?.status ?? 'allowed');
+  const fiveHour = snapshot?.unifiedWindows?.five_hour;
+  const pct = fiveHour ? Math.round(fiveHour.utilization * 100) : 0;
 
   return (
-    <Card surface="chalkboard" size="small" className="flex flex-col gap-1.5">
-      <div className="flex flex-wrap items-center gap-2">
-        <Stamp
-          surface="chalkboard"
-          size="small"
-          fillColor={levelFill[level]}
-          textColor={levelText[level]}
-        >
-          {snapshot.status}
-        </Stamp>
-        {snapshot.overage && (
-          <Stamp
-            surface="chalkboard"
+    <Card surface="chalkboard" size="small" className={heightClassName}>
+      <div className="flex h-full flex-col justify-center gap-1">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+            {fiveHour?.resetsAt === undefined
+              ? 'Capacity'
+              : `Resets in ${formatGap(resetsAtMs(fiveHour.resetsAt) - now)}`}
+          </span>
+          <IconButton
+            icon={
+              <span className="inline-flex">
+                <RefreshIcon size={14} />
+              </span>
+            }
+            label={refreshing ? 'Checking…' : 'Refresh capacity'}
             size="small"
-            fillColor={chalkStatusFill.running}
-            textColor={chalkStatusText.running}
-          >
-            overage
-          </Stamp>
-        )}
-        <span className="ml-auto flex items-center gap-2 text-2xs text-desk-text-muted">
-          {capturedMs !== null && !Number.isNaN(capturedMs) && (
-            <span className="opacity-70">as of {formatGap(now - capturedMs)} ago</span>
-          )}
-          <button type="button" className="underline opacity-70" onClick={refresh}>
-            {refreshing ? 'Checking…' : 'Refresh'}
-          </button>
-        </span>
-      </div>
-      {fiveHour && (
-        <div className="flex items-center gap-2">
+            variant="ghost"
+            surface="chalkboard"
+            disabled={refreshing}
+            onClick={refresh}
+            className="h-auto min-h-0 w-auto shrink-0 p-0"
+          />
+        </div>
+        <div className="flex min-w-0 items-center justify-between gap-2">
           <Progress
-            className="flex-1"
-            value={Math.round(fiveHour.utilization * 100)}
+            className="min-w-0 flex-1"
+            value={pct}
             max={100}
-            color={levelFill[level]}
-            height={4}
+            // The chalk *Text* tokens are the light marks on the board; the *Fill*
+            // tokens are dark stamp backgrounds and vanish against it.
+            color={levelText[level]}
             surface="chalkboard"
           />
-          <span className="shrink-0 text-2xs text-desk-text-muted">
-            {Math.round(fiveHour.utilization * 100)}%
-            {fiveHour.resetsAt === undefined
-              ? ''
-              : ` · resets in ${formatGap(resetsAtMs(fiveHour.resetsAt) - now)}`}
+          <span className="flex shrink-0 items-center gap-2">
+            {snapshot?.overage && (
+              <Stamp
+                surface="chalkboard"
+                size="small"
+                fillColor={chalkStatusFill.running}
+                textColor={chalkStatusText.running}
+              >
+                overage
+              </Stamp>
+            )}
+            <Stamp
+              surface="chalkboard"
+              size="small"
+              fillColor={levelFill[level]}
+              textColor={levelText[level]}
+              className="leading-none"
+            >
+              {fiveHour ? `${pct}%` : (snapshot?.status ?? 'no report')}
+            </Stamp>
           </span>
         </div>
-      )}
+      </div>
     </Card>
   );
 };
