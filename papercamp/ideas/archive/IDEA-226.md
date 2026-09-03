@@ -2,7 +2,7 @@
 id: IDEA-226
 title: Read paper-ui source from node_modules
 type: docs
-status: review
+status: done
 created: 2026-09-01
 updated: 2026-09-03
 tags:
