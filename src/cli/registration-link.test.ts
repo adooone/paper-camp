@@ -8,7 +8,6 @@ vi.mock('../core/tailnet', () => ({ readTailnetStatus: mockReadTailnetStatus }))
 
 import {
   bestNetworkHost,
-  buildRegistrationLink,
   buildRegistrationLinkForRuntime,
   canReachRuntime,
   hostedClientUrl,
@@ -74,27 +73,6 @@ describe('buildRegistrationLinkForRuntime', () => {
   it('defaults to the configured hosted client when none is passed', () => {
     expect(buildRegistrationLinkForRuntime('http://localhost:3333', 'abc123')).toBe(
       'https://paper-camp.vercel.app/?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123',
-    );
-  });
-});
-
-describe('buildRegistrationLink', () => {
-  it('builds the runtime address from host and port, still on the hosted client origin', () => {
-    expect(
-      buildRegistrationLink(3333, 'abc123', 'localhost', 'https://paper-camp.vercel.app'),
-    ).toBe('https://paper-camp.vercel.app/?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123');
-  });
-
-  it('builds a link for whichever host the caller picked', () => {
-    expect(
-      buildRegistrationLink(
-        3333,
-        'abc',
-        'deimos.pitta-ray.ts.net',
-        'https://paper-camp.vercel.app',
-      ),
-    ).toBe(
-      'https://paper-camp.vercel.app/?runtime=http%3A%2F%2Fdeimos.pitta-ray.ts.net%3A3333&token=abc',
     );
   });
 });
@@ -202,29 +180,31 @@ describe('networkRegistrationLink', () => {
     mockReadTailnetStatus.mockReset();
   });
 
-  it('emits a single hosted-client link for this machine', async () => {
+  it('reports blocked, with no link, for the default https hosted client and an http runtime', async () => {
     mockReadTailnetStatus.mockResolvedValue(undefined);
-    const link = await networkRegistrationLink(3333, 'abc123');
-    expect(link).toBeDefined();
-    expect(link?.startsWith('https://paper-camp.vercel.app/?runtime=')).toBe(true);
-    expect(link).toContain('token=abc123');
+    const registration = await networkRegistrationLink(3333, 'abc123');
+    expect(registration.blocked).toBe(true);
+    expect(registration.link).toBeUndefined();
   });
 
-  it('prefers the MagicDNS name over an address when Tailscale is up', async () => {
+  it('prefers the MagicDNS name over an address once an http hosted client makes the pair reachable', async () => {
+    process.env.PAPERCAMP_HOSTED_CLIENT_URL = 'http://camp.example.com';
     mockReadTailnetStatus.mockResolvedValue({
       selfDnsName: 'deimos.pitta-ray.ts.net',
       magicDnsSuffix: 'pitta-ray.ts.net',
       onlinePeers: [],
     });
-    const link = await networkRegistrationLink(3333, 'abc123');
-    expect(link).toBe(
-      'https://paper-camp.vercel.app/?runtime=http%3A%2F%2Fdeimos.pitta-ray.ts.net%3A3333&token=abc123',
+    const registration = await networkRegistrationLink(3333, 'abc123');
+    expect(registration.blocked).toBe(false);
+    expect(registration.link).toBe(
+      'http://camp.example.com/?runtime=http%3A%2F%2Fdeimos.pitta-ray.ts.net%3A3333&token=abc123',
     );
   });
 
   it('falls back to the address order when Tailscale is down', async () => {
+    process.env.PAPERCAMP_HOSTED_CLIENT_URL = 'http://camp.example.com';
     mockReadTailnetStatus.mockResolvedValue(undefined);
-    const link = await networkRegistrationLink(3333, 'abc123');
-    expect(link).not.toContain('.ts.net');
+    const registration = await networkRegistrationLink(3333, 'abc123');
+    expect(registration.link).not.toContain('.ts.net');
   });
 });

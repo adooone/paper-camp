@@ -24,6 +24,26 @@ describe('formatDevBanner', () => {
     expect(banner).not.toContain('another device');
   });
 
+  it('prints the HTTPS remedy instead of the Network row when the pair is blocked', () => {
+    const banner = formatDevBanner({
+      ...input,
+      networkLink: undefined,
+      networkBlocked: true,
+      color: false,
+    });
+    expect(banner).toContain('Local:');
+    expect(banner).not.toContain('Network:');
+    expect(banner).toContain(
+      'Another device needs an HTTPS address — rerun with --tailnet or --share.',
+    );
+  });
+
+  it('prefers the Network row over the remedy when a link is present', () => {
+    const banner = formatDevBanner({ ...input, networkBlocked: true, color: false });
+    expect(banner).toContain(`Network: ${input.networkLink}`);
+    expect(banner).not.toContain('rerun with --tailnet or --share');
+  });
+
   it('emits no escape codes without color, so piped output stays clean', () => {
     expect(formatDevBanner({ ...input, color: false })).not.toContain('\x1b[');
   });

@@ -26,7 +26,11 @@ import { readTailnetStatus } from '../core/tailnet';
 import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
 import { formatDevBanner, formatDimNote, formatShareLine, formatTailnetLine } from './dev-banner';
 import { portInUseMessage } from './dev-port';
-import { buildRegistrationLinkForRuntime, networkRegistrationLink } from './registration-link';
+import {
+  type NetworkRegistration,
+  buildRegistrationLinkForRuntime,
+  networkRegistrationLink,
+} from './registration-link';
 import { appDir, loadIndexHtml, serveStatic } from './serve-static';
 import {
   TAILNET_HTTPS_CERTS_MISSING_MESSAGE,
@@ -189,14 +193,15 @@ export function createDaemonRequestHandler(
 
 export function formatDaemonBanner(
   port: number,
-  networkLink: string | undefined,
+  network: NetworkRegistration,
   color: boolean,
 ): string {
   return [
     formatDevBanner({
       version: PAPER_CAMP_VERSION,
       localUrl: `http://localhost:${port}`,
-      networkLink,
+      networkLink: network.link,
+      networkBlocked: network.blocked,
       color,
     }),
     formatDimNote('Registered projects mount lazily at /p/<slug>/ on first request.', color),

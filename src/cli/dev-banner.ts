@@ -21,10 +21,17 @@ export interface DevBannerInput {
   version: string;
   localUrl: string;
   networkLink?: string;
+  networkBlocked?: boolean;
   color: boolean;
 }
 
-export function formatDevBanner({ version, localUrl, networkLink, color }: DevBannerInput): string {
+export function formatDevBanner({
+  version,
+  localUrl,
+  networkLink,
+  networkBlocked,
+  color,
+}: DevBannerInput): string {
   const { bold, dim, green, cyan, yellow } = palette(color);
   const row = (label: string, value: string) =>
     `  ${green('➜')}  ${bold(label.padEnd(LABEL_WIDTH))} ${cyan(value)}`;
@@ -39,6 +46,13 @@ export function formatDevBanner({ version, localUrl, networkLink, color }: DevBa
     lines.push(
       row('Network:', networkLink),
       `     ${dim('open the Network link on another device to pair it with this machine')}`,
+    );
+  } else if (networkBlocked) {
+    lines.push(
+      formatDimNote(
+        'Another device needs an HTTPS address — rerun with --tailnet or --share.',
+        color,
+      ),
     );
   }
   return lines.join('\n');

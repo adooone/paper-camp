@@ -18,15 +18,6 @@ export function buildRegistrationLinkForRuntime(
   return `${clientUrl}/?${params}`;
 }
 
-export function buildRegistrationLink(
-  port: number,
-  pairingToken: string,
-  host = 'localhost',
-  clientUrl = hostedClientUrl(),
-): string {
-  return buildRegistrationLinkForRuntime(`http://${host}:${port}`, pairingToken, clientUrl);
-}
-
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 /** Whether a browser on `clientOrigin` will let a fetch through to `runtimeUrl`: browsers
@@ -83,15 +74,25 @@ export function bestNetworkHost(
   );
 }
 
+export interface NetworkRegistration {
+  link?: string;
+  blocked: boolean;
+}
+
 /** Hosted-client pairing link for the best reachable host, if the machine has one. A
  *  MagicDNS name is preferred whenever Tailscale is up — stable across reboots and IP
- *  churn, already trusted tokenlessly, and the only form that can carry a certificate. */
+ *  churn, already trusted tokenlessly, and the only form that can carry a certificate.
+ *  `blocked` reports a host that exists but that the hosted client's browser will
+ *  refuse to fetch, so the caller can print the fix instead of a dead link. */
 export async function networkRegistrationLink(
   port: number,
   pairingToken: string,
-): Promise<string | undefined> {
+): Promise<NetworkRegistration> {
   const tailnet = await readTailnetStatus();
   const host =
     tailnet?.selfDnsName ?? bestNetworkHost(networkInterfaces() as InterfaceEntries, hostname());
-  return host === undefined ? undefined : buildRegistrationLink(port, pairingToken, host);
+  if (host === undefined) return { blocked: false };
+  const runtimeUrl = `http://${host}:${port}`;
+  if (!canReachRuntime(hostedClientUrl(), runtimeUrl)) return { blocked: true };
+  return { link: buildRegistrationLinkForRuntime(runtimeUrl, pairingToken), blocked: false };
 }

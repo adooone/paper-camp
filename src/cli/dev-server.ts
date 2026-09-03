@@ -98,11 +98,13 @@ export async function startDevServer({
   });
 
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
+  const network = await networkRegistrationLink(port, apiMiddleware.pairing.token);
   console.log(
     formatDevBanner({
       version: PAPER_CAMP_VERSION,
       localUrl: `http://localhost:${port}`,
-      networkLink: await networkRegistrationLink(port, apiMiddleware.pairing.token),
+      networkLink: network.link,
+      networkBlocked: network.blocked,
       color,
     }),
   );

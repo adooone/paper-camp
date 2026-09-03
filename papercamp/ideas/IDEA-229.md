@@ -77,8 +77,9 @@ admin-console setting on the user's side and already has its own message
 - [x] Decide reachability from the two origins
       Add a helper to `registration-link.ts` that takes the client origin and the runtime URL and reports whether the browser will allow the connection: an `https:` client needs an `https:` runtime, an `http:` client accepts either, and loopback is always allowed. Unit-test the matrix.
       run: 2m17s · 24 in · 5.5k out · sonnet-5
-- [ ] Print the remedy instead of a dead Network row
+- [x] Print the remedy instead of a dead Network row
       When the pair is incompatible, omit the Network row and the pairing note and print the `--tailnet`/`--share` line in their place. Wire it through both `dev-server.ts` and `daemon-server.ts` so the two banners stay identical.
+      run: 10m28s · 76 in · 21k out · sonnet-5
 - [ ] Stamp Needs HTTPS in the hub
       Carry a scheme-blocked flag through `use-runtime-statuses.ts` from the runtime URL and `window.location.protocol`, and branch `project-row.tsx` to a warning stamp with the tooltip before the unreachable branch.
 - [ ] Correct USAGE.md and run the quality checks
