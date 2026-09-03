@@ -2,7 +2,7 @@
 id: IDEA-228
 title: Point the registry elsewhere for tests
 type: chore
-status: idea
+status: review
 created: 2026-09-03
 tags:
   - cli
@@ -51,5 +51,6 @@ pairing file, which follows the config dir as it already does.
 - [x] Cover the daemon's project listing
       Daemon started against a temp registry: `/api/machine/projects` lists them, `/p/<slug>/` mounts, an unknown slug 404s.
       run: 4m34s · 46 in · 15.7k out · sonnet-5
-- [ ] Document it and run the quality checks
+- [x] Document it and run the quality checks
       `USAGE.md` names the variable as the way to keep a separate set of projects; check-types, lint, vitest, consistency green.
+      run: 6m34s · 30 in · 3.6k out · sonnet-5
