@@ -70,7 +70,7 @@ capacity, which reports nothing comparable today.
 - [x] Expire spent snapshots
       `latestCapacity` treats a snapshot whose `resetsAt` has passed as unknown rather than current.
       run: 4m36s · 42 in · 7.9k out · sonnet-5
-- [ ] Sum window spend from the task log
+- [x] Sum window spend from the task log
       Tokens and cost across runs since the current window opened, exposed beside the snapshot.
 - [ ] Add the compact indicator to the Stack panel
       One row: the reset-window bar when known, window spend, status stamp and overage, with `null` rendering as a quiet resting state.
