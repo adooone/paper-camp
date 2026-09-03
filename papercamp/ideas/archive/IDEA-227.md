@@ -2,11 +2,13 @@
 id: IDEA-227
 title: Daemon prints the dev banner
 type: feat
-status: review
+status: done
 created: 2026-09-03
+updated: 2026-09-03
 tags:
   - cli
 subject: Multi-project
+order: 1
 ---
 
 `paper-camp daemon` is becoming the primary way in — one process per machine
