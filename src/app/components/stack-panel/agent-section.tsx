@@ -132,7 +132,7 @@ const AgentTaskCard = ({
   };
 
   return (
-    <Card surface="chalkboard" size="small" className={`stack-task-card ${TASK_CARD_HEIGHT_CLASS}`}>
+    <Card surface="chalkboard" size="small" className={TASK_CARD_HEIGHT_CLASS}>
       {/* biome-ignore lint/a11y/useSemanticElements: the Stop IconButton nests inside, and a native <button> can't contain another button. */}
       <div
         role="button"
@@ -145,9 +145,9 @@ const AgentTaskCard = ({
             openTaskPage();
           }
         }}
-        className="flex h-full min-w-0 cursor-pointer flex-col justify-center gap-1 rounded-[10px]"
+        className="flex h-full min-w-0 cursor-pointer flex-col justify-between gap-1 rounded-[10px]"
       >
-        <span className="block min-w-[6ch] overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm font-semibold text-desk-chalk">
+        <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
           {taskCardTitle(task)}
         </span>
         <div className="flex min-w-0 items-center justify-between gap-2">
@@ -196,6 +196,7 @@ const AgentTaskCard = ({
                 label="Stop agent"
                 onClick={handleStop}
                 disabled={task.status === 'stopping'}
+                className="h-auto min-h-0 w-auto shrink-0 p-0"
               />
             )}
           </div>

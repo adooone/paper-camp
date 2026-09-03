@@ -64,7 +64,7 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
 
   return (
     <Card surface="chalkboard" size="small" className={heightClassName}>
-      <div className="flex h-full flex-col justify-center gap-1">
+      <div className="flex h-full flex-col justify-between gap-1">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
             {fiveHour?.resetsAt === undefined

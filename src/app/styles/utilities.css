@@ -71,10 +71,6 @@ header[class*="layout-module__header___"] {
  * padding is still sized for content cards, so tighten it to a single-line row
  * fit — same reach-into-the-nested-div pattern as .plan-row-card above.
  */
-.stack-task-card [class*="textureLayer"] {
-  padding: 0.5rem 0.875rem;
-}
-
 /*
  * paper-ui's phase Table is a real <table> with fixed pixel column widths
  * (colgroup), which don't reflow — below phone width this drops every table

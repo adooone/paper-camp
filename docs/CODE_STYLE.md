@@ -57,7 +57,7 @@ cards are the exception: they stay `surface="chalkboard"`.
 The default `Button` (`variant="primary"`) is the app's accent green — paper-camp
 themes paper-ui's brand primary through the `--pui-btn-primary` CSS vars in
 `utilities.css` `:root`, which the button's fills read (see
-`~/dev/paper-ui/src/components/button/button.module.scss`). So a primary/affirmative
+`node_modules/@dendelion/paper-ui/src/components/button/button.module.scss`). So a primary/affirmative
 action is just `<Button>` — no per-button styling. Use `variant="secondary"` (pale)
 or `variant="ghost"` (borderless) for lesser or cancel-style actions; `variant="danger"`
 for destructive ones. Never hand-color a button's fill.

@@ -58,22 +58,36 @@ broken `npm publish` too).
   `package.json` points `main`/`module`/`types` at `dist/index.{js,mjs,d.ts}`.
   If you edit anything under `~/dev/paper-ui/src` while linked, it has **no
   effect** in paper-camp until you run `pnpm run build` inside `~/dev/paper-ui`.
-- **Publishing a new paper-ui version:** in `~/dev/paper-ui`, write a
-  changeset (`.changeset/*.md`, sized correctly — new components/exports are
-  `minor`, behavior-preserving fixes are `patch`), run `pnpm run version`
-  (needs a `GITHUB_TOKEN` env var for the changelog generator — `gh auth
-  token` works), verify with `pnpm run check-types && pnpm run build`, commit,
-  then `pnpm publish --access public`. Bump paper-camp's `package.json` range
-  afterward and `pnpm install`.
+- **Publishing a new paper-ui version:** paper-ui releases through
+  release-please, not Changesets — there is no `.changeset/` directory and no
+  `version` script, and `npm publish` runs from `publish.yml` after a release
+  is published. Never run `pnpm publish` locally: it mints a version
+  release-please's manifest does not know about. Instead, in `~/dev/paper-ui`
+  verify with `pnpm run check-types && pnpm run lint && pnpm run build`, then
+  commit on a branch with a **Conventional Commit** and open a PR. Only `feat`
+  (minor, while `bump-minor-pre-major` holds), `fix`, `refactor` and `docs`
+  produce a release — **`chore` is `hidden: true` in
+  `.github/release-please-config.json` and cuts no version at all**, so a
+  change that must reach consumers is never a `chore`. Merging the PR makes
+  release-please open a release PR; merging *that* publishes to npm. Bump
+  paper-camp's `package.json` range and `pnpm install` only once the version
+  is actually on npm.
+- **paper-ui lands PRs as merge commits, so the *commit message* is what
+  release-please reads — not the PR title.** Retitling a PR changes nothing
+  unless it is squash-merged (only squash promotes the title to the commit
+  message). Fix the type by amending the commit, so it works under any merge
+  strategy. The upside of merge commits: several typed commits on one branch
+  each keep their own changelog entry, so a `feat` and a `fix` can ship in one
+  PR and one release without either being absorbed — prefer that over opening
+  a second PR for a related change.
 - **Check the real source, not just the `.d.ts` — from inside this repo.**
-  The published package ships no `src/components`, but its bundle's source
-  map embeds every original `.tsx`, so the real component source is already
-  in `node_modules`. Print it with `node scripts/paper-ui-source.mjs <name>`
-  (no argument lists every component). Do **not** read
+  Since 0.18.0 the package ships its sources, so read
+  `node_modules/@dendelion/paper-ui/src/components/<name>/` directly —
+  both the `.tsx` and its `.module.scss` are there. Do **not** read
   `~/dev/paper-ui/src/components/` for this: leaving the workspace is what
   makes headless opencode runs stop for an `external_directory` approval.
-  The sibling checkout is needed only for the showcase, SCSS module
-  internals, and editing paper-ui itself.
+  The sibling checkout is needed only for the showcase and for editing
+  paper-ui itself.
 - **When changing paper-ui itself,** follow `~/dev/paper-ui/AGENTS.md`/
   `CODE_STYLE.md` (one component per file, `cn()` for classNames, SCSS modules
   for styles — no hardcoded hex in `.tsx`), then run `pnpm run check-types` and

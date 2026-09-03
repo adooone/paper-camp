@@ -66,6 +66,7 @@ showcase, which the map does not carry.
 - [x] Verify a phase runs clean under opencode
       Run a phase touching a paper-ui component with opencode and confirm no external-directory prompt and no parked run.
       run: 2m30s · 26 in · 5.4k out · sonnet-5
+- [x] [manual] Bump paper-ui to 0.18.0 and read source from node_modules
 
 ### Thread
 - [x] 2026-09-01 [log] [agent] Applied phase 1 out of band: the run-all for [[IDEA-223]] failed twice on this exact denial (`read outside workspace: .../page/page.tsx`, then `.../modal/modal.tsx`), so the convention fix went in immediately rather than waiting to be scheduled. Added `scripts/paper-ui-source.mjs` — the raw source map is a megabyte of JSON, so an instruction to read it directly would not have been followable; the script prints a component's original `.tsx` by name and lists them with no argument. `AGENTS.md` now points there and says explicitly not to read the sibling checkout for this. `knip.json` gained `scripts/*.mjs` as an entry pattern, same fix the Vercel `api/` functions needed.
