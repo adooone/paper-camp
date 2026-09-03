@@ -131,6 +131,62 @@ export function createProjectMounter(
   return { mount, mounted };
 }
 
+/** The daemon's routing decision, isolated from `startDaemonServer`'s process
+ * lifecycle (signal handlers, tunnel, tailnet) so it can be driven by a real
+ * `http.Server` in tests without spinning any of that up. */
+export function createDaemonRequestHandler(
+  registryPath: string,
+  mount: (slug: string) => Promise<ApiMiddleware | null>,
+  staticDir: string,
+  indexHtml: string,
+): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
+  return async (req, res) => {
+    const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
+
+    if (pathname === MACHINE_PROJECTS_PATH) {
+      applyCorsHeaders(req, res);
+      if (req.method === 'OPTIONS') {
+        handlePreflight(req, res);
+        return;
+      }
+      // Host-trust only, same carve-out as /api/pair: a hosted hub must be able to
+      // discover what a reachable machine serves before it has any pairing to lose.
+      if (!isTrustedHost(hostOf(req.headers.host))) {
+        sendJson(res, 403, { error: 'Forbidden: request failed the Host check' });
+        return;
+      }
+      const projects = await readMachineProjectSummaries(registryPath);
+      sendJson(res, 200, { projects });
+      return;
+    }
+
+    const request = parseMountRequest(pathname);
+    if (!request) {
+      await serveStatic(req, res, staticDir, indexHtml);
+      return;
+    }
+
+    const apiMiddleware = await mount(request.slug);
+    if (!apiMiddleware) {
+      res.statusCode = 404;
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.end(`paper-camp daemon: no registered project with slug "${request.slug}"`);
+      return;
+    }
+
+    const query = (req.url ?? '').split('?')[1];
+    req.url = query ? `${request.rest}?${query}` : request.rest;
+
+    const mountedIndexHtml = injectMountAttribute(indexHtml, `/p/${request.slug}`);
+    await apiMiddleware(req, res, () => {
+      serveStatic(req, res, staticDir, mountedIndexHtml).catch((error) => {
+        res.statusCode = 500;
+        res.end(String(error));
+      });
+    });
+  };
+}
+
 export function formatDaemonBanner(
   port: number,
   networkLink: string | undefined,
@@ -173,51 +229,12 @@ export async function startDaemonServer({
     mounted,
   );
 
-  const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
-
-    if (pathname === MACHINE_PROJECTS_PATH) {
-      applyCorsHeaders(req, res);
-      if (req.method === 'OPTIONS') {
-        handlePreflight(req, res);
-        return;
-      }
-      // Host-trust only, same carve-out as /api/pair: a hosted hub must be able to
-      // discover what a reachable machine serves before it has any pairing to lose.
-      if (!isTrustedHost(hostOf(req.headers.host))) {
-        sendJson(res, 403, { error: 'Forbidden: request failed the Host check' });
-        return;
-      }
-      const projects = await readMachineProjectSummaries(defaultRegistryPath());
-      sendJson(res, 200, { projects });
-      return;
-    }
-
-    const request = parseMountRequest(pathname);
-    if (!request) {
-      await serveStatic(req, res, staticDir, indexHtml);
-      return;
-    }
-
-    const apiMiddleware = await mount(request.slug);
-    if (!apiMiddleware) {
-      res.statusCode = 404;
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.end(`paper-camp daemon: no registered project with slug "${request.slug}"`);
-      return;
-    }
-
-    const query = (req.url ?? '').split('?')[1];
-    req.url = query ? `${request.rest}?${query}` : request.rest;
-
-    const mountedIndexHtml = injectMountAttribute(indexHtml, `/p/${request.slug}`);
-    await apiMiddleware(req, res, () => {
-      serveStatic(req, res, staticDir, mountedIndexHtml).catch((error) => {
-        res.statusCode = 500;
-        res.end(String(error));
-      });
-    });
-  };
+  const handleRequest = createDaemonRequestHandler(
+    defaultRegistryPath(),
+    mount,
+    staticDir,
+    indexHtml,
+  );
 
   const server = createServer((req, res) => {
     handleRequest(req, res).catch((error) => {

@@ -1,11 +1,14 @@
 import { mkdtemp, rm } from 'node:fs/promises';
+import { type Server, createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import type { ApiMiddleware } from '../app/server/api';
 import type { PairingManagerState } from '../app/server/pairing';
 import { type MachineRegistry, addProject, saveRegistry } from '../core/machine-registry';
 import {
+  createDaemonRequestHandler,
   createProjectApi,
   createProjectMounter,
   formatDaemonBanner,
@@ -211,5 +214,84 @@ describe('formatDaemonBanner', () => {
   it('omits the Network row when the machine has no reachable address', () => {
     const banner = formatDaemonBanner(4333, undefined, false);
     expect(banner).not.toContain('Network:');
+  });
+});
+
+describe('createDaemonRequestHandler', () => {
+  const dirs: string[] = [];
+  const servers: Server[] = [];
+
+  afterAll(async () => {
+    await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
+  });
+
+  afterEach(async () => {
+    await Promise.all(servers.splice(0).map((server) => new Promise((r) => server.close(r))));
+  });
+
+  async function makeRegistryFile(registry: MachineRegistry): Promise<string> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-e2e-'));
+    dirs.push(dir);
+    const path = join(dir, 'projects.json');
+    await saveRegistry(path, registry);
+    return path;
+  }
+
+  async function startHandler(registryPath: string): Promise<{ port: number; seenUrls: string[] }> {
+    const seenUrls: string[] = [];
+    const mockedApi = vi.fn((req, res) => {
+      seenUrls.push(req.url ?? '');
+      res.statusCode = 200;
+      res.end('mounted');
+    }) as unknown as ApiMiddleware;
+    const { mount } = createProjectMounter(registryPath, () => Promise.resolve(mockedApi));
+    const handler = createDaemonRequestHandler(registryPath, mount, '/nonexistent', '<html/>');
+    const server = createServer((req, res) => {
+      handler(req, res).catch((error) => {
+        res.statusCode = 500;
+        res.end(String(error));
+      });
+    });
+    servers.push(server);
+    const port = await new Promise<number>((resolve) => {
+      server.listen(0, '127.0.0.1', () => resolve((server.address() as AddressInfo).port));
+    });
+    return { port, seenUrls };
+  }
+
+  it('lists registered projects at /api/machine/projects for a loopback caller', async () => {
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
+    );
+    const { port } = await startHandler(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/machine/projects`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ projects: [{ slug: 'demo', name: 'Demo' }] });
+  });
+
+  it('mounts a registered slug and rewrites the forwarded URL to strip the /p/<slug> prefix', async () => {
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
+    );
+    const { port, seenUrls } = await startHandler(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/p/demo/sub?x=1`);
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('mounted');
+    expect(seenUrls).toEqual(['/sub?x=1']);
+  });
+
+  it('404s an unregistered slug without mounting anything', async () => {
+    const registryPath = await makeRegistryFile({ version: 1, projects: [] });
+    const { port, seenUrls } = await startHandler(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/p/unknown/`);
+
+    expect(response.status).toBe(404);
+    expect(await response.text()).toContain('no registered project with slug "unknown"');
+    expect(seenUrls).toEqual([]);
   });
 });

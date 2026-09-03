@@ -48,7 +48,8 @@ pairing file, which follows the config dir as it already does.
 - [x] Cover the registry commands end to end
       `scan`, `ls`, and `rm` tested against a temp config dir, including that a directory without `papercamp/config.json` is skipped.
       run: 1m51s · 32 in · 6.8k out · sonnet-5
-- [ ] Cover the daemon's project listing
+- [x] Cover the daemon's project listing
       Daemon started against a temp registry: `/api/machine/projects` lists them, `/p/<slug>/` mounts, an unknown slug 404s.
+      run: 4m34s · 46 in · 15.7k out · sonnet-5
 - [ ] Document it and run the quality checks
       `USAGE.md` names the variable as the way to keep a separate set of projects; check-types, lint, vitest, consistency green.
