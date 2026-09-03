@@ -204,10 +204,18 @@ program
     'Serve every registered project from one process, mounted at /p/<slug>/ on first request',
   )
   .option('-p, --port <number>', `port to listen on (default: ${DEFAULT_DAEMON_PORT})`)
-  .action(async (opts: { port?: string }) => {
+  .option(
+    '--share',
+    'open an account-less cloudflared quick tunnel so the hosted client can reach this machine from anywhere',
+  )
+  .option(
+    '--tailnet',
+    "serve over HTTPS at this machine's stable MagicDNS address via `tailscale serve`",
+  )
+  .action(async (opts: { port?: string; share?: boolean; tailnet?: boolean }) => {
     const port = opts.port ? Number(opts.port) : DEFAULT_DAEMON_PORT;
     try {
-      await startDaemonServer({ port });
+      await startDaemonServer({ port, share: opts.share, tailnet: opts.tailnet });
     } catch (error) {
       console.error((error as Error).message);
       // Hard-exit: a mounted project's fs watchers may already be running by the

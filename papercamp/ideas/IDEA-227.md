@@ -54,7 +54,8 @@ surface. Pairing semantics — this changes only what is printed.
 - [x] Drop the bare pairing token line
       The Network link carries the token; printing it separately exposes a credential for no remaining purpose.
       run: 28s · 14 in · 1.2k out · sonnet-5
-- [ ] Extend `--tailnet` and `--share` to the daemon
+- [x] Extend `--tailnet` and `--share` to the daemon
       Same flags, same `Tailnet:` and `Tunnel:` rows, resolved against the daemon's port.
+      run: 2m16s · 44 in · 7.2k out · sonnet-5
 - [ ] Cover the daemon banner in tests and run the quality checks
       Banner rows and token absence asserted; check-types, lint, vitest, consistency green.

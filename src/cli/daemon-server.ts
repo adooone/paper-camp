@@ -22,14 +22,29 @@ import {
   loadRegistry,
 } from '../core/machine-registry';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
+import { readTailnetStatus } from '../core/tailnet';
 import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
-import { formatDevBanner, formatDimNote } from './dev-banner';
+import { formatDevBanner, formatDimNote, formatShareLine, formatTailnetLine } from './dev-banner';
 import { portInUseMessage } from './dev-port';
-import { networkRegistrationLink } from './registration-link';
+import { buildRegistrationLinkForRuntime, networkRegistrationLink } from './registration-link';
 import { appDir, loadIndexHtml, serveStatic } from './serve-static';
+import {
+  TAILNET_HTTPS_CERTS_MISSING_MESSAGE,
+  TAILNET_NOT_RUNNING_MESSAGE,
+  isMissingHttpsCertsError,
+  runTailnetServe,
+} from './tailnet-serve';
+import {
+  CLOUDFLARED_MISSING_MESSAGE,
+  type QuickTunnel,
+  isCloudflaredAvailable,
+  startQuickTunnel,
+} from './tunnel';
 
 export interface DaemonServerOptions {
   port: number;
+  share?: boolean;
+  tailnet?: boolean;
 }
 
 interface MountRequest {
@@ -116,7 +131,15 @@ export function createProjectMounter(
   return { mount, mounted };
 }
 
-export async function startDaemonServer({ port }: DaemonServerOptions): Promise<void> {
+export async function startDaemonServer({
+  port,
+  share,
+  tailnet,
+}: DaemonServerOptions): Promise<void> {
+  if (share && !(await isCloudflaredAvailable())) {
+    throw new Error(CLOUDFLARED_MISSING_MESSAGE);
+  }
+
   const staticDir = appDir();
   const indexHtml = await loadIndexHtml(staticDir);
   if (indexHtml === null) {
@@ -187,7 +210,9 @@ export async function startDaemonServer({ port }: DaemonServerOptions): Promise<
     });
   });
 
+  let tunnel: QuickTunnel | undefined;
   const shutdown = async () => {
+    tunnel?.process.kill();
     await Promise.all(
       [...mounted.values()].map(async (apiMiddleware) => {
         await apiMiddleware.agent.killCurrent();
@@ -218,4 +243,33 @@ export async function startDaemonServer({ port }: DaemonServerOptions): Promise<
   console.log(
     formatDimNote('Registered projects mount lazily at /p/<slug>/ on first request.', color),
   );
+
+  if (tailnet) {
+    const tailnetStatus = await readTailnetStatus();
+    if (!tailnetStatus) {
+      console.error(TAILNET_NOT_RUNNING_MESSAGE);
+    } else {
+      const result = await runTailnetServe(port);
+      if (result.ok) {
+        const tailnetLink = buildRegistrationLinkForRuntime(
+          `https://${tailnetStatus.selfDnsName}/`,
+          pairingState.token,
+        );
+        console.log(formatTailnetLine(tailnetLink, color));
+      } else if (isMissingHttpsCertsError(result.output)) {
+        console.error(TAILNET_HTTPS_CERTS_MISSING_MESSAGE);
+      } else {
+        console.error(`papercamp: tailscale serve failed:\n${result.output}`);
+      }
+    }
+  }
+
+  if (share) {
+    tunnel = await startQuickTunnel(port);
+    const tunnelHost = new URL(tunnel.url).hostname;
+    const existing = process.env.PAPERCAMP_ALLOWED_HOSTS;
+    process.env.PAPERCAMP_ALLOWED_HOSTS = existing ? `${existing},${tunnelHost}` : tunnelHost;
+    const tunnelLink = buildRegistrationLinkForRuntime(tunnel.url, pairingState.token);
+    console.log(formatShareLine(tunnelLink, color));
+  }
 }
