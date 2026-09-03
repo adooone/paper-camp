@@ -58,8 +58,9 @@ showcase, which the map does not carry.
 ### Phases
 - [x] Point the convention at the in-workspace source
       `AGENTS.md` reads component source from `node_modules/@dendelion/paper-ui/dist/index.cjs.map` (`sourcesContent`), naming the showcase, SCSS internals, and editing paper-ui as the only reasons to open the sibling checkout.
-- [ ] Ship `src/components` from paper-ui
+- [x] Ship `src/components` from paper-ui
       Sibling repo: add it to the `files` array with a changeset, publish, then bump the range here — carried out per `AGENTS.md`'s paper-ui publishing steps.
+      run: 5m4s · 52 in · 12.3k out · sonnet-5
 - [ ] Simplify the convention to the published path
       Once the sources ship directly, `AGENTS.md` names `node_modules/@dendelion/paper-ui/src/components/` and drops the source-map route.
 - [ ] Verify a phase runs clean under opencode
