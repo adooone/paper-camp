@@ -4,10 +4,12 @@ title: Read paper-ui source from node_modules
 type: docs
 status: in-progress
 created: 2026-09-01
+updated: 2026-09-03
 tags:
   - docs
   - code-health
 subject: Code health
+order: 1
 ---
 
 `AGENTS.md` tells every agent to read paper-ui component source at
@@ -66,3 +68,6 @@ showcase, which the map does not carry.
 ### Thread
 - [x] 2026-09-01 [log] [agent] Applied phase 1 out of band: the run-all for [[IDEA-223]] failed twice on this exact denial (`read outside workspace: .../page/page.tsx`, then `.../modal/modal.tsx`), so the convention fix went in immediately rather than waiting to be scheduled. Added `scripts/paper-ui-source.mjs` — the raw source map is a megabyte of JSON, so an instruction to read it directly would not have been followable; the script prints a component's original `.tsx` by name and lists them with no argument. `AGENTS.md` now points there and says explicitly not to read the sibling checkout for this. `knip.json` gained `scripts/*.mjs` as an entry pattern, same fix the Vercel `api/` functions needed.
 - [x] 2026-09-01 [note] [agent] `docs/CODE_STYLE.md` still cites `~/dev/paper-ui/src/components/button/button.module.scss` as provenance for button theming. Left as-is: SCSS module contents are genuinely absent from the source map, so there is no in-workspace copy to point at, and it reads as a citation rather than an instruction to open the file.
+- [ ] 2026-09-03 [question] [agent] Run-all parked on phase 2 ("Ship `src/components` from paper-ui") — the agent needs a decision: AGENTS.md's documented paper-ui publishing steps (write a changeset, `pnpm run version`, local `pnpm publish --access public`) are stale — paper-ui dropped Changesets for release-please + Conventional Commits + GitHub Actions in commit 9aabe5b (`.changeset/` and the `version` script no longer exist; `publish.yml` now runs `npm publish` automatically, but only after a `release.yml`-generated release-please PR is merged and a GitHub Release is published). Running a local `pnpm publish` for this phase would create an npm version that release-please's manifest doesn't know about and skip CI/PR review entirely. How do you want phase 2 carried out instead — commit the `files` array change with a Conventional Commit and push it through the normal PR → release-please → GitHub Release pipeline (meaning the paper-camp range bump happens in a later, separate step once that version actually publishes), or something else?
+- [x] 2026-09-03 [chat] push it through the normal PR
+- [x] 2026-09-03 [chat] [agent] Got it — pushing phase 2 through a normal PR: files-array commit → PR → release-please → GitHub Release, with the paper-camp version bump deferred to a later step once it actually publishes. Moving on to that.
