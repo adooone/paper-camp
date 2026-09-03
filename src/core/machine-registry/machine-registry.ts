@@ -17,7 +17,7 @@ export interface MachineRegistry {
 const EMPTY_REGISTRY: MachineRegistry = { version: 1, projects: [] };
 
 export function machineConfigDir(): string {
-  return join(homedir(), '.config', 'paper-camp');
+  return process.env.PAPERCAMP_CONFIG_DIR ?? join(homedir(), '.config', 'paper-camp');
 }
 
 export function defaultRegistryPath(): string {

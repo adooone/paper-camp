@@ -42,8 +42,9 @@ Multiple registries active at once. Registry file format. Moving the
 pairing file, which follows the config dir as it already does.
 
 ### Phases
-- [ ] Honour `PAPERCAMP_CONFIG_DIR`
+- [x] Honour `PAPERCAMP_CONFIG_DIR`
       `machineConfigDir()` reads the variable when set, so the registry and pairing files both follow it; unset behaviour is unchanged.
+      run: 1m21s · 14 in · 1.3k out · sonnet-5
 - [ ] Cover the registry commands end to end
       `scan`, `ls`, and `rm` tested against a temp config dir, including that a directory without `papercamp/config.json` is skipped.
 - [ ] Cover the daemon's project listing
