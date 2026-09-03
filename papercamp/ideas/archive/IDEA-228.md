@@ -2,13 +2,14 @@
 id: IDEA-228
 title: Point the registry elsewhere for tests
 type: chore
-status: review
+status: done
 created: 2026-09-03
 updated: 2026-09-03
 tags:
   - cli
   - testing
 subject: Multi-project
+order: 1
 ---
 
 `defaultRegistryPath()` is the only path the machine registry ever uses:
