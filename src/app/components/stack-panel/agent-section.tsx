@@ -3,6 +3,7 @@ import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { AGENT_LABELS, type AgentTaskState, type AgentTaskStatus } from '@/types/index';
 import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { CapacityRow } from './capacity-row';
 import { chalkStatusFill, chalkStatusText, formatLastRun, sectionLabelClassName } from './shared';
 
 const MAX_VISIBLE_TASKS = 1;
@@ -203,6 +204,9 @@ export const AgentSection = () => {
             {hiddenCount} more…
           </button>
         )}
+      </div>
+      <div className="mt-2 shrink-0">
+        <CapacityRow />
       </div>
     </div>
   );

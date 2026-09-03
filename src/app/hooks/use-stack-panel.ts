@@ -41,6 +41,7 @@ export function useStackPanel(
       loadGitStatus,
       loadAgentStatus,
       loadArchivableIdeas,
+      loadTaskLog,
     } = useAppStore.getState();
     loadStatus();
     loadConsistency();
@@ -48,6 +49,7 @@ export function useStackPanel(
     loadGitStatus();
     loadAgentStatus();
     loadArchivableIdeas();
+    loadTaskLog();
   }, []);
 
   // Catches remote changes (a PR merged on GitHub) faster than the server's own poll.
@@ -95,6 +97,7 @@ export function useStackPanel(
             loadGitStatus,
             loadAgentStatus,
             loadArchivableIdeas,
+            loadTaskLog,
           } = useAppStore.getState();
           loadPlans();
           loadSuggestions();
@@ -104,6 +107,7 @@ export function useStackPanel(
           loadGitStatus();
           loadAgentStatus();
           loadArchivableIdeas();
+          loadTaskLog();
         },
         250,
       );
