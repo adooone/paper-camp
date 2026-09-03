@@ -48,8 +48,9 @@ The banner's own format, which is settled. The hub's connect-to-a-machine
 surface. Pairing semantics — this changes only what is printed.
 
 ### Phases
-- [ ] Give the daemon the shared banner
+- [x] Give the daemon the shared banner
       Print `formatDevBanner` with the daemon's port and a Network link from `networkRegistrationLink`, replacing the three plain lines; keep the lazy-mount note as a dim row.
+      run: 2m45s · 38 in · 8.8k out · sonnet-5
 - [ ] Drop the bare pairing token line
       The Network link carries the token; printing it separately exposes a credential for no remaining purpose.
 - [ ] Extend `--tailnet` and `--share` to the daemon

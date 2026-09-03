@@ -21,8 +21,11 @@ import {
   listProjects,
   loadRegistry,
 } from '../core/machine-registry';
+import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
+import { formatDevBanner, formatDimNote } from './dev-banner';
 import { portInUseMessage } from './dev-port';
+import { networkRegistrationLink } from './registration-link';
 import { appDir, loadIndexHtml, serveStatic } from './serve-static';
 
 export interface DaemonServerOptions {
@@ -203,7 +206,16 @@ export async function startDaemonServer({ port }: DaemonServerOptions): Promise<
     server.listen(port, resolve);
   });
 
-  console.log(`paper-camp daemon listening on http://localhost:${port}`);
-  console.log(`Pairing token: ${pairingState.token}`);
-  console.log('Registered projects mount lazily at /p/<slug>/ on first request.');
+  const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
+  console.log(
+    formatDevBanner({
+      version: PAPER_CAMP_VERSION,
+      localUrl: `http://localhost:${port}`,
+      networkLink: await networkRegistrationLink(port, pairingState.token),
+      color,
+    }),
+  );
+  console.log(
+    formatDimNote('Registered projects mount lazily at /p/<slug>/ on first request.', color),
+  );
 }

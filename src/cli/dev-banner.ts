@@ -49,6 +49,11 @@ function formatExternalLink(label: string, link: string, note: string, color: bo
   return `  ${green('➜')}  ${bold(label.padEnd(LABEL_WIDTH))} ${cyan(link)}  ${dim(note)}`;
 }
 
+export function formatDimNote(note: string, color: boolean): string {
+  const { dim } = palette(color);
+  return `     ${dim(note)}`;
+}
+
 export function formatShareLine(tunnelLink: string, color: boolean): string {
   return formatExternalLink('Tunnel:', tunnelLink, '(reachable from anywhere)', color);
 }
