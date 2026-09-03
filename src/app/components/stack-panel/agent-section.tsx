@@ -170,6 +170,7 @@ const AgentTaskCard = ({
                   size="small"
                   fillColor={statusFill.error}
                   textColor={statusText.error}
+                  className="leading-none"
                 >
                   stopped — agent signed out
                 </Stamp>
@@ -180,6 +181,7 @@ const AgentTaskCard = ({
                 size="small"
                 fillColor={statusFill[task.status]}
                 textColor={statusText[task.status]}
+                className="leading-none"
               >
                 {task.status}
               </Stamp>
@@ -212,7 +214,18 @@ export const AgentSection = () => {
 
   return (
     <div className="flex min-h-0 flex-none flex-col p-[var(--pc-stack-pad)]">
-      <h3 className={`${groupLabelClassName} m-0`}>Agent</h3>
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <h3 className={`${groupLabelClassName} m-0`}>Agent</h3>
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            onClick={() => navigate({ to: '/tasks' })}
+            className="cursor-pointer border-none bg-transparent p-0 font-handwritten text-xs text-desk-text-muted underline"
+          >
+            more
+          </button>
+        )}
+      </div>
       <div
         className={`flex shrink-0 flex-col justify-start gap-2 overflow-y-auto ${TASK_STACK_MIN_HEIGHT_CLASS}`}
       >
@@ -228,15 +241,6 @@ export const AgentSection = () => {
           >
             <p className="m-0 text-xs opacity-50">No agent running.</p>
           </Card>
-        )}
-        {hiddenCount > 0 && (
-          <button
-            type="button"
-            onClick={() => navigate({ to: '/tasks' })}
-            className="shrink-0 cursor-pointer border-none bg-transparent p-0 text-left text-xs text-desk-text-muted underline"
-          >
-            {hiddenCount} more…
-          </button>
         )}
       </div>
       <div className="mt-2 shrink-0">

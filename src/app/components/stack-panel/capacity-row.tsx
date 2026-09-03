@@ -1,8 +1,8 @@
 import { RefreshIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import { capacityLevel, latestCapacity, mergeLiveCapacity, resetsAtMs } from '@/core/rate-limit';
-import { Card, IconButton, Progress, Stamp } from '@dendelion/paper-ui';
-import { useEffect, useMemo, useState } from 'react';
+import { Card, IconButton, Progress, Spinner, Stamp } from '@dendelion/paper-ui';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { chalkStatusFill, chalkStatusText } from './shared';
 
 const levelFill = {
@@ -46,10 +46,16 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
   const logged = useMemo(() => latestCapacity(taskLog), [taskLog]);
   const capacity = mergeLiveCapacity(live, probed ?? logged);
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     setRefreshing(true);
     void refreshCapacity().finally(() => setRefreshing(false));
-  };
+  }, [refreshCapacity]);
+
+  // Once per session: a probe is cheap but not free, so a later mount reuses the
+  // reading already in the store and leaves refreshing to the button.
+  useEffect(() => {
+    if (probed === null) refresh();
+  }, [probed, refresh]);
 
   const snapshot = capacity?.snapshot ?? null;
   const level = capacityLevel(snapshot?.status ?? 'allowed');
@@ -65,20 +71,25 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
               ? 'Capacity'
               : `Resets in ${formatGap(resetsAtMs(fiveHour.resetsAt) - now)}`}
           </span>
-          <IconButton
-            icon={
-              <span className="inline-flex">
-                <RefreshIcon size={14} />
-              </span>
-            }
-            label={refreshing ? 'Checking…' : 'Refresh capacity'}
-            size="small"
-            variant="ghost"
-            surface="chalkboard"
-            disabled={refreshing}
-            onClick={refresh}
-            className="h-auto min-h-0 w-auto shrink-0 p-0"
-          />
+          {refreshing ? (
+            <span className="inline-flex shrink-0">
+              <Spinner size="small" surface="chalkboard" label="Checking capacity" />
+            </span>
+          ) : (
+            <IconButton
+              icon={
+                <span className="inline-flex">
+                  <RefreshIcon size={14} />
+                </span>
+              }
+              label="Refresh capacity"
+              size="small"
+              variant="ghost"
+              surface="chalkboard"
+              onClick={refresh}
+              className="h-auto min-h-0 w-auto shrink-0 p-0"
+            />
+          )}
         </div>
         <div className="flex min-w-0 items-center justify-between gap-2">
           <Progress
