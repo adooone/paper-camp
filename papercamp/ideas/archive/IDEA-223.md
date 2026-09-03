@@ -2,9 +2,9 @@
 id: IDEA-223
 title: Desk discovery for new projects
 type: feat
-status: review
+status: done
 created: 2026-09-01
-updated: 2026-09-02
+updated: 2026-09-03
 tags:
   - app
   - server

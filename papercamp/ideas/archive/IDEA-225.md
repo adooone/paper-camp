@@ -2,13 +2,14 @@
 id: IDEA-225
 title: Capacity indicator in the Stack panel
 type: feat
-status: in-progress
+status: done
 created: 2026-09-01
 updated: 2026-09-03
 tags:
   - app
   - stack
 subject: Run & monitor
+order: 1
 ---
 
 Capacity never displays, and the reason is a parser reading the wrong key —
