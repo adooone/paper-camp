@@ -74,7 +74,11 @@ survives any tool — the app is optional at every step.
 ## Beyond the app
 
 - **CLI**: `paper-camp` mirrors the corpus operations (init, add, audit,
-  PR sync) for scripts and CI.
+  PR sync) for scripts and CI, plus a machine-level project registry
+  (`scan <dir>`, `ls`, `rm <slug>`, `daemon`) at `~/.config/paper-camp/`.
+  Set `PAPERCAMP_CONFIG_DIR` to point that registry at a different
+  directory — a second, separate set of projects, or a throwaway daemon
+  that never touches your real one.
 - **MCP server**: agents connect directly — list plans, add ideas, log
   decisions — with the same guards the app enforces.
 - **CI**: commitlint on every commit, quality/tests/consistency jobs, draft-PR

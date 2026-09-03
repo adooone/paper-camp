@@ -4,6 +4,7 @@ title: Point the registry elsewhere for tests
 type: chore
 status: review
 created: 2026-09-03
+updated: 2026-09-03
 tags:
   - cli
   - testing
@@ -54,3 +55,4 @@ pairing file, which follows the config dir as it already does.
 - [x] Document it and run the quality checks
       `USAGE.md` names the variable as the way to keep a separate set of projects; check-types, lint, vitest, consistency green.
       run: 6m34s · 30 in · 3.6k out · sonnet-5
+- [x] [manual] Document PAPERCAMP_CONFIG_DIR and enable page shading
