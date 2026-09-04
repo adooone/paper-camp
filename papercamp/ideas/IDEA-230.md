@@ -2,7 +2,7 @@
 id: IDEA-230
 title: Get started guide on the empty hub
 type: feat
-status: idea
+status: review
 created: 2026-09-03
 updated: 2026-09-03
 tags:
@@ -108,8 +108,9 @@ following its link, not by scanning the network.
 - [x] Guide the empty hub
       A three-step card above the GitHub card, rendered only when the registry is empty, each step with its command and a copy control, step three switching to `--tailnet` when the hub's origin is HTTPS.
       run: 4m46s · 98 in · 21.2k out · sonnet-5
-- [ ] Correct the docs and run the quality checks
+- [x] Correct the docs and run the quality checks
       USAGE.md's install and "Adding a project" steps match the three commands and the machine link; check-types, lint, vitest, consistency green with no orphans left by the deletions.
+      run: 8m33s · 128 in · 20.1k out · sonnet-5
 
 ### Thread
 - [x] 2026-09-03 [decision] [user] Remove the paste card outright rather than demoting it — the whole flow follows the daemon's instructions, so a URL input is the thing being replaced, not kept as a fallback.
