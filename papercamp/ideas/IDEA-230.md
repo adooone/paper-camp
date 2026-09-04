@@ -90,8 +90,9 @@ Discovery of machines the hub has never met; a machine becomes known by
 following its link, not by scanning the network.
 
 ### Phases
-- [ ] Register the project on `init`
+- [x] Register the project on `init`
       Write the initialized repo into the machine registry through the existing `machine-registry` helpers, honouring `PAPERCAMP_CONFIG_DIR` and re-running clean on an already-registered path.
+      run: 2m27s · 32 in · 7.5k out · sonnet-5
 - [ ] Declare the machine in the daemon's link
       Give `registration-link.ts` a machine variant emitting `?machine=`, point `daemon-server.ts` at it, and leave `dev-server.ts` on `?runtime=`.
 - [ ] Remember machines the hub has met
