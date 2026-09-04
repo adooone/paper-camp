@@ -2,7 +2,7 @@
 id: IDEA-232
 title: Illustrated empty states
 type: feat
-status: idea
+status: review
 created: 2026-09-04
 updated: 2026-09-04
 tags:
@@ -93,8 +93,9 @@ while they are still being drawn.
 - [x] Adopt it on the card and row empties
       The six stats cards, the settings sub-lists and the Stack panel groups use the same component without an illustration; delete the local `EmptyState` in `docs-sidebar.tsx`.
       run: 8m31s · 88 in · 27.5k out · sonnet-5
-- [ ] Cover it in tests and run the quality checks
+- [x] Cover it in tests and run the quality checks
       Assert the illustration is omitted when absent and that copy renders in both surfaces; check-types, lint, vitest, consistency green with no orphaned strings left behind.
+      run: 5m5s · 40 in · 9.7k out · sonnet-5
 
 ### Thread
 - [x] 2026-09-04 [decision] [user] Draw our own paper-native illustrations rather than using the purchased doodle pack, after the licence review below.
