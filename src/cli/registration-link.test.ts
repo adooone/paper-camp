@@ -8,6 +8,7 @@ vi.mock('../core/tailnet', () => ({ readTailnetStatus: mockReadTailnetStatus }))
 
 import {
   bestNetworkHost,
+  buildRegistrationLinkForMachine,
   buildRegistrationLinkForRuntime,
   hostedClientUrl,
   networkRegistrationLink,
@@ -72,6 +73,26 @@ describe('buildRegistrationLinkForRuntime', () => {
   it('defaults to the configured hosted client when none is passed', () => {
     expect(buildRegistrationLinkForRuntime('http://localhost:3333', 'abc123')).toBe(
       'https://paper-camp.vercel.app/?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123',
+    );
+  });
+});
+
+describe('buildRegistrationLinkForMachine', () => {
+  // A `?machine=` link is the daemon declaring it serves a machine, not a single
+  // project — the param is how the hub tells the two link shapes apart on sight.
+  it('carries the machine as a query value, not a runtime', () => {
+    expect(
+      buildRegistrationLinkForMachine(
+        'http://100.80.79.13:4333',
+        'abc123',
+        'https://paper-camp.vercel.app',
+      ),
+    ).toBe('https://paper-camp.vercel.app/?machine=http%3A%2F%2F100.80.79.13%3A4333&token=abc123');
+  });
+
+  it('defaults to the configured hosted client when none is passed', () => {
+    expect(buildRegistrationLinkForMachine('http://localhost:4333', 'abc123')).toBe(
+      'https://paper-camp.vercel.app/?machine=http%3A%2F%2Flocalhost%3A4333&token=abc123',
     );
   });
 });
@@ -171,5 +192,17 @@ describe('networkRegistrationLink', () => {
     mockReadTailnetStatus.mockResolvedValue(undefined);
     const registration = await networkRegistrationLink(3333, 'abc123');
     expect(registration.link).not.toContain('.ts.net');
+  });
+
+  it('builds with the given link builder instead of the runtime default', async () => {
+    process.env.PAPERCAMP_HOSTED_CLIENT_URL = 'http://camp.example.com';
+    mockReadTailnetStatus.mockResolvedValue(undefined);
+    const registration = await networkRegistrationLink(
+      4333,
+      'abc123',
+      buildRegistrationLinkForMachine,
+    );
+    expect(registration.link).toContain('?machine=');
+    expect(registration.link).not.toContain('?runtime=');
   });
 });

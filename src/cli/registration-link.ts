@@ -19,6 +19,15 @@ export function buildRegistrationLinkForRuntime(
   return `${clientUrl}/?${params}`;
 }
 
+export function buildRegistrationLinkForMachine(
+  machineUrl: string,
+  pairingToken: string,
+  clientUrl = hostedClientUrl(),
+): string {
+  const params = new URLSearchParams({ machine: machineUrl, token: pairingToken });
+  return `${clientUrl}/?${params}`;
+}
+
 type InterfaceEntries = Record<
   string,
   { family: string; internal: boolean; address: string }[] | undefined
@@ -76,6 +85,7 @@ export interface NetworkRegistration {
 export async function networkRegistrationLink(
   port: number,
   pairingToken: string,
+  buildLink: (url: string, pairingToken: string) => string = buildRegistrationLinkForRuntime,
 ): Promise<NetworkRegistration> {
   const tailnet = await readTailnetStatus();
   const host =
@@ -83,5 +93,5 @@ export async function networkRegistrationLink(
   if (host === undefined) return { blocked: false };
   const runtimeUrl = `http://${host}:${port}`;
   if (!canReachRuntime(hostedClientUrl(), runtimeUrl)) return { blocked: true };
-  return { link: buildRegistrationLinkForRuntime(runtimeUrl, pairingToken), blocked: false };
+  return { link: buildLink(runtimeUrl, pairingToken), blocked: false };
 }

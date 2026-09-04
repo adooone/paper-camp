@@ -28,7 +28,7 @@ import { formatDevBanner, formatDimNote, formatShareLine, formatTailnetLine } fr
 import { portInUseMessage } from './dev-port';
 import {
   type NetworkRegistration,
-  buildRegistrationLinkForRuntime,
+  buildRegistrationLinkForMachine,
   networkRegistrationLink,
 } from './registration-link';
 import { appDir, loadIndexHtml, serveStatic } from './serve-static';
@@ -271,7 +271,11 @@ export async function startDaemonServer({
 
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
   console.log(
-    formatDaemonBanner(port, await networkRegistrationLink(port, pairingState.token), color),
+    formatDaemonBanner(
+      port,
+      await networkRegistrationLink(port, pairingState.token, buildRegistrationLinkForMachine),
+      color,
+    ),
   );
 
   if (tailnet) {
@@ -281,7 +285,7 @@ export async function startDaemonServer({
     } else {
       const result = await runTailnetServe(port);
       if (result.ok) {
-        const tailnetLink = buildRegistrationLinkForRuntime(
+        const tailnetLink = buildRegistrationLinkForMachine(
           `https://${tailnetStatus.selfDnsName}/`,
           pairingState.token,
         );
@@ -299,7 +303,7 @@ export async function startDaemonServer({
     const tunnelHost = new URL(tunnel.url).hostname;
     const existing = process.env.PAPERCAMP_ALLOWED_HOSTS;
     process.env.PAPERCAMP_ALLOWED_HOSTS = existing ? `${existing},${tunnelHost}` : tunnelHost;
-    const tunnelLink = buildRegistrationLinkForRuntime(tunnel.url, pairingState.token);
+    const tunnelLink = buildRegistrationLinkForMachine(tunnel.url, pairingState.token);
     console.log(formatShareLine(tunnelLink, color));
   }
 }
