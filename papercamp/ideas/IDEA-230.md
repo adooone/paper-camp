@@ -102,8 +102,9 @@ following its link, not by scanning the network.
 - [x] Adopt a machine link into the project picker
       Read `?machine=` before the runtime path in `main.tsx`, pair against it, remember it, and render its `/api/machine/projects` list; choosing a project persists `<machine>/p/<slug>` and opens it.
       run: 10m52s · 80 in · 43.2k out · sonnet-5
-- [ ] Retire the paste card
+- [x] Retire the paste card
       Delete `connect-machine-card.tsx` and `use-machine-connect.ts`, and render one card per remembered machine listing only the projects not already in the registry.
+      run: 4m19s · 52 in · 14.5k out · sonnet-5
 - [ ] Guide the empty hub
       A three-step card above the GitHub card, rendered only when the registry is empty, each step with its command and a copy control, step three switching to `--tailnet` when the hub's origin is HTTPS.
 - [ ] Correct the docs and run the quality checks
