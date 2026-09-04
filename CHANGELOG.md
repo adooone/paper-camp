@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.27.0](https://github.com/adooone/paper-camp/compare/v0.26.0...v0.27.0) (2026-09-04)
+
+
+### Features
+
+* **app:** Adopt a machine link into the project picker ([5b6c24f](https://github.com/adooone/paper-camp/commit/5b6c24ff3d60bf668d03a1fa35691fdaad96668e))
+* **app:** Correct the docs and run the quality checks ([2e1e292](https://github.com/adooone/paper-camp/commit/2e1e292d4be1c07c6f4173b08ca504abd0223376))
+* **app:** Declare the machine in the daemon's link ([7e20f0b](https://github.com/adooone/paper-camp/commit/7e20f0b37049ba595422b0b78d71eefbc8ca06bd))
+* **app:** Guide the empty hub ([752973c](https://github.com/adooone/paper-camp/commit/752973cf46c6d8b6c42a1b333225fb6b270be40e))
+* **app:** Register the project on `init` ([37091a2](https://github.com/adooone/paper-camp/commit/37091a2bae6d039511c28c34f9db1e439b5202aa))
+* **app:** Remember machines the hub has met ([9dd9c92](https://github.com/adooone/paper-camp/commit/9dd9c92c4c6199d836b0a653bd5bf3f604984889))
+* **app:** Replace machine connect flow with remembered machines ([d9ee14c](https://github.com/adooone/paper-camp/commit/d9ee14cc416676c848eeb2cf5f8c3bd1fcb0ef8f))
+* **app:** Retire the paste card ([b9e1a66](https://github.com/adooone/paper-camp/commit/b9e1a662f53b95812e42eb160a74dfcfe24614bd))
+
+
+### Bug Fixes
+
+* **cli:** Correct USAGE.md and run the quality checks ([5455857](https://github.com/adooone/paper-camp/commit/5455857118f80d36d71a0fd0ae22d2f2f96fdb11))
+* **cli:** Decide reachability from the two origins ([c25fc84](https://github.com/adooone/paper-camp/commit/c25fc84ac15d7fa6a5278c83f543f6776a0c12ae))
+* **cli:** Print the remedy instead of a dead Network row ([2cb6aee](https://github.com/adooone/paper-camp/commit/2cb6aeec35bdc3d3be0e82756fbc87e0c73ee787))
+* **cli:** Stamp Needs HTTPS in the hub ([1c5176e](https://github.com/adooone/paper-camp/commit/1c5176e4dca608b03bca47a57414ae9acdadd012))
+* **core:** Isolate scaffold tests from real machine registry ([6bcb8d8](https://github.com/adooone/paper-camp/commit/6bcb8d80a42cea65ec9ba244a9a30794132ca46b))
+
 ## [0.26.0](https://github.com/adooone/paper-camp/compare/v0.25.0...v0.26.0) (2026-09-03)
 
 
