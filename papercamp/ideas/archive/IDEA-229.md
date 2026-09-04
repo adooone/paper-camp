@@ -2,9 +2,9 @@
 id: IDEA-229
 title: Explain the blocked http runtime
 type: fix
-status: review
+status: done
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-04
 tags:
   - cli
   - app
