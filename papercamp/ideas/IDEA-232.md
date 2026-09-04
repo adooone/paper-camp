@@ -81,8 +81,9 @@ Moving the component into paper-ui — worth doing once the drawings settle, not
 while they are still being drawn.
 
 ### Phases
-- [ ] One component for every empty message
+- [x] One component for every empty message
       Add `EmptyState` to `src/app/components/` taking a message, an optional illustration and an optional action; handwritten copy, one spacing scale, one muted token instead of six opacities.
+      run: 3m9s · 44 in · 14.4k out · sonnet-5
 - [ ] Draw the four illustrations
       Single-colour inline SVG on a shared viewBox, filled from `currentColor` so one asset works on parchment and chalkboard; sized to the panel body, never to a fixed pixel height.
 - [ ] Adopt it on the page and panel bodies
