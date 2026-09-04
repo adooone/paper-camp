@@ -1,9 +1,10 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CORPUS_FORMAT_VERSION } from '../corpus-format';
+import { addProject, loadRegistry } from '../machine-registry';
 import { PAPER_CAMP_VERSION, initProject } from './scaffold';
 
 const dirs: string[] = [];
@@ -70,6 +71,48 @@ describe('initProject Claude Code integration scaffolding', () => {
     expect(await readFile(join(root, '.claude', 'settings.json'), 'utf-8')).toBe(
       '{"custom":true}\n',
     );
+  });
+});
+
+describe('initProject machine registry', () => {
+  const originalConfigDir = process.env.PAPERCAMP_CONFIG_DIR;
+  let configDir: string;
+
+  beforeEach(async () => {
+    configDir = await makeTempDir('papercamp-scaffold-registry-config-');
+    process.env.PAPERCAMP_CONFIG_DIR = configDir;
+  });
+
+  afterEach(() => {
+    if (originalConfigDir === undefined) {
+      process.env.PAPERCAMP_CONFIG_DIR = undefined;
+    } else {
+      process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
+    }
+  });
+
+  it('registers the project, honouring PAPERCAMP_CONFIG_DIR', async () => {
+    const root = await makeTempDir('papercamp-scaffold-registry-');
+
+    await initProject(root, { projectName: 'demo' });
+
+    const registry = await loadRegistry(join(configDir, 'projects.json'));
+    expect(registry.projects).toHaveLength(1);
+    expect(registry.projects[0]).toMatchObject({ path: resolve(root), name: 'demo' });
+  });
+
+  it('re-running registration for an already-registered path stays clean', async () => {
+    const root = await makeTempDir('papercamp-scaffold-registry-');
+
+    await initProject(root, { projectName: 'demo' });
+    const before = await loadRegistry(join(configDir, 'projects.json'));
+
+    const { created } = addProject(before, root, 'demo');
+    expect(created).toBe(false);
+
+    const after = await loadRegistry(join(configDir, 'projects.json'));
+    expect(after).toEqual(before);
+    expect(after.projects).toHaveLength(1);
   });
 });
 

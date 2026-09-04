@@ -18,10 +18,11 @@ async function makeTempDir(prefix: string): Promise<string> {
   return dir;
 }
 
-function runCli(args: string[], configDir: string): SpawnSyncReturns<string> {
+function runCli(args: string[], configDir: string, cwd?: string): SpawnSyncReturns<string> {
   return spawnSync('bun', [CLI_ENTRY, ...args], {
     encoding: 'utf-8',
     env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir },
+    cwd,
   });
 }
 
@@ -94,5 +95,26 @@ describe('paper-camp scan / ls / rm (CLI)', () => {
     const unknown = runCli(['rm', 'demo'], configDir);
     expect(unknown.status).toBe(1);
     expect(unknown.stderr).toContain('No registered project with slug "demo"');
+  });
+
+  it('init registers the project, and stays clean if the path is already registered', async () => {
+    const configDir = await makeTempDir('paper-camp-config-');
+    const projectDir = await makeTempDir('paper-camp-init-');
+
+    const result = runCli(['init'], configDir, projectDir);
+    expect(result.status).toBe(0);
+
+    const registry = JSON.parse(await readFile(join(configDir, 'projects.json'), 'utf-8'));
+    expect(registry.projects).toHaveLength(1);
+    expect(registry.projects[0]).toMatchObject({ path: projectDir });
+
+    await rm(join(projectDir, 'papercamp', 'config.json'));
+    const rerun = runCli(['init'], configDir, projectDir);
+    expect(rerun.status).toBe(0);
+
+    const registryAfterRerun = JSON.parse(
+      await readFile(join(configDir, 'projects.json'), 'utf-8'),
+    );
+    expect(registryAfterRerun.projects).toHaveLength(1);
   });
 });

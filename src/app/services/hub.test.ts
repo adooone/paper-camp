@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  daemonStartCommand,
   hasChosenProject,
   machineProjectRuntimeUrl,
+  pickableMachineProjects,
   pickableTailnetPeers,
   runtimeAdditionUrl,
   runtimeRowLabel,
@@ -87,6 +89,30 @@ describe('pickableTailnetPeers', () => {
   });
 });
 
+describe('pickableMachineProjects', () => {
+  const machineUrl = 'http://100.64.1.2:4333';
+  const projects = [
+    { slug: 'alpha', name: 'Alpha' },
+    { slug: 'beta', name: 'Beta' },
+  ];
+
+  it('keeps every project when none are already added', () => {
+    expect(pickableMachineProjects(machineUrl, projects, [])).toEqual(projects);
+  });
+
+  it('drops a project already registered as that machine mount', () => {
+    expect(
+      pickableMachineProjects(machineUrl, projects, ['http://100.64.1.2:4333/p/alpha']),
+    ).toEqual([{ slug: 'beta', name: 'Beta' }]);
+  });
+
+  it('is unaffected by an added runtime that belongs to a different machine', () => {
+    expect(pickableMachineProjects(machineUrl, projects, ['http://9.9.9.9:4333/p/alpha'])).toEqual(
+      projects,
+    );
+  });
+});
+
 describe('servesOwnRuntime', () => {
   const jsonResponse = { ok: true, json: async () => ({ capabilities: [] }) };
   // A static host rewrites unknown paths to index.html: 200, but HTML.
@@ -123,5 +149,17 @@ describe('servesOwnRuntime', () => {
     const probe = vi.fn();
     await expect(servesOwnRuntime('http://localhost:3333', probe)).resolves.toBe(false);
     expect(probe).not.toHaveBeenCalled();
+  });
+});
+
+describe('daemonStartCommand', () => {
+  it('is a plain daemon for an http hub', () => {
+    expect(daemonStartCommand('http://localhost:5173')).toBe('npx paper-camp daemon');
+  });
+
+  it('adds --tailnet for an https hub, since a plain daemon is unreachable from it', () => {
+    expect(daemonStartCommand('https://paper-camp.vercel.app')).toBe(
+      'npx paper-camp daemon --tailnet',
+    );
   });
 });

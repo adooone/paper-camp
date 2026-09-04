@@ -1,3 +1,5 @@
+import type { MachineProjectSummary } from '@/types/index';
+
 /**
  * A project is chosen once it's embedded under a mount prefix, paired with a
  * runtime it dialled, or pointed at a GitHub corpus source. The hosted
@@ -80,4 +82,21 @@ export function pickableTailnetPeers<T extends { runtimeUrl: string }>(
 ): T[] {
   const chosen = new Set(chosenRuntimeUrls);
   return peers.filter((peer) => !chosen.has(peer.runtimeUrl));
+}
+
+export function pickableMachineProjects(
+  machineUrl: string,
+  projects: MachineProjectSummary[],
+  chosenRuntimeUrls: string[],
+): MachineProjectSummary[] {
+  const chosen = new Set(chosenRuntimeUrls);
+  return projects.filter(
+    (project) => !chosen.has(machineProjectRuntimeUrl(machineUrl, project.slug)),
+  );
+}
+
+export function daemonStartCommand(hubOrigin: string): string {
+  return new URL(hubOrigin).protocol === 'https:'
+    ? 'npx paper-camp daemon --tailnet'
+    : 'npx paper-camp daemon';
 }

@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { PaperCampConfig } from '../../types/index';
 import { CORPUS_FORMAT_VERSION } from '../corpus-format';
+import { addProject, defaultRegistryPath, loadRegistry, saveRegistry } from '../machine-registry';
 import { paperCampConfigSchema } from '../parse/schemas';
 import { formatEntityFile, todayDateString } from '../serialize';
 import { CLAUDE_SETTINGS_JSON, SKILL_MD_CONTENT } from './templates';
@@ -98,6 +99,19 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
   await ensureGitignoreEntry(targetDir);
 
   await scaffoldClaudeCodeIntegration(targetDir);
+
+  await registerInMachineRegistry(targetDir, options.projectName);
+}
+
+// addProject dedupes by resolved absolute path, so registering an already-registered
+// path (e.g. re-init after the registry entry was removed by hand) is a no-op, not a duplicate.
+async function registerInMachineRegistry(targetDir: string, projectName: string): Promise<void> {
+  const registryPath = defaultRegistryPath();
+  const registry = await loadRegistry(registryPath);
+  const { registry: updated, created } = addProject(registry, targetDir, projectName);
+  if (created) {
+    await saveRegistry(registryPath, updated);
+  }
 }
 
 const PAIRING_GITIGNORE_ENTRY = 'papercamp/.pairing.json';

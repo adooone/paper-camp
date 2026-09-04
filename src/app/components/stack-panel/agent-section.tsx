@@ -235,12 +235,12 @@ export const AgentSection = () => {
             <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
           ))
         ) : (
-          <Card
-            surface="chalkboard"
-            size="small"
-            className={`flex items-center ${TASK_CARD_HEIGHT_CLASS}`}
-          >
-            <p className="m-0 text-xs opacity-50">No agent running.</p>
+          <Card surface="chalkboard" size="small" className={TASK_CARD_HEIGHT_CLASS}>
+            <div className="flex h-full items-center">
+              <span className="font-handwritten text-desk-text-muted text-sm leading-tight">
+                No agent running.
+              </span>
+            </div>
           </Card>
         )}
       </div>

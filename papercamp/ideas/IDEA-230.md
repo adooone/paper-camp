@@ -4,7 +4,7 @@ title: Get started guide on the empty hub
 type: feat
 status: review
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-04
 tags:
   - app
   - cli
@@ -111,6 +111,7 @@ following its link, not by scanning the network.
 - [x] Correct the docs and run the quality checks
       USAGE.md's install and "Adding a project" steps match the three commands and the machine link; check-types, lint, vitest, consistency green with no orphans left by the deletions.
       run: 8m33s · 128 in · 20.1k out · sonnet-5
+- [x] [manual] Replace machine connect flow with remembered machines
 
 ### Thread
 - [x] 2026-09-03 [decision] [user] Remove the paste card outright rather than demoting it — the whole flow follows the daemon's instructions, so a URL input is the thing being replaced, not kept as a fallback.

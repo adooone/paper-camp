@@ -1446,6 +1446,9 @@ export function createAgentManager(
       } else if (kind === 'fix' && onFixRun && phaseUsage && plan.id) {
         await onFixRun(plan.id, i, { usage: phaseUsage, kind });
       }
+      // Per phase, not just per task: a run-all flips N checkboxes on disk and
+      // no watcher observes them, so without this the plan view sits stale mid-run.
+      onCorpusChanged?.();
     }
 
     return {

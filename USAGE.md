@@ -106,9 +106,10 @@ interest in pinning) can still reach for `npx @dendelion/paper-camp@latest`,
 but loses that reproducibility.
 
 `init` creates the corpus and the `.claude/` integration (a paper-camp skill
-plus session hooks), so Claude Code sessions in that repo work the method
-natively. For the full loop you also want `gh auth login` (PR features) and a
-coding agent CLI (`claude` or `opencode`) on PATH.
+plus session hooks), and registers the repo in the machine-level registry so
+`paper-camp daemon` can serve it later with no `scan` step. For the full loop
+you also want `gh auth login` (PR features) and a coding agent CLI (`claude`
+or `opencode`) on PATH.
 
 Working on Paper Camp itself is the clone path instead: `pnpm install`,
 `pnpm dev`, open `localhost:3333`.
@@ -154,10 +155,19 @@ start mints a fresh token and forgets every paired origin.
 
 Other ways in:
 
-- **Add a project by URL** (on the hub's Projects tab): paste a running
-  runtime's address this browser can reach — another port on this machine, a
-  LAN or tailnet address. Right for hubs served from a trusted origin; from
-  the hosted client, prefer the Network link, which carries the token.
+- **From an empty hub, no project yet**: `npm install --save-dev
+  @dendelion/paper-camp`, `npx paper-camp init`, then `npx paper-camp daemon`
+  — the empty hub prints these same three steps. `daemon` serves every
+  registered project from one process instead of just this one, so its
+  banner link carries `?machine=` instead of `?runtime=`: opening it pairs
+  with the machine and lists its registered projects to choose from, rather
+  than adding a single one outright. The same HTTPS-only fetch applies here
+  too — pairing from the hosted client needs `--tailnet` or `--share` on that
+  last command; without one, the banner prints that requirement in place of a
+  link.
+- **A machine the hub already knows**: once a `?machine=` link has been
+  opened, that machine's not-yet-added projects sit in their own card,
+  ready to add — one click, no repeat trip to the terminal.
 - **`paper-camp dev --share`** prints a Tunnel link — the hosted client can
   reach that machine across the open internet. The address changes every
   restart.
