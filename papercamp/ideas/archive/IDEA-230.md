@@ -2,7 +2,7 @@
 id: IDEA-230
 title: Get started guide on the empty hub
 type: feat
-status: review
+status: done
 created: 2026-09-03
 updated: 2026-09-04
 tags:
