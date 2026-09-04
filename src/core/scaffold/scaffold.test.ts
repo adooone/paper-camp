@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CORPUS_FORMAT_VERSION } from '../corpus-format';
 import { addProject, loadRegistry } from '../machine-registry';
 import { PAPER_CAMP_VERSION, initProject } from './scaffold';
@@ -18,6 +18,18 @@ async function makeTempDir(prefix: string): Promise<string> {
   dirs.push(root);
   return root;
 }
+
+let configDir: string;
+
+// initProject registers on the machine, so an unisolated test writes to the real ~/.config/paper-camp.
+beforeEach(async () => {
+  configDir = await makeTempDir('papercamp-scaffold-registry-config-');
+  vi.stubEnv('PAPERCAMP_CONFIG_DIR', configDir);
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe('PAPER_CAMP_VERSION', () => {
   it("tracks this package's own version rather than a hand-kept constant", async () => {
@@ -75,22 +87,6 @@ describe('initProject Claude Code integration scaffolding', () => {
 });
 
 describe('initProject machine registry', () => {
-  const originalConfigDir = process.env.PAPERCAMP_CONFIG_DIR;
-  let configDir: string;
-
-  beforeEach(async () => {
-    configDir = await makeTempDir('papercamp-scaffold-registry-config-');
-    process.env.PAPERCAMP_CONFIG_DIR = configDir;
-  });
-
-  afterEach(() => {
-    if (originalConfigDir === undefined) {
-      process.env.PAPERCAMP_CONFIG_DIR = undefined;
-    } else {
-      process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
-    }
-  });
-
   it('registers the project, honouring PAPERCAMP_CONFIG_DIR', async () => {
     const root = await makeTempDir('papercamp-scaffold-registry-');
 
