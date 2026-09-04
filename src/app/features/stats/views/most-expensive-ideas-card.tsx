@@ -1,3 +1,4 @@
+import { EmptyState } from '@/app/components';
 import { formatTokens } from '@/core/phase-run';
 import type { ProjectStats } from '@/types/index';
 import { StatCard, StatRow } from './stat-card';
@@ -8,7 +9,7 @@ export interface MostExpensiveIdeasCardProps {
 
 export const MostExpensiveIdeasCard = ({ mostExpensiveIdeas }: MostExpensiveIdeasCardProps) => (
   <StatCard title="Most expensive ideas">
-    {mostExpensiveIdeas.length === 0 && <p className="opacity-50 m-0">No usage recorded yet.</p>}
+    {mostExpensiveIdeas.length === 0 && <EmptyState message="No usage recorded yet." />}
     {mostExpensiveIdeas.map((idea) => (
       <div key={idea.planId} className="flex flex-col gap-0.5">
         <StatRow

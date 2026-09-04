@@ -10,11 +10,11 @@ interface EmptyStateProps {
 export const EmptyState = ({ message, illustration, action, className = '' }: EmptyStateProps) => (
   <div className={`flex flex-col items-center gap-3 text-center ${className}`}>
     {illustration && (
-      <div className="text-[var(--pui-text-secondary)]" aria-hidden="true">
+      <div className="opacity-60" aria-hidden="true">
         {illustration}
       </div>
     )}
-    <p className="m-0 font-handwritten text-base text-[var(--pui-text-secondary)]">{message}</p>
+    <p className="m-0 font-handwritten text-base opacity-60">{message}</p>
     {action}
   </div>
 );

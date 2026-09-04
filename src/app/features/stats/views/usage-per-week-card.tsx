@@ -1,3 +1,4 @@
+import { EmptyState } from '@/app/components';
 import { color } from '@/app/styles/tokens';
 import { formatTokens } from '@/core/phase-run';
 import type { ProjectStats } from '@/types/index';
@@ -12,7 +13,7 @@ export const UsagePerWeekCard = ({ usagePerWeek }: UsagePerWeekCardProps) => {
   const max = Math.max(1, ...usagePerWeek.map((w) => w.agentMinutes));
   return (
     <StatCard title="Usage per week">
-      {usagePerWeek.length === 0 && <p className="opacity-50 m-0">No usage recorded yet.</p>}
+      {usagePerWeek.length === 0 && <EmptyState message="No usage recorded yet." />}
       {usagePerWeek.map((week) => (
         <div key={week.week} className="flex flex-col gap-1">
           <StatRow label={week.week} value={`${week.agentMinutes}m`} />

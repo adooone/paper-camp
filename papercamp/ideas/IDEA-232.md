@@ -90,8 +90,9 @@ while they are still being drawn.
 - [x] Adopt it on the page and panel bodies
       Plans, tasks, git, inbox, issues, roadmap and docs render `EmptyState` with the illustration its meaning calls for, replacing the hand-rolled paragraphs.
       run: 9m · 62 in · 19.2k out · sonnet-5
-- [ ] Adopt it on the card and row empties
+- [x] Adopt it on the card and row empties
       The six stats cards, the settings sub-lists and the Stack panel groups use the same component without an illustration; delete the local `EmptyState` in `docs-sidebar.tsx`.
+      run: 8m31s · 88 in · 27.5k out · sonnet-5
 - [ ] Cover it in tests and run the quality checks
       Assert the illustration is omitted when absent and that copy renders in both surfaces; check-types, lint, vitest, consistency green with no orphaned strings left behind.
 

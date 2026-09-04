@@ -3,6 +3,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import type { CiRun, CiRunStatus } from '@/types/index';
 import { Card } from '@dendelion/paper-ui';
 import { useEffect, useRef } from 'react';
+import { EmptyState } from '../empty-state';
 import { groupLabelClassName } from './shared';
 
 export const CI_GROUP_LABEL = 'CI & release';
@@ -54,9 +55,11 @@ export const CiGroup = () => {
     if (!ci) {
       return (
         <Card surface="chalkboard" size="small">
-          <p className="m-0 text-center text-xs opacity-50">
-            {loading ? 'Checking CI…' : 'No CI source declared.'}
-          </p>
+          {loading ? (
+            <p className="m-0 text-center text-xs opacity-50">Checking CI…</p>
+          ) : (
+            <EmptyState message="No CI source declared." />
+          )}
         </Card>
       );
     }

@@ -1,13 +1,10 @@
+import { EmptyState } from '@/app/components';
 import { Input, ListItem } from '@dendelion/paper-ui';
 import { SidebarSection } from '../../plans/components/sidebar-section';
 import { useDocsSidebar } from '../hooks';
 
 const simplecaseLabel = (name: string) =>
   name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-
-const EmptyState = ({ children }: { children: React.ReactNode }) => (
-  <span className="block px-3 py-1 text-sm italic opacity-[0.35]">{children}</span>
-);
 
 export const DocsSidebar = () => {
   const {
@@ -38,7 +35,7 @@ export const DocsSidebar = () => {
 
       <SidebarSection label="Repo Docs">
         {repoDocsLoading && repoDocs.length === 0 ? (
-          <EmptyState>Loading…</EmptyState>
+          <span className="block px-3 py-1 text-xs opacity-50">Loading…</span>
         ) : repoDocs.length > 0 ? (
           repoDocs.map((f) => (
             <ListItem
@@ -52,13 +49,13 @@ export const DocsSidebar = () => {
             </ListItem>
           ))
         ) : (
-          <EmptyState>No repo docs found</EmptyState>
+          <EmptyState message="No repo docs found" />
         )}
       </SidebarSection>
 
       <SidebarSection label="Releases">
         {releaseVersionsLoading && releaseVersions.length === 0 ? (
-          <EmptyState>Loading…</EmptyState>
+          <span className="block px-3 py-1 text-xs opacity-50">Loading…</span>
         ) : releaseVersions.length > 0 ? (
           releaseVersions.map((version) => (
             <ListItem
@@ -72,7 +69,7 @@ export const DocsSidebar = () => {
             </ListItem>
           ))
         ) : (
-          <EmptyState>No releases yet</EmptyState>
+          <EmptyState message="No releases yet" />
         )}
       </SidebarSection>
     </>

@@ -1,3 +1,4 @@
+import { EmptyState } from '@/app/components';
 import { formatDuration } from '@/core/phase-run';
 import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
 import type { ProjectStats } from '@/types/index';
@@ -25,7 +26,7 @@ export const ClaudeCapacityCard = ({ capacity }: ClaudeCapacityCardProps) => {
   return (
     <StatCard title="Claude capacity">
       {capacity === null ? (
-        <p className="opacity-50 m-0">No agent run has reported capacity yet.</p>
+        <EmptyState message="No agent run has reported capacity yet." />
       ) : (
         <>
           <div className="flex items-center gap-2">

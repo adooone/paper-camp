@@ -1,3 +1,4 @@
+import { EmptyState } from '@/app/components';
 import { useSubjectVocabulary } from '@/app/hooks';
 import { Button, Card, Divider } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -21,7 +22,7 @@ export const SubjectsSection = () => {
       )}
       {!loading && available && (
         <Card size="small" texture="kraft">
-          {subjects.length === 0 && <p className="opacity-[0.45] m-0 pb-2">No subjects yet.</p>}
+          {subjects.length === 0 && <EmptyState message="No subjects yet." />}
           {subjects.map((name, idx) => (
             <div key={name}>
               <div className="pb-2 pt-2">{name}</div>

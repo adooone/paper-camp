@@ -3,6 +3,7 @@ import { fetchServiceLog } from '@/app/services/services-api';
 import type { ServiceState } from '@/types/index';
 import { Card, IconButton, Spinner, useToast } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { EmptyState } from '../empty-state';
 import { ChevronRightIcon, RunIcon, StopIcon } from '../icons';
 import { groupLabelClassName } from './shared';
 
@@ -154,7 +155,7 @@ export const ServicesGroup = () => {
           ))
         ) : (
           <Card surface="chalkboard" size="small">
-            <p className="m-0 text-center text-xs opacity-50">No services declared.</p>
+            <EmptyState message="No services declared." />
           </Card>
         )}
       </div>

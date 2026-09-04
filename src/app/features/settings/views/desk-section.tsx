@@ -1,3 +1,4 @@
+import { EmptyState } from '@/app/components';
 import { DeskProposalModal } from '@/app/components/stack-panel/desk-proposal-modal';
 import { Alert, Button, Card, PlusIcon, Spinner } from '@dendelion/paper-ui';
 import { useDeskSection } from '../hooks/use-desk-section';
@@ -65,7 +66,7 @@ export const DeskSection = () => {
               </Button>
             </div>
             <Card size="small" texture="kraft">
-              {services.length === 0 && <p className="opacity-[0.45] m-0 pb-2">No services yet.</p>}
+              {services.length === 0 && <EmptyState message="No services yet." />}
               {services.map((service, idx) => (
                 <DeskServiceRow
                   key={service.id}
@@ -86,7 +87,7 @@ export const DeskSection = () => {
               </Button>
             </div>
             <Card size="small" texture="kraft">
-              {checks.length === 0 && <p className="opacity-[0.45] m-0 pb-2">No checks yet.</p>}
+              {checks.length === 0 && <EmptyState message="No checks yet." />}
               {checks.map((check, idx) => (
                 <DeskCheckRow
                   key={check.id}
