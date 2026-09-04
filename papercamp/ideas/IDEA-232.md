@@ -84,8 +84,9 @@ while they are still being drawn.
 - [x] One component for every empty message
       Add `EmptyState` to `src/app/components/` taking a message, an optional illustration and an optional action; handwritten copy, one spacing scale, one muted token instead of six opacities.
       run: 3m9s · 44 in · 14.4k out · sonnet-5
-- [ ] Draw the four illustrations
+- [x] Draw the four illustrations
       Single-colour inline SVG on a shared viewBox, filled from `currentColor` so one asset works on parchment and chalkboard; sized to the panel body, never to a fixed pixel height.
+      run: 2m33s · 20 in · 10.9k out · sonnet-5
 - [ ] Adopt it on the page and panel bodies
       Plans, tasks, git, inbox, issues, roadmap and docs render `EmptyState` with the illustration its meaning calls for, replacing the hand-rolled paragraphs.
 - [ ] Adopt it on the card and row empties
