@@ -1,3 +1,5 @@
+import { EmptyState } from '@/app/components';
+import { RestingPenIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import { useTasksPage } from './hooks';
 import { TaskList } from './views';
@@ -10,7 +12,7 @@ export const TasksPage = () => {
       <PageTitle>Tasks</PageTitle>
       {taskLogLoading && <p className="opacity-50">Loading…</p>}
       {!taskLogLoading && groups.length === 0 && (
-        <p className="opacity-50">No tasks have run yet.</p>
+        <EmptyState illustration={<RestingPenIllustration />} message="No tasks have run yet." />
       )}
       {!taskLogLoading && groups.length > 0 && <TaskList groups={groups} highlightedId={taskId} />}
     </div>

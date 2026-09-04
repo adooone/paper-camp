@@ -1,3 +1,5 @@
+import { EmptyState } from '@/app/components';
+import { EmptyTrayIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import { promoteLabel } from './helpers';
 import { useIssuesPage } from './hooks';
@@ -25,7 +27,7 @@ export const IssuesPage = () => {
       </p>
       {taskLogLoading && issues.length === 0 && <p className="opacity-50">Loading…</p>}
       {!taskLogLoading && issues.length === 0 && (
-        <p className="opacity-50">Nothing broken right now.</p>
+        <EmptyState illustration={<EmptyTrayIllustration />} message="Nothing broken right now." />
       )}
       {issues.length > 0 && (
         <div className="flex flex-col">

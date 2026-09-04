@@ -1,3 +1,4 @@
+import { EmptyState } from '@/app/components';
 import { PageTitle } from '@/app/components/page-title';
 import { useResolvedDocSection } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
@@ -38,9 +39,7 @@ export const DocsPage = () => {
   return (
     <div>
       <PageTitle>Docs</PageTitle>
-      <p className="opacity-50">
-        Pick a doc from the sidebar — start with a repo doc if you're new here.
-      </p>
+      <EmptyState message="Pick a doc from the sidebar — start with a repo doc if you're new here." />
     </div>
   );
 };

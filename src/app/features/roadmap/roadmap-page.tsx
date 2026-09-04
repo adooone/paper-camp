@@ -1,3 +1,5 @@
+import { EmptyState } from '@/app/components';
+import { EmptyTrayIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import { useRoadmapPage } from './hooks';
 import { PromoteRoadmapItemModal } from './modals';
@@ -45,7 +47,14 @@ export const RoadmapPage = () => {
     return (
       <div>
         <PageTitle>Roadmap</PageTitle>
-        <p className="opacity-50">No `ROADMAP.md` found at the project root.</p>
+        <EmptyState
+          illustration={<EmptyTrayIllustration />}
+          message={
+            <>
+              No <code>ROADMAP.md</code> found at the project root.
+            </>
+          }
+        />
       </div>
     );
   }
@@ -55,11 +64,14 @@ export const RoadmapPage = () => {
       <PageTitle>Roadmap</PageTitle>
       <GoalBanner goal={roadmap.goal} />
       {totalVisible === 0 ? (
-        <p className="opacity-50 py-6 px-0 text-center">
-          {hasActiveFilters
-            ? 'Nothing matches these filters — clear one from the sidebar to see more.'
-            : 'No roadmap items yet — add one from the sidebar.'}
-        </p>
+        <EmptyState
+          illustration={<EmptyTrayIllustration />}
+          message={
+            hasActiveFilters
+              ? 'Nothing matches these filters — clear one from the sidebar to see more.'
+              : 'No roadmap items yet — add one from the sidebar.'
+          }
+        />
       ) : (
         <div className="flex flex-col gap-6">
           {horizons

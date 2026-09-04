@@ -1,3 +1,5 @@
+import { EmptyState } from '@/app/components';
+import { MagnifierIllustration } from '@/app/components/empty-state-illustrations';
 import { useAppStore } from '@/app/stores/app-store';
 import { Button } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -49,7 +51,12 @@ export const DocsSearch = ({ query }: DocsSearchProps) => {
   };
 
   if (results.length === 0) {
-    return <p className="opacity-50">No results found for "{query}".</p>;
+    return (
+      <EmptyState
+        illustration={<MagnifierIllustration />}
+        message={<>No results found for "{query}".</>}
+      />
+    );
   }
 
   return (

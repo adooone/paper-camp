@@ -1,3 +1,5 @@
+import { EmptyState } from '@/app/components';
+import { EmptyTrayIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import { PlanIdStamp } from '@/app/features/plans/components';
 import { notificationAgeDays } from '@/core/notifications';
@@ -19,7 +21,10 @@ export const InboxPage = () => {
       {loadFailed && <p className="opacity-50">Couldn't load notifications.</p>}
       {!loadFailed && !notifications && <p className="opacity-50">Loading…</p>}
       {notifications && notifications.length === 0 && (
-        <p className="opacity-50">Nothing here — no parked questions or recent activity.</p>
+        <EmptyState
+          illustration={<EmptyTrayIllustration />}
+          message="Nothing here — no parked questions or recent activity."
+        />
       )}
       {notifications && notifications.length > 0 && (
         <div className="flex flex-col">

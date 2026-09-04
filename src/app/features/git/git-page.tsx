@@ -1,4 +1,5 @@
-import { CommitMessageFields, GitStashSurface, GitSyncActions } from '@/app/components';
+import { CommitMessageFields, EmptyState, GitStashSurface, GitSyncActions } from '@/app/components';
+import { CleanSheetIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import { GitCommitButton } from '@/app/features/git/actions';
 import { useGitPage } from '@/app/features/git/hooks';
@@ -51,7 +52,7 @@ export const GitPage = () => {
       {header}
       {files.length === 0 ? (
         <div className={contentClass}>
-          <p className="opacity-50">No changed files.</p>
+          <EmptyState illustration={<CleanSheetIllustration />} message="No changed files." />
         </div>
       ) : (
         <>

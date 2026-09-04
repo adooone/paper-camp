@@ -1,3 +1,5 @@
+import { EmptyState } from '@/app/components';
+import { EmptyTrayIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import type { PlanEntry } from '@/types/index';
 import { Card } from '@dendelion/paper-ui';
@@ -105,10 +107,15 @@ export const PlansPage = () => {
           )}
 
           {plans.entries.length === 0 ? (
-            <p className="opacity-50">
-              No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}
-              <strong>Suggest ideas</strong> to have an agent propose some.
-            </p>
+            <EmptyState
+              illustration={<EmptyTrayIllustration />}
+              message={
+                <>
+                  No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}
+                  <strong>Suggest ideas</strong> to have an agent propose some.
+                </>
+              }
+            />
           ) : (
             <ListView
               rows={rows}
