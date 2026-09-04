@@ -105,8 +105,9 @@ following its link, not by scanning the network.
 - [x] Retire the paste card
       Delete `connect-machine-card.tsx` and `use-machine-connect.ts`, and render one card per remembered machine listing only the projects not already in the registry.
       run: 4m19s · 52 in · 14.5k out · sonnet-5
-- [ ] Guide the empty hub
+- [x] Guide the empty hub
       A three-step card above the GitHub card, rendered only when the registry is empty, each step with its command and a copy control, step three switching to `--tailnet` when the hub's origin is HTTPS.
+      run: 4m46s · 98 in · 21.2k out · sonnet-5
 - [ ] Correct the docs and run the quality checks
       USAGE.md's install and "Adding a project" steps match the three commands and the machine link; check-types, lint, vitest, consistency green with no orphans left by the deletions.
 
