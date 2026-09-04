@@ -96,8 +96,9 @@ following its link, not by scanning the network.
 - [x] Declare the machine in the daemon's link
       Give `registration-link.ts` a machine variant emitting `?machine=`, point `daemon-server.ts` at it, and leave `dev-server.ts` on `?runtime=`.
       run: 2m25s · 42 in · 10.8k out · sonnet-5
-- [ ] Remember machines the hub has met
+- [x] Remember machines the hub has met
       Add a `machine-store.ts` beside the GitHub token store that lists, adds, and removes machine URLs in localStorage, with the same private-browsing tolerance.
+      run: 1m42s · 30 in · 7.9k out · sonnet-5
 - [ ] Adopt a machine link into the project picker
       Read `?machine=` before the runtime path in `main.tsx`, pair against it, remember it, and render its `/api/machine/projects` list; choosing a project persists `<machine>/p/<slug>` and opens it.
 - [ ] Retire the paste card
