@@ -2,7 +2,7 @@
 id: IDEA-231
 title: Probe the origin that serves the app
 type: fix
-status: review
+status: done
 created: 2026-09-04
 updated: 2026-09-04
 tags:
