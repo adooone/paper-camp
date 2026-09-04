@@ -1,4 +1,5 @@
 import { apiUrl } from '@/app/services/api-base';
+import { servesOwnRuntime } from '@/app/services/hub';
 import { mountPrefix } from '@/app/services/mount';
 import { runtimeConnection } from '@/app/services/runtime-connection';
 import type { SetState } from './slice-helpers';
@@ -39,13 +40,15 @@ export async function probeReachable(): Promise<boolean> {
 export function createRuntimeSlice(set: SetState): RuntimeSlice {
   return {
     runtimeReachable: hasEmbeddedRuntime,
-    runtimeChecking: hasDetachedRuntime,
+    runtimeChecking: !hasEmbeddedRuntime,
     checkRuntimeReachable: loadSlice(
       set,
       async () => {
         if (hasEmbeddedRuntime) return true;
         if (hasDetachedRuntime) return probeReachable();
-        return false;
+        // `paper-camp dev` serves bundle and API from one origin with no mount prefix and
+        // no dialled runtime; a static host answers the same path with its SPA fallback.
+        return servesOwnRuntime('', (path) => fetch(apiUrl(path)));
       },
       (reachable) => ({ runtimeReachable: reachable }),
       () => ({ runtimeReachable: false }),

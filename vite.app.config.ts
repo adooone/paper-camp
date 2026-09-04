@@ -206,7 +206,9 @@ export default defineConfig({
   publicDir: 'public',
   server: {
     port: 3333,
-    host: '0.0.0.0',
+    // '::' not '0.0.0.0': the IPv4 wildcard refuses the IPv6 address a Tailscale
+    // MagicDNS name resolves to, which is what a browser picks first.
+    host: '::',
     cors: true,
     // Allow all hosts (Tailscale, LAN, etc.)
     allowedHosts: true,

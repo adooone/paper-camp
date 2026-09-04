@@ -1,5 +1,6 @@
+import { CommandLine } from '@/app/components/command-line';
 import type { ConnectionResult } from '@/types/index';
-import { Button, CodeBlock } from '@dendelion/paper-ui';
+import { Button } from '@dendelion/paper-ui';
 
 interface ConnectActionViewProps {
   connection: ConnectionResult;
@@ -24,7 +25,7 @@ export const ConnectActionView = ({
   if (connect.kind === 'command') {
     return (
       <div className="mt-2">
-        <CodeBlock code={connect.command} />
+        <CommandLine command={connect.command} />
       </div>
     );
   }

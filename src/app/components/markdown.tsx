@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
+import { inlineCodeClassName } from './inline-code-style';
 
 const headingClass = (fontSizeClass: string): string =>
   `font-display-luminari font-semibold ${fontSizeClass} mt-6 mb-3 leading-tight`;
@@ -16,9 +17,7 @@ const components: Components = {
     </a>
   ),
   code: ({ children }) => (
-    <code className="font-mono text-[0.85em] bg-black/[6%] rounded-[3px] py-[0.1em] px-[0.35em]">
-      {children}
-    </code>
+    <code className={`${inlineCodeClassName} text-[0.85em]`}>{children}</code>
   ),
   pre: ({ children }) => (
     <pre className="font-mono text-[0.85em] bg-black/[6%] rounded-md py-3 px-4 overflow-x-auto mb-4">
