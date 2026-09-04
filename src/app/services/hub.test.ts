@@ -38,6 +38,18 @@ describe('runtimeAdditionUrl', () => {
       '/some/path?runtime=http%3A%2F%2Flocalhost%3A4444',
     );
   });
+
+  it('carries a pairing token when one is given', () => {
+    expect(runtimeAdditionUrl('/', 'http://localhost:3333', 'abc123')).toBe(
+      '/?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123',
+    );
+  });
+
+  it('omits the token param when none is given', () => {
+    expect(runtimeAdditionUrl('/', 'http://localhost:3333', null)).toBe(
+      '/?runtime=http%3A%2F%2Flocalhost%3A3333',
+    );
+  });
 });
 
 describe('runtimeRowLabel', () => {

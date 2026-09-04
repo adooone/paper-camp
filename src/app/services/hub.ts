@@ -35,12 +35,19 @@ export async function servesOwnRuntime(
 }
 
 /**
- * Reuses the same `?runtime=` query param `runtime-connection.ts` already
- * reads and persists, so a manually pasted address is adopted exactly like
- * a `paper-camp dev` registration link.
+ * Reuses the same `?runtime=&token=` query params `runtime-connection.ts`
+ * already reads and persists, so an address is adopted exactly like a
+ * registration link — a pasted or discovered one carries no token, a
+ * machine's own project does.
  */
-export function runtimeAdditionUrl(currentPath: string, runtimeUrl: string): string {
-  return `${currentPath}?runtime=${encodeURIComponent(runtimeUrl)}`;
+export function runtimeAdditionUrl(
+  currentPath: string,
+  runtimeUrl: string,
+  pairingToken?: string | null,
+): string {
+  const params = new URLSearchParams({ runtime: runtimeUrl });
+  if (pairingToken) params.set('token', pairingToken);
+  return `${currentPath}?${params}`;
 }
 
 /**

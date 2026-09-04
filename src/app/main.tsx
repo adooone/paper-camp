@@ -7,6 +7,7 @@ import { HUB_PATH, router } from './router';
 import { apiFetch, apiUrl, setApiBase, setApiPairingToken } from './services/api-base';
 import { readGithubConfig } from './services/github/config-store';
 import { hasChosenProject, servesOwnRuntime } from './services/hub';
+import './services/machine-connection';
 import { mountPrefix } from './services/mount';
 import { runtimeConnection } from './services/runtime-connection';
 

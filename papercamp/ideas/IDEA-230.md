@@ -99,8 +99,9 @@ following its link, not by scanning the network.
 - [x] Remember machines the hub has met
       Add a `machine-store.ts` beside the GitHub token store that lists, adds, and removes machine URLs in localStorage, with the same private-browsing tolerance.
       run: 1m42s · 30 in · 7.9k out · sonnet-5
-- [ ] Adopt a machine link into the project picker
+- [x] Adopt a machine link into the project picker
       Read `?machine=` before the runtime path in `main.tsx`, pair against it, remember it, and render its `/api/machine/projects` list; choosing a project persists `<machine>/p/<slug>` and opens it.
+      run: 10m52s · 80 in · 43.2k out · sonnet-5
 - [ ] Retire the paste card
       Delete `connect-machine-card.tsx` and `use-machine-connect.ts`, and render one card per remembered machine listing only the projects not already in the registry.
 - [ ] Guide the empty hub
