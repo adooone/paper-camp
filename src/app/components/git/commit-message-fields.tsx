@@ -1,6 +1,6 @@
-import { SignInAction } from '@/app/features/settings/components/sign-in-action';
 import { Alert, IconButton, Input } from '@dendelion/paper-ui';
 import { WandIcon } from '../icons';
+import { SignInAction } from '../sign-in-action';
 
 export interface CommitMessageFieldsState {
   commitTitle: string;

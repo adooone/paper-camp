@@ -96,8 +96,9 @@ its own.
 - [x] Carry the auth kind to the git card
       Return `{ error, kind: 'auth' }` from `/api/git/suggest-commit-message`, throw it through `git-api.ts`, and render a **Sign in** action in `commit-message-fields.tsx`.
       run: 7m22s · 138 in · 24.7k out · sonnet-5
-- [ ] Move the sign-in controls to shared app components
+- [x] Move the sign-in controls to shared app components
       Relocate `SignInAction` and `RelayFallbackGuide` into `src/app/components/` so the git card and the Settings row render the same control.
+      run: 2m51s · 54 in · 9.7k out · sonnet-5
 - [ ] Strip OSC sequences before matching the login URL
       Extend `stripAnsi` to drop `ESC ]` … BEL/`ESC \` sequences and add a `login-relay.test.ts` fixture from the real 2.1.250 output.
 - [ ] Answer the paste-code prompt from the app

@@ -1,8 +1,8 @@
+import { SignInAction } from '@/app/components/sign-in-action';
 import type { ConnectionResult } from '@/types/index';
 import { Button, Divider, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { CAPABILITY_STATUS_STAMP } from '../constants';
 import { ConnectActionView } from './connect-action-view';
-import { SignInAction } from './sign-in-action';
 
 // Only claude-code exposes `auth login`/`auth status` (see agentAuthenticated in server/services.ts).
 const RELAY_CONNECTION_ID: ConnectionResult['id'] = 'agent:claude-code';
