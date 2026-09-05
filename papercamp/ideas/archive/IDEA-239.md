@@ -2,8 +2,9 @@
 id: IDEA-239
 title: Paint first, probe later
 type: fix
-status: review
+status: done
 created: 2026-09-05
+updated: 2026-09-05
 tags:
   - app
   - server
