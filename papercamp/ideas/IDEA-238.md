@@ -63,9 +63,10 @@ contain, how the Plans filters behave, or the Hub, which has its own shell.
 The 480px bottom navigation.
 
 ### Phases
-- [ ] Wrap the sidebar in one kraft card
+- [x] Wrap the sidebar in one kraft card
       `SidebarShell` renders its children inside the card, drops `--pc-sidebar-h`,
       the inner scroll region, and the `h-8` spacer.
+      run: 6m36s · 58 in · 31.2k out · sonnet-5
 - [ ] Fold the Plans filters and actions into that card
       Two sections with a divider between them; `PlanActionsColumn` loses the `Card`
       it wraps its buttons in.

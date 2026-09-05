@@ -1,3 +1,4 @@
+import { Card } from '@dendelion/paper-ui';
 import { useEffect, useRef } from 'react';
 
 interface SidebarShellProps {
@@ -48,12 +49,12 @@ export const SidebarShell = ({
       <aside
         ref={asideRef}
         // Dialog semantics only as a mobile drawer — at lg+ it's an in-flow sidebar.
-        // --pc-sidebar-h caps the sticky sidebar to the fixed-chrome gap; `100%` is the mobile-drawer fallback.
+        // No height cap at lg+: the card scrolls with the page, not the drawer.
         role={mobileOpen ? 'dialog' : undefined}
         aria-modal={mobileOpen || undefined}
         aria-label="Sidebar navigation"
         tabIndex={-1}
-        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 flex flex-col overflow-hidden lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:translate-x-0 h-[var(--pc-sidebar-h,100%)] ${
+        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 overflow-y-auto lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:overflow-visible lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } ${
           mobileOpen
@@ -61,11 +62,9 @@ export const SidebarShell = ({
             : 'bg-transparent'
         }`}
       >
-        {/* Matches the sheet's 2rem top inset so the column's first row lines up with the page's first line. */}
-        <div className="shrink-0 h-8" />
-        <div className="flex-1 overflow-y-auto relative">
+        <Card size="small" texture="kraft" className="mt-8">
           <div key={routeKey}>{children}</div>
-        </div>
+        </Card>
       </aside>
     </>
   );
