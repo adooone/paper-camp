@@ -779,10 +779,15 @@ export interface TailnetPeerRuntime {
 export const MACHINE_PROJECTS_PATH = '/api/machine/projects' as const;
 
 /** One entry from a `paper-camp daemon`'s registry, as listed to the hub — no
- *  filesystem path, since the hub only ever sees projects already registered. */
+ *  filesystem path, since the hub only ever sees projects already registered.
+ *  `mounted` is whether the daemon has built this project's middleware yet
+ *  (lazy, so a registered-but-untouched project starts out unmounted);
+ *  `busy` is whether that project's own agent has a task in flight. */
 export interface MachineProjectSummary {
   slug: string;
   name: string;
+  mounted: boolean;
+  busy: boolean;
 }
 
 export interface MergePolicy {
