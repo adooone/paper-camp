@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.28.0](https://github.com/adooone/paper-camp/compare/v0.27.0...v0.28.0) (2026-09-05)
+
+
+### Features
+
+* **app:** Add paper shade to the sidebar layout background ([1b4759a](https://github.com/adooone/paper-camp/commit/1b4759ae87f7289b7b08ddaf3a9864f676bb5969))
+* **app:** Adopt it on the card and row empties ([27a6585](https://github.com/adooone/paper-camp/commit/27a658504db8e66f161723f8d256939fdfc98983))
+* **app:** Adopt it on the page and panel bodies ([abd99bd](https://github.com/adooone/paper-camp/commit/abd99bd3fcb0ae5448451bb2566cf845a3ca5df8))
+* **app:** Check the drawer and each sidebar area ([23cc082](https://github.com/adooone/paper-camp/commit/23cc08241eaeb64c0f16ec3ea34d5fe9c70ef898))
+* **app:** Cover it in tests and run the quality checks ([1bf37d6](https://github.com/adooone/paper-camp/commit/1bf37d64ed980a9d4be0ab8f599b7a0e9a82815f))
+* **app:** Delete the four `.pc-page` rules from `utilities.css` ([743effa](https://github.com/adooone/paper-camp/commit/743effaaed3a038dde559c6fa99a4360247264d9))
+* **app:** Draw the four illustrations ([8c2fbc6](https://github.com/adooone/paper-camp/commit/8c2fbc64725828864122e583b17b83fb5e96a23d))
+* **app:** Drop the `Page` sheet from the app shell ([6bcd18b](https://github.com/adooone/paper-camp/commit/6bcd18ba196b2f8f9c071f4e29920e134c91aa9c))
+* **app:** Fold the Plans filters and actions into that card ([1c5d814](https://github.com/adooone/paper-camp/commit/1c5d814b0fb39f2b6d2e076796c86da1b192cade))
+* **app:** One component for every empty message ([ee229ad](https://github.com/adooone/paper-camp/commit/ee229ad99711c8244865766e4232bd4b80dd2683))
+* **app:** Wrap the sidebar in one kraft card ([80ba0c1](https://github.com/adooone/paper-camp/commit/80ba0c14491dae0de25b8d937c5c9f0984b6ccfe))
+* **ideas:** Draft IDEA-233 through IDEA-236 for multi-project daemon ([4e735fb](https://github.com/adooone/paper-camp/commit/4e735fb34ad48a86c2eb1c115e7c0511427f91a7))
+* **ideas:** Draft IDEA-237 for unified log view ([af0b1b0](https://github.com/adooone/paper-camp/commit/af0b1b05bf6471d6765f505359f93ff93b496c34))
+
+
+### Bug Fixes
+
+* **agent:** Detect auth errors via CLI status, not stderr text ([efe7dc6](https://github.com/adooone/paper-camp/commit/efe7dc6be9255159ed773d1bcd440407bd2e8b36))
+* **app:** Answer the paste-code prompt from the app ([22f787f](https://github.com/adooone/paper-camp/commit/22f787fb8dd859eb62f54e30d927dfc86df24367))
+* **app:** Carry the auth kind to the git card ([0e70568](https://github.com/adooone/paper-camp/commit/0e705681e131c717054a565929e3d482b7f0135a))
+* **app:** Classify signed-out by probing auth status ([1dd7883](https://github.com/adooone/paper-camp/commit/1dd78835fece5d2348535491e260766995a782de))
+* **app:** Move the sign-in controls to shared app components ([5d84dab](https://github.com/adooone/paper-camp/commit/5d84dab4637ed6121a056dafd22896434fdc3a26))
+* **app:** Read the failure from the result line ([d1c276f](https://github.com/adooone/paper-camp/commit/d1c276f5e0950d135c95693eb60981a36a208fee))
+* **app:** Replace CodeBlock with inline CommandLine and fix dev reachability ([f029c0a](https://github.com/adooone/paper-camp/commit/f029c0a5035b089bc4886ad193361f0ec77ab943))
+* **app:** Strip OSC sequences before matching the login URL ([06e4006](https://github.com/adooone/paper-camp/commit/06e4006e0cf61302c3ad4b8b22318d6f4558e458))
+* **app:** Warn when the repo's trust dialog was never accepted ([2276362](https://github.com/adooone/paper-camp/commit/2276362d35655844083b4f119701a63d9e1422d2))
+* **ideas:** Restore exact byte content of IDEA-236's Fixes output ([175cef3](https://github.com/adooone/paper-camp/commit/175cef3ca81eec7a76765311cdf83e73f5c91a0d))
+* **ideas:** Revert premature Quality-check mark on IDEA-236 ([4621bd3](https://github.com/adooone/paper-camp/commit/4621bd3e9149f658714631d38dd320d8c7e12891))
+* **ideas:** Shorten IDEA-236's title under the 40-char limit ([32745a8](https://github.com/adooone/paper-camp/commit/32745a803a944787a404e8b6ee18959235915f5b))
+* **stack:** Fix notification badge visibility and checks-group logic ([57ae591](https://github.com/adooone/paper-camp/commit/57ae5912d6a4e5b83eb09b0c448d2aa30e0058b5))
+
 ## [0.27.0](https://github.com/adooone/paper-camp/compare/v0.26.0...v0.27.0) (2026-09-04)
 
 
