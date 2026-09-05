@@ -129,4 +129,4 @@ its own.
         src/app/server/agent.ts:462 — 3 lines
         src/app/server/agent.ts:660 — 3 lines
         src/app/server/login-relay.ts:16 — 3 lines
-       ELIFECYCLE  Command failed with exit code 1.
+       ELIFECYCLE  Command failed with exit code 1.
