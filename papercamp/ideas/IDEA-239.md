@@ -2,7 +2,7 @@
 id: IDEA-239
 title: Paint first, probe later
 type: fix
-status: idea
+status: review
 created: 2026-09-05
 tags:
   - app
@@ -99,5 +99,6 @@ loads.
       run: 7m10s · 62 in · 13k out · sonnet-5
 - [x] Fire `loadPlans` and `loadIdeas` on mount, ungated by `runtimeChecking`
       run: 2m24s · 26 in · 6.8k out · sonnet-5
-- [ ] Replace every `null` in the content column with a skeleton or named spinner
+- [x] Replace every `null` in the content column with a skeleton or named spinner
       `PlansListSkeleton` for Plans and a matching row skeleton elsewhere; `RuntimeUnavailable` only after an unreachable verdict, and a spinner past ten seconds gains its second line.
+      run: 9m23s · 102 in · 39.8k out · sonnet-5

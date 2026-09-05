@@ -1,2 +1,2 @@
 export { PlansPage } from './plans-page';
-export { PlanFilterColumn, PlanActionsColumn } from './views';
+export { PlanActionsColumn, PlanFilterColumn, PlansListSkeleton } from './views';

@@ -1,5 +1,7 @@
 import {
   ProjectSwitcher,
+  RowSkeleton,
+  RuntimeChecking,
   RuntimeUnavailable,
   ServerReloadBanner,
   SidebarShell,
@@ -8,7 +10,7 @@ import {
 } from '@/app/components';
 import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
 import { HubShell } from '@/app/features/hub';
-import { PlanActionsColumn, PlanFilterColumn } from '@/app/features/plans/index';
+import { PlanActionsColumn, PlanFilterColumn, PlansListSkeleton } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
 import {
   Button,
@@ -35,9 +37,28 @@ const GitFileList = lazy(() =>
   import('@/app/features/git/index').then((m) => ({ default: m.GitFileList })),
 );
 
+// Plans has its own skeleton; Docs/Roadmap/Settings/Tasks share a generic one;
+// everything else falls back to a named spinner.
+const ROW_SKELETON_PREFIXES = ['/docs', '/roadmap', '/settings', '/tasks'];
+const SPINNER_ROUTE_LABELS: Record<string, string> = {
+  '/git': 'Git',
+  '/inbox': 'Inbox',
+  '/stats': 'Stats',
+  '/issues': 'Issues',
+};
+
+function contentPlaceholder(pathname: string, isPlansArea: boolean) {
+  if (isPlansArea) return <PlansListSkeleton />;
+  if (ROW_SKELETON_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return <RowSkeleton />;
+  }
+  return <RuntimeChecking label={SPINNER_ROUTE_LABELS[pathname] ?? 'This page'} />;
+}
+
 export const AppShell = () => {
   const {
     navigate,
+    pathname,
     activeLayer,
     readiness,
     activeId,
@@ -161,8 +182,10 @@ export const AppShell = () => {
                 <div className="relative flex flex-col min-w-0 flex-[1_1_0%] pt-8 min-[1199px]:pr-[var(--pc-stack-width)]">
                   {readiness === 'unreachable' ? (
                     <RuntimeUnavailable layer={activeLayer} />
-                  ) : readiness === 'checking' ? null : (
-                    <Suspense fallback={null}>
+                  ) : readiness === 'checking' ? (
+                    contentPlaceholder(pathname, isPlansArea)
+                  ) : (
+                    <Suspense fallback={contentPlaceholder(pathname, isPlansArea)}>
                       <PageBreadcrumb />
                       <Outlet />
                     </Suspense>
