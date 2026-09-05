@@ -3,7 +3,7 @@ import { useActivePlan, useSubjectVocabulary } from '@/app/hooks';
 import { verifyDirectCompletion } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { branchEntityId } from '@/app/utils/branch-entity-id';
-import { Card, Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
+import { Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import {
   CompleteIdeaButton,
@@ -193,61 +193,59 @@ export const PlanActionsColumn = () => {
         </div>
       )}
 
-      <Card size="small" texture="kraft">
-        <div className="flex flex-col">
-          {canCreateBranch && <CreateBranchButton plan={plan} disabled={agentBusy || updating} />}
-          {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
-          {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
-          {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
+      <div className="flex flex-col">
+        {canCreateBranch && <CreateBranchButton plan={plan} disabled={agentBusy || updating} />}
+        {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
+        {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
+        {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
 
-          {underReview && plan.pr && (
-            <CompleteIdeaButton plan={plan} disabled={agentBusy || updating} />
-          )}
+        {underReview && plan.pr && (
+          <CompleteIdeaButton plan={plan} disabled={agentBusy || updating} />
+        )}
 
-          {done && (
-            <ListItem
-              size="small"
-              icon={<span className="text-ink-300">▣</span>}
-              onClick={handleArchive}
-              disabled={archiving || !plan.id}
-              className={`pc-row text-xs ${archiving || !plan.id ? 'opacity-50' : ''}`}
-            >
-              {archiving ? 'Archiving…' : 'Archive'}
-            </ListItem>
-          )}
+        {done && (
+          <ListItem
+            size="small"
+            icon={<span className="text-ink-300">▣</span>}
+            onClick={handleArchive}
+            disabled={archiving || !plan.id}
+            className={`pc-row text-xs ${archiving || !plan.id ? 'opacity-50' : ''}`}
+          >
+            {archiving ? 'Archiving…' : 'Archive'}
+          </ListItem>
+        )}
 
-          {canMarkDone && (
-            <ListItem
-              size="small"
-              // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
-              icon={<span className="text-watercolor-green-dark">✓</span>}
-              onClick={handleMarkDone}
-              disabled={archiving || !plan.id}
-              className={`pc-row text-xs ${archiving || !plan.id ? 'opacity-50' : ''}`}
-            >
-              {archiving ? 'Completing…' : 'Complete idea'}
-            </ListItem>
-          )}
+        {canMarkDone && (
+          <ListItem
+            size="small"
+            // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
+            icon={<span className="text-watercolor-green-dark">✓</span>}
+            onClick={handleMarkDone}
+            disabled={archiving || !plan.id}
+            className={`pc-row text-xs ${archiving || !plan.id ? 'opacity-50' : ''}`}
+          >
+            {archiving ? 'Completing…' : 'Complete idea'}
+          </ListItem>
+        )}
 
-          {!done && (
-            <ListItem
-              size="small"
-              icon={
-                <span
-                  className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
-                >
-                  {dropped ? '↺' : '⊘'}
-                </span>
-              }
-              onClick={() => patch({ status: dropped ? null : 'dropped' })}
-              disabled={updating}
-              className={`pc-row text-xs ${updating ? 'opacity-50' : ''}`}
-            >
-              {dropped ? 'Reopen plan' : 'Mark dropped'}
-            </ListItem>
-          )}
-        </div>
-      </Card>
+        {!done && (
+          <ListItem
+            size="small"
+            icon={
+              <span
+                className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
+              >
+                {dropped ? '↺' : '⊘'}
+              </span>
+            }
+            onClick={() => patch({ status: dropped ? null : 'dropped' })}
+            disabled={updating}
+            className={`pc-row text-xs ${updating ? 'opacity-50' : ''}`}
+          >
+            {dropped ? 'Reopen plan' : 'Mark dropped'}
+          </ListItem>
+        )}
+      </div>
     </div>
   );
 };

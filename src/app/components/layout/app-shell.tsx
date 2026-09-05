@@ -12,6 +12,7 @@ import { PlanActionsColumn, PlanFilterColumn } from '@/app/features/plans/index'
 import { useAppShell } from '@/app/hooks/use-app-shell';
 import {
   Button,
+  Divider,
   IconButton,
   Layout,
   Page,
@@ -132,6 +133,7 @@ export const AppShell = () => {
                     {isPlansArea && (
                       <>
                         <PlanFilterColumn />
+                        <Divider />
                         <PlanActionsColumn />
                       </>
                     )}

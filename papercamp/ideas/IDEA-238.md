@@ -67,9 +67,10 @@ The 480px bottom navigation.
       `SidebarShell` renders its children inside the card, drops `--pc-sidebar-h`,
       the inner scroll region, and the `h-8` spacer.
       run: 6m36s · 58 in · 31.2k out · sonnet-5
-- [ ] Fold the Plans filters and actions into that card
+- [x] Fold the Plans filters and actions into that card
       Two sections with a divider between them; `PlanActionsColumn` loses the `Card`
       it wraps its buttons in.
+      run: 2m · 34 in · 7.1k out · sonnet-5
 - [ ] Drop the `Page` sheet from the app shell
       The breadcrumb and `Outlet` render into the content column, which keeps the
       2rem top inset and the Stack's width clear on the right.
