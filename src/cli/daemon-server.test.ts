@@ -114,23 +114,52 @@ describe('readMachineProjectSummaries', () => {
     return path;
   }
 
-  it('lists slug and name, sorted, with no filesystem path', async () => {
+  const fakeApi = (active: boolean) =>
+    ({ agent: { hasActiveTask: () => active } }) as unknown as ApiMiddleware;
+
+  it('lists slug and name, sorted, with no filesystem path, unmounted by default', async () => {
     const step1 = addProject({ version: 1, projects: [] }, '/some/zeta', 'Zeta');
     const step2 = addProject(step1.registry, '/some/alpha', 'Alpha');
     const registryPath = await makeRegistryFile(step2.registry);
 
-    const summaries = await readMachineProjectSummaries(registryPath);
+    const summaries = await readMachineProjectSummaries(registryPath, new Map());
 
     expect(summaries).toEqual([
-      { slug: 'alpha', name: 'Alpha' },
-      { slug: 'zeta', name: 'Zeta' },
+      { slug: 'alpha', name: 'Alpha', mounted: false, busy: false },
+      { slug: 'zeta', name: 'Zeta', mounted: false, busy: false },
     ]);
   });
 
   it('resolves an empty list for an empty registry', async () => {
     const registryPath = await makeRegistryFile({ version: 1, projects: [] });
 
-    expect(await readMachineProjectSummaries(registryPath)).toEqual([]);
+    expect(await readMachineProjectSummaries(registryPath, new Map())).toEqual([]);
+  });
+
+  it('reports mounted true and busy false for an idle mounted project', async () => {
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
+    );
+
+    const summaries = await readMachineProjectSummaries(
+      registryPath,
+      new Map([['demo', fakeApi(false)]]),
+    );
+
+    expect(summaries).toEqual([{ slug: 'demo', name: 'Demo', mounted: true, busy: false }]);
+  });
+
+  it('reports busy true for a mounted project with an active task', async () => {
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
+    );
+
+    const summaries = await readMachineProjectSummaries(
+      registryPath,
+      new Map([['demo', fakeApi(true)]]),
+    );
+
+    expect(summaries).toEqual([{ slug: 'demo', name: 'Demo', mounted: true, busy: true }]);
   });
 });
 
@@ -246,13 +275,22 @@ describe('createDaemonRequestHandler', () => {
 
   async function startHandler(registryPath: string): Promise<{ port: number; seenUrls: string[] }> {
     const seenUrls: string[] = [];
-    const mockedApi = vi.fn((req, res) => {
-      seenUrls.push(req.url ?? '');
-      res.statusCode = 200;
-      res.end('mounted');
-    }) as unknown as ApiMiddleware;
-    const { mount } = createProjectMounter(registryPath, () => Promise.resolve(mockedApi));
-    const handler = createDaemonRequestHandler(registryPath, mount, '/nonexistent', '<html/>');
+    const mockedApi = Object.assign(
+      vi.fn((req, res) => {
+        seenUrls.push(req.url ?? '');
+        res.statusCode = 200;
+        res.end('mounted');
+      }),
+      { agent: { hasActiveTask: () => false } },
+    ) as unknown as ApiMiddleware;
+    const { mount, mounted } = createProjectMounter(registryPath, () => Promise.resolve(mockedApi));
+    const handler = createDaemonRequestHandler(
+      registryPath,
+      mount,
+      mounted,
+      '/nonexistent',
+      '<html/>',
+    );
     const server = createServer((req, res) => {
       handler(req, res).catch((error) => {
         res.statusCode = 500;
@@ -266,7 +304,7 @@ describe('createDaemonRequestHandler', () => {
     return { port, seenUrls };
   }
 
-  it('lists registered projects at /api/machine/projects for a loopback caller', async () => {
+  it('lists registered projects at /api/machine/projects for a loopback caller, unmounted', async () => {
     const registryPath = await makeRegistryFile(
       addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
     );
@@ -275,7 +313,23 @@ describe('createDaemonRequestHandler', () => {
     const response = await fetch(`http://127.0.0.1:${port}/api/machine/projects`);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ projects: [{ slug: 'demo', name: 'Demo' }] });
+    expect(await response.json()).toEqual({
+      projects: [{ slug: 'demo', name: 'Demo', mounted: false, busy: false }],
+    });
+  });
+
+  it('reports a project as mounted after a request has built its middleware', async () => {
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
+    );
+    const { port } = await startHandler(registryPath);
+    await fetch(`http://127.0.0.1:${port}/p/demo/`);
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/machine/projects`);
+
+    expect(await response.json()).toEqual({
+      projects: [{ slug: 'demo', name: 'Demo', mounted: true, busy: false }],
+    });
   });
 
   it('mounts a registered slug and rewrites the forwarded URL to strip the /p/<slug> prefix', async () => {

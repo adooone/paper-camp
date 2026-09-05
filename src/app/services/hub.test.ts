@@ -92,8 +92,8 @@ describe('pickableTailnetPeers', () => {
 describe('pickableMachineProjects', () => {
   const machineUrl = 'http://100.64.1.2:4333';
   const projects = [
-    { slug: 'alpha', name: 'Alpha' },
-    { slug: 'beta', name: 'Beta' },
+    { slug: 'alpha', name: 'Alpha', mounted: false, busy: false },
+    { slug: 'beta', name: 'Beta', mounted: false, busy: false },
   ];
 
   it('keeps every project when none are already added', () => {
@@ -103,7 +103,7 @@ describe('pickableMachineProjects', () => {
   it('drops a project already registered as that machine mount', () => {
     expect(
       pickableMachineProjects(machineUrl, projects, ['http://100.64.1.2:4333/p/alpha']),
-    ).toEqual([{ slug: 'beta', name: 'Beta' }]);
+    ).toEqual([{ slug: 'beta', name: 'Beta', mounted: false, busy: false }]);
   });
 
   it('is unaffected by an added runtime that belongs to a different machine', () => {

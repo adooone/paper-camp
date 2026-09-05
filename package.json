@@ -48,7 +48,7 @@
     "consistency": "knip --include files,dependencies && depcruise src --config .dependency-cruiser.cjs",
     "prepare": "husky",
     "comment-stats": "node scripts/comment-stats.mjs",
-    "smoke": "node scripts/pack-smoke-test.mjs"
+    "smoke": "node scripts/pack-smoke-test.mjs && node scripts/daemon-lifecycle-smoke-test.mjs"
   },
   "keywords": [
     "project-management",

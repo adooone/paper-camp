@@ -29,7 +29,6 @@ import {
   type MachineProject,
   addProject,
   defaultRegistryPath,
-  listProjects,
   loadRegistry,
   removeProject,
   saveRegistry,
@@ -52,7 +51,16 @@ import {
   type PlanEntry,
   coerceAgentConfig,
 } from '../types/index';
-import { startDaemonServer } from './daemon-server';
+import {
+  DEFAULT_LOG_LINES,
+  runLogs,
+  runLs,
+  runRestart,
+  runStart,
+  runStatus,
+  runStop,
+} from './daemon-lifecycle';
+import { DEFAULT_DAEMON_PORT, startDaemonServer } from './daemon-server';
 import { readConfigPort, resolveDevPort } from './dev-port';
 import { startDevServer } from './dev-server';
 import { buildSessionFocus } from './session-focus';
@@ -196,8 +204,6 @@ program
     }
   });
 
-const DEFAULT_DAEMON_PORT = 4333;
-
 program
   .command('daemon')
   .description(
@@ -225,19 +231,64 @@ program
   });
 
 program
-  .command('ls')
-  .description('List projects registered in the machine-level registry')
+  .command('start')
+  .description('Start `paper-camp daemon` detached, logging to daemon.log in the config dir')
+  .option('-p, --port <number>', `port to listen on (default: ${DEFAULT_DAEMON_PORT})`)
+  .option(
+    '--share',
+    'open an account-less cloudflared quick tunnel so the hosted client can reach this machine from anywhere',
+  )
+  .option(
+    '--tailnet',
+    "serve over HTTPS at this machine's stable MagicDNS address via `tailscale serve`",
+  )
+  .action(async (opts: { port?: string; share?: boolean; tailnet?: boolean }) => {
+    const ok = await runStart({
+      port: opts.port ? Number(opts.port) : undefined,
+      share: opts.share,
+      tailnet: opts.tailnet,
+    });
+    if (!ok) process.exitCode = 1;
+  });
+
+program
+  .command('stop')
+  .description('Stop the running daemon (SIGTERM, then SIGKILL after five seconds)')
   .action(async () => {
-    const registry = await loadRegistry(defaultRegistryPath());
-    const projects = listProjects(registry);
-    if (projects.length === 0) {
-      console.log('No projects registered.');
-      return;
-    }
-    const slugWidth = Math.max(...projects.map((p) => p.slug.length));
-    for (const project of projects) {
-      console.log(`${project.slug.padEnd(slugWidth)}  ${project.path}`);
-    }
+    if (!(await runStop())) process.exitCode = 1;
+  });
+
+program
+  .command('restart')
+  .description('Stop the running daemon and start it again with the same flags')
+  .action(async () => {
+    if (!(await runRestart())) process.exitCode = 1;
+  });
+
+program
+  .command('status')
+  .description("Show whether the daemon is running and each registered project's STATE")
+  .action(async () => {
+    await runStatus();
+  });
+
+program
+  .command('ls')
+  .description('List projects registered in the machine-level registry, with each STATE')
+  .action(async () => {
+    await runLs();
+  });
+
+program
+  .command('logs')
+  .description(`Print daemon.log (last ${DEFAULT_LOG_LINES} lines by default)`)
+  .option('-n, --lines <number>', `number of lines to print (default: ${DEFAULT_LOG_LINES})`)
+  .option('-f, --follow', 'follow the log until interrupted')
+  .action(async (opts: { lines?: string; follow?: boolean }) => {
+    await runLogs({
+      lines: opts.lines ? Number(opts.lines) : undefined,
+      follow: opts.follow,
+    });
   });
 
 program
