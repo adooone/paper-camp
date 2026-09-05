@@ -38,18 +38,21 @@ async function chooseProject(): Promise<boolean> {
   return servesOwnRuntime(runtimeUrl, (path) => apiFetch(apiUrl(path)));
 }
 
-// The router always mounts: rendering the hub outside RouterProvider left its own
-// navigation calling router hooks with no router, crashing every hosted load.
+// The router mounts at once — nothing on the boot path awaits a fetch, so the boot
+// indicator in index.html is on screen for one paint, not one round trip.
+createRoot(rootElement).render(
+  <StrictMode>
+    <RouterProvider router={router} />
+  </StrictMode>,
+);
+
+// The verdict lands after mount now, so a hosted bundle with no project is sent to
+// the hub from the running app instead of the redirect gating first paint on it.
 pairIfNeeded()
   .then(chooseProject)
   .catch(() => false)
   .then((chosenProject) => {
-    if (!chosenProject && !window.location.pathname.startsWith(HUB_PATH)) {
-      window.history.replaceState(null, '', `${mountPrefix}${HUB_PATH}`);
+    if (!chosenProject && !router.state.location.pathname.startsWith(HUB_PATH)) {
+      router.navigate({ to: HUB_PATH, replace: true });
     }
-    createRoot(rootElement).render(
-      <StrictMode>
-        <RouterProvider router={router} />
-      </StrictMode>,
-    );
   });
