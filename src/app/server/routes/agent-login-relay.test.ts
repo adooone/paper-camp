@@ -37,6 +37,23 @@ function fakeReq(): IncomingMessage {
   return { url: '', headers: {}, on: () => {} } as unknown as IncomingMessage;
 }
 
+function fakeBodyReq(body: string): IncomingMessage {
+  const listeners: Record<string, (chunk?: string) => void> = {};
+  const req = {
+    url: '',
+    headers: {},
+    on(event: string, cb: (chunk?: string) => void) {
+      listeners[event] = cb;
+      return req;
+    },
+  } as unknown as IncomingMessage;
+  queueMicrotask(() => {
+    listeners.data?.(body);
+    listeners.end?.();
+  });
+  return req;
+}
+
 function fakeRes(): { res: ServerResponse; status: () => number; json: () => unknown } {
   let statusCode = 0;
   let body = '';
@@ -167,5 +184,70 @@ describe('POST /api/agent/login-relay/cancel', () => {
     await route('/api/agent/login-relay/cancel').handle(fakeReq(), res);
     expect(status()).toBe(202);
     expect(json()).toEqual({ ok: true });
+  });
+});
+
+describe('POST /api/agent/login-relay/code', () => {
+  it('rejects an empty code', async () => {
+    const { res, status, json } = fakeRes();
+    await route('/api/agent/login-relay/code').handle(
+      fakeBodyReq(JSON.stringify({ code: '  ' })),
+      res,
+    );
+    expect(status()).toBe(400);
+    expect(json()).toEqual({ error: 'code is required' });
+  });
+
+  it('reports 409 when no code prompt is pending', async () => {
+    installClaude("echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 5");
+    const start = fakeRes();
+    await route('/api/agent/login-relay/start').handle(fakeReq(), start.res);
+    await waitFor(async () => {
+      const check = fakeRes();
+      await route('/api/agent/login-relay/status').handle(fakeReq(), check.res);
+      return (check.json() as { phase: string }).phase === 'awaiting-authorization';
+    });
+
+    const { res, status, json } = fakeRes();
+    await route('/api/agent/login-relay/code').handle(
+      fakeBodyReq(JSON.stringify({ code: 'ABC-123' })),
+      res,
+    );
+    expect(status()).toBe(409);
+    expect(json()).toEqual({ error: 'No code prompt is pending' });
+
+    const cancel = fakeRes();
+    await route('/api/agent/login-relay/cancel').handle(fakeReq(), cancel.res);
+  });
+
+  it('writes the code to the pty and clears needsCode (IDEA-236)', async () => {
+    installClaude(
+      `echo 'visit: https://claude.com/cai/oauth/authorize?code=true'
+       sleep 0.1
+       printf 'Paste code here if prompted > '
+       read CODE
+       if [ "$CODE" = "ABC-123" ]; then exit 0; else exit 1; fi`,
+    );
+    const start = fakeRes();
+    await route('/api/agent/login-relay/start').handle(fakeReq(), start.res);
+    await waitFor(async () => {
+      const check = fakeRes();
+      await route('/api/agent/login-relay/status').handle(fakeReq(), check.res);
+      return (check.json() as { needsCode?: boolean }).needsCode === true;
+    });
+
+    const { res, status, json } = fakeRes();
+    await route('/api/agent/login-relay/code').handle(
+      fakeBodyReq(JSON.stringify({ code: 'ABC-123' })),
+      res,
+    );
+    expect(status()).toBe(200);
+    expect(json()).toMatchObject({ needsCode: false });
+
+    await waitFor(async () => {
+      const check = fakeRes();
+      await route('/api/agent/login-relay/status').handle(fakeReq(), check.res);
+      return (check.json() as { phase: string }).phase === 'success';
+    });
   });
 });

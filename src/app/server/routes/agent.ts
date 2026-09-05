@@ -242,6 +242,26 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
       },
     },
 
+    {
+      method: 'POST',
+      path: '/api/agent/login-relay/code',
+      handle: async (req, res) => {
+        const raw = await readBody(req);
+        const { code } = JSON.parse(raw) as { code?: string };
+        if (!code?.trim()) {
+          sendJson(res, 400, { error: 'code is required' });
+          return;
+        }
+        const handle = getCurrentLoginRelay();
+        if (!handle?.getState().needsCode) {
+          sendJson(res, 409, { error: 'No code prompt is pending' });
+          return;
+        }
+        handle.submitCode(code.trim());
+        sendJson(res, 200, handle.getState());
+      },
+    },
+
     planActionRoute(
       '/api/agent/launch',
       (raw) => {

@@ -735,6 +735,8 @@ export interface LoginRelayState {
   phase: LoginRelayPhase;
   authorizeUrl: string | null;
   error?: string;
+  /** The CLI fell back to its manual code-paste prompt instead of its localhost callback. */
+  needsCode?: boolean;
 }
 
 export type ServiceId = 'git' | 'gh' | `agent:${AgentId}`;

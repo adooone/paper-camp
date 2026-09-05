@@ -55,6 +55,23 @@ describe('startClaudeLoginRelay', () => {
     await waitFor(handle, (s) => s.phase === 'cancelled');
   });
 
+  it('sets needsCode when the CLI falls back to the paste-code prompt, and submitCode answers it (IDEA-236)', async () => {
+    installClaude(
+      `echo 'visit: https://claude.com/cai/oauth/authorize?code=true'
+       sleep 0.1
+       printf 'Paste code here if prompted > '
+       read CODE
+       if [ "$CODE" = "ABC-123" ]; then exit 0; else exit 1; fi`,
+    );
+    const handle = await startClaudeLoginRelay(process.cwd());
+    await waitFor(handle, (s) => s.phase === 'awaiting-authorization');
+    await waitFor(handle, (s) => s.needsCode === true);
+
+    handle.submitCode('ABC-123');
+    expect(handle.getState().needsCode).toBe(false);
+    await waitFor(handle, (s) => s.phase === 'success');
+  });
+
   it('parses the authorize URL out of interactive PTY output', async () => {
     installClaude(
       "echo 'Opening browser to sign in...'; echo 'If the browser did not open, visit: https://claude.com/cai/oauth/authorize?code=true&state=abc'; sleep 5",

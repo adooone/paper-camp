@@ -244,3 +244,13 @@ export const fetchLoginRelayStatus = async (): Promise<LoginRelayState | null> =
 export const cancelLoginRelay = async (): Promise<void> => {
   await apiFetch(apiUrl('/api/agent/login-relay/cancel'), { method: 'POST' });
 };
+
+export const submitLoginRelayCode = async (code: string): Promise<LoginRelayState> => {
+  const response = await apiFetch(apiUrl('/api/agent/login-relay/code'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+  });
+  await handleAgentResponse(response, 'Failed to submit sign-in code');
+  return response.json();
+};

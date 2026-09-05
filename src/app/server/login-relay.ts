@@ -18,12 +18,14 @@ const ANSI_ESCAPE_RE = new RegExp(
 // regex's char class partially matches its introducer, mangling the URL if this doesn't run first.
 const OSC_ESCAPE_RE = new RegExp(`${ESC}\\][^\\x07${ESC}]*(?:\\x07|${ESC}\\\\)`, 'g');
 const URL_RE = /https?:\/\/\S+/;
+const PASTE_CODE_MARKER = 'Paste code here';
 
 export type { LoginRelayPhase, LoginRelayState };
 
 export interface LoginRelayHandle {
   getState: () => LoginRelayState;
   cancel: () => void;
+  submitCode: (code: string) => void;
 }
 
 function stripAnsi(text: string): string {
@@ -88,6 +90,7 @@ export async function startClaudeLoginRelay(
   let buffer = '';
   let proc: Pty.IPty | undefined;
   let cancelledBeforeSpawn = false;
+  let codeSubmitted = false;
 
   // Reserved synchronously (before the `await import` below yields) so a second call
   // racing in during module load sees `current` and returns this handle instead of spawning a competing login.
@@ -99,6 +102,7 @@ export async function startClaudeLoginRelay(
       if (proc) killWithEscalation(proc);
       else cancelledBeforeSpawn = true;
     },
+    submitCode: () => {},
   };
   current = handle;
 
@@ -146,13 +150,20 @@ export async function startClaudeLoginRelay(
   }, opts.sessionTimeoutMs ?? SESSION_TIMEOUT_MS);
 
   proc.onData((chunk) => {
-    if (state.phase !== 'starting') return;
+    if (isDone(state.phase)) return;
     buffer += chunk;
-    const url = extractAuthorizeUrl(buffer);
-    if (url) {
-      clearTimeout(urlTimeout);
-      state.phase = 'awaiting-authorization';
-      state.authorizeUrl = url;
+    if (state.phase === 'starting') {
+      const url = extractAuthorizeUrl(buffer);
+      if (url) {
+        clearTimeout(urlTimeout);
+        state.phase = 'awaiting-authorization';
+        state.authorizeUrl = url;
+      }
+    }
+    // The CLI falls back to this prompt when its localhost callback can't complete
+    // (e.g. a headless remote box) — otherwise exit 0 alone means success below.
+    if (!codeSubmitted && !state.needsCode && stripAnsi(buffer).includes(PASTE_CODE_MARKER)) {
+      state.needsCode = true;
     }
   });
 
@@ -175,6 +186,13 @@ export async function startClaudeLoginRelay(
     clearTimeout(sessionTimeout);
     state.phase = 'cancelled';
     if (proc) killWithEscalation(proc);
+  };
+
+  handle.submitCode = (code: string) => {
+    if (isDone(state.phase) || !proc) return;
+    codeSubmitted = true;
+    state.needsCode = false;
+    proc.write(`${code}\r`);
   };
 
   return handle;

@@ -102,7 +102,8 @@ its own.
 - [x] Strip OSC sequences before matching the login URL
       Extend `stripAnsi` to drop `ESC ]` … BEL/`ESC \` sequences and add a `login-relay.test.ts` fixture from the real 2.1.250 output.
       run: 4m · 44 in · 16.3k out · sonnet-5
-- [ ] Answer the paste-code prompt from the app
+- [x] Answer the paste-code prompt from the app
       Set `needsCode` on `LoginRelayState` when the buffer shows `Paste code here`, render the code input beside the existing actions, and write the code plus a carriage return to the pty from `POST /api/agent/login-relay/code`.
+      run: 7m52s · 132 in · 32.4k out · sonnet-5
 - [ ] Warn when the repo's trust dialog was never accepted
       Probe `~/.claude.json` for `projects[<root>].hasTrustDialogAccepted` and show a warn stamp with the remedy on the Claude Code connection row.

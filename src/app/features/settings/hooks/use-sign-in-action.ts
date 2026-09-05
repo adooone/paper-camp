@@ -9,6 +9,7 @@ export const useSignInAction = (onSignedIn: () => void) => {
   const startLoginRelay = useAppStore((s) => s.startLoginRelay);
   const loadLoginRelayStatus = useAppStore((s) => s.loadLoginRelayStatus);
   const cancelLoginRelay = useAppStore((s) => s.cancelLoginRelay);
+  const submitLoginRelayCode = useAppStore((s) => s.submitLoginRelayCode);
   const { toast } = useToast();
   const openedUrlRef = useRef<string | null>(null);
   const phase = loginRelay?.phase;
@@ -36,10 +37,24 @@ export const useSignInAction = (onSignedIn: () => void) => {
     }
   }, [phase]);
 
+  const submitCode = async (code: string) => {
+    try {
+      await submitLoginRelayCode(code);
+    } catch (err) {
+      toast({
+        title: 'Could not submit the code',
+        description: (err as Error).message,
+        variant: 'error',
+      });
+    }
+  };
+
   return {
     phase,
     authorizeUrl: loginRelay?.authorizeUrl,
+    needsCode: loginRelay?.needsCode ?? false,
     startLoginRelay,
     cancelLoginRelay,
+    submitCode,
   };
 };

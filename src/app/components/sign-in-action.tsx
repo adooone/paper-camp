@@ -1,5 +1,6 @@
 import { useSignInAction } from '@/app/features/settings/hooks';
-import { Button } from '@dendelion/paper-ui';
+import { Button, Input } from '@dendelion/paper-ui';
+import { useState } from 'react';
 import { RelayFallbackGuide } from './relay-fallback-guide';
 
 interface SignInActionProps {
@@ -7,7 +8,9 @@ interface SignInActionProps {
 }
 
 export const SignInAction = ({ onSignedIn }: SignInActionProps) => {
-  const { phase, authorizeUrl, startLoginRelay, cancelLoginRelay } = useSignInAction(onSignedIn);
+  const { phase, authorizeUrl, needsCode, startLoginRelay, cancelLoginRelay, submitCode } =
+    useSignInAction(onSignedIn);
+  const [code, setCode] = useState('');
 
   if (phase === 'starting') {
     return (
@@ -17,8 +20,14 @@ export const SignInAction = ({ onSignedIn }: SignInActionProps) => {
     );
   }
   if (phase === 'awaiting-authorization') {
+    const handleSubmit = () => {
+      const trimmed = code.trim();
+      if (!trimmed) return;
+      submitCode(trimmed);
+      setCode('');
+    };
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Button
           size="small"
           onClick={() => authorizeUrl && window.open(authorizeUrl, '_blank', 'noopener,noreferrer')}
@@ -28,6 +37,20 @@ export const SignInAction = ({ onSignedIn }: SignInActionProps) => {
         <Button size="small" onClick={() => cancelLoginRelay()}>
           Cancel
         </Button>
+        {needsCode && (
+          <>
+            <Input
+              size="small"
+              placeholder="Paste the code the sign-in page shows"
+              value={code}
+              onChange={(e) => setCode(e.currentTarget.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            />
+            <Button size="small" onClick={handleSubmit} disabled={!code.trim()}>
+              Submit
+            </Button>
+          </>
+        )}
       </div>
     );
   }

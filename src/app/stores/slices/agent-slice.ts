@@ -19,6 +19,7 @@ import {
   launchSuggestIdeas as launchSuggestIdeasApi,
   startLoginRelay as startLoginRelayApi,
   stopAgent as stopAgentApi,
+  submitLoginRelayCode as submitLoginRelayCodeApi,
 } from '../../services/agent-api';
 import { runDeskCheck } from '../../services/checks-api';
 import type { GetState, SetState } from './slice-helpers';
@@ -73,6 +74,7 @@ export type AgentSlice = {
   startLoginRelay: () => Promise<void>;
   loadLoginRelayStatus: () => Promise<void>;
   cancelLoginRelay: () => Promise<void>;
+  submitLoginRelayCode: (code: string) => Promise<void>;
 
   // At store level (not the button) so loadAgentStatus still handles completion if the
   // user navigates away mid-run.
@@ -246,6 +248,10 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
       } finally {
         set({ loginRelay: null });
       }
+    },
+    submitLoginRelayCode: async (code) => {
+      const state = await submitLoginRelayCodeApi(code);
+      set({ loginRelay: state });
     },
 
     pendingReconcile: null,
