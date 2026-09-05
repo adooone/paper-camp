@@ -108,6 +108,8 @@ export function useAppShell(): AppShellState {
     loadParkedQuestions();
     loadNotifications();
     checkRuntimeReachable();
+    loadPlans();
+    loadIdeas();
   }, [
     loadSuggestions,
     loadCapabilities,
@@ -115,15 +117,9 @@ export function useAppShell(): AppShellState {
     loadParkedQuestions,
     loadNotifications,
     checkRuntimeReachable,
+    loadPlans,
+    loadIdeas,
   ]);
-
-  // Corpus source depends on runtimeReachable, known only once the probe above
-  // resolves — re-run then so a reachable client isn't stuck on the plan-only path.
-  useEffect(() => {
-    if (runtimeChecking) return;
-    loadPlans();
-    loadIdeas();
-  }, [runtimeChecking, loadPlans, loadIdeas]);
 
   // Land fresh installs (or any install with an incomplete capability) on Setup
   // instead of letting them discover gaps by hitting a broken PR badge or agent button.
