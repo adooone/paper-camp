@@ -114,7 +114,7 @@ export const AppShell = () => {
         </div>
         <Layout
           style={{ flex: '1 1 0%', minHeight: 0, height: 'auto' }}
-          background={{ texture: 'paper' }}
+          background={{ texture: 'paper', shade: true }}
           showHeader={false}
           showSidebar={false}
           showPage={false}

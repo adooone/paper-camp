@@ -4,6 +4,7 @@ title: Sidebar as a card on solid paper
 type: feat
 status: review
 created: 2026-09-05
+updated: 2026-09-05
 tags:
   - app
   - ui
@@ -81,3 +82,4 @@ The 480px bottom navigation.
       Docs, Settings, Roadmap, and the Git file list in the card, and the mobile
       drawer's backdrop, focus, and Escape below `lg`.
       run: 4m33s · 38 in · 8.8k out · sonnet-5
+- [x] [manual] Add paper shade to the sidebar layout background
