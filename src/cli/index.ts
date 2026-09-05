@@ -51,7 +51,15 @@ import {
   type PlanEntry,
   coerceAgentConfig,
 } from '../types/index';
-import { runLs, runRestart, runStart, runStatus, runStop } from './daemon-lifecycle';
+import {
+  DEFAULT_LOG_LINES,
+  runLogs,
+  runLs,
+  runRestart,
+  runStart,
+  runStatus,
+  runStop,
+} from './daemon-lifecycle';
 import { DEFAULT_DAEMON_PORT, startDaemonServer } from './daemon-server';
 import { readConfigPort, resolveDevPort } from './dev-port';
 import { startDevServer } from './dev-server';
@@ -269,6 +277,18 @@ program
   .description('List projects registered in the machine-level registry, with each STATE')
   .action(async () => {
     await runLs();
+  });
+
+program
+  .command('logs')
+  .description(`Print daemon.log (last ${DEFAULT_LOG_LINES} lines by default)`)
+  .option('-n, --lines <number>', `number of lines to print (default: ${DEFAULT_LOG_LINES})`)
+  .option('-f, --follow', 'follow the log until interrupted')
+  .action(async (opts: { lines?: string; follow?: boolean }) => {
+    await runLogs({
+      lines: opts.lines ? Number(opts.lines) : undefined,
+      follow: opts.follow,
+    });
   });
 
 program

@@ -1,5 +1,5 @@
 import { type ChildProcess, type SpawnSyncReturns, spawn, spawnSync } from 'node:child_process';
-import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { access, appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { type Server, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -11,6 +11,7 @@ import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/inde
 import {
   buildDaemonArgs,
   formatProjectTable,
+  lastLines,
   projectState,
   restartOptionsFromState,
 } from './daemon-lifecycle';
@@ -117,6 +118,24 @@ describe('formatProjectTable', () => {
   });
 });
 
+describe('lastLines', () => {
+  it('returns every line when there are fewer than the requested count', () => {
+    expect(lastLines('one\ntwo\n', 50)).toEqual(['one', 'two']);
+  });
+
+  it('returns only the last n lines', () => {
+    expect(lastLines('one\ntwo\nthree\nfour\n', 2)).toEqual(['three', 'four']);
+  });
+
+  it('keeps a trailing line with no newline after it', () => {
+    expect(lastLines('one\ntwo', 50)).toEqual(['one', 'two']);
+  });
+
+  it('is empty for an empty file', () => {
+    expect(lastLines('', 50)).toEqual([]);
+  });
+});
+
 const CLI_ENTRY = join(__dirname, 'index.ts');
 
 const FAKE_DAEMON_SCRIPT = `
@@ -159,7 +178,7 @@ if (process.env.FAKE_DAEMON_IGNORE_SIGTERM === '1') {
 }
 `;
 
-describe('paper-camp start / stop / restart / status / ls (CLI)', () => {
+describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
   const dirs: string[] = [];
   const servers: Server[] = [];
   const children: ChildProcess[] = [];
@@ -404,5 +423,80 @@ describe('paper-camp start / stop / restart / status / ls (CLI)', () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain(`paper-camp: daemon running — pid ${state.pid}`);
     expect(result.stdout).toContain('demo  mounted  /some/demo');
+  });
+
+  it('logs says so and exits 0 when there is no daemon.log yet', async () => {
+    const configDir = await makeConfigDir();
+
+    const result = runCli(['logs'], configDir);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe('paper-camp: no daemon.log yet');
+  });
+
+  it('logs -f also exits 0 immediately when there is no daemon.log yet', async () => {
+    const configDir = await makeConfigDir();
+
+    const result = runCli(['logs', '-f'], configDir);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe('paper-camp: no daemon.log yet');
+  });
+
+  it('logs defaults to printing the last 50 lines of daemon.log', async () => {
+    const configDir = await makeConfigDir();
+    const lines = Array.from({ length: 60 }, (_, i) => `line ${i}`);
+    await writeFile(join(configDir, 'daemon.log'), `${lines.join('\n')}\n`, 'utf-8');
+
+    const result = runCli(['logs'], configDir);
+
+    const printed = result.stdout.trim().split('\n');
+    expect(printed).toHaveLength(50);
+    expect(printed[0]).toBe('line 10');
+    expect(printed.at(-1)).toBe('line 59');
+  });
+
+  it('logs -n limits the printed lines to the requested count', async () => {
+    const configDir = await makeConfigDir();
+    const lines = Array.from({ length: 10 }, (_, i) => `line ${i}`);
+    await writeFile(join(configDir, 'daemon.log'), `${lines.join('\n')}\n`, 'utf-8');
+
+    const result = runCli(['logs', '-n', '3'], configDir);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe('line 7\nline 8\nline 9');
+  });
+
+  async function waitUntil(predicate: () => boolean, timeoutMs = 5000): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (predicate()) return;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    throw new Error('timed out waiting for condition');
+  }
+
+  it('logs -f prints existing content, then follows appended lines until killed', async () => {
+    const configDir = await makeConfigDir();
+    const logPath = join(configDir, 'daemon.log');
+    await writeFile(logPath, 'line 1\n', 'utf-8');
+
+    const child = spawn('bun', [CLI_ENTRY, 'logs', '-f'], {
+      env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir },
+    });
+    children.push(child);
+    let stdout = '';
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdout += chunk.toString();
+    });
+
+    await waitUntil(() => stdout.includes('line 1'));
+
+    await appendFile(logPath, 'line 2\n', 'utf-8');
+    await waitUntil(() => stdout.includes('line 2'));
+
+    child.kill('SIGKILL');
+    expect(stdout).toContain('line 1');
+    expect(stdout).toContain('line 2');
   });
 });

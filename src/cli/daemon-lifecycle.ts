@@ -213,3 +213,42 @@ export async function runStatus(): Promise<void> {
   const registry = await loadRegistry(defaultRegistryPath());
   console.log(formatProjectTable(listProjects(registry), liveProjects));
 }
+
+export const DEFAULT_LOG_LINES = 50;
+const LOGS_POLL_INTERVAL_MS = 200;
+
+/** Drops the trailing empty element `split` leaves for a file ending in a
+ * newline, so a 50-line request doesn't come back as 49 lines plus a blank. */
+export function lastLines(content: string, n: number): string[] {
+  const lines = content.split('\n');
+  if (lines[lines.length - 1] === '') lines.pop();
+  return lines.slice(-n);
+}
+
+export interface LogsOptions {
+  lines?: number;
+  follow?: boolean;
+}
+
+export async function runLogs(opts: LogsOptions): Promise<void> {
+  const logPath = daemonLogPath();
+  const content = await readFile(logPath, 'utf-8').catch(() => null);
+  if (content === null) {
+    console.log('paper-camp: no daemon.log yet');
+    return;
+  }
+
+  for (const line of lastLines(content, opts.lines ?? DEFAULT_LOG_LINES)) console.log(line);
+  if (!opts.follow) return;
+
+  let printedLength = content.length;
+  for (;;) {
+    await sleep(LOGS_POLL_INTERVAL_MS);
+    const latest = await readFile(logPath, 'utf-8').catch(() => '');
+    if (latest.length < printedLength) printedLength = 0;
+    if (latest.length > printedLength) {
+      process.stdout.write(latest.slice(printedLength));
+      printedLength = latest.length;
+    }
+  }
+}
