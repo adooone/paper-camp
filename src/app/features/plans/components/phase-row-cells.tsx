@@ -41,7 +41,7 @@ export const PhaseTitleCell = ({ row, runningFill }: PhaseTitleCellProps) => (
   >
     <span
       title={row.item.text}
-      className="overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-base leading-tight"
+      className="overflow-hidden text-ellipsis whitespace-nowrap pr-1 font-handwritten text-base leading-tight"
     >
       {row.item.text}
     </span>

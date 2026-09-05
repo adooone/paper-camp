@@ -15,14 +15,14 @@ interface WorklistRowsProps {
   onOpenIdea?: (title: string) => void;
 }
 
-const headerLabelClass = 'text-sm font-semibold opacity-60 whitespace-nowrap overflow-hidden';
+const headerLabelClass = 'font-handwritten text-sm font-semibold opacity-60 whitespace-nowrap';
 
 const subjectHeaderClass =
   'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
 
 const groupToggleLabelClass = 'font-handwritten text-xs font-semibold opacity-55 leading-none';
 
-const headerButtonClass = `${headerLabelClass} bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit text-left`;
+const headerButtonClass = `${headerLabelClass} bg-none bg-transparent border-none p-0 cursor-pointer text-inherit text-left`;
 
 const SORT_COLUMNS: { key: PlanSortKey; label: string }[] = [
   { key: 'id', label: 'Id' },
@@ -235,7 +235,7 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
 // Fewer columns than a plan row (no updated/progress) — a fix is a distinct,
 // minimal follow-up entity, not a nested child of its (closed) parent (IDEA-187).
 const FIX_ROW_GRID_CLASS =
-  'grid grid-cols-[76px_minmax(0,1fr)_112px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
+  'grid grid-cols-[76px_minmax(0,1fr)_92px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
 interface FixRowCardProps {
   row: FixRow;

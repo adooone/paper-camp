@@ -2,7 +2,7 @@ import { Card } from '@dendelion/paper-ui';
 import { type TaskGroup, formatDayHeader } from '../helpers';
 import { TASK_ROWS_GRID_CLASS, TaskRow } from './task-row';
 
-const headerLabelClassName = 'text-sm font-semibold whitespace-nowrap overflow-hidden';
+const headerLabelClassName = 'font-handwritten text-sm font-semibold whitespace-nowrap';
 
 export interface TaskListProps {
   groups: TaskGroup[];

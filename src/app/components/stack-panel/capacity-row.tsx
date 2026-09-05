@@ -66,7 +66,7 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
     <Card surface="chalkboard" size="small" className={heightClassName}>
       <div className="flex h-full flex-col justify-between gap-1">
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+          <span className="min-w-0 truncate pr-1 font-handwritten text-sm leading-tight text-desk-chalk">
             {fiveHour?.resetsAt === undefined
               ? 'Capacity'
               : `Resets in ${formatGap(resetsAtMs(fiveHour.resetsAt) - now)}`}

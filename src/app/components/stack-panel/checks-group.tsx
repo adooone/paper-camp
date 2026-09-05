@@ -1,11 +1,14 @@
-import { entityLink, entityRouteParam } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { useAppStore } from '@/app/stores/app-store';
-import type { DoctorFindingSummary, DoctorFindingWithSeverity } from '@/core/doctor';
-import type { CheckStatus, ConsistencyIssue, DeskCheckState, PlanEntry } from '@/types/index';
-import { CopyButton } from '@dendelion/paper-ui';
-import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useState } from 'react';
+import type { DoctorFindingSummary } from '@/core/doctor';
+import { collectCheckIssues } from '@/core/issues';
+import type {
+  AgentTaskState,
+  CheckStatus,
+  ConsistencyIssue,
+  DeskCheckState,
+  Issue,
+} from '@/types/index';
 import {
   StampButton,
   chalkStatusFill,
@@ -28,8 +31,61 @@ const statusText: Record<CheckStatus, string | undefined> = {
 const severityKey = (summary: DoctorFindingSummary): 'pass' | 'fail' | 'running' =>
   summary.errorCount > 0 ? 'fail' : summary.warningCount > 0 ? 'running' : 'pass';
 
-export const fixPrompt = (check: DeskCheckState): string =>
-  `Fix the failing "${check.name}" check in this repo. The command was \`${check.cmd}\`.\n\nOutput from the last run:\n\n${check.output || '(no output captured)'}`;
+type FailingCheck = Pick<Issue, 'id' | 'sourceKey' | 'title' | 'reason' | 'output'>;
+
+/** Doctor and docs sit beside the desk checks as checks of their own, so a red
+ * stamp of any kind is a failing check with the same Fix action. */
+export const firstFailingCheck = (
+  checks: DeskCheckState[],
+  doctor: DoctorFindingSummary,
+  consistency: ConsistencyIssue[],
+): FailingCheck | null => {
+  const deskIssue = collectCheckIssues(checks)[0];
+  if (deskIssue) return deskIssue;
+  if (doctor.errorCount > 0) {
+    return {
+      id: 'check:doctor',
+      sourceKey: 'doctor',
+      title: '"doctor" check is failing',
+      reason: 'The command was `paper-camp doctor`.',
+      output: doctor.findings
+        .filter((finding) => finding.severity === 'error')
+        .map((finding) => `${finding.file}:${finding.line} — ${finding.message}`)
+        .join('\n'),
+    };
+  }
+  if (consistency.length > 0) {
+    return {
+      id: 'check:docs',
+      sourceKey: 'docs',
+      title: '"docs" check is failing',
+      reason: 'The plan/idea doc consistency check found orphan subjects or title-style issues.',
+      output: consistency.map((issue) => issue.message).join('\n'),
+    };
+  }
+  return null;
+};
+
+const isActiveFix = (task: AgentTaskState) =>
+  task.taskKind === 'issue-fix' &&
+  task.status !== 'done' &&
+  task.status !== 'error' &&
+  task.status !== 'superseded';
+
+/** The issue-fix task currently working on a check, if any — the Fix stamp reads
+ * `fixing…` for its own check and stays disabled while another fix is in flight. */
+export const activeCheckFix = (
+  agentStatus: AgentTaskState[],
+  issueId: string,
+): 'own' | 'other' | null => {
+  const active = agentStatus.find(isActiveFix);
+  if (!active) return null;
+  return active.issueId === issueId ? 'own' : 'other';
+};
+
+// Fixed height whether a check is failing or not, so the group never shifts.
+const fixRowClass =
+  'flex h-8 items-center justify-center gap-2 font-handwritten text-sm text-desk-text-muted';
 
 const CheckStamp = ({
   check,
@@ -59,55 +115,14 @@ const CheckStamp = ({
   );
 };
 
-const DoctorFindingRow = ({ finding }: { finding: DoctorFindingWithSeverity }) => (
-  <div className="font-mono text-2xs opacity-70">
-    {finding.file}:{finding.line} — {finding.message}
-  </div>
-);
-
-const DocFindingRow = ({
-  issue,
-  linkedPlan,
-  onNavigate,
-}: {
-  issue: ConsistencyIssue;
-  linkedPlan: PlanEntry | undefined;
-  onNavigate: () => void;
-}) => (
-  <div className="font-mono text-2xs opacity-70">
-    {linkedPlan ? (
-      <button
-        type="button"
-        onClick={onNavigate}
-        className="bg-none bg-transparent border-none p-0 underline cursor-pointer [font:inherit] text-left"
-      >
-        {issue.message}
-      </button>
-    ) : (
-      <span className="text-left">{issue.message}</span>
-    )}
-  </div>
-);
-
 export const ChecksGroup = () => {
   const { checks, run } = useDeskChecks();
   const doctor = useAppStore((s) => s.doctor);
   const consistency = useAppStore((s) => s.consistency);
-  const plans = useAppStore((s) => s.plans);
-  const navigate = useNavigate();
-  const failing = checks.find((check) => check.status === 'fail');
-  const [outputExpanded, setOutputExpanded] = useState(false);
-  const [doctorExpanded, setDoctorExpanded] = useState(false);
-  const [docsExpanded, setDocsExpanded] = useState(false);
-
-  const hasDoctorFindings = doctor.findings.length > 0;
-  const hasDocFindings = consistency.length > 0;
-
-  const linkedPlanFor = useCallback(
-    (issue: ConsistencyIssue) =>
-      issue.planId ? plans?.entries.find((p) => p.id === issue.planId) : undefined,
-    [plans?.entries],
-  );
+  const agentStatus = useAppStore((s) => s.agentStatus);
+  const launchIssueFix = useAppStore((s) => s.launchIssueFix);
+  const failing = firstFailingCheck(checks, doctor, consistency);
+  const fixState = failing ? activeCheckFix(agentStatus, failing.id) : null;
 
   return (
     <div>
@@ -119,14 +134,13 @@ export const ChecksGroup = () => {
           ))}
           <StampButton
             tooltip={
-              hasDoctorFindings
-                ? `${doctor.errorCount} error(s), ${doctor.warningCount} warning(s) — click to show.`
+              doctor.findings.length > 0
+                ? `Corpus doctor — ${doctor.errorCount} error(s), ${doctor.warningCount} warning(s).`
                 : 'Corpus doctor — no findings.'
             }
-            onClick={() => setDoctorExpanded((prev) => !prev)}
-            disabled={!hasDoctorFindings}
+            onClick={() => {}}
+            disabled
             disabledCursor="default"
-            ariaExpanded={hasDoctorFindings ? doctorExpanded : undefined}
             fillColor={chalkStatusFill[severityKey(doctor)]}
             textColor={chalkStatusText[severityKey(doctor)]}
           >
@@ -134,71 +148,45 @@ export const ChecksGroup = () => {
           </StampButton>
           <StampButton
             tooltip={
-              hasDocFindings
-                ? 'Plan/idea doc findings — orphan subjects & title style. Click to show.'
+              consistency.length > 0
+                ? `Plan/idea docs — ${consistency.length} finding(s): orphan subjects or title style.`
                 : 'Plan/idea docs — no findings.'
             }
-            onClick={() => setDocsExpanded((prev) => !prev)}
-            disabled={!hasDocFindings}
+            onClick={() => {}}
+            disabled
             disabledCursor="default"
-            ariaExpanded={hasDocFindings ? docsExpanded : undefined}
-            fillColor={chalkStatusFill[hasDocFindings ? 'fail' : 'pass']}
-            textColor={chalkStatusText[hasDocFindings ? 'fail' : 'pass']}
+            fillColor={chalkStatusFill[consistency.length > 0 ? 'fail' : 'pass']}
+            textColor={chalkStatusText[consistency.length > 0 ? 'fail' : 'pass']}
           >
             docs
           </StampButton>
         </div>
-        {failing && (
-          <div className="flex flex-col gap-1 text-center font-handwritten text-sm">
-            <span className="text-desk-text-muted">The {failing.name} check failed.</span>
-            <span className="text-desk-chalk">
-              Suggested fix: <CopyButton text={fixPrompt(failing)} surface="chalkboard" />
-              {failing.output && (
-                <>
-                  {' · '}
-                  <button
-                    type="button"
-                    onClick={() => setOutputExpanded((prev) => !prev)}
-                    className="bg-none bg-transparent border-none p-0 underline cursor-pointer [font:inherit] text-desk-chalk"
-                    aria-expanded={outputExpanded}
-                  >
-                    {outputExpanded ? 'Hide output' : 'Show output'}
-                  </button>
-                </>
-              )}
-            </span>
-            {outputExpanded && failing.output && (
-              <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap text-left font-mono text-2xs opacity-70">
-                {failing.output}
-              </pre>
-            )}
-          </div>
-        )}
-        {doctorExpanded && hasDoctorFindings && (
-          <div className="flex flex-col gap-1">
-            {doctor.findings.map((finding) => (
-              <DoctorFindingRow
-                key={`${finding.file}:${finding.line}:${finding.rule}`}
-                finding={finding}
-              />
-            ))}
-          </div>
-        )}
-        {docsExpanded && hasDocFindings && (
-          <div className="flex flex-col gap-1">
-            {consistency.map((issue, i) => {
-              const linkedPlan = linkedPlanFor(issue);
-              return (
-                <DocFindingRow
-                  key={`${issue.kind}-${issue.title}-${i}`}
-                  issue={issue}
-                  linkedPlan={linkedPlan}
-                  onNavigate={() => linkedPlan && navigate(entityLink(linkedPlan))}
-                />
-              );
-            })}
-          </div>
-        )}
+        <div className={fixRowClass}>
+          {failing ? (
+            <>
+              <span>The {failing.sourceKey} check failed.</span>
+              <StampButton
+                tooltip={
+                  fixState === 'own'
+                    ? 'An agent is fixing this check.'
+                    : fixState === 'other'
+                      ? 'Another fix is in flight — wait for it to finish.'
+                      : `Send an agent to fix the ${failing.sourceKey} check.`
+                }
+                onClick={() =>
+                  launchIssueFix(failing.id, failing.title, failing.reason, failing.output)
+                }
+                disabled={fixState !== null}
+                fillColor={chalkStatusFill.fail}
+                textColor={chalkStatusText.fail}
+              >
+                {fixState === 'own' ? 'fixing…' : 'fix'}
+              </StampButton>
+            </>
+          ) : (
+            <span>{checks.length === 0 ? 'No checks configured.' : 'No failing checks.'}</span>
+          )}
+        </div>
       </div>
     </div>
   );

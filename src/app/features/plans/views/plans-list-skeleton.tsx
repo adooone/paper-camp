@@ -46,7 +46,7 @@ export const PlansListSkeleton = () => (
               <span className="max-lg:hidden">
                 <Skeleton variant="text" width={52} />
               </span>
-              <Skeleton variant="rect" width={80} height={8} />
+              <Skeleton variant="text" width={28} />
               <Skeleton variant="rect" width={64} height={20} />
             </div>
           </Card>

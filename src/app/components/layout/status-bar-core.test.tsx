@@ -101,15 +101,18 @@ describe('StatusBarCore', () => {
     expect(stamps).toHaveLength(0);
   });
 
+  const isBadge = (el: Elementish) =>
+    el.type === 'span' && String(el.props['aria-label'] ?? '').endsWith('unread notifications');
+
   it('omits the notification badge when there is nothing unread', () => {
-    const stamps = collect(StatusBarCore(baseProps), (el) => el.type === Stamp);
-    expect(stamps).toHaveLength(0);
+    expect(collect(StatusBarCore(baseProps), isBadge)).toHaveLength(0);
   });
 
   it('shows the unread count on the notification badge', () => {
     const tree = StatusBarCore({ ...baseProps, unreadNotificationCount: 3 });
-    const stamps = collect(tree, (el) => el.type === Stamp);
-    expect(textOf(stamps[0]?.props.children as ReactNode)).toBe('3');
+    const badges = collect(tree, isBadge);
+    expect(textOf(badges[0]?.props.children as ReactNode)).toBe('3');
+    expect(badges[0]?.props['aria-label']).toBe('3 unread notifications');
   });
 
   it('opens notifications when the bell button is clicked', () => {

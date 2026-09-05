@@ -2,8 +2,8 @@ import { LightbulbIcon, MergeIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { Card, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
-import { PlanIdStamp, ProgressBar } from '../components';
-import { PR_STATE_STAMP, STATUS_COLOR, STATUS_LABEL, STATUS_STAMP } from '../constants';
+import { PlanIdStamp } from '../components';
+import { PR_STATE_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
 
 interface PlanRowsProps {
@@ -56,7 +56,7 @@ export const RowMarker = ({ order, done, running, status, fallback }: RowMarkerP
  * template so the header and rows line up. Exported so PlansListSkeleton can
  * match this exact column shape. */
 export const PLAN_ROWS_GRID_CLASS =
-  'grid grid-cols-[76px_minmax(0,1fr)_84px_96px_112px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_96px_112px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
+  'grid grid-cols-[76px_minmax(0,1fr)_64px_52px_92px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_52px_92px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
 export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
   const gridClass = PLAN_ROWS_GRID_CLASS;
@@ -97,18 +97,13 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                   <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
                     {plan.title}
                   </span>
-                  <span className="max-lg:hidden text-sm opacity-[0.45] whitespace-nowrap">
+                  <span className="max-lg:hidden font-handwritten text-sm opacity-[0.45] whitespace-nowrap">
                     {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
                   </span>
                   {progress ? (
-                    <div className="flex items-center gap-1">
-                      <div className="flex-1 min-w-0">
-                        <ProgressBar pct={progress.pct} color={STATUS_COLOR[status]} />
-                      </div>
-                      <span className="text-sm opacity-50 shrink-0">
-                        {progress.done}/{progress.total}
-                      </span>
-                    </div>
+                    <span className="font-handwritten text-sm opacity-50 whitespace-nowrap">
+                      {progress.done}/{progress.total}
+                    </span>
                   ) : (
                     <span className="text-sm opacity-30">—</span>
                   )}

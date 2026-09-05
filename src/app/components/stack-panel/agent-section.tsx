@@ -147,7 +147,7 @@ const AgentTaskCard = ({
         }}
         className="flex h-full min-w-0 cursor-pointer flex-col justify-between gap-1 rounded-[10px]"
       >
-        <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+        <span className="min-w-0 truncate pr-1 font-handwritten text-sm leading-tight text-desk-chalk">
           {taskCardTitle(task)}
         </span>
         <div className="flex min-w-0 items-center justify-between gap-2">

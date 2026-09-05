@@ -14,7 +14,7 @@ function capacityTooltip(snapshot: RateLimitSnapshot): string {
 }
 
 const barClass =
-  'flex items-center gap-3 h-8 px-4 border-b border-black/[0.08] text-xs shrink-0 box-border overflow-x-auto overflow-y-hidden whitespace-nowrap';
+  'flex items-center gap-3 h-[32px] px-4 border-b border-black/[0.08] text-xs shrink-0 box-border overflow-x-auto overflow-y-hidden whitespace-nowrap';
 const leftGroupClass = 'flex items-center gap-3 shrink-0';
 const branchClass = 'flex items-center gap-1';
 const mutedClass = 'opacity-50';
@@ -23,8 +23,10 @@ const secondaryClass = 'opacity-60';
 const spacerClass = 'flex-1';
 const rightGroupClass = 'flex items-center gap-2 shrink-0';
 const stampTriggerClass = 'bg-transparent border-none p-0 cursor-pointer';
-const notificationButtonClass = 'relative inline-flex';
-const notificationBadgeClass = 'absolute -top-1 -right-1 pointer-events-none';
+const notificationButtonClass = 'relative inline-flex h-[32px] items-center';
+// Raw badge: paper-ui's Stamp is a translucent wash, unreadable over the bell's strokes.
+const notificationBadgeClass =
+  'pointer-events-none absolute top-0 -right-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-watercolor-amber-dark px-1 font-handwritten text-xs font-semibold leading-none text-paper-50';
 
 export interface StatusBarCoreProps {
   gitBranch: string | null;
@@ -130,10 +132,11 @@ export const StatusBarCore = ({
               onClick={onOpenNotifications}
             />
             {unreadNotificationCount > 0 && (
-              <span className={notificationBadgeClass}>
-                <Stamp size="small" variant="warning">
-                  {unreadNotificationCount}
-                </Stamp>
+              <span
+                className={notificationBadgeClass}
+                aria-label={`${unreadNotificationCount} unread notifications`}
+              >
+                {unreadNotificationCount}
               </span>
             )}
           </span>
