@@ -27,8 +27,28 @@ function trustDialogState(plugin: Plugin, root: string): Promise<boolean | null>
   return plugin.def.trustDialogAccepted(root);
 }
 
+const capabilitiesCache = new Map<string, Promise<CapabilityResult[]>>();
+const connectionsCache = new Map<string, Promise<ConnectionResult[]>>();
+const agentAuthStatusCache = new Map<string, Map<AgentId, Promise<AgentAuthStatus>>>();
+
+// A daemon holds one middleware (and root) per mounted project in the same process,
+// so every cache below is keyed by root rather than shared process-wide.
+export function clearCapabilitiesCache(root: string): void {
+  capabilitiesCache.delete(root);
+  connectionsCache.delete(root);
+}
+
+export function clearAgentAuthStatusCache(root: string): void {
+  agentAuthStatusCache.delete(root);
+}
+
 export async function probeCapabilities(root: string): Promise<CapabilityResult[]> {
-  return Promise.all(PLUGINS.map((p) => p.def.probe(root)));
+  let cached = capabilitiesCache.get(root);
+  if (!cached) {
+    cached = Promise.all(PLUGINS.map((p) => p.def.probe(root)));
+    capabilitiesCache.set(root, cached);
+  }
+  return cached;
 }
 
 async function toConnectionResult(
@@ -55,7 +75,12 @@ async function toConnectionResult(
 }
 
 export async function probeConnections(root: string): Promise<ConnectionResult[]> {
-  return Promise.all(PLUGINS.map((p) => toConnectionResult(p, root)));
+  let cached = connectionsCache.get(root);
+  if (!cached) {
+    cached = Promise.all(PLUGINS.map((p) => toConnectionResult(p, root)));
+    connectionsCache.set(root, cached);
+  }
+  return cached;
 }
 
 /** Runs a plugin's connect action when it's safe to run non-interactively, then
@@ -73,6 +98,7 @@ export async function runConnect(id: string, root: string): Promise<ConnectionRe
   // (no placeholders, no shell operators), so splitting on spaces is sufficient here.
   const [command, ...args] = action.command.split(' ');
   const outcome = await run(command, args, root);
+  clearCapabilitiesCache(root);
   const after = await toConnectionResult(plugin, root);
   return outcome.code === 0
     ? after
@@ -89,6 +115,15 @@ const UNKNOWN_AUTH_STATUS: AgentAuthStatus = {
 // report unknown rather than being probed with a command they don't have.
 export async function probeAgentAuthStatus(id: AgentId, root: string): Promise<AgentAuthStatus> {
   if (id !== 'claude-code') return UNKNOWN_AUTH_STATUS;
-  const status = await claudeAuthStatus(root);
-  return status ?? UNKNOWN_AUTH_STATUS;
+  let byId = agentAuthStatusCache.get(root);
+  if (!byId) {
+    byId = new Map();
+    agentAuthStatusCache.set(root, byId);
+  }
+  let cached = byId.get(id);
+  if (!cached) {
+    cached = claudeAuthStatus(root).then((status) => status ?? UNKNOWN_AUTH_STATUS);
+    byId.set(id, cached);
+  }
+  return cached;
 }

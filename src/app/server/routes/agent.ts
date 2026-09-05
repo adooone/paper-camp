@@ -30,7 +30,11 @@ import type {
 } from '@/types/index';
 import { readDefaultAgentIds } from '../agent';
 import { resolveAgent } from '../agents';
-import { probeAgentAuthStatus } from '../capabilities';
+import {
+  clearAgentAuthStatusCache,
+  clearCapabilitiesCache,
+  probeAgentAuthStatus,
+} from '../capabilities';
 import {
   addsOpenFix,
   applyFeedbackEdit,
@@ -213,6 +217,8 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
       handle: async (_req, res) => {
         const handle = await startClaudeLoginRelay(root, {
           onLoginConfirmed: () => {
+            clearCapabilitiesCache(root);
+            clearAgentAuthStatusCache(root);
             agent
               .resumeAuthParkedTasks(() => status.runChecksAndWait())
               .catch((err) => {

@@ -27,7 +27,7 @@ export const useSetupSection = () => {
 
   const handleRecheck = async (id: string) => {
     setReloadingId(id);
-    applyConnections(await fetchConnections());
+    applyConnections(await fetchConnections(true));
     setReloadingId(null);
   };
 

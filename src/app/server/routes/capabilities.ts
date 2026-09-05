@@ -1,5 +1,10 @@
 import { PAPER_CAMP_VERSION } from '@/core/scaffold';
-import { probeCapabilities, probeConnections, runConnect } from '../capabilities';
+import {
+  clearCapabilitiesCache,
+  probeCapabilities,
+  probeConnections,
+  runConnect,
+} from '../capabilities';
 import { requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
@@ -18,7 +23,8 @@ export function capabilitiesRoutes({ root }: RouteContext): Route[] {
     {
       method: 'GET',
       path: '/api/connections',
-      handle: async (_req, res) => {
+      handle: async (req, res) => {
+        if (requestUrl(req).searchParams.has('recheck')) clearCapabilitiesCache(root);
         sendJson(res, 200, { connections: await probeConnections(root) });
       },
     },

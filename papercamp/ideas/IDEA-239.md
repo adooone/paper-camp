@@ -91,8 +91,9 @@ loads.
 - [x] Probe self-served once against `/api/package-name`
       `servesOwnRuntime` reads the 1 ms route, its verdict lands in the runtime slice, and `checkRuntimeReachable` reads that instead of probing again.
       run: 7m16s · 58 in · 20.6k out · sonnet-5
-- [ ] Memoise `probeCapabilities` and `probeConnections` for the process
+- [x] Memoise `probeCapabilities` and `probeConnections` for the process
       Drop the cache on the Settings recheck, on `runConnect`, and on the relay's `onLoginConfirmed`, which also expires `probeAgentAuthStatus`.
+      run: 7m31s · 106 in · 27.4k out · sonnet-5
 - [ ] Give `--version` probes a 2 s timeout in `run.ts`
       Everything else keeps the 5 s default; a slower tool is reported as slow, not awaited.
 - [ ] Fire `loadPlans` and `loadIdeas` on mount, ungated by `runtimeChecking`

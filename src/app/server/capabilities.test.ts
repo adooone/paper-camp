@@ -3,6 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  clearAgentAuthStatusCache,
+  clearCapabilitiesCache,
   probeAgentAuthStatus,
   probeCapabilities,
   probeConnections,
@@ -72,6 +74,10 @@ const ROOT = '/repo';
 
 beforeEach(() => {
   mock.reset();
+  // Every case below expects a fresh probe against its own mock state, not the process
+  // lifetime cache these functions now keep in production.
+  clearCapabilitiesCache(ROOT);
+  clearAgentAuthStatusCache(ROOT);
 });
 
 function byId(capabilities: Awaited<ReturnType<typeof probeCapabilities>>, id: string) {
@@ -353,5 +359,60 @@ describe('probeAgentAuthStatus', () => {
       authMethod: null,
       apiProvider: null,
     });
+  });
+});
+
+describe('probe caching', () => {
+  it('memoises probeCapabilities for the process, ignoring a state change in between', async () => {
+    expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('missing');
+    mock.bin('gh', () => mock.ok());
+    expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('missing');
+  });
+
+  it('re-probes once the cache is cleared', async () => {
+    await probeCapabilities(ROOT);
+    mock.bin('gh', () => mock.ok());
+    clearCapabilitiesCache(ROOT);
+    expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('warn');
+  });
+
+  it('memoises probeConnections independently of probeCapabilities', async () => {
+    expect(byConnId(await probeConnections(ROOT), 'git').authenticated).toBeNull();
+    mock.git.name = '';
+    expect(byConnId(await probeConnections(ROOT), 'git').status).toBe('ok');
+  });
+
+  it('clears both caches after runConnect runs a command', async () => {
+    mock.git.inRepo = false;
+    await probeCapabilities(ROOT);
+    await probeConnections(ROOT);
+    await runConnect('git', ROOT);
+    expect(byId(await probeCapabilities(ROOT), 'git').status).not.toBe('missing');
+    expect(byConnId(await probeConnections(ROOT), 'git').status).not.toBe('missing');
+  });
+
+  it('memoises probeAgentAuthStatus until clearAgentAuthStatusCache runs', async () => {
+    expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
+      loggedIn: null,
+      authMethod: null,
+      apiProvider: null,
+    });
+    mock.bin('claude', () =>
+      mock.ok('{"loggedIn": true, "authMethod": "claude.ai", "apiProvider": "firstParty"}'),
+    );
+    expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
+      loggedIn: null,
+      authMethod: null,
+      apiProvider: null,
+    });
+    clearAgentAuthStatusCache(ROOT);
+    expect((await probeAgentAuthStatus('claude-code', ROOT)).loggedIn).toBe(true);
+  });
+
+  it('keeps a separate cache per root', async () => {
+    expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('missing');
+    mock.bin('gh', () => mock.ok());
+    expect(byId(await probeCapabilities('/other-repo'), 'gh').status).toBe('warn');
+    clearCapabilitiesCache('/other-repo');
   });
 });
