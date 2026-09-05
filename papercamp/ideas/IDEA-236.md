@@ -90,8 +90,9 @@ its own.
 - [x] Read the failure from the result line
       Have both runners parse stdout for the `result` JSON and surface its text, falling back to stderr minus the `Ignoring … permissions.allow entries` notice, then the exit code.
       run: 1m4s · 24 in · 2.7k out · sonnet-5
-- [ ] Classify signed-out by probing auth status
+- [x] Classify signed-out by probing auth status
       Call `claudeAuthStatus` when a run ends in error, set `errorKind: 'auth'` on `loggedIn: false`, and delete the `Not logged in · Please run /login` string match.
+      run: 8m37s · 136 in · 32.3k out · sonnet-5
 - [ ] Carry the auth kind to the git card
       Return `{ error, kind: 'auth' }` from `/api/git/suggest-commit-message`, throw it through `git-api.ts`, and render a **Sign in** action in `commit-message-fields.tsx`.
 - [ ] Move the sign-in controls to shared app components
