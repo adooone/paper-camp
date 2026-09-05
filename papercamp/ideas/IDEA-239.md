@@ -82,8 +82,9 @@ the probes check or to the Settings connection rows. The Stack panel's own
 loads.
 
 ### Phases
-- [ ] Put a boot indicator inside `#root` in `index.html`
+- [x] Put a boot indicator inside `#root` in `index.html`
       Inline spinner markup with "Setting up camp…" under it, centred on the paper background, replaced when React mounts.
+      run: 4m7s · 96 in · 21.3k out · sonnet-5
 - [ ] Mount the router immediately in `main.tsx`
       Nothing on the boot path awaits a fetch; the hub redirect happens from the app once the verdict is known.
 - [ ] Probe self-served once against `/api/package-name`

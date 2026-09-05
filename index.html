@@ -13,9 +13,72 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
     <title>Paper Camp</title>
+    <style>
+      #boot-indicator {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        background: #fdfcf8;
+        font-family: 'Cormorant Garamond', Georgia, serif;
+      }
+      #boot-indicator svg {
+        overflow: visible;
+      }
+      #boot-indicator .boot-track {
+        stroke: #68635c;
+        stroke-width: 3.4;
+        opacity: 0.15;
+      }
+      #boot-indicator .boot-head {
+        stroke: #68635c;
+        stroke-width: 4.6;
+        stroke-dasharray: 26 74;
+        animation: boot-spin 1.1s linear infinite;
+      }
+      @keyframes boot-spin {
+        to {
+          stroke-dashoffset: -100;
+        }
+      }
+      #boot-indicator p {
+        margin: 0;
+        font-size: 1.125rem;
+        color: #68635c;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-indicator .boot-head {
+          animation-duration: 2.4s;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- paper-ui's Spinner isn't loaded yet at first paint, so its markup (svg path from spinner.tsx's roughGenerator.circle(25, 25, 36, { seed: 7, roughness: 1.15 }), colors from --pui-text-secondary/--pui-bg-base) is hand-copied here per docs/CODE_STYLE.md's raw-HTML gap rule; React's createRoot render replaces it on mount. -->
+      <div id="boot-indicator" role="status" aria-label="Setting up camp">
+        <svg width="40" height="40" viewBox="0 0 50 50" aria-hidden="true">
+          <path
+            class="boot-track"
+            d="M19.066166020440527 7.906625720269421 C21.90365144950134 6.249975547355087, 26.214050558330424 5.730907631061629, 29.730694605670195 7.111324491562893 C33.24733865300997 8.491741352064158, 38.35204419656329 12.817891010329486, 40.16603030447916 16.18912688327701 C41.980016412395024 19.56036275622453, 41.329131241810586 23.745841987983436, 40.61461125316539 27.338739729248026 C39.9000912645202 30.931637470512616, 38.50820138335536 34.98772759640119, 35.87891037260799 37.74651333086455 C33.24961936186062 40.50529906532791, 28.501274779171005 43.68304806972104, 24.838865188681154 43.89145413602817 C21.176455598191303 44.09986020233531, 16.796536509139194 41.54255188417343, 13.904452829668882 38.99694972870738 C11.01236915019857 36.45134757324133, 7.95421323201628 32.51509787830531, 7.4863631118592835 28.61784120323189 C7.018512991702287 24.720584528158465, 9.186985254129112 19.118856489825973, 11.097352108726902 15.613409678266828 C13.007718963324692 12.107962866707682, 17.42622099340401 8.81869742829322, 18.94856423944602 7.585160333877013 C20.470907485488034 6.351623239460807, 19.97225225985047 7.8514164671290345, 20.23141158497899 8.212187111769591"
+            fill="none"
+            pathLength="100"
+            stroke-linecap="round"
+          />
+          <path
+            class="boot-head"
+            d="M19.066166020440527 7.906625720269421 C21.90365144950134 6.249975547355087, 26.214050558330424 5.730907631061629, 29.730694605670195 7.111324491562893 C33.24733865300997 8.491741352064158, 38.35204419656329 12.817891010329486, 40.16603030447916 16.18912688327701 C41.980016412395024 19.56036275622453, 41.329131241810586 23.745841987983436, 40.61461125316539 27.338739729248026 C39.9000912645202 30.931637470512616, 38.50820138335536 34.98772759640119, 35.87891037260799 37.74651333086455 C33.24961936186062 40.50529906532791, 28.501274779171005 43.68304806972104, 24.838865188681154 43.89145413602817 C21.176455598191303 44.09986020233531, 16.796536509139194 41.54255188417343, 13.904452829668882 38.99694972870738 C11.01236915019857 36.45134757324133, 7.95421323201628 32.51509787830531, 7.4863631118592835 28.61784120323189 C7.018512991702287 24.720584528158465, 9.186985254129112 19.118856489825973, 11.097352108726902 15.613409678266828 C13.007718963324692 12.107962866707682, 17.42622099340401 8.81869742829322, 18.94856423944602 7.585160333877013 C20.470907485488034 6.351623239460807, 19.97225225985047 7.8514164671290345, 20.23141158497899 8.212187111769591"
+            fill="none"
+            pathLength="100"
+            stroke-linecap="round"
+          />
+        </svg>
+        <p>Setting up camp…</p>
+      </div>
+    </div>
     <script type="module" src="/src/app/main.tsx"></script>
   </body>
 </html>
