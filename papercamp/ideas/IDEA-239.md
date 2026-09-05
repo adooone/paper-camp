@@ -80,3 +80,18 @@ Vite's dev-server module transform on a cold reload, which is the remaining
 cost in `pnpm dev` and does not exist in the built app. Any change to what
 the probes check or to the Settings connection rows. The Stack panel's own
 loads.
+
+### Phases
+- [ ] Put a boot indicator inside `#root` in `index.html`
+      Inline spinner markup with "Setting up camp…" under it, centred on the paper background, replaced when React mounts.
+- [ ] Mount the router immediately in `main.tsx`
+      Nothing on the boot path awaits a fetch; the hub redirect happens from the app once the verdict is known.
+- [ ] Probe self-served once against `/api/package-name`
+      `servesOwnRuntime` reads the 1 ms route, its verdict lands in the runtime slice, and `checkRuntimeReachable` reads that instead of probing again.
+- [ ] Memoise `probeCapabilities` and `probeConnections` for the process
+      Drop the cache on the Settings recheck, on `runConnect`, and on the relay's `onLoginConfirmed`, which also expires `probeAgentAuthStatus`.
+- [ ] Give `--version` probes a 2 s timeout in `run.ts`
+      Everything else keeps the 5 s default; a slower tool is reported as slow, not awaited.
+- [ ] Fire `loadPlans` and `loadIdeas` on mount, ungated by `runtimeChecking`
+- [ ] Replace every `null` in the content column with a skeleton or named spinner
+      `PlansListSkeleton` for Plans and a matching row skeleton elsewhere; `RuntimeUnavailable` only after an unreachable verdict, and a spinner past ten seconds gains its second line.

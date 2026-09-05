@@ -59,3 +59,6 @@ Re-scanning or pruning the registry on the daemon's behalf. Any change to how
       Every root `/api/` path but `/api/machine/projects` returns `{"error":"no project mounted at the daemon root"}`; drop `servesOwnRuntime`'s reliance on HTML failing `response.json()`.
 - [ ] Give the daemon its own port-in-use message
       `portInUseMessage` takes a daemon variant pointing at `paper-camp status` and `-p`; `dev` keeps its wording.
+
+### Thread
+- [x] 2026-09-05 [log] [agent] Run order: Extends the same daemon root/registry contract IDEA-233 lays down and must land before the welcome screen relies on the daemon root answering /api/* with JSON 404 for self-discovery.

@@ -61,3 +61,18 @@ content.
 The app bar, status bar, and Stack panel. Any change to what the sidebars
 contain, how the Plans filters behave, or the Hub, which has its own shell.
 The 480px bottom navigation.
+
+### Phases
+- [ ] Wrap the sidebar in one kraft card
+      `SidebarShell` renders its children inside the card, drops `--pc-sidebar-h`,
+      the inner scroll region, and the `h-8` spacer.
+- [ ] Fold the Plans filters and actions into that card
+      Two sections with a divider between them; `PlanActionsColumn` loses the `Card`
+      it wraps its buttons in.
+- [ ] Drop the `Page` sheet from the app shell
+      The breadcrumb and `Outlet` render into the content column, which keeps the
+      2rem top inset and the Stack's width clear on the right.
+- [ ] Delete the four `.pc-page` rules from `utilities.css`
+- [ ] Check the drawer and each sidebar area
+      Docs, Settings, Roadmap, and the Git file list in the card, and the mobile
+      drawer's backdrop, focus, and Escape below `lg`.

@@ -116,3 +116,6 @@ else; it is simply forgotten.
       `runtime-unavailable.tsx` shows the start command instead of a token form, and a row that does not answer stamps *Offline*.
 - [ ] Rewrite the install docs
       USAGE.md and README.md teach only the three commands, `paper-camp dev` keeps one sentence as the foreground mode, and the Connect GitHub and Plan-only entries go.
+
+### Thread
+- [x] 2026-09-05 [log] [agent] Run order: Depends on IDEA-233's start/scan commands and IDEA-235's daemon-root JSON contract for same-origin machine detection, so it must follow both.

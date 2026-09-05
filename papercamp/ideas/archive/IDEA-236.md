@@ -2,7 +2,7 @@
 id: IDEA-236
 title: Real errors and a sign-in that works
 type: fix
-status: review
+status: done
 created: 2026-09-05
 updated: 2026-09-05
 tags:
