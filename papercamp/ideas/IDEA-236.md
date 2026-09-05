@@ -112,5 +112,5 @@ its own.
 - [x] [manual] Fix notification badge visibility and checks-group logic
 
 ### Fixes
-- [ ] Fix the failing "Quality" check
+- [x] Fix the failing "Quality" check
       Fix the failing "Quality" check in this repo.
