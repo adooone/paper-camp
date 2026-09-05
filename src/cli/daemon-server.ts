@@ -16,6 +16,12 @@ import {
 } from '../app/server/pairing';
 import { injectMountAttribute } from '../app/services/mount';
 import {
+  type DaemonState,
+  daemonStatePath,
+  removeDaemonState,
+  writeDaemonState,
+} from '../core/daemon-state';
+import {
   type MachineProject,
   defaultRegistryPath,
   listProjects,
@@ -45,6 +51,8 @@ import {
   startQuickTunnel,
 } from './tunnel';
 
+export const DEFAULT_DAEMON_PORT = 4333;
+
 export interface DaemonServerOptions {
   port: number;
   share?: boolean;
@@ -67,9 +75,18 @@ export function parseMountRequest(pathname: string): MountRequest | null {
  * registered, never browses a machine's filesystem to find them. */
 export async function readMachineProjectSummaries(
   registryPath: string,
+  mounted: ReadonlyMap<string, ApiMiddleware>,
 ): Promise<MachineProjectSummary[]> {
   const registry = await loadRegistry(registryPath);
-  return listProjects(registry).map(({ slug, name }) => ({ slug, name }));
+  return listProjects(registry).map(({ slug, name }) => {
+    const apiMiddleware = mounted.get(slug);
+    return {
+      slug,
+      name,
+      mounted: apiMiddleware !== undefined,
+      busy: apiMiddleware?.agent.hasActiveTask() ?? false,
+    };
+  });
 }
 
 /** Loaded once and passed by reference into every project's middleware, so pairing
@@ -141,6 +158,7 @@ export function createProjectMounter(
 export function createDaemonRequestHandler(
   registryPath: string,
   mount: (slug: string) => Promise<ApiMiddleware | null>,
+  mounted: ReadonlyMap<string, ApiMiddleware>,
   staticDir: string,
   indexHtml: string,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
@@ -159,7 +177,7 @@ export function createDaemonRequestHandler(
         sendJson(res, 403, { error: 'Forbidden: request failed the Host check' });
         return;
       }
-      const projects = await readMachineProjectSummaries(registryPath);
+      const projects = await readMachineProjectSummaries(registryPath, mounted);
       sendJson(res, 200, { projects });
       return;
     }
@@ -237,6 +255,7 @@ export async function startDaemonServer({
   const handleRequest = createDaemonRequestHandler(
     defaultRegistryPath(),
     mount,
+    mounted,
     staticDir,
     indexHtml,
   );
@@ -248,6 +267,7 @@ export async function startDaemonServer({
     });
   });
 
+  const statePath = daemonStatePath();
   let tunnel: QuickTunnel | undefined;
   const shutdown = async () => {
     tunnel?.process.kill();
@@ -257,6 +277,7 @@ export async function startDaemonServer({
         await apiMiddleware.services.killAll();
       }),
     );
+    await removeDaemonState(statePath);
     process.exit(0);
   };
   process.on('SIGINT', shutdown);
@@ -268,6 +289,16 @@ export async function startDaemonServer({
     });
     server.listen(port, resolve);
   });
+
+  const daemonState: DaemonState = {
+    pid: process.pid,
+    port,
+    version: PAPER_CAMP_VERSION,
+    startedAt: new Date().toISOString(),
+    share: share ?? false,
+    tailnet: tailnet ?? false,
+  };
+  await writeDaemonState(statePath, daemonState);
 
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
   console.log(

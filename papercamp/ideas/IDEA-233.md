@@ -2,7 +2,7 @@
 id: IDEA-233
 title: Daemon lifecycle like pm2
 type: feat
-status: idea
+status: review
 created: 2026-09-05
 tags:
   - cli
@@ -82,15 +82,23 @@ daemon — desk services and agent runs stay owned by the daemon, as
 [[IDEA-224]] settled.
 
 ### Phases
-- [ ] Write `daemon.json` on listen and remove it on exit
+- [x] Write `daemon.json` on listen and remove it on exit
       `daemon-server.ts` records pid, port, version, startedAt and the share/tailnet flags in the config dir, and clears the file on SIGINT/SIGTERM.
-- [ ] Add a shared state reader that prunes stale files
+      run: 6m42s · 98 in · 12.6k out · sonnet-5
+- [x] Add a shared state reader that prunes stale files
       One helper the CLI commands share: read the file, check `process.kill(pid, 0)`, probe the machine endpoint, and delete the file when any of those fail.
-- [ ] Add `paper-camp start`
+      run: 7m17s · 60 in · 14.2k out · sonnet-5
+- [x] Add `paper-camp start`
       Spawn `paper-camp daemon` detached with stdio into `daemon.log`, poll the machine endpoint, then echo the banner lines; refuse to start a second daemon.
-- [ ] Add `paper-camp stop` and `paper-camp restart`
+      run: 19m24s · 148 in · 59.4k out · sonnet-5
+- [x] Add `paper-camp stop` and `paper-camp restart`
       SIGTERM with a five-second SIGKILL escalation, and a restart that reuses the flags recorded in the state file.
-- [ ] Report per-project `mounted` and `busy` from `/api/machine/projects`
-- [ ] Add `paper-camp status` and the `ls` STATE column
-- [ ] Add `paper-camp logs` with `-n` and `-f`
-- [ ] Cover the lifecycle with a throwaway `PAPERCAMP_CONFIG_DIR` and run the quality checks
+      run: 12m53s · 106 in · 37k out · sonnet-5
+- [x] Report per-project `mounted` and `busy` from `/api/machine/projects`
+      run: 10m · 98 in · 17.7k out · sonnet-5
+- [x] Add `paper-camp status` and the `ls` STATE column
+      run: 11m54s · 116 in · 27.6k out · sonnet-5
+- [x] Add `paper-camp logs` with `-n` and `-f`
+      run: 7m52s · 62 in · 14.5k out · sonnet-5
+- [x] Cover the lifecycle with a throwaway `PAPERCAMP_CONFIG_DIR` and run the quality checks
+      run: 11m13s · 76 in · 22.6k out · sonnet-5
