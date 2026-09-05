@@ -95,8 +95,9 @@ hub; this is one project's log. [[IDEA-192]]'s read/act split is retired by
 this idea, not preserved: one page holds both.
 
 ### Phases
-- [ ] Derive one log stream from runs, failures, and live tasks
+- [x] Derive one log stream from runs, failures, and live tasks
       One selector merges `tasks.log` entries, the issue collectors' failures, and `agentStatus` into typed rows, newest first.
+      run: 3m35s · 36 in · 4.6k out · sonnet-5
 - [ ] Build the `features/log` page with compact rows and *Load more*
 - [ ] Move the expanded detail and its actions into the row
       Summary and usage for a successful run; reason, thread, *Fix it here*, *Promote*, and *Open* for a failed one.
