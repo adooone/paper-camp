@@ -69,6 +69,18 @@ matches title, entity id, and reason. Sort by time (default), duration, or
 cost. Filters live in the URL search params so a filtered view can be
 shared and survives reload.
 
+**Notifications are rows too.** The Inbox at the bell is the third copy of
+this page: `notifications.log` entries (`completed`, `reply`) and parked
+questions, each already tied to an entity and a run. They join the stream —
+a completed run is the same row as its `tasks.log` entry, decorated with the
+unread state; a reply and a parked question are rows of their own type, the
+question opening into the answer box the Inbox has today. Opening a row
+marks it read through the existing `/api/notifications/mark-read`. The bell
+in the status bar keeps its unread count and opens `/log?unread=1`; `/inbox`
+redirects there and `features/inbox` is deleted. Browser push in
+`use-notification-push.ts` is unchanged — it announces, the Log is where you
+read.
+
 **Quick stats respect the filters.** A strip above the list: runs, failed,
 success rate, total cost, and median duration — computed from the rows
 currently matched, so narrowing to one kind or one week narrows the numbers
@@ -77,10 +89,10 @@ is the log's own totals.
 
 ### Out of scope
 
-`notifications.log` and the Inbox — that is activity you read, and it stays
-at the bell as [[IDEA-192]] settled. Any change to what `tasks.log` records
-or how long it is kept. Cross-project aggregation in the hub; this is one
-project's log.
+Any change to what `tasks.log` or `notifications.log` records or how long
+either is kept. Browser push notifications. Cross-project aggregation in the
+hub; this is one project's log. [[IDEA-192]]'s read/act split is retired by
+this idea, not preserved: one page holds both.
 
 ### Phases
 - [ ] Derive one log stream from runs, failures, and live tasks
@@ -91,4 +103,6 @@ project's log.
 - [ ] Add the filter bar, search, and sort backed by URL search params
 - [ ] Add the quick-stats strip computed from the matched rows
 - [ ] Take the nav slot, redirect `/tasks` and `/issues`, repoint the Stack panel
+- [ ] Fold the Inbox into the Log
+      Notifications and parked questions become rows with unread state, the bell opens `/log?unread=1`, `/inbox` redirects, and `features/inbox` is deleted.
 - [ ] Delete `features/tasks` and `features/issues`, then run the quality checks
