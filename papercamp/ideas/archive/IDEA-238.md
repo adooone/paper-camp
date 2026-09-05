@@ -2,7 +2,7 @@
 id: IDEA-238
 title: Sidebar as a card on solid paper
 type: feat
-status: review
+status: done
 created: 2026-09-05
 updated: 2026-09-05
 tags:
