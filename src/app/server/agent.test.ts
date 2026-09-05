@@ -31,6 +31,20 @@ const agentScript = vi.hoisted(() => ({
   buildArgs: undefined as ((prompt: string, opts?: { resume?: string }) => string[]) | undefined,
 }));
 
+// setStatus asks this instead of matching CLI output — tests drive it directly
+// instead of spawning the real `claude` binary (IDEA-236).
+const authStatus = vi.hoisted(() => ({
+  current: null as {
+    loggedIn: boolean | null;
+    authMethod: string | null;
+    apiProvider: string | null;
+  } | null,
+}));
+
+vi.mock('./local-adapters', () => ({
+  claudeAuthStatus: vi.fn(() => Promise.resolve(authStatus.current)),
+}));
+
 vi.mock('./agents', () => {
   const adapter = {
     command: process.execPath,
@@ -119,6 +133,7 @@ afterAll(async () => {
 beforeEach(() => {
   agentScript.current = 'process.exit(0)';
   agentScript.buildArgs = undefined;
+  authStatus.current = null;
 });
 
 const run = promisify(execFile);
@@ -1044,15 +1059,15 @@ ${waitForSignalScript(signalPath, FLIP_NEXT_CHECKBOX)}`;
     expect(manager.start(plan, 99)).toEqual({ ok: false, error: 'Phase not found' });
   });
 
-  it('tags a lapsed CLI login as an auth error instead of a generic one', async () => {
+  it('tags an error as auth when claudeAuthStatus reports signed out', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = `process.stderr.write('Not logged in · Please run /login\\n'); process.exit(1);`;
+    agentScript.current = 'process.exit(1)';
+    authStatus.current = { loggedIn: false, authMethod: null, apiProvider: null };
     const manager = createAgentManager(root);
 
     manager.start(plan, 0);
     expect(await waitForStatus(manager, settled)).toBe('error');
     expect(currentStatus(manager)?.errorKind).toBe('auth');
-    expect(currentStatus(manager)?.lines.join('\n')).toContain('Not logged in · Please run /login');
   });
 
   it('leaves errorKind unset for a generic agent failure', async () => {
@@ -1065,13 +1080,10 @@ ${waitForSignalScript(signalPath, FLIP_NEXT_CHECKBOX)}`;
     expect(currentStatus(manager)?.errorKind).toBeUndefined();
   });
 
-  it('does not tag auth when a transient login blip is followed by other output before failing', async () => {
+  it('leaves errorKind unset when claudeAuthStatus reports signed in', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = `
-      process.stdout.write('Not logged in · Please run /login\\n');
-      for (let i = 0; i < 8; i++) process.stdout.write('working step ' + i + '\\n');
-      process.stderr.write('project checks failed\\n');
-      process.exit(1);`;
+    agentScript.current = 'process.exit(1)';
+    authStatus.current = { loggedIn: true, authMethod: 'oauth', apiProvider: null };
     const manager = createAgentManager(root);
 
     manager.start(plan, 0);
@@ -1079,28 +1091,44 @@ ${waitForSignalScript(signalPath, FLIP_NEXT_CHECKBOX)}`;
     expect(currentStatus(manager)?.errorKind).toBeUndefined();
   });
 
-  it('does not tag auth when the marker is buried in one buffered stderr write', async () => {
+  it('reads the failure from the stdout result JSON instead of the stderr trust warning (IDEA-236)', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    const stderrLines = [
-      'Not logged in · Please run /login',
-      ...Array.from({ length: 8 }, (_, i) => `working step ${i}`),
-      'project checks failed',
-    ];
+    const resultLine = JSON.stringify({
+      type: 'result',
+      is_error: true,
+      result: 'Failed to authenticate: OAuth session expired and could not be refreshed',
+    });
     agentScript.current = `
-      process.stderr.write(${JSON.stringify(stderrLines.join('\n'))} + '\\n');
+      console.log(${JSON.stringify(resultLine)});
+      process.stderr.write('Ignoring 14 permissions.allow entries from .claude/settings.json\\n');
       process.exit(1);`;
     const manager = createAgentManager(root);
 
     manager.start(plan, 0);
     expect(await waitForStatus(manager, settled)).toBe('error');
-    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain('Failed to authenticate: OAuth session expired');
+    expect(lines).not.toContain('permissions.allow entries');
+  });
+
+  it('falls back to stderr minus the permissions.allow notice when stdout has no result', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `
+      process.stderr.write('Ignoring 14 permissions.allow entries from .claude/settings.json\\nreal failure reason\\n');
+      process.exit(1);`;
+    const manager = createAgentManager(root);
+
+    manager.start(plan, 0);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.lines.join('\n')).toBe('real failure reason');
   });
 });
 
 describe('resumeAuthParkedTasks', () => {
   it('re-launches a single phase that parked on an auth error and clears errorKind', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = `process.stderr.write('Not logged in · Please run /login\\n'); process.exit(1);`;
+    agentScript.current = 'process.exit(1)';
+    authStatus.current = { loggedIn: false, authMethod: null, apiProvider: null };
     const manager = createAgentManager(root);
 
     manager.start(plan, 0);
@@ -1121,7 +1149,8 @@ describe('resumeAuthParkedTasks', () => {
 
   it('re-launches a run-all that parked on an auth error', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = `process.stderr.write('Not logged in · Please run /login\\n'); process.exit(1);`;
+    agentScript.current = 'process.exit(1)';
+    authStatus.current = { loggedIn: false, authMethod: null, apiProvider: null };
     const onRunComplete = vi.fn(async () => {});
     const manager = createAgentManager(root, undefined, undefined, onRunComplete);
 
@@ -1159,7 +1188,8 @@ describe('resumeAuthParkedTasks', () => {
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), plan2Md);
     const plan2 = entityToPlan(parseEntityFile(plan2Md).entries[0]);
 
-    agentScript.current = `process.stderr.write('Not logged in · Please run /login\\n'); process.exit(1);`;
+    agentScript.current = 'process.exit(1)';
+    authStatus.current = { loggedIn: false, authMethod: null, apiProvider: null };
     const manager = createAgentManager(root);
 
     manager.start(plan1, 0);
@@ -1229,6 +1259,27 @@ describe('resumeQuestionParkedTasks', () => {
     const { resumed } = await manager.resumeQuestionParkedTasks('IDEA-999');
     expect(resumed).toBe(false);
     expect(currentStatus(manager)?.errorKind).toBe('question');
+  });
+});
+
+describe('runCommitSuggest', () => {
+  it('rejects with kind "auth" when claudeAuthStatus reports signed out (IDEA-236)', async () => {
+    const { root } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(1)';
+    authStatus.current = { loggedIn: false, authMethod: null, apiProvider: null };
+    const manager = createAgentManager(root);
+
+    await expect(manager.runCommitSuggest('prompt')).rejects.toMatchObject({ kind: 'auth' });
+  });
+
+  it('rejects without a kind for a generic failure', async () => {
+    const { root } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = 'process.exit(1)';
+    const manager = createAgentManager(root);
+
+    const err = (await manager.runCommitSuggest('prompt').catch((e) => e)) as { kind?: string };
+    expect(err).toBeInstanceOf(Error);
+    expect(err.kind).toBeUndefined();
   });
 });
 

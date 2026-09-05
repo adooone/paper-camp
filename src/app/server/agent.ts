@@ -46,6 +46,7 @@ import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { discoverDeskConfig } from './desk-discovery';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
+import { claudeAuthStatus } from './local-adapters';
 import { appendNotification } from './notification-log';
 import { parsePrReviewResult, postPrReview } from './pr-review-settle';
 import { clearDeliveryFailures, recordDeliveryFailure, recordReviewedSha } from './pr-review-state';
@@ -55,15 +56,58 @@ const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
 const FIX_ATTEMPT_CAP = 2;
 const PR_REVIEW_DELIVERY_FAILURE_CAP = 3;
-const AUTH_ERROR_MARKER = 'Not logged in · Please run /login';
 const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
 const DESTRUCTIVE_GIT_BAN =
   "Never run `git stash`, `git reset`, or `git checkout` over working-tree state you did not create yourself — it may be someone else's pending work. To compare against a clean baseline, use read-only `git diff` or `git show HEAD:<file>` instead.";
 const FOREGROUND_COMMANDS_ONLY =
   "This is a one-shot headless run with no notification channel: run every command in the foreground and wait for its output directly. Never background a command (no `run_in_background`, no `&`, no `nohup`) and never sleep/poll waiting for one to finish — a backgrounded command's completion will never reach you, and you will stall until the run is cut off without finishing this work.";
 
-function isAuthError(text: string): boolean {
-  return text.includes(AUTH_ERROR_MARKER);
+// The CLI's permissions.allow warning is a notice, not the failure — strip it before
+// stderr is used as an error's display text, while leaving any other stderr content.
+const PERMISSIONS_NOTICE_RE = /^.*Ignoring \d+ permissions\.allow entr(?:y|ies).*$\n?/gm;
+
+function stripPermissionsNotice(text: string): string | undefined {
+  return text.replace(PERMISSIONS_NOTICE_RE, '').trim() || undefined;
+}
+
+// A failed run's real reason is `result` in the CLI's JSON output, not stderr — reproduced
+// by running `claude -p --output-format json` headless with an expired session (IDEA-236).
+function parseResultError(text: string): string | undefined {
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+  if (!json || typeof json !== 'object') return undefined;
+  const { type, is_error, result } = json as Record<string, unknown>;
+  if (type !== 'result' || !is_error) return undefined;
+  const text_ = typeof result === 'string' ? result.trim() : '';
+  return text_ || undefined;
+}
+
+// `--output-format json` prints one JSON object (possibly pretty-printed); `stream-json`
+// prints newline-delimited events — try the whole blob first, then line by line.
+function resultErrorFromStdout(stdout: string): string | undefined {
+  const trimmed = stdout.trim();
+  if (!trimmed) return undefined;
+  const whole = parseResultError(trimmed);
+  if (whole) return whole;
+  for (const line of trimmed.split(/\r?\n/)) {
+    const text = parseResultError(line.trim());
+    if (text) return text;
+  }
+  return undefined;
+}
+
+function extractFailureText(stdout: string, stderr: string, fallback: string): string {
+  return resultErrorFromStdout(stdout) ?? stripPermissionsNotice(stderr) ?? fallback;
+}
+
+// Carries the same classification a parked task gets onto the rejection a read-only
+// prompt's caller sees, so e.g. the commit-suggest route can answer `kind: 'auth'` too.
+function readOnlyPromptError(message: string, kind: AgentTask['errorKind']): Error {
+  return kind ? Object.assign(new Error(message), { kind }) : new Error(message);
 }
 
 function humanizeTaskKind(kind: TaskKind): string {
@@ -382,7 +426,7 @@ export function createAgentManager(
 
   function registerAndStart(task: AgentTask): AgentTask {
     registerTask(task);
-    setStatus(task, 'running');
+    void setStatus(task, 'running');
     return task;
   }
 
@@ -413,13 +457,13 @@ export function createAgentManager(
     }
   }
 
-  function setStatus(task: AgentTask, status: AgentTaskStatus) {
+  async function setStatus(task: AgentTask, status: AgentTaskStatus): Promise<void> {
     task.status = status;
-    // Classify from the terminal lines only, so a transient auth blip that later
-    // recovered isn't mislabeled; a 'question' tag from escalateToLog is left alone.
+    // Ask the CLI instead of matching a message it may no longer print — the same
+    // probe the login relay uses; a 'question' tag from escalateToLog is left alone.
     if (status === 'error' && task.errorKind !== 'question') {
-      const terminalLines = task.lines.flatMap((entry) => entry.split(/\r?\n/)).slice(-5);
-      task.errorKind = terminalLines.some(isAuthError) ? 'auth' : undefined;
+      const authStatus = task.agentId === 'claude-code' ? await claudeAuthStatus(root) : null;
+      task.errorKind = authStatus?.loggedIn === false ? 'auth' : undefined;
     }
     broadcast(`agent: ${status}`, task.id);
     if (status === 'done' || status === 'error' || status === 'superseded') {
@@ -450,7 +494,7 @@ export function createAgentManager(
   // never silently swallowed and never mislabeled as an `error`.
   function finalizeSuperseded(task: AgentTask): void {
     pushLine(task, '[superseded] preempted by a newer run for this plan');
-    setStatus(task, 'superseded');
+    void setStatus(task, 'superseded');
   }
 
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
@@ -512,7 +556,7 @@ export function createAgentManager(
     if (task.finishing) return;
     task.finishing = true;
     if (error) {
-      setStatus(task, 'error');
+      void setStatus(task, 'error');
       return;
     }
     if (task.taskKind === 'fix-review') {
@@ -546,7 +590,7 @@ export function createAgentManager(
             );
           }
           task.errorReason = outcome.reason;
-          setStatus(task, 'error');
+          void setStatus(task, 'error');
           return;
         }
         await recordReviewedSha(root, task.planId, task.prReviewSha);
@@ -561,7 +605,7 @@ export function createAgentManager(
       if (progressed === false) {
         pushLine(task, noProgressWarning(task));
       }
-      setStatus(task, 'done');
+      void setStatus(task, 'done');
       if (task.taskKind === 'audit' && task.planId && progressed === true) {
         onAuditComplete?.(task.planId).catch(() => {});
       }
@@ -599,6 +643,11 @@ export function createAgentManager(
       }
     });
 
+    let stdout = '';
+    task.proc.stdout.on('data', (d: Buffer) => {
+      stdout += d.toString();
+    });
+
     let stderr = '';
     task.proc.stderr?.on('data', (d: Buffer) => {
       stderr += d.toString();
@@ -608,18 +657,26 @@ export function createAgentManager(
       if (isTaskDone(task) || task.finishing) return;
       if (task.status === 'starting' || task.status === 'running') {
         // Plain-text CLI failures (e.g. an auth error) never reach parseLine's JSON
-        // parser, so this is the only place they surface in the task's own output.
-        if (code !== 0 && stderr.trim()) pushLine(task, stderr.trim());
+        // parser, so this is the only place they surface — unless a streamed line already gave a reason.
+        if (code !== 0 && task.errorReason === undefined) {
+          const errText = extractFailureText(
+            stdout,
+            stderr,
+            `${task.adapter.command} exited with code ${code}`,
+          );
+          task.errorReason = errText;
+          pushLine(task, errText);
+        }
         void finishTask(task, code !== 0);
       } else if (task.status === 'stopping') {
-        setStatus(task, 'done');
+        void setStatus(task, 'done');
       }
     });
 
     task.proc.on('error', (err) => {
       if (isTaskDone(task) || task.finishing) return;
       pushLine(task, `Failed to spawn agent: ${err.message}`);
-      setStatus(task, 'error');
+      void setStatus(task, 'error');
     });
   }
 
@@ -975,7 +1032,7 @@ export function createAgentManager(
 
         if (candidates.length === 0) {
           pushLine(task, 'No open ideas or plans to reconcile.');
-          setStatus(task, 'done');
+          void setStatus(task, 'done');
           return;
         }
 
@@ -1058,7 +1115,7 @@ export function createAgentManager(
         }
 
         if (task.status === 'stopping') {
-          setStatus(task, 'done');
+          void setStatus(task, 'done');
           return;
         }
 
@@ -1066,10 +1123,10 @@ export function createAgentManager(
           task,
           `Reconcile complete — ${reconciled} reconciled, ${skipped} skipped, ${failed} failed`,
         );
-        setStatus(task, failed > 0 ? 'error' : 'done');
+        void setStatus(task, failed > 0 ? 'error' : 'done');
       } catch (err) {
         pushLine(task, `Batch reconcile failed: ${(err as Error).message}`);
-        setStatus(task, 'error');
+        void setStatus(task, 'error');
       }
     })();
 
@@ -1109,7 +1166,7 @@ export function createAgentManager(
 
         if (candidates.length === 0) {
           pushLine(task, 'No ideas selected to draft.');
-          setStatus(task, 'done');
+          void setStatus(task, 'done');
           return;
         }
 
@@ -1179,15 +1236,15 @@ export function createAgentManager(
         }
 
         if (task.status === 'stopping') {
-          setStatus(task, 'done');
+          void setStatus(task, 'done');
           return;
         }
 
         pushLine(task, `Draft complete — ${drafted} drafted, ${skipped} skipped, ${failed} failed`);
-        setStatus(task, failed > 0 ? 'error' : 'done');
+        void setStatus(task, failed > 0 ? 'error' : 'done');
       } catch (err) {
         pushLine(task, `Batch draft failed: ${(err as Error).message}`);
-        setStatus(task, 'error');
+        void setStatus(task, 'error');
       }
     })();
 
@@ -1539,7 +1596,7 @@ export function createAgentManager(
           return;
         }
         if (phaseResult.exit === 'stopping') {
-          setStatus(task, 'done');
+          void setStatus(task, 'done');
           return;
         }
 
@@ -1572,7 +1629,7 @@ export function createAgentManager(
             return;
           }
           if (fixResult.exit === 'stopping') {
-            setStatus(task, 'done');
+            void setStatus(task, 'done');
             return;
           }
         }
@@ -1589,7 +1646,7 @@ export function createAgentManager(
 
         if (failed > 0) {
           pushLine(task, `Run stopped after ${summary} completed, 1 failed`);
-          setStatus(task, 'error');
+          void setStatus(task, 'error');
         } else {
           pushLine(task, `All ${summary} completed`);
           if (onRunComplete) {
@@ -1603,7 +1660,7 @@ export function createAgentManager(
               );
             }
           }
-          setStatus(task, 'done');
+          void setStatus(task, 'done');
         }
       } catch (err) {
         if (isSuperseded(task)) {
@@ -1611,7 +1668,7 @@ export function createAgentManager(
         } else {
           task.errorReason ??= (err as Error).message;
           pushLine(task, `Run all phases failed: ${(err as Error).message}`);
-          setStatus(task, 'error');
+          void setStatus(task, 'error');
         }
       }
     })();
@@ -1656,18 +1713,20 @@ export function createAgentManager(
       const task = registerAndStart(newTask({ taskKind, planTitle, agentId, adapter, proc }));
 
       let settled = false;
-      const settle = (fn: () => void) => {
+      // A settling callback that ends in error awaits setStatus so task.errorKind is
+      // classified before the rejection reaches the caller (IDEA-236).
+      const settle = (fn: () => void | Promise<void>) => {
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
-        fn();
+        void fn();
       };
       const timeout = setTimeout(() => {
-        settle(() => {
+        settle(async () => {
           pushLine(task, `${planTitle} timed out`);
-          setStatus(task, 'error');
+          await setStatus(task, 'error');
           killWithEscalation(proc);
-          reject(new Error(`${planTitle} timed out`));
+          reject(readOnlyPromptError(`${planTitle} timed out`, task.errorKind));
         });
       }, READONLY_PROMPT_TIMEOUT_MS);
 
@@ -1684,9 +1743,9 @@ export function createAgentManager(
         stderr += d.toString();
       });
       proc.on('close', (code) => {
-        settle(() => {
+        settle(async () => {
           if (code === 0) {
-            setStatus(task, 'done');
+            void setStatus(task, 'done');
             // opencode outputs JSON events; extract the text parts for the response.
             const result = isClaude
               ? stdout
@@ -1703,18 +1762,23 @@ export function createAgentManager(
                   .join('\n');
             resolve(result);
           } else {
-            const errText = stderr || `${adapter.command} exited with code ${code}`;
+            const errText = extractFailureText(
+              stdout,
+              stderr,
+              `${adapter.command} exited with code ${code}`,
+            );
+            task.errorReason = errText;
             pushLine(task, errText);
-            setStatus(task, 'error');
-            reject(new Error(errText));
+            await setStatus(task, 'error');
+            reject(readOnlyPromptError(errText, task.errorKind));
           }
         });
       });
       proc.on('error', (err) => {
-        settle(() => {
+        settle(async () => {
           pushLine(task, `Failed to spawn agent: ${err.message}`);
-          setStatus(task, 'error');
-          reject(err);
+          await setStatus(task, 'error');
+          reject(readOnlyPromptError(err.message, task.errorKind));
         });
       });
     });
@@ -1747,7 +1811,7 @@ export function createAgentManager(
     if (!task || isTaskDone(task)) {
       return { ok: false, error: 'No agent task running' };
     }
-    setStatus(task, 'stopping');
+    void setStatus(task, 'stopping');
     killWithEscalation(task.proc);
     return { ok: true };
   }
