@@ -8,7 +8,7 @@ tags:
   - app
   - ui
 subject: Run & monitor
-order: 2
+order: 5
 ---
 
 The same run is read on two pages that disagree about everything. **Tasks**
@@ -81,3 +81,14 @@ is the log's own totals.
 at the bell as [[IDEA-192]] settled. Any change to what `tasks.log` records
 or how long it is kept. Cross-project aggregation in the hub; this is one
 project's log.
+
+### Phases
+- [ ] Derive one log stream from runs, failures, and live tasks
+      One selector merges `tasks.log` entries, the issue collectors' failures, and `agentStatus` into typed rows, newest first.
+- [ ] Build the `features/log` page with compact rows and *Load more*
+- [ ] Move the expanded detail and its actions into the row
+      Summary and usage for a successful run; reason, thread, *Fix it here*, *Promote*, and *Open* for a failed one.
+- [ ] Add the filter bar, search, and sort backed by URL search params
+- [ ] Add the quick-stats strip computed from the matched rows
+- [ ] Take the nav slot, redirect `/tasks` and `/issues`, repoint the Stack panel
+- [ ] Delete `features/tasks` and `features/issues`, then run the quality checks

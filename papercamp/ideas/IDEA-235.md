@@ -45,3 +45,17 @@ another port with -p.` `dev` keeps its message.
 
 Re-scanning or pruning the registry on the daemon's behalf. Any change to how
 `scan` decides what is a project.
+
+### Phases
+- [ ] Decide missing from the registry entry
+      One helper reads a registered path and reports it missing when `papercamp/config.json` is absent.
+- [ ] Refuse to mount a missing project
+      `createProjectMounter` answers 404 `paper-camp daemon: project folder missing at <path>` instead of serving an empty desk.
+- [ ] Report `missing: true` from `/api/machine/projects`
+- [ ] Grey the missing row in the hub and make it unpickable
+- [ ] Print `missing` in the `ls` and `status` STATE column
+      Add one hint below the table naming `paper-camp rm <slug>`; nothing is removed automatically.
+- [ ] Answer `/api/*` at the daemon root with 404 JSON
+      Every root `/api/` path but `/api/machine/projects` returns `{"error":"no project mounted at the daemon root"}`; drop `servesOwnRuntime`'s reliance on HTML failing `response.json()`.
+- [ ] Give the daemon its own port-in-use message
+      `portInUseMessage` takes a daemon variant pointing at `paper-camp status` and `-p`; `dev` keeps its wording.

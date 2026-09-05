@@ -2,9 +2,9 @@
 id: IDEA-232
 title: Illustrated empty states
 type: feat
-status: review
+status: done
 created: 2026-09-04
-updated: 2026-09-04
+updated: 2026-09-05
 tags:
   - app
   - ui

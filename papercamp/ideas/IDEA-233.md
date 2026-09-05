@@ -8,7 +8,7 @@ tags:
   - cli
   - server
 subject: Multi-project
-order: 1
+order: 2
 ---
 
 `paper-camp daemon` runs in the foreground and nowhere else. Closing the
@@ -80,3 +80,17 @@ Windows service semantics; `start` works there through `detached`, but
 signal-based `stop` is not promised. Managing anything other than the one
 daemon — desk services and agent runs stay owned by the daemon, as
 [[IDEA-224]] settled.
+
+### Phases
+- [ ] Write `daemon.json` on listen and remove it on exit
+      `daemon-server.ts` records pid, port, version, startedAt and the share/tailnet flags in the config dir, and clears the file on SIGINT/SIGTERM.
+- [ ] Add a shared state reader that prunes stale files
+      One helper the CLI commands share: read the file, check `process.kill(pid, 0)`, probe the machine endpoint, and delete the file when any of those fail.
+- [ ] Add `paper-camp start`
+      Spawn `paper-camp daemon` detached with stdio into `daemon.log`, poll the machine endpoint, then echo the banner lines; refuse to start a second daemon.
+- [ ] Add `paper-camp stop` and `paper-camp restart`
+      SIGTERM with a five-second SIGKILL escalation, and a restart that reuses the flags recorded in the state file.
+- [ ] Report per-project `mounted` and `busy` from `/api/machine/projects`
+- [ ] Add `paper-camp status` and the `ls` STATE column
+- [ ] Add `paper-camp logs` with `-n` and `-f`
+- [ ] Cover the lifecycle with a throwaway `PAPERCAMP_CONFIG_DIR` and run the quality checks

@@ -85,3 +85,19 @@ once and accept the trust dialog. Paper Camp does not write that file.
 Any change to what the allowlist grants ([[FEAT-10]]). opencode's auth
 flow. Rotating or storing credentials on Paper Camp's side; the CLI keeps
 its own.
+
+### Phases
+- [ ] Read the failure from the result line
+      Have both runners parse stdout for the `result` JSON and surface its text, falling back to stderr minus the `Ignoring … permissions.allow entries` notice, then the exit code.
+- [ ] Classify signed-out by probing auth status
+      Call `claudeAuthStatus` when a run ends in error, set `errorKind: 'auth'` on `loggedIn: false`, and delete the `Not logged in · Please run /login` string match.
+- [ ] Carry the auth kind to the git card
+      Return `{ error, kind: 'auth' }` from `/api/git/suggest-commit-message`, throw it through `git-api.ts`, and render a **Sign in** action in `commit-message-fields.tsx`.
+- [ ] Move the sign-in controls to shared app components
+      Relocate `SignInAction` and `RelayFallbackGuide` into `src/app/components/` so the git card and the Settings row render the same control.
+- [ ] Strip OSC sequences before matching the login URL
+      Extend `stripAnsi` to drop `ESC ]` … BEL/`ESC \` sequences and add a `login-relay.test.ts` fixture from the real 2.1.250 output.
+- [ ] Answer the paste-code prompt from the app
+      Set `needsCode` on `LoginRelayState` when the buffer shows `Paste code here`, render the code input beside the existing actions, and write the code plus a carriage return to the pty from `POST /api/agent/login-relay/code`.
+- [ ] Warn when the repo's trust dialog was never accepted
+      Probe `~/.claude.json` for `projects[<root>].hasTrustDialogAccepted` and show a warn stamp with the remedy on the Claude Code connection row.
