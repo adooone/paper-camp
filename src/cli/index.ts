@@ -52,7 +52,7 @@ import {
   type PlanEntry,
   coerceAgentConfig,
 } from '../types/index';
-import { runStart } from './daemon-lifecycle';
+import { runRestart, runStart, runStop } from './daemon-lifecycle';
 import { DEFAULT_DAEMON_PORT, startDaemonServer } from './daemon-server';
 import { readConfigPort, resolveDevPort } from './dev-port';
 import { startDevServer } from './dev-server';
@@ -242,6 +242,20 @@ program
       tailnet: opts.tailnet,
     });
     if (!ok) process.exitCode = 1;
+  });
+
+program
+  .command('stop')
+  .description('Stop the running daemon (SIGTERM, then SIGKILL after five seconds)')
+  .action(async () => {
+    if (!(await runStop())) process.exitCode = 1;
+  });
+
+program
+  .command('restart')
+  .description('Stop the running daemon and start it again with the same flags')
+  .action(async () => {
+    if (!(await runRestart())) process.exitCode = 1;
   });
 
 program
