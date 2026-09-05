@@ -2,7 +2,7 @@
 id: IDEA-233
 title: Daemon lifecycle like pm2
 type: feat
-status: idea
+status: review
 created: 2026-09-05
 tags:
   - cli
@@ -100,4 +100,5 @@ daemon — desk services and agent runs stay owned by the daemon, as
       run: 11m54s · 116 in · 27.6k out · sonnet-5
 - [x] Add `paper-camp logs` with `-n` and `-f`
       run: 7m52s · 62 in · 14.5k out · sonnet-5
-- [ ] Cover the lifecycle with a throwaway `PAPERCAMP_CONFIG_DIR` and run the quality checks
+- [x] Cover the lifecycle with a throwaway `PAPERCAMP_CONFIG_DIR` and run the quality checks
+      run: 11m13s · 76 in · 22.6k out · sonnet-5
