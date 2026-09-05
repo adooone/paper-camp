@@ -4,6 +4,7 @@ title: Real agent errors and sign-in that completes
 type: fix
 status: review
 created: 2026-09-05
+updated: 2026-09-05
 tags:
   - app
   - server
@@ -108,3 +109,24 @@ its own.
 - [x] Warn when the repo's trust dialog was never accepted
       Probe `~/.claude.json` for `projects[<root>].hasTrustDialogAccepted` and show a warn stamp with the remedy on the Claude Code connection row.
       run: 6m17s · 88 in · 21.2k out · sonnet-5
+
+### Fixes
+- [ ] Fix the failing "Quality" check
+      Fix the failing "Quality" check in this repo.
+      
+      The command was `pnpm lint`.
+      
+      Output from the last run:
+      
+      
+      > @dendelion/paper-camp@0.27.0 lint /home/croco/dev/paper-camp
+      > biome check . && node scripts/comment-stats.mjs
+      
+      Checked 630 files in 6s. No fixes applied.
+      Comments: 1788 / 42114 lines = 4.25%
+      Trailing comment lines (code; // why): 13
+      Runs over the 2-line cap: 3 (9 lines)
+        src/app/server/agent.ts:462 — 3 lines
+        src/app/server/agent.ts:660 — 3 lines
+        src/app/server/login-relay.ts:16 — 3 lines
+       ELIFECYCLE  Command failed with exit code 1.
