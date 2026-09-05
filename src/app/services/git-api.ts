@@ -8,7 +8,7 @@ const GIT_TIMEOUT_MS = 45_000;
 async function throwIfNotOk(response: Response, fallbackError: string): Promise<void> {
   if (response.ok) return;
   const err = await response.json().catch(() => ({ error: fallbackError }));
-  throw new Error(err.error);
+  throw err.kind ? Object.assign(new Error(err.error), { kind: err.kind }) : new Error(err.error);
 }
 
 export const fetchGitStatus = async (): Promise<GitStatusResponse> => {

@@ -93,8 +93,9 @@ its own.
 - [x] Classify signed-out by probing auth status
       Call `claudeAuthStatus` when a run ends in error, set `errorKind: 'auth'` on `loggedIn: false`, and delete the `Not logged in · Please run /login` string match.
       run: 8m37s · 136 in · 32.3k out · sonnet-5
-- [ ] Carry the auth kind to the git card
+- [x] Carry the auth kind to the git card
       Return `{ error, kind: 'auth' }` from `/api/git/suggest-commit-message`, throw it through `git-api.ts`, and render a **Sign in** action in `commit-message-fields.tsx`.
+      run: 7m22s · 138 in · 24.7k out · sonnet-5
 - [ ] Move the sign-in controls to shared app components
       Relocate `SignInAction` and `RelayFallbackGuide` into `src/app/components/` so the git card and the Settings row render the same control.
 - [ ] Strip OSC sequences before matching the login URL

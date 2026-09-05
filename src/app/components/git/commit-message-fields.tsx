@@ -1,3 +1,4 @@
+import { SignInAction } from '@/app/features/settings/components/sign-in-action';
 import { Alert, IconButton, Input } from '@dendelion/paper-ui';
 import { WandIcon } from '../icons';
 
@@ -8,7 +9,8 @@ export interface CommitMessageFieldsState {
   setCommitMessage: (value: string) => void;
   suggesting: boolean;
   suggestError: string | null;
-  setSuggestError: (error: string | null) => void;
+  suggestErrorKind?: 'auth';
+  clearSuggestError: () => void;
   handleSuggestFromChanges: () => void;
 }
 
@@ -23,8 +25,13 @@ export const CommitMessageFields = ({
   return (
     <div className="flex flex-col gap-2">
       {state.suggestError && (
-        <Alert dismissible onDismiss={() => state.setSuggestError(null)}>
-          {state.suggestError}
+        <Alert dismissible onDismiss={state.clearSuggestError}>
+          <div className="flex items-center justify-between gap-2">
+            <span>{state.suggestError}</span>
+            {state.suggestErrorKind === 'auth' && (
+              <SignInAction onSignedIn={state.clearSuggestError} />
+            )}
+          </div>
         </Alert>
       )}
       <div className="flex gap-2 items-center">

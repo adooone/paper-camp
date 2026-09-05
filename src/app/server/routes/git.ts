@@ -358,7 +358,8 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
           );
           sendJson(res, 200, suggestion);
         } catch (error) {
-          sendJson(res, 400, { error: (error as Error).message });
+          const kind = (error as { kind?: 'auth' }).kind;
+          sendJson(res, 400, { error: (error as Error).message, ...(kind ? { kind } : {}) });
         }
       },
     },

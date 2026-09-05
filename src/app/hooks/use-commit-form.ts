@@ -54,6 +54,7 @@ export function useCommitForm(files: CommitFormFile[], options: UseCommitFormOpt
   const [committing, setCommitting] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
+  const [suggestErrorKind, setSuggestErrorKind] = useState<'auth' | undefined>(undefined);
 
   const filePaths = useMemo(() => files.map((f) => f.path), [files]);
   const stagedCount = useMemo(() => files.filter((f) => f.staged).length, [files]);
@@ -144,20 +145,26 @@ export function useCommitForm(files: CommitFormFile[], options: UseCommitFormOpt
     beforeCommit,
   ]);
 
+  const clearSuggestError = useCallback(() => {
+    setSuggestError(null);
+    setSuggestErrorKind(undefined);
+  }, []);
+
   const handleSuggestFromChanges = useCallback(async () => {
     if (filePaths.length === 0) return;
     setSuggesting(true);
-    setSuggestError(null);
+    clearSuggestError();
     try {
       const result = await suggestCommitMessage(filePaths);
       setCommitTitle(result.title);
       setCommitMessage(result.message);
     } catch (err) {
       setSuggestError((err as Error).message);
+      setSuggestErrorKind((err as { kind?: 'auth' }).kind);
     } finally {
       setSuggesting(false);
     }
-  }, [filePaths]);
+  }, [filePaths, clearSuggestError]);
 
   return {
     commitTitle,
@@ -169,7 +176,8 @@ export function useCommitForm(files: CommitFormFile[], options: UseCommitFormOpt
     stagedCount,
     suggesting,
     suggestError,
-    setSuggestError,
+    suggestErrorKind,
+    clearSuggestError,
     handleCommit,
     handleSuggestFromChanges,
   };
