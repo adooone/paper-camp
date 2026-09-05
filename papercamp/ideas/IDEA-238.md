@@ -2,7 +2,7 @@
 id: IDEA-238
 title: Sidebar as a card on solid paper
 type: feat
-status: idea
+status: review
 created: 2026-09-05
 tags:
   - app
@@ -77,6 +77,7 @@ The 480px bottom navigation.
       run: 4m31s · 32 in · 8.3k out · sonnet-5
 - [x] Delete the four `.pc-page` rules from `utilities.css`
       run: 4m43s · 40 in · 9.8k out · sonnet-5
-- [ ] Check the drawer and each sidebar area
+- [x] Check the drawer and each sidebar area
       Docs, Settings, Roadmap, and the Git file list in the card, and the mobile
       drawer's backdrop, focus, and Escape below `lg`.
+      run: 4m33s · 38 in · 8.8k out · sonnet-5
