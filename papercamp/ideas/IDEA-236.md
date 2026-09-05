@@ -2,7 +2,7 @@
 id: IDEA-236
 title: Real agent errors and sign-in that completes
 type: fix
-status: idea
+status: review
 created: 2026-09-05
 tags:
   - app
@@ -105,5 +105,6 @@ its own.
 - [x] Answer the paste-code prompt from the app
       Set `needsCode` on `LoginRelayState` when the buffer shows `Paste code here`, render the code input beside the existing actions, and write the code plus a carriage return to the pty from `POST /api/agent/login-relay/code`.
       run: 7m52s · 132 in · 32.4k out · sonnet-5
-- [ ] Warn when the repo's trust dialog was never accepted
+- [x] Warn when the repo's trust dialog was never accepted
       Probe `~/.claude.json` for `projects[<root>].hasTrustDialogAccepted` and show a warn stamp with the remedy on the Claude Code connection row.
+      run: 6m17s · 88 in · 21.2k out · sonnet-5

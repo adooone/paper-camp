@@ -37,6 +37,13 @@ export const ConnectionRow = ({
               </Stamp>
             </Tooltip>
           )}
+          {connection.trustDialogAccepted === false && (
+            <Tooltip content="Open `claude` in this repo once and accept its trust dialog">
+              <Stamp size="small" variant="warning">
+                Headless runs ignore this repo's permission allowlist
+              </Stamp>
+            </Tooltip>
+          )}
           <Stamp size="small" fillColor={stamp.fill} textColor={stamp.text}>
             {stamp.label}
           </Stamp>

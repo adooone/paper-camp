@@ -21,6 +21,12 @@ function authState(plugin: Plugin, root: string): Promise<boolean | null> {
   return plugin.kind === 'external' ? plugin.def.authenticated(root) : plugin.def.signedIn(root);
 }
 
+// null for anything but claude-code, which is the only adapter with a trust dialog to check.
+function trustDialogState(plugin: Plugin, root: string): Promise<boolean | null> {
+  if (plugin.kind !== 'local' || !plugin.def.trustDialogAccepted) return Promise.resolve(null);
+  return plugin.def.trustDialogAccepted(root);
+}
+
 export async function probeCapabilities(root: string): Promise<CapabilityResult[]> {
   return Promise.all(PLUGINS.map((p) => p.def.probe(root)));
 }
@@ -30,9 +36,10 @@ async function toConnectionResult(
   root: string,
   precomputed?: CapabilityResult,
 ): Promise<ConnectionResult> {
-  const [result, authenticated] = await Promise.all([
+  const [result, authenticated, trustDialogAccepted] = await Promise.all([
     precomputed ?? plugin.def.probe(root),
     authState(plugin, root),
+    trustDialogState(plugin, root),
   ]);
   return {
     id: plugin.def.id as ConnectionResult['id'],
@@ -42,6 +49,7 @@ async function toConnectionResult(
     status: result.status,
     detail: result.detail,
     authenticated,
+    trustDialogAccepted,
     connect: plugin.def.connect(result),
   };
 }

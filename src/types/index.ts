@@ -762,6 +762,8 @@ export interface ConnectionResult {
   status: CapabilityStatus;
   detail: string;
   authenticated: boolean | null;
+  /** null except for the claude-code adapter, the only one with a trust dialog to check. */
+  trustDialogAccepted: boolean | null;
   connect: ConnectAction | null;
 }
 

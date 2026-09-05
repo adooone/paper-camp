@@ -1,6 +1,9 @@
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import type { AgentAuthStatus, AgentId, CapabilityResult, ConnectAction } from '../../types';
 import { AGENT_IDS, AGENT_LABELS } from '../../types';
 import { AGENTS } from './agents';
+import { readMaybe } from './helpers';
 import { run } from './run';
 
 // Tools the runtime drives on the machine (git, claude-code, opencode); each keeps its
@@ -13,6 +16,23 @@ export interface LocalAdapterDefinition {
   /** Null once the adapter probes `ok` — nothing to connect. */
   connect: (result: CapabilityResult) => ConnectAction | null;
   signedIn: (root: string) => Promise<boolean | null>;
+  /** Only claude-code implements this — whether headless runs actually see this repo's allowlist. */
+  trustDialogAccepted?: (root: string) => Promise<boolean>;
+}
+
+// Paper Camp never writes ~/.claude.json — it's only opened once, interactively, by
+// `claude` itself; a missing entry means the trust dialog was never accepted here.
+export async function claudeTrustDialogAccepted(root: string): Promise<boolean> {
+  const raw = await readMaybe(join(homedir(), '.claude.json'));
+  if (!raw) return false;
+  try {
+    const parsed = JSON.parse(raw) as {
+      projects?: Record<string, { hasTrustDialogAccepted?: boolean }>;
+    };
+    return parsed.projects?.[root]?.hasTrustDialogAccepted === true;
+  } catch {
+    return false;
+  }
 }
 
 export async function claudeAuthStatus(root: string): Promise<AgentAuthStatus | null> {
@@ -103,5 +123,6 @@ export const LOCAL_ADAPTERS: LocalAdapterDefinition[] = [
     probe: (root: string) => probeAgent(id, root),
     connect: (result: CapabilityResult) => agentConnect(id, result),
     signedIn: (root: string) => agentSignedIn(id, root),
+    ...(id === 'claude-code' ? { trustDialogAccepted: claudeTrustDialogAccepted } : {}),
   })),
 ];

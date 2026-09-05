@@ -1,10 +1,21 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   probeAgentAuthStatus,
   probeCapabilities,
   probeConnections,
   runConnect,
 } from './capabilities';
+
+// claudeTrustDialogAccepted reads ~/.claude.json for real — this machine may have one,
+// so every test needs homedir() pointed at a directory that doesn't unless a test says so.
+const home = vi.hoisted(() => ({ current: '/papercamp-test-home-unset' }));
+vi.mock('node:os', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:os')>();
+  return { ...actual, homedir: () => home.current };
+});
 
 // Every service probes through `run` (src/app/server/run.ts). Mocking that single
 // choke point keeps these tests to in-memory dispatch — no real subprocesses, no
@@ -197,6 +208,50 @@ describe('probeConnections', () => {
   it('reports opencode as unauthenticated null — it has no auth status probe', async () => {
     mock.bin('opencode', () => mock.ok('9.9.9'));
     expect(byConnId(await probeConnections(ROOT), 'agent:opencode').authenticated).toBeNull();
+  });
+});
+
+describe('probeConnections: claude-code trust dialog (IDEA-236)', () => {
+  let homeTmp: string;
+
+  beforeEach(async () => {
+    homeTmp = await mkdtemp(join(tmpdir(), 'papercamp-claude-json-'));
+    home.current = homeTmp;
+  });
+
+  afterEach(async () => {
+    home.current = '/papercamp-test-home-unset';
+    await rm(homeTmp, { recursive: true, force: true });
+  });
+
+  it('reports false when ~/.claude.json does not exist', async () => {
+    expect(byConnId(await probeConnections(ROOT), 'agent:claude-code').trustDialogAccepted).toBe(
+      false,
+    );
+  });
+
+  it('reports false when this project has no entry in ~/.claude.json', async () => {
+    await writeFile(join(homeTmp, '.claude.json'), JSON.stringify({ projects: {} }));
+    expect(byConnId(await probeConnections(ROOT), 'agent:claude-code').trustDialogAccepted).toBe(
+      false,
+    );
+  });
+
+  it('reports true once this repo accepted the trust dialog', async () => {
+    await writeFile(
+      join(homeTmp, '.claude.json'),
+      JSON.stringify({ projects: { [ROOT]: { hasTrustDialogAccepted: true } } }),
+    );
+    expect(byConnId(await probeConnections(ROOT), 'agent:claude-code').trustDialogAccepted).toBe(
+      true,
+    );
+  });
+
+  it('reports null for every connection other than claude-code', async () => {
+    const connections = await probeConnections(ROOT);
+    expect(byConnId(connections, 'git').trustDialogAccepted).toBeNull();
+    expect(byConnId(connections, 'gh').trustDialogAccepted).toBeNull();
+    expect(byConnId(connections, 'agent:opencode').trustDialogAccepted).toBeNull();
   });
 });
 
