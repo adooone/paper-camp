@@ -22,6 +22,17 @@ const PROBE_RETRY_DELAY_MS = 1_500;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+let selfServedProbe: Promise<boolean> | undefined;
+
+// Probed once per process and shared with the boot-time hub decision in main.tsx,
+// so a `paper-camp dev` origin is asked at most once.
+export function probeSelfServed(): Promise<boolean> {
+  if (!selfServedProbe) {
+    selfServedProbe = servesOwnRuntime('', (path) => fetch(apiUrl(path)));
+  }
+  return selfServedProbe;
+}
+
 // A fresh --share tunnel can leave the first probe finding nothing — one miss
 // shouldn't be a permanent verdict with no way for the user to prompt a retry.
 export async function probeReachable(): Promise<boolean> {
@@ -46,9 +57,7 @@ export function createRuntimeSlice(set: SetState): RuntimeSlice {
       async () => {
         if (hasEmbeddedRuntime) return true;
         if (hasDetachedRuntime) return probeReachable();
-        // `paper-camp dev` serves bundle and API from one origin with no mount prefix and
-        // no dialled runtime; a static host answers the same path with its SPA fallback.
-        return servesOwnRuntime('', (path) => fetch(apiUrl(path)));
+        return probeSelfServed();
       },
       (reachable) => ({ runtimeReachable: reachable }),
       () => ({ runtimeReachable: false }),

@@ -88,8 +88,9 @@ loads.
 - [x] Mount the router immediately in `main.tsx`
       Nothing on the boot path awaits a fetch; the hub redirect happens from the app once the verdict is known.
       run: 2m34s · 32 in · 9k out · sonnet-5
-- [ ] Probe self-served once against `/api/package-name`
+- [x] Probe self-served once against `/api/package-name`
       `servesOwnRuntime` reads the 1 ms route, its verdict lands in the runtime slice, and `checkRuntimeReachable` reads that instead of probing again.
+      run: 7m16s · 58 in · 20.6k out · sonnet-5
 - [ ] Memoise `probeCapabilities` and `probeConnections` for the process
       Drop the cache on the Settings recheck, on `runConnect`, and on the relay's `onLoginConfirmed`, which also expires `probeAgentAuthStatus`.
 - [ ] Give `--version` probes a 2 s timeout in `run.ts`

@@ -4,12 +4,13 @@ import '@dendelion/paper-ui/dist/index.css';
 import './styles/utilities.css';
 import { RouterProvider } from '@tanstack/react-router';
 import { HUB_PATH, router } from './router';
-import { apiFetch, apiUrl, setApiBase, setApiPairingToken } from './services/api-base';
+import { apiUrl, setApiBase, setApiPairingToken } from './services/api-base';
 import { readGithubConfig } from './services/github/config-store';
-import { hasChosenProject, servesOwnRuntime } from './services/hub';
+import { hasChosenProject } from './services/hub';
 import './services/machine-connection';
 import { mountPrefix } from './services/mount';
 import { runtimeConnection } from './services/runtime-connection';
+import { probeSelfServed } from './stores/slices/runtime-slice';
 
 const { runtimeUrl, pairingToken } = runtimeConnection;
 setApiBase(runtimeUrl || mountPrefix);
@@ -35,7 +36,7 @@ if (!rootElement) throw new Error('#root element not found');
 
 async function chooseProject(): Promise<boolean> {
   if (hasChosenProject(mountPrefix, runtimeUrl, readGithubConfig() !== null)) return true;
-  return servesOwnRuntime(runtimeUrl, (path) => apiFetch(apiUrl(path)));
+  return probeSelfServed();
 }
 
 // The router mounts at once — nothing on the boot path awaits a fetch, so the boot

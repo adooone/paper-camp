@@ -27,7 +27,7 @@ export async function servesOwnRuntime(
 ): Promise<boolean> {
   if (runtimeUrl !== '') return false;
   try {
-    const response = await fetchApi('/api/capabilities');
+    const response = await fetchApi('/api/package-name');
     if (!response.ok) return false;
     await response.json();
     return true;
