@@ -4,7 +4,7 @@ import type { AgentAuthStatus, AgentId, CapabilityResult, ConnectAction } from '
 import { AGENT_IDS, AGENT_LABELS } from '../../types';
 import { AGENTS } from './agents';
 import { readMaybe } from './helpers';
-import { run } from './run';
+import { VERSION_PROBE_TIMEOUT_MS, run } from './run';
 
 // Tools the runtime drives on the machine (git, claude-code, opencode); each keeps its
 // own credential locally on this machine, never a remote account tied to Paper Camp.
@@ -88,7 +88,10 @@ async function gitSignedIn(): Promise<boolean | null> {
 
 async function probeAgent(id: AgentId, root: string): Promise<CapabilityResult> {
   const { command } = AGENTS[id];
-  const result = await run(command, ['--version'], root);
+  const result = await run(command, ['--version'], root, VERSION_PROBE_TIMEOUT_MS);
+  if (result.timedOut) {
+    return { id: `agent:${id}`, status: 'warn', detail: `${command} took too long to respond` };
+  }
   if (result.code !== 0) {
     return { id: `agent:${id}`, status: 'missing', detail: `${command} not found on PATH` };
   }

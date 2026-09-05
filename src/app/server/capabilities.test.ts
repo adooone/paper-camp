@@ -68,6 +68,7 @@ const mock = vi.hoisted(() => {
 
 vi.mock('./run', () => ({
   run: (command: string, args: string[]) => Promise.resolve(mock.dispatch(command, args)),
+  VERSION_PROBE_TIMEOUT_MS: 2000,
 }));
 
 const ROOT = '/repo';

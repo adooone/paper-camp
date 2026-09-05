@@ -94,8 +94,9 @@ loads.
 - [x] Memoise `probeCapabilities` and `probeConnections` for the process
       Drop the cache on the Settings recheck, on `runConnect`, and on the relay's `onLoginConfirmed`, which also expires `probeAgentAuthStatus`.
       run: 7m31s · 106 in · 27.4k out · sonnet-5
-- [ ] Give `--version` probes a 2 s timeout in `run.ts`
+- [x] Give `--version` probes a 2 s timeout in `run.ts`
       Everything else keeps the 5 s default; a slower tool is reported as slow, not awaited.
+      run: 7m10s · 62 in · 13k out · sonnet-5
 - [ ] Fire `loadPlans` and `loadIdeas` on mount, ungated by `runtimeChecking`
 - [ ] Replace every `null` in the content column with a skeleton or named spinner
       `PlansListSkeleton` for Plans and a matching row skeleton elsewhere; `RuntimeUnavailable` only after an unreachable verdict, and a spinner past ten seconds gains its second line.

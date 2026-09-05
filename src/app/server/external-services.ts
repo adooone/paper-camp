@@ -1,5 +1,5 @@
 import type { CapabilityResult, ConnectAction } from '../../types';
-import { run } from './run';
+import { VERSION_PROBE_TIMEOUT_MS, run } from './run';
 
 // The runtime speaks to these on the user's behalf (GitHub today, Figma/Linear later);
 // credentials live in each service's own CLI, tied to a remote account, not Paper Camp.
@@ -14,7 +14,10 @@ export interface ExternalServiceDefinition {
 }
 
 async function probeGh(root: string): Promise<CapabilityResult> {
-  const version = await run('gh', ['--version'], root);
+  const version = await run('gh', ['--version'], root, VERSION_PROBE_TIMEOUT_MS);
+  if (version.timedOut) {
+    return { id: 'gh', status: 'warn', detail: 'gh CLI took too long to respond' };
+  }
   if (version.code !== 0) {
     return { id: 'gh', status: 'missing', detail: 'gh CLI not found on PATH' };
   }
@@ -58,7 +61,7 @@ function ghConnect(result: CapabilityResult): ConnectAction | null {
 }
 
 async function ghAuthenticated(root: string): Promise<boolean | null> {
-  const version = await run('gh', ['--version'], root);
+  const version = await run('gh', ['--version'], root, VERSION_PROBE_TIMEOUT_MS);
   if (version.code !== 0) return null;
   const auth = await run('gh', ['auth', 'status'], root);
   return auth.code === 0;

@@ -4,15 +4,28 @@ export interface ProbeResult {
   code: number | null;
   stdout: string;
   stderr: string;
+  timedOut: boolean;
 }
 
-export function run(command: string, args: string[], cwd: string): Promise<ProbeResult> {
+const DEFAULT_TIMEOUT_MS = 5000;
+const KILL_SIGNAL = 'SIGTERM';
+
+// `gh`/`claude`/`opencode --version` are the slowest probes; a shorter timeout
+// here reports one as slow instead of stalling every other probe alongside it.
+export const VERSION_PROBE_TIMEOUT_MS = 2000;
+
+export function run(
+  command: string,
+  args: string[],
+  cwd: string,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<ProbeResult> {
   return new Promise((resolve) => {
     const proc = spawn(command, args, {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
-      timeout: 5000,
-      killSignal: 'SIGTERM',
+      timeout: timeoutMs,
+      killSignal: KILL_SIGNAL,
     });
     let stdout = '';
     let stderr = '';
@@ -22,8 +35,10 @@ export function run(command: string, args: string[], cwd: string): Promise<Probe
     proc.stderr?.on('data', (d: Buffer) => {
       stderr += d.toString();
     });
-    proc.on('close', (code) => resolve({ code, stdout, stderr }));
+    proc.on('close', (code, signal) =>
+      resolve({ code, stdout, stderr, timedOut: code === null && signal === KILL_SIGNAL }),
+    );
     // Missing binary: spawn emits 'error' instead of 'close'.
-    proc.on('error', () => resolve({ code: null, stdout: '', stderr: '' }));
+    proc.on('error', () => resolve({ code: null, stdout: '', stderr: '', timedOut: false }));
   });
 }
