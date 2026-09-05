@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { MACHINE_PROJECTS_PATH } from '../../types/index';
+import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../../types/index';
 import { machineConfigDir } from '../machine-registry';
 import { formatDuration } from '../phase-run';
 
@@ -62,17 +62,21 @@ export function isProcessAlive(pid: number): boolean {
   }
 }
 
+export async function fetchMachineProjects(port: number): Promise<MachineProjectSummary[] | null> {
+  try {
+    const response = await fetch(`http://localhost:${port}${MACHINE_PROJECTS_PATH}`);
+    if (!response.ok) return null;
+    const body = (await response.json()) as { projects: MachineProjectSummary[] };
+    return body.projects;
+  } catch {
+    return null;
+  }
+}
+
 /** A response at all is proof the port is a live daemon, not just a live pid
  * (pids get reused, ports get taken by something else). */
 export async function probeMachineEndpoint(port: number): Promise<boolean> {
-  try {
-    const response = await fetch(`http://localhost:${port}${MACHINE_PROJECTS_PATH}`);
-    if (!response.ok) return false;
-    await response.json();
-    return true;
-  } catch {
-    return false;
-  }
+  return (await fetchMachineProjects(port)) !== null;
 }
 
 /** The one truth every lifecycle command reads: a state file, a live pid, and

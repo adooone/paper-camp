@@ -29,7 +29,6 @@ import {
   type MachineProject,
   addProject,
   defaultRegistryPath,
-  listProjects,
   loadRegistry,
   removeProject,
   saveRegistry,
@@ -52,7 +51,7 @@ import {
   type PlanEntry,
   coerceAgentConfig,
 } from '../types/index';
-import { runRestart, runStart, runStop } from './daemon-lifecycle';
+import { runLs, runRestart, runStart, runStatus, runStop } from './daemon-lifecycle';
 import { DEFAULT_DAEMON_PORT, startDaemonServer } from './daemon-server';
 import { readConfigPort, resolveDevPort } from './dev-port';
 import { startDevServer } from './dev-server';
@@ -259,19 +258,17 @@ program
   });
 
 program
-  .command('ls')
-  .description('List projects registered in the machine-level registry')
+  .command('status')
+  .description("Show whether the daemon is running and each registered project's STATE")
   .action(async () => {
-    const registry = await loadRegistry(defaultRegistryPath());
-    const projects = listProjects(registry);
-    if (projects.length === 0) {
-      console.log('No projects registered.');
-      return;
-    }
-    const slugWidth = Math.max(...projects.map((p) => p.slug.length));
-    for (const project of projects) {
-      console.log(`${project.slug.padEnd(slugWidth)}  ${project.path}`);
-    }
+    await runStatus();
+  });
+
+program
+  .command('ls')
+  .description('List projects registered in the machine-level registry, with each STATE')
+  .action(async () => {
+    await runLs();
   });
 
 program

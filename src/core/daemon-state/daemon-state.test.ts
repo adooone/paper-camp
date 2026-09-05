@@ -8,6 +8,7 @@ import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { MACHINE_PROJECTS_PATH } from '../../types/index';
 import {
   type DaemonState,
+  fetchMachineProjects,
   formatDaemonStatusLine,
   readRunningDaemonState,
   removeDaemonState,
@@ -159,6 +160,55 @@ describe('readRunningDaemonState', () => {
 
     expect(await readRunningDaemonState(path)).toEqual(state);
     await expect(access(path)).resolves.toBeUndefined();
+  });
+});
+
+describe('fetchMachineProjects', () => {
+  const servers: Server[] = [];
+
+  afterEach(async () => {
+    await Promise.all(servers.splice(0).map((server) => new Promise((r) => server.close(r))));
+  });
+
+  async function listenOnFreePort(
+    handler: (req: IncomingMessage, res: ServerResponse) => void,
+  ): Promise<number> {
+    const server = createServer(handler);
+    servers.push(server);
+    return new Promise((resolve) => {
+      server.listen(0, () => resolve((server.address() as AddressInfo).port));
+    });
+  }
+
+  it('resolves the projects array the endpoint answers with', async () => {
+    const projects = [{ slug: 'demo', name: 'Demo', mounted: true, busy: false }];
+    const port = await listenOnFreePort((req, res) => {
+      if (req.url === MACHINE_PROJECTS_PATH) {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ projects }));
+        return;
+      }
+      res.statusCode = 404;
+      res.end();
+    });
+
+    expect(await fetchMachineProjects(port)).toEqual(projects);
+  });
+
+  it('resolves null when nothing answers on the port', async () => {
+    const port = await listenOnFreePort((_req, res) => res.end());
+    await Promise.all(servers.splice(0).map((server) => new Promise((r) => server.close(r))));
+
+    expect(await fetchMachineProjects(port)).toBeNull();
+  });
+
+  it('resolves null when the endpoint answers with a non-2xx status', async () => {
+    const port = await listenOnFreePort((_req, res) => {
+      res.statusCode = 500;
+      res.end();
+    });
+
+    expect(await fetchMachineProjects(port)).toBeNull();
   });
 });
 

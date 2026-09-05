@@ -6,12 +6,20 @@ import {
   type DaemonState,
   daemonLogPath,
   daemonStatePath,
+  fetchMachineProjects,
   formatDaemonStatusLine,
   isProcessAlive,
   probeMachineEndpoint,
   readRunningDaemonState,
   removeDaemonState,
 } from '../core/daemon-state';
+import {
+  type MachineProject,
+  defaultRegistryPath,
+  listProjects,
+  loadRegistry,
+} from '../core/machine-registry';
+import type { MachineProjectSummary } from '../types/index';
 import { DEFAULT_DAEMON_PORT } from './daemon-server';
 
 export interface StartOptions {
@@ -150,4 +158,58 @@ export async function runRestart(): Promise<boolean> {
   const stopped = await runStop();
   if (!stopped) return false;
   return runStart(opts);
+}
+
+interface LiveProjects {
+  state: DaemonState | null;
+  projects: MachineProjectSummary[] | null;
+}
+
+async function fetchLiveProjects(): Promise<LiveProjects> {
+  const state = await readRunningDaemonState(daemonStatePath());
+  const projects = state ? await fetchMachineProjects(state.port) : null;
+  return { state, projects };
+}
+
+export type ProjectState = 'mounted' | 'busy' | 'idle' | '—';
+
+export function projectState(
+  slug: string,
+  liveProjects: MachineProjectSummary[] | null,
+): ProjectState {
+  if (!liveProjects) return '—';
+  const project = liveProjects.find((p) => p.slug === slug);
+  if (!project) return 'idle';
+  if (project.busy) return 'busy';
+  return project.mounted ? 'mounted' : 'idle';
+}
+
+export function formatProjectTable(
+  projects: MachineProject[],
+  liveProjects: MachineProjectSummary[] | null,
+): string {
+  if (projects.length === 0) return 'No projects registered.';
+  const rows = projects.map((project) => ({
+    slug: project.slug,
+    state: projectState(project.slug, liveProjects),
+    path: project.path,
+  }));
+  const slugWidth = Math.max(...rows.map((row) => row.slug.length));
+  const stateWidth = Math.max(...rows.map((row) => row.state.length));
+  return rows
+    .map((row) => `${row.slug.padEnd(slugWidth)}  ${row.state.padEnd(stateWidth)}  ${row.path}`)
+    .join('\n');
+}
+
+export async function runLs(): Promise<void> {
+  const { projects: liveProjects } = await fetchLiveProjects();
+  const registry = await loadRegistry(defaultRegistryPath());
+  console.log(formatProjectTable(listProjects(registry), liveProjects));
+}
+
+export async function runStatus(): Promise<void> {
+  const { state, projects: liveProjects } = await fetchLiveProjects();
+  console.log(state ? formatDaemonStatusLine(state) : 'paper-camp: daemon is not running');
+  const registry = await loadRegistry(defaultRegistryPath());
+  console.log(formatProjectTable(listProjects(registry), liveProjects));
 }

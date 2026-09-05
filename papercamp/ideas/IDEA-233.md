@@ -96,6 +96,7 @@ daemon — desk services and agent runs stay owned by the daemon, as
       run: 12m53s · 106 in · 37k out · sonnet-5
 - [x] Report per-project `mounted` and `busy` from `/api/machine/projects`
       run: 10m · 98 in · 17.7k out · sonnet-5
-- [ ] Add `paper-camp status` and the `ls` STATE column
+- [x] Add `paper-camp status` and the `ls` STATE column
+      run: 11m54s · 116 in · 27.6k out · sonnet-5
 - [ ] Add `paper-camp logs` with `-n` and `-f`
 - [ ] Cover the lifecycle with a throwaway `PAPERCAMP_CONFIG_DIR` and run the quality checks

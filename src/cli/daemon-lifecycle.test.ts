@@ -6,8 +6,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { type DaemonState, isProcessAlive, writeDaemonState } from '../core/daemon-state';
-import { MACHINE_PROJECTS_PATH } from '../types/index';
-import { buildDaemonArgs, restartOptionsFromState } from './daemon-lifecycle';
+import { type MachineRegistry, addProject, saveRegistry } from '../core/machine-registry';
+import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
+import {
+  buildDaemonArgs,
+  formatProjectTable,
+  projectState,
+  restartOptionsFromState,
+} from './daemon-lifecycle';
 
 describe('buildDaemonArgs', () => {
   it('is just "daemon" with no flags given', () => {
@@ -48,6 +54,69 @@ describe('restartOptionsFromState', () => {
   });
 });
 
+describe('projectState', () => {
+  it('is "—" for every slug when no daemon is running', () => {
+    expect(projectState('demo', null)).toBe('—');
+  });
+
+  it('is "idle" when the daemon is running but does not know the slug', () => {
+    expect(projectState('demo', [])).toBe('idle');
+  });
+
+  it('is "idle" for a known project that is not mounted', () => {
+    const projects: MachineProjectSummary[] = [
+      { slug: 'demo', name: 'Demo', mounted: false, busy: false },
+    ];
+    expect(projectState('demo', projects)).toBe('idle');
+  });
+
+  it('is "mounted" for a mounted, idle project', () => {
+    const projects: MachineProjectSummary[] = [
+      { slug: 'demo', name: 'Demo', mounted: true, busy: false },
+    ];
+    expect(projectState('demo', projects)).toBe('mounted');
+  });
+
+  it('is "busy" over "mounted" for a project with a task in flight', () => {
+    const projects: MachineProjectSummary[] = [
+      { slug: 'demo', name: 'Demo', mounted: true, busy: true },
+    ];
+    expect(projectState('demo', projects)).toBe('busy');
+  });
+});
+
+describe('formatProjectTable', () => {
+  it('reports no projects registered', () => {
+    expect(formatProjectTable([], null)).toBe('No projects registered.');
+  });
+
+  it('pads the slug and state columns and shows "—" for every row with no daemon running', () => {
+    const projects = [
+      { slug: 'alpha', path: '/some/alpha', name: 'Alpha' },
+      { slug: 'longer-slug', path: '/some/longer-slug', name: 'Longer' },
+    ];
+
+    expect(formatProjectTable(projects, null)).toBe(
+      'alpha        —  /some/alpha\n' + 'longer-slug  —  /some/longer-slug',
+    );
+  });
+
+  it('shows the live mounted/busy/idle state per project once a daemon answers', () => {
+    const projects = [
+      { slug: 'alpha', path: '/some/alpha', name: 'Alpha' },
+      { slug: 'beta', path: '/some/beta', name: 'Beta' },
+    ];
+    const liveProjects: MachineProjectSummary[] = [
+      { slug: 'alpha', name: 'Alpha', mounted: true, busy: true },
+      { slug: 'beta', name: 'Beta', mounted: false, busy: false },
+    ];
+
+    expect(formatProjectTable(projects, liveProjects)).toBe(
+      'alpha  busy  /some/alpha\n' + 'beta   idle  /some/beta',
+    );
+  });
+});
+
 const CLI_ENTRY = join(__dirname, 'index.ts');
 
 const FAKE_DAEMON_SCRIPT = `
@@ -58,7 +127,10 @@ const statePath = process.env.FAKE_DAEMON_STATE_PATH;
 const server = createServer((req, res) => {
   if (req.url === '${MACHINE_PROJECTS_PATH}') {
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ projects: [] }));
+    const projects = process.env.FAKE_DAEMON_PROJECTS
+      ? JSON.parse(process.env.FAKE_DAEMON_PROJECTS)
+      : [];
+    res.end(JSON.stringify({ projects }));
     return;
   }
   res.statusCode = 404;
@@ -87,7 +159,7 @@ if (process.env.FAKE_DAEMON_IGNORE_SIGTERM === '1') {
 }
 `;
 
-describe('paper-camp start / stop / restart (CLI)', () => {
+describe('paper-camp start / stop / restart / status / ls (CLI)', () => {
   const dirs: string[] = [];
   const servers: Server[] = [];
   const children: ChildProcess[] = [];
@@ -107,6 +179,17 @@ describe('paper-camp start / stop / restart (CLI)', () => {
     const dir = await mkdtemp(join(tmpdir(), 'paper-camp-start-test-'));
     dirs.push(dir);
     return dir;
+  }
+
+  async function makeRegistry(
+    configDir: string,
+    projects: Array<{ path: string; name: string }>,
+  ): Promise<void> {
+    let registry: MachineRegistry = { version: 1, projects: [] };
+    for (const project of projects) {
+      registry = addProject(registry, project.path, project.name).registry;
+    }
+    await saveRegistry(join(configDir, 'projects.json'), registry);
   }
 
   function runCli(args: string[], configDir: string): SpawnSyncReturns<string> {
@@ -157,7 +240,12 @@ describe('paper-camp start / stop / restart (CLI)', () => {
    * runner's own pid would kill the test run. */
   async function spawnFakeDaemon(
     configDir: string,
-    opts: { ignoreSigterm?: boolean; share?: boolean; tailnet?: boolean } = {},
+    opts: {
+      ignoreSigterm?: boolean;
+      share?: boolean;
+      tailnet?: boolean;
+      projects?: MachineProjectSummary[];
+    } = {},
   ): Promise<DaemonState> {
     const statePath = join(configDir, 'daemon.json');
     const child = spawn('node', ['-e', FAKE_DAEMON_SCRIPT], {
@@ -167,6 +255,7 @@ describe('paper-camp start / stop / restart (CLI)', () => {
         FAKE_DAEMON_IGNORE_SIGTERM: opts.ignoreSigterm ? '1' : '0',
         FAKE_DAEMON_SHARE: opts.share ? '1' : '0',
         FAKE_DAEMON_TAILNET: opts.tailnet ? '1' : '0',
+        ...(opts.projects ? { FAKE_DAEMON_PROJECTS: JSON.stringify(opts.projects) } : {}),
       },
     });
     children.push(child);
@@ -252,5 +341,68 @@ describe('paper-camp start / stop / restart (CLI)', () => {
     // The re-invoked `daemon` subcommand fails fast (no dist/app under this
     // source-tree run), so `restart` surfaces the same failure `start` would.
     expect(result.status).toBe(1);
+  });
+
+  it('ls prints "—" for every project when no daemon is running', async () => {
+    const configDir = await makeConfigDir();
+    await makeRegistry(configDir, [{ path: '/some/demo', name: 'Demo' }]);
+
+    const result = runCli(['ls'], configDir);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe('demo  —  /some/demo');
+  });
+
+  it('ls reports "No projects registered." with no daemon running and an empty registry', async () => {
+    const configDir = await makeConfigDir();
+
+    const result = runCli(['ls'], configDir);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe('No projects registered.');
+  });
+
+  it('ls reports mounted/busy state per project once the daemon answers', async () => {
+    const configDir = await makeConfigDir();
+    await makeRegistry(configDir, [
+      { path: '/some/alpha', name: 'Alpha' },
+      { path: '/some/beta', name: 'Beta' },
+    ]);
+    await spawnFakeDaemon(configDir, {
+      projects: [
+        { slug: 'alpha', name: 'Alpha', mounted: true, busy: true },
+        { slug: 'beta', name: 'Beta', mounted: false, busy: false },
+      ],
+    });
+
+    const result = runCli(['ls'], configDir);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe('alpha  busy  /some/alpha\nbeta   idle  /some/beta');
+  });
+
+  it('status reports the daemon as not running, then the "—" project table', async () => {
+    const configDir = await makeConfigDir();
+    await makeRegistry(configDir, [{ path: '/some/demo', name: 'Demo' }]);
+
+    const result = runCli(['status'], configDir);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('paper-camp: daemon is not running');
+    expect(result.stdout).toContain('demo  —  /some/demo');
+  });
+
+  it('status reports the running daemon block, then the live project table', async () => {
+    const configDir = await makeConfigDir();
+    await makeRegistry(configDir, [{ path: '/some/demo', name: 'Demo' }]);
+    const state = await spawnFakeDaemon(configDir, {
+      projects: [{ slug: 'demo', name: 'Demo', mounted: true, busy: false }],
+    });
+
+    const result = runCli(['status'], configDir);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(`paper-camp: daemon running — pid ${state.pid}`);
+    expect(result.stdout).toContain('demo  mounted  /some/demo');
   });
 });
