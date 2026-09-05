@@ -75,7 +75,8 @@ The 480px bottom navigation.
       The breadcrumb and `Outlet` render into the content column, which keeps the
       2rem top inset and the Stack's width clear on the right.
       run: 4m31s · 32 in · 8.3k out · sonnet-5
-- [ ] Delete the four `.pc-page` rules from `utilities.css`
+- [x] Delete the four `.pc-page` rules from `utilities.css`
+      run: 4m43s · 40 in · 9.8k out · sonnet-5
 - [ ] Check the drawer and each sidebar area
       Docs, Settings, Roadmap, and the Git file list in the card, and the mobile
       drawer's backdrop, focus, and Escape below `lg`.
