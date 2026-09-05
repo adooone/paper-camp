@@ -54,11 +54,13 @@ export const SidebarShell = ({
         aria-modal={mobileOpen || undefined}
         aria-label="Sidebar navigation"
         tabIndex={-1}
-        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 overflow-y-auto lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:overflow-visible lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'
-          } ${mobileOpen
+        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 overflow-y-auto lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:overflow-visible lg:translate-x-0 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        } ${
+          mobileOpen
             ? 'bg-[var(--pui-bg-base)] shadow-[2px_0_12px_rgba(0,0,0,0.15)]'
             : 'bg-transparent'
-          }`}
+        }`}
       >
         <Card size="small" texture="kraft" className="mt-8">
           <div key={routeKey}>{children}</div>
