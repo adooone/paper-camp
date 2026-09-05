@@ -40,6 +40,21 @@ afterEach(async () => {
 });
 
 describe('startClaudeLoginRelay', () => {
+  it('strips an OSC 8 hyperlink instead of gluing its ST terminator onto the URL (IDEA-236)', async () => {
+    // 2.1.250 headless Linux wraps the link in an OSC 8 hyperlink whose target and
+    // visible label are both the raw URL, closed with the ESC \ string terminator —
+    // a shape the CSI-only stripAnsi let leak `;;` + the terminator onto the captured URL.
+    const ESC = '\x1b';
+    const url = 'https://console.anthropic.com/oauth/authorize?client_id=abc&state=xyz789';
+    const hyperlink = `${ESC}]8;;${url}${ESC}\\${url}${ESC}]8;;${ESC}\\`;
+    installClaude(`printf '%s' '${hyperlink}'; sleep 5`);
+    const handle = await startClaudeLoginRelay(process.cwd());
+    await waitFor(handle, (s) => s.phase === 'awaiting-authorization');
+    expect(handle.getState().authorizeUrl).toBe(url);
+    handle.cancel();
+    await waitFor(handle, (s) => s.phase === 'cancelled');
+  });
+
   it('parses the authorize URL out of interactive PTY output', async () => {
     installClaude(
       "echo 'Opening browser to sign in...'; echo 'If the browser did not open, visit: https://claude.com/cai/oauth/authorize?code=true&state=abc'; sleep 5",

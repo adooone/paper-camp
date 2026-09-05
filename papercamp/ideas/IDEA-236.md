@@ -99,8 +99,9 @@ its own.
 - [x] Move the sign-in controls to shared app components
       Relocate `SignInAction` and `RelayFallbackGuide` into `src/app/components/` so the git card and the Settings row render the same control.
       run: 2m51s · 54 in · 9.7k out · sonnet-5
-- [ ] Strip OSC sequences before matching the login URL
+- [x] Strip OSC sequences before matching the login URL
       Extend `stripAnsi` to drop `ESC ]` … BEL/`ESC \` sequences and add a `login-relay.test.ts` fixture from the real 2.1.250 output.
+      run: 4m · 44 in · 16.3k out · sonnet-5
 - [ ] Answer the paste-code prompt from the app
       Set `needsCode` on `LoginRelayState` when the buffer shows `Paste code here`, render the code input beside the existing actions, and write the code plus a carriage return to the pty from `POST /api/agent/login-relay/code`.
 - [ ] Warn when the repo's trust dialog was never accepted

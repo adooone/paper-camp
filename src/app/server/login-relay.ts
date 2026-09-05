@@ -13,6 +13,10 @@ const ANSI_ESCAPE_RE = new RegExp(
   `${ESC}[[\\]()#;?]*(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]`,
   'g',
 );
+// OSC 8 hyperlinks (2.1.250 wraps the sign-in link in one): `ESC ]` payload terminated
+// by BEL or `ESC \` — a different shape than the CSI sequences above, and the CSI
+// regex's char class partially matches its introducer, mangling the URL if this doesn't run first.
+const OSC_ESCAPE_RE = new RegExp(`${ESC}\\][^\\x07${ESC}]*(?:\\x07|${ESC}\\\\)`, 'g');
 const URL_RE = /https?:\/\/\S+/;
 
 export type { LoginRelayPhase, LoginRelayState };
@@ -23,7 +27,7 @@ export interface LoginRelayHandle {
 }
 
 function stripAnsi(text: string): string {
-  return text.replace(ANSI_ESCAPE_RE, '');
+  return text.replace(OSC_ESCAPE_RE, '').replace(ANSI_ESCAPE_RE, '');
 }
 
 function extractAuthorizeUrl(buffer: string): string | null {
