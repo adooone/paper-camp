@@ -8,6 +8,7 @@ import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { MACHINE_PROJECTS_PATH } from '../../types/index';
 import {
   type DaemonState,
+  formatDaemonStatusLine,
   readRunningDaemonState,
   removeDaemonState,
   writeDaemonState,
@@ -158,5 +159,40 @@ describe('readRunningDaemonState', () => {
 
     expect(await readRunningDaemonState(path)).toEqual(state);
     await expect(access(path)).resolves.toBeUndefined();
+  });
+});
+
+describe('formatDaemonStatusLine', () => {
+  it('reports pid, port, version, and uptime with no flags noted', () => {
+    const state: DaemonState = {
+      pid: 4242,
+      port: 4333,
+      version: '0.27.0',
+      startedAt: new Date(Date.now() - 65_000).toISOString(),
+      share: false,
+      tailnet: false,
+    };
+
+    const line = formatDaemonStatusLine(state);
+
+    expect(line).toContain('pid 4242');
+    expect(line).toContain('port 4333');
+    expect(line).toContain('v0.27.0');
+    expect(line).toContain('up 1m5s');
+    expect(line).not.toContain('share');
+    expect(line).not.toContain('tailnet');
+  });
+
+  it('lists the share and tailnet flags when set', () => {
+    const state: DaemonState = {
+      pid: 1,
+      port: 4333,
+      version: '0.27.0',
+      startedAt: new Date().toISOString(),
+      share: true,
+      tailnet: true,
+    };
+
+    expect(formatDaemonStatusLine(state)).toContain('share, tailnet');
   });
 });

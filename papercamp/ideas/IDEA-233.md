@@ -88,8 +88,9 @@ daemon — desk services and agent runs stay owned by the daemon, as
 - [x] Add a shared state reader that prunes stale files
       One helper the CLI commands share: read the file, check `process.kill(pid, 0)`, probe the machine endpoint, and delete the file when any of those fail.
       run: 7m17s · 60 in · 14.2k out · sonnet-5
-- [ ] Add `paper-camp start`
+- [x] Add `paper-camp start`
       Spawn `paper-camp daemon` detached with stdio into `daemon.log`, poll the machine endpoint, then echo the banner lines; refuse to start a second daemon.
+      run: 19m24s · 148 in · 59.4k out · sonnet-5
 - [ ] Add `paper-camp stop` and `paper-camp restart`
       SIGTERM with a five-second SIGKILL escalation, and a restart that reuses the flags recorded in the state file.
 - [ ] Report per-project `mounted` and `busy` from `/api/machine/projects`

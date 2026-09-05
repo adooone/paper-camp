@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { MACHINE_PROJECTS_PATH } from '../../types/index';
 import { machineConfigDir } from '../machine-registry';
+import { formatDuration } from '../phase-run';
 
 export interface DaemonState {
   pid: number;
@@ -15,6 +16,10 @@ export interface DaemonState {
 
 export function daemonStatePath(): string {
   return join(machineConfigDir(), 'daemon.json');
+}
+
+export function daemonLogPath(): string {
+  return join(machineConfigDir(), 'daemon.log');
 }
 
 function isDaemonState(value: unknown): value is DaemonState {
@@ -59,7 +64,7 @@ function isProcessAlive(pid: number): boolean {
 
 /** A response at all is proof the port is a live daemon, not just a live pid
  * (pids get reused, ports get taken by something else). */
-async function respondsAsDaemon(port: number): Promise<boolean> {
+export async function probeMachineEndpoint(port: number): Promise<boolean> {
   try {
     const response = await fetch(`http://localhost:${port}${MACHINE_PROJECTS_PATH}`);
     if (!response.ok) return false;
@@ -76,12 +81,21 @@ async function respondsAsDaemon(port: number): Promise<boolean> {
 export async function readRunningDaemonState(path: string): Promise<DaemonState | null> {
   const state = await loadDaemonState(path);
   const alive =
-    state !== undefined && isProcessAlive(state.pid) && (await respondsAsDaemon(state.port));
+    state !== undefined && isProcessAlive(state.pid) && (await probeMachineEndpoint(state.port));
   if (!alive) {
     await removeDaemonState(path);
     return null;
   }
   return state;
+}
+
+export function formatDaemonStatusLine(state: DaemonState): string {
+  const uptime = formatDuration(Date.now() - Date.parse(state.startedAt));
+  const flags = [state.share && 'share', state.tailnet && 'tailnet'].filter(Boolean).join(', ');
+  return (
+    `paper-camp: daemon running — pid ${state.pid}, port ${state.port}, ` +
+    `v${state.version}, up ${uptime}${flags ? `, ${flags}` : ''}`
+  );
 }
 
 /** Written to a sibling temp path and renamed into place, so a crash mid-write

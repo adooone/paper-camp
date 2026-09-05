@@ -52,7 +52,8 @@ import {
   type PlanEntry,
   coerceAgentConfig,
 } from '../types/index';
-import { startDaemonServer } from './daemon-server';
+import { runStart } from './daemon-lifecycle';
+import { DEFAULT_DAEMON_PORT, startDaemonServer } from './daemon-server';
 import { readConfigPort, resolveDevPort } from './dev-port';
 import { startDevServer } from './dev-server';
 import { buildSessionFocus } from './session-focus';
@@ -196,8 +197,6 @@ program
     }
   });
 
-const DEFAULT_DAEMON_PORT = 4333;
-
 program
   .command('daemon')
   .description(
@@ -222,6 +221,27 @@ program
       // time listen fails, and they keep the event loop alive forever otherwise.
       process.exit(1);
     }
+  });
+
+program
+  .command('start')
+  .description('Start `paper-camp daemon` detached, logging to daemon.log in the config dir')
+  .option('-p, --port <number>', `port to listen on (default: ${DEFAULT_DAEMON_PORT})`)
+  .option(
+    '--share',
+    'open an account-less cloudflared quick tunnel so the hosted client can reach this machine from anywhere',
+  )
+  .option(
+    '--tailnet',
+    "serve over HTTPS at this machine's stable MagicDNS address via `tailscale serve`",
+  )
+  .action(async (opts: { port?: string; share?: boolean; tailnet?: boolean }) => {
+    const ok = await runStart({
+      port: opts.port ? Number(opts.port) : undefined,
+      share: opts.share,
+      tailnet: opts.tailnet,
+    });
+    if (!ok) process.exitCode = 1;
   });
 
 program

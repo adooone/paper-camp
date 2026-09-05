@@ -51,6 +51,8 @@ import {
   startQuickTunnel,
 } from './tunnel';
 
+export const DEFAULT_DAEMON_PORT = 4333;
+
 export interface DaemonServerOptions {
   port: number;
   share?: boolean;
