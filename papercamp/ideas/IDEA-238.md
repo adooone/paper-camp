@@ -71,9 +71,10 @@ The 480px bottom navigation.
       Two sections with a divider between them; `PlanActionsColumn` loses the `Card`
       it wraps its buttons in.
       run: 2m · 34 in · 7.1k out · sonnet-5
-- [ ] Drop the `Page` sheet from the app shell
+- [x] Drop the `Page` sheet from the app shell
       The breadcrumb and `Outlet` render into the content column, which keeps the
       2rem top inset and the Stack's width clear on the right.
+      run: 4m31s · 32 in · 8.3k out · sonnet-5
 - [ ] Delete the four `.pc-page` rules from `utilities.css`
 - [ ] Check the drawer and each sidebar area
       Docs, Settings, Roadmap, and the Git file list in the card, and the mobile

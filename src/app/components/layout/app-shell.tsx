@@ -15,7 +15,6 @@ import {
   Divider,
   IconButton,
   Layout,
-  Page,
   ToastProvider,
   getSurfaceStyles,
 } from '@dendelion/paper-ui';
@@ -159,25 +158,15 @@ export const AppShell = () => {
                     )}
                   </SidebarShell>
                 )}
-                <div className="relative flex flex-col min-w-0 flex-[1_1_0%]">
-                  <div className="flex flex-col flex-1 min-w-0">
-                    {/* width is load-bearing: `.page`'s `margin: 0 auto` suppresses flex
-                        stretch, so without it the sheet sizes to its content. */}
-                    <Page
-                      texture={{ texture: 'paper', shade: true }}
-                      rounded="none"
-                      className="pc-page w-full max-w-none"
-                    >
-                      {readiness === 'unreachable' ? (
-                        <RuntimeUnavailable layer={activeLayer} />
-                      ) : readiness === 'checking' ? null : (
-                        <Suspense fallback={null}>
-                          <PageBreadcrumb />
-                          <Outlet />
-                        </Suspense>
-                      )}
-                    </Page>
-                  </div>
+                <div className="relative flex flex-col min-w-0 flex-[1_1_0%] pt-8 min-[1199px]:pr-[var(--pc-stack-width)]">
+                  {readiness === 'unreachable' ? (
+                    <RuntimeUnavailable layer={activeLayer} />
+                  ) : readiness === 'checking' ? null : (
+                    <Suspense fallback={null}>
+                      <PageBreadcrumb />
+                      <Outlet />
+                    </Suspense>
+                  )}
                 </div>
               </div>
             </div>
