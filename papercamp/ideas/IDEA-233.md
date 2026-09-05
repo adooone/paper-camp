@@ -82,8 +82,9 @@ daemon — desk services and agent runs stay owned by the daemon, as
 [[IDEA-224]] settled.
 
 ### Phases
-- [ ] Write `daemon.json` on listen and remove it on exit
+- [x] Write `daemon.json` on listen and remove it on exit
       `daemon-server.ts` records pid, port, version, startedAt and the share/tailnet flags in the config dir, and clears the file on SIGINT/SIGTERM.
+      run: 6m42s · 98 in · 12.6k out · sonnet-5
 - [ ] Add a shared state reader that prunes stale files
       One helper the CLI commands share: read the file, check `process.kill(pid, 0)`, probe the machine endpoint, and delete the file when any of those fail.
 - [ ] Add `paper-camp start`

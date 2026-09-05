@@ -16,6 +16,12 @@ import {
 } from '../app/server/pairing';
 import { injectMountAttribute } from '../app/services/mount';
 import {
+  type DaemonState,
+  daemonStatePath,
+  removeDaemonState,
+  writeDaemonState,
+} from '../core/daemon-state';
+import {
   type MachineProject,
   defaultRegistryPath,
   listProjects,
@@ -248,6 +254,7 @@ export async function startDaemonServer({
     });
   });
 
+  const statePath = daemonStatePath();
   let tunnel: QuickTunnel | undefined;
   const shutdown = async () => {
     tunnel?.process.kill();
@@ -257,6 +264,7 @@ export async function startDaemonServer({
         await apiMiddleware.services.killAll();
       }),
     );
+    await removeDaemonState(statePath);
     process.exit(0);
   };
   process.on('SIGINT', shutdown);
@@ -268,6 +276,16 @@ export async function startDaemonServer({
     });
     server.listen(port, resolve);
   });
+
+  const daemonState: DaemonState = {
+    pid: process.pid,
+    port,
+    version: PAPER_CAMP_VERSION,
+    startedAt: new Date().toISOString(),
+    share: share ?? false,
+    tailnet: tailnet ?? false,
+  };
+  await writeDaemonState(statePath, daemonState);
 
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
   console.log(
