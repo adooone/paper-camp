@@ -30,6 +30,7 @@ export interface StartOptions {
 
 const START_POLL_TIMEOUT_MS = 10_000;
 const START_POLL_INTERVAL_MS = 200;
+const BANNER_POLL_TIMEOUT_MS = 10_000;
 const STOP_GRACE_MS = 5_000;
 const STOP_KILL_TIMEOUT_MS = 2_000;
 
@@ -49,7 +50,7 @@ async function waitForDaemon(
   port: number,
   child: ChildProcess,
   timeoutMs: number,
-): Promise<'ready' | 'failed'> {
+): Promise<'ready' | 'exited' | 'timeout'> {
   let exited = false;
   child.once('exit', () => {
     exited = true;
@@ -59,11 +60,42 @@ async function waitForDaemon(
   });
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (exited) return 'failed';
+    if (exited) return 'exited';
     if (await probeMachineEndpoint(port)) return 'ready';
     await sleep(START_POLL_INTERVAL_MS);
   }
-  return 'failed';
+  return exited ? 'exited' : 'timeout';
+}
+
+/** --tailnet/--share each print their own banner line (or an error mentioning
+ * the same words) a few seconds after "Local:", once their subprocess reports back. */
+function pendingBannerMarkers(opts: StartOptions): RegExp[] {
+  const markers = [/Local:/];
+  if (opts.tailnet) markers.push(/tailnet|tailscale/i);
+  if (opts.share) markers.push(/Tunnel:/);
+  return markers;
+}
+
+async function waitForBannerLines(
+  logPath: string,
+  markers: RegExp[],
+  child: ChildProcess,
+  timeoutMs: number,
+): Promise<void> {
+  let exited = false;
+  const onExit = () => {
+    exited = true;
+  };
+  child.once('exit', onExit);
+  child.once('error', onExit);
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline && !exited) {
+    const content = await readFile(logPath, 'utf-8').catch(() => '');
+    if (markers.every((marker) => marker.test(content))) break;
+    await sleep(START_POLL_INTERVAL_MS);
+  }
+  child.off('exit', onExit);
+  child.off('error', onExit);
 }
 
 async function printLog(logPath: string): Promise<void> {
@@ -101,12 +133,18 @@ export async function runStart(opts: StartOptions): Promise<boolean> {
 
   const port = opts.port ?? DEFAULT_DAEMON_PORT;
   const result = await waitForDaemon(port, child, START_POLL_TIMEOUT_MS);
-  if (result === 'failed') {
+  if (result === 'exited') {
     await printLog(logPath);
     return false;
   }
+  if (result === 'timeout') {
+    console.error(
+      'paper-camp: daemon did not answer within 10s but may still be starting — check `paper-camp status`.',
+    );
+    return false;
+  }
 
-  await sleep(START_POLL_INTERVAL_MS);
+  await waitForBannerLines(logPath, pendingBannerMarkers(opts), child, BANNER_POLL_TIMEOUT_MS);
   await printLog(logPath);
   return true;
 }
@@ -128,7 +166,18 @@ export async function runStop(): Promise<boolean> {
     return true;
   }
 
-  process.kill(running.pid, 'SIGTERM');
+  try {
+    process.kill(running.pid, 'SIGTERM');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ESRCH') {
+      await removeDaemonState(statePath);
+      console.log('paper-camp: daemon is not running');
+      return true;
+    }
+    console.error(`paper-camp: could not stop daemon (pid ${running.pid}): ${error}`);
+    return false;
+  }
+
   let exited = await waitForExit(running.pid, STOP_GRACE_MS);
   if (!exited) {
     try {
@@ -139,11 +188,11 @@ export async function runStop(): Promise<boolean> {
     exited = exited || (await waitForExit(running.pid, STOP_KILL_TIMEOUT_MS));
   }
 
-  await removeDaemonState(statePath);
   if (!exited) {
     console.error(`paper-camp: could not stop daemon (pid ${running.pid} still alive)`);
     return false;
   }
+  await removeDaemonState(statePath);
   console.log('paper-camp: daemon stopped');
   return true;
 }

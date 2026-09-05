@@ -62,9 +62,13 @@ export function isProcessAlive(pid: number): boolean {
   }
 }
 
+const PROBE_TIMEOUT_MS = 2_000;
+
 export async function fetchMachineProjects(port: number): Promise<MachineProjectSummary[] | null> {
   try {
-    const response = await fetch(`http://localhost:${port}${MACHINE_PROJECTS_PATH}`);
+    const response = await fetch(`http://localhost:${port}${MACHINE_PROJECTS_PATH}`, {
+      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+    });
     if (!response.ok) return null;
     const body = (await response.json()) as { projects: MachineProjectSummary[] };
     return body.projects;

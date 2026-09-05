@@ -39,7 +39,7 @@
     },
     "codeReview": {
       "agent": "claude-code",
-      "model": "opus",
+      "model": "fable",
       "effort": "high"
     },
     "deskDiscovery": {

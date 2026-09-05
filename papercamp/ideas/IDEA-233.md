@@ -4,6 +4,7 @@ title: Daemon lifecycle like pm2
 type: feat
 status: review
 created: 2026-09-05
+updated: 2026-09-05
 tags:
   - cli
   - server
@@ -102,3 +103,7 @@ daemon — desk services and agent runs stay owned by the daemon, as
       run: 7m52s · 62 in · 14.5k out · sonnet-5
 - [x] Cover the lifecycle with a throwaway `PAPERCAMP_CONFIG_DIR` and run the quality checks
       run: 11m13s · 76 in · 22.6k out · sonnet-5
+- [x] [manual] Wait for tailnet/share banner lines and handle stop edge cases
+
+### Thread
+- [x] 2026-09-05 [review] [agent] Requests changes · 5 findings — The lifecycle commands are well-factored — one state file, one shared reader, real end-to-end coverage with a throwaway config dir — and every phase has code and tests behind it. The gap is in `start`'s output contract: it fires a fixed 200ms after the port answers, which is well before `--share`/`--tailnet` have printed their links, so the spec's promise of showing the same Local/Network/Tailnet/Tunnel links as a foreground run doesn't hold for those flags. A few robustness edges around `stop` and the liveness probe are worth tightening before merge.
