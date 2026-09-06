@@ -34,8 +34,16 @@ The hosted client becomes the only frontend. The package ships the runtime.
 runs `tsc && vite build` for the library and the toolbar and nothing else,
 and `build:app` stays the Vercel build. `appDir()`, `loadIndexHtml`, and
 `serveStatic` leave `serve-static.ts`; `pack-smoke-test.mjs` asserts no
-`dist/app` in the tarball. The toolbar stays: `./vite` injects a script into
-the user's own app and ships no imagery, and it is not the dashboard.
+`dist/app` in the tarball.
+
+**The toolbar stays as it is.** `./vite` and `dist/toolbar` remain in the
+package: the toolbar is the script a user's own app loads, and it is the
+door to the dashboard. Its own icons — the inline `paper-logo.tsx` and the
+`WandIcon` — are drawn in this repo, not taken from the pack, so they ship
+freely; nothing from `public/img/doodles/` may ever be imported into
+`src/toolbar`. Its trigger opens the hosted client at
+`PAPERCAMP_HOSTED_CLIENT_URL` (default `https://paper-camp.vercel.app`) with
+the app's own runtime in `?runtime=`, the same link the `dev` banner prints.
 
 **`dev` and `daemon` serve the API and hand you the link.** Both banners
 print a Local link that opens the hosted client with `?runtime=` (dev) or
@@ -72,7 +80,7 @@ that serves it; README.md's Quick Start matches.
 
 ### Out of scope
 
-The toolbar and the `./vite` plugin, which stay in the package. Self-hosting
+The toolbar's Scout behaviour and icons, unchanged beyond its link. Self-hosting
 the client somewhere other than Vercel; `PAPERCAMP_HOSTED_CLIENT_URL`
 already lets a runtime point at a different origin. Any change to pairing
 or to the daemon's project mounts.
