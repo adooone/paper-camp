@@ -1,5 +1,4 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
-import { EmptyTrayIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import type { PlanEntry } from '@/types/index';
 import { Card } from '@dendelion/paper-ui';
@@ -105,7 +104,6 @@ export const PlansPage = () => {
 
           {plans.entries.length === 0 ? (
             <EmptyState
-              illustration={<EmptyTrayIllustration />}
               message={
                 <>
                   No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}

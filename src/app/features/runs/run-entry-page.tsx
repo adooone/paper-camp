@@ -1,5 +1,4 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
-import { MagnifierIllustration } from '@/app/components/empty-state-illustrations';
 import type { LogRow } from '@/types/index';
 import { Button } from '@dendelion/paper-ui';
 import { useNavigate, useParams } from '@tanstack/react-router';
@@ -58,7 +57,6 @@ export const LogEntryPage = () => {
     if (loading) return <RowSkeleton />;
     return (
       <EmptyState
-        illustration={<MagnifierIllustration />}
         message="This entry doesn't exist."
         action={
           <Button size="small" onClick={() => navigate({ to: '/log' })}>

@@ -1,5 +1,4 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
-import { EmptyTrayIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import { useRoadmapPage } from './hooks';
 import { PromoteRoadmapItemModal } from './modals';
@@ -48,7 +47,6 @@ export const RoadmapPage = () => {
       <div>
         <PageTitle>Roadmap</PageTitle>
         <EmptyState
-          illustration={<EmptyTrayIllustration />}
           message={
             <>
               No <code>ROADMAP.md</code> found at the project root.
@@ -65,7 +63,6 @@ export const RoadmapPage = () => {
       <GoalBanner goal={roadmap.goal} />
       {totalVisible === 0 ? (
         <EmptyState
-          illustration={<EmptyTrayIllustration />}
           message={
             hasActiveFilters
               ? 'Nothing matches these filters — clear one from the sidebar to see more.'

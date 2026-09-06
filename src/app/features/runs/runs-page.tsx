@@ -1,5 +1,4 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
-import { RestingPenIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import { useLogPage } from './hooks';
 import { LogFilterBar, LogList, LogTitleActions } from './views';
@@ -44,9 +43,7 @@ export const LogPage = () => {
         )}
       </div>
       {loading && !hasAnyRows && <RowSkeleton />}
-      {!loading && !hasAnyRows && (
-        <EmptyState illustration={<RestingPenIllustration />} message="No runs recorded yet." />
-      )}
+      {!loading && !hasAnyRows && <EmptyState message="No runs recorded yet." />}
       {hasAnyRows && (
         <>
           <LogFilterBar filters={filters} availableTypes={availableTypes} onChange={setFilters} />
