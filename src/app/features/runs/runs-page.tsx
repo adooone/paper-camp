@@ -2,7 +2,7 @@ import { EmptyState, RowSkeleton } from '@/app/components';
 import { RestingPenIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import { useLogPage } from './hooks';
-import { LogFilterBar, LogList } from './views';
+import { LogFilterBar, LogList, LogTitleActions } from './views';
 
 export const LogPage = () => {
   const {
@@ -15,11 +15,34 @@ export const LogPage = () => {
     filters,
     setFilters,
     availableTypes,
+    totalCount,
+    matchedCount,
+    runningRows,
+    unreadCount,
+    markAllRead,
+    hasActiveFilters,
+    clearFilters,
   } = useLogPage();
 
   return (
     <div>
-      <PageTitle>Log</PageTitle>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <PageTitle className="mb-0">Log</PageTitle>
+        <div className="flex-1" />
+        {hasAnyRows && (
+          <LogTitleActions
+            runningRows={runningRows}
+            unreadCount={unreadCount}
+            unreadFilterOn={filters.unread}
+            onToggleUnread={() => setFilters({ unread: !filters.unread })}
+            onMarkAllRead={markAllRead}
+            matchedCount={matchedCount}
+            totalCount={totalCount}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={clearFilters}
+          />
+        )}
+      </div>
       {loading && !hasAnyRows && <RowSkeleton />}
       {!loading && !hasAnyRows && (
         <EmptyState illustration={<RestingPenIllustration />} message="No runs recorded yet." />
