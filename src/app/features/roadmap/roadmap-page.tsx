@@ -1,4 +1,4 @@
-import { EmptyState } from '@/app/components';
+import { EmptyState, RowSkeleton } from '@/app/components';
 import { EmptyTrayIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import { useRoadmapPage } from './hooks';
@@ -38,7 +38,7 @@ export const RoadmapPage = () => {
     return (
       <div>
         <PageTitle>Roadmap</PageTitle>
-        <p className="opacity-50">Loading…</p>
+        <RowSkeleton />
       </div>
     );
   }

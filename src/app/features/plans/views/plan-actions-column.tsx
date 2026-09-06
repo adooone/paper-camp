@@ -43,8 +43,9 @@ export const PlanActionsColumn = () => {
   const underReview = plan.status === 'review';
   const dropped = plan.status === 'dropped';
   const done = plan.status === 'done';
-  const hasUnchecked = plan.phases.some((p) => !p.done);
-  const canRunAll = (plan.status === 'planned' || inProgress) && hasUnchecked;
+  const hasUnchecked =
+    plan.phases.some((p) => !p.done) || (plan.fixes ?? []).some((fix) => !fix.done);
+  const canRunAll = (plan.status === 'planned' || inProgress || underReview) && hasUnchecked;
   const canMarkDone = canMarkPlanDone(plan);
   const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
   // A board holds no code of its own — its tickets carry the work, and each branches

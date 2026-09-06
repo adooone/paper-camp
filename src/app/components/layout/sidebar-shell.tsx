@@ -49,12 +49,13 @@ export const SidebarShell = ({
       <aside
         ref={asideRef}
         // Dialog semantics only as a mobile drawer — at lg+ it's an in-flow sidebar.
-        // No height cap at lg+: the card scrolls with the page, not the drawer.
+        // `self-start` at lg+: a stretched flex item is already as tall as the row, so
+        // sticky would never engage; sized to its content it pins while the page scrolls.
         role={mobileOpen ? 'dialog' : undefined}
         aria-modal={mobileOpen || undefined}
         aria-label="Sidebar navigation"
         tabIndex={-1}
-        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 overflow-y-auto lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:overflow-visible lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 overflow-y-auto lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:flex lg:max-h-[calc(100dvh-var(--pc-header-h)-32px)] lg:flex-col lg:self-start lg:overflow-visible lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } ${
           mobileOpen
@@ -62,8 +63,14 @@ export const SidebarShell = ({
             : 'bg-transparent'
         }`}
       >
-        <Card size="small" texture="kraft" className="mt-8">
-          <div key={routeKey}>{children}</div>
+        <Card
+          size="small"
+          texture="kraft"
+          className="pc-sidebar-card mt-8 mb-8 flex min-h-0 flex-col"
+        >
+          <div key={routeKey} className="min-h-0 flex-1 overflow-y-auto">
+            {children}
+          </div>
         </Card>
       </aside>
     </>

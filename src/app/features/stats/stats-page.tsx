@@ -1,3 +1,4 @@
+import { RowSkeleton } from '@/app/components';
 import { PageTitle } from '@/app/components/page-title';
 import { useStatsPage } from './hooks';
 import { StatsGrid } from './views';
@@ -13,7 +14,7 @@ export const StatsPage = () => {
         anything.
       </p>
       {loadFailed && <p className="opacity-50">Couldn't load stats.</p>}
-      {!loadFailed && !stats && <p className="opacity-50">Loading…</p>}
+      {!loadFailed && !stats && <RowSkeleton />}
       {stats && <StatsGrid stats={stats} />}
     </div>
   );

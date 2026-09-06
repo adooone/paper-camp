@@ -5,6 +5,7 @@ import {
   RuntimeUnavailable,
   ServerReloadBanner,
   SidebarShell,
+  SidebarSkeleton,
   StackPanel,
   StatusBar,
 } from '@/app/components';
@@ -12,6 +13,7 @@ import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
 import { HubShell } from '@/app/features/hub';
 import { PlanActionsColumn, PlanFilterColumn, PlansListSkeleton } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
+import { importWithRecovery } from '@/app/services/lazy-page';
 import {
   Button,
   Divider,
@@ -25,16 +27,31 @@ import { Suspense, lazy } from 'react';
 import { NavLabel, SidebarToggleIcon, navItems } from './nav';
 
 const DocsSidebar = lazy(() =>
-  import('@/app/features/docs/index').then((m) => ({ default: m.DocsSidebar })),
+  importWithRecovery('DocsSidebar', () => import('@/app/features/docs/index')).then((m) => ({
+    default: m.DocsSidebar,
+  })),
 );
 const SettingsSidebar = lazy(() =>
-  import('@/app/features/settings/index').then((m) => ({ default: m.SettingsSidebar })),
+  importWithRecovery('SettingsSidebar', () => import('@/app/features/settings/index')).then(
+    (m) => ({
+      default: m.SettingsSidebar,
+    }),
+  ),
 );
 const RoadmapSidebar = lazy(() =>
-  import('@/app/features/roadmap/index').then((m) => ({ default: m.RoadmapSidebar })),
+  importWithRecovery('RoadmapSidebar', () => import('@/app/features/roadmap/index')).then((m) => ({
+    default: m.RoadmapSidebar,
+  })),
 );
 const GitFileList = lazy(() =>
-  import('@/app/features/git/index').then((m) => ({ default: m.GitFileList })),
+  importWithRecovery('GitFileList', () => import('@/app/features/git/index')).then((m) => ({
+    default: m.GitFileList,
+  })),
+);
+const LogSidebar = lazy(() =>
+  importWithRecovery('LogSidebar', () => import('@/app/features/runs/index')).then((m) => ({
+    default: m.LogSidebar,
+  })),
 );
 
 // Plans has its own skeleton; Docs/Roadmap/Settings/Log share a generic one;
@@ -67,6 +84,7 @@ export const AppShell = () => {
     isSettingsArea,
     isRoadmapArea,
     isGitArea,
+    isLogArea,
     isInHub,
     stackOpen,
     toggleStack,
@@ -156,28 +174,33 @@ export const AppShell = () => {
                       </>
                     )}
                     {isDocsArea && (
-                      <Suspense fallback={null}>
+                      <Suspense fallback={<SidebarSkeleton />}>
                         <DocsSidebar />
                       </Suspense>
                     )}
                     {isSettingsArea && (
-                      <Suspense fallback={null}>
+                      <Suspense fallback={<SidebarSkeleton />}>
                         <SettingsSidebar />
                       </Suspense>
                     )}
                     {isRoadmapArea && (
-                      <Suspense fallback={null}>
+                      <Suspense fallback={<SidebarSkeleton />}>
                         <RoadmapSidebar />
                       </Suspense>
                     )}
                     {isGitArea && (
-                      <Suspense fallback={null}>
+                      <Suspense fallback={<SidebarSkeleton />}>
                         <GitFileList />
+                      </Suspense>
+                    )}
+                    {isLogArea && (
+                      <Suspense fallback={<SidebarSkeleton />}>
+                        <LogSidebar />
                       </Suspense>
                     )}
                   </SidebarShell>
                 )}
-                <div className="relative flex flex-col min-w-0 flex-[1_1_0%] pt-8 min-[1199px]:pr-[var(--pc-stack-width)]">
+                <div className="relative flex flex-col min-w-0 flex-[1_1_0%] pt-8 pb-8 min-[1199px]:pr-[var(--pc-stack-width)]">
                   {readiness === 'unreachable' ? (
                     <RuntimeUnavailable layer={activeLayer} />
                   ) : readiness === 'checking' ? (

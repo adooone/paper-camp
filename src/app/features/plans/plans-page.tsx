@@ -1,4 +1,4 @@
-import { EmptyState } from '@/app/components';
+import { EmptyState, RowSkeleton } from '@/app/components';
 import { EmptyTrayIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import type { PlanEntry } from '@/types/index';
@@ -55,10 +55,7 @@ export const PlansPage = () => {
     if (planId || ideaId) {
       return (
         <div>
-          <output aria-live="polite" className="sr-only">
-            Loading…
-          </output>
-          <p className="opacity-50">Loading…</p>
+          <RowSkeleton />
         </div>
       );
     }

@@ -46,13 +46,6 @@ export const formatCost = (usd: number): string => {
   return usd < 0.01 ? `$${usd.toFixed(3)}` : `$${usd.toFixed(2)}`;
 };
 
-export const matchesEntry = (row: LogRow, entry: string | undefined): boolean => {
-  if (!entry) return false;
-  if (row.source.kind === 'task') return row.source.entry.id === entry;
-  if (row.source.kind === 'running') return row.source.task.id === entry;
-  return false;
-};
-
 export const markReadIdFor = (row: LogRow): string | undefined => {
   if (!row.unread) return undefined;
   if (row.source.kind === 'task') return row.source.entry.id;

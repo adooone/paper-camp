@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LogRow } from '../types/index';
-import { computeLogStats } from './log-stats';
+import { computeLogStats } from './run-stats';
 
 const taskRow = (overrides: Partial<LogRow> = {}): LogRow => ({
   id: 'task:task-1',

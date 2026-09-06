@@ -1,4 +1,4 @@
-import { EmptyState } from '@/app/components';
+import { EmptyState, RowSkeleton } from '@/app/components';
 import { useSubjectVocabulary } from '@/app/hooks';
 import { Button, Card, Divider } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -16,7 +16,7 @@ export const SubjectsSection = () => {
           page.
         </p>
       </div>
-      {loading && <p>Loading…</p>}
+      {loading && <RowSkeleton />}
       {!loading && !available && (
         <p className="opacity-60 m-0">Couldn't load subjects — check the server config.</p>
       )}

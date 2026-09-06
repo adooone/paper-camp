@@ -6,7 +6,7 @@ import {
   filterLogRows,
   parseLogFilters,
   serializeLogFilters,
-} from './log-filters';
+} from './run-filters';
 
 const row = (overrides: Partial<LogRow> = {}): LogRow => ({
   id: 'task:task-1',

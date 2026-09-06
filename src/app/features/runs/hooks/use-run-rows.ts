@@ -9,18 +9,9 @@ import {
   collectPrReviewIssues,
   issueThreadFromTaskLog,
 } from '@/core/issues';
-import {
-  type LogFilters,
-  filterLogRows,
-  parseLogFilters,
-  serializeLogFilters,
-} from '@/core/log-filters';
-import { buildLogRows } from '@/core/log-rows';
-import { computeLogStats } from '@/core/log-stats';
-import type { Issue, LogRowType, PlanEntry, TaskLogEntry } from '@/types/index';
-import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { LOG_PAGE_SIZE } from '../constants';
+import { buildLogRows } from '@/core/run-rows';
+import type { Issue, LogRow, LogRowType, PlanEntry, TaskLogEntry } from '@/types/index';
+import { useEffect, useMemo, useState } from 'react';
 
 export interface ResolvedFailure extends Issue {
   cleared: boolean;
@@ -40,11 +31,10 @@ export interface LogRowActions {
   fixingIssueId: string | undefined;
   promotingId: string | null;
   handlePromote: (issue: Issue) => Promise<void>;
-  markRead: (id: string) => Promise<void>;
   reloadEntities: () => Promise<void>;
 }
 
-export const useLogPage = () => {
+export const useLogRows = () => {
   const taskLog = useAppStore((s) => s.taskLog);
   const taskLogLoading = useAppStore((s) => s.taskLogLoading);
   const loadTaskLog = useAppStore((s) => s.loadTaskLog);
@@ -56,31 +46,13 @@ export const useLogPage = () => {
   const launchIssueFix = useAppStore((s) => s.launchIssueFix);
   const notifications = useAppStore((s) => s.notifications);
   const loadNotifications = useAppStore((s) => s.loadNotifications);
-  const markRead = useAppStore((s) => s.markRead);
   const { checks } = useDeskChecks();
   const openEntity = useOpenEntity();
-  const navigate = useNavigate();
-  const search = useSearch({ from: '/log' });
-  const { entry } = search;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState(LOG_PAGE_SIZE);
   const [promotingId, setPromotingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadTaskLog();
   }, [loadTaskLog]);
-
-  useEffect(() => {
-    if (!entry) return;
-    const row = containerRef.current?.querySelector('.log-row-highlighted');
-    row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [entry]);
-
-  const filters = useMemo(() => parseLogFilters(search), [search]);
-
-  const setFilters = (patch: Partial<LogFilters>) => {
-    navigate({ to: '/log', search: serializeLogFilters({ ...filters, ...patch }), replace: true });
-  };
 
   const entities = useMemo(() => {
     const planEntities = (plans?.entries ?? []).filter(
@@ -114,7 +86,7 @@ export const useLogPage = () => {
     [failureIssues],
   );
 
-  const allRows = useMemo(() => {
+  const allRows: LogRow[] = useMemo(() => {
     const rowIssues = failureIssues.filter(
       (issue) => issue.sourceKind !== 'agent-run' && !issue.cleared,
     );
@@ -125,12 +97,6 @@ export const useLogPage = () => {
     () => Array.from(new Set(allRows.map((row) => row.type))) as LogRowType[],
     [allRows],
   );
-
-  const matchedRows = useMemo(() => filterLogRows(allRows, filters), [allRows, filters]);
-
-  const stats = useMemo(() => computeLogStats(matchedRows), [matchedRows]);
-
-  const visibleRows = matchedRows.slice(0, visibleCount);
 
   const resolveFailure = (entry: TaskLogEntry): ResolvedFailure | undefined => {
     if (entry.outcome !== 'error') return undefined;
@@ -175,22 +141,12 @@ export const useLogPage = () => {
     fixingIssueId,
     promotingId,
     handlePromote,
-    markRead,
     reloadEntities,
   };
 
   return {
     loading: taskLogLoading,
-    rows: visibleRows,
-    hasMore: matchedRows.length > visibleRows.length,
-    loadMore: () => setVisibleCount((n) => n + LOG_PAGE_SIZE),
-    hasAnyRows: allRows.length > 0,
-    hasMatches: matchedRows.length > 0,
-    stats,
-    entry,
-    containerRef,
-    filters,
-    setFilters,
+    allRows,
     availableTypes,
     actions,
   };

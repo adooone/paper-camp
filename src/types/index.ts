@@ -1068,3 +1068,35 @@ export interface Issue {
    * issue closes when that entity's status reaches 'done'. */
   promotedFixId?: string;
 }
+
+/** The compact row's type stamp (IDEA-237): a finished or live task reads its
+ * `TaskKind`, a failure with no run behind it reads its `IssueSourceKind`. */
+export type LogRowType = TaskKind | IssueSourceKind | 'reply' | 'question';
+
+export type LogRowOutcome = 'done' | 'error' | 'superseded' | 'running' | 'open';
+
+/** What the row expands into (IDEA-237 phase 3) — carries the original record
+ * rather than flattening it, so the detail view can read whatever it needs. */
+export type LogRowSource =
+  | { kind: 'task'; entry: TaskLogEntry }
+  | { kind: 'issue'; issue: Issue }
+  | { kind: 'running'; task: AgentTaskState }
+  | { kind: 'reply'; notification: StoredNotification }
+  | { kind: 'question'; question: ParkedQuestion };
+
+/** One line of the log (IDEA-237): a `tasks.log` entry, a failure with no run
+ * behind it, or a task still in flight, merged into one shape and one order. */
+export interface LogRow {
+  id: string;
+  timestamp: string;
+  type: LogRowType;
+  entityId?: string;
+  entityTitle?: string;
+  title: string;
+  agentId?: AgentId;
+  durationMs?: number;
+  costUsd?: number;
+  outcome: LogRowOutcome;
+  unread?: boolean;
+  source: LogRowSource;
+}

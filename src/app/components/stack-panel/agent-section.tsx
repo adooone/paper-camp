@@ -1,5 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import { logRowIdForTask } from '@/core/run-rows';
 import {
   AGENT_LABELS,
   type AgentTaskState,
@@ -116,7 +117,11 @@ const AgentTaskCard = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const openTaskPage = () => navigate({ to: '/log', search: { entry: task.id } });
+  const openTaskPage = () =>
+    navigate({
+      to: '/log/$entryId',
+      params: { entryId: logRowIdForTask(task) },
+    });
 
   const handleStop = async (e: React.MouseEvent) => {
     e.stopPropagation();
