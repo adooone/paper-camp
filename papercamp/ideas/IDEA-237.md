@@ -100,8 +100,9 @@ this idea, not preserved: one page holds both.
       run: 3m35s · 36 in · 4.6k out · sonnet-5
 - [x] Build the `features/log` page with compact rows and *Load more*
       run: 10m56s · 142 in · 30.3k out · sonnet-5
-- [ ] Move the expanded detail and its actions into the row
+- [x] Move the expanded detail and its actions into the row
       Summary and usage for a successful run; reason, thread, *Fix it here*, *Promote*, and *Open* for a failed one.
+      run: 18m58s · 148 in · 73.1k out · sonnet-5
 - [ ] Add the filter bar, search, and sort backed by URL search params
 - [ ] Add the quick-stats strip computed from the matched rows
 - [ ] Take the nav slot, redirect `/tasks` and `/issues`, repoint the Stack panel

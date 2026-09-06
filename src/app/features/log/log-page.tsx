@@ -5,7 +5,7 @@ import { useLogPage } from './hooks';
 import { LogList } from './views';
 
 export const LogPage = () => {
-  const { loading, rows, hasMore, loadMore } = useLogPage();
+  const { loading, rows, hasMore, loadMore, actions } = useLogPage();
 
   return (
     <div>
@@ -14,7 +14,9 @@ export const LogPage = () => {
       {!loading && rows.length === 0 && (
         <EmptyState illustration={<RestingPenIllustration />} message="No runs recorded yet." />
       )}
-      {rows.length > 0 && <LogList rows={rows} hasMore={hasMore} onLoadMore={loadMore} />}
+      {rows.length > 0 && (
+        <LogList rows={rows} hasMore={hasMore} onLoadMore={loadMore} actions={actions} />
+      )}
     </div>
   );
 };
