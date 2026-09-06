@@ -2,7 +2,7 @@
 id: IDEA-237
 title: One log view for every run
 type: feat
-status: idea
+status: review
 created: 2026-09-05
 tags:
   - app
@@ -112,4 +112,5 @@ this idea, not preserved: one page holds both.
 - [x] Fold the Inbox into the Log
       Notifications and parked questions become rows with unread state, the bell opens `/log?unread=1`, `/inbox` redirects, and `features/inbox` is deleted.
       run: 26m1s · 212 in · 55.5k out · sonnet-5
-- [ ] Delete `features/tasks` and `features/issues`, then run the quality checks
+- [x] Delete `features/tasks` and `features/issues`, then run the quality checks
+      run: 6m5s · 38 in · 4k out · sonnet-5
