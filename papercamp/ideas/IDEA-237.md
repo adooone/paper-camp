@@ -105,7 +105,8 @@ this idea, not preserved: one page holds both.
       run: 18m58s · 148 in · 73.1k out · sonnet-5
 - [x] Add the filter bar, search, and sort backed by URL search params
       run: 16m · 138 in · 43.3k out · sonnet-5
-- [ ] Add the quick-stats strip computed from the matched rows
+- [x] Add the quick-stats strip computed from the matched rows
+      run: 7m49s · 70 in · 13k out · sonnet-5
 - [ ] Take the nav slot, redirect `/tasks` and `/issues`, repoint the Stack panel
 - [ ] Fold the Inbox into the Log
       Notifications and parked questions become rows with unread state, the bell opens `/log?unread=1`, `/inbox` redirects, and `features/inbox` is deleted.

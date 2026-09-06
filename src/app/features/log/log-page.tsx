@@ -2,7 +2,7 @@ import { EmptyState } from '@/app/components';
 import { RestingPenIllustration } from '@/app/components/empty-state-illustrations';
 import { PageTitle } from '@/app/components/page-title';
 import { useLogPage } from './hooks';
-import { LogFilterBar, LogList } from './views';
+import { LogFilterBar, LogList, LogStatsStrip } from './views';
 
 export const LogPage = () => {
   const {
@@ -12,6 +12,7 @@ export const LogPage = () => {
     loadMore,
     hasAnyRows,
     hasMatches,
+    stats,
     filters,
     setFilters,
     availableTypes,
@@ -28,6 +29,7 @@ export const LogPage = () => {
       {hasAnyRows && (
         <>
           <LogFilterBar filters={filters} availableTypes={availableTypes} onChange={setFilters} />
+          <LogStatsStrip stats={stats} />
           {hasMatches ? (
             <LogList rows={rows} hasMore={hasMore} onLoadMore={loadMore} actions={actions} />
           ) : (

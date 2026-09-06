@@ -16,6 +16,7 @@ import {
   serializeLogFilters,
 } from '@/core/log-filters';
 import { buildLogRows } from '@/core/log-rows';
+import { computeLogStats } from '@/core/log-stats';
 import type { Issue, LogRowType, PlanEntry, TaskLogEntry } from '@/types/index';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -113,6 +114,8 @@ export const useLogPage = () => {
 
   const matchedRows = useMemo(() => filterLogRows(allRows, filters), [allRows, filters]);
 
+  const stats = useMemo(() => computeLogStats(matchedRows), [matchedRows]);
+
   const visibleRows = matchedRows.slice(0, visibleCount);
 
   const resolveFailure = (entry: TaskLogEntry): ResolvedFailure | undefined => {
@@ -162,6 +165,7 @@ export const useLogPage = () => {
     loadMore: () => setVisibleCount((n) => n + LOG_PAGE_SIZE),
     hasAnyRows: allRows.length > 0,
     hasMatches: matchedRows.length > 0,
+    stats,
     filters,
     setFilters,
     availableTypes,
