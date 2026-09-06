@@ -114,3 +114,11 @@ this idea, not preserved: one page holds both.
       run: 26m1s · 212 in · 55.5k out · sonnet-5
 - [x] Delete `features/tasks` and `features/issues`, then run the quality checks
       run: 6m5s · 38 in · 4k out · sonnet-5
+
+### Fixes
+- [ ] Move the filters and stats into a Log sidebar
+      Add an `isLogArea` to `use-app-shell.ts` for `/log` and its entry pages and render a `LogSidebar` in `SidebarShell`: the search field, then the agent, range, and sort selects one per row, then the five stats as label-over-value pairs, all reading and writing the same URL search params through `useLogPage`. The outcome and type chip rows stay in the content column directly above the list header; `LogStatsStrip` and the select row leave it.
+- [ ] Render every number in the handwritten face
+      Stat values, the row time, the row duration, and the usage figures on the entry page (duration, turns, cost, tokens) use `font-handwritten` instead of mono or the body serif, matching the Plans list's dates and counts.
+- [ ] Open an entry on its own page instead of expanding the row
+      Add a `/log/$entryId` route whose component renders what `LogRowDetail` shows — summary, usage, output, and for a failure the reason, thread, *Fix it here*, *Promote*, and *Open* — under a `Log › <title>` breadcrumb from `PageBreadcrumb`, keeping the sidebar. `entryId` is the row's `id`; clicking a row navigates there and an unread row is marked read on arrival. Drop the in-place expand, the `?entry=` param, and the highlighted-row scroll; point the Stack panel's task cards and the `/tasks?taskId=` redirect at `/log/<id>`; an unknown id renders the empty state with a link back to the list.
