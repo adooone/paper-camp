@@ -2,8 +2,8 @@ import { PlanIdStamp } from '@/app/features/plans/components';
 import { formatDuration } from '@/core/phase-run';
 import { AGENT_LABELS, type LogRow } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
-import { useState } from 'react';
-import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
+import { useEffect, useState } from 'react';
+import { HIGHLIGHT_OUTLINE_CLASS, LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatTime } from '../helpers';
 import type { LogRowActions } from '../hooks/use-log-page';
 import { LogRowDetail } from './log-row-detail';
@@ -31,14 +31,24 @@ const ChevronRightIcon = ({ size = 14, className }: { size?: number; className?:
 export interface LogRowViewProps {
   row: LogRow;
   actions: LogRowActions;
+  highlighted: boolean;
 }
 
-export const LogRowView = ({ row, actions }: LogRowViewProps) => {
-  const [expanded, setExpanded] = useState(false);
+export const LogRowView = ({ row, actions, highlighted }: LogRowViewProps) => {
+  const [expanded, setExpanded] = useState(highlighted);
+  useEffect(() => {
+    if (highlighted) setExpanded(true);
+  }, [highlighted]);
   const toggle = () => setExpanded((v) => !v);
 
   return (
-    <div className="flex flex-col gap-1 rounded-[10px]">
+    <div
+      className={
+        highlighted
+          ? `log-row-highlighted flex flex-col gap-1 rounded-[10px] outline outline-2 outline-offset-[-2px] ${HIGHLIGHT_OUTLINE_CLASS}`
+          : 'flex flex-col gap-1 rounded-[10px]'
+      }
+    >
       <button
         type="button"
         aria-expanded={expanded}

@@ -16,9 +16,6 @@ const DocsPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('@/app/features/settings/index').then((m) => ({ default: m.SettingsPage })),
 );
-const TasksPage = lazy(() =>
-  import('@/app/features/tasks/index').then((m) => ({ default: m.TasksPage })),
-);
 const RoadmapPage = lazy(() =>
   import('@/app/features/roadmap/index').then((m) => ({ default: m.RoadmapPage })),
 );
@@ -30,9 +27,6 @@ const GitPage = lazy(() =>
 );
 const InboxPage = lazy(() =>
   import('@/app/features/inbox/index').then((m) => ({ default: m.InboxPage })),
-);
-const IssuesPage = lazy(() =>
-  import('@/app/features/issues/index').then((m) => ({ default: m.IssuesPage })),
 );
 const LogPage = lazy(() =>
   import('@/app/features/log/index').then((m) => ({ default: m.LogPage })),
@@ -139,37 +133,40 @@ const gitRoute = createRoute({
   staticData: { layer: 'runtime' },
 });
 
+const stringParam = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
+
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/tasks',
-  component: TasksPage,
   validateSearch: (search: Record<string, unknown>): { taskId?: string } => ({
-    taskId: typeof search.taskId === 'string' ? search.taskId : undefined,
+    taskId: stringParam(search.taskId),
   }),
-  staticData: { layer: 'runtime' },
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: '/log', search: { entry: search.taskId } });
+  },
 });
 
 const issuesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/issues',
-  component: IssuesPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: () => {
+    throw redirect({ to: '/log' });
+  },
 });
-
-const stringParam = (value: unknown): string | undefined =>
-  typeof value === 'string' ? value : undefined;
 
 const logRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/log',
   component: LogPage,
-  validateSearch: (search: Record<string, unknown>): LogSearchParams => ({
+  validateSearch: (search: Record<string, unknown>): LogSearchParams & { entry?: string } => ({
     outcome: stringParam(search.outcome),
     type: stringParam(search.type),
     agent: stringParam(search.agent),
     range: stringParam(search.range),
     q: stringParam(search.q),
     sort: stringParam(search.sort),
+    entry: stringParam(search.entry),
   }),
   staticData: { layer: 'runtime' },
 });

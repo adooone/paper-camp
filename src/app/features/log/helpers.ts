@@ -1,5 +1,5 @@
 import { isClosedEntity } from '@/core/status';
-import type { EntityStatus, Issue, RunUsage, TaskLogEntry } from '@/types/index';
+import type { EntityStatus, Issue, LogRow, RunUsage, TaskLogEntry } from '@/types/index';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -44,6 +44,13 @@ export const usageForEntry = (entry: TaskLogEntry): RunUsage | undefined => {
 export const formatCost = (usd: number): string => {
   if (usd === 0) return '$0';
   return usd < 0.01 ? `$${usd.toFixed(3)}` : `$${usd.toFixed(2)}`;
+};
+
+export const matchesEntry = (row: LogRow, entry: string | undefined): boolean => {
+  if (!entry) return false;
+  if (row.source.kind === 'task') return row.source.entry.id === entry;
+  if (row.source.kind === 'running') return row.source.task.id === entry;
+  return false;
 };
 
 export const promoteLabel = (

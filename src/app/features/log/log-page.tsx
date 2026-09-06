@@ -13,6 +13,8 @@ export const LogPage = () => {
     hasAnyRows,
     hasMatches,
     stats,
+    entry,
+    containerRef,
     filters,
     setFilters,
     availableTypes,
@@ -20,7 +22,7 @@ export const LogPage = () => {
   } = useLogPage();
 
   return (
-    <div>
+    <div ref={containerRef}>
       <PageTitle>Log</PageTitle>
       {loading && !hasAnyRows && <p className="opacity-50">Loading…</p>}
       {!loading && !hasAnyRows && (
@@ -31,7 +33,13 @@ export const LogPage = () => {
           <LogFilterBar filters={filters} availableTypes={availableTypes} onChange={setFilters} />
           <LogStatsStrip stats={stats} />
           {hasMatches ? (
-            <LogList rows={rows} hasMore={hasMore} onLoadMore={loadMore} actions={actions} />
+            <LogList
+              rows={rows}
+              hasMore={hasMore}
+              onLoadMore={loadMore}
+              actions={actions}
+              highlightedEntry={entry}
+            />
           ) : (
             <p className="opacity-50">No rows match these filters.</p>
           )}

@@ -3,6 +3,8 @@ import type { StampVariant } from '@dendelion/paper-ui';
 
 export const LOG_PAGE_SIZE = 100;
 
+export const HIGHLIGHT_OUTLINE_CLASS = 'outline-[rgba(200,154,90,0.5)]';
+
 export const LOG_TYPE_LABELS: Record<LogRowType, string> = {
   phase: 'Phase run',
   audit: 'Audit',

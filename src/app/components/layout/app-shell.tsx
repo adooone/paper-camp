@@ -37,14 +37,13 @@ const GitFileList = lazy(() =>
   import('@/app/features/git/index').then((m) => ({ default: m.GitFileList })),
 );
 
-// Plans has its own skeleton; Docs/Roadmap/Settings/Tasks share a generic one;
+// Plans has its own skeleton; Docs/Roadmap/Settings/Log share a generic one;
 // everything else falls back to a named spinner.
-const ROW_SKELETON_PREFIXES = ['/docs', '/roadmap', '/settings', '/tasks'];
+const ROW_SKELETON_PREFIXES = ['/docs', '/roadmap', '/settings', '/log'];
 const SPINNER_ROUTE_LABELS: Record<string, string> = {
   '/git': 'Git',
   '/inbox': 'Inbox',
   '/stats': 'Stats',
-  '/issues': 'Issues',
 };
 
 function contentPlaceholder(pathname: string, isPlansArea: boolean) {

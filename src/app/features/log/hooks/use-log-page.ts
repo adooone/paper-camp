@@ -19,7 +19,7 @@ import { buildLogRows } from '@/core/log-rows';
 import { computeLogStats } from '@/core/log-stats';
 import type { Issue, LogRowType, PlanEntry, TaskLogEntry } from '@/types/index';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { LOG_PAGE_SIZE } from '../constants';
 
 export interface ResolvedFailure extends Issue {
@@ -55,12 +55,20 @@ export const useLogPage = () => {
   const openEntity = useOpenEntity();
   const navigate = useNavigate();
   const search = useSearch({ from: '/log' });
+  const { entry } = search;
+  const containerRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(LOG_PAGE_SIZE);
   const [promotingId, setPromotingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadTaskLog();
   }, [loadTaskLog]);
+
+  useEffect(() => {
+    if (!entry) return;
+    const row = containerRef.current?.querySelector('.log-row-highlighted');
+    row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [entry]);
 
   const filters = useMemo(() => parseLogFilters(search), [search]);
 
@@ -166,6 +174,8 @@ export const useLogPage = () => {
     hasAnyRows: allRows.length > 0,
     hasMatches: matchedRows.length > 0,
     stats,
+    entry,
+    containerRef,
     filters,
     setFilters,
     availableTypes,

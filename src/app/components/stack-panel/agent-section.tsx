@@ -116,7 +116,7 @@ const AgentTaskCard = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const openTaskPage = () => navigate({ to: '/tasks', search: { taskId: task.id } });
+  const openTaskPage = () => navigate({ to: '/log', search: { entry: task.id } });
 
   const handleStop = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -220,7 +220,7 @@ export const AgentSection = () => {
         {hiddenCount > 0 && (
           <button
             type="button"
-            onClick={() => navigate({ to: '/tasks' })}
+            onClick={() => navigate({ to: '/log' })}
             className="cursor-pointer border-none bg-transparent p-0 font-handwritten text-xs text-desk-text-muted underline"
           >
             more
