@@ -27,6 +27,8 @@ export const LOG_TYPE_LABELS: Record<LogRowType, string> = {
   'desk-discovery': 'Desk discovery',
   'agent-run': 'Agent run',
   check: 'Check',
+  reply: 'Reply',
+  question: 'Question',
 };
 
 export const LOG_OUTCOME_VARIANT: Record<LogRowOutcome, StampVariant> = {

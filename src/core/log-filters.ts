@@ -20,6 +20,7 @@ export interface LogFilters {
   range: LogDateRange;
   q: string;
   sort: LogSort;
+  unread: boolean;
 }
 
 export const DEFAULT_LOG_FILTERS: LogFilters = {
@@ -29,6 +30,7 @@ export const DEFAULT_LOG_FILTERS: LogFilters = {
   range: 'all',
   q: '',
   sort: 'time',
+  unread: false,
 };
 
 export interface LogSearchParams {
@@ -38,6 +40,7 @@ export interface LogSearchParams {
   range?: string;
   q?: string;
   sort?: string;
+  unread?: string;
 }
 
 export function parseLogFilters(search: LogSearchParams): LogFilters {
@@ -50,7 +53,7 @@ export function parseLogFilters(search: LogSearchParams): LogFilters {
     ? (search.range as LogDateRange)
     : 'all';
   const sort = SORTS.includes(search.sort as LogSort) ? (search.sort as LogSort) : 'time';
-  return { outcomes, types, agent, range, q: search.q ?? '', sort };
+  return { outcomes, types, agent, range, q: search.q ?? '', sort, unread: search.unread === '1' };
 }
 
 export function serializeLogFilters(filters: LogFilters): LogSearchParams {
@@ -61,6 +64,7 @@ export function serializeLogFilters(filters: LogFilters): LogSearchParams {
   if (filters.range !== 'all') params.range = filters.range;
   if (filters.q.trim()) params.q = filters.q;
   if (filters.sort !== 'time') params.sort = filters.sort;
+  if (filters.unread) params.unread = '1';
   return params;
 }
 
@@ -77,6 +81,7 @@ function reasonFor(row: LogRow): string {
 }
 
 function matchesFilters(row: LogRow, filters: LogFilters, cutoff: number): boolean {
+  if (filters.unread && !row.unread) return false;
   if (filters.outcomes.length > 0 && !filters.outcomes.includes(row.outcome)) return false;
   if (filters.types.length > 0 && !filters.types.includes(row.type)) return false;
   if (filters.agent && row.agentId !== filters.agent) return false;

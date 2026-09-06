@@ -42,7 +42,6 @@ const GitFileList = lazy(() =>
 const ROW_SKELETON_PREFIXES = ['/docs', '/roadmap', '/settings', '/log'];
 const SPINNER_ROUTE_LABELS: Record<string, string> = {
   '/git': 'Git',
-  '/inbox': 'Inbox',
   '/stats': 'Stats',
 };
 

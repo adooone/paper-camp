@@ -28,6 +28,7 @@ export interface ResolvedFailure extends Issue {
 
 export interface LogRowActions {
   entities: { id: string; title: string }[];
+  plans: PlanEntry[];
   openEntity: (id: string | null | undefined, title: string) => void;
   resolveFailure: (entry: TaskLogEntry) => ResolvedFailure | undefined;
   launchIssueFix: (
@@ -39,6 +40,8 @@ export interface LogRowActions {
   fixingIssueId: string | undefined;
   promotingId: string | null;
   handlePromote: (issue: Issue) => Promise<void>;
+  markRead: (id: string) => Promise<void>;
+  reloadEntities: () => Promise<void>;
 }
 
 export const useLogPage = () => {
@@ -51,6 +54,9 @@ export const useLogPage = () => {
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
   const launchIssueFix = useAppStore((s) => s.launchIssueFix);
+  const notifications = useAppStore((s) => s.notifications);
+  const loadNotifications = useAppStore((s) => s.loadNotifications);
+  const markRead = useAppStore((s) => s.markRead);
   const { checks } = useDeskChecks();
   const openEntity = useOpenEntity();
   const navigate = useNavigate();
@@ -112,8 +118,8 @@ export const useLogPage = () => {
     const rowIssues = failureIssues.filter(
       (issue) => issue.sourceKind !== 'agent-run' && !issue.cleared,
     );
-    return buildLogRows(taskLog, rowIssues, agentStatus);
-  }, [failureIssues, taskLog, agentStatus]);
+    return buildLogRows(taskLog, rowIssues, agentStatus, notifications ?? []);
+  }, [failureIssues, taskLog, agentStatus, notifications]);
 
   const availableTypes = useMemo(
     () => Array.from(new Set(allRows.map((row) => row.type))) as LogRowType[],
@@ -148,6 +154,10 @@ export const useLogPage = () => {
     }
   };
 
+  const reloadEntities = async () => {
+    await Promise.all([loadPlans(), loadNotifications()]);
+  };
+
   const fixingIssueId = agentStatus.find(
     (t) =>
       t.taskKind === 'issue-fix' &&
@@ -158,12 +168,15 @@ export const useLogPage = () => {
 
   const actions: LogRowActions = {
     entities,
+    plans: plans?.entries ?? [],
     openEntity,
     resolveFailure,
     launchIssueFix,
     fixingIssueId,
     promotingId,
     handlePromote,
+    markRead,
+    reloadEntities,
   };
 
   return {

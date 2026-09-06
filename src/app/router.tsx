@@ -25,9 +25,6 @@ const StatsPage = lazy(() =>
 const GitPage = lazy(() =>
   import('@/app/features/git/index').then((m) => ({ default: m.GitPage })),
 );
-const InboxPage = lazy(() =>
-  import('@/app/features/inbox/index').then((m) => ({ default: m.InboxPage })),
-);
 const LogPage = lazy(() =>
   import('@/app/features/log/index').then((m) => ({ default: m.LogPage })),
 );
@@ -115,8 +112,9 @@ const roadmapRoute = createRoute({
 const inboxRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/inbox',
-  component: InboxPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: () => {
+    throw redirect({ to: '/log' });
+  },
 });
 
 const statsRoute = createRoute({
@@ -166,6 +164,7 @@ const logRoute = createRoute({
     range: stringParam(search.range),
     q: stringParam(search.q),
     sort: stringParam(search.sort),
+    unread: stringParam(search.unread),
     entry: stringParam(search.entry),
   }),
   staticData: { layer: 'runtime' },

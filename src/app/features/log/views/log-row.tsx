@@ -4,7 +4,7 @@ import { AGENT_LABELS, type LogRow } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { HIGHLIGHT_OUTLINE_CLASS, LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
-import { formatTime } from '../helpers';
+import { formatTime, markReadIdFor } from '../helpers';
 import type { LogRowActions } from '../hooks/use-log-page';
 import { LogRowDetail } from './log-row-detail';
 
@@ -39,7 +39,16 @@ export const LogRowView = ({ row, actions, highlighted }: LogRowViewProps) => {
   useEffect(() => {
     if (highlighted) setExpanded(true);
   }, [highlighted]);
-  const toggle = () => setExpanded((v) => !v);
+  const toggle = () => {
+    setExpanded((v) => {
+      const next = !v;
+      if (next) {
+        const id = markReadIdFor(row);
+        if (id) actions.markRead(id);
+      }
+      return next;
+    });
+  };
 
   return (
     <div
@@ -77,7 +86,7 @@ export const LogRowView = ({ row, actions, highlighted }: LogRowViewProps) => {
               {row.durationMs != null ? formatDuration(row.durationMs) : ''}
             </span>
             <div className="flex items-center">
-              <Stamp size="small" variant={LOG_OUTCOME_VARIANT[row.outcome]}>
+              <Stamp size="small" variant={LOG_OUTCOME_VARIANT[row.outcome]} dot={row.unread}>
                 {row.outcome}
               </Stamp>
             </div>

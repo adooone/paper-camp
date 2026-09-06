@@ -64,6 +64,46 @@ describe('computeLogStats', () => {
     expect(stats.runs).toBe(1);
   });
 
+  it('excludes a reply or a parked question from the run count', () => {
+    const reply: LogRow = {
+      id: 'notification:notif-1',
+      timestamp: '2026-08-01T00:00:00.000Z',
+      type: 'reply',
+      title: 'Answered',
+      outcome: 'done',
+      source: {
+        kind: 'reply',
+        notification: {
+          id: 'notif-1',
+          kind: 'reply',
+          entityId: 'IDEA-1',
+          entityTitle: 'First idea',
+          text: 'Answered',
+          date: '2026-08-01T00:00:00.000Z',
+          read: false,
+        },
+      },
+    };
+    const question: LogRow = {
+      id: 'question:IDEA-1-0',
+      timestamp: '2026-08-01T00:00:00.000Z',
+      type: 'question',
+      title: 'Which approach?',
+      outcome: 'open',
+      source: {
+        kind: 'question',
+        question: {
+          entityId: 'IDEA-1',
+          entityTitle: 'First idea',
+          text: 'Which approach?',
+          ageDays: 1,
+        },
+      },
+    };
+    const stats = computeLogStats([taskRow(), reply, question]);
+    expect(stats.runs).toBe(1);
+  });
+
   it('counts an error outcome as failed', () => {
     const stats = computeLogStats([taskRow({ outcome: 'done' }), taskRow({ outcome: 'error' })]);
     expect(stats.runs).toBe(2);

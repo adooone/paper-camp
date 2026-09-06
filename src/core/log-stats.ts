@@ -16,7 +16,7 @@ function median(values: number[]): number | undefined {
 }
 
 export function computeLogStats(rows: LogRow[]): LogStats {
-  const runRows = rows.filter((row) => row.source.kind !== 'issue');
+  const runRows = rows.filter((row) => row.source.kind === 'task' || row.source.kind === 'running');
   const done = runRows.filter((row) => row.outcome === 'done').length;
   const failed = runRows.filter((row) => row.outcome === 'error').length;
   const settled = done + failed;

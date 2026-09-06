@@ -109,6 +109,7 @@ this idea, not preserved: one page holds both.
       run: 7m49s · 70 in · 13k out · sonnet-5
 - [x] Take the nav slot, redirect `/tasks` and `/issues`, repoint the Stack panel
       run: 15m45s · 120 in · 28.4k out · sonnet-5
-- [ ] Fold the Inbox into the Log
+- [x] Fold the Inbox into the Log
       Notifications and parked questions become rows with unread state, the bell opens `/log?unread=1`, `/inbox` redirects, and `features/inbox` is deleted.
+      run: 26m1s · 212 in · 55.5k out · sonnet-5
 - [ ] Delete `features/tasks` and `features/issues`, then run the quality checks

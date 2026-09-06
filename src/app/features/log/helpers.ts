@@ -53,6 +53,13 @@ export const matchesEntry = (row: LogRow, entry: string | undefined): boolean =>
   return false;
 };
 
+export const markReadIdFor = (row: LogRow): string | undefined => {
+  if (!row.unread) return undefined;
+  if (row.source.kind === 'task') return row.source.entry.id;
+  if (row.source.kind === 'reply') return row.source.notification.id;
+  return undefined;
+};
+
 export const promoteLabel = (
   issue: Issue,
   entities: { id: string; status?: EntityStatus; archived?: boolean }[],

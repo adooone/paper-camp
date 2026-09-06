@@ -64,12 +64,19 @@ describe('parseLogFilters', () => {
       range: '7d',
       q: 'reconcile',
       sort: 'cost',
+      unread: true,
     };
     expect(parseLogFilters(serializeLogFilters(filters))).toEqual(filters);
   });
 
   it('serializes the default filters to an empty params object', () => {
     expect(serializeLogFilters(DEFAULT_LOG_FILTERS)).toEqual({});
+  });
+
+  it('reads unread only from the literal "1"', () => {
+    expect(parseLogFilters({ unread: '1' }).unread).toBe(true);
+    expect(parseLogFilters({ unread: 'true' }).unread).toBe(false);
+    expect(parseLogFilters({}).unread).toBe(false);
   });
 });
 
@@ -184,6 +191,16 @@ describe('filterLogRows', () => {
     expect(
       filterLogRows(rows, { ...DEFAULT_LOG_FILTERS, sort: 'duration' }).map((r) => r.id),
     ).toEqual(['task:running', 'task:settled']);
+  });
+
+  it('matches only unread rows once asked', () => {
+    const rows = [
+      row({ id: 'task:read', unread: false }),
+      row({ id: 'task:unread', unread: true }),
+    ];
+    expect(filterLogRows(rows, { ...DEFAULT_LOG_FILTERS, unread: true }).map((r) => r.id)).toEqual([
+      'task:unread',
+    ]);
   });
 
   it('hides a running row once an outcome filter is set, since running is not one of the four options', () => {
