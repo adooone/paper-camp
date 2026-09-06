@@ -103,7 +103,8 @@ this idea, not preserved: one page holds both.
 - [x] Move the expanded detail and its actions into the row
       Summary and usage for a successful run; reason, thread, *Fix it here*, *Promote*, and *Open* for a failed one.
       run: 18m58s · 148 in · 73.1k out · sonnet-5
-- [ ] Add the filter bar, search, and sort backed by URL search params
+- [x] Add the filter bar, search, and sort backed by URL search params
+      run: 16m · 138 in · 43.3k out · sonnet-5
 - [ ] Add the quick-stats strip computed from the matched rows
 - [ ] Take the nav slot, redirect `/tasks` and `/issues`, repoint the Stack panel
 - [ ] Fold the Inbox into the Log

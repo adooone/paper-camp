@@ -9,8 +9,15 @@ import {
   collectPrReviewIssues,
   issueThreadFromTaskLog,
 } from '@/core/issues';
+import {
+  type LogFilters,
+  filterLogRows,
+  parseLogFilters,
+  serializeLogFilters,
+} from '@/core/log-filters';
 import { buildLogRows } from '@/core/log-rows';
-import type { Issue, PlanEntry, TaskLogEntry } from '@/types/index';
+import type { Issue, LogRowType, PlanEntry, TaskLogEntry } from '@/types/index';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import { LOG_PAGE_SIZE } from '../constants';
 
@@ -45,12 +52,20 @@ export const useLogPage = () => {
   const launchIssueFix = useAppStore((s) => s.launchIssueFix);
   const { checks } = useDeskChecks();
   const openEntity = useOpenEntity();
+  const navigate = useNavigate();
+  const search = useSearch({ from: '/log' });
   const [visibleCount, setVisibleCount] = useState(LOG_PAGE_SIZE);
   const [promotingId, setPromotingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadTaskLog();
   }, [loadTaskLog]);
+
+  const filters = useMemo(() => parseLogFilters(search), [search]);
+
+  const setFilters = (patch: Partial<LogFilters>) => {
+    navigate({ to: '/log', search: serializeLogFilters({ ...filters, ...patch }), replace: true });
+  };
 
   const entities = useMemo(() => {
     const planEntities = (plans?.entries ?? []).filter(
@@ -84,14 +99,21 @@ export const useLogPage = () => {
     [failureIssues],
   );
 
-  const rows = useMemo(() => {
+  const allRows = useMemo(() => {
     const rowIssues = failureIssues.filter(
       (issue) => issue.sourceKind !== 'agent-run' && !issue.cleared,
     );
     return buildLogRows(taskLog, rowIssues, agentStatus);
   }, [failureIssues, taskLog, agentStatus]);
 
-  const visibleRows = rows.slice(0, visibleCount);
+  const availableTypes = useMemo(
+    () => Array.from(new Set(allRows.map((row) => row.type))) as LogRowType[],
+    [allRows],
+  );
+
+  const matchedRows = useMemo(() => filterLogRows(allRows, filters), [allRows, filters]);
+
+  const visibleRows = matchedRows.slice(0, visibleCount);
 
   const resolveFailure = (entry: TaskLogEntry): ResolvedFailure | undefined => {
     if (entry.outcome !== 'error') return undefined;
@@ -136,8 +158,13 @@ export const useLogPage = () => {
   return {
     loading: taskLogLoading,
     rows: visibleRows,
-    hasMore: rows.length > visibleRows.length,
+    hasMore: matchedRows.length > visibleRows.length,
     loadMore: () => setVisibleCount((n) => n + LOG_PAGE_SIZE),
+    hasAnyRows: allRows.length > 0,
+    hasMatches: matchedRows.length > 0,
+    filters,
+    setFilters,
+    availableTypes,
     actions,
   };
 };

@@ -4,6 +4,7 @@ import { PlansPage } from '@/app/features/plans/index';
 import { bareId } from '@/app/hooks';
 import type { ModuleLayer } from '@/app/services/module-layer';
 import { mountPrefix } from '@/app/services/mount';
+import type { LogSearchParams } from '@/core/log-filters';
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
 import { lazy } from 'react';
 
@@ -155,10 +156,21 @@ const issuesRoute = createRoute({
   staticData: { layer: 'runtime' },
 });
 
+const stringParam = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
+
 const logRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/log',
   component: LogPage,
+  validateSearch: (search: Record<string, unknown>): LogSearchParams => ({
+    outcome: stringParam(search.outcome),
+    type: stringParam(search.type),
+    agent: stringParam(search.agent),
+    range: stringParam(search.range),
+    q: stringParam(search.q),
+    sort: stringParam(search.sort),
+  }),
   staticData: { layer: 'runtime' },
 });
 
