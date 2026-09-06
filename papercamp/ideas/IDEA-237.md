@@ -98,7 +98,8 @@ this idea, not preserved: one page holds both.
 - [x] Derive one log stream from runs, failures, and live tasks
       One selector merges `tasks.log` entries, the issue collectors' failures, and `agentStatus` into typed rows, newest first.
       run: 3m35s · 36 in · 4.6k out · sonnet-5
-- [ ] Build the `features/log` page with compact rows and *Load more*
+- [x] Build the `features/log` page with compact rows and *Load more*
+      run: 10m56s · 142 in · 30.3k out · sonnet-5
 - [ ] Move the expanded detail and its actions into the row
       Summary and usage for a successful run; reason, thread, *Fix it here*, *Promote*, and *Open* for a failed one.
 - [ ] Add the filter bar, search, and sort backed by URL search params

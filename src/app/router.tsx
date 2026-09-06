@@ -33,6 +33,9 @@ const InboxPage = lazy(() =>
 const IssuesPage = lazy(() =>
   import('@/app/features/issues/index').then((m) => ({ default: m.IssuesPage })),
 );
+const LogPage = lazy(() =>
+  import('@/app/features/log/index').then((m) => ({ default: m.LogPage })),
+);
 
 const rootRoute = createRootRoute({ component: AppShell });
 
@@ -152,6 +155,13 @@ const issuesRoute = createRoute({
   staticData: { layer: 'runtime' },
 });
 
+const logRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/log',
+  component: LogPage,
+  staticData: { layer: 'runtime' },
+});
+
 const routeTree = rootRoute.addChildren([
   plansRoute,
   projectsRoute,
@@ -164,6 +174,7 @@ const routeTree = rootRoute.addChildren([
   settingsSectionRoute,
   tasksRoute,
   issuesRoute,
+  logRoute,
   roadmapRoute,
   statsRoute,
   inboxRoute,
