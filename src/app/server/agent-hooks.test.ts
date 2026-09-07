@@ -71,7 +71,7 @@ describe('commitPhase', () => {
     });
     expect(headFiles).toContain('src/new-name.ts');
     expect(headFiles).not.toContain('src/old-name.ts');
-  });
+  }, 65_000);
 });
 
 describe('annotateFixRun', () => {

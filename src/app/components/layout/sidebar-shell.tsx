@@ -65,7 +65,7 @@ export const SidebarShell = ({
       >
         <Card
           size="small"
-          texture="kraft"
+          texture={{ texture: 'parchment', shade: true }}
           className="pc-sidebar-card mt-8 mb-8 flex min-h-0 flex-col"
         >
           <div key={routeKey} className="min-h-0 flex-1 overflow-y-auto">

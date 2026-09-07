@@ -68,6 +68,7 @@ Re-scanning or pruning the registry on the daemon's behalf. Any change to how
       `portInUseMessage` takes a daemon variant pointing at `paper-camp status` and `-p`; `dev` keeps its wording.
       run: 5m50s · 40 in · 5.1k out · sonnet-5
 - [x] [manual] Use parchment texture for sidebar card
+- [x] [manual] Use parchment texture and fix sidebar/log spacing
 
 ### Fixes
 - [x] Fix the failing "Tests" check
