@@ -115,3 +115,19 @@ chunk against the enabled checks immediately, gate or not.
 Fixing anything at night; the shift reports and the morning decides. More
 than one project per machine. Running under `paper-camp dev`. Surviving a
 reboot, which is [[IDEA-233]]'s later concern.
+
+### Phases
+- [ ] Pick the project and read the settings
+      Add `night: { slug }` to `projects.json` with `paper-camp night <slug> | off | status`, and the `night` block in `papercamp/config.json` with its defaults.
+- [ ] Score the chunks into a health map
+      Derive churn, size, coverage, open findings, and last-reviewed age per chunk into `papercamp/night.json`, and show it as the Stats *Code health* card.
+- [ ] Gate the shift in the daemon
+      Idle desk, no running task, both rate-limit windows, and the optional clock window, rechecked after every pass.
+- [ ] Run a pass read-only
+      Built-in and custom checks against one chunk in a throwaway worktree, with Edit/Write/NotebookEdit off, turn and cost caps, and a confirming pass that assigns severity.
+- [ ] Report findings as night suggestions
+      Write confirmed findings to `papercamp/suggestions.md` with `source: night`, drop overlaps, expire stale ones on read, and log each pass as `night-review`.
+- [ ] Surface the night report on the Ideas page
+      A dated *Night report* group above every other group, night and severity stamps, and a shell banner for critical findings.
+- [ ] Add the Settings controls
+      The per-project toggle, the check list with custom checks, `defaultAgents.nightShift`, *Pause tonight*, and *Run a pass now*.

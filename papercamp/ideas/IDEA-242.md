@@ -91,3 +91,17 @@ the failures that matter and only need cheaper fixtures. Any change to what
 the desk checks are or how the Stack panel runs them beyond the second
 stamp. Browser-rendered component tests; there is no DOM environment and
 this idea adds none.
+
+### Phases
+- [ ] Split unit and integration into two vitest projects
+      Add `vitest.workspace.ts`, repoint `test`, `test:integration`, and
+      `test:all`, and move coverage to CI's `test:all --coverage`.
+- [ ] Add `pnpm test:changed` and its Stack stamp
+- [ ] Reuse one repository per describe in `git.test.ts`
+- [ ] Drive the daemon and registry commands in-process
+      Keep one spawn per file for the entry point's argument parsing.
+- [ ] Run `agent.test.ts` on fake timers with instant fake CLIs
+- [ ] Consolidate sibling cases into `it.each` tables
+      Covers `src/core/parse`, `src/core/git-pr`, `src/core/status`, and
+      `git.test.ts`.
+- [ ] Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it

@@ -2,7 +2,7 @@
 id: IDEA-235
 title: Stale entries and daemon root answers
 type: fix
-status: in-progress
+status: done
 created: 2026-09-05
 updated: 2026-09-07
 tags:
