@@ -30,7 +30,7 @@ function StatusStamp({ status }: StatusStampProps) {
   if (!status.reachable) {
     return (
       <Stamp size="small" variant="info">
-        Plan-only
+        Offline
       </Stamp>
     );
   }

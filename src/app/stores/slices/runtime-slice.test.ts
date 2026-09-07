@@ -98,7 +98,7 @@ describe('checkRuntimeReachable on a self-served origin', () => {
     expect(applied.at(-1)).toMatchObject({ runtimeReachable: false });
   });
 
-  it('starts out checking so the shell does not flash the plan-only path', async () => {
+  it('starts out checking so the shell does not flash the offline state', async () => {
     const { slice } = await reachabilityWith({ ok: true, json: async () => ({}) });
     expect(slice.runtimeChecking).toBe(true);
   });

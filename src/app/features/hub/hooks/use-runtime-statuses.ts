@@ -25,7 +25,7 @@ const UNREACHABLE: Omit<RuntimeStatus, 'schemeBlocked'> = {
 
 /** Asks each registered runtime what project it serves and what version it's on, in
  *  parallel. A runtime that is down, or that refuses this origin, has no response to
- *  either request — reported as unreachable (shown as plan-only) rather than the list
+ *  either request — reported as unreachable (shown as offline) rather than the list
  *  waiting on it or a row silently vanishing. `schemeBlocked` flags the one case that
  *  needs no round trip to know: an http runtime this page's https origin refuses
  *  outright as mixed content. */

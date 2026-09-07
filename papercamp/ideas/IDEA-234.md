@@ -2,7 +2,7 @@
 id: IDEA-234
 title: Daemon-only welcome screen
 type: feat
-status: idea
+status: review
 created: 2026-09-05
 tags:
   - app
@@ -118,7 +118,8 @@ else; it is simply forgotten.
       run: 12m15s · 160 in · 48.9k out · sonnet-5
 - [x] Replace plan-only with offline
       `runtime-unavailable.tsx` shows the start command instead of a token form, and a row that does not answer stamps *Offline*.
-- [ ] Rewrite the install docs
+      run: 5m22s · 42 in · 10.1k out · sonnet-5
+- [x] Rewrite the install docs
       USAGE.md and README.md teach only the three commands, `paper-camp dev` keeps one sentence as the foreground mode, and the Connect GitHub and Plan-only entries go.
 
 ### Thread

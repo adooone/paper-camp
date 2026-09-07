@@ -12,7 +12,7 @@ export type RuntimeSlice = {
 };
 
 // Embedded serves itself, so there's nothing to probe; detached needs a probe to
-// confirm; neither (the GitHub plan-only path) has no runtime, so it's just unreachable.
+// confirm; neither has no runtime, so it's just unreachable.
 const hasEmbeddedRuntime = !!mountPrefix;
 const hasDetachedRuntime = !!runtimeConnection.runtimeUrl;
 

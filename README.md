@@ -17,20 +17,34 @@ Paper Camp is designed around the way humans actually work with AI assistants. A
 ## Quick Start
 
 ```bash
-# Start the dev server
-bun run dev
+npm install -g @dendelion/paper-camp
+paper-camp scan ~/dev
+paper-camp start
+```
+
+Open the Local link `start` prints. `~/dev` stands for the folder holding
+your repositories; `paper-camp init` run inside a single repo registers just
+that one instead of scanning. Prefer a single repo running in the foreground?
+`paper-camp dev`, run inside that repo, serves just it in the terminal you
+started it from.
+
+## Working on Paper Camp
+
+```bash
+pnpm install
+pnpm dev
 ```
 
 Open `http://localhost:3333` to access the dashboard.
 
 ## Reachable from anywhere
 
-`paper-camp dev` only answers requests from the machine it runs on, or another
-device on the same LAN/tailnet. To reach it from the hosted client on a
-different machine over the open internet, run:
+`paper-camp start` only answers requests from the machine it runs on, or
+another device on the same LAN/tailnet. To reach it from the hosted client on
+a different machine over the open internet, run:
 
 ```bash
-paper-camp dev --share
+paper-camp start --share
 ```
 
 This opens an account-less `cloudflared` quick tunnel and prints a
@@ -47,10 +61,10 @@ worth it if you have Tailscale, but more setup than `--share`:
 1. Enable HTTPS certificates for your tailnet once, in the
    [Tailscale admin console](https://login.tailscale.com/admin/dns) under
    **DNS → HTTPS Certificates**.
-2. From the machine running `paper-camp dev`, serve it over HTTPS at a stable
-   MagicDNS address:
+2. From the machine running `paper-camp start`, serve it over HTTPS at a
+   stable MagicDNS address:
    ```bash
-   sudo tailscale serve --bg --https=443 / http://localhost:3333
+   sudo tailscale serve --bg --https=443 / http://localhost:4333
    ```
    The first run needs `sudo` so Tailscale can provision the certificate.
 3. Open `https://<your-machine>.<your-tailnet>.ts.net/` — directly, or pasted
