@@ -84,3 +84,18 @@ The toolbar's Scout behaviour and icons, unchanged beyond its link. Self-hosting
 the client somewhere other than Vercel; `PAPERCAMP_HOSTED_CLIENT_URL`
 already lets a runtime point at a different origin. Any change to pairing
 or to the daemon's project mounts.
+
+### Phases
+- [ ] Hand the hosted client link to `dev` and `daemon`
+      Both banners print a Local link to `PAPERCAMP_HOSTED_CLIENT_URL` carrying `?runtime=`/`?machine=` and the pairing token, and `GET /` answers a 302 to it.
+- [ ] Open the hosted client from the toolbar trigger
+      Same link shape, with the host app's own runtime origin in `?runtime=`.
+- [ ] Drop static serving from the servers
+      `appDir()`, `loadIndexHtml`, and `serveStatic` leave `serve-static.ts` along with their tests; `dev-server.ts` and `daemon-server.ts` serve the API only.
+- [ ] Ship a runtime-only tarball
+      `files` lists `dist/cli`, `dist/core`, `dist/mcp`, `dist/vite`, and `templates`; a `prepack` script builds the library and the toolbar; `build:app` stays the Vercel build and `pack-smoke-test.mjs` asserts no `dist/app`.
+- [ ] Fetch the doodle pack outside git
+      Git-ignore `public/img/doodles/` and add `scripts/fetch-assets.mjs`, which unpacks `PAPERCAMP_ASSETS_URL` before `build:app` and skips quietly when the variable is absent.
+- [ ] Give `EmptyState` an `illustration` slot
+      A 96px `<img>` from `/img/doodles/<name>.svg` above the existing copy; the seven empty states that had drawings each pick one, and a pack-less build renders the copy alone.
+- [ ] Say one client in USAGE.md and README.md
