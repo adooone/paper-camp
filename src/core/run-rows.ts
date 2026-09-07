@@ -4,6 +4,7 @@ import type {
   LogRow,
   Notification,
   ParkedQuestion,
+  RunUsage,
   StoredNotification,
   TaskLogEntry,
 } from '../types/index';
@@ -16,10 +17,34 @@ export function logRowIdForTask(task: AgentTaskState): string {
   return RUNNING_STATUSES.includes(task.status) ? `running:${task.id}` : `task:${task.id}`;
 }
 
-function entryCost(entry: TaskLogEntry): number | undefined {
-  if (entry.usage) return entry.usage.costUsd;
+const EMPTY_USAGE: RunUsage = {
+  durationMs: 0,
+  numTurns: 0,
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheCreationTokens: 0,
+  cacheReadTokens: 0,
+  costUsd: 0,
+};
+
+/** A run-all/phase entry only carries `usage` once every phase has reported;
+ * until then its cost and duration live in `phaseRuns` and must be summed. */
+export function usageForEntry(entry: TaskLogEntry): RunUsage | undefined {
+  if (entry.usage) return entry.usage;
   if (!entry.phaseRuns?.length) return undefined;
-  return entry.phaseRuns.reduce((sum, phase) => sum + phase.usage.costUsd, 0);
+  return entry.phaseRuns.reduce<RunUsage>(
+    (acc, phase) => ({
+      durationMs: acc.durationMs + phase.usage.durationMs,
+      numTurns: acc.numTurns + phase.usage.numTurns,
+      model: phase.usage.model ?? acc.model,
+      inputTokens: acc.inputTokens + phase.usage.inputTokens,
+      outputTokens: acc.outputTokens + phase.usage.outputTokens,
+      cacheCreationTokens: acc.cacheCreationTokens + phase.usage.cacheCreationTokens,
+      cacheReadTokens: acc.cacheReadTokens + phase.usage.cacheReadTokens,
+      costUsd: acc.costUsd + phase.usage.costUsd,
+    }),
+    EMPTY_USAGE,
+  );
 }
 
 function unreadCompletedIds(notifications: Notification[]): Set<string> {
@@ -31,6 +56,7 @@ function unreadCompletedIds(notifications: Notification[]): Set<string> {
 }
 
 function taskRow(entry: TaskLogEntry, unreadIds: Set<string>): LogRow {
+  const usage = usageForEntry(entry);
   return {
     id: `task:${entry.id}`,
     timestamp: entry.endedAt,
@@ -39,8 +65,8 @@ function taskRow(entry: TaskLogEntry, unreadIds: Set<string>): LogRow {
     entityTitle: entry.planTitle,
     title: entry.planTitle,
     agentId: entry.agentId,
-    durationMs: entry.usage?.durationMs,
-    costUsd: entryCost(entry),
+    durationMs: usage?.durationMs,
+    costUsd: usage?.costUsd,
     outcome: entry.outcome,
     unread: unreadIds.has(entry.id),
     source: { kind: 'task', entry },
@@ -90,7 +116,7 @@ function replyRow(notification: StoredNotification): LogRow {
 
 function questionRow(question: ParkedQuestion, index: number): LogRow {
   return {
-    id: `question:${question.entityId}-${index}`,
+    id: `question:${question.entityId}-${question.date ?? index}`,
     timestamp: question.date ?? new Date(0).toISOString(),
     type: 'question',
     entityId: question.entityId,

@@ -2,6 +2,7 @@ import { FeedbackThread, PlanIdStamp } from '@/app/features/plans/components';
 import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
 import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import { formatDuration, shortModel } from '@/core/phase-run';
+import { usageForEntry } from '@/core/run-rows';
 import {
   AGENT_LABELS,
   type Issue,
@@ -13,7 +14,7 @@ import {
 import { Button, Card, Spinner, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
-import { formatCost, formatTime, promoteLabel, summaryLine, usageForEntry } from '../helpers';
+import { formatCost, formatTime, promoteLabel, summaryLine } from '../helpers';
 import type { LogRowActions } from '../hooks/use-run-rows';
 
 interface Fact {
@@ -24,7 +25,8 @@ interface Fact {
 const factsFor = (row: LogRow): Fact[] => {
   const usage = row.source.kind === 'task' ? usageForEntry(row.source.entry) : undefined;
   const durationMs = usage?.durationMs ?? row.durationMs;
-  const facts: Fact[] = [{ label: 'Started', value: formatTime(row.timestamp) }];
+  const startedAt = row.source.kind === 'task' ? row.source.entry.startedAt : row.timestamp;
+  const facts: Fact[] = [{ label: 'Started', value: formatTime(startedAt) }];
   if (durationMs != null) facts.push({ label: 'Duration', value: formatDuration(durationMs) });
   if (usage) {
     facts.push({ label: 'Turns', value: String(usage.numTurns) });

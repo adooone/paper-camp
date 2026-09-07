@@ -4,6 +4,7 @@ title: One log view for every run
 type: feat
 status: review
 created: 2026-09-05
+updated: 2026-09-07
 tags:
   - app
   - ui
@@ -114,6 +115,7 @@ this idea, not preserved: one page holds both.
       run: 26m1s · 212 in · 55.5k out · sonnet-5
 - [x] Delete `features/tasks` and `features/issues`, then run the quality checks
       run: 6m5s · 38 in · 4k out · sonnet-5
+- [x] [manual] Add agent/duration columns and fix run usage aggregation
 
 ### Fixes
 - [x] Move the filters and stats into a Log sidebar
@@ -125,3 +127,6 @@ this idea, not preserved: one page holds both.
 - [x] Open an entry on its own page instead of expanding the row
       Add a `/log/$entryId` route whose component renders what `LogRowDetail` shows — summary, usage, output, and for a failure the reason, thread, *Fix it here*, *Promote*, and *Open* — under a `Log › <title>` breadcrumb from `PageBreadcrumb`, keeping the sidebar. `entryId` is the row's `id`; clicking a row navigates there and an unread row is marked read on arrival. Drop the in-place expand, the `?entry=` param, and the highlighted-row scroll; point the Stack panel's task cards and the `/tasks?taskId=` redirect at `/log/<id>`; an unknown id renders the empty state with a link back to the list.
       run: 14m40s · 158 in · 56.6k out · sonnet-5
+
+### Thread
+- [x] 2026-09-06 [review] [agent] Requests changes · 5 findings — The PR substantially delivers IDEA-237: one merged stream of tasks, failures, live runs, and notifications, URL-backed filters/search/sort, a stats sidebar, the nav swap and redirects, the inbox fold, and clean deletion of the three old features, with typecheck and the new unit tests passing. However the compact row omits two fields the spec explicitly enumerates (agent and duration), and there are a few smaller correctness rough edges around timestamps, phase-run duration aggregation, and unstable question-row ids. The features/runs naming (rather than features/log) matches the project's settled ad-blocker constraint and is fine.

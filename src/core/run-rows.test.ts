@@ -223,7 +223,7 @@ describe('buildLogRows', () => {
     const rows = buildLogRows([], [], [], [{ ...parkedQuestion(), kind: 'question' }]);
     expect(rows).toEqual([
       expect.objectContaining({
-        id: 'question:IDEA-1-0',
+        id: 'question:IDEA-1-2026-08-01T00:00:00.000Z',
         type: 'question',
         outcome: 'open',
         title: 'Which approach?',

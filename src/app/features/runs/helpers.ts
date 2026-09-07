@@ -1,44 +1,22 @@
 import { isClosedEntity } from '@/core/status';
-import type { EntityStatus, Issue, LogRow, RunUsage, TaskLogEntry } from '@/types/index';
+import type { EntityStatus, Issue, LogRow } from '@/types/index';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
+const isSameDay = (a: Date, b: Date): boolean =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
 export const formatTime = (iso: string) => {
   const d = new Date(iso);
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  return isSameDay(d, new Date()) ? time : `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${time}`;
 };
 
 export const summaryLine = (lines: string[]): string | undefined => {
   const trimmed = lines.map((line) => line.trim()).filter(Boolean);
   return trimmed.at(-1);
-};
-
-const EMPTY_USAGE: RunUsage = {
-  durationMs: 0,
-  numTurns: 0,
-  inputTokens: 0,
-  outputTokens: 0,
-  cacheCreationTokens: 0,
-  cacheReadTokens: 0,
-  costUsd: 0,
-};
-
-export const usageForEntry = (entry: TaskLogEntry): RunUsage | undefined => {
-  if (entry.usage) return entry.usage;
-  if (!entry.phaseRuns?.length) return undefined;
-  return entry.phaseRuns.reduce<RunUsage>(
-    (acc, phase) => ({
-      durationMs: acc.durationMs + phase.usage.durationMs,
-      numTurns: acc.numTurns + phase.usage.numTurns,
-      model: phase.usage.model ?? acc.model,
-      inputTokens: acc.inputTokens + phase.usage.inputTokens,
-      outputTokens: acc.outputTokens + phase.usage.outputTokens,
-      cacheCreationTokens: acc.cacheCreationTokens + phase.usage.cacheCreationTokens,
-      cacheReadTokens: acc.cacheReadTokens + phase.usage.cacheReadTokens,
-      costUsd: acc.costUsd + phase.usage.costUsd,
-    }),
-    EMPTY_USAGE,
-  );
 };
 
 export const formatCost = (usd: number): string => {

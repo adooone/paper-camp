@@ -17,6 +17,8 @@ export const LogList = ({ rows, hasMore, onLoadMore }: LogListProps) => (
         <span className={headerLabelClassName}>Time</span>
         <span className={headerLabelClassName}>Type</span>
         <span className={headerLabelClassName}>Entry</span>
+        <span className={headerLabelClassName}>Agent</span>
+        <span className={headerLabelClassName}>Duration</span>
         <span className={headerLabelClassName}>Outcome</span>
       </div>
     </Card>

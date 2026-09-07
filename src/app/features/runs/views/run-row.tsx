@@ -1,12 +1,13 @@
 import { PlanIdStamp } from '@/app/features/plans/components';
-import type { LogRow } from '@/types/index';
+import { formatDuration } from '@/core/phase-run';
+import { AGENT_LABELS, type LogRow } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatTime } from '../helpers';
 
 export const LOG_ROW_GRID_CLASS =
-  'grid grid-cols-[64px_128px_minmax(0,1fr)_84px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
+  'grid grid-cols-[100px_128px_minmax(0,1fr)_100px_72px_84px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
 export interface LogRowViewProps {
   row: LogRow;
@@ -32,6 +33,12 @@ export const LogRowView = ({ row }: LogRowViewProps) => {
           <span className="flex min-w-0 items-center gap-2">
             <PlanIdStamp id={row.entityId} />
             <span className="overflow-hidden text-ellipsis whitespace-nowrap">{row.title}</span>
+          </span>
+          <span className="font-handwritten text-xs opacity-[0.55] overflow-hidden text-ellipsis whitespace-nowrap">
+            {row.agentId ? AGENT_LABELS[row.agentId] : '—'}
+          </span>
+          <span className="font-handwritten text-xs opacity-[0.55] whitespace-nowrap">
+            {row.durationMs != null ? formatDuration(row.durationMs) : '—'}
           </span>
           <div className="flex items-center">
             <Stamp size="small" variant={LOG_OUTCOME_VARIANT[row.outcome]} dot={row.unread}>
