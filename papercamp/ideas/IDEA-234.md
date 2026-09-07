@@ -107,8 +107,9 @@ else; it is simply forgotten.
 - [x] Print the three global commands
       Rewrite the Get started card to the global install, `scan ~/dev` with its single-repo note, and `start`, switching to `--tailnet` on an HTTPS origin.
       run: 4m56s · 54 in · 6.9k out · sonnet-5
-- [ ] Detect the machine that serves the hub
+- [x] Detect the machine that serves the hub
       Probe `origin/api/machine/projects` when there is no mount prefix and list that origin first as *This machine*, never writing it to `machine-store.ts`.
+      run: 6m10s · 74 in · 15.5k out · sonnet-5
 - [ ] Drop the GitHub and Tailnet cards
       Delete `github-connect-card.tsx`, `tailnet-peers-card.tsx`, `use-github-connect.ts` and `use-tailnet-peers.ts`, leaving Get started, *This machine* and remembered machines in the add column.
 - [ ] Remove the GitHub project kind

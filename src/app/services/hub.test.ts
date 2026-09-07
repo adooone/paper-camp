@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   daemonStartCommand,
+  detectThisMachine,
   hasChosenProject,
   machineProjectRuntimeUrl,
   pickableMachineProjects,
@@ -134,6 +135,31 @@ describe('servesOwnRuntime', () => {
     const probe = vi.fn();
     await expect(servesOwnRuntime('http://localhost:3333', probe)).resolves.toBe(false);
     expect(probe).not.toHaveBeenCalled();
+  });
+});
+
+describe('detectThisMachine', () => {
+  it('probes the origin when there is no mount prefix', async () => {
+    const projects = [{ slug: 'demo', name: 'Demo', mounted: false, busy: false, missing: false }];
+    const fetchMachineProjects = vi.fn().mockResolvedValue(projects);
+    await expect(
+      detectThisMachine('', 'http://localhost:4333', fetchMachineProjects),
+    ).resolves.toBe(projects);
+    expect(fetchMachineProjects).toHaveBeenCalledWith('http://localhost:4333');
+  });
+
+  it('does not probe when a mount prefix says a project already served this bundle', async () => {
+    const fetchMachineProjects = vi.fn();
+    await expect(
+      detectThisMachine('/paper-camp', 'http://localhost:4333', fetchMachineProjects),
+    ).resolves.toBeNull();
+    expect(fetchMachineProjects).not.toHaveBeenCalled();
+  });
+
+  it('is null when the origin has no machine registry at all', async () => {
+    await expect(
+      detectThisMachine('', 'http://localhost:4333', async () => null),
+    ).resolves.toBeNull();
   });
 });
 

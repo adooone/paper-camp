@@ -3,6 +3,7 @@ import { GetStartedCard } from './get-started-card';
 import { GithubConnectCard } from './github-connect-card';
 import { RememberedMachinesCards } from './remembered-machines-cards';
 import { TailnetPeersCard } from './tailnet-peers-card';
+import { ThisMachineCard } from './this-machine-card';
 
 export interface AddProjectColumnProps {
   projects: ProjectEntry[];
@@ -18,6 +19,7 @@ export const AddProjectColumn = ({ projects, onAddRepo }: AddProjectColumnProps)
     <div className="flex flex-col gap-4">
       <p className="m-0 font-semibold">Add a project</p>
       {projects.length === 0 && <GetStartedCard />}
+      <ThisMachineCard chosenRuntimeUrls={chosenRuntimeUrls} />
       <RememberedMachinesCards chosenRuntimeUrls={chosenRuntimeUrls} />
       <GithubConnectCard
         chosenRepoNames={projects.filter((entry) => entry.kind === 'github').map(projectEntryId)}

@@ -5,3 +5,4 @@ export * from './project-row';
 export * from './projects-column';
 export * from './remembered-machines-cards';
 export * from './tailnet-peers-card';
+export * from './this-machine-card';

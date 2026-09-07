@@ -92,6 +92,23 @@ export function pickableMachineProjects(
   );
 }
 
+/**
+ * The origin serving this SPA is a machine, not just a hosted bundle, when
+ * there's no mount prefix to say otherwise and that origin answers its own
+ * `/api/machine/projects` — the state a `paper-camp start`/`daemon` root is
+ * in before any project is picked. Same-origin, so the request passes the
+ * daemon's Host check the way loopback and LAN already do — no pairing
+ * token involved, unlike a `?machine=&token=` link.
+ */
+export async function detectThisMachine(
+  mountPrefix: string,
+  origin: string,
+  fetchMachineProjects: (machineUrl: string) => Promise<MachineProjectSummary[] | null>,
+): Promise<MachineProjectSummary[] | null> {
+  if (mountPrefix !== '') return null;
+  return fetchMachineProjects(origin);
+}
+
 export function daemonStartCommand(hubOrigin: string): string {
   return new URL(hubOrigin).protocol === 'https:'
     ? 'paper-camp start --tailnet'
