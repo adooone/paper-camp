@@ -306,3 +306,15 @@ header[class*="layout-module__header___"] {
   padding-bottom: 4px;
   line-height: 1;
 }
+
+/*
+ * The sidebar card is capped at the viewport and scrolls inside; Card's own
+ * border and texture layers have to pass that constraint down, or the inner
+ * scroll region never gets a bounded height. Same reach-in pattern as above.
+ */
+.pc-sidebar-card [class*="borderLayer"],
+.pc-sidebar-card [class*="textureLayer"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}

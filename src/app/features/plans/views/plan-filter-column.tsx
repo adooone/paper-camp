@@ -1,3 +1,4 @@
+import { SidebarSkeleton } from '@/app/components';
 import { selectPlanRows } from '@/app/features/plans/helpers';
 import { useActivePlan } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
@@ -27,7 +28,8 @@ export const PlanFilterColumn = () => {
   const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
   const navigate = useNavigate();
 
-  if (!plans || activePlan) return null;
+  if (activePlan) return null;
+  if (!plans) return <SidebarSkeleton />;
 
   const { statusCounts } = selectPlanRows(plans.entries, filters);
   const { statusCounts: corpusStatusCounts } = selectPlanRows(plans.entries);

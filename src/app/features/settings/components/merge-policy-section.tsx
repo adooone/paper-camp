@@ -1,3 +1,4 @@
+import { RowSkeleton } from '@/app/components';
 import { applyMergePolicy, fetchMergePolicy } from '@/app/services/system';
 import type { MergePolicy, MergePolicyResult } from '@/types/index';
 import { Alert, Button, Card, Divider, Stamp, useToast } from '@dendelion/paper-ui';
@@ -87,7 +88,7 @@ export const MergePolicySection = () => {
           from the PR.
         </p>
       </div>
-      {result === undefined && <p>Loading…</p>}
+      {result === undefined && <RowSkeleton />}
       {result === null && <Alert variant="warning">Failed to load merge policy.</Alert>}
       {result?.status === 'unavailable' && <Alert variant="warning">{result.reason}</Alert>}
       {result?.status === 'ok' && (

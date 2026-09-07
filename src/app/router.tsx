@@ -2,36 +2,49 @@ import { AppShell } from '@/app/components/layout/app-shell';
 import { HubHome } from '@/app/features/hub';
 import { PlansPage } from '@/app/features/plans/index';
 import { bareId } from '@/app/hooks';
+import { importWithRecovery } from '@/app/services/lazy-page';
 import type { ModuleLayer } from '@/app/services/module-layer';
 import { mountPrefix } from '@/app/services/mount';
+import type { LogSearchParams } from '@/core/run-filters';
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
 import { lazy } from 'react';
 
 export { HUB_PATH } from '@/app/components/layout/nav';
 
 const DocsPage = lazy(() =>
-  import('@/app/features/docs/index').then((m) => ({ default: m.DocsPage })),
+  importWithRecovery('DocsPage', () => import('@/app/features/docs/index')).then((m) => ({
+    default: m.DocsPage,
+  })),
 );
 const SettingsPage = lazy(() =>
-  import('@/app/features/settings/index').then((m) => ({ default: m.SettingsPage })),
-);
-const TasksPage = lazy(() =>
-  import('@/app/features/tasks/index').then((m) => ({ default: m.TasksPage })),
+  importWithRecovery('SettingsPage', () => import('@/app/features/settings/index')).then((m) => ({
+    default: m.SettingsPage,
+  })),
 );
 const RoadmapPage = lazy(() =>
-  import('@/app/features/roadmap/index').then((m) => ({ default: m.RoadmapPage })),
+  importWithRecovery('RoadmapPage', () => import('@/app/features/roadmap/index')).then((m) => ({
+    default: m.RoadmapPage,
+  })),
 );
 const StatsPage = lazy(() =>
-  import('@/app/features/stats/index').then((m) => ({ default: m.StatsPage })),
+  importWithRecovery('StatsPage', () => import('@/app/features/stats/index')).then((m) => ({
+    default: m.StatsPage,
+  })),
 );
 const GitPage = lazy(() =>
-  import('@/app/features/git/index').then((m) => ({ default: m.GitPage })),
+  importWithRecovery('GitPage', () => import('@/app/features/git/index')).then((m) => ({
+    default: m.GitPage,
+  })),
 );
-const InboxPage = lazy(() =>
-  import('@/app/features/inbox/index').then((m) => ({ default: m.InboxPage })),
+const LogPage = lazy(() =>
+  importWithRecovery('LogPage', () => import('@/app/features/runs/index')).then((m) => ({
+    default: m.LogPage,
+  })),
 );
-const IssuesPage = lazy(() =>
-  import('@/app/features/issues/index').then((m) => ({ default: m.IssuesPage })),
+const LogEntryPage = lazy(() =>
+  importWithRecovery('LogEntryPage', () => import('@/app/features/runs/index')).then((m) => ({
+    default: m.LogEntryPage,
+  })),
 );
 
 const rootRoute = createRootRoute({ component: AppShell });
@@ -117,8 +130,9 @@ const roadmapRoute = createRoute({
 const inboxRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/inbox',
-  component: InboxPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: () => {
+    throw redirect({ to: '/log' });
+  },
 });
 
 const statsRoute = createRoute({
@@ -135,20 +149,56 @@ const gitRoute = createRoute({
   staticData: { layer: 'runtime' },
 });
 
+const stringParam = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
+
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/tasks',
-  component: TasksPage,
   validateSearch: (search: Record<string, unknown>): { taskId?: string } => ({
-    taskId: typeof search.taskId === 'string' ? search.taskId : undefined,
+    taskId: stringParam(search.taskId),
   }),
-  staticData: { layer: 'runtime' },
+  beforeLoad: ({ search }) => {
+    if (search.taskId) {
+      throw redirect({
+        to: '/log/$entryId',
+        params: { entryId: `task:${search.taskId}` },
+      });
+    }
+    throw redirect({ to: '/log' });
+  },
 });
 
 const issuesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/issues',
-  component: IssuesPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/log' });
+  },
+});
+
+const logRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/log',
+  component: LogPage,
+  validateSearch: (search: Record<string, unknown>): LogSearchParams => ({
+    outcome: stringParam(search.outcome),
+    type: stringParam(search.type),
+    agent: stringParam(search.agent),
+    range: stringParam(search.range),
+    q: stringParam(search.q),
+    sort: stringParam(search.sort),
+    // `?unread=1` arrives as the number 1 through the router's search parser.
+    unread:
+      search.unread === '1' || search.unread === 1 || search.unread === true ? '1' : undefined,
+  }),
+  staticData: { layer: 'runtime' },
+});
+
+const logEntryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/log/$entryId',
+  component: LogEntryPage,
   staticData: { layer: 'runtime' },
 });
 
@@ -164,6 +214,8 @@ const routeTree = rootRoute.addChildren([
   settingsSectionRoute,
   tasksRoute,
   issuesRoute,
+  logRoute,
+  logEntryRoute,
   roadmapRoute,
   statsRoute,
   inboxRoute,

@@ -1,3 +1,4 @@
+import { EmptyState, SidebarSkeleton } from '@/app/components';
 import { CheckAllIcon } from '@/app/components/icons';
 import { CountBadge, GitStatusMarker } from '@/app/features/git/components';
 import { useGitFileList } from '@/app/features/git/hooks';
@@ -35,7 +36,17 @@ export const GitFileList = () => {
     toggleStaged,
   } = useGitFileList();
 
-  if (!files || files.length === 0) return null;
+  if (!files) return <SidebarSkeleton />;
+  if (files.length === 0) {
+    return (
+      <div className="flex flex-col">
+        <div className={`${sectionLabelClass} flex h-[32px] items-end pb-1`}>
+          <span>Changed files</span>
+        </div>
+        <EmptyState className="py-4" message="Nothing changed — the working tree is clean." />
+      </div>
+    );
+  }
 
   return (
     <nav aria-label="Changed files" className="flex flex-col">

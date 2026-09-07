@@ -1,5 +1,4 @@
-import { EmptyState } from '@/app/components';
-import { EmptyTrayIllustration } from '@/app/components/empty-state-illustrations';
+import { EmptyState, RowSkeleton } from '@/app/components';
 import { PageTitle } from '@/app/components/page-title';
 import type { PlanEntry } from '@/types/index';
 import { Card } from '@dendelion/paper-ui';
@@ -55,10 +54,7 @@ export const PlansPage = () => {
     if (planId || ideaId) {
       return (
         <div>
-          <output aria-live="polite" className="sr-only">
-            Loading…
-          </output>
-          <p className="opacity-50">Loading…</p>
+          <RowSkeleton />
         </div>
       );
     }
@@ -108,7 +104,6 @@ export const PlansPage = () => {
 
           {plans.entries.length === 0 ? (
             <EmptyState
-              illustration={<EmptyTrayIllustration />}
               message={
                 <>
                   No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}

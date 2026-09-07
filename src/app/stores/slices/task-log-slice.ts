@@ -7,6 +7,9 @@ export type TaskLogSlice = {
   taskLog: TaskLogEntry[];
   taskLogLoading: boolean;
   loadTaskLog: () => Promise<void>;
+
+  activeLogEntryTitle: string | null;
+  setActiveLogEntryTitle: (title: string | null) => void;
 };
 
 export function createTaskLogSlice(set: SetState): TaskLogSlice {
@@ -20,5 +23,8 @@ export function createTaskLogSlice(set: SetState): TaskLogSlice {
       () => ({ taskLog: [] }),
       'taskLogLoading',
     ),
+
+    activeLogEntryTitle: null,
+    setActiveLogEntryTitle: (title) => set({ activeLogEntryTitle: title }),
   };
 }

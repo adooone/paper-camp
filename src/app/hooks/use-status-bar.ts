@@ -51,6 +51,6 @@ export function useStatusBar(): StatusBarState {
     unreadNotificationCount,
     onOpenSetup: () => navigate({ to: '/settings/$section', params: { section: 'setup' } }),
     onOpenGit: () => navigate({ to: '/git' }),
-    onOpenNotifications: () => navigate({ to: '/inbox' }),
+    onOpenNotifications: () => navigate({ to: '/log', search: { unread: '1' } }),
   };
 }

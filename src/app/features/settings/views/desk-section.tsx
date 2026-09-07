@@ -1,4 +1,4 @@
-import { EmptyState } from '@/app/components';
+import { EmptyState, RowSkeleton } from '@/app/components';
 import { DeskProposalModal } from '@/app/components/stack-panel/desk-proposal-modal';
 import { Alert, Button, Card, PlusIcon, Spinner } from '@dendelion/paper-ui';
 import { useDeskSection } from '../hooks/use-desk-section';
@@ -50,7 +50,7 @@ export const DeskSection = () => {
           </Button>
         )}
       </div>
-      {config === undefined && <p>Loading…</p>}
+      {config === undefined && <RowSkeleton />}
       {config === null && (
         <Alert variant="warning">
           No papercamp/config.json found — run <code>paper-camp init</code> in this directory first.

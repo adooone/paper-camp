@@ -1,3 +1,4 @@
+import { RowSkeleton } from '@/app/components';
 import { color } from '@/app/styles/tokens';
 import { DEFAULT_AGENTS } from '@/types/index';
 import { Alert, Button, Card, Divider, Input, Stamp } from '@dendelion/paper-ui';
@@ -29,7 +30,7 @@ export const GeneralSection = () => {
       <div className="mb-6">
         <h2 className="m-0">Project Info</h2>
       </div>
-      {config === undefined && <p>Loading…</p>}
+      {config === undefined && <RowSkeleton />}
       {config === null && (
         <Alert variant="warning">
           No papercamp/config.json found — run <code>paper-camp init</code> in this directory first.

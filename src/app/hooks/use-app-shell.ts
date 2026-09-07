@@ -39,6 +39,7 @@ export interface AppShellState {
   isSettingsArea: boolean;
   isRoadmapArea: boolean;
   isGitArea: boolean;
+  isLogArea: boolean;
   isInHub: boolean;
   stackOpen: boolean;
   toggleStack: () => void;
@@ -77,6 +78,7 @@ export function useAppShell(): AppShellState {
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
   const isRoadmapArea = pathname === '/roadmap';
   const isGitArea = pathname === '/git';
+  const isLogArea = pathname === '/log' || pathname.startsWith('/log/');
   const activeId = isPlansArea
     ? 'plans'
     : isDocsArea
@@ -84,7 +86,8 @@ export function useAppShell(): AppShellState {
       : isSettingsArea
         ? 'settings'
         : navItems.find((item) => item.path === pathname)?.id;
-  const hasSidebar = isPlansArea || isDocsArea || isSettingsArea || isRoadmapArea || isGitArea;
+  const hasSidebar =
+    isPlansArea || isDocsArea || isSettingsArea || isRoadmapArea || isGitArea || isLogArea;
   const sidebarAreaKey = isPlansArea
     ? 'plans'
     : isDocsArea
@@ -93,7 +96,9 @@ export function useAppShell(): AppShellState {
         ? 'settings'
         : isRoadmapArea
           ? 'roadmap'
-          : 'git';
+          : isGitArea
+            ? 'git'
+            : 'log';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
@@ -171,6 +176,7 @@ export function useAppShell(): AppShellState {
     isSettingsArea,
     isRoadmapArea,
     isGitArea,
+    isLogArea,
     isInHub: HUB_PATHS.includes(pathname),
     stackOpen,
     toggleStack,

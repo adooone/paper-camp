@@ -1,3 +1,4 @@
+import { RowSkeleton } from '@/app/components';
 import { Alert, Button, Card } from '@dendelion/paper-ui';
 import { useSetupSection } from '../hooks';
 import { ConnectionRow } from './connection-row';
@@ -22,7 +23,7 @@ export const SetupSection = () => {
       <div className="mb-6">
         <h2 className="m-0">Setup</h2>
       </div>
-      {connections === null && !loadFailed && <p>Loading…</p>}
+      {connections === null && !loadFailed && <RowSkeleton />}
       {loadFailed && (
         <div className="mb-4">
           <Alert variant="warning">Failed to load connections. Try refreshing.</Alert>
