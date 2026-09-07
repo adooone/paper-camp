@@ -55,7 +55,8 @@ Re-scanning or pruning the registry on the daemon's behalf. Any change to how
       run: 6m51s · 58 in · 16.1k out · sonnet-5
 - [x] Report `missing: true` from `/api/machine/projects`
       run: 11m27s · 80 in · 17.3k out · sonnet-5
-- [ ] Grey the missing row in the hub and make it unpickable
+- [x] Grey the missing row in the hub and make it unpickable
+      run: 11m16s · 140 in · 28.3k out · sonnet-5
 - [ ] Print `missing` in the `ls` and `status` STATE column
       Add one hint below the table naming `paper-camp rm <slug>`; nothing is removed automatically.
 - [ ] Answer `/api/*` at the daemon root with 404 JSON
