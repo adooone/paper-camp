@@ -1,14 +1,20 @@
 import { type ChildProcess, type SpawnSyncReturns, spawn, spawnSync } from 'node:child_process';
-import { access, appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, appendFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { type Server, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { type DaemonState, isProcessAlive, writeDaemonState } from '../core/daemon-state';
-import { type MachineRegistry, addProject, saveRegistry } from '../core/machine-registry';
+import {
+  type MachineProject,
+  type MachineRegistry,
+  addProject,
+  saveRegistry,
+} from '../core/machine-registry';
 import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
 import {
+  MISSING_PROJECT_HINT,
   buildDaemonArgs,
   formatProjectTable,
   lastLines,
@@ -56,65 +62,123 @@ describe('restartOptionsFromState', () => {
 });
 
 describe('projectState', () => {
-  it('is "—" for every slug when no daemon is running', () => {
-    expect(projectState('demo', null)).toBe('—');
+  const dirs: string[] = [];
+
+  afterAll(async () => {
+    await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
   });
 
-  it('is "idle" when the daemon is running but does not know the slug', () => {
-    expect(projectState('demo', [])).toBe('idle');
+  async function makeProject(slug: string): Promise<MachineProject> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-project-state-'));
+    dirs.push(dir);
+    await mkdir(join(dir, 'papercamp'), { recursive: true });
+    await writeFile(join(dir, 'papercamp', 'config.json'), '{}', 'utf-8');
+    return { slug, path: dir, name: slug };
+  }
+
+  it('is "—" for a present project when no daemon is running', async () => {
+    const project = await makeProject('demo');
+    expect(await projectState(project, null)).toBe('—');
   });
 
-  it('is "idle" for a known project that is not mounted', () => {
+  it('is "idle" when the daemon is running but does not know the slug', async () => {
+    const project = await makeProject('demo');
+    expect(await projectState(project, [])).toBe('idle');
+  });
+
+  it('is "idle" for a known project that is not mounted', async () => {
+    const project = await makeProject('demo');
     const projects: MachineProjectSummary[] = [
       { slug: 'demo', name: 'Demo', mounted: false, busy: false, missing: false },
     ];
-    expect(projectState('demo', projects)).toBe('idle');
+    expect(await projectState(project, projects)).toBe('idle');
   });
 
-  it('is "mounted" for a mounted, idle project', () => {
+  it('is "mounted" for a mounted, idle project', async () => {
+    const project = await makeProject('demo');
     const projects: MachineProjectSummary[] = [
       { slug: 'demo', name: 'Demo', mounted: true, busy: false, missing: false },
     ];
-    expect(projectState('demo', projects)).toBe('mounted');
+    expect(await projectState(project, projects)).toBe('mounted');
   });
 
-  it('is "busy" over "mounted" for a project with a task in flight', () => {
+  it('is "busy" over "mounted" for a project with a task in flight', async () => {
+    const project = await makeProject('demo');
     const projects: MachineProjectSummary[] = [
       { slug: 'demo', name: 'Demo', mounted: true, busy: true, missing: false },
     ];
-    expect(projectState('demo', projects)).toBe('busy');
+    expect(await projectState(project, projects)).toBe('busy');
+  });
+
+  it('is "missing" over everything else when the folder has no papercamp/config.json', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-project-state-'));
+    dirs.push(dir);
+    const project: MachineProject = { slug: 'demo', path: join(dir, 'gone'), name: 'Demo' };
+    const projects: MachineProjectSummary[] = [
+      { slug: 'demo', name: 'Demo', mounted: true, busy: true, missing: true },
+    ];
+    expect(await projectState(project, projects)).toBe('missing');
+    expect(await projectState(project, null)).toBe('missing');
   });
 });
 
 describe('formatProjectTable', () => {
-  it('reports no projects registered', () => {
-    expect(formatProjectTable([], null)).toBe('No projects registered.');
+  const dirs: string[] = [];
+
+  afterAll(async () => {
+    await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
   });
 
-  it('pads the slug and state columns and shows "—" for every row with no daemon running', () => {
-    const projects = [
-      { slug: 'alpha', path: '/some/alpha', name: 'Alpha' },
-      { slug: 'longer-slug', path: '/some/longer-slug', name: 'Longer' },
-    ];
+  async function makeProject(slug: string): Promise<MachineProject> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-project-table-'));
+    dirs.push(dir);
+    await mkdir(join(dir, 'papercamp'), { recursive: true });
+    await writeFile(join(dir, 'papercamp', 'config.json'), '{}', 'utf-8');
+    return { slug, path: dir, name: slug };
+  }
 
-    expect(formatProjectTable(projects, null)).toBe(
-      'alpha        —  /some/alpha\n' + 'longer-slug  —  /some/longer-slug',
+  it('reports no projects registered', async () => {
+    expect(await formatProjectTable([], null)).toBe('No projects registered.');
+  });
+
+  it('pads the slug and state columns and shows "—" for every row with no daemon running', async () => {
+    const alpha = await makeProject('alpha');
+    const longerSlug = await makeProject('longer-slug');
+
+    expect(await formatProjectTable([alpha, longerSlug], null)).toBe(
+      `alpha        —  ${alpha.path}\n` + `longer-slug  —  ${longerSlug.path}`,
     );
   });
 
-  it('shows the live mounted/busy/idle state per project once a daemon answers', () => {
-    const projects = [
-      { slug: 'alpha', path: '/some/alpha', name: 'Alpha' },
-      { slug: 'beta', path: '/some/beta', name: 'Beta' },
-    ];
+  it('shows the live mounted/busy/idle state per project once a daemon answers', async () => {
+    const alpha = await makeProject('alpha');
+    const beta = await makeProject('beta');
     const liveProjects: MachineProjectSummary[] = [
       { slug: 'alpha', name: 'Alpha', mounted: true, busy: true, missing: false },
       { slug: 'beta', name: 'Beta', mounted: false, busy: false, missing: false },
     ];
 
-    expect(formatProjectTable(projects, liveProjects)).toBe(
-      'alpha  busy  /some/alpha\n' + 'beta   idle  /some/beta',
+    expect(await formatProjectTable([alpha, beta], liveProjects)).toBe(
+      `alpha  busy  ${alpha.path}\n` + `beta   idle  ${beta.path}`,
     );
+  });
+
+  it('prints missing in the STATE column and a hint to forget it below the table', async () => {
+    const alpha = await makeProject('alpha');
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-project-table-'));
+    dirs.push(dir);
+    const deleted: MachineProject = { slug: 'deleted', path: join(dir, 'gone'), name: 'Deleted' };
+
+    const table = await formatProjectTable([alpha, deleted], null);
+
+    expect(table).toBe(
+      `alpha    —        ${alpha.path}\ndeleted  missing  ${deleted.path}\n\n${MISSING_PROJECT_HINT}`,
+    );
+  });
+
+  it('omits the missing hint when nothing is missing', async () => {
+    const alpha = await makeProject('alpha');
+    expect(await formatProjectTable([alpha], null)).not.toContain('paper-camp rm');
   });
 });
 
@@ -209,6 +273,15 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
       registry = addProject(registry, project.path, project.name).registry;
     }
     await saveRegistry(join(configDir, 'projects.json'), registry);
+  }
+
+  async function makeProjectDir(name: string): Promise<string> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-start-test-project-'));
+    dirs.push(dir);
+    const projectPath = join(dir, name);
+    await mkdir(join(projectPath, 'papercamp'), { recursive: true });
+    await writeFile(join(projectPath, 'papercamp', 'config.json'), '{}', 'utf-8');
+    return projectPath;
   }
 
   function runCli(args: string[], configDir: string): SpawnSyncReturns<string> {
@@ -364,12 +437,27 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
 
   it('ls prints "—" for every project when no daemon is running', async () => {
     const configDir = await makeConfigDir();
-    await makeRegistry(configDir, [{ path: '/some/demo', name: 'Demo' }]);
+    const demoPath = await makeProjectDir('demo');
+    await makeRegistry(configDir, [{ path: demoPath, name: 'Demo' }]);
 
     const result = runCli(['ls'], configDir);
 
     expect(result.status).toBe(0);
-    expect(result.stdout.trim()).toBe('demo  —  /some/demo');
+    expect(result.stdout.trim()).toBe(`demo  —  ${demoPath}`);
+  });
+
+  it('ls prints missing in the STATE column and a hint to forget a deleted project', async () => {
+    const configDir = await makeConfigDir();
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-start-test-project-'));
+    dirs.push(dir);
+    const deletedPath = join(dir, 'deleted-repo');
+    await makeRegistry(configDir, [{ path: deletedPath, name: 'Deleted' }]);
+
+    const result = runCli(['ls'], configDir);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(`deleted-repo  missing  ${deletedPath}`);
+    expect(result.stdout).toContain(MISSING_PROJECT_HINT);
   });
 
   it('ls reports "No projects registered." with no daemon running and an empty registry', async () => {
@@ -383,9 +471,11 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
 
   it('ls reports mounted/busy state per project once the daemon answers', async () => {
     const configDir = await makeConfigDir();
+    const alphaPath = await makeProjectDir('alpha');
+    const betaPath = await makeProjectDir('beta');
     await makeRegistry(configDir, [
-      { path: '/some/alpha', name: 'Alpha' },
-      { path: '/some/beta', name: 'Beta' },
+      { path: alphaPath, name: 'Alpha' },
+      { path: betaPath, name: 'Beta' },
     ]);
     await spawnFakeDaemon(configDir, {
       projects: [
@@ -397,23 +487,25 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     const result = runCli(['ls'], configDir);
 
     expect(result.status).toBe(0);
-    expect(result.stdout.trim()).toBe('alpha  busy  /some/alpha\nbeta   idle  /some/beta');
+    expect(result.stdout.trim()).toBe(`alpha  busy  ${alphaPath}\nbeta   idle  ${betaPath}`);
   });
 
   it('status reports the daemon as not running, then the "—" project table', async () => {
     const configDir = await makeConfigDir();
-    await makeRegistry(configDir, [{ path: '/some/demo', name: 'Demo' }]);
+    const demoPath = await makeProjectDir('demo');
+    await makeRegistry(configDir, [{ path: demoPath, name: 'Demo' }]);
 
     const result = runCli(['status'], configDir);
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('paper-camp: daemon is not running');
-    expect(result.stdout).toContain('demo  —  /some/demo');
+    expect(result.stdout).toContain(`demo  —  ${demoPath}`);
   });
 
   it('status reports the running daemon block, then the live project table', async () => {
     const configDir = await makeConfigDir();
-    await makeRegistry(configDir, [{ path: '/some/demo', name: 'Demo' }]);
+    const demoPath = await makeProjectDir('demo');
+    await makeRegistry(configDir, [{ path: demoPath, name: 'Demo' }]);
     const state = await spawnFakeDaemon(configDir, {
       projects: [{ slug: 'demo', name: 'Demo', mounted: true, busy: false, missing: false }],
     });
@@ -422,7 +514,7 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain(`paper-camp: daemon running — pid ${state.pid}`);
-    expect(result.stdout).toContain('demo  mounted  /some/demo');
+    expect(result.stdout).toContain(`demo  mounted  ${demoPath}`);
   });
 
   it('logs says so and exits 0 when there is no daemon.log yet', async () => {

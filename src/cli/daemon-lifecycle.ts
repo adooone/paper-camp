@@ -16,6 +16,7 @@ import {
 import {
   type MachineProject,
   defaultRegistryPath,
+  isProjectMissing,
   listProjects,
   loadRegistry,
 } from '../core/machine-registry';
@@ -220,47 +221,56 @@ async function fetchLiveProjects(): Promise<LiveProjects> {
   return { state, projects };
 }
 
-export type ProjectState = 'mounted' | 'busy' | 'idle' | '—';
+export type ProjectState = 'mounted' | 'busy' | 'idle' | 'missing' | '—';
 
-export function projectState(
-  slug: string,
+export async function projectState(
+  project: MachineProject,
   liveProjects: MachineProjectSummary[] | null,
-): ProjectState {
+): Promise<ProjectState> {
+  if (await isProjectMissing(project.path)) return 'missing';
   if (!liveProjects) return '—';
-  const project = liveProjects.find((p) => p.slug === slug);
-  if (!project) return 'idle';
-  if (project.busy) return 'busy';
-  return project.mounted ? 'mounted' : 'idle';
+  const live = liveProjects.find((p) => p.slug === project.slug);
+  if (!live) return 'idle';
+  if (live.busy) return 'busy';
+  return live.mounted ? 'mounted' : 'idle';
 }
 
-export function formatProjectTable(
+export const MISSING_PROJECT_HINT =
+  "paper-camp: a missing project isn't removed automatically — run `paper-camp rm <slug>` to forget it.";
+
+export async function formatProjectTable(
   projects: MachineProject[],
   liveProjects: MachineProjectSummary[] | null,
-): string {
+): Promise<string> {
   if (projects.length === 0) return 'No projects registered.';
-  const rows = projects.map((project) => ({
-    slug: project.slug,
-    state: projectState(project.slug, liveProjects),
-    path: project.path,
-  }));
+  const rows = await Promise.all(
+    projects.map(async (project) => ({
+      slug: project.slug,
+      state: await projectState(project, liveProjects),
+      path: project.path,
+    })),
+  );
   const slugWidth = Math.max(...rows.map((row) => row.slug.length));
   const stateWidth = Math.max(...rows.map((row) => row.state.length));
-  return rows
+  const table = rows
     .map((row) => `${row.slug.padEnd(slugWidth)}  ${row.state.padEnd(stateWidth)}  ${row.path}`)
     .join('\n');
+  return rows.some((row) => row.state === 'missing')
+    ? `${table}\n\n${MISSING_PROJECT_HINT}`
+    : table;
 }
 
 export async function runLs(): Promise<void> {
   const { projects: liveProjects } = await fetchLiveProjects();
   const registry = await loadRegistry(defaultRegistryPath());
-  console.log(formatProjectTable(listProjects(registry), liveProjects));
+  console.log(await formatProjectTable(listProjects(registry), liveProjects));
 }
 
 export async function runStatus(): Promise<void> {
   const { state, projects: liveProjects } = await fetchLiveProjects();
   console.log(state ? formatDaemonStatusLine(state) : 'paper-camp: daemon is not running');
   const registry = await loadRegistry(defaultRegistryPath());
-  console.log(formatProjectTable(listProjects(registry), liveProjects));
+  console.log(await formatProjectTable(listProjects(registry), liveProjects));
 }
 
 export const DEFAULT_LOG_LINES = 50;
