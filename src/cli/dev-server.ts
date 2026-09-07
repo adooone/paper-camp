@@ -69,8 +69,19 @@ export async function startDevServer({
 
   if (minted) await persistPairingState();
 
+  const localLink = buildRegistrationLinkForRuntime(
+    `http://localhost:${port}`,
+    apiMiddleware.pairing.token,
+  );
+
   const server = createServer((req, res) => {
     apiMiddleware(req, res, () => {
+      if ((req.url ?? '/').split('?')[0] === '/') {
+        res.statusCode = 302;
+        res.setHeader('Location', localLink);
+        res.end();
+        return;
+      }
       serveStatic(req, res, staticDir, indexHtml).catch((error) => {
         res.statusCode = 500;
         res.end(String(error));
@@ -102,7 +113,7 @@ export async function startDevServer({
   console.log(
     formatDevBanner({
       version: PAPER_CAMP_VERSION,
-      localUrl: `http://localhost:${port}`,
+      localUrl: localLink,
       networkLink: network.link,
       networkBlocked: network.blocked,
       color,

@@ -182,9 +182,17 @@ export function createDaemonRequestHandler(
   mounted: ReadonlyMap<string, ApiMiddleware>,
   staticDir: string,
   indexHtml: string,
+  localLink: string,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   return async (req, res) => {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
+
+    if (pathname === '/') {
+      res.statusCode = 302;
+      res.setHeader('Location', localLink);
+      res.end();
+      return;
+    }
 
     if (pathname === MACHINE_PROJECTS_PATH) {
       applyCorsHeaders(req, res);
@@ -240,14 +248,14 @@ export function createDaemonRequestHandler(
 }
 
 export function formatDaemonBanner(
-  port: number,
+  localLink: string,
   network: NetworkRegistration,
   color: boolean,
 ): string {
   return [
     formatDevBanner({
       version: PAPER_CAMP_VERSION,
-      localUrl: `http://localhost:${port}`,
+      localUrl: localLink,
       networkLink: network.link,
       networkBlocked: network.blocked,
       color,
@@ -282,12 +290,14 @@ export async function startDaemonServer({
     mounted,
   );
 
+  const localLink = buildRegistrationLinkForMachine(`http://localhost:${port}`, pairingState.token);
   const handleRequest = createDaemonRequestHandler(
     defaultRegistryPath(),
     mount,
     mounted,
     staticDir,
     indexHtml,
+    localLink,
   );
 
   const server = createServer((req, res) => {
@@ -333,7 +343,7 @@ export async function startDaemonServer({
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
   console.log(
     formatDaemonBanner(
-      port,
+      localLink,
       await networkRegistrationLink(port, pairingState.token, buildRegistrationLinkForMachine),
       color,
     ),

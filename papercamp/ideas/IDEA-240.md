@@ -86,8 +86,9 @@ already lets a runtime point at a different origin. Any change to pairing
 or to the daemon's project mounts.
 
 ### Phases
-- [ ] Hand the hosted client link to `dev` and `daemon`
+- [x] Hand the hosted client link to `dev` and `daemon`
       Both banners print a Local link to `PAPERCAMP_HOSTED_CLIENT_URL` carrying `?runtime=`/`?machine=` and the pairing token, and `GET /` answers a 302 to it.
+      run: 15s · 124 in · 32.1k out · sonnet-5
 - [ ] Open the hosted client from the toolbar trigger
       Same link shape, with the host app's own runtime origin in `?runtime=`.
 - [ ] Drop static serving from the servers
