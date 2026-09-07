@@ -300,9 +300,15 @@ export async function runLogs(opts: LogsOptions): Promise<void> {
   for (const line of lastLines(content, opts.lines ?? DEFAULT_LOG_LINES)) console.log(line);
   if (!opts.follow) return;
 
+  // A follower outlives the shell or test that spawned it unless it watches for
+  // that itself; `process.ppid` is read once at startup under Bun, so the parent
+  // is probed with a zero signal instead.
+  const parentPid = process.ppid;
+  process.stdout.on('error', () => process.exit(0));
   let printedLength = content.length;
   for (;;) {
     await sleep(LOGS_POLL_INTERVAL_MS);
+    if (!isProcessAlive(parentPid) || process.stdout.destroyed) return;
     const latest = await readFile(logPath, 'utf-8').catch(() => '');
     if (latest.length < printedLength) printedLength = 0;
     if (latest.length > printedLength) {
