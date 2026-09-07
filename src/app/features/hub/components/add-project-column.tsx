@@ -1,16 +1,13 @@
 import { type ProjectEntry, projectEntryId } from '@/app/services/project-registry';
 import { GetStartedCard } from './get-started-card';
-import { GithubConnectCard } from './github-connect-card';
 import { RememberedMachinesCards } from './remembered-machines-cards';
-import { TailnetPeersCard } from './tailnet-peers-card';
 import { ThisMachineCard } from './this-machine-card';
 
 export interface AddProjectColumnProps {
   projects: ProjectEntry[];
-  onAddRepo: (repoFullName: string) => void;
 }
 
-export const AddProjectColumn = ({ projects, onAddRepo }: AddProjectColumnProps) => {
+export const AddProjectColumn = ({ projects }: AddProjectColumnProps) => {
   const chosenRuntimeUrls = projects
     .filter((entry) => entry.kind === 'runtime')
     .map(projectEntryId);
@@ -21,11 +18,6 @@ export const AddProjectColumn = ({ projects, onAddRepo }: AddProjectColumnProps)
       {projects.length === 0 && <GetStartedCard />}
       <ThisMachineCard chosenRuntimeUrls={chosenRuntimeUrls} />
       <RememberedMachinesCards chosenRuntimeUrls={chosenRuntimeUrls} />
-      <GithubConnectCard
-        chosenRepoNames={projects.filter((entry) => entry.kind === 'github').map(projectEntryId)}
-        onAddRepo={onAddRepo}
-      />
-      <TailnetPeersCard chosenRuntimeUrls={chosenRuntimeUrls} />
     </div>
   );
 };

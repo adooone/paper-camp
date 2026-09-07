@@ -110,8 +110,9 @@ else; it is simply forgotten.
 - [x] Detect the machine that serves the hub
       Probe `origin/api/machine/projects` when there is no mount prefix and list that origin first as *This machine*, never writing it to `machine-store.ts`.
       run: 6m10s · 74 in · 15.5k out · sonnet-5
-- [ ] Drop the GitHub and Tailnet cards
+- [x] Drop the GitHub and Tailnet cards
       Delete `github-connect-card.tsx`, `tailnet-peers-card.tsx`, `use-github-connect.ts` and `use-tailnet-peers.ts`, leaving Get started, *This machine* and remembered machines in the add column.
+      run: 5m22s · 50 in · 10.5k out · sonnet-5
 - [ ] Remove the GitHub project kind
       Take `kind` out of `project-registry.ts`, drop entries of that kind on parse, and cut the GitHub services, `github-slice.ts`, the device-flow route and its callers down to their runtime branch.
 - [ ] Replace plan-only with offline
