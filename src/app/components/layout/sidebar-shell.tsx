@@ -49,12 +49,12 @@ export const SidebarShell = ({
       <aside
         ref={asideRef}
         // Dialog semantics only as a mobile drawer — at lg+ it's an in-flow sidebar.
-        // `self-start` at lg+: a stretched flex item is already as tall as the row, so
-        // sticky would never engage; sized to its content it pins while the page scrolls.
         role={mobileOpen ? 'dialog' : undefined}
         aria-modal={mobileOpen || undefined}
         aria-label="Sidebar navigation"
         tabIndex={-1}
+        // `self-start`: a row-stretched flex item is already full height, so sticky can't
+        // engage; sizing to content lets it pin while the page scrolls.
         className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 overflow-y-auto lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:flex lg:max-h-[calc(100dvh-var(--pc-header-h)-32px)] lg:flex-col lg:self-start lg:overflow-visible lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } ${
