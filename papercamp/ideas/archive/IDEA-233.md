@@ -2,9 +2,9 @@
 id: IDEA-233
 title: Daemon lifecycle like pm2
 type: feat
-status: review
+status: done
 created: 2026-09-05
-updated: 2026-09-05
+updated: 2026-09-07
 tags:
   - cli
   - server

@@ -2,7 +2,7 @@
 id: IDEA-237
 title: One log view for every run
 type: feat
-status: review
+status: done
 created: 2026-09-05
 updated: 2026-09-07
 tags:
