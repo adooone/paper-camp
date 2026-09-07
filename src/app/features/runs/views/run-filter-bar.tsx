@@ -1,7 +1,7 @@
 import type { LogFilters } from '@/core/run-filters';
 import type { LogRowOutcome, LogRowType } from '@/types/index';
-import { Stamp } from '@dendelion/paper-ui';
-import { LOG_TYPE_LABELS } from '../constants';
+import { Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 
 const OUTCOME_OPTIONS: LogRowOutcome[] = ['done', 'error', 'superseded', 'open'];
 
@@ -9,16 +9,19 @@ interface FilterChipProps {
   active: boolean;
   onClick: () => void;
   children: string;
+  /** Outcome chips keep their outcome colour, dimmed until active; type chips are
+   * neutral until active — the two groups read apart without a divider. */
+  variant?: StampVariant;
 }
 
-const FilterChip = ({ active, onClick, children }: FilterChipProps) => (
+const FilterChip = ({ active, onClick, children, variant }: FilterChipProps) => (
   <button
     type="button"
     aria-pressed={active}
     onClick={onClick}
-    className="shrink-0 border-none bg-transparent p-0 cursor-pointer"
+    className={`shrink-0 border-none bg-transparent p-0 cursor-pointer ${active ? '' : 'opacity-60'}`}
   >
-    <Stamp size="small" variant={active ? 'info' : 'neutral'}>
+    <Stamp size="small" variant={variant ?? (active ? 'info' : 'neutral')}>
       {children}
     </Stamp>
   </button>
@@ -54,13 +57,11 @@ export const LogFilterBar = ({ filters, availableTypes, onChange }: LogFilterBar
           key={outcome}
           active={filters.outcomes.includes(outcome)}
           onClick={() => toggleOutcome(outcome)}
+          variant={LOG_OUTCOME_VARIANT[outcome]}
         >
           {outcome}
         </FilterChip>
       ))}
-      {availableTypes.length > 0 && (
-        <span className="w-px shrink-0 self-stretch bg-ink-200" aria-hidden="true" />
-      )}
       {availableTypes.map((type) => (
         <FilterChip
           key={type}

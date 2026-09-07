@@ -1,5 +1,5 @@
 import type { LogRow } from '@/types/index';
-import { Button, Stamp } from '@dendelion/paper-ui';
+import { Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 
 export interface LogTitleActionsProps {
@@ -14,8 +14,10 @@ export interface LogTitleActionsProps {
   onClearFilters: () => void;
 }
 
-const stampTriggerClass = 'cursor-pointer border-none bg-transparent p-0';
+const stampTriggerClass = 'shrink-0 cursor-pointer border-none bg-transparent p-0';
 const countClass = 'font-handwritten text-sm opacity-[0.55] whitespace-nowrap';
+const linkClass =
+  'shrink-0 cursor-pointer border-none bg-transparent p-0 font-handwritten text-sm underline opacity-70 hover:opacity-100';
 
 export const LogTitleActions = ({
   runningRows,
@@ -32,7 +34,7 @@ export const LogTitleActions = ({
   const running = runningRows[0];
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-1">
       {running && (
         // paper-ui has no clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1)
         <button
@@ -59,18 +61,18 @@ export const LogTitleActions = ({
               {unreadCount} unread
             </Stamp>
           </button>
-          <Button variant="ghost" size="small" onClick={() => void onMarkAllRead()}>
+          <button type="button" className={linkClass} onClick={() => void onMarkAllRead()}>
             Mark all read
-          </Button>
+          </button>
         </>
       )}
       <span className={countClass}>
         {hasActiveFilters ? `${matchedCount} of ${totalCount} entries` : `${totalCount} entries`}
       </span>
       {hasActiveFilters && (
-        <Button variant="ghost" size="small" onClick={onClearFilters}>
+        <button type="button" className={linkClass} onClick={onClearFilters}>
           Clear filters
-        </Button>
+        </button>
       )}
     </div>
   );

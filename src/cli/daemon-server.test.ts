@@ -110,6 +110,36 @@ describe('createProjectMounter', () => {
     expect(buildApi).toHaveBeenCalledTimes(2);
   });
 
+  it('evicts a mounted project once its folder is gone, then mounts it fresh when restored', async () => {
+    const projectPath = await makeProjectDir('repo');
+    const registryPath = await makeRegistryFile({
+      version: 1,
+      projects: [{ slug: 'repo', path: projectPath, name: 'Repo' }],
+    });
+    const killCurrent = vi.fn().mockResolvedValue(undefined);
+    const killAll = vi.fn().mockResolvedValue(undefined);
+    const liveApi = () =>
+      Object.assign(vi.fn(), {
+        agent: { killCurrent, hasActiveTask: () => false },
+        services: { killAll },
+      }) as unknown as ApiMiddleware;
+    const buildApi = vi.fn().mockImplementation(async () => liveApi());
+    const { mount, mounted } = createProjectMounter(registryPath, buildApi);
+
+    expect((await mount('repo')).kind).toBe('mounted');
+    await rm(join(projectPath, 'papercamp'), { recursive: true, force: true });
+
+    expect(await mount('repo')).toEqual({ kind: 'missing', path: projectPath });
+    expect(mounted.has('repo')).toBe(false);
+    expect(killCurrent).toHaveBeenCalledTimes(1);
+    expect(killAll).toHaveBeenCalledTimes(1);
+
+    await mkdir(join(projectPath, 'papercamp'), { recursive: true });
+    await writeFile(join(projectPath, 'papercamp', 'config.json'), '{}', 'utf-8');
+    expect((await mount('repo')).kind).toBe('mounted');
+    expect(buildApi).toHaveBeenCalledTimes(2);
+  });
+
   it('reports missing for a registered project whose folder has no papercamp/config.json, without building an API', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-project-'));
     dirs.push(dir);

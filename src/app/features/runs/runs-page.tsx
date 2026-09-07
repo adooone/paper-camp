@@ -25,8 +25,8 @@ export const LogPage = () => {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <PageTitle className="mb-0">Log</PageTitle>
+      <div className="mb-6 flex flex-nowrap items-center gap-3">
+        <PageTitle className="mb-0 shrink-0">Log</PageTitle>
         <div className="flex-1" />
         {hasAnyRows && (
           <LogTitleActions

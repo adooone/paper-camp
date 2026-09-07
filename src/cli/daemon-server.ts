@@ -145,16 +145,24 @@ export function createProjectMounter(
   mounted: Map<string, ApiMiddleware> = new Map(),
 ) {
   async function mount(slug: string): Promise<MountResult> {
-    const cached = mounted.get(slug);
-    if (cached) return { kind: 'mounted', api: cached };
-
     const registry = await loadRegistry(registryPath);
     const project = registry.projects.find((p) => p.slug === slug);
     if (!project) return { kind: 'unknown' };
 
+    // Checked on every request, cached or not: a folder deleted after its mount
+    // must stop serving an empty desk, and a restored one must mount fresh.
     if (await isProjectMissing(project.path)) {
+      const stale = mounted.get(slug);
+      if (stale) {
+        mounted.delete(slug);
+        await stale.agent.killCurrent();
+        await stale.services.killAll();
+      }
       return { kind: 'missing', path: project.path };
     }
+
+    const cached = mounted.get(slug);
+    if (cached) return { kind: 'mounted', api: cached };
 
     const apiMiddleware = await buildApi(project);
     mounted.set(slug, apiMiddleware);
