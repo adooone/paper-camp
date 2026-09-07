@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { type Server, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -56,19 +56,29 @@ describe('createProjectMounter', () => {
     return path;
   }
 
-  it('resolves null for an unregistered slug without building an API', async () => {
+  async function makeProjectDir(name: string): Promise<string> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-project-'));
+    dirs.push(dir);
+    const projectPath = join(dir, name);
+    await mkdir(join(projectPath, 'papercamp'), { recursive: true });
+    await writeFile(join(projectPath, 'papercamp', 'config.json'), '{}', 'utf-8');
+    return projectPath;
+  }
+
+  it('resolves unknown for an unregistered slug without building an API', async () => {
     const registryPath = await makeRegistryFile({ version: 1, projects: [] });
     const buildApi = vi.fn();
 
     const { mount } = createProjectMounter(registryPath, buildApi);
     const result = await mount('missing');
 
-    expect(result).toBeNull();
+    expect(result).toEqual({ kind: 'unknown' });
     expect(buildApi).not.toHaveBeenCalled();
   });
 
   it('builds and caches a registered project on first request', async () => {
-    const { registry } = addProject({ version: 1, projects: [] }, '/some/repo', 'Repo');
+    const projectPath = await makeProjectDir('repo');
+    const { registry } = addProject({ version: 1, projects: [] }, projectPath, 'Repo');
     const registryPath = await makeRegistryFile(registry);
     const api = fakeApi();
     const buildApi = vi.fn().mockResolvedValue(api);
@@ -77,15 +87,17 @@ describe('createProjectMounter', () => {
     const first = await mount('repo');
     const second = await mount('repo');
 
-    expect(first).toBe(api);
-    expect(second).toBe(api);
+    expect(first).toEqual({ kind: 'mounted', api });
+    expect(second).toEqual({ kind: 'mounted', api });
     expect(buildApi).toHaveBeenCalledTimes(1);
     expect(mounted.get('repo')).toBe(api);
   });
 
   it('mounts independent slugs independently', async () => {
-    const step1 = addProject({ version: 1, projects: [] }, '/some/alpha');
-    const step2 = addProject(step1.registry, '/some/beta');
+    const alphaPath = await makeProjectDir('alpha');
+    const betaPath = await makeProjectDir('beta');
+    const step1 = addProject({ version: 1, projects: [] }, alphaPath);
+    const step2 = addProject(step1.registry, betaPath);
     const registryPath = await makeRegistryFile(step2.registry);
     const apiAlpha = fakeApi();
     const apiBeta = fakeApi();
@@ -93,9 +105,24 @@ describe('createProjectMounter', () => {
 
     const { mount } = createProjectMounter(registryPath, buildApi);
 
-    expect(await mount('alpha')).toBe(apiAlpha);
-    expect(await mount('beta')).toBe(apiBeta);
+    expect(await mount('alpha')).toEqual({ kind: 'mounted', api: apiAlpha });
+    expect(await mount('beta')).toEqual({ kind: 'mounted', api: apiBeta });
     expect(buildApi).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports missing for a registered project whose folder has no papercamp/config.json, without building an API', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-project-'));
+    dirs.push(dir);
+    const deletedPath = join(dir, 'deleted-repo');
+    const { registry } = addProject({ version: 1, projects: [] }, deletedPath, 'Deleted');
+    const registryPath = await makeRegistryFile(registry);
+    const buildApi = vi.fn();
+
+    const { mount } = createProjectMounter(registryPath, buildApi);
+    const result = await mount('deleted-repo');
+
+    expect(result).toEqual({ kind: 'missing', path: deletedPath });
+    expect(buildApi).not.toHaveBeenCalled();
   });
 });
 
@@ -273,6 +300,15 @@ describe('createDaemonRequestHandler', () => {
     return path;
   }
 
+  async function makeProjectDir(name: string): Promise<string> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-e2e-project-'));
+    dirs.push(dir);
+    const projectPath = join(dir, name);
+    await mkdir(join(projectPath, 'papercamp'), { recursive: true });
+    await writeFile(join(projectPath, 'papercamp', 'config.json'), '{}', 'utf-8');
+    return projectPath;
+  }
+
   async function startHandler(registryPath: string): Promise<{ port: number; seenUrls: string[] }> {
     const seenUrls: string[] = [];
     const mockedApi = Object.assign(
@@ -319,8 +355,9 @@ describe('createDaemonRequestHandler', () => {
   });
 
   it('reports a project as mounted after a request has built its middleware', async () => {
+    const projectPath = await makeProjectDir('demo');
     const registryPath = await makeRegistryFile(
-      addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
     );
     const { port } = await startHandler(registryPath);
     await fetch(`http://127.0.0.1:${port}/p/demo/`);
@@ -333,8 +370,9 @@ describe('createDaemonRequestHandler', () => {
   });
 
   it('mounts a registered slug and rewrites the forwarded URL to strip the /p/<slug> prefix', async () => {
+    const projectPath = await makeProjectDir('demo');
     const registryPath = await makeRegistryFile(
-      addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
     );
     const { port, seenUrls } = await startHandler(registryPath);
 
@@ -343,6 +381,24 @@ describe('createDaemonRequestHandler', () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('mounted');
     expect(seenUrls).toEqual(['/sub?x=1']);
+  });
+
+  it('404s a registered slug whose folder has no papercamp/config.json', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-e2e-project-'));
+    dirs.push(dir);
+    const deletedPath = join(dir, 'deleted-repo');
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, deletedPath, 'Deleted').registry,
+    );
+    const { port, seenUrls } = await startHandler(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/p/deleted-repo/`);
+
+    expect(response.status).toBe(404);
+    expect(await response.text()).toBe(
+      `paper-camp daemon: project folder missing at ${deletedPath}`,
+    );
+    expect(seenUrls).toEqual([]);
   });
 
   it('404s an unregistered slug without mounting anything', async () => {

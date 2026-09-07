@@ -24,6 +24,7 @@ import {
 import {
   type MachineProject,
   defaultRegistryPath,
+  isProjectMissing,
   listProjects,
   loadRegistry,
 } from '../core/machine-registry';
@@ -127,6 +128,11 @@ export async function createProjectApi(
   );
 }
 
+export type MountResult =
+  | { kind: 'mounted'; api: ApiMiddleware }
+  | { kind: 'unknown' }
+  | { kind: 'missing'; path: string };
+
 /** Builds and caches a project's API middleware instance on first request — an
  * unopened registered project costs nothing until then. `buildApi` is a seam for
  * tests to avoid spinning up a real project's git/watcher stack. */
@@ -135,18 +141,22 @@ export function createProjectMounter(
   buildApi: (project: MachineProject) => Promise<ApiMiddleware>,
   mounted: Map<string, ApiMiddleware> = new Map(),
 ) {
-  async function mount(slug: string): Promise<ApiMiddleware | null> {
+  async function mount(slug: string): Promise<MountResult> {
     const cached = mounted.get(slug);
-    if (cached) return cached;
+    if (cached) return { kind: 'mounted', api: cached };
 
     const registry = await loadRegistry(registryPath);
     const project = registry.projects.find((p) => p.slug === slug);
-    if (!project) return null;
+    if (!project) return { kind: 'unknown' };
+
+    if (await isProjectMissing(project.path)) {
+      return { kind: 'missing', path: project.path };
+    }
 
     const apiMiddleware = await buildApi(project);
     mounted.set(slug, apiMiddleware);
     console.log(`paper-camp: mounted "${slug}" (${project.path})`);
-    return apiMiddleware;
+    return { kind: 'mounted', api: apiMiddleware };
   }
 
   return { mount, mounted };
@@ -157,7 +167,7 @@ export function createProjectMounter(
  * `http.Server` in tests without spinning any of that up. */
 export function createDaemonRequestHandler(
   registryPath: string,
-  mount: (slug: string) => Promise<ApiMiddleware | null>,
+  mount: (slug: string) => Promise<MountResult>,
   mounted: ReadonlyMap<string, ApiMiddleware>,
   staticDir: string,
   indexHtml: string,
@@ -188,13 +198,18 @@ export function createDaemonRequestHandler(
       return;
     }
 
-    const apiMiddleware = await mount(request.slug);
-    if (!apiMiddleware) {
+    const result = await mount(request.slug);
+    if (result.kind !== 'mounted') {
       res.statusCode = 404;
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.end(`paper-camp daemon: no registered project with slug "${request.slug}"`);
+      res.end(
+        result.kind === 'missing'
+          ? `paper-camp daemon: project folder missing at ${result.path}`
+          : `paper-camp daemon: no registered project with slug "${request.slug}"`,
+      );
       return;
     }
+    const apiMiddleware = result.api;
 
     const query = (req.url ?? '').split('?')[1];
     req.url = query ? `${request.rest}?${query}` : request.rest;

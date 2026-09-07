@@ -50,8 +50,9 @@ Re-scanning or pruning the registry on the daemon's behalf. Any change to how
 - [x] Decide missing from the registry entry
       One helper reads a registered path and reports it missing when `papercamp/config.json` is absent.
       run: 3m31s · 88 in · 15k out · sonnet-5
-- [ ] Refuse to mount a missing project
+- [x] Refuse to mount a missing project
       `createProjectMounter` answers 404 `paper-camp daemon: project folder missing at <path>` instead of serving an empty desk.
+      run: 6m51s · 58 in · 16.1k out · sonnet-5
 - [ ] Report `missing: true` from `/api/machine/projects`
 - [ ] Grey the missing row in the hub and make it unpickable
 - [ ] Print `missing` in the `ls` and `status` STATE column
