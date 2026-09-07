@@ -116,7 +116,7 @@ else; it is simply forgotten.
 - [x] Remove the GitHub project kind
       Take `kind` out of `project-registry.ts`, drop entries of that kind on parse, and cut the GitHub services, `github-slice.ts`, the device-flow route and its callers down to their runtime branch.
       run: 12m15s · 160 in · 48.9k out · sonnet-5
-- [ ] Replace plan-only with offline
+- [x] Replace plan-only with offline
       `runtime-unavailable.tsx` shows the start command instead of a token form, and a row that does not answer stamps *Offline*.
 - [ ] Rewrite the install docs
       USAGE.md and README.md teach only the three commands, `paper-camp dev` keeps one sentence as the foreground mode, and the Connect GitHub and Plan-only entries go.
