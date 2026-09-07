@@ -138,13 +138,11 @@ describe('servesOwnRuntime', () => {
 });
 
 describe('daemonStartCommand', () => {
-  it('is a plain daemon for an http hub', () => {
-    expect(daemonStartCommand('http://localhost:5173')).toBe('npx paper-camp daemon');
+  it('is a plain start for an http hub', () => {
+    expect(daemonStartCommand('http://localhost:5173')).toBe('paper-camp start');
   });
 
-  it('adds --tailnet for an https hub, since a plain daemon is unreachable from it', () => {
-    expect(daemonStartCommand('https://paper-camp.vercel.app')).toBe(
-      'npx paper-camp daemon --tailnet',
-    );
+  it('adds --tailnet for an https hub, since a plain start is unreachable from it', () => {
+    expect(daemonStartCommand('https://paper-camp.vercel.app')).toBe('paper-camp start --tailnet');
   });
 });

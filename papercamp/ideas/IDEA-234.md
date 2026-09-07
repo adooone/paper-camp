@@ -104,8 +104,9 @@ stays exactly as it is. Migrating a stored GitHub-kind entry into anything
 else; it is simply forgotten.
 
 ### Phases
-- [ ] Print the three global commands
+- [x] Print the three global commands
       Rewrite the Get started card to the global install, `scan ~/dev` with its single-repo note, and `start`, switching to `--tailnet` on an HTTPS origin.
+      run: 4m56s · 54 in · 6.9k out · sonnet-5
 - [ ] Detect the machine that serves the hub
       Probe `origin/api/machine/projects` when there is no mount prefix and list that origin first as *This machine*, never writing it to `machine-store.ts`.
 - [ ] Drop the GitHub and Tailnet cards

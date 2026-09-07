@@ -94,6 +94,6 @@ export function pickableMachineProjects(
 
 export function daemonStartCommand(hubOrigin: string): string {
   return new URL(hubOrigin).protocol === 'https:'
-    ? 'npx paper-camp daemon --tailnet'
-    : 'npx paper-camp daemon';
+    ? 'paper-camp start --tailnet'
+    : 'paper-camp start';
 }
