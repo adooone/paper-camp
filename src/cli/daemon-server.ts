@@ -79,15 +79,18 @@ export async function readMachineProjectSummaries(
   mounted: ReadonlyMap<string, ApiMiddleware>,
 ): Promise<MachineProjectSummary[]> {
   const registry = await loadRegistry(registryPath);
-  return listProjects(registry).map(({ slug, name }) => {
-    const apiMiddleware = mounted.get(slug);
-    return {
-      slug,
-      name,
-      mounted: apiMiddleware !== undefined,
-      busy: apiMiddleware?.agent.hasActiveTask() ?? false,
-    };
-  });
+  return Promise.all(
+    listProjects(registry).map(async ({ slug, name, path }) => {
+      const apiMiddleware = mounted.get(slug);
+      return {
+        slug,
+        name,
+        mounted: apiMiddleware !== undefined,
+        busy: apiMiddleware?.agent.hasActiveTask() ?? false,
+        missing: await isProjectMissing(path),
+      };
+    }),
+  );
 }
 
 /** Loaded once and passed by reference into every project's middleware, so pairing

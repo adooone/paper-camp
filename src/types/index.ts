@@ -782,12 +782,14 @@ export const MACHINE_PROJECTS_PATH = '/api/machine/projects' as const;
  *  filesystem path, since the hub only ever sees projects already registered.
  *  `mounted` is whether the daemon has built this project's middleware yet
  *  (lazy, so a registered-but-untouched project starts out unmounted);
- *  `busy` is whether that project's own agent has a task in flight. */
+ *  `busy` is whether that project's own agent has a task in flight;
+ *  `missing` is whether the registered path has no `papercamp/config.json`. */
 export interface MachineProjectSummary {
   slug: string;
   name: string;
   mounted: boolean;
   busy: boolean;
+  missing: boolean;
 }
 
 export interface MergePolicy {

@@ -66,21 +66,21 @@ describe('projectState', () => {
 
   it('is "idle" for a known project that is not mounted', () => {
     const projects: MachineProjectSummary[] = [
-      { slug: 'demo', name: 'Demo', mounted: false, busy: false },
+      { slug: 'demo', name: 'Demo', mounted: false, busy: false, missing: false },
     ];
     expect(projectState('demo', projects)).toBe('idle');
   });
 
   it('is "mounted" for a mounted, idle project', () => {
     const projects: MachineProjectSummary[] = [
-      { slug: 'demo', name: 'Demo', mounted: true, busy: false },
+      { slug: 'demo', name: 'Demo', mounted: true, busy: false, missing: false },
     ];
     expect(projectState('demo', projects)).toBe('mounted');
   });
 
   it('is "busy" over "mounted" for a project with a task in flight', () => {
     const projects: MachineProjectSummary[] = [
-      { slug: 'demo', name: 'Demo', mounted: true, busy: true },
+      { slug: 'demo', name: 'Demo', mounted: true, busy: true, missing: false },
     ];
     expect(projectState('demo', projects)).toBe('busy');
   });
@@ -108,8 +108,8 @@ describe('formatProjectTable', () => {
       { slug: 'beta', path: '/some/beta', name: 'Beta' },
     ];
     const liveProjects: MachineProjectSummary[] = [
-      { slug: 'alpha', name: 'Alpha', mounted: true, busy: true },
-      { slug: 'beta', name: 'Beta', mounted: false, busy: false },
+      { slug: 'alpha', name: 'Alpha', mounted: true, busy: true, missing: false },
+      { slug: 'beta', name: 'Beta', mounted: false, busy: false, missing: false },
     ];
 
     expect(formatProjectTable(projects, liveProjects)).toBe(
@@ -389,8 +389,8 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     ]);
     await spawnFakeDaemon(configDir, {
       projects: [
-        { slug: 'alpha', name: 'Alpha', mounted: true, busy: true },
-        { slug: 'beta', name: 'Beta', mounted: false, busy: false },
+        { slug: 'alpha', name: 'Alpha', mounted: true, busy: true, missing: false },
+        { slug: 'beta', name: 'Beta', mounted: false, busy: false, missing: false },
       ],
     });
 
@@ -415,7 +415,7 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     const configDir = await makeConfigDir();
     await makeRegistry(configDir, [{ path: '/some/demo', name: 'Demo' }]);
     const state = await spawnFakeDaemon(configDir, {
-      projects: [{ slug: 'demo', name: 'Demo', mounted: true, busy: false }],
+      projects: [{ slug: 'demo', name: 'Demo', mounted: true, busy: false, missing: false }],
     });
 
     const result = runCli(['status'], configDir);

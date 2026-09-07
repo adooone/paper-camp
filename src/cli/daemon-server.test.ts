@@ -141,19 +141,30 @@ describe('readMachineProjectSummaries', () => {
     return path;
   }
 
+  async function makeProjectDir(name: string): Promise<string> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-project-'));
+    dirs.push(dir);
+    const projectPath = join(dir, name);
+    await mkdir(join(projectPath, 'papercamp'), { recursive: true });
+    await writeFile(join(projectPath, 'papercamp', 'config.json'), '{}', 'utf-8');
+    return projectPath;
+  }
+
   const fakeApi = (active: boolean) =>
     ({ agent: { hasActiveTask: () => active } }) as unknown as ApiMiddleware;
 
   it('lists slug and name, sorted, with no filesystem path, unmounted by default', async () => {
-    const step1 = addProject({ version: 1, projects: [] }, '/some/zeta', 'Zeta');
-    const step2 = addProject(step1.registry, '/some/alpha', 'Alpha');
+    const zetaPath = await makeProjectDir('zeta');
+    const alphaPath = await makeProjectDir('alpha');
+    const step1 = addProject({ version: 1, projects: [] }, zetaPath, 'Zeta');
+    const step2 = addProject(step1.registry, alphaPath, 'Alpha');
     const registryPath = await makeRegistryFile(step2.registry);
 
     const summaries = await readMachineProjectSummaries(registryPath, new Map());
 
     expect(summaries).toEqual([
-      { slug: 'alpha', name: 'Alpha', mounted: false, busy: false },
-      { slug: 'zeta', name: 'Zeta', mounted: false, busy: false },
+      { slug: 'alpha', name: 'Alpha', mounted: false, busy: false, missing: false },
+      { slug: 'zeta', name: 'Zeta', mounted: false, busy: false, missing: false },
     ]);
   });
 
@@ -164,8 +175,9 @@ describe('readMachineProjectSummaries', () => {
   });
 
   it('reports mounted true and busy false for an idle mounted project', async () => {
+    const projectPath = await makeProjectDir('demo');
     const registryPath = await makeRegistryFile(
-      addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
     );
 
     const summaries = await readMachineProjectSummaries(
@@ -173,12 +185,15 @@ describe('readMachineProjectSummaries', () => {
       new Map([['demo', fakeApi(false)]]),
     );
 
-    expect(summaries).toEqual([{ slug: 'demo', name: 'Demo', mounted: true, busy: false }]);
+    expect(summaries).toEqual([
+      { slug: 'demo', name: 'Demo', mounted: true, busy: false, missing: false },
+    ]);
   });
 
   it('reports busy true for a mounted project with an active task', async () => {
+    const projectPath = await makeProjectDir('demo');
     const registryPath = await makeRegistryFile(
-      addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
     );
 
     const summaries = await readMachineProjectSummaries(
@@ -186,7 +201,24 @@ describe('readMachineProjectSummaries', () => {
       new Map([['demo', fakeApi(true)]]),
     );
 
-    expect(summaries).toEqual([{ slug: 'demo', name: 'Demo', mounted: true, busy: true }]);
+    expect(summaries).toEqual([
+      { slug: 'demo', name: 'Demo', mounted: true, busy: true, missing: false },
+    ]);
+  });
+
+  it('reports missing true for a registered project whose folder has no papercamp/config.json', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-project-'));
+    dirs.push(dir);
+    const deletedPath = join(dir, 'deleted-repo');
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, deletedPath, 'Deleted').registry,
+    );
+
+    const summaries = await readMachineProjectSummaries(registryPath, new Map());
+
+    expect(summaries).toEqual([
+      { slug: 'deleted-repo', name: 'Deleted', mounted: false, busy: false, missing: true },
+    ]);
   });
 });
 
@@ -341,8 +373,9 @@ describe('createDaemonRequestHandler', () => {
   }
 
   it('lists registered projects at /api/machine/projects for a loopback caller, unmounted', async () => {
+    const projectPath = await makeProjectDir('demo');
     const registryPath = await makeRegistryFile(
-      addProject({ version: 1, projects: [] }, '/some/demo', 'Demo').registry,
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
     );
     const { port } = await startHandler(registryPath);
 
@@ -350,7 +383,7 @@ describe('createDaemonRequestHandler', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      projects: [{ slug: 'demo', name: 'Demo', mounted: false, busy: false }],
+      projects: [{ slug: 'demo', name: 'Demo', mounted: false, busy: false, missing: false }],
     });
   });
 
@@ -365,7 +398,7 @@ describe('createDaemonRequestHandler', () => {
     const response = await fetch(`http://127.0.0.1:${port}/api/machine/projects`);
 
     expect(await response.json()).toEqual({
-      projects: [{ slug: 'demo', name: 'Demo', mounted: true, busy: false }],
+      projects: [{ slug: 'demo', name: 'Demo', mounted: true, busy: false, missing: false }],
     });
   });
 
@@ -399,6 +432,24 @@ describe('createDaemonRequestHandler', () => {
       `paper-camp daemon: project folder missing at ${deletedPath}`,
     );
     expect(seenUrls).toEqual([]);
+  });
+
+  it('reports missing true at /api/machine/projects for a registered slug whose folder has no papercamp/config.json', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-e2e-project-'));
+    dirs.push(dir);
+    const deletedPath = join(dir, 'deleted-repo');
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, deletedPath, 'Deleted').registry,
+    );
+    const { port } = await startHandler(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/machine/projects`);
+
+    expect(await response.json()).toEqual({
+      projects: [
+        { slug: 'deleted-repo', name: 'Deleted', mounted: false, busy: false, missing: true },
+      ],
+    });
   });
 
   it('404s an unregistered slug without mounting anything', async () => {
