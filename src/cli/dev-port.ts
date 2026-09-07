@@ -45,7 +45,10 @@ export function resolveDevPort(explicitPort: string | undefined, configPort: num
   return explicitPort ? Number(explicitPort) : (configPort ?? 3333);
 }
 
-export function portInUseMessage(port: number): string {
+export function portInUseMessage(port: number, kind: 'dev' | 'daemon' = 'dev'): string {
+  if (kind === 'daemon') {
+    return `Port ${port} is already taken — a daemon may already be running; paper-camp status shows it, or pick another port with -p.`;
+  }
   return [
     `Port ${port} is already taken — something else (maybe another paper-camp) is listening there.`,
     'Pick a different port with -p, or set "port" in papercamp/config.json for this project.',

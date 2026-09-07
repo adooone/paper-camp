@@ -307,7 +307,7 @@ export async function startDaemonServer({
 
   await new Promise<void>((resolve, reject) => {
     server.once('error', (error: NodeJS.ErrnoException) => {
-      reject(error.code === 'EADDRINUSE' ? new Error(portInUseMessage(port)) : error);
+      reject(error.code === 'EADDRINUSE' ? new Error(portInUseMessage(port, 'daemon')) : error);
     });
     server.listen(port, resolve);
   });

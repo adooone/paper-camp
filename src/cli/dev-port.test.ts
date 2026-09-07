@@ -24,11 +24,19 @@ describe('resolveDevPort', () => {
 });
 
 describe('portInUseMessage', () => {
-  it('names the taken port and both ways out', () => {
+  it('names the taken port and both ways out for dev', () => {
     const message = portInUseMessage(3333);
     expect(message).toContain('3333');
     expect(message).toContain('-p');
     expect(message).toContain('papercamp/config.json');
+  });
+
+  it('points the daemon variant at `paper-camp status` and -p, not config.json', () => {
+    const message = portInUseMessage(4333, 'daemon');
+    expect(message).toContain('4333');
+    expect(message).toContain('paper-camp status');
+    expect(message).toContain('-p');
+    expect(message).not.toContain('papercamp/config.json');
   });
 });
 

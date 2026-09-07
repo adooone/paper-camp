@@ -2,7 +2,7 @@
 id: IDEA-235
 title: Stale entries and daemon root answers
 type: fix
-status: idea
+status: review
 created: 2026-09-05
 tags:
   - cli
@@ -63,8 +63,9 @@ Re-scanning or pruning the registry on the daemon's behalf. Any change to how
 - [x] Answer `/api/*` at the daemon root with 404 JSON
       Every root `/api/` path but `/api/machine/projects` returns `{"error":"no project mounted at the daemon root"}`; drop `servesOwnRuntime`'s reliance on HTML failing `response.json()`.
       run: 14m21s · 64 in · 15.1k out · sonnet-5
-- [ ] Give the daemon its own port-in-use message
+- [x] Give the daemon its own port-in-use message
       `portInUseMessage` takes a daemon variant pointing at `paper-camp status` and `-p`; `dev` keeps its wording.
+      run: 5m50s · 40 in · 5.1k out · sonnet-5
 
 ### Thread
 - [x] 2026-09-05 [log] [agent] Run order: Extends the same daemon root/registry contract IDEA-233 lays down and must land before the welcome screen relies on the daemon root answering /api/* with JSON 404 for self-discovery.
