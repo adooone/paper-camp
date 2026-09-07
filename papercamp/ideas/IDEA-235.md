@@ -47,8 +47,9 @@ Re-scanning or pruning the registry on the daemon's behalf. Any change to how
 `scan` decides what is a project.
 
 ### Phases
-- [ ] Decide missing from the registry entry
+- [x] Decide missing from the registry entry
       One helper reads a registered path and reports it missing when `papercamp/config.json` is absent.
+      run: 3m31s · 88 in · 15k out · sonnet-5
 - [ ] Refuse to mount a missing project
       `createProjectMounter` answers 404 `paper-camp daemon: project folder missing at <path>` instead of serving an empty desk.
 - [ ] Report `missing: true` from `/api/machine/projects`

@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 
@@ -134,6 +134,17 @@ export function removeProject(registry: MachineRegistry, slug: string): RemovePr
 
 export function listProjects(registry: MachineRegistry): MachineProject[] {
   return [...registry.projects].sort((a, b) => a.slug.localeCompare(b.slug));
+}
+
+/** A registered path is missing once its `papercamp/config.json` is gone — the
+ * mounter, the machine-projects endpoint, and `ls`/`status` all key off this. */
+export async function isProjectMissing(path: string): Promise<boolean> {
+  try {
+    await access(join(path, 'papercamp', 'config.json'));
+    return false;
+  } catch {
+    return true;
+  }
 }
 
 export interface ScanEntry {

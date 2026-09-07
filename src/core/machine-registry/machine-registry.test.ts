@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   addProject,
+  isProjectMissing,
   listProjects,
   loadRegistry,
   removeProject,
@@ -111,6 +112,28 @@ describe('listProjects', () => {
     const step1 = addProject({ version: 1, projects: [] }, '/a/zeta');
     const step2 = addProject(step1.registry, '/a/alpha');
     expect(listProjects(step2.registry).map((p) => p.slug)).toEqual(['alpha', 'zeta']);
+  });
+});
+
+describe('isProjectMissing', () => {
+  it('is false when papercamp/config.json exists', async () => {
+    const dir = await makeTempDir();
+    await mkdir(join(dir, 'papercamp'), { recursive: true });
+    await writeFile(join(dir, 'papercamp', 'config.json'), '{}', 'utf-8');
+
+    expect(await isProjectMissing(dir)).toBe(false);
+  });
+
+  it('is true when papercamp/config.json is absent', async () => {
+    const dir = await makeTempDir();
+
+    expect(await isProjectMissing(dir)).toBe(true);
+  });
+
+  it('is true when the registered path itself does not exist', async () => {
+    const dir = await makeTempDir();
+
+    expect(await isProjectMissing(join(dir, 'deleted'))).toBe(true);
   });
 });
 
