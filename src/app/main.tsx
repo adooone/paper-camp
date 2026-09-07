@@ -5,7 +5,6 @@ import './styles/utilities.css';
 import { RouterProvider } from '@tanstack/react-router';
 import { HUB_PATH, router } from './router';
 import { apiUrl, setApiBase, setApiPairingToken } from './services/api-base';
-import { readGithubConfig } from './services/github/config-store';
 import { hasChosenProject } from './services/hub';
 import './services/machine-connection';
 import { mountPrefix } from './services/mount';
@@ -35,7 +34,7 @@ const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element not found');
 
 async function chooseProject(): Promise<boolean> {
-  if (hasChosenProject(mountPrefix, runtimeUrl, readGithubConfig() !== null)) return true;
+  if (hasChosenProject(mountPrefix, runtimeUrl)) return true;
   return probeSelfServed();
 }
 

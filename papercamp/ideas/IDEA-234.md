@@ -113,8 +113,9 @@ else; it is simply forgotten.
 - [x] Drop the GitHub and Tailnet cards
       Delete `github-connect-card.tsx`, `tailnet-peers-card.tsx`, `use-github-connect.ts` and `use-tailnet-peers.ts`, leaving Get started, *This machine* and remembered machines in the add column.
       run: 5m22s · 50 in · 10.5k out · sonnet-5
-- [ ] Remove the GitHub project kind
+- [x] Remove the GitHub project kind
       Take `kind` out of `project-registry.ts`, drop entries of that kind on parse, and cut the GitHub services, `github-slice.ts`, the device-flow route and its callers down to their runtime branch.
+      run: 12m15s · 160 in · 48.9k out · sonnet-5
 - [ ] Replace plan-only with offline
       `runtime-unavailable.tsx` shows the start command instead of a token form, and a row that does not answer stamps *Offline*.
 - [ ] Rewrite the install docs

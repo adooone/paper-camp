@@ -63,15 +63,13 @@ export function useAppShell(): AppShellState {
   const checkRuntimeReachable = useAppStore((s) => s.checkRuntimeReachable);
   const runtimeReachable = useAppStore((s) => s.runtimeReachable);
   const runtimeChecking = useAppStore((s) => s.runtimeChecking);
-  const githubConfig = useAppStore((s) => s.githubConfig);
   const activeLayer = useRouterState({
     select: (s) => s.matches.at(-1)?.staticData.layer,
   });
-  const readiness = moduleReadiness(
-    activeLayer,
-    { reachable: runtimeReachable, checking: runtimeChecking },
-    { githubConfigured: githubConfig !== null },
-  );
+  const readiness = moduleReadiness(activeLayer, {
+    reachable: runtimeReachable,
+    checking: runtimeChecking,
+  });
   const isPlansArea =
     pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');

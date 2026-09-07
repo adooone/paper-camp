@@ -9,12 +9,8 @@ export interface ProjectsColumnProps {
   onRemove: (id: string) => void;
 }
 
-function isRuntimeEntry(entry: ProjectEntry) {
-  return entry.kind === 'runtime';
-}
-
 export const ProjectsColumn = ({ projects, onOpen, onRename, onRemove }: ProjectsColumnProps) => {
-  const statuses = useRuntimeStatuses(projects.filter(isRuntimeEntry));
+  const statuses = useRuntimeStatuses(projects);
 
   return (
     <div className="flex flex-col gap-3">
@@ -29,7 +25,7 @@ export const ProjectsColumn = ({ projects, onOpen, onRename, onRemove }: Project
               <ProjectRow
                 key={id}
                 entry={entry}
-                status={entry.kind === 'runtime' ? statuses[entry.runtimeUrl] : undefined}
+                status={statuses[entry.runtimeUrl]}
                 onOpen={() => onOpen(id)}
                 onRename={(label) => onRename(id, label)}
                 onRemove={() => onRemove(id)}

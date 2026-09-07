@@ -1,6 +1,5 @@
 import {
   type ProjectEntry,
-  type RuntimeProjectEntry,
   activeProjectId,
   listProjects,
   removeProject,
@@ -18,11 +17,7 @@ export interface RuntimeConnection {
   label?: string;
 }
 
-function isRuntimeEntry(entry: ProjectEntry): entry is RuntimeProjectEntry {
-  return entry.kind === 'runtime';
-}
-
-function toRuntimeConnection(entry: RuntimeProjectEntry): RuntimeConnection {
+function toRuntimeConnection(entry: ProjectEntry): RuntimeConnection {
   return { runtimeUrl: entry.runtimeUrl, pairingToken: entry.pairingToken, label: entry.label };
 }
 
@@ -38,7 +33,7 @@ export function readRuntimeConnection(location: { search: string } | null): Runt
 
 // The list every runtime this device has ever dialled.
 export function listRuntimes(storage: Storage | null): RuntimeConnection[] {
-  return listProjects(storage).filter(isRuntimeEntry).map(toRuntimeConnection);
+  return listProjects(storage).map(toRuntimeConnection);
 }
 
 export function renameRuntime(
@@ -47,7 +42,7 @@ export function renameRuntime(
   storage: Storage | null,
 ): RuntimeConnection | null {
   const renamed = renameProject(runtimeUrl, label, storage);
-  return renamed && isRuntimeEntry(renamed) ? toRuntimeConnection(renamed) : null;
+  return renamed ? toRuntimeConnection(renamed) : null;
 }
 
 export function removeRuntime(runtimeUrl: string, storage: Storage | null): void {
@@ -61,7 +56,7 @@ export function selectRuntime(
   storage: Storage | null,
 ): RuntimeConnection | null {
   const selected = selectProject(runtimeUrl, storage);
-  return selected && isRuntimeEntry(selected) ? toRuntimeConnection(selected) : null;
+  return selected ? toRuntimeConnection(selected) : null;
 }
 
 function rememberRuntime(storage: Storage | null, connection: RuntimeConnection): void {
@@ -86,11 +81,9 @@ export function loadRuntimeConnection(
   }
   const activeId = activeProjectId(storage);
   const active = activeId
-    ? listProjects(storage).find((entry) => isRuntimeEntry(entry) && entry.runtimeUrl === activeId)
+    ? listProjects(storage).find((entry) => entry.runtimeUrl === activeId)
     : null;
-  return active && isRuntimeEntry(active)
-    ? toRuntimeConnection(active)
-    : { runtimeUrl: '', pairingToken: null };
+  return active ? toRuntimeConnection(active) : { runtimeUrl: '', pairingToken: null };
 }
 
 export const runtimeConnection = loadRuntimeConnection(

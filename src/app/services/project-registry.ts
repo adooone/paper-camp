@@ -2,29 +2,18 @@ const PROJECTS_KEY = 'paper-camp.projects';
 const ACTIVE_PROJECT_KEY = 'paper-camp.activeProjectId';
 
 // Pre-unification keys — read once to carry an existing device's paired
-// runtimes and chosen repos into the unified store instead of losing them.
+// runtimes into the unified store instead of losing them.
 const LEGACY_RUNTIMES_KEY = 'paper-camp.runtimes';
 const LEGACY_ACTIVE_RUNTIME_KEY = 'paper-camp.activeRuntimeUrl';
-const LEGACY_HUB_REPOS_KEY = 'paper-camp.hubRepos';
 
-export interface RuntimeProjectEntry {
-  kind: 'runtime';
+export interface ProjectEntry {
   runtimeUrl: string;
   pairingToken: string | null;
   label?: string;
 }
 
-export interface GithubProjectEntry {
-  kind: 'github';
-  owner: string;
-  repo: string;
-  label?: string;
-}
-
-export type ProjectEntry = RuntimeProjectEntry | GithubProjectEntry;
-
 export function projectEntryId(entry: ProjectEntry): string {
-  return entry.kind === 'runtime' ? entry.runtimeUrl : `${entry.owner}/${entry.repo}`;
+  return entry.runtimeUrl;
 }
 
 function safeParseArray<T>(raw: string | null): T[] {
@@ -33,40 +22,25 @@ function safeParseArray<T>(raw: string | null): T[] {
   return Array.isArray(parsed) ? (parsed as T[]) : [];
 }
 
-function splitRepoFullName(repoFullName: string): [owner: string, repo: string] {
-  const slash = repoFullName.indexOf('/');
-  return slash === -1
-    ? [repoFullName, '']
-    : [repoFullName.slice(0, slash), repoFullName.slice(slash + 1)];
+// A pre-unification entry, or one written by an older client, may carry a
+// GitHub-kind shape with no `runtimeUrl` — nothing can open that any more,
+// so it's dropped here rather than migrated into anything else.
+function isProjectEntry(value: unknown): value is ProjectEntry {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    typeof (value as { runtimeUrl?: unknown }).runtimeUrl === 'string'
+  );
 }
 
-// Runs once per device: folds the pre-unification runtimes/repos/active-runtime
+// Runs once per device: folds the pre-unification runtimes and active-runtime
 // keys into the unified key before anything reads or writes through it.
 function ensureMigrated(storage: Storage): void {
   if (storage.getItem(PROJECTS_KEY) !== null) return;
-  const legacyRuntimes = safeParseArray<{
-    runtimeUrl: string;
-    pairingToken: string | null;
-    label?: string;
-  }>(storage.getItem(LEGACY_RUNTIMES_KEY));
-  const legacyRepos = safeParseArray<string>(storage.getItem(LEGACY_HUB_REPOS_KEY));
-  if (legacyRuntimes.length === 0 && legacyRepos.length === 0) return;
+  const legacyRuntimes = safeParseArray<ProjectEntry>(storage.getItem(LEGACY_RUNTIMES_KEY));
+  if (legacyRuntimes.length === 0) return;
 
-  const projects: ProjectEntry[] = [
-    ...legacyRuntimes.map(
-      (r): RuntimeProjectEntry => ({
-        kind: 'runtime',
-        runtimeUrl: r.runtimeUrl,
-        pairingToken: r.pairingToken,
-        label: r.label,
-      }),
-    ),
-    ...legacyRepos.map((full): GithubProjectEntry => {
-      const [owner, repo] = splitRepoFullName(full);
-      return { kind: 'github', owner, repo };
-    }),
-  ];
-  storage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  storage.setItem(PROJECTS_KEY, JSON.stringify(legacyRuntimes));
 
   const legacyActive = storage.getItem(LEGACY_ACTIVE_RUNTIME_KEY);
   if (legacyActive) storage.setItem(ACTIVE_PROJECT_KEY, legacyActive);
@@ -75,22 +49,16 @@ function ensureMigrated(storage: Storage): void {
 function readProjects(storage: Storage | null): ProjectEntry[] {
   if (!storage) return [];
   ensureMigrated(storage);
-  return safeParseArray<ProjectEntry>(storage.getItem(PROJECTS_KEY));
+  return safeParseArray<ProjectEntry>(storage.getItem(PROJECTS_KEY)).filter(isProjectEntry);
 }
 
 function writeProjects(storage: Storage | null, projects: ProjectEntry[]): void {
   storage?.setItem(PROJECTS_KEY, JSON.stringify(projects));
 }
 
-// Every project this device knows about, runtime-backed or GitHub-backed.
+// Every runtime this device has ever dialled.
 export function listProjects(storage: Storage | null): ProjectEntry[] {
   return readProjects(storage);
-}
-
-export function listGithubRepoNames(storage: Storage | null): string[] {
-  return readProjects(storage)
-    .filter((entry): entry is GithubProjectEntry => entry.kind === 'github')
-    .map((entry) => `${entry.owner}/${entry.repo}`);
 }
 
 export function activeProjectId(storage: Storage | null): string | null {
@@ -104,40 +72,17 @@ export function activeProjectId(storage: Storage | null): string | null {
 export function upsertRuntimeProject(
   connection: { runtimeUrl: string; pairingToken: string | null },
   storage: Storage | null,
-): RuntimeProjectEntry {
+): ProjectEntry {
   const existing = readProjects(storage);
-  const previousLabel = existing.find(
-    (entry): entry is RuntimeProjectEntry =>
-      entry.kind === 'runtime' && entry.runtimeUrl === connection.runtimeUrl,
-  )?.label;
-  const entry: RuntimeProjectEntry = {
-    kind: 'runtime',
+  const previousLabel = existing.find((entry) => entry.runtimeUrl === connection.runtimeUrl)?.label;
+  const entry: ProjectEntry = {
     runtimeUrl: connection.runtimeUrl,
     pairingToken: connection.pairingToken,
     label: previousLabel,
   };
-  const projects = existing.filter(
-    (candidate) =>
-      !(candidate.kind === 'runtime' && candidate.runtimeUrl === connection.runtimeUrl),
-  );
+  const projects = existing.filter((candidate) => candidate.runtimeUrl !== connection.runtimeUrl);
   projects.push(entry);
   writeProjects(storage, projects);
-  return entry;
-}
-
-export function addGithubProject(
-  repoFullName: string,
-  storage: Storage | null,
-): GithubProjectEntry {
-  const [owner, repo] = splitRepoFullName(repoFullName);
-  const existing = readProjects(storage);
-  const found = existing.find(
-    (entry): entry is GithubProjectEntry =>
-      entry.kind === 'github' && entry.owner === owner && entry.repo === repo,
-  );
-  if (found) return found;
-  const entry: GithubProjectEntry = { kind: 'github', owner, repo };
-  writeProjects(storage, [...existing, entry]);
   return entry;
 }
 

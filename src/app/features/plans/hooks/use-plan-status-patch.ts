@@ -1,5 +1,4 @@
 import { updatePlan } from '@/app/services/content';
-import { saveGithubEntity } from '@/app/services/github/corpus';
 import { useAppStore } from '@/app/stores/app-store';
 import { useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
@@ -8,8 +7,6 @@ import { useState } from 'react';
 // go through one updatePlan + reload + error-toast path instead of each caller reimplementing it.
 export const usePlanStatusPatch = () => {
   const loadPlans = useAppStore((s) => s.loadPlans);
-  const runtimeReachable = useAppStore((s) => s.runtimeReachable);
-  const githubConfig = useAppStore((s) => s.githubConfig);
   const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
 
@@ -20,11 +17,7 @@ export const usePlanStatusPatch = () => {
   ) => {
     setUpdating(true);
     try {
-      if (!runtimeReachable && githubConfig) {
-        await saveGithubEntity(githubConfig, title, updates);
-      } else {
-        await updatePlan(title, updates);
-      }
+      await updatePlan(title, updates);
       await loadPlans();
       return true;
     } catch (err) {

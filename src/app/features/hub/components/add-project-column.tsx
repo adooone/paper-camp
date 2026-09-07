@@ -8,9 +8,7 @@ export interface AddProjectColumnProps {
 }
 
 export const AddProjectColumn = ({ projects }: AddProjectColumnProps) => {
-  const chosenRuntimeUrls = projects
-    .filter((entry) => entry.kind === 'runtime')
-    .map(projectEntryId);
+  const chosenRuntimeUrls = projects.map(projectEntryId);
 
   return (
     <div className="flex flex-col gap-4">

@@ -7,18 +7,10 @@ import { projectAddress, projectName } from '../helpers/project-row';
 import type { RuntimeStatus } from '../hooks';
 
 interface StatusStampProps {
-  entry: ProjectEntry;
   status: RuntimeStatus | undefined;
 }
 
-function StatusStamp({ entry, status }: StatusStampProps) {
-  if (entry.kind === 'github') {
-    return (
-      <Stamp size="small" variant="info">
-        Plan-only
-      </Stamp>
-    );
-  }
+function StatusStamp({ status }: StatusStampProps) {
   if (!status) {
     return (
       <Stamp size="small" variant="neutral">
@@ -78,7 +70,7 @@ export const ProjectRow = ({ entry, status, onOpen, onRename, onRemove }: Projec
         size="medium"
         className="min-w-0 flex-1"
         onClick={onOpen}
-        action={<StatusStamp entry={entry} status={status} />}
+        action={<StatusStamp status={status} />}
       >
         {name ? (
           <span className="flex min-w-0 flex-col gap-0.5 text-left">
