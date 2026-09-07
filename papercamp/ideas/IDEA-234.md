@@ -121,6 +121,7 @@ else; it is simply forgotten.
       run: 5m22s · 42 in · 10.1k out · sonnet-5
 - [x] Rewrite the install docs
       USAGE.md and README.md teach only the three commands, `paper-camp dev` keeps one sentence as the foreground mode, and the Connect GitHub and Plan-only entries go.
+      run: 4m11s · 72 in · 21.6k out · sonnet-5
 
 ### Thread
 - [x] 2026-09-05 [log] [agent] Run order: Depends on IDEA-233's start/scan commands and IDEA-235's daemon-root JSON contract for same-origin machine detection, so it must follow both.
