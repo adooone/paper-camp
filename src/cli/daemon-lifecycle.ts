@@ -301,8 +301,7 @@ export async function runLogs(opts: LogsOptions): Promise<void> {
   if (!opts.follow) return;
 
   // A follower outlives the shell or test that spawned it unless it watches for
-  // that itself; `process.ppid` is read once at startup under Bun, so the parent
-  // is probed with a zero signal instead.
+  // that itself, so the startup-time `process.ppid` is probed with a zero signal.
   const parentPid = process.ppid;
   process.stdout.on('error', () => process.exit(0));
   let printedLength = content.length;

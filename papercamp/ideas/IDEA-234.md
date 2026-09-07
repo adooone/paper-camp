@@ -124,6 +124,7 @@ else; it is simply forgotten.
       USAGE.md and README.md teach only the three commands, `paper-camp dev` keeps one sentence as the foreground mode, and the Connect GitHub and Plan-only entries go.
       run: 10m47s · 92 in · 28.3k out · sonnet-5 · ×2
 - [x] [manual] Stop log follower when parent process or stdout dies
+- [x] [manual] Trim redundant comments in daemon-lifecycle and project-registry
 
 ### Fixes
 - [x] Fix the failing "Quality" check

@@ -22,9 +22,8 @@ function safeParseArray<T>(raw: string | null): T[] {
   return Array.isArray(parsed) ? (parsed as T[]) : [];
 }
 
-// A pre-unification entry, or one written by an older client, may carry a
-// GitHub-kind shape with no `runtimeUrl` — nothing can open that any more,
-// so it's dropped here rather than migrated into anything else.
+// A pre-unification entry may carry a GitHub-kind shape with no `runtimeUrl`;
+// nothing can open that any more, so it's dropped rather than migrated.
 function isProjectEntry(value: unknown): value is ProjectEntry {
   return (
     !!value &&
