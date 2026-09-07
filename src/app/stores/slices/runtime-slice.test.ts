@@ -93,13 +93,8 @@ describe('checkRuntimeReachable on a self-served origin', () => {
     expect(applied.at(-1)).toMatchObject({ runtimeReachable: true });
   });
 
-  it('stays unreachable when the origin only answers with a static SPA fallback', async () => {
-    const { applied } = await reachabilityWith({
-      ok: true,
-      json: async () => {
-        throw new SyntaxError('Unexpected token <');
-      },
-    });
+  it('stays unreachable when the origin has no API at all (a daemon root or hosted bundle 404s)', async () => {
+    const { applied } = await reachabilityWith({ ok: false, json: async () => ({}) });
     expect(applied.at(-1)).toMatchObject({ runtimeReachable: false });
   });
 

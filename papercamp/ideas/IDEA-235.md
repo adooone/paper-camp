@@ -60,8 +60,9 @@ Re-scanning or pruning the registry on the daemon's behalf. Any change to how
 - [x] Print `missing` in the `ls` and `status` STATE column
       Add one hint below the table naming `paper-camp rm <slug>`; nothing is removed automatically.
       run: 12m54s · 94 in · 22k out · sonnet-5
-- [ ] Answer `/api/*` at the daemon root with 404 JSON
+- [x] Answer `/api/*` at the daemon root with 404 JSON
       Every root `/api/` path but `/api/machine/projects` returns `{"error":"no project mounted at the daemon root"}`; drop `servesOwnRuntime`'s reliance on HTML failing `response.json()`.
+      run: 14m21s · 64 in · 15.1k out · sonnet-5
 - [ ] Give the daemon its own port-in-use message
       `portInUseMessage` takes a daemon variant pointing at `paper-camp status` and `-p`; `dev` keeps its wording.
 

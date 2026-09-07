@@ -462,4 +462,15 @@ describe('createDaemonRequestHandler', () => {
     expect(await response.text()).toContain('no registered project with slug "unknown"');
     expect(seenUrls).toEqual([]);
   });
+
+  it('404s any /api/* path at the daemon root other than /api/machine/projects', async () => {
+    const registryPath = await makeRegistryFile({ version: 1, projects: [] });
+    const { port } = await startHandler(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/package-name`);
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get('content-type')).toContain('application/json');
+    expect(await response.json()).toEqual({ error: 'no project mounted at the daemon root' });
+  });
 });

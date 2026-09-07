@@ -197,6 +197,10 @@ export function createDaemonRequestHandler(
 
     const request = parseMountRequest(pathname);
     if (!request) {
+      if (pathname.startsWith('/api/')) {
+        sendJson(res, 404, { error: 'no project mounted at the daemon root' });
+        return;
+      }
       await serveStatic(req, res, staticDir, indexHtml);
       return;
     }

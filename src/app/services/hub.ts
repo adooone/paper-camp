@@ -17,20 +17,17 @@ export function hasChosenProject(
  * The third way in, and the one `paper-camp dev` uses: a bundle a runtime
  * serves is same-origin with that runtime's API, so the repo serving the
  * page IS the project — nothing to pair, register, or leave. Only a probe
- * separates it from a hosted bundle, which has no API at its own origin. A
- * static host's SPA fallback answers 200 with HTML, so the JSON parse is
- * what actually decides.
+ * separates it from a hosted bundle, which has no API at its own origin: the
+ * daemon root and any other static host answer `/api/*` with a 404.
  */
 export async function servesOwnRuntime(
   runtimeUrl: string,
-  fetchApi: (path: string) => Promise<{ ok: boolean; json: () => Promise<unknown> }>,
+  fetchApi: (path: string) => Promise<{ ok: boolean }>,
 ): Promise<boolean> {
   if (runtimeUrl !== '') return false;
   try {
     const response = await fetchApi('/api/package-name');
-    if (!response.ok) return false;
-    await response.json();
-    return true;
+    return response.ok;
   } catch {
     return false;
   }

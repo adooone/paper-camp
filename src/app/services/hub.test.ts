@@ -114,27 +114,12 @@ describe('pickableMachineProjects', () => {
 });
 
 describe('servesOwnRuntime', () => {
-  const jsonResponse = { ok: true, json: async () => ({ capabilities: [] }) };
-  // A static host rewrites unknown paths to index.html: 200, but HTML.
-  const htmlResponse = {
-    ok: true,
-    json: async () => {
-      throw new SyntaxError('Unexpected token <');
-    },
-  };
-
-  it('is true when the page origin answers the API with JSON', async () => {
-    await expect(servesOwnRuntime('', async () => jsonResponse)).resolves.toBe(true);
+  it('is true when the page origin answers the API', async () => {
+    await expect(servesOwnRuntime('', async () => ({ ok: true }))).resolves.toBe(true);
   });
 
-  it('is false when the origin returns a static SPA fallback instead of the API', async () => {
-    await expect(servesOwnRuntime('', async () => htmlResponse)).resolves.toBe(false);
-  });
-
-  it('is false when the origin has no API at all', async () => {
-    await expect(
-      servesOwnRuntime('', async () => ({ ok: false, json: async () => ({}) })),
-    ).resolves.toBe(false);
+  it('is false when the origin has no API at all (a daemon root or hosted bundle 404s)', async () => {
+    await expect(servesOwnRuntime('', async () => ({ ok: false }))).resolves.toBe(false);
   });
 
   it('is false when the request itself fails', async () => {
