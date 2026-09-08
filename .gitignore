@@ -3,6 +3,7 @@ dist
 coverage
 *.tsbuildinfo
 *.timestamp-*.mjs
+public/img/doodles/
 papercamp/.task-logs/
 papercamp/tasks.log
 papercamp/notifications.log

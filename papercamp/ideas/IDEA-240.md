@@ -98,8 +98,9 @@ or to the daemon's project mounts.
 - [x] Ship a runtime-only tarball
       `files` lists `dist/cli`, `dist/core`, `dist/mcp`, `dist/vite`, and `templates`; a `prepack` script builds the library and the toolbar; `build:app` stays the Vercel build and `pack-smoke-test.mjs` asserts no `dist/app`.
       run: 9m20s · 74 in · 16.2k out · sonnet-5
-- [ ] Fetch the doodle pack outside git
+- [x] Fetch the doodle pack outside git
       Git-ignore `public/img/doodles/` and add `scripts/fetch-assets.mjs`, which unpacks `PAPERCAMP_ASSETS_URL` before `build:app` and skips quietly when the variable is absent.
+      run: 9m48s · 50 in · 10.4k out · sonnet-5
 - [ ] Give `EmptyState` an `illustration` slot
       A 96px `<img>` from `/img/doodles/<name>.svg` above the existing copy; the seven empty states that had drawings each pick one, and a pack-less build renders the copy alone.
 - [ ] Say one client in USAGE.md and README.md
