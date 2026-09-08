@@ -152,27 +152,31 @@ program
   .description('Local-first, AI-native project companion.')
   .version(PAPER_CAMP_VERSION);
 
+export async function runInit(targetDir: string, projectName?: string): Promise<boolean> {
+  const name = projectName ?? basename(targetDir);
+  try {
+    await initProject(targetDir, { projectName: name });
+    console.log(`Initialized Paper Camp in ${targetDir}`);
+    console.log('  papercamp/config.json');
+    console.log('  papercamp/ideas/          (one file per idea, plan as a section)');
+    console.log('  papercamp/ideas/archive/');
+    console.log('  .claude/skills/paper-camp/SKILL.md');
+    console.log('  .claude/settings.json     (SessionStart hook)');
+    return true;
+  } catch (error) {
+    if (error instanceof AlreadyInitializedError) {
+      console.error(error.message);
+      return false;
+    }
+    throw error;
+  }
+}
+
 program
   .command('init [project-name]')
   .description('Initialize Paper Camp in the current directory')
   .action(async (projectName: string | undefined) => {
-    const targetDir = process.cwd();
-    const name = projectName ?? basename(targetDir);
-    try {
-      await initProject(targetDir, { projectName: name });
-      console.log(`Initialized Paper Camp in ${targetDir}`);
-      console.log('  papercamp/config.json');
-      console.log('  papercamp/ideas/          (one file per idea, plan as a section)');
-      console.log('  papercamp/ideas/archive/');
-      console.log('  .claude/skills/paper-camp/SKILL.md');
-      console.log('  .claude/settings.json     (SessionStart hook)');
-    } catch (error) {
-      if (error instanceof AlreadyInitializedError) {
-        fail(error.message);
-        return;
-      }
-      throw error;
-    }
+    if (!(await runInit(process.cwd(), projectName))) process.exitCode = 1;
   });
 
 program
@@ -291,20 +295,74 @@ program
     });
   });
 
+export async function runRm(slug: string): Promise<boolean> {
+  const path = defaultRegistryPath();
+  const registry = await loadRegistry(path);
+  const result = removeProject(registry, slug);
+  if (!result.removed) {
+    console.error(`No registered project with slug "${slug}"`);
+    return false;
+  }
+  await saveRegistry(path, result.registry);
+  console.log(`Removed "${slug}" from the registry.`);
+  return true;
+}
+
 program
   .command('rm <slug>')
   .description('Remove a project from the machine-level registry')
   .action(async (slug: string) => {
-    const path = defaultRegistryPath();
-    const registry = await loadRegistry(path);
-    const result = removeProject(registry, slug);
-    if (!result.removed) {
-      fail(`No registered project with slug "${slug}"`);
-      return;
-    }
-    await saveRegistry(path, result.registry);
-    console.log(`Removed "${slug}" from the registry.`);
+    if (!(await runRm(slug))) process.exitCode = 1;
   });
+
+export async function runScan(dir: string): Promise<boolean> {
+  const entries = await scanForProjects(dir).catch((error: NodeJS.ErrnoException) => {
+    console.error(`Could not scan "${dir}": ${error.message}`);
+    return null;
+  });
+  if (!entries) return false;
+
+  const path = defaultRegistryPath();
+  let registry = await loadRegistry(path);
+  const added: MachineProject[] = [];
+  const skipped: { name: string; reason: string }[] = [];
+
+  for (const entry of entries) {
+    if (!entry.hasConfig) {
+      skipped.push({ name: entry.name, reason: 'no papercamp/config.json' });
+      continue;
+    }
+    const result = addProject(registry, entry.path, entry.name);
+    registry = result.registry;
+    if (result.created) {
+      added.push(result.entry);
+    } else {
+      skipped.push({ name: entry.name, reason: `already registered as "${result.entry.slug}"` });
+    }
+  }
+
+  if (added.length === 0 && skipped.length === 0) {
+    console.log(`No subdirectories found under ${resolve(dir)}.`);
+    return true;
+  }
+
+  if (added.length > 0) {
+    await saveRegistry(path, registry);
+    console.log('Added:');
+    const slugWidth = Math.max(...added.map((p) => p.slug.length));
+    for (const project of added) {
+      console.log(`  ${project.slug.padEnd(slugWidth)}  ${project.path}`);
+    }
+  }
+
+  if (skipped.length > 0) {
+    console.log('Skipped:');
+    for (const s of skipped) {
+      console.log(`  ${s.name} — ${s.reason}`);
+    }
+  }
+  return true;
+}
 
 program
   .command('scan <dir>')
@@ -312,51 +370,7 @@ program
     'Register every folder one level deep under <dir> that contains papercamp/config.json',
   )
   .action(async (dir: string) => {
-    const entries = await scanForProjects(dir).catch((error: NodeJS.ErrnoException) => {
-      fail(`Could not scan "${dir}": ${error.message}`);
-      return null;
-    });
-    if (!entries) return;
-
-    const path = defaultRegistryPath();
-    let registry = await loadRegistry(path);
-    const added: MachineProject[] = [];
-    const skipped: { name: string; reason: string }[] = [];
-
-    for (const entry of entries) {
-      if (!entry.hasConfig) {
-        skipped.push({ name: entry.name, reason: 'no papercamp/config.json' });
-        continue;
-      }
-      const result = addProject(registry, entry.path, entry.name);
-      registry = result.registry;
-      if (result.created) {
-        added.push(result.entry);
-      } else {
-        skipped.push({ name: entry.name, reason: `already registered as "${result.entry.slug}"` });
-      }
-    }
-
-    if (added.length === 0 && skipped.length === 0) {
-      console.log(`No subdirectories found under ${resolve(dir)}.`);
-      return;
-    }
-
-    if (added.length > 0) {
-      await saveRegistry(path, registry);
-      console.log('Added:');
-      const slugWidth = Math.max(...added.map((p) => p.slug.length));
-      for (const project of added) {
-        console.log(`  ${project.slug.padEnd(slugWidth)}  ${project.path}`);
-      }
-    }
-
-    if (skipped.length > 0) {
-      console.log('Skipped:');
-      for (const s of skipped) {
-        console.log(`  ${s.name} — ${s.reason}`);
-      }
-    }
+    if (!(await runScan(dir))) process.exitCode = 1;
   });
 
 program

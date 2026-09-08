@@ -1,8 +1,10 @@
-import { type SpawnSyncReturns, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import { runLs } from './daemon-lifecycle';
+import { runInit, runRm, runScan } from './index';
 
 const CLI_ENTRY = join(__dirname, 'index.ts');
 
@@ -18,14 +20,6 @@ async function makeTempDir(prefix: string): Promise<string> {
   return dir;
 }
 
-function runCli(args: string[], configDir: string, cwd?: string): SpawnSyncReturns<string> {
-  return spawnSync('bun', [CLI_ENTRY, ...args], {
-    encoding: 'utf-8',
-    env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir },
-    cwd,
-  });
-}
-
 async function makeProjectDir(root: string, name: string, hasConfig: boolean): Promise<void> {
   const projectDir = join(root, name);
   if (hasConfig) {
@@ -36,23 +30,67 @@ async function makeProjectDir(root: string, name: string, hasConfig: boolean): P
   }
 }
 
-// One process-boundary suite for all three commands together: `scan` populates the
-// registry `ls` and `rm` then read back, all against a PAPERCAMP_CONFIG_DIR-redirected
-// registry so a crash mid-suite can never touch the real one at ~/.config/paper-camp.
-describe('paper-camp scan / ls / rm (CLI)', () => {
+function captureLogs() {
+  const lines: string[] = [];
+  const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) => {
+    lines.push(args.join(' '));
+  });
+  return {
+    get output() {
+      return lines.join('\n');
+    },
+    restore() {
+      logSpy.mockRestore();
+    },
+  };
+}
+
+function captureErrors() {
+  const lines: string[] = [];
+  const errSpy = vi.spyOn(console, 'error').mockImplementation((...args) => {
+    lines.push(args.join(' '));
+  });
+  return {
+    get output() {
+      return lines.join('\n');
+    },
+    restore() {
+      errSpy.mockRestore();
+    },
+  };
+}
+
+let originalConfigDir: string | undefined;
+
+afterEach(() => {
+  // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
+  if (originalConfigDir === undefined) delete process.env.PAPERCAMP_CONFIG_DIR;
+  else process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
+});
+
+async function useConfigDir(): Promise<string> {
+  const dir = await makeTempDir('paper-camp-config-');
+  originalConfigDir = process.env.PAPERCAMP_CONFIG_DIR;
+  process.env.PAPERCAMP_CONFIG_DIR = dir;
+  return dir;
+}
+
+describe('paper-camp scan / ls / rm / init', () => {
   it('scan skips a directory with no papercamp/config.json and registers the rest', async () => {
-    const configDir = await makeTempDir('paper-camp-config-');
+    const configDir = await useConfigDir();
     const scanRoot = await makeTempDir('paper-camp-scan-');
     await makeProjectDir(scanRoot, 'with-config', true);
     await makeProjectDir(scanRoot, 'without-config', false);
 
-    const result = runCli(['scan', scanRoot], configDir);
+    const logs = captureLogs();
+    const ok = await runScan(scanRoot);
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain('Added:');
-    expect(result.stdout).toContain('with-config');
-    expect(result.stdout).toContain('Skipped:');
-    expect(result.stdout).toContain('without-config — no papercamp/config.json');
+    expect(ok).toBe(true);
+    expect(logs.output).toContain('Added:');
+    expect(logs.output).toContain('with-config');
+    expect(logs.output).toContain('Skipped:');
+    expect(logs.output).toContain('without-config — no papercamp/config.json');
 
     const registry = JSON.parse(await readFile(join(configDir, 'projects.json'), 'utf-8'));
     expect(registry.projects).toHaveLength(1);
@@ -63,58 +101,79 @@ describe('paper-camp scan / ls / rm (CLI)', () => {
   });
 
   it('ls reports no projects against a fresh registry, then lists what scan added', async () => {
-    const configDir = await makeTempDir('paper-camp-config-');
+    await useConfigDir();
     const scanRoot = await makeTempDir('paper-camp-scan-');
 
-    const empty = runCli(['ls'], configDir);
-    expect(empty.status).toBe(0);
-    expect(empty.stdout).toContain('No projects registered.');
+    const emptyLogs = captureLogs();
+    await runLs();
+    emptyLogs.restore();
+    expect(emptyLogs.output).toContain('No projects registered.');
 
     await makeProjectDir(scanRoot, 'demo', true);
-    runCli(['scan', scanRoot], configDir);
+    await runScan(scanRoot);
 
-    const populated = runCli(['ls'], configDir);
-    expect(populated.status).toBe(0);
-    expect(populated.stdout).toContain('demo');
-    expect(populated.stdout).toContain(join(scanRoot, 'demo'));
+    const logs = captureLogs();
+    await runLs();
+    logs.restore();
+    expect(logs.output).toContain('demo');
+    expect(logs.output).toContain(join(scanRoot, 'demo'));
   });
 
   it('rm removes a registered project and fails for an unknown slug', async () => {
-    const configDir = await makeTempDir('paper-camp-config-');
+    await useConfigDir();
     const scanRoot = await makeTempDir('paper-camp-scan-');
     await makeProjectDir(scanRoot, 'demo', true);
-    runCli(['scan', scanRoot], configDir);
+    await runScan(scanRoot);
 
-    const removed = runCli(['rm', 'demo'], configDir);
-    expect(removed.status).toBe(0);
-    expect(removed.stdout).toContain('Removed "demo" from the registry.');
+    const removeLogs = captureLogs();
+    const removed = await runRm('demo');
+    removeLogs.restore();
+    expect(removed).toBe(true);
+    expect(removeLogs.output).toContain('Removed "demo" from the registry.');
 
-    const afterRemoval = runCli(['ls'], configDir);
-    expect(afterRemoval.stdout).toContain('No projects registered.');
+    const afterLogs = captureLogs();
+    await runLs();
+    afterLogs.restore();
+    expect(afterLogs.output).toContain('No projects registered.');
 
-    const unknown = runCli(['rm', 'demo'], configDir);
-    expect(unknown.status).toBe(1);
-    expect(unknown.stderr).toContain('No registered project with slug "demo"');
+    const errors = captureErrors();
+    const unknown = await runRm('demo');
+    errors.restore();
+    expect(unknown).toBe(false);
+    expect(errors.output).toContain('No registered project with slug "demo"');
   });
 
   it('init registers the project, and stays clean if the path is already registered', async () => {
-    const configDir = await makeTempDir('paper-camp-config-');
+    const configDir = await useConfigDir();
     const projectDir = await makeTempDir('paper-camp-init-');
 
-    const result = runCli(['init'], configDir, projectDir);
-    expect(result.status).toBe(0);
+    const ok = await runInit(projectDir);
+    expect(ok).toBe(true);
 
     const registry = JSON.parse(await readFile(join(configDir, 'projects.json'), 'utf-8'));
     expect(registry.projects).toHaveLength(1);
     expect(registry.projects[0]).toMatchObject({ path: projectDir });
 
     await rm(join(projectDir, 'papercamp', 'config.json'));
-    const rerun = runCli(['init'], configDir, projectDir);
-    expect(rerun.status).toBe(0);
+    const rerun = await runInit(projectDir);
+    expect(rerun).toBe(true);
 
     const registryAfterRerun = JSON.parse(
       await readFile(join(configDir, 'projects.json'), 'utf-8'),
     );
     expect(registryAfterRerun.projects).toHaveLength(1);
+  });
+});
+
+describe('paper-camp CLI entry point', () => {
+  it('dispatches `ls` through commander to runLs against an empty registry', async () => {
+    const configDir = await makeTempDir('paper-camp-config-');
+    const result = spawnSync('bun', [CLI_ENTRY, 'ls'], {
+      encoding: 'utf-8',
+      env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir },
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('No projects registered.');
   });
 });

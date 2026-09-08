@@ -1,10 +1,10 @@
-import { type ChildProcess, type SpawnSyncReturns, spawn, spawnSync } from 'node:child_process';
+import { type ChildProcess, spawn, spawnSync } from 'node:child_process';
 import { access, appendFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { type Server, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import { type DaemonState, isProcessAlive, writeDaemonState } from '../core/daemon-state';
 import {
   type MachineProject,
@@ -20,6 +20,12 @@ import {
   lastLines,
   projectState,
   restartOptionsFromState,
+  runLogs,
+  runLs,
+  runRestart,
+  runStart,
+  runStatus,
+  runStop,
 } from './daemon-lifecycle';
 
 describe('buildDaemonArgs', () => {
@@ -269,10 +275,26 @@ if (process.env.FAKE_DAEMON_IGNORE_SIGTERM === '1') {
 }
 `;
 
-describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
+function captureLogs() {
+  const lines: string[] = [];
+  const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) => {
+    lines.push(args.join(' '));
+  });
+  return {
+    get output() {
+      return lines.join('\n');
+    },
+    restore() {
+      logSpy.mockRestore();
+    },
+  };
+}
+
+describe('paper-camp start / stop / restart / status / ls / logs', () => {
   const dirs: string[] = [];
   const servers: Server[] = [];
   const children: ChildProcess[] = [];
+  let originalConfigDir: string | undefined;
 
   afterAll(async () => {
     await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
@@ -283,11 +305,24 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     for (const child of children.splice(0)) {
       if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
     }
+    // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
+    if (originalConfigDir === undefined) delete process.env.PAPERCAMP_CONFIG_DIR;
+    else process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
   });
 
-  async function makeConfigDir(): Promise<string> {
+  async function makeTempConfigDir(): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'paper-camp-start-test-'));
     dirs.push(dir);
+    return dir;
+  }
+
+  /** Points `PAPERCAMP_CONFIG_DIR` at a fresh throwaway directory for the
+   * in-process command functions to read, the same redirection the CLI
+   * process used to get via its own env — restored in `afterEach`. */
+  async function makeConfigDir(): Promise<string> {
+    const dir = await makeTempConfigDir();
+    originalConfigDir = process.env.PAPERCAMP_CONFIG_DIR;
+    process.env.PAPERCAMP_CONFIG_DIR = dir;
     return dir;
   }
 
@@ -309,33 +344,6 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     await mkdir(join(projectPath, 'papercamp'), { recursive: true });
     await writeFile(join(projectPath, 'papercamp', 'config.json'), '{}', 'utf-8');
     return projectPath;
-  }
-
-  function runCli(args: string[], configDir: string): SpawnSyncReturns<string> {
-    return spawnSync('bun', [CLI_ENTRY, ...args], {
-      encoding: 'utf-8',
-      env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir },
-      timeout: 15_000,
-    });
-  }
-
-  /** `spawnSync` blocks this process's event loop: it can't answer the
-   * in-process fake HTTP server, and it can't reap an exited fake-daemon
-   * child either, leaving a zombie `isProcessAlive` still sees as running. */
-  function runCliAsync(
-    args: string[],
-    configDir: string,
-  ): Promise<{ status: number | null; stdout: string }> {
-    return new Promise((resolve) => {
-      const child = spawn('bun', [CLI_ENTRY, ...args], {
-        env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir },
-      });
-      let stdout = '';
-      child.stdout.on('data', (chunk: Buffer) => {
-        stdout += chunk.toString();
-      });
-      child.on('close', (status) => resolve({ status, stdout }));
-    });
   }
 
   async function listenOnFreePort(): Promise<number> {
@@ -385,6 +393,24 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     return state;
   }
 
+  /** `runStart` spawns a daemon by re-invoking this process's own entry point
+   * (`process.execPath`/`process.argv[1]`) — under vitest that's node running
+   * this test file, not bun running the CLI. Pointing both at the real CLI for
+   * the duration of `fn` makes that inner spawn start a genuine daemon, the
+   * way it does when `runStart` is reached via the actual `paper-camp` binary. */
+  async function asRealCliEntry<T>(fn: () => Promise<T>): Promise<T> {
+    const originalArgv1 = process.argv[1];
+    const originalExecPath = process.execPath;
+    process.argv[1] = CLI_ENTRY;
+    process.execPath = 'bun';
+    try {
+      return await fn();
+    } finally {
+      process.argv[1] = originalArgv1;
+      process.execPath = originalExecPath;
+    }
+  }
+
   it('refuses a second daemon and prints the status line for the one already running', async () => {
     const configDir = await makeConfigDir();
     const port = await listenOnFreePort();
@@ -397,19 +423,25 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
       tailnet: false,
     });
 
-    const result = await runCliAsync(['start'], configDir);
+    const logs = captureLogs();
+    const ok = await runStart({});
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain('daemon running');
-    expect(result.stdout).toContain(`pid ${process.pid}`);
+    expect(ok).toBe(true);
+    expect(logs.output).toContain('daemon running');
+    expect(logs.output).toContain(`pid ${process.pid}`);
     await expect(access(join(configDir, 'daemon.log'))).rejects.toThrow();
   });
 
   it('prints the log and exits 1 when the spawned daemon dies before answering', async () => {
-    const configDir = await makeConfigDir();
+    const configDir = await makeTempConfigDir();
     const takenPort = await listenOnFreePort();
 
-    const result = runCli(['start', '-p', String(takenPort)], configDir);
+    const result = spawnSync('bun', [CLI_ENTRY, 'start', '-p', String(takenPort)], {
+      encoding: 'utf-8',
+      env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir },
+      timeout: 15_000,
+    });
 
     expect(result.status).toBe(1);
     const log = await readFile(join(configDir, 'daemon.log'), 'utf-8');
@@ -418,22 +450,26 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
   });
 
   it('stop reports nothing running and exits 0 when there is no daemon', async () => {
-    const configDir = await makeConfigDir();
+    await makeConfigDir();
 
-    const result = runCli(['stop'], configDir);
+    const logs = captureLogs();
+    const ok = await runStop();
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain('paper-camp: daemon is not running');
+    expect(ok).toBe(true);
+    expect(logs.output).toContain('paper-camp: daemon is not running');
   });
 
   it('stop sends SIGTERM, waits for exit, and removes the state file', async () => {
     const configDir = await makeConfigDir();
     const state = await spawnFakeDaemon(configDir);
 
-    const result = await runCliAsync(['stop'], configDir);
+    const logs = captureLogs();
+    const ok = await runStop();
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain('paper-camp: daemon stopped');
+    expect(ok).toBe(true);
+    expect(logs.output).toContain('paper-camp: daemon stopped');
     expect(isProcessAlive(state.pid)).toBe(false);
     await expect(access(join(configDir, 'daemon.json'))).rejects.toThrow();
   });
@@ -442,10 +478,12 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     const configDir = await makeConfigDir();
     const state = await spawnFakeDaemon(configDir, { ignoreSigterm: true });
 
-    const result = await runCliAsync(['stop'], configDir);
+    const logs = captureLogs();
+    const ok = await runStop();
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain('paper-camp: daemon stopped');
+    expect(ok).toBe(true);
+    expect(logs.output).toContain('paper-camp: daemon stopped');
     expect(isProcessAlive(state.pid)).toBe(false);
     await expect(access(join(configDir, 'daemon.json'))).rejects.toThrow();
   }, 10_000);
@@ -454,13 +492,15 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     const configDir = await makeConfigDir();
     const state = await spawnFakeDaemon(configDir);
 
-    const result = await runCliAsync(['restart'], configDir);
+    const logs = captureLogs();
+    const ok = await asRealCliEntry(() => runRestart());
+    logs.restore();
 
-    expect(result.stdout).toContain('paper-camp: daemon stopped');
+    expect(logs.output).toContain('paper-camp: daemon stopped');
     expect(isProcessAlive(state.pid)).toBe(false);
-    expect(result.status).toBe(0);
+    expect(ok).toBe(true);
 
-    await runCliAsync(['stop'], configDir);
+    await runStop();
   }, 15_000);
 
   it('ls prints "—" for every project when no daemon is running', async () => {
@@ -468,10 +508,11 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     const demoPath = await makeProjectDir('demo');
     await makeRegistry(configDir, [{ path: demoPath, name: 'Demo' }]);
 
-    const result = runCli(['ls'], configDir);
+    const logs = captureLogs();
+    await runLs();
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout.trim()).toBe(`demo  —  ${demoPath}`);
+    expect(logs.output.trim()).toBe(`demo  —  ${demoPath}`);
   });
 
   it('ls prints missing in the STATE column and a hint to forget a deleted project', async () => {
@@ -481,20 +522,22 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     const deletedPath = join(dir, 'deleted-repo');
     await makeRegistry(configDir, [{ path: deletedPath, name: 'Deleted' }]);
 
-    const result = runCli(['ls'], configDir);
+    const logs = captureLogs();
+    await runLs();
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain(`deleted-repo  missing  ${deletedPath}`);
-    expect(result.stdout).toContain(MISSING_PROJECT_HINT);
+    expect(logs.output).toContain(`deleted-repo  missing  ${deletedPath}`);
+    expect(logs.output).toContain(MISSING_PROJECT_HINT);
   });
 
   it('ls reports "No projects registered." with no daemon running and an empty registry', async () => {
-    const configDir = await makeConfigDir();
+    await makeConfigDir();
 
-    const result = runCli(['ls'], configDir);
+    const logs = captureLogs();
+    await runLs();
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout.trim()).toBe('No projects registered.');
+    expect(logs.output.trim()).toBe('No projects registered.');
   });
 
   it('ls reports mounted/busy state per project once the daemon answers', async () => {
@@ -512,10 +555,11 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
       ],
     });
 
-    const result = runCli(['ls'], configDir);
+    const logs = captureLogs();
+    await runLs();
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout.trim()).toBe(`alpha  busy  ${alphaPath}\nbeta   idle  ${betaPath}`);
+    expect(logs.output.trim()).toBe(`alpha  busy  ${alphaPath}\nbeta   idle  ${betaPath}`);
   });
 
   it('status reports the daemon as not running, then the "—" project table', async () => {
@@ -523,11 +567,12 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     const demoPath = await makeProjectDir('demo');
     await makeRegistry(configDir, [{ path: demoPath, name: 'Demo' }]);
 
-    const result = runCli(['status'], configDir);
+    const logs = captureLogs();
+    await runStatus();
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain('paper-camp: daemon is not running');
-    expect(result.stdout).toContain(`demo  —  ${demoPath}`);
+    expect(logs.output).toContain('paper-camp: daemon is not running');
+    expect(logs.output).toContain(`demo  —  ${demoPath}`);
   });
 
   it('status reports the running daemon block, then the live project table', async () => {
@@ -538,29 +583,32 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
       projects: [{ slug: 'demo', name: 'Demo', mounted: true, busy: false, missing: false }],
     });
 
-    const result = runCli(['status'], configDir);
+    const logs = captureLogs();
+    await runStatus();
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain(`paper-camp: daemon running — pid ${state.pid}`);
-    expect(result.stdout).toContain(`demo  mounted  ${demoPath}`);
+    expect(logs.output).toContain(`paper-camp: daemon running — pid ${state.pid}`);
+    expect(logs.output).toContain(`demo  mounted  ${demoPath}`);
   });
 
   it('logs says so and exits 0 when there is no daemon.log yet', async () => {
-    const configDir = await makeConfigDir();
+    await makeConfigDir();
 
-    const result = runCli(['logs'], configDir);
+    const logs = captureLogs();
+    await runLogs({});
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout.trim()).toBe('paper-camp: no daemon.log yet');
+    expect(logs.output.trim()).toBe('paper-camp: no daemon.log yet');
   });
 
   it('logs -f also exits 0 immediately when there is no daemon.log yet', async () => {
-    const configDir = await makeConfigDir();
+    await makeConfigDir();
 
-    const result = runCli(['logs', '-f'], configDir);
+    const logs = captureLogs();
+    await runLogs({ follow: true });
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout.trim()).toBe('paper-camp: no daemon.log yet');
+    expect(logs.output.trim()).toBe('paper-camp: no daemon.log yet');
   });
 
   it('logs defaults to printing the last 50 lines of daemon.log', async () => {
@@ -568,9 +616,11 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     const lines = Array.from({ length: 60 }, (_, i) => `line ${i}`);
     await writeFile(join(configDir, 'daemon.log'), `${lines.join('\n')}\n`, 'utf-8');
 
-    const result = runCli(['logs'], configDir);
+    const logs = captureLogs();
+    await runLogs({});
+    logs.restore();
 
-    const printed = result.stdout.trim().split('\n');
+    const printed = logs.output.trim().split('\n');
     expect(printed).toHaveLength(50);
     expect(printed[0]).toBe('line 10');
     expect(printed.at(-1)).toBe('line 59');
@@ -581,10 +631,11 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     const lines = Array.from({ length: 10 }, (_, i) => `line ${i}`);
     await writeFile(join(configDir, 'daemon.log'), `${lines.join('\n')}\n`, 'utf-8');
 
-    const result = runCli(['logs', '-n', '3'], configDir);
+    const logs = captureLogs();
+    await runLogs({ lines: 3 });
+    logs.restore();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout.trim()).toBe('line 7\nline 8\nline 9');
+    expect(logs.output.trim()).toBe('line 7\nline 8\nline 9');
   });
 
   async function waitUntil(predicate: () => boolean, timeoutMs = 5000): Promise<void> {
@@ -597,13 +648,21 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
   }
 
   it('logs -f prints existing content, then follows appended lines until killed', async () => {
-    const configDir = await makeConfigDir();
+    const configDir = await makeTempConfigDir();
     const logPath = join(configDir, 'daemon.log');
     await writeFile(logPath, 'line 1\n', 'utf-8');
 
-    const child = spawn('bun', [CLI_ENTRY, 'logs', '-f'], {
-      env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir },
-    });
+    // A minimal script calling `runLogs` directly, not the full CLI entry — this
+    // test only needs a real, killable process for the follow loop, not another
+    // pass through commander's argument parsing.
+    const child = spawn(
+      'bun',
+      [
+        '-e',
+        `import(${JSON.stringify(join(__dirname, 'daemon-lifecycle.ts'))}).then((m) => m.runLogs({ follow: true }));`,
+      ],
+      { env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir } },
+    );
     children.push(child);
     let stdout = '';
     child.stdout.on('data', (chunk: Buffer) => {

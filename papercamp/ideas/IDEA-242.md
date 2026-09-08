@@ -101,8 +101,9 @@ this idea adds none.
       run: 15m15s · 122 in · 32.4k out · sonnet-5
 - [x] Reuse one repository per describe in `git.test.ts`
       run: 14m59s · 32 in · 78.7k out · sonnet-5
-- [ ] Drive the daemon and registry commands in-process
+- [x] Drive the daemon and registry commands in-process
       Keep one spawn per file for the entry point's argument parsing.
+      run: 18m8s · 126 in · 77.6k out · sonnet-5
 - [ ] Run `agent.test.ts` on fake timers with instant fake CLIs
 - [ ] Consolidate sibling cases into `it.each` tables
       Covers `src/core/parse`, `src/core/git-pr`, `src/core/status`, and
