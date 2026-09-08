@@ -10,7 +10,6 @@ import { readTailnetStatus } from '../core/tailnet';
 import { formatDevBanner, formatShareLine, formatTailnetLine } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import { buildRegistrationLinkForRuntime, networkRegistrationLink } from './registration-link';
-import { appDir, loadIndexHtml, serveStatic } from './serve-static';
 import {
   TAILNET_HTTPS_CERTS_MISSING_MESSAGE,
   TAILNET_NOT_RUNNING_MESSAGE,
@@ -31,8 +30,8 @@ export interface DevServerOptions {
   tailnet?: boolean;
 }
 
-/** Serves the pre-built dashboard SPA (dist/app), for an installed package
- * where there's no Vite runtime available (it's a devDependency). */
+/** Serves the API only; the dashboard itself is the hosted client, opened at
+ * the Local link this banner prints. */
 export async function startDevServer({
   root,
   port,
@@ -41,14 +40,6 @@ export async function startDevServer({
 }: DevServerOptions): Promise<void> {
   if (share && !(await isCloudflaredAvailable())) {
     throw new Error(CLOUDFLARED_MISSING_MESSAGE);
-  }
-
-  const staticDir = appDir();
-  const indexHtml = await loadIndexHtml(staticDir);
-  if (indexHtml === null) {
-    throw new Error(
-      `Dashboard assets not found at ${staticDir}. Run \`pnpm build\` (or reinstall the package) so dist/app exists.`,
-    );
   }
 
   const { state: pairingState, minted } = await loadOrMintPairingState(projectPairingPath(root));
@@ -82,10 +73,8 @@ export async function startDevServer({
         res.end();
         return;
       }
-      serveStatic(req, res, staticDir, indexHtml).catch((error) => {
-        res.statusCode = 500;
-        res.end(String(error));
-      });
+      res.statusCode = 404;
+      res.end();
     });
   });
 

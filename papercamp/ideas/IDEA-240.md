@@ -92,8 +92,9 @@ or to the daemon's project mounts.
 - [x] Open the hosted client from the toolbar trigger
       Same link shape, with the host app's own runtime origin in `?runtime=`.
       run: 5m43s · 38 in · 6.7k out · sonnet-5
-- [ ] Drop static serving from the servers
+- [x] Drop static serving from the servers
       `appDir()`, `loadIndexHtml`, and `serveStatic` leave `serve-static.ts` along with their tests; `dev-server.ts` and `daemon-server.ts` serve the API only.
+      run: 8m22s · 110 in · 27.5k out · sonnet-5
 - [ ] Ship a runtime-only tarball
       `files` lists `dist/cli`, `dist/core`, `dist/mcp`, `dist/vite`, and `templates`; a `prepack` script builds the library and the toolbar; `build:app` stays the Vercel build and `pack-smoke-test.mjs` asserts no `dist/app`.
 - [ ] Fetch the doodle pack outside git

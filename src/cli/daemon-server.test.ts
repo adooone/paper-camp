@@ -386,14 +386,7 @@ describe('createDaemonRequestHandler', () => {
       { agent: { hasActiveTask: () => false } },
     ) as unknown as ApiMiddleware;
     const { mount, mounted } = createProjectMounter(registryPath, () => Promise.resolve(mockedApi));
-    const handler = createDaemonRequestHandler(
-      registryPath,
-      mount,
-      mounted,
-      '/nonexistent',
-      '<html/>',
-      localLink,
-    );
+    const handler = createDaemonRequestHandler(registryPath, mount, mounted, localLink);
     const server = createServer((req, res) => {
       handler(req, res).catch((error) => {
         res.statusCode = 500;
