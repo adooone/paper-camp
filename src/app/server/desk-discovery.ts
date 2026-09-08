@@ -7,10 +7,12 @@ function buildPrompt(evidence: ProjectEvidence): string {
 
 The desk config has three optional sections:
 - "services": long-running processes with their own start command, e.g. a dev server. Each entry is {"name": string, "cmd": string, "port": number (optional), "healthcheck": string (optional, a URL the service should answer on once healthy)}.
-- "checks": one-shot commands that run to completion and pass or fail, e.g. lint, type-check, or test scripts. Each entry is {"name": string, "cmd": string}.
+- "checks": one-shot commands that run to completion and pass or fail, e.g. lint, type-check, or test scripts. Each entry is {"name": string, "cmd": string, "fixCmd": string (optional)}.
 - "ci": {"repo": "owner/repo", "branch": string (optional), "releasePlease": boolean (optional)}. Fill "repo" from the evidence's git origin slug and omit "ci" entirely when there is no git origin slug.
 
 Classify each package.json script and each non-JS manifest's declared target as one service (starts a long-running process — e.g. a name like "dev"/"serve"/"start", or a command with a --watch/--port flag), one check (runs to completion — e.g. lint/test/build/typecheck), or omit it entirely if it doesn't belong on the panel (e.g. a postinstall hook or a script that only wraps another script already listed). Use the evidence's detected dev port on the service it belongs to. Give each entry a short, human-readable "name" for the panel — not the raw script name.
+
+If a check is a lint or format pass and the evidence has another script that mechanically applies the same tool's fixes (e.g. a "lint:write"/"lint:fix"/"format" script wrapping the same tool with a --write/--fix flag), set that check's "fixCmd" to that script's command. Leave "fixCmd" out for checks with no such mechanical fix (type-check, tests, build).
 
 Evidence:
 ${JSON.stringify(evidence, null, 2)}

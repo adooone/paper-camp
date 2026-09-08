@@ -61,4 +61,12 @@ describe('discoverDeskConfig', () => {
       /valid JSON/,
     );
   });
+
+  it('passes through a check-level fixCmd', async () => {
+    const block = {
+      checks: [{ name: 'Lint', cmd: 'biome check .', fixCmd: 'biome check --write .' }],
+    };
+    const result = await discoverDeskConfig(EVIDENCE, async () => JSON.stringify(block));
+    expect(result).toEqual(block);
+  });
 });

@@ -4,6 +4,7 @@ title: Auto-fix before the fix agent
 type: feat
 status: review
 created: 2026-09-08
+updated: 2026-09-08
 tags:
   - app
   - server
@@ -71,6 +72,7 @@ itself.
 - [x] Offer `auto-fix` beside `fix` in the checks group
       Two stamps while a `fixCmd` exists, `fixing…` disabling both, a fixed row height in every state, and the post-fix output handed to the agent if the re-check still fails.
       run: 10m35s · 66 in · 19.3k out · sonnet-5
+- [x] [manual] Pass through check-level fixCmd in desk discovery
 
 ### Thread
 - [x] 2026-09-08 [question] [agent] Run-all parked on phase 2 ("Seed the lint fix command in `init`") — the agent needs a decision: Phase 2 says "`init` seeds the lint check with `fixCmd: "pnpm lint:write"` in every template that has a lint check" — but I can't find any such template mechanism. `initProject` in `src/core/scaffold/scaffold.ts` currently writes no desk config at all (no `checks` array, no lint/types/test), and `templates.ts` only holds the SKILL.md and settings.json string constants. The only place that ever produces desk `checks` is the AI-driven `discoverDeskConfig` in `src/app/server/desk-discovery.ts`, which classifies scripts dynamically per-repo rather than from static templates — and it can't safely hardcode `pnpm lint:write` since arbitrary user repos won't have that script. Should I (a) add a new static desk-config-seeding template system to `initProject` (a much bigger addition than this phase implies), (b) have `discoverDeskConfig`'s prompt instruct the AI to add `fixCmd` when it finds a lint-equivalent write/fix script in the evidence, or (c) something else you have in mind for where "init" and "templates" live?
