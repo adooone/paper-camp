@@ -99,7 +99,8 @@ this idea adds none.
       run: 13m49s · 92 in · 17.1k out · sonnet-5
 - [x] Add `pnpm test:changed` and its Stack stamp
       run: 15m15s · 122 in · 32.4k out · sonnet-5
-- [ ] Reuse one repository per describe in `git.test.ts`
+- [x] Reuse one repository per describe in `git.test.ts`
+      run: 14m59s · 32 in · 78.7k out · sonnet-5
 - [ ] Drive the daemon and registry commands in-process
       Keep one spawn per file for the entry point's argument parsing.
 - [ ] Run `agent.test.ts` on fake timers with instant fake CLIs

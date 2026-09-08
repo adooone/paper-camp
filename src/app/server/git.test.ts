@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { PlanEntry } from '../../types';
 import { createGitManager } from './git';
 
@@ -37,6 +37,22 @@ async function initRepo(branch = 'main'): Promise<string> {
   git(root, 'add', '.');
   git(root, 'commit', '-m', 'initial commit');
   return root;
+}
+
+function resetRepo(root: string, initialSha: string) {
+  git(root, 'reset', '--hard', 'HEAD');
+  git(root, 'clean', '-fd');
+  git(root, 'checkout', 'main');
+  git(root, 'reset', '--hard', initialSha);
+  for (const branch of git(root, 'branch', '--format=%(refname:short)')
+    .split('\n')
+    .filter((name) => name && name !== 'main')) {
+    git(root, 'branch', '-D', branch);
+  }
+  for (const remote of git(root, 'remote').split('\n').filter(Boolean)) {
+    git(root, 'remote', 'remove', remote);
+  }
+  git(root, 'stash', 'clear');
 }
 
 async function commitFile(root: string, name: string, content: string, message: string) {
@@ -85,70 +101,71 @@ const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
 });
 
 describe('getBranchHygieneStatus', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('reports a fresh feature branch at main tip as fine, not stale', async () => {
     // Regression: `git branch --merged main` lists a branch whose tip equals main's,
     // so without the behind-count guard a just-created branch looked "stale-merged".
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-1-new-work');
-    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('fine');
   });
 
   it('reports a fresh feature branch with uncommitted work as dirty, not stale', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-1-new-work');
     await writeFile(join(root, 'wip.txt'), 'work in progress\n');
-    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('dirty');
   });
 
   it('reports a branch with unmerged local commits as fine', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-2-active');
     await commitFile(root, 'feature.txt', 'new feature\n', 'add feature');
-    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('fine');
   });
 
   it('reports stale-merged after a no-ff merge into main (PR-style merge)', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-3-done');
     await commitFile(root, 'feature.txt', 'done\n', 'finish feature');
     git(root, 'checkout', 'main');
     git(root, 'merge', '--no-ff', '-m', 'merge feature', 'feat/feat-3-done');
     git(root, 'checkout', 'feat/feat-3-done');
-    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
   });
 
   it('reports stale-merged after a ff merge once main advances past the branch', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-4-done');
     await commitFile(root, 'feature.txt', 'done\n', 'finish feature');
     git(root, 'checkout', 'main');
     git(root, 'merge', '--ff-only', 'feat/feat-4-done');
     await commitFile(root, 'later.txt', 'later\n', 'later work on main');
     git(root, 'checkout', 'feat/feat-4-done');
-    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
   });
 
   it('reports stale-merged even when the working tree is dirty', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-5-done');
     await commitFile(root, 'feature.txt', 'done\n', 'finish feature');
     git(root, 'checkout', 'main');
     git(root, 'merge', '--no-ff', '-m', 'merge feature', 'feat/feat-5-done');
     git(root, 'checkout', 'feat/feat-5-done');
     await writeFile(join(root, 'stray.txt'), 'stray\n');
-    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
   });
 
   it('reports stale-merged via origin/main when the local main ref is stale', async () => {
     // The real workflow: PR merged on the remote, local main never checked out
     // since — comparing against local main alone never sees the merge.
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-6-done');
     await commitFile(root, 'feature.txt', 'done\n', 'finish feature');
@@ -157,7 +174,6 @@ describe('getBranchHygieneStatus', () => {
     git(root, 'push', 'origin', 'main');
     git(root, 'reset', '--hard', 'HEAD~1');
     git(root, 'checkout', 'feat/feat-6-done');
-    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
   });
 
@@ -165,115 +181,132 @@ describe('getBranchHygieneStatus', () => {
     // Regression: with origin/main as the merged-ness reference, a zero-commit
     // branch from a lagging local main is an ancestor of origin/main and behind
     // it — the exact stale-merged signature, but nothing was ever merged.
-    const root = await initRepo();
     await addOrigin(root);
     await commitFile(root, 'later.txt', 'later\n', 'later work on main');
     git(root, 'push', 'origin', 'main');
     git(root, 'reset', '--hard', 'HEAD~1');
     git(root, 'checkout', '-b', 'feat/feat-9-fresh');
-    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('fine');
   });
 
   it('reports clean-on-main on a clean main checkout', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('clean-on-main');
   });
 
   it('reports dirty on main with uncommitted changes', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'changed\n');
-    const manager = gitManager(root);
     expect(await manager.getBranchHygieneStatus()).toBe('dirty');
   });
 
   it('treats master like main', async () => {
-    const root = await initRepo('master');
-    const manager = gitManager(root);
-    expect(await manager.getBranchHygieneStatus()).toBe('clean-on-main');
+    const masterRoot = await initRepo('master');
+    const masterManager = gitManager(masterRoot);
+    expect(await masterManager.getBranchHygieneStatus()).toBe('clean-on-main');
   });
 });
 
 describe('isMergedIntoMain', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('returns false on main itself', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     expect(await manager.isMergedIntoMain()).toBe(false);
   });
 
   it('returns true for a fresh branch still at main tip', async () => {
     // This is why getBranchHygieneStatus needs the behind-count guard: git considers
     // a zero-commit branch "merged" the moment it is created.
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-1-fresh');
-    const manager = gitManager(root);
     expect(await manager.isMergedIntoMain()).toBe(true);
   });
 
   it('returns false for a branch with commits not on main', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-2-active');
     await commitFile(root, 'feature.txt', 'new\n', 'add feature');
-    const manager = gitManager(root);
     expect(await manager.isMergedIntoMain()).toBe(false);
   });
 });
 
 describe('getPhaseStateAtRef', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('returns null when the entity does not exist at that ref', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     expect(await manager.getPhaseStateAtRef('IDEA-1', 'HEAD')).toBeNull();
   });
 
   it('returns the checked/unchecked count for an entity committed at that ref', async () => {
-    const root = await initRepo();
     await commitEntityPhases(root, 'IDEA-1', [true, true, false]);
-    const manager = gitManager(root);
     expect(await manager.getPhaseStateAtRef('IDEA-1', 'HEAD')).toEqual({ done: 2, total: 3 });
   });
 
   it('reads a ref other than HEAD, not the working tree', async () => {
-    const root = await initRepo();
     await commitEntityPhases(root, 'IDEA-1', [true, false]);
     const mainSha = git(root, 'rev-parse', 'HEAD');
     git(root, 'checkout', '-b', 'feat/idea-1-work');
     await commitEntityPhases(root, 'IDEA-1', [true, true]);
-    const manager = gitManager(root);
     expect(await manager.getPhaseStateAtRef('IDEA-1', mainSha)).toEqual({ done: 1, total: 2 });
     expect(await manager.getPhaseStateAtRef('IDEA-1', 'HEAD')).toEqual({ done: 2, total: 2 });
   });
 });
 
 describe('findStaleBaseRef', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('returns null when HEAD matches main', async () => {
-    const root = await initRepo();
     await commitEntityPhases(root, 'IDEA-1', [true, false]);
-    const manager = gitManager(root);
     expect(await manager.findStaleBaseRef('IDEA-1')).toBeNull();
   });
 
   it('returns null when the entity was never drafted on HEAD', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     expect(await manager.findStaleBaseRef('IDEA-1')).toBeNull();
   });
 
   it('flags main when it has phases checked that HEAD still shows unchecked', async () => {
     // The IDEA-137 scenario: a branch forked before main's run-all landed its checkmarks.
-    const root = await initRepo();
     await commitEntityPhases(root, 'IDEA-1', [false, false]);
     git(root, 'checkout', '-b', 'fix/idea-1-work');
     git(root, 'checkout', 'main');
     await commitEntityPhases(root, 'IDEA-1', [true, true]);
     git(root, 'checkout', 'fix/idea-1-work');
-    const manager = gitManager(root);
     expect(await manager.findStaleBaseRef('IDEA-1')).toEqual({ ref: 'main', done: 2, total: 2 });
   });
 
   it('flags origin/main when local main lags but origin/main is ahead', async () => {
-    const root = await initRepo();
     await commitEntityPhases(root, 'IDEA-1', [false]);
     await addOrigin(root);
     git(root, 'checkout', '-b', 'fix/idea-1-work');
@@ -282,7 +315,6 @@ describe('findStaleBaseRef', () => {
     git(root, 'push', 'origin', 'main');
     git(root, 'reset', '--hard', 'HEAD~1');
     git(root, 'checkout', 'fix/idea-1-work');
-    const manager = gitManager(root);
     expect(await manager.findStaleBaseRef('IDEA-1')).toEqual({
       ref: 'origin/main',
       done: 1,
@@ -291,23 +323,33 @@ describe('findStaleBaseRef', () => {
   });
 
   it('returns null when HEAD is ahead of main, not behind', async () => {
-    const root = await initRepo();
     await commitEntityPhases(root, 'IDEA-1', [false, false]);
     git(root, 'checkout', '-b', 'fix/idea-1-work');
     await commitEntityPhases(root, 'IDEA-1', [true, false]);
-    const manager = gitManager(root);
     expect(await manager.findStaleBaseRef('IDEA-1')).toBeNull();
   });
 });
 
 describe('runGitSync', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('carries uncommitted and untracked changes onto main', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-7-done');
     await writeFile(join(root, 'README.md'), 'edited\n');
     await writeFile(join(root, 'notes.txt'), 'untracked\n');
-    const manager = gitManager(root);
 
     await manager.runGitSync();
 
@@ -320,12 +362,10 @@ describe('runGitSync', () => {
   it('restores staged changes as staged, not just as a working-tree edit', async () => {
     // Regression: a bare `git stash pop` drops the index, so a file staged
     // before sync would land back unstaged afterward.
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-9-staged');
     await writeFile(join(root, 'README.md'), 'staged edit\n');
     git(root, 'add', 'README.md');
-    const manager = gitManager(root);
 
     await manager.runGitSync();
 
@@ -333,14 +373,12 @@ describe('runGitSync', () => {
   });
 
   it('leaves a pre-existing unrelated stash alone', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-10-prestash');
     await writeFile(join(root, 'pre.txt'), 'pre-existing\n');
     git(root, 'add', 'pre.txt');
     git(root, 'stash', 'push', '-m', 'unrelated-pre-existing-stash');
     await writeFile(join(root, 'README.md'), 'edited\n');
-    const manager = gitManager(root);
 
     await manager.runGitSync();
 
@@ -352,7 +390,6 @@ describe('runGitSync', () => {
     // Both files are gitignored in a real corpus and never reach runGitStatus at all.
     // Here they are tracked, which pins the remaining rule: differing from origin/main
     // is the only thing that decides survival — there is no disposable-by-name list.
-    const root = await initRepo();
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
     await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-1 — first\n');
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'stale entity\n');
@@ -362,7 +399,6 @@ describe('runGitSync', () => {
     git(root, 'checkout', '-b', 'feat/feat-11-runorder');
     await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-2 — second\nIDEA-1 — first\n');
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'locally edited entity\n');
-    const manager = gitManager(root);
 
     await manager.runGitSync();
 
@@ -377,7 +413,6 @@ describe('runGitSync', () => {
   it('rebases a diverged local main onto origin instead of failing', async () => {
     // The recurring "split": a direct-to-main commit sits locally while origin/main
     // advances via a squash-merge. Sync must replay the local commit on top, not fail.
-    const root = await initRepo();
     await addOrigin(root);
     // origin/main advances by one commit that local main never saw.
     await commitFile(root, 'remote.txt', 'from remote\n', 'remote-only change');
@@ -385,7 +420,6 @@ describe('runGitSync', () => {
     git(root, 'reset', '--hard', 'HEAD~1');
     // local main gets its own commit — now diverged from origin/main.
     await commitFile(root, 'local.txt', 'from local\n', 'local-only change');
-    const manager = gitManager(root);
 
     await manager.runGitSync();
 
@@ -398,7 +432,6 @@ describe('runGitSync', () => {
   });
 
   it('reports a pop conflict and keeps the changes in the stash', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-8-conflict');
     // Conflicting upstream: main's README moves on the remote while the local
@@ -409,7 +442,6 @@ describe('runGitSync', () => {
     git(root, 'reset', '--hard', 'HEAD~1');
     git(root, 'checkout', 'feat/feat-8-conflict');
     await writeFile(join(root, 'README.md'), 'local edit\n');
-    const manager = gitManager(root);
 
     const result = await manager.runGitSync();
     expect(result).toMatchObject({ ok: false, stage: 'stash-pop', stashPending: true });
@@ -423,7 +455,6 @@ describe('runGitSync', () => {
   });
 
   it('keeps the corpus out of the stash, committing it separately even when the source pop conflicts', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-12-corpus-stash');
     // Same conflicting-upstream setup as the pop-conflict test above, plus a
@@ -436,7 +467,6 @@ describe('runGitSync', () => {
     await writeFile(join(root, 'README.md'), 'local edit\n');
     await mkdir(join(root, 'papercamp'), { recursive: true });
     await writeFile(join(root, 'papercamp', 'config.json'), '{"nextId":{"idea":5}}\n');
-    const manager = gitManager(root);
 
     const result = await manager.runGitSync();
 
@@ -451,7 +481,6 @@ describe('runGitSync', () => {
   });
 
   it('does not create a corpus commit when papercamp/ is already clean', async () => {
-    const root = await initRepo();
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
     await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-1 — first\n');
     git(root, 'add', '.');
@@ -459,7 +488,6 @@ describe('runGitSync', () => {
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-13-clean-corpus');
     await writeFile(join(root, 'README.md'), 'edited\n');
-    const manager = gitManager(root);
     const before = git(root, 'rev-list', '--count', 'HEAD');
 
     await manager.runGitSync();
@@ -470,8 +498,21 @@ describe('runGitSync', () => {
 });
 
 describe('hasPendingSyncStash', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('is true once a sync pop conflict leaves work stranded in the stash', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-14-stash-durable');
     git(root, 'checkout', 'main');
@@ -480,7 +521,6 @@ describe('hasPendingSyncStash', () => {
     git(root, 'reset', '--hard', 'HEAD~1');
     git(root, 'checkout', 'feat/feat-14-stash-durable');
     await writeFile(join(root, 'README.md'), 'local edit\n');
-    const manager = gitManager(root);
 
     await manager.runGitSync();
 
@@ -488,8 +528,6 @@ describe('hasPendingSyncStash', () => {
   });
 
   it('is false when there is no stash, and stays false for an unrelated one', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     expect(await manager.hasPendingSyncStash()).toBe(false);
 
     await writeFile(join(root, 'notes.txt'), 'wip\n');
@@ -499,11 +537,9 @@ describe('hasPendingSyncStash', () => {
   });
 
   it('is false again once the sync succeeds and the stash pops cleanly', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-15-stash-clears');
     await writeFile(join(root, 'README.md'), 'edited\n');
-    const manager = gitManager(root);
 
     await manager.runGitSync();
 
@@ -512,19 +548,29 @@ describe('hasPendingSyncStash', () => {
 });
 
 describe('getStashes', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('returns an empty array when there is no stash', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     expect(await manager.getStashes()).toEqual([]);
   });
 
   it('parses index, branch, message, and age from a message-carrying stash', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-16-stash-parse');
     await writeFile(join(root, 'README.md'), 'edited\n');
     git(root, 'add', 'README.md');
     git(root, 'stash', 'push', '-m', 'papercamp-sync');
-    const manager = gitManager(root);
 
     const stashes = await manager.getStashes();
 
@@ -539,12 +585,10 @@ describe('getStashes', () => {
   });
 
   it('parses a plain WIP stash created without an explicit message', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-17-wip-stash');
     await writeFile(join(root, 'README.md'), 'edited\n');
     git(root, 'add', 'README.md');
     git(root, 'stash', 'push');
-    const manager = gitManager(root);
 
     const stashes = await manager.getStashes();
 
@@ -556,7 +600,6 @@ describe('getStashes', () => {
   });
 
   it('flags a papercamp-sync stash but not a lookalike or a human WIP stash', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'a.txt'), 'a\n');
     git(root, 'add', 'a.txt');
     git(root, 'stash', 'push', '-m', 'papercamp-sync');
@@ -566,7 +609,6 @@ describe('getStashes', () => {
     await writeFile(join(root, 'c.txt'), 'c\n');
     git(root, 'add', 'c.txt');
     git(root, 'stash', 'push', '-m', 'unrelated-pre-existing-stash');
-    const manager = gitManager(root);
 
     const stashes = await manager.getStashes();
 
@@ -578,14 +620,12 @@ describe('getStashes', () => {
   });
 
   it('lists multiple stashes newest first, matching `git stash list`', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'a.txt'), 'a\n');
     git(root, 'add', 'a.txt');
     git(root, 'stash', 'push', '-m', 'first');
     await writeFile(join(root, 'b.txt'), 'b\n');
     git(root, 'add', 'b.txt');
     git(root, 'stash', 'push', '-m', 'second');
-    const manager = gitManager(root);
 
     const stashes = await manager.getStashes();
 
@@ -597,12 +637,24 @@ describe('getStashes', () => {
 });
 
 describe('showStash', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('returns the patch for the given stash index, read-only', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'edited\n');
     git(root, 'add', 'README.md');
     git(root, 'stash', 'push', '-m', 'papercamp-sync');
-    const manager = gitManager(root);
 
     const patch = await manager.showStash(0);
 
@@ -613,10 +665,8 @@ describe('showStash', () => {
   });
 
   it('includes untracked files carried in the stash', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'notes.txt'), 'wip\n');
     git(root, 'stash', 'push', '--include-untracked', '-m', 'papercamp-sync');
-    const manager = gitManager(root);
 
     const patch = await manager.showStash(0);
 
@@ -624,16 +674,26 @@ describe('showStash', () => {
   });
 
   it('rejects an out-of-range index instead of returning garbage', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
-
     await expect(manager.showStash(0)).rejects.toThrow();
   });
 });
 
 describe('fixDivergence', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('rebases a diverged branch onto its remote instead of failing', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     // origin/main advances by one commit the local branch never saw.
     await commitFile(root, 'remote.txt', 'from remote\n', 'remote-only change');
@@ -641,7 +701,6 @@ describe('fixDivergence', () => {
     git(root, 'reset', '--hard', 'HEAD~1');
     // local main gets its own commit — now diverged from origin/main.
     await commitFile(root, 'local.txt', 'from local\n', 'local-only change');
-    const manager = gitManager(root);
 
     const result = await manager.fixDivergence();
 
@@ -652,13 +711,11 @@ describe('fixDivergence', () => {
   });
 
   it('reports a conflicted rebase with the conflicted files and a recovery prompt instead of throwing', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     await commitFile(root, 'README.md', 'upstream\n', 'upstream change');
     git(root, 'push', 'origin', 'main');
     git(root, 'reset', '--hard', 'HEAD~1');
     await commitFile(root, 'README.md', 'local change\n', 'local change');
-    const manager = gitManager(root);
 
     const result = await manager.fixDivergence();
 
@@ -690,7 +747,6 @@ describe('fixDivergence', () => {
   });
 
   it('reconciles an unpushed feature branch against origin/main, not a nonexistent upstream', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-9-unpushed');
     await commitFile(root, 'feature.txt', 'feature work\n', 'feature commit');
@@ -699,7 +755,6 @@ describe('fixDivergence', () => {
     await commitFile(root, 'remote.txt', 'from remote\n', 'remote-only change');
     git(root, 'push', 'origin', 'main');
     git(root, 'checkout', 'feat/feat-9-unpushed');
-    const manager = gitManager(root);
 
     const result = await manager.fixDivergence();
 
@@ -710,69 +765,83 @@ describe('fixDivergence', () => {
 });
 
 describe('getAheadCount', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('counts commits past the upstream when one is configured', async () => {
-    const root = await initRepo();
     await addOrigin(root);
-    const manager = gitManager(root);
     expect(await manager.getAheadCount()).toBe(0);
     await commitFile(root, 'a.txt', 'a\n', 'local commit');
     expect(await manager.getAheadCount()).toBe(1);
   });
 
   it('counts commits missing from every remote-tracking branch when no upstream is set', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-1-unpushed');
     await commitFile(root, 'a.txt', 'a\n', 'branch commit');
-    const manager = gitManager(root);
     // Only the one new commit counts — history already on origin/main does not.
     expect(await manager.getAheadCount()).toBe(1);
   });
 
   it('counts every local commit when the repo has no remotes at all', async () => {
-    const root = await initRepo();
     await commitFile(root, 'a.txt', 'a\n', 'second commit');
-    const manager = gitManager(root);
     expect(await manager.getAheadCount()).toBe(2);
   });
 });
 
 describe('ensureBranch', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('creates and checks out a kind/id-title branch, slugging the title', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     await manager.ensureBranch(plan({ kind: 'feat', id: 'IDEA-42', title: 'Add User Auth!' }));
     expect(manager.getCurrentBranch()).toBe('feat/idea-42-add-user-auth');
   });
 
   it('branches from main even when currently on another branch', async () => {
-    const root = await initRepo();
     const mainSha = git(root, 'rev-parse', 'HEAD');
     git(root, 'checkout', '-b', 'other-branch');
     await commitFile(root, 'other.txt', 'other\n', 'other work');
-    const manager = gitManager(root);
     await manager.ensureBranch(plan({ kind: 'fix', id: 'IDEA-1', title: 'Small fix' }));
     expect(manager.getCurrentBranch()).toBe('fix/idea-1-small-fix');
     expect(git(root, 'rev-parse', 'HEAD')).toBe(mainSha);
   });
 
   it('is a no-op when already on the plan branch', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/idea-42-add-user-auth');
     const shaBefore = git(root, 'rev-parse', 'HEAD');
-    const manager = gitManager(root);
     await manager.ensureBranch(plan({ kind: 'feat', id: 'IDEA-42', title: 'Add User Auth!' }));
     expect(manager.getCurrentBranch()).toBe('feat/idea-42-add-user-auth');
     expect(git(root, 'rev-parse', 'HEAD')).toBe(shaBefore);
   });
 
   it('checks out an existing branch instead of failing to recreate it', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/idea-7-existing-work');
     await commitFile(root, 'work.txt', 'work\n', 'branch work');
     const branchSha = git(root, 'rev-parse', 'HEAD');
     git(root, 'checkout', 'main');
-    const manager = gitManager(root);
     await manager.ensureBranch(plan({ kind: 'feat', id: 'IDEA-7', title: 'Existing work' }));
     expect(manager.getCurrentBranch()).toBe('feat/idea-7-existing-work');
     // Prior work on the branch is kept — not reset to main.
@@ -780,22 +849,16 @@ describe('ensureBranch', () => {
   });
 
   it('does nothing when the entity has no id', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     await manager.ensureBranch(plan({ title: 'No id yet' }));
     expect(manager.getCurrentBranch()).toBe('main');
   });
 
   it('defaults the branch prefix to feat for an untyped entity', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     await manager.ensureBranch(plan({ id: 'IDEA-9', title: 'Untyped work' }));
     expect(manager.getCurrentBranch()).toBe('feat/idea-9-untyped-work');
   });
 
   it('returns no warning when creating a branch with no divergence', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     const warning = await manager.ensureBranch(
       plan({ kind: 'feat', id: 'IDEA-50', title: 'Fresh work' }),
     );
@@ -805,13 +868,11 @@ describe('ensureBranch', () => {
   it('warns when creating a branch while HEAD is behind local main for this entity', async () => {
     // The IDEA-171 guard: HEAD is about to hand off its stale corpus state to a brand
     // new branch, so this is the cheapest moment to catch it, before the branch exists.
-    const root = await initRepo();
     await commitEntityPhases(root, 'IDEA-1', [false, false]);
     git(root, 'checkout', '-b', 'other-branch');
     git(root, 'checkout', 'main');
     await commitEntityPhases(root, 'IDEA-1', [true, true]);
     git(root, 'checkout', 'other-branch');
-    const manager = gitManager(root);
     const warning = await manager.ensureBranch(
       plan({ kind: 'fix', id: 'IDEA-1', title: 'Different work' }),
     );
@@ -822,13 +883,11 @@ describe('ensureBranch', () => {
   });
 
   it('does not warn when checking out an already-existing branch', async () => {
-    const root = await initRepo();
     await commitEntityPhases(root, 'IDEA-2', [false]);
     git(root, 'checkout', '-b', 'fix/idea-2-existing');
     await commitFile(root, 'work.txt', 'work\n', 'branch work');
     git(root, 'checkout', 'main');
     await commitEntityPhases(root, 'IDEA-2', [true]);
-    const manager = gitManager(root);
     const warning = await manager.ensureBranch(
       plan({ kind: 'fix', id: 'IDEA-2', title: 'Existing' }),
     );
@@ -838,16 +897,26 @@ describe('ensureBranch', () => {
 });
 
 describe('getFeatureBranchPlanId', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('extracts the plan id from a kind/id-title branch', async () => {
-    const root = await initRepo();
     git(root, 'checkout', '-b', 'feat/feat-30-run-all-phases');
-    const manager = gitManager(root);
     expect(manager.getFeatureBranchPlanId()).toBe('FEAT-30');
   });
 
   it('returns null on main and on branches without the pattern', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     expect(manager.getFeatureBranchPlanId()).toBeNull();
     git(root, 'checkout', '-b', 'random-branch');
     expect(manager.getFeatureBranchPlanId()).toBeNull();
@@ -855,14 +924,26 @@ describe('getFeatureBranchPlanId', () => {
 });
 
 describe('getStatus', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('parses untracked, unstaged, and staged entries', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'untracked.txt'), 'new\n');
     await writeFile(join(root, 'README.md'), 'modified\n');
     await commitFile(root, 'staged.txt', 'v1\n', 'add staged.txt');
     await writeFile(join(root, 'staged.txt'), 'v2\n');
     git(root, 'add', '--', 'staged.txt');
-    const manager = gitManager(root);
     const entries = await manager.getStatus();
     expect(entries).toContainEqual(
       expect.objectContaining({ path: 'untracked.txt', status: '??', staged: false }),
@@ -876,10 +957,8 @@ describe('getStatus', () => {
   });
 
   it('parses a staged rename with its source path', async () => {
-    const root = await initRepo();
     await commitFile(root, 'old-name.txt', 'content\n', 'add file');
     git(root, 'mv', 'old-name.txt', 'new-name.txt');
-    const manager = gitManager(root);
     const entries = await manager.getStatus();
     expect(entries).toContainEqual(
       expect.objectContaining({
@@ -893,17 +972,27 @@ describe('getStatus', () => {
 });
 
 describe('assertCleanWorkingTree', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('resolves on a clean tree', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     await expect(manager.assertCleanWorkingTree()).resolves.toBeUndefined();
   });
 
   it('throws naming every uncommitted file, tracked and untracked', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'modified\n');
     await writeFile(join(root, 'untracked.txt'), 'new\n');
-    const manager = gitManager(root);
     await expect(manager.assertCleanWorkingTree()).rejects.toMatchObject({
       files: expect.arrayContaining(['README.md', 'untracked.txt']),
     });
@@ -911,10 +1000,22 @@ describe('assertCleanWorkingTree', () => {
 });
 
 describe('verifyDirectCompletion', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('is ready when the tree is clean and a commit names the id', async () => {
-    const root = await initRepo();
     await commitFile(root, 'notes.md', 'work', 'fix(app): IDEA-203 land the thing');
-    const manager = gitManager(root);
     await expect(manager.verifyDirectCompletion('IDEA-203')).resolves.toEqual({
       ready: true,
       missing: [],
@@ -922,9 +1023,7 @@ describe('verifyDirectCompletion', () => {
   });
 
   it('reports a dirty tree and a missing commit together', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'modified\n');
-    const manager = gitManager(root);
     await expect(manager.verifyDirectCompletion('IDEA-203')).resolves.toEqual({
       ready: false,
       missing: ['a clean working tree', 'a commit for IDEA-203 on main'],
@@ -932,12 +1031,10 @@ describe('verifyDirectCompletion', () => {
   });
 
   it('checks origin/main when it exists, not the possibly-behind local main', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     await commitFile(root, 'notes.md', 'work', 'fix(app): IDEA-203 land the thing');
     git(root, 'push', 'origin', 'main');
     git(root, 'reset', '--hard', 'HEAD~1');
-    const manager = gitManager(root);
     await expect(manager.verifyDirectCompletion('IDEA-203')).resolves.toEqual({
       ready: true,
       missing: [],
@@ -946,8 +1043,21 @@ describe('verifyDirectCompletion', () => {
 });
 
 describe('returnToMain', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('checks out main, fast-forwards it, and deletes the branch locally and on the remote', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/idea-1-x');
     await commitFile(root, 'feature.txt', 'feature work\n', 'feature commit');
@@ -958,7 +1068,6 @@ describe('returnToMain', () => {
     await commitFile(root, 'squashed.txt', 'squash landed\n', 'feat: squashed (IDEA-1)');
     git(root, 'push', 'origin', 'main');
     git(root, 'checkout', 'feat/idea-1-x');
-    const manager = gitManager(root);
 
     const result = await manager.returnToMain();
 
@@ -970,11 +1079,9 @@ describe('returnToMain', () => {
   });
 
   it('force-deletes locally even though squashing means the branch never merged into main', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/idea-2-y');
     await commitFile(root, 'feature.txt', 'feature work\n', 'feature commit');
-    const manager = gitManager(root);
 
     await manager.returnToMain();
 
@@ -984,11 +1091,9 @@ describe('returnToMain', () => {
   });
 
   it('reports remoteDeleted: false without throwing when the remote branch is already gone', async () => {
-    const root = await initRepo();
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/idea-3-z');
     await commitFile(root, 'feature.txt', 'feature work\n', 'feature commit');
-    const manager = gitManager(root);
 
     const result = await manager.returnToMain();
 
@@ -998,9 +1103,7 @@ describe('returnToMain', () => {
   });
 
   it('is a safe no-op when already on main', async () => {
-    const root = await initRepo();
     await addOrigin(root);
-    const manager = gitManager(root);
 
     const result = await manager.returnToMain();
 
@@ -1010,10 +1113,22 @@ describe('returnToMain', () => {
 });
 
 describe('stagePath', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('stages a modified file into the index', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'modified\n');
-    const manager = gitManager(root);
     await manager.stagePath('README.md');
     const entries = await manager.getStatus();
     expect(entries).toContainEqual(
@@ -1023,11 +1138,23 @@ describe('stagePath', () => {
 });
 
 describe('unstagePath', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('unstages a file without discarding its working-tree change', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'modified\n');
     git(root, 'add', '--', 'README.md');
-    const manager = gitManager(root);
     await manager.unstagePath('README.md');
     const entries = await manager.getStatus();
     expect(entries).toContainEqual(
@@ -1038,13 +1165,25 @@ describe('unstagePath', () => {
 });
 
 describe('commit', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('commits only the selected files, leaving other changes untouched', async () => {
-    const root = await initRepo();
     await commitFile(root, 'a.txt', 'a1\n', 'add a');
     await commitFile(root, 'b.txt', 'b1\n', 'add b');
     await writeFile(join(root, 'a.txt'), 'a2\n');
     await writeFile(join(root, 'b.txt'), 'b2\n');
-    const manager = gitManager(root);
     await manager.commit(['a.txt'], 'change a only');
     const committed = git(root, 'show', '--name-only', '--format=', 'HEAD');
     expect(committed).toContain('a.txt');
@@ -1054,9 +1193,7 @@ describe('commit', () => {
   });
 
   it('stages and commits an untracked file', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'new.txt'), 'new\n');
-    const manager = gitManager(root);
     await manager.commit(['new.txt'], 'add new file');
     expect(git(root, 'show', '--name-only', '--format=', 'HEAD')).toContain('new.txt');
     expect(await manager.getStatus()).toEqual([]);
@@ -1065,28 +1202,22 @@ describe('commit', () => {
   it('handles a file that is already fully staged', async () => {
     // `git add` on a path with nothing left to stage fails with "did not match any
     // files" — the commit path must skip the add for those.
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'staged change\n');
     git(root, 'add', '--', 'README.md');
-    const manager = gitManager(root);
     await manager.commit(['README.md'], 'commit staged change');
     expect(await manager.getStatus()).toEqual([]);
   });
 
   it('commits whatever is staged when the selection is empty', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'staged change\n');
     git(root, 'add', '--', 'README.md');
-    const manager = gitManager(root);
     await manager.commit([], 'commit staged');
     expect(git(root, 'log', '-1', '--format=%s')).toBe('commit staged');
     expect(await manager.getStatus()).toEqual([]);
   });
 
   it('includes the body as a second -m paragraph', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'change\n');
-    const manager = gitManager(root);
     await manager.commit(['README.md'], 'title line', 'body paragraph');
     expect(git(root, 'log', '-1', '--format=%B')).toContain('body paragraph');
   });
@@ -1094,10 +1225,8 @@ describe('commit', () => {
   it('commits a staged rename including the old path, not as a copy', async () => {
     // A pathspec-limited commit of only the new path records the add but leaves the
     // old path's staged deletion behind — HEAD keeps both files (rename becomes copy).
-    const root = await initRepo();
     await commitFile(root, 'old-name.txt', 'content\n', 'add file');
     git(root, 'mv', 'old-name.txt', 'new-name.txt');
-    const manager = gitManager(root);
     await manager.commit(['new-name.txt'], 'rename the file');
     expect(await manager.getStatus()).toEqual([]);
     const headFiles = git(root, 'ls-tree', '--name-only', 'HEAD');
@@ -1108,15 +1237,11 @@ describe('commit', () => {
   it("rejects with git's stdout explanation when there is nothing to commit", async () => {
     // git writes "nothing to commit" to stdout, not stderr — a rejection built from
     // stderr alone would surface only a contentless "exited with code 1".
-    const root = await initRepo();
-    const manager = gitManager(root);
     await expect(manager.commit([], 'commit staged')).rejects.toThrow(/nothing to commit/);
   });
 
   it('handles non-ASCII filenames without octal quoting', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'файл.md'), 'вміст\n');
-    const manager = gitManager(root);
     const entries = await manager.getStatus();
     expect(entries).toContainEqual(expect.objectContaining({ path: 'файл.md', status: '??' }));
     await manager.commit(['файл.md'], 'add cyrillic file');
@@ -1124,12 +1249,10 @@ describe('commit', () => {
   });
 
   it('treats selected paths literally instead of as glob pathspecs', async () => {
-    const root = await initRepo();
     await commitFile(root, 'a*.txt', 'glob1\n', 'add glob-named file');
     await commitFile(root, 'ab.txt', 'ab1\n', 'add ab');
     await writeFile(join(root, 'a*.txt'), 'glob2\n');
     await writeFile(join(root, 'ab.txt'), 'ab2\n');
-    const manager = gitManager(root);
     await manager.commit(['a*.txt'], 'change glob-named file only');
     // Without :(literal), the `a*.txt` pathspec would also sweep in ab.txt.
     const entries = await manager.getStatus();
@@ -1139,11 +1262,23 @@ describe('commit', () => {
 });
 
 describe('commitCorpus', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('commits pending papercamp/ changes with the given subject and Refs trailer', async () => {
-    const root = await initRepo();
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'draft\n');
-    const manager = gitManager(root);
     await manager.commitCorpus('docs(ideas): Some plan — plan', 'IDEA-1');
     expect(git(root, 'log', '-1', '--format=%s')).toBe('docs(ideas): Some plan — plan');
     expect(git(root, 'log', '-1', '--format=%B')).toContain('Refs: IDEA-1');
@@ -1151,10 +1286,8 @@ describe('commitCorpus', () => {
   });
 
   it('commits without a Refs trailer when no id is given', async () => {
-    const root = await initRepo();
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'draft\n');
-    const manager = gitManager(root);
     await manager.commitCorpus('docs(ideas): sync corpus');
     expect(git(root, 'log', '-1', '--format=%s')).toBe('docs(ideas): sync corpus');
     expect(git(root, 'log', '-1', '--format=%B')).not.toContain('Refs:');
@@ -1162,19 +1295,15 @@ describe('commitCorpus', () => {
   });
 
   it('leaves changes outside papercamp/ uncommitted', async () => {
-    const root = await initRepo();
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'draft\n');
     await writeFile(join(root, 'src.ts'), 'code\n');
-    const manager = gitManager(root);
     await manager.commitCorpus('docs(ideas): Some plan — plan', 'IDEA-1');
     const entries = await manager.getStatus();
     expect(entries).toEqual([expect.objectContaining({ path: 'src.ts' })]);
   });
 
   it('is a no-op when the corpus is clean', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     const before = git(root, 'rev-parse', 'HEAD');
     await manager.commitCorpus('docs(ideas): Some plan — plan', 'IDEA-1');
     expect(git(root, 'rev-parse', 'HEAD')).toBe(before);
@@ -1182,25 +1311,33 @@ describe('commitCorpus', () => {
 });
 
 describe('diff', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('returns an empty string for an empty selection', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     expect(await manager.diff([])).toBe('');
   });
 
   it('includes tracked modifications as a unified diff', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'changed\n');
-    const manager = gitManager(root);
     const output = await manager.diff(['README.md']);
     expect(output).toContain('-hello');
     expect(output).toContain('+changed');
   });
 
   it('includes untracked file content as a new-file block', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'brand-new.txt'), 'fresh content\n');
-    const manager = gitManager(root);
     const output = await manager.diff(['brand-new.txt']);
     expect(output).toContain('+++ b/brand-new.txt');
     expect(output).toContain('(new file)');
@@ -1208,42 +1345,32 @@ describe('diff', () => {
   });
 
   it('refuses to diff sensitive files', async () => {
-    const root = await initRepo();
     await writeFile(join(root, '.env'), 'SECRET=1\n');
-    const manager = gitManager(root);
     await expect(manager.diff(['.env'])).rejects.toThrow(/sensitive/);
     await expect(manager.diff(['config/.env.production'])).rejects.toThrow(/sensitive/);
     await expect(manager.diff(['certs/server.pem'])).rejects.toThrow(/sensitive/);
   });
 
   it('skips a file renamed from a sensitive source', async () => {
-    const root = await initRepo();
     await commitFile(root, '.env', 'SECRET=1\n', 'add env');
     git(root, 'mv', '.env', 'settings.txt');
-    const manager = gitManager(root);
     expect(await manager.diff(['settings.txt'])).toBe('');
   });
 
   it('omits symlink content instead of following the target', async () => {
-    const root = await initRepo();
     await symlink('/etc/hostname', join(root, 'sneaky-link'));
-    const manager = gitManager(root);
     const output = await manager.diff(['sneaky-link']);
     expect(output).toContain('(new file omitted: symlink)');
   });
 
   it('omits untracked files larger than the size cap', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'big.txt'), 'x'.repeat(500));
-    const manager = gitManager(root);
     const output = await manager.diff(['big.txt'], 200);
     expect(output).toContain('(new file omitted: exceeds diff size cap)');
   });
 
   it('truncates combined output past the size cap', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), `${'y'.repeat(500)}\n`);
-    const manager = gitManager(root);
     const output = await manager.diff(['README.md'], 100);
     expect(output).toContain('... (truncated)');
     expect(output.length).toBeLessThan(200);
@@ -1251,16 +1378,26 @@ describe('diff', () => {
 });
 
 describe('getWorkingDiff', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
   it('returns an empty list for a clean working tree', async () => {
-    const root = await initRepo();
-    const manager = gitManager(root);
     expect(await manager.getWorkingDiff()).toEqual([]);
   });
 
   it('reports add/remove counts for a tracked modification', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), 'changed\n');
-    const manager = gitManager(root);
     const [entry] = await manager.getWorkingDiff();
     expect(entry).toMatchObject({
       path: 'README.md',
@@ -1274,9 +1411,7 @@ describe('getWorkingDiff', () => {
   });
 
   it('reports an untracked file as all additions', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'brand-new.txt'), 'one\ntwo\n');
-    const manager = gitManager(root);
     const [entry] = await manager.getWorkingDiff();
     expect(entry).toMatchObject({
       path: 'brand-new.txt',
@@ -1289,12 +1424,10 @@ describe('getWorkingDiff', () => {
   });
 
   it('combines staged and unstaged changes into one entry', async () => {
-    const root = await initRepo();
     await commitFile(root, 'file.txt', 'v1\n', 'add file');
     await writeFile(join(root, 'file.txt'), 'v2\n');
     git(root, 'add', '--', 'file.txt');
     await writeFile(join(root, 'file.txt'), 'v3\n');
-    const manager = gitManager(root);
     const [entry] = await manager.getWorkingDiff();
     expect(entry.path).toBe('file.txt');
     expect(entry.staged).toBe(true);
@@ -1304,10 +1437,8 @@ describe('getWorkingDiff', () => {
   });
 
   it('carries the rename source and includes it in the patch', async () => {
-    const root = await initRepo();
     await commitFile(root, 'old-name.txt', 'content\n', 'add file');
     git(root, 'mv', 'old-name.txt', 'new-name.txt');
-    const manager = gitManager(root);
     const [entry] = await manager.getWorkingDiff();
     expect(entry).toMatchObject({
       path: 'new-name.txt',
@@ -1321,11 +1452,9 @@ describe('getWorkingDiff', () => {
     // Below git's rename-similarity threshold, `git diff` reports the old path as a
     // full deletion and the new path as a full addition rather than a single rename —
     // getWorkingDiff should still sum both counts and stub the patch, not dump both.
-    const root = await initRepo();
     await commitFile(root, 'old-name.txt', 'aaaa\nbbbb\ncccc\ndddd\n', 'add file');
     git(root, 'mv', 'old-name.txt', 'new-name.txt');
     await writeFile(join(root, 'new-name.txt'), 'zzzz\nyyyy\nxxxx\nwwww\n');
-    const manager = gitManager(root);
     const [entry] = await manager.getWorkingDiff();
     expect(entry).toMatchObject({
       path: 'new-name.txt',
@@ -1337,11 +1466,9 @@ describe('getWorkingDiff', () => {
   });
 
   it('marks a binary file as such with zero counts', async () => {
-    const root = await initRepo();
     await commitFile(root, 'data.bin', 'v1', 'add binary');
     // Real binary content: bytes git won't treat as text.
     await writeFile(join(root, 'data.bin'), Buffer.from([0, 1, 2, 255, 0, 254]));
-    const manager = gitManager(root);
     const [entry] = await manager.getWorkingDiff();
     expect(entry).toMatchObject({
       path: 'data.bin',
@@ -1353,25 +1480,19 @@ describe('getWorkingDiff', () => {
   });
 
   it('omits untracked symlink content instead of following the target', async () => {
-    const root = await initRepo();
     await symlink('/etc/hostname', join(root, 'sneaky-link'));
-    const manager = gitManager(root);
     const [entry] = await manager.getWorkingDiff();
     expect(entry).toMatchObject({ path: 'sneaky-link', binary: true, patch: '' });
   });
 
   it('stubs an untracked file larger than the size cap', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'big.txt'), 'x'.repeat(500));
-    const manager = gitManager(root);
     const [entry] = await manager.getWorkingDiff(200);
     expect(entry).toMatchObject({ contentKind: 'too-large', patch: '' });
   });
 
   it('truncates a tracked patch past the size cap', async () => {
-    const root = await initRepo();
     await writeFile(join(root, 'README.md'), `${'y'.repeat(500)}\n`);
-    const manager = gitManager(root);
     const [entry] = await manager.getWorkingDiff(100);
     expect(entry.patch).toContain('... (truncated)');
     expect(entry.patch.length).toBeLessThan(200);
