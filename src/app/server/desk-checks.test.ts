@@ -2,14 +2,14 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { createDeskCheckManager } from './desk-checks';
+import { MissingFixCmdError, createDeskCheckManager } from './desk-checks';
 
-async function tmpRoot(cmd: string): Promise<string> {
+async function tmpRoot(cmd: string, fixCmd?: string): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'papercamp-desk-checks-'));
   await mkdir(join(root, 'papercamp'), { recursive: true });
   await writeFile(
     join(root, 'papercamp', 'config.json'),
-    JSON.stringify({ desk: { checks: [{ name: 'test', cmd }] } }),
+    JSON.stringify({ desk: { checks: [{ name: 'test', cmd, fixCmd }] } }),
   );
   return root;
 }
@@ -38,5 +38,31 @@ describe('runCheck', () => {
 
     const runs = (await readFile(countFile, 'utf-8')).trim().split('\n');
     expect(runs).toHaveLength(2);
+  });
+});
+
+describe('runFix', () => {
+  it('runs the fix command, re-runs the check, and returns the refreshed state', async () => {
+    const root = await tmpRoot('test -f marker.txt', 'touch marker.txt');
+    const { runFix } = createDeskCheckManager(root);
+
+    const state = await runFix('test');
+
+    expect(state.name).toBe('test');
+    expect(state.status).toBe('pass');
+  });
+
+  it('rejects a check with no fix command', async () => {
+    const root = await tmpRoot('true');
+    const { runFix } = createDeskCheckManager(root);
+
+    await expect(runFix('test')).rejects.toThrow(MissingFixCmdError);
+  });
+
+  it('rejects an unknown check name', async () => {
+    const root = await tmpRoot('true', 'true');
+    const { runFix } = createDeskCheckManager(root);
+
+    await expect(runFix('ghost')).rejects.toThrow(/ghost/);
   });
 });

@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { DeskCheckState } from '@/types/index';
 import { describe, expect, it, vi } from 'vitest';
+import { MissingFixCmdError } from '../desk-checks';
 import { checkRoutes } from './checks';
 import type { RouteContext } from './types';
 
@@ -12,8 +13,21 @@ function route(path: string, method: string, checks: Partial<RouteContext['check
   return found;
 }
 
-function fakeReq(url: string): IncomingMessage {
-  return { url, headers: { host: 'localhost' } } as unknown as IncomingMessage;
+function fakeReq(url: string, body = ''): IncomingMessage {
+  const listeners: Record<string, (chunk?: string) => void> = {};
+  const req = {
+    url,
+    headers: { host: 'localhost' },
+    on(event: string, cb: (chunk?: string) => void) {
+      listeners[event] = cb;
+      return req;
+    },
+  } as unknown as IncomingMessage;
+  queueMicrotask(() => {
+    listeners.data?.(body);
+    listeners.end?.();
+  });
+  return req;
 }
 
 function fakeRes(): { res: ServerResponse; status: () => number; json: () => unknown } {
@@ -80,6 +94,65 @@ describe('POST /api/checks/run', () => {
     const { res, status, json } = fakeRes();
     await route('/api/checks/run', 'POST', { runCheck }).handle(
       fakeReq('/api/checks/run?name=ghost'),
+      res,
+    );
+    expect(status()).toBe(404);
+    expect((json() as { error: string }).error).toMatch(/ghost/);
+  });
+});
+
+describe('POST /api/checks/fix', () => {
+  it('rejects a missing name with 400', async () => {
+    const runFix = vi.fn();
+    const { res, status } = fakeRes();
+    await route('/api/checks/fix', 'POST', { runFix }).handle(
+      fakeReq('/api/checks/fix', '{}'),
+      res,
+    );
+    expect(status()).toBe(400);
+    expect(runFix).not.toHaveBeenCalled();
+  });
+
+  it('runs the fix and returns the refreshed check state', async () => {
+    const state: DeskCheckState = {
+      name: 'lint',
+      cmd: 'pnpm lint',
+      fixCmd: 'pnpm lint:write',
+      status: 'pass',
+      lastRun: null,
+      output: '',
+    };
+    const runFix = vi.fn(async () => state);
+    const { res, status, json } = fakeRes();
+    await route('/api/checks/fix', 'POST', { runFix }).handle(
+      fakeReq('/api/checks/fix', JSON.stringify({ name: 'lint' })),
+      res,
+    );
+    expect(status()).toBe(200);
+    expect(json()).toEqual({ check: state });
+    expect(runFix).toHaveBeenCalledWith('lint');
+  });
+
+  it('reports a check with no fix command as 400', async () => {
+    const runFix = vi.fn(() => {
+      throw new MissingFixCmdError('Check "types" has no fix command');
+    });
+    const { res, status, json } = fakeRes();
+    await route('/api/checks/fix', 'POST', { runFix }).handle(
+      fakeReq('/api/checks/fix', JSON.stringify({ name: 'types' })),
+      res,
+    );
+    expect(status()).toBe(400);
+    expect((json() as { error: string }).error).toMatch(/types/);
+  });
+
+  it('reports an unknown check as 404', async () => {
+    const runFix = vi.fn(() => {
+      throw new Error('No check named "ghost" in the desk manifest');
+    });
+    const { res, status, json } = fakeRes();
+    await route('/api/checks/fix', 'POST', { runFix }).handle(
+      fakeReq('/api/checks/fix', JSON.stringify({ name: 'ghost' })),
       res,
     );
     expect(status()).toBe(404);

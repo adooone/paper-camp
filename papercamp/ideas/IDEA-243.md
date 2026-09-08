@@ -63,8 +63,9 @@ itself.
       run: 1m59s · 34 in · 3.4k out · sonnet-5
 - [x] Seed the lint fix command in `init`
       There's no static init-template system for desk checks — `initProject` writes no `checks` at all, and the only thing that ever produces them is the AI-driven `discoverDeskConfig`. Its prompt now instructs the agent to set a check's `fixCmd` to a companion write/fix script (e.g. `lint:write`) found in the evidence, and to leave it off checks with no mechanical fix.
-- [ ] Add `POST /api/checks/fix`
+- [x] Add `POST /api/checks/fix`
       Run the fix command through the runner `run` uses, re-run the check, emit the `check` activity payload, and answer 400 without a `fixCmd`.
+      run: 7m48s · 98 in · 18.8k out · sonnet-5
 - [ ] Add the *Fix command* field to the Settings check row
 - [ ] Offer `auto-fix` beside `fix` in the checks group
       Two stamps while a `fixCmd` exists, `fixing…` disabling both, a fixed row height in every state, and the post-fix output handed to the agent if the re-check still fails.

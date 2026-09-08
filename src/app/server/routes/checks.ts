@@ -1,4 +1,5 @@
-import { requestUrl, sendJson } from '../http';
+import { MissingFixCmdError } from '../desk-checks';
+import { readBody, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 export function checkRoutes({ checks }: RouteContext): Route[] {
@@ -27,6 +28,28 @@ export function checkRoutes({ checks }: RouteContext): Route[] {
           return;
         }
         sendJson(res, 202, { ok: true });
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/checks/fix',
+      handle: async (req, res) => {
+        const { name } = JSON.parse(await readBody(req)) as { name?: string };
+        if (!name) {
+          sendJson(res, 400, { error: 'name is required' });
+          return;
+        }
+        try {
+          const check = await checks.runFix(name);
+          sendJson(res, 200, { check });
+        } catch (err) {
+          if (err instanceof MissingFixCmdError) {
+            sendJson(res, 400, { error: err.message });
+            return;
+          }
+          sendJson(res, 404, { error: (err as Error).message });
+        }
       },
     },
   ];

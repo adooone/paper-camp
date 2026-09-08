@@ -15,6 +15,25 @@ function emptyRuntime(): CheckRuntime {
   return { status: 'stale', lastRun: null, output: '' };
 }
 
+export class MissingFixCmdError extends Error {}
+
+function run(cmd: string, cwd: string): Promise<{ code: number | null; output: string }> {
+  return new Promise((resolve) => {
+    const proc = spawn(cmd, { cwd, stdio: ['ignore', 'pipe', 'pipe'], shell: true });
+    let output = '';
+    proc.stdout?.on('data', (d: Buffer) => {
+      output += d.toString();
+    });
+    proc.stderr?.on('data', (d: Buffer) => {
+      output += d.toString();
+    });
+    proc.on('close', (code) => resolve({ code, output }));
+    proc.on('error', (err) =>
+      resolve({ code: null, output: `Failed to spawn check: ${err.message}` }),
+    );
+  });
+}
+
 export interface DeskCheckManagerState {
   runtimes: Map<string, CheckRuntime>;
   inFlight: Map<string, Promise<CheckStatus>>;
@@ -85,31 +104,26 @@ export function createDeskCheckManager(
     const check = loadManifestChecks(root).find((c) => c.name === name);
     if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
 
-    const promise = new Promise<CheckStatus>((resolve) => {
+    const promise = (async () => {
       setResult(name, 'running', '');
-
-      const proc = spawn(check.cmd, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], shell: true });
-      let out = '';
-      proc.stdout?.on('data', (d: Buffer) => {
-        out += d.toString();
-      });
-      proc.stderr?.on('data', (d: Buffer) => {
-        out += d.toString();
-      });
-      proc.on('close', (code) => {
-        inFlight.delete(name);
-        const status = code === 0 ? 'pass' : 'fail';
-        setResult(name, status, out);
-        resolve(status);
-      });
-      proc.on('error', (err) => {
-        inFlight.delete(name);
-        setResult(name, 'fail', `Failed to spawn check: ${err.message}`);
-        resolve('fail');
-      });
-    });
+      const { code, output } = await run(check.cmd, root);
+      inFlight.delete(name);
+      const status = code === 0 ? 'pass' : 'fail';
+      setResult(name, status, output);
+      return status;
+    })();
     inFlight.set(name, promise);
     return promise;
+  }
+
+  async function runFix(name: string): Promise<DeskCheckState> {
+    const check = loadManifestChecks(root).find((c) => c.name === name);
+    if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
+    if (!check.fixCmd) throw new MissingFixCmdError(`Check "${name}" has no fix command`);
+
+    await run(check.fixCmd, root);
+    await runCheck(name);
+    return getStatus().find((c) => c.name === name) as DeskCheckState;
   }
 
   function getStatus(): DeskCheckState[] {
@@ -128,6 +142,7 @@ export function createDeskCheckManager(
 
   return {
     runCheck,
+    runFix,
     getStatus,
     getState: (): DeskCheckManagerState => state,
     subscribe(res: ServerResponse) {
