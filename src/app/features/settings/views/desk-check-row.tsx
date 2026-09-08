@@ -15,7 +15,13 @@ export const DeskCheckRow = ({ check, onSave, onRemove, isLast }: DeskCheckRowPr
   useEffect(() => setLocal(check), [check]);
 
   const commit = () => {
-    if (local.name === check.name && local.cmd === check.cmd) return;
+    if (
+      local.name === check.name &&
+      local.cmd === check.cmd &&
+      (local.fixCmd ?? undefined) === (check.fixCmd ?? undefined)
+    ) {
+      return;
+    }
     onSave(local);
   };
 
@@ -34,6 +40,13 @@ export const DeskCheckRow = ({ check, onSave, onRemove, isLast }: DeskCheckRowPr
           label="Command"
           value={local.cmd}
           onChange={(e) => setLocal({ ...local, cmd: e.target.value })}
+          onBlur={commit}
+        />
+        <Input
+          size="small"
+          label="Fix command"
+          value={local.fixCmd ?? ''}
+          onChange={(e) => setLocal({ ...local, fixCmd: e.target.value || undefined })}
           onBlur={commit}
         />
         <IconButton

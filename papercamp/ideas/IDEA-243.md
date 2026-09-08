@@ -66,7 +66,8 @@ itself.
 - [x] Add `POST /api/checks/fix`
       Run the fix command through the runner `run` uses, re-run the check, emit the `check` activity payload, and answer 400 without a `fixCmd`.
       run: 7m48s · 98 in · 18.8k out · sonnet-5
-- [ ] Add the *Fix command* field to the Settings check row
+- [x] Add the *Fix command* field to the Settings check row
+      run: 1m19s · 30 in · 3.8k out · sonnet-5
 - [ ] Offer `auto-fix` beside `fix` in the checks group
       Two stamps while a `fixCmd` exists, `fixing…` disabling both, a fixed row height in every state, and the post-fix output handed to the agent if the re-check still fails.
 
