@@ -2,7 +2,7 @@
 id: IDEA-240
 title: Ship no frontend in the npm package
 type: feat
-status: review
+status: done
 created: 2026-09-06
 updated: 2026-09-08
 tags:

@@ -56,3 +56,14 @@ pass — so they keep the single `fix` stamp.
 Running `fixCmd` automatically on save or on every failure; the user
 clicks. Chaining several fix commands. Any change to the issue-fix agent
 itself.
+
+### Phases
+- [ ] Carry `fixCmd` through config and state
+      Add the optional field to `DeskCheck` and pass it through `DeskCheckState` to the client.
+- [ ] Seed the lint fix command in `init`
+      Every template with a lint check gets `fixCmd: "pnpm lint:write"`; `types` and `test` get none.
+- [ ] Add `POST /api/checks/fix`
+      Run the fix command through the runner `run` uses, re-run the check, emit the `check` activity payload, and answer 400 without a `fixCmd`.
+- [ ] Add the *Fix command* field to the Settings check row
+- [ ] Offer `auto-fix` beside `fix` in the checks group
+      Two stamps while a `fixCmd` exists, `fixing…` disabling both, a fixed row height in every state, and the post-fix output handed to the agent if the re-check still fails.
