@@ -4,6 +4,7 @@ title: Ship no frontend in the npm package
 type: feat
 status: review
 created: 2026-09-06
+updated: 2026-09-08
 tags:
   - cli
   - app
@@ -106,3 +107,22 @@ or to the daemon's project mounts.
       run: 8m42s · 92 in · 19.7k out · sonnet-5
 - [x] Say one client in USAGE.md and README.md
       run: 11m52s · 90 in · 35.3k out · sonnet-5
+
+### Fixes
+- [ ] Fix the failing "Quality" check
+      Fix the failing "Quality" check in this repo.
+      
+      The command was `pnpm lint`.
+      
+      Output from the last run:
+      
+      
+      > @dendelion/paper-camp@0.27.0 lint /home/croco/dev/paper-camp
+      > biome check . && node scripts/comment-stats.mjs
+      
+      Checked 629 files in 3s. No fixes applied.
+      Comments: 1837 / 42348 lines = 4.34%
+      Trailing comment lines (code; // why): 14
+      Runs over the 2-line cap: 1 (4 lines)
+        src/app/server/desk-checks.ts:79 — 4 lines
+       ELIFECYCLE  Command failed with exit code 1.
