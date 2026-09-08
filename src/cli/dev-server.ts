@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { createApiMiddleware } from '../app/server/api';
+import { createApiMiddleware, hostOf, isLoopbackHost } from '../app/server/api';
 import {
   loadOrMintPairingState,
   projectPairingPath,
@@ -68,15 +68,22 @@ export async function startDevServer({
 
   const server = createServer((req, res) => {
     apiMiddleware(req, res, async () => {
-      if ((req.url ?? '/').split('?')[0] === '/') {
-        res.statusCode = 302;
-        res.setHeader('Location', localLink);
+      try {
+        // The link always points at localhost, so it only resolves correctly for a
+        // request that already arrived over loopback — anything else falls through to 404.
+        if ((req.url ?? '/').split('?')[0] === '/' && isLoopbackHost(hostOf(req.headers.host))) {
+          res.statusCode = 302;
+          res.setHeader('Location', localLink);
+          res.end();
+          return;
+        }
+        if (await serveToolbarAsset(req, res)) return;
+        res.statusCode = 404;
         res.end();
-        return;
+      } catch (error) {
+        res.statusCode = 500;
+        res.end(String(error));
       }
-      if (await serveToolbarAsset(req, res)) return;
-      res.statusCode = 404;
-      res.end();
     });
   });
 

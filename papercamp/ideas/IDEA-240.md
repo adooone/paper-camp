@@ -108,8 +108,12 @@ or to the daemon's project mounts.
 - [x] Say one client in USAGE.md and README.md
       run: 11m52s · 90 in · 35.3k out · sonnet-5
 - [x] [manual] Prevent duplicate check runs and add pairing status route
+- [x] [manual] Close pairing-token leak and dead-script gaps
 
 ### Fixes
 - [x] Fix the failing "Quality" check
       Fix the failing "Quality" check in this repo.
       run: 1m39s · 36 in · 4.2k out · sonnet-5
+
+### Thread
+- [x] 2026-09-08 [review] [agent] Requests changes · 4 findings — The diff delivers the shape the idea asks for — static serving is gone, both servers 302 the bare root to the hosted client, the tarball excludes dist/app, the toolbar builds its link from a new /api/pairing route, and the docs read one-client throughout. But the doodle-pack pipeline is broken at its trigger: prebuild:app is an npm-style pre-script, and this repo pins pnpm 10 (packageManager field, no .npmrc), which does not run pre-scripts by default — I verified with pnpm 10.12.1 that `pnpm run build:app` skips it — so Vercel's `pnpm build:app` buildCommand never invokes fetch-assets.mjs and the hosted client ships without the pack, with every empty-state img 404ing silently behind the onError hide. The check-dedup and server changes are otherwise sound, with one crash-path regression in the dev server worth fixing.

@@ -5,6 +5,7 @@ import {
   createApiMiddleware,
   handlePreflight,
   hostOf,
+  isLoopbackHost,
   isTrustedHost,
 } from '../app/server/api';
 import { sendJson } from '../app/server/http';
@@ -183,7 +184,9 @@ export function createDaemonRequestHandler(
   return async (req, res) => {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
 
-    if (pathname === '/') {
+    // localLink only resolves for loopback — gating it here keeps the pairing token
+    // out of a LAN/tunnel peer's reach instead of handing it out via Location.
+    if (pathname === '/' && isLoopbackHost(hostOf(req.headers.host))) {
       res.statusCode = 302;
       res.setHeader('Location', localLink);
       res.end();

@@ -39,8 +39,7 @@
   ],
   "scripts": {
     "build": "tsc && vite build && vite build --config vite.app.config.ts && vite build --config vite.toolbar.config.ts",
-    "prebuild:app": "node scripts/fetch-assets.mjs",
-    "build:app": "vite build --config vite.app.config.ts",
+    "build:app": "node scripts/fetch-assets.mjs && vite build --config vite.app.config.ts",
     "build:toolbar": "vite build --config vite.toolbar.config.ts",
     "prepack": "tsc && vite build && vite build --config vite.toolbar.config.ts",
     "dev": "vite --config vite.app.config.ts --port 3333",

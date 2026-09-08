@@ -54,7 +54,7 @@ export function hostOf(value: string | undefined): string {
 
 // Reaching loopback proves the caller is a process on this machine, the one
 // case a missing Origin can still stand in for the pairing token.
-function isLoopbackHost(host: string): boolean {
+export function isLoopbackHost(host: string): boolean {
   return host === 'localhost' || host === '127.0.0.1' || host === '::1';
 }
 

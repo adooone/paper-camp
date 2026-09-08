@@ -143,6 +143,10 @@ export function createStatusManager(
         const passed = await Promise.all(
           names.map(async (name) => {
             if (name === 'test' && !hasVitest) return true;
+            // A run already in flight predates this fix pass — wait it out so the
+            // fresh runCheck below reports on post-fix code, not a stale join.
+            const stale = checks.getState().inFlight.get(name);
+            if (stale) await stale;
             return (await checks.runCheck(name)) === 'pass';
           }),
         );
