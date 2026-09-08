@@ -58,8 +58,9 @@ clicks. Chaining several fix commands. Any change to the issue-fix agent
 itself.
 
 ### Phases
-- [ ] Carry `fixCmd` through config and state
+- [x] Carry `fixCmd` through config and state
       Add the optional field to `DeskCheck` and pass it through `DeskCheckState` to the client.
+      run: 1m59s · 34 in · 3.4k out · sonnet-5
 - [ ] Seed the lint fix command in `init`
       Every template with a lint check gets `fixCmd: "pnpm lint:write"`; `types` and `test` get none.
 - [ ] Add `POST /api/checks/fix`

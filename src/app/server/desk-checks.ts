@@ -118,6 +118,7 @@ export function createDeskCheckManager(
       return {
         name: check.name,
         cmd: check.cmd,
+        fixCmd: check.fixCmd,
         status: runtime.status,
         lastRun: runtime.lastRun,
         output: runtime.output,

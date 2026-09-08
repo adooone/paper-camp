@@ -598,6 +598,7 @@ export interface DeskService {
 export interface DeskCheck {
   name: string;
   cmd: string;
+  fixCmd?: string;
 }
 
 export interface DeskCi {
@@ -634,6 +635,7 @@ export interface ServiceState {
 export interface DeskCheckState {
   name: string;
   cmd: string;
+  fixCmd?: string;
   status: CheckStatus;
   lastRun: string | null;
   output: string;
