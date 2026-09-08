@@ -95,8 +95,9 @@ or to the daemon's project mounts.
 - [x] Drop static serving from the servers
       `appDir()`, `loadIndexHtml`, and `serveStatic` leave `serve-static.ts` along with their tests; `dev-server.ts` and `daemon-server.ts` serve the API only.
       run: 8m22s · 110 in · 27.5k out · sonnet-5
-- [ ] Ship a runtime-only tarball
+- [x] Ship a runtime-only tarball
       `files` lists `dist/cli`, `dist/core`, `dist/mcp`, `dist/vite`, and `templates`; a `prepack` script builds the library and the toolbar; `build:app` stays the Vercel build and `pack-smoke-test.mjs` asserts no `dist/app`.
+      run: 9m20s · 74 in · 16.2k out · sonnet-5
 - [ ] Fetch the doodle pack outside git
       Git-ignore `public/img/doodles/` and add `scripts/fetch-assets.mjs`, which unpacks `PAPERCAMP_ASSETS_URL` before `build:app` and skips quietly when the variable is absent.
 - [ ] Give `EmptyState` an `illustration` slot
