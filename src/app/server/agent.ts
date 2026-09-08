@@ -50,7 +50,12 @@ import { claudeAuthStatus } from './local-adapters';
 import { appendNotification } from './notification-log';
 import { parsePrReviewResult, postPrReview } from './pr-review-settle';
 import { clearDeliveryFailures, recordDeliveryFailure, recordReviewedSha } from './pr-review-state';
-import { UNLOGGED_TASK_KINDS, logTaskCompletion, logTaskStart } from './task-log';
+import {
+  UNLOGGED_TASK_KINDS,
+  logTaskCompletion,
+  logTaskStart,
+  reconcileInterruptedTasks,
+} from './task-log';
 
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -353,12 +358,35 @@ export function createAgentManager(
   ) => Promise<void>,
   snapshotWorkingTree?: () => Promise<GitStatusEntry[]>,
   onCorpusChanged?: () => void,
-  state: AgentManagerState = createEmptyAgentState(),
+  passedState?: AgentManagerState,
   isMachineBusy?: () => boolean,
 ) {
+  // No state handed in means a fresh process or (under the daemon) this project's
+  // first mount since it stopped — a started-but-unfinished entry is one it lost.
+  const isColdStart = passedState === undefined;
   // Shared with a hot-reloaded replacement instance via `state`, so in-flight
   // listeners and the new instance's getStatus()/subscribe() stay in sync.
+  const state: AgentManagerState = passedState ?? createEmptyAgentState();
   const { tasks, clients } = state;
+
+  let interruptedOnBoot = 0;
+  if (isColdStart) {
+    void reconcileInterruptedTasks(root, new Date().toISOString()).then((entries) => {
+      interruptedOnBoot = entries.length;
+      if (entries.length === 0) return;
+      for (const entry of entries) {
+        void appendNotification(root, {
+          id: entry.id,
+          kind: 'completed',
+          entityId: entry.planId ?? entry.id,
+          entityTitle: entry.planTitle,
+          text: `${humanizeTaskKind(entry.taskKind)} interrupted`,
+          outcome: 'interrupted',
+        });
+      }
+      onCorpusChanged?.();
+    });
+  }
 
   function currentTask(): AgentTask | undefined {
     return state.lastLaunchedId ? tasks.get(state.lastLaunchedId) : undefined;
@@ -1948,6 +1976,7 @@ export function createAgentManager(
     getStatus,
     hasActiveTask,
     getReconcileQueue,
+    getInterruptedOnBoot: () => interruptedOnBoot,
     // Handed to a hot-reloaded replacement instance so both share this exact
     // state object instead of drifting apart after the swap.
     getState: () => state,
@@ -2027,6 +2056,7 @@ export interface AgentManager {
   getStatus: () => AgentTaskState[];
   hasActiveTask: () => boolean;
   getReconcileQueue: () => ReconcileQueueItem[] | null;
+  getInterruptedOnBoot: () => number;
   getState: () => AgentManagerState;
   subscribe: (res: ServerResponse) => void;
   killCurrent: () => Promise<void>;

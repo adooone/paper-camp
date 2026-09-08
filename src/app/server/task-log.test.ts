@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { logTaskCompletion, logTaskStart } from './task-log';
+import { logTaskCompletion, logTaskStart, reconcileInterruptedTasks } from './task-log';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -91,6 +91,61 @@ describe('logTaskStart', () => {
       startedAt: '2026-09-08T10:00:00.000Z',
     });
 
+    expect(existsSync(join(root, 'papercamp', 'tasks.log'))).toBe(false);
+  });
+});
+
+describe('reconcileInterruptedTasks', () => {
+  it('marks a started-but-unfinished entry interrupted, at the given boot time', async () => {
+    const root = makeRoot();
+    const id = '99999999-0000-0000-0000-000000000011';
+    await logTaskStart(root, {
+      id,
+      taskKind: 'phase',
+      planId: 'IDEA-1',
+      planTitle: 'Test plan',
+      agentId: 'claude-code',
+      startedAt: '2026-09-08T10:00:00.000Z',
+    });
+
+    const marked = await reconcileInterruptedTasks(root, '2026-09-08T12:00:00.000Z');
+    expect(marked).toEqual([
+      {
+        id,
+        taskKind: 'phase',
+        planId: 'IDEA-1',
+        planTitle: 'Test plan',
+        agentId: 'claude-code',
+        startedAt: '2026-09-08T10:00:00.000Z',
+      },
+    ]);
+
+    const raw = readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const logged = raw
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => JSON.parse(l))
+      .find((e) => e.id === id && e.outcome === 'interrupted');
+    expect(logged).toMatchObject({
+      endedAt: '2026-09-08T12:00:00.000Z',
+      outcome: 'interrupted',
+      reason: 'the server stopped while this task was running',
+    });
+  });
+
+  it('leaves a finished entry alone', async () => {
+    const root = makeRoot();
+    const id = '99999999-0000-0000-0000-000000000012';
+    await logTaskCompletion(root, completed(id), 'done');
+
+    const marked = await reconcileInterruptedTasks(root, '2026-09-08T12:00:00.000Z');
+    expect(marked).toEqual([]);
+  });
+
+  it('does nothing when tasks.log has never been written', async () => {
+    const root = makeRoot();
+    const marked = await reconcileInterruptedTasks(root, '2026-09-08T12:00:00.000Z');
+    expect(marked).toEqual([]);
     expect(existsSync(join(root, 'papercamp', 'tasks.log'))).toBe(false);
   });
 });

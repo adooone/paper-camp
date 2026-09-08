@@ -6,7 +6,7 @@ import type {
   StoredNotification,
   TaskLogEntry,
 } from '../types/index';
-import { buildLogRows } from './run-rows';
+import { buildLogRows, interruptedNotices } from './run-rows';
 
 const taskLogEntry = (overrides: Partial<TaskLogEntry> = {}): TaskLogEntry => ({
   id: 'task-1',
@@ -62,6 +62,39 @@ const parkedQuestion = (overrides: Partial<ParkedQuestion> = {}): ParkedQuestion
   date: '2026-08-01T00:00:00.000Z',
   ageDays: 1,
   ...overrides,
+});
+
+describe('interruptedNotices', () => {
+  it('surfaces a plan whose latest entry never finished', () => {
+    const notices = interruptedNotices([
+      taskLogEntry({
+        outcome: 'interrupted',
+        reason: 'the server stopped while this task was running',
+      }),
+    ]);
+    expect(notices.map((e) => e.planId)).toEqual(['IDEA-1']);
+  });
+
+  it('drops a plan once a newer run has started on it', () => {
+    const notices = interruptedNotices([
+      taskLogEntry({ id: 'task-1', outcome: 'interrupted', startedAt: '2026-08-01T00:00:00.000Z' }),
+      taskLogEntry({
+        id: 'task-2',
+        startedAt: '2026-08-02T00:00:00.000Z',
+        endedAt: undefined,
+        outcome: undefined,
+      }),
+    ]);
+    expect(notices).toEqual([]);
+  });
+
+  it('ignores entries with no plan and finished entries', () => {
+    const notices = interruptedNotices([
+      taskLogEntry({ planId: undefined, outcome: 'interrupted' }),
+      taskLogEntry({ outcome: 'done' }),
+    ]);
+    expect(notices).toEqual([]);
+  });
 });
 
 describe('buildLogRows', () => {

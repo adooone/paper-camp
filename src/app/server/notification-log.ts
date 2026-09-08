@@ -14,7 +14,7 @@ interface NewNotification {
   entityId: string;
   entityTitle: string;
   text: string;
-  outcome?: 'done' | 'error';
+  outcome?: 'done' | 'error' | 'interrupted';
 }
 
 const notificationLogPath = (root: string) => campFile(root, 'notifications.log');

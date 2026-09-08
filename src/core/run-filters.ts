@@ -9,7 +9,7 @@ import {
 export type LogDateRange = 'today' | '7d' | '30d' | 'all';
 export type LogSort = 'time' | 'duration' | 'cost';
 
-const FILTERABLE_OUTCOMES: LogRowOutcome[] = ['done', 'error', 'superseded', 'open'];
+const FILTERABLE_OUTCOMES: LogRowOutcome[] = ['done', 'error', 'superseded', 'open', 'interrupted'];
 const DATE_RANGES: LogDateRange[] = ['today', '7d', '30d', 'all'];
 const SORTS: LogSort[] = ['time', 'duration', 'cost'];
 

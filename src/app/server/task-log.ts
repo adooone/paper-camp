@@ -99,6 +99,38 @@ export function logTaskStart(root: string, task: StartingTask): Promise<void> {
   return run;
 }
 
+export const INTERRUPTED_REASON = 'the server stopped while this task was running';
+
+// Run once per boot: any entry with a start and no end was still running when
+// the process that owned it died. Returns the pre-update entries to notify on.
+export function reconcileInterruptedTasks(root: string, bootedAt: string): Promise<TaskLogEntry[]> {
+  const run = taskChain.then(async () => {
+    const raw = await readMaybe(campFile(root, 'tasks.log'));
+    if (!raw) return [];
+    const unfinished = readTaskLog(raw).filter((e) => !e.endedAt);
+    if (unfinished.length === 0) return [];
+    const updates: TaskLogEntry[] = unfinished.map((e) => ({
+      ...e,
+      endedAt: bootedAt,
+      outcome: 'interrupted',
+      reason: INTERRUPTED_REASON,
+    }));
+    try {
+      await appendFile(
+        campFile(root, 'tasks.log'),
+        updates.map((e) => `${JSON.stringify(e)}\n`).join(''),
+        'utf-8',
+      );
+    } catch (err) {
+      console.error('papercamp: could not append interrupted-task updates to tasks.log:', err);
+      return [];
+    }
+    return unfinished;
+  });
+  taskChain = run.catch(() => undefined);
+  return run;
+}
+
 // Best-effort: a log write failure must never take down the task it's recording.
 export function logTaskCompletion(
   root: string,

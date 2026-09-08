@@ -1,11 +1,12 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { logRowIdForTask } from '@/core/run-rows';
+import { interruptedNotices, logRowIdForTask } from '@/core/run-rows';
 import {
   AGENT_LABELS,
   type AgentTaskState,
   type AgentTaskStatus,
   type TaskKind,
+  type TaskLogEntry,
 } from '@/types/index';
 import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -211,12 +212,42 @@ const AgentTaskCard = ({
   );
 };
 
+const InterruptedNoticeCard = ({ entry }: { entry: TaskLogEntry }) => {
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      onClick={() => navigate({ to: '/log/$entryId', params: { entryId: `task:${entry.id}` } })}
+      className="block w-full cursor-pointer border-none bg-transparent p-0 text-left"
+    >
+      <Card surface="chalkboard" size="small" className={TASK_CARD_HEIGHT_CLASS}>
+        <div className="flex h-full min-w-0 flex-col justify-center gap-1">
+          <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+            {entry.planId ?? entry.planTitle}
+          </span>
+          <Stamp
+            surface="chalkboard"
+            size="small"
+            fillColor={statusFill.running}
+            textColor={statusText.running}
+            className="w-fit leading-none"
+          >
+            A run was interrupted; run again
+          </Stamp>
+        </div>
+      </Card>
+    </button>
+  );
+};
+
 export const AgentSection = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
+  const taskLog = useAppStore((s) => s.taskLog);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
   const navigate = useNavigate();
   const visibleTasks = agentStatus.slice(0, MAX_VISIBLE_TASKS);
   const hiddenCount = agentStatus.length - visibleTasks.length;
+  const notices = interruptedNotices(taskLog);
 
   return (
     <div className="flex min-h-0 flex-none flex-col p-[var(--pc-stack-pad)]">
@@ -239,7 +270,7 @@ export const AgentSection = () => {
           visibleTasks.map((task) => (
             <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
           ))
-        ) : (
+        ) : notices.length === 0 ? (
           <Card surface="chalkboard" size="small" className={TASK_CARD_HEIGHT_CLASS}>
             <div className="flex h-full items-center">
               <span className="font-handwritten text-desk-text-muted text-sm leading-tight">
@@ -247,7 +278,10 @@ export const AgentSection = () => {
               </span>
             </div>
           </Card>
-        )}
+        ) : null}
+        {notices.map((entry) => (
+          <InterruptedNoticeCard key={entry.id} entry={entry} />
+        ))}
       </div>
       <div className="mt-2 shrink-0">
         <CapacityRow heightClassName={TASK_CARD_HEIGHT_CLASS} />

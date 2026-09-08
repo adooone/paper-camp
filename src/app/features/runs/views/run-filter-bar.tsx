@@ -3,7 +3,7 @@ import type { LogRowOutcome, LogRowType } from '@/types/index';
 import { Stamp, type StampVariant } from '@dendelion/paper-ui';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 
-const OUTCOME_OPTIONS: LogRowOutcome[] = ['done', 'error', 'superseded', 'open'];
+const OUTCOME_OPTIONS: LogRowOutcome[] = ['done', 'error', 'superseded', 'open', 'interrupted'];
 
 interface FilterChipProps {
   active: boolean;

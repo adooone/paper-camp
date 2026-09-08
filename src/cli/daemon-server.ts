@@ -87,6 +87,7 @@ export async function readMachineProjectSummaries(
         mounted: apiMiddleware !== undefined,
         busy: apiMiddleware?.agent.hasActiveTask() ?? false,
         missing: await isProjectMissing(path),
+        interruptedCount: apiMiddleware?.agent.getInterruptedOnBoot(),
       };
     }),
   );

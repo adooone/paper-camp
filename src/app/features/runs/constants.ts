@@ -35,4 +35,5 @@ export const LOG_OUTCOME_VARIANT: Record<LogRowOutcome, StampVariant> = {
   superseded: 'warning',
   running: 'info',
   open: 'error',
+  interrupted: 'warning',
 };

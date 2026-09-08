@@ -248,12 +248,16 @@ export async function formatProjectTable(
       slug: project.slug,
       state: await projectState(project, liveProjects),
       path: project.path,
+      interruptedCount: liveProjects?.find((p) => p.slug === project.slug)?.interruptedCount ?? 0,
     })),
   );
   const slugWidth = Math.max(...rows.map((row) => row.slug.length));
   const stateWidth = Math.max(...rows.map((row) => row.state.length));
   const table = rows
-    .map((row) => `${row.slug.padEnd(slugWidth)}  ${row.state.padEnd(stateWidth)}  ${row.path}`)
+    .map((row) => {
+      const notice = row.interruptedCount > 0 ? `  (${row.interruptedCount} interrupted)` : '';
+      return `${row.slug.padEnd(slugWidth)}  ${row.state.padEnd(stateWidth)}  ${row.path}${notice}`;
+    })
     .join('\n');
   return rows.some((row) => row.state === 'missing')
     ? `${table}\n\n${MISSING_PROJECT_HINT}`

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { parseEntityFile } from '@/core/parse';
 import { entityToIdea, entityToPlan } from '@/core/readers';
-import type { PhaseItem, PlanEntry, ReviewThread } from '@/types/index';
+import type { PhaseItem, PlanEntry, ReviewThread, TaskLogEntry } from '@/types/index';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildAgentPrompt,
@@ -1401,6 +1401,110 @@ process.exit(1)
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
     expect(raw).toBe(expected);
+  });
+});
+
+describe('boot reconciliation', () => {
+  async function pollTasksLog(root: string, until: (entries: TaskLogEntry[]) => boolean) {
+    const logPath = join(root, 'papercamp', 'tasks.log');
+    const start = Date.now();
+    let entries: TaskLogEntry[] = [];
+    while (Date.now() - start < 2000) {
+      try {
+        const raw = await readFile(logPath, 'utf-8');
+        entries = raw
+          .trim()
+          .split('\n')
+          .filter(Boolean)
+          .map((line) => JSON.parse(line));
+        if (until(entries)) break;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    return entries;
+  }
+
+  it('marks a started-but-unfinished entry interrupted on a cold start, and notifies', async () => {
+    const { root } = await makeRoot(PLAN_TWO_PHASES);
+    const startedEntry = {
+      id: 'aaaaaaaa-0000-0000-0000-0000000000a1',
+      taskKind: 'phase',
+      planId: 'IDEA-1',
+      planTitle: 'Test plan',
+      agentId: 'claude-code',
+      startedAt: '2026-09-08T09:00:00.000Z',
+    };
+    await writeFile(join(root, 'papercamp', 'tasks.log'), `${JSON.stringify(startedEntry)}\n`);
+
+    const manager = createAgentManager(root);
+
+    const entries = await pollTasksLog(root, (es) =>
+      es.some((e) => e.id === startedEntry.id && e.outcome === 'interrupted'),
+    );
+    expect(entries.findLast((e) => e.id === startedEntry.id)).toMatchObject({
+      outcome: 'interrupted',
+      reason: 'the server stopped while this task was running',
+    });
+    expect(manager.getInterruptedOnBoot()).toBe(1);
+
+    const notifPath = join(root, 'papercamp', 'notifications.log');
+    const start = Date.now();
+    let notifications: { entityId?: string; outcome?: string }[] = [];
+    while (Date.now() - start < 2000 && notifications.length === 0) {
+      try {
+        const raw = await readFile(notifPath, 'utf-8');
+        notifications = raw
+          .trim()
+          .split('\n')
+          .filter(Boolean)
+          .map((line) => JSON.parse(line));
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(notifications).toEqual([
+      expect.objectContaining({ entityId: 'IDEA-1', outcome: 'interrupted' }),
+    ]);
+  });
+
+  it('leaves a task still running in this process untouched across a hot-reload', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const signalPath = join(root, 'signal');
+    agentScript.current = waitForSignalScript(signalPath);
+    const firstManager = createAgentManager(root);
+
+    firstManager.start(plan, 0);
+    const taskId = currentStatus(firstManager)?.id;
+    await waitForTaskStatus(firstManager, taskId as string, (s) => s === 'running');
+
+    // Simulates a server-code hot-reload: a second manager built against the same
+    // state object, as vite.app.config.ts's watcher does across a server edit.
+    const secondManager = createAgentManager(
+      root,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      firstManager.getState(),
+    );
+    expect(secondManager.getInterruptedOnBoot()).toBe(0);
+
+    await releaseSignal(signalPath);
+    expect(await waitForTaskStatus(firstManager, taskId as string, settled)).toBe('done');
+
+    const raw = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const entries = raw
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    expect(entries.some((e) => e.id === taskId && e.outcome === 'interrupted')).toBe(false);
   });
 });
 

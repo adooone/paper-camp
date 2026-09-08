@@ -6,6 +6,7 @@ kind: fix
 status: review
 idea: IDEA-233
 created: 2026-09-08
+updated: 2026-09-08
 tags:
   - server
   - cli
@@ -43,3 +44,4 @@ under [[IDEA-233]] prints the same count when the daemon restarts.
 - [x] Mark unfinished entries interrupted on boot and surface them
       The `interrupted` outcome in the Log, the notice on the idea's Stack card, and the count in `paper-camp status`.
       run: 11m56s · 76 in · 8.9k out · sonnet-5
+- [x] [manual] Mark unfinished tasks interrupted on boot and notify

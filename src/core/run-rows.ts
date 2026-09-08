@@ -47,6 +47,18 @@ export function usageForEntry(entry: TaskLogEntry): RunUsage | undefined {
   );
 }
 
+/** The most recent tasks.log entry per plan that's still `interrupted` — a newer
+ * `started` line on that plan becomes the newest entry, dropping it from this list. */
+export function interruptedNotices(taskLog: TaskLogEntry[]): TaskLogEntry[] {
+  const latestByPlan = new Map<string, TaskLogEntry>();
+  for (const entry of taskLog) {
+    if (!entry.planId) continue;
+    const current = latestByPlan.get(entry.planId);
+    if (!current || entry.startedAt > current.startedAt) latestByPlan.set(entry.planId, entry);
+  }
+  return [...latestByPlan.values()].filter((entry) => entry.outcome === 'interrupted');
+}
+
 function unreadCompletedIds(notifications: Notification[]): Set<string> {
   return new Set(
     notifications

@@ -163,6 +163,33 @@ describe('formatProjectTable', () => {
     );
   });
 
+  it('appends an interrupted-run count for a project that lost one at its last boot', async () => {
+    const alpha = await makeProject('alpha');
+    const beta = await makeProject('beta');
+    const liveProjects: MachineProjectSummary[] = [
+      {
+        slug: 'alpha',
+        name: 'Alpha',
+        mounted: true,
+        busy: false,
+        missing: false,
+        interruptedCount: 2,
+      },
+      {
+        slug: 'beta',
+        name: 'Beta',
+        mounted: true,
+        busy: false,
+        missing: false,
+        interruptedCount: 0,
+      },
+    ];
+
+    expect(await formatProjectTable([alpha, beta], liveProjects)).toBe(
+      `alpha  mounted  ${alpha.path}  (2 interrupted)\n` + `beta   mounted  ${beta.path}`,
+    );
+  });
+
   it('prints missing in the STATE column and a hint to forget it below the table', async () => {
     const alpha = await makeProject('alpha');
     const dir = await mkdtemp(join(tmpdir(), 'paper-camp-project-table-'));

@@ -289,7 +289,7 @@ export interface StoredNotification {
   date: string;
   read: boolean;
   /** Only set for 'completed' — the task outcome that triggered it. */
-  outcome?: 'done' | 'error';
+  outcome?: 'done' | 'error' | 'interrupted';
 }
 
 /** One unified feed entry (IDEA-153) — a parked question (open→resolved, always
@@ -790,6 +790,8 @@ export interface MachineProjectSummary {
   mounted: boolean;
   busy: boolean;
   missing: boolean;
+  /** Runs marked `interrupted` when this project last mounted (a crash mid-run) — unset while unmounted. */
+  interruptedCount?: number;
 }
 
 export interface MergePolicy {
@@ -923,7 +925,7 @@ export interface TaskLogEntry {
   agentId: AgentId;
   startedAt: string;
   endedAt?: string;
-  outcome?: 'done' | 'error' | 'superseded';
+  outcome?: 'done' | 'error' | 'superseded' | 'interrupted';
   reason?: string;
   usage?: RunUsage;
   phaseRuns?: PhaseRunRecord[];
@@ -1075,7 +1077,7 @@ export interface Issue {
  * `TaskKind`, a failure with no run behind it reads its `IssueSourceKind`. */
 export type LogRowType = TaskKind | IssueSourceKind | 'reply' | 'question';
 
-export type LogRowOutcome = 'done' | 'error' | 'superseded' | 'running' | 'open';
+export type LogRowOutcome = 'done' | 'error' | 'superseded' | 'running' | 'open' | 'interrupted';
 
 /** What the row expands into (IDEA-237 phase 3) — carries the original record
  * rather than flattening it, so the detail view can read whatever it needs. */

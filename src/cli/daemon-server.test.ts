@@ -181,7 +181,9 @@ describe('readMachineProjectSummaries', () => {
   }
 
   const fakeApi = (active: boolean) =>
-    ({ agent: { hasActiveTask: () => active } }) as unknown as ApiMiddleware;
+    ({
+      agent: { hasActiveTask: () => active, getInterruptedOnBoot: () => 0 },
+    }) as unknown as ApiMiddleware;
 
   it('lists slug and name, sorted, with no filesystem path, unmounted by default', async () => {
     const zetaPath = await makeProjectDir('zeta');
@@ -216,7 +218,14 @@ describe('readMachineProjectSummaries', () => {
     );
 
     expect(summaries).toEqual([
-      { slug: 'demo', name: 'Demo', mounted: true, busy: false, missing: false },
+      {
+        slug: 'demo',
+        name: 'Demo',
+        mounted: true,
+        busy: false,
+        missing: false,
+        interruptedCount: 0,
+      },
     ]);
   });
 
@@ -232,7 +241,14 @@ describe('readMachineProjectSummaries', () => {
     );
 
     expect(summaries).toEqual([
-      { slug: 'demo', name: 'Demo', mounted: true, busy: true, missing: false },
+      {
+        slug: 'demo',
+        name: 'Demo',
+        mounted: true,
+        busy: true,
+        missing: false,
+        interruptedCount: 0,
+      },
     ]);
   });
 
@@ -281,7 +297,9 @@ describe('createProjectApi', () => {
 
 describe('isMachineBusy', () => {
   const fakeApi = (active: boolean) =>
-    ({ agent: { hasActiveTask: () => active } }) as unknown as ApiMiddleware;
+    ({
+      agent: { hasActiveTask: () => active, getInterruptedOnBoot: () => 0 },
+    }) as unknown as ApiMiddleware;
 
   it('is false when no mounted project has an active task', () => {
     const mounted = new Map([
@@ -383,7 +401,7 @@ describe('createDaemonRequestHandler', () => {
         res.statusCode = 200;
         res.end('mounted');
       }),
-      { agent: { hasActiveTask: () => false } },
+      { agent: { hasActiveTask: () => false, getInterruptedOnBoot: () => 0 } },
     ) as unknown as ApiMiddleware;
     const { mount, mounted } = createProjectMounter(registryPath, () => Promise.resolve(mockedApi));
     const handler = createDaemonRequestHandler(registryPath, mount, mounted, localLink);
@@ -426,7 +444,16 @@ describe('createDaemonRequestHandler', () => {
     const response = await fetch(`http://127.0.0.1:${port}/api/machine/projects`);
 
     expect(await response.json()).toEqual({
-      projects: [{ slug: 'demo', name: 'Demo', mounted: true, busy: false, missing: false }],
+      projects: [
+        {
+          slug: 'demo',
+          name: 'Demo',
+          mounted: true,
+          busy: false,
+          missing: false,
+          interruptedCount: 0,
+        },
+      ],
     });
   });
 
