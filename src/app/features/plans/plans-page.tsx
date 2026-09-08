@@ -104,6 +104,7 @@ export const PlansPage = () => {
 
           {plans.entries.length === 0 ? (
             <EmptyState
+              illustration="empty-tray"
               message={
                 <>
                   No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}

@@ -47,6 +47,7 @@ export const RoadmapPage = () => {
       <div>
         <PageTitle>Roadmap</PageTitle>
         <EmptyState
+          illustration="empty-tray"
           message={
             <>
               No <code>ROADMAP.md</code> found at the project root.
@@ -63,6 +64,7 @@ export const RoadmapPage = () => {
       <GoalBanner goal={roadmap.goal} />
       {totalVisible === 0 ? (
         <EmptyState
+          illustration="empty-tray"
           message={
             hasActiveFilters
               ? 'Nothing matches these filters — clear one from the sidebar to see more.'

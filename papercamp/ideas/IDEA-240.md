@@ -101,6 +101,7 @@ or to the daemon's project mounts.
 - [x] Fetch the doodle pack outside git
       Git-ignore `public/img/doodles/` and add `scripts/fetch-assets.mjs`, which unpacks `PAPERCAMP_ASSETS_URL` before `build:app` and skips quietly when the variable is absent.
       run: 9m48s · 50 in · 10.4k out · sonnet-5
-- [ ] Give `EmptyState` an `illustration` slot
+- [x] Give `EmptyState` an `illustration` slot
       A 96px `<img>` from `/img/doodles/<name>.svg` above the existing copy; the seven empty states that had drawings each pick one, and a pack-less build renders the copy alone.
+      run: 8m42s · 92 in · 19.7k out · sonnet-5
 - [ ] Say one client in USAGE.md and README.md

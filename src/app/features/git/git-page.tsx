@@ -51,7 +51,7 @@ export const GitPage = () => {
       {header}
       {files.length === 0 ? (
         <div className={contentClass}>
-          <EmptyState message="No changed files." />
+          <EmptyState illustration="clean-sheet" message="No changed files." />
         </div>
       ) : (
         <>

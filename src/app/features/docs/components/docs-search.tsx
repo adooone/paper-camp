@@ -50,7 +50,7 @@ export const DocsSearch = ({ query }: DocsSearchProps) => {
   };
 
   if (results.length === 0) {
-    return <EmptyState message={<>No results found for "{query}".</>} />;
+    return <EmptyState illustration="magnifier" message={<>No results found for "{query}".</>} />;
   }
 
   return (
