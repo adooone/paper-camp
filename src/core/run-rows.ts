@@ -59,7 +59,7 @@ function taskRow(entry: TaskLogEntry, unreadIds: Set<string>): LogRow {
   const usage = usageForEntry(entry);
   return {
     id: `task:${entry.id}`,
-    timestamp: entry.endedAt,
+    timestamp: entry.endedAt ?? entry.startedAt,
     type: entry.taskKind,
     entityId: entry.planId,
     entityTitle: entry.planTitle,
@@ -67,7 +67,7 @@ function taskRow(entry: TaskLogEntry, unreadIds: Set<string>): LogRow {
     agentId: entry.agentId,
     durationMs: usage?.durationMs,
     costUsd: usage?.costUsd,
-    outcome: entry.outcome,
+    outcome: entry.outcome ?? 'running',
     unread: unreadIds.has(entry.id),
     source: { kind: 'task', entry },
   };

@@ -37,7 +37,8 @@ run again" — until the next run on that idea starts. `paper-camp status`
 under [[IDEA-233]] prints the same count when the daemon restarts.
 
 ### Phases
-- [ ] Write the start record and fold it on read
+- [x] Write the start record and fold it on read
       Append a `started` entry on task registration, update it on finish, and make `readTaskLog` merge the pair.
+      run: 18m18s · 194 in · 37.9k out · sonnet-5
 - [ ] Mark unfinished entries interrupted on boot and surface them
       The `interrupted` outcome in the Log, the notice on the idea's Stack card, and the count in `paper-camp status`.

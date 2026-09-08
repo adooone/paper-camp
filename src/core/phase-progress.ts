@@ -62,7 +62,10 @@ function median(values: number[]): number {
 export function medianSegmentMs(entries: TaskLogEntry[]): Partial<Record<PhaseMilestone, number>> {
   const durations = entries
     .filter((entry) => entry.taskKind === 'phase' && entry.outcome === 'done')
-    .map((entry) => Date.parse(entry.endedAt) - Date.parse(entry.startedAt))
+    .map(
+      (entry) =>
+        (entry.endedAt ? Date.parse(entry.endedAt) : Number.NaN) - Date.parse(entry.startedAt),
+    )
     .filter((ms) => Number.isFinite(ms) && ms > 0);
   if (durations.length === 0) return {};
   const phaseMs = median(durations);

@@ -1,9 +1,9 @@
-import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { logTaskCompletion } from './task-log';
+import { logTaskCompletion, logTaskStart } from './task-log';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -48,6 +48,51 @@ const completed = (id: string) => ({
   agentId: 'claude-code' as const,
   startedAt: new Date().toISOString(),
   lines: ['line one'],
+});
+
+describe('logTaskStart', () => {
+  it('appends a started entry with no endedAt or outcome', async () => {
+    const root = makeRoot();
+    const id = '99999999-0000-0000-0000-000000000009';
+    await logTaskStart(root, {
+      id,
+      taskKind: 'phase',
+      planId: 'IDEA-1',
+      planTitle: 'Test plan',
+      agentId: 'claude-code',
+      startedAt: '2026-09-08T10:00:00.000Z',
+    });
+
+    const raw = readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const logged = raw
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => JSON.parse(l))
+      .find((e) => e.id === id);
+    expect(logged).toMatchObject({
+      id,
+      taskKind: 'phase',
+      planId: 'IDEA-1',
+      planTitle: 'Test plan',
+      agentId: 'claude-code',
+      startedAt: '2026-09-08T10:00:00.000Z',
+    });
+    expect(logged.endedAt).toBeUndefined();
+    expect(logged.outcome).toBeUndefined();
+  });
+
+  it('skips unlogged task kinds', async () => {
+    const root = makeRoot();
+    await logTaskStart(root, {
+      id: '99999999-0000-0000-0000-000000000010',
+      taskKind: 'commit-suggest',
+      planTitle: 'Suggest commit message',
+      agentId: 'claude-code',
+      startedAt: '2026-09-08T10:00:00.000Z',
+    });
+
+    expect(existsSync(join(root, 'papercamp', 'tasks.log'))).toBe(false);
+  });
 });
 
 describe('logTaskCompletion reason', () => {

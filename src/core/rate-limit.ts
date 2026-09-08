@@ -16,7 +16,7 @@ export function latestCapacity(entries: TaskLogEntry[]): CapacityStat | null {
   let latest: CapacityStat | null = null;
   let latestMs = Number.NEGATIVE_INFINITY;
   for (const entry of entries) {
-    if (!entry.rateLimit) continue;
+    if (!entry.rateLimit || entry.endedAt === undefined) continue;
     if (
       entry.rateLimit.resetsAt !== undefined &&
       resetsAtMs(entry.rateLimit.resetsAt) <= Date.now()

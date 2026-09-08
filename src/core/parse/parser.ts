@@ -419,17 +419,31 @@ export function findConsistencyIssues(
   return issues;
 }
 
-/** tasks.log is JSON Lines — one TaskLogEntry per line. Skip lines that fail to parse rather than fail the whole read (a truncated last line from a crash shouldn't hide the rest). */
-export function parseTaskLog(raw: string): TaskLogEntry[] {
-  const entries: TaskLogEntry[] = [];
+/** tasks.log is JSON Lines: a `started` line on registration and, once the task
+ * finishes, a second line for the same id carrying `endedAt`/`outcome`. Folds
+ * both into one entry per id, in first-seen order — an entry with no `endedAt`
+ * is a start with no matching finish. Skips lines that fail to parse rather than
+ * fail the whole read (a truncated last line from a crash shouldn't hide the rest). */
+export function readTaskLog(raw: string): TaskLogEntry[] {
+  const byId = new Map<string, TaskLogEntry>();
+  const order: string[] = [];
   for (const line of raw.split('\n')) {
     const trimmed = line.trim();
     if (!trimmed) continue;
+    let parsed: TaskLogEntry;
     try {
-      entries.push(JSON.parse(trimmed) as TaskLogEntry);
-    } catch {}
+      parsed = JSON.parse(trimmed) as TaskLogEntry;
+    } catch {
+      continue;
+    }
+    const existing = byId.get(parsed.id);
+    if (existing) byId.set(parsed.id, { ...existing, ...parsed });
+    else {
+      byId.set(parsed.id, parsed);
+      order.push(parsed.id);
+    }
   }
-  return entries;
+  return order.map((id) => byId.get(id) as TaskLogEntry);
 }
 
 export function parseNotificationLog(raw: string): StoredNotification[] {

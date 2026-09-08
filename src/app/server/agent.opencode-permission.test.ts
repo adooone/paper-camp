@@ -125,7 +125,7 @@ describe('opencode external_directory permission ask (IDEA-125)', () => {
       .trim()
       .split('\n')
       .map((line) => JSON.parse(line))
-      .find((e) => e.planId === 'IDEA-1');
+      .findLast((e) => e.planId === 'IDEA-1');
     expect(entry.outcome).toBe('error');
     expect(entry.reason).toBe(`read outside workspace: ${SIBLING_REPO_PATH}`);
 

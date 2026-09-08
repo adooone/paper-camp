@@ -9,7 +9,7 @@ import {
   runGit,
 } from './git-log';
 import { resolvePrsByEntity } from './git-pr/pr-lookup';
-import { parseTaskLog } from './parse/parser';
+import { readTaskLog } from './parse/parser';
 import { readEntities } from './readers';
 import { deriveStatus } from './status';
 
@@ -127,7 +127,7 @@ export async function resolveEntityTrail(root: string, id: string): Promise<Prov
 
   const entry = entries.find((e) => e.id === id);
   const pr = prs?.get(id);
-  const taskRuns = parseTaskLog(taskLogRaw).filter((t) => t.planId === id);
+  const taskRuns = readTaskLog(taskLogRaw).filter((t) => t.planId === id);
   const releaseLine = findReleaseLineForId(changelogRaw, id);
 
   return {

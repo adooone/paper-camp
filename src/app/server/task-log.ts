@@ -1,6 +1,6 @@
 import { appendFile, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { parseTaskLog } from '@/core/parse';
+import { readTaskLog } from '@/core/parse';
 import type {
   AgentId,
   PhaseRunRecord,
@@ -24,10 +24,10 @@ async function pruneExpiredTasks(root: string): Promise<void> {
   const path = campFile(root, 'tasks.log');
   const raw = await readMaybe(path);
   if (!raw) return;
-  const entries = parseTaskLog(raw);
+  const entries = readTaskLog(raw);
   const cutoff = Date.now() - RETENTION_MS;
   const kept = entries.filter((e) => {
-    const ended = Date.parse(e.endedAt);
+    const ended = e.endedAt ? Date.parse(e.endedAt) : Number.NaN;
     return Number.isNaN(ended) || ended >= cutoff;
   });
   if (kept.length === entries.length) return;
@@ -68,6 +68,36 @@ interface CompletedTask {
 // Read-only helper runs (commit-message suggestion, capture-time overlap check) produce no
 // lasting artifact — recording them would just dirty the tracked tasks.log on every use.
 export const UNLOGGED_TASK_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check']);
+
+interface StartingTask {
+  id: string;
+  taskKind: TaskKind;
+  planId?: string;
+  planTitle: string;
+  agentId: AgentId;
+  startedAt: string;
+}
+
+// Written on registration so a crash mid-run still leaves a line behind.
+// Best-effort: a log write failure must never take down the task it's recording.
+export function logTaskStart(root: string, task: StartingTask): Promise<void> {
+  if (UNLOGGED_TASK_KINDS.has(task.taskKind)) return Promise.resolve();
+  const entry: TaskLogEntry = {
+    id: task.id,
+    taskKind: task.taskKind,
+    planId: task.planId,
+    planTitle: task.planTitle,
+    agentId: task.agentId,
+    startedAt: task.startedAt,
+  };
+  const run = taskChain.then(() =>
+    appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch((err) => {
+      console.error(`papercamp: could not append task start ${task.id} to tasks.log:`, err);
+    }),
+  );
+  taskChain = run.catch(() => undefined);
+  return run;
+}
 
 // Best-effort: a log write failure must never take down the task it's recording.
 export function logTaskCompletion(

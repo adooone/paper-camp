@@ -913,8 +913,8 @@ export type TaskKind =
   | 'issue-fix'
   | 'desk-discovery';
 
-// Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart,
-// unlike the in-memory task registry.
+// Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart.
+// A start line and its later finish share an id; `readTaskLog` folds them, so no `endedAt` means never finished.
 export interface TaskLogEntry {
   id: string;
   taskKind: TaskKind;
@@ -922,8 +922,8 @@ export interface TaskLogEntry {
   planTitle: string;
   agentId: AgentId;
   startedAt: string;
-  endedAt: string;
-  outcome: 'done' | 'error' | 'superseded';
+  endedAt?: string;
+  outcome?: 'done' | 'error' | 'superseded';
   reason?: string;
   usage?: RunUsage;
   phaseRuns?: PhaseRunRecord[];

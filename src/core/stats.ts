@@ -12,7 +12,7 @@ import type {
   TasksPerWeek,
   UsagePerWeek,
 } from '../types/index';
-import { parseTaskLog } from './parse';
+import { readTaskLog } from './parse';
 import { latestCapacity } from './rate-limit';
 import { readEntitiesWithDerivedStatus } from './readers';
 
@@ -144,7 +144,7 @@ function entryTokens(entry: TaskLogEntry): { inputTokens: number; outputTokens: 
 
 function taskWallClockMs(entry: TaskLogEntry): number {
   const started = Date.parse(entry.startedAt);
-  const ended = Date.parse(entry.endedAt);
+  const ended = entry.endedAt ? Date.parse(entry.endedAt) : Number.NaN;
   if (Number.isNaN(started) || Number.isNaN(ended)) return 0;
   return Math.max(0, ended - started);
 }
@@ -220,7 +220,7 @@ export async function computeProjectStats(root: string): Promise<ProjectStats> {
     readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8').catch(() => ''),
   ]);
   const { openQuestions, decisions } = countThreadNotes(entries);
-  const taskLog = parseTaskLog(taskLogRaw);
+  const taskLog = readTaskLog(taskLogRaw);
   return {
     generatedAt: new Date().toISOString(),
     comments,

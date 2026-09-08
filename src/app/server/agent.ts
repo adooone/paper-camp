@@ -50,7 +50,7 @@ import { claudeAuthStatus } from './local-adapters';
 import { appendNotification } from './notification-log';
 import { parsePrReviewResult, postPrReview } from './pr-review-settle';
 import { clearDeliveryFailures, recordDeliveryFailure, recordReviewedSha } from './pr-review-state';
-import { UNLOGGED_TASK_KINDS, logTaskCompletion } from './task-log';
+import { UNLOGGED_TASK_KINDS, logTaskCompletion, logTaskStart } from './task-log';
 
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -409,6 +409,14 @@ export function createAgentManager(
     tasks.set(task.id, task);
     state.lastLaunchedId = task.id;
     if (EXCLUSIVE_KINDS.has(task.taskKind)) state.lastExclusiveLaunchedId = task.id;
+    void logTaskStart(root, {
+      id: task.id,
+      taskKind: task.taskKind,
+      planId: task.planId,
+      planTitle: task.planTitle,
+      agentId: task.agentId,
+      startedAt: task.startedAt,
+    });
   }
 
   function newTask(

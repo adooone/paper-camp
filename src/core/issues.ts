@@ -165,7 +165,9 @@ export function applyPromotions(issues: Issue[], entities: PromotionTarget[]): I
  * oldest first, so a repeat fix attempt reads as a continuation, not a fresh mystery. */
 export function issueThreadFromTaskLog(issue: Issue, taskLog: TaskLogEntry[]): ThreadMessage[] {
   return taskLog
-    .filter((entry) => entry.issueId === issue.id)
+    .filter((entry): entry is TaskLogEntry & { endedAt: string } =>
+      Boolean(entry.issueId === issue.id && entry.endedAt),
+    )
     .sort((a, b) => a.endedAt.localeCompare(b.endedAt))
     .map((entry) => ({
       kind: 'log',

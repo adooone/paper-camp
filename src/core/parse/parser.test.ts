@@ -9,7 +9,7 @@ import {
   parseNotificationLog,
   parsePlans,
   parseSuggestions,
-  parseTaskLog,
+  readTaskLog,
 } from './parser';
 
 describe('parsePlans', () => {
@@ -766,7 +766,7 @@ Body prose.
   });
 });
 
-describe('parseTaskLog', () => {
+describe('readTaskLog', () => {
   it('parses one entry per JSON line', () => {
     const entryA = {
       id: 'a',
@@ -788,7 +788,7 @@ describe('parseTaskLog', () => {
       outcome: 'error',
     };
     const jsonl = `${JSON.stringify(entryA)}\n${JSON.stringify(entryB)}\n`;
-    expect(parseTaskLog(jsonl)).toEqual([entryA, entryB]);
+    expect(readTaskLog(jsonl)).toEqual([entryA, entryB]);
   });
 
   it('skips malformed lines and blank lines rather than failing the whole read', () => {
@@ -802,11 +802,61 @@ describe('parseTaskLog', () => {
       outcome: 'done',
     };
     const jsonl = `${JSON.stringify(entry)}\n\nnot json\n`;
-    expect(parseTaskLog(jsonl)).toEqual([entry]);
+    expect(readTaskLog(jsonl)).toEqual([entry]);
   });
 
   it('returns an empty array for an empty file', () => {
-    expect(parseTaskLog('')).toEqual([]);
+    expect(readTaskLog('')).toEqual([]);
+  });
+
+  it('folds a started line and its later finish into one entry', () => {
+    const started = {
+      id: 'a',
+      taskKind: 'phase',
+      planId: 'FEAT-1',
+      planTitle: 'Some plan',
+      agentId: 'claude-code',
+      startedAt: '2026-07-15T10:00:00.000Z',
+    };
+    const finished = {
+      ...started,
+      endedAt: '2026-07-15T10:05:00.000Z',
+      outcome: 'done',
+    };
+    const jsonl = `${JSON.stringify(started)}\n${JSON.stringify(finished)}\n`;
+    expect(readTaskLog(jsonl)).toEqual([finished]);
+  });
+
+  it('leaves a started entry with no finish line without endedAt or outcome', () => {
+    const started = {
+      id: 'a',
+      taskKind: 'phase',
+      planId: 'FEAT-1',
+      planTitle: 'Some plan',
+      agentId: 'claude-code',
+      startedAt: '2026-07-15T10:00:00.000Z',
+    };
+    expect(readTaskLog(`${JSON.stringify(started)}\n`)).toEqual([started]);
+  });
+
+  it('keeps folded entries in first-seen order', () => {
+    const startedA = {
+      id: 'a',
+      taskKind: 'phase',
+      planTitle: 'Plan A',
+      agentId: 'claude-code',
+      startedAt: '2026-07-15T10:00:00.000Z',
+    };
+    const startedB = {
+      id: 'b',
+      taskKind: 'phase',
+      planTitle: 'Plan B',
+      agentId: 'claude-code',
+      startedAt: '2026-07-15T10:01:00.000Z',
+    };
+    const finishedA = { ...startedA, endedAt: '2026-07-15T10:05:00.000Z', outcome: 'done' };
+    const jsonl = `${JSON.stringify(startedA)}\n${JSON.stringify(startedB)}\n${JSON.stringify(finishedA)}\n`;
+    expect(readTaskLog(jsonl).map((e) => e.id)).toEqual(['a', 'b']);
   });
 });
 

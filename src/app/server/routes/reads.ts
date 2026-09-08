@@ -6,7 +6,7 @@ import {
   deskConfigSchema,
   findConsistencyIssues,
   parseSuggestions,
-  parseTaskLog,
+  readTaskLog,
 } from '@/core/parse';
 import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
@@ -57,7 +57,7 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/tasks',
     handler: async (root) => ({
-      entries: parseTaskLog(await readMaybe(campFile(root, 'tasks.log'))),
+      entries: readTaskLog(await readMaybe(campFile(root, 'tasks.log'))),
     }),
   },
   {
@@ -159,7 +159,7 @@ export const readRoutes: ReadRoute[] = [
         readMaybe(campFile(root, 'tasks.log')),
         readMaybe(join(root, 'CHANGELOG.md')),
       ]);
-      return resolveRoadmap(parseRoadmap(raw), entries, parseTaskLog(taskLogRaw), changelog);
+      return resolveRoadmap(parseRoadmap(raw), entries, readTaskLog(taskLogRaw), changelog);
     },
   },
   {
