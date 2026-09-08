@@ -357,7 +357,33 @@ UX/UI principles (layout stability, visual hierarchy, motion restraint, and so
 on) live in [`UX_PRINCIPLES.md`](UX_PRINCIPLES.md), not here — this file is
 about how the code is written, that one is about how the UI feels to use.
 
-## 8. The style pass
+## 8. Testing
+
+`pnpm test` runs the `unit` vitest project — everything except the suites
+that spawn a process or drive a real git repository. It carries no coverage
+instrumentation and must stay under **two minutes** on a laptop; that is
+what the Stack panel's Tests check runs, and CI's `Tests` job fails the
+build if the unit project doesn't clear that bar.
+
+- **Core and server logic** get unit tests at the function boundary — the
+  public function or handler, not its internals.
+- **A feature** gets one test for its selector or hook; its child components
+  go untested. Component tests exist only where a component owns real logic,
+  not for coverage of JSX shape.
+- **Anything that spawns a process or touches a real repository** (a `bun`
+  or `git` subprocess, a live daemon, a real filesystem repo) belongs in the
+  `integration` vitest project (`vitest.workspace.ts`), not `unit` — run it
+  with `pnpm test:integration`, or both projects together with
+  `pnpm test:all`. Coverage (`--coverage`) only runs in CI, via
+  `pnpm test:all -- --coverage`.
+- **`pnpm test:changed`** (`vitest run --changed`) runs only the tests
+  affected by the working tree's git changes, for a fast local loop; the
+  full `pnpm test` run is still the gate before a commit.
+- A test survives when its failure would name a bug a user could hit.
+  Sibling cases that differ only in an input value belong in one `it.each`
+  table, not one `it` per variant.
+
+## 9. The style pass
 
 Working code is not finished code. An agent implementing a phase optimises for
 making it work; nothing afterwards reads the result back against this document,

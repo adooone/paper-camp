@@ -2,7 +2,7 @@
 id: IDEA-242
 title: Tests in a minute
 type: chore
-status: in-progress
+status: review
 created: 2026-09-07
 updated: 2026-09-08
 tags:
@@ -113,7 +113,8 @@ this idea adds none.
       Covers `src/core/parse`, `src/core/git-pr`, `src/core/status`, and
       `git.test.ts`.
       run: 24m21s · 212 in · 68.1k out · sonnet-5
-- [ ] Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it
+- [x] Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it
+      run: 4m2s · 38 in · 8.2k out · sonnet-5
 
 ### Thread
 - [ ] 2026-09-08 [question] [agent] Run-all parked on phase 7 ("Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it") — the agent needs a decision: `pnpm test` measures ~99-100s here (verified twice, 2-core sandbox comparable to a GitHub Actions runner), not under a minute as the plan's phase 7 wants documented and CI-gated. How do you want to proceed — pick a different threshold to write into `docs/CODE_STYLE.md` and gate CI on (e.g., 2 minutes), land the gate at 60s anyway and accept it may start red until further optimization, or something else?
