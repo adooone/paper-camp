@@ -93,9 +93,10 @@ stamp. Browser-rendered component tests; there is no DOM environment and
 this idea adds none.
 
 ### Phases
-- [ ] Split unit and integration into two vitest projects
+- [x] Split unit and integration into two vitest projects
       Add `vitest.workspace.ts`, repoint `test`, `test:integration`, and
       `test:all`, and move coverage to CI's `test:all --coverage`.
+      run: 13m49s · 92 in · 17.1k out · sonnet-5
 - [ ] Add `pnpm test:changed` and its Stack stamp
 - [ ] Reuse one repository per describe in `git.test.ts`
 - [ ] Drive the daemon and registry commands in-process
