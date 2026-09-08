@@ -5,6 +5,7 @@ import {
   createApiMiddleware,
   handlePreflight,
   hostOf,
+  isLoopbackHost,
   isTrustedHost,
 } from '../app/server/api';
 import { sendJson } from '../app/server/http';
@@ -14,7 +15,6 @@ import {
   machinePairingPath,
   savePairingState,
 } from '../app/server/pairing';
-import { injectMountAttribute } from '../app/services/mount';
 import {
   type DaemonState,
   daemonStatePath,
@@ -38,7 +38,6 @@ import {
   buildRegistrationLinkForMachine,
   networkRegistrationLink,
 } from './registration-link';
-import { appDir, loadIndexHtml, serveStatic } from './serve-static';
 import {
   TAILNET_HTTPS_CERTS_MISSING_MESSAGE,
   TAILNET_NOT_RUNNING_MESSAGE,
@@ -66,7 +65,7 @@ interface MountRequest {
 }
 
 /** `/p/<slug>` and `/p/<slug>/...` mount a registered project; anything else
- * (bare `/`, the shared JS/CSS bundle) is served unmounted, at the daemon root. */
+ * (bare `/`, `/api/machine/projects`) is handled unmounted, at the daemon root. */
 export function parseMountRequest(pathname: string): MountRequest | null {
   const match = pathname.match(/^\/p\/([^/]+)(\/.*)?$/);
   return match ? { slug: match[1], rest: match[2] ?? '/' } : null;
@@ -180,11 +179,19 @@ export function createDaemonRequestHandler(
   registryPath: string,
   mount: (slug: string) => Promise<MountResult>,
   mounted: ReadonlyMap<string, ApiMiddleware>,
-  staticDir: string,
-  indexHtml: string,
+  localLink: string,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   return async (req, res) => {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
+
+    // localLink only resolves for loopback — gating it here keeps the pairing token
+    // out of a LAN/tunnel peer's reach instead of handing it out via Location.
+    if (pathname === '/' && isLoopbackHost(hostOf(req.headers.host))) {
+      res.statusCode = 302;
+      res.setHeader('Location', localLink);
+      res.end();
+      return;
+    }
 
     if (pathname === MACHINE_PROJECTS_PATH) {
       applyCorsHeaders(req, res);
@@ -209,7 +216,8 @@ export function createDaemonRequestHandler(
         sendJson(res, 404, { error: 'no project mounted at the daemon root' });
         return;
       }
-      await serveStatic(req, res, staticDir, indexHtml);
+      res.statusCode = 404;
+      res.end();
       return;
     }
 
@@ -229,25 +237,22 @@ export function createDaemonRequestHandler(
     const query = (req.url ?? '').split('?')[1];
     req.url = query ? `${request.rest}?${query}` : request.rest;
 
-    const mountedIndexHtml = injectMountAttribute(indexHtml, `/p/${request.slug}`);
     await apiMiddleware(req, res, () => {
-      serveStatic(req, res, staticDir, mountedIndexHtml).catch((error) => {
-        res.statusCode = 500;
-        res.end(String(error));
-      });
+      res.statusCode = 404;
+      res.end();
     });
   };
 }
 
 export function formatDaemonBanner(
-  port: number,
+  localLink: string,
   network: NetworkRegistration,
   color: boolean,
 ): string {
   return [
     formatDevBanner({
       version: PAPER_CAMP_VERSION,
-      localUrl: `http://localhost:${port}`,
+      localUrl: localLink,
       networkLink: network.link,
       networkBlocked: network.blocked,
       color,
@@ -265,14 +270,6 @@ export async function startDaemonServer({
     throw new Error(CLOUDFLARED_MISSING_MESSAGE);
   }
 
-  const staticDir = appDir();
-  const indexHtml = await loadIndexHtml(staticDir);
-  if (indexHtml === null) {
-    throw new Error(
-      `Dashboard assets not found at ${staticDir}. Run \`pnpm build\` (or reinstall the package) so dist/app exists.`,
-    );
-  }
-
   const { state: pairingState, persist: persistPairing } = await loadMachinePairing();
   const mounted = new Map<string, ApiMiddleware>();
   const checkMachineBusy = () => isMachineBusy(mounted);
@@ -282,12 +279,12 @@ export async function startDaemonServer({
     mounted,
   );
 
+  const localLink = buildRegistrationLinkForMachine(`http://localhost:${port}`, pairingState.token);
   const handleRequest = createDaemonRequestHandler(
     defaultRegistryPath(),
     mount,
     mounted,
-    staticDir,
-    indexHtml,
+    localLink,
   );
 
   const server = createServer((req, res) => {
@@ -333,7 +330,7 @@ export async function startDaemonServer({
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
   console.log(
     formatDaemonBanner(
-      port,
+      localLink,
       await networkRegistrationLink(port, pairingState.token, buildRegistrationLinkForMachine),
       color,
     ),

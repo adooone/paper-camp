@@ -310,33 +310,35 @@ describe('isMachineBusy', () => {
 });
 
 describe('formatDaemonBanner', () => {
+  const localLink =
+    'https://paper-camp.vercel.app/?machine=http%3A%2F%2Flocalhost%3A4333&token=shared-token';
   const networkLink =
     'https://paper-camp.vercel.app/?runtime=http%3A%2F%2F100.80.79.13%3A4333&token=shared-token';
   const reachable = { link: networkLink, blocked: false };
 
-  it('carries the daemon port in the Local row and the resolved Network link', () => {
-    const banner = formatDaemonBanner(4333, reachable, false);
-    expect(banner).toContain('Local:   http://localhost:4333');
+  it('carries the hosted-client Local link and the resolved Network link', () => {
+    const banner = formatDaemonBanner(localLink, reachable, false);
+    expect(banner).toContain(`Local:   ${localLink}`);
     expect(banner).toContain(`Network: ${networkLink}`);
   });
 
   it('keeps the lazy-mount note as a dim row after the banner', () => {
-    const banner = formatDaemonBanner(4333, reachable, false);
+    const banner = formatDaemonBanner(localLink, reachable, false);
     expect(banner).toContain('Registered projects mount lazily at /p/<slug>/ on first request.');
   });
 
   it('never prints the pairing token as its own bare line', () => {
-    const banner = formatDaemonBanner(4333, reachable, false);
+    const banner = formatDaemonBanner(localLink, reachable, false);
     expect(banner).not.toMatch(/^Pairing token:/m);
   });
 
   it('omits the Network row when the machine has no reachable address', () => {
-    const banner = formatDaemonBanner(4333, { blocked: false }, false);
+    const banner = formatDaemonBanner(localLink, { blocked: false }, false);
     expect(banner).not.toContain('Network:');
   });
 
   it('prints the remedy instead of the Network row when the pair is blocked', () => {
-    const banner = formatDaemonBanner(4333, { blocked: true }, false);
+    const banner = formatDaemonBanner(localLink, { blocked: true }, false);
     expect(banner).not.toContain('Network:');
     expect(banner).toContain('rerun with --tailnet or --share');
   });
@@ -371,6 +373,8 @@ describe('createDaemonRequestHandler', () => {
     return projectPath;
   }
 
+  const localLink = 'https://paper-camp.vercel.app/?machine=http%3A%2F%2Flocalhost%3A4333&token=t';
+
   async function startHandler(registryPath: string): Promise<{ port: number; seenUrls: string[] }> {
     const seenUrls: string[] = [];
     const mockedApi = Object.assign(
@@ -382,13 +386,7 @@ describe('createDaemonRequestHandler', () => {
       { agent: { hasActiveTask: () => false } },
     ) as unknown as ApiMiddleware;
     const { mount, mounted } = createProjectMounter(registryPath, () => Promise.resolve(mockedApi));
-    const handler = createDaemonRequestHandler(
-      registryPath,
-      mount,
-      mounted,
-      '/nonexistent',
-      '<html/>',
-    );
+    const handler = createDaemonRequestHandler(registryPath, mount, mounted, localLink);
     const server = createServer((req, res) => {
       handler(req, res).catch((error) => {
         res.statusCode = 500;
@@ -502,5 +500,15 @@ describe('createDaemonRequestHandler', () => {
     expect(response.status).toBe(404);
     expect(response.headers.get('content-type')).toContain('application/json');
     expect(await response.json()).toEqual({ error: 'no project mounted at the daemon root' });
+  });
+
+  it('redirects the bare root to the hosted-client Local link', async () => {
+    const registryPath = await makeRegistryFile({ version: 1, projects: [] });
+    const { port } = await startHandler(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/`, { redirect: 'manual' });
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe(localLink);
   });
 });

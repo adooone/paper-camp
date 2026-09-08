@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { createPairingManager } from '../pairing';
 import { pairingRoutes } from './pairing';
 import type { RouteContext } from './types';
@@ -9,6 +9,14 @@ function route(pairing: RouteContext['pairing']) {
     (r) => r.path === '/api/pair' && r.method === 'POST',
   );
   if (!found) throw new Error('no route registered for POST /api/pair');
+  return found;
+}
+
+function registrationRoute(pairing: RouteContext['pairing']) {
+  const found = pairingRoutes({ pairing } as RouteContext).find(
+    (r) => r.path === '/api/pairing' && r.method === 'GET',
+  );
+  if (!found) throw new Error('no route registered for GET /api/pairing');
   return found;
 }
 
@@ -41,6 +49,33 @@ function fakeRes(): { res: ServerResponse; status: () => number; json: () => unk
   } as unknown as ServerResponse;
   return { res, status: () => statusCode, json: () => JSON.parse(body) };
 }
+
+describe('GET /api/pairing', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(process.env, 'PAPERCAMP_HOSTED_CLIENT_URL');
+  });
+
+  it("reports the hosted client URL and this runtime's pairing token", async () => {
+    const pairing = createPairingManager();
+    const { res, status, json } = fakeRes();
+    await registrationRoute(pairing).handle(fakeReq('', undefined), res);
+    expect(status()).toBe(200);
+    expect(json()).toEqual({
+      hostedClientUrl: 'https://paper-camp.vercel.app',
+      token: pairing.token,
+    });
+  });
+
+  it('honors PAPERCAMP_HOSTED_CLIENT_URL when set', async () => {
+    process.env.PAPERCAMP_HOSTED_CLIENT_URL = 'https://camp.example.com';
+    const pairing = createPairingManager();
+    const { res, json } = fakeRes();
+    await registrationRoute(pairing).handle(fakeReq('', undefined), res);
+    expect((json() as { hostedClientUrl: string }).hostedClientUrl).toBe(
+      'https://camp.example.com',
+    );
+  });
+});
 
 describe('POST /api/pair', () => {
   it('pairs the request Origin when the token matches', async () => {

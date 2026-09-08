@@ -11,9 +11,14 @@ export default defineConfig({
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
   },
+  // The toolbar's own icons are inline components (paper-logo.tsx, WandIcon), not
+  // files under public/ — copying that folder here would ship public/img (and any
+  // future doodle pack placed there) in the npm tarball, exactly what this build
+  // must not do.
+  publicDir: false,
   build: {
-    outDir: 'dist/app',
-    emptyOutDir: false,
+    outDir: 'dist/toolbar',
+    emptyOutDir: true,
     sourcemap: true,
     lib: {
       entry: resolve(__dirname, 'src/toolbar/index.ts'),

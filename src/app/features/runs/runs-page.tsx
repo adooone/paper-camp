@@ -43,7 +43,9 @@ export const LogPage = () => {
         )}
       </div>
       {loading && !hasAnyRows && <RowSkeleton />}
-      {!loading && !hasAnyRows && <EmptyState message="No runs recorded yet." />}
+      {!loading && !hasAnyRows && (
+        <EmptyState illustration="resting-pen" message="No runs recorded yet." />
+      )}
       {hasAnyRows && (
         <>
           <LogFilterBar filters={filters} availableTypes={availableTypes} onChange={setFilters} />

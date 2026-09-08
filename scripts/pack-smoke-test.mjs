@@ -69,6 +69,11 @@ async function main() {
     const packageDir = join(extractDir, 'package');
     await symlink(join(repoRoot, 'node_modules'), join(packageDir, 'node_modules'), 'dir');
 
+    const distEntries = await readdir(join(packageDir, 'dist'));
+    if (distEntries.includes('app')) {
+      throw new Error('tarball contains dist/app — the runtime must ship no dashboard frontend');
+    }
+
     const campPort = await getFreePort();
     campServer = spawn(
       'node',

@@ -31,6 +31,10 @@ export default defineConfig(({ command }) => {
         include: ['src/core/**/*', 'src/types/**/*', 'src/vite/**/*'],
       }),
     ],
+    // None of this build's entries (core, types, cli, vite) are a browser app — copying
+    // public/ into dist/ here served no purpose and risked carrying public/img (and any
+    // future doodle pack placed there) into a runtime-only tarball.
+    publicDir: false,
     build: {
       lib: {
         entry: {

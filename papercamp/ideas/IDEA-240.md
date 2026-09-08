@@ -2,8 +2,9 @@
 id: IDEA-240
 title: Ship no frontend in the npm package
 type: feat
-status: idea
+status: review
 created: 2026-09-06
+updated: 2026-09-08
 tags:
   - cli
   - app
@@ -86,16 +87,33 @@ already lets a runtime point at a different origin. Any change to pairing
 or to the daemon's project mounts.
 
 ### Phases
-- [ ] Hand the hosted client link to `dev` and `daemon`
+- [x] Hand the hosted client link to `dev` and `daemon`
       Both banners print a Local link to `PAPERCAMP_HOSTED_CLIENT_URL` carrying `?runtime=`/`?machine=` and the pairing token, and `GET /` answers a 302 to it.
-- [ ] Open the hosted client from the toolbar trigger
+      run: 15s · 124 in · 32.1k out · sonnet-5
+- [x] Open the hosted client from the toolbar trigger
       Same link shape, with the host app's own runtime origin in `?runtime=`.
-- [ ] Drop static serving from the servers
+      run: 5m43s · 38 in · 6.7k out · sonnet-5
+- [x] Drop static serving from the servers
       `appDir()`, `loadIndexHtml`, and `serveStatic` leave `serve-static.ts` along with their tests; `dev-server.ts` and `daemon-server.ts` serve the API only.
-- [ ] Ship a runtime-only tarball
+      run: 8m22s · 110 in · 27.5k out · sonnet-5
+- [x] Ship a runtime-only tarball
       `files` lists `dist/cli`, `dist/core`, `dist/mcp`, `dist/vite`, and `templates`; a `prepack` script builds the library and the toolbar; `build:app` stays the Vercel build and `pack-smoke-test.mjs` asserts no `dist/app`.
-- [ ] Fetch the doodle pack outside git
+      run: 9m20s · 74 in · 16.2k out · sonnet-5
+- [x] Fetch the doodle pack outside git
       Git-ignore `public/img/doodles/` and add `scripts/fetch-assets.mjs`, which unpacks `PAPERCAMP_ASSETS_URL` before `build:app` and skips quietly when the variable is absent.
-- [ ] Give `EmptyState` an `illustration` slot
+      run: 9m48s · 50 in · 10.4k out · sonnet-5
+- [x] Give `EmptyState` an `illustration` slot
       A 96px `<img>` from `/img/doodles/<name>.svg` above the existing copy; the seven empty states that had drawings each pick one, and a pack-less build renders the copy alone.
-- [ ] Say one client in USAGE.md and README.md
+      run: 8m42s · 92 in · 19.7k out · sonnet-5
+- [x] Say one client in USAGE.md and README.md
+      run: 11m52s · 90 in · 35.3k out · sonnet-5
+- [x] [manual] Prevent duplicate check runs and add pairing status route
+- [x] [manual] Close pairing-token leak and dead-script gaps
+
+### Fixes
+- [x] Fix the failing "Quality" check
+      Fix the failing "Quality" check in this repo.
+      run: 1m39s · 36 in · 4.2k out · sonnet-5
+
+### Thread
+- [x] 2026-09-08 [review] [agent] Requests changes · 4 findings — The diff delivers the shape the idea asks for — static serving is gone, both servers 302 the bare root to the hosted client, the tarball excludes dist/app, the toolbar builds its link from a new /api/pairing route, and the docs read one-client throughout. But the doodle-pack pipeline is broken at its trigger: prebuild:app is an npm-style pre-script, and this repo pins pnpm 10 (packageManager field, no .npmrc), which does not run pre-scripts by default — I verified with pnpm 10.12.1 that `pnpm run build:app` skips it — so Vercel's `pnpm build:app` buildCommand never invokes fetch-assets.mjs and the hosted client ships without the pack, with every empty-state img 404ing silently behind the onError hide. The check-dedup and server changes are otherwise sound, with one crash-path regression in the dev server worth fixing.

@@ -97,10 +97,13 @@ paper-camp start
 `~/dev` stands for the folder holding your repositories — `scan` registers
 every one under it that already has a `papercamp/` corpus; `paper-camp init`
 run inside a single repo scaffolds that corpus and registers just that one
-repo, with no `scan` step. `start` launches the daemon detached, logging to
-`daemon.log` in the machine config dir, and prints a **Local** link to open.
-Reaching it from the hosted client on another device needs `paper-camp start
---tailnet` instead — see "Adding a project" below.
+repo, with no `scan` step. The package installs no dashboard of its own —
+`start` launches the daemon detached, logging to `daemon.log` in the machine
+config dir, serving only the API, and prints a **Local** link that opens the
+one dashboard, [the hosted client](https://paper-camp.vercel.app), pointed at
+this machine's API. Reaching that same API from another device needs
+`paper-camp start --tailnet` or `--share` instead — see "Adding a project"
+below.
 
 `init` also creates the `.claude/` integration (a paper-camp skill plus
 session hooks) in the repo it runs in. For the full loop you also want `gh
@@ -110,46 +113,46 @@ PATH.
 Upgrading later is a normal global dependency bump — `npm update -g
 @dendelion/paper-camp` — check `paper-camp --version` against the
 [changelog](CHANGELOG.md) if you want to confirm what shipped since you last
-bumped it.
+bumped it. The hosted client always runs the latest release; an older
+runtime shows a **Version mismatch** stamp until you do.
 
 Prefer a single repo running in the foreground instead of the detached
-daemon? `paper-camp dev`, run inside that repo, serves just it in the
-terminal you started it from.
+daemon? `paper-camp dev`, run inside that repo, serves just that project's
+API in the terminal you started it from and prints its own Local link to the
+same hosted client.
 
 Working on Paper Camp itself is the clone path instead: `pnpm install`,
-`pnpm dev`, open `localhost:3333`.
+`pnpm dev`, open `localhost:3333` — that runs the app from source as its own
+dashboard, not the packaged runtime.
 
 ## The hub — every project in one place
 
-The hub is the `/projects` view of the same app: the registry of your projects
-plus the cross-project tabs — **Projects**, **In review**, **Agent activity**,
-**Ideas**. It lives in two places:
+The hub is the `/projects` view of the hosted client: the registry of your
+projects plus the cross-project tabs — **Projects**, **In review**, **Agent
+activity**, **Ideas**. The hosted client at `https://paper-camp.vercel.app`
+is the one dashboard — a static build with no project of its own, so it opens
+straight into the hub. Every link a `paper-camp start`, `daemon`, or `dev`
+banner prints (Local, Network, Tailnet, Tunnel) opens this same client,
+pointed at that command's API; *Back to projects* in the header returns to
+the hub from inside a project.
 
-- **The hosted client** at `https://paper-camp.vercel.app` — a static build
-  with no project of its own, so it opens straight into the hub. Every Network
-  link `paper-camp start` (or `dev`) prints points here, which is what lands
-  all your projects in this one registry.
-- **Any running dashboard** — *Back to projects* in the header opens that
-  server's own hub at `/projects`.
-
-The registry is the browser's localStorage at that origin: a project added in
-your laptop's hosted client is not in your phone's — open its link once there
-too.
+The registry is the browser's localStorage at that origin: a project added on
+your laptop is not on your phone's — open its link once there too.
 
 ### Adding a project
 
 1. On the machine holding your repositories, run the three commands above:
    `npm install -g @dendelion/paper-camp`, `paper-camp scan ~/dev` (or
    `paper-camp init` inside a single repo), then `paper-camp start`. The
-   banner prints a **Local** link (the dashboard on this machine) and a
-   **Network** link (the pairing link for other devices).
-2. Open the **Local** link on that same machine and the hub lists its
-   registered projects first, under **This machine** — the page's own origin
-   answers its own `/api/machine/projects`, so nothing needs pairing. From a
-   different device, open the **Network** link instead: it carries the
-   daemon's address and a pairing token, so one visit both registers the
-   machine and pairs the client with it. The hosted client is HTTPS, so it
-   can only fetch an HTTPS runtime — pairing from another device needs
+   banner prints a **Local** link (this machine's own address) and a
+   **Network** link (the same daemon, at an address another device can
+   reach).
+2. Open either link and the hosted client adds this machine's card to the
+   hub, listing its registered projects — the link carries the daemon's
+   address and a pairing token, so one visit both registers the machine and
+   pairs the client with it. The hosted client is HTTPS, so it can only
+   fetch an HTTPS-reachable runtime: the Local link's loopback address always
+   qualifies, but reaching the Network link from another device needs
    `--tailnet` or `--share`; without one, the banner prints that requirement
    in place of a Network link.
 3. Click a project's row to enter it; *Back to projects* returns to the hub.
@@ -157,11 +160,9 @@ too.
    anything in the repo.
 
 The pairing token persists in `~/.config/paper-camp/pairing.json`, so a
-hosted client paired once stays paired across `paper-camp start` restarts —
-Local, LAN, and tailnet origins never needed it anyway, since network
-topology already vouches for them. To revoke every paired client, delete
-that file: the next start mints a fresh token and forgets every paired
-origin.
+hosted client paired once stays paired across `paper-camp start` restarts. To
+revoke every paired client, delete that file: the next start mints a fresh
+token and forgets every paired origin.
 
 Other ways in:
 
@@ -172,9 +173,9 @@ Other ways in:
   reach that machine across the open internet. The address changes every
   restart.
 - **`paper-camp start --tailnet`** serves over HTTPS at a stable
-  `https://<node>.<tailnet>.ts.net` address and prints that link — no token
-  needed, since a tailnet origin is already trusted. See "On your tailnet"
-  below.
+  `https://<node>.<tailnet>.ts.net` address and prints a link to the hosted
+  client pointed at it — a stable address that needs no `--share` tunnel and
+  no re-pairing across restarts. See "On your tailnet" below.
 
 Each row's stamp says what the hub can do right now: **Can execute** (the
 runtime answers), **Offline** (it doesn't), or **Version mismatch** (runtime
@@ -189,25 +190,24 @@ If every machine involved already runs Tailscale, `paper-camp start
 paper-camp start --tailnet
 ```
 
-It runs `tailscale serve --bg --https=443` for you, then prints the
-`https://<node>.<tailnet>.ts.net` link straight in the banner — open it from
-any device on the tailnet and it just works, no pairing token needed at all:
-a `.ts.net` origin is trusted the moment it's reached, the same as loopback
-or a LAN address, because network topology already vouches for it. On a
-personal tailnet that's exactly right; on a shared one it means every
-member's device is trusted by the runtime, worth knowing before you add
-people to it. If your tailnet hasn't turned on HTTPS certificates yet, the
-banner says so and links straight to the
+It runs `tailscale serve --bg --https=443` for you, then prints a Tailnet
+link straight in the banner — the same hosted client every other link opens,
+pointed at the stable `https://<node>.<tailnet>.ts.net` address instead of a
+loopback or LAN one. Open it from any device on the tailnet and that visit
+pairs the client with this runtime, same as a Local or Network link; what a
+tailnet address buys you is no `--share` tunnel and an address that doesn't
+change across restarts. If your tailnet hasn't turned on HTTPS certificates
+yet, the banner says so and links straight to the
 [admin console](https://login.tailscale.com/admin/dns) setting that turns it
 on — `README.md` keeps the manual `tailscale serve` steps as a fallback.
 
 A tailnet peer becomes known to the hub the same way any other machine
 does — open its Tailnet link once.
 
-**Mobile:** open the `https://…ts.net` link on a phone joined to the same
-tailnet, then install it to the home screen (`Add to Home Screen` on iOS
-Safari, `Install app` on Android Chrome) — that installed PWA is the mobile
-story; there's no native app.
+**Mobile:** open the Tailnet link on a phone joined to the same tailnet,
+then install it to the home screen (`Add to Home Screen` on iOS Safari,
+`Install app` on Android Chrome) — that installed PWA is the mobile story;
+there's no native app.
 
 ## Introducing someone
 

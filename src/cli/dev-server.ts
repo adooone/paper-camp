@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { createApiMiddleware } from '../app/server/api';
+import { createApiMiddleware, hostOf, isLoopbackHost } from '../app/server/api';
 import {
   loadOrMintPairingState,
   projectPairingPath,
@@ -10,13 +10,13 @@ import { readTailnetStatus } from '../core/tailnet';
 import { formatDevBanner, formatShareLine, formatTailnetLine } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import { buildRegistrationLinkForRuntime, networkRegistrationLink } from './registration-link';
-import { appDir, loadIndexHtml, serveStatic } from './serve-static';
 import {
   TAILNET_HTTPS_CERTS_MISSING_MESSAGE,
   TAILNET_NOT_RUNNING_MESSAGE,
   isMissingHttpsCertsError,
   runTailnetServe,
 } from './tailnet-serve';
+import { serveToolbarAsset } from './toolbar-assets';
 import {
   CLOUDFLARED_MISSING_MESSAGE,
   type QuickTunnel,
@@ -31,8 +31,8 @@ export interface DevServerOptions {
   tailnet?: boolean;
 }
 
-/** Serves the pre-built dashboard SPA (dist/app), for an installed package
- * where there's no Vite runtime available (it's a devDependency). */
+/** Serves the API and the toolbar bundle a host app's Vite plugin proxies to; the
+ * dashboard itself is the hosted client, opened at the Local link this banner prints. */
 export async function startDevServer({
   root,
   port,
@@ -41,14 +41,6 @@ export async function startDevServer({
 }: DevServerOptions): Promise<void> {
   if (share && !(await isCloudflaredAvailable())) {
     throw new Error(CLOUDFLARED_MISSING_MESSAGE);
-  }
-
-  const staticDir = appDir();
-  const indexHtml = await loadIndexHtml(staticDir);
-  if (indexHtml === null) {
-    throw new Error(
-      `Dashboard assets not found at ${staticDir}. Run \`pnpm build\` (or reinstall the package) so dist/app exists.`,
-    );
   }
 
   const { state: pairingState, minted } = await loadOrMintPairingState(projectPairingPath(root));
@@ -69,12 +61,29 @@ export async function startDevServer({
 
   if (minted) await persistPairingState();
 
+  const localLink = buildRegistrationLinkForRuntime(
+    `http://localhost:${port}`,
+    apiMiddleware.pairing.token,
+  );
+
   const server = createServer((req, res) => {
-    apiMiddleware(req, res, () => {
-      serveStatic(req, res, staticDir, indexHtml).catch((error) => {
+    apiMiddleware(req, res, async () => {
+      try {
+        // The link always points at localhost, so it only resolves correctly for a
+        // request that already arrived over loopback — anything else falls through to 404.
+        if ((req.url ?? '/').split('?')[0] === '/' && isLoopbackHost(hostOf(req.headers.host))) {
+          res.statusCode = 302;
+          res.setHeader('Location', localLink);
+          res.end();
+          return;
+        }
+        if (await serveToolbarAsset(req, res)) return;
+        res.statusCode = 404;
+        res.end();
+      } catch (error) {
         res.statusCode = 500;
         res.end(String(error));
-      });
+      }
     });
   });
 
@@ -102,7 +111,7 @@ export async function startDevServer({
   console.log(
     formatDevBanner({
       version: PAPER_CAMP_VERSION,
-      localUrl: `http://localhost:${port}`,
+      localUrl: localLink,
       networkLink: network.link,
       networkBlocked: network.blocked,
       color,

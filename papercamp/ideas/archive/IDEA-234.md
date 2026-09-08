@@ -2,7 +2,7 @@
 id: IDEA-234
 title: Daemon-only welcome screen
 type: feat
-status: review
+status: done
 created: 2026-09-05
 updated: 2026-09-07
 tags:

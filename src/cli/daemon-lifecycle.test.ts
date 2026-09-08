@@ -380,8 +380,9 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
 
   it('prints the log and exits 1 when the spawned daemon dies before answering', async () => {
     const configDir = await makeConfigDir();
+    const takenPort = await listenOnFreePort();
 
-    const result = runCli(['start'], configDir);
+    const result = runCli(['start', '-p', String(takenPort)], configDir);
 
     expect(result.status).toBe(1);
     const log = await readFile(join(configDir, 'daemon.log'), 'utf-8');
@@ -422,18 +423,18 @@ describe('paper-camp start / stop / restart / status / ls / logs (CLI)', () => {
     await expect(access(join(configDir, 'daemon.json'))).rejects.toThrow();
   }, 10_000);
 
-  it('restart stops the running daemon, then attempts to start a new one', async () => {
+  it('restart stops the running daemon, then starts a new one on the same port', async () => {
     const configDir = await makeConfigDir();
-    const state = await spawnFakeDaemon(configDir, { share: true });
+    const state = await spawnFakeDaemon(configDir);
 
     const result = await runCliAsync(['restart'], configDir);
 
     expect(result.stdout).toContain('paper-camp: daemon stopped');
     expect(isProcessAlive(state.pid)).toBe(false);
-    // The re-invoked `daemon` subcommand fails fast (no dist/app under this
-    // source-tree run), so `restart` surfaces the same failure `start` would.
-    expect(result.status).toBe(1);
-  });
+    expect(result.status).toBe(0);
+
+    await runCliAsync(['stop'], configDir);
+  }, 15_000);
 
   it('ls prints "—" for every project when no daemon is running', async () => {
     const configDir = await makeConfigDir();

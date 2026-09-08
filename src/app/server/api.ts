@@ -54,7 +54,7 @@ export function hostOf(value: string | undefined): string {
 
 // Reaching loopback proves the caller is a process on this machine, the one
 // case a missing Origin can still stand in for the pairing token.
-function isLoopbackHost(host: string): boolean {
+export function isLoopbackHost(host: string): boolean {
   return host === 'localhost' || host === '127.0.0.1' || host === '::1';
 }
 
@@ -178,9 +178,9 @@ export function createApiMiddleware(
   isMachineBusy?: () => boolean,
 ): ApiMiddleware {
   const git = createGitManager(root);
-  const status = createStatusManager(root, statusState);
   const services = createDeskServiceManager(root, serviceState);
   const checks = createDeskCheckManager(root, checkState);
+  const status = createStatusManager(root, checks, statusState);
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);
   const activity = createActivityManager(root);

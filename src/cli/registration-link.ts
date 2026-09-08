@@ -1,14 +1,9 @@
 import { hostname, networkInterfaces } from 'node:os';
+import { hostedClientUrl } from '../core/hosted-client';
 import { canReachRuntime } from '../core/runtime-reachability';
 import { readTailnetStatus } from '../core/tailnet';
 
-// Every link shares this origin so registrations land in one localStorage registry.
-const DEFAULT_HOSTED_CLIENT_URL = 'https://paper-camp.vercel.app';
-
-export function hostedClientUrl(): string {
-  const configured = process.env.PAPERCAMP_HOSTED_CLIENT_URL?.trim();
-  return (configured || DEFAULT_HOSTED_CLIENT_URL).replace(/\/+$/, '');
-}
+export { hostedClientUrl } from '../core/hosted-client';
 
 export function buildRegistrationLinkForRuntime(
   runtimeUrl: string,
