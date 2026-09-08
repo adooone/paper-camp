@@ -2,6 +2,73 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.28.0](https://github.com/adooone/paper-camp/compare/v0.27.0...v0.28.0) (2026-09-08)
+
+
+### Features
+
+* **app:** Add paper shade to the sidebar layout background ([1b4759a](https://github.com/adooone/paper-camp/commit/1b4759ae87f7289b7b08ddaf3a9864f676bb5969))
+* **app:** Adopt it on the card and row empties ([27a6585](https://github.com/adooone/paper-camp/commit/27a658504db8e66f161723f8d256939fdfc98983))
+* **app:** Adopt it on the page and panel bodies ([abd99bd](https://github.com/adooone/paper-camp/commit/abd99bd3fcb0ae5448451bb2566cf845a3ca5df8))
+* **app:** Check the drawer and each sidebar area ([23cc082](https://github.com/adooone/paper-camp/commit/23cc08241eaeb64c0f16ec3ea34d5fe9c70ef898))
+* **app:** Cover it in tests and run the quality checks ([1bf37d6](https://github.com/adooone/paper-camp/commit/1bf37d64ed980a9d4be0ab8f599b7a0e9a82815f))
+* **app:** Delete the four `.pc-page` rules from `utilities.css` ([743effa](https://github.com/adooone/paper-camp/commit/743effaaed3a038dde559c6fa99a4360247264d9))
+* **app:** Detect the machine that serves the hub ([a33f3f3](https://github.com/adooone/paper-camp/commit/a33f3f3051bf24a5953743616dec8df4318496f0))
+* **app:** Draw the four illustrations ([8c2fbc6](https://github.com/adooone/paper-camp/commit/8c2fbc64725828864122e583b17b83fb5e96a23d))
+* **app:** Drop the `Page` sheet from the app shell ([6bcd18b](https://github.com/adooone/paper-camp/commit/6bcd18ba196b2f8f9c071f4e29920e134c91aa9c))
+* **app:** Drop the GitHub and Tailnet cards ([e98f087](https://github.com/adooone/paper-camp/commit/e98f087c6221f444a3266ce3eaf452f3abadfaf8))
+* **app:** Fold the Plans filters and actions into that card ([1c5d814](https://github.com/adooone/paper-camp/commit/1c5d814b0fb39f2b6d2e076796c86da1b192cade))
+* **app:** One component for every empty message ([ee229ad](https://github.com/adooone/paper-camp/commit/ee229ad99711c8244865766e4232bd4b80dd2683))
+* **app:** One log view for every run (IDEA-237) ([#208](https://github.com/adooone/paper-camp/issues/208)) ([7bf76e6](https://github.com/adooone/paper-camp/commit/7bf76e6a367825429c6df7845dfd6b24e6c97496))
+* **app:** Print the three global commands ([2f361d1](https://github.com/adooone/paper-camp/commit/2f361d1a5269b7ca52dcebdcf1558d0a9d528d07))
+* **app:** Remove the GitHub project kind ([c13946c](https://github.com/adooone/paper-camp/commit/c13946c43e62da2833db4754826d71510c7e36d0))
+* **app:** Replace plan-only with offline ([288193c](https://github.com/adooone/paper-camp/commit/288193cb12d05fbfd484e8a56c7600a19d693ab1))
+* **app:** Rewrite the install docs ([cf679a4](https://github.com/adooone/paper-camp/commit/cf679a47b12e5ab42d4dcdf57bfd3d78ec5df8e1))
+* **app:** Rewrite the install docs ([82a210a](https://github.com/adooone/paper-camp/commit/82a210a3707d3adfe3e194e31d10f40c72815629))
+* **app:** Wrap the sidebar in one kraft card ([80ba0c1](https://github.com/adooone/paper-camp/commit/80ba0c14491dae0de25b8d937c5c9f0984b6ccfe))
+* **cli:** Daemon lifecycle like pm2 (IDEA-233) ([#207](https://github.com/adooone/paper-camp/issues/207)) ([9e1c092](https://github.com/adooone/paper-camp/commit/9e1c0921f615d89fa50dcef3115fdb861de3b201))
+* **cli:** Ship no frontend in the npm package (IDEA-240) ([#209](https://github.com/adooone/paper-camp/issues/209)) ([8eb2978](https://github.com/adooone/paper-camp/commit/8eb297836e1c4e6aa628758c6351b421d3997c4d))
+* **ideas:** Draft IDEA-233 through IDEA-236 for multi-project daemon ([4e735fb](https://github.com/adooone/paper-camp/commit/4e735fb34ad48a86c2eb1c115e7c0511427f91a7))
+* **ideas:** Draft IDEA-237 for unified log view ([af0b1b0](https://github.com/adooone/paper-camp/commit/af0b1b05bf6471d6765f505359f93ff93b496c34))
+
+
+### Bug Fixes
+
+* **agent:** Detect auth errors via CLI status, not stderr text ([efe7dc6](https://github.com/adooone/paper-camp/commit/efe7dc6be9255159ed773d1bcd440407bd2e8b36))
+* **agent:** Mark unfinished tasks interrupted on boot and notify ([7bf71a5](https://github.com/adooone/paper-camp/commit/7bf71a5638b2e76e31f0d33aefa177fe4cd02486))
+* **app:** Answer the paste-code prompt from the app ([22f787f](https://github.com/adooone/paper-camp/commit/22f787fb8dd859eb62f54e30d927dfc86df24367))
+* **app:** Carry the auth kind to the git card ([0e70568](https://github.com/adooone/paper-camp/commit/0e705681e131c717054a565929e3d482b7f0135a))
+* **app:** Classify signed-out by probing auth status ([1dd7883](https://github.com/adooone/paper-camp/commit/1dd78835fece5d2348535491e260766995a782de))
+* **app:** Fire `loadPlans` and `loadIdeas` on mount, ungated by `runtimeChecking` ([fd2e7cf](https://github.com/adooone/paper-camp/commit/fd2e7cf5d0de220ee2294d6f386cd869f10ab974))
+* **app:** Give `--version` probes a 2 s timeout in `run.ts` ([af5923f](https://github.com/adooone/paper-camp/commit/af5923fec251f284006ef3c921c5d4b01ed50839))
+* **app:** Memoise `probeCapabilities` and `probeConnections` for the process ([25c2e78](https://github.com/adooone/paper-camp/commit/25c2e78bb82dbff723cf930e4fb7bca7b7726a92))
+* **app:** Mount the router immediately in `main.tsx` ([79d19d0](https://github.com/adooone/paper-camp/commit/79d19d06c0ddd4d6c2914e32484180dcc1a96dfe))
+* **app:** Move the sign-in controls to shared app components ([5d84dab](https://github.com/adooone/paper-camp/commit/5d84dab4637ed6121a056dafd22896434fdc3a26))
+* **app:** Probe self-served once against `/api/package-name` ([08c4056](https://github.com/adooone/paper-camp/commit/08c405669b4e16f663c6895e56abd85ed6bc3e61))
+* **app:** Put a boot indicator inside `#root` in `index.html` ([9f18d98](https://github.com/adooone/paper-camp/commit/9f18d98a20e0206bfb3816c64dc7454f7b6e6c03))
+* **app:** Read the failure from the result line ([d1c276f](https://github.com/adooone/paper-camp/commit/d1c276f5e0950d135c95693eb60981a36a208fee))
+* **app:** Replace CodeBlock with inline CommandLine and fix dev reachability ([f029c0a](https://github.com/adooone/paper-camp/commit/f029c0a5035b089bc4886ad193361f0ec77ab943))
+* **app:** Replace every `null` in the content column with a skeleton or named spinner ([53f0dcf](https://github.com/adooone/paper-camp/commit/53f0dcfab5d629e75fdbbf0603a9bf3253c51cf0))
+* **app:** Strip OSC sequences before matching the login URL ([06e4006](https://github.com/adooone/paper-camp/commit/06e4006e0cf61302c3ad4b8b22318d6f4558e458))
+* **app:** Use parchment texture and fix sidebar/log spacing ([3a1079b](https://github.com/adooone/paper-camp/commit/3a1079bc47ade3d46c1604786a84cfd687373b49))
+* **app:** Use parchment texture for sidebar card ([9e9fbfb](https://github.com/adooone/paper-camp/commit/9e9fbfb059e53500484ced2e061345e5d4402562))
+* **app:** Warn when the repo's trust dialog was never accepted ([2276362](https://github.com/adooone/paper-camp/commit/2276362d35655844083b4f119701a63d9e1422d2))
+* **cli:** Answer `/api/*` at the daemon root with 404 JSON ([807d3da](https://github.com/adooone/paper-camp/commit/807d3da2f96401cb1fb209f8076df6597d0e8a3d))
+* **cli:** Decide missing from the registry entry ([81ec729](https://github.com/adooone/paper-camp/commit/81ec7294949aaf81a369b5fd2226e29833f86774))
+* **cli:** Give the daemon its own port-in-use message ([1136611](https://github.com/adooone/paper-camp/commit/1136611db0de886b7364d81ae6084b0976219014))
+* **cli:** Grey the missing row in the hub and make it unpickable ([39b2d7a](https://github.com/adooone/paper-camp/commit/39b2d7ae9a53404e41a5248c693c86491da02e29))
+* **cli:** Print `missing` in the `ls` and `status` STATE column ([04c1adc](https://github.com/adooone/paper-camp/commit/04c1adc6d6edecd979ccec933c42b3745aa33989))
+* **cli:** Refuse to mount a missing project ([e005fc9](https://github.com/adooone/paper-camp/commit/e005fc9abfe5ec611bec69ab225fe6de66689417))
+* **cli:** Report `missing: true` from `/api/machine/projects` ([2f6677a](https://github.com/adooone/paper-camp/commit/2f6677ae976bad450655fdd0ed7297ba30449270))
+* **cli:** Stop log follower when parent process or stdout dies ([c8c9f02](https://github.com/adooone/paper-camp/commit/c8c9f027be73e86a3d0dc9733fa79e889b5a5686))
+* **core:** Ignore corpus-only commits when resolving main activity ([ef559e4](https://github.com/adooone/paper-camp/commit/ef559e40f198386e7679f2254d787b19cbedfa2e))
+* **ideas:** Restore exact byte content of IDEA-236's Fixes output ([175cef3](https://github.com/adooone/paper-camp/commit/175cef3ca81eec7a76765311cdf83e73f5c91a0d))
+* **ideas:** Revert premature Quality-check mark on IDEA-236 ([4621bd3](https://github.com/adooone/paper-camp/commit/4621bd3e9149f658714631d38dd320d8c7e12891))
+* **ideas:** Shorten IDEA-236's title under the 40-char limit ([32745a8](https://github.com/adooone/paper-camp/commit/32745a803a944787a404e8b6ee18959235915f5b))
+* **server:** Mark unfinished entries interrupted on boot and surface them ([bbf4b06](https://github.com/adooone/paper-camp/commit/bbf4b06b1151b006f78bb5dd36ee584c2404ee31))
+* **server:** Write the start record and fold it on read ([c562f74](https://github.com/adooone/paper-camp/commit/c562f74a1febc12702e3772b91d08ee22542caa9))
+* **stack:** Fix notification badge visibility and checks-group logic ([57ae591](https://github.com/adooone/paper-camp/commit/57ae5912d6a4e5b83eb09b0c448d2aa30e0058b5))
+
 ## [0.27.0](https://github.com/adooone/paper-camp/compare/v0.26.0...v0.27.0) (2026-09-04)
 
 
