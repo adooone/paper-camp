@@ -87,7 +87,8 @@
       },
       {
         "name": "test",
-        "cmd": "pnpm test"
+        "cmd": "pnpm test",
+        "changedCmd": "pnpm test:changed"
       },
       {
         "name": "build",

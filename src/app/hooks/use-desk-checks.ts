@@ -1,11 +1,12 @@
 import type { DeskCheckState } from '@/types/index';
 import { useCallback, useEffect, useState } from 'react';
 import { subscribeToActivityStream } from '../services/activity-stream';
-import { fetchChecks, fixDeskCheck, runDeskCheck } from '../services/checks-api';
+import { fetchChecks, fixDeskCheck, runChangedCheck, runDeskCheck } from '../services/checks-api';
 
 export interface DeskChecksClient {
   checks: DeskCheckState[];
   run: (name: string) => Promise<void>;
+  runChanged: (name: string) => Promise<void>;
   fix: (name: string) => Promise<DeskCheckState>;
 }
 
@@ -45,6 +46,14 @@ export function useDeskChecks(): DeskChecksClient {
     [refresh],
   );
 
+  const runChanged = useCallback(
+    async (name: string) => {
+      await runChangedCheck(name);
+      await refresh();
+    },
+    [refresh],
+  );
+
   const fix = useCallback(
     async (name: string) => {
       const check = await fixDeskCheck(name);
@@ -54,5 +63,5 @@ export function useDeskChecks(): DeskChecksClient {
     [refresh],
   );
 
-  return { checks, run, fix };
+  return { checks, run, runChanged, fix };
 }

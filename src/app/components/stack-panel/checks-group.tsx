@@ -91,33 +91,56 @@ const fixRowClass =
 const CheckStamp = ({
   check,
   onRun,
+  onRunChanged,
 }: {
   check: DeskCheckState;
   onRun: (name: string) => void;
+  onRunChanged: (name: string) => void;
 }) => {
   const running = check.status === 'running';
   const lastRun = formatLastRun(check.lastRun);
+  const changed = check.changed;
+  const changedRunning = changed?.status === 'running';
   return (
-    <StampButton
-      tooltip={
-        lastRun
-          ? `${check.cmd} — last run ${lastRun}. Click to run.`
-          : `${check.cmd} — click to run.`
-      }
-      onClick={() => onRun(check.name)}
-      disabled={running}
-      fillColor={statusFill[check.status]}
-      textColor={statusText[check.status]}
-      variant={check.status === 'stale' ? 'neutral' : undefined}
-    >
-      {check.name}
-      <span className={running ? 'visible' : 'invisible'}>…</span>
-    </StampButton>
+    <div className="flex items-center gap-1">
+      <StampButton
+        tooltip={
+          lastRun
+            ? `${check.cmd} — last run ${lastRun}. Click to run.`
+            : `${check.cmd} — click to run.`
+        }
+        onClick={() => onRun(check.name)}
+        disabled={running}
+        fillColor={statusFill[check.status]}
+        textColor={statusText[check.status]}
+        variant={check.status === 'stale' ? 'neutral' : undefined}
+      >
+        {check.name}
+        <span className={running ? 'visible' : 'invisible'}>…</span>
+      </StampButton>
+      {check.changedCmd && (
+        <StampButton
+          tooltip={
+            changed?.lastRun
+              ? `${check.changedCmd} — last run ${formatLastRun(changed.lastRun)}. Click to run.`
+              : `${check.changedCmd} — click to run.`
+          }
+          onClick={() => onRunChanged(check.name)}
+          disabled={changedRunning}
+          fillColor={changed ? statusFill[changed.status] : undefined}
+          textColor={changed ? statusText[changed.status] : undefined}
+          variant={!changed || changed.status === 'stale' ? 'neutral' : undefined}
+        >
+          changed
+          <span className={changedRunning ? 'visible' : 'invisible'}>…</span>
+        </StampButton>
+      )}
+    </div>
   );
 };
 
 export const ChecksGroup = () => {
-  const { checks, run, fix } = useDeskChecks();
+  const { checks, run, runChanged, fix } = useDeskChecks();
   const doctor = useAppStore((s) => s.doctor);
   const consistency = useAppStore((s) => s.consistency);
   const agentStatus = useAppStore((s) => s.agentStatus);
@@ -143,7 +166,7 @@ export const ChecksGroup = () => {
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">
           {checks.map((check) => (
-            <CheckStamp key={check.name} check={check} onRun={run} />
+            <CheckStamp key={check.name} check={check} onRun={run} onRunChanged={runChanged} />
           ))}
           <StampButton
             tooltip={

@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { DeskCheckState } from '@/types/index';
 import { describe, expect, it, vi } from 'vitest';
-import { MissingFixCmdError } from '../desk-checks';
+import { MissingChangedCmdError, MissingFixCmdError } from '../desk-checks';
 import { checkRoutes } from './checks';
 import type { RouteContext } from './types';
 
@@ -94,6 +94,56 @@ describe('POST /api/checks/run', () => {
     const { res, status, json } = fakeRes();
     await route('/api/checks/run', 'POST', { runCheck }).handle(
       fakeReq('/api/checks/run?name=ghost'),
+      res,
+    );
+    expect(status()).toBe(404);
+    expect((json() as { error: string }).error).toMatch(/ghost/);
+  });
+});
+
+describe('POST /api/checks/changed', () => {
+  it('rejects a missing name with 400', async () => {
+    const runChangedCheck = vi.fn();
+    const { res, status } = fakeRes();
+    await route('/api/checks/changed', 'POST', { runChangedCheck }).handle(
+      fakeReq('/api/checks/changed'),
+      res,
+    );
+    expect(status()).toBe(400);
+    expect(runChangedCheck).not.toHaveBeenCalled();
+  });
+
+  it('runs the changed check and returns 202', async () => {
+    const runChangedCheck = vi.fn();
+    const { res, status } = fakeRes();
+    await route('/api/checks/changed', 'POST', { runChangedCheck }).handle(
+      fakeReq('/api/checks/changed?name=test'),
+      res,
+    );
+    expect(status()).toBe(202);
+    expect(runChangedCheck).toHaveBeenCalledWith('test');
+  });
+
+  it('reports a check with no changed command as 400', async () => {
+    const runChangedCheck = vi.fn(() => {
+      throw new MissingChangedCmdError('Check "test" has no changed command');
+    });
+    const { res, status, json } = fakeRes();
+    await route('/api/checks/changed', 'POST', { runChangedCheck }).handle(
+      fakeReq('/api/checks/changed?name=test'),
+      res,
+    );
+    expect(status()).toBe(400);
+    expect((json() as { error: string }).error).toMatch(/changed command/);
+  });
+
+  it('reports an unknown check as 404', async () => {
+    const runChangedCheck = vi.fn(() => {
+      throw new Error('No check named "ghost" in the desk manifest');
+    });
+    const { res, status, json } = fakeRes();
+    await route('/api/checks/changed', 'POST', { runChangedCheck }).handle(
+      fakeReq('/api/checks/changed?name=ghost'),
       res,
     );
     expect(status()).toBe(404);

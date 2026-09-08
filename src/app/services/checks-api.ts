@@ -18,6 +18,16 @@ export const runDeskCheck = async (name: string): Promise<void> => {
   }
 };
 
+export const runChangedCheck = async (name: string): Promise<void> => {
+  const response = await apiFetch(apiUrl(`/api/checks/changed?name=${encodeURIComponent(name)}`), {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Failed to run changed check' }));
+    throw new Error(err.error ?? 'Failed to run changed check');
+  }
+};
+
 export const fixDeskCheck = async (name: string): Promise<DeskCheckState> => {
   const response = await apiFetch(apiUrl('/api/checks/fix'), {
     method: 'POST',

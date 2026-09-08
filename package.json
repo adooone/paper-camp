@@ -51,6 +51,7 @@
     "test": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:all": "vitest run",
+    "test:changed": "vitest run --changed",
     "test:watch": "vitest",
     "knip": "knip",
     "depcruise": "depcruise src --config .dependency-cruiser.cjs",

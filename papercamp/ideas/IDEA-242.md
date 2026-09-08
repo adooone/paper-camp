@@ -97,7 +97,8 @@ this idea adds none.
       Add `vitest.workspace.ts`, repoint `test`, `test:integration`, and
       `test:all`, and move coverage to CI's `test:all --coverage`.
       run: 13m49s · 92 in · 17.1k out · sonnet-5
-- [ ] Add `pnpm test:changed` and its Stack stamp
+- [x] Add `pnpm test:changed` and its Stack stamp
+      run: 15m15s · 122 in · 32.4k out · sonnet-5
 - [ ] Reuse one repository per describe in `git.test.ts`
 - [ ] Drive the daemon and registry commands in-process
       Keep one spawn per file for the entry point's argument parsing.
