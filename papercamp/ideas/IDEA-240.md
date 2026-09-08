@@ -2,7 +2,7 @@
 id: IDEA-240
 title: Ship no frontend in the npm package
 type: feat
-status: idea
+status: review
 created: 2026-09-06
 tags:
   - cli
@@ -104,4 +104,5 @@ or to the daemon's project mounts.
 - [x] Give `EmptyState` an `illustration` slot
       A 96px `<img>` from `/img/doodles/<name>.svg` above the existing copy; the seven empty states that had drawings each pick one, and a pack-less build renders the copy alone.
       run: 8m42s · 92 in · 19.7k out · sonnet-5
-- [ ] Say one client in USAGE.md and README.md
+- [x] Say one client in USAGE.md and README.md
+      run: 11m52s · 90 in · 35.3k out · sonnet-5
