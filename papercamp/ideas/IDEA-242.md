@@ -2,8 +2,9 @@
 id: IDEA-242
 title: Tests in a minute
 type: chore
-status: idea
+status: in-progress
 created: 2026-09-07
+updated: 2026-09-08
 tags:
   - testing
   - cli
@@ -81,8 +82,10 @@ tests are untouched; there are sixteen.
 core and server logic get unit tests at the function boundary; a feature
 gets one test for its selector or hook and none for its child components;
 anything that spawns a process or touches a real repository lives in the
-integration project. `pnpm test` under a minute on a laptop is the number
-the section states, and the CI job fails if the unit project passes it.
+integration project. `pnpm test` under two minutes on a laptop is the
+number the section states — measured at ~99-100s on a 2-core sandbox
+comparable to a GitHub Actions runner, after the fixture work above — and
+the CI job fails if the unit project doesn't clear it.
 
 ### Out of scope
 
@@ -111,3 +114,8 @@ this idea adds none.
       `git.test.ts`.
       run: 24m21s · 212 in · 68.1k out · sonnet-5
 - [ ] Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it
+
+### Thread
+- [ ] 2026-09-08 [question] [agent] Run-all parked on phase 7 ("Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it") — the agent needs a decision: `pnpm test` measures ~99-100s here (verified twice, 2-core sandbox comparable to a GitHub Actions runner), not under a minute as the plan's phase 7 wants documented and CI-gated. How do you want to proceed — pick a different threshold to write into `docs/CODE_STYLE.md` and gate CI on (e.g., 2 minutes), land the gate at 60s anyway and accept it may start red until further optimization, or something else?
+- [x] 2026-09-08 [chat] pick a different treshold
+- [x] 2026-09-08 [chat] [agent] Landed on 2 minutes instead — measured ~99-100s locally, so 60s was never realistic. Added a fix to update phase 7 accordingly: gate CI at under 2 minutes and document that threshold in CODE_STYLE.md.
