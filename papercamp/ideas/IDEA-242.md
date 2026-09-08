@@ -104,7 +104,8 @@ this idea adds none.
 - [x] Drive the daemon and registry commands in-process
       Keep one spawn per file for the entry point's argument parsing.
       run: 18m8s · 126 in · 77.6k out · sonnet-5
-- [ ] Run `agent.test.ts` on fake timers with instant fake CLIs
+- [x] Run `agent.test.ts` on fake timers with instant fake CLIs
+      run: 19m30s · 180 in · 75.7k out · sonnet-5
 - [ ] Consolidate sibling cases into `it.each` tables
       Covers `src/core/parse`, `src/core/git-pr`, `src/core/status`, and
       `git.test.ts`.

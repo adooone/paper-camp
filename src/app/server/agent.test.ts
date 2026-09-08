@@ -81,6 +81,13 @@ const p = 'papercamp/ideas/IDEA-1.md';
 fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('- [ ]', '- [x]'));
 `;
 
+// Never exits on its own and ignores SIGTERM, so the phase timeout and the
+// SIGKILL escalation both have a real process to fire against.
+const HANGS_IGNORING_SIGTERM = `
+process.on('SIGTERM', () => {});
+setInterval(() => {}, 1000);
+`;
+
 // A handful of concurrency tests need an agent that is still "in flight" while
 // the test drives other work, then finishes exactly when the test says so —
 // not after a wall-clock guess. The script polls for a file the test creates
@@ -790,6 +797,27 @@ Plan body.
       });
     });
   });
+
+  it('times out a stalled phase agent, escalating through SIGTERM to SIGKILL', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = HANGS_IGNORING_SIGTERM;
+    const manager = createAgentManager(root);
+
+    // shouldAdvanceTime: real waits (the spawn, waitForStatus's own poll) keep working
+    // as if timers were real; only the two explicit advances below skip ahead.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+      await waitForStatus(manager, (status) => status === 'running');
+      await vi.advanceTimersByTimeAsync(30 * 60 * 1000);
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(await waitForStatus(manager, settled)).toBe('error');
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('no progress for 30min');
+  });
 });
 
 describe('commitPhase scoping (IDEA-190)', () => {
@@ -1259,6 +1287,28 @@ describe('resumeQuestionParkedTasks', () => {
     const { resumed } = await manager.resumeQuestionParkedTasks('IDEA-999');
     expect(resumed).toBe(false);
     expect(currentStatus(manager)?.errorKind).toBe('question');
+  });
+
+  it('stays parked no matter how long it waits, until explicitly resumed', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
+    const manager = createAgentManager(root);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBe('question');
+
+    vi.useFakeTimers();
+    await vi.advanceTimersByTimeAsync(7 * 24 * 60 * 60 * 1000);
+    vi.useRealTimers();
+
+    expect(currentStatus(manager)?.status).toBe('error');
+    expect(currentStatus(manager)?.errorKind).toBe('question');
+
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const { resumed } = await manager.resumeQuestionParkedTasks(plan.id as string);
+    expect(resumed).toBe(true);
+    expect(await waitForStatus(manager, settled)).toBe('done');
   });
 });
 
