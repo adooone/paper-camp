@@ -3,7 +3,7 @@ id: IDEA-245
 title: A plan commit is not main activity
 type: fix
 kind: fix
-status: idea
+status: review
 idea: IDEA-116
 created: 2026-09-08
 tags:
@@ -29,5 +29,6 @@ all corpus writes; a commit that touches anything outside the corpus is
 work. The rule in `deriveStatus` is unchanged; only its input is.
 
 ### Phases
-- [ ] Ignore corpus-only commits when resolving main activity
+- [x] Ignore corpus-only commits when resolving main activity
       Read `--name-only` with the message in `resolveIdsWithMainActivity` and skip commits whose paths all fall under `papercamp/`, with a test for a plan-draft commit and one for a mixed commit.
+      run: 2m56s · 42 in · 8.3k out · sonnet-5

@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { resolveIdsWithMainActivity } from './git-log';
 
@@ -26,7 +26,17 @@ function initGitRepo(): string {
 }
 
 function commit(root: string, file: string, subject: string, body?: string): void {
+  mkdirSync(dirname(join(root, file)), { recursive: true });
   writeFileSync(join(root, file), `${file}\n`);
+  git(root, 'add', '.');
+  git(root, 'commit', '-m', body ? `${subject}\n\n${body}` : subject);
+}
+
+function commitFiles(root: string, files: string[], subject: string, body?: string): void {
+  for (const file of files) {
+    mkdirSync(dirname(join(root, file)), { recursive: true });
+    writeFileSync(join(root, file), `${file}\n`);
+  }
   git(root, 'add', '.');
   git(root, 'commit', '-m', body ? `${subject}\n\n${body}` : subject);
 }
@@ -61,6 +71,29 @@ describe('resolveIdsWithMainActivity', () => {
 
     return resolveIdsWithMainActivity(root).then((ids) => {
       expect(ids).toEqual(new Set());
+    });
+  });
+
+  it('ignores a plan-draft commit that only touches papercamp/', () => {
+    const root = initGitRepo();
+    commit(root, 'papercamp/ideas/IDEA-243.md', 'docs(ideas): Auto-fix — plan', 'Refs: IDEA-243');
+
+    return resolveIdsWithMainActivity(root).then((ids) => {
+      expect(ids).toEqual(new Set());
+    });
+  });
+
+  it('counts a mixed commit that touches papercamp/ and other files', () => {
+    const root = initGitRepo();
+    commitFiles(
+      root,
+      ['papercamp/ideas/IDEA-243.md', 'src/core/status.ts'],
+      'fix(core): Ignore corpus-only commits',
+      'Refs: IDEA-243',
+    );
+
+    return resolveIdsWithMainActivity(root).then((ids) => {
+      expect(ids).toEqual(new Set(['IDEA-243']));
     });
   });
 

@@ -33,11 +33,23 @@ export function resolveIdFromCommitMessage(message: string): string | null {
   return byMergeBranch ? byMergeBranch[1].toUpperCase() : null;
 }
 
+/** Merge commits show no file list under --name-only, so an empty list doesn't imply corpus-only. */
+function isCorpusOnly(files: string[]): boolean {
+  return files.length > 0 && files.every((f) => f.startsWith('papercamp/'));
+}
+
 export async function resolveIdsWithMainActivity(root: string): Promise<Set<string>> {
   const branch = await resolveDefaultBranch(root);
-  const output = await runGit(root, ['log', '--format=%B%x00', branch]);
+  const output = await runGit(root, ['log', '--format=%x02%B%x00', '--name-only', branch]);
   const ids = new Set<string>();
-  for (const body of output.split('\x00')) {
+  for (const commit of output.split('\x02')) {
+    if (!commit) continue;
+    const [body, fileSection = ''] = commit.split('\x00');
+    const files = fileSection
+      .split('\n')
+      .map((f) => f.trim())
+      .filter(Boolean);
+    if (isCorpusOnly(files)) continue;
     const id = resolveIdFromCommitMessage(body.trim());
     if (id) ids.add(id);
   }
