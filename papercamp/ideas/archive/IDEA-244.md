@@ -3,7 +3,7 @@ id: IDEA-244
 title: Record a run cut off by a crash
 type: fix
 kind: fix
-status: review
+status: done
 idea: IDEA-233
 created: 2026-09-08
 updated: 2026-09-08
