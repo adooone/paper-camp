@@ -9,6 +9,7 @@ import type {
   DeskCheckState,
   Issue,
 } from '@/types/index';
+import { useState } from 'react';
 import {
   StampButton,
   chalkStatusFill,
@@ -116,13 +117,25 @@ const CheckStamp = ({
 };
 
 export const ChecksGroup = () => {
-  const { checks, run } = useDeskChecks();
+  const { checks, run, fix } = useDeskChecks();
   const doctor = useAppStore((s) => s.doctor);
   const consistency = useAppStore((s) => s.consistency);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const launchIssueFix = useAppStore((s) => s.launchIssueFix);
   const failing = firstFailingCheck(checks, doctor, consistency);
   const fixState = failing ? activeCheckFix(agentStatus, failing.id) : null;
+  const failingCheck = failing ? checks.find((c) => c.name === failing.sourceKey) : undefined;
+  const [fixingName, setFixingName] = useState<string | null>(null);
+  const fixing = fixingName !== null && fixingName === failingCheck?.name;
+
+  const runAutoFix = async (name: string) => {
+    setFixingName(name);
+    try {
+      await fix(name);
+    } finally {
+      setFixingName(null);
+    }
+  };
 
   return (
     <div>
@@ -165,6 +178,21 @@ export const ChecksGroup = () => {
           {failing ? (
             <>
               <span>The {failing.sourceKey} check failed.</span>
+              {failingCheck?.fixCmd && (
+                <StampButton
+                  tooltip={
+                    fixing
+                      ? 'Running the fix command…'
+                      : `Run \`${failingCheck.fixCmd}\`, then re-check.`
+                  }
+                  onClick={() => runAutoFix(failingCheck.name)}
+                  disabled={fixing || fixState !== null}
+                  fillColor={statusFill[failingCheck.status]}
+                  textColor={statusText[failingCheck.status]}
+                >
+                  {fixing ? 'fixing…' : 'auto-fix'}
+                </StampButton>
+              )}
               <StampButton
                 tooltip={
                   fixState === 'own'
@@ -176,7 +204,7 @@ export const ChecksGroup = () => {
                 onClick={() =>
                   launchIssueFix(failing.id, failing.title, failing.reason, failing.output)
                 }
-                disabled={fixState !== null}
+                disabled={fixState !== null || fixing}
                 fillColor={chalkStatusFill.fail}
                 textColor={chalkStatusText.fail}
               >

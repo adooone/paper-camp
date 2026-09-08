@@ -17,3 +17,17 @@ export const runDeskCheck = async (name: string): Promise<void> => {
     throw new Error(err.error ?? 'Failed to run check');
   }
 };
+
+export const fixDeskCheck = async (name: string): Promise<DeskCheckState> => {
+  const response = await apiFetch(apiUrl('/api/checks/fix'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Failed to fix check' }));
+    throw new Error(err.error ?? 'Failed to fix check');
+  }
+  const body = (await response.json()) as { check: DeskCheckState };
+  return body.check;
+};
