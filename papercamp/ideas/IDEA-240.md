@@ -89,8 +89,9 @@ or to the daemon's project mounts.
 - [x] Hand the hosted client link to `dev` and `daemon`
       Both banners print a Local link to `PAPERCAMP_HOSTED_CLIENT_URL` carrying `?runtime=`/`?machine=` and the pairing token, and `GET /` answers a 302 to it.
       run: 15s · 124 in · 32.1k out · sonnet-5
-- [ ] Open the hosted client from the toolbar trigger
+- [x] Open the hosted client from the toolbar trigger
       Same link shape, with the host app's own runtime origin in `?runtime=`.
+      run: 5m43s · 38 in · 6.7k out · sonnet-5
 - [ ] Drop static serving from the servers
       `appDir()`, `loadIndexHtml`, and `serveStatic` leave `serve-static.ts` along with their tests; `dev-server.ts` and `daemon-server.ts` serve the API only.
 - [ ] Ship a runtime-only tarball
