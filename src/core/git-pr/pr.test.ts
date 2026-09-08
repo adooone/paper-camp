@@ -657,70 +657,69 @@ describe('syncPlanPhasesToPr', () => {
 });
 
 describe('derivePrLabels', () => {
-  it('combines kind with tags that are also recognized commit scopes', () => {
-    expect(derivePrLabels({ kind: 'feat', tags: ['ci', 'freshness', 'plans'] })).toEqual([
-      'feat',
-      'ci',
-      'plans',
-    ]);
-  });
-
-  it('drops tags that are not in the commit-scope vocabulary', () => {
-    expect(derivePrLabels({ kind: 'fix', tags: ['freshness', 'random-idea'] })).toEqual(['fix']);
-  });
-
-  it('omits the kind label when the plan has no kind', () => {
-    expect(derivePrLabels({ tags: ['ci'] })).toEqual(['ci']);
-  });
-
-  it('de-dupes when kind and a tag collide', () => {
-    expect(derivePrLabels({ kind: 'feat', tags: ['feat', 'ci'] })).toEqual(['feat', 'ci']);
+  it.each<[string, Parameters<typeof derivePrLabels>[0], string[]]>([
+    [
+      'combines kind with tags that are also recognized commit scopes',
+      { kind: 'feat', tags: ['ci', 'freshness', 'plans'] },
+      ['feat', 'ci', 'plans'],
+    ],
+    [
+      'drops tags that are not in the commit-scope vocabulary',
+      { kind: 'fix', tags: ['freshness', 'random-idea'] },
+      ['fix'],
+    ],
+    ['omits the kind label when the plan has no kind', { tags: ['ci'] }, ['ci']],
+    [
+      'de-dupes when kind and a tag collide',
+      { kind: 'feat', tags: ['feat', 'ci'] },
+      ['feat', 'ci'],
+    ],
+  ])('%s', (_description, input, expected) => {
+    expect(derivePrLabels(input)).toEqual(expected);
   });
 });
 
 describe('computePrTitle', () => {
-  it('builds `type(scope): title (id)` from the idea type and first recognized-scope tag', () => {
-    expect(
-      computePrTitle('IDEA-76', {
-        type: 'feat',
-        tags: ['app', 'onboarding'],
-        title: 'First run access setup',
-      }),
-    ).toBe('feat(app): First run access setup (IDEA-76)');
-  });
-
-  it('falls back to feat when the idea has no type', () => {
-    expect(computePrTitle('IDEA-9', { tags: ['ci'], title: 'Some plan' })).toBe(
+  it.each<[string, string, Parameters<typeof computePrTitle>[1], string]>([
+    [
+      'builds `type(scope): title (id)` from the idea type and first recognized-scope tag',
+      'IDEA-76',
+      { type: 'feat', tags: ['app', 'onboarding'], title: 'First run access setup' },
+      'feat(app): First run access setup (IDEA-76)',
+    ],
+    [
+      'falls back to feat when the idea has no type',
+      'IDEA-9',
+      { tags: ['ci'], title: 'Some plan' },
       'feat(ci): Some plan (IDEA-9)',
-    );
-  });
-
-  it('falls back to repo when no tag is a recognized commit scope', () => {
-    expect(
-      computePrTitle('IDEA-80', {
-        type: 'fix',
-        tags: ['dev-server', 'vite'],
-        title: 'Fix dev server',
-      }),
-    ).toBe('fix(repo): Fix dev server (IDEA-80)');
+    ],
+    [
+      'falls back to repo when no tag is a recognized commit scope',
+      'IDEA-80',
+      { type: 'fix', tags: ['dev-server', 'vite'], title: 'Fix dev server' },
+      'fix(repo): Fix dev server (IDEA-80)',
+    ],
+  ])('%s', (_description, id, idea, expected) => {
+    expect(computePrTitle(id, idea)).toBe(expected);
   });
 });
 
 describe('isConventionalPrTitle', () => {
-  it('accepts a type(scope): description title', () => {
-    expect(isConventionalPrTitle('feat(app): First run access setup (IDEA-76)')).toBe(true);
-  });
-
-  it('rejects a hand-titled PR with no type/scope prefix', () => {
-    expect(isConventionalPrTitle('IDEA-76: First Run Access Setup')).toBe(false);
-  });
-
-  it('rejects an unrecognized scope', () => {
-    expect(isConventionalPrTitle('feat(nonsense): Some title')).toBe(false);
-  });
-
-  it('rejects an unrecognized type', () => {
-    expect(isConventionalPrTitle('build(app): Some title')).toBe(false);
+  it.each([
+    [
+      'accepts a type(scope): description title',
+      'feat(app): First run access setup (IDEA-76)',
+      true,
+    ],
+    [
+      'rejects a hand-titled PR with no type/scope prefix',
+      'IDEA-76: First Run Access Setup',
+      false,
+    ],
+    ['rejects an unrecognized scope', 'feat(nonsense): Some title', false],
+    ['rejects an unrecognized type', 'build(app): Some title', false],
+  ] as const)('%s', (_description, title, expected) => {
+    expect(isConventionalPrTitle(title)).toBe(expected);
   });
 });
 
@@ -1164,19 +1163,22 @@ describe('renderConsistencyComment', () => {
     );
   });
 
-  it('notes a stale convergence audit', () => {
-    const body = renderConsistencyComment([], { audited: '2026-07-01', stale: true });
-    expect(body).toContain('Convergence audit: last run `2026-07-01`, plan has changed since');
-  });
-
-  it('notes a current convergence audit', () => {
-    const body = renderConsistencyComment([], { audited: '2026-07-01', stale: false });
-    expect(body).toContain('Convergence audit: last run `2026-07-01`, still current.');
-  });
-
-  it('omits the audit line entirely when no audit is recorded', () => {
-    const body = renderConsistencyComment([]);
-    expect(body).not.toContain('Convergence audit');
+  it.each([
+    [
+      'notes a stale convergence audit',
+      { audited: '2026-07-01', stale: true },
+      'Convergence audit: last run `2026-07-01`, plan has changed since',
+    ],
+    [
+      'notes a current convergence audit',
+      { audited: '2026-07-01', stale: false },
+      'Convergence audit: last run `2026-07-01`, still current.',
+    ],
+    ['omits the audit line entirely when no audit is recorded', undefined, undefined],
+  ] as const)('%s', (_description, audit, expectedLine) => {
+    const body = renderConsistencyComment([], audit);
+    if (expectedLine) expect(body).toContain(expectedLine);
+    else expect(body).not.toContain('Convergence audit');
   });
 });
 

@@ -61,62 +61,31 @@ Rationale prose.
     ]);
   });
 
-  it('parses a subject key when present', () => {
-    const content = `---
+  const minimalIdea = (extraFrontmatter = '') => `---
 id: IDEA-47
-title: Has a subject
+title: Minimal idea
 status: idea
 created: 2026-07-05
-subject: Onboarding
----
+${extraFrontmatter}---
 Prose.
 `;
-    const { entries, warnings } = parseEntityFile(content);
+
+  it.each<[string, string, string | undefined]>([
+    ['parses a subject key when present', 'subject: Onboarding\n', 'Onboarding'],
+    ['leaves subject undefined when the key is absent (virtual "No subject")', '', undefined],
+  ])('%s', (_description, extraFrontmatter, expected) => {
+    const { entries, warnings } = parseEntityFile(minimalIdea(extraFrontmatter));
     expect(warnings).toEqual([]);
-    expect(entries[0].subject).toBe('Onboarding');
+    expect(entries[0].subject).toBe(expected);
   });
 
-  it('leaves subject undefined when the key is absent (virtual "No subject")', () => {
-    const content = `---
-id: IDEA-48
-title: No subject
-status: idea
-created: 2026-07-05
----
-Prose.
-`;
-    const { entries, warnings } = parseEntityFile(content);
+  it.each<[string, string, number | undefined]>([
+    ['parses an order key when present', 'order: 3\n', 3],
+    ['leaves order undefined when the key is absent (unordered)', '', undefined],
+  ])('%s', (_description, extraFrontmatter, expected) => {
+    const { entries, warnings } = parseEntityFile(minimalIdea(extraFrontmatter));
     expect(warnings).toEqual([]);
-    expect(entries[0].subject).toBeUndefined();
-  });
-
-  it('parses an order key when present', () => {
-    const content = `---
-id: IDEA-49
-title: Has an order
-status: idea
-created: 2026-07-05
-order: 3
----
-Prose.
-`;
-    const { entries, warnings } = parseEntityFile(content);
-    expect(warnings).toEqual([]);
-    expect(entries[0].order).toBe(3);
-  });
-
-  it('leaves order undefined when the key is absent (unordered)', () => {
-    const content = `---
-id: IDEA-50
-title: No order
-status: idea
-created: 2026-07-05
----
-Prose.
-`;
-    const { entries, warnings } = parseEntityFile(content);
-    expect(warnings).toEqual([]);
-    expect(entries[0].order).toBeUndefined();
+    expect(entries[0].order).toBe(expected);
   });
 
   it('parses a phaseless idea-status entity (the pre-plan state)', () => {
@@ -151,28 +120,29 @@ Usage pattern, no plan needed.
     expect(entries[0].status).toBe('done');
   });
 
-  it('rejects a plan-track status on a note', () => {
-    const content = `---
+  it.each<[string, string]>([
+    [
+      'rejects a plan-track status on a note',
+      `---
 id: IDEA-1
 title: Bad note
 kind: note
 status: in-progress
 created: 2026-07-05
 ---
-`;
-    const { entries, warnings } = parseEntityFile(content);
-    expect(entries).toEqual([]);
-    expect(warnings.length).toBeGreaterThan(0);
-  });
-
-  it('rejects status open on a non-note', () => {
-    const content = `---
+`,
+    ],
+    [
+      'rejects status open on a non-note',
+      `---
 id: IDEA-2
 title: Bad idea
 status: open
 created: 2026-07-05
 ---
-`;
+`,
+    ],
+  ])('%s', (_description, content) => {
     const { entries, warnings } = parseEntityFile(content);
     expect(entries).toEqual([]);
     expect(warnings.length).toBeGreaterThan(0);

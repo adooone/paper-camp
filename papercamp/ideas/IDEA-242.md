@@ -106,7 +106,8 @@ this idea adds none.
       run: 18m8s · 126 in · 77.6k out · sonnet-5
 - [x] Run `agent.test.ts` on fake timers with instant fake CLIs
       run: 19m30s · 180 in · 75.7k out · sonnet-5
-- [ ] Consolidate sibling cases into `it.each` tables
+- [x] Consolidate sibling cases into `it.each` tables
       Covers `src/core/parse`, `src/core/git-pr`, `src/core/status`, and
       `git.test.ts`.
+      run: 24m21s · 212 in · 68.1k out · sonnet-5
 - [ ] Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it

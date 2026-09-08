@@ -1344,12 +1344,12 @@ describe('diff', () => {
     expect(output).toContain('fresh content');
   });
 
-  it('refuses to diff sensitive files', async () => {
-    await writeFile(join(root, '.env'), 'SECRET=1\n');
-    await expect(manager.diff(['.env'])).rejects.toThrow(/sensitive/);
-    await expect(manager.diff(['config/.env.production'])).rejects.toThrow(/sensitive/);
-    await expect(manager.diff(['certs/server.pem'])).rejects.toThrow(/sensitive/);
-  });
+  it.each(['.env', 'config/.env.production', 'certs/server.pem'])(
+    'refuses to diff sensitive file %s',
+    async (path) => {
+      await expect(manager.diff([path])).rejects.toThrow(/sensitive/);
+    },
+  );
 
   it('skips a file renamed from a sensitive source', async () => {
     await commitFile(root, '.env', 'SECRET=1\n', 'add env');

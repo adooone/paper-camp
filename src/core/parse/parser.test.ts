@@ -231,7 +231,15 @@ Body.
     expect(entries[0].log).toEqual([{ date: '2026-06-18', text: 'Note' }]);
   });
 
-  it('parses the [review] inline tag as phase.source', () => {
+  it.each([
+    [
+      'review',
+      '- [ ] [review] Fix off-by-one in pagination',
+      false,
+      'Fix off-by-one in pagination',
+    ],
+    ['manual', '- [x] [manual] Smaller toolbar button text', true, 'Smaller toolbar button text'],
+  ] as const)('parses the [%s] inline tag as phase.source', (source, line, done, text) => {
     const md = `## Short title
 
 **Status:** in-progress
@@ -241,33 +249,13 @@ Body.
 
 ### Phases
 - [x] Decide on storage format
-- [ ] [review] Fix off-by-one in pagination
+${line}
 `;
     const { entries, warnings } = parsePlans(md);
     expect(warnings).toEqual([]);
     expect(entries[0].phases).toEqual([
       { done: true, text: 'Decide on storage format' },
-      { done: false, text: 'Fix off-by-one in pagination', source: 'review' },
-    ]);
-  });
-
-  it('parses the [manual] inline tag as phase.source', () => {
-    const md = `## Short title
-
-**Status:** in-progress
-**Created:** 2026-06-18
-
-Body.
-
-### Phases
-- [x] Decide on storage format
-- [x] [manual] Smaller toolbar button text
-`;
-    const { entries, warnings } = parsePlans(md);
-    expect(warnings).toEqual([]);
-    expect(entries[0].phases).toEqual([
-      { done: true, text: 'Decide on storage format' },
-      { done: true, text: 'Smaller toolbar button text', source: 'manual' },
+      { done, text, source },
     ]);
   });
 });
@@ -287,65 +275,66 @@ describe('findConsistencyIssues', () => {
     expect(findConsistencyIssues([])).toEqual([]);
   });
 
-  it('flags a plan whose subject is not in the roadmap vocabulary', () => {
-    const plans = [plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Retired subject' })];
-    expect(findConsistencyIssues(plans, ['Packaging'])).toEqual([
-      expect.objectContaining({ kind: 'orphan-subject', title: 'Plan A', planId: 'FEAT-2' }),
-    ]);
+  it.each<[string, PlanEntry[], unknown[]]>([
+    [
+      'flags a plan whose subject is not in the roadmap vocabulary',
+      [plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Retired subject' })],
+      [expect.objectContaining({ kind: 'orphan-subject', title: 'Plan A', planId: 'FEAT-2' })],
+    ],
+    [
+      'does not flag a plan whose subject is in the roadmap vocabulary',
+      [plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Packaging' })],
+      [],
+    ],
+    ['does not flag a plan with no subject', [plan({ title: 'Plan A', id: 'FEAT-2' })], []],
+    [
+      'does not flag an archived plan even when its subject was pruned from the roadmap',
+      [plan({ title: 'Shipped', id: 'FEAT-9', subject: 'Retired subject', archived: true })],
+      [],
+    ],
+  ])('%s', (_description, plans, expected) => {
+    expect(findConsistencyIssues(plans, ['Packaging'])).toEqual(expected);
   });
 
-  it('does not flag a plan whose subject is in the roadmap vocabulary', () => {
-    const plans = [plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Packaging' })];
-    expect(findConsistencyIssues(plans, ['Packaging'])).toEqual([]);
-  });
-
-  it('does not flag a plan with no subject', () => {
-    const plans = [plan({ title: 'Plan A', id: 'FEAT-2' })];
-    expect(findConsistencyIssues(plans, ['Packaging'])).toEqual([]);
-  });
-
-  it('does not flag an archived plan even when its subject was pruned from the roadmap', () => {
-    const plans = [
-      plan({ title: 'Shipped', id: 'FEAT-9', subject: 'Retired subject', archived: true }),
-    ];
-    expect(findConsistencyIssues(plans, ['Packaging'])).toEqual([]);
-  });
-
-  it('flags an active idea whose title runs past 40 characters', () => {
-    const plans = [
-      plan({
-        title: 'Desk is broken under the mount, router basepath and a friendlier route',
-        id: 'IDEA-139',
-      }),
-    ];
-    expect(findConsistencyIssues(plans)).toEqual([
-      expect.objectContaining({
-        kind: 'title-style',
-        title: expect.any(String),
-        planId: 'IDEA-139',
-      }),
-    ]);
-  });
-
-  it('flags an active idea with an em-dash subtitle even under 40 characters', () => {
-    const plans = [plan({ title: 'Desk breaks — router basepath', id: 'IDEA-140' })];
-    expect(findConsistencyIssues(plans)).toEqual([
-      expect.objectContaining({ kind: 'title-style', planId: 'IDEA-140' }),
-    ]);
-  });
-
-  it('does not flag a short, clean active title', () => {
-    const plans = [plan({ title: 'Desk breaks under the mount', id: 'IDEA-1' })];
-    expect(findConsistencyIssues(plans)).toEqual([]);
-  });
-
-  it('does not flag a long title on a done or dropped idea', () => {
-    const longTitle = 'Desk is broken under the mount, router basepath and a friendlier route';
-    const plans = [
-      plan({ title: longTitle, id: 'IDEA-8', status: 'done' }),
-      plan({ title: longTitle, id: 'IDEA-9', status: 'dropped' }),
-    ];
-    expect(findConsistencyIssues(plans)).toEqual([]);
+  it.each<[string, PlanEntry[], unknown[]]>([
+    [
+      'flags an active idea whose title runs past 40 characters',
+      [
+        plan({
+          title: 'Desk is broken under the mount, router basepath and a friendlier route',
+          id: 'IDEA-139',
+        }),
+      ],
+      [expect.objectContaining({ kind: 'title-style', planId: 'IDEA-139' })],
+    ],
+    [
+      'flags an active idea with an em-dash subtitle even under 40 characters',
+      [plan({ title: 'Desk breaks — router basepath', id: 'IDEA-140' })],
+      [expect.objectContaining({ kind: 'title-style', planId: 'IDEA-140' })],
+    ],
+    [
+      'does not flag a short, clean active title',
+      [plan({ title: 'Desk breaks under the mount', id: 'IDEA-1' })],
+      [],
+    ],
+    [
+      'does not flag a long title on a done or dropped idea',
+      [
+        plan({
+          title: 'Desk is broken under the mount, router basepath and a friendlier route',
+          id: 'IDEA-8',
+          status: 'done',
+        }),
+        plan({
+          title: 'Desk is broken under the mount, router basepath and a friendlier route',
+          id: 'IDEA-9',
+          status: 'dropped',
+        }),
+      ],
+      [],
+    ],
+  ])('%s', (_description, plans, expected) => {
+    expect(findConsistencyIssues(plans)).toEqual(expected);
   });
 });
 
@@ -402,19 +391,11 @@ ${phasesHeading}
 - [ ] second
 `;
 
-  it('extracts phases under the canonical ### heading', () => {
-    const { entries, warnings } = parseEntityFile(entity('### Phases'));
+  // Regression: a generic markdown-heading "fix" (### → ##) must not silently make the
+  // whole Phases section vanish. The serializer re-canonicalizes to ###.
+  it.each(['### Phases', '## Phases'])('extracts phases under the heading "%s"', (heading) => {
+    const { entries, warnings } = parseEntityFile(entity(heading));
     expect(warnings).toEqual([]);
-    expect(entries[0].phases).toEqual([
-      { done: true, text: 'first' },
-      { done: false, text: 'second' },
-    ]);
-  });
-
-  it('still extracts phases when a linter demoted ### Phases to ## Phases', () => {
-    // Regression: a generic markdown-heading "fix" (### → ##) must not silently
-    // make the whole Phases section vanish. The serializer re-canonicalizes to ###.
-    const { entries } = parseEntityFile(entity('## Phases'));
     expect(entries[0].phases).toEqual([
       { done: true, text: 'first' },
       { done: false, text: 'second' },
