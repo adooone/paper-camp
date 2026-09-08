@@ -3,9 +3,10 @@ id: IDEA-245
 title: A plan commit is not main activity
 type: fix
 kind: fix
-status: review
+status: done
 idea: IDEA-116
 created: 2026-09-08
+updated: 2026-09-08
 tags:
   - core
 subject: The format as the product
