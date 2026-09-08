@@ -17,12 +17,12 @@ function emptyRuntime(): CheckRuntime {
 
 export interface DeskCheckManagerState {
   runtimes: Map<string, CheckRuntime>;
-  running: Set<string>;
+  inFlight: Map<string, Promise<CheckStatus>>;
   clients: Set<ServerResponse>;
 }
 
 export function createEmptyCheckState(): DeskCheckManagerState {
-  return { runtimes: new Map(), running: new Set(), clients: new Set() };
+  return { runtimes: new Map(), inFlight: new Map(), clients: new Set() };
 }
 
 export type DeskCheckManager = ReturnType<typeof createDeskCheckManager>;
@@ -46,7 +46,7 @@ export function createDeskCheckManager(
   root: string,
   state: DeskCheckManagerState = createEmptyCheckState(),
 ) {
-  const { runtimes, running, clients } = state;
+  const { runtimes, inFlight, clients } = state;
 
   function runtimeFor(name: string): CheckRuntime {
     let runtime = runtimes.get(name);
@@ -76,29 +76,40 @@ export function createDeskCheckManager(
     broadcast(name);
   }
 
-  function runCheck(name: string): void {
+  // Joins a run already in flight instead of spawning a second one — two
+  // `pnpm test` processes racing over the coverage dir crashes vitest.
+  function runCheck(name: string): Promise<CheckStatus> {
+    const alreadyRunning = inFlight.get(name);
+    if (alreadyRunning) return alreadyRunning;
+
     const check = loadManifestChecks(root).find((c) => c.name === name);
     if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
-    if (running.has(name)) return;
-    running.add(name);
-    setResult(name, 'running', '');
 
-    const proc = spawn(check.cmd, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], shell: true });
-    let out = '';
-    proc.stdout?.on('data', (d: Buffer) => {
-      out += d.toString();
+    const promise = new Promise<CheckStatus>((resolve) => {
+      setResult(name, 'running', '');
+
+      const proc = spawn(check.cmd, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], shell: true });
+      let out = '';
+      proc.stdout?.on('data', (d: Buffer) => {
+        out += d.toString();
+      });
+      proc.stderr?.on('data', (d: Buffer) => {
+        out += d.toString();
+      });
+      proc.on('close', (code) => {
+        inFlight.delete(name);
+        const status = code === 0 ? 'pass' : 'fail';
+        setResult(name, status, out);
+        resolve(status);
+      });
+      proc.on('error', (err) => {
+        inFlight.delete(name);
+        setResult(name, 'fail', `Failed to spawn check: ${err.message}`);
+        resolve('fail');
+      });
     });
-    proc.stderr?.on('data', (d: Buffer) => {
-      out += d.toString();
-    });
-    proc.on('close', (code) => {
-      running.delete(name);
-      setResult(name, code === 0 ? 'pass' : 'fail', out);
-    });
-    proc.on('error', (err) => {
-      running.delete(name);
-      setResult(name, 'fail', `Failed to spawn check: ${err.message}`);
-    });
+    inFlight.set(name, promise);
+    return promise;
   }
 
   function getStatus(): DeskCheckState[] {

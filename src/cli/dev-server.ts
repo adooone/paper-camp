@@ -16,6 +16,7 @@ import {
   isMissingHttpsCertsError,
   runTailnetServe,
 } from './tailnet-serve';
+import { serveToolbarAsset } from './toolbar-assets';
 import {
   CLOUDFLARED_MISSING_MESSAGE,
   type QuickTunnel,
@@ -30,8 +31,8 @@ export interface DevServerOptions {
   tailnet?: boolean;
 }
 
-/** Serves the API only; the dashboard itself is the hosted client, opened at
- * the Local link this banner prints. */
+/** Serves the API and the toolbar bundle a host app's Vite plugin proxies to; the
+ * dashboard itself is the hosted client, opened at the Local link this banner prints. */
 export async function startDevServer({
   root,
   port,
@@ -66,13 +67,14 @@ export async function startDevServer({
   );
 
   const server = createServer((req, res) => {
-    apiMiddleware(req, res, () => {
+    apiMiddleware(req, res, async () => {
       if ((req.url ?? '/').split('?')[0] === '/') {
         res.statusCode = 302;
         res.setHeader('Location', localLink);
         res.end();
         return;
       }
+      if (await serveToolbarAsset(req, res)) return;
       res.statusCode = 404;
       res.end();
     });

@@ -5,8 +5,27 @@ import { type OpenQuestionGroup, phaseProgress } from '@/app/features/plans/help
 import type { StatusClientState } from '@/app/hooks/use-status-client';
 import type { PlanEntry } from '@/types/index';
 import { Button, Card, IconButton, Input, Island, Stamp } from '@dendelion/paper-ui';
-import { type CSSProperties, useState } from 'react';
+import { type CSSProperties, type ReactNode, useState } from 'react';
 import { ScoutThread } from './scout-thread';
+
+// Renders plain text instead of a dead link while the hosted-client pairing
+// link (fetched async from the runtime) hasn't resolved yet.
+const DeskLink = ({
+  href,
+  style,
+  children,
+}: {
+  href: string | null;
+  style: CSSProperties;
+  children: ReactNode;
+}) =>
+  href ? (
+    <a style={style} href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  ) : (
+    <span style={style}>{children}</span>
+  );
 
 const bodyStyle: CSSProperties = {
   display: 'flex',
@@ -180,8 +199,8 @@ export interface ScoutCardProps {
   focusPlan: PlanEntry | null;
   openQuestions: OpenQuestionGroup[];
   onRefreshScout: () => void;
-  deskUrl: string;
-  changesUrl: string;
+  deskUrl: string | null;
+  changesUrl: string | null;
 }
 
 export const ScoutCard = ({
@@ -260,26 +279,16 @@ export const ScoutCard = ({
                           </span>
                         </div>
                       )}
-                      <a
-                        style={deskLinkStyle}
-                        href={deskUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <DeskLink href={deskUrl} style={deskLinkStyle}>
                         Open Paper Camp →
-                      </a>
+                      </DeskLink>
                     </>
                   ) : (
                     <>
                       <span style={mutedStyle}>no active plan</span>
-                      <a
-                        style={deskLinkStyle}
-                        href={deskUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <DeskLink href={deskUrl} style={deskLinkStyle}>
                         Open Paper Camp →
-                      </a>
+                      </DeskLink>
                     </>
                   )}
 
@@ -287,15 +296,10 @@ export const ScoutCard = ({
 
                   {status.changedFileCount > 0 ? (
                     <>
-                      <a
-                        style={changedCountStyle}
-                        href={changesUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <DeskLink href={changesUrl} style={changedCountStyle}>
                         {status.changedFileCount} {status.changedFileCount === 1 ? 'file' : 'files'}{' '}
                         changed
-                      </a>
+                      </DeskLink>
 
                       <div style={commitInputWrapStyle}>
                         <Input

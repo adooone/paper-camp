@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { getPrMapFetchedAt } from '@/core/git-pr';
 import type { CheckName, CheckResult, CheckStatus } from '../../types';
 import { BIOME_FIX_COMMAND } from './biome-fix';
+import type { DeskCheckManager } from './desk-checks';
 import { loadManifestChecks } from './desk-checks';
 
 interface StatusSnapshot {
@@ -53,6 +54,7 @@ export function createEmptyStatusState(): StatusManagerState {
 
 export function createStatusManager(
   root: string,
+  checks: DeskCheckManager,
   state: StatusManagerState = createEmptyStatusState(),
 ) {
   // Same containers a hot-reloaded replacement receives, so a still-running check's
@@ -132,38 +134,19 @@ export function createStatusManager(
   // can't hard-fail an autonomous run-all phase.
   function runChecksAndWait(): Promise<CheckName[]> {
     return new Promise<CheckName[]>((resolve) => {
-      const runChecks = () => {
+      const runChecks = async () => {
         const manifestChecks = loadManifestChecks(root);
         const names = (['lint', 'test'] as const).filter((n) =>
           manifestChecks.some((c) => c.name === n),
         );
-        const passed = new Map<CheckName, boolean>();
-        const finished = new Set<CheckName>();
-        let pending = names.length;
-        if (pending === 0) {
-          resolve([]);
-          return;
-        }
-
-        function onDone(name: CheckName, ok: boolean) {
-          if (finished.has(name)) return;
-          finished.add(name);
-          passed.set(name, ok);
-          pending--;
-          if (pending === 0) resolve(names.filter((n) => passed.get(n) !== true));
-        }
-
         const hasVitest = repoHasVitest(root);
-        for (const name of names) {
-          if (name === 'test' && !hasVitest) {
-            onDone(name, true);
-            continue;
-          }
-          const cmd = manifestChecks.find((c) => c.name === name)!.cmd;
-          const proc = spawn(cmd, { cwd: root, stdio: 'ignore', shell: true });
-          proc.on('close', (code) => onDone(name, code === 0));
-          proc.on('error', () => onDone(name, false));
-        }
+        const passed = await Promise.all(
+          names.map(async (name) => {
+            if (name === 'test' && !hasVitest) return true;
+            return (await checks.runCheck(name)) === 'pass';
+          }),
+        );
+        resolve(names.filter((_, i) => !passed[i]));
       };
 
       const fix = spawn(BIOME_FIX_COMMAND, { cwd: root, stdio: 'ignore', shell: true });

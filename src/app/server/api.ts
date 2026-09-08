@@ -178,9 +178,9 @@ export function createApiMiddleware(
   isMachineBusy?: () => boolean,
 ): ApiMiddleware {
   const git = createGitManager(root);
-  const status = createStatusManager(root, statusState);
   const services = createDeskServiceManager(root, serviceState);
   const checks = createDeskCheckManager(root, checkState);
+  const status = createStatusManager(root, checks, statusState);
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);
   const activity = createActivityManager(root);

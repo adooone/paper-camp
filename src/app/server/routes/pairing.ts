@@ -1,8 +1,16 @@
+import { hostedClientUrl } from '@/core/hosted-client';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 export function pairingRoutes({ pairing }: RouteContext): Route[] {
   return [
+    {
+      method: 'GET',
+      path: '/api/pairing',
+      handle: async (_req, res) => {
+        sendJson(res, 200, { hostedClientUrl: hostedClientUrl(), token: pairing.token });
+      },
+    },
     {
       method: 'POST',
       path: '/api/pair',
