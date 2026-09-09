@@ -18,6 +18,9 @@ export const MachineProjectRow = ({ project, onOpen }: MachineProjectRowProps) =
     onClick={project.missing ? undefined : onOpen}
   >
     <span className="truncate">{project.name}</span>
+    {project.slug !== project.name && (
+      <span className="ml-2 shrink-0 font-mono text-2xs opacity-50">{project.slug}</span>
+    )}
   </ListItem>
 );
 

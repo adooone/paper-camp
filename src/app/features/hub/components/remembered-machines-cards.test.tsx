@@ -33,6 +33,26 @@ describe('MachineProjectRow', () => {
   });
 });
 
+describe('MachineProjectRow', () => {
+  it('shows the slug beside the name when they differ, so two projects with one name read apart', () => {
+    const tree = MachineProjectRow({
+      project: project({ slug: 'paper-camp-build', name: 'paper-camp' }),
+      onOpen: vi.fn(),
+    });
+    const [, slug] = tree.props.children as [unknown, { props: { children: string } } | false];
+    expect(slug && slug.props.children).toBe('paper-camp-build');
+  });
+
+  it('shows the name alone when it already is the slug', () => {
+    const tree = MachineProjectRow({
+      project: project({ slug: 'demo', name: 'demo' }),
+      onOpen: vi.fn(),
+    });
+    const [, slug] = tree.props.children as [unknown, unknown];
+    expect(slug).toBe(false);
+  });
+});
+
 describe('machineReachMessage', () => {
   it('names the browser permission while a request is still open', () => {
     expect(machineReachMessage('waiting', 'deimos.pitta-ray.ts.net', 0)).toMatch(
