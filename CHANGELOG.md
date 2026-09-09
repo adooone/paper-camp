@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.28.3](https://github.com/adooone/paper-camp/compare/v0.28.2...v0.28.3) (2026-09-09)
+
+
+### Bug Fixes
+
+* **app:** Prevent OSC 8 URL match spanning escape sequences ([ef363b1](https://github.com/adooone/paper-camp/commit/ef363b108c5cc1732c0b4f69a9322796debdff3b))
+* **app:** Show reachability status for remembered machines ([eb120ac](https://github.com/adooone/paper-camp/commit/eb120ac3241bd9079648da102960ee8cfc5e88ba))
+
 ## [0.28.2](https://github.com/adooone/paper-camp/compare/v0.28.1...v0.28.2) (2026-09-09)
 
 
