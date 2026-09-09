@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.28.2](https://github.com/adooone/paper-camp/compare/v0.28.1...v0.28.2) (2026-09-09)
+
+
+### Bug Fixes
+
+* **cli:** Rework daemon banner labels and tailnet failure handling ([435e3db](https://github.com/adooone/paper-camp/commit/435e3dbb1dc3f88ce5d9ac6cc5503b2e70e8709c))
+
 ## [0.28.1](https://github.com/adooone/paper-camp/compare/v0.28.0...v0.28.1) (2026-09-09)
 
 
