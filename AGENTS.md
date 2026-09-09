@@ -18,7 +18,7 @@ Use this instead of exploring from scratch — it is kept current like the code.
 - `src/types/index.ts` — every shared type.
 - `papercamp/` — the corpus itself: `ideas/<ID>.md` (one file per idea, plan included), `config.json` (id counters, default agents, subjects), `run-order.md`, `suggestions.md`.
 
-Verify with: `pnpm run check-types`, `npx biome check . --write`, and `npx vitest run` (plain — `pnpm test` adds coverage and is much slower).
+Verify with: `pnpm run check-types`, `npx biome check . --write`, and `pnpm test` (the unit project only, no coverage — see `docs/CODE_STYLE.md`'s testing section for the time bar). `pnpm test:integration` covers the suites that spawn a process or a real repo; `pnpm test:all` runs both, and only CI adds `--coverage`.
 
 ## Do one phase at a time
 

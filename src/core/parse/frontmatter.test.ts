@@ -78,36 +78,26 @@ body`;
 });
 
 describe('frontmatter schema passthrough', () => {
-  it('preserves an unrecognised key on entityFrontmatterSchema', () => {
-    const result = entityFrontmatterSchema.safeParse({
-      id: 'IDEA-1',
-      title: 'Test idea',
-      created: '2026-08-19',
-      futureField: 'from a newer paper-camp',
-    });
-    expect(result.success).toBe(true);
-    expect(result.data).toMatchObject({ futureField: 'from a newer paper-camp' });
-  });
-
-  it('preserves an unrecognised key on planFrontmatterSchema', () => {
-    const result = planFrontmatterSchema.safeParse({
-      id: 'FEAT-1',
-      title: 'Test plan',
-      kind: 'feat',
-      status: 'planned',
-      created: '2026-08-19',
-      futureField: 'from a newer paper-camp',
-    });
-    expect(result.success).toBe(true);
-    expect(result.data).toMatchObject({ futureField: 'from a newer paper-camp' });
-  });
-
-  it('preserves an unrecognised key on ideaFrontmatterSchema', () => {
-    const result = ideaFrontmatterSchema.safeParse({
-      id: 'IDEA-1',
-      title: 'Test idea',
-      futureField: 'from a newer paper-camp',
-    });
+  it.each([
+    [
+      'entityFrontmatterSchema',
+      entityFrontmatterSchema,
+      { id: 'IDEA-1', title: 'Test idea', created: '2026-08-19' },
+    ],
+    [
+      'planFrontmatterSchema',
+      planFrontmatterSchema,
+      {
+        id: 'FEAT-1',
+        title: 'Test plan',
+        kind: 'feat',
+        status: 'planned',
+        created: '2026-08-19',
+      },
+    ],
+    ['ideaFrontmatterSchema', ideaFrontmatterSchema, { id: 'IDEA-1', title: 'Test idea' }],
+  ] as const)('preserves an unrecognised key on %s', (_name, schema, base) => {
+    const result = schema.safeParse({ ...base, futureField: 'from a newer paper-camp' });
     expect(result.success).toBe(true);
     expect(result.data).toMatchObject({ futureField: 'from a newer paper-camp' });
   });
@@ -193,33 +183,21 @@ Simple body text.
     expect(entries[0].log).toEqual([]);
   });
 
-  it('parses a plan with tags as array', () => {
+  it.each<[string, string, string[]]>([
+    ['parses a plan with tags as array', 'tags: [app, settings]\n', ['app', 'settings']],
+    ['defaults tags to empty array when absent', '', []],
+  ])('%s', (_description, tagsLine, expected) => {
     const content = `---
 id: FEAT-5
 title: Tagged plan
 kind: feat
 status: planned
 created: 2026-06-15
-tags: [app, settings]
----
+${tagsLine}---
 Body.
 `;
     const { entries } = parsePlanFile(content);
-    expect(entries[0].tags).toEqual(['app', 'settings']);
-  });
-
-  it('defaults tags to empty array when absent', () => {
-    const content = `---
-id: FEAT-5
-title: Untagged plan
-kind: feat
-status: planned
-created: 2026-06-15
----
-Body.
-`;
-    const { entries } = parsePlanFile(content);
-    expect(entries[0].tags).toEqual([]);
+    expect(entries[0].tags).toEqual(expected);
   });
 });
 
@@ -374,44 +352,28 @@ describe('formatPlanFile round-trip', () => {
     expect(entries[0].tags).toEqual([]);
   });
 
-  it('round-trips phase descriptions', () => {
+  it.each([
+    [
+      'round-trips phase descriptions',
+      { done: false, text: 'Write tests', description: 'Cover the happy path and error cases.' },
+    ],
+    [
+      'round-trips phase with [review] source',
+      { done: false, text: 'Fix review findings', source: 'review' as const },
+    ],
+  ] as const)('%s', (_description, phase) => {
     const input = {
       id: 'FEAT-5',
-      title: 'Phase descriptions plan',
+      title: 'Phase variant plan',
       kind: 'feat' as const,
       status: 'in-progress' as const,
       created: '2026-06-15',
-      phases: [
-        {
-          done: false,
-          text: 'Write tests',
-          description: 'Cover the happy path and error cases.',
-        },
-      ],
+      phases: [phase],
     };
 
     const serialized = formatPlanFile(input);
     const { entries } = parsePlanFile(serialized);
-    expect(entries[0].phases).toEqual([
-      { done: false, text: 'Write tests', description: 'Cover the happy path and error cases.' },
-    ]);
-  });
-
-  it('round-trips phase with [review] source', () => {
-    const input = {
-      id: 'FEAT-24',
-      title: 'Review-source phase plan',
-      kind: 'feat' as const,
-      status: 'in-progress' as const,
-      created: '2026-06-28',
-      phases: [{ done: false, text: 'Fix review findings', source: 'review' as const }],
-    };
-
-    const serialized = formatPlanFile(input);
-    const { entries } = parsePlanFile(serialized);
-    expect(entries[0].phases).toEqual([
-      { done: false, text: 'Fix review findings', source: 'review' },
-    ]);
+    expect(entries[0].phases).toEqual([phase]);
   });
 
   it('round-trips clarifications', () => {
@@ -437,59 +399,45 @@ describe('formatPlanFile round-trip', () => {
     expect(entries[0].phases).toEqual(input.phases);
   });
 
-  it('round-trips the audited field', () => {
+  it.each<[string, string | undefined]>([
+    ['round-trips the audited field when set', '2026-07-01'],
+    ['omits audited from frontmatter when not set', undefined],
+  ])('%s', (_description, audited) => {
     const input = {
       id: 'FEAT-25',
       title: 'Batch plan freshness audit',
       kind: 'feat' as const,
       status: 'in-progress' as const,
       created: '2026-06-30',
-      audited: '2026-07-01',
+      ...(audited ? { audited } : {}),
     };
 
     const serialized = formatPlanFile(input);
+    if (!audited) expect(serialized).not.toContain('audited');
     const { entries, warnings } = parsePlanFile(serialized);
     expect(warnings).toEqual([]);
-    expect(entries[0].audited).toBe('2026-07-01');
-  });
-
-  it('omits audited from frontmatter when not set', () => {
-    const input = {
-      id: 'FEAT-1',
-      title: 'No audit yet',
-      kind: 'feat' as const,
-      status: 'planned' as const,
-      created: '2026-06-01',
-    };
-
-    const serialized = formatPlanFile(input);
-    expect(serialized).not.toContain('audited');
-    const { entries } = parsePlanFile(serialized);
-    expect(entries[0].audited).toBeUndefined();
+    expect(entries[0].audited).toBe(audited);
   });
 });
 
 describe('formatIdeaFile round-trip', () => {
-  it('round-trips an idea through formatIdeaFile -> parseIdeaFile', () => {
-    const serialized = formatIdeaFile({
-      id: 'IDEA-20',
-      title: 'Plan storage architecture',
-      body: 'Full rationale body.',
-    });
+  it.each([
+    [
+      'round-trips an idea through formatIdeaFile -> parseIdeaFile',
+      { id: 'IDEA-20', title: 'Plan storage architecture', body: 'Full rationale body.' },
+      '## IDEA-20: Plan storage architecture\n\nFull rationale body.',
+    ],
+    [
+      'round-trips an idea with no body',
+      { id: 'IDEA-1', title: 'Minimal idea' },
+      '## IDEA-1: Minimal idea',
+    ],
+  ] as const)('%s', (_description, input, expectedBody) => {
+    const serialized = formatIdeaFile(input);
     const { entries } = parseIdeaFile(serialized);
-    expect(entries[0].id).toBe('IDEA-20');
-    expect(entries[0].title).toBe('Plan storage architecture');
-    expect(entries[0].body).toBe('## IDEA-20: Plan storage architecture\n\nFull rationale body.');
-  });
-
-  it('round-trips an idea with no body', () => {
-    const serialized = formatIdeaFile({
-      id: 'IDEA-1',
-      title: 'Minimal idea',
-    });
-    const { entries } = parseIdeaFile(serialized);
-    expect(entries[0].id).toBe('IDEA-1');
-    expect(entries[0].body).toBe('## IDEA-1: Minimal idea');
+    expect(entries[0].id).toBe(input.id);
+    expect(entries[0].title).toBe(input.title);
+    expect(entries[0].body).toBe(expectedBody);
   });
 
   it('round-trips an idea with Log entries, leaving the body untouched', () => {

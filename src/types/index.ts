@@ -343,7 +343,7 @@ export interface ProjectStats {
   generatedAt: string;
   comments: CommentStats;
   testLines: number;
-  /** Null when no coverage report has been emitted yet (run `pnpm test`). */
+  /** Null when no coverage report has been emitted yet (run `pnpm test:all -- --coverage`). */
   testCoveragePct: number | null;
   entitiesByStatus: Partial<Record<EntityStatus, number>>;
   openQuestions: number;

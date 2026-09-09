@@ -64,8 +64,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run tests
-        run: pnpm test
+      # docs/CODE_STYLE.md's testing bar: `pnpm test` (the unit project)
+      # must clear two minutes on a laptop-equivalent runner.
+      - name: Run unit tests within the two-minute bar
+        run: timeout 120s pnpm run test
+
+      - name: Run full suite with coverage
+        run: pnpm run test:all -- --coverage
 
   consistency:
     name: Consistency

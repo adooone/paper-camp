@@ -2,7 +2,7 @@
 id: IDEA-243
 title: Auto-fix before the fix agent
 type: feat
-status: review
+status: done
 created: 2026-09-08
 updated: 2026-09-08
 tags:

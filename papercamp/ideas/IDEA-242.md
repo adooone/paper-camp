@@ -2,8 +2,9 @@
 id: IDEA-242
 title: Tests in a minute
 type: chore
-status: idea
+status: review
 created: 2026-09-07
+updated: 2026-09-09
 tags:
   - testing
   - cli
@@ -48,9 +49,9 @@ project; `pnpm test:all` runs both, and CI's test job runs `test:all
 Tests stamp answers in the unit project's time.
 
 **Affected tests on demand.** `pnpm test:changed` is `vitest run --changed`,
-which walks the import graph from the working tree's git changes. The
-Stack panel's Tests check gains a second stamp, `changed`, that runs it;
-the full unit run stays the gate before a commit. Measured today,
+which walks the import graph from the working tree's git changes — a
+terminal command, not a Stack panel stamp; the full unit run stays the
+gate before a commit. Measured today,
 `--changed` against a live working tree ran 6 files and 79 tests in 38
 seconds, 26 of them the git suite; after the fixture rewrites below it
 lands under ten.
@@ -81,8 +82,10 @@ tests are untouched; there are sixteen.
 core and server logic get unit tests at the function boundary; a feature
 gets one test for its selector or hook and none for its child components;
 anything that spawns a process or touches a real repository lives in the
-integration project. `pnpm test` under a minute on a laptop is the number
-the section states, and the CI job fails if the unit project passes it.
+integration project. `pnpm test` under two minutes on a laptop is the
+number the section states — measured at ~99-100s on a 2-core sandbox
+comparable to a GitHub Actions runner, after the fixture work above — and
+the CI job fails if the unit project doesn't clear it.
 
 ### Out of scope
 
@@ -93,15 +96,32 @@ stamp. Browser-rendered component tests; there is no DOM environment and
 this idea adds none.
 
 ### Phases
-- [ ] Split unit and integration into two vitest projects
+- [x] Split unit and integration into two vitest projects
       Add `vitest.workspace.ts`, repoint `test`, `test:integration`, and
       `test:all`, and move coverage to CI's `test:all --coverage`.
-- [ ] Add `pnpm test:changed` and its Stack stamp
-- [ ] Reuse one repository per describe in `git.test.ts`
-- [ ] Drive the daemon and registry commands in-process
+      run: 13m49s · 92 in · 17.1k out · sonnet-5
+- [x] Add `pnpm test:changed`
+      run: 15m15s · 122 in · 32.4k out · sonnet-5
+- [x] Reuse one repository per describe in `git.test.ts`
+      run: 14m59s · 32 in · 78.7k out · sonnet-5
+- [x] Drive the daemon and registry commands in-process
       Keep one spawn per file for the entry point's argument parsing.
-- [ ] Run `agent.test.ts` on fake timers with instant fake CLIs
-- [ ] Consolidate sibling cases into `it.each` tables
+      run: 18m8s · 126 in · 77.6k out · sonnet-5
+- [x] Run `agent.test.ts` on fake timers with instant fake CLIs
+      run: 19m30s · 180 in · 75.7k out · sonnet-5
+- [x] Consolidate sibling cases into `it.each` tables
       Covers `src/core/parse`, `src/core/git-pr`, `src/core/status`, and
       `git.test.ts`.
-- [ ] Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it
+      run: 24m21s · 212 in · 68.1k out · sonnet-5
+- [x] Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it
+      run: 4m2s · 38 in · 8.2k out · sonnet-5
+- [x] [manual] Remove the changed-command stamp from desk checks
+- [x] [manual] Fix smoke test assertions for Local link and mount URL
+- [x] [manual] Fix stale test-timing claim and desk-check plumbing
+
+### Thread
+- [ ] 2026-09-08 [question] [agent] Run-all parked on phase 7 ("Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it") — the agent needs a decision: `pnpm test` measures ~99-100s here (verified twice, 2-core sandbox comparable to a GitHub Actions runner), not under a minute as the plan's phase 7 wants documented and CI-gated. How do you want to proceed — pick a different threshold to write into `docs/CODE_STYLE.md` and gate CI on (e.g., 2 minutes), land the gate at 60s anyway and accept it may start red until further optimization, or something else?
+- [x] 2026-09-08 [chat] pick a different treshold
+- [x] 2026-09-08 [chat] [agent] Landed on 2 minutes instead — measured ~99-100s locally, so 60s was never realistic. Added a fix to update phase 7 accordingly: gate CI at under 2 minutes and document that threshold in CODE_STYLE.md.
+- [x] 2026-09-08 [decision] [user] No second `changed` stamp on the Stack panel — the idea was optimisation only; the stamp, its `changedCmd` field, route, and client call were removed, leaving `pnpm test:changed` as a terminal command.
+- [x] 2026-09-09 [review] [agent] Comments · 2 findings — The diff delivers all eight phases: vitest.workspace.ts splits exactly the seven specified files into the integration project, coverage moves to CI's test:all step, the four heavy suites get the specified cheap fixtures (shared repo per describe with a thorough reset, in-process CLI command functions with only justified spawns remaining, fake timers in agent.test.ts), the it.each consolidation covers the named suites, CODE_STYLE.md documents the two-minute bar CI now gates, and the changed stamp is fully removed with no leftover changedCmd references — the settled decision is respected. I verified git.ts aborts conflicted rebases itself, so the shared-repo resetRepo won't inherit mid-rebase state, and the CLI fail() swap for console.error plus exitCode is behavior-preserving. The remaining issues are a documentation contradiction in AGENTS.md and some minor residue, none blocking.

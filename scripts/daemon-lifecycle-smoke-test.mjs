@@ -72,7 +72,13 @@ async function main() {
     const start = runCli(['start', '-p', String(port)], env);
     if (start.status !== 0) throw new Error(`\`start\` failed:\n${start.stdout}\n${start.stderr}`);
     assertIncludes(start.stdout, 'Paper Camp v', '`start` should print the daemon banner');
-    assertIncludes(start.stdout, `http://localhost:${port}`, '`start` should print the Local URL');
+    // The Local link opens the hosted client with the daemon's origin as an
+    // encoded `?machine=` parameter, so the port appears URL-encoded.
+    assertIncludes(
+      start.stdout,
+      encodeURIComponent(`http://localhost:${port}`),
+      '`start` should print the Local link carrying the daemon origin',
+    );
 
     const statusRunning = runCli(['status'], env);
     assertIncludes(
@@ -86,7 +92,8 @@ async function main() {
       '`status` should list the project as idle',
     );
 
-    const mountResponse = await fetch(`http://localhost:${port}/p/${slug}/`);
+    // The daemon serves no dashboard of its own; the project's API is what mounts it.
+    const mountResponse = await fetch(`http://localhost:${port}/p/${slug}/api/package-name`);
     if (!mountResponse.ok) {
       throw new Error(`Mounting "${slug}" responded with status ${mountResponse.status}`);
     }
@@ -116,7 +123,7 @@ async function main() {
     );
     assertIncludes(
       restart.stdout,
-      `http://localhost:${port}`,
+      encodeURIComponent(`http://localhost:${port}`),
       '`restart` should reuse the recorded port',
     );
 

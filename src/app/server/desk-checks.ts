@@ -96,7 +96,7 @@ export function createDeskCheckManager(
   }
 
   // Joins a run already in flight instead of spawning a second one — two
-  // `pnpm test` processes racing over the coverage dir crashes vitest.
+  // concurrent vitest runs racing over the same working tree crashes vitest.
   function runCheck(name: string): Promise<CheckStatus> {
     const alreadyRunning = inFlight.get(name);
     if (alreadyRunning) return alreadyRunning;

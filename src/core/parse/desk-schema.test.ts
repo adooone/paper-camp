@@ -2,34 +2,25 @@ import { describe, expect, it } from 'vitest';
 import { deskConfigSchema, paperCampConfigSchema } from './schemas';
 
 describe('deskConfigSchema', () => {
-  it('accepts a full manifest with services, checks, and ci', () => {
-    const result = deskConfigSchema.safeParse({
-      services: [
-        { name: 'app', cmd: 'pnpm dev', port: 3333, healthcheck: 'http://localhost:3333/' },
-        { name: 'lib', cmd: 'pnpm dev:lib' },
-      ],
-      checks: [{ name: 'types', cmd: 'pnpm check-types' }],
-      ci: { repo: 'adooone/paper-camp', branch: 'main', releasePlease: true },
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts an empty manifest', () => {
-    expect(deskConfigSchema.safeParse({}).success).toBe(true);
-  });
-
-  it('rejects a service missing cmd', () => {
-    expect(deskConfigSchema.safeParse({ services: [{ name: 'app' }] }).success).toBe(false);
-  });
-
-  it('rejects a non-positive port', () => {
-    expect(
-      deskConfigSchema.safeParse({ services: [{ name: 'app', cmd: 'x', port: 0 }] }).success,
-    ).toBe(false);
-  });
-
-  it('rejects ci without a repo', () => {
-    expect(deskConfigSchema.safeParse({ ci: { branch: 'main' } }).success).toBe(false);
+  it.each<[string, unknown, boolean]>([
+    [
+      'accepts a full manifest with services, checks, and ci',
+      {
+        services: [
+          { name: 'app', cmd: 'pnpm dev', port: 3333, healthcheck: 'http://localhost:3333/' },
+          { name: 'lib', cmd: 'pnpm dev:lib' },
+        ],
+        checks: [{ name: 'types', cmd: 'pnpm check-types' }],
+        ci: { repo: 'adooone/paper-camp', branch: 'main', releasePlease: true },
+      },
+      true,
+    ],
+    ['accepts an empty manifest', {}, true],
+    ['rejects a service missing cmd', { services: [{ name: 'app' }] }, false],
+    ['rejects a non-positive port', { services: [{ name: 'app', cmd: 'x', port: 0 }] }, false],
+    ['rejects ci without a repo', { ci: { branch: 'main' } }, false],
+  ])('%s', (_description, input, expected) => {
+    expect(deskConfigSchema.safeParse(input).success).toBe(expected);
   });
 });
 
