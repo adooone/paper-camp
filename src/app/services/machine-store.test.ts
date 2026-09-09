@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { addMachine, listMachines, removeMachine } from './machine-store';
+import { addMachine, listMachines, machineToken, removeMachine } from './machine-store';
 
 class FakeLocalStorage {
   private store = new Map<string, string>();
@@ -83,5 +83,24 @@ describe('machine-store', () => {
     expect(() => addMachine('https://alpha.example.com')).not.toThrow();
     expect(() => removeMachine('https://alpha.example.com')).not.toThrow();
     expect(listMachines()).toEqual([]);
+  });
+});
+
+describe('machineToken', () => {
+  beforeEach(() => {
+    vi.stubGlobal('localStorage', new FakeLocalStorage());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('remembers the token a link carried and forgets it with the machine', () => {
+    addMachine('https://deimos.pitta-ray.ts.net/', 'abc123');
+    expect(machineToken('https://deimos.pitta-ray.ts.net')).toBe('abc123');
+    addMachine('https://deimos.pitta-ray.ts.net');
+    expect(machineToken('https://deimos.pitta-ray.ts.net')).toBe('abc123');
+    removeMachine('https://deimos.pitta-ray.ts.net');
+    expect(machineToken('https://deimos.pitta-ray.ts.net')).toBeNull();
   });
 });

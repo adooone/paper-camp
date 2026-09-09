@@ -16,6 +16,10 @@ export const fetchIdeas = async (): Promise<ParseResult<IdeaEntry>> => {
   const response = await fetch(apiUrl('/api/ideas'), {
     signal: AbortSignal.timeout(IDEAS_TIMEOUT_MS),
   });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? `Failed to load ideas (${response.status})`);
+  }
   return response.json();
 };
 

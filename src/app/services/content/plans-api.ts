@@ -15,6 +15,10 @@ export const fetchPlans = async (): Promise<ParseResult<PlanEntry>> => {
   const response = await fetch(apiUrl('/api/plans'), {
     signal: AbortSignal.timeout(PLANS_TIMEOUT_MS),
   });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? `Failed to load plans (${response.status})`);
+  }
   return response.json();
 };
 

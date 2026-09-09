@@ -3,8 +3,7 @@ import {
   pickableMachineProjects,
   runtimeAdditionUrl,
 } from '@/app/services/hub';
-import { machineConnection } from '@/app/services/machine-connection';
-import { listMachines } from '@/app/services/machine-store';
+import { listMachines, machineToken } from '@/app/services/machine-store';
 import { fetchMachineProjects } from '@/app/services/system';
 import type { MachineProjectSummary } from '@/types/index';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -76,13 +75,11 @@ export function useRememberedMachines(chosenRuntimeUrls: string[]): UseRemembere
     machines,
     retry: reach,
     openProject: (machineUrl, slug) => {
-      const token =
-        machineConnection.machineUrl === machineUrl ? machineConnection.pairingToken : null;
       window.location.assign(
         runtimeAdditionUrl(
           window.location.pathname,
           machineProjectRuntimeUrl(machineUrl, slug),
-          token,
+          machineToken(machineUrl),
         ),
       );
     },

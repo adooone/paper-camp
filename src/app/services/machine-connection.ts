@@ -25,7 +25,7 @@ export function readMachineConnection(location: { search: string } | null): Mach
  */
 export function loadMachineConnection(location: { search: string } | null): MachineConnection {
   const connection = readMachineConnection(location);
-  if (connection.machineUrl) addMachine(connection.machineUrl);
+  if (connection.machineUrl) addMachine(connection.machineUrl, connection.pairingToken);
   return connection;
 }
 

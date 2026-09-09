@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'papercamp:machines';
+const TOKENS_KEY = 'papercamp:machine-tokens';
 
 function parseMachines(raw: string | null): string[] {
   if (!raw) return [];
@@ -27,9 +28,30 @@ export function listMachines(): string[] {
   }
 }
 
-export function addMachine(url: string): void {
+function readTokens(): Record<string, string> {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(TOKENS_KEY) ?? '{}');
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** The pairing token a machine's link carried, so a project can be opened
+ * from that machine on a later visit that carries no link at all. */
+export function machineToken(url: string): string | null {
+  return readTokens()[normalizeMachineUrl(url)] ?? null;
+}
+
+export function addMachine(url: string, pairingToken: string | null = null): void {
   try {
     const normalized = normalizeMachineUrl(url);
+    if (pairingToken) {
+      localStorage.setItem(
+        TOKENS_KEY,
+        JSON.stringify({ ...readTokens(), [normalized]: pairingToken }),
+      );
+    }
     const machines = parseMachines(localStorage.getItem(STORAGE_KEY));
     if (machines.includes(normalized)) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...machines, normalized]));
@@ -45,6 +67,8 @@ export function removeMachine(url: string): void {
       (machine) => machine !== normalized,
     );
     localStorage.setItem(STORAGE_KEY, JSON.stringify(machines));
+    const { [normalized]: _forgotten, ...tokens } = readTokens();
+    localStorage.setItem(TOKENS_KEY, JSON.stringify(tokens));
   } catch {
     // localStorage unavailable
   }

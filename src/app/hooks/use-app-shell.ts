@@ -140,11 +140,13 @@ export function useAppShell(): AppShellState {
       }
       // A corpus at or below `init`'s single seeded example idea (IDEA-1, no plans yet)
       // hasn't been used for real work — point it at USAGE.md instead of an empty Ideas list.
-      Promise.all([fetchIdeas(), fetchPlans()]).then(([ideas, plans]) => {
-        if (ideas.entries.length > 1 || plans.entries.length > 0) return;
-        setActiveDocTitle('USAGE.md');
-        navigate({ to: '/docs' });
-      });
+      Promise.all([fetchIdeas(), fetchPlans()])
+        .then(([ideas, plans]) => {
+          if ((ideas.entries?.length ?? 0) > 1 || (plans.entries?.length ?? 0) > 0) return;
+          setActiveDocTitle('USAGE.md');
+          navigate({ to: '/docs' });
+        })
+        .catch(() => {});
     });
   }, [pathname, navigate, setActiveDocTitle]);
 
