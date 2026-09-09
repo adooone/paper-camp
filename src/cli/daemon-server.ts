@@ -31,7 +31,7 @@ import {
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
 import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
-import { formatDevBanner, formatDimNote, formatShareLine, formatTailnetLine } from './dev-banner';
+import { formatDevBanner, formatShareLine, formatTailnetLine } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import {
   type NetworkRegistration,
@@ -258,16 +258,13 @@ export function formatDaemonBanner(
   network: NetworkRegistration,
   color: boolean,
 ): string {
-  return [
-    formatDevBanner({
-      version: PAPER_CAMP_VERSION,
-      localUrl: localLink,
-      networkLink: network.link,
-      networkBlocked: network.blocked,
-      color,
-    }),
-    formatDimNote('Registered projects mount lazily at /p/<slug>/ on first request.', color),
-  ].join('\n');
+  return formatDevBanner({
+    version: PAPER_CAMP_VERSION,
+    localUrl: localLink,
+    networkLink: network.link,
+    networkBlocked: network.blocked,
+    color,
+  });
 }
 
 export async function startDaemonServer({

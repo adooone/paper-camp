@@ -18,7 +18,9 @@ export function isMissingHttpsCertsError(output: string): boolean {
 }
 
 export function tailnetServeArgs(port: number): string[] {
-  return ['serve', '--bg', '--https=443', '/', `http://localhost:${port}`];
+  // No mount path argument: `tailscale serve` (1.60+) takes only the target and
+  // rejects a bare `/` as an invalid argument format.
+  return ['serve', '--bg', '--https=443', `http://localhost:${port}`];
 }
 
 export interface TailnetServeResult {

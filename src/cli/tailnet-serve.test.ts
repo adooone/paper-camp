@@ -18,7 +18,6 @@ describe('tailnetServeArgs', () => {
       'serve',
       '--bg',
       '--https=443',
-      '/',
       'http://localhost:3333',
     ]);
   });

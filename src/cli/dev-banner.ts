@@ -1,21 +1,22 @@
 const paint = (code: string, text: string) => `\x1b[${code}m${text}\x1b[0m`;
 
+// OSC 8: the terminal treats the whole span as one link, so a URL that wraps
+// across lines stays clickable, which plain auto-detection cannot manage.
+const hyperlink = (url: string) => `\x1b]8;;${url}\x1b\\${url}\x1b]8;;\x1b\\`;
+
 function palette(color: boolean) {
   if (!color) {
     const plain = (text: string) => text;
-    return { bold: plain, dim: plain, green: plain, cyan: plain, yellow: plain };
+    return { bold: plain, dim: plain, green: plain, yellow: plain, link: plain };
   }
   return {
     bold: (text: string) => paint('1', text),
     dim: (text: string) => paint('2', text),
     green: (text: string) => paint('32', text),
-    cyan: (text: string) => paint('36', text),
     yellow: (text: string) => paint('1;33', text),
+    link: (url: string) => paint('36', hyperlink(url)),
   };
 }
-
-// Pad before colorizing — escape codes would count toward the pad width.
-const LABEL_WIDTH = 'This host:'.length;
 
 export interface DevBannerInput {
   version: string;
@@ -25,6 +26,13 @@ export interface DevBannerInput {
   color: boolean;
 }
 
+/** One entry per way in: a bold label, then the link alone on its own line so
+ * it is the whole line to copy or click. */
+function entry(label: string, url: string, color: boolean): string {
+  const { bold, link } = palette(color);
+  return `${bold(label)}\n  ${link(url)}`;
+}
+
 export function formatDevBanner({
   version,
   localUrl,
@@ -32,52 +40,31 @@ export function formatDevBanner({
   networkBlocked,
   color,
 }: DevBannerInput): string {
-  const { bold, dim, green, cyan, yellow } = palette(color);
-  const row = (label: string, value: string) =>
-    `  ${green('➜')}  ${bold(label.padEnd(LABEL_WIDTH))} ${cyan(value)}`;
-
+  const { dim, yellow } = palette(color);
   const lines = [
+    `${yellow('⛺ Paper Camp')} ${dim(`v${version}`)}`,
     '',
-    `  ${yellow('⛺ Paper Camp')} ${dim(`v${version}`)} ${dim('— camp is up')}`,
-    '',
-    row('This host:', localUrl),
-    formatDimNote('opens the dashboard in a browser on this machine', color),
+    entry('This host', localUrl, color),
   ];
-  if (networkLink) {
-    lines.push(
-      row('Network:', networkLink),
-      `     ${dim('open the Network link on another device to pair it with this machine')}`,
-    );
-  } else if (networkBlocked) {
-    lines.push(
-      formatDimNote(
-        'Another device needs an HTTPS address — rerun with --tailnet or --share.',
-        color,
-      ),
-    );
-  }
+  if (networkLink) lines.push(entry('Network', networkLink, color));
+  else if (networkBlocked) lines.push(dim('Other devices need HTTPS — add --tailnet or --share.'));
   return lines.join('\n');
 }
 
-function formatExternalLink(label: string, link: string, note: string, color: boolean): string {
-  const { bold, dim, green, cyan } = palette(color);
-  return `  ${green('➜')}  ${bold(label.padEnd(LABEL_WIDTH))} ${cyan(link)}  ${dim(note)}`;
-}
-
-export function formatDimNote(note: string, color: boolean): string {
-  const { dim } = palette(color);
-  return `     ${dim(note)}`;
-}
-
 export function formatShareLine(tunnelLink: string, color: boolean): string {
-  return formatExternalLink('Tunnel:', tunnelLink, '(reachable from anywhere)', color);
+  return entry('Tunnel', tunnelLink, color);
 }
 
 export function formatTailnetLine(tailnetLink: string, color: boolean): string {
-  return formatExternalLink(
-    'Tailnet:',
-    tailnetLink,
-    '(stable HTTPS address on your tailnet)',
-    color,
-  );
+  return entry('Tailnet', tailnetLink, color);
+}
+
+const URL_RE = /https?:\/\/[^\s\x1b]+/g;
+
+/** The daemon writes its banner to a log file, where colour is off, so `start`
+ * and `logs` echo plain text; this re-adds the OSC 8 wrapper around each URL
+ * for a terminal reader, leaving text that already carries escapes untouched. */
+export function linkifyUrls(text: string): string {
+  if (text.includes('\x1b]8;;')) return text;
+  return text.replace(URL_RE, (url) => hyperlink(url));
 }

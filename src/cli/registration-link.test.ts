@@ -51,9 +51,7 @@ describe('buildRegistrationLinkForRuntime', () => {
         'abc123',
         'https://paper-camp.vercel.app',
       ),
-    ).toBe(
-      'https://paper-camp.vercel.app/?runtime=https%3A%2F%2Ffoo-bar.trycloudflare.com&token=abc123',
-    );
+    ).toBe('https://paper-camp.vercel.app/?runtime=https://foo-bar.trycloudflare.com&token=abc123');
   });
 
   it('is adopted back into the same runtime URL and token by the client', async () => {
@@ -72,7 +70,7 @@ describe('buildRegistrationLinkForRuntime', () => {
 
   it('defaults to the configured hosted client when none is passed', () => {
     expect(buildRegistrationLinkForRuntime('http://localhost:3333', 'abc123')).toBe(
-      'https://paper-camp.vercel.app/?runtime=http%3A%2F%2Flocalhost%3A3333&token=abc123',
+      'https://paper-camp.vercel.app/?runtime=http://localhost:3333&token=abc123',
     );
   });
 });
@@ -87,12 +85,12 @@ describe('buildRegistrationLinkForMachine', () => {
         'abc123',
         'https://paper-camp.vercel.app',
       ),
-    ).toBe('https://paper-camp.vercel.app/?machine=http%3A%2F%2F100.80.79.13%3A4333&token=abc123');
+    ).toBe('https://paper-camp.vercel.app/?machine=http://100.80.79.13:4333&token=abc123');
   });
 
   it('defaults to the configured hosted client when none is passed', () => {
     expect(buildRegistrationLinkForMachine('http://localhost:4333', 'abc123')).toBe(
-      'https://paper-camp.vercel.app/?machine=http%3A%2F%2Flocalhost%3A4333&token=abc123',
+      'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=abc123',
     );
   });
 });
@@ -183,7 +181,7 @@ describe('networkRegistrationLink', () => {
     const registration = await networkRegistrationLink(3333, 'abc123');
     expect(registration.blocked).toBe(false);
     expect(registration.link).toBe(
-      'http://camp.example.com/?runtime=http%3A%2F%2Fdeimos.pitta-ray.ts.net%3A3333&token=abc123',
+      'http://camp.example.com/?runtime=http://deimos.pitta-ray.ts.net:3333&token=abc123',
     );
   });
 

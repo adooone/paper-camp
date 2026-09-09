@@ -22,6 +22,7 @@ import {
 } from '../core/machine-registry';
 import type { MachineProjectSummary } from '../types/index';
 import { DEFAULT_DAEMON_PORT } from './daemon-server';
+import { linkifyUrls } from './dev-banner';
 
 export interface StartOptions {
   port?: number;
@@ -71,9 +72,9 @@ async function waitForDaemon(
 /** --tailnet/--share each print their own banner line (or an error mentioning
  * the same words) a few seconds after "Local:", once their subprocess reports back. */
 function pendingBannerMarkers(opts: StartOptions): RegExp[] {
-  const markers = [/This host:/];
-  if (opts.tailnet) markers.push(/Tailnet:|Tailnet failed/);
-  if (opts.share) markers.push(/Tunnel:|cloudflared/);
+  const markers = [/^This host$/m];
+  if (opts.tailnet) markers.push(/^Tailnet$|Tailnet failed/m);
+  if (opts.share) markers.push(/^Tunnel$|cloudflared/m);
   return markers;
 }
 
@@ -101,7 +102,9 @@ async function waitForBannerLines(
 
 async function printLog(logPath: string): Promise<void> {
   const content = await readFile(logPath, 'utf-8').catch(() => '');
-  if (content) console.log(content.trimEnd());
+  if (!content) return;
+  const text = content.trimEnd();
+  console.log(process.stdout.isTTY && !process.env.NO_COLOR ? linkifyUrls(text) : text);
 }
 
 /** Spawns `paper-camp daemon` by re-invoking this same process's own entry
@@ -301,7 +304,10 @@ export async function runLogs(opts: LogsOptions): Promise<void> {
     return;
   }
 
-  for (const line of lastLines(content, opts.lines ?? DEFAULT_LOG_LINES)) console.log(line);
+  const clickable = process.stdout.isTTY && !process.env.NO_COLOR;
+  for (const line of lastLines(content, opts.lines ?? DEFAULT_LOG_LINES)) {
+    console.log(clickable ? linkifyUrls(line) : line);
+  }
   if (!opts.follow) return;
 
   // A follower outlives the shell or test that spawned it unless it watches for

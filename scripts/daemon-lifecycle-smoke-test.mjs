@@ -72,11 +72,10 @@ async function main() {
     const start = runCli(['start', '-p', String(port)], env);
     if (start.status !== 0) throw new Error(`\`start\` failed:\n${start.stdout}\n${start.stderr}`);
     assertIncludes(start.stdout, 'Paper Camp v', '`start` should print the daemon banner');
-    // The Local link opens the hosted client with the daemon's origin as an
-    // encoded `?machine=` parameter, so the port appears URL-encoded.
+    // The link carries the daemon origin as a readable `?machine=` value.
     assertIncludes(
       start.stdout,
-      encodeURIComponent(`http://localhost:${port}`),
+      `machine=http://localhost:${port}&`,
       '`start` should print the Local link carrying the daemon origin',
     );
 
@@ -123,7 +122,7 @@ async function main() {
     );
     assertIncludes(
       restart.stdout,
-      encodeURIComponent(`http://localhost:${port}`),
+      `machine=http://localhost:${port}&`,
       '`restart` should reuse the recorded port',
     );
 

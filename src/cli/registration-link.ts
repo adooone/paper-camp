@@ -10,8 +10,7 @@ export function buildRegistrationLinkForRuntime(
   pairingToken: string,
   clientUrl = hostedClientUrl(),
 ): string {
-  const params = new URLSearchParams({ runtime: runtimeUrl, token: pairingToken });
-  return `${clientUrl}/?${params}`;
+  return `${clientUrl}/?runtime=${runtimeUrl}&token=${pairingToken}`;
 }
 
 export function buildRegistrationLinkForMachine(
@@ -19,8 +18,7 @@ export function buildRegistrationLinkForMachine(
   pairingToken: string,
   clientUrl = hostedClientUrl(),
 ): string {
-  const params = new URLSearchParams({ machine: machineUrl, token: pairingToken });
-  return `${clientUrl}/?${params}`;
+  return `${clientUrl}/?machine=${machineUrl}&token=${pairingToken}`;
 }
 
 type InterfaceEntries = Record<

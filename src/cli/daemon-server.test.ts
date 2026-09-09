@@ -330,20 +330,15 @@ describe('isMachineBusy', () => {
 
 describe('formatDaemonBanner', () => {
   const localLink =
-    'https://paper-camp.vercel.app/?machine=http%3A%2F%2Flocalhost%3A4333&token=shared-token';
+    'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=shared-token';
   const networkLink =
-    'https://paper-camp.vercel.app/?runtime=http%3A%2F%2F100.80.79.13%3A4333&token=shared-token';
+    'https://paper-camp.vercel.app/?runtime=http://100.80.79.13:4333&token=shared-token';
   const reachable = { link: networkLink, blocked: false };
 
   it('carries the hosted-client Local link and the resolved Network link', () => {
     const banner = formatDaemonBanner(localLink, reachable, false);
-    expect(banner).toContain(`This host: ${localLink}`);
-    expect(banner).toContain(`Network:   ${networkLink}`);
-  });
-
-  it('keeps the lazy-mount note as a dim row after the banner', () => {
-    const banner = formatDaemonBanner(localLink, reachable, false);
-    expect(banner).toContain('Registered projects mount lazily at /p/<slug>/ on first request.');
+    expect(banner).toContain(`This host\n  ${localLink}`);
+    expect(banner).toContain(`Network\n  ${networkLink}`);
   });
 
   it('never prints the pairing token as its own bare line', () => {
@@ -353,7 +348,7 @@ describe('formatDaemonBanner', () => {
 
   it('omits the Network row when the machine has no reachable address', () => {
     const banner = formatDaemonBanner(localLink, { blocked: false }, false);
-    expect(banner).not.toContain('Network:');
+    expect(banner).not.toContain('Network\n');
   });
 
   it('drops the HTTPS remedy once --tailnet or --share was asked for', () => {
@@ -364,13 +359,13 @@ describe('formatDaemonBanner', () => {
       withRequestedNetwork({ blocked: true }, true),
       false,
     );
-    expect(banner).not.toContain('rerun with --tailnet or --share');
+    expect(banner).not.toContain('add --tailnet or --share');
   });
 
   it('prints the remedy instead of the Network row when the pair is blocked', () => {
     const banner = formatDaemonBanner(localLink, { blocked: true }, false);
-    expect(banner).not.toContain('Network:');
-    expect(banner).toContain('rerun with --tailnet or --share');
+    expect(banner).not.toContain('Network\n');
+    expect(banner).toContain('add --tailnet or --share');
   });
 });
 
@@ -403,7 +398,7 @@ describe('createDaemonRequestHandler', () => {
     return projectPath;
   }
 
-  const localLink = 'https://paper-camp.vercel.app/?machine=http%3A%2F%2Flocalhost%3A4333&token=t';
+  const localLink = 'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=t';
 
   async function startHandler(registryPath: string): Promise<{ port: number; seenUrls: string[] }> {
     const seenUrls: string[] = [];

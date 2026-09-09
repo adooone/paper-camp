@@ -1,7 +1,7 @@
 import { runtimeRowLabel } from '@/app/services/hub';
 import type { MachineProjectSummary } from '@/types/index';
-import { Card, ListItem } from '@dendelion/paper-ui';
-import { useRememberedMachines } from '../hooks';
+import { Button, Card, ListItem } from '@dendelion/paper-ui';
+import { type MachineReach, useRememberedMachines } from '../hooks';
 
 export interface MachineProjectRowProps {
   project: MachineProjectSummary;
@@ -21,34 +21,68 @@ export const MachineProjectRow = ({ project, onOpen }: MachineProjectRowProps) =
   </ListItem>
 );
 
+/** What the card says while the machine's project list is not on screen —
+ * the browser's own local-network prompt is invisible to the page, so the
+ * card has to name it. */
+export const machineReachMessage = (
+  reach: MachineReach,
+  host: string,
+  projectCount: number,
+): string | null => {
+  switch (reach) {
+    case 'loading':
+      return `Reaching ${host}…`;
+    case 'waiting':
+      return `Still reaching ${host}. If the browser asks to allow this site to access your local network, allow it.`;
+    case 'unreachable':
+      return `Couldn't reach ${host} from this device. Check that this device is on the same tailnet or network, and that the browser allows this site local-network access.`;
+    case 'ready':
+      return projectCount === 0 ? 'Every project on this machine is already in your list.' : null;
+  }
+};
+
 export interface RememberedMachinesCardsProps {
   chosenRuntimeUrls: string[];
 }
 
 export const RememberedMachinesCards = ({ chosenRuntimeUrls }: RememberedMachinesCardsProps) => {
-  const { machines, openProject } = useRememberedMachines(chosenRuntimeUrls);
+  const { machines, openProject, retry } = useRememberedMachines(chosenRuntimeUrls);
 
   return (
     <>
-      {machines.map(({ machineUrl, projects }) => (
-        <Card
-          key={machineUrl}
-          size="small"
-          texture="kraft"
-          className="flex flex-1 flex-col gap-2 text-left"
-        >
-          <p className="m-0 font-semibold">{runtimeRowLabel(machineUrl)}</p>
-          <div className="flex max-h-[160px] flex-col gap-1 overflow-y-auto">
-            {projects.map((project) => (
-              <MachineProjectRow
-                key={project.slug}
-                project={project}
-                onOpen={() => openProject(machineUrl, project.slug)}
-              />
-            ))}
-          </div>
-        </Card>
-      ))}
+      {machines.map(({ machineUrl, reach, projects }) => {
+        const host = runtimeRowLabel(machineUrl);
+        const message = machineReachMessage(reach, host, projects.length);
+        return (
+          <Card
+            key={machineUrl}
+            size="small"
+            texture="kraft"
+            className="flex flex-1 flex-col gap-2 text-left"
+          >
+            <p className="m-0 font-semibold">{host}</p>
+            {message && <p className="m-0 font-handwritten text-sm opacity-70">{message}</p>}
+            {reach === 'unreachable' && (
+              <div>
+                <Button size="small" variant="secondary" onClick={() => retry(machineUrl)}>
+                  Try again
+                </Button>
+              </div>
+            )}
+            {projects.length > 0 && (
+              <div className="flex max-h-[160px] flex-col gap-1 overflow-y-auto">
+                {projects.map((project) => (
+                  <MachineProjectRow
+                    key={project.slug}
+                    project={project}
+                    onOpen={() => openProject(machineUrl, project.slug)}
+                  />
+                ))}
+              </div>
+            )}
+          </Card>
+        );
+      })}
     </>
   );
 };

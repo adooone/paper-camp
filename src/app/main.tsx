@@ -6,7 +6,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { HUB_PATH, router } from './router';
 import { apiUrl, setApiBase, setApiPairingToken } from './services/api-base';
 import { hasChosenProject } from './services/hub';
-import './services/machine-connection';
+import { machineConnection } from './services/machine-connection';
 import { mountPrefix } from './services/mount';
 import { runtimeConnection } from './services/runtime-connection';
 import { probeSelfServed } from './stores/slices/runtime-slice';
@@ -34,6 +34,9 @@ const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element not found');
 
 async function chooseProject(): Promise<boolean> {
+  // A machine link is a request to see that machine's projects: it opens the hub
+  // even when this browser last had a project open.
+  if (machineConnection.machineUrl) return false;
   if (hasChosenProject(mountPrefix, runtimeUrl)) return true;
   return probeSelfServed();
 }

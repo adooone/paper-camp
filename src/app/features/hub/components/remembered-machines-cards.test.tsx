@@ -1,6 +1,6 @@
 import type { MachineProjectSummary } from '@/types/index';
 import { describe, expect, it, vi } from 'vitest';
-import { MachineProjectRow } from './remembered-machines-cards';
+import { MachineProjectRow, machineReachMessage } from './remembered-machines-cards';
 
 const project = (overrides: Partial<MachineProjectSummary> = {}): MachineProjectSummary => ({
   slug: 'demo',
@@ -30,5 +30,24 @@ describe('MachineProjectRow', () => {
     expect(tree.props.className).toMatch(/opacity-50/);
     expect(tree.props.className).toMatch(/cursor-not-allowed/);
     expect(tree.props.onClick).toBeUndefined();
+  });
+});
+
+describe('machineReachMessage', () => {
+  it('names the browser permission while a request is still open', () => {
+    expect(machineReachMessage('waiting', 'deimos.pitta-ray.ts.net', 0)).toMatch(
+      /allow this site to access your local network/,
+    );
+  });
+
+  it('explains an unreachable machine in terms of the network and the permission', () => {
+    const message = machineReachMessage('unreachable', 'deimos.pitta-ray.ts.net', 0);
+    expect(message).toMatch(/Couldn't reach deimos.pitta-ray.ts.net/);
+    expect(message).toMatch(/local-network access/);
+  });
+
+  it('says nothing once projects are listed, and why when none are pickable', () => {
+    expect(machineReachMessage('ready', 'deimos', 3)).toBeNull();
+    expect(machineReachMessage('ready', 'deimos', 0)).toMatch(/already in your list/);
   });
 });
