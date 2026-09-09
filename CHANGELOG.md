@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.28.1](https://github.com/adooone/paper-camp/compare/v0.28.0...v0.28.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **ci:** Re-run the release gate with the corrected daemon smoke test ([cc0d52f](https://github.com/adooone/paper-camp/commit/cc0d52f535ab48b6faf674915d4e16be3e0165c4))
+
 ## [0.28.0](https://github.com/adooone/paper-camp/compare/v0.27.0...v0.28.0) (2026-09-08)
 
 
