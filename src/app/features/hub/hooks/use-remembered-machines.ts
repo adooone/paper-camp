@@ -7,7 +7,7 @@ import { machineConnection } from '@/app/services/machine-connection';
 import { listMachines } from '@/app/services/machine-store';
 import { fetchMachineProjects } from '@/app/services/system';
 import type { MachineProjectSummary } from '@/types/index';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** `waiting` is a request still open past the point a healthy one answers —
  * on Chrome that is the local-network permission prompt the page cannot see. */
@@ -33,35 +33,34 @@ export function useRememberedMachines(chosenRuntimeUrls: string[]): UseRemembere
   const [projectsByMachine, setProjectsByMachine] = useState<
     Record<string, MachineProjectSummary[]>
   >({});
-  const [attempt, setAttempt] = useState(0);
+  const mounted = useRef(true);
+
+  const reach = useCallback((machineUrl: string) => {
+    setReachByMachine((current) => ({ ...current, [machineUrl]: 'loading' }));
+    const slow = setTimeout(() => {
+      if (!mounted.current) return;
+      setReachByMachine((current) =>
+        current[machineUrl] === 'loading' ? { ...current, [machineUrl]: 'waiting' } : current,
+      );
+    }, WAITING_AFTER_MS);
+    fetchMachineProjects(machineUrl).then((projects) => {
+      clearTimeout(slow);
+      if (!mounted.current) return;
+      setProjectsByMachine((current) => ({ ...current, [machineUrl]: projects ?? [] }));
+      setReachByMachine((current) => ({
+        ...current,
+        [machineUrl]: projects === null ? 'unreachable' : 'ready',
+      }));
+    });
+  }, []);
 
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    let cancelled = false;
-    for (const machineUrl of machineUrls) {
-      setReachByMachine((current) => ({ ...current, [machineUrl]: 'loading' }));
-      timers.push(
-        setTimeout(() => {
-          if (cancelled) return;
-          setReachByMachine((current) =>
-            current[machineUrl] === 'loading' ? { ...current, [machineUrl]: 'waiting' } : current,
-          );
-        }, WAITING_AFTER_MS),
-      );
-      fetchMachineProjects(machineUrl).then((projects) => {
-        if (cancelled) return;
-        setProjectsByMachine((current) => ({ ...current, [machineUrl]: projects ?? [] }));
-        setReachByMachine((current) => ({
-          ...current,
-          [machineUrl]: projects === null ? 'unreachable' : 'ready',
-        }));
-      });
-    }
+    mounted.current = true;
+    for (const machineUrl of machineUrls) reach(machineUrl);
     return () => {
-      cancelled = true;
-      for (const timer of timers) clearTimeout(timer);
+      mounted.current = false;
     };
-  }, [machineUrls, attempt]);
+  }, [machineUrls, reach]);
 
   const machines = machineUrls.map((machineUrl) => ({
     machineUrl,
@@ -73,11 +72,9 @@ export function useRememberedMachines(chosenRuntimeUrls: string[]): UseRemembere
     ),
   }));
 
-  const retry = useCallback(() => setAttempt((n) => n + 1), []);
-
   return {
     machines,
-    retry,
+    retry: reach,
     openProject: (machineUrl, slug) => {
       const token =
         machineConnection.machineUrl === machineUrl ? machineConnection.pairingToken : null;

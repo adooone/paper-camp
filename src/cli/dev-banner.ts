@@ -59,7 +59,8 @@ export function formatTailnetLine(tailnetLink: string, color: boolean): string {
   return entry('Tailnet', tailnetLink, color);
 }
 
-const URL_RE = /https?:\/\/[^\s\x1b]+/g;
+const ESC = String.fromCharCode(27);
+const URL_RE = new RegExp(`https?:\\/\\/[^\\s${ESC}]+`, 'g');
 
 /** The daemon writes its banner to a log file, where colour is off, so `start`
  * and `logs` echo plain text; this re-adds the OSC 8 wrapper around each URL
