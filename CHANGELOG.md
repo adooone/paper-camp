@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.28.4](https://github.com/adooone/paper-camp/compare/v0.28.3...v0.28.4) (2026-09-09)
+
+
+### Bug Fixes
+
+* **app:** Persist pairing token so remembered machines reopen projects ([8362dab](https://github.com/adooone/paper-camp/commit/8362dab2c503b51a340dfdf8b630c71e6148b806))
+
 ## [0.28.3](https://github.com/adooone/paper-camp/compare/v0.28.2...v0.28.3) (2026-09-09)
 
 
