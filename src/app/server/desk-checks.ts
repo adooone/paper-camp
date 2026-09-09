@@ -97,26 +97,23 @@ export function createDeskCheckManager(
 
   // Joins a run already in flight instead of spawning a second one — two
   // concurrent vitest runs racing over the same working tree crashes vitest.
-  function runCommand(key: string, cmd: string): Promise<CheckStatus> {
-    const alreadyRunning = inFlight.get(key);
+  function runCheck(name: string): Promise<CheckStatus> {
+    const alreadyRunning = inFlight.get(name);
     if (alreadyRunning) return alreadyRunning;
 
-    const promise = (async () => {
-      setResult(key, 'running', '');
-      const { code, output } = await run(cmd, root);
-      inFlight.delete(key);
-      const status = code === 0 ? 'pass' : 'fail';
-      setResult(key, status, output);
-      return status;
-    })();
-    inFlight.set(key, promise);
-    return promise;
-  }
-
-  function runCheck(name: string): Promise<CheckStatus> {
     const check = loadManifestChecks(root).find((c) => c.name === name);
     if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
-    return runCommand(name, check.cmd);
+
+    const promise = (async () => {
+      setResult(name, 'running', '');
+      const { code, output } = await run(check.cmd, root);
+      inFlight.delete(name);
+      const status = code === 0 ? 'pass' : 'fail';
+      setResult(name, status, output);
+      return status;
+    })();
+    inFlight.set(name, promise);
+    return promise;
   }
 
   async function runFix(name: string): Promise<DeskCheckState> {

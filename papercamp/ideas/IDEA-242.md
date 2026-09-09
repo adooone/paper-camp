@@ -117,6 +117,7 @@ this idea adds none.
       run: 4m2s · 38 in · 8.2k out · sonnet-5
 - [x] [manual] Remove the changed-command stamp from desk checks
 - [x] [manual] Fix smoke test assertions for Local link and mount URL
+- [x] [manual] Fix stale test-timing claim and desk-check plumbing
 
 ### Thread
 - [ ] 2026-09-08 [question] [agent] Run-all parked on phase 7 ("Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it") — the agent needs a decision: `pnpm test` measures ~99-100s here (verified twice, 2-core sandbox comparable to a GitHub Actions runner), not under a minute as the plan's phase 7 wants documented and CI-gated. How do you want to proceed — pick a different threshold to write into `docs/CODE_STYLE.md` and gate CI on (e.g., 2 minutes), land the gate at 60s anyway and accept it may start red until further optimization, or something else?
