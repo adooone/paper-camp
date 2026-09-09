@@ -599,7 +599,6 @@ export interface DeskCheck {
   name: string;
   cmd: string;
   fixCmd?: string;
-  changedCmd?: string;
 }
 
 export interface DeskCi {
@@ -637,15 +636,9 @@ export interface DeskCheckState {
   name: string;
   cmd: string;
   fixCmd?: string;
-  changedCmd?: string;
   status: CheckStatus;
   lastRun: string | null;
   output: string;
-  changed?: {
-    status: CheckStatus;
-    lastRun: string | null;
-    output: string;
-  };
 }
 
 export type CiRunStatus =

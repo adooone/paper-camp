@@ -16,7 +16,6 @@ function emptyRuntime(): CheckRuntime {
 }
 
 export class MissingFixCmdError extends Error {}
-export class MissingChangedCmdError extends Error {}
 
 function run(cmd: string, cwd: string): Promise<{ code: number | null; output: string }> {
   return new Promise((resolve) => {
@@ -120,16 +119,6 @@ export function createDeskCheckManager(
     return runCommand(name, check.cmd);
   }
 
-  // A stamp of its own beside the check's main one — its status never feeds
-  // `runFix` or the failing-check gate, only the full run does.
-  function runChangedCheck(name: string): Promise<CheckStatus> {
-    const check = loadManifestChecks(root).find((c) => c.name === name);
-    if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
-    const changedCmd = check.changedCmd;
-    if (!changedCmd) throw new MissingChangedCmdError(`Check "${name}" has no changed command`);
-    return runCommand(`${name}:changed`, changedCmd);
-  }
-
   async function runFix(name: string): Promise<DeskCheckState> {
     const check = loadManifestChecks(root).find((c) => c.name === name);
     if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
@@ -143,29 +132,19 @@ export function createDeskCheckManager(
   function getStatus(): DeskCheckState[] {
     return loadManifestChecks(root).map((check) => {
       const runtime = runtimeFor(check.name);
-      const changedRuntime = check.changedCmd ? runtimeFor(`${check.name}:changed`) : undefined;
       return {
         name: check.name,
         cmd: check.cmd,
         fixCmd: check.fixCmd,
-        changedCmd: check.changedCmd,
         status: runtime.status,
         lastRun: runtime.lastRun,
         output: runtime.output,
-        changed: changedRuntime
-          ? {
-              status: changedRuntime.status,
-              lastRun: changedRuntime.lastRun,
-              output: changedRuntime.output,
-            }
-          : undefined,
       };
     });
   }
 
   return {
     runCheck,
-    runChangedCheck,
     runFix,
     getStatus,
     getState: (): DeskCheckManagerState => state,

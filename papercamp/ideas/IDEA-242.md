@@ -4,7 +4,7 @@ title: Tests in a minute
 type: chore
 status: review
 created: 2026-09-07
-updated: 2026-09-08
+updated: 2026-09-09
 tags:
   - testing
   - cli
@@ -49,9 +49,9 @@ project; `pnpm test:all` runs both, and CI's test job runs `test:all
 Tests stamp answers in the unit project's time.
 
 **Affected tests on demand.** `pnpm test:changed` is `vitest run --changed`,
-which walks the import graph from the working tree's git changes. The
-Stack panel's Tests check gains a second stamp, `changed`, that runs it;
-the full unit run stays the gate before a commit. Measured today,
+which walks the import graph from the working tree's git changes — a
+terminal command, not a Stack panel stamp; the full unit run stays the
+gate before a commit. Measured today,
 `--changed` against a live working tree ran 6 files and 79 tests in 38
 seconds, 26 of them the git suite; after the fixture rewrites below it
 lands under ten.
@@ -100,7 +100,7 @@ this idea adds none.
       Add `vitest.workspace.ts`, repoint `test`, `test:integration`, and
       `test:all`, and move coverage to CI's `test:all --coverage`.
       run: 13m49s · 92 in · 17.1k out · sonnet-5
-- [x] Add `pnpm test:changed` and its Stack stamp
+- [x] Add `pnpm test:changed`
       run: 15m15s · 122 in · 32.4k out · sonnet-5
 - [x] Reuse one repository per describe in `git.test.ts`
       run: 14m59s · 32 in · 78.7k out · sonnet-5
@@ -115,8 +115,10 @@ this idea adds none.
       run: 24m21s · 212 in · 68.1k out · sonnet-5
 - [x] Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it
       run: 4m2s · 38 in · 8.2k out · sonnet-5
+- [x] [manual] Remove the changed-command stamp from desk checks
 
 ### Thread
 - [ ] 2026-09-08 [question] [agent] Run-all parked on phase 7 ("Write the testing bar into `docs/CODE_STYLE.md` and gate CI on it") — the agent needs a decision: `pnpm test` measures ~99-100s here (verified twice, 2-core sandbox comparable to a GitHub Actions runner), not under a minute as the plan's phase 7 wants documented and CI-gated. How do you want to proceed — pick a different threshold to write into `docs/CODE_STYLE.md` and gate CI on (e.g., 2 minutes), land the gate at 60s anyway and accept it may start red until further optimization, or something else?
 - [x] 2026-09-08 [chat] pick a different treshold
 - [x] 2026-09-08 [chat] [agent] Landed on 2 minutes instead — measured ~99-100s locally, so 60s was never realistic. Added a fix to update phase 7 accordingly: gate CI at under 2 minutes and document that threshold in CODE_STYLE.md.
+- [x] 2026-09-08 [decision] [user] No second `changed` stamp on the Stack panel — the idea was optimisation only; the stamp, its `changedCmd` field, route, and client call were removed, leaving `pnpm test:changed` as a terminal command.

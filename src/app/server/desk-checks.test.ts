@@ -2,14 +2,14 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { MissingChangedCmdError, MissingFixCmdError, createDeskCheckManager } from './desk-checks';
+import { MissingFixCmdError, createDeskCheckManager } from './desk-checks';
 
-async function tmpRoot(cmd: string, fixCmd?: string, changedCmd?: string): Promise<string> {
+async function tmpRoot(cmd: string, fixCmd?: string): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'papercamp-desk-checks-'));
   await mkdir(join(root, 'papercamp'), { recursive: true });
   await writeFile(
     join(root, 'papercamp', 'config.json'),
-    JSON.stringify({ desk: { checks: [{ name: 'test', cmd, fixCmd, changedCmd }] } }),
+    JSON.stringify({ desk: { checks: [{ name: 'test', cmd, fixCmd }] } }),
   );
   return root;
 }
@@ -38,34 +38,6 @@ describe('runCheck', () => {
 
     const runs = (await readFile(countFile, 'utf-8')).trim().split('\n');
     expect(runs).toHaveLength(2);
-  });
-});
-
-describe('runChangedCheck', () => {
-  it('runs the changed command and reports its own status without touching the main check', async () => {
-    const root = await tmpRoot('false', undefined, 'true');
-    const { runChangedCheck, getStatus } = createDeskCheckManager(root);
-
-    const status = await runChangedCheck('test');
-
-    expect(status).toBe('pass');
-    const [state] = getStatus();
-    expect(state.status).toBe('stale');
-    expect(state.changed?.status).toBe('pass');
-  });
-
-  it('rejects a check with no changed command', async () => {
-    const root = await tmpRoot('true');
-    const { runChangedCheck } = createDeskCheckManager(root);
-
-    expect(() => runChangedCheck('test')).toThrow(MissingChangedCmdError);
-  });
-
-  it('rejects an unknown check name', async () => {
-    const root = await tmpRoot('true', undefined, 'true');
-    const { runChangedCheck } = createDeskCheckManager(root);
-
-    expect(() => runChangedCheck('ghost')).toThrow(/ghost/);
   });
 });
 

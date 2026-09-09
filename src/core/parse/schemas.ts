@@ -181,7 +181,6 @@ export const deskCheckSchema = z.object({
   name: z.string(),
   cmd: z.string(),
   fixCmd: z.string().optional(),
-  changedCmd: z.string().optional(),
 });
 
 export const deskCiSchema = z.object({
