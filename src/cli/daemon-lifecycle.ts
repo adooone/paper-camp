@@ -71,9 +71,9 @@ async function waitForDaemon(
 /** --tailnet/--share each print their own banner line (or an error mentioning
  * the same words) a few seconds after "Local:", once their subprocess reports back. */
 function pendingBannerMarkers(opts: StartOptions): RegExp[] {
-  const markers = [/Local:/];
-  if (opts.tailnet) markers.push(/tailnet|tailscale/i);
-  if (opts.share) markers.push(/Tunnel:/);
+  const markers = [/This host:/];
+  if (opts.tailnet) markers.push(/Tailnet:|Tailnet failed/);
+  if (opts.share) markers.push(/Tunnel:|cloudflared/);
   return markers;
 }
 

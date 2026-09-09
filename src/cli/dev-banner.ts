@@ -15,7 +15,7 @@ function palette(color: boolean) {
 }
 
 // Pad before colorizing — escape codes would count toward the pad width.
-const LABEL_WIDTH = 'Network:'.length;
+const LABEL_WIDTH = 'This host:'.length;
 
 export interface DevBannerInput {
   version: string;
@@ -40,7 +40,8 @@ export function formatDevBanner({
     '',
     `  ${yellow('⛺ Paper Camp')} ${dim(`v${version}`)} ${dim('— camp is up')}`,
     '',
-    row('Local:', localUrl),
+    row('This host:', localUrl),
+    formatDimNote('opens the dashboard in a browser on this machine', color),
   ];
   if (networkLink) {
     lines.push(

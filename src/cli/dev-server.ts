@@ -11,10 +11,9 @@ import { formatDevBanner, formatShareLine, formatTailnetLine } from './dev-banne
 import { portInUseMessage } from './dev-port';
 import { buildRegistrationLinkForRuntime, networkRegistrationLink } from './registration-link';
 import {
-  TAILNET_HTTPS_CERTS_MISSING_MESSAGE,
   TAILNET_NOT_RUNNING_MESSAGE,
-  isMissingHttpsCertsError,
   runTailnetServe,
+  tailnetFailureMessage,
 } from './tailnet-serve';
 import { serveToolbarAsset } from './toolbar-assets';
 import {
@@ -113,7 +112,7 @@ export async function startDevServer({
       version: PAPER_CAMP_VERSION,
       localUrl: localLink,
       networkLink: network.link,
-      networkBlocked: network.blocked,
+      networkBlocked: network.blocked && !tailnet && !share,
       color,
     }),
   );
@@ -121,7 +120,7 @@ export async function startDevServer({
   if (tailnet) {
     const tailnetStatus = await readTailnetStatus();
     if (!tailnetStatus) {
-      console.error(TAILNET_NOT_RUNNING_MESSAGE);
+      console.error(`papercamp: Tailnet failed — ${TAILNET_NOT_RUNNING_MESSAGE}`);
     } else {
       const result = await runTailnetServe(port);
       if (result.ok) {
@@ -130,10 +129,8 @@ export async function startDevServer({
           apiMiddleware.pairing.token,
         );
         console.log(formatTailnetLine(tailnetLink, color));
-      } else if (isMissingHttpsCertsError(result.output)) {
-        console.error(TAILNET_HTTPS_CERTS_MISSING_MESSAGE);
       } else {
-        console.error(`papercamp: tailscale serve failed:\n${result.output}`);
+        console.error(tailnetFailureMessage(result.output));
       }
     }
   }

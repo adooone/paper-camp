@@ -39,10 +39,9 @@ import {
   networkRegistrationLink,
 } from './registration-link';
 import {
-  TAILNET_HTTPS_CERTS_MISSING_MESSAGE,
   TAILNET_NOT_RUNNING_MESSAGE,
-  isMissingHttpsCertsError,
   runTailnetServe,
+  tailnetFailureMessage,
 } from './tailnet-serve';
 import {
   CLOUDFLARED_MISSING_MESSAGE,
@@ -245,6 +244,15 @@ export function createDaemonRequestHandler(
   };
 }
 
+/** The HTTPS remedy is for a run without one — with `--tailnet` or `--share`
+ * asked for, its own line reports the outcome instead. */
+export function withRequestedNetwork(
+  network: NetworkRegistration,
+  requested: boolean,
+): NetworkRegistration {
+  return requested ? { ...network, blocked: false } : network;
+}
+
 export function formatDaemonBanner(
   localLink: string,
   network: NetworkRegistration,
@@ -332,7 +340,10 @@ export async function startDaemonServer({
   console.log(
     formatDaemonBanner(
       localLink,
-      await networkRegistrationLink(port, pairingState.token, buildRegistrationLinkForMachine),
+      withRequestedNetwork(
+        await networkRegistrationLink(port, pairingState.token, buildRegistrationLinkForMachine),
+        Boolean(tailnet || share),
+      ),
       color,
     ),
   );
@@ -340,7 +351,7 @@ export async function startDaemonServer({
   if (tailnet) {
     const tailnetStatus = await readTailnetStatus();
     if (!tailnetStatus) {
-      console.error(TAILNET_NOT_RUNNING_MESSAGE);
+      console.error(`papercamp: Tailnet failed — ${TAILNET_NOT_RUNNING_MESSAGE}`);
     } else {
       const result = await runTailnetServe(port);
       if (result.ok) {
@@ -349,10 +360,8 @@ export async function startDaemonServer({
           pairingState.token,
         );
         console.log(formatTailnetLine(tailnetLink, color));
-      } else if (isMissingHttpsCertsError(result.output)) {
-        console.error(TAILNET_HTTPS_CERTS_MISSING_MESSAGE);
       } else {
-        console.error(`papercamp: tailscale serve failed:\n${result.output}`);
+        console.error(tailnetFailureMessage(result.output));
       }
     }
   }

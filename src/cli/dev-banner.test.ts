@@ -12,14 +12,14 @@ describe('formatDevBanner', () => {
     const banner = formatDevBanner({ ...input, color: false });
     expect(banner).toContain('Paper Camp');
     expect(banner).toContain('v0.21.1');
-    expect(banner).toContain('Local:   http://localhost:3333');
-    expect(banner).toContain(`Network: ${input.networkLink}`);
+    expect(banner).toContain('This host: http://localhost:3333');
+    expect(banner).toContain(`Network:   ${input.networkLink}`);
     expect(banner).toContain('another device');
   });
 
   it('omits the Network row and its hint when the machine has no reachable address', () => {
     const banner = formatDevBanner({ ...input, networkLink: undefined, color: false });
-    expect(banner).toContain('Local:');
+    expect(banner).toContain('This host:');
     expect(banner).not.toContain('Network:');
     expect(banner).not.toContain('another device');
   });
@@ -31,7 +31,7 @@ describe('formatDevBanner', () => {
       networkBlocked: true,
       color: false,
     });
-    expect(banner).toContain('Local:');
+    expect(banner).toContain('This host:');
     expect(banner).not.toContain('Network:');
     expect(banner).toContain(
       'Another device needs an HTTPS address — rerun with --tailnet or --share.',
@@ -40,7 +40,7 @@ describe('formatDevBanner', () => {
 
   it('prefers the Network row over the remedy when a link is present', () => {
     const banner = formatDevBanner({ ...input, networkBlocked: true, color: false });
-    expect(banner).toContain(`Network: ${input.networkLink}`);
+    expect(banner).toContain(`Network:   ${input.networkLink}`);
     expect(banner).not.toContain('rerun with --tailnet or --share');
   });
 

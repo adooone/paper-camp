@@ -15,6 +15,7 @@ import {
   isMachineBusy,
   parseMountRequest,
   readMachineProjectSummaries,
+  withRequestedNetwork,
 } from './daemon-server';
 
 describe('parseMountRequest', () => {
@@ -336,8 +337,8 @@ describe('formatDaemonBanner', () => {
 
   it('carries the hosted-client Local link and the resolved Network link', () => {
     const banner = formatDaemonBanner(localLink, reachable, false);
-    expect(banner).toContain(`Local:   ${localLink}`);
-    expect(banner).toContain(`Network: ${networkLink}`);
+    expect(banner).toContain(`This host: ${localLink}`);
+    expect(banner).toContain(`Network:   ${networkLink}`);
   });
 
   it('keeps the lazy-mount note as a dim row after the banner', () => {
@@ -353,6 +354,17 @@ describe('formatDaemonBanner', () => {
   it('omits the Network row when the machine has no reachable address', () => {
     const banner = formatDaemonBanner(localLink, { blocked: false }, false);
     expect(banner).not.toContain('Network:');
+  });
+
+  it('drops the HTTPS remedy once --tailnet or --share was asked for', () => {
+    expect(withRequestedNetwork({ blocked: true }, true)).toEqual({ blocked: false });
+    expect(withRequestedNetwork({ blocked: true }, false)).toEqual({ blocked: true });
+    const banner = formatDaemonBanner(
+      localLink,
+      withRequestedNetwork({ blocked: true }, true),
+      false,
+    );
+    expect(banner).not.toContain('rerun with --tailnet or --share');
   });
 
   it('prints the remedy instead of the Network row when the pair is blocked', () => {
