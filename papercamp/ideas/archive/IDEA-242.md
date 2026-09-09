@@ -2,7 +2,7 @@
 id: IDEA-242
 title: Tests in a minute
 type: chore
-status: review
+status: done
 created: 2026-09-07
 updated: 2026-09-09
 tags:
