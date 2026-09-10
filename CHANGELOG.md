@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.1](https://github.com/adooone/paper-camp/compare/v0.30.0...v0.30.1) (2026-09-10)
+
+
+### Bug Fixes
+
+* **ci:** Smoke-test the toolbar through the daemon ([25f0db4](https://github.com/adooone/paper-camp/commit/25f0db46a0c94b3962d20900ee799fb0ec7b7c53))
+
 ## [0.30.0](https://github.com/adooone/paper-camp/compare/v0.29.0...v0.30.0) (2026-09-10)
 
 
