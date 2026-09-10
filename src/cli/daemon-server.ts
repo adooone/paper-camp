@@ -31,6 +31,7 @@ import {
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
 import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
+import { startAutoUpdatePolling } from './auto-update';
 import { formatDevBanner } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import {
@@ -305,6 +306,8 @@ export async function startDaemonServer({
   const { state: pairingState, persist: persistPairing } = await loadMachinePairing();
   const mounted = new Map<string, ApiMiddleware>();
   const checkMachineBusy = () => isMachineBusy(mounted);
+  const stopAutoUpdatePolling =
+    (autoUpdate ?? true) ? startAutoUpdatePolling(PAPER_CAMP_VERSION, checkMachineBusy) : undefined;
   const { mount } = createProjectMounter(
     defaultRegistryPath(),
     (project) => createProjectApi(project, pairingState, persistPairing, checkMachineBusy),
@@ -329,6 +332,7 @@ export async function startDaemonServer({
   const statePath = daemonStatePath();
   let tunnel: QuickTunnel | undefined;
   const shutdown = async () => {
+    stopAutoUpdatePolling?.();
     tunnel?.process.kill();
     await Promise.all(
       [...mounted.values()].map(async (apiMiddleware) => {
