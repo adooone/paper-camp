@@ -75,22 +75,6 @@ export const useSettingsPage = () => {
     }
   };
 
-  const handleToggleIntegration = async () => {
-    if (!config) return;
-    const next = !(config.integration?.toolbar?.enabled ?? true);
-    const integration = {
-      ...config.integration,
-      toolbar: { ...config.integration?.toolbar, enabled: next },
-    };
-    const { ok, error } = await saveConfig({ integration });
-    if (ok) {
-      setConfig((prev) => (prev ? { ...prev, integration } : prev));
-      toast({ title: 'Saved', variant: 'success' });
-    } else {
-      toast({ title: 'Failed to save', description: error, variant: 'error' });
-    }
-  };
-
   const handleSaveName = async () => {
     const projectName = nameInput.trim();
     if (!config || !projectName || projectName === config.projectName) return;
@@ -135,7 +119,6 @@ export const useSettingsPage = () => {
     setNameInput,
     handleSaveAgentConfig,
     handleSavePort,
-    handleToggleIntegration,
     handleSaveName,
     handleFile,
   };

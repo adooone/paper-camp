@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { describeFindings, runDoctor } from '@/core/doctor';
 import { mergeNotifications } from '@/core/notifications';
 import { readParkedQuestions } from '@/core/parked-questions';
@@ -184,5 +185,9 @@ export const readRoutes: ReadRoute[] = [
       const changelog = await readMaybe(join(root, 'CHANGELOG.md'));
       return { versions: resolveReleaseRanges(changelog).map((r) => r.version) };
     },
+  },
+  {
+    path: '/api/toolbar/host-app',
+    handler: async (root) => detectToolbarHostState(root),
   },
 ];

@@ -71,6 +71,7 @@ still applies to `vite serve` only. Host apps that are not Vite.
       run: 3m11s · 32 in · 8.1k out · sonnet-5
 - [x] Read the origin from the script `src` in the toolbar bundle
       run: 5m21s · 60 in · 18.8k out · sonnet-5
-- [ ] Add the Toolbar settings section
+- [x] Add the Toolbar settings section
       Enable switch, route field, and host-app state from the frontend service's Vite config.
+      run: 9m23s · 164 in · 37.8k out · sonnet-5
 - [ ] Launch the *Install toolbar* agent task from that section

@@ -588,6 +588,15 @@ export interface IntegrationConfig {
   route?: string;
 }
 
+/** Deterministic read of the frontend service's Vite setup, for Settings > Toolbar
+ * (IDEA-247) — whether `@dendelion/paper-camp/vite` is wired into its config and
+ * listed as a dependency, the two facts *Install toolbar* would otherwise fix. */
+export interface ToolbarHostState {
+  viteConfigPath: string | null;
+  importsPlugin: boolean;
+  isDependency: boolean;
+}
+
 export interface DeskService {
   name: string;
   cmd: string;
