@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.29.0](https://github.com/adooone/paper-camp/compare/v0.28.4...v0.29.0) (2026-09-10)
+
+
+### Features
+
+* **agent:** Verify once after the last phase for run-all ([0df3f61](https://github.com/adooone/paper-camp/commit/0df3f615cf8cd4dda35b9fc462d73ffbd4f4e5e5))
+* **app:** Add the Toolbar settings section ([235329e](https://github.com/adooone/paper-camp/commit/235329e40845533d07a3b42c3fa4641ddf3a967e))
+* **app:** Delete `src/vite/proxy.ts` and its mount rewriting ([e57836d](https://github.com/adooone/paper-camp/commit/e57836dc1f4c4d8fbb856302d17ef7dc91ed7e5c))
+* **app:** Drop the first-run redirect to Settings ([ef08908](https://github.com/adooone/paper-camp/commit/ef089086e7237be6b031d2ccff24656c1ab248e3))
+* **app:** Inject the script tag, or print the off notice ([faa6293](https://github.com/adooone/paper-camp/commit/faa6293e691a6744cb00ed314f77dab3ceee4e4f))
+* **app:** Launch the *Install toolbar* agent task from that section ([ae69373](https://github.com/adooone/paper-camp/commit/ae6937316c00ef284c03cfefcecd0d34555e362c))
+* **app:** List every known link in `paper-camp status` ([ec5f507](https://github.com/adooone/paper-camp/commit/ec5f5070f09737e1a4cd034b78801a94850e6c0b))
+* **app:** Mark a busy mounted project on the machine card ([1f70460](https://github.com/adooone/paper-camp/commit/1f704603118c505cd8aa924c76012fa4787e45c8))
+* **app:** Open a machine link into the remembered or only project ([4b2c0c2](https://github.com/adooone/paper-camp/commit/4b2c0c29b7aac08ca7eb555c05781eb13992948a))
+* **app:** Print the single best link in the banner ([8a7faf9](https://github.com/adooone/paper-camp/commit/8a7faf9a163199351a5de8b1767037e9667c8798))
+* **app:** Read the origin from the script `src` in the toolbar bundle ([b68bd8a](https://github.com/adooone/paper-camp/commit/b68bd8acf4a412f84be3f6ddd0a588284b7c84be))
+* **app:** Remember the last route visited under each project ([1dda059](https://github.com/adooone/paper-camp/commit/1dda0591ee679117badad6f41218098b0e750f9a))
+* **app:** Resolve the daemon origin and slug in `paperCamp()` ([36ad768](https://github.com/adooone/paper-camp/commit/36ad768f2c595dee64a225aad3101a43cff86ec0))
+* **app:** Serve the toolbar bundle from the daemon ([95aa722](https://github.com/adooone/paper-camp/commit/95aa7221debf1b597f8b694a28f2e968695f5a83))
+* **app:** Stamp running agents on hub project rows ([16f2c9f](https://github.com/adooone/paper-camp/commit/16f2c9fce1366ef4117d1d34f3fa0d6b759c56ed))
+* **server:** Drop the per-phase verify from `runQueue` ([96023b7](https://github.com/adooone/paper-camp/commit/96023b74db01f51f20141c880904bfb11fb24f3e))
+* **server:** Keep one session for the whole run ([e2e3a29](https://github.com/adooone/paper-camp/commit/e2e3a29072c93db6974b15d1af431ae285267976))
+* **server:** Take the baseline from the checks' last results ([016425d](https://github.com/adooone/paper-camp/commit/016425d58a7f198001c68f2f093fb5bfe7d7a8ce))
+* **server:** Target 3–5 phases in the drafting prompts ([89732db](https://github.com/adooone/paper-camp/commit/89732db889c807118bd07b2e5ba1ec75afa1c7f8))
+* **server:** Trim the phase prompt to types and touched tests ([8d76c71](https://github.com/adooone/paper-camp/commit/8d76c71823b3eb567c9c66df60b5a2a72c389617))
+* **server:** Verify once after a single phase or fix run ([359206e](https://github.com/adooone/paper-camp/commit/359206e1d32f5e178fbf4e7ae26d3e7656cdbc3b))
+* **server:** Verify once after the last phase ([d96009e](https://github.com/adooone/paper-camp/commit/d96009ef58dd9e912194fbd2b6d6e445949bd346))
+* **settings:** Install toolbar via manual devDependency edit, drop route field ([6bcfb09](https://github.com/adooone/paper-camp/commit/6bcfb097156c4c55abe506527c9ab9b21fb186ff))
+
+
+### Bug Fixes
+
+* **app:** Show project slug when it differs from name ([bd969f2](https://github.com/adooone/paper-camp/commit/bd969f2c752979f40b337c5ab3ceb490847241c2))
+* **docs:** Shorten IDEA-247 title under the 40-char limit ([21b1271](https://github.com/adooone/paper-camp/commit/21b1271d5ca46ecbb73d0a9f98eb2d93f2dd1e06))
+* **ideas:** Shorten IDEA-254 title under the 40-char limit ([367225a](https://github.com/adooone/paper-camp/commit/367225a83163d36d38db18e9462631f4365f00a5))
+* **repo:** Fix optional-chain lint error and comment-cap overflow ([a5ccb0c](https://github.com/adooone/paper-camp/commit/a5ccb0c80a7cdfd3a1235393380809cb948584cf))
+
 ## [0.28.4](https://github.com/adooone/paper-camp/compare/v0.28.3...v0.28.4) (2026-09-09)
 
 
