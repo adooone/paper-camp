@@ -180,7 +180,7 @@ export function createApiMiddleware(
   const git = createGitManager(root);
   const services = createDeskServiceManager(root, serviceState);
   const checks = createDeskCheckManager(root, checkState);
-  const status = createStatusManager(root, checks, statusState);
+  const status = createStatusManager(root, checks, git, statusState);
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);
   const activity = createActivityManager(root);

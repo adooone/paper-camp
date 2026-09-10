@@ -1476,6 +1476,7 @@ export function createAgentManager(
   function startRunAllPhases(
     plan: PlanEntry,
     runProjectChecks?: () => Promise<CheckName[]>,
+    getBaselineChecks?: () => Promise<CheckName[]>,
   ): Result {
     const blocked = admit('run-all', plan.id);
     if (blocked) return blocked;
@@ -1518,9 +1519,10 @@ export function createAgentManager(
           return;
         }
 
-        // Checks already red before this run — pre-existing or known-flaky
-        // breakage this run didn't cause, so the fix loop never owns it.
-        let toleratedRed = new Set<CheckName>(runProjectChecks ? await runProjectChecks() : []);
+        // Checks already red before this run aren't the fix loop's concern; reused
+        // from the current HEAD's last sweep when one exists (IDEA-255).
+        const getBaseline = getBaselineChecks ?? runProjectChecks;
+        let toleratedRed = new Set<CheckName>(getBaseline ? await getBaseline() : []);
         if (isSuperseded(task)) {
           finalizeSuperseded(task);
           return;
@@ -1927,6 +1929,7 @@ export function createAgentManager(
   // leaving it failed; `start`/`startRunAllPhases` pick up the checkbox it never flipped.
   async function resumeAuthParkedTasks(
     runProjectChecks?: () => Promise<CheckName[]>,
+    getBaselineChecks?: () => Promise<CheckName[]>,
   ): Promise<{ resumed: string[] }> {
     const parked = [...tasks.values()].filter(
       (task) =>
@@ -1943,7 +1946,7 @@ export function createAgentManager(
       if (!plan) continue;
       const result =
         task.taskKind === 'run-all'
-          ? startRunAllPhases(plan, runProjectChecks)
+          ? startRunAllPhases(plan, runProjectChecks, getBaselineChecks)
           : task.phaseIndex !== undefined
             ? start(plan, task.phaseIndex)
             : { ok: false as const, error: 'Missing phase index' };
@@ -1960,6 +1963,7 @@ export function createAgentManager(
   async function resumeQuestionParkedTasks(
     planId: string,
     runProjectChecks?: () => Promise<CheckName[]>,
+    getBaselineChecks?: () => Promise<CheckName[]>,
   ): Promise<{ resumed: boolean }> {
     const task = [...tasks.values()].find(
       (t) =>
@@ -1971,7 +1975,7 @@ export function createAgentManager(
     if (!task) return { resumed: false };
     const plan = await findPlanById(planId);
     if (!plan) return { resumed: false };
-    const result = startRunAllPhases(plan, runProjectChecks);
+    const result = startRunAllPhases(plan, runProjectChecks, getBaselineChecks);
     if (result.ok) task.errorKind = undefined;
     return { resumed: result.ok };
   }
@@ -2063,13 +2067,19 @@ export interface AgentManager {
   startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
   startBatchReconcile: () => Result;
   startBatchDraft: (ids: string[]) => Result;
-  startRunAllPhases: (plan: PlanEntry, runProjectChecks?: () => Promise<CheckName[]>) => Result;
+  startRunAllPhases: (
+    plan: PlanEntry,
+    runProjectChecks?: () => Promise<CheckName[]>,
+    getBaselineChecks?: () => Promise<CheckName[]>,
+  ) => Result;
   resumeAuthParkedTasks: (
     runProjectChecks?: () => Promise<CheckName[]>,
+    getBaselineChecks?: () => Promise<CheckName[]>,
   ) => Promise<{ resumed: string[] }>;
   resumeQuestionParkedTasks: (
     planId: string,
     runProjectChecks?: () => Promise<CheckName[]>,
+    getBaselineChecks?: () => Promise<CheckName[]>,
   ) => Promise<{ resumed: boolean }>;
   startSuggest: (prompt: string) => Promise<Result>;
   startGitSyncRecovery: (prompt: string) => Result;

@@ -76,8 +76,9 @@ demand.
 - [x] Verify once after the last phase
       `startRunAllPhases` runs the biome fixer, lint, tests, consistency and docs once, sends introduced red to the fix pass under the same cap, commits a landed fix as its own `fix` commit, and stamps review only after.
       run: 18m1s · 220 in · 81.2k out · sonnet-5
-- [ ] Take the baseline from the checks' last results
+- [x] Take the baseline from the checks' last results
       Reuse results already produced on the current HEAD; run the sweep up front only when none exist.
+      run: 7m39s · 138 in · 35k out · sonnet-5
 - [ ] Keep one session for the whole run
       Resume the previous phase's session, start fresh when its last turn passed 120k input tokens, and record which session each phase ran in for the run card.
 - [ ] Target 3–5 phases in the drafting prompts

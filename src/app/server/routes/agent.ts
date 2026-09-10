@@ -224,7 +224,10 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
             clearCapabilitiesCache(root);
             clearAgentAuthStatusCache(root);
             agent
-              .resumeAuthParkedTasks(() => status.runChecksAndWait())
+              .resumeAuthParkedTasks(
+                () => status.runChecksAndWait(),
+                () => status.getCachedOrRunChecks(),
+              )
               .catch((err) => {
                 console.error('Failed to resume auth-parked tasks after sign-in', err);
               });
@@ -405,7 +408,11 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         if (!resolved.ok) return resolved;
         const staleBase = await checkStaleBaseForRunAll(git, planId);
         if (staleBase) return { ok: false, error: staleBase };
-        return agent.startRunAllPhases(resolved.plan, () => status.runChecksAndWait());
+        return agent.startRunAllPhases(
+          resolved.plan,
+          () => status.runChecksAndWait(),
+          () => status.getCachedOrRunChecks(),
+        );
       },
     ),
 
@@ -560,7 +567,11 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         );
 
         if (parent) {
-          agent.startRunAllPhases(entityToPlan(spawnedEntity), () => status.runChecksAndWait());
+          agent.startRunAllPhases(
+            entityToPlan(spawnedEntity),
+            () => status.runChecksAndWait(),
+            () => status.getCachedOrRunChecks(),
+          );
         }
 
         activity.notifyChanged();
@@ -703,7 +714,11 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
               undo = { commitSha: await git.getHeadSha() };
               replyText = `${replyText} (spawned ${spawnedId} to track this)`;
 
-              agent.startRunAllPhases(entityToPlan(spawnedEntity), () => status.runChecksAndWait());
+              agent.startRunAllPhases(
+                entityToPlan(spawnedEntity),
+                () => status.runChecksAndWait(),
+                () => status.getCachedOrRunChecks(),
+              );
             }
           }
 
@@ -734,7 +749,11 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
           // Re-enter a run-all parked on this question (IDEA-125) now, instead of
           // leaving it failed until someone notices.
           if (openQuestionIndex !== -1) {
-            await agent.resumeQuestionParkedTasks(entity.id, () => status.runChecksAndWait());
+            await agent.resumeQuestionParkedTasks(
+              entity.id,
+              () => status.runChecksAndWait(),
+              () => status.getCachedOrRunChecks(),
+            );
           }
 
           // Commit a plan edit on its own so an Undo revert can't sweep in unrelated
@@ -761,7 +780,11 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
                 ...overrides,
                 status: 'in-progress',
               });
-              agent.startRunAllPhases(reopenedPlan, () => status.runChecksAndWait());
+              agent.startRunAllPhases(
+                reopenedPlan,
+                () => status.runChecksAndWait(),
+                () => status.getCachedOrRunChecks(),
+              );
             }
           }
         } catch (err) {

@@ -10,6 +10,7 @@ import type { CheckName, CheckResult, CheckStatus } from '../../types';
 import { BIOME_FIX_COMMAND } from './biome-fix';
 import type { DeskCheckManager } from './desk-checks';
 import { loadManifestChecks } from './desk-checks';
+import type { GitManager } from './git';
 import { campFile, readMaybe } from './helpers';
 
 interface StatusSnapshot {
@@ -43,6 +44,9 @@ export interface StatusManagerState {
   running: Set<CheckName>;
   queued: Set<CheckName>;
   clients: Set<ServerResponse>;
+  // The last full sweep's result, tagged with the HEAD it ran against — lets a
+  // run-all's baseline skip re-running checks nothing has changed since (IDEA-255).
+  lastSweep: { headSha: string; failing: CheckName[] } | null;
 }
 
 export function createEmptyStatusState(): StatusManagerState {
@@ -53,12 +57,14 @@ export function createEmptyStatusState(): StatusManagerState {
     running: new Set<CheckName>(),
     queued: new Set<CheckName>(),
     clients: new Set<ServerResponse>(),
+    lastSweep: null,
   };
 }
 
 export function createStatusManager(
   root: string,
   checks: DeskCheckManager,
+  git: GitManager,
   state: StatusManagerState = createEmptyStatusState(),
 ) {
   // Same containers a hot-reloaded replacement receives, so a still-running check's
@@ -201,6 +207,7 @@ export function createStatusManager(
         const failing: CheckName[] = names.filter((_, i) => !passed[i]);
         if (!consistencyPassed) failing.push('consistency');
         if (!docsPassed) failing.push('docs');
+        state.lastSweep = { headSha: await git.getHeadSha(), failing };
         resolve(failing);
       };
 
@@ -208,6 +215,16 @@ export function createStatusManager(
       fix.on('close', runChecks);
       fix.on('error', runChecks);
     });
+  }
+
+  // A sweep already produced on the current HEAD is still valid — skip re-running
+  // the 80s+ suite when nothing has changed since (IDEA-255).
+  async function getCachedOrRunChecks(): Promise<CheckName[]> {
+    const headSha = await git.getHeadSha();
+    if (state.lastSweep && state.lastSweep.headSha === headSha) {
+      return state.lastSweep.failing;
+    }
+    return runChecksAndWait();
   }
 
   return {
@@ -220,6 +237,7 @@ export function createStatusManager(
     getState: (): StatusManagerState => state,
     runCheck,
     runChecksAndWait,
+    getCachedOrRunChecks,
     subscribe(res: ServerResponse) {
       clients.add(res);
       const result = snapshot.consistency;
