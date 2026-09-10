@@ -22,6 +22,7 @@ export interface DaemonState {
   autoUpdate?: boolean;
   autoUpdateLastCheckedAt?: string;
   autoUpdatePendingVersion?: string | null;
+  autoUpdateFailedVersion?: string | null;
   links?: DaemonLinks;
 }
 
@@ -65,6 +66,9 @@ function isDaemonState(value: unknown): value is DaemonState {
     (v.autoUpdatePendingVersion === undefined ||
       v.autoUpdatePendingVersion === null ||
       typeof v.autoUpdatePendingVersion === 'string') &&
+    (v.autoUpdateFailedVersion === undefined ||
+      v.autoUpdateFailedVersion === null ||
+      typeof v.autoUpdateFailedVersion === 'string') &&
     (v.links === undefined || isDaemonLinks(v.links))
   );
 }
@@ -147,7 +151,10 @@ export function formatAutoUpdateStatusLine(state: DaemonState): string {
   const pending = state.autoUpdatePendingVersion
     ? `, ${state.autoUpdatePendingVersion} pending`
     : '';
-  return `paper-camp: auto-update on, ${checked}${pending}`;
+  const failed = state.autoUpdateFailedVersion
+    ? `, ${state.autoUpdateFailedVersion} installed but did not take effect — run \`paper-camp update\``
+    : '';
+  return `paper-camp: auto-update on, ${checked}${pending}${failed}`;
 }
 
 /** Unlike the daemon banner, which prints only the single best way in, status

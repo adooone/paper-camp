@@ -4,6 +4,7 @@ title: The daemon updates itself
 type: feat
 status: review
 created: 2026-09-10
+updated: 2026-09-10
 tags:
   - cli
   - server
@@ -74,3 +75,4 @@ other than the daemon's own package.
 - [x] Carry the pending version to the hub's machine card
       Extend the `/api/machine/projects` payload and stamp the waiting version until the restart clears the mismatch.
       run: 15m22s · 218 in · 49.3k out · sonnet-5
+- [x] [manual] Verify installed version and hold restart until idle

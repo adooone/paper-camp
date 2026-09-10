@@ -25,7 +25,7 @@ import {
 import { checkLatestVersion } from '../core/registry-version';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import type { MachineProjectSummary } from '../types/index';
-import { runNpmInstall } from './auto-update';
+import { installedVersionAt, runNpmInstall } from './auto-update';
 import { DEFAULT_DAEMON_PORT } from './daemon-server';
 import { linkifyUrls } from './dev-banner';
 
@@ -219,7 +219,9 @@ export async function runRestart(): Promise<boolean> {
   return runStart(opts);
 }
 
-export async function runUpdate(): Promise<boolean> {
+export async function runUpdate(
+  installedVersion: () => Promise<string | null> = () => installedVersionAt(process.argv[1]),
+): Promise<boolean> {
   const check = await checkLatestVersion(PAPER_CAMP_VERSION);
   if (!check) {
     console.error('paper-camp: could not reach the npm registry to check for an update');
@@ -239,6 +241,14 @@ export async function runUpdate(): Promise<boolean> {
     return false;
   }
   if (output) console.log(output);
+
+  const installed = await installedVersion();
+  if (installed !== check.latestVersion) {
+    console.error(
+      `paper-camp: ${check.latestVersion} installed, but the paper-camp command still runs ${installed ?? 'an unknown version'} — npm installed into a prefix this command does not run from`,
+    );
+    return false;
+  }
 
   const running = await readRunningDaemonState(daemonStatePath());
   if (!running) {

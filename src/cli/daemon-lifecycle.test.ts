@@ -584,12 +584,28 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
       await stubNpm('exit 0');
 
       const logs = captureLogs();
-      const ok = await runUpdate();
+      const ok = await runUpdate(async () => '9.9.9');
       logs.restore();
 
       expect(ok).toBe(true);
       expect(logs.output).toContain(`paper-camp: updated ${PAPER_CAMP_VERSION} → 9.9.9`);
       expect(logs.output).not.toContain('restarting');
+    });
+
+    it('reports an install the paper-camp command cannot see, and does not restart', async () => {
+      await makeConfigDir();
+      stubRegistryFetch('9.9.9');
+      await stubNpm('exit 0');
+
+      const errors: string[] = [];
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args) => {
+        errors.push(args.join(' '));
+      });
+      const ok = await runUpdate(async () => PAPER_CAMP_VERSION);
+      errorSpy.mockRestore();
+
+      expect(ok).toBe(false);
+      expect(errors.join('\n')).toContain(`still runs ${PAPER_CAMP_VERSION}`);
     });
 
     it('installs and restarts the running daemon', async () => {
@@ -599,7 +615,7 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
       await stubNpm('exit 0');
 
       const logs = captureLogs();
-      const ok = await asRealCliEntry(() => runUpdate());
+      const ok = await asRealCliEntry(() => runUpdate(async () => '9.9.9'));
       logs.restore();
 
       expect(ok).toBe(true);
@@ -620,7 +636,7 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args) => {
         errors.push(args.join(' '));
       });
-      const ok = await runUpdate();
+      const ok = await runUpdate(async () => '9.9.9');
       errorSpy.mockRestore();
 
       expect(ok).toBe(false);

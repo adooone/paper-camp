@@ -1,12 +1,14 @@
-import { access, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   type AutoUpdateDeps,
   createAutoUpdateState,
+  installedVersionAt,
   npmInstallArgs,
   pollForUpdate,
+  resolveNpmCommand,
   runNpmInstall,
   spawnRestart,
 } from './auto-update';
@@ -95,6 +97,7 @@ function fakeDeps(overrides: Partial<AutoUpdateDeps> = {}): AutoUpdateDeps {
     checkLatestVersion: vi.fn(),
     isBusy: vi.fn(() => false),
     runInstall: vi.fn(),
+    installedVersion: vi.fn().mockResolvedValue('0.29.1'),
     restart: vi.fn(),
     recordCheck: vi.fn(),
     ...overrides,
@@ -118,14 +121,14 @@ describe('pollForUpdate', () => {
     expect(deps.isBusy).not.toHaveBeenCalled();
     expect(deps.runInstall).not.toHaveBeenCalled();
     expect(deps.restart).not.toHaveBeenCalled();
-    expect(deps.recordCheck).toHaveBeenCalledWith(null);
+    expect(deps.recordCheck).toHaveBeenCalledWith({ pendingVersion: null, failedVersion: null });
   });
 
   it('does nothing when the registry check fails', async () => {
     const deps = fakeDeps({ checkLatestVersion: vi.fn().mockResolvedValue(null) });
     await pollForUpdate('0.28.4', createAutoUpdateState(), deps);
     expect(deps.isBusy).not.toHaveBeenCalled();
-    expect(deps.recordCheck).toHaveBeenCalledWith(null);
+    expect(deps.recordCheck).toHaveBeenCalledWith({ pendingVersion: null, failedVersion: null });
   });
 
   it('logs the wait once while busy, and again only once a newer version shows up', async () => {
@@ -150,7 +153,10 @@ describe('pollForUpdate', () => {
     expect(waitLines).toHaveLength(1);
     expect(waitLines[0][0]).toBe('paper-camp: update to 0.29.1 waiting for the machine to go idle');
     expect(deps.recordCheck).toHaveBeenCalledTimes(2);
-    expect(deps.recordCheck).toHaveBeenCalledWith('0.29.1');
+    expect(deps.recordCheck).toHaveBeenCalledWith({
+      pendingVersion: '0.29.1',
+      failedVersion: null,
+    });
   });
 
   it('installs and restarts once idle, logging the install output', async () => {
@@ -173,7 +179,68 @@ describe('pollForUpdate', () => {
     expect(logSpy.mock.calls.map(([line]) => line)).toContain(
       'paper-camp: update to 0.29.1 installed, restarting',
     );
-    expect(deps.recordCheck).toHaveBeenCalledWith(null);
+    expect(deps.recordCheck).toHaveBeenLastCalledWith({
+      pendingVersion: null,
+      failedVersion: null,
+    });
+  });
+
+  it('records a version the entry point still cannot see as failed, skips it, and never restarts', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const deps = fakeDeps({
+      checkLatestVersion: vi.fn().mockResolvedValue({
+        currentVersion: '0.28.4',
+        latestVersion: '0.29.1',
+        isNewer: true,
+      }),
+      runInstall: vi.fn().mockResolvedValue({ ok: true, output: '' }),
+      installedVersion: vi.fn().mockResolvedValue('0.28.4'),
+    });
+    const state = createAutoUpdateState();
+
+    await pollForUpdate('0.28.4', state, deps);
+    await pollForUpdate('0.28.4', state, deps);
+
+    expect(deps.runInstall).toHaveBeenCalledOnce();
+    expect(deps.restart).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('still on 0.28.4'));
+    expect(deps.recordCheck).toHaveBeenLastCalledWith({
+      pendingVersion: null,
+      failedVersion: '0.29.1',
+    });
+  });
+
+  it('holds the restart when a run started during the install, and restarts without reinstalling once idle', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    let busy = false;
+    const deps = fakeDeps({
+      checkLatestVersion: vi.fn().mockResolvedValue({
+        currentVersion: '0.28.4',
+        latestVersion: '0.29.1',
+        isNewer: true,
+      }),
+      isBusy: vi.fn(() => busy),
+      runInstall: vi.fn(async () => {
+        busy = true;
+        return { ok: true, output: '' };
+      }),
+    });
+    const state = createAutoUpdateState();
+
+    await pollForUpdate('0.28.4', state, deps);
+    expect(deps.restart).not.toHaveBeenCalled();
+    expect(logSpy.mock.calls.map(([line]) => line)).toContain(
+      'paper-camp: update to 0.29.1 installed, restart waiting for the machine to go idle',
+    );
+    expect(deps.recordCheck).toHaveBeenLastCalledWith({
+      pendingVersion: '0.29.1',
+      failedVersion: null,
+    });
+
+    busy = false;
+    await pollForUpdate('0.28.4', state, deps);
+    expect(deps.runInstall).toHaveBeenCalledOnce();
+    expect(deps.restart).toHaveBeenCalledOnce();
   });
 
   it('logs a failed install with its output and does not restart', async () => {
@@ -212,5 +279,42 @@ describe('pollForUpdate', () => {
     await pollForUpdate('0.28.4', createAutoUpdateState(), deps);
 
     expect(deps.runInstall).toHaveBeenCalledOnce();
+  });
+});
+
+describe('resolveNpmCommand', () => {
+  it('prefers the Volta shim when it exists', () => {
+    expect(resolveNpmCommand({ VOLTA_HOME: '/v' }, (path) => path === '/v/bin/npm')).toBe(
+      '/v/bin/npm',
+    );
+  });
+
+  it('falls back to PATH lookup without Volta', () => {
+    expect(resolveNpmCommand({}, () => false)).toBe('npm');
+  });
+});
+
+describe('installedVersionAt', () => {
+  const dirs: string[] = [];
+
+  afterEach(async () => {
+    await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
+    dirs.length = 0;
+  });
+
+  it('reads the version from the package above the entry, following a bin symlink', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-entry-'));
+    dirs.push(dir);
+    await mkdir(join(dir, 'pkg', 'dist', 'cli'), { recursive: true });
+    await writeFile(join(dir, 'pkg', 'package.json'), JSON.stringify({ version: '0.29.1' }));
+    await writeFile(join(dir, 'pkg', 'dist', 'cli', 'index.js'), '');
+    await mkdir(join(dir, 'bin'));
+    await symlink(join(dir, 'pkg', 'dist', 'cli', 'index.js'), join(dir, 'bin', 'paper-camp'));
+    expect(await installedVersionAt(join(dir, 'bin', 'paper-camp'))).toBe('0.29.1');
+  });
+
+  it('resolves null for a missing entry', async () => {
+    expect(await installedVersionAt('/nowhere/paper-camp')).toBeNull();
+    expect(await installedVersionAt(undefined)).toBeNull();
   });
 });

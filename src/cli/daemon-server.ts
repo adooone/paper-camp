@@ -17,6 +17,7 @@ import {
 } from '../app/server/pairing';
 import {
   type DaemonState,
+  daemonLogPath,
   daemonStatePath,
   removeDaemonState,
   writeDaemonState,
@@ -31,7 +32,7 @@ import {
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
 import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
-import { startAutoUpdatePolling } from './auto-update';
+import { type AutoUpdateCheckRecord, startAutoUpdatePolling } from './auto-update';
 import { formatDevBanner } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import {
@@ -408,12 +409,16 @@ export async function startDaemonServer({
   await writeDaemonState(statePath, daemonState);
 
   if (autoUpdate ?? true) {
-    const recordAutoUpdateCheck = async (pendingVersion: string | null) => {
+    const recordAutoUpdateCheck = async ({
+      pendingVersion,
+      failedVersion,
+    }: AutoUpdateCheckRecord) => {
       pendingUpdateVersion = pendingVersion;
       daemonState = {
         ...daemonState,
         autoUpdateLastCheckedAt: new Date().toISOString(),
         autoUpdatePendingVersion: pendingVersion,
+        autoUpdateFailedVersion: failedVersion,
       };
       await writeDaemonState(statePath, daemonState);
     };
@@ -421,6 +426,7 @@ export async function startDaemonServer({
       PAPER_CAMP_VERSION,
       checkMachineBusy,
       recordAutoUpdateCheck,
+      daemonLogPath(),
     );
   }
 

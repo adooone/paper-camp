@@ -325,6 +325,17 @@ describe('formatAutoUpdateStatusLine', () => {
       'paper-camp: auto-update on, last checked 0s ago, 0.29.1 pending',
     );
   });
+  it('names a version that installed but did not take effect', () => {
+    const state = {
+      ...baseDaemonState,
+      autoUpdate: true,
+      autoUpdateLastCheckedAt: new Date().toISOString(),
+      autoUpdateFailedVersion: '0.29.1',
+    };
+    expect(formatAutoUpdateStatusLine(state)).toBe(
+      'paper-camp: auto-update on, last checked 0s ago, 0.29.1 installed but did not take effect — run `paper-camp update`',
+    );
+  });
 });
 
 describe('formatDaemonLinks', () => {
