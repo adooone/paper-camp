@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.0](https://github.com/adooone/paper-camp/compare/v0.29.0...v0.30.0) (2026-09-10)
+
+
+### Features
+
+* **app:** Show runtime version in stack panel footer ([6a3e21b](https://github.com/adooone/paper-camp/commit/6a3e21bfb99906613665086f77a7205215c91f13))
+* **cli:** Add `paper-camp update` for one check and install on demand ([df9040d](https://github.com/adooone/paper-camp/commit/df9040d165d0b764a1ae4e39cd15da66b6d1f3e7))
+* **cli:** Ask the registry for the latest version ([7b91276](https://github.com/adooone/paper-camp/commit/7b91276487d3cd1f3f3757971cbd1a0ed5c3d078))
+* **cli:** Carry the pending version to the hub's machine card ([4ed8b59](https://github.com/adooone/paper-camp/commit/4ed8b590c7e0c4513896784f7f78d5a2904a9a81))
+* **cli:** Install and restart the daemon when the machine is idle ([47bb4fe](https://github.com/adooone/paper-camp/commit/47bb4feaa79be0ca827ede1c3221e79f8a7a6c2d))
+* **cli:** Record the auto-update setting on the daemon ([67ce774](https://github.com/adooone/paper-camp/commit/67ce7747370b2afe62efd785403ae845b9745c18))
+* **cli:** Report auto-update state, last check, and pending version in `paper-camp status` ([fdf7300](https://github.com/adooone/paper-camp/commit/fdf73004a993ed490c788110ff75d7b296ab5a5b))
+
+
+### Bug Fixes
+
+* **cli:** Verify installed version and hold restart until idle ([4b6006a](https://github.com/adooone/paper-camp/commit/4b6006ad8c5e7318d45f63a295305ec51ce1388d))
+* **ideas:** Move IDEA-257 off the orphan "Daemon" subject ([c1ab9a0](https://github.com/adooone/paper-camp/commit/c1ab9a08b8d02d87461f76e41f8ee023f97f4b2a))
+
 ## [0.29.0](https://github.com/adooone/paper-camp/compare/v0.28.4...v0.29.0) (2026-09-10)
 
 
