@@ -88,6 +88,27 @@ export function pickableMachineProjects(
 }
 
 /**
+ * The slug a `?machine=` link should skip the project list for: the most
+ * recently dialled project this browser already opened on that machine
+ * (last in `chosenRuntimeUrls`, which is dial order), else the machine's
+ * only project on a first visit. A missing project is never auto-opened —
+ * that folder is gone, so the list is where its `rm` hint lives.
+ */
+export function resolveMachineProjectSlug(
+  machineUrl: string,
+  projects: MachineProjectSummary[],
+  chosenRuntimeUrls: string[],
+): string | null {
+  const present = projects.filter((project) => !project.missing);
+  const bySlug = new Map(
+    present.map((project) => [machineProjectRuntimeUrl(machineUrl, project.slug), project.slug]),
+  );
+  const lastDialled = [...chosenRuntimeUrls].reverse().find((url) => bySlug.has(url));
+  if (lastDialled) return bySlug.get(lastDialled) ?? null;
+  return present.length === 1 ? present[0].slug : null;
+}
+
+/**
  * The origin serving this SPA is a machine, not just a hosted bundle, when
  * there's no mount prefix to say otherwise and that origin answers its own
  * `/api/machine/projects` — the state a `paper-camp start`/`daemon` root is

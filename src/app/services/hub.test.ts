@@ -6,6 +6,7 @@ import {
   machineProjectRuntimeUrl,
   pickableMachineProjects,
   pickableTailnetPeers,
+  resolveMachineProjectSlug,
   runtimeAdditionUrl,
   runtimeRowLabel,
   servesOwnRuntime,
@@ -107,6 +108,56 @@ describe('pickableMachineProjects', () => {
     expect(pickableMachineProjects(machineUrl, projects, ['http://9.9.9.9:4333/p/alpha'])).toEqual(
       projects,
     );
+  });
+});
+
+describe('resolveMachineProjectSlug', () => {
+  const machineUrl = 'http://100.64.1.2:4333';
+  const projects = [
+    { slug: 'alpha', name: 'Alpha', mounted: false, busy: false, missing: false },
+    { slug: 'beta', name: 'Beta', mounted: false, busy: false, missing: false },
+  ];
+
+  it('opens the only project on a first visit', () => {
+    const one = [projects[0]];
+    expect(resolveMachineProjectSlug(machineUrl, one, [])).toBe('alpha');
+  });
+
+  it('shows the list instead when there is more than one project and none dialled yet', () => {
+    expect(resolveMachineProjectSlug(machineUrl, projects, [])).toBeNull();
+  });
+
+  it('opens the project this browser already dialled on this machine', () => {
+    expect(resolveMachineProjectSlug(machineUrl, projects, ['http://100.64.1.2:4333/p/beta'])).toBe(
+      'beta',
+    );
+  });
+
+  it('picks the most recently dialled when more than one was opened on this machine', () => {
+    expect(
+      resolveMachineProjectSlug(machineUrl, projects, [
+        'http://100.64.1.2:4333/p/beta',
+        'http://100.64.1.2:4333/p/alpha',
+      ]),
+    ).toBe('alpha');
+  });
+
+  it('is unaffected by a dialled runtime that belongs to a different machine', () => {
+    expect(resolveMachineProjectSlug(machineUrl, projects, ['http://9.9.9.9:4333/p/alpha'])).toBe(
+      null,
+    );
+  });
+
+  it('never auto-opens a missing project, even as the only one left', () => {
+    const missingOnly = [{ ...projects[0], missing: true }];
+    expect(resolveMachineProjectSlug(machineUrl, missingOnly, [])).toBeNull();
+  });
+
+  it('skips a missing project when picking the browser-dialled one, falling through to none', () => {
+    const missing = [{ ...projects[0], missing: true }];
+    expect(
+      resolveMachineProjectSlug(machineUrl, missing, ['http://100.64.1.2:4333/p/alpha']),
+    ).toBeNull();
   });
 });
 

@@ -72,6 +72,7 @@ panels within a route.
       run: 3m33s · 38 in · 7.2k out · sonnet-5
 - [x] Remember the last route visited under each project
       run: 13m41s · 120 in · 54.7k out · sonnet-5
-- [ ] Open a machine link into the remembered or only project
+- [x] Open a machine link into the remembered or only project
+      run: 5m22s · 46 in · 19.3k out · sonnet-5
 - [ ] Drop the first-run redirect to Settings
       The USAGE.md redirect for an untouched corpus stays.

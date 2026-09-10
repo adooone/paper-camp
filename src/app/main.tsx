@@ -5,12 +5,21 @@ import './styles/utilities.css';
 import { RouterProvider } from '@tanstack/react-router';
 import { HUB_PATH, router } from './router';
 import { apiUrl, setApiBase, setApiPairingToken } from './services/api-base';
-import { hasChosenProject } from './services/hub';
+import {
+  hasChosenProject,
+  machineProjectRuntimeUrl,
+  resolveMachineProjectSlug,
+  runtimeAdditionUrl,
+} from './services/hub';
 import { lastRouteFor } from './services/last-route-store';
 import { machineConnection } from './services/machine-connection';
 import { mountPrefix } from './services/mount';
+import { listProjects, projectEntryId } from './services/project-registry';
 import { runtimeConnection } from './services/runtime-connection';
+import { fetchMachineProjects } from './services/system';
 import { probeSelfServed } from './stores/slices/runtime-slice';
+
+const storage = typeof window === 'undefined' ? null : window.localStorage;
 
 const { runtimeUrl, pairingToken } = runtimeConnection;
 setApiBase(runtimeUrl || mountPrefix);
@@ -34,10 +43,27 @@ async function pairIfNeeded(): Promise<void> {
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element not found');
 
+// A machine link is a request to see that machine's projects — unless this
+// browser already opened one there, or the machine has only one to offer,
+// in which case the list is skipped and that project opens directly.
+async function chooseMachineProject(machineUrl: string): Promise<boolean> {
+  const projects = await fetchMachineProjects(machineUrl);
+  if (!projects) return false;
+  const chosenRuntimeUrls = listProjects(storage).map(projectEntryId);
+  const slug = resolveMachineProjectSlug(machineUrl, projects, chosenRuntimeUrls);
+  if (!slug) return false;
+  window.location.assign(
+    runtimeAdditionUrl(
+      mountPrefix || '/',
+      machineProjectRuntimeUrl(machineUrl, slug),
+      machineConnection.pairingToken,
+    ),
+  );
+  return true;
+}
+
 async function chooseProject(): Promise<boolean> {
-  // A machine link is a request to see that machine's projects: it opens the hub
-  // even when this browser last had a project open.
-  if (machineConnection.machineUrl) return false;
+  if (machineConnection.machineUrl) return chooseMachineProject(machineConnection.machineUrl);
   if (hasChosenProject(mountPrefix, runtimeUrl)) return true;
   return probeSelfServed();
 }
@@ -62,12 +88,15 @@ pairIfNeeded()
       }
       return;
     }
+    // A resolved machine link is already reloading into its target project,
+    // which is not this runtime, so there is nothing of this browser's to redo here.
+    if (machineConnection.machineUrl) return;
     // A bare `/` is an implicit "open the project", not a specific deep link —
     // the only case a remembered route should override where the URL landed.
     if (router.state.location.pathname !== '/') return;
     const remembered = lastRouteFor(
       runtimeUrl,
-      typeof window === 'undefined' ? null : window.localStorage,
+      storage,
       (path) => router.getMatchedRoutes(path).foundRoute !== undefined,
     );
     if (remembered) router.navigate({ to: remembered, replace: true });
