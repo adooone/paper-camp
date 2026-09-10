@@ -51,7 +51,8 @@ describe('MachineProjectRow', () => {
       onOpen: vi.fn(),
     });
     const [, slug] = tree.props.children as [unknown, { props: { children: string } } | false];
-    expect(slug && slug.props.children).toBe('paper-camp-build');
+    if (!slug) throw new Error('expected a slug element');
+    expect(slug.props.children).toBe('paper-camp-build');
   });
 
   it('shows the name alone when it already is the slug', () => {

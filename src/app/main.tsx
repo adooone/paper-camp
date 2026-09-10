@@ -43,9 +43,8 @@ async function pairIfNeeded(): Promise<void> {
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element not found');
 
-// A machine link is a request to see that machine's projects — unless this
-// browser already opened one there, or the machine has only one to offer,
-// in which case the list is skipped and that project opens directly.
+// A machine link opens that machine's project list — unless this browser
+// already opened one there, or the machine has only one, then it opens directly.
 async function chooseMachineProject(machineUrl: string): Promise<boolean> {
   const projects = await fetchMachineProjects(machineUrl);
   if (!projects) return false;

@@ -70,9 +70,8 @@ async function waitForDaemon(
   return exited ? 'exited' : 'timeout';
 }
 
-/** The daemon prints its banner only after --tailnet/--share have reported
- * back (or failed), so the greeting line alone is proof the whole thing —
- * banner or failure messages — is already in the log. */
+/** The greeting line prints only after --tailnet/--share report back (or
+ * fail), so it alone proves the whole banner is already in the log. */
 function pendingBannerMarkers(): RegExp[] {
   return [/⛺ Paper Camp/];
 }

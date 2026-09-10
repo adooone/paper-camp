@@ -12,9 +12,8 @@ export function rememberRoute(runtimeUrl: string, pathname: string, storage: Sto
   }
 }
 
-// `/` is already the default a never-visited project opens on, so there is
-// nothing to redirect to; `routeExists` catches a route a later app version
-// dropped, clearing it rather than replaying a dead path forever.
+// `/` is already the default for a never-visited project, so there's nothing
+// to redirect to; `routeExists` clears a route a later app version dropped.
 export function lastRouteFor(
   runtimeUrl: string,
   storage: Storage | null,
