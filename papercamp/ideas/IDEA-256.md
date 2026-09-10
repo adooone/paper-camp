@@ -1,0 +1,51 @@
+---
+id: IDEA-256
+title: Redraft the phases of an untouched plan
+type: fix
+kind: fix
+status: idea
+idea: IDEA-255
+created: 2026-09-10
+tags:
+  - app
+subject: Run & monitor
+order: 2
+---
+
+[[IDEA-255]] moved the drafting target to 3–5 phases, and every plan
+drafted before it — [[IDEA-241]], [[IDEA-250]], [[IDEA-251]] at seven and
+eight phases — keeps the old split. There is no way to redraw one from
+the app: `DraftPlanButton` in `phases-section.tsx` is offered only while
+an idea has no phases, and `buildPlanDraftPrompt` appends a `### Phases`
+list, so running it on a drafted plan would produce two lists. The only
+route today is deleting the section by hand and drafting again.
+
+**Redraft while nothing has run.** The button stays on an idea whose
+phases are all unchecked, labelled *Redraft*, next to *Run all*. Its
+prompt is the draft prompt with one added rule: replace the existing
+`### Phases` list in place, keeping the section where it is, rather than
+appending. An idea with any checked phase, or any run stamp, hides the
+button, since its history is already running and the phase list is part
+of it. `paper-camp doctor` keeps rejecting a second `### Phases` section,
+which is the guard that makes the replacement rule checkable.
+
+### Out of scope
+
+Redrafting a plan that has started. Changing the draft prompt's phase
+target, which [[IDEA-255]] set.
+
+### Phases
+- [ ] Add an untouched-plan predicate
+      True when the entity has phases, none are checked, and no phase or fix
+      carries a `run` stamp.
+- [ ] Give `buildPlanDraftPrompt` a redraft mode
+      Same prompt plus the rule to replace the existing `### Phases` list in
+      place instead of appending.
+- [ ] Teach `DraftPlanButton` the redraft mode
+      Label it *Redraft* and send the redraft prompt; the undrafted call sites
+      in `phases-section.tsx` and `create-idea-modal.tsx` keep today's wording.
+- [ ] Render Redraft next to Run all
+      In `plan-actions-column.tsx`, gated on the predicate.
+- [ ] Reject a second `### Phases` section in doctor
+      Today only orphaned checkboxes are flagged, so nothing catches the
+      duplicate list the replacement rule exists to prevent.

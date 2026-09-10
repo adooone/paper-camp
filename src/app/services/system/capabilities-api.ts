@@ -9,12 +9,20 @@ import {
 } from '@/types/index';
 import { apiUrl } from '../api-base';
 
-export const fetchCapabilities = async (): Promise<CapabilityResult[] | null> => {
+export interface CapabilitiesPayload {
+  capabilities: CapabilityResult[];
+  version: string | null;
+}
+
+export const fetchCapabilitiesPayload = async (): Promise<CapabilitiesPayload | null> => {
   const response = await fetch(apiUrl('/api/capabilities'));
   if (!response.ok) return null;
-  const body = (await response.json()) as { capabilities: CapabilityResult[] };
-  return body.capabilities;
+  const body = (await response.json()) as { capabilities: CapabilityResult[]; version?: string };
+  return { capabilities: body.capabilities, version: body.version ?? null };
 };
+
+export const fetchCapabilities = async (): Promise<CapabilityResult[] | null> =>
+  (await fetchCapabilitiesPayload())?.capabilities ?? null;
 
 /**
  * The registry holds runtimes this client is not currently pointed at, so

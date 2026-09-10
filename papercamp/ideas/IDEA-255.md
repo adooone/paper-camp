@@ -1,2 +1,0 @@
-- [ ] Redraft the phases of an idea nothing has run yet
-      `DraftPlanButton` is offered only while an idea has no phases, and `buildPlanDraftPrompt` appends a `### Phases` list, so a plan drafted under the old 3–7 target cannot be redrawn to the 3–5 one without editing the file by hand. Keep the button on an idea whose phases are all unchecked, labelled *Redraft*, and have the prompt replace the existing unchecked list instead of appending; an idea with any checked phase keeps the button hidden, since its history is already running.

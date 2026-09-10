@@ -1,4 +1,4 @@
-import { fetchCapabilities } from '@/app/services/system';
+import { fetchCapabilitiesPayload } from '@/app/services/system';
 import type { DoctorFindingSummary } from '@/core/doctor';
 import type {
   BranchHygieneStatus,
@@ -47,6 +47,7 @@ export type StatusSlice = {
 
   // Empty until loaded; gating selectors treat empty as "unknown" and don't block on it.
   capabilities: CapabilityResult[];
+  runtimeVersion: string | null;
   loadCapabilities: () => Promise<void>;
 };
 
@@ -150,10 +151,11 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
     },
 
     capabilities: [],
+    runtimeVersion: null,
     loadCapabilities: loadSlice(
       set,
-      fetchCapabilities,
-      (data) => ({ capabilities: data ?? [] }),
+      fetchCapabilitiesPayload,
+      (data) => ({ capabilities: data?.capabilities ?? [], runtimeVersion: data?.version ?? null }),
       () => ({ capabilities: [] }),
     ),
   };

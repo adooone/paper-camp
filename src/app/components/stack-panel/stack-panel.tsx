@@ -2,6 +2,7 @@ import { useStackPanel } from '@/app/hooks/use-stack-panel';
 import { IconButton, Spinner } from '@dendelion/paper-ui';
 import { AgentSection } from './agent-section';
 import { DeskSection } from './desk-section';
+import { VersionFooter } from './version-footer';
 
 interface StackPanelProps {
   open: boolean;
@@ -80,6 +81,7 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
           <AgentSection />
           <DeskSection />
         </div>
+        <VersionFooter />
       </aside>
     </>
   );
