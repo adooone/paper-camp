@@ -65,8 +65,9 @@ panels within a route.
       run: 6m17s · 78 in · 26.5k out · sonnet-5
 - [x] List every known link in `paper-camp status`
       run: 8m50s · 112 in · 33k out · sonnet-5
-- [ ] Stamp running agents on hub project rows
+- [x] Stamp running agents on hub project rows
       `use-runtime-statuses.ts` also polls `/api/agent/status` and carries the task's plan title.
+      run: 7m38s · 152 in · 29.6k out · sonnet-5
 - [ ] Mark a busy mounted project on the machine card
 - [ ] Remember the last route visited under each project
 - [ ] Open a machine link into the remembered or only project

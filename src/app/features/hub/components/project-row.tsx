@@ -6,15 +6,22 @@ import type { ProjectActionsMenuProps } from '../actions/project-actions-menu';
 import { projectAddress, projectName } from '../helpers/project-row';
 import type { RuntimeStatus } from '../hooks';
 
-interface StatusStampProps {
+export interface StatusStampProps {
   status: RuntimeStatus | undefined;
 }
 
-function StatusStamp({ status }: StatusStampProps) {
+export function StatusStamp({ status }: StatusStampProps) {
   if (!status) {
     return (
       <Stamp size="small" variant="neutral">
         Checking…
+      </Stamp>
+    );
+  }
+  if (status.runningPlanTitle) {
+    return (
+      <Stamp size="small" variant="success">
+        Running: {status.runningPlanTitle}
       </Stamp>
     );
   }

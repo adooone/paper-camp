@@ -1,5 +1,6 @@
 import {
   type AgentAuthStatus,
+  type AgentTaskState,
   type CapabilityResult,
   type ConnectionResult,
   MACHINE_PROJECTS_PATH,
@@ -27,6 +28,22 @@ export const fetchRuntimeVersionAt = async (baseUrl: string): Promise<string | n
     if (!response.ok) return null;
     const body = (await response.json()) as { version?: string };
     return body.version ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * The registry holds runtimes this client is not currently pointed at, so
+ * the base URL is explicit rather than taken from `apiUrl` — same shape as
+ * `fetchRuntimeVersionAt` above, asking a specific runtime whether it has a
+ * task in flight rather than this client's own.
+ */
+export const fetchAgentStatusAt = async (baseUrl: string): Promise<AgentTaskState[] | null> => {
+  try {
+    const response = await fetch(`${baseUrl}/api/agent/status`);
+    if (!response.ok) return null;
+    return (await response.json()) as AgentTaskState[];
   } catch {
     return null;
   }
