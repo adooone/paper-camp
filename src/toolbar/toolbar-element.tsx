@@ -1,7 +1,7 @@
 import { setApiBase } from '@/app/services/api-base';
 import paperUiCss from '@dendelion/paper-ui/dist/index.css?raw';
 import { type Root, createRoot } from 'react-dom/client';
-import { ROUTE_ATTRIBUTE } from './route-attribute';
+import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID, scriptOrigin } from './route-attribute';
 import { Toolbar } from './toolbar';
 
 export const TOOLBAR_TAG_NAME = 'paper-camp-toolbar';
@@ -28,7 +28,10 @@ export class PaperCampToolbarElement extends HTMLElement {
   connectedCallback(): void {
     ensureFonts();
     const route = this.getAttribute(ROUTE_ATTRIBUTE);
-    if (route) setApiBase(route);
+    const origin = scriptOrigin(
+      document.getElementById(TOOLBAR_SCRIPT_ID) as HTMLScriptElement | null,
+    );
+    if (route) setApiBase(origin ? `${origin}${route}` : route);
     const shadow = this.shadowRoot ?? this.attachShadow({ mode: 'open' });
     shadow.replaceChildren();
     const hostStyle = document.createElement('style');
@@ -46,7 +49,7 @@ export class PaperCampToolbarElement extends HTMLElement {
     mountPoint.style.fontFamily = '"Cormorant Garamond", Georgia, serif';
     shadow.appendChild(mountPoint);
     this.#root = createRoot(mountPoint);
-    this.#root.render(<Toolbar route={route ?? undefined} />);
+    this.#root.render(<Toolbar route={route ?? undefined} origin={origin} />);
   }
 
   disconnectedCallback(): void {

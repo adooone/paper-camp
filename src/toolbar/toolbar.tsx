@@ -11,6 +11,7 @@ const DEFAULT_ROUTE = '/paper-camp';
 
 export interface ToolbarProps {
   route?: string;
+  origin?: string;
 }
 
 // Same link shape the `dev`/`daemon` banners print, with this app's own proxied
@@ -20,7 +21,7 @@ function hostedClientLink(pairing: PairingInfo, runtimeUrl: string, path: string
   return `${pairing.hostedClientUrl}${path}?${params}`;
 }
 
-export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
+export const Toolbar = ({ route: injectedRoute, origin }: ToolbarProps) => {
   const status = useStatusClient();
   const focusPlan = useFocusClient();
   const scout = useScoutClient();
@@ -35,7 +36,7 @@ export const Toolbar = ({ route: injectedRoute }: ToolbarProps) => {
     fetchPairingInfo().then(setPairing);
   }, []);
 
-  const runtimeUrl = `${window.location.origin}${route}`;
+  const runtimeUrl = `${origin ?? window.location.origin}${route}`;
   const deskPath = focusPlan ? `/plans/${encodeURIComponent(focusPlan.title)}` : '/';
   const deskUrl = pairing ? hostedClientLink(pairing, runtimeUrl, deskPath) : null;
   const changesUrl = pairing ? hostedClientLink(pairing, runtimeUrl, '/diff') : null;
