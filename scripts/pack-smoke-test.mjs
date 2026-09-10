@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtemp, readdir, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { createServer as createNetServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -46,11 +46,28 @@ async function stopProcess(child) {
   if (child.exitCode === null) child.kill('SIGKILL');
 }
 
+function runCli(entry, args, env, cwd) {
+  const result = spawnSync('node', [entry, ...args], {
+    cwd,
+    encoding: 'utf-8',
+    env: { ...process.env, ...env },
+    timeout: 25000,
+  });
+  if (result.error) throw result.error;
+  return result;
+}
+
 async function main() {
   const packDir = await mkdtemp(join(tmpdir(), 'paper-camp-pack-'));
   const extractDir = await mkdtemp(join(tmpdir(), 'paper-camp-extract-'));
-  let campServer;
-  let viteServer;
+  const configDir = await mkdtemp(join(tmpdir(), 'paper-camp-pack-config-'));
+  const projectDir = await mkdtemp(join(tmpdir(), 'paper-camp-pack-project-'));
+  const strangerDir = await mkdtemp(join(tmpdir(), 'paper-camp-pack-stranger-'));
+  const env = { PAPERCAMP_CONFIG_DIR: configDir };
+  process.env.PAPERCAMP_CONFIG_DIR = configDir;
+  let daemon;
+  let cliEntry;
+  const viteServers = [];
   try {
     const pack = spawnSync('pnpm', ['pack', '--pack-destination', packDir], {
       cwd: repoRoot,
@@ -74,65 +91,105 @@ async function main() {
       throw new Error('tarball contains dist/app — the runtime must ship no dashboard frontend');
     }
 
-    const campPort = await getFreePort();
-    campServer = spawn(
-      'node',
-      [join(packageDir, 'dist', 'cli', 'index.js'), 'dev', '--port', String(campPort)],
-      { cwd: extractDir, stdio: 'ignore' },
-    );
-    await waitForServer(`http://localhost:${campPort}/toolbar.js`, 10000);
+    cliEntry = join(packageDir, 'dist', 'cli', 'index.js');
+    const init = runCli(cliEntry, ['init'], env, projectDir);
+    if (init.status !== 0) throw new Error(`\`init\` failed:\n${init.stderr}`);
+    const ls = runCli(cliEntry, ['ls'], env, projectDir);
+    const slug = (ls.stdout.trim().split('\n')[0] ?? '').trim().split(/\s+/)[0];
+    if (!slug) throw new Error(`Could not find a slug in \`ls\` output:\n${ls.stdout}`);
+
+    const daemonPort = await getFreePort();
+    daemon = spawn('node', [cliEntry, 'daemon', '-p', String(daemonPort), '--no-auto-update'], {
+      cwd: projectDir,
+      env: { ...process.env, ...env },
+      stdio: 'ignore',
+    });
+    await waitForServer(`http://localhost:${daemonPort}/api/machine/projects`, 15000);
 
     const pluginPath = join(packageDir, 'dist', 'vite', 'index.js');
     const { paperCamp } = await import(pathToFileURL(pluginPath).href);
 
+    await writeFile(join(projectDir, 'index.html'), '<!doctype html><html><body></body></html>\n');
     const hostPort = await getFreePort();
-    viteServer = await createViteServer({
+    const host = await createViteServer({
       configFile: false,
-      root: extractDir,
+      root: projectDir,
       logLevel: 'silent',
-      plugins: [paperCamp({ port: campPort })],
+      plugins: [paperCamp()],
       server: { port: hostPort, strictPort: true },
     });
-    await viteServer.listen();
+    viteServers.push(host);
+    await host.listen();
 
-    const response = await fetch(`http://localhost:${hostPort}/paper-camp/toolbar.js`);
+    const mount = `/p/${slug}`;
+    const toolbarUrl = `http://localhost:${daemonPort}${mount}/toolbar.js`;
+    const html = await (await fetch(`http://localhost:${hostPort}/`)).text();
+    if (!html.includes(`src="${toolbarUrl}"`)) {
+      throw new Error(`host index.html lacks the toolbar script tag for ${toolbarUrl}:\n${html}`);
+    }
+    if (!html.includes(`data-route="${mount}"`)) {
+      throw new Error(`toolbar script tag lacks data-route="${mount}":\n${html}`);
+    }
+    console.log(`paperCamp() injected ${toolbarUrl} into a registered host app.`);
+
+    const origin = `http://localhost:${hostPort}`;
+    const response = await fetch(toolbarUrl, { headers: { Origin: origin } });
     const contentType = response.headers.get('content-type') ?? '';
     const body = await response.text();
-
     if (!response.ok) {
-      throw new Error(`/paper-camp/toolbar.js responded with status ${response.status}`);
+      throw new Error(`${toolbarUrl} responded with status ${response.status}`);
     }
     if (!contentType.includes('javascript')) {
-      throw new Error(
-        `/paper-camp/toolbar.js served content-type "${contentType}", expected JavaScript`,
-      );
+      throw new Error(`${toolbarUrl} served content-type "${contentType}", expected JavaScript`);
     }
     if (body.trimStart().startsWith('<!DOCTYPE') || body.trimStart().startsWith('<html')) {
+      throw new Error(`${toolbarUrl} served an HTML fallback instead of the toolbar bundle`);
+    }
+    if (response.headers.get('access-control-allow-origin') !== origin) {
       throw new Error(
-        '/paper-camp/toolbar.js served an HTML fallback instead of the toolbar bundle',
+        `${toolbarUrl} answered origin ${origin} with access-control-allow-origin "${response.headers.get('access-control-allow-origin')}"`,
       );
     }
+    console.log(
+      'The daemon served the toolbar bundle as JavaScript with CORS for the host origin.',
+    );
 
-    console.log('/paper-camp/toolbar.js served as JavaScript through a packed tarball.');
-
-    const bareResponse = await fetch(`http://localhost:${hostPort}/paper-camp`, {
-      redirect: 'manual',
-    });
-    if (bareResponse.status !== 308) {
-      throw new Error(`/paper-camp responded with status ${bareResponse.status}, expected 308`);
+    await writeFile(join(strangerDir, 'index.html'), '<!doctype html><html><body></body></html>\n');
+    const strangerPort = await getFreePort();
+    const notices = [];
+    const originalLog = console.log;
+    console.log = (...args) => notices.push(args.join(' '));
+    let stranger;
+    try {
+      stranger = await createViteServer({
+        configFile: false,
+        root: strangerDir,
+        logLevel: 'silent',
+        plugins: [paperCamp()],
+        server: { port: strangerPort, strictPort: true },
+      });
+      viteServers.push(stranger);
+      await stranger.listen();
+    } finally {
+      console.log = originalLog;
     }
-    if (bareResponse.headers.get('location') !== '/paper-camp/') {
+    const strangerHtml = await (await fetch(`http://localhost:${strangerPort}/`)).text();
+    if (strangerHtml.includes('toolbar.js')) {
+      throw new Error(`an unregistered host app received the toolbar script:\n${strangerHtml}`);
+    }
+    if (!notices.some((line) => line.includes('paper-camp: toolbar off'))) {
       throw new Error(
-        `/paper-camp redirected to "${bareResponse.headers.get('location')}", expected "/paper-camp/"`,
+        `an unregistered host app did not print the toolbar-off notice:\n${notices.join('\n')}`,
       );
     }
-
-    console.log('/paper-camp redirected to /paper-camp/ with a 308.');
+    console.log('An unregistered host app got the off notice and no script tag.');
   } finally {
-    if (viteServer) await viteServer.close();
-    await stopProcess(campServer);
-    await rm(packDir, { recursive: true, force: true });
-    await rm(extractDir, { recursive: true, force: true });
+    for (const server of viteServers) await server.close();
+    if (cliEntry) runCli(cliEntry, ['stop'], env, projectDir);
+    await stopProcess(daemon);
+    for (const dir of [packDir, extractDir, configDir, projectDir, strangerDir]) {
+      await rm(dir, { recursive: true, force: true });
+    }
   }
 }
 
