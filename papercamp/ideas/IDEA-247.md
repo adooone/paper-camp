@@ -65,7 +65,8 @@ still applies to `vite serve` only. Host apps that are not Vite.
 - [x] Resolve the daemon origin and slug in `paperCamp()`
       Match the Vite root against `projects.json`, read the port from `daemon.json`, keep `port` as a manual override.
       run: 5m13s · 46 in · 19.3k out · sonnet-5
-- [ ] Inject the script tag, or print the off notice
+- [x] Inject the script tag, or print the off notice
+      run: 5m59s · 58 in · 23.8k out · sonnet-5
 - [ ] Delete `src/vite/proxy.ts` and its mount rewriting
 - [ ] Read the origin from the script `src` in the toolbar bundle
 - [ ] Add the Toolbar settings section

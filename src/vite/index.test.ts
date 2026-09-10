@@ -1,28 +1,38 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID } from '../toolbar/route-attribute';
-import { CAMP_ROUTE, type PaperCampToolbarOptions, paperCamp } from './index';
-import { proxyToCampServer } from './proxy';
+import { resolveDaemonTarget } from './daemon-target';
+import { type PaperCampToolbarOptions, TOOLBAR_OFF_MESSAGE, paperCamp } from './index';
 
-vi.mock('./proxy', () => ({ proxyToCampServer: vi.fn() }));
+vi.mock('./daemon-target', () => ({ resolveDaemonTarget: vi.fn() }));
 
 interface FakeServer {
   config: { root: string; mode?: string };
-  middlewares: { use: ReturnType<typeof vi.fn> };
 }
 
-function configureServer(options: PaperCampToolbarOptions, server: FakeServer): Promise<void> {
-  const plugin = paperCamp(options);
+function configureServer(plugin: ReturnType<typeof paperCamp>, server: FakeServer): Promise<void> {
   return (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)(server);
 }
 
+function transformOf(plugin: ReturnType<typeof paperCamp>) {
+  return plugin.transformIndexHtml as (html: string) => string;
+}
+
+const HTML = '<html><body><div id="root"></div></body></html>';
+
 describe('paperCamp', () => {
   const dirs: string[] = [];
+  const resolveDaemonTargetMock = vi.mocked(resolveDaemonTarget);
 
   afterAll(async () => {
     await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
+  });
+
+  afterEach(() => {
+    resolveDaemonTargetMock.mockReset();
+    vi.restoreAllMocks();
   });
 
   async function makeRoot(config: unknown): Promise<string> {
@@ -37,171 +47,67 @@ describe('paperCamp', () => {
     expect(paperCamp().apply).toBe('serve');
   });
 
-  it('injects a toolbar script tag before </body>', () => {
+  it('injects a script tag pointing straight at the daemon origin and slug mount', async () => {
+    const root = await makeRoot({});
+    resolveDaemonTargetMock.mockResolvedValue({ origin: 'http://localhost:4333', slug: 'demo' });
     const plugin = paperCamp();
-    const transform = plugin.transformIndexHtml as (html: string) => string;
-    const html = transform('<html><body><div id="root"></div></body></html>');
-    expect(html).toContain(
-      `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="${CAMP_ROUTE}" src="${CAMP_ROUTE}/toolbar.js"></script></body>`,
+
+    await configureServer(plugin, { config: { root } });
+
+    expect(transformOf(plugin)(HTML)).toContain(
+      `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="/p/demo" src="http://localhost:4333/p/demo/toolbar.js"></script>`,
     );
   });
 
-  it('proxies to the port from papercamp/config.json', async () => {
-    const root = await makeRoot({ port: 4242 });
-    const use = vi.fn();
-    await configureServer({}, { config: { root }, middlewares: { use } });
+  it('passes the port option through to resolveDaemonTarget as the manual override', async () => {
+    const root = await makeRoot({});
+    resolveDaemonTargetMock.mockResolvedValue({ origin: 'http://localhost:9999', slug: 'demo' });
+    const plugin = paperCamp({ port: 9999 });
 
-    expect(use).toHaveBeenCalledWith(CAMP_ROUTE, expect.any(Function));
-    const middleware = use.mock.calls[1][1] as (req: unknown, res: unknown) => void;
-    const req = {};
-    const res = {};
-    middleware(req, res);
-    expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 4242, mount: CAMP_ROUTE });
+    await configureServer(plugin, { config: { root } });
+
+    expect(resolveDaemonTargetMock).toHaveBeenCalledWith(root, 9999);
   });
 
-  it('prefers an explicit port option over config.json', async () => {
-    const root = await makeRoot({ port: 4242 });
-    const use = vi.fn();
-    await configureServer({ port: 9999 }, { config: { root }, middlewares: { use } });
-
-    const middleware = use.mock.calls[1][1] as (req: unknown, res: unknown) => void;
-    const req = {};
-    const res = {};
-    middleware(req, res);
-    expect(proxyToCampServer).toHaveBeenCalledWith(req, res, { port: 9999, mount: CAMP_ROUTE });
-  });
-
-  it('redirects the bare mount path to the slash form with a 308', async () => {
-    const root = await makeRoot({ port: 4242 });
-    const use = vi.fn();
-    await configureServer({}, { config: { root }, middlewares: { use } });
-
-    const redirect = use.mock.calls[0][0] as (
-      req: { url: string },
-      res: {
-        statusCode: number;
-        setHeader: ReturnType<typeof vi.fn>;
-        end: ReturnType<typeof vi.fn>;
-      },
-      next: ReturnType<typeof vi.fn>,
-    ) => void;
-    const res = { statusCode: 200, setHeader: vi.fn(), end: vi.fn() };
-    redirect({ url: CAMP_ROUTE }, res, vi.fn());
-    expect(res.statusCode).toBe(308);
-    expect(res.setHeader).toHaveBeenCalledWith('Location', `${CAMP_ROUTE}/`);
-    expect(res.end).toHaveBeenCalled();
-  });
-
-  it('preserves the query string when redirecting the bare mount path', async () => {
-    const root = await makeRoot({ port: 4242 });
-    const use = vi.fn();
-    await configureServer({}, { config: { root }, middlewares: { use } });
-
-    const redirect = use.mock.calls[0][0] as (
-      req: { url: string },
-      res: {
-        statusCode: number;
-        setHeader: ReturnType<typeof vi.fn>;
-        end: ReturnType<typeof vi.fn>;
-      },
-      next: ReturnType<typeof vi.fn>,
-    ) => void;
-    const res = { statusCode: 200, setHeader: vi.fn(), end: vi.fn() };
-    redirect({ url: `${CAMP_ROUTE}?foo=bar` }, res, vi.fn());
-    expect(res.setHeader).toHaveBeenCalledWith('Location', `${CAMP_ROUTE}/?foo=bar`);
-  });
-
-  it('passes through to the next middleware for non-bare paths', async () => {
-    const root = await makeRoot({ port: 4242 });
-    const use = vi.fn();
-    await configureServer({}, { config: { root }, middlewares: { use } });
-
-    const redirect = use.mock.calls[0][0] as (
-      req: { url: string },
-      res: unknown,
-      next: ReturnType<typeof vi.fn>,
-    ) => void;
-    const next = vi.fn();
-    redirect({ url: `${CAMP_ROUTE}/toolbar.js` }, {}, next);
-    expect(next).toHaveBeenCalled();
-  });
-
-  it('skips the proxy middleware and script injection when integration.toolbar.enabled is false', async () => {
-    const root = await makeRoot({ port: 4242, integration: { toolbar: { enabled: false } } });
-    const use = vi.fn();
+  it('prints the off notice and injects nothing when the daemon target cannot be resolved', async () => {
+    const root = await makeRoot({});
+    resolveDaemonTargetMock.mockResolvedValue(undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const plugin = paperCamp();
-    await (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)({
-      config: { root },
-      middlewares: { use },
-    });
 
-    expect(use).not.toHaveBeenCalled();
-    const transform = plugin.transformIndexHtml as (html: string) => string;
-    const html = transform('<html><body><div id="root"></div></body></html>');
-    expect(html).not.toContain('toolbar.js');
+    await configureServer(plugin, { config: { root } });
+
+    expect(log).toHaveBeenCalledWith(TOOLBAR_OFF_MESSAGE);
+    expect(transformOf(plugin)(HTML)).toBe(HTML);
   });
 
-  it('skips the proxy middleware and script injection when mode is production', async () => {
-    const root = await makeRoot({ port: 4242 });
-    const use = vi.fn();
+  it('skips resolution and injects nothing when integration.toolbar.enabled is false', async () => {
+    const root = await makeRoot({ integration: { toolbar: { enabled: false } } });
     const plugin = paperCamp();
-    await (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)({
-      config: { root, mode: 'production' },
-      middlewares: { use },
-    });
 
-    expect(use).not.toHaveBeenCalled();
-    const transform = plugin.transformIndexHtml as (html: string) => string;
-    const html = transform('<html><body><div id="root"></div></body></html>');
-    expect(html).not.toContain('toolbar.js');
+    await configureServer(plugin, { config: { root } });
+
+    expect(resolveDaemonTargetMock).not.toHaveBeenCalled();
+    expect(transformOf(plugin)(HTML)).toBe(HTML);
   });
 
-  it('mounts the proxy and injects the script at a configured integration.route', async () => {
-    const root = await makeRoot({ port: 4242, integration: { route: '/__toolbar' } });
-    const use = vi.fn();
+  it('skips resolution and injects nothing when mode is production', async () => {
+    const root = await makeRoot({});
     const plugin = paperCamp();
-    await (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)({
-      config: { root },
-      middlewares: { use },
-    });
 
-    expect(use).toHaveBeenCalledWith('/__toolbar', expect.any(Function));
-    const transform = plugin.transformIndexHtml as (html: string) => string;
-    const html = transform('<html><body><div id="root"></div></body></html>');
-    expect(html).toContain(
-      `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="/__toolbar" src="/__toolbar/toolbar.js"></script></body>`,
-    );
+    await configureServer(plugin, { config: { root, mode: 'production' } });
+
+    expect(resolveDaemonTargetMock).not.toHaveBeenCalled();
+    expect(transformOf(plugin)(HTML)).toBe(HTML);
   });
 
-  it('still honors the legacy /__camp route when pinned in an existing config', async () => {
-    const root = await makeRoot({ port: 4242, integration: { route: '/__camp' } });
-    const use = vi.fn();
+  it('resolves normally in production mode when integration.toolbar.allowProduction is true', async () => {
+    const root = await makeRoot({ integration: { toolbar: { allowProduction: true } } });
+    resolveDaemonTargetMock.mockResolvedValue({ origin: 'http://localhost:4333', slug: 'demo' });
     const plugin = paperCamp();
-    await (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)({
-      config: { root },
-      middlewares: { use },
-    });
 
-    expect(use).toHaveBeenCalledWith('/__camp', expect.any(Function));
-    const transform = plugin.transformIndexHtml as (html: string) => string;
-    const html = transform('<html><body><div id="root"></div></body></html>');
-    expect(html).toContain(
-      `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="/__camp" src="/__camp/toolbar.js"></script></body>`,
-    );
-  });
+    await configureServer(plugin, { config: { root, mode: 'production' } });
 
-  it('stays enabled in production mode when integration.toolbar.allowProduction is true', async () => {
-    const root = await makeRoot({
-      port: 4242,
-      integration: { toolbar: { allowProduction: true } },
-    });
-    const use = vi.fn();
-    const plugin = paperCamp();
-    await (plugin.configureServer as unknown as (server: FakeServer) => Promise<void>)({
-      config: { root, mode: 'production' },
-      middlewares: { use },
-    });
-
-    expect(use).toHaveBeenCalledWith(CAMP_ROUTE, expect.any(Function));
+    expect(resolveDaemonTargetMock).toHaveBeenCalledWith(root, undefined);
   });
 });
