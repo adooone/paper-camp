@@ -132,7 +132,8 @@ reboot, which is [[IDEA-233]]'s later concern.
 - [x] Report findings as night suggestions
       Write confirmed findings to `papercamp/suggestions.md` with `source: night`, drop overlaps, expire stale ones on read, and log each pass as `night-review`.
       run: 20m56s · 276 in · 89.5k out · sonnet-5
-- [ ] Surface the night report on the Ideas page
+- [x] Surface the night report on the Ideas page
       A dated *Night report* group above every other group, night and severity stamps, and a shell banner for critical findings.
+      run: 27m34s · 366 in · 98.3k out · sonnet-5
 - [ ] Add the Settings controls
       The per-project toggle, the check list with custom checks, `defaultAgents.nightShift`, *Pause tonight*, and *Run a pass now*.

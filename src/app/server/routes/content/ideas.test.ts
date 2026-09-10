@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { parseEntityFile } from '@/core/parse';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { RouteContext } from '../types';
 import { ideaRoutes } from './ideas';
@@ -80,6 +81,98 @@ describe('POST /api/ideas', () => {
     const content = await readFile(join(root, 'papercamp', 'ideas', `${id}.md`), 'utf-8');
     expect(content).toContain('kind: board');
     expect(content).toContain('status: idea');
+  });
+});
+
+const NIGHT_FINDING_LINE =
+  '- night: 2026-09-10 | check=bugs | chunk=src/core | file=src/core/a.ts | line=12 | commit=abc1234 | severity=high | Off-by-one in the turn counter.';
+
+async function writeSuggestions(root: string, content: string): Promise<void> {
+  await writeFile(join(root, 'papercamp', 'suggestions.md'), content, 'utf-8');
+}
+
+const NIGHT_FINDING = {
+  date: '2026-09-10',
+  check: 'bugs',
+  chunk: 'src/core',
+  file: 'src/core/a.ts',
+  line: 12,
+  commit: 'abc1234',
+  severity: 'high' as const,
+  message: 'Off-by-one in the turn counter.',
+};
+
+describe('POST /api/night-findings/promote', () => {
+  it('removes the finding line and mints an idea from its fields', async () => {
+    const root = await makeRoot();
+    await writeSuggestions(root, `## Night findings\n${NIGHT_FINDING_LINE}\n`);
+
+    const { res, status, json } = fakeRes();
+    await route(root, 'POST', '/api/night-findings/promote').handle(
+      fakeReq(JSON.stringify({ finding: NIGHT_FINDING })),
+      res,
+    );
+
+    expect(status()).toBe(201);
+    const { id } = json() as { id: string };
+    const idea = await readFile(join(root, 'papercamp', 'ideas', `${id}.md`), 'utf-8');
+    const parsed = parseEntityFile(idea).entries[0];
+    expect(parsed?.title).toBe('bugs: a.ts');
+    expect(parsed?.body).toContain('Off-by-one in the turn counter.');
+    expect(parsed?.body).toContain('src/core/a.ts:12');
+
+    const suggestions = await readFile(join(root, 'papercamp', 'suggestions.md'), 'utf-8');
+    expect(suggestions).not.toContain('night:');
+  });
+
+  it('rejects a missing finding', async () => {
+    const root = await makeRoot();
+    const { res, status } = fakeRes();
+    await route(root, 'POST', '/api/night-findings/promote').handle(fakeReq('{}'), res);
+    expect(status()).toBe(400);
+  });
+
+  it('404s when the finding line is not found', async () => {
+    const root = await makeRoot();
+    await writeSuggestions(root, '## Night findings\n');
+    const { res, status } = fakeRes();
+    await route(root, 'POST', '/api/night-findings/promote').handle(
+      fakeReq(JSON.stringify({ finding: NIGHT_FINDING })),
+      res,
+    );
+    expect(status()).toBe(404);
+  });
+});
+
+describe('POST /api/night-findings/dismiss', () => {
+  it('removes the finding line without minting an idea', async () => {
+    const root = await makeRoot();
+    await writeSuggestions(
+      root,
+      `## Night findings\n${NIGHT_FINDING_LINE}\n- night: 2026-09-10 | check=bugs | chunk=src/core | file=src/core/b.ts | line=- | commit=abc1234 | severity=normal | Another finding.\n`,
+    );
+
+    const { res, status } = fakeRes();
+    await route(root, 'POST', '/api/night-findings/dismiss').handle(
+      fakeReq(JSON.stringify({ finding: NIGHT_FINDING })),
+      res,
+    );
+
+    expect(status()).toBe(200);
+    const suggestions = await readFile(join(root, 'papercamp', 'suggestions.md'), 'utf-8');
+    expect(suggestions).not.toContain('src/core/a.ts');
+    expect(suggestions).toContain('src/core/b.ts');
+  });
+
+  it('404s when the finding line is not found', async () => {
+    const root = await makeRoot();
+    await writeSuggestions(root, '## Night findings\n');
+    const { res, status } = fakeRes();
+    await route(root, 'POST', '/api/night-findings/dismiss').handle(
+      fakeReq(JSON.stringify({ finding: NIGHT_FINDING })),
+      res,
+    );
+    expect(status()).toBe(404);
   });
 });
 

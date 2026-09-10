@@ -1,6 +1,8 @@
 import type { DoctorFindingSummary } from '@/core/doctor';
 import type {
   ConsistencyIssue,
+  NightReportGroup,
+  NightSuggestionEntry,
   ResolvedRoadmap,
   RoadmapItem,
   SuggestionEntry,
@@ -58,6 +60,36 @@ export const dismissSuggestion = async (suggestion: SuggestionEntry) => {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Failed to dismiss suggestion' }));
+    throw new Error(err.error);
+  }
+};
+
+export const fetchNightReport = async () => {
+  const res = await fetch(apiUrl('/api/night-findings'));
+  return res.json() as Promise<{ groups: NightReportGroup[] }>;
+};
+
+export const promoteNightFinding = async (finding: NightSuggestionEntry) => {
+  const res = await fetch(apiUrl('/api/night-findings/promote'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ finding }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to promote finding' }));
+    throw new Error(err.error);
+  }
+  return res.json() as Promise<{ ok: boolean; id: string }>;
+};
+
+export const dismissNightFinding = async (finding: NightSuggestionEntry) => {
+  const res = await fetch(apiUrl('/api/night-findings/dismiss'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ finding }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to dismiss finding' }));
     throw new Error(err.error);
   }
 };

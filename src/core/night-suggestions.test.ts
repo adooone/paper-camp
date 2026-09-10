@@ -3,14 +3,16 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import type { NightFinding, NightSuggestionEntry } from '../types/index';
+import type { NightFinding, NightSuggestionEntry, TaskLogEntry } from '../types/index';
 import {
   NIGHT_FINDINGS_HEADING,
   appendNightFindings,
+  buildNightReportGroups,
   dropOverlappingFindings,
   isOverlappingFinding,
   parseNightFindings,
   readNightFindings,
+  removeNightFindingLine,
 } from './night-suggestions';
 
 function entry(overrides: Partial<NightSuggestionEntry> = {}): NightSuggestionEntry {
@@ -121,6 +123,92 @@ describe('isOverlappingFinding / dropOverlappingFindings', () => {
     const dup = finding();
     const earlier = [entry({ file: 'src/core/a.ts', message: finding().message })];
     expect(dropOverlappingFindings([clean, dup], [], earlier)).toEqual([clean]);
+  });
+});
+
+describe('removeNightFindingLine', () => {
+  it('removes the one matching line and leaves the rest of the file intact', () => {
+    const written = appendNightFindings('some preamble\n', [
+      entry({ file: 'src/core/a.ts' }),
+      entry({ file: 'src/core/b.ts' }),
+    ]);
+    const updated = removeNightFindingLine(written, entry({ file: 'src/core/a.ts' }));
+    expect(updated).toContain('some preamble');
+    expect(parseNightFindings(updated)).toEqual([entry({ file: 'src/core/b.ts' })]);
+  });
+
+  it('is a no-op when no line matches', () => {
+    const written = appendNightFindings('', [entry()]);
+    const updated = removeNightFindingLine(written, entry({ file: 'src/core/other.ts' }));
+    expect(updated).toBe(written);
+  });
+
+  it('does not remove a plain suggestion line even with a coincidentally matching date', () => {
+    const markdown = '- 2026-09-10: Some idea — a plain suggestion\n';
+    expect(removeNightFindingLine(markdown, entry())).toBe(markdown);
+  });
+});
+
+describe('buildNightReportGroups', () => {
+  function nightReviewEntry(overrides: Partial<TaskLogEntry> = {}): TaskLogEntry {
+    return {
+      id: 'x',
+      taskKind: 'night-review',
+      planTitle: 'src/core · bugs',
+      agentId: 'claude-code',
+      startedAt: '2026-09-10T02:00:00.000Z',
+      endedAt: '2026-09-10T02:01:00.000Z',
+      outcome: 'done',
+      usage: {
+        durationMs: 60_000,
+        numTurns: 4,
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheCreationTokens: 0,
+        cacheReadTokens: 0,
+        costUsd: 0.12,
+      },
+      ...overrides,
+    };
+  }
+
+  it('groups findings and passes by date, summing cost and counting passes', () => {
+    const groups = buildNightReportGroups(
+      [entry({ date: '2026-09-10' })],
+      [
+        nightReviewEntry({ id: '1' }),
+        nightReviewEntry({ id: '2', usage: { ...nightReviewEntry().usage!, costUsd: 0.08 } }),
+      ],
+    );
+    expect(groups).toEqual([
+      {
+        date: '2026-09-10',
+        passCount: 2,
+        costUsd: 0.2,
+        findings: [entry({ date: '2026-09-10' })],
+      },
+    ]);
+  });
+
+  it('includes a date with passes but no confirmed findings', () => {
+    const groups = buildNightReportGroups([], [nightReviewEntry()]);
+    expect(groups).toEqual([{ date: '2026-09-10', passCount: 1, costUsd: 0.12, findings: [] }]);
+  });
+
+  it('ignores task log entries of other kinds', () => {
+    const groups = buildNightReportGroups(
+      [],
+      [nightReviewEntry({ taskKind: 'phase' }), nightReviewEntry({ taskKind: 'audit' })],
+    );
+    expect(groups).toEqual([]);
+  });
+
+  it('sorts groups by date, most recent first', () => {
+    const groups = buildNightReportGroups(
+      [entry({ date: '2026-09-08' }), entry({ date: '2026-09-10' })],
+      [],
+    );
+    expect(groups.map((g) => g.date)).toEqual(['2026-09-10', '2026-09-08']);
   });
 });
 

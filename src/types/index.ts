@@ -805,6 +805,13 @@ export interface NightSuggestionEntry {
   message: string;
 }
 
+export interface NightReportGroup {
+  date: string;
+  passCount: number;
+  costUsd: number;
+  findings: NightSuggestionEntry[];
+}
+
 export type NightGateBlockReason =
   | 'dashboard-active'
   | 'task-running'

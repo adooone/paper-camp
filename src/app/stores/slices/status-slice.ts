@@ -65,6 +65,7 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
           get().loadIdeas(),
           get().loadArchivableIdeas(),
           get().loadSuggestions(),
+          get().loadNightReport(),
           get().loadStatus(),
           get().loadConsistency(),
           get().loadDoctor(),

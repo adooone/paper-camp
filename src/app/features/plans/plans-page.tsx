@@ -4,11 +4,12 @@ import type { PlanEntry } from '@/types/index';
 import { Card } from '@dendelion/paper-ui';
 import { selectWorklistRows } from './helpers';
 import { usePlansPage } from './hooks';
-import { PromoteSuggestionModal } from './modals';
+import { PromoteNightFindingModal, PromoteSuggestionModal } from './modals';
 import {
   ArchiveSection,
   EntityDetail,
   ListView,
+  NightReportSection,
   NoteDetail,
   PlansHeader,
   PlansListSkeleton,
@@ -22,6 +23,7 @@ export const PlansPage = () => {
     plansError,
     ideaEntries,
     suggestions,
+    nightReport,
     planFilters,
     activePlan,
     activeIdea,
@@ -29,11 +31,14 @@ export const PlansPage = () => {
     ideaId,
     openSuggestion,
     setOpenSuggestion,
+    openNightFinding,
+    setOpenNightFinding,
     handleBack,
     handleOpenPlan,
     handleOpenIdea,
     handleOpenArchivable,
     handleDismissSuggestion,
+    handleDismissNightFinding,
   } = usePlansPage();
 
   if (plansError) {
@@ -89,6 +94,12 @@ export const PlansPage = () => {
         <div>
           <PlansHeader showGroupingToggle={plans.entries.length > 0} />
 
+          <NightReportSection
+            groups={nightReport}
+            onOpen={setOpenNightFinding}
+            onDismiss={handleDismissNightFinding}
+          />
+
           {plans.warnings.length > 0 && (
             <Card size="small" accent accentColor="amber">
               <p className="m-0 font-semibold">Some entries couldn't be parsed</p>
@@ -132,6 +143,11 @@ export const PlansPage = () => {
           <PromoteSuggestionModal
             suggestion={openSuggestion}
             onClose={() => setOpenSuggestion(null)}
+          />
+
+          <PromoteNightFindingModal
+            finding={openNightFinding}
+            onClose={() => setOpenNightFinding(null)}
           />
         </div>
       )}

@@ -1,4 +1,5 @@
 import {
+  NightCriticalBanner,
   ProjectSwitcher,
   RowSkeleton,
   RuntimeChecking,
@@ -113,6 +114,7 @@ export const AppShell = () => {
             width so the parchment passes under the panel instead of stopping at it. */}
         <div className="shrink-0 min-[1199px]:pr-[var(--pc-stack-width)]">
           <ServerReloadBanner />
+          <NightCriticalBanner />
           {/* Full-bleed app bar: identity at the left edge, nav at the right, spanning
               the sidebar and the sheet instead of sitting inside the content column. */}
           <header

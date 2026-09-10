@@ -6,6 +6,7 @@ export { EmptyState } from './empty-state';
 export { LinkButton } from './link-button';
 export { Markdown } from './markdown';
 export { StackPanel } from './stack-panel';
+export { NightCriticalBanner } from './layout/night-critical-banner';
 export { ProjectIdentityHeader } from './layout/project-identity-header';
 export { ProjectSwitcher } from './layout/project-switcher';
 export { RowSkeleton } from './layout/row-skeleton';
