@@ -1,4 +1,4 @@
-import type { Plugin, ViteDevServer } from 'vite';
+import type { HtmlTagDescriptor, Plugin, ViteDevServer } from 'vite';
 import { readConfigIntegration } from '../cli/dev-port';
 import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID } from '../toolbar/route-attribute';
 import { resolveDaemonTarget } from './daemon-target';
@@ -11,7 +11,7 @@ export interface PaperCampToolbarOptions {
 }
 
 export function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
-  let scriptTag: string | undefined;
+  let scriptTag: HtmlTagDescriptor | undefined;
 
   return {
     name: 'paper-camp-toolbar',
@@ -30,11 +30,20 @@ export function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
       }
 
       const mount = `/p/${target.slug}`;
-      scriptTag = `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="${mount}" src="${target.origin}${mount}/toolbar.js"></script>`;
+      scriptTag = {
+        tag: 'script',
+        attrs: {
+          type: 'module',
+          id: TOOLBAR_SCRIPT_ID,
+          [ROUTE_ATTRIBUTE]: mount,
+          src: `${target.origin}${mount}/toolbar.js`,
+        },
+        injectTo: 'body',
+      };
     },
     transformIndexHtml(html: string) {
       if (!scriptTag) return html;
-      return html.replace('</body>', `${scriptTag}</body>`);
+      return { html, tags: [scriptTag] };
     },
   };
 }

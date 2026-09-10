@@ -1,19 +1,10 @@
 import { RowSkeleton } from '@/app/components';
-import { Alert, Button, Card, Divider, Input, Stamp, Switch, Tooltip } from '@dendelion/paper-ui';
+import { Alert, Button, Card, Divider, Stamp, Switch, Tooltip } from '@dendelion/paper-ui';
 import { useToolbarSection } from '../hooks';
 
 export const ToolbarSection = () => {
-  const {
-    config,
-    hostState,
-    routeInput,
-    setRouteInput,
-    handleToggleEnabled,
-    handleSaveRoute,
-    handleInstall,
-    installRunning,
-    hasAgent,
-  } = useToolbarSection();
+  const { config, hostState, handleToggleEnabled, handleInstall, installRunning, hasAgent } =
+    useToolbarSection();
 
   const needsInstall = Boolean(
     hostState?.viteConfigPath && (!hostState.importsPlugin || !hostState.isDependency),
@@ -47,17 +38,6 @@ export const ToolbarSection = () => {
             <Switch
               checked={config.integration?.toolbar?.enabled ?? true}
               onChange={handleToggleEnabled}
-            />
-          </div>
-          <Divider />
-
-          <div className="flex items-end gap-3 pb-3 pt-3">
-            <Input
-              value={routeInput}
-              onChange={(e) => setRouteInput(e.target.value)}
-              onBlur={handleSaveRoute}
-              label="Route"
-              placeholder="/paper-camp"
             />
           </div>
           <Divider />

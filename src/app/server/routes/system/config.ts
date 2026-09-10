@@ -61,7 +61,6 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           setupDismissed?: boolean;
           integration?: {
             toolbar?: { enabled?: unknown; segments?: unknown; allowProduction?: unknown };
-            route?: unknown;
           };
           desk?: unknown;
         };
@@ -150,13 +149,6 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
             return;
           }
         }
-        if (
-          integration?.route !== undefined &&
-          (typeof integration.route !== 'string' || !integration.route.startsWith('/'))
-        ) {
-          sendJson(res, 400, { error: 'integration.route must be a path starting with /' });
-          return;
-        }
         const deskProvided = desk !== undefined;
         const deskResult = deskProvided ? deskConfigSchema.safeParse(desk) : undefined;
         if (deskResult && !deskResult.success) {
@@ -214,7 +206,6 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
                   }),
                 },
               }),
-              ...(integration.route !== undefined && { route: integration.route as string }),
             }
           : undefined;
         const updated: PaperCampConfig = {

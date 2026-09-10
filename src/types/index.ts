@@ -585,7 +585,6 @@ export interface IntegrationToolbarConfig {
 
 export interface IntegrationConfig {
   toolbar?: IntegrationToolbarConfig;
-  route?: string;
 }
 
 /** Deterministic read of the frontend service's Vite setup, for Settings > Toolbar

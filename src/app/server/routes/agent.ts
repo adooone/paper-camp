@@ -12,6 +12,7 @@ import { detectPackageManager } from '@/core/desk-discovery/evidence';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
+import { PAPER_CAMP_VERSION } from '@/core/scaffold';
 import {
   agentThreadMessage,
   assignEntityId,
@@ -486,6 +487,7 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         const prompt = buildInstallToolbarPrompt(
           hostState.viteConfigPath,
           detectPackageManager(root),
+          PAPER_CAMP_VERSION,
         );
         return agent.startInstallToolbar(prompt);
       },

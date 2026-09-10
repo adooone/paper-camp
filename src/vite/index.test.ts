@@ -17,7 +17,7 @@ function configureServer(plugin: ReturnType<typeof paperCamp>, server: FakeServe
 }
 
 function transformOf(plugin: ReturnType<typeof paperCamp>) {
-  return plugin.transformIndexHtml as (html: string) => string;
+  return plugin.transformIndexHtml as (html: string) => string | { html: string; tags: unknown[] };
 }
 
 const HTML = '<html><body><div id="root"></div></body></html>';
@@ -54,9 +54,34 @@ describe('paperCamp', () => {
 
     await configureServer(plugin, { config: { root } });
 
-    expect(transformOf(plugin)(HTML)).toContain(
-      `<script type="module" id="${TOOLBAR_SCRIPT_ID}" ${ROUTE_ATTRIBUTE}="/p/demo" src="http://localhost:4333/p/demo/toolbar.js"></script>`,
-    );
+    expect(transformOf(plugin)(HTML)).toEqual({
+      html: HTML,
+      tags: [
+        {
+          tag: 'script',
+          attrs: {
+            type: 'module',
+            id: TOOLBAR_SCRIPT_ID,
+            [ROUTE_ATTRIBUTE]: '/p/demo',
+            src: 'http://localhost:4333/p/demo/toolbar.js',
+          },
+          injectTo: 'body',
+        },
+      ],
+    });
+  });
+
+  it('injects the tag even when the index has no </body>', async () => {
+    const root = await makeRoot({});
+    resolveDaemonTargetMock.mockResolvedValue({ origin: 'http://localhost:4333', slug: 'demo' });
+    const plugin = paperCamp();
+    const bodylessHtml = '<html><div id="root"></div></html>';
+
+    await configureServer(plugin, { config: { root } });
+
+    const result = transformOf(plugin)(bodylessHtml) as { html: string; tags: unknown[] };
+    expect(result.html).toBe(bodylessHtml);
+    expect(result.tags).toHaveLength(1);
   });
 
   it('passes the port option through to resolveDaemonTarget as the manual override', async () => {

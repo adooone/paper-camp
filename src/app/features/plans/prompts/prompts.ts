@@ -39,11 +39,11 @@ You are headless with no browser or display. Verify only with terminal commands 
 If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`NEEDS-DECISION:\` followed by your question, then stop without committing.`;
 }
 
-const INSTALL_COMMANDS: Record<PackageManager, string> = {
-  npm: 'npm install --save-dev @dendelion/paper-camp',
-  pnpm: 'pnpm add -D @dendelion/paper-camp',
-  yarn: 'yarn add -D @dendelion/paper-camp',
-  bun: 'bun add -d @dendelion/paper-camp',
+const LOCKFILE_INSTALL_COMMANDS: Record<PackageManager, string> = {
+  npm: 'npm install',
+  pnpm: 'pnpm install',
+  yarn: 'yarn install',
+  bun: 'bun install',
 };
 
 // Settings > Toolbar's "Install toolbar" action (IDEA-247) — no plan/idea file to
@@ -51,12 +51,16 @@ const INSTALL_COMMANDS: Record<PackageManager, string> = {
 export function buildInstallToolbarPrompt(
   viteConfigPath: string,
   packageManager: PackageManager | null,
+  pluginVersion: string,
 ): string {
-  const installCmd = INSTALL_COMMANDS[packageManager ?? 'npm'];
+  const installCmd = LOCKFILE_INSTALL_COMMANDS[packageManager ?? 'npm'];
+  const slashIndex = viteConfigPath.lastIndexOf('/');
+  const packageJsonPath =
+    slashIndex === -1 ? 'package.json' : `${viteConfigPath.slice(0, slashIndex)}/package.json`;
 
   return `You are wiring up paper-camp's in-app dev toolbar for this project, from its Settings > Toolbar section.
 
-Add \`@dendelion/paper-camp\` as a dev dependency: \`${installCmd}\`.
+Add \`"@dendelion/paper-camp": "^${pluginVersion}"\` to \`devDependencies\` in \`${packageJsonPath}\` (create \`devDependencies\` if the file has none) — edit the file directly rather than running the package manager's add command, since this task's shell allowlist may not permit it. Then run \`${installCmd}\` to update the lockfile; the dependency is recorded in \`${packageJsonPath}\` even if that command is refused.
 
 Then in \`${viteConfigPath}\`, import the plugin and add its call to the Vite \`plugins\` array (create the array if the config has none):
 

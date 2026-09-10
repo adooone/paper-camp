@@ -2,7 +2,6 @@ import { useFocusClient } from '@/app/hooks/use-focus-client';
 import { useScoutClient } from '@/app/hooks/use-scout-client';
 import { useStatusClient } from '@/app/hooks/use-status-client';
 import { type PairingInfo, fetchPairingInfo } from '@/app/services/pairing-api';
-import { fetchConfig } from '@/app/services/system';
 import { useEffect, useState } from 'react';
 import { ScoutCard } from './scout/scout-card';
 import { ScoutTrigger } from './scout/scout-trigger';
@@ -25,14 +24,10 @@ export const Toolbar = ({ route: injectedRoute, origin }: ToolbarProps) => {
   const status = useStatusClient();
   const focusPlan = useFocusClient();
   const scout = useScoutClient();
-  const [route, setRoute] = useState(injectedRoute ?? DEFAULT_ROUTE);
+  const route = injectedRoute ?? DEFAULT_ROUTE;
   const [pairing, setPairing] = useState<PairingInfo | null>(null);
 
   useEffect(() => {
-    fetchConfig().then((config) => {
-      const configuredRoute = config?.integration?.route;
-      if (configuredRoute) setRoute(configuredRoute);
-    });
     fetchPairingInfo().then(setPairing);
   }, []);
 

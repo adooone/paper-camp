@@ -7,7 +7,6 @@ import { useEffect, useState } from 'react';
 export const useToolbarSection = () => {
   const [config, setConfig] = useState<PaperCampConfig | null | undefined>(undefined);
   const [hostState, setHostState] = useState<ToolbarHostState | null | undefined>(undefined);
-  const [routeInput, setRouteInput] = useState('');
   const [installing, setInstalling] = useState(false);
   const { toast } = useToast();
 
@@ -18,10 +17,7 @@ export const useToolbarSection = () => {
   );
 
   useEffect(() => {
-    fetchConfig().then((c) => {
-      setConfig(c);
-      setRouteInput(c?.integration?.route ?? '');
-    });
+    fetchConfig().then(setConfig);
     fetchToolbarHostState().then(setHostState);
   }, []);
 
@@ -38,23 +34,6 @@ export const useToolbarSection = () => {
       ...config.integration,
       toolbar: { ...config.integration?.toolbar, enabled: next },
     };
-    const { ok, error } = await saveConfig({ integration });
-    if (ok) {
-      setConfig((prev) => (prev ? { ...prev, integration } : prev));
-      toast({ title: 'Saved', variant: 'success' });
-    } else {
-      toast({ title: 'Failed to save', description: error, variant: 'error' });
-    }
-  };
-
-  const handleSaveRoute = async () => {
-    const route = routeInput.trim();
-    if (!config || !route || route === config.integration?.route) return;
-    if (!route.startsWith('/')) {
-      toast({ title: 'Failed to save', description: 'Route must start with /', variant: 'error' });
-      return;
-    }
-    const integration = { ...config.integration, route };
     const { ok, error } = await saveConfig({ integration });
     if (ok) {
       setConfig((prev) => (prev ? { ...prev, integration } : prev));
@@ -84,10 +63,7 @@ export const useToolbarSection = () => {
   return {
     config,
     hostState,
-    routeInput,
-    setRouteInput,
     handleToggleEnabled,
-    handleSaveRoute,
     handleInstall,
     installRunning,
     hasAgent,

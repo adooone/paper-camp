@@ -358,15 +358,22 @@ describe('buildFeedbackSummaryPrompt', () => {
 });
 
 describe('buildInstallToolbarPrompt', () => {
-  it('names the detected vite config and the pnpm add command', () => {
-    const prompt = buildInstallToolbarPrompt('vite.config.ts', 'pnpm');
+  it('names the detected vite config, the pinned version, and the pnpm install command', () => {
+    const prompt = buildInstallToolbarPrompt('vite.config.ts', 'pnpm', '0.28.4');
     expect(prompt).toContain('vite.config.ts');
-    expect(prompt).toContain('pnpm add -D @dendelion/paper-camp');
+    expect(prompt).toContain('"@dendelion/paper-camp": "^0.28.4"');
+    expect(prompt).toContain('devDependencies` in `package.json`');
+    expect(prompt).toContain('pnpm install');
     expect(prompt).toContain("import paperCamp from '@dendelion/paper-camp/vite';");
   });
 
+  it('points at the app package.json next to a nested vite config', () => {
+    const prompt = buildInstallToolbarPrompt('apps/admin/vite.config.ts', 'pnpm', '0.28.4');
+    expect(prompt).toContain('devDependencies` in `apps/admin/package.json`');
+  });
+
   it('falls back to npm when no package manager was detected', () => {
-    const prompt = buildInstallToolbarPrompt('vite.config.js', null);
-    expect(prompt).toContain('npm install --save-dev @dendelion/paper-camp');
+    const prompt = buildInstallToolbarPrompt('vite.config.js', null, '0.28.4');
+    expect(prompt).toContain('npm install');
   });
 });

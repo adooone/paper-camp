@@ -120,4 +120,35 @@ describe('resolveDaemonTarget', () => {
 
     expect(await resolveDaemonTarget('/repo/unknown', 4333)).toBeUndefined();
   });
+
+  it('resolves a monorepo Vite root nested inside a registered project path', async () => {
+    await makeRegistry([{ path: '/repo/radio', name: 'Radio' }]);
+    const port = await listenOnFreePort();
+    await writeRunningDaemon(port);
+
+    const target = await resolveDaemonTarget('/repo/radio/apps/admin');
+
+    expect(target).toEqual({ origin: `http://localhost:${port}`, slug: 'radio' });
+  });
+
+  it('picks the most specific registered path when projects are nested', async () => {
+    await makeRegistry([
+      { path: '/repo/radio', name: 'Radio' },
+      { path: '/repo/radio/apps/admin', name: 'Admin' },
+    ]);
+    const port = await listenOnFreePort();
+    await writeRunningDaemon(port);
+
+    const target = await resolveDaemonTarget('/repo/radio/apps/admin');
+
+    expect(target).toEqual({ origin: `http://localhost:${port}`, slug: 'admin' });
+  });
+
+  it('does not match a registered project path that merely shares a prefix', async () => {
+    await makeRegistry([{ path: '/repo/radio', name: 'Radio' }]);
+    const port = await listenOnFreePort();
+    await writeRunningDaemon(port);
+
+    expect(await resolveDaemonTarget('/repo/radio-station')).toBeUndefined();
+  });
 });
