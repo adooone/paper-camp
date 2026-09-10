@@ -21,7 +21,10 @@ import {
   listProjects,
   loadRegistry,
 } from '../core/machine-registry';
+import { checkLatestVersion } from '../core/registry-version';
+import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import type { MachineProjectSummary } from '../types/index';
+import { runNpmInstall } from './auto-update';
 import { DEFAULT_DAEMON_PORT } from './daemon-server';
 import { linkifyUrls } from './dev-banner';
 
@@ -213,6 +216,37 @@ export async function runRestart(): Promise<boolean> {
   const stopped = await runStop();
   if (!stopped) return false;
   return runStart(opts);
+}
+
+export async function runUpdate(): Promise<boolean> {
+  const check = await checkLatestVersion(PAPER_CAMP_VERSION);
+  if (!check) {
+    console.error('paper-camp: could not reach the npm registry to check for an update');
+    return false;
+  }
+  if (!check.isNewer) {
+    console.log(`paper-camp: already on ${PAPER_CAMP_VERSION}`);
+    return true;
+  }
+
+  const result = await runNpmInstall(check.latestVersion);
+  const output = result.output.trim();
+  if (!result.ok) {
+    console.error(
+      `paper-camp: update to ${check.latestVersion} failed to install${output ? `\n${output}` : ''}`,
+    );
+    return false;
+  }
+  if (output) console.log(output);
+
+  const running = await readRunningDaemonState(daemonStatePath());
+  if (!running) {
+    console.log(`paper-camp: updated ${PAPER_CAMP_VERSION} → ${check.latestVersion}`);
+    return true;
+  }
+
+  console.log(`paper-camp: updated ${PAPER_CAMP_VERSION} → ${check.latestVersion}, restarting`);
+  return runRestart();
 }
 
 interface LiveProjects {

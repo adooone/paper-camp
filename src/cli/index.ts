@@ -59,6 +59,7 @@ import {
   runStart,
   runStatus,
   runStop,
+  runUpdate,
 } from './daemon-lifecycle';
 import { DEFAULT_DAEMON_PORT, startDaemonServer } from './daemon-server';
 import { readConfigPort, resolveDevPort } from './dev-port';
@@ -279,6 +280,13 @@ program
   .description('Stop the running daemon and start it again with the same flags')
   .action(async () => {
     if (!(await runRestart())) process.exitCode = 1;
+  });
+
+program
+  .command('update')
+  .description('Check the npm registry for a newer version and install it now')
+  .action(async () => {
+    if (!(await runUpdate())) process.exitCode = 1;
   });
 
 program

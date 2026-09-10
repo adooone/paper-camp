@@ -67,7 +67,8 @@ other than the daemon's own package.
 - [x] Install and restart the daemon when the machine is idle
       The 30-minute poll, gated on the existing `isMachineBusy`, logging the wait once and a failed install with its output.
       run: 12m4s · 82 in · 33.2k out · sonnet-5
-- [ ] Add `paper-camp update` for one check and install on demand
+- [x] Add `paper-camp update` for one check and install on demand
+      run: 6m32s · 68 in · 21.5k out · sonnet-5
 - [ ] Report auto-update state, last check, and pending version in `paper-camp status`
 - [ ] Carry the pending version to the hub's machine card
       Extend the `/api/machine/projects` payload and stamp the waiting version until the restart clears the mismatch.

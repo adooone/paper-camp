@@ -12,6 +12,7 @@ import {
   addProject,
   saveRegistry,
 } from '../core/machine-registry';
+import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
 import {
   MISSING_PROJECT_HINT,
@@ -26,6 +27,7 @@ import {
   runStart,
   runStatus,
   runStop,
+  runUpdate,
 } from './daemon-lifecycle';
 
 describe('buildDaemonArgs', () => {
@@ -310,6 +312,7 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
   const servers: Server[] = [];
   const children: ChildProcess[] = [];
   let originalConfigDir: string | undefined;
+  const originalPath = process.env.PATH;
 
   afterAll(async () => {
     await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
@@ -323,7 +326,36 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
     // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
     if (originalConfigDir === undefined) delete process.env.PAPERCAMP_CONFIG_DIR;
     else process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
+    process.env.PATH = originalPath;
+    vi.unstubAllGlobals();
   });
+
+  /** Only the npm registry URL is faked — everything else (the daemon's own
+   *  localhost port probes) reaches the real `fetch`, so this can run
+   *  alongside tests that spawn a real daemon. */
+  function stubRegistryFetch(latestVersion: string, ok = true): void {
+    const originalFetch = globalThis.fetch;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.startsWith('https://registry.npmjs.org/')) {
+          return Promise.resolve({
+            ok,
+            json: async () => ({ version: latestVersion }),
+          } as Response);
+        }
+        return originalFetch(input, init);
+      }),
+    );
+  }
+
+  async function stubNpm(script: string): Promise<void> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-npm-'));
+    dirs.push(dir);
+    await writeFile(join(dir, 'npm'), `#!/bin/sh\n${script}\n`, { mode: 0o755 });
+    process.env.PATH = `${dir}:${originalPath}`;
+  }
 
   async function makeTempConfigDir(): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'paper-camp-start-test-'));
@@ -517,6 +549,85 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
 
     await runStop();
   }, 15_000);
+
+  describe('runUpdate', () => {
+    it('reports already on the current version when nothing newer is published', async () => {
+      await makeConfigDir();
+      stubRegistryFetch(PAPER_CAMP_VERSION);
+
+      const logs = captureLogs();
+      const ok = await runUpdate();
+      logs.restore();
+
+      expect(ok).toBe(true);
+      expect(logs.output).toBe(`paper-camp: already on ${PAPER_CAMP_VERSION}`);
+    });
+
+    it('reports a registry failure without touching npm', async () => {
+      await makeConfigDir();
+      stubRegistryFetch(PAPER_CAMP_VERSION, false);
+
+      const errors: string[] = [];
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args) => {
+        errors.push(args.join(' '));
+      });
+      const ok = await runUpdate();
+      errorSpy.mockRestore();
+
+      expect(ok).toBe(false);
+      expect(errors.join('\n')).toContain('could not reach the npm registry');
+    });
+
+    it('installs and reports the new version when nothing is running to restart', async () => {
+      await makeConfigDir();
+      stubRegistryFetch('9.9.9');
+      await stubNpm('exit 0');
+
+      const logs = captureLogs();
+      const ok = await runUpdate();
+      logs.restore();
+
+      expect(ok).toBe(true);
+      expect(logs.output).toContain(`paper-camp: updated ${PAPER_CAMP_VERSION} → 9.9.9`);
+      expect(logs.output).not.toContain('restarting');
+    });
+
+    it('installs and restarts the running daemon', async () => {
+      const configDir = await makeConfigDir();
+      const state = await spawnFakeDaemon(configDir);
+      stubRegistryFetch('9.9.9');
+      await stubNpm('exit 0');
+
+      const logs = captureLogs();
+      const ok = await asRealCliEntry(() => runUpdate());
+      logs.restore();
+
+      expect(ok).toBe(true);
+      expect(logs.output).toContain(
+        `paper-camp: updated ${PAPER_CAMP_VERSION} → 9.9.9, restarting`,
+      );
+      expect(isProcessAlive(state.pid)).toBe(false);
+
+      await runStop();
+    }, 15_000);
+
+    it('logs the command output and does not restart when the install fails', async () => {
+      await makeConfigDir();
+      stubRegistryFetch('9.9.9');
+      await stubNpm('echo "404 Not Found" >&2\nexit 1');
+
+      const errors: string[] = [];
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args) => {
+        errors.push(args.join(' '));
+      });
+      const ok = await runUpdate();
+      errorSpy.mockRestore();
+
+      expect(ok).toBe(false);
+      expect(errors.join('\n')).toContain('update to 9.9.9 failed to install');
+      expect(errors.join('\n')).toContain('404 Not Found');
+    });
+  });
 
   it('ls prints "—" for every project when no daemon is running', async () => {
     const configDir = await makeConfigDir();
