@@ -4,6 +4,7 @@ title: Toolbar served from the daemon
 type: feat
 status: review
 created: 2026-09-10
+updated: 2026-09-10
 tags:
   - app
   - vite
@@ -76,15 +77,21 @@ still applies to `vite serve` only. Host apps that are not Vite.
       run: 9m23s · 164 in · 37.8k out · sonnet-5
 - [x] Launch the *Install toolbar* agent task from that section
       run: 11m16s · 234 in · 54.6k out · sonnet-5
+- [x] [manual] Verify once after the last phase for run-all
 
 ### Fixes
-- [ ] Resolve the toolbar for a Vite root inside a registered project
+- [x] Resolve the toolbar for a Vite root inside a registered project
       `resolveDaemonTarget` in `src/vite/daemon-target.ts` matches the registry entry whose path equals the Vite root, so a monorepo app such as radio's `apps/admin` prints the off notice. Match the entry whose path contains the Vite root instead, and use its slug for the mount. Cover it in `daemon-target.test.ts`.
-- [ ] Detect the host app from the frontend service, not the repo root
+      run: 2m48s · 32 in · 4k out · sonnet-5
+- [x] Detect the host app from the frontend service, not the repo root
       `detectToolbarHostState` in `src/core/desk-discovery/toolbar-host.ts` looks for `vite.config.*` only at the project root, so Settings → Toolbar reports Not found for a monorepo and never offers Install. Look in the frontend desk service's working directory when the desk names one, else the first Vite config under `apps/*` or `packages/*`, else the root; report the path relative to the root, and pass that path to `buildInstallToolbarPrompt` so the agent edits the right config and adds the dependency to that app's `package.json`. Cover it in `toolbar-host.test.ts`.
-- [ ] Remove the Route field and `integration.route`
+      run: 6m45s · 86 in · 21.1k out · sonnet-5
+- [x] Remove the Route field and `integration.route`
       The plugin mounts at `/p/<slug>` and nothing reads `integration.route` any more. Drop the field from `toolbar-section.tsx` and `use-toolbar-section.ts`, the key and its validation from `src/app/server/routes/system/config.ts` and `src/cli/dev-port.ts`, the `route` member of `IntegrationConfig` in `src/types/index.ts`, and the tests that cover it.
-- [ ] Make the install task land without a shell allowlist entry
+      run: 5m6s · 90 in · 11k out · sonnet-5
+- [x] Make the install task land without a shell allowlist entry
       The agent runs headless in the host repo, whose scaffolded allowlist permits file edits but not `pnpm add`. In `buildInstallToolbarPrompt` tell the agent to add `@dendelion/paper-camp` to `devDependencies` by editing that app's `package.json` first, then run the package manager's install to update the lockfile, so the dependency is recorded even if the command is refused.
-- [ ] Inject the script through Vite's tags API
+      run: 5m11s · 64 in · 11.2k out · sonnet-5
+- [x] Inject the script through Vite's tags API
       In `src/vite/index.ts`, return `{ html, tags: [{ tag: 'script', attrs: {...}, injectTo: 'body' }] }` from `transformIndexHtml` instead of replacing `</body>` by string, so an index without that tag still gets the toolbar. Update `index.test.ts`.
+      run: 3m15s · 28 in · 5.1k out · sonnet-5

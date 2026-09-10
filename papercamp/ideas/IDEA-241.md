@@ -9,7 +9,7 @@ tags:
   - server
   - app
 subject: Run & monitor
-order: 5
+order: 4
 ---
 
 Most days end with Claude capacity unspent. The five-hour window resets
