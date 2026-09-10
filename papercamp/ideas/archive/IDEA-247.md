@@ -2,7 +2,7 @@
 id: IDEA-247
 title: Toolbar served from the daemon
 type: feat
-status: review
+status: done
 created: 2026-09-10
 updated: 2026-09-10
 tags:

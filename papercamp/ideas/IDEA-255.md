@@ -65,3 +65,17 @@ target so it does not split them back.
 Parallel phases; the tree is one and the commits are ordered. Changing
 what the four checks run. Any change to the checks the Stack runs on
 demand.
+
+### Phases
+- [ ] Trim the phase prompt to types and touched tests
+      `buildAgentPrompt` in `agent.ts` loses the "leave the whole repo green" line; `buildFixPassPrompt` keeps its full list.
+- [ ] Drop the per-phase verify from `runQueue`
+      A phase ends when the agent stops: commit, tick, next phase — no checks, no fix loop between items.
+- [ ] Verify once after the last phase
+      `startRunAllPhases` runs the biome fixer, lint, tests, consistency and docs once, sends introduced red to the fix pass under the same cap, commits a landed fix as its own `fix` commit, and stamps review only after.
+- [ ] Take the baseline from the checks' last results
+      Reuse results already produced on the current HEAD; run the sweep up front only when none exist.
+- [ ] Keep one session for the whole run
+      Resume the previous phase's session, start fresh when its last turn passed 120k input tokens, and record which session each phase ran in for the run card.
+- [ ] Target 3–5 phases in the drafting prompts
+      `BREVITY_CONTRACT` in `prompts.ts`, plus the plan-draft rule that steps editing the same files are one phase.
