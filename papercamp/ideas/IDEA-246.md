@@ -70,7 +70,8 @@ panels within a route.
       run: 7m38s · 152 in · 29.6k out · sonnet-5
 - [x] Mark a busy mounted project on the machine card
       run: 3m33s · 38 in · 7.2k out · sonnet-5
-- [ ] Remember the last route visited under each project
+- [x] Remember the last route visited under each project
+      run: 13m41s · 120 in · 54.7k out · sonnet-5
 - [ ] Open a machine link into the remembered or only project
 - [ ] Drop the first-run redirect to Settings
       The USAGE.md redirect for an untouched corpus stays.

@@ -6,6 +6,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { HUB_PATH, router } from './router';
 import { apiUrl, setApiBase, setApiPairingToken } from './services/api-base';
 import { hasChosenProject } from './services/hub';
+import { lastRouteFor } from './services/last-route-store';
 import { machineConnection } from './services/machine-connection';
 import { mountPrefix } from './services/mount';
 import { runtimeConnection } from './services/runtime-connection';
@@ -55,7 +56,19 @@ pairIfNeeded()
   .then(chooseProject)
   .catch(() => false)
   .then((chosenProject) => {
-    if (!chosenProject && !router.state.location.pathname.startsWith(HUB_PATH)) {
-      router.navigate({ to: HUB_PATH, replace: true });
+    if (!chosenProject) {
+      if (!router.state.location.pathname.startsWith(HUB_PATH)) {
+        router.navigate({ to: HUB_PATH, replace: true });
+      }
+      return;
     }
+    // A bare `/` is an implicit "open the project", not a specific deep link —
+    // the only case a remembered route should override where the URL landed.
+    if (router.state.location.pathname !== '/') return;
+    const remembered = lastRouteFor(
+      runtimeUrl,
+      typeof window === 'undefined' ? null : window.localStorage,
+      (path) => router.getMatchedRoutes(path).foundRoute !== undefined,
+    );
+    if (remembered) router.navigate({ to: remembered, replace: true });
   });

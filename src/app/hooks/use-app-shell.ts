@@ -1,12 +1,16 @@
 import { HUB_PATHS, LARGE_SCREEN_QUERY, navItems } from '@/app/components/layout/nav';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
+import { rememberRoute } from '@/app/services/last-route-store';
 import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
+import { runtimeConnection } from '@/app/services/runtime-connection';
 import { fetchCapabilities, fetchConfig } from '@/app/services/system';
 import { useAppStore } from '@/app/stores/app-store';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { useMediaQuery } from './use-media-query';
 import { useNotificationPush } from './use-notification-push';
+
+const storage = typeof window === 'undefined' ? null : window.localStorage;
 
 const STACK_OPEN_KEY = 'stack-open';
 
@@ -153,6 +157,13 @@ export function useAppShell(): AppShellState {
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body.
   useEffect(() => {
     setMobileSidebarOpen(false);
+  }, [pathname]);
+
+  // The hub's own route is a project switcher, not part of any one project's
+  // work, so it is never worth landing back on.
+  useEffect(() => {
+    if (HUB_PATHS.includes(pathname)) return;
+    rememberRoute(runtimeConnection.runtimeUrl, pathname, storage);
   }, [pathname]);
 
   const toggleStack = () => {
