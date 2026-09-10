@@ -9,7 +9,7 @@ tags:
   - vite
   - cli
 subject: In-app dev toolbar
-order: 15
+order: 2
 ---
 
 Putting the toolbar into another app is a hand job today, and it needs a
